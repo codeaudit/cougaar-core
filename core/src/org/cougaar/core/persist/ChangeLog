@@ -1,5 +1,11 @@
 2002-06-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* DataProtectionServiceStub.java: 
+	* DataProtectionOutputStreamStub.java: 
+	* DataProtectionKeyStub.java: 
+	* DataProtectionInputStreamStub.java:
+	Stub implementation for testing.
+
 	* BasePersistence.java:
 	Bug #1533 -- Identification of malfunctioning agent is hard
 	Use new LoggingServiceWithPrefix.
