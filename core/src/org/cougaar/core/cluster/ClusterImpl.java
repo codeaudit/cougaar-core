@@ -289,14 +289,16 @@ public class ClusterImpl extends Agent
           new Thread("Kludge Killer") {
             public void run() {
               try {
-                while (true) {
-                  try {
-                    Thread.sleep(kludgeDelay);
-                  } catch (InterruptedException ie) {
-                  }
-                  writeKludge();
-                  break;
+                try {
+                  Thread.sleep(kludgeDelay);
+                } catch (InterruptedException ie) {
                 }
+                System.out.println("unregisterClient");
+                messenger.unregisterClient(ClusterImpl.this);
+                System.out.println("gettingState");
+                writeKludge(myBlackboard.getState());
+                System.out.println("flushMessages");
+                messenger.flushMessages();
               } catch (Throwable e) {
                 e.printStackTrace();
               }
@@ -311,12 +313,11 @@ public class ClusterImpl extends Agent
     }
   }
 
-  public void writeKludge() {
+  public void writeKludge(Object state) {
     try {
       ObjectOutputStream oos =
         new ObjectOutputStream(new FileOutputStream("kludge.dat"));
       try {
-        Object state = myBlackboard.getState();
         oos.writeObject(state);
         System.out.println("Wrote " + state);
       } finally {
@@ -1385,15 +1386,5 @@ public class ClusterImpl extends Agent
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 
