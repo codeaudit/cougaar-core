@@ -121,6 +121,8 @@ import org.cougaar.util.StringUtility;
  * interval in milliseconds between the generation of persistence
  * deltas. Default is 300000 (5 minutes). This will be overridden if
  * the persistence control and adaptivity engines are running.
+ * @property org.cougaar.core.persistence.DataProtectionServiceStubEnabled set to true to enable 
+ * a debugging implementation of DataProtectionService if no real one is found.
  */
 public class BasePersistence
   implements Persistence, PersistencePluginSupport, ServiceProvider
@@ -457,7 +459,9 @@ public class BasePersistence
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
       if (logger.isInfoEnabled()) logger.info("No DataProtectionService Available.");
-      dataProtectionService = new DataProtectionServiceStub();
+      if (Boolean.getBoolean("org.cougaar.core.persistence.DataProtectionServiceStubEnabled")) {
+        dataProtectionService = new DataProtectionServiceStub();
+      }
     } else {
       if (logger.isInfoEnabled()) logger.info("DataProtectionService is "
                                               + dataProtectionService.getClass().getName());
@@ -1110,6 +1114,7 @@ public class BasePersistence
       //startCPU = CpuClock.cpuTimeMillis();
       startCPU = 0l;
       startTime = System.currentTimeMillis();
+      logger.info("Persist started");
     }
     int bytesSerialized = 0;
     recomputeNextPersistenceTime = true;
@@ -1151,8 +1156,6 @@ public class BasePersistence
           sequenceNumbers.first = sequenceNumbers.current;
           selectNextPlugin();
         }
-        previousPersistenceTime = System.currentTimeMillis();
-        currentPersistPluginInfo.nextPersistenceTime += currentPersistPluginInfo.persistenceInterval;
         currentPersistPluginInfo.deltaCount++;
         if (sequenceNumbers.current == sequenceNumbers.first) {
           // First delta of this running
@@ -1185,7 +1188,13 @@ public class BasePersistence
             stream.setIdentityTable(identityTable);
             // One agent at a time to avoid inter-agent deadlock due to shared objects
             try {
+              if (logger.isInfoEnabled()) {
+                logger.info("Obtaining JVM persist lock");
+              }
               synchronized (vmPersistLock) {
+                if (logger.isInfoEnabled()) {
+                  logger.info("Obtained JVM persist lock, serializing");
+                }
                 int nObjects = objectsToPersist.size();
                 referenceArrays = new PersistenceReference[nObjects][];
                 for (int i = 0; i < nObjects; i++) {
@@ -1214,6 +1223,11 @@ public class BasePersistence
                 bytesSerialized = stream.size();
                 meta.setUIDServerState(clusterContext.getUIDServer()
                                        .getPersistenceState());
+                if (logger.isInfoEnabled()) {
+                  logger.info(
+                      "Serialized "+bytesSerialized+
+                      " bytes to buffer, releasing lock");
+                }
               } // Ok to let other agents persist while we write out our data
             } finally {
               stream.close();
@@ -1226,10 +1240,19 @@ public class BasePersistence
               result = new PersistenceObject("Persistence state "
                                              + sequenceNumbers.current,
                                              returnByteStream.toByteArray());
+              if (logger.isInfoEnabled()) {
+                logger.info(
+                    "Copied persistence snapshot to memory buffer"+
+                    " for return to state-capture caller");
+              }
             }
             if (currentOutput != null) {
               writeFinalOutput(currentOutput, meta, referenceArrays, stream);
               currentOutput.close();
+              if (logger.isInfoEnabled()) {
+                logger.info(
+                    "Wrote persistence snapshot to output stream");
+              }
             }
           } // End of non-dummy persistence
           clearMarks(objectsToPersist.iterator());
@@ -1249,13 +1272,21 @@ public class BasePersistence
       catch (Exception e) {
         logger.error("Error writing persistence snapshot", e);
       }
+      // set persist time to persist completion + epsilon
+      previousPersistenceTime = System.currentTimeMillis();
+      currentPersistPluginInfo.nextPersistenceTime =
+        previousPersistenceTime +
+        currentPersistPluginInfo.persistenceInterval;
     }
-    if (bytesSerialized > 0 && logger.isInfoEnabled()) {
+    if (logger.isInfoEnabled()) {
       //long finishCPU = CpuClock.cpuTimeMillis();
       long finishCPU = 0l;
       long finishTime = System.currentTimeMillis();
-      logger.info("bytes=" + bytesSerialized + ", cpu=" + (finishCPU - startCPU)
-                  + ", real=" + (finishTime - startTime));
+      logger.info(
+          "Persisted "+
+          bytesSerialized+" bytes in "+
+          (finishTime-startTime)+" MS");
+      // +", cpu="+(finishCPU - startCPU)
     }
     return result;
   }

@@ -41,6 +41,7 @@ import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerAdapter;
 import org.cougaar.util.log.LoggerFactory;
 
 /**
@@ -126,8 +127,7 @@ public final class Distributor {
   // blackboard, noted below.
 
   /** the logger, which is thread safe */
-  private final Logger logger =
-    LoggerFactory.getInstance().createLogger(getClass());
+  private final Logger logger;
 
   //
   // these are set immediately following the constructor, and
@@ -210,8 +210,11 @@ public final class Distributor {
   public Distributor(Blackboard blackboard, String name) {
     this.blackboard = blackboard;
     this.name = (name != null ? name : "Anonymous");
+    Logger l = LoggerFactory.getInstance().createLogger(getClass());
+    l = new LoggerWithPrefix(l, (name+": "));
+    this.logger = l;
     if (logger.isInfoEnabled()) {
-      logger.info(name + ": Distributor started");
+      logger.info("Distributor started");
     }
   }
 
@@ -364,7 +367,7 @@ public final class Distributor {
 
   /** provide a hook to start the distribution thread.
    * Note that although Distributor is Runnable, it does not
-   * extend Thread, rather, it maintains it's own thread state
+   * extend Thread, rather, it maintains its own thread state
    * privately.
    **/
   public void start(
@@ -451,7 +454,7 @@ public final class Distributor {
         if (subscriber.isReadyToPersist()) {
           if (logger.isInfoEnabled()) {
             logger.info(
-                name + ": No subscriber state for late subscribe of " +
+                "No subscriber state for late subscribe of " +
                 subscriber.getName());
           }
         } else {
@@ -570,7 +573,7 @@ public final class Distributor {
           DirectiveMessage msg = (DirectiveMessage) i.next();
           Directive[] dirs = msg.getDirectives();
           for (int j = 0; j < dirs.length; j++) {
-            logger.debug(name + ": SEND   " + dirs[j]);
+            logger.debug("SEND   " + dirs[j]);
           }
         }
       }
@@ -647,7 +650,7 @@ public final class Distributor {
               if (logger.isDebugEnabled()) {
                 Directive[] dirs = msg.getDirectives();
                 for (int i = 0; i < dirs.length; i++) {
-                  logger.debug(name + ": RECV   " + dirs[i]);
+                  logger.debug("RECV   " + dirs[i]);
                 }
               }
               directiveMessages.add(msg);
@@ -792,11 +795,17 @@ public final class Distributor {
       if (persistPending) {
         if (transactionCount == 1) {
           // transactionCount == 1 implies persistActive == false
+          if (logger.isInfoEnabled()) {
+            logger.info("Persist started (finish transaction)");
+          }
           assert !persistActive;
           doPersistence();
+          if (logger.isInfoEnabled()) {
+            logger.info("Persist completed (finish transaction)");
+          }
         } else {
           if (logger.isInfoEnabled()) {
-            logger.info(name + ": Persist deferred, "
+            logger.info("Persist deferred, "
                 + transactionCount
                 + " transactions open");
           }
@@ -852,14 +861,27 @@ public final class Distributor {
       assert !Thread.holdsLock(transactionLock);
       if (persistence == null)
         throw new PersistenceNotEnabledException();
+      if (logger.isInfoEnabled()) {
+        logger.info("Persist requested (persist)");
+      }
       synchronized (transactionLock) {
-        while (persistActive) {
-          try {
-            transactionLock.wait();
-          } catch (InterruptedException ie) {
+        if (persistActive) {
+          if (logger.isInfoEnabled()) {
+            logger.info("Waiting for active persist to complete");
           }
+          do {
+            try {
+              transactionLock.wait();
+            } catch (InterruptedException ie) {
+            }
+          } while (persistActive);
         }
         persistActive = true;
+        if (logger.isInfoEnabled()) {
+          logger.info(
+              "Waiting for "+transactionCount+
+              " transactions to close");
+        }
         transactionCount++;
         assert transactionCount >= 1 : transactionCount;
         try {
@@ -869,11 +891,17 @@ public final class Distributor {
             } catch (InterruptedException ie) {
             }
           }
+          if (logger.isInfoEnabled()) {
+            logger.info("Persist started (persist)");
+          }
           assert transactionCount == 1 : transactionCount;
           // persistPending == don't care, transactionCount == 1
           // We are the only one left in the pool
           return doPersistence(isStateWanted, full);
         } finally {
+          if (logger.isInfoEnabled()) {
+            logger.info("Persist completed (persist)");
+          }
           persistActive = false;
           --transactionCount;
           assert transactionCount == 0 : transactionCount;
@@ -922,7 +950,7 @@ public final class Distributor {
     for (Iterator tuples = envelope.getAllTuples(); tuples.hasNext(); ) {
       if (first) {
         logger.debug(
-            name + ": Outbox of " + client.getBlackboardClientName());
+            "Outbox of " + client.getBlackboardClientName());
         first = false;
       }
       EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
@@ -930,7 +958,7 @@ public final class Distributor {
         for (Iterator objects =
             ((BulkEnvelopeTuple) tuple).getCollection().iterator();
             objects.hasNext(); ) {
-          logger.debug(name + ": BULK   " + objects.next());
+          logger.debug("BULK   " + objects.next());
         }
       } else {
         String kind = "";
@@ -941,7 +969,7 @@ public final class Distributor {
         } else {
           kind = "REMOVE ";
         }
-        logger.debug(name + ": " + kind + tuple.getObject());
+        logger.debug(kind + tuple.getObject());
       }
     }
   }
@@ -952,9 +980,25 @@ public final class Distributor {
 
 
   /**
+   * Wrapper to prefix all log calls.
+   *
+   * @see org.cougaar.core.logging.LoggingServiceWithPrefix
+   */
+  public static class LoggerWithPrefix extends LoggerAdapter {
+    private final String prefix;
+    private final Logger logger;
+    public LoggerWithPrefix(Logger logger, String prefix) {
+      this.logger = logger;
+      this.prefix = prefix;
+    }
+    public boolean isEnabledFor(int level) { return logger.isEnabledFor(level); }
+    public void log(int level, String message, Throwable t) { logger.log(level, prefix + message, t); }
+  }  
+
+  /**
    * Hold our set of registered Subscribers.
    * <p>
-   * The Distributor must lock this object with it's
+   * The Distributor must lock this object with its
    * "distributorLock".
    */
   private static class Subscribers {
