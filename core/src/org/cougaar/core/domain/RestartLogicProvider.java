@@ -46,7 +46,10 @@ public interface RestartLogicProvider extends LogicProvider {
    *
    * @param cid null if this agent restarted, otherwise the
    *            ClusterIdentifier of a remote agent that restarted
-   **/
+   *
+   * @see RestartLogicProviderHelper utility method to test the 
+   *    given "cid"
+   */
   void restart(ClusterIdentifier cid);
 }
 

@@ -28,6 +28,7 @@ import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
+import org.cougaar.core.domain.RestartLogicProviderHelper;
 
 import org.cougaar.planning.ldm.asset.Asset;
 
@@ -48,6 +49,8 @@ import org.cougaar.planning.ldm.plan.ScheduleElement;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskScoreTable;
 
+import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.util.UID;
 
 import org.cougaar.util.UnaryPredicate;
@@ -66,12 +69,12 @@ public class NotificationLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
-  private ClusterIdentifier cid;
+  private final ClusterIdentifier self;
 
   public NotificationLP(LogPlanServesLogicProvider logplan,
                         ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
-    cid = cluster.getClusterIdentifier();
+    self = cluster.getClusterIdentifier();
   }
 
   /**
@@ -96,17 +99,19 @@ public class NotificationLP
       public boolean execute(Object o) {
         if (o instanceof PlanElement) {
           PlanElement pe = (PlanElement) o;
-          return cid.equals(pe.getTask().getSource());
+          ClusterIdentifier source = pe.getTask().getSource();
+          return RestartLogicProviderHelper.matchesRestart(self, cid, source);
         }
         return false;
       }
     };
     Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
-      checkValues((PlanElement) enum.nextElement(), null);
+      PlanElement pe = (PlanElement) enum.nextElement();
+      checkValues(pe, null);
     }
   }
-  	
+
   private void checkValues(PlanElement pe, Collection changes) {
     AllocationResult ar = pe.getEstimatedResult();
     if (ar != null) {
@@ -139,7 +144,7 @@ public class NotificationLP
   
   private void createNotification(UID ptuid, Task t, AllocationResult ar, Collection changes) {
     ClusterIdentifier dest = t.getSource();
-    if (cid == dest || cid.equals(dest)) {
+    if (self == dest || self.equals(dest)) {
       // deliver intra-cluster notifications directly
       ReceiveNotificationLP.propagateNotification(logplan,ptuid,ar,t.getUID(), changes);
     } else {
@@ -153,7 +158,7 @@ public class NotificationLP
       if (ptuid == null) System.out.println("***DebugNotification-LP: pt is null");
       ClusterIdentifier newDest = t.getSource();
       //ClusterIdentifier newDest = pt.getDestination();
-      ClusterIdentifier newSource =  cid;
+      ClusterIdentifier newSource = self;
       
       nn.setSource(newSource);
       nn.setDestination(newDest);

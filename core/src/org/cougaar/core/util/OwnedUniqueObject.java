@@ -56,6 +56,11 @@ public abstract class OwnedUniqueObject extends SimpleUniqueObject {
     return owner;
   }
 
+  /** alias for getOwner */
+  public ClusterIdentifier getSource() {
+    return getOwner();
+  }
+
   private void ownerError(String reason) {
     if (allocationContext != null) {
       allocationContext.printStackTrace();

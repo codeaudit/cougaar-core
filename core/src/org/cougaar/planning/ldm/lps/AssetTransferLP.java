@@ -28,6 +28,7 @@ import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
+import org.cougaar.core.domain.RestartLogicProviderHelper;
 
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.ClusterPG;
@@ -68,10 +69,12 @@ public class AssetTransferLP
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
   private static TimeSpan ETERNITY = new MutableTimeSpan();
+  private final ClusterIdentifier self;
 
   public AssetTransferLP(LogPlanServesLogicProvider logplan,
                          ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
+    self = cluster.getClusterIdentifier();
   }
 
   /**
@@ -130,7 +133,11 @@ public class AssetTransferLP
       public boolean execute(Object o) {
         if (o instanceof AssetTransfer) {
           AssetTransfer at = (AssetTransfer) o;
-          return cid.equals(at.getAssignee().getClusterPG().getClusterIdentifier());
+          ClusterIdentifier assignee = 
+            at.getAssignee().getClusterPG().getClusterIdentifier();
+          return 
+            RestartLogicProviderHelper.matchesRestart(
+                self, cid, assignee);
         }
         return false;
       }
@@ -146,7 +153,10 @@ public class AssetTransferLP
           Asset asset = (Asset) o;
           ClusterPG clusterPG = asset.getClusterPG();
           if (clusterPG != null) {
-            return (clusterPG.getClusterIdentifier().equals(cid));
+            ClusterIdentifier assetCID = clusterPG.getClusterIdentifier();
+            return
+              RestartLogicProviderHelper.matchesRestart(
+                  self, cid, assetCID);
           }
         }
         return false;
@@ -189,8 +199,8 @@ public class AssetTransferLP
             ldmf.newAssetVerification(ldmf.cloneInstance(asset),
                                       ldmf.cloneInstance(receivingAsset),
                                       verifySchedule);
-          nav.setSource(cluster.getClusterIdentifier());
-          nav.setDestination(cid);
+          nav.setSource(self);
+          nav.setDestination(asset.getClusterPG().getClusterIdentifier());
           logplan.sendDirective(nav);
         }
       } else {

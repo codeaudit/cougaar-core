@@ -18,41 +18,35 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+package org.cougaar.core.domain;
 
-package org.cougaar.planning.ldm.plan;
-
-import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.agent.ClusterIdentifier;
 
-/** Transferable 
- *
- * Interface that describes the methods an object needs to be
- * transfered from one cluster to another using the Transferable Logic
- * Providers
- **/
-public interface Transferable extends Cloneable, UniqueObject {
-  /** A Transferable must be fully cloneable, otherwise unwanted side effects
-   * may show up when object replicas are on clusters in the same VM
-   **/
-  Object clone();
+/**
+ * Helper methods for RestartLogicProviders.
+ */
+public abstract class RestartLogicProviderHelper {
 
-  /** 
-   * A "close enough" version of equals() used by the Logic Provider
-   * to find the local version of an object transfered from another cluster
-   **/
-  boolean same(Transferable other);
+  private RestartLogicProviderHelper() { 
+    // just helper methods
+  }
 
   /**
-   * Set all relevent parameters to the values in other.
-   * Almost a deep copy.
-   * @param other - must be of same type as this
-   **/
-  void setAll(Transferable other);
-
-  boolean isFrom(ClusterIdentifier src);
-
-  /**
-   * @see #isFrom
+   * Utility method for RestartLogicProviders to
+   * use when performing "restart(cid)".
+   *
+   * @return true if this "self" agent, asked to
+   *    "restart(cid)", should reconcile with the
+   *    specified "dest" agent.
    */
-  ClusterIdentifier getSource();
+  public static final boolean matchesRestart(
+      ClusterIdentifier self,
+      ClusterIdentifier cid,
+      ClusterIdentifier dest) {
+    return 
+      cid != null ? 
+      cid.equals(dest) : 
+      (dest != null && !dest.equals(self));
+  }
+
 }

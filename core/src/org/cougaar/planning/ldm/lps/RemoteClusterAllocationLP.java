@@ -26,6 +26,7 @@ import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
+import org.cougaar.core.domain.RestartLogicProviderHelper;
 
 
 import org.cougaar.planning.ldm.plan.PlanElement;
@@ -54,9 +55,12 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
         
+  private final ClusterIdentifier self;
+
   public RemoteClusterAllocationLP(LogPlanServesLogicProvider logplan,
                                    ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
+    self = cluster.getClusterIdentifier();
   }
 
   private void examine(Object obj, Collection changes) {
@@ -113,7 +117,9 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
           ClusterPG cpg = asset.getClusterPG();
           if (cpg == null) return false;
           ClusterIdentifier destination = cpg.getClusterIdentifier();
-          return cid.equals(destination);
+          return 
+            RestartLogicProviderHelper.matchesRestart(
+              self, cid, destination);
         }
         return false;
       }
