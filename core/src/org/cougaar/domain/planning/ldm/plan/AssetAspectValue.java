@@ -5,7 +5,6 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 
 public class AssetAspectValue extends AspectValue
 {
-    
     private Asset theAsset;
     private boolean successBit = true;
     
