@@ -141,4 +141,17 @@ public class PrototypeRegistry implements PrototypeRegistryService {
     return myRegistry;
   }
 
+  //metrics service hooks
+  public int getPrototypeProviderCount() {
+    return prototypeProviders.size();
+  }
+  public int getPropertyProviderCount() {
+    return propertyProviders.size();
+  }
+  public int getCachedPrototypeCount() {
+    return getRegistry().size();
+  }
+
 }
+
+

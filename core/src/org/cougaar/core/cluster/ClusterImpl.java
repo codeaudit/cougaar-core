@@ -784,11 +784,10 @@ public class ClusterImpl extends Agent
     //no longer works from cluster as the sharedpluginmanager
     //is now a service
     //ms.thinPluginCount = getSharedPlugInManager().size();
-    //no longer works from cluster as these are part of 
-    //the prototyperegistryservice
-    //ms.prototypeProviderCount = prototypeProviders.size();
-    //ms.propertyProviderCount = propertyProviders.size();
-    //ms.cachedPrototypeCount = getRegistry().size();
+    //grab these from the PrototypeRegistryService
+    ms.prototypeProviderCount = getPrototypeRegistryService().getPrototypeProviderCount();
+    ms.propertyProviderCount = getPrototypeRegistryService().getPropertyProviderCount();
+    ms.cachedPrototypeCount = getPrototypeRegistryService().getCachedPrototypeCount();
 
     // vm stuff
     ms.idleTime = getIdleTime();

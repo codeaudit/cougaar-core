@@ -82,5 +82,13 @@ public interface PrototypeRegistryService extends Service {
    **/
   PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pg, long time);
  
+  // metrics service hooks
+  /** @return int Count of Prototype Providers  **/
+  int getPrototypeProviderCount();
 
+  /** @return int Count of Property Providers **/
+  int getPropertyProviderCount();
+
+  /** @return int Count of Cached Prototypes **/
+  int getCachedPrototypeCount();
 }

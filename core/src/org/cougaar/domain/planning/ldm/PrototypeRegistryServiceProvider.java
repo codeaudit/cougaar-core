@@ -65,6 +65,16 @@ public class PrototypeRegistryServiceProvider implements ServiceProvider {
     public PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pg, long time) {
       return protregistry.lateFillPropertyGroup(anAsset, pg, time);
     }
+    //metrics service hooks
+    public int getPrototypeProviderCount() {
+      return protregistry.getPrototypeProviderCount();
+    }
+    public int getPropertyProviderCount() {
+      return protregistry.getPropertyProviderCount();
+    }
+    public int getCachedPrototypeCount() {
+      return protregistry.getCachedPrototypeCount();
+    }
   }  // end of PrototypeRegistryServiceImpl
 
 
