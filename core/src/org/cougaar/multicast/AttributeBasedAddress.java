@@ -50,10 +50,13 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
   
   public AttributeBasedAddress() {}
   
-  public String getValue() {
+  public String getRoleValue() {
     return AttributeValue;
   }
   
+  public String getRoleName() {
+    return AttributeRole;
+  }
   public boolean isPersistable(){
     return false;
   }
