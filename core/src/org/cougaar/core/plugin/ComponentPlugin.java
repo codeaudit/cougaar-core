@@ -10,7 +10,6 @@
 
 package org.cougaar.core.plugin;
 
-
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedEvent;
@@ -23,6 +22,7 @@ import org.cougaar.core.cluster.AlarmService;
 import org.cougaar.core.cluster.SchedulerService;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 
+import java.util.Vector;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -90,10 +90,9 @@ public class ComponentPlugin
   }
 
   /**
-   * Found by introspection
+   * Service found by introspection
    **/
   public void setBindingSite(BindingSite bs) {
-    //System.out.println("ComponentPlugin.setBindingSite() " + toString() );
     if (bs instanceof PluginBindingSite) {
       pluginBindingSite = (PluginBindingSite)bs;
     } else {
@@ -116,6 +115,7 @@ public class ComponentPlugin
       schedulerProd = myScheduler.register(pokeMe);
     }
 
+    // proceed to get blackboard service
     blackboard = (BlackboardService)
       serviceBroker.getService(this, BlackboardService.class,
  			    new ServiceRevokedListener() {
@@ -127,6 +127,7 @@ public class ComponentPlugin
 				}
 			      });
 
+    // proceed to get alarm service
     alarmService = (AlarmService)
       serviceBroker.getService(this, AlarmService.class,
  			    new ServiceRevokedListener() {
@@ -170,16 +171,13 @@ public class ComponentPlugin
    * Found by introspection by ComponentFactory
    * PM expects this, and fails if it isn't here.
    **/
-  public void setParameter(Object param) {
-    //System.out.println("ComponentPlugin.setParameter()");
-    if (param != null) {
-      if (param instanceof Collection) {
-	parameters = (Collection) param;
-      } else {
-	System.err.println("Warning: "+this+" initialized with non-collection parameter "+param);
-      }
+    public void setParameter(Object param) {
+	if (param != null) {
+	    parameters = (Collection) param;
+	} else {
+	    parameters = new Vector(0);
+	}
     }
-  }
 
   /** get any Plugin parameters passed by the plugin instantiator.
    * If they haven't been set, will return null.
@@ -194,60 +192,59 @@ public class ComponentPlugin
    * This is the scheduler's hook into me
    **/
   protected class PluginCallback implements Trigger {
-    public void trigger() {
-      //System.out.println("PluginCallback.trigger()");
-      if (!primed) {
-	precycle();
+      public void trigger() {
+	  if (!primed) {
+	      precycle();
+	  }
+	  if (readyToRun) { 
+	      cycle();
+	  }
       }
-      if (readyToRun) {
-	cycle();
-      }
+  }
+      
+    protected void precycle() {
+	blackboard.openTransaction();
+	setupSubscriptions();
+	blackboard.closeTransaction();
+	primed = true;
     }
-  }
-
-  protected void precycle() {
-    blackboard.openTransaction();
-    setupSubscriptions();
-    blackboard.closeTransaction();
-    primed = true;
-  }
-
-  protected void cycle() {
-    // do stuff
-    readyToRun = false;
-    blackboard.openTransaction();
-    execute();
-    blackboard.closeTransaction();
-  }
-
-  /**
-   * override me
-   * Called once sometime after initialization
-   **/
-  protected void setupSubscriptions() {}
-
-  /**
-   * override me
-   * Called everytime plugin is scheduled to run
-   **/
-  protected void execute() {}
-
-  public String toString() {
-    return getBlackboardClientName();
-  }
-
-  protected class ThinWatcher extends SubscriptionWatcher {
-    /** Override this method so we don't have to do a wait()
-     */
-    public void signalNotify(int event) {
-      // This seems to get called even though my subscriptions haven't changed. Why?
-      super.signalNotify(event);
-      //System.out.println("ThinWatcher.signalNotify(" + event + ")");
-      // ask the scheduler to run us again.
-      if (schedulerProd != null) {
-	readyToRun = true;
-	schedulerProd.trigger();
+    
+      protected void cycle() {
+	  readyToRun = false;
+	  blackboard.openTransaction();
+	  execute();
+	  blackboard.closeTransaction();
       }
-    }
-  }
+
+
+      /**
+       * override me
+       * Called once sometime after initialization
+       **/
+      protected void setupSubscriptions() {}
+      
+      /**
+       * override me
+       * Called everytime plugin is scheduled to run
+       **/
+      protected void execute() {}
+      
+      public String toString() {
+	  return getBlackboardClientName();
+      }
+      
+      protected class ThinWatcher extends SubscriptionWatcher {
+	  /** Override this method so we don't have to do a wait()
+	   */
+	  public void signalNotify(int event) {
+	      // This seems to get called even though my subscriptions haven't changed. Why?
+	      super.signalNotify(event);
+
+	      // ask the scheduler to run us again.
+	      if (schedulerProd != null) {
+		  readyToRun = true;
+		  schedulerProd.trigger();
+	      }
+	  }
+      }
 }
