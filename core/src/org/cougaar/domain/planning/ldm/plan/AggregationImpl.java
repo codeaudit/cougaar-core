@@ -117,8 +117,11 @@ public class AggregationImpl extends PlanElementImpl
         ListIterator it = aggpes.listIterator();
         while (it.hasNext()) {
           Aggregation anagg = (Aggregation) it.next();
-          if (anagg != this)       // dont recurse on ourselves...
+          if (anagg != this) {     // dont recurse on ourselves...
+            Task atask = anagg.getTask();
             s.publishRemove(anagg);
+            s.publishChange(atask);
+          }
         }
 
         // rescind the combined task
