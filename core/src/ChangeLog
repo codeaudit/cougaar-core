@@ -1,3 +1,12 @@
+2001-12-13  Todd Wright  <twright@bbn.com>
+
+	* Trigger, Plugin-base-classes, SchedulerService:
+        Fixed bug 938, "Need thread-safe "TriggerModel" for Component 
+        "suspend()"".  Created new "TriggerModel" API and thread-safe 
+        implementation, "SyncTriggerModelImpl".  Modified Plugin 
+        base-classes to use the new TriggerModel API for clean
+        "start/suspend/resume/stop" state transitions.
+
 2001-11-29  Todd Wright  <twright@bbn.com>
 
 	* org/cougaar/core/society/*Message.java:
