@@ -23,7 +23,7 @@ package org.cougaar.core.adaptivity;
 import org.cougaar.core.relay.*;
 import java.util.Set;
 import java.util.Collections;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
 /**
@@ -36,8 +36,9 @@ import org.cougaar.core.util.UID;
  **/
 public class InterAgentOperatingMode
   extends OperatingModeImpl
-  implements Relay.Source, Relay.Content
+  implements Relay.Source
 {
+  // FIXME this shouldn't be transient!
   private transient Set targets = Collections.EMPTY_SET;
   private UID uid;
 
@@ -59,10 +60,10 @@ public class InterAgentOperatingMode
   /**
    * Set the message address of the target. This implementation
    * presumes that there is but one target.
-   * @param targetAddress the address of the target agent.
+   * @param target the address of the target agent.
    **/
-  public void setTarget(ClusterIdentifier targetAddress) {
-    targets = Collections.singleton(targetAddress);
+  public void setTarget(MessageAddress target) {
+    targets = Collections.singleton(target);
   }
 
   // UniqueObject interface
@@ -76,11 +77,19 @@ public class InterAgentOperatingMode
    * @param uid the UID to be given to this
    **/
   public void setUID(UID uid) {
-    if (uid != null) throw new RuntimeException("Attempt to change UID");
+    if (this.uid != null) throw new RuntimeException("Attempt to change UID");
     this.uid = uid;
   }
 
   // Relay.Source interface
+
+  /** 
+   * @return null -- this is the source copy of the Relay.
+   */
+  public MessageAddress getSource() {
+    return null;
+  }
+
   /**
    * Get all the addresses of the target agents to which this Relay
    * should be sent. For this implementation this is always a
@@ -95,17 +104,15 @@ public class InterAgentOperatingMode
    * for transmission. This implementation uses itself to represent
    * its Content.
    **/
-  public Relay.Content getContent() {
+  public Object getContent() {
     return this;
   }
 
   /**
-   * Get an object representing a response from the target with the
-   * specified address. This implementation needs and has no responses
-   * so we just return null.
+   * @return a factory to convert the content to a Relay Target.
    **/
-  public Relay.Response getResponse(ClusterIdentifier ma) {
-    return null;                // We don't expect to receive Responses
+  public Relay.TargetFactory getTargetFactory() {
+    return InterAgentConditionFactory.INSTANCE;
   }
 
   /**
@@ -113,26 +120,24 @@ public class InterAgentOperatingMode
    * This implemenation does nothing because responses are not needed
    * or used.
    **/
-  public void setResponse(ClusterIdentifier targetAddress, Relay.Response resp) {
+  public boolean updateResponse(MessageAddress target, Object response) {
     // No response expected
+    return false;
   }
 
-  // Relay.Content implementation
   /**
-   * Create an object to be published to the target's blackboard as
-   * described by this Content. Often this will be the Content
-   * itself for those implementations whose getContent() method
-   * returns itself. Other implementations may create an instance of
-   * a different class that is just sufficient to implement the
-   * Relay.Target interface.
-   * <p>
-   * This implementation creates a new InterAgentCondition
-   * @param uid the UID of the target instance. In some cases this
-   * may be redundant with information in this Content, but simple
-   * Content implementations need not carry the UID since it is also
-   * passed in the Directive.
+   * This factory creates a new InterAgentCondition.
    **/
-  public Relay.Target create(UID uid, ClusterIdentifier source, Relay.Token owner) {
-    return new InterAgentCondition(this, uid, source, owner);
-  }
+  private static class InterAgentConditionFactory 
+    implements Relay.TargetFactory, java.io.Serializable {
+      public static final InterAgentConditionFactory INSTANCE = 
+        new InterAgentConditionFactory();
+      private InterAgentConditionFactory() { }
+      public Relay.Target create(
+          UID uid, MessageAddress source, Object content, Relay.Token owner) {
+        InterAgentOperatingMode iaom = (InterAgentOperatingMode) content;
+        return new InterAgentCondition(iaom, uid, source, owner);
+      }
+      private Object readResolve() { return INSTANCE; }
+    }
 }

@@ -21,81 +21,132 @@
 
 package org.cougaar.core.relay;
 
-import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.util.UID;
-import java.io.Serializable;
 import java.util.Set;
-import java.util.Collection;
-import org.cougaar.core.agent.ClusterIdentifier;
 
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
+
+/**
+ * A Relay is a blackboard object that allows a source agent
+ * to stream content changes to multiple target agents, and
+ * for each target to stream back a response.
+ * <p>
+ * The Relay API is a intended to be a generic mechanism for
+ * transfering data between agents.  Specific subclasses and
+ * clients may not need the full Relay features, such as
+ * multiple-targets or target-responses.
+ */
 public interface Relay extends UniqueObject {
+
+  // UID support from UniqueObject -- note that the
+  // Source and Target(s) all have the same UID.
+
+  /**
+   * Get the address of the Agent holding the Source 
+   * copy of this Relay, or null if it is the local agent.
+   * <p>
+   * If the source is null or matches the local agent, then 
+   * the Relay is cast to a "Relay.Source", otherwise it is 
+   * cast to a "Relay.Target".
+   **/
+  MessageAddress getSource();
+
+  /**
+   * The source-side Relay, which contains the content and
+   * a set of target-addresses, and also receives response 
+   * updates from the Target(s).
+   */
   interface Source extends Relay {
+
     /**
-     * Get all the addresses of the target agents to which this
+     * Get the addresses of the target agents to which this
      * Relay should be sent.
-     **/
+     */
     Set getTargets();
 
     /**
      * Get an object representing the value of this Relay
      * suitable for transmission.
-     **/
-    Content getContent();
+     */
+    Object getContent();
 
     /**
-     * Get an object representing a response from the target with the
-     * specified address.
-     **/
-    Response getResponse(ClusterIdentifier targetAddress);
+     * Get a factory for creating the target.
+     * Null indicates that the content can be directly cast into
+     * the Target object.
+     */
+    TargetFactory getTargetFactory();
 
     /**
-     * Set the response that was sent from a target. For LP use only.
-     **/
-    void setResponse(ClusterIdentifier targetAddress, Relay.Response resp);
+     * Update the source with the new response.
+     * @return true if the update changed the Relay, in which
+     *    case the infrastructure should "publishChange" this 
+     *    Relay.
+     */
+    boolean updateResponse(MessageAddress target, Object response);
+
   }
 
+  /**
+   * The target-side Relay, which receives content updates and
+   * can send response updates back to the Source.
+   */
   interface Target extends Relay {
-    /**
-     * Get the ClusterIdentifier of the Agent holding the Source copy of
-     * this Relay
-     **/
-    ClusterIdentifier getSource();
 
     /**
      * Get the current Response for this target. Null indicates that
      * this target has no response.
-     **/
-    Response getResponse();
+     */
+    Object getResponse();
 
     /**
-     * Update with new content.
-     * @return true if the update changed the Relay. The LP should
-     * publishChange the Relay.
-     **/
-    boolean updateContent(Content newContent, Token token);
+     * Update the target with the new content.
+     * @return true if the update changed the Relay, in which
+     *    case the infrastructure should "publishChange" this 
+     */
+    boolean updateContent(Object content, Token token);
+
   }
 
-  interface Content extends Serializable {
+  /**
+   * A factory for creating a Target from the Source's content.
+   */
+  interface TargetFactory {
+
     /**
-     * Create an object to be published to the target's blackboard as
-     * described by this Content. Often this will be the Content
-     * itself for those implementations whose getContent() method
-     * returns itself. Other implementations may create an instance of
-     * a different class that is just sufficient to implement the
-     * Relay.Target interface.
-     * @param uid the UID of the target instance. In some cases this
-     * may be redundant with information in this Content, but simple
-     * Content implementations need not carry the UID since it is also
-     * passed in the Directive.
-     **/
-    Relay.Target create(UID uid, ClusterIdentifier source, Token token);
+     * Convert the given content and related information into a 
+     * Target, that will be published on the target's blackboard.
+     * <p>
+     * If the implementation simply casts the content into the
+     * Target then the Source can instead simply use:<pre>
+     *   public TargetFactory getTargetFactory() { return null; }
+     * </pre>
+     * <p>
+     * Other implementations may create an instance of a different 
+     * class that is just sufficient to implement the Relay.Target 
+     * interface.  In particular, the content can be trimmed to the
+     * minimal information needed to create the Target.
+     * <p>
+     * In some cases the UID and source address may be redundant
+     * with the content information; this information allows
+     * the content to be trimmed, such as just passing a String.
+     */
+    Relay.Target create(
+        UID uid, MessageAddress source, Object content, Token token);
+
   }
 
-  interface Response extends Serializable {
-    // Response is arbitrary
-  }
-
+  /**
+   * An object that is passed from the Source to the Target(s), which
+   * authorizes content updates.
+   * <p>
+   * The Target implementation can optionally save the Token
+   * that was used in the factory "create" and later assert that
+   * all content-updates must pass the same Token instance.
+   */
   class Token {
-    Token() {}                  // Only package access allowed.
+    /** Restricted to infrastructure-only construction. */
+    Token() {} 
   }
 }

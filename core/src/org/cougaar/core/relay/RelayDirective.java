@@ -27,7 +27,6 @@ import org.cougaar.planning.ldm.plan.DirectiveImpl;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.Collection;
-import org.cougaar.core.agent.ClusterIdentifier;
 
 /**
  * Define Directives for Relay messages. Directives can add, change,
@@ -46,26 +45,36 @@ class RelayDirective extends DirectiveImpl {
   }
 
   static class Add extends RelayDirective {
-    private Relay.Content content;
+    private Object content;
+    private Relay.TargetFactory tf;
 
-    public Add(UID uid, Relay.Content content) {
+    public Add(UID uid, Object content, Relay.TargetFactory tf) {
       super(uid);
       this.content = content;
+      this.tf = tf;
     }
-    public Relay.Content getContent() {
+    public Object getContent() {
       return content;
+    }
+    public Relay.TargetFactory getTargetFactory() {
+      return tf;
     }
   }
 
   static class Change extends RelayDirective {
-    private Relay.Content content;
+    private Object content;
+    private Relay.TargetFactory tf;
 
-    public Change(UID uid, Relay.Content content, Collection changes) {
+    public Change(UID uid, Object content, Relay.TargetFactory tf) {
       super(uid);
       this.content = content;
+      this.tf = tf;
     }
-    public Relay.Content getContent() {
+    public Object getContent() {
       return content;
+    }
+    public Relay.TargetFactory getTargetFactory() {
+      return tf;
     }
   }
 
@@ -76,12 +85,12 @@ class RelayDirective extends DirectiveImpl {
   }
 
   static class Response extends RelayDirective {
-    private Relay.Response response;
-    public Response(UID uid, Relay.Response response) {
+    private Object response;
+    public Response(UID uid, Object response) {
       super(uid);
       this.response = response;
     }
-    public Relay.Response getResponse() {
+    public Object getResponse() {
       return response;
     }
   }

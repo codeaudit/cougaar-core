@@ -22,9 +22,9 @@ package org.cougaar.core.adaptivity;
 
 import java.util.Set;
 import java.util.Collections;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.relay.*;
+import org.cougaar.core.relay.Relay;
 
 /**
  * The Condition part of a remotely-controlled Condition. This is the
@@ -38,10 +38,12 @@ public class InterAgentCondition
   implements Relay.Target, Condition
 {
   private UID uid;
-  private ClusterIdentifier source;
+  private MessageAddress source;
   private Relay.Token owner;
 
-  InterAgentCondition(InterAgentOperatingMode iaom, UID uid, ClusterIdentifier src, Relay.Token owner) {
+  InterAgentCondition(
+      InterAgentOperatingMode iaom, UID uid, MessageAddress src, 
+      Relay.Token owner) {
     super(iaom.getName(), iaom.getAllowedValues(), iaom.getValue());
     this.owner = owner;
     this.uid = uid;
@@ -65,19 +67,19 @@ public class InterAgentCondition
 
   // Relay.Target implementation
   /**
-   * Get the ClusterIdentifier of the Agent holding the Source copy of
+   * Get the address of the Agent holding the Source copy of
    * this Relay.
    **/
-  public ClusterIdentifier getSource() {
+  public MessageAddress getSource() {
     return source;
   }
 
   /**
-   * Get the current Response for this target. Null indicates that
+   * Get the current response for this target. Null indicates that
    * this target has no response. This implementation never has a
-   * Response so it always returns null.
+   * response so it always returns null.
    **/
-  public Response getResponse() {
+  public Object getResponse() {
     return null;
   }
 
@@ -88,9 +90,9 @@ public class InterAgentCondition
    * publishChange the Relay. This implementation returns true only
    * if the new value differs from the current value.
    **/
-  public boolean updateContent(Relay.Content newContent, Relay.Token token) {
+  public boolean updateContent(Object content, Relay.Token token) {
     if (token != owner) throw new IllegalArgumentException("Not owner");
-    InterAgentOperatingMode newOM = (InterAgentOperatingMode) newContent;
+    InterAgentOperatingMode newOM = (InterAgentOperatingMode) content;
     if (getValue().compareTo(newOM.getValue()) != 0) {
       setValue(newOM.getValue());
       return true;
