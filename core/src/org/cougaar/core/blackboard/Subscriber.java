@@ -318,7 +318,10 @@ public class Subscriber implements BlackboardService {
   /** Primary subscribe method.  Register a new subscription.
    **/
   public final Subscription subscribe(Subscription subscription) {
-//      checkTransactionOK("subscribe()");
+    // Strictly speaking, subscribe can be done outside a transaction, but the 
+    // state of filled subscription w/rt the rest of the subscriptions
+    // is suspect if it isn't.
+    checkTransactionOK("subscribe()");
 
     synchronized (subscriptions) {
       subscription.setSubscriber(this);
@@ -360,7 +363,9 @@ public class Subscriber implements BlackboardService {
    * @param subscription the Subscription that is to be cancelled.
    **/
   public void unsubscribe(Subscription subscription) {
-//      checkTransactionOK("unsubscribe()");
+    // strictly speaking, this doesn't have to be done inside a transaction, but
+    // we'll check anyway to be symmetric with subscribe.
+    checkTransactionOK("unsubscribe()");
     synchronized (subscriptions) {
       subscriptions.remove(subscription);
     }
