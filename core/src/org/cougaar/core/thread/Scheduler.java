@@ -32,7 +32,7 @@ abstract class Scheduler implements ThreadControlService
 {
     static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
-    static final int MaxRunningCountDefault = Integer.MAX_VALUE;
+    static final int MaxRunningCountDefault = 100;
 
     static final boolean DebugThreads = 
 	Boolean.getBoolean("org.cougaar.thread.debug");
@@ -81,7 +81,7 @@ abstract class Scheduler implements ThreadControlService
 
     void setParent(Scheduler parent) {
 	this.parent = parent;
-	parent.addChild(this);
+	if (parent != null) parent.addChild(this);
     }
 
     private void addChild(Scheduler child) {

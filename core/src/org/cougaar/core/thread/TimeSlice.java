@@ -27,9 +27,7 @@ class TimeSlice
     long end;
     boolean in_use;
 
-    TimeSlice(long start, long end) {
-	this.start = start;
-	this.end = end;
+    TimeSlice() {
     }
 
     boolean isExpired() {

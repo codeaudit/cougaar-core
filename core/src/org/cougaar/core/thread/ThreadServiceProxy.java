@@ -43,6 +43,7 @@ final class ThreadServiceProxy 	implements ThreadService
 	this.scheduler = scheduler;
 
 	if (parent == null) {
+	    scheduler.setParent(null);
 	    group = new ThreadGroup(name);
 	} else {
 	    scheduler.setParent(parent.scheduler);
