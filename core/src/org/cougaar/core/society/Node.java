@@ -89,30 +89,58 @@ import java.beans.Beans;
  *    <tt>java [props] org.cougaar.core.society.Node [props] [-help]</tt>
  * where the "props" are "-D" System Properties, such as:
  *    "-Dorg.cougaar.node.name=NAME" -- name of the Node
- * See the documentation for a complete properties list.
+ * See the documentation below for Node-specific properties, and 
+ * the external documentation for a list of all COUGAAR properties.
+ * </pre>
+ *
+ * <pre>
+ * @property org.cougaar.node.name
+ *   required name for this Node
+ * @property org.cougaar.useBootstrapper
+ *   if true, will launch using the Bootstrapper to find jar files.
+ *   Defaults to true
+ * @property org.cougaar.filename
+ *   file name (.ini) for starting this Node, which defaults to 
+ *   ("org.cougaar.node.name"+".ini") if both "org.cougaar.filename"
+ *   and "org.cougaar.experiment.id" are not specified.  If this property 
+ *   is specified then "org.cougaar.experiment.id" must not be specified
+ * @property org.cougaar.experiment.id
+ *   experiment identifier for running this Node; see 
+ *   "org.cougaar.filename" for details
+ * @property org.cougaar.install.path
+ *   "base" path for finding jar and configuration files
+ * @property org.cougaar.validate.jars
+ *   if true, will check the certificates on the 
+ *   ("org.cougaar.install.path"+"/plugin/*.jar") files.  Defaults to 
+ *   false
+ * @property org.cougaar.security.certificate
+ *   path off of the "org.cougaar.install.path" for finding the 
+ *   "org.cougaar.validate.jars" certificates
+ * @property org.cougaar.control.host
+ *   host address for the optional external (RMI) controller of this 
+ *   Node; requires "org.cougaar.control.port".  Defaults to no 
+ *   external control
+ * @property org.cougaar.control.port
+ *   port address for the "org.cougaar.control.host"; requires 
+ *   "org.cougaar.control.host".  Defaults to no external control
+ *
+ * @property org.cougaar.config
+ *   Only used by Node to transfer a command-line "-config X" to
+ *   the corresponding "org.cougaar.config=X" property
+ * @property org.cougaar.config.server
+ *   Only used by Node to transfer a command-line "-cs X" to
+ *   the corresponding "org.cougaar.config.server=X" property
+ * @property org.cougaar.name.server
+ *   Only used by Node to transfer a command-line "-ns X" to
+ *   the corresponding "org.cougaar.name.server=X" property
+ * @property org.cougaar.name.server.port
+ *   Only used by Node to transfer a command-line "-port X" to
+ *   the corresponding "org.cougaar.name.server.port=X" property
  * </pre>
  */
 public class Node extends ContainerSupport
-implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
+implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
 {
-  public static int NSPortNo;
-  public static String NSHost = "127.0.0.1";
-  //protected MgmtLP mgmtLP;
-
-  static boolean alwaysSerialize = false;
-  static boolean disableRetransmission = false;
-
-  // initialize static vars from system properties.
-  static {
-    Properties props = System.getProperties();
-    if ((Boolean.valueOf(props.getProperty("org.cougaar.message.shortCircuit", "false"))).booleanValue()) {
-      System.err.println("Use alwaysSerialize instead of shortCircuit (same functionality, less deceptive name.");
-      System.exit(-1);
-    }
-    alwaysSerialize = (Boolean.valueOf(props.getProperty("org.cougaar.message.alwaysSerialize", "false"))).booleanValue();
-    disableRetransmission = Boolean.getBoolean("org.cougaar.core.cluster.persistence.enable");
-  }
-
   private NodeIdentifier myNodeIdentity_ = null;
 
   public String getIdentifier() {
@@ -233,61 +261,63 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 
     // transfer the command-line arguments to system properties
 
-    String validateJars = (String) myArgs.get(SIGNED_PLUGIN_JARS);
+    String validateJars = 
+      (String) myArgs.get(ArgTableIfc.SIGNED_PLUGIN_JARS);
     if (validateJars != null) {
       props.put("org.cougaar.validate.jars", validateJars);
       System.err.println("Set name to "+validateJars);
     }
 
-    String name = (String) myArgs.get(NAME_KEY);
+    String name = (String) myArgs.get(ArgTableIfc.NAME_KEY);
     if (name != null) {
       props.put("org.cougaar.node.name", name);
       System.err.println("Set name to "+name);
     }
 
-    String config = (String) myArgs.get(CONFIG_KEY);
+    String config = (String) myArgs.get(ArgTableIfc.CONFIG_KEY);
     if (config != null) {
       props.put("org.cougaar.config", config);
       System.err.println("Set config to "+config);
     }
 
-    String cs = (String) myArgs.get(CS_KEY);
+    String cs = (String) myArgs.get(ArgTableIfc.CS_KEY);
     if (cs != null && cs.length()>0) {
       props.put("org.cougaar.config.server", cs);
       System.err.println("Using ConfigurationServer at "+cs);
     }
 
-    String ns = (String) myArgs.get(NS_KEY);
+    String ns = (String) myArgs.get(ArgTableIfc.NS_KEY);
     if (ns != null && ns.length()>0) {
       props.put("org.cougaar.name.server", ns);
       System.err.println("Using NameServer at "+ns);
     }
 
-    String port = (String) myArgs.get(PORT_KEY);
+    String port = (String) myArgs.get(ArgTableIfc.PORT_KEY);
     if (port != null && port.length()>0) {
       props.put("org.cougaar.name.server.port", port);
       System.err.println("Using NameServer on port " + port);
     }
 
-    String filename = (String) myArgs.get(FILE_KEY);
+    String filename = (String) myArgs.get(ArgTableIfc.FILE_KEY);
     if (filename != null) {
       props.put("org.cougaar.filename", filename);
       System.err.println("Using file "+filename);
     }
 
-    String experimentId = (String) myArgs.get(EXPERIMENT_ID_KEY);
+    String experimentId = 
+      (String) myArgs.get(ArgTableIfc.EXPERIMENT_ID_KEY);
     if (experimentId != null) {
       props.put("org.cougaar.experiment.id", experimentId);
       System.err.println("Using experiment ID "+experimentId);
     }
 
-    String controlHost = (String) myArgs.get(CONTROL_KEY);
+    String controlHost = (String) myArgs.get(ArgTableIfc.CONTROL_KEY);
     if (controlHost != null) {
       props.put("org.cougaar.control.host", controlHost);
       System.err.println("Using control host "+controlHost);
     }
 
-    String controlPort = (String) myArgs.get(CONTROL_PORT_KEY);
+    String controlPort = (String) myArgs.get(ArgTableIfc.CONTROL_PORT_KEY);
     if (controlPort != null) {
       props.put("org.cougaar.control.port", controlPort);
       System.err.println("Using control port "+controlPort);
@@ -588,8 +618,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     // once bulk-add ComponentMessages are implements this can
     //   be done with "this.receiveMessage(compMsg)"
     add(nodeDescs);
-
-    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
 
 
