@@ -119,7 +119,7 @@ public class CollectionSubscription
   private HashMap changeMap = new HashMap(13);
 
   // override to reset the changereport hash
-  void resetChanges() {
+  protected void resetChanges() {
     super.resetChanges();       // propagate reset
     changeMap.clear();
   }

@@ -28,7 +28,7 @@ public class IncrementalSubscription extends CollectionSubscription {
   private List myRemovedList = null;
   private List myChangedList = null;
 
-  void resetChanges() {
+  protected void resetChanges() {
     super.resetChanges();
     if (myAddedSet != null) 
       myAddedSet.clear();

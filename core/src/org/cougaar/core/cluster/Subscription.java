@@ -149,7 +149,7 @@ public abstract class Subscription {
    * changes (and delta lists, if applicable) tracking.
    * @see hasChanged()
    **/
-  void resetChanges() { setChanged(false); }
+  protected void resetChanges() { setChanged(false); }
 
   public void fill(Envelope envelope) {
     if (envelope.applyToSubscription(this)) {
