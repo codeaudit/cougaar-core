@@ -69,7 +69,7 @@ import org.cougaar.util.log.Logging;
  * <li> <em>HIGH</em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
  * </li>
  * <li> <em>INTERNAL</em>: ThreadService, NamingService, TopologyWriterServiceComponent, TopologyReaderServiceComponent,
- * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport, NodeTrustComponent, RootMobilityComponent,
+ * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport,
  * RootServletComponent, external INTERNAL components.
  * </li>
  * <li> <em>BINDER</em>: NodeAgentBinderFactory, external BINDER components.
@@ -94,7 +94,7 @@ import org.cougaar.util.log.Logging;
  *
  * @property org.cougaar.core.load.planning
  *   If enabled, the node will load the planning-specific
- *   NodeTrustComponent or AssetInitializerService.  See bug 2522.
+ *   AssetInitializerService.  See bug 2522.
  *   Default <em>true</em>
  *
  * @property org.cougaar.core.load.servlet
@@ -324,19 +324,6 @@ public class NodeAgent
             (getIdentifier()+"ServletService"),
             Agent.INSERTION_POINT + ".NodeServletService",
             "org.cougaar.lib.web.service.RootServletServiceComponent",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null)); //policy
-    }
-
-    if (isPlanningEnabled) {
-      // start up the NodeTrust component
-      add(new ComponentDescription(
-            (getIdentifier()+"NodeTrust"),
-            Agent.INSERTION_POINT + ".NodeTrust",
-            "org.cougaar.planning.plugin.node.NodeTrustComponent",
             null,  //codebase
             null,  //parameters
             null,  //certificate
