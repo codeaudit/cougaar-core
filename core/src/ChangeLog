@@ -1,3 +1,12 @@
+2001-10-19  Todd Wright  <twright@bbn.com>
+
+	* org/cougaar/core/society/Node.java, ExternalNodeControl*
+	Removed the AppServer's "external-controller" registration 
+        with the Node.  A future refactoring will replace the 
+        removed code with a cleaner design.
+        This removes the dependency of server upon core, and in the 
+        future core will depend upon server.
+
 2001-10-18  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBProperties.java (Repository):
