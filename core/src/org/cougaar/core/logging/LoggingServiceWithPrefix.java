@@ -38,4 +38,5 @@ public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingSe
   }
   public boolean isEnabledFor(int level) { return logger.isEnabledFor(level); }
   public void log(int level, String message, Throwable t) { logger.log(level, prefix + message, t); }
+  public void printDot(String dot) {logger.printDot(dot);}
 }  
