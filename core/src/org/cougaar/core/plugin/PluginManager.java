@@ -63,7 +63,7 @@ public class PluginManager
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "agent.plugin";
+    return "Node.AgentManager.Agent.PluginManager";
   }
   protected ServiceBroker specifyChildServiceBroker() {
     return new PluginServiceBroker();

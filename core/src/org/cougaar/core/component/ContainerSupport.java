@@ -17,7 +17,8 @@ public abstract class ContainerSupport
   implements Container 
 {
   protected final ComponentFactory componentFactory = specifyComponentFactory();
-  protected final String myContainmentPoint = specifyContainmentPoint();
+  /** this is the prefix that all subcomponents must have as a prefix **/
+  protected final String containmentPrefix = specifyContainmentPoint()+".";
   protected final ServiceBroker childServiceBroker = specifyChildServiceBroker();
   protected final Class childBindingSite = specifyChildBindingSite();
 
@@ -42,8 +43,9 @@ public abstract class ContainerSupport
   protected ComponentFactory specifyComponentFactory() {
     return new ComponentFactory() {};
   }
-  /** override to specify the insertion point which Components must match,
-   * e.g. "agent.plugin"
+  /** override to specify insertion point of this component, 
+   * the parent insertion point which sub Components must match,
+   * e.g. "Node.AgentManager.Agent.PluginManager"
    * this is called once during initialization.
    **/
   protected abstract String specifyContainmentPoint();
@@ -102,28 +104,35 @@ public abstract class ContainerSupport
       ComponentDescription cd = (ComponentDescription)o;
       String ip = cd.getInsertionPoint();
       if (ip == null) return false;
-      if (myContainmentPoint.equals(ip)) {
-        try {
-          Component c = componentFactory.createComponent(cd);
-          return loadComponent(c);
-        } catch (ComponentFactoryException cfe) {
-          cfe.printStackTrace();
-          return false;
-        }
-      } else if (ip.startsWith(myContainmentPoint)) {
-        // try any subs.
-        synchronized (boundComponents) {
-          int l = boundComponents.size();
-          for (int i=0; i<l; i++) {
-            Object p = boundComponents.get(i);
-            if (p instanceof Container) {
-              // try loading into this guy.
-              if (((Container)p).add(o)) return true;    // someone claimed it!
+      if (ip.startsWith(containmentPrefix)) {
+        // match! - now do we load it here or below - look for any more dots beyond 
+        // the one trailing the prefix...
+        int subi = ip.indexOf('.',containmentPrefix.length());
+        if (subi == -1) {
+          // no more dots: insert here
+          try {
+            Component c = componentFactory.createComponent(cd);
+            return loadComponent(c);
+          } catch (ComponentFactoryException cfe) {
+            cfe.printStackTrace();
+            return false;
+          }
+        } else {
+          // more dots: try inserting in subcomponents
+          synchronized (boundComponents) {
+            int l = boundComponents.size();
+            for (int i=0; i<l; i++) {
+              Object p = boundComponents.get(i);
+              if (p instanceof Container) {
+                // try loading into this guy.
+                if (((Container)p).add(o)) return true;    // someone claimed it!
+              }
             }
           }
+          return false;
         }
-        return false;
       } else {
+        // wrong insertion point!
         return false;
       }
     } else if (o instanceof Component) {

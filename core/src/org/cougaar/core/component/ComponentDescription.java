@@ -27,7 +27,8 @@ import java.io.Serializable;
  * trust attributes at each level before instantiation or pass-through.
  * <p>
  **/
-public class ComponentDescription implements Serializable {
+public final class ComponentDescription implements Serializable {
+  private String name;
   private String insertionPoint;
   private String classname;
   private URL codebase;
@@ -36,13 +37,15 @@ public class ComponentDescription implements Serializable {
   private Object lease;
   private Object policy;
 
-  public ComponentDescription(String insertionPoint,
+  public ComponentDescription(String name,
+                              String insertionPoint,
                               String classname,
                               URL codebase,
                               Object parameter,
                               Object certificate,
                               Object lease,
                               Object policy) {
+    this.name = name;
     this.insertionPoint = insertionPoint;
     this.classname = classname;
     this.codebase = codebase;
@@ -52,16 +55,30 @@ public class ComponentDescription implements Serializable {
     this.policy = policy;
   }
 
+  /** The name of a particular component, used
+   * both as the displayable identifier of 
+   * the Component and to disambiguate between 
+   * multiple similar components which might otherwise
+   * appear equal. <p>
+   * It would be consistent to treat the name as a UID/OID for
+   * a specific component.
+   **/
+  public String getName() { return name; }
 
-  /** The point (ContainerComponent) at which the Plugin 
-   * should be inserted.  This is the name of a class which 
-   * could be loaded in the core (e.g. not in the plugin's
-   * codebase). It is used by the component hierarchy to
+  /** The point in the component hierarchy where the component
+   * should be inserted.  It is used by the component hierarchy to
    * determine the container component the plugin should be
    * added.  This point is interpreted individually by each
    * (parent) component as it propagates through the container
    * hierarchy - it may be interpreted any number of times along
-   * the way to the final insertion point.
+   * the way to the final insertion point. <p>
+   * example: a plugin would have an insertion point of
+   * "Node.AgentManager.Agent.PluginManager.Plugin"
+   * <p>
+   * Note that data formats (including presentation methods) may
+   * abbreviate full insertion paths as relative to some parent
+   * in the context.  For instance, agent.ini files may refer to
+   * plugins as ".PluginManager.Plugin".
    */
   public String getInsertionPoint() { return insertionPoint; }
 
