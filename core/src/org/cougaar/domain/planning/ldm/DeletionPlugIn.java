@@ -51,11 +51,12 @@ import org.cougaar.core.society.UID;
  **/
 
 public class DeletionPlugIn extends SimplePlugIn {
-    private static final int DELETION_PERIOD_PARAM = 0;
-    private static final int DELETION_DELAY_PARAM  = 1;
+    private static final int DELETION_DELAY_PARAM  = 0;
+    private static final int DELETION_PERIOD_PARAM = 1;
 
-    private static final long DEFAULT_DELETION_PERIOD = 7 * 86400000L;
-    private static final long DEFAULT_DELETION_DELAY  = 2 * 86400000L;
+    // Default times are to check every week and delete tasks older than 15 days
+    private static final long DEFAULT_DELETION_PERIOD =  7 * 86400000L;
+    private static final long DEFAULT_DELETION_DELAY  = 15 * 86400000L;
 
     private static final long subscriptionExpirationTime = 10L * 60L * 1000L;
 
