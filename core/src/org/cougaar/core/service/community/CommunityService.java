@@ -178,6 +178,16 @@ public interface CommunityService extends Service {
 
 
   /**
+   * Requests a collection of community names identifying the communities that
+   * contain the specified member and satisfy a given set of attributes.
+   * @param name   Member name
+   * @param filter Search filter defining community attributes
+   * @return A collection of community names
+   */
+  Collection listParentCommunities(String member, String filter);
+
+
+  /**
    * Adds an agent to list of agents that are notified of changes to specified
    * community.
    * @param agent         Listener agents ClusterIdentifier
