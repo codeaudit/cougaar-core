@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Filtering rules for selecting which components to freeze.
+ */
 public class Rules {
   private List rules = new ArrayList();
 

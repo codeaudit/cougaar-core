@@ -43,8 +43,8 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.ListAllNodes;
 
 /**
- * This plugin initiates a society-wide freeze for assessment
- * 
+ * This component initiates a society-wide freeze for assessment.
+ * <p>
  * NOTE: This is part of the older mechanism for freezing the society.  The
  * current mechanism uses FreezeServlet located on every agent in the society,
  * and depends on some external process to tell all agents to freeze.  This older

@@ -28,8 +28,7 @@ package org.cougaar.core.plugin.deletion;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- *
- * A DeletionPolicy controls the timing of the deletion of a blackboard object.
+ * A policy that controls the timing of the deletion of a blackboard object.
  * A predicate checks for the applicability of the policy to the object. The
  * priority disambiguates the case where multiple policies might apply. The
  * deletionDelay supplies an additional delay before the object is actually

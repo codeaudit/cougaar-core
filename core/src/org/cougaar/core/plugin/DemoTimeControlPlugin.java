@@ -43,12 +43,14 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
 
 /**
- * Servlet plugin that implements a simple controller for setting the
- * demo (aka "execution") time for the local node.
+ * This component provides {@link javax.servlet.Servlet} access
+ * to the {@link DemoControlService} for setting the demo (aka
+ * "execution") time of the local node.
  * <p>
- * One plugin paramter if present and Boolean <tt>true</tt> will cause the plugin to 
- * print the system and demo time every 10 secs (as measured by system and demo time)
- * <p>
+ * One plugin paramter if present and Boolean <tt>true</tt> will
+ * cause the plugin to print the system and demo time every 10
+ * secs (as measured by system and demo time)
+ *
  * @see org.cougaar.core.service.DemoControlService
  */
 public class DemoTimeControlPlugin extends ComponentPlugin {

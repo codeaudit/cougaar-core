@@ -37,18 +37,17 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 
 /**
- * This plugin gathers and integrates freeze information from
+ * This component gathers and integrates freeze information from
  * agents in a node to determine the "freeze" of the current
  * tasks. It continually determines the worst laggard in the node and
  * forwards that one laggard to the society root.
- * 
+ * <p>
  * NOTE: This is part of the older mechanism for freezing the society.  The
  * current mechanism uses FreezeServlet located on every agent in the society,
  * and depends on some external process to tell all agents to freeze.  This older
  * mechanism has not been removed so that people can continue to use a single servlet
  * to freeze the entire society, but the FreezeServlet mechanism is preferred now.
- **/
-
+ */
 public class FreezeNodePlugin extends FreezeSourcePlugin {
   private IncrementalSubscription relaySubscription;
   private AgentContainer agentContainer;

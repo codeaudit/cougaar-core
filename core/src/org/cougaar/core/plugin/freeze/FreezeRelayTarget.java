@@ -34,6 +34,8 @@ import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.SimpleUniqueObject;
 
 /**
+ * A target-side freeze {@link Relay}.
+ * <p>
  * NOTE: This is part of the older mechanism for freezing the society.  The
  * current mechanism uses FreezeServlet located on every agent in the society,
  * and depends on some external process to tell all agents to freeze.  This older

@@ -30,6 +30,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
+ * A time-based deletion policy.
+ * <p> 
  * Inner class specifies the policy for when deletions should
  * occur. This consists of a periodic element plus ad hoc
  * elements. The policy may be modified to add or remove ad hoc

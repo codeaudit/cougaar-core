@@ -38,7 +38,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.ConfigFinder;
 
 /**
- * A container for Plugin Components.
+ * This component is a container for {@link ComponentPlugin} and
+ * {@link org.cougaar.core.servlet.ComponentServlet} components.
  */
 public class PluginManager 
 extends ContainerSupport

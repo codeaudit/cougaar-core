@@ -30,17 +30,13 @@ import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.service.BlackboardService;
 
 /**
- * Extracted from ServiceUserPlugin. This class must be sub-classed to provide
- * access to a plugin's current blackboard.
+ * A standard {@link Alarm} implementation. 
  */
 public abstract class PluginAlarm implements Alarm {
   private long expirationTime;
   private boolean expired = false;
 
-  /**
-   * Construct an alarm to expire
-   * @param delay
-   */
+  /** Construct an alarm to expire */
   public PluginAlarm(long time) {
     expirationTime = time;
   }

@@ -26,19 +26,21 @@
 package org.cougaar.core.plugin.deletion;
 
 /**
- *
- * Define the interface for blackboard objects that can be deleted. Deletion
- * occurs when a blackboard object is no longer functionally significant
- * subject to a DeletionPolicy that may extend the interval before an object
- * is actually removed to support "best effort" retention of historical data.
- * Actual deletion is performed by deletion plugins according to policies. Not
+ * A Blackboard object that can be deleted.
+ * <p>
+ * Deletion occurs when a blackboard object is no longer functionally
+ * significant subject to a DeletionPolicy that may extend the
+ * interval before an object is actually removed to support "best
+ * effort" retention of historical data.  Actual deletion is performed
+ * by deletion plugins according to policies. Not
  * all deletable blackboard objects implement this interface. It is only
  * implemented for simple deletable objects for which the "is it time to
  * delete" decision is uncomplicated.
  */
 public interface Deletable {
   /**
-   * Some Deletable objects are not actually deletable. This method lets such
+   * Some Deletable objects are not actually deletable.
+   * This method lets such
    * objects declare whether they are deletable or not.
    * @return true if the object with this interface can be deleted.
    */

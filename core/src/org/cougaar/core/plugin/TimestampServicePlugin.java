@@ -36,11 +36,11 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * The TimestampServicePlugin is a plugin that provides the
- * BlackboardTimestampService to other plugins and components.
+ * This component advertises the {@link BlackboardTimestampService}
+ * for use by other plugins.
  * <p>
- * This classes provides access to a shared 
- * TimestampSubscription's contents.
+ * This classes provides access to a shared {@link
+ * TimestampSubscription}'s contents.
  */
 public final class TimestampServicePlugin
 extends ComponentPlugin

@@ -42,6 +42,10 @@ import org.cougaar.core.util.UID;
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This component creates a test {@link AttributeBasedAddress}
+ * {@link Relay}.
+ */
 public class TestABA extends ComponentPlugin {
   private IncrementalSubscription relays;
   private UIDService uidService;

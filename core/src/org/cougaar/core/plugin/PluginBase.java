@@ -31,9 +31,7 @@ import org.cougaar.core.component.Component;
 /** 
  * Inteface that describes the minimum expected capabilities of
  * all Plugins.
- * @see org.cougaar.core.component.BinderSupport#initialize()
- **/
-
+ */
 public interface PluginBase
   extends Component
 {

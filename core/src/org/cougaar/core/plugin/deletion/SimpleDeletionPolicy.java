@@ -29,8 +29,7 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- *
- * A simple implementation of DeletionPolicy providing a fixed set of values
+ * A simple {@link DeletionPolicy} providing a fixed set of values
  * established when constructed. Setters are protected an may be overridden in
  * subclasses.
  */

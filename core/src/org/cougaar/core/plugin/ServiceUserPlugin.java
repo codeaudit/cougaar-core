@@ -35,11 +35,16 @@ import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Convenience base class for plugins that need to acquire services
- * that may not be immediately available when first started. Records
- * the service classes needed and attempts acquire them on request.
- * <p>Also provides timer services.
- **/
+ * This component is a  convenience base class for plugins that
+ * need to acquire services that may not be immediately available
+ * when first started.
+ * <p>
+ * Records the service classes needed and attempts acquire them
+ * on request.  Also provides timer services.
+ * <p>
+ * Instead of using this class, consider using a {@link
+ * org.cougaar.core.component.ServiceAvailableListener}.
+ */
 public abstract class ServiceUserPlugin extends ComponentPlugin {
   private Class[] serviceClasses;
 

@@ -29,7 +29,8 @@ import org.cougaar.core.blackboard.BlackboardClientComponent;
 import org.cougaar.util.ConfigFinder;
 
 /**
- * Standard base class for Plugins.
+ * This component is a base class for standard blackboard-client
+ * "plugins".
  * <p>
  * Create a derived class by implementing 
  * <tt>setupSubscriptions()</tt> and <tt>execute()</tt>.

@@ -31,6 +31,9 @@ import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This component is a base class for freeze plugins.
+ */
 public abstract class FreezePlugin extends ServiceUserPlugin {
   protected LoggingService logger;
   protected FreezePlugin() {

@@ -37,14 +37,14 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * This plugin gathers and integrates freeze information from agents
+ * This component gathers and integrates freeze information from agents
  * in a society to determine the "completion" of the freeze operation.
  * In most agents, it gathers the information and forwards the frozen
  * status of the agent to another agent. This process continues
  * through a hierarchy of such plugins until the plugin at the root of
  * the tree is reached. When the root determines that ice has been
  * acheived, that is reflected in the freeze control servlet
- * 
+ * <p>
  * NOTE: This is part of the older mechanism for freezing the society.  The
  * current mechanism uses FreezeServlet located on every agent in the society,
  * and depends on some external process to tell all agents to freeze.  This older

@@ -48,9 +48,11 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- *
- * How to Configure the DeletionPlugin.
- * 
+ * This component removes {@link Deletable} blackboard objects
+ * according to policy and their age.
+ * <p>
+ * How to Configure the DeletionPlugin:
+ * <p>
  * The DeletionPlugin runs according to a prescribed schedule to find
  * Deletable objects on the blackboard and delete them if they are ready
  * to be deleted. These actions are controlled by a
@@ -58,9 +60,9 @@ import org.cougaar.util.UnaryPredicate;
  * blackboard. The DeletionPlugin guarantees that there is always a
  * DefaultDeletionPolicy present by creating on at startup (or restart)
  * if there is not one already present.
- * 
- * DeletionSchedulePolicy
- * 
+ * <p>
+ * DeletionSchedulePolicy:
+ * <p>
  * The deletion schedule is characterized primarily by a period (how
  * often) and a phase (at what time of day). The public interface of the
  * standard DeletionSchedulePolicy allows all aspects of the schedule to
@@ -71,25 +73,26 @@ import org.cougaar.util.UnaryPredicate;
  * found, it is left as is. Subclasses could choose to insure that the
  * periodic schedule parameters agree with the values specified as plugin
  * parameters.
- * 
- * DefaultDeletionPolicy
- * 
+ * <p>
+ * DefaultDeletionPolicy:
+ * <p>
  * The DeletionPlugin also guarantees that there is exactly one default
  * DeletionPolicy on the blackboard. If there are none, one is created
  * using plugin parameters. If there are multiples (should never happen),
  * extras are deleted.
- * 
- * DeletionPlugin Parameters
- * 
+ * <p>
+ * DeletionPlugin Parameters:
+ * <p>
  * The DeletionPlug accepts four named parameters as follows:
- * deletionDelay=<long default 15 days>
- * deletionPeriod=<long default 7 days>
- * deletionPhase=<long 0 (midnight)>
- * archivingEnabled=<boolean>
- * 
+ * <pre>
+ * deletionDelay=&lt;long default 15 days&gt;
+ * deletionPeriod=&lt;long default 7 days&gt;
+ * deletionPhase=&lt;long 0 (midnight)&gt;
+ * archivingEnabled=&lt;boolean&gt;
+ * </pre> 
+ * <p>
  * The archivingEnable parameter causes a persistence snapshot to be
  * taken for archiving purposes prior to doing deletions.
- * 
  */
 public class DeletionPlugin extends ComponentPlugin {
 

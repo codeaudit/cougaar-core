@@ -46,31 +46,34 @@ import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.ThreadListener;
 import org.cougaar.util.UnaryPredicate;
+
 /**
+ * This component is a {@link javax.servlet.Servlet} that implements
+ * the plugin freeze.
+ * <p>
  * NOTE: This servlet duplicates much code from the FreezeTargetPlugin.  It 
  * could be refactored to extend that plugin, but since that capability may
  * be obsoleted by this, I'll shoose to copy-paste rather than inherit.
- */
-
-/**
+ * <p> 
  * This plugin implements the actual freezing of an agent. Freezing is
  * accomplished by preventing the ThreadService from running certain
  * classes of components. The relevant object is the so-called
  * "consumer" of the ThreadService. For plugins, this is the plugin
  * itself. For other uses of the ThreadService, the "consumer" may be
  * different.
- *
+ * <p>
  * Generally, all plugins except those involved in the freeze process
  * are prevented from running, but this can be modified by rules
  * specified as plugin parameters. The rules are applied in this
  * order:
- *
+ * <pre>
  * "allow " + FreezePlugin.class.getName()
  * first plugin parameter
  * second plugin parameter
  * etc.
  * "deny " + PluginBase.class.getName()
- *
+ * </pre>
+ * <p>
  * The form of the rule is one of the words, "deny" or "allow",
  * followed by a space followed by the name of the class or interface
  * that should be affected by the rule. The rule matches if it is
@@ -79,7 +82,7 @@ import org.cougaar.util.UnaryPredicate;
  * interfaces implemented by the consumer or their superinterfaces,
  * all superclasses of the consumer, and all interfaces implemented by
  * any superclass or their superinterfaces.
- *
+ * <p>
  * The first rule is built-in and cannot be overridden. It allows all
  * the freeze plugins to run while frozen. This is obviously necessary
  * to handle thawing a frozen society. The last rule is always added
@@ -87,7 +90,7 @@ import org.cougaar.util.UnaryPredicate;
  * those allowed by preceding rules. While it is possible to write a
  * component that behaves as a plugin but does not extend PluginBase,
  * this does not happen in practice.
- *
+ * <p>
  * The effect of this final rule can be nullified by including rules
  * (as plugin parameters) that specifically allow individual plugins.
  * Indeed, the whole class of plugins extending PluginBase could be
