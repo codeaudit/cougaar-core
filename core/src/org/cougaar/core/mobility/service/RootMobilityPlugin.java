@@ -35,6 +35,8 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.AddTicket;
+import org.cougaar.core.mobility.RemoveTicket;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.RemoveTicket;
 import org.cougaar.core.mobility.AbstractTicket;
@@ -71,17 +73,128 @@ extends AbstractMobilityPlugin
     
     AbstractTicket abstractTicket = control.getAbstractTicket();
     if (!(abstractTicket instanceof MoveTicket)) {
-      // SARAH!
-      return;
-    }
+      
+      /* It's an Add Request */
+      if (abstractTicket instanceof AddTicket) {
+	
+	AddTicket addTicket = (AddTicket) abstractTicket;
+	MessageAddress id = addTicket.getMobileAgent();
+	MessageAddress destNode = addTicket.getDestinationNode();
+	
+	// check if this node is the destination node
+        if ((destNode != null) && (!destNode.equals(nodeId))) {
+          // not for me!  let the RedirectMovePlugin forward the request
+          // to the other node.
+          return;
+	}
+	
+        // create the component-desc that we'll add
+	ComponentDescription desc = new ComponentDescription(
+							     "org.cougaar.core.agent.ClusterImpl",
+                                                             "Node.AgentManager.Agent",
+                                                             "org.cougaar.core.agent.ClusterImpl",
+                                                             null,
+                                                             id,
+                                                             null, null, null,
+                                                             ComponentDescription.PRIORITY_COMPONENT);
+	
+        Object state = null;  // no prior state
+        StateTuple tuple = new StateTuple(desc, state);
 
+        // add into this node
+        int resultState;
+        Throwable resultStack = null;
+        try {
+          agentContainer.addAgent(id, tuple);
+          // success!
+          resultState = AgentControl.CREATED;
+        } catch (Exception e) {
+          // either already exists or unable to add
+          //
+          // HACK: check the exception message
+          if (e.getMessage().indexOf(" already exists") > 0) {
+            // already exists
+            resultState = AgentControl.ALREADY_EXISTS;
+	    if (log.isErrorEnabled()) {
+	      log.error("Agent " + id + " already exists");
+	    }
+          } else {
+            // couldn't add
+            resultState = AgentControl.FAILURE;
+            resultStack = e;
+	    if (log.isErrorEnabled()) {
+	      log.error("Unable to add agent " + id);
+	    }
+          }
+        }
+
+        // set our response state
+        control.setStatus(resultState, resultStack);
+        blackboard.publishChange(control);
+	return;
+      } 
+      
+      
+      /* It's a Remove Request*/
+      if (abstractTicket instanceof RemoveTicket) {
+	// handle remove
+	
+	RemoveTicket removeTicket = (RemoveTicket) abstractTicket;
+	MessageAddress id = removeTicket.getMobileAgent();
+	MessageAddress destNode = removeTicket.getDestinationNode();
+	
+	// check if this node is the destination node
+        if ((destNode != null) && (!destNode.equals(nodeId))) {
+          // not for me!  let the RedirectMovePlugin forward the request
+          // to the other node.
+          return;
+	}
+	
+	// remove agent from this node
+        int resultState;
+        Throwable resultStack = null;
+        try {
+          agentContainer.removeAgent(id);
+          // success!
+          resultState = AgentControl.REMOVED;
+        } catch (Exception e) {
+          // either already removed or unable to remove
+          //
+          // HACK: check the exception message
+          if (e.getMessage().indexOf(" is not loaded") > 0) {
+            // already exists
+            resultState = AgentControl.DOES_NOT_EXIST;
+	    if (log.isErrorEnabled()) {
+	      log.error("Agent " + id + " already Removed");
+	    }
+          } else {
+            // couldn't add
+            resultState = AgentControl.FAILURE;
+            resultStack = e;
+	    if (log.isErrorEnabled()) {
+	      log.error("Unable to remove agent " + id);
+	    }
+          }
+        }
+
+        // set our response state
+        control.setStatus(resultState, resultStack);
+        blackboard.publishChange(control);
+	return;
+      } 
+      else {
+	// log error
+	return;
+      }
+    }
+    
     MoveTicket moveTicket = (MoveTicket) abstractTicket;
     MessageAddress id = moveTicket.getMobileAgent();
     MessageAddress origNode = moveTicket.getOriginNode();
     MessageAddress destNode = moveTicket.getDestinationNode();
     
     if ((id == null) ||
-        (id.equals(nodeId))) {
+	(id.equals(nodeId))) {
       String s =
         "Move request "+control.getUID()+
         " attempted to move node "+nodeId+
