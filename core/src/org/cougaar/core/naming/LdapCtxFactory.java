@@ -18,7 +18,6 @@ import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import javax.naming.spi.InitialContextFactory;
 import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.node.Communications;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 

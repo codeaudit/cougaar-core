@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.node;
+package org.cougaar.core.naming;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

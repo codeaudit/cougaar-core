@@ -35,7 +35,6 @@ import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.spi.InitialContextFactory;
 import org.cougaar.core.mts.SocketFactory;
-import org.cougaar.core.node.Communications;
 
 /**
  * Creates an RMI stub for communicating with the name server or the
