@@ -27,6 +27,7 @@ import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.DynamicUnaryPredicate;
 
@@ -49,8 +50,8 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
   private static final OMCRangeList POSITIVE_VALUES =
     new OMCRangeList(new OMCRange(0.0, Double.MAX_VALUE));
 
-  private static final double TIME_CONSTANT = 30000.0; // Thirty second time constant
-  private static final long UPDATE_INTERVAL = 10000L; // Update every 10 seconds
+  private static final double TIME_CONSTANT = 10000.0; // Ten second time constant
+  private static final long UPDATE_INTERVAL = 5000L; // Update every 5 seconds
 
   private ConditionService conditionService;
 
@@ -59,16 +60,18 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
   private MyCondition backlogCondition     = new MyCondition(BACKLOG_CONDITION_NAME);
 
   private long then = System.currentTimeMillis();
-  private IncrementalSubscription backlogSubscription;
-  private UnaryPredicate backlogPredicate = new DynamicUnaryPredicate() {
-    public boolean execute(Object o) {
-      if (o instanceof Task) {
-        Task task = (Task) o;
-        return task.getPlanElement() == null;
+  private IncrementalSubscription tasksSubscription;
+  private UnaryPredicate tasksPredicate = new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return o instanceof Task;
       }
-      return false;
-    }
-  };
+    };
+  private IncrementalSubscription peSubscription;
+  private UnaryPredicate pePredicate = new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return o instanceof PlanElement;
+      }
+    };
 
   /**
    * Private inner class precludes use by others to set our
@@ -112,7 +115,8 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
     blackboard.publishAdd(publishRateCondition);
     blackboard.publishAdd(disposeRateCondition);
     blackboard.publishAdd(backlogCondition);
-    backlogSubscription = (IncrementalSubscription) blackboard.subscribe(backlogPredicate);
+    tasksSubscription = (IncrementalSubscription) blackboard.subscribe(tasksPredicate);
+    peSubscription = (IncrementalSubscription) blackboard.subscribe(pePredicate);
     if (haveServices()) update(true);
   }
 
@@ -155,9 +159,9 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
     long elapsed = now - then;
     if (elapsed < 1) elapsed = 1;
     then = now;
-    publishRateCondition.updateRate(backlogSubscription.getAddedCollection().size(), elapsed);
-    backlogCondition.update(backlogSubscription.size(), elapsed);
-    disposeRateCondition.updateRate(backlogSubscription.getRemovedCollection().size(), elapsed);
+    publishRateCondition.updateRate(tasksSubscription.getAddedCollection().size(), elapsed);
+    disposeRateCondition.updateRate(peSubscription.getAddedCollection().size(), elapsed);
+    backlogCondition.update(tasksSubscription.size() - peSubscription.size(), elapsed);
     if (publish) {
       cancelTimer();
       if (logger.isDebugEnabled()){
