@@ -17,6 +17,8 @@ public class Whiteboard extends Subscriber
   public Distributor myDistributor;
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.cluster.savePriorPublisher", "false").equals("true");
+  public static final boolean enablePublishException =
+    System.getProperty("org.cougaar.core.cluster.enablePublishException", "true").equals("true");
 
   /** The list of XPlans **/
   private Collection xPlans = new ArrayList();
@@ -135,7 +137,11 @@ public class Whiteboard extends Subscriber
 
   public final void init() {
     try {
-      alpPlanObjects = new CollectionSubscription(anythingP, new AllObjectsSet(111));
+      alpPlanObjects =
+        new CollectionSubscription(anythingP,
+                                   enablePublishException
+                                   ? new AllObjectsSet(111)
+                                   : new HashSet(111));
       subscribe(alpPlanObjects);
 
       for (Iterator plans = xPlans.iterator(); plans.hasNext(); ) {
