@@ -61,26 +61,26 @@ public interface AspectType {
    **/
   static final int TYPED_QUANTITY = 11;         
   
-  static final int _LAST_ASPECT = TYPED_QUANTITY;
+  /** The extent to which a task has been satisfactorily completed **/
+  static final int READINESS = 12;
+
+  /** The last core-defined aspect type **/
+  static final int N_CORE_ASPECTS = 12;
+
+  static final int _LAST_ASPECT = READINESS;
   static final int _ASPECT_COUNT = _LAST_ASPECT+1;
 
-  static final int[] _STANDARD_ASPECTS = {0,1,2,3,4,5,6,7,8,9,10,11};
+  static final int[] _STANDARD_ASPECTS = {0,1,2,3,4,5,6,7,8,9,10,11,12};
   
   
   // extended AspectTypes that are NOT handled by default
   // AllocationResultAggregators or AllocationResultDistributors
   
   /** The point of debarkation of a task **/
-  static final int POD = 12;         
+  static final int POD = 13;         
 
   /** The time at which a task should arrive at the POD **/
-  static final int POD_DATE = 13;
-
-  /** The extent to which a task has been satisfactorily completed **/
-  static final int READINESS = 14;
-
-  /** The last core-defined aspect type **/
-  static final int N_CORE_ASPECTS = 15;
+  static final int POD_DATE = 15;
 
   public static final String[] ASPECT_STRINGS = {
     "START_TIME",
@@ -95,8 +95,8 @@ public interface AspectType {
     "TOTAL_SHIPMENTS",
     "CUSTOMER_SATISFACTION",
     "TYPED_QUANTITY",
+    "READINESS",
     "POD",
     "POD_DATE",
-    "READINESS",
   };
 }

@@ -63,6 +63,7 @@ public interface AllocationResultAggregator
    * TOTAL_QUANTITY is summed.
    * TOTAL_SHIPMENTS is summed.
    * CUSTOMER_SATISFACTION is averaged.
+   * READINESS is minimized.
    * Any extended aspect types are ignored.
    * 
    * For AuxiliaryQuery information, if all the query values are the same
@@ -88,6 +89,7 @@ public interface AllocationResultAggregator
       acc[TOTAL_QUANTITY] = 0.0;
       acc[TOTAL_SHIPMENTS] = 0.0;
       acc[CUSTOMER_SATISFACTION] = 1.0; // start at best
+      acc[READINESS] = 1.0;
 
       boolean ap[] = new boolean[AspectType._ASPECT_COUNT];
 
@@ -172,7 +174,12 @@ public interface AllocationResultAggregator
             ap[CUSTOMER_SATISFACTION] = true;
             hash |= (1<<CUSTOMER_SATISFACTION);
             break;
-          }
+          case READINESS:
+            acc[READINESS] = Math.min(acc[READINESS], ar.getValue(READINESS));
+            ap[READINESS] = true;
+            hash |= (1<<READINESS);
+            break;
+	  }
         }
         
         // Sum up the auxiliaryquery data.  If there are conflicting data
