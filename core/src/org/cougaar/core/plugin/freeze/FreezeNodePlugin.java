@@ -53,10 +53,7 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
       getServiceBroker().getService(
           this, NodeControlService.class, null);
     if (ncs != null) {
-      Container c = ncs.getRootContainer();
-      if (c instanceof AgentContainer) {
-        agentContainer = (AgentContainer) c;
-      }
+      agentContainer = ncs.getRootContainer();
       getServiceBroker().releaseService(
           this, NodeControlService.class, ncs);
     }
