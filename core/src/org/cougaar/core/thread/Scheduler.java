@@ -62,6 +62,7 @@ public class Scheduler
     private TreeNode treeNode;
     private int maxRunningThreads;
     private int runningThreadCount = 0;
+    protected int rightsRequestCount = 0;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -253,6 +254,7 @@ public class Scheduler
     SchedulableObject popQueue() {
 	SchedulableObject thread = null;
 	synchronized(this) {
+	    if (!checkLocalRights()) return null;
 	    thread = (SchedulableObject)pendingThreads.next();
 	    if (thread != null) incrementRunCount(this);
 	}
@@ -261,6 +263,12 @@ public class Scheduler
 	if (thread != null) threadDequeued(thread);
 
 	return thread;
+    }
+
+    // Caller should synchronize.  
+    boolean checkLocalRights () {
+	if (maxRunningThreads < 0) return true;
+	return runningThreadCount+rightsRequestCount < maxRunningThreads;
     }
 
 
@@ -291,6 +299,11 @@ public class Scheduler
     public void setMaxRunningThreadCount(int count) {
 	int additionalThreads = count - maxRunningThreads;
 	maxRunningThreads = count;
+ 	TreeNode parent_node = getTreeNode().getParent();
+ 	if (parent_node != null) return;
+	
+	// If we get here, we're the root node.  Try to run more
+	// threads if the count has gone up.
 	for (int i=0; i<additionalThreads; i++) {
 	    SchedulableObject schedulable = null;
 	    synchronized (this) {

@@ -51,10 +51,17 @@ public class PropagatingScheduler extends Scheduler
 	    // This is the root
 	    return super.requestRights(requestor);
 	} else {
+	    synchronized (this) {
+		if (!checkLocalRights()) return false;
+		++rightsRequestCount;
+	    }
 	    Scheduler parent = parent_node.getScheduler();
 	    boolean ok = parent.requestRights(this);
 	    // If our parent gave us a right, increase our local count
-	    if (ok) incrementRunCount(this);
+	    synchronized (this) {
+		if (ok) incrementRunCount(this);
+		--rightsRequestCount;
+	    }
 	    return ok;
 	}
     }
@@ -75,29 +82,29 @@ public class PropagatingScheduler extends Scheduler
    }
 
 
-    // The maxRunningThreads instance variable is irrelevant except at
-    // the root scheduler.
-    public void setMaxRunningThreadCount(int count) {
-	TreeNode parent_node = getTreeNode().getParent();
-	if (parent_node == null) {
-	    // This is the root
-	    super.setMaxRunningThreadCount(count);
-	} else {
-	    Scheduler parent = parent_node.getScheduler();
-	    parent.setMaxRunningThreadCount(count);
-	}
-    }
+//     // The maxRunningThreads instance variable is irrelevant except at
+//     // the root scheduler.
+//     public void setMaxRunningThreadCount(int count) {
+// 	TreeNode parent_node = getTreeNode().getParent();
+// 	if (parent_node == null) {
+// 	    // This is the root
+// 	    super.setMaxRunningThreadCount(count);
+// 	} else {
+// 	    Scheduler parent = parent_node.getScheduler();
+// 	    parent.setMaxRunningThreadCount(count);
+// 	}
+//     }
 
-    public int maxRunningThreadCount() {
-	TreeNode parent_node = getTreeNode().getParent();
-	if (parent_node == null) {
-	    // This is the root
-	    return super.maxRunningThreadCount();
-	} else {
-	    Scheduler parent = parent_node.getScheduler();
-	    return parent.maxRunningThreadCount();
-	}
-    }
+//     public int maxRunningThreadCount() {
+// 	TreeNode parent_node = getTreeNode().getParent();
+// 	if (parent_node == null) {
+// 	    // This is the root
+// 	    return super.maxRunningThreadCount();
+// 	} else {
+// 	    Scheduler parent = parent_node.getScheduler();
+// 	    return parent.maxRunningThreadCount();
+// 	}
+//     }
 
 
     SchedulableObject getNextPending() {

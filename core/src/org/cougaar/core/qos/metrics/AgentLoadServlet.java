@@ -101,5 +101,33 @@ public class AgentLoadServlet
 
 	}
 	out.print("</table>");
+
+	//Service table
+
+	out.print("<h2>Services</h2>\n");
+	//Header Row
+	out.print("<table border=1>\n");
+	out.print("<tr><b>");
+	out.print("<td><b>AGENT</b></td>");
+	out.print("<td><b>CPUload</b></td>");
+	out.print("<td><b>Cred</b></td>");
+	out.print("</b></tr>");
+
+	out.print("<tr><td><b>MTS</b></td>");
+	String mtsPath = "Service(MTS)" +PATH_SEPR+ ONE_SEC_LOAD_AVG;
+	Metric mtsCpuLoad = metricsService.getValue(mtsPath);
+	out.print(Color.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2));
+	out.print(Color.credTable(mtsCpuLoad));
+	out.print("</tr>\n");
+
+	out.print("<tr><td><b>Metrics</b></td>");
+	String metricPath = "Service(Metrics)" +PATH_SEPR+ ONE_SEC_LOAD_AVG;
+	Metric metricCpuLoad = metricsService.getValue(metricPath);
+	out.print(Color.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2));
+	out.print(Color.credTable(metricCpuLoad));
+	out.print("</tr>\n");
+
+	out.print("</table>");
+
     }
 }

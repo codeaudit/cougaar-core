@@ -24,6 +24,7 @@ package org.cougaar.core.thread;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricImpl;
@@ -40,8 +41,6 @@ public class LoadWatcher
     private static final String UNITS = "cpusec/sec";
     private static final double CREDIBILITY = SECOND_MEAS_CREDIBILITY;
 
-    private int total;
-
     private class ConsumerRecord {
 	String name;
 	String key;
@@ -54,6 +53,10 @@ public class LoadWatcher
 
 	ConsumerRecord(String name) {
 	    this.name = extractObjectName(name);
+	    if (this.name.startsWith("Service"))
+	    key = this.name
+		+KEY_SEPR+ "OneSecondLoadAvg";
+		else
 	    key = "Agent" +KEY_SEPR+ this.name
 		+KEY_SEPR+ "OneSecondLoadAvg";
 	}
@@ -68,7 +71,7 @@ public class LoadWatcher
 		int end = rawName.length();
 		return rawName.substring(start+1, end-1);
 	    } else {
-		return rawName;
+		return "Service" +KEY_SEPR+ rawName;
 	    }
 	}	
 	
@@ -84,13 +87,16 @@ public class LoadWatcher
 					   UNITS,
 					   "LoadWatcher");
  	    metricsUpdateService.updateValue(key, metric);
+// 	    if (key.equals("Service_MTS_OneSecondLoadAvg")){
+// 		loggingService.debug(key+"="+metric);
+// 	    }
 	}
 
 
 	synchronized void incrementOutstanding() {
 	    accumulate();
 	    ++outstanding;
-	    if (outstanding >10) 
+	    if (outstanding > controlService.maxRunningThreadCount())
 		loggingService.debug("Agent outstanding =" +total+ 
 				     " when rights given for " +name);
 
@@ -127,9 +133,12 @@ public class LoadWatcher
     }
 
 
+    private int total;
     private HashMap records = new HashMap();
     private MetricsUpdateService metricsUpdateService;
     private LoggingService loggingService;
+    private ThreadControlService controlService;
+
 
     public LoadWatcher(ServiceBroker sb) {
 	loggingService = (LoggingService)
@@ -142,6 +151,8 @@ public class LoadWatcher
 	ThreadService ts = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
 	ts.schedule(new SnapShotter(), 5000, 1000);
+	controlService = (ThreadControlService)
+	    sb.getService(this, ThreadControlService.class, null);
 
     }
 
@@ -179,7 +190,7 @@ public class LoadWatcher
 	ConsumerRecord rec = findRecord(consumer);
 	rec.incrementOutstanding();
 	++total;
-	if (total >10)
+	if (total > controlService.maxRunningThreadCount())
 	    loggingService.debug("total outstanding =" +total+ 
 			       " when rights given for " +consumer);
     }

@@ -57,12 +57,10 @@ class RoundRobinSelector implements RightsSelector
 	int initialIndex = currentIndex;
 	ArrayList children = scheduler.getTreeNode().getChildren();
 	SchedulableObject handoff = null;
-	// repeat-until
-	while (true) {
+	do {
 	    handoff = checkNextPending(children);
 	    if (handoff != null) return handoff;
-	    if (currentIndex == initialIndex) break;
-	}
+	} while (currentIndex != initialIndex);
 	return null;
     }
 }
