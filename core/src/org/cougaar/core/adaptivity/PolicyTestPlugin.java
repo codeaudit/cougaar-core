@@ -89,7 +89,9 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
   }
 
   private void setPolicies() {
-    if (true || constrained) {
+    // This method is meant to alternately add & remove
+    // threatcon policies, based on the constarained flag
+    if (constrained) {
       if (logger.isInfoEnabled()) logger.info("Adding threatcon policy");
       for (int i = 0; i < policies.length; i++) {
         playbookConstrainService.constrain(policies[i]);
@@ -105,3 +107,8 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
     resetTimer(75000);
   }
 }
+
+
+
+
+
