@@ -66,6 +66,50 @@ public class MetricsComponentPlugIn
      */
     protected void setupSubscriptions() {
     createGUI();
+    protoRegistryService = (PrototypeRegistryService)
+        getServiceBroker().getService(this, PrototypeRegistryService.class, 
+                                      new ServiceRevokedListener() {
+                                              public void serviceRevoked(ServiceRevokedEvent re) {
+                                                  if (PrototypeRegistryService.class.equals(re.getService()))
+                                                      protoRegistryService  = null;
+                                              }
+                                          });
+    bbMetricsService = (BlackboardMetricsService)
+        getServiceBroker().getService(this, BlackboardMetricsService.class, 
+                                      new ServiceRevokedListener() {
+                                              public void serviceRevoked(ServiceRevokedEvent re) {
+                                                  if (BlackboardMetricsService.class.equals(re.getService())) {
+                                                      bbMetricsService = null;
+                                                  }
+                                              }
+                                          });
+    nodeMetricsService = (NodeMetricsService)
+        getServiceBroker().getService(this, NodeMetricsService.class, 
+                                      new ServiceRevokedListener() {
+                                              public void serviceRevoked(ServiceRevokedEvent re) {
+                                                  if (NodeMetricsService.class.equals(re.getService())) {
+                                                      nodeMetricsService = null;
+                                                  }
+                                              }
+                                          });    
+    messageStatsService = (MessageStatisticsService)
+        getServiceBroker().getService(this, MessageStatisticsService.class, 
+                                      new ServiceRevokedListener() {
+                                              public void serviceRevoked(ServiceRevokedEvent re) {
+                                                  if (MessageStatisticsService.class.equals(re.getService())) {
+                                                      messageStatsService = null;
+                                                  }
+                                              }
+                                          });
+    messageWatchService = (MessageWatcherService)
+        getServiceBroker().getService(this,MessageWatcherService.class, 
+                                      new ServiceRevokedListener() {
+                                              public void serviceRevoked(ServiceRevokedEvent re) {
+                                                  if (MessageWatcherService.class.equals(re.getService()))
+                                                      messageWatchService = null;
+                                              }
+                                          });   
+    messageWatchService.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
     }
 
     private void createGUI() {
@@ -99,15 +143,8 @@ public class MetricsComponentPlugIn
     public void execute() {}
 
     public void getAllMetrics() {
-        protoRegistryService = (PrototypeRegistryService)
-            getServiceBroker().getService(this, PrototypeRegistryService.class, 
-                                          new ServiceRevokedListener() {
-                                                  public void serviceRevoked(ServiceRevokedEvent re) {
-                                                      if (PrototypeRegistryService.class.equals(re.getService()))
-                                                          protoRegistryService  = null;
-                                                  }
-                                              }); 
 
+        //get all PrototypeRegistryService metrics
         cachedProtoCount = protoRegistryService.getCachedPrototypeCount();
         propProviderCount = protoRegistryService.getPropertyProviderCount();
         protoProviderCount = protoRegistryService.getPrototypeProviderCount();
@@ -116,17 +153,7 @@ public class MetricsComponentPlugIn
         System.out.println("Property Provider Count: " + propProviderCount);
         System.out.println("Prototype Provider Count: " + protoProviderCount);
 
-
-        bbMetricsService = (BlackboardMetricsService)
-            getServiceBroker().getService(this, BlackboardMetricsService.class, 
-                                          new ServiceRevokedListener() {
-                                                  public void serviceRevoked(ServiceRevokedEvent re) {
-                                                      if (BlackboardMetricsService.class.equals(re.getService())) {
-                                                          bbMetricsService = null;
-                                                      }
-                                                 }
-                                              }); 
- 
+        //get all BlackBoardMetricsServices metrics
         assetCount = bbMetricsService.getAssetCount();
         planElementCount = bbMetricsService.getPlanElementCount();
         taskCount = bbMetricsService.getTaskCount();
@@ -136,48 +163,18 @@ public class MetricsComponentPlugIn
         System.out.println("Task Count: " + taskCount);
         System.out.println("Total Blackboard Object Count: " + totalBlackboardCount);
 
-        nodeMetricsService = (NodeMetricsService)
-            getServiceBroker().getService(this, NodeMetricsService.class, 
-                                          new ServiceRevokedListener() {
-                                                  public void serviceRevoked(ServiceRevokedEvent re) {
-                                                      if (NodeMetricsService.class.equals(re.getService())) {
-                                                           nodeMetricsService = null;
-                                                      }
-                                                 }
-                                              }); 
-
+        //get all NodeMetricsSerivices metrics
         System.out.println("Active Thread Count: " + nodeMetricsService.getActiveThreadCount());
         System.out.println("Free Memory: " + nodeMetricsService.getFreeMemory());
         System.out.println("Total Memory: " + nodeMetricsService.getTotalMemory());
 
-
-        messageStatsService = (MessageStatisticsService)
-            getServiceBroker().getService(this, MessageStatisticsService.class, 
-                                          new ServiceRevokedListener() {
-                                                  public void serviceRevoked(ServiceRevokedEvent re) {
-                                                      if (MessageStatisticsService.class.equals(re.getService())) {
-                                                          messageStatsService = null;
-                                                      }
-                                                  }
-                                              }); 
-        //System.out.println("Just got messageStatsService, Value: " + messageStatsService);
-
+        //get all MessageStatistics metrics
         System.out.println("Message Queue: " + messageStatsService.getMessageStatistics(false).averageMessageQueueLength);
         System.out.println("Message Bytes: " + messageStatsService.getMessageStatistics(false).totalMessageBytes);
         System.out.println("Message Count: " + messageStatsService.getMessageStatistics(false).totalMessageCount);
         System.out.println("Histogram:     " + messageStatsService.getMessageStatistics(false).histogram); 
-        
-        messageWatchService = (MessageWatcherService)
-            getServiceBroker().getService(this,MessageWatcherService.class, 
-                                          new ServiceRevokedListener() {
-                                                  public void serviceRevoked(ServiceRevokedEvent re) {
-                                                      if (MessageWatcherService.class.equals(re.getService()))
-                                                          messageWatchService = null;
-                                                  }
-                                              });
-        //System.out.println("Just got messageWatchService, Value: " + messageWatchService);
 
-        messageWatchService.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
+        //get all MessageWatcher metrics
         System.out.println("Directives In: " + _messageWatcher.getDirectivesIn());
         System.out.println("Directives Out: " + _messageWatcher.getDirectivesOut());
         System.out.println("Notifications In: " + _messageWatcher.getNotificationsIn());
