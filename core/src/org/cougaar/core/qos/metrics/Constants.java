@@ -28,8 +28,7 @@ package org.cougaar.core.qos.metrics;
 
 
 /**
- * We need to redefine the RSS constants here, since rss.jar isn't
- * accessible.
+ * Assorted constants for key and path construction, and credibility.
  */
 public interface Constants
 {

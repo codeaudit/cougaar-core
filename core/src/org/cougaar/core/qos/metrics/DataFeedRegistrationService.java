@@ -29,10 +29,10 @@ package org.cougaar.core.qos.metrics;
 import org.cougaar.core.component.Service;
 
 /**
- * The MetricsService borrows the concept of DataFeeds (ie, raw data
- * providers) from the ResourceStatusService.  The primary function of
- * this API is simply to add new feeds on the fly.  The precise
- * semantics of a 'data feed' is left indeterminate at this level.
+ * The primary function of this Service is to add new "data feeds" to
+ * the MetricsUpdateService.  The concept of a data feed (ie, a raw
+ * data provider) is borrowed from the RSS; the precise semantics is
+ * left indeterminate at this level.
  */
 public interface DataFeedRegistrationService extends Service
 {
