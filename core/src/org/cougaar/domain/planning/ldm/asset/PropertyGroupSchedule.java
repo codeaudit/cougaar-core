@@ -43,12 +43,6 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
 
   private NonOverlappingTimeSpanSet myTiling = null;
 
-  public Object []toArray() {
-    Object []array = super.toArray();
-    System.out.println("toArray count = " + array.length);
-    return array;
-  }
-
   // constructors
   public PropertyGroupSchedule() {
     super();
