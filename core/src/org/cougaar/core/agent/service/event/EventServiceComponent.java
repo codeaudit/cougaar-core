@@ -52,9 +52,12 @@ implements Component
     this.sb = bs.getServiceBroker();
   }
 
-  public void setAgentIdentificationService(
-      AgentIdentificationService ais) {
-    prefix = ais.getMessageAddress()+": ";
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    if (ais == null) {
+      // Revocation
+    } else {
+      prefix = ais.getMessageAddress()+": ";
+    }
   }
 
   public void load() {
