@@ -88,6 +88,12 @@ Cougaar.rc file&nbsp;</a></li>
 <br>&nbsp;
 <br>&nbsp;
 <br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
 <br>&nbsp;</ul>
 
 <hr>
@@ -205,16 +211,16 @@ value must match the database type reference defined in the database URL,&nbsp;
 query, if one exists, will be executed over the default query.&nbsp; Query
 examples shown below.
 <p><font face="Courier New,Courier"><font size=-1>Queries that are compatible
-with most databases being used are specified in the following format:</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+with most databases being used are specified in the following format:</font></font>
 <p><font face="Courier New,Courier"><font size=-1>query = select CAPABILITY
 AS MOS_LEVEL, PERSONNEL AS MOS_QTY, 'Dummy Nomenclature' AS “Dummy Nomenclature”\</font></font>
 <br><font face="Courier New,Courier"><font size=-1>&nbsp;from ORG_MOS \</font></font>
-<br><font face="Courier New,Courier"><font size=-1>&nbsp;where UIC = :uic</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+<br><font face="Courier New,Courier"><font size=-1>&nbsp;where UIC = :uic</font></font>
 <p><font face="Courier New,Courier"><font size=-1>The above format indicates
-that it is the default query and should work with any type of database.</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+that it is the default query and should work with any type of database.</font></font>
 <p><font face="Courier New,Courier"><font size=-1>If the query syntax differs
 depending on database type the following format is used for specifying
-which query to use for each particular database type.</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+which query to use for each particular database type.</font></font>
 <p><font face="Courier New,Courier"><font size=-1>query = select NSN, SUM(QTY_OH),
 NOMENCLATURE from jtav_equipment \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>where&nbsp; UIC4 = substr(:uic,
@@ -222,7 +228,7 @@ NOMENCLATURE from jtav_equipment \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>&nbsp; NSN in (:pacing)
 \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>&nbsp; group by NSN,
-NOMENCLATURE</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+NOMENCLATURE</font></font>
 <p><font face="Courier New,Courier"><font size=-1>query.mysql = select
 NSN, SUM(QTY_OH), NOMENCLATURE from jtav_equipment \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>where&nbsp; UIC4 = substring(:uic,
@@ -230,7 +236,7 @@ NSN, SUM(QTY_OH), NOMENCLATURE from jtav_equipment \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>&nbsp; NSN in (:pacing)
 \</font></font>
 <br><font face="Courier New,Courier"><font size=-1>&nbsp; group by NSN,
-NOMENCLATURE</font></font><font face="Courier New,Courier"><font size=-1></font></font>
+NOMENCLATURE</font></font>
 <p><font face="Courier New,Courier"><font size=-1>Note: If a query does
 not follow the above pattern (i.e. it is not named “query”), the pattern
 for specifying different types would remains the same.&nbsp; An example
@@ -252,13 +258,14 @@ If needed, download and install the latest version of&nbsp; MySQL from
 <a href="http://www.mysql.com">http://www.mysql.com</a>&nbsp;</li>
 
 <li>
-You will find a MySQL JDBC driver in the sys directory in the cougaar-support.zip.&nbsp;
-This one had been tested with the 8.6.0 release.&nbsp; You can find the
-latest drivers at&nbsp; <a href="http://sourceforge.net/projects/mmmysql">http://sourceforge.net/projects/mmmysql</a>&nbsp;</li>
+You will find a MySQL JDBC driver, version 2.0.3 ( mm-mysql-2.jar) in the
+sys directory in the cougaar-support.zip.&nbsp; This one has been tested
+with the 8.6.0 release.&nbsp; You can find the latest drivers at 
+<a href="http://sourceforge.net/projects/mmmysql">http://sourceforge.net/projects/mmmysql</a>&nbsp;</li>
 
 <li>
-Download and import the mysqldump.8.6.txt from the Cougaar web site (look
-for latest <i>SMALL-135 MySQL Data Export</i>).&nbsp;</li>
+Download and import the mysqldump.8.6.txt found in the dbms/data/mysql
+directory in the cougaar.zip</li>
 
 <li>
 To load: mysql -u {USER} –p{PASSWORD} {DATABASE} &lt; mysqldump.8.6.txt</li>
@@ -301,8 +308,8 @@ to use the bbn-postgresql7.1.3.jar in the sys directory.&nbsp;
 If needed, download and install the latest version of PostgreSQL from http://www.postgresql.org</li>
 
 <li>
-Download and import the pg_dump-8.6.txt from the Cougaar website (look
-for latest <i>SMALL-135 PostgreSQL Data Export</i>).&nbsp;</li>
+Download and import the pg_dump-8.6.txt found in the dbms/data/postgresql
+directory in the cougaar.zip</li>
 
 <li>
 To load the data, use the command:&nbsp; psql dbname &lt; mysqldump.8.6.txt&nbsp;</li>
