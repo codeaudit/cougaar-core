@@ -177,7 +177,7 @@ public class MobilePlugin
    * Should probably make this a <code>UniqueObject</code>
    * and <code>XMLable</code> for the UI.
    */
-  private static class TestObject {
+  private static class TestObject implements java.io.Serializable {
     private String s;
     public TestObject(
         NodeIdentifier nid,
