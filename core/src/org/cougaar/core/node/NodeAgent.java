@@ -344,30 +344,35 @@ extends SimpleAgent
       }
     }
 
-    // Set up MTS service provides.
-    //
-    // NB: The order is important for now - MTS *must* be created
-    // first.
+    /**
+     * Arg for regular MTS or SingleNodeMTS
+     * 
+     * NB: The order is important for now - MTS *must* be created first. 
+     **/
+    
+    String mts_impl = "org.cougaar.mts.base.MessageTransportServiceProvider";
+    if (Boolean.getBoolean("org.cougaar.mts.singlenode"))
+	mts_impl = "org.cougaar.core.mts.singlenode.SingleNodeMTSProvider";
     add(new ComponentDescription(
-          (getIdentifier()+"MessageTransport"),
-          Agent.INSERTION_POINT + ".MessageTransport",
-          "org.cougaar.mts.base.MessageTransportServiceProvider",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null)); //policy
-
+				 (getIdentifier()+"MessageTransport"),
+				 Agent.INSERTION_POINT + ".MessageTransport",
+				 mts_impl,
+				 null,  //codebase
+				 null,  //parameters
+				 null,  //certificate
+				 null,  //lease
+				 null)); //policy
+    
     {
-      TimeServiceProvider tsp = new TimeServiceProvider();
-      tsp.start();
-      rootsb.addService(NaturalTimeService.class, tsp);
-      rootsb.addService(RealTimeService.class, tsp);
-    }
-
+	TimeServiceProvider tsp = new TimeServiceProvider();
+	tsp.start();
+	rootsb.addService(NaturalTimeService.class, tsp);
+	rootsb.addService(RealTimeService.class, tsp);
+    } 
+    
     if (isServletEnabled) {
-      // start up the Node-level ServletService component
-      add(new ComponentDescription(
+	// start up the Node-level ServletService component
+	add(new ComponentDescription(
             (getIdentifier()+"ServletService"),
             Agent.INSERTION_POINT + ".NodeServletService",
             "org.cougaar.lib.web.service.RootServletServiceComponent",
