@@ -28,7 +28,10 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.ConfigFinder;
 
-class FileComponentInitializerServiceProvider implements ServiceProvider {
+/**
+ * Provides service to initialize components from INI files.
+ **/
+public class FileComponentInitializerServiceProvider implements ServiceProvider {
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (serviceClass != ComponentInitializerService.class) {
