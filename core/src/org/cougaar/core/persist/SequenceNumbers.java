@@ -44,6 +44,28 @@ public class SequenceNumbers implements Comparable {
     public SequenceNumbers(SequenceNumbers numbers) {
         this(numbers.first, numbers.current, numbers.timestamp);
     }
+
+  /**
+   * @return The first sequence number in the range
+   */
+  public int getFirst() {
+    return first;
+  }
+
+  /**
+   * @return The current sequence number in the range
+   */
+  public int getCurrent() {
+    return current;
+  }
+
+  /**
+   * @return Return the time that the highest delta in this set was written.
+   */
+  public long getTimestamp() {
+    return timestamp;
+  }
+
     public int compareTo(Object o) {
         SequenceNumbers that = (SequenceNumbers) o;
         if (this.timestamp < that.timestamp) return -1;
