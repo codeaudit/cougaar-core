@@ -95,47 +95,47 @@ import java.beans.Beans;
  *
  * <pre>
  * @property org.cougaar.node.name
- *   required name for this Node
+ *   The (required) name for this Node.
  * @property org.cougaar.useBootstrapper
- *   if true, will launch using the Bootstrapper to find jar files.
- *   Defaults to true
+ *   If <em>true</em>, will launch using the Bootstrapper to find jar files.
+ *   Defaults to <em>true</em>.
  * @property org.cougaar.filename
- *   file name (.ini) for starting this Node, which defaults to 
- *   ("org.cougaar.node.name"+".ini") if both "org.cougaar.filename"
- *   and "org.cougaar.experiment.id" are not specified.  If this property 
- *   is specified then "org.cougaar.experiment.id" must not be specified
+ *   The file name (.ini) for starting this Node, which defaults to 
+ *   (<em>org.cougaar.node.name</em>+".ini") if both <em>org.cougaar.filename</em>
+ *   and </em>org.cougaar.experiment.id</em> are not specified.  If this property 
+ *   is specified then <em>org.cougaar.experiment.id</em> must not be specified.
  * @property org.cougaar.experiment.id
- *   experiment identifier for running this Node; see 
- *   "org.cougaar.filename" for details
+ *   The experiment identifier for running this Node; see 
+ *   <em>org.cougaar.filename</em> for details.
  * @property org.cougaar.install.path
- *   "base" path for finding jar and configuration files
+ *   The <em>base</em> path for finding jar and configuration files.
  * @property org.cougaar.validate.jars
- *   if true, will check the certificates on the 
- *   ("org.cougaar.install.path"+"/plugin/*.jar") files.  Defaults to 
- *   false
+ *   If <em>true</em>, will check the certificates on the 
+ *   (<em>org.cougaar.install.path</em>+"/plugin/*.jar") files.  Defaults to 
+ *   <em>false</em>.
  * @property org.cougaar.security.certificate
- *   path off of the "org.cougaar.install.path" for finding the 
- *   "org.cougaar.validate.jars" certificates
+ *   The path of the <em>org.cougaar.install.path</em> for finding the 
+ *   <em>org.cougaar.validate.jars</em> certificates.
  * @property org.cougaar.control.host
- *   host address for the optional external (RMI) controller of this 
- *   Node; requires "org.cougaar.control.port".  Defaults to no 
- *   external control
+ *   The host address for the optional external (RMI) controller of this 
+ *   Node; requires <em>org.cougaar.control.port</em>.  Defaults to no 
+ *   external control.
  * @property org.cougaar.control.port
- *   port address for the "org.cougaar.control.host"; requires 
- *   "org.cougaar.control.host".  Defaults to no external control
+ *   The port address for the <em>org.cougaar.control.host</em>; requires 
+ *   <em>org.cougaar.control.host</em>.  Defaults to no external control.
  *
  * @property org.cougaar.config
  *   Only used by Node to transfer a command-line "-config X" to
- *   the corresponding "org.cougaar.config=X" property
+ *   the corresponding <em>org.cougaar.config=X</em> property.
  * @property org.cougaar.config.server
  *   Only used by Node to transfer a command-line "-cs X" to
- *   the corresponding "org.cougaar.config.server=X" property
+ *   the corresponding <em>org.cougaar.config.server=X</em> property.
  * @property org.cougaar.name.server
  *   Only used by Node to transfer a command-line "-ns X" to
- *   the corresponding "org.cougaar.name.server=X" property
+ *   the corresponding <em>org.cougaar.name.server=X</em> property.
  * @property org.cougaar.name.server.port
  *   Only used by Node to transfer a command-line "-port X" to
- *   the corresponding "org.cougaar.name.server.port=X" property
+ *   the corresponding <em>org.cougaar.name.server.port=X</em> property.
  * </pre>
  */
 public class Node extends ContainerSupport

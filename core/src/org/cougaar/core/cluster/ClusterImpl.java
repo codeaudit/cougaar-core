@@ -110,19 +110,19 @@ import org.cougaar.util.PropertyParser;
  * <p>
  * <pre>
  * @property org.cougaar.core.cluster.heartbeat
- *   a low-priority thread runs and prints
+ *   If enabled, a low-priority thread runs and prints
  *   a '.' every few seconds when nothing else much is going on.
- *   This is a one-per-vm function.  Default true.
+ *   This is a one-per-vm function.  Default <em>true</em>.
  * @property org.cougaar.core.cluster.idleInterval 
- * how long between idle detection and heartbeat cycles (prints '.');
+ * How long between idle detection and heartbeat cycles (prints '.');
  * @property org.cougaar.core.cluster.idle.verbose
- *   if true, will print elapsed time (seconds) since
+ *   If <em>true</em>, will print elapsed time (seconds) since
  *   cluster start every idle.interval millis.
  * @property org.cougaar.core.cluster.idle.verbose.interval=60000
- *   millis between verbose idle reports
+ *   The number of milliseconds between verbose idle reports.
  * @property org.cougaar.core.cluster.showTraffic
- *   if True, shows '+' and '-' on message sends and receives.  if
- *   false, also turns off reports of heartbeat ('.') and other status chars.
+ *   If <em>true</em>, shows '+' and '-' on message sends and receives.  if
+ *   <em>false</em>, also turns off reports of heartbeat ('.') and other status chars.
  * </pre>
  */
 public class ClusterImpl 

@@ -37,7 +37,7 @@ import org.cougaar.domain.planning.ldm.plan.*;
 
 /** Subscriber is the most common implementation of BlackboardService
  *
- * @property org.cougaar.core.blackboard.enforceTransactions Set to "false" to disable checking for clients
+ * @property org.cougaar.core.blackboard.enforceTransactions Set to <em>false</em> to disable checking for clients
  * of BlackboardService publishing changes to the blackboard outside of a transaction.
  * @property org.cougaar.core.blackboard.debug Set to true to additional checking on blackboard transactions.  
  * For instance, it will attempt to look for changes to blackboard objects which have not been published

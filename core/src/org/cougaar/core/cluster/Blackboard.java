@@ -38,13 +38,13 @@ import org.cougaar.domain.planning.ldm.Domain;
 
 /** The Blackboard
  *
- * @property org.cougaar.core.cluster.savePriorPublisher When set to true, will collect extra 
+ * @property org.cougaar.core.cluster.savePriorPublisher When set to <em>true</em>, will collect extra 
  * information on each publish to detect problems with multiple adds, deletes, etc by complaining
  * about unexpected state changes.  This adds significant runtime overhead.
- * @property org.cougaar.core.cluster.enablePublishException When set to true, collects stack frames
+ * @property org.cougaar.core.cluster.enablePublishException When set to <em>true</em>, collects stack frames
  * for each published object in order to pinpoint both sides of publish conflicts.  This is <em>extremely</em> 
  * expensive.
- * @property org.cougaar.core.cluster.persistence.enable When set to true will enable blackboard persistence.
+ * @property org.cougaar.core.cluster.persistence.enable When set to <em>true</em> will enable blackboard persistence.
  * @property org.cougaar.core.cluster.persistence.disableWrite See documentation on Blackboard persistence.
  * @property org.cougaar.core.cluster.persistence.sequence See documentation on Blackboard persistence.
  **/

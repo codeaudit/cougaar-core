@@ -50,8 +50,8 @@ import java.net.UnknownHostException;
  * Also has a create() method which can be used to actually create an
  * rmiregistry, a NSImpl (and register it at the expected place).
  *
- * @property org.cougaar.nameserver.verbose false iff true is the same as verbosity=1
- * @property org.cougaar.nameserver.verbosity verbosity level 0=quiet, 1=exceptions, 2=progress.
+ * @property org.cougaar.nameserver.verbose If set to </em>true</em> this is the same as verbosity=1
+ * @property org.cougaar.nameserver.verbosity Set the Nameservice verbosity level: 0=quiet, 1=exceptions, 2=progress.
  * @property org.cougaar.nameserver.auto Start the nameserver automatically if possible (local) 
  * without an admin node.
  * @property org.cougaar.nameserver.local Circumvent RMI if possible for nameservice.

@@ -47,7 +47,7 @@ import org.cougaar.util.UnaryPredicate;
 
 /**  The Distributor
  * 
- * @property org.cougaar.core.cluster.keepPublishHistory When set to true, enables tracking of 
+ * @property org.cougaar.core.cluster.keepPublishHistory When set to <em>true</em>, enables tracking of 
  * all publishes.  Extremely expensive.
  **/
 public class Distributor {
