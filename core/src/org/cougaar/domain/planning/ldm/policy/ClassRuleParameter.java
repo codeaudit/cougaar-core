@@ -16,7 +16,7 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClassRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: ClassRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
@@ -24,41 +24,59 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
  * Java interface/class that returns an Class that implements that interface
  * or extends that class
  */
-public class ClassRuleParameter implements RuleParameter,
-					   java.io.Serializable
-{
+public class ClassRuleParameter implements RuleParameter, java.io.Serializable {
+  protected String my_name;
+  protected Class my_interface = Object.class;
+  protected Class my_value = Object.class;
 
   /**
    * Constructor sets class interface and establishes value as not set
    */
   public ClassRuleParameter(String param_name, Class iface)
   { 
-    my_interface = iface; my_value = null;
-    name = param_name;
+    my_interface = iface; my_value = iface;
+    my_name = param_name;
   }
 
 
   public ClassRuleParameter(String param_name)
   { 
-    my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
-
-  public void setInterface(Class iface)
-  { 
-    my_interface = iface; 
-  }
-
-
-  public Class getInterface() {
-    return my_interface;
+  public ClassRuleParameter() {
   }
 
   /**
    * Parameter type is CLASS
    */
   public int ParameterType() { return RuleParameter.CLASS_PARAMETER; }
+
+
+  public Class getInterface() {
+    return my_interface;
+  }
+
+  public void setInterface(Class iface)
+  { 
+    my_interface = iface; 
+  }
+
+  public void setInterface(String iface) { 
+    try {
+    my_interface = Class.forName(iface);
+    } catch (Exception e) {
+      System.out.println("Couldn't create class " + iface + e);
+    } 
+  }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
 
   /**
    * Get parameter value (Class)
@@ -67,6 +85,14 @@ public class ClassRuleParameter implements RuleParameter,
   public Object getValue()
   {
     return my_value; 
+  }
+
+  public void setValue(String iface) { 
+    try {
+    my_interface = Class.forName(iface);
+    } catch (Exception e) {
+      System.out.println("Couldn't create class " + iface + e);
+    } 
   }
 
   /**
@@ -108,6 +134,21 @@ public class ClassRuleParameter implements RuleParameter,
     return false;
   }
 
+  public String toString() 
+  {
+    return "#<CLASS_PARAMETER : " + my_value + 
+      " [" + my_interface + "] >";
+  }
+
+
+  public Object clone() {
+    ClassRuleParameter crp = new ClassRuleParameter(my_name, my_interface);
+    try{
+      crp.setValue(my_value);
+    }catch (RuleParameterIllegalValueException rpive) {}
+    return crp;
+  }
+
   private interface CRP_Interface {}
   private class CRP_Derived implements CRP_Interface {}
 
@@ -140,28 +181,7 @@ public class ClassRuleParameter implements RuleParameter,
     System.out.println("ClassRuleParameter test complete.");
 
   }
-
-  public String toString() 
-  {
-    return "#<INTEGER_PARAMETER : " + my_value + 
-      " [" + my_interface + "] >";
-  }
-
-
-  public String getName() 
-  {
-    return name;
-  }
-
-  public Object clone() {
-    ClassRuleParameter crp = new ClassRuleParameter(name, my_interface);
-    try{
-      crp.setValue(my_value);
-    }catch (RuleParameterIllegalValueException rpive) {}
-    return crp;
-  }
-
-  protected String name;
-  protected Class my_value;
-  protected Class my_interface;
 }
+
+
+

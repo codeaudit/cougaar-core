@@ -14,18 +14,23 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: EnumerationRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: EnumerationRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * An EnumerationRuleParameter is a RuleParameter with specified/protected
  * string selections that returns a string
  */
-public class EnumerationRuleParameter implements RuleParameter ,
-						 java.io.Serializable
-{
+public class EnumerationRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+  protected String my_name;
+  protected String []my_enums;
+  protected String my_value;
+
 
   /**
    * Constructor sets min/max values and establishes value as not set
@@ -33,14 +38,30 @@ public class EnumerationRuleParameter implements RuleParameter ,
   public EnumerationRuleParameter(String param_name, String []enums)
   { 
     my_enums = enums; my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
 
   public EnumerationRuleParameter(String param_name)
   { 
-    name = param_name;
+    my_name = param_name;
     my_value = null;
+  }
+
+  public EnumerationRuleParameter() {
+  }
+
+  /**
+   * Parameter type is ENUMERATION
+   */
+  public int ParameterType() { return RuleParameter.ENUMERATION_PARAMETER; }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
   }
 
   public void setEnumeration(String []enums)
@@ -53,10 +74,6 @@ public class EnumerationRuleParameter implements RuleParameter ,
     return my_enums;
   }
 
-  /**
-   * Parameter type is ENUMERATION
-   */
-  public int ParameterType() { return RuleParameter.ENUMERATION_PARAMETER; }
 
   /**
    * Get parameter value (String)
@@ -147,6 +164,21 @@ public class EnumerationRuleParameter implements RuleParameter ,
       " [" + Enum_List() + "] >";
   }
 
+  public Object clone() {
+    EnumerationRuleParameter erp 
+      = new EnumerationRuleParameter(my_name, (String[])my_enums.clone());
+    try {
+      erp.setValue(my_value);
+    } catch(RuleParameterIllegalValueException rpive) {}
+    return erp;
+  }
+
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_enums, "Enumeration");
+    pr.print(my_value, "Value");
+  }
+
   protected String Enum_List() {
     String list = "";
     for(int i = 0; i < my_enums.length; i++) {
@@ -156,22 +188,6 @@ public class EnumerationRuleParameter implements RuleParameter ,
     }
     return list;
   }
-
-  public String getName() 
-  {
-    return name;
-  }
-
-  public Object clone() {
-    EnumerationRuleParameter erp 
-      = new EnumerationRuleParameter(name, (String[])my_enums.clone());
-    try {
-      erp.setValue(my_value);
-    } catch(RuleParameterIllegalValueException rpive) {}
-    return erp;
-  }
-
-  protected String name;
-  protected String my_value;
-  protected String []my_enums;
 }
+
+

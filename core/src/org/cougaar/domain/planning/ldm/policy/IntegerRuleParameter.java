@@ -13,18 +13,23 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: IntegerRuleParameter.java,v 1.2 2001-02-15 19:41:37 tomlinso Exp $
+ * @version $Id: IntegerRuleParameter.java,v 1.3 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * An IntegerRuleParameter is a RuleParameter with specified/protected
  * integer bounds that returns an Integer
  */
-public class IntegerRuleParameter implements RuleParameter, 
-					     java.io.Serializable
-{
+public class IntegerRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+  protected String my_name;
+  protected Integer my_value;
+  protected int my_min;
+  protected int my_max;
 
   /**
    * Constructor sets min/max values and establishes value as not set
@@ -38,32 +43,64 @@ public class IntegerRuleParameter implements RuleParameter,
 
   public IntegerRuleParameter(String param_name, int min, int max) {
     my_min = min; my_max = max; my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
   public IntegerRuleParameter(String param_name)
   { 
     my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
-  public void setBounds(int min, int max) {
-    my_min = min; 
-    my_max = max;
-  }
-
-  public int getLowerBound() {
-    return my_min;
-  }
-
-  public int getUpperBound() {
-    return my_max;
+  public IntegerRuleParameter() {
   }
 
   /**
    * Parameter type is INTEGER
    */
   public int ParameterType() { return RuleParameter.INTEGER_PARAMETER; }
+
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
+  public int getMin() {
+    return my_min;
+  }
+    
+  public void setMin(int min) {
+    my_min = min;
+  }
+
+  public int getMax() {
+    return my_max;
+  }
+
+  public void setMax(int max) {
+    my_max = max;
+  }
+
+  public void setBounds(int min, int max) {
+    if (min > max) {
+      throw new java.lang.IllegalArgumentException("min  - " + min + 
+                                                   " - must be greater than max - " + max);
+    }
+    my_min = min; 
+    my_max = max;
+  }
+
+  public int getLowerBound() {
+    return getMin();
+  }
+
+  public int getUpperBound() {
+    return getMax();
+  }
 
   /**
    * Get parameter value (Integer)
@@ -118,6 +155,28 @@ public class IntegerRuleParameter implements RuleParameter,
       
   }
 
+
+  public String toString() 
+  {
+    return "#<INTEGER_PARAMETER : " + my_value + 
+      " [" + my_min + " , " + my_max + "] >";
+  }
+
+  public Object clone() {
+    IntegerRuleParameter irp = new IntegerRuleParameter(my_name, my_min, my_max);
+    try {
+      irp.setValue(my_value);
+    } catch(RuleParameterIllegalValueException rpive) {}
+    return irp;
+  }
+
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_min, "Min");
+    pr.print(my_max, "Max");
+    pr.print(my_value, "Value");
+  }
+  
   public static void Test() 
   {
     IntegerRuleParameter irp = new IntegerRuleParameter("testIntParam", 3, 10);
@@ -154,28 +213,5 @@ public class IntegerRuleParameter implements RuleParameter,
 
   }
 
-  public String toString() 
-  {
-    return "#<INTEGER_PARAMETER : " + my_value + 
-      " [" + my_min + " , " + my_max + "] >";
-  }
 
-
-  public String getName() 
-  {
-    return name;
-  }
-
-  public Object clone() {
-    IntegerRuleParameter irp = new IntegerRuleParameter(name, my_min, my_max);
-    try {
-      irp.setValue(my_value);
-    } catch(RuleParameterIllegalValueException rpive) {}
-    return irp;
-  }
-
-  protected String name;
-  protected Integer my_value;
-  protected int my_min;
-  protected int my_max;
 }

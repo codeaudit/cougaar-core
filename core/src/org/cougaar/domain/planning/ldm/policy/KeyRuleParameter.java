@@ -14,9 +14,14 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: KeyRuleParameter.java,v 1.2 2001-02-20 19:40:58 ngivler Exp $
+ * @version $Id: KeyRuleParameter.java,v 1.3 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
@@ -26,7 +31,11 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
  * for that key, that value is returned. Otherwise, the default
  * is returned.
  */
-public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
+public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+
+  protected String my_name;
+  protected KeyRuleParameterEntry []my_keys;
+  protected String my_value;
 
   /**
    * Constructor sets min/max values and establishes value as not set
@@ -44,20 +53,32 @@ public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
     my_value = null;
   }
 
-  public void setKeys(KeyRuleParameterEntry []keys)
-  { 
-    my_keys = keys; 
-    my_value = null;
-  }
-
-  public KeyRuleParameterEntry[] getKeys() {
-    return my_keys;
+  public KeyRuleParameter() {
   }
 
   /**
    * Parameter type is KEY
    */
   public int ParameterType() { return RuleParameter.KEY_PARAMETER; }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
+  public KeyRuleParameterEntry[] getKeys() {
+    return my_keys;
+  }
+
+  public void setKeys(KeyRuleParameterEntry []keys)
+  { 
+    my_keys = keys; 
+    my_value = null;
+  }
+
 
   /**
    * Get parameter value (String)
@@ -113,6 +134,39 @@ public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
       return (test_value instanceof String);
   }
 
+  public Object clone() {
+    KeyRuleParameter krp 
+      = new KeyRuleParameter(my_name, 
+			       (KeyRuleParameterEntry[])my_keys.clone());
+    try {
+      krp.setValue(my_value);
+    } catch(RuleParameterIllegalValueException rpive) {}
+    return krp;
+  }
+
+
+  
+  public String toString() 
+  {
+    return "#<KEY_PARAMETER : " + my_value + 
+      " [" + Key_List() + "] >";
+  }
+
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_keys, "Keys");
+    pr.print(my_value, "Value");
+  }
+
+  protected String Key_List() {
+    String list = "";
+    for(int i = 0; i < my_keys.length; i++) {
+      list += my_keys[i];
+      if (i != my_keys.length-1)
+	list += "/";
+    }
+    return list;
+  }
 
   public static void main(String []args) 
   {
@@ -148,38 +202,8 @@ public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
 
   }
 
-  public String toString() 
-  {
-    return "#<KEY_PARAMETER : " + my_value + 
-      " [" + Key_List() + "] >";
-  }
-
-  protected String Key_List() {
-    String list = "";
-    for(int i = 0; i < my_keys.length; i++) {
-      list += my_keys[i];
-      if (i != my_keys.length-1)
-	list += "/";
-    }
-    return list;
-  }
-
-  public String getName() 
-  {
-    return my_name;
-  }
-
-  public Object clone() {
-    KeyRuleParameter krp 
-      = new KeyRuleParameter(my_name, 
-			       (KeyRuleParameterEntry[])my_keys.clone());
-    try {
-      krp.setValue(my_value);
-    } catch(RuleParameterIllegalValueException rpive) {}
-    return krp;
-  }
-
-  protected String my_name;
-  protected String my_value;
-  protected KeyRuleParameterEntry []my_keys;
 }
+
+
+
+

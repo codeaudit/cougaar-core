@@ -14,9 +14,12 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: RangeRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: RangeRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
@@ -26,16 +29,19 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
  * within some range, that value is returned. Otherwise, the default
  * is returned.
  */
-public class RangeRuleParameter implements RuleParameter ,
-						 java.io.Serializable
-{
+public class RangeRuleParameter implements RuleParameter, SelfPrinter, 
+  java.io.Serializable {
+  protected String my_name;
+  protected RangeRuleParameterEntry []my_ranges;
+  protected Object my_default_value;
 
   /**
    * Constructor sets min/max values and establishes value as not set
    */
   public RangeRuleParameter(String param_name, RangeRuleParameterEntry []ranges)
   { 
-    my_ranges = ranges; my_value = null;
+    my_ranges = ranges; 
+    my_default_value = null;
     my_name = param_name;
   }
 
@@ -43,17 +49,10 @@ public class RangeRuleParameter implements RuleParameter ,
   public RangeRuleParameter(String param_name)
   { 
     my_name = param_name;
-    my_value = null;
+    my_default_value = null;
   }
 
-  public void setRanges(RangeRuleParameterEntry []ranges)
-  { 
-    my_ranges = ranges; 
-    my_value = null;
-  }
-
-  public RangeRuleParameterEntry[] getRanges() {
-    return my_ranges;
+  public RangeRuleParameter() {
   }
 
   /**
@@ -61,24 +60,42 @@ public class RangeRuleParameter implements RuleParameter ,
    */
   public int ParameterType() { return RuleParameter.RANGE_PARAMETER; }
 
-  /**
-   * Get parameter value (String)
-   * @returns Object parameter value (String). Note : could be null.
-   */
-  public Object getValue()
-  {
-    return my_value; 
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
+  public RangeRuleParameterEntry[] getRanges() {
+    return my_ranges;
+  }
+
+  public void setRanges(RangeRuleParameterEntry []ranges)
+  { 
+    my_ranges = ranges; 
+    my_default_value = null;
   }
 
   /**
-   * Get parameter value (String) keyed by int
+   * Get parameter value
+   * @returns Object parameter value. Note : could be null.
+   */
+  public Object getValue()
+  {
+    return my_default_value; 
+  }
+
+  /**
+   * Get parameter value keyed by int
    * If key fits into one of the defined ranges, return associated
-   * value, otherwise return default value (String).
-   * @returns Object parameter value (String). Note : could be null.
+   * value, otherwise return default value.
+   * @returns Object parameter value. Note : could be null.
    */
   public Object getValue(int key)
   {
-      String value = my_value;
+      Object value = my_default_value;
       for(int i = 0; i < my_ranges.length; i++) {
 	  if ((my_ranges[i].getRangeMin() <= key) &&
 	      (my_ranges[i].getRangeMax() >= key)) {
@@ -98,38 +115,52 @@ public class RangeRuleParameter implements RuleParameter ,
   public void setValue(Object new_value) 
        throws RuleParameterIllegalValueException
   {
-    if (new_value instanceof String) {
-	my_value = (String)new_value;
-    } else {
-      throw new RuleParameterIllegalValueException
-	(RuleParameter.RANGE_PARAMETER, 
-	 "String must be specified");
-    }
+    my_default_value = new_value;
   }
 
   /**
-   * @param Object test_value : must be String
-   * @return true if Object is a String in the enumeration, false otherwise
+   * @param Object test_value 
+   * @return always returns true 
    */
   public boolean inRange(Object test_value)
   {
-      return (test_value instanceof String);
+    return true;
   }
 
-
-  public static void main(String []args) 
+  public String toString() 
   {
-      RangeRuleParameterEntry p1 = 
-	  new RangeRuleParameterEntry("LOW", 1, 3);
-      RangeRuleParameterEntry p2 = 
-	  new RangeRuleParameterEntry("MED", 4, 6);
-      RangeRuleParameterEntry p3 = 
-	  new RangeRuleParameterEntry("HIGH", 7, 9);
+    return "#<RANGE_PARAMETER : " + my_default_value + 
+      " [" + Range_List() + "] >";
+  }
 
+  public Object clone() {
+    RangeRuleParameter rrp 
+      = new RangeRuleParameter(my_name, 
+			       (RangeRuleParameterEntry[])my_ranges.clone());
+    try {
+      rrp.setValue(my_default_value);
+    } catch(RuleParameterIllegalValueException rpive) {}
+    return rrp;
+  }
+
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_ranges, "Ranges");
+    pr.print(my_default_value, "Value");
+  }
+  
+  public static void main(String []args) {
+    RangeRuleParameterEntry p1 = 
+      new RangeRuleParameterEntry("LOW", 1, 3);
+    RangeRuleParameterEntry p2 = 
+      new RangeRuleParameterEntry(new Integer(37), 4, 6);
+    RangeRuleParameterEntry p3 = 
+      new RangeRuleParameterEntry("HIGH", 7, 9);
+    
     RangeRuleParameterEntry []ranges = {p1, p2, p3};
     RangeRuleParameter rrp = 
-	new RangeRuleParameter("testRangeParam", ranges);
-
+      new RangeRuleParameter("testRangeParam", ranges);
+    
     if (rrp.getValue() != null) {
       System.out.println("Error : Parameter not initialized to null");
     }
@@ -141,21 +172,15 @@ public class RangeRuleParameter implements RuleParameter ,
     }
 
     for(int i = 0; i <= 10; i++) {
-	String value = (String)rrp.getValue(i);
-	System.out.println("Value for " + i + " = " + value);
+      Object value = rrp.getValue(i);
+      System.out.println("Value for " + i + " = " + value);
     }
-
+    
     System.out.println("RRP = " + rrp);
     System.out.println("RuleRuleParameter test complete.");
-
+    
   }
-
-  public String toString() 
-  {
-    return "#<RANGE_PARAMETER : " + my_value + 
-      " [" + Range_List() + "] >";
-  }
-
+  
   protected String Range_List() {
     String list = "";
     for(int i = 0; i < my_ranges.length; i++) {
@@ -165,23 +190,6 @@ public class RangeRuleParameter implements RuleParameter ,
     }
     return list;
   }
-
-  public String getName() 
-  {
-    return my_name;
-  }
-
-  public Object clone() {
-    RangeRuleParameter rrp 
-      = new RangeRuleParameter(my_name, 
-			       (RangeRuleParameterEntry[])my_ranges.clone());
-    try {
-      rrp.setValue(my_value);
-    } catch(RuleParameterIllegalValueException rpive) {}
-    return rrp;
-  }
-
-  protected String my_name;
-  protected String my_value;
-  protected RangeRuleParameterEntry []my_ranges;
 }
+
+

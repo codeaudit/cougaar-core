@@ -13,18 +13,23 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: DoubleRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: DoubleRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * An DoubleRuleParameter is a RuleParameter with specified/protected
  * double bounds that returns a Double
  */
-public class DoubleRuleParameter implements RuleParameter,
-					    java.io.Serializable
-{
+public class DoubleRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+  protected String my_name;
+  protected double my_min;
+  protected double my_max;
+  protected Double my_value;
 
   /**
    * Constructor sets min/max values and establishes value as not set
@@ -32,34 +37,62 @@ public class DoubleRuleParameter implements RuleParameter,
   public DoubleRuleParameter(String param_name, double min, double max)
   { 
     my_min = min; my_max = max; my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
   public DoubleRuleParameter(String param_name)
   { 
-    name = param_name;
+    my_name = param_name;
   }
 
-  public void setBounds(double min, double max)
-  { 
-    my_min = min; 
-    my_max = max;
+  public DoubleRuleParameter() {
   }
-
-  public double getLowerBound() {
-    return my_min;
-  }
-
-  public double getUpperBound() {
-    return my_max;
-  }
-
-
 
   /**
    * Parameter type is DOUBLE
    */
   public int ParameterType() { return RuleParameter.DOUBLE_PARAMETER; }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
+  public double getMin() {
+    return my_min;
+  }
+    
+  public void setMin(double min) {
+    my_min = min;
+  }
+
+  public double getMax() {
+    return my_max;
+  }
+
+  public void setMax(double max) {
+    my_max = max;
+  }
+
+  public void setBounds(double min, double max) { 
+    if (min > max) {
+      throw new java.lang.IllegalArgumentException("min  - " + min + 
+                                                   " - must be greater than max - " + max);
+    }
+    my_min = min; 
+    my_max = max;
+  }
+
+  public double getLowerBound() {
+    return getMin();
+  }
+
+  public double getUpperBound() {
+    return getMax();
+  }
 
   /**
    * Get parameter value (Double)
@@ -110,6 +143,13 @@ public class DoubleRuleParameter implements RuleParameter,
       
   }
 
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_min, "Min");
+    pr.print(my_max, "Max");
+    pr.print(my_value, "Value");
+  }
+
   public static void Test() 
   {
     DoubleRuleParameter drp = new DoubleRuleParameter("testDoubleParam", 3.14, 10.73);
@@ -152,22 +192,13 @@ public class DoubleRuleParameter implements RuleParameter,
       " [" + my_min + " , " + my_max + "] >";
   }
 
-  public String getName() 
-  {
-    return name;
-  }
-
-
   public Object clone() {
-    DoubleRuleParameter dp = new DoubleRuleParameter(name, my_min, my_max);
+    DoubleRuleParameter dp = new DoubleRuleParameter(my_name, my_min, my_max);
     try {
       dp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return dp;
   }
 
-  protected String name;
-  protected Double my_value;
-  protected double my_min;
-  protected double my_max;
+
 }

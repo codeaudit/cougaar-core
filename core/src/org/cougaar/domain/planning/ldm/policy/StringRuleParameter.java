@@ -14,25 +14,30 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: StringRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: StringRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * An StringRuleParameter is a RuleParameter that returns an arbitrary string
  */
-public class StringRuleParameter implements RuleParameter,
-					    java.io.Serializable
-{
+public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+  protected String my_name;
+  protected String my_value;
 
   /**
    * Constructor  - Initially not set
    */
-  public StringRuleParameter(String param_name)
-  { 
+  public StringRuleParameter(String param_name) { 
     my_value = null;
-    name = param_name;
+    my_name = param_name;
+  }
+
+  public StringRuleParameter() {
   }
 
   /**
@@ -40,12 +45,19 @@ public class StringRuleParameter implements RuleParameter,
    */
   public int ParameterType() { return RuleParameter.STRING_PARAMETER; }
 
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
   /**
    * Get parameter value (String)
    * @returns Object parameter value (String). Note : could be null.
    */
-  public Object getValue()
-  {
+  public Object getValue() {
     return my_value; 
   }
 
@@ -55,8 +67,7 @@ public class StringRuleParameter implements RuleParameter,
    * @throws RuleParameterIllegalValueException (all strings accepted)
    */
   public void setValue(Object new_value) 
-       throws RuleParameterIllegalValueException
-  {
+       throws RuleParameterIllegalValueException {
     boolean success = false;
     if (new_value instanceof String) {
       my_value = (String)new_value;
@@ -80,25 +91,23 @@ public class StringRuleParameter implements RuleParameter,
   }
 
 
-  public String toString() 
-  {
+  public String toString() {
     return "#<STRING_PARAMETER : " + my_value + ">";
   }
 
-  public String getName() 
-  {
-    return name;
-  }
-
   public Object clone() {
-    StringRuleParameter srp = new StringRuleParameter(name);
+    StringRuleParameter srp = new StringRuleParameter(my_name);
     try {
       srp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return srp;
   }
 
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_value, "Value");
+  }
 
-  protected String name;
-  protected String my_value;
 }
+
+

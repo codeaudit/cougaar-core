@@ -17,11 +17,12 @@ package org.cougaar.domain.planning.ldm.policy;
  *    INTEGER - Integer value type (within given bounds)
  *    DOUBLE - Double value type (within given bounds)
  *    STRING - String value type
+ *    LONG - Long value type (within given bounds)
  *    ENUMERATION - Enumeration value type (String from given list)
  *    BOOLEAN - Boolean value type
  *    CLASS - Java class value type (implementing given interface)
  *    KEY - Set of String values (with default) indexed off a key
- *    RANGE - Set of String values (with default) indexed 
+ *    RANGE - Set of values (String or RuleParameter) (with default) indexed 
  *        from a list of integer ranges
  *
  */

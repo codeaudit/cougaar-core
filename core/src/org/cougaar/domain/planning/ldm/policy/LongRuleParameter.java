@@ -13,57 +13,93 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: LongRuleParameter.java,v 1.1 2001-02-15 19:40:05 tomlinso Exp $
+ * @version $Id: LongRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * An LongRuleParameter is a RuleParameter with specified/protected
  * long bounds that returns an Long
  */
-public class LongRuleParameter implements RuleParameter, 
-					     java.io.Serializable
-{
+public class LongRuleParameter implements RuleParameter, java.io.Serializable {
+
+  protected String my_name;
+  protected Long my_value;
+  protected long my_min;
+  protected long my_max;
 
   /**
    * Constructor sets min/max values and establishes value as not set
    */
   public LongRuleParameter(String param_name, long min, long max, long value)
-    throws RuleParameterIllegalValueException
-  {
+    throws RuleParameterIllegalValueException {
     this(param_name, min, max);
     setValue(new Long(value));
   }
 
   public LongRuleParameter(String param_name, long min, long max) {
     my_min = min; my_max = max; my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
-  public LongRuleParameter(String param_name)
-  { 
+  public LongRuleParameter(String param_name) { 
     my_value = null;
-    name = param_name;
+    my_name = param_name;
+  }
+
+  public LongRuleParameter() {
+  }
+
+  /*
+   * Parameter type is LONG
+   */
+  public int ParameterType() { return RuleParameter.LONG_PARAMETER; }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
+  public long getMin() {
+    return my_min;
+  }
+    
+  public void setMin(long min) {
+    my_min = min;
+  }
+
+  public long getMax() {
+    return my_max;
+  }
+
+  public void setMax(long max) {
+    my_max = max;
   }
 
   public void setBounds(long min, long max) {
+    if (min > max) {
+      throw new java.lang.IllegalArgumentException("min  - " + min + 
+                                                   " - must be greater than max - " + max);
+    }
     my_min = min; 
     my_max = max;
   }
 
   public long getLowerBound() {
-    return my_min;
+    return getMin();
   }
 
   public long getUpperBound() {
-    return my_max;
+    return getMax();
   }
-
-  /**
-   * Parameter type is LONG
-   */
-  public int ParameterType() { return RuleParameter.LONG_PARAMETER; }
 
   /**
    * Get parameter value (Long)
@@ -118,6 +154,30 @@ public class LongRuleParameter implements RuleParameter,
       
   }
 
+
+  public String toString() 
+  {
+    return "<#LONG_PARAMETER : " + my_value + 
+      " [" + my_min + " , " + my_max + "]>";
+  }
+
+
+    
+  public Object clone() {
+    LongRuleParameter irp = new LongRuleParameter(my_name, my_min, my_max);
+    try {
+      irp.setValue(my_value);
+    } catch(RuleParameterIllegalValueException rpive) {}
+    return irp;
+  }
+
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_min, "Min");
+    pr.print(my_max, "Max");
+    pr.print(my_value, "Value");
+  }
+
   public static void Test() 
   {
     LongRuleParameter irp = new LongRuleParameter("testIntParam", 3, 10);
@@ -154,28 +214,10 @@ public class LongRuleParameter implements RuleParameter,
 
   }
 
-  public String toString() 
-  {
-    return "#<LONG_PARAMETER : " + my_value + 
-      " [" + my_min + " , " + my_max + "] >";
-  }
 
-
-  public String getName() 
-  {
-    return name;
-  }
-
-  public Object clone() {
-    LongRuleParameter irp = new LongRuleParameter(name, my_min, my_max);
-    try {
-      irp.setValue(my_value);
-    } catch(RuleParameterIllegalValueException rpive) {}
-    return irp;
-  }
-
-  protected String name;
-  protected Long my_value;
-  protected long my_min;
-  protected long my_max;
 }
+
+
+
+
+

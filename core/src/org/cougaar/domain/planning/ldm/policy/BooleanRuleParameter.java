@@ -14,18 +14,21 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 
+import org.cougaar.core.util.AsciiPrinter;
+import org.cougaar.core.util.SelfPrinter;
+
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: BooleanRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: BooleanRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
  * A BooleanRuleParameter is a RuleParameter that contains a single true
  * or false value
  */
-public class BooleanRuleParameter implements RuleParameter,
-					    java.io.Serializable
-{
+public class BooleanRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+  protected String my_name;
+  protected Boolean my_value;
 
   /**
    * Constructor  - Initially not set
@@ -33,7 +36,7 @@ public class BooleanRuleParameter implements RuleParameter,
   public BooleanRuleParameter(String param_name)
   { 
     my_value = null;
-    name = param_name;
+    my_name = param_name;
   }
 
   /**
@@ -42,13 +45,24 @@ public class BooleanRuleParameter implements RuleParameter,
   public BooleanRuleParameter(String param_name, boolean value)
   { 
     my_value = new Boolean(value);
-    name = param_name;
+    my_name = param_name;
+  }
+
+  public BooleanRuleParameter() {
   }
 
   /**
    * Parameter type is Boolean
    */
   public int ParameterType() { return RuleParameter.BOOLEAN_PARAMETER; }
+
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
 
   /**
    * Get parameter value (Boolean)
@@ -95,20 +109,19 @@ public class BooleanRuleParameter implements RuleParameter,
     return "#<BOOLEAN_PARAMETER : " + my_value + ">";
   }
 
-  public String getName() 
-  {
-    return name;
-  }
-
   public Object clone() {
-    BooleanRuleParameter brp = new BooleanRuleParameter(name);
+    BooleanRuleParameter brp = new BooleanRuleParameter(my_name);
     try {
       brp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return brp;
   }
 
+  public void printContent(AsciiPrinter pr) {
+    pr.print(my_name, "Name");
+    pr.print(my_value, "Value");
+  }
 
-  protected String name;
-  protected Boolean my_value;
 }
+
+

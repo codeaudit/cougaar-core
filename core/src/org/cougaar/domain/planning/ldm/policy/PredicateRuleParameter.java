@@ -12,11 +12,12 @@ package org.cougaar.domain.planning.ldm.policy;
 
 import org.cougaar.domain.planning.ldm.policy.RuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
+
 import org.cougaar.util.UnaryPredicate;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PredicateRuleParameter.java,v 1.1 2001-02-15 19:45:20 tomlinso Exp $
+ * @version $Id: PredicateRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
  **/
 
 /**
@@ -25,13 +26,18 @@ import org.cougaar.util.UnaryPredicate;
  * predicate to the test object.
  **/
 public class PredicateRuleParameter implements RuleParameter, java.io.Serializable {
+  protected String my_name;
+  protected UnaryPredicate thePredicate;
 
   /**
    * Constructor sets the predicate
    **/
   public PredicateRuleParameter(String param_name, UnaryPredicate aPredicate) { 
-    name = param_name;
+    my_name = param_name;
     thePredicate = aPredicate;
+  }
+
+  public PredicateRuleParameter() {
   }
 
   /**
@@ -41,9 +47,17 @@ public class PredicateRuleParameter implements RuleParameter, java.io.Serializab
     return RuleParameter.PREDICATE_PARAMETER;
   }
 
+  public String getName() {
+    return my_name;
+  }
+
+  public void  setName(String name) {
+    my_name = name;
+  }
+
   /**
-   * Get parameter value (Integer)
-   * @returns Object parameter value (Integer). Note : could be null.
+   * Get parameter value (UnaryPredicate)
+   * @returns Object parameter value (UnaryPredicate). Note : could be null.
    */
   public Object getValue() {
     return thePredicate;
@@ -87,16 +101,8 @@ public class PredicateRuleParameter implements RuleParameter, java.io.Serializab
     return "#<PREDICATE_PARAMETER : " + thePredicate.toString();
   }
 
-
-  public String getName() 
-  {
-    return name;
-  }
-
   public Object clone() {
-    return new PredicateRuleParameter(name, thePredicate);
+    return new PredicateRuleParameter(my_name, thePredicate);
   }
 
-  protected String name;
-  protected UnaryPredicate thePredicate;
 }
