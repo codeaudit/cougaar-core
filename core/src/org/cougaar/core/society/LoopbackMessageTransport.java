@@ -4,7 +4,7 @@ class LoopbackMessageTransport extends MessageTransport
 {
 
     public void routeMessage(Message message) {
-	getBinder().deliverMessage(message);
+	recvQ.deliverMessage(message);
     }
 
     public void registerClient(MessageTransportClient client) {

@@ -356,7 +356,7 @@ public class RMIMessageTransport
         return myServerProxy;
       }
     } else {
-      return new MTImpl(this, clientAddress);
+      return new MTImpl(this, clientAddress, recvQ);
     }
   }
 

@@ -22,33 +22,50 @@ import org.cougaar.util.*;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageTransport;
+import org.cougaar.core.society.ReceiveQueue;
 
 /** actual RMI remote object providing the implementation of MessageTransport client
  **/
 
-public class MTImpl extends UnicastRemoteObject implements MT {
-  private MessageTransport transport;
-  private MessageAddress address;
+public class MTImpl extends UnicastRemoteObject implements MT 
+{
+    private MessageTransport transport;
+    private MessageAddress address;
+    private ReceiveQueue recvQ;
 
-  //public MTImpl() throws RemoteException {} // not used
+    //public MTImpl() throws RemoteException {} // not used
 
-  public MTImpl(MessageTransport mt, MessageAddress addr) 
-      throws RemoteException {
-    super();
-    transport = mt;
-    address = addr;
-  }
-
-  public void rerouteMessage(Message m) {
-    try {
-      transport.rerouteMessage(m);
-    } catch (Exception e) {
-      System.err.println("\n\nCaught exception in shim: "+e);
-      e.printStackTrace();
+    public MTImpl(MessageTransport mt, MessageAddress addr) 
+	throws RemoteException 
+    {
+	this(mt, addr, null);
     }
-  }
 
-  public MessageAddress getMessageAddress() {
-    return address;
-  }
+    public MTImpl(MessageTransport mt, MessageAddress addr, ReceiveQueue recvQ) 
+	throws RemoteException 
+    {
+	super();
+	transport = mt;
+	address = addr;
+	this.recvQ = recvQ;
+    }
+
+    public void rerouteMessage(Message m) {
+	try {
+	    if (recvQ != null) {
+		// System.err.println("Something efficient happened today ");
+		recvQ.deliverMessage(m);
+	    } else {
+		// System.err.println("Unwinding will happen today ");
+		transport.rerouteMessage(m);
+	    }
+	} catch (Exception e) {
+	    System.err.println("\n\nCaught exception in shim: "+e);
+	    e.printStackTrace();
+	}
+    }
+
+    public MessageAddress getMessageAddress() {
+	return address;
+    }
 }

@@ -10,32 +10,54 @@
 
 package org.cougaar.core.society;
 
+import java.util.Enumeration;
+import java.util.Vector;
+
 public class MessageTransportServerProxy implements MessageTransportServer
 {
-    private MessageTransportServerImpl server;
+    private MessageTransportRegistry registry;
+    private SendQueue sendQ;
 
-    public MessageTransportServerProxy(MessageTransportServerImpl server) {
-	this.server = server;
+    public MessageTransportServerProxy(MessageTransportRegistry registry,
+				       SendQueue queue) 
+    {
+	this.sendQ = queue;
+	this.registry = registry;
     }
 
+    private boolean checkMessage(Message message) {
+	MessageAddress target = message.getTarget();
+	// message is ok as long as the target is not empty or null
+	return target != null && !target.toString().equals("");
+    }
+
+
+
+
     public void sendMessage(Message m) {
-	server.sendMessage(m);
+	if (checkMessage(m)) {
+	    sendQ.sendMessage(m);
+	} else {
+	    System.err.println("Warning: MessageTransport.sendMessage of malformed message: "+m);
+	    Thread.dumpStack();
+	    return;
+	}
     }
 
     public void registerClient(MessageTransportClient client) {
-	server.registerClient(client);
+	registry.registerClient(client);
     }
 
     public void addMessageTransportWatcher(MessageTransportWatcher watcher) {
-	server.addMessageTransportWatcher(watcher);
+	registry.addMessageTransportWatcher(watcher);
     }
    
     public String getIdentifier() {
-	return server.getIdentifier();
+	return registry.getIdentifier();
     }
 
     public boolean addressKnown(MessageAddress a) {
-	return server.addressKnown(a);
+	return registry.addressKnown(a);
     }
 
 }

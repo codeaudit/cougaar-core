@@ -18,6 +18,7 @@ public abstract class MessageTransport
   implements Component
 {
     private MessageTransportServerBindingSite binder;
+    protected ReceiveQueue recvQ;
 
     abstract public void routeMessage(Message message);
     abstract public void registerClient(MessageTransportClient client);
@@ -30,6 +31,11 @@ public abstract class MessageTransport
     protected MessageTransportServerBindingSite getBinder() {
 	return binder;
     }
+
+    public void setRecvQ(ReceiveQueue recvQ) {
+	this.recvQ = recvQ;
+    }
+
 
     // Hook for handling incoming remote route requests, only
     // called from our own MTImpl.
