@@ -699,7 +699,7 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     } catch (Exception e) {}
 
     synchronized (System.err) {
-      System.out.print("ALP ");
+      System.out.print("COUGAAR ");
       if (version == null) {
         System.out.println("(unknown version)");
       } else {
