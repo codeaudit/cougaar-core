@@ -22,12 +22,27 @@ package org.cougaar.core.component;
 
 import java.util.*;
 
-/** A Component which contains other components.
+/** 
+ * A Component which contains other components.
  * <p>
- * add, remove, etc will generally take either Component or 
- * ComponentDescription instances, depending on the Container.
+ * A Container plays a role similar to a BeanContext.
  * <p>
- * ContainingComponent is similar to BeanContext.
+ * Most Collection operations (add, remove, contains, etc) expect 
+ * either ComponentDescription or Component instances as arguments, 
+ * depending upon the caller and this component's container.  In
+ * general a ComponentDescription is preferred.
+ * <p>
+ * Like all components, this component has an implicit 
+ * "insertion point" in the component hierarchy.  A collection 
+ * operation that specifies a ComponentDescription at a lower-level
+ * insertion point will be forwarded down the hierarchy to the
+ * appropriate child container.
+ * <p>
+ * The collection API of a container is defined to be the recursive
+ * set of all components contained in that container.  For example,
+ * if this container contains a "sub-" container, the size of this
+ * container includes all the components in that "sub-" container.
+ * All collection methods are similarily defined.
  * <p>
  * The Container will implement or delegate to an implementation of 
  * a ContainerAPI callable by associated Binders (and BinderFactories).
