@@ -76,8 +76,11 @@ public interface AspectType {
   /** The time at which a task should arrive at the POD **/
   static final int POD_DATE = 13;
 
+  /** The extent to which a task has been satisfactorily completed **/
+  static final int READINESS = 14;
+
   /** The last core-defined aspect type **/
-  static final int N_CORE_ASPECTS = 14;
+  static final int N_CORE_ASPECTS = 15;
 
   public static final String[] ASPECT_STRINGS = {
     "START_TIME",
@@ -94,5 +97,6 @@ public interface AspectType {
     "TYPED_QUANTITY",
     "POD",
     "POD_DATE",
+    "READINESS",
   };
 }
