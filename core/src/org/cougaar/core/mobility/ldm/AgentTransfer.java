@@ -33,9 +33,9 @@ import org.cougaar.core.util.UniqueObject;
  */
 public interface AgentTransfer extends UniqueObject {
 
-  int NO_STATUS = 0;
-  int FAILURE_STATUS = 1;
-  int SUCCESS_STATUS = 2;
+  int NO_STATUS = AgentControl.NONE;
+  int FAILURE_STATUS = AgentControl.FAILURE;
+  int SUCCESS_STATUS = AgentControl.MOVED;
 
   /**
    * UID support from unique-object.
