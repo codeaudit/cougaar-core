@@ -343,6 +343,14 @@ public class ScheduleImpl
         
   /* methods returned by ScheduleImplBeanInfo */
 
+  public synchronized Date getStartDate_quiet() {
+    return (isEmpty() ? (new Date(-1)) : getStartDate());
+  }
+
+  public synchronized Date getEndDate_quiet() {
+    return (isEmpty() ? (new Date(-1)) : getEndDate());
+  }
+
   public synchronized ScheduleElement[] getScheduleElements() {
     ScheduleElement s[] = new ScheduleElement[size()];
     return (ScheduleElement[])toArray(s);

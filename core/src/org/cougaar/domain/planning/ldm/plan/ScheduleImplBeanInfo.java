@@ -69,11 +69,11 @@ public class ScheduleImplBeanInfo extends SimpleBeanInfo {
 					      "getScheduleElement", null);
       pd[i++] = new PropertyDescriptor("startDate",
 				       ScheduleClass,
-				       "getStartDate",
+				       "getStartDate_quiet",
 				       null);
       pd[i++] = new PropertyDescriptor("endDate",
 				       ScheduleClass,
-				       "getEndDate",
+				       "getEndDate_quiet",
 				       null);
       PropertyDescriptor[] additionalPDs = Introspector.getBeanInfo(ScheduleClass.getSuperclass()).getPropertyDescriptors();
       PropertyDescriptor[] finalPDs = new PropertyDescriptor[additionalPDs.length + pd.length];
