@@ -22,6 +22,8 @@
 package org.cougaar.core.thread;
 
 
+import java.util.ArrayList;
+
 class SimplePropagatingScheduler extends SimpleScheduler
 {
     SimplePropagatingScheduler(ThreadListenerProxy listenerProxy, String name)
@@ -33,6 +35,7 @@ class SimplePropagatingScheduler extends SimpleScheduler
     boolean requestRights(SimpleScheduler requestor) {
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
+	    // This is the root
 	    return super.requestRights(requestor);
 	} else {
 	    SimpleScheduler parent = (SimpleScheduler) 
@@ -45,8 +48,7 @@ class SimplePropagatingScheduler extends SimpleScheduler
     void releaseRights(SimpleScheduler consumer) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
-	    // Here we need to give other children a chance to claim
-	    // the newly available slot
+	    // This is the root
 	    super.releaseRights(consumer);
 	} else {
 	    SimpleScheduler parent = (SimpleScheduler) 
@@ -56,17 +58,36 @@ class SimplePropagatingScheduler extends SimpleScheduler
    }
 
 
-    SchedulableObject getNextPending() {
-	SchedulableObject handoff = super.getNextPending();
-	if (handoff != null) return handoff;
 
-	java.util.Iterator itr = getTreeNode().getChildren().iterator();
-	while (itr.hasNext()) {
-	    TreeNode child_node = (TreeNode) itr.next();
+
+    // Holds the next index of the round-robin selection.  A value of
+    // -1 refers to the local queue, rather than any of the children.
+    private int currentIndex = -1;
+
+    private SchedulableObject checkNextPending(ArrayList children) {
+	SchedulableObject handoff = null;
+	if (currentIndex == -1) {
+	    handoff = super.getNextPending();
+	    currentIndex = children.size() == 0 ? -1 : 0;
+	} else {
+	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
+	    if (currentIndex == children.size()) currentIndex = -1;
 	    SimpleScheduler child = (SimpleScheduler) 
 		child_node.getScheduler();
 	    handoff = child.getNextPending();
+	}
+	return handoff;
+    }
+
+    SchedulableObject getNextPending() {
+	int initialIndex = currentIndex;
+	ArrayList children = getTreeNode().getChildren();
+	SchedulableObject handoff = null;
+	// repeat-until
+	while (true) {
+	    handoff = checkNextPending(children);
 	    if (handoff != null) return handoff;
+	    if (currentIndex == initialIndex) break;
 	}
 	return null;
     }
