@@ -62,7 +62,7 @@ public interface SimpleServletSupport {
    * <tt>HttpServletRequest.getRequestURI()</tt>, which
    * will be "/$encoded-agent-name/path".
    */
-  public String getPath();
+  String getPath();
 
   /**
    * Query the blackboard for all Objects that match the
@@ -81,7 +81,7 @@ public interface SimpleServletSupport {
    * obtain the <code>ServletService</code> directly.
    * See <code>SimpleServletComponent</code> as a guide.
    */
-  public Collection queryBlackboard(UnaryPredicate pred);
+  Collection queryBlackboard(UnaryPredicate pred);
 
   /**
    * Get the URL- and HTML-safe (encoded) name of the
@@ -101,7 +101,7 @@ public interface SimpleServletSupport {
    *
    * @see #encodeAgentName
    */
-  public String getEncodedAgentName();
+  String getEncodedAgentName();
 
   /**
    * Get the Agent's identifier for the Agent that contains
@@ -113,13 +113,13 @@ public interface SimpleServletSupport {
    *
    * @see #getEncodedAgentName
    */
-  public ClusterIdentifier getAgentIdentifier();
+  ClusterIdentifier getAgentIdentifier();
 
   /**
    * Equivalent to 
    * <tt>getAllEncodedAgentNames(new ArrayList())</tt>.
    */
-  public List getAllEncodedAgentNames();
+  List getAllEncodedAgentNames();
 
   /**
    * Fill the given <tt>toList</tt> with all the 
@@ -129,7 +129,7 @@ public interface SimpleServletSupport {
    *
    * @see #getEncodedAgentName
    */
-  public List getAllEncodedAgentNames(List toList);
+  List getAllEncodedAgentNames(List toList);
 
   /**
    * Utility method to encode an Agent name -- 
@@ -137,7 +137,7 @@ public interface SimpleServletSupport {
    *
    * @see #getEncodedAgentName
    */
-  public String encodeAgentName(String name);
+  String encodeAgentName(String name);
 
   //
   // add other COUGAAR-specific methods here.

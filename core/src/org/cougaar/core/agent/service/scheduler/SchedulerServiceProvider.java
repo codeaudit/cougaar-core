@@ -574,7 +574,7 @@ public class SchedulerServiceProvider
   }    
 
   public static final class Semaphore {
-    public Semaphore() {};
+    public Semaphore() {}
 
     private boolean attention = false;
     public synchronized boolean isSet() {
