@@ -1,5 +1,9 @@
 package org.cougaar.core.society;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
+
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ContainerSupport;
@@ -20,22 +24,62 @@ class MessageTransportServerImpl
     protected DestinationQueueFactory destQFactory;
     protected LinkSenderFactory linkSenderFactory;
     protected RouterFactory routerFactory;
+    protected ReceiveLinkFactory receiveLinkFactory;
 
 
-    // Singeltons
+    // Singletons
     protected NameSupport nameSupport;
     protected MessageTransportRegistry registry;
     protected Router router;
     protected SendQueue sendQ;
     protected ReceiveQueue recvQ;
 
+    private ArrayList aspects;
+
+
+    private void readAspects() {
+	String property = "org.cougaar.message.transport.aspects";
+	String classes = System.getProperty(property);
+	if (classes == null) return;
+
+	aspects = new ArrayList();
+	StringTokenizer tokenizer = new StringTokenizer(classes, ",");
+	while (tokenizer.hasMoreElements()) {
+	    String classname = tokenizer.nextToken();
+	    try {
+		Class aspectClass = Class.forName(classname);
+		MessageTransportAspect aspect = 
+		    (MessageTransportAspect) aspectClass.newInstance();
+		aspects.add(aspect);
+	    }
+	    catch (Exception ex) {
+		ex.printStackTrace();
+		// System.err.println(ex);
+	    }
+	}
+    }
+
     public MessageTransportServerImpl(String id) {
+	readAspects();
+
 	nameSupport = new NameSupport(id);
 	registry = new MessageTransportRegistry(id, this);
+
+	//Watcher Aspect is special because the MTServicer interace
+	//needs it.  So we have to make the Watcher Aspect all the
+	//time.
+	WatcherAspect watcherAspect =  new WatcherAspect();
+	registry.setWatcherManager(watcherAspect);
+	if (aspects == null) aspects = new ArrayList();
+	aspects.add(watcherAspect);
+
 	serviceFactory = new MessageTransportServerServiceFactoryImpl();
 	transportFactory = 
 	    new MessageTransportFactory(id, registry, nameSupport);
-	
+	receiveLinkFactory = new ReceiveLinkFactory(registry,
+						    aspects);
+
+	registry.setReceiveLinkFactory(receiveLinkFactory);
 	registry.setTransportFactory(transportFactory);
 
 	wireComponents(id);
@@ -47,7 +91,7 @@ class MessageTransportServerImpl
     }
 
     protected void wireComponents(String id) {
-	recvQFactory = new ReceiveQueueFactory(registry);
+	recvQFactory = new ReceiveQueueFactory(registry, aspects);
 	recvQ = recvQFactory.getReceiveQueue(id+"/InQ");
 
 
@@ -55,13 +99,16 @@ class MessageTransportServerImpl
 	    new LinkSenderFactory(registry, transportFactory);
 	
 	destQFactory = 
-	    new DestinationQueueFactory(registry, transportFactory, linkSenderFactory);
+	    new DestinationQueueFactory(registry, 
+					transportFactory, 
+					linkSenderFactory,
+					aspects);
 	routerFactory =
-	    new RouterFactory(registry, destQFactory);
+	    new RouterFactory(registry, destQFactory, aspects);
 
 	router = routerFactory.getRouter();
 
-	sendQFactory = new SendQueueFactory(registry);
+	sendQFactory = new SendQueueFactory(registry, aspects);
 	sendQ = sendQFactory.getSendQueue(id+"/OutQ", router);
 
     }

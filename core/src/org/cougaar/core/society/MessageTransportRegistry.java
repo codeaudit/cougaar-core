@@ -1,40 +1,46 @@
 package org.cougaar.core.society;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Vector;
 
 class MessageTransportRegistry
 {
     private String name;
-    private Vector watchers;
     private HashMap myClients = new HashMap(89);
+    private HashMap receiveLinks = new HashMap();
     private MessageTransportServerImpl server;
     private MessageTransportFactory transportFactory;
+    private ReceiveLinkFactory receiveLinkFactory;
+    private WatcherAspect watcherAspect;
 
     MessageTransportRegistry(String name, MessageTransportServerImpl server) {
 	this.name = name;
 	this.server = server;
-	watchers = new Vector();
     }
 
     void setTransportFactory(MessageTransportFactory transportFactory) {
 	this.transportFactory = transportFactory;
     }
 
-    Enumeration getWatchers() {
-	return watchers.elements();
-    }
-
-    void addMessageTransportWatcher(MessageTransportWatcher watcher) {
-	watchers.add(watcher);
+    void setReceiveLinkFactory(ReceiveLinkFactory receiveLinkFactory) {
+	this.receiveLinkFactory = receiveLinkFactory;
     }
 
 
     String getIdentifier() {
 	return name;
+    }
+
+
+
+    void setWatcherManager(WatcherAspect watcherAspect) {
+	this.watcherAspect =watcherAspect;
+    }
+ 
+
+    public WatcherAspect getWatcherManager() {
+	return watcherAspect;
     }
 
 
@@ -69,6 +75,40 @@ class MessageTransportRegistry
 	}
     }
 
+
+
+
+
+    private void addLocalReceiveLink(ReceiveLink link, MessageAddress key) {
+	synchronized (receiveLinks) {
+	    try {
+		receiveLinks.put(key, link);
+	    } catch(Exception e) {}
+	}
+    }
+
+
+    ReceiveLink findLocalReceiveLink(MessageAddress id) {
+	synchronized (receiveLinks) {
+	    return (ReceiveLink) receiveLinks.get(id);
+	}
+    }
+
+    // this is a slow implementation, as it conses a new set each time.
+    // Better alternatives surely exist.
+    Iterator findLocalMulticastReceiveLinks(MulticastMessageAddress addr)
+    {
+	synchronized (receiveLinks) {
+	    return new ArrayList(receiveLinks.values()).iterator();
+	}
+    }
+
+
+
+
+
+
+
     private void registerClientWithSociety(MessageTransportClient client) {
 	// register with each component transport
 	Iterator transports = transportFactory.getTransports().iterator();
@@ -81,7 +121,12 @@ class MessageTransportRegistry
     void registerClient(MessageTransportClient client) {
 	addLocalClient(client);
 	registerClientWithSociety(client);
+	ReceiveLink link = receiveLinkFactory.getReceiveLink(client);
+	addLocalReceiveLink(link, client.getMessageAddress());
     }
+
+
+
 
 
     boolean addressKnown(MessageAddress address) {

@@ -3,12 +3,15 @@ package org.cougaar.core.society;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-public class ReceiveQueueFactory 
+public class ReceiveQueueFactory extends AspectFactory
 {
     private ArrayList queues = new ArrayList();
     private MessageTransportRegistry registry;
 
-    ReceiveQueueFactory(MessageTransportRegistry registry) {
+    ReceiveQueueFactory(MessageTransportRegistry registry,
+			ArrayList aspects)
+    {
+	super(aspects);
 	this.registry = registry;
     }
 
@@ -19,7 +22,8 @@ public class ReceiveQueueFactory
 	    if (candidate != null && candidate.matches(name)) return candidate;
 	}
 	// No match, make a new one
-	ReceiveQueue queue = new ReceiveQueue(name, registry);
+	ReceiveQueue queue = new ReceiveQueueImpl(name, registry);
+	queue = (ReceiveQueue) attachAspects(queue, ReceiveQueue.class);
 	queues.add(queue);
 	return queue;
     }

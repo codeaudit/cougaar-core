@@ -10,8 +10,6 @@
 
 package org.cougaar.core.society;
 
-import java.util.Enumeration;
-import java.util.Vector;
 
 public class MessageTransportServerProxy implements MessageTransportServer
 {
@@ -47,9 +45,14 @@ public class MessageTransportServerProxy implements MessageTransportServer
     public void registerClient(MessageTransportClient client) {
 	registry.registerClient(client);
     }
+    
 
     public void addMessageTransportWatcher(MessageTransportWatcher watcher) {
-	registry.addMessageTransportWatcher(watcher);
+	WatcherAspect mgr = registry.getWatcherManager();
+	if (mgr != null)
+	    mgr.addMessageTransportWatcher(watcher);
+	else
+	    System.err.println("Call to addMessageTransportWatcher but no WatcherManager exists");
     }
    
     public String getIdentifier() {
