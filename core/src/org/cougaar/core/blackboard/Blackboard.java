@@ -752,8 +752,10 @@ public class Blackboard extends Subscriber
     Collection matches = cs.search(communitySpec, filter);
     List cis = new ArrayList(matches.size());
     for (Iterator i = matches.iterator(); i.hasNext(); ) {
-      ClusterIdentifier cid = (ClusterIdentifier) i.next();
-      cis.add(cid);
+      Object o = i.next();
+      if (o instanceof ClusterIdentifier) {
+        cis.add(o);
+      }
     }
     return cis;
   }
