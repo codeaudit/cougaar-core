@@ -194,59 +194,66 @@ public class ComponentPlugin
    * This is the scheduler's hook into me
    **/
   protected class PluginCallback implements Trigger {
-      public void trigger() {
-	  if (!primed) {
-	      precycle();
-	  }
-	  if (readyToRun) { 
-	      cycle();
-	  }
+    public void trigger() {
+      if (!primed) {
+	precycle();
       }
+      if (readyToRun) { 
+	cycle();
+      }
+    }
+  }
+
+  protected void precycle() {
+    blackboard.openTransaction();
+    setupSubscriptions();
+
+    // run execute here so subscriptions don't miss out on the first
+    // batch in their subscription addedLists
+    execute();
+
+
+    readyToRun = false;  // don't need to run execute again
+    blackboard.closeTransaction();
+    primed = true;
+  }
+
+  protected void cycle() {
+    // do stuff
+    readyToRun = false;
+    blackboard.openTransaction();
+    execute();
+    blackboard.closeTransaction();
   }
       
-    protected void precycle() {
-	blackboard.openTransaction();
-	setupSubscriptions();
-	blackboard.closeTransaction();
-	primed = true;
+  /**
+   * override me
+   * Called once sometime after initialization
+   **/
+  protected void setupSubscriptions() {}
+  
+  /**
+   * override me
+   * Called everytime plugin is scheduled to run
+   **/
+  protected void execute() {}
+  
+  public String toString() {
+    return getBlackboardClientName();
+  }
+  
+  protected class ThinWatcher extends SubscriptionWatcher {
+    /** Override this method so we don't have to do a wait()
+     */
+    public void signalNotify(int event) {
+      // This seems to get called even though my subscriptions haven't changed. Why?
+      super.signalNotify(event);
+      
+      // ask the scheduler to run us again.
+      if (schedulerProd != null) {
+	readyToRun = true;
+	schedulerProd.trigger();
+      }
     }
-    
-      protected void cycle() {
-	  readyToRun = false;
-	  blackboard.openTransaction();
-	  execute();
-	  blackboard.closeTransaction();
-      }
-
-
-      /**
-       * override me
-       * Called once sometime after initialization
-       **/
-      protected void setupSubscriptions() {}
-      
-      /**
-       * override me
-       * Called everytime plugin is scheduled to run
-       **/
-      protected void execute() {}
-      
-      public String toString() {
-	  return getBlackboardClientName();
-      }
-      
-      protected class ThinWatcher extends SubscriptionWatcher {
-	  /** Override this method so we don't have to do a wait()
-	   */
-	  public void signalNotify(int event) {
-	      // This seems to get called even though my subscriptions haven't changed. Why?
-	      super.signalNotify(event);
-
-	      // ask the scheduler to run us again.
-	      if (schedulerProd != null) {
-		  readyToRun = true;
-		  schedulerProd.trigger();
-	      }
-	  }
-      }
+  }
 }
