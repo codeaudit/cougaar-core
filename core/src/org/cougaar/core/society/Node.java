@@ -530,12 +530,12 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     setNodeIdentifier(nid);
 
     // load node properties
-    PropertyTree nodePT = null;
+    ComponentDescription[] nodeDescs = null;
     if (filename != null) {
       try {
         // currently assumes ".ini" format
         InputStream in = getConfigFinder().open(filename);
-        nodePT = NodeINIParser.parse(in);
+        nodeDescs = INIParser.parse(in, "Node");
       } catch (Exception e) {
         System.err.println(
             "Unable to parse node \""+name+"\" file \""+filename+"\"");
@@ -553,20 +553,11 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
 
     registerExternalNodeController();
 
-    // load the clusters with an "AddClustersMessage".  
-    if ((nodePT != null) &&
-        (nodePT.containsKey("clusters"))) {
-      // It's fine to send the entire "nodePT", since only the "clusters" 
-      // entry is used.
-      AddClustersMessage myMessage = new AddClustersMessage();
-      myMessage.setOriginator(nid);
-      myMessage.setTarget(nid);
-      myMessage.setPropertyTree(nodePT);
-      // bypass the message system to send the message directly.
-      this.receiveMessage(myMessage);
-    } else {
-      System.err.println("Created empty Node");
-    }
+    // load the clusters
+    //
+    // once bulk-add ComponentMessages are implements this can
+    //   be done with "this.receiveMessage(compMsg)"
+    add(nodeDescs);
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
@@ -629,6 +620,14 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     }
 
     try {
+      //
+      // add an RMI stub for this Node in the RMI space
+      //
+      // a better implementation is to lookup the external controller
+      //   and register this node for external control, since it leaves
+      //   the RMI space clean...
+      //
+
       /*
       // create the local hook
       ExternalNodeController localENC = new ExternalNodeControllerImpl(this);
@@ -655,7 +654,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
 
       eController = remoteENC;
 
-      // never unbind!
+      // never unbind!  this leaves a mess...
       //reg.unbind(getIdentifier());
       //UnicastRemoteObject.unexportObject(remoteENC, true);
     } catch (Exception e) {
@@ -665,94 +664,152 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   }
 
   /**
-   * This method is responsible for creating the Clusters for this Node.
-   **/
-  protected void loadClusters(PropertyTree addClustersPT) {
-    // get the list of cluster entries from the PropertyTree
-    List clusterEntries;
+   * Create a Cluster from a ComponentDescription.
+   * <p>
+   * This should be moved into the future "AgentManager".
+   */
+  protected ClusterServesClusterManagement createCluster(
+      ComponentDescription desc) {
+
+    // check the cluster classname
+    String clusterClassname = desc.getClassname();
+
+    // load an instance of the cluster
+    //
+    // FIXME use the "desc.getCodebase()" and other arguments
+    ClusterServesClusterManagement cluster;
     try {
-      clusterEntries = (List)addClustersPT.get("clusters");
+      Class clusterClass = Class.forName(clusterClassname);
+      Object clusterInstance = clusterClass.newInstance();
+      if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
+        throw new ClassNotFoundException();
+      }
+      cluster = (ClusterServesClusterManagement)clusterInstance;
     } catch (Exception e) {
-      // illegal format!
-      clusterEntries = null;
-    }
-    int nClusterEntries = 
-      ((clusterEntries != null) ? clusterEntries.size() : 0);
-
-    if (nClusterEntries <= 0) {
-      // no clusters specified
-      return;
+      throw new IllegalArgumentException(
+          "Unable to load agent class: \""+clusterClassname+"\"");
     }
 
-    // other addClustersPT properties may be of interest, but for now
-    // we only use the "clusters" entry.
+    // the parameter should be the cluster name
+    String clusterid;
+    try {
+      clusterid = (String)((List)desc.getParameter()).get(0);
+    } catch (Exception e) {
+      clusterid = null;
+    }
+    if (clusterid == null) {
+      throw new IllegalArgumentException(
+          "Agent specification lacks a String \"name\" parameter");
+    }
+   
+    // set the ClusterId
+    ClusterIdentifier cid = new ClusterIdentifier(clusterid);
+    cluster.setClusterIdentifier(cid);
 
-    List addedClusters = new ArrayList(nClusterEntries);
+    //move the cluster to the intialized state
+    cluster.initialize();
+    cluster.load(this);
+    cluster.start();
+    if (cluster.getState() != cluster.ACTIVE) {
+      System.err.println("Cluster "+cluster+" is not Active!");
+    }
 
-    // create the clusters
-    System.err.println("Creating Clusters:");
-    List clusterPTs = new ArrayList(nClusterEntries);
-    for (int i = 0; i < nClusterEntries; i++) {
-      Object cObj = clusterEntries.get(i);
+    return cluster;
+  }
+  
+  // replace with Container's add, but keep this basic code
+  private final void add(ComponentDescription desc) {
+    // simply wrap as a single-element "bulk" operation
+    ComponentDescription[] descs = new ComponentDescription[1];
+    descs[0] = desc;
+    add(descs);
+  }
+ 
+  /**
+   * Add Clusters and their child Components (Plugins, etc) to this Node.
+   * <p>
+   * Note that this is a bulk operation, since the loading process is:<ol>
+   *   <li>Create the empty clusters</li>
+   *   <li>Add the Plugins and initialize the clusters</li>
+   * </ol>
+   * <p>
+   * This should be moved into the future "AgentManager".
+   */
+  protected void add(ComponentDescription[] descs) {
 
-      // get the cluster's PropertyTree
-      PropertyTree cpt;
+    int nDescs = ((descs != null) ? descs.length : 0);
+
+    System.err.print("Creating Clusters:");
+    List clusters = new ArrayList(nDescs);
+    for (int i = 0; i < nDescs; i++) {
       try {
-        if (cObj instanceof String) {
-          // read from file
-          String cname = (String)cObj;
-          System.err.println("\t"+cname);
-          // parse the cluster properties
-          // currently assume ".ini" files
-          InputStream in = getConfigFinder().open(cname+".ini");
-          cpt = ClusterINIParser.parse(in);
-          if ((cpt != null) &&
-              (!(cpt.containsKey("name")))) {
-            cpt.put("name", cname);
-          }
-        } else if (cObj instanceof PropertyTree) {
-          // already parsed
-          cpt = (PropertyTree)cObj;
-          String cname = (String)cpt.get("name");
-          System.err.println("\t"+cname);
-        } else {
+        ComponentDescription desc = descs[i];
+        String insertionPoint = desc.getInsertionPoint();
+        if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
+          // fix to support non-agent components
           throw new IllegalArgumentException(
-              "Expecting String or PropertyTree \"clusters\"["+i+"],"+
-              " but was given: "+
-              ((cObj != null) ? cObj.getClass().getName() : "null"));
+              "Currently only agent ADD is supported, not "+
+              insertionPoint);
         }
+        ClusterServesClusterManagement cluster = createCluster(desc);
+        ClusterIdentifier cid = cluster.getClusterIdentifier();
+        String cname = cid.toString();
+        System.err.print("\n\t"+cname);
+        clusters.add(cluster);
       } catch (Exception e) {
         System.err.println(
-            "Caught Exception during cluster initialization:"+e);
+            "\nUnable to load cluster["+i+"]: "+e);
         e.printStackTrace();
-        cpt = null;
-      }
-
-      // create the cluster
-      if (cpt != null) {
-        clusterPTs.add(cpt);
-        addedClusters.add(createCluster(cpt));
       }
     }
 
-    // load the plugins
-    System.err.print("Loading Plugins:");
-    int nClusterPTs = clusterPTs.size();
-    for (int j = 0; j < nClusterPTs; j++) {
-      ClusterServesClusterManagement cluster = 
-        (ClusterServesClusterManagement)addedClusters.get(j);
-      if (cluster != null) {
-        PropertyTree cpt = (PropertyTree)clusterPTs.get(j);
-        String cname = (String)cpt.get("name");
+    System.err.print("\nLoading Plugins:");
+    int nClusters = clusters.size();
+    for (int i = 0; i < nClusters; i++) {
+      try {
+        ClusterServesClusterManagement cluster = 
+          (ClusterServesClusterManagement)clusters.get(i);
+        ClusterIdentifier cid = cluster.getClusterIdentifier();
+        String cname = cid.toString();
+        // read from file
         System.err.print("\n\t"+cname);
-        populateCluster(cluster, cpt);
+        // parse the cluster properties
+        // currently assume ".ini" files
+        InputStream in = getConfigFinder().open(cname+".ini");
+        ComponentDescription[] cDescs = 
+          INIParser.parse(in, "Node.AgentManager.Agent");
+
+        // add the plugins and other cluster components
+        //
+        // FIXME could benefit from a bulk-add message
+        for (int j = 0; j < cDescs.length; j++) {
+          ComponentMessage addCM = 
+            new ComponentMessage(
+                cid,
+                cid,
+                ComponentMessage.ADD,
+                cDescs[j]);
+          // bypass the message system to initialize the cluster
+          cluster.receiveMessage(addCM);
+        }
+
+        // tell the cluster to proceed.
+        ClusterInitializedMessage m = new ClusterInitializedMessage();
+        m.setOriginator(cid);
+        m.setTarget(cid);
+        cluster.receiveMessage(m);
+      } catch (Exception e) {
+        System.err.println(
+            "\nUnable to add cluster["+i+"] child omponents: "+e);
+        e.printStackTrace();
+        clusters.set(i, null);
       }
     }
 
     System.err.println("\nPlugins Loaded.");
 
-    // append to the list of clusters
-    addClusters(addedClusters);
+    // save these clusters as children of the node
+    addClusters(clusters);
 
     // get the (optional) external listener
     ExternalNodeActionListener eListener;
@@ -767,10 +824,10 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
 
     // notify the listener
     if (eListener != null) {
-      int n = addedClusters.size();
+      int n = clusters.size();
       for (int i = 0; i < n; i++) {
         ClusterServesClusterManagement ci = 
-          (ClusterServesClusterManagement)addedClusters.get(i);
+          (ClusterServesClusterManagement)clusters.get(i);
         if (ci != null) {
           ClusterIdentifier ciId = ci.getClusterIdentifier();
           try {
@@ -791,117 +848,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   }
 
   /**
-   * Used by <tt>loadClusters(..)</tt> to create a Cluster.
-   * @see #loadClusters(PropertyTree)
-   */
-  protected ClusterServesClusterManagement createCluster(
-      PropertyTree clusterPT) {
-    try {
-      // get the cluster class name
-      String clusterClassName = (String)clusterPT.get("class");
-      if (clusterClassName == null) {
-        throw new IllegalArgumentException("Cluster lacks a \"class\"");
-      }
-
-      // load an instance of the cluster
-      Class clusterClass = Class.forName(clusterClassName);
-      Object clusterInstance = clusterClass.newInstance();
-      if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
-        throw new ClassNotFoundException();
-      }
-      ClusterServesClusterManagement cluster = 
-        (ClusterServesClusterManagement)clusterInstance;
-
-      // we pass in the alias as the cluster identifier so we can use this to 
-      //translate messages to system proxy objects 
-      String clusterid = (String)clusterPT.get("name");
-      if (clusterid == null) {
-        throw new IllegalArgumentException("Cluster lacks a \"name\"");
-      }
-      cluster.setClusterIdentifier(new ClusterIdentifier(clusterid));
-
-      //move the cluster to the intialized state
-      cluster.initialize();
-      cluster.load(this);
-      cluster.start();
-      if (cluster.getState() != cluster.ACTIVE) {
-        System.err.println("Cluster "+cluster+" is not Active!");
-      }
-
-      return cluster;
-    } catch (Exception ex) {
-      System.err.println("Caught Exception during cluster initialization:"+ex);
-      ex.printStackTrace();
-    }
-    return null;
-  }
-
-  /**
-   * Used by <tt>loadClusters(..)</tt> to load and start a Cluster.
-   * @see #loadClusters(PropertyTree)
-   */
-  protected boolean populateCluster(
-      ClusterServesClusterManagement cluster,
-      PropertyTree clusterPT) {
-    try {
-      ClusterIdentifier cid = cluster.getClusterIdentifier();
-
-      // add the plugins
-      PropertyTree pluginsPT = (PropertyTree)clusterPT.get("plugins");
-      int nPlugins = ((pluginsPT != null) ? pluginsPT.size() : 0);
-      for (int i = 0; i < nPlugins; i++) {
-        Map.Entry pi = pluginsPT.get(i);
-        String piName = (String)pi.getKey();
-        Vector piParams = (Vector)pi.getValue();
-        // OLD-style:
-        /*
-        AddPlugInMessage myMessage = new AddPlugInMessage();
-        myMessage.setOriginator(cid);
-        myMessage.setTarget(cid);
-        myMessage.setPlugIn(piName);
-        myMessage.setArguments(piParams);
-        // bypass the message system to initialize the cluster - send
-        // the message directly.
-        cluster.receiveMessage(myMessage);
-        */
-        // NEW-style:
-        ComponentMessage addCM = new ComponentMessage();
-        addCM.setOriginator(cid);
-        addCM.setTarget(cid);
-        addCM.setTarget(cid);
-        addCM.setOperation(ComponentMessage.ADD);
-        ComponentDescription desc = 
-          new ComponentDescription(
-              piName, // name
-              "Node.AgentManager.Agent.PluginManager.Plugin",
-              piName,           // class
-              null,     // codebase
-              piParams,
-              null,     // certificate
-              null,     // lease
-              null);    // policy
-        addCM.setComponentDescription(desc);
-        // bypass the message system to initialize the cluster
-        cluster.receiveMessage(addCM);
-      }
-
-      // tell the cluster to proceed.
-      ClusterInitializedMessage m = new ClusterInitializedMessage();
-      m.setOriginator(cid);
-      m.setTarget(cid);
-      cluster.receiveMessage(m);
-
-      return true;
-    } catch (Exception ex) {
-      System.err.println("Caught Exception during cluster initialization:"+ex);
-      ex.printStackTrace();
-    }
-    return false;
-  }
-
-
-
-  /**
    * Modifier method for theArgs
    * @param aTable The ArgTable object that is used to modify theArgs
    **/
@@ -909,10 +855,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     theArgs = aTable; 
   }
 
-  /**
-   * Modifier method for theClusters
-   * @param addedClusters List of added Clusters, may contain nulls
-   **/
   private final synchronized void addClusters(List addedClusters) { 
     int n = addedClusters.size();
     if (theClusters == null) {
@@ -938,135 +880,19 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     return myNodeIdentity_;
   }
 
-  // replace with Container's add, but keep this basic code
-  private final void add(ComponentDescription desc) {
-    try {
-      // check insertion point
-      String insertionPoint = desc.getInsertionPoint();
-      if (!("agent".equals(insertionPoint))) {
-        throw new IllegalArgumentException(
-            "Expecting \"add\" insertion point to be \"agent\", not: "+
-            insertionPoint);
-      }
-      // check parameter -- for now only support new clusters
-      Object parameter = desc.getParameter();
-      if (!(parameter instanceof PropertyTree)) {
-        throw new IllegalArgumentException(
-            "Expecting PropertyTree parameter, not: "+
-            ((parameter != null) ? 
-             parameter.getClass().getName() : 
-             "null"));
-      }
-      PropertyTree cpt = (PropertyTree)parameter;
-      // check classname
-      String classname = desc.getClassname();
-      if (classname != null) {
-        Object oclass = cpt.get("class");
-        if (oclass == null) {
-          // use desc's classname
-          cpt.put("class", classname);
-        } else if (classname.equals(oclass)) {
-          // good -- they match
-        } else {
-          throw new IllegalArgumentException(
-              "Cluster specification \"class\" ("+oclass+") must match "+
-              "ComponentDescription's \"classname\" ("+classname+")");
-        }
-      }
-      // later use codebase and other arguments
-      //
-      // create the cluster
-      ClusterServesClusterManagement cluster = createCluster(cpt);
-      populateCluster(cluster, cpt);
-      addCluster(cluster);
-    } catch (Exception e) {
-      System.err.println(
-          "Node unable to add component: "+e.getMessage());
-    }
-  }
-
-  private final String getClusterName(ComponentDescription desc) {
-    // check insertion point
-    String insertionPoint = desc.getInsertionPoint();
-    if (!("agent".equals(insertionPoint))) {
-      throw new IllegalArgumentException(
-          "Expecting insertion point to be \"agent\", not: "+
-          insertionPoint);
-    }
-    // check parameter -- for now only support new clusters
-    Object parameter = desc.getParameter();
-    if (!(parameter instanceof PropertyTree)) {
-      throw new IllegalArgumentException(
-          "Expecting PropertyTree parameter, not: "+
-          ((parameter != null) ? 
-           parameter.getClass().getName() : 
-           "null"));
-    }
-    PropertyTree cpt = (PropertyTree)parameter;
-    // check name
-    Object oname = cpt.get("name");
-    if (!(oname instanceof String)) {
-      throw new IllegalArgumentException(
-          "Expecting a cluster PropertyTree with a \"name\", not "+
-          ((oname != null) ? oname.getClass().getName() : "null"));
-    }
-    return (String)oname;
-  }
-
-  // replace with Container's remove
-  private final void remove(ComponentDescription desc) {
-    String cname = getClusterName(desc);
-    // not implemented yet!  maybe once Node is a real Container...
-    throw new UnsupportedOperationException(
-        "Remove cluster ("+cname+") not implemented yet!");
-  }
-
-  // replace with Container's suspend
-  private final void suspend(ComponentDescription desc) {
-    String cname = getClusterName(desc);
-    // not implemented yet!  maybe once Node is a real Container...
-    throw new UnsupportedOperationException(
-        "Suspend cluster ("+cname+") not implemented yet!");
-  }
-
-  // replace with Container's resume
-  private final void resume(ComponentDescription desc) {
-    String cname = getClusterName(desc);
-    // not implemented yet!  maybe once Node is a real Container...
-    throw new UnsupportedOperationException(
-        "Resume cluster ("+cname+") not implemented yet!");
-  }
-
-  // replace with Container's reload
-  private final void reload(ComponentDescription desc) {
-    String cname = getClusterName(desc);
-    // not implemented yet!  maybe once Node is a real Container...
-    throw new UnsupportedOperationException(
-        "Reload cluster ("+cname+") not implemented yet!");
-  }
- 
- 
   public void receiveMessage(Message m) {
     try {
       if (m instanceof ComponentMessage) {
         ComponentMessage cm = (ComponentMessage)m;
         ComponentDescription desc = cm.getComponentDescription();
         int operation = cm.getOperation();
-        switch (operation) {
-          case ComponentMessage.ADD:     add(desc);     break;
-          case ComponentMessage.REMOVE:  remove(desc);  break;
-          case ComponentMessage.SUSPEND: suspend(desc); break;
-          case ComponentMessage.RESUME:  resume(desc);  break;
-          case ComponentMessage.RELOAD:  reload(desc);  break;
-          default:
-            throw new UnsupportedOperationException(
-              "Unsupported ComponentMessage: "+m);
+        if (operation == ComponentMessage.ADD) {
+          add(desc);
+        } else {
+          // not implemented yet!  will be okay once Node is a Container
+          throw new UnsupportedOperationException(
+            "Unsupported ComponentMessage: "+m);
         }
-      } else if (m instanceof AddClustersMessage) {
-        // need this for batched cluster-add, at least until an
-        //   "AddAllComponentsMessage" is implemented.
-        PropertyTree pt = ((AddClustersMessage)m).getPropertyTree();
-        loadClusters(pt);
       } else {
         throw new UnsupportedOperationException(
             "Unsupported Message: "+
