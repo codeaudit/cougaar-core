@@ -19,36 +19,19 @@
  * </copyright>
  */
 
-package org.cougaar.core.plugin.completion;
+package org.cougaar.planning.plugin.completion;
 
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Task;
+import org.cougaar.util.UnaryPredicate;
 
-public class LaggardFilter {
-  public static final long LAGGARD_UPDATE_INTERVAL = 15000L;
-  public static final long NON_LAGGARD_UPDATE_INTERVAL = 120000L;
-
-  private Laggard oldLaggard = null;
-  private long updateTime;
-
-  public boolean filter(Laggard newLaggard) {
-    if (oldLaggard == newLaggard) return false;
-    boolean result = filter(newLaggard.isLaggard(), newLaggard.getTimestamp());
-    if (result) setOldLaggard(newLaggard);
-    return result;
-  }
-
-  public boolean filter(boolean isLaggard, long timestamp) {
-    return
-      oldLaggard == null ||
-      oldLaggard.isLaggard() != isLaggard ||
-      timestamp > updateTime;
-  }
-
-  public void setOldLaggard(Laggard newLaggard) {
-    oldLaggard = newLaggard;
-    updateTime = oldLaggard.getTimestamp() +
-      (oldLaggard.isLaggard()
-       ? LAGGARD_UPDATE_INTERVAL
-       : NON_LAGGARD_UPDATE_INTERVAL);
+/**
+ * This predicate is used by the CompletionTargetPlugin.
+ */
+public class CompletionActivityPredicate implements UnaryPredicate {
+  public boolean execute(Object o) {
+    if (o instanceof Task) return true;
+    if (o instanceof PlanElement) return true;
+    return false;
   }
 }
-

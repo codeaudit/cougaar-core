@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.plugin.completion;
+package org.cougaar.planning.plugin.completion;
 
 import java.util.Collection;
 import java.util.Collections;
