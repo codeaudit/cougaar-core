@@ -17,9 +17,10 @@
  * </copyright>
  */
 
-package org.cougaar.core.adaptivity;
+package org.cougaar.planning.plugin.adaptivity;
 
 import java.util.Collection;
+import org.cougaar.core.adaptivity.*;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
@@ -38,11 +39,8 @@ import org.cougaar.util.UnaryPredicate;
 public class TaskRateSensorPlugin extends ServiceUserPlugin {
   private static final String CONDITION_NAME = "TaskRateSensorPlugin.TASKRATE";
 
-  private static final OMCRange[] TASKRATE_RANGES = {
-    new OMCRange(0.0, Double.MAX_VALUE)
-  };
-
-  private static final OMCRangeList TASKRATE_VALUES = new OMCRangeList(TASKRATE_RANGES);
+  private static final OMCRangeList TASKRATE_VALUES = new OMCRangeList(
+      new Double(0.0), new Double(Double.MAX_VALUE));
 
   private static final double TIME_CONSTANT = 5000.0; // Five second time constant
 

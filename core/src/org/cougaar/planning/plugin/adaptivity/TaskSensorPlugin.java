@@ -17,9 +17,10 @@
  * </copyright>
  */
 
-package org.cougaar.core.adaptivity;
+package org.cougaar.planning.plugin.adaptivity;
 
 import java.util.Collection;
+import org.cougaar.core.adaptivity.*;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
@@ -50,7 +51,7 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
   private static final String BACKLOG_CONDITION_NAME      = "TaskSensor.backlog";
 
   private static final OMCRangeList POSITIVE_VALUES =
-    new OMCRangeList(new OMCRange(0.0, Double.MAX_VALUE));
+    new OMCRangeList(new Double(0.0), new Double(Double.MAX_VALUE));
 
   private static final double TIME_CONSTANT = 10000.0; // Ten second time constant
   private static final long UPDATE_INTERVAL = 5000L; // Update every 5 seconds
