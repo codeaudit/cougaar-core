@@ -33,10 +33,20 @@ import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 
 import org.cougaar.core.service.DomainForBlackboardService;
+import org.cougaar.core.service.NamingService;
 
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Plan;
 
+import org.cougaar.multicast.AttributeBasedAddress;
+
+import javax.naming.NamingException;
+import javax.naming.NameNotFoundException;
+import javax.naming.directory.SearchResult;
+import javax.naming.directory.BasicAttribute;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.DirContext;
 
 /** The Blackboard
  *
@@ -361,26 +371,69 @@ public class Blackboard extends Subscriber
   }
 
   private final HashMap directivesByDestination = new HashMap(89);
-
+  
+  /*
+   * Builds up hashmap of arrays of directives for each agent, <code>ClusterIdentifier</code>.
+   * Modified to handle destinations of <code>AttributeBasedAddress</code>es, so that these are 
+   * sent properly as well. 
+   */
   public void appendMessagesToSend(List messages) {
+    
+    // FIXME - prefill cache of aba roles to ClusterIDs here, instead of building up a cache
+    // fillCache();
+    
     for (Iterator iter = sendQueue.iterator(); iter.hasNext(); ) {
-      Directive dir = (Directive) iter.next();
+      Directive dir = (Directive) iter.next();  
       ClusterIdentifier dest = dir.getDestination();
-      ArrayList dirs = (ArrayList) directivesByDestination.get(dest);
-      if (dirs == null) {
-        dirs = new ArrayList();
-        directivesByDestination.put(dest, dirs);
+      
+      // get all destinations
+      
+      /**
+       * If dest is an ABA, get all agent_names from cache or 
+       * nameserver and fills in the hashmap of directives
+       * Short and easy way to handle ABA destinations
+       */
+      ArrayList dirs;
+
+      if(dest instanceof AttributeBasedAddress) {
+        System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
+	List agents = getAllAddresses((AttributeBasedAddress)dest);   // List of CIs
+	// for all destinations, add a new directive array and insert a new directive, or add to 
+	// an existing array in the destinations hashmap
+	for (int i=0; i < agents.size(); i++) {
+	  dirs = (ArrayList)directivesByDestination.get(agents.get(i));
+	  if(dirs == null){
+	    dirs = new ArrayList();
+	    directivesByDestination.put(agents.get(i), dirs); 
+	  }
+	  dirs.add(dir);
+	}
+      } // done with aba handling
+      
+      /**
+       * dest is regular ClusterID so proceed as before 
+       */
+      else {
+	dirs = (ArrayList) directivesByDestination.get(dest);
+	if (dirs == null) {
+	  dirs = new ArrayList();
+	  directivesByDestination.put(dest, dirs);
+	}
+	dirs.add(dir);	
       }
-      dirs.add(dir);
     }
+    /**
+     * By now directivesByDestination only has ArrayLists of ClusterIdentifiers,
+     * so we can set their directives as before. 
+     */
     for (Iterator iter = directivesByDestination.keySet().iterator(); iter.hasNext(); ) {
-      ClusterIdentifier dest = (ClusterIdentifier) iter.next();
-      ArrayList dirs = (ArrayList) directivesByDestination.get(dest);
+      ClusterIdentifier tmpci = (ClusterIdentifier) iter.next();
+      ArrayList dirs = (ArrayList) directivesByDestination.get(tmpci);
       int size = dirs.size();
       if (size > 0) {
         Directive[] directives = (Directive[]) dirs.toArray(new Directive[size]);
         DirectiveMessage ndm = new DirectiveMessage(directives);
-        ndm.setDestination(dest);
+	ndm.setDestination(tmpci);
         ndm.setSource(myCluster.getClusterIdentifier());
         messages.add(ndm);
         dirs.clear();
@@ -466,5 +519,158 @@ public class Blackboard extends Subscriber
     }
     return null;
   }
+ 
+  
+  // -------- Methods for ABA Handling Below --------  //
+  
+  // (String)role to (List)agentnames cache
+  private static java.util.HashMap cache = new java.util.HashMap(89);
+  
+  /*
+   * Loops through the cache of ABAs and returns ClusterIdentifiers, 
+   * else it querries the nameserver for all agents with the ABA's role attribute, 
+   * and builds the cache. 
+   */
+  public List getAllAddresses(AttributeBasedAddress dest) {
+    
+    ArrayList l = null; // clusterids to be returned
+    
+    // first look in cache
 
+    // return a List of agent_names for the matching roleValue in HashMap 
+    synchronized (cache) {
+      for (Iterator i = cache.entrySet().iterator(); i.hasNext(); ) {
+        Map.Entry ent = (Map.Entry) i.next();
+	String roleValue = (String)ent.getKey();
+	//System.out.println("roleValue is: " + roleValue);
+	
+	// if ABA's role = rolevalue, get out of hashmap a set of clusterids
+	if(dest.getRoleValue().equals(roleValue)) {
+	  List values = (ArrayList) ent.getValue();
+	  if(values != null) {
+	    l = new ArrayList();
+	    for (Iterator iter = values.iterator(); iter.hasNext(); ) {
+	      l.add(iter.next());
+	    }
+	  }
+	}
+      }
+    }
+    
+    
+    // else query NameServer
+    if(l != null){
+      System.out.println("Returning from cache");
+      return l;
+    }
+    else {
+      l = lookupABAinNameServer(dest);
+      System.out.println("Returning from NameServer");
+      return l;
+    }
+  }
+  
+  /*
+   * Adds new list of ClusterIDs to aba cache. 
+   */
+  public static void cacheByRole(String roleValue, List agent_names) {
+    synchronized (cache) {
+      for(Iterator iter = agent_names.iterator(); iter.hasNext();) {
+	System.out.println("Caching " + iter.next());
+	cache.put(roleValue, agent_names);}
+    }
+  } 
+    
+  /*
+   * Querries NameServer and returns a list of all agentnames matching the aba's
+   * String role value. Adds new list to the aba cache. 
+   */
+  public ArrayList lookupABAinNameServer(AttributeBasedAddress aba) {
+    
+    ArrayList cis = new ArrayList();
+    String roleValue = aba.getRoleValue();
+    String roleName = aba.getRoleName();
+    //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
+    
+    DirContext dirContext = getNameServer();
+    if (dirContext==null)
+      System.out.println("dirContext in lookupABAinNameServer is null!!");
+    
+    try {
+      SearchControls boundValueSearchControls = new SearchControls();
+      boundValueSearchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+      boundValueSearchControls.setReturningObjFlag(true);
+      NamingEnumeration enum = dirContext.search("", 
+                                                 "(" + roleName + 
+                                                 "=" + roleValue + ")",
+                                                 boundValueSearchControls);
+      while (enum.hasMore()) {
+        SearchResult result = (SearchResult) enum.next();
+	cis.add(result.getObject());
+        System.out.println("Name: " + result.getName() + 
+                           " object: " + result.getObject() + 
+                           " objectClass: " + result.getClassName());
+			   } 
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    cacheByRole(roleValue, cis);
+    
+    return cis;
+  }
+  
+  
+  /*
+   * Return a reference to the NameServer. 
+   */
+  public DirContext getNameServer() {
+    
+    NamingService myNamingService;
+    String MNR_CONTEXT_NAME = "MNRTest";
+    String ROLE_ATTRIBUTE_NAME = "Role";
+    
+    myNamingService = (NamingService)myServiceBroker.getService(this, NamingService.class, null);
+
+    DirContext dirContext = null;
+   
+    try {
+      dirContext = 
+        (DirContext) myNamingService.getRootContext().lookup(MNR_CONTEXT_NAME);
+    } catch (NamingException ne) {
+      // Ignore for now - if it hasn't been created, we obviously can't send the abas. 
+    }
+    
+    return dirContext;
+  }
+
+ /*
+   * FIXME - this should be called fist to fill cache initially instead 
+   * of building it, as it is now implemented. 
+   *
+   * Fills up cache of roleValue (ie 'Manager') to a set of ClusterIdentifiers 
+   * by queries to the NameServer. 
+   
+  public void fillCache() {
+    // for all roles
+    // set agents = search by role type
+    // cacheByRole(role, agents);
+    
+    DirContext dirContext = getNameServer();
+    
+    // get all object names, then search attributes on them
+    try {
+      //NamingEnumeration enum = dirContext.list("MNRTest");
+      //while (enum.hasMore()) {
+      //SearchResult result = (SearchResult) enum.next();
+      //System.out.println("Object Name = " + result.getName());
+      //}
+      if(dirContext==null)
+	System.out.println("dirContext is NULL!!");
+    }catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+    }
+ */
+  
 }
