@@ -73,6 +73,7 @@ final class TimeSliceScheduler extends Scheduler
 
 
 
+
     private void handoffSlice(ControllableThread thread) {
 	boolean expired = thread.slice().isExpired();
 	boolean queue_empty = pendingThreadCount() == 0;
@@ -94,6 +95,13 @@ final class TimeSliceScheduler extends Scheduler
     
 
 
+    void threadClaimed(ControllableThread thread) {
+	TimeSlice slice = thread.slice();
+	if (slice != null) slice.run_start = System.currentTimeMillis();
+	super.threadClaimed(thread);
+    }
+	
+
     // Called when a thread is about to end
     void threadReclaimed(ControllableThread thread) {
 	super.threadReclaimed(thread);
@@ -108,7 +116,11 @@ final class TimeSliceScheduler extends Scheduler
     }
 
 
-
+    void resumeThread(ControllableThread thread) {
+	TimeSlice slice = thread.slice();
+	if (slice != null) slice.run_start = System.currentTimeMillis();
+	super.resumeThread(thread);
+    }
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
