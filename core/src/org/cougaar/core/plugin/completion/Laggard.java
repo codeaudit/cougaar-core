@@ -21,18 +21,19 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.text.DecimalFormat;
 import org.cougaar.core.mts.MessageAddress;
 
-class Laggard implements Comparable {
+class Laggard implements Comparable, Serializable {
   private long timestamp = System.currentTimeMillis();
   private MessageAddress agent;
   private double taskCompletion;
   private double cpuConsumption;
   private boolean isLaggard;
-  private Map verbCounts = new HashMap();
+//   private Map verbCounts = new HashMap();
   Laggard(MessageAddress me,
           double taskCompletion,
           double cpuConsumption,
@@ -73,9 +74,9 @@ class Laggard implements Comparable {
     return isLaggard;
   }
 
-  public Map getVerbCounts() {
-    return verbCounts;
-  }
+//   public Map getVerbCounts() {
+//     return verbCounts;
+//   }
 
   public int compareTo(Object o) {
     Laggard that = (Laggard) o;

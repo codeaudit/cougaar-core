@@ -1,5 +1,8 @@
 2002-06-11  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* Laggard.java:
+	Remove verb-counting code and storage.
+
 	* CompletionTargetPlugin.java: 
 	* CompletionSourcePlugin.java: 
 	* CompletionSocietyPlugin.java: 
