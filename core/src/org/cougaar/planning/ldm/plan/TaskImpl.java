@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 
 import org.cougaar.core.blackboard.Subscriber;
@@ -57,7 +56,7 @@ import org.cougaar.core.util.UniqueObject;
  * are attached to a workflow.
  */
 
-public class TaskImpl extends DirectiveImpl
+public class TaskImpl extends PlanningDirectiveImpl
   implements Task, NewTask, Cloneable, XMLizable, ActiveSubscriptionObject, java.io.Serializable
 {
   private static final Logger logger = Logging.getLogger(TaskImpl.class);

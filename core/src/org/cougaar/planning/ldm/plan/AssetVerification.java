@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.blackboard.Directive;
 
 /**
  * Verification Interface Verification is a response to an asset
@@ -32,7 +31,7 @@ import org.cougaar.core.blackboard.Directive;
  * cluster restarts.
  **/
 
-public interface AssetVerification extends Directive {
+public interface AssetVerification extends PlanningDirective {
   Asset getAsset();
   Asset getAssignee();
   Schedule getSchedule();

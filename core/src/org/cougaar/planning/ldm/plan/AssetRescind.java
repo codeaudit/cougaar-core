@@ -21,14 +21,13 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetRescind Interface
  * AssetRescind allows an asset to be rescinded from the Plan. 
  **/
 
-public interface AssetRescind extends Directive {
+public interface AssetRescind extends PlanningDirective {
 
   /**
    * Returns the asset to be rescinded

@@ -21,13 +21,12 @@
 
 package org.cougaar.planning.ldm.plan;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetTransfer Interface
  * An AssetTransfer is a type of PlanElement
  * which represents an Asset being assigned to another Cluster for use.
- * An AssetAssignment Directive is closely related
+ * An AssetAssignment PlanningDirective is closely related
  *
  **/
 

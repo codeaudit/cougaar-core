@@ -28,17 +28,17 @@ import java.sql.Connection;
 import java.util.Arrays;
 import org.cougaar.planning.ldm.asset.NewPropertyGroup;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.node.InitializerService;
+import org.cougaar.planning.service.AssetInitializerService;
 
 /**
  * Populates an "Asset" from the config database.
  **/
 public class AssetDataPluginDB extends AssetDataPluginBase {
   private String clusterId;
-  InitializerService s;
+  AssetInitializerService assetInitService;
 
-  public void setInitializerService(InitializerService s) {
-    this.s = s;
+  public void setAssetInitializerService(AssetInitializerService assetInitService) {
+    this.assetInitService = assetInitService;
   }
 
   /**
@@ -47,13 +47,13 @@ public class AssetDataPluginDB extends AssetDataPluginBase {
   protected void readAsset(String cId) {
     try {
       clusterId = cId;
-      createMyLocalAsset(s.getAgentPrototype(cId));
-      String[] pgNames = s.getAgentPropertyGroupNames(cId);
+      createMyLocalAsset(assetInitService.getAgentPrototype(cId));
+      String[] pgNames = assetInitService.getAgentPropertyGroupNames(cId);
       for (int i = 0; i < pgNames.length; i++) {
         String pgName = pgNames[i];
         createPropertyGroup(pgName);
         addPropertyToAsset();
-        Object[][] props = s.getAgentProperties(cId, pgName);
+        Object[][] props = assetInitService.getAgentProperties(cId, pgName);
         for (int j = 0; j < props.length; j++) {
           Object[] prop = props[j];
           String attributeName = (String) prop[0];
@@ -82,7 +82,7 @@ public class AssetDataPluginDB extends AssetDataPluginBase {
           }
         }
       }
-      String[][] relationships = s.getAgentRelationships(cId);
+      String[][] relationships = assetInitService.getAgentRelationships(cId);
       for (int i = 0; i < relationships.length; i++) {
         String[] r = relationships[i];
         long start, end;

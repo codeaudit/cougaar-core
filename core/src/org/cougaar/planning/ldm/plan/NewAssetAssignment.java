@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.blackboard.NewDirective;
 
 /**
  * AssetAssignment Setter Interface
@@ -30,7 +29,7 @@ import org.cougaar.core.blackboard.NewDirective;
  *
  **/
 	
-public interface NewAssetAssignment extends AssetAssignment, NewDirective  {
+public interface NewAssetAssignment extends AssetAssignment, NewPlanningDirective  {
 		
   /** @param newasset - sets the asset being assigned 
    */

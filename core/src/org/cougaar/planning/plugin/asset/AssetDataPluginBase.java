@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.InitializerService;
+import org.cougaar.planning.service.AssetInitializerService;
 import org.cougaar.planning.plugin.legacy.SimplePlugin;
 import org.cougaar.core.service.DomainService;
 
@@ -99,10 +99,10 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     new TrivialTimeSpan(TimeSpan.MIN_VALUE,
                         TimeSpan.MAX_VALUE);
 
-  protected InitializerService initializerService;
+  protected AssetInitializerService assetInitService;
 
-  public void setInitializerService(InitializerService is) {
-    initializerService = is;
+  public void setAssetInitializerService(AssetInitializerService ais) {
+    assetInitService = ais;
   }
 
   public long getDefaultStartTime() {
@@ -164,7 +164,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
   protected void processAssets() {
     try {
       String cId = getMessageAddress().getAddress();
-      AssetDataReader assetDataReader = initializerService.getAssetDataReader();
+      AssetDataReader assetDataReader = assetInitService.getAssetDataReader();
       assetDataReader.readAsset(cId, new AssetDataCallbackImpl());
 //        System.out.println("Property Groups: ");
 //        Vector all = myLocalAsset.fetchAllProperties();

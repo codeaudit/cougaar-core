@@ -31,7 +31,6 @@ import java.util.Collection;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.util.StringUtility;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -238,7 +237,6 @@ public class DirectiveMessage extends ClusterMessage
     public Directive getDirective() { return real; }
     public Collection getChangeReports() { return changes; }
 
-    public Plan getPlan() { return real.getPlan(); }
     public MessageAddress getSource() { return real.getSource(); }
     public MessageAddress getDestination() { return real.getDestination(); }
     public String toString() {return real.toString(); }

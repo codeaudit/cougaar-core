@@ -27,7 +27,7 @@ import java.sql.ResultSet;
 import java.sql.Connection;
 import java.util.Arrays;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.node.InitializerService;
+import org.cougaar.planning.service.AssetInitializerService;
 import org.cougaar.planning.ldm.asset.NewPropertyGroup;
 
 /**
@@ -36,10 +36,10 @@ import org.cougaar.planning.ldm.asset.NewPropertyGroup;
 public class AssetDataDBReader implements AssetDataReader {
   private AssetDataCallback cb;
   private String clusterId;
-  InitializerService initializerService;
+  AssetInitializerService assetInitService;
 
-  public AssetDataDBReader(InitializerService is) {
-    initializerService = is;
+  public AssetDataDBReader(AssetInitializerService ais) {
+    assetInitService = ais;
   }
 
   /**
@@ -49,13 +49,13 @@ public class AssetDataDBReader implements AssetDataReader {
     this.cb = cb;
     try {
       clusterId = cId;
-      cb.createMyLocalAsset(initializerService.getAgentPrototype(cId));
-      String[] pgNames = initializerService.getAgentPropertyGroupNames(cId);
+      cb.createMyLocalAsset(assetInitService.getAgentPrototype(cId));
+      String[] pgNames = assetInitService.getAgentPropertyGroupNames(cId);
       for (int i = 0; i < pgNames.length; i++) {
         String pgName = pgNames[i];
         cb.createPropertyGroup(pgName);
         cb.addPropertyToAsset();
-        Object[][] props = initializerService.getAgentProperties(cId, pgName);
+        Object[][] props = assetInitService.getAgentProperties(cId, pgName);
         for (int j = 0; j < props.length; j++) {
           Object[] prop = props[j];
           String attributeName = (String) prop[0];
@@ -63,7 +63,7 @@ public class AssetDataDBReader implements AssetDataReader {
           Object attributeValue = prop[2];
           if (attributeType.startsWith("query")) {
             String v = ((String) attributeValue).trim();
-            Object[] r = initializerService.translateAttributeValue(attributeType, v);
+            Object[] r = assetInitService.translateAttributeValue(attributeType, v);
             attributeType = (String) r[0];
             attributeValue = r[1];
           }
@@ -91,7 +91,7 @@ public class AssetDataDBReader implements AssetDataReader {
           }
         }
       }
-      String[][] relationships = initializerService.getAgentRelationships(cId);
+      String[][] relationships = assetInitService.getAgentRelationships(cId);
       for (int i = 0; i < relationships.length; i++) {
         String[] r = relationships[i];
         long start = cb.getDefaultStartTime();

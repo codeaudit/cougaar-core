@@ -22,13 +22,12 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.NewDirective;
 
 /** NewTransferableRescind Interface
  * Provides setter methods for object creation 
  **/
 
-public interface NewTransferableRescind extends TransferableRescind, NewDirective 
+public interface NewTransferableRescind extends TransferableRescind, NewPlanningDirective 
 {
   /**
    * Sets the UID of the transferable to be rescinded

@@ -22,7 +22,6 @@
 package org.cougaar.core.blackboard;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.planning.ldm.plan.Plan;
 import java.io.Serializable;
 
 /**
@@ -32,12 +31,6 @@ import java.io.Serializable;
 public interface Directive
 extends Serializable
 {
-
-  /** getPlan method
-   * Returns an object that represents the plan
-   * that this object is in reference to.
-   **/
-  Plan getPlan();
 
   /**
    * @return MessageAddress Identifies the originator of this message

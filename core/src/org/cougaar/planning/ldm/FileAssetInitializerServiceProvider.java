@@ -19,25 +19,22 @@
  * </copyright>
  */
 
-package org.cougaar.core.node;
+package org.cougaar.planning.ldm;
 
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Vector;
-import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.planning.plugin.asset.AssetDataFileReader;
 import org.cougaar.planning.plugin.asset.AssetDataReader;
-import org.cougaar.util.ConfigFinder;
+import org.cougaar.planning.service.AssetInitializerService;
 
-public class FileInitializerServiceProvider implements ServiceProvider {
+class FileAssetInitializerServiceProvider implements ServiceProvider {
+
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    if (serviceClass != InitializerService.class)
-      throw new IllegalArgumentException(getClass() + " does not furnish "
-                                         + serviceClass);
-    return new InitializerServiceImpl();
+    if (serviceClass != AssetInitializerService.class) {
+      throw new IllegalArgumentException(
+          getClass() + " does not furnish " + serviceClass);
+    }
+    return new AssetInitializerServiceImpl();
   }
   
   public void releaseService(ServiceBroker sb, Object requestor,
@@ -45,69 +42,24 @@ public class FileInitializerServiceProvider implements ServiceProvider {
   {
   }
 
-  private class InitializerServiceImpl implements InitializerService {
-    /**
-     * Get the descriptions of components with the named parent having
-     * an insertion point below the given container insertion point.
-     **/
-    public ComponentDescription[]
-      getComponentDescriptions(String parentName, String containerInsertionPoint)
-      throws InitializerServiceException
-    {
-      try {
-        String filename = parentName;
-	if (! parentName.endsWith(".ini")) {
-	  filename = parentName + ".ini";
-	}
-        InputStream in = ConfigFinder.getInstance().open(filename);
-        try {
-          return INIParser.parse(in, containerInsertionPoint);
-        } finally {
-          in.close();
-        }
-      } catch (Exception e) {
-        throw new InitializerServiceException(e);
-      }
-    }
-
+  private class AssetInitializerServiceImpl implements AssetInitializerService {
     public String getAgentPrototype(String agentName) {
       throw new UnsupportedOperationException();
     }
-
     public String[] getAgentPropertyGroupNames(String agentName) {
       throw new UnsupportedOperationException();
     }
-
     public Object[][] getAgentProperties(String agentName, String pgName) {
       throw new UnsupportedOperationException();
     }
-
     public String[][] getAgentRelationships(String agentName) {
       throw new UnsupportedOperationException();
     }
-
     public AssetDataReader getAssetDataReader() {
       return new AssetDataFileReader();
     }
-
     public Object[] translateAttributeValue(String type, String key) {
       return new Object[] {type, key};
-    }
-
-    public Collection getCommunityDescriptions(String entityName, String initXmlFile)
-      throws InitializerServiceException { 
-      try {
-        if (initXmlFile == null) {
-          return CommunityConfigUtils.getCommunityConfigsFromFile("communities.xml", entityName);
-        }
-        else {
-          return CommunityConfigUtils.getCommunityConfigsFromFile(initXmlFile, entityName);
-        }
-      }
-      catch (RuntimeException ex) {
-        System.out.println("Exception in getCommunityDescriptions from File");
-      }
-      return new Vector();
     }
   }
 }

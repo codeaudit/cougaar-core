@@ -41,7 +41,7 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.Node;
-import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -108,15 +108,16 @@ public class AgentManager
     }
 
     try {
-      InitializerService is = (InitializerService) 
-        sb.getService(this, InitializerService.class, null);
-      Logging.getLogger(AgentManager.class).info(nodeName + " AgentManager.load about to look for CompDesc's of Agent Binders.");
+      ComponentInitializerService cis = (ComponentInitializerService) 
+        sb.getService(this, ComponentInitializerService.class, null);
+      Logging.getLogger(AgentManager.class).info(
+          nodeName + " AgentManager.load about to look for CompDesc's of Agent Binders.");
       // Get all items _below_ given insertion point.
       // To get just binders, must use extract method later....
-      cds = new ComponentDescriptions(is.getComponentDescriptions(nodeName, INSERTION_POINT));
-      sb.releaseService(this, InitializerService.class, is);
+      cds = new ComponentDescriptions(cis.getComponentDescriptions(nodeName, INSERTION_POINT));
+      sb.releaseService(this, ComponentInitializerService.class, cis);
     } catch (Exception e) {
-      throw new Error("Couldn't initialize AgentManager Binders with InitializerService ", e);
+      throw new Error("Couldn't initialize AgentManager Binders with ComponentInitializerService ", e);
     }
 
     addAll(ComponentDescriptions.sort(cds.extractInsertionPointComponent(INSERTION_POINT + ".Binder")));

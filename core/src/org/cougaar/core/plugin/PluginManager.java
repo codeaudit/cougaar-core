@@ -41,8 +41,7 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.InitializerService;
-import org.cougaar.core.node.InitializerServiceException;
+import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -88,7 +87,7 @@ public class PluginManager
     this.loadState = loadState;
   }
 
-  /** Get the components from the InitializerService or the state **/
+  /** Get the components from the ComponentInitializerService or the state **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
     if (loadState instanceof StateTuple[]) {
       StateTuple[] ls = (StateTuple[])loadState;
@@ -104,16 +103,18 @@ public class PluginManager
       String cname = cid.toString();
 
       ServiceBroker sb = getServiceBroker();
-      InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
+      ComponentInitializerService cis = (ComponentInitializerService)
+        sb.getService(this, ComponentInitializerService.class, null);
       try {
-        return new ComponentDescriptions(is.getComponentDescriptions(cname, specifyContainmentPoint()));
-      } catch (InitializerServiceException e) {
+        return new ComponentDescriptions(
+            cis.getComponentDescriptions(cname, specifyContainmentPoint()));
+      } catch (ComponentInitializerService.InitializerException cise) {
         if (logger.isInfoEnabled()) {
-          logger.info("\nUnable to add "+cname+"'s plugins ",e);
+          logger.info("\nUnable to add "+cname+"'s plugins ",cise);
         }
         return null;
       } finally {
-        sb.releaseService(this, InitializerService.class, is);
+        sb.releaseService(this, ComponentInitializerService.class, cis);
       }
     }
   }

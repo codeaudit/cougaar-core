@@ -25,8 +25,6 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 
-import org.cougaar.core.blackboard.Directive;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.planning.ldm.asset.Asset;
@@ -40,7 +38,7 @@ import org.cougaar.planning.ldm.plan.Plan;
  **/
 
 
-public class AssetRescindImpl extends DirectiveImpl
+public class AssetRescindImpl extends PlanningDirectiveImpl
   implements
   AssetRescind,
   NewAssetRescind

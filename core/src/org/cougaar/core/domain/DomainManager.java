@@ -61,8 +61,7 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.InitializerService;
-import org.cougaar.core.node.InitializerServiceException;
+import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
@@ -194,7 +193,7 @@ descs,
       }      
 
       /* load domains specified in  agent.ini */
-      loadFromInitializer();
+      loadFromComponentInitializer();
     }
   }
 
@@ -368,24 +367,24 @@ descs,
 
 
   /* load domains specified in  agent.ini */
-  protected void loadFromInitializer() {
+  protected void loadFromComponentInitializer() {
     ComponentDescription [] children;
     ServiceBroker sb = getServiceBroker();
-    InitializerService is = (InitializerService)
-      sb.getService(this, InitializerService.class, null);
+    ComponentInitializerService cis = (ComponentInitializerService)
+      sb.getService(this, ComponentInitializerService.class, null);
     MessageAddress cid = getBindingSite().getAgentIdentifier();
     String cname = cid.toString();
 
     try {
-      children = is.getComponentDescriptions(cname, specifyContainmentPoint());
-    } catch (InitializerServiceException e) {
-      //loggingService.error("Unable to add "+cname+"'s Domains", e);
+      children = cis.getComponentDescriptions(cname, specifyContainmentPoint());
+    } catch (ComponentInitializerService.InitializerException cise) {
+      //loggingService.error("Unable to add "+cname+"'s Domains", cise);
       if (loggingService.isInfoEnabled()) {
-        loggingService.info("Unable to add "+cname+"'s Domains", e);
+        loggingService.info("Unable to add "+cname+"'s Domains", cise);
       }
       children = null; 
     } finally {
-      sb.releaseService(this, InitializerService.class, is);
+      sb.releaseService(this, ComponentInitializerService.class, cis);
     } 
     
     // load the child Components (Plugins, etc)

@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.NewDirective;
 
 import java.util.Enumeration;
 
@@ -32,7 +31,7 @@ import java.util.Enumeration;
  *
  **/
 
-public interface NewDeletion extends Deletion, NewDirective {
+public interface NewDeletion extends Deletion, NewPlanningDirective {
 		
   /** 
    * Sets the task the deletion is in reference to.

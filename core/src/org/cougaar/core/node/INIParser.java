@@ -113,8 +113,7 @@ public final class INIParser {
    *   <li>"cloned"  (ignored)</li>
    * </ul>
    * <br>
-   * <em>Note:</em> This is used by 
-   * <code>FileInitializerServiceProvider.getComponentDescriptions</code>,
+   * <em>Note:</em> This is used by the file-based <code>ComponentInitializerService</code>,
    * which is declared to return only items <em>below</em> the given insertion point. 
    * However, this method returns <em>all</em> items, regardless
    * of insertion point. Callers must beware they may get themselves. 

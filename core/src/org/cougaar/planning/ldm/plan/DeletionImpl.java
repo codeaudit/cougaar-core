@@ -22,8 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.plan.AllocationResult;
-import org.cougaar.core.blackboard.Directive;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.plan.NewDeletion;
 import org.cougaar.planning.ldm.plan.Deletion;
 import org.cougaar.planning.ldm.plan.Plan;
@@ -38,7 +36,7 @@ import java.io.Serializable;
 
 /** An implementation of org.cougaar.Deletion
  */
-public class DeletionImpl extends DirectiveImpl
+public class DeletionImpl extends PlanningDirectiveImpl
   implements Deletion, NewDeletion
 {
                 

@@ -439,9 +439,6 @@ implements ContainerAPI, ServiceRevokedListener
     return cert;
   }
 
-  // AgentManager component hook for now 
-  private AgentManager agentManager;
-
   /**
    * Create the node, which is configured with System Properties.
    */
@@ -486,8 +483,12 @@ implements ContainerAPI, ServiceRevokedListener
   /**
    *   @return String the string object containing the local DNS name
    */
-  protected String findHostName() throws UnknownHostException {
-     return InetAddress.getLocalHost().getHostName();
+  protected String findHostName() {
+    try {
+      return InetAddress.getLocalHost().getHostName();
+    } catch (UnknownHostException uhe) {
+      return null;
+    }
   }
 
   public ConfigFinder getConfigFinder() {
@@ -499,10 +500,7 @@ implements ContainerAPI, ServiceRevokedListener
    *    <p>
    *    @exception UnknownHostException IF the host can not be determined
    **/  
-  protected void initNode()
-    throws UnknownHostException, NamingException, IOException,
-           SQLException, InitializerServiceException
-  {
+  protected void initNode() {
     // get the node name
     String name = System.getProperty("org.cougaar.node.name");
     if (name == null) {
@@ -516,6 +514,11 @@ implements ContainerAPI, ServiceRevokedListener
     MessageAddress nid = MessageAddress.getMessageAddress(name);
     setMessageAddress(nid);
 
+    BinderFactory ambf = new AgentManagerBinderFactory();
+    if (!attachBinderFactory(ambf)) {
+      throw new Error("Failed to load the AgentManagerBinderFactory in Node");
+    }
+
     // sb is our service broker (for *all* agents)
     ServiceBroker sb = getServiceBroker();
 
@@ -523,21 +526,42 @@ implements ContainerAPI, ServiceRevokedListener
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
 
+    // maybe provide the DBInitializerService, depending upon the
+    // "expermentId" system property
+    ComponentDescription dbInitDesc = 
+      new ComponentDescription(
+          "db-init",
+          Node.INSERTION_POINT+".Init",
+          "org.cougaar.core.node.DBInitializerServiceComponent",
+          null,  //codebase
+          null,  //params
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH);
+    add(dbInitDesc);
+
     // we need the initializerservice so that AgentManager can load external binders
-    sb.addService(InitializerService.class, new InitializerServiceProvider(name));
+    ComponentDescription compInitDesc = 
+      new ComponentDescription(
+          "component-init",
+          Node.INSERTION_POINT+".Init",
+          "org.cougaar.core.node.ComponentInitializerServiceComponent",
+          null,  //codebase
+          null,  //params
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH);
+    add(compInitDesc);
 
     //
     // construct the NodeAgent and hook it in.
     // 
 
-    BinderFactory ambf = new AgentManagerBinderFactory();
-    if (!attachBinderFactory(ambf)) {
-      throw new Error("Failed to load the AgentManagerBinderFactory in Node");
-    }
-
     // create the AgentManager on our own for now
-    agentManager = new AgentManager();
-    super.add(agentManager);
+    AgentManager agentManager = new AgentManager();
+    add(agentManager);
 
     //
     // construct the NodeAgent and then hand off control

@@ -21,15 +21,14 @@
 
 package org.cougaar.core.node;
 
-import java.util.Collection;
-
-import org.cougaar.core.mts.*;
-
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.planning.plugin.asset.AssetDataReader;
 
-public interface InitializerService extends Service {
+/**
+ * Component model configuration service.
+ */
+public interface ComponentInitializerService extends Service {
+
   /**
    * Get the descriptions of components with the named parent having
    * an insertion point <em>below</em> the given container insertion point.
@@ -44,27 +43,16 @@ public interface InitializerService extends Service {
    * Note that the returned value is in whatever order the underlying 
    * implementation uses.  It is <em>not</em> sorted by priority.
    **/
-  ComponentDescription[] getComponentDescriptions(String parentName, String insertionPoint)
-    throws InitializerServiceException;
+  ComponentDescription[] getComponentDescriptions(
+      String parentName, String insertionPoint)
+    throws InitializerException;
 
-  String getAgentPrototype(String agentName) 
-    throws InitializerServiceException;
-
-  String[] getAgentPropertyGroupNames(String agentName)
-    throws InitializerServiceException;
-
-  Object[][] getAgentProperties(String agentName, String pgName)
-    throws InitializerServiceException;
-
-  String[][] getAgentRelationships(String agentName)
-    throws InitializerServiceException;
-
-  AssetDataReader getAssetDataReader();
-
-  Object[] translateAttributeValue(String type, String key)
-    throws InitializerServiceException;
-
-  Collection getCommunityDescriptions(String entityName, String initFileName)
-    throws InitializerServiceException;
-  
+  /**
+   * Generic exception for component initializer failures.
+   */
+  public class InitializerException extends Exception {
+    public InitializerException(String msg, Throwable t) {
+      super(msg, t);
+    }
+  }
 }

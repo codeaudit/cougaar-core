@@ -33,8 +33,6 @@ import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 
-import org.cougaar.core.blackboard.Directive;
-
 /** Task Interface
   * Task is the essential "execute" directive,
   * instructing a subordinate or service provider
@@ -44,7 +42,7 @@ import org.cougaar.core.blackboard.Directive;
   **/
 	
 public interface Task
-  extends Directive, UniqueObject, Priority, Annotatable, Publishable
+  extends PlanningDirective, UniqueObject, Priority, Annotatable, Publishable
 {
 		
   /** 

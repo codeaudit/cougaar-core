@@ -21,15 +21,13 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.blackboard.NewDirective;
-
 /**
   * TransferableAssignment Setter Interface
   * @author  ALPINE <alpine-software@bbn.com>
   *
   **/
 	
-public interface NewTransferableAssignment extends TransferableAssignment, NewDirective  {
+public interface NewTransferableAssignment extends TransferableAssignment, NewPlanningDirective  {
 		
   /** @param newtransferable - sets the transferable being assigned */
   void setTransferable(org.cougaar.planning.ldm.plan.Transferable newtransferable);

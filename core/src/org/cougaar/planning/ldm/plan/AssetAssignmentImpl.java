@@ -21,8 +21,6 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.blackboard.Directive;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.AssetAssignment;
 import org.cougaar.planning.ldm.plan.NewAssetAssignment;
@@ -39,7 +37,7 @@ import java.io.IOException;
  * skeleton implementation of assetassignment
  */
 
-public class AssetAssignmentImpl extends DirectiveImpl
+public class AssetAssignmentImpl extends PlanningDirectiveImpl
   implements AssetAssignment, NewAssetAssignment
 {
 		

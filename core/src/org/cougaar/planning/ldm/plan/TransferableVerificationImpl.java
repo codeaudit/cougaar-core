@@ -22,15 +22,14 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.DirectiveImpl;
 
-/** Directive to verify Transferables
+/** PlanningDirective to verify Transferables
  * 
  * @author  ALPINE <alpine-software@bbn.com>
  *
  **/
 public class TransferableVerificationImpl
-  extends DirectiveImpl
+  extends PlanningDirectiveImpl
   implements TransferableVerification, NewTransferableVerification
 {
   private UID uid;

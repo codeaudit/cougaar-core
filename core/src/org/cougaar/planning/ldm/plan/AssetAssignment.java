@@ -22,20 +22,19 @@
 package org.cougaar.planning.ldm.plan;
 
 import java.util.Enumeration;
-import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetAssignment Interface identifies those method signatures associated 
- *  with AssetAssignment Directives.
+ *  with AssetAssignment PlanningDirectives.
  **/
 
-public interface AssetAssignment extends Directive {
+public interface AssetAssignment extends PlanningDirective {
   byte UPDATE = 0;
   byte NEW = 1;
   byte REPEAT = 2;
 
   /**
-   * Answer with the Asset to be assigned by this Directive.
+   * Answer with the Asset to be assigned by this PlanningDirective.
    * @return org.cougaar.planning.ldm.asset.Asset
    **/
   Asset getAsset();

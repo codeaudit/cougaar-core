@@ -22,13 +22,12 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.Directive;
 
 /** TaskRescind Interface
  * TaskRescind allows a task to be rescinded from the Plan. 
  **/
 
-public interface TaskRescind extends Directive {
+public interface TaskRescind extends PlanningDirective {
   
   /**
    * @return the UID of the task to be rescinded.

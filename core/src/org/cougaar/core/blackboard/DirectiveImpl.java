@@ -22,8 +22,6 @@
 package org.cougaar.core.blackboard;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.planning.ldm.plan.Plan;
-import org.cougaar.planning.ldm.plan.PlanImpl;
 import java.io.Serializable;
 
 import java.io.ObjectOutputStream;
@@ -42,8 +40,6 @@ implements Directive, NewDirective, Serializable
   protected MessageAddress source = null;
   protected MessageAddress destination = null;
 
-  //protected transient Plan theplan;   // Made transient for Persistence
-
   /** 
    */
   protected DirectiveImpl() {
@@ -52,15 +48,6 @@ implements Directive, NewDirective, Serializable
    
   //Directive interface method implementations
 		
-  /** getPlan method
-   * Returns an object that represents the plan
-   * that this object is in reference to.
-   */
-  public Plan getPlan() {
-    //return theplan;
-    return PlanImpl.REALITY;
-  }
-  
   /**
    * @return MessageAddress Identifies the originator of this message
    */
@@ -75,11 +62,6 @@ implements Directive, NewDirective, Serializable
     return destination;
   }
   
-  /** @param plan - the plan this directive is attached to*/
-  public void setPlan(Plan plan) {
-    //theplan = plan;
-  }
-    
   /*
    *	Depricated because it is inherited from the base interface Message
    * @param asource - Set the MessageAddress of the originator of this message

@@ -22,13 +22,12 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.NewDirective;
 
 /** NewTaskRescind Interface
  * Provides setter methods for object creation 
  **/
 
-public interface NewTaskRescind extends TaskRescind, NewDirective 
+public interface NewTaskRescind extends TaskRescind, NewPlanningDirective 
 {
   /**
    * Sets the UID of the task to be rescinded

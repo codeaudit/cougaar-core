@@ -18,18 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+ 
+package org.cougaar.planning.ldm.plan;
 
-package org.cougaar.core.node;
+import org.cougaar.core.blackboard.NewDirective;
 
-
-public class InitializerServiceException extends Exception {
-    public InitializerServiceException() {
-        super();
-    }
-    public InitializerServiceException(String msg) {
-        super(msg);
-    }
-    public InitializerServiceException(Throwable t) {
-        super(t.toString());
-    }
+/**
+ * Planning directive, which adds a "Plan" marker.
+ */
+public interface NewPlanningDirective extends NewDirective {
+  void setPlan(Plan plan);
 }

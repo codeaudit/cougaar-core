@@ -18,37 +18,20 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-
+ 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.util.UID;
+import org.cougaar.core.blackboard.Directive;
+import java.io.Serializable;
 
-import java.util.Enumeration;
-
-/** NewNotification Interface
- * provides setter methods to create a Notification object
- * @author  ALPINE <alpine-software@bbn.com>
- *
- **/
-
-public interface NewNotification extends Notification, NewPlanningDirective {
-		
-  /** 
-   * Sets the task the notification is in reference to.
-   * @param uid The UID of the Task to be referenced in the Notification. 
-   **/
-  void setTaskUID(UID uid);
-		
-  /** Sets the combined estiamted allocationresult from below
-   * @param ar - The AllocationResult for the Task.
-   **/
-  void setAllocationResult(AllocationResult ar);
-    
-  /** Sets the child task's UID that was disposed.  It's parent task is getTask();
-   * Useful for keeping track of which subtask of an Expansion caused
-   * the re-aggregation of the Expansion's reported allocationresult.
-   * @param thechildUID
-   */
-  void setChildTaskUID(UID thechildUID);
-		
+/**
+ * Planning directive, which adds a "Plan" marker.
+ * <p>
+ * A Directive is a blackboard object that directly corresponds
+ * with an inter-agent Message.
+ */
+public interface PlanningDirective
+extends Directive, Serializable
+{
+  Plan getPlan();
 }

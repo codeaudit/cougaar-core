@@ -26,7 +26,6 @@ import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.plan.NewTaskRescind;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.plan.TaskRescind;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -39,7 +38,7 @@ import java.io.ObjectOutputStream;
  **/
 
 public class TaskRescindImpl 
-  extends DirectiveImpl
+  extends PlanningDirectiveImpl
   implements TaskRescind, NewTaskRescind
 {
 

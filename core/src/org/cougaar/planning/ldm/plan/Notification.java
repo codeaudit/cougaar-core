@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.Directive;
 
 import java.util.Enumeration;
 
@@ -31,7 +30,7 @@ import java.util.Enumeration;
  * The Notification will inlcude the task and the allocationresult
  **/
 
-public interface Notification extends Directive {
+public interface Notification extends PlanningDirective {
 
   /**
    * Returns the task the notification is in reference to.

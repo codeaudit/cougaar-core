@@ -22,12 +22,11 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
-import org.cougaar.core.blackboard.NewDirective;
 
-/** Directive to verify Transferables
+/** PlanningDirective to verify Transferables
  **/
 public interface NewTransferableVerification 
-  extends NewDirective 
+  extends NewPlanningDirective 
 {
   void setTransferableUID(UID newUID);
 }

@@ -22,7 +22,6 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.blackboard.NewDirective;
 import org.cougaar.core.util.UID;
 
 
@@ -32,7 +31,7 @@ import org.cougaar.core.util.UID;
  *
  **/
 
-public interface NewAssetRescind extends AssetRescind, NewDirective {
+public interface NewAssetRescind extends AssetRescind, NewPlanningDirective {
   /**
    * Sets the asset to be rescinded
    * @param asset - The Asset to be rescinded.

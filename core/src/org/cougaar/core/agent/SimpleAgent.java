@@ -68,8 +68,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageStatistics;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.node.ComponentMessage;
-import org.cougaar.core.node.InitializerService;
-import org.cougaar.core.node.InitializerServiceException;
+import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
@@ -338,7 +337,7 @@ public class SimpleAgent
     setMessageAddress(cid);
   }
 
-  /** Get the components from the InitializerService or the state **/
+  /** Get the components from the ComponentInitializerService or the state **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
 
     if (agentState != null) {
@@ -348,18 +347,18 @@ public class SimpleAgent
 
     String cname = getIdentifier();
     ServiceBroker sb = getBindingSite().getServiceBroker();
-    InitializerService is = (InitializerService) 
-      sb.getService(this, InitializerService.class, null);
+    ComponentInitializerService cis = (ComponentInitializerService) 
+      sb.getService(this, ComponentInitializerService.class, null);
     try {
       String cp = specifyContainmentPoint();
       ComponentDescription[] cds = new ComponentDescription[0];
       try {
 	// Get components _below_ given point
 	// That is, we want all items below the cp. 
-        cds = is.getComponentDescriptions(cname, cp);
-      } catch (InitializerServiceException ise) {
+        cds = cis.getComponentDescriptions(cname, cp);
+      } catch (ComponentInitializerService.InitializerException cise) {
         if (log.isWarnEnabled()) {
-          log.warn("Cannot find Agent configuration for "+cname, ise);
+          log.warn("Cannot find Agent configuration for "+cname, cise);
         }
       }
 
@@ -448,7 +447,7 @@ public class SimpleAgent
       log.error("Unable to add "+cname+"'s child Components", e);
       return null;
     } finally {
-      sb.releaseService(this, InitializerService.class, is);
+      sb.releaseService(this, ComponentInitializerService.class, cis);
     }
   }
 

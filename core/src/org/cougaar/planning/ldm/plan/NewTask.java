@@ -24,7 +24,6 @@ package org.cougaar.planning.ldm.plan;
 import org.cougaar.core.blackboard.Publishable;
 
 import org.cougaar.core.blackboard.ChangeReport;
-import org.cougaar.core.blackboard.NewDirective;
 
 import java.util.Enumeration;
 import java.util.Date;
@@ -46,7 +45,7 @@ import org.cougaar.planning.ldm.plan.Priority;
  * Task is added.
  **/
 	
-public interface NewTask extends Task, NewDirective
+public interface NewTask extends Task, NewPlanningDirective
 {
 		
 		

@@ -269,17 +269,17 @@ public class NodeAgent
         new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
     try {
-      InitializerService is = (InitializerService) 
-        rootsb.getService(this, InitializerService.class, null);
+      ComponentInitializerService cis = (ComponentInitializerService) 
+        rootsb.getService(this, ComponentInitializerService.class, null);
       if (logger.isInfoEnabled())
 	logger.info("NodeAgent(" + nodeName + ").loadInternal about to ask for agents");
       // get the agents - this gives _anything_ below AgentManager,
       // so must extract out just the .Agent's later (done in addAgents)
       agentDescs =
-        is.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
-      rootsb.releaseService(this, InitializerService.class, is);
+        cis.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
+      rootsb.releaseService(this, ComponentInitializerService.class, cis);
     } catch (Exception e) {
-      throw new Error("Couldn't initialize NodeAgent from InitializerService ", e);
+      throw new Error("Couldn't initialize NodeAgent from ComponentInitializerService ", e);
     }
 
 
@@ -356,6 +356,32 @@ public class NodeAgent
   }
 
   protected void loadComponentPriorityComponents() {
+    ComponentDescription commInitDesc = 
+      new ComponentDescription(
+          "community-init",
+          Agent.INSERTION_POINT+".Init",
+          "org.cougaar.community.init.CommunityInitializerServiceComponent",
+          null,  //codebase
+          null,  //params
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_COMPONENT);
+    add(commInitDesc);
+
+    ComponentDescription assetInitDesc = 
+      new ComponentDescription(
+          "asset-init",
+          Agent.INSERTION_POINT+".Init",
+          "org.cougaar.planning.ldm.AssetInitializerServiceComponent",
+          null,  //codebase
+          null,  //params
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_COMPONENT);
+    add(assetInitDesc);
+
     super.loadComponentPriorityComponents();
   }
 

@@ -22,7 +22,6 @@
 package org.cougaar.core.blackboard;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.planning.ldm.plan.Plan;
 
 /**
  * Directive interface
@@ -35,9 +34,6 @@ import org.cougaar.planning.ldm.plan.Plan;
  **/
 
 public interface NewDirective extends Directive {
-  /** @param plan - the plan this directive is attached to*/
-    void setPlan(Plan plan);
-    
   /*
   	*	Depricated because it is inherited from the base interface Message
    * @param asource - Set the MessageAddress of the originator of this message

@@ -24,8 +24,6 @@ package org.cougaar.planning.ldm.plan;
 import org.cougaar.planning.ldm.asset.Asset;
 
 import org.cougaar.planning.ldm.plan.AssetVerification;
-import org.cougaar.core.blackboard.Directive;
-import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.plan.NewAssetVerification;
 
 import java.io.IOException;
@@ -36,7 +34,7 @@ import java.io.Serializable;
 
 /** An implementation of AssetVerification
  */
-public class AssetVerificationImpl extends DirectiveImpl
+public class AssetVerificationImpl extends PlanningDirectiveImpl
   implements AssetVerification, NewAssetVerification
 {
   private transient Asset myAsset;

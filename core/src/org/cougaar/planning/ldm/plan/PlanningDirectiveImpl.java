@@ -21,34 +21,44 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.util.UID;
+import org.cougaar.core.blackboard.DirectiveImpl;
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
-import java.util.Enumeration;
+/**
+ * Planning directive, which adds a "Plan" marker.
+ */
+public abstract class PlanningDirectiveImpl 
+extends DirectiveImpl
+implements PlanningDirective, NewPlanningDirective, Serializable
+{
 
-/** NewNotification Interface
- * provides setter methods to create a Notification object
- * @author  ALPINE <alpine-software@bbn.com>
- *
- **/
-
-public interface NewNotification extends Notification, NewPlanningDirective {
-		
   /** 
-   * Sets the task the notification is in reference to.
-   * @param uid The UID of the Task to be referenced in the Notification. 
-   **/
-  void setTaskUID(UID uid);
-		
-  /** Sets the combined estiamted allocationresult from below
-   * @param ar - The AllocationResult for the Task.
-   **/
-  void setAllocationResult(AllocationResult ar);
-    
-  /** Sets the child task's UID that was disposed.  It's parent task is getTask();
-   * Useful for keeping track of which subtask of an Expansion caused
-   * the re-aggregation of the Expansion's reported allocationresult.
-   * @param thechildUID
    */
-  void setChildTaskUID(UID thechildUID);
-		
+  protected PlanningDirectiveImpl() {
+    super();
+  }
+   
+  public Plan getPlan() {
+    return PlanImpl.REALITY;
+  }
+
+  public void setPlan(Plan p) {
+    //plan = p;
+  }
+
+  //
+  // implement read/write object here to provide top-level object stack implementations
+  //
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+  }
+
+  private void readObject(ObjectInputStream stream)
+    throws ClassNotFoundException, IOException
+  {
+    stream.defaultReadObject();
+  }
 }
