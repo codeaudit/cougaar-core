@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
@@ -169,6 +170,7 @@ public class SimpleAgent
   private RealTimeService rTimer;
   private AlarmServiceProvider myAlarmServiceProvider;
   private DemoControlServiceProvider myDemoControlServiceProvider;
+  private ServiceProvider myMessageSwitchSP;
 
   private BlackboardForAgent myBlackboardService;
 
@@ -665,6 +667,10 @@ public class SimpleAgent
     myDemoControlServiceProvider = new DemoControlServiceProvider(demoClock);
     sb.addService(DemoControlService.class, myDemoControlServiceProvider);
 
+    // add a Service hook into the MessageSwitch
+    myMessageSwitchSP = new MessageSwitchServiceProvider();
+    sb.addService(MessageSwitchService.class, myMessageSwitchSP);
+
     //for backwards compatability
     super.loadInternalPriorityComponents();
 
@@ -1053,8 +1059,8 @@ public class SimpleAgent
     sb.releaseService(this, RealTimeService.class, rTimer);
     sb.releaseService(this, NaturalTimeService.class, xTimer);
 
+    sb.revokeService(MessageSwitchService.class, myMessageSwitchSP);
     sb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
-
     sb.revokeService(AlarmService.class, myAlarmServiceProvider);
 
     //
@@ -1976,6 +1982,27 @@ public class SimpleAgent
 
     public MessageAddress getMessageAddress() {
       return SimpleAgent.this.getMessageAddress();
+    }
+  }
+
+  // implement the MessageSwitch Service
+  private class MessageSwitchServiceProvider implements ServiceProvider {
+    public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
+      if (MessageSwitchService.class.isAssignableFrom(serviceClass)) {
+        return new MessageSwitchServiceImpl();
+      } else {
+        return null;
+      }
+    }
+    public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) { }
+  }
+
+  private class MessageSwitchServiceImpl implements MessageSwitchService {
+    public void sendMessage(Message m) {
+      (SimpleAgent.this).sendMessage(m);
+    }
+    public void addMessageHandler(MessageHandler mh) {
+      (SimpleAgent.this).getMessageSwitch().addMessageHandler(mh);
     }
   }
 
