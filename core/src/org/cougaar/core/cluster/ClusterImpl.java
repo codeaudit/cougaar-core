@@ -306,7 +306,8 @@ public class ClusterImpl extends Agent
     ServiceBroker sb = getServiceBroker();
 
     // get the Messenger instance from ClusterManagement
-    messenger = getBindingSite().getMessageTransportServer();
+    messenger = (MessageTransportService) sb.getService(this, MessageTransportService.class, null);
+    messenger.registerClient(this);
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
@@ -314,7 +315,8 @@ public class ClusterImpl extends Agent
     //set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
     sb.addService(UIDService.class, new UIDServiceProvider(theUIDServer));
-    // for backwards compatability
+
+
     myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
     
     //set up the PrototypeRegistry and the PrototypeRegistryService
@@ -336,8 +338,6 @@ public class ClusterImpl extends Agent
     sb.addService(MetricsService.class, new MetricsServiceProvider(this));
     // add alarm service
     sb.addService(AlarmService.class, new AlarmServiceProvider(this));
-    // Should become a node level service
-    sb.addService(MessageTransportService.class, new MessageTransportServiceProvider(this));
     // add older plugin style shared threading
     sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(getClusterIdentifier()));
     // hack service for demo control
@@ -430,8 +430,6 @@ public class ClusterImpl extends Agent
 
     // activate the metrics watcher before we register
     if (isMetricsHeartbeatOn) getMessageWatcher();
-
-    messenger.registerClient(this);
 
     if (isHeartbeatOn) {
       startHeartbeat();
@@ -608,12 +606,6 @@ public class ClusterImpl extends Agent
     return getDomainService().getFactory(domainname);
   }
 
-  /**
-   * Temporary support for <code>MessageTransportServiceProvider</code>.  
-   */
-  MessageTransportService getMessageTransportServer() {
-    return messenger;
-  }
 
   public void sendMessage(ClusterMessage message)
   {

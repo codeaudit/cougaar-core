@@ -16,11 +16,6 @@ import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.*;
 import org.cougaar.core.society.*;
 
-
-import org.cougaar.core.mts.MessageTransportException;
-import org.cougaar.core.mts.MessageTransportService;
-
-
 import java.beans.*;
 import java.lang.reflect.*;
 
@@ -217,17 +212,6 @@ public class AgentManager
     return cluster;
   }
 
-  // old ClusterManagementServesCluster stuff
-  // pass this up to Node for now (backwards compat)
-  // should shortly move to getting a service the right way!
-  public MessageTransportService getMessageTransportServer() {
-    return getBindingSite().getMessageTransportServer();
-  }
-  
-  public void sendMessage(Message message) throws MessageTransportException {
-    getBindingSite().sendMessage(message);
-  }
-
   public String getName() {
     return getBindingSite().getName();
   }
@@ -248,13 +232,7 @@ public class AgentManager
 
   private class AgentManagerProxy implements AgentManagerForBinder, 
                                              ClusterManagementServesCluster, BindingSite {
-    // ClusterManagementServesCluster
-    public void sendMessage(Message message) throws MessageTransportException {
-      AgentManager.this.sendMessage(message);
-    }
-    public MessageTransportService getMessageTransportServer() {
-      return AgentManager.this.getMessageTransportServer(); 
-    }
+
     public String getName() {return AgentManager.this.getName(); }
     
     // BindingSite

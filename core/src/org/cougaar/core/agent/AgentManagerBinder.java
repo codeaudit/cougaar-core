@@ -13,8 +13,6 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageTransportException;
-import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.society.ClusterManagementServesCluster;
 import org.cougaar.core.society.Node;
 import org.cougaar.core.society.NodeForBinder;
@@ -55,12 +53,6 @@ public class AgentManagerBinder extends BinderSupport
   }
 
   //backwards compatability pass thrus
-  public MessageTransportService getMessageTransportServer() {
-    return getNode().getMessageTransportServer();
-  }
-  public void sendMessage(Message message) throws MessageTransportException {
-    getNode().sendMessage(message);
-  }
   public String getIdentifier() {
     return getNode().getIdentifier();
   }

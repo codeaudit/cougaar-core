@@ -12,9 +12,6 @@ package org.cougaar.core.agent;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageTransportException;
-import org.cougaar.core.mts.MessageTransportService;
-import org.cougaar.core.society.Message;
 
 /** The standard Binder for Agents.
  **/
@@ -43,13 +40,6 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
     return getAgent() + "'s AgentManagerBinder";
   }
 
-  // pass thru old ClusterManagerServesCluster stuff
-  public void sendMessage(Message message) throws MessageTransportException {
-    getAgentManager().sendMessage(message);
-  }
-  public MessageTransportService getMessageTransportServer() {
-    return getAgentManager().getMessageTransportServer();
-  }
   public String getName() {return getAgentManager().getName(); }
 
 }

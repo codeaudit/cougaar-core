@@ -475,15 +475,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   /** Refernece containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
 
-  /**
-   *   Accessor method for theMessenger
-   *   <p>
-   *   @return Messenger The threaded messenger component of the node as referenced by theMessenger
-   **/
-  protected MessageTransportService getMessenger() { 
-      // Nb:  One proxy for all requestors!
-    return theMessenger; 
-  }
 
   /**
    * Post a message to the destination's message queue
@@ -570,19 +561,12 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     // value of theMessenger.
   private void initTransport() {
     String name = getIdentifier();
-//      if (alwaysSerialize) {
-//        theMessenger = new PipedMessageTransport(name);
-//      } else {
-//        theMessenger = Communications.getInstance().startMessageTransport(name);
-//      }
     MessageTransportServiceProvider mtsp = 
 	new MessageTransportServiceProvider(name);
     add(mtsp);
     getServiceBroker().addService(MessageTransportService.class, mtsp);
     theMessenger = (MessageTransportService)
       getServiceBroker().getService(this, MessageTransportService.class, null);
-    // Communications.setDefaultMessageTransport(theMessenger);
-    // theMessenger.setDisableRetransmission(disableRetransmission);
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
   }
@@ -803,10 +787,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   // ClusterManagementServesCluster
   //
 
-  public MessageTransportService getMessageTransportServer() {
-    return getMessenger();
-  }
-
   public String getName() {
     return getIdentifier();
   }
@@ -850,12 +830,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   // the NodeForBinder interface.  Keeps the actual Node safe.
   private class NodeProxy implements NodeForBinder, BindingSite {
     // ClusterManagementServesCluster
-    public void sendMessage(Message message) throws MessageTransportException {
-      Node.this.sendMessage(message);
-    }
-    public MessageTransportService getMessageTransportServer() {
-      return Node.this.getMessageTransportServer(); 
-    }
+   
     public String getName() {return Node.this.getName(); }
     public String getIdentifier() {
       return Node.this.getIdentifier();

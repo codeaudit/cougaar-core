@@ -19,19 +19,6 @@ import org.cougaar.core.mts.MessageTransportService;
 
 public interface ClusterManagementServesCluster {
   
-  /**
-   * Send a Message to another entity on behalf of the (calling) Cluster.
-   *
-   * @param message Message to send
-   * @exception MessageTransportException Raised when message only when message is malformed.
-   * Transmission errors are handled by ClusterManagement via other means.
-   **/
-  void sendMessage(Message message) throws MessageTransportException;
-
-  /**
-   * The MessageTransportServer for the Node in which this Cluster resides.
-   **/
-  MessageTransportService getMessageTransportServer();
 
   /**
    * The name of this ClusterManager (Node).
