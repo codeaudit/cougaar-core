@@ -1,84 +1,46 @@
-*** ObjectInputStream.orig	Mon Mar 26 11:40:43 2001
---- ObjectInputStream.java	Mon Mar 26 11:43:04 2001
-***************
-*** 1199,1205 ****
-  	if (currentClassDesc.isExternalizable()) {
-  	    try {
-  		currentObject = (currentClass == null) ?
-! 		              null : allocateNewObject(currentClass, currentClass);
-  		handle = assignWireOffset(currentObject);
-  		boolean prevmode = blockDataMode;
-  		try {
---- 1199,1205 ----
-  	if (currentClassDesc.isExternalizable()) {
-  	    try {
-  		currentObject = (currentClass == null) ?
-! 		              null : allocateNewObjectOverride(currentClass, currentClass);
-  		handle = assignWireOffset(currentObject);
-  		boolean prevmode = blockDataMode;
-  		try {
-***************
-*** 1345,1351 ****
-  	     */
-  	    try {
-  		currentObject = (currentClass == null) ?
-! 			     null : allocateNewObject(currentClass, currclass);
-  	    } catch (NoSuchMethodError e) {
-  		throw new InvalidClassException(currclass.getName() +
-  			"Missing no-arg constructor for class"); 
---- 1345,1351 ----
-  	     */
-  	    try {
-  		currentObject = (currentClass == null) ?
-! 			     null : allocateNewObjectOverride(currentClass, currclass);
-  	    } catch (NoSuchMethodError e) {
-  		throw new InvalidClassException(currclass.getName() +
-  			"Missing no-arg constructor for class"); 
-***************
-*** 2092,2098 ****
-       * see DataInputStream for the details and alternatives.
-       */
-      public String readLine() throws IOException {
-! 	return dis.readLine();
-      }
-  
-      /**
---- 2092,2101 ----
-       * see DataInputStream for the details and alternatives.
-       */
-      public String readLine() throws IOException {
-!       // MIK - Hack to prevent deprecation warnings
-!       //  return dis.readLine();
-!       BufferedReader d = new BufferedReader(new InputStreamReader(dis));
-!       return d.readLine();
-      }
-  
-      /**
-***************
-*** 2827,2836 ****
-      private IOException abortIOException = null;
-      private ClassNotFoundException abortClassNotFoundException = null;
-  
-      /* Allocate a new object for the specified class
-       * Native since newInstance may not be able to find a zero arg constructor.
-       */
-!     private static native Object allocateNewObject(Class aclass, Class initclass)
-  	throws InstantiationException, IllegalAccessException;
-      
-      /* Allocate a new array for the specified class
---- 2830,2844 ----
-      private IOException abortIOException = null;
-      private ClassNotFoundException abortClassNotFoundException = null;
-  
-+     protected Object allocateNewObjectOverride(Class cl, Class scl)
-+       throws InstantiationException, IllegalAccessException {
-+       return allocateNewObject(cl, scl);
-+     }
-+ 
-      /* Allocate a new object for the specified class
-       * Native since newInstance may not be able to find a zero arg constructor.
-       */
-!     public static native Object allocateNewObject(Class aclass, Class initclass)
-  	throws InstantiationException, IllegalAccessException;
-      
-      /* Allocate a new array for the specified class
+2c2
+<  * @(#)ObjectInputStream.java	1.107 01/02/09
+---
+>  * @(#)OBJECTINPUTSTREAM.java	1.105 00/02/02
+4c4
+<  * Copyright 1996-2001 Sun Microsystems, Inc. All Rights Reserved.
+---
+>  * Copyright 1996-2000 Sun Microsystems, Inc. All Rights Reserved.
+134c134
+<  * @version 1.107, 02/09/01
+---
+>  * @version 1.105, 02/02/00
+1202c1202
+< 		              null : allocateNewObject(currentClass, currentClass);
+---
+> 		              null : allocateNewObjectOverride(currentClass, currentClass);
+1348c1348
+< 			     null : allocateNewObject(currentClass, currclass);
+---
+> 			     null : allocateNewObjectOverride(currentClass, currclass);
+1403,1404d1402
+< 		    setBlockData(true);  /* any reads are from datablocks */
+< 
+1408a1407
+> 			setBlockData(true);  /* any reads are from datablocks */
+2096c2095,2098
+< 	return dis.readLine();
+---
+>       // MIK - Hack to prevent deprecation warnings
+>       //  return dis.readLine();
+>       BufferedReader d = new BufferedReader(new InputStreamReader(dis));
+>       return d.readLine();
+2830a2833,2837
+>     protected Object allocateNewObjectOverride(Class cl, Class scl)
+>       throws InstantiationException, IllegalAccessException {
+>       return allocateNewObject(cl, scl);
+>     }
+> 
+2834c2841
+<     private static native Object allocateNewObject(Class aclass, Class initclass)
+---
+>     public static native Object allocateNewObject(Class aclass, Class initclass)
+2905c2912
+< };
+---
+> }

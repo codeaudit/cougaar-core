@@ -1,0 +1,19 @@
+269a270
+>         try {
+418a420,423
+>         } catch (NotSerializableException nse) {
+>             System.out.println("NSE: " + obj.getClass().getName());
+>             throw nse;
+>         }
+1974c1979
+<     };
+---
+>     }
+2200c2205
+<      };
+---
+>      }
+2495c2500
+< };
+---
+> }
