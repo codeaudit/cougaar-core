@@ -71,6 +71,8 @@ import org.cougaar.core.thread.ThreadServiceProvider;
 import org.cougaar.util.log.*;
 import org.cougaar.util.PropertyParser;
 
+import org.cougaar.core.node.service.*;
+
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
  * <p>
@@ -210,8 +212,10 @@ public class NodeAgent
     ServiceBroker rootsb = agentServiceBroker;
     AgentManager am = agentManager;
 
-    ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
-    tsp.provideServices(rootsb);
+    {
+      ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
+      tsp.provideServices(rootsb);
+    }
 
     try {
       rootsb.addService(NamingService.class,
@@ -322,6 +326,13 @@ public class NodeAgent
       } catch (RuntimeException re) {
         re.printStackTrace();
       }
+    }
+
+    {
+      TimeServiceProvider tsp = new TimeServiceProvider();
+      tsp.start();
+      rootsb.addService(NaturalTimeService.class, tsp);
+      rootsb.addService(RealTimeService.class, tsp);
     }
 
     super.loadInternalPriorityComponents();
@@ -568,6 +579,5 @@ public class NodeAgent
     heartbeat = new Heartbeat();
     heartbeat.start();
   }
-
 
 }

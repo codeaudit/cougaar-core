@@ -108,6 +108,8 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
 
+import org.cougaar.core.node.service.*;
+
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 
  * provides basic services to Agent Components.
@@ -678,6 +680,10 @@ public class SimpleAgent
     }
 
     super.loadInternalPriorityComponents();
+
+    /** get the timers **/
+    xTimer = (NaturalTimeService) sb.getService(this, NaturalTimeService.class, null);
+    rTimer = (RealTimeService) sb.getService(this, RealTimeService.class, null);
   }
 
   protected void loadBinderPriorityComponents() {
@@ -919,6 +925,9 @@ public class SimpleAgent
     //
     // release context-based services
     //
+
+    sb.releaseService(this, RealTimeService.class, rTimer);
+    sb.releaseService(this, NaturalTimeService.class, xTimer);
 
     sb.revokeService(LDMService.class, myLDMServiceProvider);
 
@@ -1165,7 +1174,7 @@ public class SimpleAgent
     if (message instanceof ClusterMessage) {
       checkClusterInfo(((ClusterMessage) message).getSource());
     }
-    showProgress("-");
+    if (showTraffic) showProgress("-");
 
     try {
       if (message instanceof AdvanceClockMessage) {
@@ -1429,7 +1438,7 @@ public class SimpleAgent
   public void sendMessage(ClusterMessage message)
   {
     checkClusterInfo(message.getDestination());
-    showProgress("+");
+    if (showTraffic) showProgress("+");
     try {
       if (messenger == null) {
         throw new RuntimeException("MessageTransport unavailable. Message dropped.");
@@ -1579,15 +1588,8 @@ public class SimpleAgent
   // COUGAAR Scenario Time management and support for Plugins
   //
 
-  // one timer per vm - conserve threads.
-  static ExecutionTimer _xTimer;
-  static Timer _rTimer;
-  static {
-    _xTimer = new ExecutionTimer();
-    _xTimer.start();
-    _rTimer = new RealTimer();
-    _rTimer.start();
-  }
+  private NaturalTimeService xTimer = null;
+  private RealTimeService rTimer = null;
 
   /** Set the Scenario time to some specific time (stopped).
    *
@@ -1595,7 +1597,7 @@ public class SimpleAgent
    * 
    **/
   public void setTime(long time) {
-    sendAdvanceClockMessage(time, true, 0.0, false, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(time, true, 0.0, false, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   /**
@@ -1605,7 +1607,7 @@ public class SimpleAgent
    * @param running should the clock continue to run after setting the time?
    **/
   public void setTime(long time, boolean running) {
-    sendAdvanceClockMessage(time, true, 0.0, running, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(time, true, 0.0, running, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   /**
@@ -1613,7 +1615,7 @@ public class SimpleAgent
    * @param newRate the new rate. Execution time advance at the new rate after a brief delay
    **/
   public void setTimeRate(double newRate) {
-    sendAdvanceClockMessage(0L, false, newRate, false, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(0L, false, newRate, false, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   /**
@@ -1622,7 +1624,7 @@ public class SimpleAgent
    * equivalent to advanceTime(timePeriod, false);
    **/
   public void advanceTime(long timePeriod){
-    sendAdvanceClockMessage(timePeriod, false, 0.0, false, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(timePeriod, false, 0.0, false, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   /**
@@ -1632,7 +1634,7 @@ public class SimpleAgent
    * @param running should the clock continue to run after setting.
    **/
   public void advanceTime(long timePeriod, boolean running){
-    sendAdvanceClockMessage(timePeriod, false, 0.0, running, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(timePeriod, false, 0.0, running, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   /**
@@ -1642,18 +1644,18 @@ public class SimpleAgent
    * @param newRate the new rate
    **/
   public void advanceTime(long timePeriod, double newRate){
-    sendAdvanceClockMessage(timePeriod, false, newRate, false, _xTimer.DEFAULT_CHANGE_DELAY);
+    sendAdvanceClockMessage(timePeriod, false, newRate, false, xTimer.DEFAULT_CHANGE_DELAY);
   }
 
   public void advanceTime(ExecutionTimer.Change[] changes) {
-    ExecutionTimer.Parameters[] params = _xTimer.create(changes);
+    ExecutionTimer.Parameters[] params = xTimer.createParameters(changes);
     for (int i = 0; i < params.length; i++) {
       sendAdvanceClockMessage(params[i]);
     }
   }
 
   public double getExecutionRate() {
-    return _xTimer.getRate();
+    return xTimer.getRate();
   }
 
   private void sendAdvanceClockMessage(long millis,
@@ -1664,7 +1666,7 @@ public class SimpleAgent
   {
     MessageAddress a = getAgentIdentifier();
     ExecutionTimer.Parameters newParameters =
-      _xTimer.create(millis, millisIsAbsolute, newRate, forceRunning, changeDelay);
+      xTimer.createParameters(millis, millisIsAbsolute, newRate, forceRunning, changeDelay);
     Message m = new AdvanceClockMessage(a, newParameters);
     messenger.sendMessage(m);
   }
@@ -1680,24 +1682,24 @@ public class SimpleAgent
    * The returned time is in milliseconds.
    **/
   public long currentTimeMillis( ){
-    return _xTimer.currentTimeMillis();
+    return xTimer.currentTimeMillis();
   }
 
   public void addAlarm(Alarm alarm) {
-    _xTimer.addAlarm(alarm);
+    xTimer.addAlarm(alarm);
   }
 
   public void handleAdvanceClockMessage(AdvanceClockMessage acm) {
-    _xTimer.setParameters(acm.getParameters());
+    xTimer.setParameters(acm.getParameters());
   }
 
   /* RealTime Alarms */
   public void addRealTimeAlarm(Alarm alarm) {
-    _rTimer.addAlarm(alarm);
+    rTimer.addAlarm(alarm);
   }
 
   private static void showProgress(String p) {
-    if (showTraffic) {
+    if (!isQuiet) {
       // Too many threads in a multi-cluster node are printing progress 
       // at the same time and we don't really care about the newlines
       // so we'll drop the synchronized and live with the consequences.
