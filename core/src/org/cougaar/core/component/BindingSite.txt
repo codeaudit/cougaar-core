@@ -1,0 +1,74 @@
+Initial Enumeration of BindingSites
+
+BlackboardBindingSite
+	Blackboard access for plugin.  In ALP, this is the LogPlan
+	api and the matching binder is the Subscriber object.
+
+BlackboardLPBindingSite
+	Blackboard access for LogicProviders.  In ALP, this is the 
+	LogPlanServesLogicProvider api, without a binder.
+
+ContainmentBindingSite
+	Primary container of a component.  Used to request more
+	services.  this is really new for ultralog.
+
+DomainBindingSite
+	Access to Object factories and other Domain objects.  In ALP,
+	this function is provided to plugins via the LDMServesPlugIn
+	api, without a real Binder.
+
+MessageTransportBindingSite
+	Access to message transport(s) for sending and receiving
+	messages to other Agents.  In ALP, Plugins never have access
+	to the equivalent functionality, but must be helped (through
+	the Blackboard) by a LogicProvider.  For LPs, this is part of 
+	LogPlanServesLogicProvider.	
+
+DatabaseBindingSite
+	general access to databases.  Offers connection pooling,
+	retries, etc in addition to giving (controlled) access to
+	databases for components which do not have permission to
+	access databases directly.  ALP only offers this service
+	through a global object DBConnectionPool.
+	
+SecurityBindingSite
+	Auth/cert/crypt services.  New for UltraLog, though some
+	similar functionality is made available to the
+	MessageTransport(s).
+	
+ThreadingBindingSite
+	Provides lightweight activation services for components which
+	don't want to worry about scheduling themselves.  Like "Thin"
+	or "shared thread" plugins in ALP, but abstracted out into a
+	general service.
+
+PSPBindingSite
+	Provides access to HTML, XML, etc services and protocols for
+	PSP-like components - that is allows communication with the 
+	outside world, including humans.  ALP integrates this
+	functionality with the PSP base classes.
+	
+NamespaceBindingSite
+	Provides access to Agent-level whitepages and yellowpages.
+
+
+Notes:
+
+Although there is no specific BindingSite above for Rovers or mobile
+plugins, this functionality is to be provided via a combination of other 
+BindingSites and PluginDescription.  Essentially, a
+Rover which wishes to send itself to another location would:
+	- identify the destination via the NamespaceBindingSite
+	- construct a PluginDescription of itself parameterized with
+	its current state or with itself (if it is serializable).
+	- certify the new PluginDescription with the help of the
+	SecurityBindingSite.
+	- send a AddPlugin message via the MessageTransportBindingSite
+	referencing the new PluginDescription and the destination.
+	- optionally request immediate expiration or stop/collect via
+	the ContainmentBindingSite api.
+We could certainly offer a convenience service which would simplify
+this process, but we wanted to focus on the lowest-level services
+initially. 
+
+
