@@ -25,6 +25,7 @@
  */
 package org.cougaar.core.plugin.deletion;
 
+import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -33,8 +34,10 @@ import org.cougaar.util.UnaryPredicate;
  * established when constructed. Setters are protected an may be overridden in
  * subclasses.
  */
-public class SimpleDeletionPolicy implements DeletionPolicy {
+public class SimpleDeletionPolicy  
+  implements DeletionPolicy, org.cougaar.core.util.UniqueObject, java.io.Serializable {
   private String name;
+  private UID myUID = null;
   private UnaryPredicate predicate;
   private long deletionDelay;
   private int priority;
@@ -114,6 +117,27 @@ public class SimpleDeletionPolicy implements DeletionPolicy {
 
   public long getDeletionDelay() {
     return deletionDelay;
+  }
+
+  // UniqueObject interface
+  /** @return the UID of a UniqueObject.  If the object was created
+   * correctly (e.g. via a Factory), will be non-null.
+   **/
+  public UID getUID() {
+    return myUID;
+  }
+
+  /** set the UID of a UniqueObject.  This should only be done by
+   * an LDM factory.  Will throw a RuntimeException if
+   * the UID was already set.
+   **/
+  public void setUID(UID uid) {
+    if (myUID != null) {
+      RuntimeException rt = new RuntimeException("Attempt to call setUID() more than once.");
+      throw rt;
+    }
+
+    myUID = uid;
   }
 }
 
