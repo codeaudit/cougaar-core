@@ -280,7 +280,11 @@ implements AgentIdentityClient
           cid = (MessageAddress) o1;
         } else if (o1 instanceof String) {
           cid = MessageAddress.getMessageAddress((String) o1);
-          parameters.set(0, cid);
+          {                     /* disgusting */
+            parameters = new ArrayList(parameters);
+            parameters.set(0, cid);
+            parameters = Collections.unmodifiableList(parameters);
+          }
         }
       }
     }

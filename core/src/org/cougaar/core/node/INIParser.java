@@ -29,7 +29,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
+import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +37,7 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.plugin.PluginBase;
 import org.cougaar.util.StringUtility;
+import org.cougaar.util.CSVUtility;
 
 /**
  * Parse an INI stream into an <code>ComponentDescription[]</code>.
@@ -83,7 +84,7 @@ public final class INIParser {
    *   # option comment lines and empty lines
    *   [ ignored section headers ]
    *   insertionPoint = classname
-   *   # or specify String arguments, which are saved as a Vector "param"
+   *   # or specify String arguments, which are saved as a List "param"
    *   insertionPoint = classname(arg0, arg1, argN)
    *   # more "insertionPoint = " lines
    * </pre> and is parsed into an array of ComponentDescriptions.
@@ -203,21 +204,19 @@ readDescriptions:
           }
         }
 
-        // FIXME only a simplistic property of "Vector<String>" is supported
+        // FIXME only a simplistic property of "List<String>" is supported
         //
         // parse value into classname and optional parameters
         String classname;
-        Vector vParams;
+        List vParams = null;
         int p1;
         int p2;
         if (((p1 = value.indexOf('(')) > 0) && 
             ((p2 = value.lastIndexOf(')')) > p1)) {
           classname = value.substring(0, p1);
-          vParams = StringUtility.parseCSV(value, (p1+1), p2);
+          vParams = CSVUtility.parseToList(value.substring((p1+1), p2));
         } else {
           classname = value;
-          //vParams = getEmptyVector();
-          vParams = null;       // no parameters == NO PARAMETERS! (bug 1372)
         }
 
         // fix the insertion point for backwards compatibility
@@ -227,7 +226,7 @@ readDescriptions:
         } else if (insertionPoint.equals("cluster")) {
           if (vParams == null) {
             // fix "cluster=name" to be "cluster=classname(name)"
-            vParams = new Vector(1);
+            vParams = new ArrayList(1);
             vParams.add(classname);
             classname = "org.cougaar.core.agent.SimpleAgent";
           }
@@ -249,6 +248,9 @@ readDescriptions:
           }
         }
 
+        if (vParams != null) {
+          vParams = Collections.unmodifiableList(vParams);
+        }
         // FIXME unsupported fields: codebase, certificate, lease, policy
         //
         // create a new ComponentDescription
@@ -296,15 +298,15 @@ readDescriptions:
       out.print(descI.getInsertionPoint());
       out.print("=");
       out.print(descI.getClassname());
-      Vector vParams = (Vector)descI.getParameter();
+      List vParams = (List)descI.getParameter();
       int nvParams = vParams.size();
       if (nvParams > 0) {
         out.print("(");
         int k = 0;
-        out.print((String)vParams.elementAt(k));
+        out.print((String)vParams.get(k));
         while (++k < nvParams) {
           out.print(", ");
-          out.print((String)vParams.elementAt(k));
+          out.print((String)vParams.get(k));
         }
         out.print(")");
       }

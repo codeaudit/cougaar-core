@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Collections;
 import java.util.Map;
-import java.util.Vector;
 
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
@@ -247,13 +247,9 @@ public class XMLComponentInitializerServiceProvider
       String insertionPoint = (String) componentProps.get("insertionpoint");
 //      String order = (String) componentProps.get("order");
       ArrayList args = (ArrayList) componentProps.get("arguments");
-      Vector vParams = null;
+      List vParams = null;
       if ((args != null) && (args.size() > 0)) {
-        vParams = new Vector(args.size());
-        Iterator argsIter = args.iterator();
-        while (argsIter.hasNext()) {
-          vParams.addElement(argsIter.next());
-        }
+        vParams = Collections.unmodifiableList(args);
       }
       ret[i++] =
         makeComponentDesc(name, vParams, classname, priority, insertionPoint);
@@ -263,10 +259,10 @@ public class XMLComponentInitializerServiceProvider
 
   private ComponentDescription makeComponentDesc(
 						 String name,
-    Vector vParams,
-    String classname,
-    String priority,
-    String insertionPoint) {
+                                                 List vParams,
+                                                 String classname,
+                                                 String priority,
+                                                 String insertionPoint) {
     return new ComponentDescription(name, insertionPoint, classname, null,
     //codebase
     vParams, //params

@@ -27,7 +27,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
@@ -106,12 +106,12 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
             substitutions.put(":component_id:", componentId);
             String query2 = dbInit.getQuery("queryComponentParams",  substitutions);
             ResultSet rs2 = dbInit.executeQuery(stmt2, query2);
-            Vector vParams = null; // no parameters == NO PARAMETERS! (bug 1372)
+            ArrayList vParams = null;
             while (rs2.next()) {
               String param = dbInit.getNonNullString(rs2, 1, query2);
               if (!param.startsWith("PROP$")) { // CSMART private arg
-                if (vParams == null) vParams = new Vector(); // lazy create
-                vParams.addElement(param);
+                if (vParams == null) vParams = new ArrayList(1); // lazy create
+                vParams.add(param);
               }
             }
             ComponentDescription desc =
@@ -147,7 +147,7 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
               }
               buf.append("=");
               buf.append(result[i].getClassname());
-              Vector params = (Vector) result[i].getParameter();
+              ArrayList params = (ArrayList) result[i].getParameter();
               int n = params.size();
               if (n > 0) {
                 for (int j = 0; j < n; j++) {
@@ -155,7 +155,7 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
                     buf.append("(");
                   else
                     buf.append(", ");
-                  buf.append(params.elementAt(j));
+                  buf.append(params.get(j));
                 }
                 buf.append(")");
               }
