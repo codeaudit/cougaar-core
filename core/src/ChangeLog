@@ -1,3 +1,9 @@
+2001-11-09  Michael Thome  <mthome@bbn.com>
+
+	* org/cougaar/util/ConfigFinder
+	Add find(URL) method to return the URL used by open.  Useful for
+	debugging purposes, but expensive.
+
 2001-11-08  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NamingDirContext.java:

@@ -229,6 +229,35 @@ public final class ConfigFinder {
     throw new FileNotFoundException(aURL);
   }
 
+  /**
+   * Attempt to find the URL which would be opened by the open method.
+   * Note that this must actually attempt to open the various URLs
+   * under consideration, so this is <em>not</em> an inexpensive operation.
+   **/
+  public URL find(String aURL) throws IOException {
+    for (int i = 0 ; i < configPath.size() ; i++) {
+      URL base = (URL) configPath.get(i);
+      try {
+        URL url = new URL(base, aURL);
+        if (verbose) { System.err.print("Trying "+url+": "); }
+        InputStream is = url.openStream();
+        if (is == null) continue; // Don't return null
+        is.close();
+        return url;
+      }
+      catch (MalformedURLException mue) {
+        if (verbose) { System.err.println(); }
+        continue;
+      }
+      catch (IOException ioe) {
+        if (verbose) { System.err.println(); }
+        continue;
+      }
+    }
+    return null;
+  }
+
+
   public InputStream openZip (String aURL, String aZIP) 
     throws IOException
   {
