@@ -14,17 +14,20 @@ import java.io.Serializable;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectLocation.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: AspectLocation.java,v 1.2 2001-04-03 14:00:34 tomlinso Exp $
  */
  
 public class AspectLocation extends AspectValue {
-  protected int type;
   protected Location loc_value;
 
   public AspectLocation(int type, Location new_loc_value) {
-    super(type, 0.0);
+    super(type, Double.NaN);
 
     this.loc_value = new_loc_value;
+  }
+
+  public Object clone() {
+    return new AspectLocation(type, loc_value);
   }
 
   /** Reset the value after creation.  Useful for AllocationResultAggregators
@@ -41,9 +44,10 @@ public class AspectLocation extends AspectValue {
   public Location getLocationValue() { return loc_value;}
 
   /** 
-    * @return double
+    * @return Meaningless return
+    * The super class was initted with NaN, so it will return NaN
     */
-  public double getValue() { return 0.0d;}
+ //   public double getValue() { return 0.0d;}
    
 /* Accessors for longitude + latitude?
    public long longValue() {
