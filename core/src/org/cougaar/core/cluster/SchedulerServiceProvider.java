@@ -135,7 +135,7 @@ public class SchedulerServiceProvider
        * Add component to the list of pokables to be triggerd
        **/
       public void trigger() {
-	System.out.println("SchedulerServiceProvider.SchedulerCallback.trigger() - ouch! I've been triggerd");
+	//System.out.println("SchedulerServiceProvider.SchedulerCallback.trigger() - ouch! I've been triggerd");
 	synchronized(runListSemaphore) {
 	  runThese.add(componentsTrigger);
 	  signalActivity();
