@@ -595,13 +595,14 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
 
     ServiceProvider sp;
     if (filename != null)
-      sp = new FileInitializerServiceProvider(filename);
+      sp = new FileInitializerServiceProvider();
     else
-      sp = new DBInitializerServiceProvider(experimentId, name);
+      sp = new DBInitializerServiceProvider(experimentId);
     sb.addService(InitializerService.class, sp);
     InitializerService is = (InitializerService) sb.getService(
         this, InitializerService.class, null);
-    ComponentDescription[] nodeDescs = is.getAgentDescriptions(name);
+    ComponentDescription[] agentDescs =
+      is.getComponentDescriptions(name, "Node.AgentManager.Agent");
     sb.releaseService(this, InitializerService.class, is);
 
     // Set up MTS and QOS service provides.
@@ -617,7 +618,9 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
     //
     // once bulk-add ComponentMessages are implements this can
     //   be done with "this.receiveMessage(compMsg)"
-    add(nodeDescs);
+    add(agentDescs);
+
+    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
 
 
