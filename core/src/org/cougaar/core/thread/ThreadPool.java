@@ -265,15 +265,14 @@ class ThreadPool
 	    return null;
     }
 
-    void listActiveThreads(List records) {
+    void listRunningThreads(List records) {
 	PooledThread thread = null;
-	long now = System.currentTimeMillis();
 	long elapsed = 0;
 	for (int i=0; i<pool.length; i++) {
 	    thread = pool[i];
 	    if (thread != null && thread.isRunning) {
 		ThreadStatusService.Record record = 
-		    new ThreadStatusService.ActiveRecord();
+		    new ThreadStatusService.RunningRecord();
 		try {
 		    SchedulableObject sched = thread.schedulable;
 		    Object consumer = sched.getConsumer();
@@ -283,7 +282,8 @@ class ThreadPool
 		    if (scheduler != null)
 			record.scheduler = scheduler.getName();
 		    record.schedulable = sched.getName();
-		    record.elapsed = now-thread.start_time;
+		    long startTime=thread.start_time;
+		    record.elapsed = System.currentTimeMillis()-startTime;
 		    records.add(record);
 		} catch (Throwable t) {
 		}

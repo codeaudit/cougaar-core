@@ -38,7 +38,7 @@ import org.cougaar.core.component.Service;
 public interface ThreadStatusService extends Service
 {
     public static final String QUEUED = "queued";
-    public static final String ACTIVE = "active";
+    public static final String RUNNING = "running";
 
     abstract public class Record {
 	public String scheduler;
@@ -49,8 +49,8 @@ public interface ThreadStatusService extends Service
 	abstract public String getState();
     }
 
-    public class ActiveRecord extends Record {
-	public String getState() { return ACTIVE; }
+    public class RunningRecord extends Record {
+	public String getState() { return RUNNING; }
     }
 
     public class QueuedRecord extends Record {

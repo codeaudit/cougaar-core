@@ -96,7 +96,7 @@ public final class ThreadServiceProvider
 			TreeNode node = scheduler.getTreeNode();
 			List result = new ArrayList();
 			node.listQueuedThreads(result);	
-			node.listActiveThreads(result);
+			node.listRunningThreads(result);
 			return result;
 		    }
 		};

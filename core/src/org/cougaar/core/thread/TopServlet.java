@@ -21,6 +21,10 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.service.ThreadControlService;
+
 import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.Date;
@@ -36,7 +40,8 @@ import javax.servlet.http.HttpServletResponse;
 class TopServlet extends HttpServlet
 {
 
-    private ThreadStatusService service;
+    private ThreadStatusService statusService;
+    private ThreadControlService controlService;
 
     // Higher times appear earlier in the list
     private Comparator comparator = new Comparator() {
@@ -56,8 +61,24 @@ class TopServlet extends HttpServlet
 	    }
 	};
 
-    public TopServlet(ThreadStatusService service) {
-	this.service = service;
+    public TopServlet(ServiceBroker sb) {
+	NodeControlService ncs = (NodeControlService)
+	    sb.getService(this, NodeControlService.class, null);
+
+	if (ncs == null) {
+	    throw new RuntimeException("Unable to obtain service");
+	}
+
+	ServiceBroker rootsb = ncs.getRootServiceBroker();
+
+	statusService = (ThreadStatusService)
+	    rootsb.getService(this, ThreadStatusService.class, null);
+	controlService = (ThreadControlService)
+	    rootsb.getService(this, ThreadControlService.class, null);
+
+	if (statusService == null || controlService == null) {
+	    throw new RuntimeException("Unable to obtain service");
+	}
     }
 
     String getPath() {
@@ -72,7 +93,7 @@ class TopServlet extends HttpServlet
     private void printHeaders(PrintWriter out) {
 	out.print("<tr>");
 	out.print("<th align=left><b>State</b></th>");
-	out.print("<th align=left><b>Time</b></th>");
+	out.print("<th align=left><b>Time(ms)</b></th>");
 	out.print("<th align=left><b>Level</b></th>");
 	out.print("<th align=left><b>Thread</b></th>");
 	out.print("<th align=left><b>Client</b></th>");
@@ -108,13 +129,52 @@ class TopServlet extends HttpServlet
 	out.print("</tr>");
     }
 
+    void printSummary(List status, PrintWriter out) 
+    {
+	int max = controlService.maxRunningThreadCount();
+	int running = 0;
+	int queued = 0;
+	int total = status.size();
+	
+	Iterator itr = status.iterator();
+	while (itr.hasNext()) {
+	    ThreadStatusService.Record record = (ThreadStatusService.Record)
+		itr.next();
+	    if (record.getState() == ThreadStatusService.QUEUED)
+		++queued;
+	    else
+		++running;
+	}
+
+	out.print("<br><br><b>");
+	out.print(total );
+	out.print(" thread");
+	if (total != 1) out.print('s');
+	out.print(": " );
+	out.print(queued);
+	out.print(" queued, ");
+	out.print(running);
+	out.print(" running, ");
+	out.print(max);
+	out.print(" max running");
+	out.print("</b>");
+    }
+
     void printPage(PrintWriter out) {
-	List status = service.getStatus();
-	if (status == null || status.size() == 0) {
-	    out.print("<br><i>none</i>");
+	List status = statusService.getStatus();
+	if (status == null) {
+	    // print some error message
 	    return;
 	}
 
+	printSummary(status, out);
+
+	if (status.size() == 0) {
+	    // Nothing more to print
+	    return;
+	}
+
+	out.print("<hr>");
 	// Sort the records by time
 	java.util.Collections.sort(status, comparator);
 
@@ -131,26 +191,48 @@ class TopServlet extends HttpServlet
 	out.print("</table>");
     }
 
-    public void doGet(HttpServletRequest request,
-		      HttpServletResponse response) 
-	throws java.io.IOException 
-    {
+    private static final String REFRESH_FIELD_PARAM = "refresh";
 
-	String refresh = request.getParameter("refresh");
+    private void printRefreshForm(HttpServletRequest request,
+				  PrintWriter out)
+    {
+	String refresh  = request.getParameter(REFRESH_FIELD_PARAM);
 	int refreshSeconds = 
 	    ((refresh != null) ?
 	     Integer.parseInt(refresh) :
 	     0);
 
+	out.print("<hr>");
+	out.print("Refresh (in seconds): ");
+	out.print("<input type=\"text\" size=10 name=\"");
+	out.print(REFRESH_FIELD_PARAM);
+	out.print("\"");
+	if (refresh != null) {
+	    out.print(" value=\"");
+	    out.print(refresh);
+	    out.print("\"");
+	}
+	out.print(">");
+
+	if (refresh != null) {
+	    out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
+	    out.print(refresh);
+	    out.print("\">");
+	}
+
+	out.print("<input type=\"submit\" name=\"action\" value=\"Refresh\">");
+    }
+
+    public void doGet(HttpServletRequest request,
+		      HttpServletResponse response) 
+	throws java.io.IOException 
+    {
+
 	response.setContentType("text/html");
 	PrintWriter out = response.getWriter();
 
 	out.print("<html><HEAD>");
-	if (refreshSeconds > 0) {
-	    out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
-	    out.print(refreshSeconds);
-	    out.print("\">");
-	}
+
 	out.print("<TITLE>");
 	out.print(getTitle());
 	out.print("</TITLE></HEAD><body><H1>");
@@ -161,9 +243,9 @@ class TopServlet extends HttpServlet
 	out.print(new Date());
 	
 	printPage(out);
+	
+	printRefreshForm(request, out);
 
-	out.print("<hr>RefreshSeconds: ");	
-	out.print(refreshSeconds);
 
 	out.print("</body></html>\n");
 

@@ -23,7 +23,6 @@ package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ServletService;
 
 /**
@@ -46,26 +45,14 @@ public class TopPlugin extends ComponentPlugin
 
 	ServiceBroker sb = getServiceBroker();
 
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
-
-	if (ncs == null) {
-	    throw new RuntimeException("Unable to obtain service");
-	}
-
-	ServiceBroker rootsb = ncs.getRootServiceBroker();
-
-	ThreadStatusService statusService = (ThreadStatusService)
-	    rootsb.getService(this, ThreadStatusService.class, null);
-	
 	ServletService servletService = (ServletService)
 	    sb.getService(this, ServletService.class, null);
 
-	if (servletService == null || statusService == null) {
+	if (servletService == null) {
 	    throw new RuntimeException("Unable to obtain service");
 	}
 
-	TopServlet servlet = new TopServlet(statusService);
+	TopServlet servlet = new TopServlet(sb);
 
 	// register the servlet
 	try {

@@ -95,11 +95,16 @@ public class Scheduler
 
 
 
-    public Scheduler(ThreadListenerProxy listenerProxy, String  name) {
-	pendingThreads = new DynamicSortedQueue(timeComparator);
-	maxRunningThreads = 
+    private static int ConfiguredMaxRunningThreads;
+    static {
+	ConfiguredMaxRunningThreads = 
 	    PropertyParser.getInt(MaxRunningCountProp, 
 				  MaxRunningCountDefault);
+    };
+
+    public Scheduler(ThreadListenerProxy listenerProxy, String  name) {
+	pendingThreads = new DynamicSortedQueue(timeComparator);
+	maxRunningThreads = ConfiguredMaxRunningThreads;
 	this.listenerProxy = listenerProxy;
 	this.name = name;
 	printName = "<Scheduler " +name+ ">";
@@ -108,7 +113,6 @@ public class Scheduler
 
     // NB: By design this method is NOT synchronized!  
     void listQueuedThreads(final List records) {
-	final long now = System.currentTimeMillis();
 	DynamicSortedQueue.Processor processor = 
 	    new DynamicSortedQueue.Processor() {
 		public void process(Object thing) {
@@ -122,7 +126,8 @@ public class Scheduler
 			    record.consumer = consumer.toString();
 			record.scheduler = name;
 			record.schedulable = sched.getName();
-			record.elapsed = now-sched.getTimestamp();
+			long timestamp = sched.getTimestamp();
+			record.elapsed = System.currentTimeMillis()-timestamp;
 			records.add(record);
 		    } catch (Throwable t) {
 		    }
@@ -343,7 +348,20 @@ public class Scheduler
 	}
     }
 
-    public void setMaxRunningThreadCount(int count) {
+    public void setMaxRunningThreadCount(int requested_max) {
+	int count = requested_max;
+	if (requested_max > ConfiguredMaxRunningThreads) {
+	    Logger logger = getLogger();
+	    if (logger.isErrorEnabled())
+		logger.error("Attempt to set maxRunningThreadCount to "
+			     +requested_max+
+			     " which is greater than the value given in "
+			     +MaxRunningCountProp+
+			     " ("
+			     +ConfiguredMaxRunningThreads+
+			     ")");
+	    count = ConfiguredMaxRunningThreads;
+	}
 	int additionalThreads = count - maxRunningThreads;
 	maxRunningThreads = count;
  	TreeNode parent_node = getTreeNode().getParent();

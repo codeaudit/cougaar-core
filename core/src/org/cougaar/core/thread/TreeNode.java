@@ -70,8 +70,8 @@ final class TreeNode
 	return children;
     }
 
-    void listActiveThreads(List records) {
-	pool.listActiveThreads(records);
+    void listRunningThreads(List records) {
+	pool.listRunningThreads(records);
     }
 
     void listQueuedThreads(List records) {
