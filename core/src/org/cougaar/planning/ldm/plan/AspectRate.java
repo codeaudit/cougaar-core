@@ -45,7 +45,7 @@ public class AspectRate extends TypedAspectValue {
   private static boolean hack_warnedUser; // FIXME big hack!
 
   public static AspectValue create(int type, Object o) {
-    if (o instanceof Number && ((Number)o).doubleValue() == 0.0) {
+    if (o instanceof Number) {
       if (!hack_warnedUser) {
         // this bug can easily occur in the thousands, so we
         // only make a fuss this once
@@ -57,7 +57,7 @@ public class AspectRate extends TypedAspectValue {
             new RuntimeException("Trace"));
       }
       // bogus!
-      o = org.cougaar.planning.ldm.measure.CostRate.newDollarsPerSecond(123.456);
+      o = CountRate.newUnitsPerDay(((Number)o).doubleValue());
     }
     long l;
     if (o instanceof Rate) {
@@ -69,6 +69,19 @@ public class AspectRate extends TypedAspectValue {
    
   public static AspectValue create(int type, Rate r) {
     return new AspectRate(type,r);
+  }
+
+  public static AspectValue create(int type, int v) {
+    return new AspectRate(type,CountRate.newUnitsPerDay((double)v));
+  }
+  public static AspectValue create(int type, float v) {
+    return new AspectRate(type,CountRate.newUnitsPerDay((double)v));
+  }
+  public static AspectValue create(int type, long v) {
+    return new AspectRate(type,CountRate.newUnitsPerDay((double)v));
+  }
+  public static AspectValue create(int type, double v) {
+    return new AspectRate(type,CountRate.newUnitsPerDay(v));
   }
 
   /** Non-preferred alias for #create(int, Rate).
