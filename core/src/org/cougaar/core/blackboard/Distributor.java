@@ -1218,9 +1218,19 @@ final class Distributor {
   }
 
   public void invokeABAChangeLPs(Set communities) {
-    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    synchronized (transactionLock) { // this was distributorLock, which appears wrong
+    if (logger.isDebugEnabled()) {
+      if (Thread.holdsLock(distributorLock)) {
+        logger.debug("Distributor.invokeABAChangeLPs invoked inside distributorLock",
+                     new Throwable());
+      }
+      if (Thread.holdsLock(transactionLock)) {
+        logger.debug("Distributor.invokeABAChangeLPs invoked inside transactionLock",
+                     new Throwable());
+      }
+    }
+    synchronized (distributorLock) { // this was distributorLock, which appears wrong
       try {
         blackboard.startTransaction();
         blackboard.invokeABAChangeLPs(communities);
