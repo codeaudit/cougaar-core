@@ -33,6 +33,12 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This node-level Plugin shows examples of limiting the top-level
+ * thread service in two ways: it sets the global max to 2, and it
+ * qualifies rights selection for children so that no child ever uses
+ * more than half of the available rights.
+ */
 public class RootControlPlugin extends ComponentPlugin
 {
     private static final int MAX_THREADS=2;

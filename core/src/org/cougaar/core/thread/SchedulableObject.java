@@ -32,6 +32,11 @@ import org.cougaar.util.log.Logging;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * The standard implementation of @link Schedulable.  The trivial
+ * thread services use @link TrivialSchedulable instead.
+ */
+
 final class SchedulableObject implements Schedulable
 {
     private long timestamp;

@@ -28,6 +28,9 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
+/**
+ * This experimenatal extension of @Scheduler is not currently used.
+ */
 public class RightsPropagatingScheduler extends Scheduler
 {
     private static final long MaxTime = 20; // ms
@@ -37,7 +40,6 @@ public class RightsPropagatingScheduler extends Scheduler
     public RightsPropagatingScheduler(ThreadListenerProxy listenerProxy)
     {
 	super(listenerProxy);
-	System.out.println("RightsPropagatingScheduler");
     }
 
     

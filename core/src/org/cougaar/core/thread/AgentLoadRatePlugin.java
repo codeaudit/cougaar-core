@@ -41,7 +41,11 @@ import org.cougaar.core.qos.metrics.MetricImpl;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.service.ThreadService;
 
-/* Load this Plugin at LOW priority since it needs another plugin's service
+/**
+ * This Plugin collects the load history for the Agent in which it's
+ * loaded, and uplaads that data to the metrics service.  It
+ * uses the @link AgentLoadService to collect the raw date and should
+ * be loaded at LOW priority to ensure that the service is available.
  */
 public class AgentLoadRatePlugin
     extends ComponentPlugin

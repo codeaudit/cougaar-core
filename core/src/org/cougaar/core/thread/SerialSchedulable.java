@@ -21,6 +21,11 @@
 
 package org.cougaar.core.thread;
 
+/**
+ * This is the @link Schedulable implementation used by the simplest
+ * thread service implementation, which runs its {@link Schedulable}s
+ * serially.
+ */
 class SerialSchedulable extends TrivialSchedulable
 {
     private SerialThreadQueue queue;

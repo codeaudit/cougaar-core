@@ -28,6 +28,14 @@ package org.cougaar.core.thread;
 
 import org.cougaar.util.CircularQueue;
 
+/**
+ * This native Java thread helps the standard thread service scheduler
+ * to use its pool efficiently.  When a pooled thread ends a given
+ * run, it places itself on the Reclaimer so that it can be reused.
+ * See also @link Starter.
+ * 
+ * This is a singleton; there should never be more than one per Node.
+ */
 final class Reclaimer extends Thread
 {
 

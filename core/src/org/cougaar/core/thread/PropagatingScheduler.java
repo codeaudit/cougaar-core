@@ -28,8 +28,8 @@ package org.cougaar.core.thread;
 
 
 /**
- * An extension of Scheduler that uses a globally shared max thread
- * count.  This is the default scheduler class.
+ * The standard hiearchical thread service implementation uses this
+ * extension of @link Scheduler to handle the propagation of rights.
  */
 public class PropagatingScheduler extends Scheduler
 {

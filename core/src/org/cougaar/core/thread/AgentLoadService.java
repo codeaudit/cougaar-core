@@ -31,6 +31,11 @@ import java.util.Collection;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.qos.metrics.DecayingHistory;
 
+/**
+ * This Service provides a simple time-based integral of agent load.
+ * This service is provided by @link AgentLoadSensorPlugin, an inner
+ * class of which implements the service.
+ */
 public interface AgentLoadService extends Service
 {
     

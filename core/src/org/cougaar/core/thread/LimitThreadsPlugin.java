@@ -31,8 +31,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadControlService;
 
 /**
- * This class limits the number of threads that an agent can use to
- * run its schedulables in parallel.  This should loaded into all
+ * This Component limits the number of threads that an agent can use
+ * to run its schedulables in parallel.  This should loaded into all
  * agents.  Note that if the more than the given number of threads are
  * already running when this loads, the limiting won't become
  * effective until some of them stop.

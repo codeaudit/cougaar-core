@@ -40,8 +40,8 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.PropertyParser;
 
 /**
- * A sample RightsSelector that attempts to select among the children
- * in such a way as to match a set of target percentages.
+ * A sample @link RightsSelector that attempts to select among the
+ * children in such a way as to match a set of target percentages.
  * 
  * @property org.cougaar.thread.targets Specifies a file which
  * contains percentage targets for the children.

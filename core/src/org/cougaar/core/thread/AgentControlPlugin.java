@@ -31,6 +31,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
 
+/**
+ * This trivial Plugin exists only to create a @link SchedulerWatcher
+ * for whatever Agent it's loaded in to.
+ */
 public class AgentControlPlugin extends ComponentPlugin
 {
     public AgentControlPlugin() {

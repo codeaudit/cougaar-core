@@ -28,6 +28,14 @@ package org.cougaar.core.thread;
 
 import org.cougaar.util.CircularQueue;
 
+/**
+ * This native Java thread helps the standard thread service scheduler
+ * to use its pool efficiently.  When a @link Schedulable has been
+ * given the right to run, it's placed on the Starter for the actual
+ * starting.  See also @Reclaimer.
+ * 
+ * This is a singleton; there should never be more than one per Node.
+ */
 final class Starter extends Thread
 {
 

@@ -26,6 +26,13 @@ import java.util.ArrayList;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
+/**
+ * The simplest thread service implementation, which runs its {@link
+ * Schedulable}s serially, uses a small Collection of
+ * SerialThreadRunners to do that work.  Each uses its own  native
+ * Java Thread.  The {@link Schedulable}s for any given runner are
+ * held in a @link SerialThreadQueue.
+ */
 final class SerialThreadRunner
 {
     private Thread thread;

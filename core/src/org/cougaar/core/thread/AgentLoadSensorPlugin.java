@@ -46,6 +46,10 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 
+/**
+ * This Plugin provides the @klink AgentLoadService for other Plugins
+ * in the same Agetnt.  The service implementation is an inner class.
+ */
 public class AgentLoadSensorPlugin
     extends ComponentPlugin
     implements ThreadListener, Constants, ServiceProvider

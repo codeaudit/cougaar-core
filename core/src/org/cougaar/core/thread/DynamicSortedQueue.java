@@ -37,7 +37,9 @@ import org.cougaar.util.UnaryPredicate;
  * determine which elements is next (the smallest, according to the
  * Comparator).  Note that this is not a Collection.  Also note that
  * the methods are not synchronized.  It's the caller's reponsibility
- * to handle synchronization.
+ * to handle synchronization.  Queues of this kind are used by @link
+ * Schedulers to hold @link Schedulables that are not able to run
+ * immediately.
  */
 public class DynamicSortedQueue
 {
