@@ -44,7 +44,9 @@ public interface PlugInDelegate {
   RootFactory getLdmFactory();
   Factory getFactory(String domainname);
   ClusterIdentifier getClusterIdentifier();
+  /** @deprecated use getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) **/
   MetricsSnapshot getMetricsSnapshot();
+  MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);
   void openTransaction();
   boolean tryOpenTransaction();
   void closeTransaction() throws SubscriberException;

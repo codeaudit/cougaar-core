@@ -42,6 +42,10 @@ public class MetricsSnapshot implements Serializable {
   public int notificationsIn = -1;
   /** count of notifications sent by this cluster (CMT) **/
   public int notificationsOut = -1;
+  /** Statistics from MessageStatistics.Statistics **/
+  public double averageMessageQueueLength = -1;
+  public long totalMessageBytes = -1;
+  public long totalMessageCount = -1;
 
   /** number of assets in the cluster's logplan. (CLP) **/
   public int assets = 0;
@@ -77,12 +81,16 @@ public class MetricsSnapshot implements Serializable {
   public String toString() {
     return "<MetricsSnapshot at "+(new Date(time))+">";
   }
+  
   public String describe() {
     return nodeName+"/"+clusterName+"@"+time+":\n"+
       "\tdirectivesIn="+directivesIn+"\n"+
       "\tdirectivesOut="+directivesOut+"\n"+
       "\tnotificationsIn="+notificationsIn+"\n"+
       "\tnotificationsOut="+notificationsOut+"\n"+
+      "\taverageMessageQueueLength="+averageMessageQueueLength+"\n"+
+      "\ttotalMessageBytes="+totalMessageBytes+"\n"+
+      "\ttotalMessageCount="+totalMessageCount+"\n"+
       "\tassets="+assets+"\n"+
       "\tplanelements="+planelements+"\n"+
       "\ttasks="+tasks+"\n"+
@@ -96,5 +104,99 @@ public class MetricsSnapshot implements Serializable {
       "\tfreeMemory="+freeMemory+"\n"+
       "\ttotalMemory="+totalMemory+"\n"+
       "\tthreadCount="+threadCount+"\n";
+  }
+
+  /**
+   * Create an incremental metrics snapshot from 2 cumulative snapshots.<br>
+   * Note that both such snapshots should have been created with the
+   * boolean argument <em>false</em> to give reasonable results.<br>
+   * Many fields will return values of <code>-1</code> if either original
+   * was undefined, or the <code>latest</code> was less than the <code>base</code>.<br>
+   * The following entries are not diffed, but taken from the base:<br>
+   * <ul><li><code>clusterName</code></li>
+   * <li><code>nodeName</code></li>
+   * <li><code>pluginCount</code></li>
+   * <li><code>thinPluginCount</code></li>
+   * <li><code>prototypeProviderCount</code></li>
+   * <li><code>propertyProviderCount</code></li></ul><br>
+   * The time listed is that of the <code>latest</code> snapshot.<br>
+   *
+   * @param base a <code>MetricsSnapshot</code> with cumulative results to compare against
+   * @param latest a <code>MetricsSnapshot</code> with recent cumulative results
+   * @return a <code>MetricsSnapshot</code> containing the diffs (where reasonable) of the latest from the base
+   */
+  public static MetricsSnapshot calculateIncremental(MetricsSnapshot base, MetricsSnapshot latest) {
+    MetricsSnapshot answer = new MetricsSnapshot();
+    // some elements it doesnt make sense to diff
+    answer.clusterName = base.clusterName;
+    answer.nodeName = base.nodeName;
+    answer.time = latest.time;
+
+    // these make sense to diff. However, if either value is undefined,
+    // or the newer is less than the older, then the answer is undefined
+    answer.directivesIn = MetricsSnapshot.calcDiff(base.directivesIn, latest.directivesIn);
+    answer.directivesOut = MetricsSnapshot.calcDiff(base.directivesOut, latest.directivesOut);
+    answer.notificationsIn = MetricsSnapshot.calcDiff(base.notificationsIn, latest.notificationsIn);
+    answer.notificationsOut = MetricsSnapshot.calcDiff(base.notificationsOut, latest.notificationsOut);
+    answer.averageMessageQueueLength = MetricsSnapshot.calcDiff(base.averageMessageQueueLength, latest.averageMessageQueueLength);
+    answer.totalMessageBytes = MetricsSnapshot.calcDiff(base.totalMessageBytes, latest.totalMessageBytes);
+    answer.totalMessageCount = MetricsSnapshot.calcDiff(base.totalMessageCount, latest.totalMessageCount);
+    
+    // these next are not initialized to -1, but the calcDiff
+    // will at least handle the new being less than the old
+    answer.assets = MetricsSnapshot.calcDiff(base.assets, latest.assets);
+    answer.planelements = MetricsSnapshot.calcDiff(base.planelements, latest.planelements);
+    answer.tasks = MetricsSnapshot.calcDiff(base.tasks, latest.tasks);
+    answer.workflows = MetricsSnapshot.calcDiff(base.workflows, latest.workflows);
+
+    // some more elements that shouldn't change, so don't diff
+    answer.pluginCount = base.pluginCount;
+    answer.thinPluginCount = base.thinPluginCount;
+    answer.prototypeProviderCount = base.prototypeProviderCount;
+    answer.propertyProviderCount = base.propertyProviderCount;
+
+    // this one might actually change
+    answer.cachedPrototypeCount = MetricsSnapshot.calcDiff(base.cachedPrototypeCount, latest.cachedPrototypeCount);
+
+    // and a last few, where negative diffs are OK
+    answer.idleTime = latest.idleTime - base.idleTime;
+    answer.freeMemory = latest.freeMemory - base.freeMemory;
+    answer.totalMemory = latest.totalMemory - base.totalMemory;
+    answer.threadCount = latest.threadCount - base.threadCount;
+
+    return answer;
+  } // end of static calculateIncremental()
+
+  // if either value is -1 or latest < base, return an error: -1
+  private static int calcDiff(int base, int latest) {
+    if (latest == -1 || base == -1) {
+      return -1;
+    } else if (latest < base) {
+      return -1;
+    } else {
+      return latest - base;
+    }
+  }
+  
+  // if either value is -1 or latest < base, return an error: -1
+  private static long calcDiff(long base, long latest) {
+    if (latest == -1 || base == -1) {
+      return -1;
+    } else if (latest < base) {
+      return -1;
+    } else {
+      return latest - base;
+    }
+  }
+  
+  // if either value is -1 or latest < base, return an error: -1
+  private static double calcDiff(double base, double latest) {
+    if (latest == -1 || base == -1) {
+      return -1;
+    } else if (latest < base) {
+      return -1;
+    } else {
+      return latest - base;
+    }
   }
 }

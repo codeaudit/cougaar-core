@@ -37,5 +37,11 @@ public class MetricsServiceProvider implements ServiceProvider {
     public MetricsSnapshot getMetricsSnapshot() {
       return cluster.getMetricsSnapshot();
     }
+    public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+      return cluster.getMetricsSnapshot(ms, resetMsgStats);
+    }
   }
 }
+
+
+

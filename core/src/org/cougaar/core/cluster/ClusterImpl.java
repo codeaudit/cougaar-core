@@ -807,8 +807,15 @@ public class ClusterImpl
     return this;
   }
 
+  /**
+   * @return a new filled in <code>MetricsSnapshot</code>
+   * @deprecated use #getMetricsSnapshot(MetricsSnapshot ms) and reuse the object
+   */
   public MetricsSnapshot getMetricsSnapshot() {
-    MetricsSnapshot ms = new MetricsSnapshot();
+    return getMetricsSnapshot(new MetricsSnapshot(), true);
+  }
+
+  public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
     ms.clusterName = getClusterIdentifier().cleanToString();
     ms.nodeName = getClusterManagement().getName();
     ms.time = System.currentTimeMillis();
@@ -820,6 +827,14 @@ public class ClusterImpl
     ms.notificationsIn = mw.notificationsIn;
     ms.notificationsOut = mw.notificationsOut;
 
+    // Message Statistics stuff
+    MessageStatistics.Statistics mstats = getMessageStatistics(resetMsgStats);
+    if (mstats != null) {
+      ms.averageMessageQueueLength = mstats.averageMessageQueueLength;
+      ms.totalMessageBytes = mstats.totalMessageBytes;
+      ms.totalMessageCount = mstats.totalMessageCount;
+    }
+    
     // logplan stuff
     ms.assets = myLogPlan.getAssetCount();
     ms.planelements = myLogPlan.getPlanElementCount();
@@ -837,6 +852,12 @@ public class ClusterImpl
 
     // vm stuff
     ms.idleTime = getIdleTime();
+
+    // do a gc to ensure get accurate results.
+    // Note this means that if you call this method frequently, you'll hurt
+    // your performance with all these garbage collects
+    Runtime.getRuntime().gc();
+    
     ms.freeMemory = Runtime.getRuntime().freeMemory();
     ms.totalMemory = Runtime.getRuntime().totalMemory();
     ms.threadCount = Thread.currentThread().getThreadGroup().activeCount();

@@ -97,9 +97,18 @@ public abstract class PlugInAdapter
     return metricsService;
   }
 
+  /** @deprecated supply a <code>MetricsSnapshot</code> object **/
   protected final MetricsSnapshot getMetricsSnapshot() {
     if (metricsService != null) {
       return metricsService.getMetricsSnapshot();
+    } else {
+      return null;
+    }
+  }
+
+  protected final MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+    if (metricsService != null) {
+      return metricsService.getMetricsSnapshot(ms, resetMsgStats);
     } else {
       return null;
     }
@@ -362,6 +371,7 @@ public abstract class PlugInAdapter
 
       // metrics service
       public MetricsSnapshot getMetricsSnapshot() { return getMetricsService().getMetricsSnapshot(); }
+      public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) { return getMetricsService().getMetricsSnapshot(ms, resetMsgStats); }
 
       // ??
       public java.sql.Connection getDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
@@ -696,6 +706,9 @@ public abstract class PlugInAdapter
     }
     public MetricsSnapshot getMetricsSnapshot() {
       return getMetricsService().getMetricsSnapshot();
+    }
+    public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+      return getMetricsService().getMetricsSnapshot(ms, resetMsgStats);
     }
     public void openTransaction() {
       getBlackboardService().openTransaction();

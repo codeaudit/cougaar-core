@@ -16,5 +16,7 @@ import org.cougaar.core.component.*;
  **/
 
 public interface MetricsService extends Service {
+  /** @deprecated provide an object to fill in **/
   MetricsSnapshot getMetricsSnapshot();
+  MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);
 }
