@@ -33,12 +33,25 @@ public class AgentBinderFactory
   extends BinderFactorySupport
 {
 
-  /** AgentBinderFactory always uses AgentBinder.
+  /** AgentBinderFactory always uses AgentBinder for Agents, otherwise
+   * it won't bind it.
    **/
   public Class getBinderClass(Object child) {
-    //Might want to differentiate between Agent and specializations of
-    //agents such as Clusters at some point.  But for now...
-    return AgentBinder.class;
+    if (child instanceof ComponentDescription) {
+      ComponentDescription cd = (ComponentDescription) child;
+      if ("Node.AgentManager.Agent".equals(cd.getInsertionPoint())) {
+        //Might want to differentiate between Agent and specializations of
+        //agents such as Clusters at some point.  But for now...
+        return AgentBinder.class;
+      }
+    } else {
+      if (child instanceof Agent) {
+        return AgentBinder.class;
+      }
+    }
+ 
+    // otherwise 
+    return null;
   }
 }
 
