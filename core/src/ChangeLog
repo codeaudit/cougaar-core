@@ -1,3 +1,23 @@
+2001-10-10  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Minor debugging changes.
+
+2001-10-01  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* org/cougaar/core/society/Node.java (Repository):
+	Accomodate changes to more generic initializer services. Need to
+	provide parent information that was implicit in earlier API.
+	
+	* org/cougaar/core/society/InitializerService.java (Repository):
+	* org/cougaar/core/society/FileInitializerServiceProvider.java (Repository): 
+	Revised to treat plugins and agents and other components more
+	uniformly.
+	
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Revised queries treat plugins and agent and other components more
+	uniformly.
+
 2001-09-28  Michael Thome  <mthome@bbn.com>
 
 	* *.java
