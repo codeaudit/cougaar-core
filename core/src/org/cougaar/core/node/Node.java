@@ -146,6 +146,11 @@ import org.cougaar.util.log.LogTarget; // inlined
  *   short hand (<em>DB</em>, <em>XML</em>, <em>File</em>) or as a fully specified class:
  *   <em>org.cougaar.core.node.DBComponentInitializerServiceComponent</em>
  *
+ * @property org.cougaar.core.node.ignoreRehydratedAgentList
+ *   Ignore the list of agents from the rehydrated state of the
+ *   NodeAgent, if any. Defaults to false. Set to true to disable this
+ *   feature and always use the list of agents from the
+ *   ComponentInitializerService.
  * </pre>
  */
 public class Node extends ContainerSupport
@@ -156,6 +161,8 @@ implements ContainerAPI, ServiceRevokedListener
   public static final String FILENAME_PROP = "org.cougaar.filename";
   public static final String EXPTID_PROP = "org.cougaar.experiment.id";
   public static final String INITIALIZER_PROP = "org.cougaar.core.node.InitializationComponent";
+  public static final String IGNORE_REHYDRATED_AGENT_LIST_PROP =
+    "org.cougaar.core.node.ignoreRehydratedAgentList";
 
   public String getIdentifier() {
     return 
@@ -572,10 +579,11 @@ implements ContainerAPI, ServiceRevokedListener
     //
     // construct the NodeAgent and then hand off control
     // 
-    List naParams = new ArrayList(3);
+    List naParams = new ArrayList(4);
     naParams.add(nid);
     naParams.add(getServiceBroker());
     naParams.add(agentManager);
+    naParams.add(Boolean.valueOf(System.getProperty(IGNORE_REHYDRATED_AGENT_LIST_PROP)));
     ComponentDescription naDesc = 
       new ComponentDescription(
           name,

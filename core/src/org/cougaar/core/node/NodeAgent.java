@@ -23,9 +23,10 @@ package org.cougaar.core.node;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.List;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Properties;
 import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
@@ -52,6 +53,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
+import org.cougaar.core.persist.PersistenceClient;
+import org.cougaar.core.persist.PersistenceIdentity;
+import org.cougaar.core.persist.PersistenceServiceForAgent;
+import org.cougaar.core.persist.RehydrationData;
 import org.cougaar.core.plugin.PluginManager;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
@@ -107,6 +112,7 @@ public class NodeAgent
   private ServiceBroker agentServiceBroker = null;
   private AgentManager agentManager = null;
 
+  private boolean ignoreRehydratedAgentDescs = true;
   private ComponentDescription[] agentDescs = null;
 
   private String nodeName = null;
@@ -146,6 +152,7 @@ public class NodeAgent
     super.setParameter(nodeIdentifier);
     agentServiceBroker = (ServiceBroker) l.get(1);
     agentManager = (AgentManager) l.get(2);
+    ignoreRehydratedAgentDescs = ((Boolean) l.get(3)).booleanValue();
   }
 
 
@@ -215,7 +222,7 @@ public class NodeAgent
   protected void loadInternalPriorityComponents() {
     ServiceBroker rootsb = agentServiceBroker;
 
-    ArrayList threadServiceParams = new ArrayList();
+    List threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
     add(new ComponentDescription(
@@ -262,20 +269,32 @@ public class NodeAgent
     rootsb.addService(NodeMetricsService.class,
         new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
-    try {
-      ComponentInitializerService cis = (ComponentInitializerService) 
-        rootsb.getService(this, ComponentInitializerService.class, null);
-      if (logger.isInfoEnabled())
-	logger.info("NodeAgent(" + nodeName + ").loadInternal about to ask for agents");
-      // get the agents - this gives _anything_ below AgentManager,
-      // so must extract out just the .Agent's later (done in addAgents)
-      agentDescs =
-        cis.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
-      rootsb.releaseService(this, ComponentInitializerService.class, cis);
-    } catch (Exception e) {
-      throw new Error("Couldn't initialize NodeAgent from ComponentInitializerService ", e);
+    // Load agents from either the rehydrated agents map or from the
+    // ComponentInitializerService
+    if (ignoreRehydratedAgentDescs && agentDescs != null) {
+      if (logger.isInfoEnabled()) {
+        logger.info("Ignoring rehydrated list of " + agentDescs.length + " agents");
+      }
+      agentDescs = null;
     }
-
+    if (agentDescs == null) {
+      try {
+        ComponentInitializerService cis = (ComponentInitializerService) 
+          rootsb.getService(this, ComponentInitializerService.class, null);
+        if (logger.isInfoEnabled())
+          logger.info("NodeAgent(" + nodeName + ").loadInternal about to ask for agents");
+        // get the agents - this gives _anything_ below AgentManager,
+        // so must extract out just the .Agent's later (done in addAgents)
+        agentDescs =
+          cis.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
+        rootsb.releaseService(this, ComponentInitializerService.class, cis);
+        if (logger.isInfoEnabled()) {
+          logger.info("Using ComponentInitializerService list of " + agentDescs.length + " agents");
+        }
+      } catch (Exception e) {
+        throw new Error("Couldn't initialize NodeAgent from ComponentInitializerService ", e);
+      }
+    }
 
     // Set up MTS service provides.
     //
@@ -369,6 +388,48 @@ public class NodeAgent
 
   protected void loadLowPriorityComponents() {
     super.loadLowPriorityComponents();
+  }
+
+  protected PersistenceClient getPersistenceClient() {
+    final PersistenceClient superPersistenceClient = super.getPersistenceClient();
+    return new PersistenceClient() {
+        public PersistenceIdentity getPersistenceIdentity() {
+          return superPersistenceClient.getPersistenceIdentity();
+        }
+        public List getPersistenceData() {
+          List superData = superPersistenceClient.getPersistenceData();
+          List data = new ArrayList(superData.size() + 1);
+          data.addAll(superData);
+          Collection agents = agentManager.getAgents().values();
+          // Find and remove ourself from the agent collection
+          for (Iterator i = agents.iterator(); i.hasNext(); ) {
+            ComponentDescription cd = (ComponentDescription) i.next();
+            if (NodeAgent.class.getName().equals(cd.getClassname())) {
+              if (logger.isDebugEnabled()) logger.debug("Removing " + cd);
+              i.remove();
+              break;
+            } else {
+              if (logger.isDebugEnabled()) logger.debug("Keeping " + cd);
+            }
+          }
+          data.add(agents.toArray(new ComponentDescription[agents.size()]));
+          return data;
+        }
+      };
+  }
+
+  protected List getRehydrationList(PersistenceServiceForAgent persistenceService) {
+    RehydrationData rd = persistenceService.getRehydrationData();
+    if (rd != null) {
+      List rehydrationList = rd.getObjects();
+      int len = rehydrationList.size();
+      if (len > 0) {
+        agentDescs = (ComponentDescription[]) rehydrationList.get(len - 1);
+        rehydrationList.remove(len - 1);
+      }
+      return rehydrationList;
+    }
+    return null;
   }
 
   public void load() 
