@@ -484,7 +484,6 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
 
     // Kludge to work around bug in Jikes - explicitly store a ref to the outer class
     // since Jikes refuses to recognize PropertySchedule.this.
-    //private transient PropertyGroupSchedule myRealSchedule = null;
     private PropertyGroupSchedule myRealSchedule = null;
 
     private transient Object theKey = null;
@@ -499,7 +498,7 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     /** public constructor for beaninfo - won't work**/
     public _Locked() {
       RuntimeException rt = new RuntimeException("Calling the empty constructor");
-      throw rt;
+      rt.printStackTrace();
     }
 
     public PropertyGroupSchedule lock() { return this; }
