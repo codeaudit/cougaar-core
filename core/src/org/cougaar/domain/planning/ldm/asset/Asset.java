@@ -741,22 +741,30 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
   }
 
   private static class TypeItemKey {
-    private String myTypeString;
-    private String myItemString;
+    private String myTypeString = null;
+    private String myItemString = null;
     private int myHashCode;
     
     public TypeItemKey(Asset asset) {
       TypeIdentificationPG tipg = asset.getTypeIdentificationPG();
-      myTypeString = (tipg != null) ?
-        tipg.getTypeIdentification() : null;
-
+      if (tipg != null) {
+        myTypeString = tipg.getTypeIdentification();
+      }
+      if (myTypeString == null) {
+        myTypeString = "";
+      }
+      
       ItemIdentificationPG iipg = asset.getItemIdentificationPG();
-      myItemString = (iipg != null) ?
-        iipg.getItemIdentification() : null;
+      if (iipg != null) {
+        myItemString = iipg.getItemIdentification();
+      }
+      if (myItemString == null) {
+        myItemString = "";
+      }
 
-      if ((myTypeString == null) && (myItemString == null)) {
+      if ((myTypeString.equals("")) && (myItemString.equals(""))) {
         System.err.println("Unable to create unique key for asset " + asset +
-                           " - type and item idetification are null.");
+                           " - type and item identification are not set.");
       }
 
       myHashCode = myTypeString.hashCode() + myItemString.hashCode();
