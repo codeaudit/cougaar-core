@@ -139,6 +139,9 @@ public class AllocationResult
    * a future version.
    **/
   public AllocationResult(AllocationResult ar1, AllocationResult ar2) {
+    assert isAVVValid(ar1.avResults);
+    assert isAVVValid(ar2.avResults);
+
     int len1 = ar1.avResults.length;
     int len2 = ar2.avResults.length;
     List mergedavs = new ArrayList(len1 + len2);
@@ -167,7 +170,6 @@ public class AllocationResult
         if (mergedQueries[i] == null) mergedQueries[i] = ar2.auxqueries[i];
       }
     }
-    // checkAVResults();
     isSuccess = ar1.isSuccess() || ar2.isSuccess();
   }
 
@@ -449,15 +451,16 @@ public class AllocationResult
    */
   private void setAspectValueResults(AspectValue[] aspectvalues) {
     AspectValue[] avs = (AspectValue[]) aspectvalues.clone();
+    assert isAVVValid(avs);
     avResults = avs;
-    checkAVResults();           //check AVS for now
     clearMemos();
   }
 
-  private void checkAVResults() {
-    for (int i = 0; i < avResults.length; i++) {
-      if (avResults[i] == null) throw new NullPointerException("null AspectValue at index " + i);
+  private boolean isAVVValid(AspectValue[] av) {
+    for (int i = 0; i < av.length; i++) {
+      if (av[i] == null) return false;
     }
+    return true;
   }
         
   /** Set the phased results
