@@ -126,12 +126,20 @@ public class DomainManager
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
-    this.self = ais.getMessageAddress();
+    if (ais == null) {
+      // Revocation
+    } else {
+      this.self = ais.getMessageAddress();
+    }
   }
 
   private NodeControlService nodeControlService = null;
   public void setNodeControlService(NodeControlService ncs) {
-    nodeControlService = ncs;
+    if (ncs == null) {
+      // Revocation
+    } else {
+      nodeControlService = ncs;
+    }
   }
   protected NodeControlService getNodeControlService() {
     return nodeControlService;
