@@ -1,3 +1,11 @@
+2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Re-interpret "disabled persistence" as install only the dummy
+	persistence plugin and run persistence at a minimal rate. This
+	leaves the persistence mechanism available for getting agent state
+	for agent mobility.
+
 2002-05-07  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* FilePersistence.java:
