@@ -32,7 +32,7 @@ import java.util.*;
  */
 public interface CommunityService extends Service {
 
-  public final static String COMMUNITIES_CONTEXT_NAME = "Communities";
+  String COMMUNITIES_CONTEXT_NAME = "Communities";
 
 
   /**

@@ -23,6 +23,6 @@ package org.cougaar.core.thread;
 
 public interface RightsSelector
 {
-    public void setScheduler(PropagatingScheduler scheduler);
-    public SchedulableObject getNextPending();
+    void setScheduler(PropagatingScheduler scheduler);
+    SchedulableObject getNextPending();
 }

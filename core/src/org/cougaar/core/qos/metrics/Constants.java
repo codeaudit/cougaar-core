@@ -28,21 +28,21 @@ public interface Constants
 {
     /**
      * The character used to separate fields of a data key. */
-    public static final String KEY_SEPR = "_";
+    String KEY_SEPR = "_";
 
     /**
      * The character used to seperate fields of a data-lookup paths.
      */
-    public static final String PATH_SEPR = ":";
+    String PATH_SEPR = ":";
 
 
     /**
      * The category of thread-service measurements, and some specific
      * ones
      */
-    public static final String THREAD_SENSOR = "COUGAAR_THREAD";
+    String THREAD_SENSOR = "COUGAAR_THREAD";
 
-    public static final String ONE_SEC_LOAD_AVG = "OneSecondLoadAvg";
+    String ONE_SEC_LOAD_AVG = "OneSecondLoadAvg";
 
     // Credibility Spectrum: tries to unify many different notions of
     // credibility into a common metric. The Credibility "Calculus" is
@@ -58,43 +58,43 @@ public interface Constants
     /**
      * No source for data. There was an error or nobody was looking for
      * this data*/
-    public static final double NO_CREDIBILITY = 0.0;
+    double NO_CREDIBILITY = 0.0;
     /**
      * Compile Time Default was the source for data */
-    public static final double DEFAULT_CREDIBILITY = 0.1;
+    double DEFAULT_CREDIBILITY = 0.1;
     /**
      * System Level configuration file was the source for data */
-    public static final double SYS_DEFAULT_CREDIBILITY = 0.2;
+    double SYS_DEFAULT_CREDIBILITY = 0.2;
     /**
      * User Level configuration file was the source for data */
-    public static final double USER_DEFAULT_CREDIBILITY = 0.3;
+    double USER_DEFAULT_CREDIBILITY = 0.3;
     /**
      * System Level Base-Line measurements file was the source
      * for data. This data is aggregated over Days */
-    public static final double SYS_BASE_CREDIBILITY = 0.4;
+    double SYS_BASE_CREDIBILITY = 0.4;
     /**
      * User Level Base-Line measurements file was the source for
      * data. This data is aggregated over Days */
-    public static final double USER_BASE_CREDIBILITY = 0.5;
+    double USER_BASE_CREDIBILITY = 0.5;
     /**
      * A Single Active measurment was source for data. 
      * This data is aggregated over Hours and is not stale*/
-    public static final double HOURLY_MEAS_CREDIBILITY = 0.6;
+    double HOURLY_MEAS_CREDIBILITY = 0.6;
     /**
      * A Single Active measurment was source for data. 
      * This data is aggregated over Minutes and is not stale*/
-    public static final double MINUTE_MEAS_CREDIBILITY = 0.7;
+    double MINUTE_MEAS_CREDIBILITY = 0.7;
     /**
      * A Single Active measurment was source for data. 
      * This data is aggregated over Seconds and is not stale*/
-    public static final double SECOND_MEAS_CREDIBILITY = 0.8;
+    double SECOND_MEAS_CREDIBILITY = 0.8;
     /**
      * A Multiple Active measurments were a Consistant source for data. 
      * This data is aggregated over Seconds and is not stale*/
-    public static final double CONFIRMED_MEAS_CREDIBILITY = 0.9;
+    double CONFIRMED_MEAS_CREDIBILITY = 0.9;
     /**
      * A higher-level system has declared this datarmation to be true. 
      * Mainly used by debuggers and gods */
-    public static final double ORACLE_CREDIBILITY = 1.0;
+    double ORACLE_CREDIBILITY = 1.0;
 }
 

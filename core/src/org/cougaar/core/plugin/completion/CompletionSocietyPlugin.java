@@ -79,7 +79,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
    * After that, the standard time-advance action is invoked.
    **/
   public interface CompletionAction {
-    public boolean checkCompletion(boolean haveLaggard);
+    boolean checkCompletion(boolean haveLaggard);
   }
 
   private long timeToAdvanceTime = Long.MIN_VALUE; // Time to advance time (maybe)
