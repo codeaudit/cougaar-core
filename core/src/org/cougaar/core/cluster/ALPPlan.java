@@ -111,7 +111,7 @@ public class ALPPlan extends Subscriber
           priorStack = (PublishStack) stacks.get(o);
         }
         throw new PublishException("ALPPlan.alpPlanObjects.add object already published: " + o.toString(),
-                                   priorStack);
+                                   priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior publisher: "));
       }
@@ -125,7 +125,7 @@ public class ALPPlan extends Subscriber
           priorStack = (PublishStack) stacks.get(o);
         }
         throw new PublishException("ALPPlan.alpPlanObjects.remove object not published: " + o.toString(),
-                                   priorStack);
+                                   priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior remover: "));
       }

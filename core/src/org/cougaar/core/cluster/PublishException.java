@@ -12,14 +12,16 @@ package org.cougaar.core.cluster;
 
 public class PublishException extends IllegalArgumentException {
     public PublishStack priorStack;
+    public boolean priorStackUnavailable;
     private String specialMessage = null;
     public PublishException(String msg) {
         super(msg);
         this.priorStack = null;
     }
-    public PublishException(String msg, PublishStack priorStack) {
+    public PublishException(String msg, PublishStack priorStack, boolean priorStackUnavailable) {
         super(msg);
         this.priorStack = priorStack;
+        this.priorStackUnavailable = priorStackUnavailable;
     }
     public String toString() {
         if (specialMessage != null) return specialMessage;

@@ -131,8 +131,10 @@ public class Subscriber {
                   thisPublisher = "Unknown";
                 }
                 pe.printStackTrace(" This publisher: " + thisPublisher);
-                if (pe.priorStack == null) {
-                  System.err.println("Prior publisher: Unknown");
+                if (!pe.priorStackUnavailable) {
+                  if (pe.priorStack == null) {
+                    System.err.println("Prior publisher: Unknown");
+                  }
                 } else {
                   pe.priorStack.printStackTrace();
                 }
