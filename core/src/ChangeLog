@@ -1,3 +1,23 @@
+2001-10-11  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* org/cougaar/util/DBProperties.java (Repository):
+	Detect missing queries. Never return a null from getQuery. Throw
+	IllegalArgumentException instead. Identify the query file with the
+	missing query.
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Undo earlier fix. Null parent name just can't work. Throw an
+	exception if specified.
+
+	* org/cougaar/core/naming/NamingDirContext.java (Repository):
+	Fix bug #608.
+	Check SearchControls.getReturningObjFlag and return the bound
+	value in the SearchResults when true.
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Allow for possible null parent name in queries. (Requires a new
+	DBInitializer.q file)
+
 2001-10-10  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
 
 	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):

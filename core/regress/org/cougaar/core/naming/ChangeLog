@@ -1,3 +1,9 @@
+2001-10-11  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* NamingDirContextTest.java (Repository):
+	Add test using ReturningObj of true in SearchControls and check
+	that the bound value is correctly returned.
+
 2001-09-06  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* GlobTest.java:
