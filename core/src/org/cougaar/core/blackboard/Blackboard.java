@@ -29,7 +29,6 @@ import org.cougaar.core.blackboard.*;
 // Persistence
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.BasePersistence;
-import org.cougaar.core.persist.DatabasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 
