@@ -57,7 +57,7 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
   public ArgTable( String[] args ) {
     //Check to see if help was requested
     checkForHelp( args );
-    //if not hte map the args
+    //if not then map the args
     mapArgs( args );
   }
 
