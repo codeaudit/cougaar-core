@@ -20,7 +20,7 @@
 #  PERFORMANCE OF THE COUGAAR SOFTWARE.
 # </copyright>
 
-# deals with very special cases in the org.cougaar.tools.scalability.scalabilty package
+# global special cases fix
 
 # adds global imports
 use Cwd;
@@ -49,15 +49,9 @@ sub process_dir {
     local($_);
     foreach $_ (@files) {
 	$file = $_;
-	#local($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_);
-#	print "\nfile name is: ", $file;
-	if (substr($file, -25) eq "ScalabilityLDMPlugIn.java") {
-	    $found++;
-	    process_bb($_);
-	} elsif (substr($file, -21) eq "ScalabilityUtils.java") {
-	    $found++;
-	    process_domain($_);
-	} 
+	if (substr($file, -5) eq ".java") {
+	    process_imports($_);
+	}
     }
 }
 
@@ -79,18 +73,29 @@ sub findfiles {
   @stuff;
 }
 
-sub process_domain {
+sub process_imports {
+    local($domain) = "false";
     local($file) = @_;
     #print "\nprocessing file:", $file;
     open(IN, $file);
     open(OUT, ">".$tmp);
     while (<IN>) {
 	$input_line = $_;
-	printf (OUT $input_line);
-	# find the package line and put the import lines after it.
-	if (substr($input_line,0,7) eq "package") {
+	if (substr($input_line,0,34) eq "import org.cougaar.planning.ldm.\*;") {
+	    $input_line = "import org.cougaar.core.domain.\*;\n";
+	    local($domain) = "true";
+	}
+	print OUT "$input_line";
+	# find the agent* import line and put the import lines after it.
+	if (substr($input_line,0,32) eq "import org.cougaar.core.agent.\*;") {
 	    $found++;
-	    printf OUT ("\nimport org.cougaar.core.domain.RootFactory\;\n");
+	    #if we changed a global above, don't do it again.
+	    if ($domain eq "false") {
+		printf OUT ("import org.cougaar.core.domain.\*;\n");
+	    }
+	    printf OUT ("import org.cougaar.core.blackboard.\*;\n");
+	    printf OUT ("import org.cougaar.core.mts.Message\;\n");
+	    printf OUT ("import org.cougaar.core.mts.MessageAddress\;\n");
 	}
 
     }
@@ -98,26 +103,4 @@ sub process_domain {
     close(IN);
     rename($tmp, $file);
 }
-
-sub process_bb {
-    local($file) = @_;
-    #print "\nprocessing file:", $file;
-    open(IN, $file);
-    open(OUT, ">".$tmp);
-    while (<IN>) {
-	$input_line = $_;
-	printf (OUT $input_line);
-	# find the package line and put the import lines after it.
-	if (substr($input_line,0,7) eq "package") {
-	    $found++;
-	    printf OUT ("\nimport org.cougaar.core.blackboard.IncrementalSubscription\;\n");
-
-	}
-
-    }
-    close(OUT);
-    close(IN);
-    rename($tmp, $file);
-}
-
 

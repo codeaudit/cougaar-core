@@ -11,3 +11,4 @@ CALL core-rpkg.pl -m -d %REPKG_DEST% %REPKG_DEST% postprocess.pkg
 
 CALL core-rpkg.pl -m -d %REPKG_DEST% %REPKG_DEST% unclustersociety.pkg
 
+CALL grossimports.pl %REPKG_DEST%

@@ -203,7 +203,6 @@ occ.society.NodeXMLParser			occ.node.NodeXMLParser
 occ.society.Node				occ.node.Node
 occ.society.SignedMessageSecurityManager	occ.node.SignedMessageSecurityManager
 occ.society.SecureMessage			occ.node.SecureMessage
-occ.society.society				occ.node.society
 
 #
 # org.cougaar.domain.planning.ldm
