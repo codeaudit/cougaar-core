@@ -12,7 +12,7 @@ database server. http://www.postgreSQL.org/
 NetComponents.jar	version ?
 http://www.savarese.org/oro/software/NetComponents.html
 
-QuoKernel.jar		version ?
+quoSumo.jar		version ?
 
 activation.jar		version ?
 Java Activation Framework (JAF)
@@ -101,5 +101,8 @@ http://xml.apache.org/xerces2-j/index.html
 xmlparserv2.jar		version (For Oracle 9i?)
 oracle's xml parser
 http://otn.oracle.com/software/content.html (select "Oracle XML for Java")
+
+
+
 
 
