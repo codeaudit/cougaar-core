@@ -41,6 +41,7 @@ if ( "$node" == "" ) then
   set node="Clusters"
 endif
 
+
 if ( "$node" == "admin" ) then
     set args="-c -r -n Administrator -p 8000 $rest"
     set MYMEMORY="-Djava.compiler=NONE"
@@ -68,6 +69,9 @@ if ("$os" == "Linux") then
     limit coredumpsize 0   #down from 1g
     #turn this on to enable inprise JIT
     #setenv JAVA_COMPILER javacomp
+else if ("$os" == "Darwin") then
+# Darwin jvm doesn't support -Xoss128k
+    set MYMEMORY="-Xmx600m -Xms64m -Xmaxf0.9 -Xminf0.1"
 endif
 
 #set javaargs="$osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS -Dorg.cougaar.core.message.isLogging=true -Djava.rmi.server.logCalls=true -Dsun.rmi.server.exceptionTrace=true -Dsun.rmi.transport.tcp.readTimeout=150000 "
