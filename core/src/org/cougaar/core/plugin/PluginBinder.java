@@ -32,8 +32,8 @@ public class PluginBinder extends BinderSupport implements PluginBindingSite
 
   }
 
-  protected final Plugin getPlugin() {
-    return (Plugin) getChildComponent();
+  protected final PluginBase getPlugin() {
+    return (PluginBase) getChildComponent();
   }
   protected final PluginManager getPluginManager() {
     return (PluginManager)getParentComponent();
