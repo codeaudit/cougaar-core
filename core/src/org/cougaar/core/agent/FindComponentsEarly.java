@@ -367,16 +367,21 @@ implements Component
       sb.releaseService(this, ComponentInitializerService.class, cis);
     }
 
-    // convert to component descriptions, for priority-based sorting
-    ComponentDescriptions descs = new ComponentDescriptions(l);
+    String configFormat =
+      System.getProperty("org.cougaar.core.node.InitializationComponent");
+    if (!"XML".equals(configFormat)) {
+      // backwards compatibility for non-XML configs!
+      //
+      // convert to component descriptions, for priority-based sorting
+      ComponentDescriptions descs = new ComponentDescriptions(l);
 
-    // add hard-coded "template" components and convert into
-    // sorted list
-    List l2 = 
-      DefaultComponents.getHardCodedComponents(descs, isNode);
+      // add hard-coded "template" components and convert into
+      // sorted list
+      l = DefaultComponents.getHardCodedComponents(descs, isNode);
+    }
 
     // return list of ComponentDescriptions and StateTuples
-    return l2;
+    return l;
   }
 
   private void overrideComponentList(List l) {

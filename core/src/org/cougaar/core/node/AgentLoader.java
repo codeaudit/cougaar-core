@@ -28,7 +28,9 @@ package org.cougaar.core.node;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,6 +76,8 @@ implements Component
 
   private ServiceBroker sb;
 
+  private Set initialAgents;
+
   private LoggingService log;
 
   private ServiceBroker rootsb;
@@ -96,8 +100,24 @@ implements Component
     this.sb = bs.getServiceBroker();
   }
 
+  /**
+   * Expecting a list of agent names.
+   */
   public void setParameter(Object o) {
-    // maybe override ignoreRehydratedAgentDescs
+    List l = (List) o;
+    int n = (l == null ? 0 : l.size());
+    for (int i = 0; i < n; i++) {
+      Object o1 = l.get(i);
+      if (!(o1 instanceof String)) {
+        throw new IllegalArgumentException(
+            "List element["+i+"/"+n+"] is "+
+            (o1 == null ? "null" : o1.getClass().getName()));
+      }
+      if (initialAgents == null) {
+        initialAgents = new HashSet();
+      }
+      initialAgents.add(o1);
+    }
   }
 
   /**
@@ -206,41 +226,75 @@ implements Component
   }
   
   private ComponentDescription[] readAgentsFromConfig() {
-    ComponentDescription[] agentDescs = null;
-
-    try {
-      ComponentInitializerService cis = (ComponentInitializerService) 
-        sb.getService(
-            this, ComponentInitializerService.class, null);
-      if (log.isInfoEnabled()) {
-        log.info("Asking component initializer service for agents");
+    String configFormat =
+      System.getProperty("org.cougaar.core.node.InitializationComponent");
+    if (!"XML".equals(configFormat)) {
+      // backwards compatibility for non-XML configs!
+      ComponentDescription[] agentDescs = null;
+      try {
+        ComponentInitializerService cis = (ComponentInitializerService) 
+          sb.getService(
+              this, ComponentInitializerService.class, null);
+        if (log.isInfoEnabled()) {
+          log.info("Asking component initializer service for agents");
+        }
+        // get the agents - this gives _anything_ below AgentManager,
+        // so must extract out just the .Agent's later
+        agentDescs =
+          cis.getComponentDescriptions(
+              localAgent.getAddress(),
+              "Node.AgentManager");
+        sb.releaseService(this, ComponentInitializerService.class, cis);
+        if (log.isInfoEnabled()) {
+          log.info(
+              "Using ComponentInitializerService list of " +
+              agentDescs.length + " agents");
+        }
+      } catch (Exception e) {
+        throw new Error(
+            "Couldn't initialize list of agents from"+
+            " ComponentInitializerService ", e);
       }
-      // get the agents - this gives _anything_ below AgentManager,
-      // so must extract out just the .Agent's later
-      agentDescs =
-        cis.getComponentDescriptions(
-            localAgent.getAddress(),
-            "Node.AgentManager");
-      sb.releaseService(this, ComponentInitializerService.class, cis);
-      if (log.isInfoEnabled()) {
-        log.info(
-            "Using ComponentInitializerService list of " +
-            agentDescs.length + " agents");
+      if (agentDescs == null) {
+        agentDescs = new ComponentDescription[0];
       }
-    } catch (Exception e) {
-      throw new Error(
-          "Couldn't initialize list of agents from"+
-          " ComponentInitializerService ", e);
+      return agentDescs;
     }
 
-    if (agentDescs == null) {
+    if (initialAgents == null) {
       if (log.isWarnEnabled()) {
         log.warn("Null list of agents");
       }
-      agentDescs = new ComponentDescription[0];
+      return new ComponentDescription[0];
     }
 
-    return agentDescs;
+    int n = initialAgents.size();
+
+    if (log.isInfoEnabled()) {
+      log.info("Will add agents["+n+"]: "+initialAgents);
+    }
+
+    ComponentDescription[] ret = 
+      new ComponentDescription[n];
+
+    Iterator iter = initialAgents.iterator();
+    for (int i = 0; i < n; i++) {
+      String name = (String) iter.next();
+      ComponentDescription desc = 
+        new ComponentDescription(
+            "org.cougaar.core.agent.AgentImpl("+name+")",
+            "Node.AgentManager.Agent",
+            "org.cougaar.core.agent.AgentImpl",
+            null, //codebase
+            Collections.singletonList(name), //params
+            null, //certificate
+            null, //lease
+            null, //policy
+            ComponentDescription.PRIORITY_COMPONENT);
+      ret[i] = desc;
+    }
+
+    return ret;
   }
 
   private void addAgents(ComponentDescription[] agentDescs) {

@@ -32,6 +32,8 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * A component which creates and advertises a XMLComponentInitializerService
@@ -45,7 +47,6 @@ public class XMLComponentInitializerServiceComponent
   private ServiceBroker sb;
 
   private ServiceProvider theSP;
-  private LoggingService log;
 
   public void setBindingSite(BindingSite bs) {
     // this is the *node* service broker!  The NodeControlService
@@ -55,32 +56,26 @@ public class XMLComponentInitializerServiceComponent
 
   public void load() {
     super.load();
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
-    if (log == null) {
-      log = LoggingService.NULL;
-    }
+
+    Logger logger = Logging.getLogger(getClass());
 
     if (sb.hasService(ComponentInitializerService.class)) {
       // already have a ComponentInitializer? 
       // Leave the existing one in place
-      if (log.isInfoEnabled()) {
-	log.info("Not loading the XMLComponentInitializer service");
+      if (logger.isInfoEnabled()) {
+	logger.info("Not loading the XMLComponentInitializer service");
       }
     } else {
       try {
 	theSP = new XMLComponentInitializerServiceProvider();
       } catch (Exception e) {
-	log.error("Unable to load FileComponentInitializerService", e);
+	logger.error("Unable to load XMLComponentInitializer service", e);
       }
-      if (log.isDebugEnabled())
-	log.debug("Providing XML Init service");
-      sb.addService(ComponentInitializerService.class, theSP);
-    }
-
-    if (log != LoggingService.NULL) {
-      sb.releaseService(this, LoggingService.class, log);
-      log = null;
+      if (theSP != null) {
+        if (logger.isDebugEnabled())
+          logger.debug("Providing XML Init service");
+        sb.addService(ComponentInitializerService.class, theSP);
+      }
     }
   }
 
