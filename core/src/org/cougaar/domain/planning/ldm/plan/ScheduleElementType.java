@@ -24,19 +24,19 @@ public interface ScheduleElementType {
   static final Class LOCATIONRANGE = LocationRangeScheduleElement.class;
   static final Class RELATIONSHIP = Relationship.class;
 
-  /**deprecated Use org.cougaar.domain.glm.plan.PlanScheduleElementType.QUANTITY
+  /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.QUANTITY
    **/
   static final Class QUANTITY = ScheduleElement.class;
 
-  /**deprecated Use org.cougaar.domain.glm.plan.PlanScheduleElementType.QUANTIITYRANGE
+  /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.QUANTIITYRANGE
    **/
   static final Class QUANTITYRANGE = ScheduleElement.class;
 
- /**deprecated Use org.cougaar.domain.glm.plan.PlanScheduleElementType.RATE
+ /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.RATE
    **/
   static final Class RATE = ScheduleElement.class;
 
- /**deprecated Use org.cougaar.domain.glm.plan.PlanScheduleElementType.CAPACITY
+ /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.CAPACITY
    **/
   static final Class CAPACITY = ScheduleElement.class;
 

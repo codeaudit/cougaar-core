@@ -1,0 +1,28 @@
+These are the conversion scripts to help port from 6.8.2 to 7.0.
+
+alp7.pkg	the datafile for doing the bulk of the conversion (repackage)
+remaster	The perl script used to drive the conversion of the
+		alpine source tree.
+repackage	the perl script used to do the actual port. see below
+		for instructions.
+reorgglm	the perl script to do the GLM ldm package
+		cleanup. (see below)
+
+
+To run the scripts, assuming that *your* software packags aren't
+changing:
+
+% cd RootOfYourSourceTree
+# if you want to see what it is going to do:
+% repackage -vq /your/source/tree/root alp7.pkg
+# actually do it:
+% repackage /your/source/tree/root alp7.pkg
+# apply the glm changes:
+% find /your/source/tree/root -name "*.java" -print | reorgglm
+
+I *strongly* recommend that you run the scripts on a copy of your tree.
+
+both repackage and reorgglm can operate of .def, .ini, etc files.
+
+You will probably have to do some minor fixups afterwards.
+
