@@ -31,22 +31,22 @@ import org.cougaar.core.service.ThreadListenerService;
 /**
  * The ServiceProvider for ThreadService and ThreadControlService.
  */
-final class ThreadServiceProvider implements ServiceProvider 
+public final class ThreadServiceProvider implements ServiceProvider 
 {
     private ThreadListenerProxy listenerProxy;
-    private AbstractScheduler scheduler;
+    private Scheduler scheduler;
     private ThreadServiceProxy proxy;
 	
-    ThreadServiceProvider(ServiceBroker sb, String name) {
+    public ThreadServiceProvider(ServiceBroker sb, String name) {
 	listenerProxy = new ThreadListenerProxy();
 	if (Boolean.getBoolean("org.cougaar.thread.timeslice"))
 	    scheduler = new TimeSliceScheduler(listenerProxy);
 	else
-	    scheduler = new Scheduler(listenerProxy);
+	    scheduler = new SimpleScheduler(listenerProxy);
 	proxy = new ThreadServiceProxy(sb, name, scheduler);
     }
 
-    void provideServices(ServiceBroker sb) {
+    public void provideServices(ServiceBroker sb) {
 	sb.addService(ThreadService.class, this);
 	sb.addService(ThreadControlService.class, this);
 	sb.addService(ThreadListenerService.class, this);

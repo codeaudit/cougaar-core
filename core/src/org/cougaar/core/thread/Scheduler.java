@@ -21,96 +21,148 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.util.PropertyParser;
 
-final class Scheduler extends AbstractScheduler
+import java.util.ArrayList;
+import java.util.Comparator;
+
+
+abstract class Scheduler implements ThreadControlService 
 {
+    static final String MaxRunningCountProp =
+	"org.cougaar.thread.running.max";
+    static final int MaxRunningCountDefault = Integer.MAX_VALUE;
+
+    protected DynamicSortedQueue pendingThreads;
+    protected int maxRunningThreads;
+    protected int runningThreadCount = 0;
+    protected ThreadListenerProxy listenerProxy;
+    protected Scheduler parent;
+    protected ArrayList children;
+
+    private Comparator timeComparator =
+	new Comparator() {
+		public boolean equals(Object x) {
+		    return x == this;
+		}
+
+		public int compare (Object x, Object y) {
+		    long t1 = ((ControllableThread) x).timestamp();
+		    long t2 = ((ControllableThread) y).timestamp();
+		    if (t1 < t2)
+			return -1;
+		    else if (t1 > t2)
+			return 1;
+		    else
+			return 0;
+		}
+	    };
+
+
+
     Scheduler(ThreadListenerProxy listenerProxy) {
-	super(listenerProxy);
+	pendingThreads = new DynamicSortedQueue(timeComparator);
+	maxRunningThreads = 
+	    PropertyParser.getInt(MaxRunningCountProp, 
+				  MaxRunningCountDefault);
+	this.listenerProxy = listenerProxy;
+	children = new ArrayList();
     }
 
 
-    void changedMaxRunningThreadCount() {
-	// Maybe we can run some pending threads
-	while (canStartThread() && !pendingThreads.isEmpty()) {
-	    runNextThread();
-	}
-    }
-    
-
-    private boolean canStartThread() {
-	return runningThreadCount < maxRunningThreads;
+    void setParent(Scheduler parent) {
+	this.parent = parent;
+	parent.addChild(this);
     }
 
+    private void addChild(Scheduler child) {
+	children.add(child);
+    }
 
-    private void runNextThread() {
-	((ControllableThread)pendingThreads.next()).start();
+    // ThreadControlService 
+    public synchronized void setQueueComparator(Comparator comparator)
+    {
+	pendingThreads.setComparator(comparator);
+    }
+
+    public synchronized void setMaxRunningThreadCount(int count) {
+	maxRunningThreads = count;
+	changedMaxRunningThreadCount();
+    }
+
+    public int maxRunningThreadCount() {
+	return maxRunningThreads;
+    }
+
+    public synchronized int pendingThreadCount() {
+	return pendingThreads.size();
+    }
+
+    public synchronized int runningThreadCount() {
+	return runningThreadCount;
+    }
+
+
+    public synchronized int activeThreadCount() {
+	return runningThreadCount + pendingThreads.size();
+    }
+
+
+
+    void wakeup (){
+    }
+
+    void addPendingThread(ControllableThread thread) 
+    {
+	thread.stamp();
+	listenerProxy.notifyPending(thread);
+	pendingThreads.add(thread);
     }
 
 
     // Called when a thread is about to end
     void threadEnded(ControllableThread thread) {
-	synchronized (this) {
-	    --runningThreadCount; 
-	    if (!pendingThreads.isEmpty()) runNextThread();
-	}
-	super.threadEnded(thread);
+	listenerProxy.notifyEnd(thread);
     }
+
+    // Called when a thread has just started
+    void threadStarted(ControllableThread thread) {
+	synchronized (this) {
+	    ++runningThreadCount; 
+	}
+	listenerProxy.notifyStart(thread);
+    }
+
+
+
+    // Called when resuming a suspended or yielded thread that was
+    // queued.
+    void resumeQueuedThread(ControllableThread thread) {
+	synchronized (this) {
+	    ++runningThreadCount; 
+	}
+    }
+
+
+
+    void changedMaxRunningThreadCount() {
+    }
+
 
 
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
-    boolean maybeYieldThread(ControllableThread thread) {
-	ControllableThread candidate = null;
-	synchronized (this) {
-	    if (pendingThreads.isEmpty()) {
-		// No point yielding since no pending threads
-		return false;
-	    }
-
-	    candidate = (ControllableThread) pendingThreads.next(thread);
-	    if (candidate == thread) {
-		// No better-or-equal thread on the queue.
-		return false;
-	    }
-
-	    // We found a thread to yield to. 
-	    --runningThreadCount; 
-	}
-	candidate.start();
-	return true;
-    }
-
-
+    abstract boolean maybeYieldThread(ControllableThread thread);
 
     // Called when a thread is about to suspend.
-    synchronized void suspendThread(ControllableThread thread) {
-	--runningThreadCount; 
-	if (!pendingThreads.isEmpty()) runNextThread();
-    }
-
+    abstract void suspendThread(ControllableThread thread);
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
-    synchronized boolean maybeResumeThread(ControllableThread thread) {
-	if (canStartThread()) {
-	    ++runningThreadCount;
-	    return true;
-	} else {
-	    // couldn'resume - place the thread back on the queue
-	    addPendingThread(thread);
-	    return false;
-	}
-    }
+    abstract boolean maybeResumeThread(ControllableThread thread);
 
- 
-
-    synchronized void startOrQueue(ControllableThread thread) {
-	if (canStartThread()) {
-	    thread.thread_start();
-	} else {
-	    addPendingThread(thread);
-	}
-    }
+    abstract void startOrQueue(ControllableThread thread);
 
 }

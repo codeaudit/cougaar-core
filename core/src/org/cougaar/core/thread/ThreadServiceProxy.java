@@ -34,10 +34,10 @@ final class ThreadServiceProxy 	implements ThreadService
     private ControllablePool pool;
     private ThreadGroup group;
     private TimerRunnable timer;
-    private AbstractScheduler scheduler;
+    private Scheduler scheduler;
 
     ThreadServiceProxy(ServiceBroker sb,  String name, 
-		       AbstractScheduler scheduler) 
+		       Scheduler scheduler) 
     {
 	ThreadServiceProxy parent = (ThreadServiceProxy)
 	    sb.getService(this, ThreadService.class, null);

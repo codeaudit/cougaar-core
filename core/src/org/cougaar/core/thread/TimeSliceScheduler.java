@@ -28,7 +28,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 
-final class TimeSliceScheduler extends AbstractScheduler
+final class TimeSliceScheduler extends Scheduler
 {
     private static final long DEFAULT_SLICE_DURATION = 1000;
     private int outstandingChildSliceCount;
@@ -49,7 +49,7 @@ final class TimeSliceScheduler extends AbstractScheduler
 	// Let the children know that a slice may be available.
 	Iterator itr = children.iterator();
 	while (itr.hasNext()) {
-	    AbstractScheduler child = (AbstractScheduler) itr.next();
+	    Scheduler child = (Scheduler) itr.next();
 	    child.wakeup();
 	}
 	runMoreThreads();

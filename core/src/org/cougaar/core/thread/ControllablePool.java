@@ -40,9 +40,9 @@ final class ControllablePool extends ReusableThreadPool
     private static final int MaxPoolSizeDefault = 64;
 
 
-    private AbstractScheduler scheduler;
+    private Scheduler scheduler;
 
-    ControllablePool(ThreadGroup group, AbstractScheduler scheduler)  {
+    ControllablePool(ThreadGroup group, Scheduler scheduler)  {
 	super(group, 
 	      PropertyParser.getInt(InitialPoolSizeProp, 
 				    InitialPoolSizeDefault),
@@ -55,7 +55,7 @@ final class ControllablePool extends ReusableThreadPool
 	return  new ControllableThread(this);
     }
 
-    AbstractScheduler scheduler() {
+    Scheduler scheduler() {
 	return scheduler;
     }
 
