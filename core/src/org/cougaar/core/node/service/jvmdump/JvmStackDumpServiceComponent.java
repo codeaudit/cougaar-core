@@ -54,7 +54,9 @@ implements Component
   }
 
   public void setNodeControlService(NodeControlService ncs) {
-    this.sb = ncs.getRootServiceBroker();
+    if (ncs != null) {
+      this.sb = ncs.getRootServiceBroker();
+    }
   }
 
   public void start() {
