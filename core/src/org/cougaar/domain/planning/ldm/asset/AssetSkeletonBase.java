@@ -31,7 +31,7 @@ public abstract class AssetSkeletonBase
 
   /** additional properties searched by default get*PG methods **/
   private ArrayList otherProperties = null;
-  private boolean hasOtherTimePhasedProperties = false;
+  protected boolean hasOtherTimePhasedProperties = false;
 
   public boolean hasOtherTimePhasedProperties() {
     return hasOtherTimePhasedProperties;
@@ -90,7 +90,7 @@ public abstract class AssetSkeletonBase
   }
 
   /** replace the existing set of other properties **/
-  protected synchronized void setOtherProperties( Collection newProps) {
+  protected synchronized void setOtherProperties(Collection newProps) {
     synchronized (otherProperties) {
       if (otherProperties != null) {
         otherProperties.clear();
@@ -117,18 +117,9 @@ public abstract class AssetSkeletonBase
     setLocalPG(prop.getPrimaryClass(), prop);
   }
 
-  /** Add a PropertyGroupSchedule to the set of additional properties **/
+  /** Add a PropertyGroupSchedule to the Aset of additional properties **/
   public synchronized void addOtherPropertyGroupSchedule(PropertyGroupSchedule prop) {
-    PropertyGroupSchedule schedule = 
-      searchForPropertyGroupSchedule(prop.getClass());
-
-    if (schedule != null) {
-      throw new IllegalArgumentException();
-    } else {
-      hasOtherTimePhasedProperties = true;
-
-      force().add(prop);
-    }
+    setLocalPGSchedule(prop);
   }
 
   /** Add an OtherPropertyGroup to the set of additional 
@@ -145,6 +136,16 @@ public abstract class AssetSkeletonBase
 
       force().add(prop);
     }
+  }
+
+  /** Add an OtherPropertyGroup to the set of additional 
+   * properties, replacing any existing properties of the 
+   * same type.
+   **/
+  public synchronized void replaceOtherPropertyGroupSchedule(PropertyGroupSchedule schedule) {
+    System.out.println(99);
+    removeOtherPropertyGroup(schedule.getPGClass());
+    addOtherPropertyGroupSchedule(schedule);
   }
 
   /** Removes the instance matching the class passed in as an argument 
@@ -394,6 +395,16 @@ public abstract class AssetSkeletonBase
     } else {
       addOrReplaceLocalPG(pgc, prop);
     }
+  }
+
+  protected void setLocalPGSchedule(PropertyGroupSchedule pgSchedule) {
+    if (hasOtherTimePhasedProperties) {
+      removeOtherPropertyGroup(pgSchedule.getPGClass());
+    }
+
+    hasOtherTimePhasedProperties = true;
+
+    force().add(pgSchedule);
   }
 
   /** add a PG, making sure to drop any previous PG of identical class which had

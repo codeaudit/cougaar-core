@@ -72,6 +72,7 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
     initRoleSchedule();
   }
 
+
   protected Asset(Asset prototype) {
     super(prototype);
     // my prototype is who we're based on
@@ -164,7 +165,14 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
 
     // handle assetskeleton params immediately
     for (Enumeration ops = getOtherProperties(); ops.hasMoreElements();) {
-      a.addOtherPropertyGroup(((PropertyGroup) ops.nextElement()).lock());
+      Object p = ops.nextElement();
+      
+      if (p instanceof PropertyGroup) {
+        a.addOtherPropertyGroup(((PropertyGroup) p).lock());
+      } else {
+        a.addOtherPropertyGroupSchedule((PropertyGroupSchedule) ((PropertyGroupSchedule) p).clone());
+      }
+        
     }
 
     return a;
