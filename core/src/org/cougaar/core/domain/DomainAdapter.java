@@ -174,10 +174,10 @@ public abstract class DomainAdapter
       throw new IllegalArgumentException("Null domain name");
     }
     
-    if (domainName != getDomainName()) { 
-      myLoggingService.error("Invalid Domain name parameter - " +
-                             " specified " + domainName + 
-                             " should be " + getDomainName());
+    if (!domainName.equals(getDomainName())) { 
+      System.err.println("Invalid Domain name parameter - " +
+                         " specified " + domainName + 
+                         " should be " + getDomainName());
     }
   }
 
