@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Copyright 1997-2001 Defense Advanced Research Projects
  *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  *  Raytheon Systems Company (RSC) Consortium).
  *  This software to be used only in accordance with the
@@ -17,43 +17,102 @@ import java.util.*;
  * COUGAAR Parameter String utilities.
  * Parameters may be specifed in the form "NAME" or "NAME:DEFAULT"
  * The NAME will be looked up in a passed-in parameter table (if supplied),
- * then system properties and then the default.
- *
+ * then the parameter map (e.g. from $HOME/.cougaarrc), 
+ * then system properties and then the default value (if supplied).
  **/
+
 public class Parameters {
 
   private static HashMap parameterMap = new HashMap(89);
 
   static {
+    // initialize parameter map from various places
+    
     String home = System.getProperty("user.home");
+    boolean found = false;
+
     try {
-      BufferedReader br = new BufferedReader(new InputStreamReader(ConfigFileFinder.open(".alprc")));
-      int l = 0;
-      String line;
-      while ((line = br.readLine()) != null) {
-        l++;
-        if (line.startsWith("#") ||
-            line.startsWith(";") ||
-            line.length() == 0)
-          continue;
-        try {
-          int i = line.indexOf("=");
-          String param = line.substring(0, i).trim();
-          String value = line.substring(i+1).trim();
-          parameterMap.put(param, value);
-        } catch (RuntimeException re) {
-          System.err.println("Badly formed line in \".alprc\" ("+l+"):\n"+line);
-        }
+      File f = new File(home+File.separator+".cougaarrc");
+      if (! f.exists()) {
+        // System.err.println("Warning: no \""+f+"\"");
+      } else {
+        parseParameterStream(f.toString(), new FileInputStream(f));
+        found=true;
       }
-      br.close();
-    } catch (Exception e) { 
-      System.err.println("Warning: Could not find \".alprc\" anywhere in the Config Path.");
-      // ignore
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    try {
+      InputStream in = ConfigFileFinder.open("cougaar.rc");
+      if (in != null) {
+        parseParameterStream("cougaar.rc", in);
+        found=true;
+      }
+    } catch (IOException e) {
+      //e.printStackTrace();
+    }
+
+    // @deprecated
+    // check .alprc to avoid confusion
+    try {
+      File f = new File(home+File.separator+".alprc");
+      if (f.exists()) {
+        System.err.println("Warning: \""+f+"\" will be ignored in the future.  Use .cougaarrc instead.");
+        parseParameterStream(f.toString(), new FileInputStream(f));
+        found=true;
+      } 
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+   // @deprecated
+   // check for .alprc in config path.
+    try {
+      InputStream in = ConfigFileFinder.open(".alprc");
+      if (in != null) {
+        System.err.println("Warning: Found an \".alprc\" in ConfigPath.  Please use cougaar.rc instead.");
+        parseParameterStream("ConfigPath/.alprc", in);
+        found=true;
+      }
+    } catch (IOException e) {
+      // be quiet
+      //e.printStackTrace();
+    }
+    if (!found) {
+      System.err.println("Warning: Found no source for Parameters - Expected to find .cougaarrc or ConfigPath/cougaar.rc");
     }
   }
 
   private static String OPEN = "${";
   private static String CLOSE = "}";
+
+  private static void parseParameterStream(String sname, InputStream in)
+    throws IOException 
+  {
+    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+    int l = 0;
+    String line;
+    while ((line = br.readLine()) != null) {
+      l++;
+      line = line.trim();
+      if (line.startsWith("#") ||
+          line.startsWith(";") ||
+          line.length() == 0)
+        continue;
+      try {
+        int i = line.indexOf("=");
+        String param = line.substring(0, i).trim();
+        String value = line.substring(i+1).trim();
+        // don't overwrite values - first wins forever
+        if (parameterMap.get(param) == null)
+          parameterMap.put(param, value);
+      } catch (RuntimeException re) {
+        System.err.println("Badly formed line in \""+sname+"\" ("+l+"):\n"+line);
+      }
+    }
+    br.close();
+  }
 
   /** Replace occurances of ${PARAM} in the argument with the result
    * of calling findParameter("PARAM");

@@ -1,14 +1,29 @@
+* MB 7.0.1
+
+Default database connection information has been moved out of all
+standard ".q" and ".cfg" files.  This means that Parameters are now 
+required, either from a .cougaarrc file (was .alprc - see below) or as
+-D arguments on the java command line (org.cougaar.database,
+org.cougaar.database.user, org.cougaar.database.password).
+
+Parameters files have changed a bit.  Previous versions used the file
+.alprc as found in the ConfigPath.  Now, parameters are set first from
+a file ".cougaarrc" in $HOME and then by the file cougaar.rc somewhere
+in ConfigPath (e.g. in your society's config directory).  This allows,
+for instance, databases to be selected in the the config directory but
+have individual usernames and passwords set outside on a per-user
+basis.  See the javadoc for org.cougaar.util.Parameters for more
+information.   A (non-functional) example of the format expected in
+these files is in this directory (core/doc) as "example.cougaarrc".
+
+At this point, .alprc is still searched for and used as before, albeit
+with warnings that they will be ignored in some future release.
+
 * MB 7.0
 
 Package reorganization to support COUGAAR opensource release 7.0.
 Details may be found in 7.0/alp7.pkg.  Changes are reflected in
 javadocs and other documentation.
-
-Default database connection information has been moved out of all
-standard ".q" and ".cfg" files.  A file .alprc must be found somewhere
-in the config path in order for any of the demonstration configs to
-work.  An example .alprc file may be found in this directory as
-"example.alprc".
 
 * MB 6.8.2
 

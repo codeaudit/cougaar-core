@@ -1,3 +1,11 @@
+2001-01-19  Michael Thome  <mthome@bbn.com>
+
+	* org.cougaar.util.Parameters
+	More extensive Parameter File handling.  Now reads
+	"$home/.cougaarrc" *and* searches the config path for "cougaar.rc"
+	in addition to searching for .alprc in the usual places.  .alprc
+	processing will, of course, be dropped at some point.
+
 2001-01-05  Noelle Givler <ngivler@bbn.com>
 	* org.cougaar.domain.planning.ldm.plan.Schedule
 
