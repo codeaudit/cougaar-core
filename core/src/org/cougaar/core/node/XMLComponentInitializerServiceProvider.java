@@ -26,193 +26,66 @@
 
 package org.cougaar.core.node;
 
-import java.io.CharArrayWriter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Properties;
-
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.component.*;
-import org.cougaar.util.log.*;
-import org.cougaar.util.ConfigFinder;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Class to provide service for initializing Components
  * from an XML file.
- *
+ * <p> 
  * <pre>
  * @property org.cougaar.society.file
  *   The name of the XML file from which to read this Node's
  *   definition
- * @property org.cougaar.node.name
- *   The name for this Node.
- * @property org.cougaar.society.xml.validate 
- *   Indicates if the XML parser should be validating or not.
- *   Defaults to "false".
- * @property org.cougaar.node.validate
- *   Same as "-Dorg.cougaar.society.xml.validate" 
- * @property org.cougaar.society.xsl.checkXML
- *    Check for an XSL stylesheet, e.g.:
- *      &lt;?xml-stylesheet type="text/xml" href="society.xsl"?&gt;
- *    Defaults to "true".
- * @property org.cougaar.society.xsl.default.file
- *    Default XSL stylesheet if "-Dorg.cougaar.society.xsl.checkXML"
- *    is false or an xml-stylesheet is not found.  Defaults to
- *    null. 
- * @property org.cougaar.society.xsl.dynamic.file
- *    Dynamic XSL stylesheet that generates the XSL stylesheet
- *    based upon the XML file contents, unless an XSL stylesheet
- *    is specified in the XML file
- *    (-Dorg.cougaar.society.xsl.checkXML) or specified
- *    (-Dorg.cougaar.society.xsl.default.file).  Defaults to
- *    "make_society.xsl".
- * @property org.cougaar.society.xsl.param.*
- *    XSL parameters passed to the xml-stylesheet or default XSL
- *    stylesheet, where the above system property prefix is
- *    removed.  For example, if a system property is:
- *       -Dorg.cougaar.society.xsl.param.foo=bar
- *    then the parameter "foo=bar" will be passed to the XSL
- *    file's optional parameter:
- *       &lt;xsl:param name="foo"&gt;my_default&lt;/xsl:param&gt;
- * </pre>
- **/
+ * </pre> 
+ */ 
 public class XMLComponentInitializerServiceProvider
   implements ServiceProvider {
 
+  private static final String XML_FILE_NAME_PROP = 
+    "org.cougaar.society.file";
   private static final String XML_FILE_NAME = 
-    System.getProperty("org.cougaar.society.file");
+    System.getProperty(XML_FILE_NAME_PROP);
 
+  private static final String NODE_NAME_PROP =
+    "org.cougaar.node.name";
   private static final String NODE_NAME =
-    System.getProperty("org.cougaar.node.name");
+    System.getProperty(NODE_NAME_PROP);
 
-  private static final boolean VALIDATE =
-    Boolean.getBoolean("org.cougaar.society.xml.validate") ||
-    Boolean.getBoolean("org.cougaar.core.node.validate");
+  // backwards compatibility for the wp server:
+  private static final String IMPLICIT_WP_SERVER_PROP = 
+    "org.cougaar.core.load.wp.server";
+  private static final boolean IMPLICIT_WP_SERVER = 
+    PropertyParser.getBoolean(IMPLICIT_WP_SERVER_PROP, true);
 
-  private static final boolean USE_XML_STYLESHEET = 
-    PropertyParser.getBoolean(
-        "org.cougaar.society.xsl.checkXML",
-        true);
+  private static final String MY_CLASS_NAME =
+    XMLComponentInitializerServiceProvider.class.getName();
 
-  private static final String DEFAULT_XSL_FILE_NAME =
-    System.getProperty(
-        "org.cougaar.society.xsl.default.file",
-        null);
-
-  private static final String DYNAMIC_XSL_FILE_NAME = 
-    System.getProperty(
-        "org.cougaar.society.xsl.dynamic.file",
-        "make_society.xsl");
-
-  private static final String XSL_PARAM_PROP_PREFIX =
-    "org.cougaar.society.xsl.param.";
-
-  // could make this a soft reference, since we can always
-  // reparse our xml file
-  private final ComponentInitializerService serviceImpl;
+  private final ComponentInitializerService serviceImpl =
+      new ComponentInitializerServiceImpl();
 
   public XMLComponentInitializerServiceProvider() {
-
-    //
-    // parse the config when this class is constructed!
-    //
-
-    String filename = XML_FILE_NAME;
-    if (filename == null || filename.equals("")) {
-      throw new RuntimeException(
-          "Missing \"-Dorg.cougaar.society.file=STRING\" system"+
-          " property that specifies the XML config file");
-    }
-
-    String nodename = NODE_NAME;
-    if (nodename == null || nodename.equals("")) {
-      throw new RuntimeException(
-          "Missing \"-Dorg.cougaar.node.name=STRING\" system property"+
-          " that specifies the local node's name");
-    }
-
-    // find all "-Dorg.cougaar.society.xsl.param.*" system properties
-    Map default_xsl_params = new HashMap();
-    Properties props =
-      SystemProperties.getSystemPropertiesWithPrefix(
-          XSL_PARAM_PROP_PREFIX);
-    for (Enumeration en = props.propertyNames();
-        en.hasMoreElements();
-        ) {
-      String name = (String) en.nextElement();
-      String key = name.substring(XSL_PARAM_PROP_PREFIX.length());
-      String value = props.getProperty(name);
-      default_xsl_params.put(key, value);
+  }
+  
+  private static Map get_overrides() {
+    Map ret = new HashMap();
+    // add node name
+    if (NODE_NAME != null && !NODE_NAME.equals("")) {
+      ret.put("node", NODE_NAME);
     }
     // backwards compatibility for the wp server:
-    if (!default_xsl_params.containsKey("wpserver") &&
-        !PropertyParser.getBoolean(
-          "org.cougaar.core.load.wp.server",
-          true)) {
-      default_xsl_params.put("wpserver", "false");
+    if (!IMPLICIT_WP_SERVER) {
+      ret.put("wpserver", "false");
     }
-
-    // for now we don't pass our params to the dynamic XSL template
-    Map dynamic_xsl_params = null;
-
-    Logger logger = Logging.getLogger(getClass());
-    if (logger.isShoutEnabled()) {
-      logger.shout(
-          "Initializing node \""+nodename+
-          "\" from XML file \""+ filename+"\"");
-    }
-
-    Map agents;
-    try {
-      XMLConfigParser xcp = 
-        new XMLConfigParser(
-            filename,
-            nodename,
-            VALIDATE,
-            USE_XML_STYLESHEET,
-            DEFAULT_XSL_FILE_NAME,
-            DYNAMIC_XSL_FILE_NAME,
-            default_xsl_params,
-            dynamic_xsl_params);
-      agents = xcp.parseFile();
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to parse XML file ("+
-            "filename="+filename+
-            ", nodename="+nodename+
-            ", validate="+VALIDATE+
-            ", use_xml_stylesheet="+USE_XML_STYLESHEET+
-            ", default_xsl_file_name="+DEFAULT_XSL_FILE_NAME+
-            ", dynamic_xsl_file_name="+DYNAMIC_XSL_FILE_NAME+
-            ", default_xsl_params="+default_xsl_params+
-            ", dynamic_xsl_params="+dynamic_xsl_params+
-            ")",
-          e);
-    }
-
-    // agents map fully initialized
-
-    if (agents.isEmpty()) {
-      throw new RuntimeException(
-          "The configuration for node \""+nodename+ 
-          "\" was not found in XML file \""+filename+"\"");
-    }
-
-    serviceImpl = 
-      new ComponentInitializerServiceImpl(
-          logger,
-          agents);
+    return ret;
   }
 
   public Object getService(
@@ -239,13 +112,45 @@ public class XMLComponentInitializerServiceProvider
           new ComponentDescription[0];
 
         private final Logger logger;
+
+        // could make this a map of soft references
         private final Map agents;
 
-        public ComponentInitializerServiceImpl(
-            Logger logger,
-            Map agents) {
-          this.logger = logger;
-          this.agents = agents;
+        public ComponentInitializerServiceImpl() {
+          this.logger = Logging.getLogger(MY_CLASS_NAME);
+          this.agents = parseAgents();
+        }
+
+        private Map parseAgents() {
+          if (XML_FILE_NAME == null) {
+            throw new RuntimeException(
+                "\"-D"+XML_FILE_NAME_PROP+"\" XML filename not set");
+          } 
+
+          if (logger.isShoutEnabled()) {
+            logger.shout(
+                "Initializing node \""+NODE_NAME+
+                "\" from XML file \""+XML_FILE_NAME+"\"");
+          }
+
+          Map ret = 
+            XMLConfigParser.parseAgents(
+                XML_FILE_NAME,
+                NODE_NAME,
+                null, // all agents in this file
+                get_overrides());
+          if (logger.isDetailEnabled()) {
+            logger.detail("found "+ret.size()+" agents");
+          }
+
+          // we should minimally have the node-agent's config
+          if (ret.isEmpty()) {
+            throw new RuntimeException(
+                "The configuration for node \""+NODE_NAME+ 
+                "\" was not found in XML file \""+XML_FILE_NAME+"\"");
+          }
+
+          return ret;
         }
 
         /**
@@ -264,48 +169,102 @@ public class XMLComponentInitializerServiceProvider
                 containmentPoint);
           }
 
-          ComponentDescription[] ret = NO_COMPONENTS;
+          List agentDescs;
           try {
-            List l = (List) agents.get(agentName);
-            if (l != null) {
-              List retList = null;
-              for (int i = 0, n = l.size(); i < n; i++) {
-                ComponentDescription cd =
-                  (ComponentDescription) l.get(i);
-                String ip = cd.getInsertionPoint();
-                if (ip.startsWith(containmentPoint) &&
-                    ip.indexOf('.', containmentPoint.length()+1) < 0) {
-                  if (retList == null) {
-                    retList = new ArrayList();
-                  }
-                  retList.add(cd);
-                }
-              }
-              if (retList != null) {
-                ret = (ComponentDescription[])
-                  retList.toArray(
-                      new ComponentDescription[retList.size()]);
-              }
-            }
+            agentDescs = getAgentDescs(agentName);
           } catch (Exception e) {
+            logger.error(
+                "Failed getComponentDescriptions("+agentName+")",
+                e);
             throw new InitializerException(
-                "getComponentDescriptions("+agentName+", "+
-                containmentPoint+")",
+                "getComponentDescriptions("+agentName+")",
                 e);
           }
 
-          if (logger.isInfoEnabled()) {
+          ComponentDescription[] ret = 
+            filterByContainmentPoint(
+                agentDescs, containmentPoint);
+
+          if (logger.isDetailEnabled()) {
             StringBuffer buf = new StringBuffer();
-            buf.append("Returning ");
+            buf.append("returning ");
             buf.append(ret.length);
             buf.append(" component descriptions: ");
             for (int i = 0; i < ret.length; i++) {
               appendDesc(buf, ret[i]);
             }
-            logger.info(buf.toString());
+            logger.detail(buf.toString());
           }
 
           return ret;
+        }
+        
+        private List getAgentDescs(
+            String agentName) throws Exception {
+          if (agentName == null) {
+            throw new IllegalArgumentException("null agentName");
+          }
+
+          // check already parsed XML_FILE_NAME
+          List l = (List) agents.get(agentName);
+          if (l != null) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Found cached agent "+agentName+" config");
+            }
+            return l;
+          }
+
+          // look for agent.xml
+          //
+          // we could cache a parse failure, but these are probably
+          // rare 
+          if (logger.isInfoEnabled()) {
+            logger.info("Parsing "+agentName+".xml");
+          }
+          Map m = 
+            XMLConfigParser.parseAgents(
+                agentName+".xml",
+                null, // no "<node>"
+                agentName, // just this agent
+                get_overrides());
+          l = (List) m.get(agentName);
+          if (logger.isDetailEnabled()) {
+            logger.detail(
+                "found "+(l == null ? 0 : l.size())+" components");
+          }
+
+          // cache
+          agents.put(agentName, l);
+
+          return l;
+        }
+
+        private ComponentDescription[] filterByContainmentPoint(
+            List l,
+            String containmentPoint) {
+          if (l == null ||
+              l.isEmpty()) {
+            return NO_COMPONENTS;
+          }
+          List retList = null;
+          for (int i = 0, n = l.size(); i < n; i++) {
+            ComponentDescription cd =
+              (ComponentDescription) l.get(i);
+            String ip = cd.getInsertionPoint();
+            if (ip.startsWith(containmentPoint) &&
+                ip.indexOf('.', containmentPoint.length()+1) < 0) {
+              if (retList == null) {
+                retList = new ArrayList();
+              }
+              retList.add(cd);
+            }
+          }
+          if (retList == null) {
+            return NO_COMPONENTS;
+          }
+          return (ComponentDescription[])
+            retList.toArray(
+                new ComponentDescription[retList.size()]);
         }
         
         private static void appendDesc(
