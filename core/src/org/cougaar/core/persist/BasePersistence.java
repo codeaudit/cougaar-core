@@ -76,7 +76,7 @@ import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
-import org.cougaar.tools.scalability.performance.jni.CpuClock;
+//import org.cougaar.tools.scalability.performance.jni.CpuClock;
 import org.cougaar.core.persist.PersistMetadata;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -943,7 +943,8 @@ public class BasePersistence
     long startCPU = 0L;
     long startTime = 0L;
     if (logger.isInfoEnabled()) {
-      startCPU = CpuClock.cpuTimeMillis();
+      //startCPU = CpuClock.cpuTimeMillis();
+      startCPU = 0l;
       startTime = System.currentTimeMillis();
     }
     int bytesSerialized = 0;
@@ -1094,7 +1095,8 @@ public class BasePersistence
       }
     }
     if (bytesSerialized > 0 && logger.isInfoEnabled()) {
-      long finishCPU = CpuClock.cpuTimeMillis();
+      //long finishCPU = CpuClock.cpuTimeMillis();
+      long finishCPU = 0l;
       long finishTime = System.currentTimeMillis();
       logger.info("bytes=" + bytesSerialized + ", cpu=" + (finishCPU - startCPU)
                   + ", real=" + (finishTime - startTime));
