@@ -31,6 +31,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.util.Memo;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -315,9 +316,17 @@ public class AgentManager
     return (getAgentDescription(agentId) != null);
   }
 
+  private Memo _getAgentAddressesMemo = Memo.get(new Memo.Function() {
+      public String toString() { return "Memo<getAgentAddresses>"; }
+      public Object eval(Object o) {
+        return Collections.unmodifiableSet(((Map)o).keySet());
+      }
+    });
+
+  /** Return the current set of contained Agent's MessageAddresses **/
   public Set getAgentAddresses() {
-    Map m = getAgents();
-    return Collections.unmodifiableSet(m.keySet());
+    // memorize to avoid consing a new Set each time.
+    return (Set) _getAgentAddressesMemo.eval(getAgents());
   }
 
   public ComponentDescription getAgentDescription(MessageAddress agentId) {
@@ -325,41 +334,68 @@ public class AgentManager
     return (ComponentDescription) m.get(agentId);
   }
 
-  public List getComponents() {
+  public List getComponents() { // better to use iterator()!
     return super.listComponents();
   }
 
-  public Map getAgents() {
-    // FIXME cleanup this code
-    //
-    // assume that all agents are loaded with a ComponentDescription,
-    // where the desc's parameter is (<agentId> [, ...])
-    List descs = listComponents();
-    Map ret = new HashMap(descs.size());
-    for (Iterator iter = descs.iterator(); iter.hasNext();) {
-      ComponentDescription desc = (ComponentDescription) iter.next();
-      Object o = desc.getParameter();
-      MessageAddress cid = null;
-      if (o instanceof MessageAddress) {
-        cid = (MessageAddress) o;
-      } else if (o instanceof String) {
-        cid = MessageAddress.getMessageAddress((String) o);
-      } else if (o instanceof List) {
-        List l = (List) o;
-        if (l.size() > 0) {
-          Object o1 = l.get(0);
-          if (o1 instanceof MessageAddress) {
-            cid = (MessageAddress) o1;
-          } else if (o1 instanceof String) {
-            cid = MessageAddress.getMessageAddress((String) o1);
+  protected Iterator getComponentsIterator() {
+    return iterator();
+  }
+
+  private Memo _getAgentsMemo = Memo.get(new Memo.Function() {
+      public String toString() { return "Memo<getAgents>"; }
+      public Object eval(Object o) {
+        List cds = (List) o;
+
+        HashMap ret = new HashMap(cds.size());
+        for (Iterator iter = componentIterator(); iter.hasNext(); ) {
+          Object ob = iter.next();
+          ComponentDescription desc = (ComponentDescription) ob;
+          MessageAddress cid = cdToMa(desc);
+          if (cid != null) {
+            ret.put(cid, desc);
           }
         }
+        return Collections.unmodifiableMap(ret);
       }
-      if (cid != null) {
-        ret.put(cid, desc);
+    });
+
+  /** return a map of MessageAddress to ComponentDescription which 
+   * describes the current set of agents.
+   * The returned map is Unmodifiable and will be shared across multiple
+   * invocations.
+   **/
+  public synchronized Map getAgents() {
+    return (Map) _getAgentsMemo.eval(getBoundComponentList());
+  }
+
+  /** Interpret an Agent-level ComponentDescription to 
+   * determine the agent name in the form of the MessageAddress of the agent.
+   * May return null if uninterpretable.
+   **/
+  protected MessageAddress cdToMa(ComponentDescription desc) {
+    Object o = desc.getParameter();
+    MessageAddress cid = null;
+    if (o instanceof MessageAddress) {
+      cid = (MessageAddress) o;
+    } else if (o instanceof String) {
+      cid = MessageAddress.getMessageAddress((String) o);
+    } else if (o instanceof List) {
+      List l = (List) o;
+      if (l.size() > 0) {
+        Object o1 = l.get(0);
+        if (o1 instanceof MessageAddress) {
+          cid = (MessageAddress) o1;
+        } else if (o1 instanceof String) { // primary case
+          cid = MessageAddress.getMessageAddress((String) o1);
+        } else {
+          // shouldn't happen
+        }
       }
+    } else {
+      // sometimes we get a null (e.g. agent binder)
     }
-    return ret;
+    return cid;
   }
 
   public void addAgent(MessageAddress agentId, StateTuple tuple) {
