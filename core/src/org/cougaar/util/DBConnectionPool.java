@@ -126,12 +126,15 @@ public class DBConnectionPool {
    * Inner class to record individual connections
    */
   class DBConnectionPoolEntry {
+    int entryNumber = ++entryCounter;
+    boolean defaultAutoCommit;
+
     /**
      * Construct an entry for a given connection that is not in use.
      */
-    int entryNumber = ++entryCounter;
-    DBConnectionPoolEntry(Connection aConnection) {
+    DBConnectionPoolEntry(Connection aConnection) throws SQLException {
       theConnection = aConnection;
+      defaultAutoCommit = theConnection.getAutoCommit();
     }
 
     /**
@@ -193,6 +196,7 @@ public class DBConnectionPool {
       PoolConnection(Connection realConnection) throws SQLException {
 	c = realConnection;
 	supportsTransactions = c.getMetaData().supportsTransactions();
+        if (supportsTransactions) realConnection.setAutoCommit(defaultAutoCommit);
       }	  
       
       private void destroyPool() {
@@ -1011,7 +1015,9 @@ public class DBConnectionPool {
             throw sqle;
           }
 	}
-        /** @deprecated **/
+        /**
+         * @deprecated
+         **/
 	public void setUnicodeStream(int arg0, java.io.InputStream arg1, int arg2) throws java.sql.SQLException {
           throw new java.sql.SQLException("Method not supported");
           //	  thePreparedStatement.setUnicodeStream(arg0, arg1, arg2);
