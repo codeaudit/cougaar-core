@@ -86,6 +86,7 @@ implements Serializable {
     throws ClassNotFoundException, IOException {
       stream.defaultReadObject();
       if (stream instanceof PersistenceInputStream) {
+	// don't try reading state
       } else {
         state = stream.readObject();
       }
