@@ -1,3 +1,11 @@
+2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SearchStringParserTest.java:
+	Fix copyright.
+
+	* NamingDirContextTest.java:
+	The beginnings of a test of NamingDirContext.
+
 2001-08-23  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ChangeLog:

@@ -1,3 +1,21 @@
+2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Remove unbind override. Nothing special needs to be done about
+	attributes. The go away when the binding goes away.
+
+	* org/cougaar/core/naming/NamingContext.java:
+	Remove extraneous slashs from names returned by
+	getNameInNamespace(). Fix unbind so it unbinds contexts, but only
+	if called from destroySubcontext. The guts of unbind are now a
+	subroutine called from both unbind and destroySubcontext. A
+	boolean argument says whether contexts can be destroyed or not.
+
+	* org/cougaar/core/naming/SearchStringParser.java:
+	Fix bug caused by treating space as separator. Spaces are ignored
+	between what are otherwise tokens, but to not separate tokens nor
+	are they tokens themselves.
+
 2001-08-24  Lora Goldston  <lgoldsto@bbn.com>
 
 	* org/cougaar/core/util/DBConnectionPool.java
