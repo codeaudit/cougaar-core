@@ -328,6 +328,11 @@ public class NodeAgent
 
   protected void loadComponentPriorityComponents() {
     if (isCommunityEnabled) {
+      // If no other CommunityInitService available, and we're using communities,
+      // then use the default InitServiceComponent -- CSMART DB
+      // if components loaded from there, otherwise Files XML)
+      // To provide your own (ie, non-CSMART DB) InitService, load a component
+      // at BINDER priority
       add(new ComponentDescription(
             "community-init",
             Agent.INSERTION_POINT+".Init",
@@ -341,6 +346,12 @@ public class NodeAgent
     }
 
     if (isPlanningEnabled) {
+      // If no other AssetInitService loaded, load the default
+      // InitServiceComponent: CSMART DB Initialization
+      // if Components loaded from there, Non-CSMART DB if Component 
+      // initialized from XML, otherwise INI intializations.
+      // If you want your own AssetInitService 
+      // specify your own component at BINDER priority
       add(new ComponentDescription(
             "asset-init",
             Agent.INSERTION_POINT+".Init",
