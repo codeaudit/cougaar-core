@@ -96,6 +96,7 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
           return o == relay;
         }
       });
+    setUnfrozenAgents(names);
   }
 
   protected synchronized void thaw() {
