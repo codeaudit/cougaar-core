@@ -26,90 +26,37 @@
 
 package org.cougaar.core.wp;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.cougaar.util.Arguments;
 
 /**
- * Utility class to parse component parameters.
- * <p> 
- * Similar to org.cougaar.core.component.ParameterizedComponent,
- * will probably be moved into that package...
+ * An extended {@link Arguments} implementation that supports
+ * system properties. 
  */
-public class Parameters {
+public class Parameters extends Arguments {
 
   private final String prefix;
-  private final Map m;
 
   public Parameters(Object o) {
     this(o, null);
   }
 
   public Parameters(Object o, String prefix) {
+    super(o);
     this.prefix = prefix;
-    m = parseMap(o);
-  }
-
-  protected Map parseMap(Object o) {
-    if (!(o instanceof List)) {
-      return Collections.EMPTY_MAP;
-    }
-    List l = (List) o;
-    int n = l.size();
-    if (n == 0) {
-      return Collections.EMPTY_MAP;
-    }
-    Map ret = new HashMap(n);
-    for (int i = 0; i < n; i++) {
-      String s = (String) l.get(i);
-      int sepIdx = s.indexOf('=');
-      if (sepIdx < 0) {
-        continue;
-      }
-      String key = s.substring(0, sepIdx);
-      String value = s.substring(sepIdx+1);
-      ret.put(key, value);
-    }
-    return ret;
-  }
-
-  public String getString(String key) {
-    return getString(key, null);
   }
 
   public String getString(String key, String deflt) {
-    String value = (String) m.get(key);
+    String value = super.getString(key, null);
     if (value == null && prefix != null) {
       value = System.getProperty(prefix+key);
     }
     return (value == null ? deflt : value);
   }
 
-  public boolean getBoolean(String key, boolean deflt) {
-    String value = getString(key);
-    return (value == null ? deflt : "true".equals(value));
-  }
-
-  public int getInt(String key, int deflt) {
-    String value = getString(key);
-    return (value == null ? deflt : Integer.parseInt(value));
-  }
-
-  public long getLong(String key, long deflt) {
-    String value = getString(key);
-    return (value == null ? deflt : Long.parseLong(value));
-  }
-
-  public double getDouble(String key, double deflt) {
-    String value = getString(key);
-    return (value == null ? deflt : Double.parseDouble(value));
-  }
-
   public String toString() {
     return 
       "(parameters"+
       (prefix == null ? "" : (" prefix="+prefix))+
-      " "+m+")";
+      " "+super.toString()+")";
   }
 }
