@@ -201,7 +201,9 @@ public class Scheduler
     }
 
     private void log(String action, Object item) {
-	if (!ensureLog()) return;
+	// if (!ensureLog()) return;
+	if (true) return; // disable this completely for now
+
 	long now = MetricsServiceProvider.relativeTimeMillis();
 	StringBuffer buf = new StringBuffer();
 	buf.append(Double.toString(now/1000.0));

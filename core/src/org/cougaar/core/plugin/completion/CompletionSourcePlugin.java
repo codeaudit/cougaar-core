@@ -34,6 +34,8 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.UIDService;
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.core.blackboard.Subscription;
 
 /**
  * This plugin gathers and integrates completion information from
@@ -54,15 +56,18 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private static final long NORMAL_UPDATE_INTERVAL = 5000L;
   private static final long NORMAL_LONG_CHECK_TARGETS_INTERVAL = 120000L;
   private static final long NORMAL_SHORT_CHECK_TARGETS_INTERVAL = 15000L;
+  private static final long DEFAULT_DEAD_NODE_TIMEOUT = 120000L;
   private static final String UPDATE_INTERVAL_KEY = "UPDATE_INTERVAL=";
   private static final String LONG_CHECK_TARGETS_INTERVAL_KEY = "LONG_CHECK_TARGETS_INTERVAL=";
   private static final String SHORT_CHECK_TARGETS_INTERVAL_KEY = "SHORT_CHECK_TARGETS_INTERVAL=";
   private static final String TASK_COMPLETION_THRESHOLD_KEY = "TASK_COMPLETION_THRESHOLD=";
+  private static final String DEAD_NODE_TIMEOUT_KEY = "DEAD_NODE_TIMEOUT";
   private static final int SHORT_CHECK_TARGETS_MAX = 5;
   private double TASK_COMPLETION_THRESHOLD = NORMAL_TASK_COMPLETION_THRESHOLD;
   private long UPDATE_INTERVAL = NORMAL_UPDATE_INTERVAL;
   private long LONG_CHECK_TARGETS_INTERVAL = NORMAL_LONG_CHECK_TARGETS_INTERVAL;
   private long SHORT_CHECK_TARGETS_INTERVAL = NORMAL_SHORT_CHECK_TARGETS_INTERVAL;
+  private long DEAD_NODE_TIMEOUT = DEFAULT_DEAD_NODE_TIMEOUT;
   private static final Class[] requiredServices = {
     UIDService.class,
     TopologyReaderService.class,
@@ -80,6 +85,14 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private int shortCheckTargetsCount = 0;
   private CompletionRelay relay;                // The relay we sent
   private Laggard selfLaggard = null;
+  private UnaryPredicate myRelayPredicate =
+    new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return o == relay;
+      }
+    };
+  private Subscription responseSubscription;
+  private long timerTimeout = 0L; // When the timer should expire.
 
   private static Class[] concatRequiredServices(Class[] a1, Class[] a2) {
     Class[] result = new Class[a1.length + a2.length];
@@ -158,19 +171,37 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
                                                 + SHORT_CHECK_TARGETS_INTERVAL);
         continue;
       }
+      if (param.startsWith(DEAD_NODE_TIMEOUT_KEY)) {
+        DEAD_NODE_TIMEOUT = Long.parseLong(param.substring(DEAD_NODE_TIMEOUT_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + DEAD_NODE_TIMEOUT_KEY
+                                                + DEAD_NODE_TIMEOUT);
+        continue;
+      }
     }
+    responseSubscription = blackboard.subscribe(myRelayPredicate);
     if (haveServices()) {
       checkTargets();
       checkSelfLaggard(true);
       startTimer(SHORT_CHECK_TARGETS_INTERVAL);
+      timerTimeout = System.currentTimeMillis() + SHORT_CHECK_TARGETS_INTERVAL;
+    } else {
+      timerTimeout = 0L;
     }
   }
 
   public void execute() {
     if (haveServices()) {
-      if (timerExpired()) {
+      now = System.currentTimeMillis();
+      boolean timerExpired = timerExpired();
+      if (!timerExpired) {
+        if (timerTimeout > 0L && now > timerTimeout) {
+          logger.error("Timer failed to fire");
+          timerExpired = true;
+        }
+      }
+      if (timerExpired) {
         cancelTimer();
-        now = System.currentTimeMillis();
         if (now > nextCheckTargetsTime) {
           if (checkTargets()) {
             checkSelfLaggard(true);
@@ -187,6 +218,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
           checkLaggards();
         }
         startTimer(UPDATE_INTERVAL);
+        timerTimeout = System.currentTimeMillis() + UPDATE_INTERVAL;
       }
     }
   }
@@ -238,11 +270,23 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private void checkLaggards() {
     SortedSet laggards = relay.getLaggards();
     if (laggards.size() > 0) {
-      Laggard newLaggard = (Laggard) laggards.first();
-      if (logger.isDebugEnabled()) {
-        logger.debug("checkLaggards " + newLaggard);
+      long oldestAllowedTimestamp = now - (LaggardFilter.NON_LAGGARD_UPDATE_INTERVAL + DEAD_NODE_TIMEOUT);
+      for (Iterator i = laggards.iterator(); i.hasNext(); ) {
+        Laggard newLaggard = (Laggard) i.next();
+        long okBy = newLaggard.getTimestamp() - oldestAllowedTimestamp;
+        if (okBy > 0L) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("checkLaggards(" + (okBy / 1000L) + ") " + newLaggard);
+          }
+          handleNewLaggard(newLaggard);
+          break;
+        } else {
+          //relay.flushOutdatedLaggard(newLaggard);
+          if (logger.isDebugEnabled()) {
+            logger.debug("checkLaggards ignoring old " + newLaggard);
+          }
+        }
       }
-      handleNewLaggard(newLaggard);
     } else {
       handleNewLaggard(selfLaggard);
       if (logger.isDebugEnabled()) {
@@ -263,4 +307,3 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
 
   protected abstract void handleNewLaggard(Laggard worstLaggard);
 }
-      

@@ -602,6 +602,21 @@ public class SimpleAgent
       setRestartState(agentState.restartState);
     }
 
+    // set up the PrototypeRegistry and the PrototypeRegistryService
+    // this needs to happen before we start accepting messages.
+    PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
+    myPrototypeRegistryServiceProvider = 
+      new PrototypeRegistryServiceProvider(thePrototypeRegistry);
+    sb.addService(
+        PrototypeRegistryService.class, 
+        myPrototypeRegistryServiceProvider);
+
+    //for backwards compatability
+    myPrototypeRegistryService = (PrototypeRegistryService) 
+      sb.getService(
+          this, PrototypeRegistryService.class, null);
+
+
     // get the Messenger instance from ClusterManagement
     if (log.isInfoEnabled()) {
       log.info("Registering with the message transport");
@@ -620,7 +635,7 @@ public class SimpleAgent
       // send all unsent messages
       List l = agentState.unsentMessages;
       for (int i = 0, n = l.size(); i < n; i++) {
-        ClusterMessage cmi = (ClusterMessage) l.get(i);
+        Message cmi = (Message) l.get(i);
         sendMessage(cmi);
       }
     }
@@ -643,19 +658,6 @@ public class SimpleAgent
     sb.addService(UIDService.class, myUIDServiceProvider);
 
     myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
-
-    // set up the PrototypeRegistry and the PrototypeRegistryService
-    PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
-    myPrototypeRegistryServiceProvider = 
-      new PrototypeRegistryServiceProvider(thePrototypeRegistry);
-    sb.addService(
-        PrototypeRegistryService.class, 
-        myPrototypeRegistryServiceProvider);
-
-    //for backwards compatability
-    myPrototypeRegistryService = (PrototypeRegistryService) 
-      sb.getService(
-          this, PrototypeRegistryService.class, null);
 
     // add alarm service
     myAlarmServiceProvider = new AlarmServiceProvider(this);
@@ -1014,7 +1016,7 @@ public class SimpleAgent
       List l = unsentMessages;
       unsentMessages = null;
       for (int i = 0, n = ((l != null) ? l.size() : 0); i < n; i++) {
-        ClusterMessage cmi = (ClusterMessage) l.get(i);
+        Message cmi = (Message) l.get(i);
         sendMessage(cmi);
       }
 
@@ -1658,9 +1660,15 @@ public class SimpleAgent
     }
   }
 
+  // required by the interface - ClusterMessage should really go away. Ugh.
   public void sendMessage(ClusterMessage message)
   {
-    checkClusterInfo(message.getDestination());
+    sendMessage((Message)message);
+  }
+
+  public void sendMessage(Message message)
+  {
+    checkClusterInfo(message.getTarget());
     if (showTraffic) showProgress("+");
     try {
       if (messenger == null) {
@@ -1674,6 +1682,7 @@ public class SimpleAgent
       }
     }
   }
+
 
   // hook into Agent
   /** Alias for getMessageAddress **/

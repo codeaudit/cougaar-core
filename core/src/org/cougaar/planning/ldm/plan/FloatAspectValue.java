@@ -47,6 +47,10 @@ public class FloatAspectValue extends TypedAspectValue {
       throw new IllegalArgumentException("Cannot construct a FloatAspectValue from "+o);
     }
 
+    return create(type, value);
+  }
+
+  public static AspectValue create(int type, float value) {
     // cache zeros
     if (value == 0.0) {
       synchronized (zeros) {

@@ -568,20 +568,14 @@ public final class Distributor {
     // Fill messagesToSend
     blackboard.appendMessagesToSend(messagesToSend);
     if (messagesToSend.size() > 0) {
-      //if (logger.isDebugEnabled()) {
+      if (logger.isDebugEnabled()) {
         for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
           DirectiveMessage msg = (DirectiveMessage) i.next();
           Directive[] dirs = msg.getDirectives();
           for (int j = 0; j < dirs.length; j++) {
-            Directive d = dirs[j];
-            if ((blackboard.getCID()).equals(d.getDestination())) {
-              _messagesSelf++;
-            } else {
-              _messagesOut++;
-            }
-            //logger.debug("SEND   " + dirs[j]);
+            logger.debug("SEND   " + dirs[j]);
           }
-          //}
+        }
       }
       getMessageManager().sendMessages(messagesToSend.iterator());
     }
@@ -603,12 +597,6 @@ public final class Distributor {
     }
     outboxes.clear();
   }
-  private long _messagesOut = 0L;
-  private long _messagesIn = 0L;
-  private long _messagesSelf = 0L;
-  public long getMessagesOut() { return _messagesOut; }
-  public long getMessagesIn() { return _messagesIn; }
-  public long getMessagesSelf() { return _messagesSelf; }
 
   public void restartAgent(MessageAddress cid) {
     assert !Thread.holdsLock(distributorLock);
@@ -659,16 +647,12 @@ public final class Distributor {
               }
             }
             if ((code & MessageManager.IGNORE) == 0) {
-              //if (logger.isDebugEnabled()) {
+              if (logger.isDebugEnabled()) {
                 Directive[] dirs = msg.getDirectives();
                 for (int i = 0; i < dirs.length; i++) {
-                  //logger.debug("RECV   " + dirs[i]);
-                  Directive d = dirs[i];
-                  if (!(blackboard.getCID()).equals(d.getSource())) {
-                    _messagesIn++;
-                  }
+                  logger.debug("RECV   " + dirs[i]);
                 }
-                //}
+              }
               directiveMessages.add(msg);
             }
           } else if (m instanceof AckDirectiveMessage) {

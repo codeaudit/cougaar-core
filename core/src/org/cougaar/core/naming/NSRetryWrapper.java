@@ -24,6 +24,8 @@ package org.cougaar.core.naming;
 import java.util.Collection;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.ConnectIOException;
+import java.net.SocketTimeoutException;
 import javax.naming.*;
 import org.cougaar.util.log.*;
 
@@ -34,16 +36,36 @@ public class NSRetryWrapper implements NS {
   public NSRetryWrapper(NS ns) {
     this.ns = ns;
     log = LoggerFactory.getInstance().createLogger(getClass());
+    if (log.isInfoEnabled())
+        log.info("RetryWrapper logging on");
   }
 
+  private void logInfo(String methodName, String arg) {
+      if (log.isDebugEnabled()) {
+        log.debug("Nameserver access: " + methodName+" arg = "+arg, new Throwable());
+      }
+      else if (log.isInfoEnabled()) {
+        log.info("Nameserver access: " + methodName+" arg = "+arg);
+      }
+  }
+  
   private void logSuccess(String methodName) {
     log.warn("Successful retry during " + methodName);
   }
 
-  private void handleException(RemoteException re, String methodName, int ntries)
+  private void handleException(RemoteException re, String methodName, int ntries, boolean isReadOnly)
     throws RemoteException
   {
-    if (!re.getMessage().startsWith("Connection refused")) throw re;
+    String msg = re.getMessage();
+    /* Let's retry any read-only access */
+    boolean doRetry = msg.startsWith("Connection refused") || isReadOnly;
+    if (!doRetry) {
+      doRetry = (isReadOnly &&
+                 re instanceof ConnectIOException &&
+                 re.getCause() instanceof SocketTimeoutException);
+    }
+    if (!doRetry) throw re;
+
     if (ntries >= MAXTRIES) {
       if (log.isWarnEnabled()) {
         log.warn("Too many retries during " + methodName);
@@ -74,7 +96,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("createSubDirectory");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "createSubDirectory", ++ntries);
+        handleException(re, "createSubDirectory", ++ntries, false);
       }
     }
   }
@@ -90,7 +112,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("createSubDirectory");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "createSubDirectory", ++ntries);
+        handleException(re, "createSubDirectory", ++ntries, false);
       }
     }
   }
@@ -105,7 +127,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("destroySubDirectory");
         return;
       } catch (RemoteException re) {
-        handleException(re, "destroySubDirectory", ++ntries);
+        handleException(re, "destroySubDirectory", ++ntries, false);
       }
     }
   }
@@ -120,7 +142,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("entrySet");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "entrySet", ++ntries);
+        handleException(re, "entrySet", ++ntries, true);
       }
     }
   }
@@ -135,7 +157,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("fullName");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "fullName", ++ntries);
+        handleException(re, "fullName", ++ntries, true);
       }
     }
   }
@@ -150,7 +172,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("getKey");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "getKey", ++ntries);
+        handleException(re, "getKey", ++ntries, true);
       }
     }
   }
@@ -165,7 +187,7 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("get");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "get", ++ntries);
+        handleException(re, "get", ++ntries, true);
       }
     }
   }
@@ -181,20 +203,21 @@ public class NSRetryWrapper implements NS {
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("getAttributes");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "getAttributes", ++ntries);
+        handleException(re, "getAttributes", ++ntries, true);
       }
     }
   }
 
   public NSKey getRoot() throws RemoteException {
     int ntries = 0;
+    logInfo("getRoot", "");
     while (true) {
       try {
         NSKey ret = ns.getRoot();
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("getRoot");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "getRoot", ++ntries);
+        handleException(re, "getRoot", ++ntries, true);
       }
     }
   }
@@ -203,13 +226,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException, NameNotFoundException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("isEmpty", nsKey.toString());
     while (true) {
       try {
         boolean ret = ns.isEmpty(nsKey);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("isEmpty");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "isEmpty", ++ntries);
+        handleException(re, "isEmpty", ++ntries, true);
       }
     }
   }
@@ -218,13 +242,15 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException, NameNotFoundException, NameAlreadyBoundException
   {
     int ntries = 0;
+    logInfo("put", name);
+
     while (true) {
       try {
         Object ret = ns.put(nsKey, name, o, overwriteOkay);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("put");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "put", ++ntries);
+        handleException(re, "put", ++ntries, false);
       }
     }
   }
@@ -233,13 +259,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException, NameNotFoundException, NameAlreadyBoundException
   {
     int ntries = 0;
+    logInfo("put", name);
     while (true) {
       try {
         Object ret = ns.put(nsKey, name, o, attributes, overwriteOkay);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("put");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "put", ++ntries);
+        handleException(re, "put", ++ntries, false);
       }
     }
   }
@@ -249,13 +276,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException, NameNotFoundException
   {
     int ntries = 0;
+    logInfo("putAttributes", name);
     while (true) {
       try {
         ns.putAttributes(nsKey, name, attributes);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("putAttributes");
         return;
       } catch (RemoteException re) {
-        handleException(re, "putAttributes", ++ntries);
+        handleException(re, "putAttributes", ++ntries, false);
       }
     }
   }
@@ -265,13 +293,14 @@ public class NSRetryWrapper implements NS {
            OperationNotSupportedException
   {
     int ntries = 0;
+    logInfo("remove", name);
     while (true) {
       try {
         Object ret = ns.remove(nsKey, name);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("remove");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "remove", ++ntries);
+        handleException(re, "remove", ++ntries, false);
       }
     }
   }
@@ -281,13 +310,14 @@ public class NSRetryWrapper implements NS {
            NameNotFoundException, OperationNotSupportedException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("rename", oldName+":"+newName);
     while (true) {
       try {
         Object ret = ns.rename(nsKey, oldName, newName);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("rename");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "rename", ++ntries);
+        handleException(re, "rename", ++ntries, false);
       }
     }
   }
@@ -296,13 +326,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NameNotFoundException, NamingException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("size", nsKey.toString());
     while (true) {
       try {
         int ret = ns.size(nsKey);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("size");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "size", ++ntries);
+        handleException(re, "size", ++ntries, true);
       }
     }
   }
@@ -311,13 +342,15 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NameNotFoundException, NamingException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("values", nsKey.toString());
+
     while (true) {
       try {
         Collection ret = ns.values(nsKey);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("values");
         return ret;
       } catch (RemoteException re) {
-        handleException(re, "values", ++ntries);
+        handleException(re, "values", ++ntries, true);
       }
     }
   }
@@ -326,13 +359,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("registerInterest:"+names.length, nsKey.toString()+":"+names[0]);
     while (true) {
       try {
         ns.registerInterest(nsKey, names, cbid);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("registerInterest");
         return;
       } catch (RemoteException re) {
-        handleException(re, "registerInterest", ++ntries);
+        handleException(re, "registerInterest", ++ntries, false);
       }
     }
   }
@@ -341,13 +375,14 @@ public class NSRetryWrapper implements NS {
     throws RemoteException, NamingException
   {
     int ntries = 0;
+    if (log.isInfoEnabled()) logInfo("unRegisterInterest", dirKey.toString());
     while (true) {
       try {
         ns.unregisterInterest(dirKey, cbid);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("unregisterInterest");
         return;
       } catch (RemoteException re) {
-        handleException(re, "unregisterInterest", ++ntries);
+        handleException(re, "unregisterInterest", ++ntries, false);
       }
     }
   }

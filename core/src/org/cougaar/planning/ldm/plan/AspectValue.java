@@ -36,43 +36,40 @@ public abstract class AspectValue implements Serializable {
   // Factories
   // 
 
-  // MIK - we might want to optimize the "standard" cases to avoid
-  // boxing the primatives.
-  
+  private static final AspectType.Factory factory(int type) {
+    return AspectType.registry.get(type);
+  }
+
+  public static final AspectValue newAspectValue(int type, Object o) {
+    return factory(type).newAspectValue(o);
+  }
   public static final AspectValue newAspectValue(int type, long value) {
-    return newAspectValue(type, new Long(value));
+    return factory(type).newAspectValue(value);
   }
   public static final AspectValue newAspectValue(int type, double value) {
-    return newAspectValue(type, new Double(value));
+    return factory(type).newAspectValue(value);
   }
   public static final AspectValue newAspectValue(int type, float value) {
-    return newAspectValue(type, new Float(value));
+    return factory(type).newAspectValue(value);
   }
   public static final AspectValue newAspectValue(int type, int value) {
-    return newAspectValue(type, new Integer(value));
+    return factory(type).newAspectValue(value);
   }
-  public static final AspectValue newAspectValue(int type, Object o) {
-    AspectType.Factory f = AspectType.registry.get(type);
-    if (f == null) {
-      throw new IllegalArgumentException("Type "+type+" is not a known Aspect type");
-    } else {
-      return f.newAspectValue(o);
-    }
-  }
+
   public static final AspectValue newAspectValue(AspectType.Factory type, Object o) {
     return type.newAspectValue(o);
   }
   public static final AspectValue newAspectValue(AspectType.Factory type, long value) {
-    return newAspectValue(type, new Long(value));
+    return type.newAspectValue(value);
   }
   public static final AspectValue newAspectValue(AspectType.Factory type, double value) {
-    return newAspectValue(type, new Double(value));
+    return type.newAspectValue(value);
   }
   public static final AspectValue newAspectValue(AspectType.Factory type, float value) {
-    return newAspectValue(type, new Float(value));
+    return type.newAspectValue(value);
   }
   public static final AspectValue newAspectValue(AspectType.Factory type, int value) {
-    return newAspectValue(type, new Integer(value));
+    return type.newAspectValue(value);
   }
     
   //
@@ -82,6 +79,9 @@ public abstract class AspectValue implements Serializable {
   /** factory for possibly creating a new AspectValue with the same type 
    * but a different value.
    **/
+  public AspectValue dupAspectValue(Object newvalue) {
+    return newAspectValue(getType(), newvalue);
+  }
   public AspectValue dupAspectValue(double newvalue) {
     return (doubleValue() == newvalue)?this:newAspectValue(getType(), newvalue);
   }

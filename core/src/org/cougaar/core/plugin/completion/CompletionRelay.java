@@ -86,8 +86,10 @@ public class CompletionRelay
   }
 
   // Application Source API
-  synchronized SortedSet getLaggards() {
-    return new TreeSet(laggardsByTarget.values());
+  SortedSet getLaggards() {
+    synchronized (laggardsByTarget) {
+      return new TreeSet(laggardsByTarget.values());
+    }
   }
 
   void setPersistenceNeeded() {

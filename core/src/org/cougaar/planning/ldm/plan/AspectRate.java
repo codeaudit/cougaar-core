@@ -57,7 +57,7 @@ public class AspectRate extends TypedAspectValue {
 
   /** Non-preferred alias for #create(int, Rate).
    **/
-  public static final AspectValue newAspectRate(int type, Rate r) {
+  public static final AspectRate newAspectRate(int type, Rate r) {
     return new AspectRate(type, r);
   }
    
