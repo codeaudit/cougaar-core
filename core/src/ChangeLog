@@ -1,5 +1,13 @@
 2001-07-19  Michael Thome  <mthome@bbn.com>
 
+	* DelegatingServiceBroker
+	ServiceBroker which delegates to another with no local storage,
+	useful as a base class for restricting access to clients.
+
+	* PropagatingServiceBroker
+	ServiceBroker which will propagate queries to a higher authority
+	if not satisfied locally.
+
 	* PluginAdapter, DefaultPluginBinder
 	Binder no longer needs ANY special case for PluginAdapter.
 
