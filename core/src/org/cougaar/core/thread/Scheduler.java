@@ -114,12 +114,15 @@ public class Scheduler
 	// no indications this is really an issue.
 	try {
 	    return pendingThreads.processEach(body, getName(), _logger);
-	} catch (Throwable r) {
-	    // processEach should be catching all errors but leave
-	    // this here just in case.
-	    _logger.error(null, r);
-	    return 0;
+	} catch (IndexOutOfBoundsException r) {
+          // this may happen if pendingThreads was modified during the traversal
+          if (_logger.isDebugEnabled()) {
+            _logger.debug("SortedQueue.processEach detected a collision", r);
+          }
+        } catch (Throwable r) {
+            _logger.error("SortedQueue.processEach threw an uncaught exception", r);
 	}
+        return 0;
     }
 
 
