@@ -41,7 +41,7 @@ import org.cougaar.core.util.UniqueObject;
  * and simplifies status checking.  The existing MoveAgent
  * APIs still work, but are now subclasses of AgentMove.
  */
-public interface AgentMove extends UniqueObject {
+public interface AgentMove extends AgentControl {
 
   int NO_STATUS = 0;
   int FAILURE_STATUS = 1;
