@@ -137,14 +137,11 @@ public class MobilityDomain extends DomainAdapter {
   protected void loadLPs() {
   }
   public void invokeMessageLogicProviders(DirectiveMessage message) {
-    return;
   }
   public void invokeEnvelopeLogicProviders(
       EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
-    return;
   }
   public void invokeRestartLogicProviders(MessageAddress cid) {
-    return;
   }
 
 }
