@@ -1,3 +1,19 @@
+2003-04-04  Todd Wright  <twright@bbn.com>
+
+	* org/cougaar/core/domain/*
+        Bug #1375 -- Eliminate custom BindingSite interfaces
+        Refactored DomainManager/Domain glue to remove custom
+        DomainBindingSite.  This removes the last of our custom
+        BindingSite and ContainerAPIs.
+
+	* containers (Node, Agent, AgentManager, PluginManager, etc)
+        Bug #1113 -- Add "visitor" for peek at component hierarchy + binders
+        Moved common container state model actions (recursive suspend, 
+        resume, unload, etc) and state capture (recursive comp-desc 
+        capture and restore) to the ContainerSupport base class.  This
+        simplifies all our containers and will make the component model
+        viewer easier to build.
+
 2003-03-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/qos/metrics/MetricsServlet.java: 
