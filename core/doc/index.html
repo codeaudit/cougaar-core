@@ -74,7 +74,25 @@ see <a href="details/DataAccess.html">Data Access document</a> for the
 current list of parameters needed to run a small-135 society.</li>
 
 <li>
-db stuff here</li>
+Heterogeneous Database Capability.&nbsp; The query based LDMPlugins now
+support database connectivity via any JDBC driver.&nbsp; MySQL and PostgreSQL
+database exports for running the SMALL-135 configuration are posted on
+the Cougaar web site.&nbsp; <a href="details/HeterogeneousDatabase.html">HeterogeneousDatabase</a></li>
+
+<li>
+New Configuration database to replace "ini" files. This new database
+and the Node enhancements that support reading from it allow running
+societies without distributing multiple configuration files. For
+details, see the JavaDocs for Node, the Cougaar Developer's Guide, and
+the CSMART User's Guide.</li>
+
+<li>
+CSMART enhancements to support configuring, executing, and monitoring
+large distributed societies using the above configuration database. This is
+now the preferred mechanism for configuring, running, and monitoring
+large distributed societies. For further details, see the CSMART
+User's Guide and release documention in the CSMART module
+(csmart/doc/CSMART-Readme.txt to start).</li>
 
 <li>
 Generic <a href="details/Logging.html">logging facility</a>. Both logging
