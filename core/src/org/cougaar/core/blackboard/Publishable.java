@@ -40,6 +40,15 @@ public interface Publishable
    * Provide a hint to Persistence on how to handle this object. <p>
    *
    * Example?
+   * <pre>
+   * public class SometimesPersistableObject implements Publishable {
+   *   public SometimesPersistableObject(..., boolean persistThisInstance) {
+   *     this.persistThisInstance = persistThisInstance;
+   *   }
+   *   public boolean isPersistable() {
+   *     return persistThisInstance;
+   *   }
+   * </pre>
    **/
   boolean isPersistable();
 }
