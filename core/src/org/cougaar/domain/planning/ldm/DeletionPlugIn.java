@@ -18,7 +18,9 @@ import java.util.Enumeration;
 import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.PlanElementSet;
 import org.cougaar.core.cluster.Subscription;
+import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.plugin.SimplePlugIn;
+import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.plan.Allocation;
 import org.cougaar.domain.planning.ldm.plan.AspectType;
@@ -46,7 +48,7 @@ import org.cougaar.core.society.UID;
  * Identification of Aggregations to deletable tasks
  **/
 
-public abstract class DeletionPlugIn extends SimplePlugIn {
+public class DeletionPlugIn extends SimplePlugIn {
     private static final int DELETION_PERIOD_PARAM = 0;
     private static final int DELETION_DELAY_PARAM  = 1;
 
@@ -68,7 +70,11 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
                     if (pe instanceof Allocation) {
                         Allocation alloc = (Allocation) pe;
                         Asset asset = alloc.getAsset();
-                        return !isAssetRemote(asset);
+                        ClusterPG cpg = asset.getClusterPG();
+                        if (cpg == null) return true; // Can't be remote w/o ClusterPG
+                        ClusterIdentifier destination = cpg.getClusterIdentifier();
+                        if (destination == null) return true; // Can't be remote w null destination
+                        return true;
                     }
                     if (pe instanceof Expansion) {
                         Expansion exp = (Expansion) pe;
@@ -80,15 +86,6 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
             return false;
         }
     }
-
-    /**
-     * This method must be defined in a sub-class to test if a
-     * particular asset is remote. Tasks allocated to a remote
-     * asset (e.g. Organization) cannot be deleted until the
-     * remote cluster notifies us that the remote task can be
-     * deleted. When that happens, the allocation will be removed.
-     **/
-    protected abstract boolean isAssetRemote(Asset asset);
 
     public DeletionPlugIn() {
         super();
@@ -250,7 +247,10 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
         } else {
             System.out.println("Checking parent");
             UID ptuid = task.getParentTaskUID();
-            if (ptuid != null) {
+            if (ptuid == null) {
+                System.out.println("Deleting root");
+                deleteRootTask(task);
+            } else {
                 PlanElement ppe = peSet.findPlanElement(ptuid);
                 if (ppe == null) { // Parent is in another cluster
                                 // Nothing further to do
@@ -307,9 +307,9 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
         if (et == 0L) et = computeExpirationTime(pe);
 //  	System.out.println("Expiration time is " + new java.util.Date(et));
         boolean result = et == 0L || et < currentTimeMillis() - deletionDelay;
-        if (result) {
-            System.out.println("isTimeToDelete: " + new java.util.Date(et));
-        }
+//          if (result) {
+//              System.out.println("isTimeToDelete: " + new java.util.Date(et));
+//          }
         return result;
     }
 
