@@ -71,13 +71,19 @@ public interface Relay extends UniqueObject {
      * items only for persistence, that is, only if the object streams
      * are instances of PersistenceOutputStream or
      * PersistenceInputStream.
+     * <p>Also, see the cautions for
+     * {@link #getTargetFactory getTargetFactory}
      */
     Object getContent();
 
     /**
      * Get a factory for creating the target.
      * Null indicates that the content can be directly cast into
-     * the Target object.
+     * the Target object. Be wary of aliasing of the content between
+     * multiple agents in the same node. If the content is immutable,
+     * there is no problem, but if the content can be changed by
+     * either the source or target, the content should be cloned or
+     * otherwise used to create a new target object.
      */
     TargetFactory getTargetFactory();
 
@@ -138,6 +144,17 @@ public interface Relay extends UniqueObject {
      * Target then the Source can instead simply use:<pre>
      *   public TargetFactory getTargetFactory() { return null; }
      * </pre>
+     * <p>
+     * Care must be taken when the same class implements both
+     * Relay.Source and Relay.Target. When a relay is transmitted between agents
+     * in the same node the received content is the same object as the
+     * source content. Usually, the factory should create a new
+     * instance to avoid aliasing pitfalls. The factory can avoid the
+     * expense of creating a new instance by taking advantage of the
+     * treatment of transient fields in the content. Such fields are
+     * initialized to default values when deserialized in another node
+     * and such default values can be used to detect that the content
+     * has already been copied and a new copy is not necessary.
      * <p>
      * Other implementations may create an instance of a different 
      * class that is just sufficient to implement the Relay.Target 

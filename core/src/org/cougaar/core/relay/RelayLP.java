@@ -201,6 +201,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   public void execute(Directive dir, Collection changes) {
     if (dir instanceof RelayDirective) { // Quick test for one of ours
+      if (self.equals(dir.getSource())) return;
       if (dir instanceof RelayDirective.Change) {
         receiveChange((RelayDirective.Change) dir, changes);
         return;
@@ -230,6 +231,7 @@ public class RelayLP extends LogPlanLogicProvider
       // ERROR cannot create target
       return;
     }
+    if (rt == null) return;     // Target should not exist here
     logplan.add(rt);
     // Check for immediate response due to arrival
     Object resp = rt.getResponse();
@@ -352,6 +354,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void verify(Relay.Target rt, MessageAddress s) {
     MessageAddress source = rt.getSource();
+    if (source == null) return;
     if (source.equals(self)) {
       // Don't send to ourself.  Likely an error.
     } else {
