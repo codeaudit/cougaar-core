@@ -15,12 +15,12 @@ package org.cougaar.util;
  *  clusters, components and plugins.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: GenericStateModel.java,v 1.3 2001-07-23 19:12:50 mthome Exp $
+ * @version $Id: GenericStateModel.java,v 1.4 2001-08-08 22:13:29 twright Exp $
  */
 
 public interface GenericStateModel {
 
-  /** UNINITIALIZED state - should never be returned by getState() **/
+  /** UNINITIALIZED state - should never be returned by getModelState() **/
   public static final int UNINITIALIZED = -1;
   /** initialized but not yet attached to an enclosing object **/
   public static final int UNLOADED = 1;
@@ -97,6 +97,6 @@ public interface GenericStateModel {
    * @return object state
    **/
 
-  int getState();
+  int getModelState();
 }
  

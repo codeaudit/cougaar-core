@@ -231,7 +231,7 @@ class SharedPlugInManager implements SharedThreadingService {
     private long t0 = 0; 
 
     private void runPlugin(ScheduleablePlugIn plugin, ThinWatcher watcher) {
-      //if (plugin.getState() == GenericStateModel.ACTIVE) {}
+      //if (plugin.getModelState() == GenericStateModel.ACTIVE) {}
 
       synchronized (this) {
         currentPlugin = plugin;

@@ -1041,7 +1041,7 @@ public abstract class PlugInAdapter
     public void stop() {}
     public void halt() {}
     public void unload() {}
-    public int getState() { 
+    public int getModelState() { 
       return UNINITIALIZED; 
     }
     public String toString() {

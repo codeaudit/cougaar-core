@@ -40,13 +40,13 @@ public class StatelessPlugInAdapter
     implements PlugInContext
   {
     private PlugIn.State theState = null;
-    public void setState(PlugIn.State state) {
+    public void setPlugInState(PlugIn.State state) {
       if (theState != null) { 
         throw new RuntimeException("PlugIns may not set the state multiple times.");
       }
       theState = state;
     }
-    public PlugIn.State getState() {
+    public PlugIn.State getPlugInState() {
       return theState;
     }
   }

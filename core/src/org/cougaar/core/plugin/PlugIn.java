@@ -63,7 +63,7 @@ public abstract class PlugIn
   }
 
   /** a PlugIn may add a single State instance
-   * to a PlugInContext via the PlugInContext.setState
+   * to a PlugInContext via the PlugInContext.setPlugInState
    * method during a call to initialize.
    * Thereafter, the plugin may retrieve the state
    * for use in subsequent execute cycles.  

@@ -24,7 +24,7 @@ public abstract class StateModelAdapter
 
   /** PlugIn State model accessor.
    **/
-  public final int getState() {
+  public final int getModelState() {
     return runState; 
   }
 

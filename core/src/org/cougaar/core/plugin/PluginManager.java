@@ -105,42 +105,7 @@ public class PluginManager
     }
   }
   
-  //
-  // support for direct loading of old-style plugins
-  //
-  
-  public boolean add(Object o) {
-    // this could go away if we turned the message into a ComponentDescription object.
-    if (o instanceof AddPlugInMessage ) {
-      AddPlugInMessage message = (AddPlugInMessage) o;
-      String pluginclass = message.getPlugIn();
-      PlugInServesCluster newPlugIn = null;
-      Vector args = message.getArguments();
-      System.err.println("Got AddPluginMessage: "+o);
-      ComponentDescription cd = new ComponentDescription("Plugin-"+pluginclass, 
-                                                         "Node.AgentManager.Agent.PluginManager.plugin",
-                                                         pluginclass,
-                                                         null,
-                                                         args,
-                                                         null,
-                                                         null,
-                                                         null);
-      return super.add(cd);
-    } else {
-      return super.add(o);
-    }
-  }
 
-  public boolean remove(Object o) {
-    if (o instanceof RemovePlugInMessage) {
-      String theClassName = ((RemovePlugInMessage)o).getPlugIn();
-      System.err.println("RemovePlugin Message is disabled: "+theClassName);
-      return false;
-    } else {
-      return super.remove(o);
-    }
-  }
-      
   // standin API for LDMService called by PluginBinder for temporary support
   void addPrototypeProvider(PrototypeProvider plugin) {
     agent.addPrototypeProvider(plugin);

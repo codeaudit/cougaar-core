@@ -29,10 +29,10 @@ public interface PlugInContext
    * PlugIn.initialize().  May be called no more
    * than once or a RuntimeException will be thrown.
    */
-  void setState(PlugIn.State state);
+  void setPlugInState(PlugIn.State state);
 
   /**
    * @return the previously set state for this context if any.
    **/
-  PlugIn.State getState();
+  PlugIn.State getPlugInState();
 }
