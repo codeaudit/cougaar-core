@@ -23,6 +23,7 @@ package org.cougaar.core.plugin;
 import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
+import org.cougaar.util.log.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
@@ -44,12 +45,18 @@ public class PluginManager
 {
 
   private Object loadState = null;
+  
+  private final Logger logger;
+
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
+    logger = Logging.getLogger(this.getClass());
   }
+
+  protected final Logger getLogger() { return logger; }
 
   private AgentChildBindingSite bindingSite = null;
   
@@ -96,11 +103,14 @@ public class PluginManager
     }
   }
 
-  // no need for load() any more.
-
-  //
-  //
-  //
+  public boolean add(Object o) {
+    try {
+      return super.add(o);
+    } catch (RuntimeException re) {
+      getLogger().error("Failed to add "+o+" to "+this, re);
+      throw re;
+    }
+  }
 
   public Object getState() {
     synchronized (boundComponents) {

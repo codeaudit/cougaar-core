@@ -71,6 +71,7 @@ import org.cougaar.core.service.MessageWatcherService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.core.thread.ThreadServiceProvider;
+import org.cougaar.util.log.*;
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
@@ -177,7 +178,7 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null); //policy
-    super.add(defaultAgentIdCDesc);
+    add(defaultAgentIdCDesc);
   }
 
   protected void loadInternalPriorityComponents() {
@@ -206,7 +207,7 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null); //policy
-    super.add(topologyWriterSCDesc);
+    add(topologyWriterSCDesc);
 
     ComponentDescription topologyReaderSCDesc = 
       new ComponentDescription(
@@ -218,7 +219,7 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null); //policy
-    super.add(topologyReaderSCDesc);
+    add(topologyReaderSCDesc);
 
     MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, nodeIdentifier);
     rootsb.addService(MetricsService.class, msp);
@@ -261,7 +262,7 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null); //policy
-    super.add(ntcdesc);         // let a ComponentLoadFailure pass through
+    add(ntcdesc);         // let a ComponentLoadFailure pass through
 
     // node-level agent mobility service provider
     List mobilityParams = new ArrayList(2);
@@ -274,7 +275,7 @@ public class NodeAgent
     this.agentMobility = 
       new RootMobilityComponent(
           mobilityParams);
-    super.add(agentMobility);
+    add(agentMobility);
     agentMobility.provideServices(rootsb);
 
     String enableServlets = 
@@ -293,7 +294,7 @@ public class NodeAgent
             null,  //lease
             null); //policy
       try {
-        super.add(nsscDesc);
+        add(nsscDesc);
       } catch (RuntimeException re) {
         re.printStackTrace();
       }
@@ -308,8 +309,7 @@ public class NodeAgent
     {
       BinderFactory nabf = new NodeAgentBinderFactory();
       if (!attachBinderFactory(nabf)) {
-        throw new Error(
-            "Failed to load the NodeAgentBinderFactory in NodeAgent");
+        throw new Error("Failed to load the NodeAgentBinderFactory in NodeAgent");
       }
     }
 
@@ -385,11 +385,6 @@ public class NodeAgent
     addAgents(agentDescs);
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
-  }
-
-
-  public boolean add(Object o) {
-    return super.add(o);
   }
 
   // replace with Container's add, but keep this basic code
@@ -530,8 +525,7 @@ public class NodeAgent
         super.receiveMessage(m);
       }
     } catch (Exception e) {
-      System.err.println("Node received invalid message: "+e.getMessage());
-      e.printStackTrace();
+      getLogger().warn("NodeAgent "+this+" received invalid message: "+m, e);
     }
   }
 

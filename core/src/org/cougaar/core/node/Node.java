@@ -70,8 +70,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import java.beans.Beans;
 import org.cougaar.util.PropertyParser;
-import org.cougaar.util.log.LoggerController;
-import org.cougaar.util.log.LogTarget;
+import org.cougaar.util.log.*;
 import org.cougaar.bootstrap.Bootstrapper;
 
 /**
@@ -180,7 +179,7 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
   // @deprecated
   static public void main(String[] args){
     if (PropertyParser.getBoolean("org.cougaar.useBootstrapper", true)) {
-      System.err.println("Warning! org.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
+      Logging.getLogger(Node.class).warn("-Dorg.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
       Bootstrapper.launch(Node.class.getName(), args);
     } else {
       launch(args);
@@ -302,50 +301,50 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
       (String) myArgs.get(ArgTableIfc.SIGNED_PLUGIN_JARS);
     if (validateJars != null) {
       System.setProperty("org.cougaar.validate.jars", validateJars);
-      //System.err.println("Set name to "+validateJars);
+      Logging.getLogger(Node.class).info("Set validateJars to "+validateJars);
     }
 
     String name = (String) myArgs.get(ArgTableIfc.NAME_KEY);
     if (name != null) {
       System.setProperty("org.cougaar.node.name", name);
-      //System.err.println("Set name to "+name);
+      Logging.getLogger(Node.class).info("Set node name to "+name);
     }
 
     String config = (String) myArgs.get(ArgTableIfc.CONFIG_KEY);
     if (config != null) {
       System.setProperty("org.cougaar.config", config);
-      //System.err.println("Set config to "+config);
+      Logging.getLogger(Node.class).info("Set node config to "+config);
     }
 
     String cs = (String) myArgs.get(ArgTableIfc.CS_KEY);
     if (cs != null && cs.length()>0) {
       System.setProperty("org.cougaar.config.server", cs);
-      //System.err.println("Using ConfigurationServer at "+cs);
+      Logging.getLogger(Node.class).info("Set node config server to "+cs);
     }
 
     String ns = (String) myArgs.get(ArgTableIfc.NS_KEY);
     if (ns != null && ns.length()>0) {
       System.setProperty("org.cougaar.name.server", ns);
-      System.err.println("Using NameServer at "+ns);
+      Logging.getLogger(Node.class).info("Set node name server to "+ns);
     }
 
     String port = (String) myArgs.get(ArgTableIfc.PORT_KEY);
     if (port != null && port.length()>0) {
       System.setProperty("org.cougaar.name.server.port", port);
-      System.err.println("Using NameServer on port " + port);
+      Logging.getLogger(Node.class).info("Set node name server port to "+port);
     }
 
     String filename = (String) myArgs.get(ArgTableIfc.FILE_KEY);
     if (filename != null) {
       System.setProperty("org.cougaar.filename", filename);
-      System.err.println("Using file "+filename);
+      Logging.getLogger(Node.class).info("Set node filename to "+filename);
     }
 
     String experimentId = 
       (String) myArgs.get(ArgTableIfc.EXPERIMENT_ID_KEY);
     if (experimentId != null) {
       System.setProperty("org.cougaar.experiment.id", experimentId);
-      System.err.println("Using experiment ID "+experimentId);
+      Logging.getLogger(Node.class).info("Set node experiment ID to "+experimentId);
     }
   }
 
@@ -365,7 +364,7 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
       Vector cache = new Vector();
       File myCertFile = new File(installpath + File.separatorChar + certPath );
 
-      System.out.println("Using Alp Certificate from: " + myCertFile);
+      Logging.getLogger(Node.class).info("Using certificate from: "+myCertFile);
 
       java.security.cert.Certificate myCert = null;
       myCert = getAlpineCertificate(myCertFile);
@@ -375,8 +374,9 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
         File f = new File(
             installpath+File.separatorChar+
             jarSubdirectory+File.separatorChar+filename);
-        System.out.println("Testing Plugin Jar ("+
-            f.toString() +")");
+
+        Logging.getLogger(Node.class).info("Testing Plugin jar "+f);
+      
         FileInputStream fis = new FileInputStream(f);
         JarInputStream jis = new  JarInputStream(fis);
         try {
@@ -459,8 +459,7 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
   {
     String[] files = new String[0];
     File d = new File(installpath+File.separatorChar+subdir);
-    System.out.println(
-        "Searching for plugin jars in directory: " + d.toString());
+    //System.out.println("Searching for plugin jars in directory: " + d.toString());
     if (d.exists() && d.isDirectory()) {
       files = d.list(
           new FilenameFilter() {
@@ -668,10 +667,14 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
       repositoryTime = rtf.getLong(null);
     } catch (Exception e) {}
 
+    Logging.getLogger(Node.class).info("COUGAAR "+version+" "+buildTime+
+          " "+repositoryTag+" "+repositoryModified+" "+repositoryTime);
+
+
     if (!(fullFormat)) {
-      System.out.print(
+      System.out.println(
           "COUGAAR\t"+version+"\t"+buildTime+
-          "\t"+repositoryTag+"\t"+repositoryModified+"\t"+repositoryTime+"\n");
+          "\t"+repositoryTag+"\t"+repositoryModified+"\t"+repositoryTime);
       return;
     } 
 

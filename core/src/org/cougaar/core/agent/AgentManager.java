@@ -31,6 +31,7 @@ import org.cougaar.core.blackboard.*;
 import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
+import org.cougaar.util.log.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.node.*;
@@ -141,11 +142,11 @@ public class AgentManager
     try {
       return super.add(o);
     } catch (RuntimeException re) {
-      System.err.println("Failed to add "+o+" to "+this+":");
-      re.printStackTrace();
+      Logging.getLogger(this.getClass()).error("Failed to add "+o+" to "+this, re);
       return false;
     }
   }
+
   //
   // Implement the "AgentContainer" API, primarily to support
   //   agent mobility
@@ -175,7 +176,7 @@ public class AgentManager
     }
     
     // add the agent
-    if (!(super.add(tuple))) {
+    if (! add(tuple)) {
       throw new RuntimeException(
           "Agent "+agentId+" returned \"false\"");
     }

@@ -24,6 +24,7 @@ package org.cougaar.core.agent;
 import org.cougaar.core.blackboard.*;
 
 import org.cougaar.util.*;
+import org.cougaar.util.log.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.util.*;
 import org.cougaar.core.mts.MessageAddress;
@@ -39,13 +40,17 @@ public abstract class Agent
 {
 
   private ServiceBroker childServiceBroker;
+  private Logger logger;
 
   public Agent() {
     BinderFactory pmbf = new AgentChildBinderFactory();
     if (!attachBinderFactory(pmbf)) {
       throw new RuntimeException("Failed to load the AgentChildBinderFactory");
     }
+    logger = Logging.getLogger(this.getClass());
   }
+
+  protected final Logger getLogger() { return logger; }
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
@@ -60,6 +65,15 @@ public abstract class Agent
     }
 
     super.unload();
+  }
+
+  public boolean add(Object o) {
+    try {
+      return super.add(o);
+    } catch (RuntimeException re) {
+      getLogger().error("Failed to add "+o+" to "+this, re);
+      throw re;
+    }
   }
 
   protected ServiceBroker specifyAgentServiceBroker(BindingSite bs) {
