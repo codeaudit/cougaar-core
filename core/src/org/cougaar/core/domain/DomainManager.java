@@ -84,8 +84,6 @@ extends ContainerSupport
     Agent.INSERTION_POINT + ".DomainManager";
   private final static String CONTAINMENT_POINT = INSERTION_POINT;
 
-  private Object loadState = null;
-
   private final Object lock = new Object();
   private List delayedXPlans = Collections.EMPTY_LIST;
   private List domains = Collections.EMPTY_LIST;
