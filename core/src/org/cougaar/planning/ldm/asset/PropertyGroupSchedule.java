@@ -126,7 +126,15 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     
     myTiling = null;
 
-    return super.add(o);
+    TimeSpan timeSpan = (TimeSpan) o;
+    if ((timeSpan.getStartTime() == TimeSpan.MIN_VALUE) && 
+        (timeSpan.getEndTime() == TimeSpan.MAX_VALUE)) {
+      setDefault((TimePhasedPropertyGroup) o);
+
+      return true;
+    } else {
+      return super.add(o);
+    }
   }
 
   public boolean remove(Object o) {
@@ -136,7 +144,13 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
 
     myTiling = null;
 
-    return super.remove(o);
+    if (o.equals(getDefault())) {
+        clearDefault();
+        return true;
+    } else {
+      return super.remove(o);
+    }
+      
   }
 
   public NonOverlappingTimeSpanSet getTiling(long startTime, long endTime) {
