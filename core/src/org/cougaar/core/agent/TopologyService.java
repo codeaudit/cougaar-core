@@ -24,27 +24,18 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.agent;
 
+import org.cougaar.core.component.Service;
 
 /**
- * Abstract MessageTransport layer for Society interaction.
+ * This service is used by the MessageSwitch service to
+ * obtain the local agent's incarnation number.
  *
- **/
-
-public interface MessageTransportClient {
-
-  /** Receive a message, presumably from a MessageTransportServer.
-   * message.getTarget() should generally be our MessageAddress.
-   **/
-
-  void receiveMessage(Message message);
-
-  /** @return this client's MessageAddress. */
-  MessageAddress getMessageAddress();
-
-  /** @return this client's incarnation number */
+ * @see Topology
+ * @see MessageSwitch
+ */
+public interface TopologyService extends Service {
   long getIncarnationNumber();
-
+  long getMoveNumber();
 }
-

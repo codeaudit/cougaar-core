@@ -36,6 +36,7 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.persist.PersistenceClient;
@@ -87,6 +88,8 @@ implements Component
   // move identity of this agent, which is incremented every time this
   // agent moves.
   private long moveId;
+
+  private TopologyServiceProvider tsp;
 
   private boolean needsRestart = true;
 
@@ -151,6 +154,9 @@ implements Component
           "Unable to load restart checker", e);
     }
 
+    tsp = new TopologyServiceProvider();
+    sb.addService(TopologyService.class, tsp);
+
     if (isNode) {
       // we haven't added our child agents yet, so we can set
       // our skip-reconcile flag here or earlier.
@@ -173,6 +179,11 @@ implements Component
 
   public void unload() {
     super.unload();
+
+    if (tsp != null) {
+      sb.revokeService(TopologyService.class, tsp);
+      tsp = null;
+    }
 
     unregister_persistence();
 
@@ -398,6 +409,33 @@ implements Component
           nodeURI);
     wps.rebind(nodeEntry, callback); // really should pay attention
   }
+
+  private final class TopologyServiceProvider
+    implements ServiceProvider {
+      private final TopologyService ts;
+      public TopologyServiceProvider() {
+        ts = new TopologyService() {
+          public long getIncarnationNumber() {
+            return incarnation;
+          }
+          public long getMoveNumber() {
+            return moveId;
+          }
+        };
+      }
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (TopologyService.class.isAssignableFrom(serviceClass)) {
+          return ts;
+        } else {
+          return null;
+        }
+      }
+      public void releaseService(
+          ServiceBroker sb, Object requestor, 
+          Class serviceClass, Object service) {
+      }
+    }
 
   private static final class TopologyState
     implements Serializable {

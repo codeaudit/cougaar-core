@@ -114,6 +114,7 @@ implements Component
   private MessageSwitchShutdownServiceProvider msssp;
 
   private MessageAddress localAgent;
+  private long localIncarnation;
 
   private MessageTransportClient mtsClientAdapter;
 
@@ -160,6 +161,7 @@ implements Component
     }
     o = null;
 
+    find_local_incarnation();
     load_internal_register_with_mts();
     load_create_message_switch();
     resume_resend_unsent_messages();
@@ -214,6 +216,22 @@ implements Component
     }
   }
 
+  private void find_local_incarnation() {
+    // get the local agent's incarnation number from the
+    // TopologyService
+    if (log.isInfoEnabled()) {
+      log.info("Finding the local agent's incarnation");
+    }
+
+    TopologyService ts = (TopologyService) 
+      sb.getService(this, TopologyService.class, null);
+    if (ts != null) {
+      localIncarnation = ts.getIncarnationNumber();
+      sb.releaseService(
+          this, TopologyService.class, ts);
+    }
+  }
+
   private void load_internal_register_with_mts() {
     // get the Messenger instance from ClusterManagement
     if (log.isInfoEnabled()) {
@@ -227,6 +245,9 @@ implements Component
         }
         public MessageAddress getMessageAddress() {
           return localAgent;
+        }
+        public long getIncarnationNumber() {
+          return localIncarnation;
         }
       };
 
