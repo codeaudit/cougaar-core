@@ -12,11 +12,16 @@ class MessageTransportRegistry
     private Vector watchers;
     private HashMap myClients = new HashMap(89);
     private MessageTransportServerImpl server;
+    private MessageTransportServerImpl.MessageTransportFactory transportFactory;
 
     MessageTransportRegistry(String name, MessageTransportServerImpl server) {
 	this.name = name;
 	this.server = server;
 	watchers = new Vector();
+    }
+
+    void setTransportFactory(MessageTransportServerImpl.MessageTransportFactory transportFactory) {
+	this.transportFactory = transportFactory;
     }
 
     Enumeration getWatchers() {
@@ -66,11 +71,10 @@ class MessageTransportRegistry
 
     private void registerClientWithSociety(MessageTransportClient client) {
 	// register with each component transport
-	Enumeration binders = server.getBinders();
-	while (binders.hasMoreElements()) {
-	    MessageTransportServerBinder binder = 
-		(MessageTransportServerBinder) binders.nextElement();
-	    binder.registerClient(client);
+	Iterator transports = transportFactory.getTransports().iterator();
+	while (transports.hasNext()) {
+	    MessageTransport mt = (MessageTransport) transports.next();
+	    mt.registerClient(client);
 	}
     }
 
@@ -81,11 +85,10 @@ class MessageTransportRegistry
 
 
     boolean addressKnown(MessageAddress address) {
-	Enumeration binders = server.getBinders();
-	while (binders.hasMoreElements()) {
-	    MessageTransportServerBinder binder = 
-		(MessageTransportServerBinder) binders.nextElement();
-	    if (binder.addressKnown(address)) return true;
+	Iterator transports = transportFactory.getTransports().iterator();
+	while (transports.hasNext()) {
+	    MessageTransport mt = (MessageTransport) transports.next();
+	    if (mt.addressKnown(address)) return true;
 	}
 	return false;
     }

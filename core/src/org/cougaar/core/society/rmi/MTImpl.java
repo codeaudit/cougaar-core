@@ -56,8 +56,7 @@ public class MTImpl extends UnicastRemoteObject implements MT
 		// System.err.println("Something efficient happened today ");
 		recvQ.deliverMessage(m);
 	    } else {
-		// System.err.println("Unwinding will happen today ");
-		transport.rerouteMessage(m);
+		throw new Exception("No ReceiveQueue in " + this);
 	    }
 	} catch (Exception e) {
 	    System.err.println("\n\nCaught exception in shim: "+e);

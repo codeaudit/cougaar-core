@@ -7,55 +7,39 @@ import org.cougaar.core.society.MessageTransportClient;
 import org.cougaar.core.society.NameServer;
 
 import java.rmi.RemoteException;
+import java.util.HashMap;
 
 public class SimpleRMIMessageTransport extends MessageTransport
 {
-    public static final String CLUSTERDIR = "/clusters/";
-    public static final String MTDIR = "/MessageTransports/";
+    private static final String TRANSPORT_TYPE = "/simpleRMI";
+    
 
-    private MT myMT = null;
-    private MessageAddress myAddress;
-    private NameServer nameserver;
-    private MT remote = null;
+    private boolean madeServerProxy;
+    private HashMap remotes;
 
 
     public SimpleRMIMessageTransport(String id) {
 	super(); 
-	myAddress = new MessageAddress(id+"(Node)");
-	nameserver=new RMINameServer();
+	remotes = new HashMap();
     }
 
 
     private MT lookupRMIObject(MessageAddress address) throws Exception {
-	MessageAddress addr = address;
-	for (int count=0; count<2; count++) {
-	    String key = CLUSTERDIR+addr.getAddress();
-	    Object object = nameserver.get(key);
-
-	    if (object == null) { 
-		// unknown?
-		return null; 
-	    } else if (object instanceof MessageAddress) {
-		addr = (MessageAddress) object;
-	    } else {
-		object = generateClientSideProxy(object);
-		if (object instanceof MT) {
-		    return (MT) object;
-		} else {
-		    throw new RuntimeException("Object "
-					       +object+
-					       " is not a MessageTransport!");
-		}
-	    }
+	Object object = nameSupport.lookupAddressInNameServer(address, TRANSPORT_TYPE);
+	object = generateClientSideProxy(object);
+	if (object instanceof MT) {
+	    return (MT) object;
+	} else {
+	    throw new RuntimeException("Object "
+				       +object+
+				       " is not a MessageTransport!");
 	}
-
-	throw new RuntimeException("Address "+address+" loops");
 
     }
 
-      protected Object generateClientSideProxy(Object object) {
-	  return object;
-      }
+    protected Object generateClientSideProxy(Object object) {
+	return object;
+    }
 
 
 
@@ -66,49 +50,38 @@ public class SimpleRMIMessageTransport extends MessageTransport
 	return new MTImpl(this, clientAddress, recvQ);
     }
 
-    private final void _registerWithSociety(String path, Object proxy) 
-	throws RemoteException
-    {
-	Object old = nameserver.put(path, proxy);
-	if (old != null) {
-	    System.err.println("Warning: Re-registration of "+
-			       path+" as "+proxy+
-			       " (was "+old+").");
-	}
-    }
 
     private final void registerMTWithSociety() 
 	throws RemoteException
     {
 	synchronized (this) {
-	    if (myMT == null) {
-		// make a real shim so that overriders of generateServerSideProxy
-		// can override usefully.
-		myMT = new MTImpl(this, myAddress);
+	    if (!madeServerProxy) {
+		madeServerProxy = true;
 
-		Object proxy =   generateServerSideProxy(myAddress);
-		// register both as an MT and as a Cluster (so that lookup Works)
-		_registerWithSociety(MTDIR+myAddress.getAddress(), proxy);
-		_registerWithSociety(CLUSTERDIR+myAddress.getAddress(), proxy);
+		Object proxy =   generateServerSideProxy(nameSupport.getNodeMessageAddress());
+		nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
 	    }
 	}
     }
 
-    public NameServer getNameServer() {
-	return nameserver;
-    }
 
     public void routeMessage(Message message) {
-	while (remote == null) {
-	    try {
-		remote = lookupRMIObject(message.getTarget());
+	MessageAddress target = message.getTarget();
+	MT remote = (MT) remotes.get(target);
+	if (remote == null) {
+	    while (remote == null) {
+		try {
+		    remote = lookupRMIObject(target);
+		}
+		catch (Exception lookup_failure) {
+		    System.err.println("Name lookup failure on " + target);
+		    lookup_failure.printStackTrace();
+		    return;
+		}
+		try { Thread.sleep(500); } catch (InterruptedException ex) {}
 	    }
-	    catch (Exception lookup_failure) {
-		System.err.println("Name lookup failure on " + message.getTarget());
-		lookup_failure.printStackTrace();
-		return;
-	    }
-	    try { Thread.sleep(500); } catch (InterruptedException ex) {}
+
+	    remotes.put(target, remote);
 	}
 
 
@@ -122,15 +95,16 @@ public class SimpleRMIMessageTransport extends MessageTransport
 
     }
 
+
     public final void registerClient(MessageTransportClient client) {
 	try {
 	    // always register the Node MT
 	    registerMTWithSociety();
 
 	    MessageAddress addr = client.getMessageAddress();
-	    String p = CLUSTERDIR+addr;
+	    System.out.println("***Client address is  " + addr);
 	    Object proxy = generateServerSideProxy(addr);
-	    _registerWithSociety(p, proxy);
+	    nameSupport.registerAgentInNameServer(proxy,client,TRANSPORT_TYPE);
 	} catch (Exception e) {
 	    System.err.println("Error registering MessageTransport:");
 	    e.printStackTrace();

@@ -216,7 +216,7 @@ public class PipedMessageTransport extends MessageTransportClassic
 		    if (o instanceof Message) {
 			Message m = (Message) o;
 			// deliver via inq
-			rerouteMessage(m);
+			recvQ.deliverMessage(m);
 		    } else {
 			throw new RuntimeException("PipedMessageTransport serialization stream corrupted!");
 		    }

@@ -119,7 +119,7 @@ public abstract class MessageTransportClassic extends MessageTransport
   private PrintWriter getLog() {
     if (logStream == null) {
       try {
-	  String id = ((MessageTransportServerBinder) getBinder()).getID();
+	  String id = registry.getIdentifier();
 	logStream = new PrintWriter(new FileWriter(id+".cml"), true);
       } catch (Exception e) {
 	e.printStackTrace();
@@ -131,8 +131,8 @@ public abstract class MessageTransportClassic extends MessageTransport
   }
 
   protected void log(String key, String info) {
-      String id = ((MessageTransportServerBinder) getBinder()).getID();
-    getLog().println(id+"\t"+System.currentTimeMillis()+"\t"+key+"\t"+info);
+      String id = registry.getIdentifier();
+      getLog().println(id+"\t"+System.currentTimeMillis()+"\t"+key+"\t"+info);
   }
 
   //
@@ -148,7 +148,6 @@ public abstract class MessageTransportClassic extends MessageTransport
     return disableRetransmission;
   }
 
-  public abstract NameServer getNameServer();
 
   //
   // specialized message transport serialization layer

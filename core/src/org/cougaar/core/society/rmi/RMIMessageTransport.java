@@ -86,8 +86,7 @@ public class RMIMessageTransport
     implements MessageStatistics
 {
 
-  public String CLUSTERDIR = "/clusters/";
-  public String MTDIR = "/MessageTransports/";
+    private static final String TRANSPORT_TYPE ="/RMI";
 
   /** retry sending failed message no more often than every five seconds */
   private static long retryInterval = 5000L;
@@ -222,22 +221,24 @@ public class RMIMessageTransport
         }
       }
     }
-    nameserver=new RMINameServer();
     myAddress = new MessageAddress(id+"(Node)");
   }
 
-  public NameServer getNameServer() {
-    return nameserver;
-  }
+    public void setNameSupport(NameSupport nameSupport) {
+	super.setNameSupport(nameSupport);
+	nameserver = nameSupport.getNameServer();
+    }
+
+
 
   /** Create a nameserver <em>server</em> side instance **/
-  public static void startNameService() {
-    RMINameServer.create();
-  }
+//   public static void startNameService() {
+//     RMINameServer.create();
+//   }
 
   public Enumeration getMulticastAddresses(MulticastMessageAddress mma) {
     // only look in the Node directory, since everyone always registers there.
-    return new Enumerator(nameserver.keySet(MTDIR));
+    return new Enumerator(nameserver.keySet(NameSupport.MTDIR));
   }
 
   /** guard for thread governer **/
@@ -313,7 +314,6 @@ public class RMIMessageTransport
       registerMTWithSociety();
 
       MessageAddress addr = client.getMessageAddress();
-      String p = CLUSTERDIR+addr;
       Object proxy;
       if (useNodeRedirect) {
         // register the cluster as the node string (proxy)
@@ -322,7 +322,7 @@ public class RMIMessageTransport
         // register the cluster as shim object
         proxy = generateServerSideProxy(addr);
       }
-      _registerWithSociety(p, proxy);
+      nameSupport.registerAgentInNameServer( proxy,client,TRANSPORT_TYPE);
     } catch (Exception e) {
       System.err.println("Error registering MessageTransport:");
       e.printStackTrace();
@@ -364,21 +364,19 @@ public class RMIMessageTransport
   // Node-level MT registration and lookup
 
   /** Hold the VM-private non-shim MT object **/
-  private MT myMT = null;
+    private boolean madeServerProxy = false;
 
   private final void registerMTWithSociety() 
     throws RemoteException
   {
     synchronized (this) {
-      if (myMT == null) {
-        // make a real shim so that overriders of generateServerSideProxy
-        // can override usefully.
-	  myMT = new MTImpl(this,myAddress);
+      if (!madeServerProxy) {
+	  madeServerProxy = true;
 
-        Object proxy =   generateServerSideProxy(myAddress);
-        // register both as an MT and as a Cluster (so that lookup Works)
-        _registerWithSociety(MTDIR+myAddress.getAddress(), proxy);
-        _registerWithSociety(CLUSTERDIR+myAddress.getAddress(), proxy);
+
+	Object proxy =   generateServerSideProxy(nameSupport.getNodeMessageAddress());
+	nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
+
       }
     }
   }
@@ -427,12 +425,15 @@ public class RMIMessageTransport
   }
 
   private KeyedMT lookupRMIObject(MessageAddress address) throws Exception {
+      // check local cache first
     Object o = clusterAddresses.get(address);
     if (o != null) return (KeyedMT) o;
+
     int count = 0;
     MessageAddress aa = address;
     while (count < 2) {         // two tries
-      String key = CLUSTERDIR+aa.getAddress();
+	// JAZ temp hack 
+      String key = NameSupport.CLUSTERDIR+aa.getAddress()+TRANSPORT_TYPE;
 
       o = nameserver.get(key);
 

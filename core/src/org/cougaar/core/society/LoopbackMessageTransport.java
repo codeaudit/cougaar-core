@@ -14,7 +14,7 @@ class LoopbackMessageTransport extends MessageTransport
 
     public boolean addressKnown(MessageAddress address) {
 	// true iff the address is local
-	return getBinder().isLocalAddress(address);
+	return registry.findLocalClient(address) != null;
     }
    
 

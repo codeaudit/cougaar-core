@@ -1,14 +1,8 @@
 package org.cougaar.core.society;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
 class Router
 {
     private MessageTransportRegistry registry;
-    private MessageTransport defaultTransport;
-    private MessageTransport loopback;
-    private ArrayList transports; // hash transports -> binders
     private MessageTransportServerImpl.DestinationQueueFactory destQFactory;
 
 
@@ -17,33 +11,6 @@ class Router
     {
 	this.registry = registry;
 	this.destQFactory = destQFactory;
-	transports = new ArrayList();
-    }
-
-
-
-    void addTransport(MessageTransport tport) {
-	transports.add(tport);
-    }
-
-    void setDefaultTransport(MessageTransport tport) {
-	defaultTransport = tport;
-    }
-
-    void setLoopbackTransport(MessageTransport loopback) {
-	this.loopback = loopback;
-    }
-
-    MessageTransport getDefaultTransport() {
-	return defaultTransport;
-    }
-
-    MessageTransport getLoopbackTransport() {
-	return loopback;
-    }
-
-    Iterator getTransports() {
-	return transports.iterator();
     }
 
 

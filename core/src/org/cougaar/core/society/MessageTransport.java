@@ -10,26 +10,25 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.component.Component;
-import org.cougaar.util.GenericStateModelAdapter;
 
 public abstract class MessageTransport 
-  extends GenericStateModelAdapter
-  implements Component
 {
-    private MessageTransportServerBindingSite binder;
     protected ReceiveQueue recvQ;
+    protected MessageTransportRegistry registry;
+    protected NameSupport nameSupport;
 
     abstract public void routeMessage(Message message);
     abstract public void registerClient(MessageTransportClient client);
     abstract public boolean addressKnown(MessageAddress address);
 
-    void setBinder(MessageTransportServerBindingSite binder) {
-	this.binder = binder;
+
+    public void setRegistry(MessageTransportRegistry registry) {
+	this.registry = registry;
     }
 
-    protected MessageTransportServerBindingSite getBinder() {
-	return binder;
+
+    public void setNameSupport(NameSupport nameSupport) {
+	this.nameSupport = nameSupport;
     }
 
     public void setRecvQ(ReceiveQueue recvQ) {
@@ -37,12 +36,6 @@ public abstract class MessageTransport
     }
 
 
-    // Hook for handling incoming remote route requests, only
-    // called from our own MTImpl.
-    public void rerouteMessage(Message message) {
-	getBinder().deliverMessage(message);
-    }
-  
     
 
 }

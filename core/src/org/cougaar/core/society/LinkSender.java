@@ -7,20 +7,21 @@ import java.util.Set;
 class LinkSender implements Runnable
 {
     private MessageAddress destination;
-    private Router router;
+    private MessageTransportServerImpl.MessageTransportFactory transportFactory;
     private MessageTransportRegistry registry;
     private Thread thread;
     private DestinationQueue queue;
 
     LinkSender(String name, 
 	       MessageAddress destination, 
-	       Router router, 
+	       MessageTransportRegistry registry,
+	       MessageTransportServerImpl.MessageTransportFactory transportFactory,
 	       DestinationQueue queue) 
     {
 	this.destination = destination;
 	this.queue = queue;
-	this.router = router;
-	this.registry = router.getRegistry();
+	this.transportFactory = transportFactory;
+	this.registry = registry;
 	thread = new Thread(this, name);
 	thread.start();
     }
@@ -31,9 +32,9 @@ class LinkSender implements Runnable
 	String defaultTransportClass = System.getProperty(prop);
 	MessageTransportClient client = registry.findLocalClient(destination);
 	if (client != null) {
-	    return router.getLoopbackTransport();
+	    return transportFactory.getLoopbackTransport();
 	} else if (defaultTransportClass == null) {
-	    return router.getDefaultTransport();
+	    return transportFactory.getDefaultTransport();
 	} else {
 	    return selectPreferredTransport(defaultTransportClass);
 	}
@@ -46,11 +47,11 @@ class LinkSender implements Runnable
 	    preferredClass = Class.forName(preferredClassname);
 	} catch (ClassNotFoundException ex) {
 	    ex.printStackTrace();
-	    return router.getDefaultTransport();
+	    return transportFactory.getDefaultTransport();
 	}
 
 	// Simple matcher: take the first acceptable one
-	Iterator itr = router.getTransports();
+	Iterator itr = transportFactory.getTransports().iterator();
 	while (itr.hasNext()) {
 	    MessageTransport tpt = (MessageTransport) itr.next();
 	    Class tpt_class = tpt.getClass();
@@ -59,7 +60,7 @@ class LinkSender implements Runnable
 		// return (MessageTransportServerBinder) pair.getValue();
 	    }
 	}
-	return router.getDefaultTransport();
+	return transportFactory.getDefaultTransport();
     }
 
     public void run() {

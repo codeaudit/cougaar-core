@@ -7,9 +7,13 @@ class DestinationQueue extends CircularQueue
     private MessageAddress destination;
     private LinkSender sender;
 
-    DestinationQueue(String name, MessageAddress destination, Router router) {
+    DestinationQueue(String name, 
+		     MessageAddress destination, 
+		     MessageTransportRegistry registry,
+		     MessageTransportServerImpl.MessageTransportFactory transportFactory)
+    {
 	this.destination = destination;
-	sender = new LinkSender(name, destination, router, this);
+	sender = new LinkSender(name, destination, registry, transportFactory, this);
     }
 
     void holdMessage(Message message) {
