@@ -21,10 +21,6 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.service.ThreadControlService;
-import org.cougaar.util.PropertyParser;
-
-import java.util.Comparator;
 import java.util.Iterator;
 
 
@@ -32,7 +28,7 @@ final class TimeSliceScheduler extends Scheduler
 {
     private static final long DEFAULT_SLICE_DURATION = 1000;
     private int outstandingChildSliceCount;
-    TimeSlice[] timeSlices;
+    private TimeSlice[] timeSlices;
 
     TimeSliceScheduler(ThreadListenerProxy listenerProxy, String name) {
 	super(listenerProxy, name);
@@ -63,23 +59,6 @@ final class TimeSliceScheduler extends Scheduler
     }
 
 
-
-
-    synchronized void changedMaxRunningThreadCount() {
-	runMoreThreads();
-    }
-
-
-
-    synchronized void wakeup() {
-	// Let the children know that a slice may be available.
-	Iterator itr = children.iterator();
-	while (itr.hasNext()) {
-	    Scheduler child = (Scheduler) itr.next();
-	    child.wakeup();
-	}
-	runMoreThreads();
-    }
 
 
     private void runMoreThreads() {
@@ -120,6 +99,20 @@ final class TimeSliceScheduler extends Scheduler
 	++outstandingChildSliceCount;
     }
 
+
+    // If we're keeping track of the slices we've given to children,
+    // here's where we get told that the given chilc has released the
+    // given slice 
+    private void noteRelease(TimeSlice slice, TimeSliceScheduler child) {
+	--outstandingChildSliceCount;
+	if (DebugThreads)
+	    System.out.println(name+
+			       " released a slice from " +child+
+			       "; " +outstandingChildSliceCount+
+			       " now outstanding");
+    }
+
+
     
 
     private synchronized TimeSlice getSlice(TimeSliceScheduler child) {
@@ -133,39 +126,27 @@ final class TimeSliceScheduler extends Scheduler
 	} else {
 	    // The root.
 	    slice = findSlice();
-
-	    // For now make a new one everytime.  Later cache them.
-	    long start = System.currentTimeMillis();
-	    long end = start + DEFAULT_SLICE_DURATION;
-	    slice.start = start;
-	    slice.end = end;
-	    slice.in_use = true;
 	    
-	    noteGrant(slice, child);
+	    if (slice != null) {
+		long start = System.currentTimeMillis();
+		long end = start + DEFAULT_SLICE_DURATION;
+		slice.start = start;
+		slice.end = end;
+		slice.in_use = true;
+		
+		noteGrant(slice, child);
 
-	    if (DebugThreads)
-		System.out.println(name+
-				   " made a slice for " +child+
-				   "; " +outstandingChildSliceCount+
-				   " now outstanding");
+		if (DebugThreads)
+		    System.out.println(name+
+				       " made a slice for " +child+
+				       "; " +outstandingChildSliceCount+
+				       " now outstanding");
+	    }
 	}
 	
 	return slice;
     }
 
-
-
-    // If we're keeping track of the slices we've given to children,
-    // here's where we get told that the given chilc has released the
-    // given slice 
-    private void noteRelease(TimeSlice slice, TimeSliceScheduler child) {
-	--outstandingChildSliceCount;
-	if (DebugThreads)
-	    System.out.println(name+
-			       " released a slice from " +child+
-			       "; " +outstandingChildSliceCount+
-			       " now outstanding");
-    }
 
 
 
@@ -314,5 +295,25 @@ final class TimeSliceScheduler extends Scheduler
 	    addPendingThread(thread);
 	}
     }
+
+
+    synchronized void changedMaxRunningThreadCount() {
+	runMoreThreads();
+    }
+
+
+
+    synchronized void wakeup() {
+	// Let the children know that a slice may be available.
+	Iterator itr = children.iterator();
+	while (itr.hasNext()) {
+	    Scheduler child = (Scheduler) itr.next();
+	    child.wakeup();
+	}
+	runMoreThreads();
+    }
+
+
+
 
 }
