@@ -16,7 +16,30 @@ import java.net.URL;
  **/
 public class Test {
   public static void main(String[] args) {
+    // create a pluginManager container
     PluginManager pm = new PluginManager();
+
+    // add some services to the container
+    Services services = pm.getChildContext();
+    // add a log service
+    services.addService(TestLogService.class,
+                        new ServiceProvider() {
+                            public Object getService(Services s, Object r, Class sc) {
+                              return new LogService();
+                            }
+                            public void releaseService(Services s, Object r, Class sc, Object service) {
+                            }
+                          });
+    // add the alarm service
+    services.addService(TestAlarmService.class,
+                        new ServiceProvider() {
+                            public Object getService(Services s, Object r, Class sc) {
+                              return new AlarmService((TestAlarmService.Client) r);
+                            }
+                            public void releaseService(Services s, Object r, Class sc, Object service) {
+                            }
+                          });
+    
 
     ComponentDescription bd = 
       new ComponentDescription("agent.plugin",
@@ -39,4 +62,29 @@ public class Test {
 
     System.err.println("Done");
   }
+
+  private static class LogService implements TestLogService {
+    public void log(String message) {
+      System.err.println("Log: "+message);
+    }
+  }
+
+  private static class AlarmService implements TestAlarmService {
+    final TestAlarmService.Client client;
+    public AlarmService(TestAlarmService.Client client) {
+      this.client = client;
+    }
+    public void wakeAfterDelay(final long millis) {
+      Runnable waiter = new Runnable() {
+          public void run() {
+            try {
+              Thread.sleep(millis);
+            } catch (InterruptedException ie) {}
+            client.wake();
+          }
+        };
+      (new Thread(waiter)).start();
+    }
+  }
+
 }

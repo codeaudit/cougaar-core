@@ -46,9 +46,10 @@ public class PluginManager
   //
 
   /** Makes the child services available to child binders.
-   * Uses package protection to give access only to PluginBinderSupport.
+   * should use package protection to give access only to PluginBinderSupport,
+   * but makes it public for use by Test example.
    **/
-  final Services getChildContext() {
+  public final Services getChildContext() {
     return childContext;
   }
 
