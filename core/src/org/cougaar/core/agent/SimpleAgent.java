@@ -68,6 +68,7 @@ import org.cougaar.core.mts.MessageStatistics.Statistics;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.node.ComponentMessage;
 import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.InitializerServiceException;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.LatePropertyProvider;
 import org.cougaar.core.plugin.LDMService;
@@ -330,8 +331,15 @@ public class SimpleAgent
       sb.getService(this, InitializerService.class, null);
     try {
       String cp = specifyContainmentPoint();
-      ComponentDescription[] cds = 
-        is.getComponentDescriptions(cname, specifyContainmentPoint());
+      ComponentDescription[] cds = new ComponentDescription[0];
+      try {
+        cds = is.getComponentDescriptions(cname, cp);
+      } catch (InitializerServiceException ise) {
+        if (log.isWarnEnabled()) {
+          log.warn("Cannot find Agent configuration for "+cname, ise);
+        }
+      }
+
       //
       // FIXME by *luck* our descriptions are in this order:
       //
@@ -448,9 +456,7 @@ public class SimpleAgent
 
       return new ComponentDescriptions(l);
     } catch (Exception e) {
-      if (log.isErrorEnabled()) {
-        log.error("Unable to add "+cname+"'s child Components", e);
-      }
+      log.error("Unable to add "+cname+"'s child Components", e);
       return null;
     } finally {
       sb.releaseService(this, InitializerService.class, is);

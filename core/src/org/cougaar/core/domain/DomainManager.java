@@ -41,6 +41,7 @@ import org.cougaar.core.blackboard.SupportsDelayedLPActions;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.InitializerServiceException;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.DomainForBlackboardService;
@@ -335,10 +336,12 @@ public class DomainManager
 
     try {
       children = is.getComponentDescriptions(cname, specifyContainmentPoint());
-    } catch (Exception e) {
-        loggingService.error("Unable to add "+cname+"'s child Components: "+e);
-        e.printStackTrace();
-        children = null; 
+    } catch (InitializerServiceException e) {
+      //loggingService.error("Unable to add "+cname+"'s Domains", e);
+      if (loggingService.isInfoEnabled()) {
+        loggingService.info("Unable to add "+cname+"'s Domains", e);
+      }
+      children = null; 
     } finally {
       sb.releaseService(this, InitializerService.class, is);
     } 

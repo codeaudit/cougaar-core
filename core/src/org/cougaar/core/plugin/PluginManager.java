@@ -27,6 +27,7 @@ import org.cougaar.util.log.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.InitializerServiceException;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.mts.MessageAddress;
 import java.beans.*;
@@ -93,9 +94,10 @@ public class PluginManager
       InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
       try {
         return new ComponentDescriptions(is.getComponentDescriptions(cname, specifyContainmentPoint()));
-      } catch (Exception e) {
-        System.err.println("\nUnable to add "+cname+"'s child Components: "+e);
-        e.printStackTrace();
+      } catch (InitializerServiceException e) {
+        if (logger.isInfoEnabled()) {
+          logger.info("\nUnable to add "+cname+"'s plugins ",e);
+        }
         return null;
       } finally {
         sb.releaseService(this, InitializerService.class, is);
