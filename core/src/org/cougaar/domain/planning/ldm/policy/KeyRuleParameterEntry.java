@@ -12,7 +12,7 @@
 package org.cougaar.domain.planning.ldm.policy;
 
 /** Simple entry for KeyRuleParameters : holds a key and a value **/
-public class KeyRuleParameterEntry {
+public class KeyRuleParameterEntry implements java.io.Serializable {
 
     public KeyRuleParameterEntry
 	(String key, String value)

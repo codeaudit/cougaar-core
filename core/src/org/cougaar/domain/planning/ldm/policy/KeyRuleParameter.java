@@ -16,7 +16,7 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: KeyRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: KeyRuleParameter.java,v 1.2 2001-02-20 19:40:58 ngivler Exp $
  **/
 
 /**
@@ -26,9 +26,7 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
  * for that key, that value is returned. Otherwise, the default
  * is returned.
  */
-public class KeyRuleParameter implements RuleParameter ,
-						 java.io.Serializable
-{
+public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
 
   /**
    * Constructor sets min/max values and establishes value as not set
