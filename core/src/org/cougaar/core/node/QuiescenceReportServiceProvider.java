@@ -439,7 +439,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
         try {
           if (pendingAnnouncement == null) {
-            // no-op
+            // Nothing to announce. No-op.
           } else if ((delay = getDelay()) > 0L) {
             // run again later
             schedulable.schedule(delay);
