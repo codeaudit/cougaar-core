@@ -34,23 +34,8 @@ public class LinkSender implements Runnable
     }
 
 
-
-
     private void getDestinationLinks() 
     {
-	String prop = "org.cougaar.message.transportClass";
-	String preferredClassname = System.getProperty(prop);
-	Class preferredClass = null;
-	if (preferredClassname != null) {
-	    try {
-		preferredClass = Class.forName(preferredClassname);
-	    } catch (ClassNotFoundException ex) {
-		System.err.println(ex);
-	    }
-	}
-
-	// ignore org.cougaar.message.transportClass for now
-
 	Iterator itr = transportFactory.getTransports().iterator();
 	DestinationLink link;
 	while (itr.hasNext()) {

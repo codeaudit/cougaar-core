@@ -113,6 +113,22 @@ class MessageTransportServerImpl
 
 	    transports = new ArrayList();
 
+
+	    String prop = "org.cougaar.message.transportClass";
+	    String preferredClassname = System.getProperty(prop);
+	    if (preferredClassname != null) {
+		MessageTransport transport = makeTransport(preferredClassname);
+		if (transport != null) {
+		    // If there's a preferred transport, never use any
+		    // others.
+		    defaultTransport = transport;
+		    loopbackTransport = transport;
+		    return transports;
+		}
+	    }
+
+	    // No preferred transport, make all the usual ones.
+
 	    loopbackTransport = new LoopbackMessageTransport();
 	    loopbackTransport.setRecvQ(recvQ);
 	    loopbackTransport.setRegistry(registry);

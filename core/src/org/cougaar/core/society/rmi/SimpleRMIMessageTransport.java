@@ -13,18 +13,17 @@ import java.util.HashMap;
 
 public class SimpleRMIMessageTransport 
     extends MessageTransport
-    implements DestinationLink
 {
     private static final String TRANSPORT_TYPE = "/simpleRMI";
     
 
     private boolean madeServerProxy;
-    private HashMap remotes;
+    private HashMap links;
 
 
     public SimpleRMIMessageTransport(String id) {
 	super(); 
-	remotes = new HashMap();
+	links = new HashMap();
     }
 
 
@@ -50,7 +49,12 @@ public class SimpleRMIMessageTransport
 
 
     public DestinationLink getDestinationLink(MessageAddress address) {
-	return this;
+	DestinationLink link = (DestinationLink) links.get(address);
+	if (link == null) {
+	    link = new Link(address);
+	    links.put(address, link);
+	}
+	return link;
     }
 
 
@@ -75,15 +79,21 @@ public class SimpleRMIMessageTransport
 	}
     }
 
-    public int cost (Message message) {
-	return 1000;
-    }
+    class Link implements DestinationLink {
+	
+	private MessageAddress target;
+	private MT remote;
+
+	Link(MessageAddress destination) {
+	    this.target = destination;
+	}
+
+	public int cost (Message message) {
+	    return 1000;
+	}
 
 
-    public void forwardMessage(Message message) {
-	MessageAddress target = message.getTarget();
-	MT remote = (MT) remotes.get(target);
-	if (remote == null) {
+	public void forwardMessage(Message message) {
 	    while (remote == null) {
 		try {
 		    remote = lookupRMIObject(target);
@@ -96,18 +106,16 @@ public class SimpleRMIMessageTransport
 		try { Thread.sleep(500); } catch (InterruptedException ex) {}
 	    }
 
-	    remotes.put(target, remote);
+
+	    try {
+		remote.rerouteMessage(message);
+	    } 
+	    catch (RemoteException ex) {
+		System.err.println("Reroute failure on " + message);
+		ex.printStackTrace();
+	    }
+
 	}
-
-
-	try {
-	    remote.rerouteMessage(message);
-	} 
-	catch (RemoteException ex) {
-	    System.err.println("Reroute failure on " + message);
-	    ex.printStackTrace();
-	}
-
     }
 
 
