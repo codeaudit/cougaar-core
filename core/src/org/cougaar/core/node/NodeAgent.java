@@ -481,7 +481,7 @@ public class NodeAgent
           //
           // for now we do this work-around:
           String ip = cd.getInsertionPoint();
-          if (!("Node.Agent".equals(ip))) {
+          if (!("Node.AgentManager.Agent".equals(ip))) {
             throw new UnsupportedOperationException(
                 "Only Agent ADD supported for now, not "+ip);
           }
