@@ -1,3 +1,31 @@
+2001-07-19  Beth DePass <bdepass@bbn.com>
+	* ClusterImpl
+	Hook in new services that were split out of ClusterImpl such as
+	UIDService, DomainService and PrototypeRegistryService.
+	Cluster is now a subclass of Agent and provides the above listed
+	services to the AgentServiceBroker.
+
+	* UIDServer, UIDService, etc
+	No longer the UIDServer implementation. Instead it is a UIDService
+	like interface for backwards compatability.  Can easily be removed
+	to leave the UIDService interface and renamed implementation.
+
+	* DomainService
+	LDM Factory service.  Implemented as a service instead of part
+	of ClusterImpl.
+
+	* PrototypeRegistryService
+	LDM Prototype provider registry services. Now implemented as a
+	service instead of part of ClusterImpl.
+
+	* AgentManager, AgentManagerServiceBroker, AgentBinder, etc
+	New AgentManager shell and Binder support classes to bind the
+	AgentManager with various Agents.
+
+	* Agent, AgentServiceBroker, PluginManagerBinder, etc
+	New base class for Agents along with PluginManagerBinder support 
+	for binding Agents and PluginManagers.
+	
 2001-07-19  Todd Wright <twright@bbn.com>
 
         * INIParser, ClusterINIParser, NodeINIParser
