@@ -1,25 +1,21 @@
-*** /usr/local/java/jdk1.4/src/java/io/ObjectOutputStream.java	Sat Jan  5 03:13:51 2002
---- ObjectOutputStream.java	Tue Feb 19 11:01:08 2002
-***************
-*** 270,275 ****
---- 270,276 ----
-       * 		OutputStream.
-       */
-      public final void writeObject(Object obj) throws IOException {
-+       try {
-  	if (enableOverride) {
-  	    writeObjectOverride(obj);
-  	    return;
-***************
-*** 282,287 ****
---- 283,292 ----
-  	    }
-  	    throw ex;
-  	}
-+       } catch (NotSerializableException nse) {
-+         System.out.println("NSE: "+obj.getClass().getName());
-+         throw nse;
-+       }
-      }
-  
-      /**
+--- /usr/local/java/jdk1.4.1/src/java/io/ObjectOutputStream.java	Thu Aug 29 03:16:33 2002
++++ ObjectOutputStream.java	Mon Oct 21 09:09:46 2002
+@@ -270,6 +270,7 @@
+      * 		OutputStream.
+      */
+     public final void writeObject(Object obj) throws IOException {
++      try {
+ 	if (enableOverride) {
+ 	    writeObjectOverride(obj);
+ 	    return;
+@@ -282,6 +283,10 @@
+ 	    }
+ 	    throw ex;
+ 	}
++      } catch (NotSerializableException nse) {
++        System.out.println("NSE: "+obj.getClass().getName());
++        throw nse;
++      }
+     }
+ 
+     /**
