@@ -230,6 +230,7 @@ public class ScheduleImpl
    *  Use filter() to get an copy which can be iterated over without 
    *  the warning.
    *  @return Iterator over a copy
+   *  @deprecated Get a copy of the Schedule before iterating
    */
   public synchronized Iterator iterator() {
     UnsupportedOperationException uae = 
@@ -261,6 +262,7 @@ public class ScheduleImpl
    *  Use filter() to get an copy which can be iterated over without 
    *  the warning.
    *  @return Iterator over a copy
+   *  @deprecated Get a copy of the Schedule before calling subList
    */
   public synchronized List subList(int fromIndex, int toIndex) {
     UnsupportedOperationException uae = 
@@ -288,14 +290,14 @@ public class ScheduleImpl
         
   /* setScheduleType - type can only be set for empty schedule.
    */
-  public void setScheduleType(String type) {
+  public synchronized void setScheduleType(String type) {
     if (!isEmpty()) {
       throw new ClassCastException("Can not set ScheduleType for non-empty schedule");
     }
     scheduleType = type;
   }
   
-  public void setScheduleElementType(Class setype) {
+  public synchronized void setScheduleElementType(Class setype) {
     if (!ScheduleElement.class.isAssignableFrom(setype)) {
       throw new ClassCastException(setype + " is  not a ScheduleElement");
     } else if (!isEmpty() &&
@@ -333,19 +335,39 @@ public class ScheduleImpl
     return super.iterator();
   }
 
+  private static class TestScheduleElementImpl extends LocationScheduleElementImpl
+    implements ScheduleElementWithValue {
+
+    private double myValue;
+
+    public TestScheduleElementImpl(double value) {
+      super();
+      myValue = value;
+    }
+
+    public double getValue() {
+      return myValue;
+    }
+
+    public ScheduleElementWithValue newElement(long start, long end, 
+                                               double value) {
+      TestScheduleElementImpl newElement = new TestScheduleElementImpl(value);
+      newElement.stime = start;
+      newElement.etime = end;
+      return newElement;
+    }
+  }   
 
   public static void main(String []args) {
-    LocationScheduleElementImpl lsei = new LocationScheduleElementImpl();
+    TestScheduleElementImpl lsei = new TestScheduleElementImpl(2.0);
     lsei.setEndTime(TimeSpan.MAX_VALUE - 100000);
 
     Vector vector = new Vector();
-    vector.add(new LocationScheduleElementImpl());
+    vector.add(new TestScheduleElementImpl(3.0));
     vector.add(lsei);
 
     ScheduleImpl lsSchedule = new ScheduleImpl();
-    lsSchedule.setScheduleElementType(ScheduleElementType.LOCATION);
-    lsSchedule.add(new LocationScheduleElementImpl());
-    lsSchedule.setScheduleElementType(ScheduleElementType.SIMPLE);
+    lsSchedule.add(new TestScheduleElementImpl(4));
 
     ScheduleImpl schedule1 = new ScheduleImpl(vector);
     System.out.println(schedule1);
@@ -354,6 +376,9 @@ public class ScheduleImpl
     System.out.println(schedule2);
 
     schedule2.addAll(schedule1);
+    System.out.println(schedule1);
+
+    ScheduleUtilities.subtractSchedules(schedule2, schedule1);
     System.out.println(schedule1);
 
     schedule2.setScheduleElements(vector);

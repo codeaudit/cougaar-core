@@ -293,13 +293,33 @@ public final class ScheduleUtilities {
   public static final Schedule subtractSchedules(Schedule aSchedule, 
                                                  Schedule bSchedule) {
     Schedule tmp = new ScheduleImpl(aSchedule);
-    for (Iterator i = bSchedule.iterator(); i.hasNext(); ) {
-      ScheduleElementWithValue e = (ScheduleElementWithValue) i.next();
+
+    boolean list = (bSchedule instanceof List);
+    int index = 0;
+    Iterator iterator = null;
+
+    // Walk Schedule as a List if possible
+    if (!list) {
+      iterator = bSchedule.iterator();
+    } 
+
+    ScheduleElementWithValue e; 
+    boolean done = false;
+
+    while (!done) {
+      if (list) {
+        e = (ScheduleElementWithValue) (((List) bSchedule).get(index++));
+        done = (index == bSchedule.size());
+      } else {
+        e = (ScheduleElementWithValue) iterator.next();
+        done = !(iterator.hasNext());
+      }
       ScheduleElementWithValue n = e.newElement(e.getStartTime(),
                                                 e.getEndTime(),
                                                 -e.getValue());
       tmp.add(n);
     }
+
     return simplifySchedule(tmp);
   }
 }

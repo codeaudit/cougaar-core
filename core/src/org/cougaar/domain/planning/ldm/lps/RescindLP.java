@@ -197,10 +197,8 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       rescindSchedule = ldmf.newAssignedRelationshipSchedule();
       RelationshipSchedule transferSchedule = 
         ((HasRelationships)at.getAsset()).getRelationshipSchedule();
-      Collection transferRelationships = 
-        transferSchedule.getMatchingRelationships(new MutableTimeSpan());
 
-      for (Iterator iterator = transferRelationships.iterator();
+      for (Iterator iterator = new ArrayList(transferSchedule).iterator();
            iterator.hasNext();) {
         Relationship relationship = (Relationship)iterator.next();
         ((NewSchedule)rescindSchedule).add(ldmf.newAssignedRelationshipElement(relationship));
@@ -223,10 +221,10 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
 
       // Update local relationship schedules
       RelationshipSchedule localSchedule = localAsset.getRelationshipSchedule();
-      localSchedule.removeAll(transferRelationships);        
+      localSchedule.removeAll(transferSchedule);        
       
       localSchedule = localAssignee.getRelationshipSchedule();
-      localSchedule.removeAll(transferRelationships);
+      localSchedule.removeAll(transferSchedule);
       
       // Update assignee avail
       // Remove all current entries denoting asset avail to assignee
