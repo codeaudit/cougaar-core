@@ -24,6 +24,13 @@ import java.util.*;
  * negative 1 millisecond duration.  A point in time must be represented
  * with end = start+EPSILON.
  *
+ * A TimeSpan that does not have well-defined start and end times is
+ * also illegal. For example a set of TimeSpans might also be a
+ * TimeSpan (e.g. Schedule) (with start and end times bounding the
+ * start and end times of all the members of the set). If the set were
+ * empty, there would be no well-defined start and end times. Such a
+ * TimeSpan would be illegal.
+ *
  * The values are usually interpreted to mean milliseconds in java time,
  * though there is nothing which actually requires these semantics.
  *
