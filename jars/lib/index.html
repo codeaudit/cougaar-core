@@ -1,387 +1,213 @@
-<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
 <html>
 <head>
-   <title>Third Party Software</title>
+  <title>Third Party Software</title>
 </head>
-<h1>
-Versions and download locations for standard third-party jar files
-</h1>
-<p>
-Jar files should not be added or updated without updating this file.
-<p>
-<table>
-<tr>
-<td>
-bbn-postgresql7.1.3.jar
-</td>
-<td>
-7.1.3
-</td>
-<td>
-Modified postgresql jdbc driver; added case types.OTHER to getObject() in 
-org.postgresql.jdbc2.ResultSet.java.  This prevents sql string constants and 
-identifiers/names from throwing an unknown object exception. The source for 
-this driver came from src/interfaces in version of 7.1.3 of the PostgreSQL 
-database server. <a href="http://www.postgreSQL.org/">http://www.postgreSQL.org/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-crimson.jar
-</td>
-<td>
-1.1.3
-</td>
-<td>
-Standards-based implementation of JAXP: just the crimson.jar part.
-	  Will eventually be superseded by xerces2.
-<a href="xml.apache.org/crimson/">http://xml.apache.org/crimson/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-quoSumo.jar
-</td>
-<td>
-n/a
-</td>
-<td>
-Cougaar is the distribution point for this jar.  It contains all the classes
-required to run quo, qos. 
-</td>
-</tr>
-
-<tr>
-<td>
-activation.jar
-</td>
-<td>
-1.0.1
-</td>
-<td>
-Java Activation Framework (JAF)
-<a href="http://java.sun.com/products/javabeans/glasgow/jaf.html">http://java.sun.com/products/javabeans/glasgow/jaf.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-fesi-111.jar
-</td>
-<td>
-?
-</td>
-<td>
-Free EcmaScript Interpreter
-<a href="http://home.worldcom.ch/~jmlugrin/fesi/index.html">http://home.worldcom.ch/~jmlugrin/fesi/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-grappa1_2_bbn.jar
-</td>
-<td>
-1.2 (with bbn modifications)
-</td>
-<td>
-Original may be downloaded at
-	<a href="http://www.research.att.com/sw/tools/graphviz/packages/grappa.html">http://www.research.att.com/sw/tools/graphviz/packages/grappa.html</a>
-BBN changes have been submitted and are being integrated into
-mainline.  Check the CSMART tree for changes.
-</td>
-</tr>
-
-<tr>
-<td>
-ejb.jar
-</td>
-<td>
-1.1
-</td>
-<td>
-Final release of ejb
-<a href="http://java.sun.com/products/ejb/index.html">http://java.sun.com/products/ejb/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jacorb.jar
-</td>
-<td>
-1.3.30
-</td>
-<td>
-This contains Java orb required for running corba.  Specific use would
-be to run CorbaNode in quo/test/bin/configs/QuoNode
-<a href="http://www.jacorb.org/">http://www.jacorb.org/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jbcl.jar
-</td>
-<td>
-?
-</td>
-<td>
-<a href="http://community.borland.com/downloads">http://community.borland.com/downloads</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jcchart451K.jar
-</td>
-<td>
-?
-</td>
-<td>
-JClass Chart: developers of jcchart software must purchase a license,
-but users of cougaar and developers of non-jcchart software may use
-the jar without fee.
-<a href="http://www.sitraka.com/software/jclass/jclasschart.html">http://www.sitraka.com/software/jclass/jclasschart.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jce1_2-do.jar
-</td>
-<td>
-1.2 (domestic)
-</td>
-<td>
-(required for runtime only)
-</td>
-</tr>
-
-<tr>
-<td>
-jdbc2_0-stdext.jar
-</td>
-<td>
-2.0
-</td>
-<td>
-JDBC standard extensions (javax.sql) unbundled from j2ee.  Will be
-	  incorporated into jdk1.4.
-<a href="http://java.sun.com/products/jdbc/index.html">http://java.sun.com/products/jdbc/index.html</a>
-</td>
-</tr>
-
-
-<tr>
-<td>
-jess50.jar
-</td>
-<td>
-5.0
-</td>
-<td>
-Java Expert System Shell
-<a href="http://herzberg.ca.sandia.gov/jess/">http://herzberg.ca.sandia.gov/jess/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jms.jar
-</td>
-<td>
-1.0.2b
-</td>
-<td>
-Java Message Service API.
-<a href="http://java.sun.com/products/jms/">http://java.sun.com/products/jms/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-jpython.jar
-</td>
-<td>
-?
-</td>
-<td>
-JPython
-<a href="http://www.jython.org/">http://www.jython.org/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-servlet.jar
-</td>
-<td>
-3.2.3
-</td>
-<td>
-Java Servlet Development kit (now Jakarta Tomcat).  Includes Java
-	  Servlet 2.2 and JSP 1.1 specifications.
-<a href="http://jakarta.apache.org/tomcat/index.html">http://jakarta.apache.org/tomcat/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-junit.jar
-</td>
-<td>
-3.7
-</td>
-<td>
-(required at build-time only)
-<a href="http://www.junit.org/">http://www.junit.org/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-log4j.jar
-</td>
-<td>
-1.1.3 (full)
-</td>
-<td>
-<a href="http://jakarta.apache.org/log4j/docs/index.html">http://jakarta.apache.org/log4j/docs/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-mail.jar
-</td>
-<td>
-1.2
-</td>
-<td>
-Java Mail API with all providers.
-<a href="http://java.sun.com/products/javamail/">http://java.sun.com/products/javamail/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-mm-mysql-2.jar
-</td>
-<td>
-2.0.7
-</td>
-<td>
-MySQL driver (required for runtime only)
-<a href="http://mmmysql.sourceforge.net/">http://mmmysql.sourceforge.net/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-openmap.jar
-</td>
-<td>
-4.2 (full)
-</td>
-<td>
-<a href="http://openmap.bbn.com/">http://openmap.bbn.com/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-oracle12.zip
-</td>
-<td>
-any for jdk 1.2/1.3
-</td>
-<td>
-(required for runtime only)
-This is distributed by oracle as classes12.zip.
-<a href="http://otn.oracle.com/software/content.html">http://otn.oracle.com/software/content.html</a>
- (select "Oracle JDBC Drivers")
-</td>
-</tr>
-
-<tr>
-<td>
-qslink.jar
-</td>
-<td>
-?
-</td>
-<td>
-Partnet driver. 
-</td>
-</tr>
-
-<tr>
-<td>
-silk.jar
-</td>
-<td>
-4.0.18
-</td>
-<td>
-SILK/JScheme
-<a href="http://sourceforge.net/projects/silk/">http://sourceforge.net/projects/silk/</a>
-</td>
-</tr>
-
-<tr>
-<td>
-vgj.jar
-</td>
-<td>
-?
-</td>
-<td>
-<a href="http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html">http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-xalan.jar
-</td>
-<td>
-2.2.D11
-</td>
-<td>
-Currently also requires xalanj1compat.jar.
-<a href="http://xml.apache.org/xalan-j/index.html">http://xml.apache.org/xalan-j/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-xerces.jar
-</td>
-<td>
-1.4.3
-</td>
-<td>
-Apache xerces-j version 1.
-<a href="http://xml.apache.org/xerces-j/index.html">http://xml.apache.org/xerces-j/index.html</a>
-</td>
-</tr>
-
-<tr>
-<td>
-xmlparserv2.jar
-</td>
-<td>
-Oracle 9i?
-</td>
-<td>
-Oracle's xml parser - will be deprecated in favor of xerces.
-<a href="http://otn.oracle.com/software/content.html ">http://otn.oracle.com/software/content.html </a>
-(select "Oracle XML for Java")
-</td>
-</tr>
-
+  <body>
+<h1> Versions and download locations for standard third-party jar files </h1>
+ 
+<p> Jar files should not be added or updated without updating this file. </p>
+<p> 
+<table border="1">
+ <tbody>
+    <tr>
+ <td valign="Top"> bbn-postgresql7.1.3.jar </td>
+ <td valign="Top"> 7.1.3 </td>
+ <td valign="Top"> Modified postgresql jdbc driver; added case types.OTHER to getObject()
+in  org.postgresql.jdbc2.ResultSet.java.  This prevents sql string constants
+and  identifiers/names from throwing an unknown object exception. The source
+for  this driver came from src/interfaces in version of 7.1.3 of the PostgreSQL
+ database server. <a href="http://www.postgreSQL.org/">http://www.postgreSQL.org/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> crimson.jar </td>
+ <td valign="Top"> 1.1.3 </td>
+ <td valign="Top"> Standards-based implementation of JAXP: just the crimson.jar part. 	
+ Will eventually be superseded by xerces2. <a href="xml.apache.org/crimson/">
+http://xml.apache.org/crimson/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> quoSumo.jar </td>
+ <td valign="Top"> n/a </td>
+ <td valign="Top"> Cougaar is the distribution point for this jar.  It contains all the
+classes required to run quo, qos.  </td>
+ </tr>
+  <tr>
+ <td valign="Top"> activation.jar </td>
+ <td valign="Top"> 1.0.1 </td>
+ <td valign="Top"> Java Activation Framework (JAF) <a href="http://java.sun.com/products/javabeans/glasgow/jaf.html">
+http://java.sun.com/products/javabeans/glasgow/jaf.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> fesi-111.jar </td>
+ <td valign="Top"> 1.1.1 </td>
+ <td valign="Top"> Free EcmaScript Interpreter <a href="http://home.worldcom.ch/%7Ejmlugrin/fesi/index.html">
+http://home.worldcom.ch/~jmlugrin/fesi/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> grappa1_2_bbn.jar </td>
+ <td valign="Top"> 1.2+bbn </td>
+ <td valign="Top"> Original may be downloaded at 	<a href="http://www.research.att.com/sw/tools/graphviz/packages/grappa.html">
+http://www.research.att.com/sw/tools/graphviz/packages/grappa.html</a>
+ BBN changes have been submitted and are being integrated into mainline.
+ Check the CSMART tree for changes. </td>
+ </tr>
+  <tr>
+ <td valign="Top"> ejb.jar </td>
+ <td valign="Top"> 1.1 </td>
+ <td valign="Top"> Final release of ejb <a href="http://java.sun.com/products/ejb/index.html">
+http://java.sun.com/products/ejb/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jacorb.jar </td>
+ <td valign="Top"> 1.3.30 </td>
+ <td valign="Top"> This contains Java orb required for running corba.  Specific use would 
+be to run CorbaNode in quo/test/bin/configs/QuoNode <a href="http://www.jacorb.org/">
+http://www.jacorb.org/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jbcl.jar </td>
+ <td valign="Top"> ? </td>
+ <td valign="Top"> <a href="http://community.borland.com/downloads">http://community.borland.com/downloads</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jcchart451K.jar </td>
+ <td valign="Top"> ? </td>
+ <td valign="Top"> JClass Chart: developers of jcchart software must purchase a license, 
+but users of cougaar and developers of non-jcchart software may use the jar
+without fee. <a href="http://www.sitraka.com/software/jclass/jclasschart.html">
+http://www.sitraka.com/software/jclass/jclasschart.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jce1_2-do.jar </td>
+ <td valign="Top"> 1.2 (domestic) </td>
+ <td valign="Top"> (required for runtime only) </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jdbc2_0-stdext.jar </td>
+ <td valign="Top"> 2.0 </td>
+ <td valign="Top"> JDBC standard extensions (javax.sql) unbundled from j2ee.  Will be 	
+ incorporated into jdk1.4. <a href="http://java.sun.com/products/jdbc/index.html">
+http://java.sun.com/products/jdbc/index.html</a>
+ </td>
+ </tr>
+   <tr>
+ <td valign="Top"> jess50.jar </td>
+ <td valign="Top"> 5.0 </td>
+ <td valign="Top"> Java Expert System Shell <a href="http://herzberg.ca.sandia.gov/jess/">
+http://herzberg.ca.sandia.gov/jess/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jms.jar </td>
+ <td valign="Top"> 1.0.2b </td>
+ <td valign="Top"> Java Message Service API. <a href="http://java.sun.com/products/jms/">
+http://java.sun.com/products/jms/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> jpython.jar </td>
+ <td valign="Top"> ? </td>
+ <td valign="Top"> JPython <a href="http://www.jython.org/">http://www.jython.org/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> servlet.jar </td>
+ <td valign="Top"> 3.2.3 </td>
+ <td valign="Top"> Java Servlet Development kit (now Jakarta Tomcat).  Includes Java 	
+ Servlet 2.2 and JSP 1.1 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
+http://jakarta.apache.org/tomcat/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> junit.jar </td>
+ <td valign="Top"> 3.7 </td>
+ <td valign="Top"> (required at build-time only) <a href="http://www.junit.org/">http://www.junit.org/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> log4j.jar </td>
+ <td valign="Top"> 1.1.3 (full) </td>
+ <td valign="Top"> <a href="http://jakarta.apache.org/log4j/docs/index.html">http://jakarta.apache.org/log4j/docs/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> mail.jar </td>
+ <td valign="Top"> 1.2 </td>
+ <td valign="Top"> Java Mail API with all providers. <a href="http://java.sun.com/products/javamail/">
+http://java.sun.com/products/javamail/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> mm-mysql-2.jar </td>
+ <td valign="Top"> 2.0.7 </td>
+ <td valign="Top"> MySQL driver (required for runtime only) <a href="http://mmmysql.sourceforge.net/">
+http://mmmysql.sourceforge.net/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> openmap.jar </td>
+ <td valign="Top"> 4.2 (full) </td>
+ <td valign="Top"> <a href="http://openmap.bbn.com/">http://openmap.bbn.com/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> oracle12.zip </td>
+ <td valign="Top"> any for jdk 1.2/1.3 </td>
+ <td valign="Top"> (required for runtime only) This is distributed by oracle as classes12.zip. 
+      <a href="http://otn.oracle.com/software/content.html">http://otn.oracle.com/software/content.html</a>
+  (select "Oracle JDBC Drivers") </td>
+ </tr>
+  <tr>
+ <td valign="Top"> qslink.jar </td>
+ <td valign="Top"> ? </td>
+ <td valign="Top"> Partnet driver.  </td>
+ </tr>
+  <tr>
+ <td valign="Top"> silk.jar </td>
+ <td valign="Top"> 4.0.18 </td>
+ <td valign="Top"> SILK/JScheme <a href="http://sourceforge.net/projects/silk/">http://sourceforge.net/projects/silk/</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> vgj.jar </td>
+ <td valign="Top"> ? </td>
+ <td valign="Top"> <a href="http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html">
+http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> xalan.jar </td>
+ <td valign="Top"> 2.2.D11 </td>
+ <td valign="Top"> Currently also requires xalanj1compat.jar. <a href="http://xml.apache.org/xalan-j/index.html">
+http://xml.apache.org/xalan-j/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> xerces.jar </td>
+ <td valign="Top"> 1.4.3 </td>
+ <td valign="Top"> Apache xerces-j version 1. <a href="http://xml.apache.org/xerces-j/index.html">
+http://xml.apache.org/xerces-j/index.html</a>
+ </td>
+ </tr>
+  <tr>
+ <td valign="Top"> xmlparserv2.jar </td>
+ <td valign="Top"> Oracle 9i? </td>
+ <td valign="Top"> Oracle's xml parser - will be deprecated in favor of xerces. <a href="http://otn.oracle.com/software/content.html%20">
+http://otn.oracle.com/software/content.html </a>
+ (select "Oracle XML for Java") </td>
+ </tr>
+  
+  </tbody>
+</table>
+</p>
 </body>
 </html>
