@@ -214,8 +214,8 @@ public class ClusterImpl
     idleVerboseInterval = PropertyParser.getInt("org.cougaar.core.agent.idle.verbose.interval", 60000);
   }
 
-
   private AgentBindingSite bindingSite = null;
+  private java.util.Timer restartTimer;
 
   public final void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
@@ -495,7 +495,7 @@ public class ClusterImpl
     // register with node - temporary hack.
     getBindingSite().registerAgent(this);
     restart();
-    java.util.Timer restartTimer = new java.util.Timer();
+    restartTimer = new java.util.Timer();
     restartTimer.schedule(new java.util.TimerTask() {
       public void run() {
         checkRestarts();
@@ -555,6 +555,7 @@ public class ClusterImpl
 
   public void stop() {
     super.stop();
+    restartTimer.cancel();      // Stop the restart timer
 
     // should be okay...
 
