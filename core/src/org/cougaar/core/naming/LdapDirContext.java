@@ -11,10 +11,21 @@ package org.cougaar.core.naming;
 
 import javax.naming.directory.*;
 import javax.naming.*;
+import javax.naming.spi.*;
+
+import java.rmi.*;  // because we must treat remote objects specially
 
 
-
-
+/**
+ * A JNDI DirContext that stores Cougaar objects in an LDAP directory.
+ * It mostly just delegates to a real LDAP DirContext, but in some
+ * cases, it has to process the arguments a little.  The main points are:
+ * <pre>
+ * String names are converted from /foo/bar to dc=bar, dc=foo (see LdapNameParser)
+ * The DirStateFactory is called on the outside chance that someone wants to use it.
+ * Remote (RMPI) objects are wrapped in a MarshalledObject so the whole RMI object 
+ *   doesn't get serialized - just the stub.  See getObjectToBind() and getBoundObject())
+ **/
 public class LdapDirContext implements DirContext {
     private DirContext realDirContext;
     private Attribute objClasses;
@@ -41,7 +52,8 @@ public class LdapDirContext implements DirContext {
     }
     
     public void bind(Name name, Object obj) throws NamingException {
-        realDirContext.bind(name, obj);
+        DirStateFactory.Result res = getObjectToBind(name, obj, null);
+        realDirContext.bind(name, res.getObject());
     }
     
     public void bind(String str, Object obj, Attributes attributes) throws NamingException {
@@ -49,7 +61,8 @@ public class LdapDirContext implements DirContext {
     }
     
     public void bind(Name name, Object obj, Attributes attributes) throws NamingException {
-        realDirContext.bind(name, obj, attributes);
+        DirStateFactory.Result res = getObjectToBind(name, obj, attributes);
+        realDirContext.bind(name, res.getObject(), res.getAttributes());
     }
     
     protected Object clone() throws CloneNotSupportedException {
@@ -189,7 +202,12 @@ public class LdapDirContext implements DirContext {
     
     public Object lookup(Name name) throws NamingException {
        Object ret = realDirContext.lookup(name);
-       
+       try {
+         ret = getBoundObject(name, ret, null);
+       } catch (Exception ex) {
+           System.err.println("Error unwrapping in lookup()");
+           ex.printStackTrace();
+       }
        if (ret instanceof DirContext) {
           ret = wrap((DirContext)ret);
        }
@@ -203,6 +221,12 @@ public class LdapDirContext implements DirContext {
     
     public Object lookupLink(Name name) throws NamingException {
        Object ret = realDirContext.lookupLink(name);
+       try {
+         ret = getBoundObject(name, ret, null);
+       } catch (Exception ex) {
+           System.err.println("Error unwrapping in lookupLink()");
+           ex.printStackTrace();
+       }
        
        if (ret instanceof DirContext) {
           ret = wrap((DirContext)ret);
@@ -232,7 +256,8 @@ public class LdapDirContext implements DirContext {
     }
     
     public void rebind(Name name, Object obj) throws NamingException {
-        realDirContext.rebind(name, obj);
+        DirStateFactory.Result res = getObjectToBind(name, obj, null);
+        realDirContext.rebind(name, res.getObject());
     }
     
     public void rebind(String str, Object obj, Attributes attributes) throws NamingException {
@@ -240,7 +265,8 @@ public class LdapDirContext implements DirContext {
     }
     
     public void rebind(Name name, Object obj, Attributes attributes) throws NamingException {
-        realDirContext.rebind(name, obj, attributes);
+        DirStateFactory.Result res = getObjectToBind(name, obj, attributes);
+        realDirContext.rebind(name, res.getObject(), res.getAttributes());
     }
     
     public Object removeFromEnvironment(String str) throws NamingException {
@@ -259,10 +285,6 @@ public class LdapDirContext implements DirContext {
         return search(nameParser.parse(str), attributes);
     }
     
-    public NamingEnumeration search(Name name, Attributes attributes) throws NamingException {
-        return realDirContext.search(name, attributes);
-    }
-    
     public NamingEnumeration search(String str, String filter, SearchControls searchControls) throws NamingException {
         return search(nameParser.parse(str), filter, searchControls);
     }
@@ -271,20 +293,24 @@ public class LdapDirContext implements DirContext {
         return search(nameParser.parse(str), attributes, str2);
     }
     
-    public NamingEnumeration search(Name name, String str, SearchControls searchControls) throws NamingException {
-        return realDirContext.search(name, str, searchControls);
-    }
-    
-    public NamingEnumeration search(Name name, Attributes attributes, String[] str) throws NamingException {
-        return realDirContext.search(name, attributes, str);
-    }
-    
     public NamingEnumeration search(String str, String str1, Object[] obj, SearchControls searchControls) throws NamingException {
         return search(nameParser.parse(str), str1, obj, searchControls);
     }
     
+    public NamingEnumeration search(Name name, Attributes attributes) throws NamingException {
+        return updateSearchResults(realDirContext.search(name, attributes));
+    }
+    
+    public NamingEnumeration search(Name name, String str, SearchControls searchControls) throws NamingException {
+        return updateSearchResults(realDirContext.search(name, str, searchControls));
+    }
+    
+    public NamingEnumeration search(Name name, Attributes attributes, String[] str) throws NamingException {
+        return updateSearchResults(realDirContext.search(name, attributes, str));
+    }
+    
     public NamingEnumeration search(Name name, String str, Object[] obj, SearchControls searchControls) throws NamingException {
-        return realDirContext.search(name, str, obj, searchControls);
+        return updateSearchResults(realDirContext.search(name, str, obj, searchControls));
     }
     
     public String toString() {
@@ -307,6 +333,103 @@ public class LdapDirContext implements DirContext {
             obj = new LdapDirContext((DirContext)obj);
         }
         return (DirContext)obj;
+    }
+    
+    private DirStateFactory.Result getObjectToBind(Name name, Object obj, Attributes attrs) throws NamingException {
+        DirStateFactory.Result res = null;
+        //System.out.println("1) CALLED getObjectToBind on a "+obj.getClass().toString());
+        try {
+            //
+            // If this is a remote (RMI) object, I wrap it as a marshalled object.
+            // This has the effect of extracting the stub rather than the impl object
+            //
+            if (obj instanceof Remote) {
+                try {
+                  obj = new MarshalledObject(obj);
+                } catch (java.io.IOException ioe) {
+                    System.err.println("Error marshalling Remote object");
+                    ioe.printStackTrace();
+                }
+            }
+            
+            res = DirectoryManager.getStateToBind(obj, name, 
+                    realDirContext, 
+                    realDirContext.getEnvironment(), 
+                    attrs);
+        } catch (NamingException ex) {
+            ex.printStackTrace();
+            throw ex;
+        }
+        //System.out.println("Returning a  "+res.getObject().getClass().toString());
+
+        return res;
+    }
+    
+    private Object getBoundObject(Name name, Object obj, Attributes attrs) throws Exception {
+        Object ret;
+        //System.out.println("2) CALLED getBoundObject on a "+obj.getClass().toString());
+        
+        ret = DirectoryManager.getObjectInstance(obj,
+                                                  name,
+                                                  realDirContext, 
+                                                  realDirContext.getEnvironment(), 
+                                                  attrs);
+        
+        //
+        // If this is a marshalled object, I unwrap it here.
+        // Should be an RMI stub.
+        //
+        if (ret instanceof MarshalledObject) {
+            ret = ((MarshalledObject)ret).get();
+        }
+       //System.out.println("Returning a  "+ret.getClass().toString());
+       return ret;
+    }
+    
+    
+    /**
+     * This class and updateSearchResults() provide hooks so that we can call
+     * getBoundObject() on objects that are returned from a search.  lookup()
+     * just calls it directly.
+     */
+    private class LdapNamingEnumeration implements NamingEnumeration {
+        
+        private NamingEnumeration wrapped;
+        public LdapNamingEnumeration (NamingEnumeration wrapped) {
+            this.wrapped = wrapped;
+        }
+        
+        public void close() throws javax.naming.NamingException {
+            wrapped.close();
+        }
+        
+        public java.lang.Object next() throws javax.naming.NamingException {
+            return nextElement();
+        }
+        
+        public boolean hasMore() throws javax.naming.NamingException {
+            return wrapped.hasMore();
+        }
+        
+        public java.lang.Object nextElement() {
+            SearchResult sr = (SearchResult)wrapped.nextElement();
+            try {
+            sr.setObject(getBoundObject(nameParser.parse(sr.getName()), sr.getObject(), sr.getAttributes()));
+            } catch (Exception ex) {
+                System.err.println("Error unwrapping search results");
+                ex.printStackTrace();
+            }
+            return sr;
+        }
+        
+        public boolean hasMoreElements() {
+            return wrapped.hasMoreElements();
+        }
+        
+    }
+    
+    private NamingEnumeration updateSearchResults(NamingEnumeration enum) {
+        return new LdapNamingEnumeration(enum);
     }
     
 }
