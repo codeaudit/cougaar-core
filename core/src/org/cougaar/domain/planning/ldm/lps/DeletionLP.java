@@ -26,7 +26,7 @@ import java.util.Collection;
  * rescinded PlanElements (removed from collection)
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: DeletionLP.java,v 1.1 2001-01-24 12:46:38 tomlinso Exp $
+  * @version $Id: DeletionLP.java,v 1.2 2001-01-31 18:39:38 tomlinso Exp $
   **/
 
 public class DeletionLP
@@ -54,26 +54,19 @@ public class DeletionLP
         if (task.isDeleted()) {
           UID ptuid = task.getParentTaskUID();
           if (ptuid != null) {
-            Task parent = logplan.findTask(ptuid);
-            if (parent == null) {   // Parent is remote
-              sendDeletion(ptuid, task);
+            ClusterIdentifier dst = task.getSource();
+            if (!dst.equals(cid)) {
+              NewDeletion nd = ldmf.newDeletion();
+              nd.setTaskUID(ptuid);
+              nd.setPlan(task.getPlan());
+              nd.setSource(cid);
+              nd.setDestination(dst);
+//                System.out.println(cid + ": sendDeletion to " + dst + " for task " + ptuid);
+              logplan.sendDirective(nd);
             }
           }
         }
       }
     }
-  }
-  
-  private void sendDeletion(UID ptuid, Task t) {
-    ClusterIdentifier dest = t.getSource();
-    NewDeletion nd = ldmf.newDeletion();
-    nd.setTaskUID(ptuid);
-    nd.setPlan(t.getPlan());
-    // set the UID of the child task for Expansion aggregation change purposes
-    ClusterIdentifier newDest = t.getSource();
-    ClusterIdentifier newSource =  cid;
-    nd.setSource(newSource);
-    nd.setDestination(newDest);
-    logplan.sendDirective(nd);
   }
 }
