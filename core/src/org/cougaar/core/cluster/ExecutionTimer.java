@@ -11,6 +11,7 @@
 package org.cougaar.core.cluster;
 
 import org.cougaar.core.cluster.Alarm;
+import alp.util.ShortDateFormat;
 import java.util.*;
 import java.text.*;
 
