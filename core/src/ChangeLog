@@ -1,3 +1,20 @@
+2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Bug #1573 -- NPE in RelayLP
+	Added checks for null target set in all places where it is
+	fetched. This makes the LP more bulletproof against buggy Relay
+	implementations.
+
+2002-06-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Bug #1570 -- Deadlock in name server.
+	Too much "synchronized" code. The mapOfMaps was being needlessly
+	locked during subdirectory creation and removal. The eventuality
+	against which the lock was trying to protect cannot, in fact,
+	happen.
+
 2002-06-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/log/LoggingServiceWithPrefix.java:
