@@ -123,7 +123,9 @@ public class XMLComponentInitializerServiceProvider
       logger.debug((factory.isValidating()) ? "Validating against schema" : "Validating disabled");
     factory.setNamespaceAware(true);
     SAXParser saxParser = factory.newSAXParser();
-    saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+
+    // Uncomment the following line when we go back to xerces2 again - bug 2823
+    //    saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
     
     InputStream istr = ConfigFinder.getInstance().open(filename);
     if (istr == null) {
