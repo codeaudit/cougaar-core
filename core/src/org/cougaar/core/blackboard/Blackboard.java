@@ -32,6 +32,7 @@ import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 
+import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.NamingService;
 
@@ -648,7 +649,8 @@ public class Blackboard extends Subscriber
       SearchControls boundValueSearchControls = new SearchControls();
       boundValueSearchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
       boundValueSearchControls.setReturningObjFlag(true);
-      NamingEnumeration enum = dirContext.search("", 
+      String communitySpec = getCommunitySpec(aba);
+      NamingEnumeration enum = dirContext.search(communitySpec, 
                                                  "(" + roleName + 
                                                  "=" + roleValue + ")",
                                                  boundValueSearchControls);
@@ -669,13 +671,29 @@ public class Blackboard extends Subscriber
   }
   
   
+  // Stub - should be replaced when we figure out semantics for
+  // community name spec in the aba.
+  protected String getCommunitySpec(AttributeBasedAddress aba) {
+    String abaComm = aba.getCommunityName();
+
+    if ((abaComm == null) ||
+        (abaComm.equals("")) ||
+        (abaComm.equals("*"))) {
+      return "";
+    } else {
+      return abaComm;
+    }
+  }
+  
+
   /*
    * Return a reference to the NameServer. 
    */
   public DirContext getNameServer() {
     
     NamingService myNamingService;
-    String MNR_CONTEXT_NAME = "MNRTest";
+    //String MNR_CONTEXT_NAME = "MNRTest";
+    //String COMMUNITIES_CONTEXT_NAME = "Communities";
     String ROLE_ATTRIBUTE_NAME = "Role";
     
     myNamingService = (NamingService)myServiceBroker.getService(this, NamingService.class, null);
@@ -684,7 +702,7 @@ public class Blackboard extends Subscriber
    
     try {
       dirContext = 
-        (DirContext) myNamingService.getRootContext().lookup(MNR_CONTEXT_NAME);
+        (DirContext) myNamingService.getRootContext().lookup(CommunityService.COMMUNITIES_CONTEXT_NAME);
     } catch (NamingException ne) {
       // Ignore for now - if it hasn't been created, we obviously can't send the abas. 
     }
