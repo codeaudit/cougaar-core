@@ -86,7 +86,8 @@ public abstract class MetricsServlet
     }
 
 
-    public void printBottomPage(PrintWriter out) 
+    public void printBottomPage(HttpServletRequest request,
+				PrintWriter out)
     {
 	out.print("<p><b>Color key</b>");
 	Color.colorTest(out);

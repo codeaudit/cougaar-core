@@ -23,6 +23,8 @@ package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import javax.servlet.http.HttpServletRequest;
+
 import org.cougaar.core.component.ServiceBroker;
 
 public class NodeResourcesServlet 
@@ -61,7 +63,7 @@ public class NodeResourcesServlet
 	out.print("</tr>\n");	
     }
 
-    public void printPage(PrintWriter out) {
+    public void printPage(HttpServletRequest request, PrintWriter out) {
 	String nodePath = "Agent(" +getNodeID()+ ")"+PATH_SEPR;
 	
 	//Header Row

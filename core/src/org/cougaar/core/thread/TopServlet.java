@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
 
 class TopServlet extends ServletFrameset
@@ -169,7 +170,7 @@ class TopServlet extends ServletFrameset
 	return "Threads";
     }
 
-    public void printPage(PrintWriter out) 
+    public void printPage(HttpServletRequest request, PrintWriter out) 
     {
 	List status = statusService.getStatus();
 	if (status == null) {

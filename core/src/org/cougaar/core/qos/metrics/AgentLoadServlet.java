@@ -23,6 +23,7 @@ package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
 import java.util.Iterator;
+import javax.servlet.http.HttpServletRequest;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
@@ -43,7 +44,7 @@ public class AgentLoadServlet
 	return "Agent Load for Node " + getNodeID();
     }
 
-    public void printPage(PrintWriter out) {
+    public void printPage(HttpServletRequest request, PrintWriter out) {
 	// Get list of All Agents On this Node
 	java.util.Set localAgents = getLocalAgents();
 	if (localAgents == null) return;

@@ -73,10 +73,12 @@ abstract public class ServletFrameset extends HttpServlet
 
     abstract public String getTitle();
     abstract public String getPath();
-    abstract public void printPage(PrintWriter out);
+    abstract public void printPage(HttpServletRequest request,
+				   PrintWriter out);
 
     // Not abstract, but a no-op by default
-    public void printBottomPage(PrintWriter out)
+    public void printBottomPage(HttpServletRequest request,
+				PrintWriter out)
     {
     }
 
@@ -162,7 +164,7 @@ abstract public class ServletFrameset extends HttpServlet
         // end form
 	out.print("</form>");
 
-	printBottomPage(out);
+	printBottomPage(request, out);
 
 	out.print("</body></html>\n");
     }
@@ -189,7 +191,7 @@ abstract public class ServletFrameset extends HttpServlet
 	out.print("Date: ");
 	out.print(new java.util.Date());
 	
-	printPage(out);
+	printPage(request, out);
 	out.print("</body></html>\n");
     }
 

@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.AgentStatusService;
@@ -77,7 +78,7 @@ public class RemoteAgentServlet
 	}
     }
 
-    public void printPage(PrintWriter out) {
+    public void printPage(HttpServletRequest request, PrintWriter out) {
 	// Get list of All Agents in society
 	Set matches = agentStatusService.getRemoteAgents();
 	if (matches == null) return;
