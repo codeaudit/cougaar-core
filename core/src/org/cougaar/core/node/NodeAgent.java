@@ -43,7 +43,8 @@ import org.cougaar.core.agent.ClusterServesClusterManagement;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.service.NamingService;
-import org.cougaar.core.security.bootstrap.SystemProperties;
+
+import org.cougaar.bootstrap.SystemProperties;
 
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.logging.LoggingControlService;
@@ -152,8 +153,6 @@ import java.beans.Beans;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.LogTarget;
-import org.cougaar.core.security.bootstrap.SystemProperties;
-
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.

@@ -28,6 +28,8 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 import org.cougaar.util.*;
+import org.cougaar.bootstrap.SystemProperties;
+
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.mts.MessageAddress;
@@ -38,7 +40,6 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.SupportsDelayedLPActions;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.component.*;
-import org.cougaar.core.security.bootstrap.SystemProperties;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;

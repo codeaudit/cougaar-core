@@ -78,7 +78,6 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.LogTarget;
 import org.cougaar.bootstrap.Bootstrapper;
-import org.cougaar.core.security.bootstrap.SystemProperties;
 
 /**
  * This class is responsible for creating and maintaining a Node in the alp
