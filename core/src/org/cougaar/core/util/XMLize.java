@@ -200,7 +200,9 @@ public class XMLize {
         int length = Array.getLength(childObject);
         for (int j = 0; j < length; j++) {
           Object value = Array.get(childObject, j);
-          if (value.getClass().isPrimitive()) {
+          if (value == null) {
+            value = "null";
+          } else if (value.getClass().isPrimitive()) {
             value = String.valueOf(value);
           }
           pv.add(new PropertyNameValue(name, value));
