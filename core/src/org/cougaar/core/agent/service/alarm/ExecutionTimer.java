@@ -467,8 +467,6 @@ public class ExecutionTimer extends Timer {
           logger.warn("Multi-node societies will have execution-time clock skew: Set org.cougaar.core.society.startTime or society.timeOffset to avoid this problem.");
         }
       }
-    } else {
-      // nothing to do
     }
     return offset;
   }
@@ -503,7 +501,10 @@ public class ExecutionTimer extends Timer {
             DateFormat f = (new SimpleDateFormat("MM/dd/yyy"));
             f.setTimeZone(TimeZone.getTimeZone("GMT"));
             time = f.parse(value).getTime();
-          } catch (ParseException e1) {}
+          } catch (ParseException e1) {
+	    if (logger.isDebugEnabled())
+	      logger.debug("Failed to parse property " + propertyName + " as date+time or just time: " + value, e1);
+	  }
         }
       }
     }
