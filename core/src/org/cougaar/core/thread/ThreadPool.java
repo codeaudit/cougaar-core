@@ -22,7 +22,6 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.cougaar.util.PropertyParser;
@@ -218,19 +217,20 @@ class ThreadPool
 	    if (thread == null && list_pool != null) {
 		// Use the slow ArrayList.  This is only enabled if
 		// there's no thread limit.
-		Iterator itr  = list_pool.iterator();
-		while (itr.hasNext()) {
-		    candidate = (PooledThread) itr.next();
+                for (int i = 0, n = list_pool.size(); i < n; i++) { 
+		    candidate = (PooledThread) list_pool.get(i);
 		    if (!candidate.in_use) {
 			thread = candidate;
 			thread.in_use = true;
 			break;
 		    }
 		}
-		// None in the list either. Make one and add it,
-		thread = constructReusableThread();
-		thread.in_use = true;
-		list_pool.add(thread);
+                if (thread == null) {
+		    // None in the list either. Make one and add it,
+		    thread = constructReusableThread();
+		    thread.in_use = true;
+		    list_pool.add(thread);
+                }
 	    }
 	}
 

@@ -22,7 +22,6 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.cougaar.core.service.ThreadListenerService;
 
@@ -39,54 +38,48 @@ final class ThreadListenerProxy implements ThreadListenerService
 		    
     synchronized void notifyQueued(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+        for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.threadQueued(schedulable, consumer);
 	}
     }
 
     synchronized void notifyDequeued(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+	for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.threadDequeued(schedulable, consumer);
 	}
     }
 
     synchronized void notifyStart(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+	for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.threadStarted(schedulable, consumer);
 	}
     }
 
     synchronized void notifyEnd(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+	for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.threadStopped(schedulable, consumer);
 	}
     }
 
     synchronized void notifyRightGiven(Scheduler scheduler) {
 	String id = scheduler.getName();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+	for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.rightGiven(id);
 	}
     }
 
     synchronized void notifyRightReturned(Scheduler scheduler) {
 	String id = scheduler.getName();
-	Iterator itr = listeners.iterator();
-	while (itr.hasNext()) {
-	    ThreadListener listener = (ThreadListener) itr.next();
+	for (int i = 0, n = listeners.size(); i < n; i++) {
+	    ThreadListener listener = (ThreadListener) listeners.get(i);
 	    listener.rightReturned(id);
 	}
     }

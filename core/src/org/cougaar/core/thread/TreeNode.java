@@ -22,7 +22,6 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
 
@@ -89,10 +88,8 @@ final class TreeNode
 	scheduler.listQueuedThreads(records);
 	if (children != null) {
 	    synchronized (children) {
-		Iterator itr = children.iterator();
-		TreeNode child = null;
-		while (itr.hasNext()) {
-		    child = (TreeNode) itr.next();
+		for (int i = 0, n = children.size(); i < n; i++) {
+		    TreeNode child = (TreeNode) children.get(i);
 		    child.listQueuedThreads(records);
 		}
 	    }

@@ -23,7 +23,6 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 
 import org.cougaar.util.UnaryPredicate;
 
@@ -52,22 +51,21 @@ public class DynamicSortedQueue
 
     // Utter and total hack.
     void processEach(Processor processor) {
-	Iterator itr = store.iterator();
-	Object thing = null;
-	while (itr.hasNext()) {
-	    thing = itr.next();
+	for (int i = 0, n = store.size(); i < n; i++) {
+	    Object thing = store.get(i);
 	    processor.process(thing);
 	}
     }
 
     public ArrayList filter(UnaryPredicate predicate) {
 	ArrayList result = new ArrayList();
-	Iterator itr = store.iterator();
-	while (itr.hasNext()) {
-	    Object candidate = itr.next();
+	for (int i = 0, n = store.size(); i < n; i++) {
+	    Object candidate = store.get(i);
 	    if (!predicate.execute(candidate)) {
 		result.add(candidate);
-		itr.remove();
+		store.remove(i);
+                i--;
+                n--;
 	    }
 	}
 	return result;
@@ -108,10 +106,9 @@ public class DynamicSortedQueue
 
 
     public Object next() {
-	Iterator itr = store.iterator();
 	Object min = null;
-	while (itr.hasNext()) {
-	    Object candidate = itr.next();
+	for (int i = 0, n = store.size(); i < n; i++) {
+	    Object candidate = store.get(i);
 	    if (min == null) {
 		min = candidate;
 	    } else {

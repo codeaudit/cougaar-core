@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.RandomAccess;
 
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.PropertyParser;
@@ -396,9 +397,8 @@ public class Scheduler
 	    if (logger.isDebugEnabled())
 		logger.debug("Restoring " + requeue.size() + 
 			     " previously disqualified threads");
-            Iterator itr = requeue.iterator();
-            while (itr.hasNext()) {
-                SchedulableObject sched = (SchedulableObject) itr.next();
+            for (int i = 0, n = requeue.size(); i < n; i++) {
+                SchedulableObject sched = (SchedulableObject) requeue.get(i);
                 Starter.push(sched);
             }
             return true;
@@ -408,8 +408,11 @@ public class Scheduler
                 List bad = pendingThreads.filter(predicate);
                 // move any disqualified items on the queue to the
                 // disqualified list
-                for (Iterator i = bad.iterator(); i.hasNext(); ) {
-                    SchedulableObject thread = (SchedulableObject) i.next();
+                boolean useItr = (bad instanceof RandomAccess); 
+                Iterator itr = (useItr ? bad.iterator() : null);
+                for (int i = 0, n = bad.size(); i < n; i++) {
+                    SchedulableObject thread = (SchedulableObject)
+                      (useItr ? itr.next() : bad.get(i));
                     disqualify(thread);
                 }
                 return true;

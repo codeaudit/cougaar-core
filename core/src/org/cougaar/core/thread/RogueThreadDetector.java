@@ -23,6 +23,7 @@ package org.cougaar.core.thread;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.RandomAccess;
 import java.util.TimerTask;
 
 import org.cougaar.core.component.ServiceBroker;
@@ -130,10 +131,11 @@ class RogueThreadDetector
 	int running = 0;
 	int queued = 0;
 	
-	Iterator itr = status.iterator();
-	while (itr.hasNext()) {
+	boolean useItr = (status instanceof RandomAccess);
+	Iterator itr = (useItr ? status.iterator() : null);
+	for (int i = 0, n = status.size(); i < n; i++) {
 	    ThreadStatusService.Record record = (ThreadStatusService.Record)
-		itr.next();
+                (useItr ? itr.next() : status.get(i));
 	    if (record.getState() == ThreadStatusService.RUNNING){
 		running++;
 		if (loggingService.isWarnEnabled() && 

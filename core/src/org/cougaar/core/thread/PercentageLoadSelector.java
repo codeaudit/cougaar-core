@@ -22,6 +22,7 @@
 package org.cougaar.core.thread;
 
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -222,15 +223,14 @@ public class PercentageLoadSelector
 
     // Too inefficient to use but simple to write...
     private void rankChildren() {
-	TreeSet children = new TreeSet(comparator);
-	Iterator itr = scheduler.getTreeNode().getChildren().iterator();
-	TreeNode child = null;
-	while (itr.hasNext()) {
-	    child = (TreeNode) itr.next();
-	    children.add(child.getScheduler());
+	TreeSet result = new TreeSet(comparator);
+        ArrayList children = scheduler.getTreeNode().getChildren();
+	for (int i = 0, n = children.size(); i < n; i++) {
+	    TreeNode child = (TreeNode) children.get(i);
+	    result.add(child.getScheduler());
 	}
-	children.add(scheduler);
-	orderedChildren = children;
+	result.add(scheduler);
+	orderedChildren = result;
     }
 
     public SchedulableObject getNextPending() {

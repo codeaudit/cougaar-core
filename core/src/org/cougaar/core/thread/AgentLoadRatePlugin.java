@@ -24,6 +24,8 @@ package org.cougaar.core.thread;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.RandomAccess;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.plugin.ComponentPlugin;
@@ -137,10 +139,22 @@ public class AgentLoadRatePlugin
     // Schedulable body
     public void run() {
 	Collection agentLoadSnapshot = agentLoadService.snapshotRecords();
-	Iterator itr = agentLoadSnapshot.iterator();
-	while (itr.hasNext()) {
+        boolean useItr;
+        Iterator itr;
+        List l;
+        if (agentLoadSnapshot instanceof List &&
+            agentLoadSnapshot instanceof RandomAccess) {
+          useItr = false;
+          itr = null;
+          l = (List) agentLoadSnapshot;
+        } else {
+          useItr = true;
+          itr = agentLoadSnapshot.iterator();
+          l = null;
+        }
+	for (int i = 0, n = agentLoadSnapshot.size(); i < n; i++) {
 	    AgentLoadService.AgentLoad record = (AgentLoadService.AgentLoad)
-		itr.next();
+		(useItr ? itr.next() : l.get(i));
 	    String agent = record.name;
 	    AgentLoadHistory history = findOrMakeHistory(agent);
 	    history.add(record);
