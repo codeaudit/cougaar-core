@@ -36,7 +36,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component registers the agent name in the
- * ClusterContextTable, which is required for serialization
+ * {@link ClusterContextTable}, which is required for serialization
  * and deserialization of persistence snapshots and messages.
  */
 public final class RegisterContext
@@ -68,7 +68,7 @@ implements Component
           this, AgentIdentificationService.class, ais);
     }
 
-    // add our address to our VM's cluster table
+    // add our address to our VM's table
     if (log.isDebugEnabled()) {
       log.debug("Adding to the cluster context table");
     }

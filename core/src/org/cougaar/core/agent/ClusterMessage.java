@@ -34,21 +34,23 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A org.cougaar.core.agent.ClusterMessage  provides a basic implementation of 
- *  ClusterMessage
+ * The base class for blackboard messages, which pass through the agent's
+ * {@link QueueHandler} before entering the blackboard.
+ * <p>
+ * This should really be abstract and only used by the
+ * {@link org.cougaar.core.blackboard.DirectiveMessage} subclass.
  */
-
 public class ClusterMessage 
   extends Message
 {
   protected long theIncarnationNumber;
 
   /**
-   * @param s The MessageAddress of creator cluster 
-   * @param d The MessageAddress of the target cluster
-   **/
+   * @param s The MessageAddress of creator agent 
+   * @param d The MessageAddress of the target agent
+   */
   public ClusterMessage(MessageAddress s, MessageAddress d, long incarnationNumber) {
-    super( (MessageAddress)s, (MessageAddress)d );
+    super(s, d);
     theIncarnationNumber = incarnationNumber;
   }
 
@@ -56,50 +58,28 @@ public class ClusterMessage
     super();
   }
 
+  // the agent's incarnation number, which is not typically used
   public long getIncarnationNumber() {
     return theIncarnationNumber;
   }
-
   public void setIncarnationNumber(long incarnationNumber) {
     theIncarnationNumber = incarnationNumber;
   }
 
-  /**
-   *  We provide the translation from the object version.  Unfortunately we cannot return
-   *	a different type in java method overloading so the method signature is changed.
-   *  Mark it final to allow the compilier to inline optimize the function.
-   * @return Identifies the originator of this directive
-   */
-  public final MessageAddress getSource(){
+  // for backwards compatibility, rename a couple methods:
+  //   originator --> source
+  //   target --> destination
+  public final MessageAddress getSource() {
     return getOriginator();
   }
-
-  /**
-   *	We provide the translation from the Object version in Message to the 
-   *	Type sepecific version for the Cluster messageing subsystem.
-   *  Mark it final to allow the compilier to inline optimize the function.
-   *	@return Identifies the reciever of the directive
-   */
   public final MessageAddress getDestination() {
     return getTarget();
   }
-  
-  /*
-   *  Source is stored as na object so that message can service all objects.
-   *  Mark it final to allow the compilier to inline optimize the function.
-   * @param asource Set the MessageAddress of the originator of this message
-   */
   public final void setSource(MessageAddress asource) {
-    setOriginator( (MessageAddress)asource );
+    setOriginator(asource);
   }
-  
-  /*
-   *  Target is stored as na object so that message can service all objects.
-   *  Mark it final to allow the compilier to inline optimize the function.
-   * @param adestination Set the MessageAddress of the receiver of this message
-   */
   public final void setDestination(MessageAddress adestination) {
-    setTarget( (MessageAddress)adestination );
+    setTarget(adestination);
   }
 
   public String toString() {

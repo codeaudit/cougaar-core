@@ -32,7 +32,7 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The ReconcileEnabler uses the {@link ReconcileEnablerService}
+ * This component uses the {@link ReconcileEnablerService}
  * provided by the {@link Reconcile} component to enable and
  * disable blackboard reconciliation.
  * <p>

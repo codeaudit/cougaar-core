@@ -41,11 +41,17 @@ import java.util.*;
 
 /**
  * A container for Agents.
- * Although the AgentManager can hold Components other than Agents, the
- * default BinderFactory will only actually accept Agents and other Binders.
- * If you want to load other sorts of components into AgentManager, you'll
- * need to supply a Binder which knows how to bind your Component class.
- * @property org.cougaar.core.node.InitializationComponent is used to indicate what class to initialize communities and Organization assets from. Usually set to XML.
+ * <p> 
+ * Although the AgentManager can hold Components other than Agents,
+ * the default BinderFactory will only actually accept Agents and
+ * other Binders.  If you want to load other sorts of components
+ * into AgentManager, you'll need to supply a Binder which knows
+ * how to bind your Component class.
+ *
+ * @property org.cougaar.core.node.InitializationComponent
+ * Which component should be loaded to advertise the
+ * ComponentInitializerService, which provides the agent
+ * component description configurations.  Usually set to XML.
  */
 public class AgentManager
     extends ContainerSupport
@@ -324,7 +330,7 @@ public class AgentManager
       }
     });
 
-  /** Return the current set of contained Agent's MessageAddresses **/
+  /** Return the current set of contained Agent's MessageAddresses */
   public Set getAgentAddresses() {
     // memorize to avoid consing a new Set each time.
     return (Set) _getAgentAddressesMemo.eval(getAgents());
@@ -365,7 +371,7 @@ public class AgentManager
    * describes the current set of agents.
    * The returned map is Unmodifiable and will be shared across multiple
    * invocations.
-   **/
+   */
   public synchronized Map getAgents() {
     return (Map) _getAgentsMemo.eval(getBoundComponentList());
   }
@@ -373,7 +379,7 @@ public class AgentManager
   /** Interpret an Agent-level ComponentDescription to 
    * determine the agent name in the form of the MessageAddress of the agent.
    * May return null if uninterpretable.
-   **/
+   */
   protected MessageAddress cdToMa(ComponentDescription desc) {
     Object o = desc.getParameter();
     MessageAddress cid = null;

@@ -51,8 +51,9 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component registers with persistence as the component
- * model tracker and either rehydrates or reads the agents'
- * component descriptions.
+ * model tracker and finds the agent's component descriptions
+ * in either a rehydrated persistence snapshot or the agent's
+ * configuration file ({@link ComponentInitializerService}).
  *
  * @see FindComponentsLoadService 
  */

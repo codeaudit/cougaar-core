@@ -43,8 +43,7 @@ import org.cougaar.core.service.DemoControlService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The DemoControl component adds the agent's
- * {@link DemoControlService}.
+ * This component adds the agent's {@link DemoControlService}.
  */
 public final class DemoControl
 extends GenericStateModelAdapter

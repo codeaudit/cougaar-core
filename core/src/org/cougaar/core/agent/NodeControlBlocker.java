@@ -39,9 +39,9 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This component blocks the NodeControlService if the agent's
- * address does not match the node's address, and is typically
- * one of the first component loaded in all agents.
+ * This component blocks the {@link NodeControlService} if the
+ * agent's address does not match the node's address.  This is
+ * typically one of the first component loaded in all agents.
  */
 public final class NodeControlBlocker
 extends GenericStateModelAdapter

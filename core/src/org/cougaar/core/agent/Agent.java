@@ -32,13 +32,16 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /** 
- * This is the basic class required for
- * implementing an Agent.
- **/
+ * The abstract agent base class, which is subclassed by {@link
+ * AgentImpl}.
+ * <p>
+ * This is primarily a marker class, since AgentImpl is used for
+ * all agent types. 
+ */
 public abstract class Agent 
 extends ContainerSupport
 {
-  /** The Insertion point for any Agent, defined relative to the AgentManager. **/
+  /** The Insertion point for any Agent, defined relative to the AgentManager. */
   public static final String INSERTION_POINT = AgentManager.INSERTION_POINT + ".Agent";
 
   public boolean add(Object o) {
@@ -55,6 +58,6 @@ extends ContainerSupport
     return INSERTION_POINT;
   }
 
-  //backwards compatability to attach to Cluster Agents for now
+  //backwards compatability for direct pointers to the agent
   public abstract MessageAddress getAgentIdentifier();
 }

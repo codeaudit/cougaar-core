@@ -35,7 +35,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * 
+ * The AgentContainer manages all agents on the node.
  */
 public interface AgentContainer {
 
@@ -88,7 +88,7 @@ public interface AgentContainer {
    * Add a component to this agent container. Only certain components
    * are allowed using this method. In particular, agents cannot be
    * added.
-   **/
+   */
   boolean add(Object o);
 
   /**
@@ -103,6 +103,6 @@ public interface AgentContainer {
    * Remove component from this agent container. Only components added
    * with the add method can be removed this way. Agents cannot be
    * removed with this method.
-   **/
+   */
   boolean remove(Object o);
 }

@@ -32,9 +32,8 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The MessageSwitchUnpend component invokes the
- * {@link MessageSwitchUnpendService} at the end of the agent
- * load.
+ * This component invokes the {@link MessageSwitchUnpendService} at
+ * the end of the agent load.
  *
  * @see MessageSwitchUnpendService 
  */

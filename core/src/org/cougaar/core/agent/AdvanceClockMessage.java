@@ -31,17 +31,16 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A org.cougaar.core.agent.ClusterMessage  provides a basic implementation of 
- *  ClusterMessage
+ * This a multicast message sent by the DemoTimeControlService to
+ * set the execution time on all nodes.
  */
-
 public class AdvanceClockMessage extends Message
 {
   private ExecutionTimer.Parameters theParameters;
 
   /**
    * Advance the society's clock to a fixed (stopped) time.
-   **/
+   */
   public AdvanceClockMessage(MessageAddress s, ExecutionTimer.Parameters parameters) {
     super(s, MessageAddress.MULTICAST_SOCIETY);
     theParameters = parameters;

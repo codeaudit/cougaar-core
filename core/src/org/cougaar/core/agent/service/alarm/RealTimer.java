@@ -27,9 +27,8 @@
 package org.cougaar.core.agent.service.alarm;
 
 /** 
- * Instantiable Timer to track Real (System, "Wall Clock") Time.
- **/
-
+ * A Timer for real time ("system", or "wall clock" time).
+ */
 public class RealTimer extends Timer {
   public RealTimer() {}
 

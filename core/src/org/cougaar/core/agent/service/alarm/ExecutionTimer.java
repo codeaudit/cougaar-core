@@ -38,6 +38,10 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
+ * A Timer for execution time (artificial "execution" or "scenario"
+ * time), which is a modifiable offset from real time with a rate
+ * multiplier.
+ * <p>
  * Control the advancement of Execution time. Execution time is a
  * monotonically increasing value whose rate can be controlled through
  * the API implemented in this class. Execution time is nominally the
@@ -47,19 +51,20 @@ import org.cougaar.util.log.Logging;
  * offset. The rate of advancment may be zero (time stands still) or
  * any positive value. Excessively high rates may lead to anomalous
  * behavior.
- *
- * The equation of time is Te = Ts * Km + Ko where:
+ * <p>
+ * The equation of time is Te = Ts * Km + Ko where:<pre>
  *  Te is Execution time
  *  Ts is system time (System.currentTimeMillis())
  *  Km is the (positive) rate of advancement
  *  Ko is the offset
- *
+ * </pre>
+ * <p>
  * The System.currentTimeMillis() is presumed to be in sync in all
- * clusters within a few milliseconds by using NTP (Network Time
+ * agents within a few milliseconds by using NTP (Network Time
  * Protocol). The maximum offset of the system clocks limits the
  * maximum value that Km can have without introducing serious
  * anomalies.
- *
+ * <p>
  * It is necessary for execution time to be monotonic. Monotonicity
  * must be achieved even in the face of delays in propagating changes
  * in the parameters of execution time advancement. The message that
@@ -69,22 +74,22 @@ import org.cougaar.util.log.Logging;
  * transmission is delayed or if insufficient time is allowed, the
  * equation of time must be altered to assure monotonicity.
  * Furthermore, a succession of time advancement must ultimately
- * result in all clusters using the same time parameters. This is
+ * result in all agents using the same time parameters. This is
  * achieved by defining a sorting order on the time parameters that
  * establishes a dominance relation between all such parameter sets.
- *
- * Time change messages contain:
- *
+ * <p>
+ * Time change messages contain:<pre>
  *   New rate
  *   New offset
  *   Changeover (real) time
- *
+ * </pre>
+ * <p> 
  * The changeover time is the first order sorting factor. If the changeover
  * times are equal, the parameters yielding the highest execution time value
  * at the changeover time dominate. If the execution times at the
  * changeover time are equal, the change with the highest offset
  * dominates.  
- * 
+ * <p> 
  * The changeover time in this message is used as an offset from the
  * current system time --- at current system time + changeover the new parameters
  * will take effect.  Normally, though, an absolute real time sync point should be
@@ -92,19 +97,20 @@ import org.cougaar.util.log.Logging;
  * assuming all host clocks are synchronized using NTP).  An absolute real time
  * change time can be specified using the ExecutionTimer.Parameters.create method,
  * and setting changeIsAbsolute = true.
- *
+ * <p>
  * We want the execution timer to have the ability to initialize the natural-time
  * clock to a particular time. This is
  * problematic since we represent execution time as an offset from
  * system time. Computing that offset consistently across all
- * clusters means that we have to compute a time (in the past) at
+ * agents means that we have to compute a time (in the past) at
  * which the parameters became effective and then compute the offset
- * relative to that. <p>
+ * relative to that.
+ * <p>
  * If org.cougaar.core.society.startTime is provided, we can 
  * synchronize from a common baseline point to reasonable accuracy.
  * Otherwise, there is no way for all agents to reliably
  * compute the same value, so we'll assume simultaneous starts.
- *
+ * 
  * @property org.cougaar.core.agent.startTime The date to use as the
  * start of execution for demonstration purposes.  Accepts date/time
  * in the form of <em>MM/dd/yyy H:mm:ss</em> where the time sequence
@@ -126,8 +132,7 @@ import org.cougaar.util.log.Logging;
  * these other properties are ignored).  Typical usage would be to specify
  * the execution-time offset when (re)starting a node to match the other nodes
  * in the society.
- *
- **/
+ */
 public class ExecutionTimer extends Timer {
   private static final Logger logger = Logging.getLogger("org.cougaar.core.agent.service.alarm.ExecutionTimer");
 
@@ -174,7 +179,7 @@ public class ExecutionTimer extends Timer {
 
   /**
    * Description of a Parameters change (relative to some implicit Parameters)
-   **/
+   */
   public static class Change {
     long theOffsetDelta;       // Step in the offset
     double theRate;             // New rate is absolute
@@ -189,7 +194,7 @@ public class ExecutionTimer extends Timer {
   /**
    * An array of Parameters. The array is sorted in the order in which
    * they are to be applied. The 0-th element is the current setting.
-   **/
+   */
   Parameters[] theParameters = new Parameters[] {
     new Parameters(1.0, 0L, 0L),
     null,                       // Allow up to five new parameters
@@ -204,7 +209,7 @@ public class ExecutionTimer extends Timer {
   /**
    * Create Parameters that jump time by a specified amount and
    * continue at a new rate thereafter.
-   **/
+   */
   public Parameters create(long millis,
                                         boolean millisIsAbsolute,
                                         double newRate)
@@ -220,7 +225,7 @@ public class ExecutionTimer extends Timer {
    * is false, the current rate if running is true and the current
    * rate is greater than 0.0 or 1.0 if running is true and the
    * current rate is stopped.
-   **/
+   */
   public Parameters create(long millis,
                            boolean millisIsAbsolute,
                            double newRate,
@@ -238,7 +243,7 @@ public class ExecutionTimer extends Timer {
    * rate is greater than 0.0 or 1.0 if running is true and the
    * current rate is stopped.
    * @deprecated Use the version that allows specifying absolute change time instead
-   **/
+   */
   public Parameters create(long millis,
                            boolean millisIsAbsolute,
                            double newRate,
@@ -260,7 +265,7 @@ public class ExecutionTimer extends Timer {
    * The new parameters can go into effect at a time relative to
    * the current system time (changeIsAbsolute == false), or at a
    * specific system time (changeIsAbsolute == true)
-   **/
+   */
   public Parameters create(long millis,
                            boolean millisIsAbsolute,
                            double newRate,
@@ -310,7 +315,7 @@ public class ExecutionTimer extends Timer {
    * Creates a series of changes. The first change is relative to the
    * current Parameters, the subsequent changes are relative to the
    * previous change.
-   **/
+   */
   public Parameters[] create(Change[] changes) {
     synchronized (sem) {
       Parameters[] result = new Parameters[changes.length];
@@ -337,7 +342,7 @@ public class ExecutionTimer extends Timer {
    * are compatible with the real time being returned. The pending
    * parameters become current if their time of applicability has been
    * reached.
-   **/
+   */
   private long getNow() {
     long now = System.currentTimeMillis();
     while (theParameterCount > 1 && theParameters[1].theChangeTime <= now) {
@@ -349,7 +354,7 @@ public class ExecutionTimer extends Timer {
 
   /**
    * Get the current execution time in millis.
-   **/
+   */
   public long currentTimeMillis() {
     synchronized (sem) {
       long now = getNow();
@@ -365,7 +370,7 @@ public class ExecutionTimer extends Timer {
    * Insert new Parameters into theParameters. If the new parameters
    * apply before the last element of theParameters, ignore them.
    * Otherwise, append the new parameters overwriting the last parameters if necessary.
-   **/
+   */
   public void setParameters(Parameters parameters) {
     synchronized (sem) {
       getNow();                   // Bring parameters up-to-now
@@ -402,7 +407,7 @@ public class ExecutionTimer extends Timer {
   }
 
   /**
-   **/
+   */
   public ExecutionTimer() {
     long offset = computeInitialOffset();
     if (offset != 0L) {

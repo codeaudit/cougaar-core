@@ -32,9 +32,8 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The MessageSwitchShutdown component invokes the
- * {@link MessageSwitchShutdownService} during agent
- * suspend and resume.
+ * This component invokes the {@link MessageSwitchShutdownService}
+ * during agent suspend and resume.
  *
  * @see MessageSwitchUnpendService 
  */

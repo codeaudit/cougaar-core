@@ -32,9 +32,9 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
-/** Essential services for serving UniqueObjects to
- * parts of a cluster.
- **/
+/**
+ * The UIDService implementation.
+ */
 final class UIDServiceImpl implements UIDService {
   private MessageAddress cid;
   private String prefix;
@@ -45,41 +45,48 @@ final class UIDServiceImpl implements UIDService {
     prefix = cid.getAddress();
   }
 
-  /** MessageAddress of the proxy server.
-   *  This might go away if we ever really separated proxy 
-   * servers from clusters.
-   **/
+  /**
+   * MessageAddress of the agent.
+   * <p> 
+   * This is primarily for backwards compatibility; components
+   * should get their agent's address through the
+   * {@link org.cougaar.core.service.AgentIdentificationService},
+   * which the common component base classes provide as a
+   * "getAgentIdentifier()" method.
+   */
   public MessageAddress getMessageAddress() {
     return cid;
   }
 
-  // long getNextUniqueID();
   private synchronized long nextID() {
     return ++count;
   }
 
-  /** get the next Unique ID for the Proxiable object registry
-   * at this server.
-   * It is better for Factories to use the registerUniqueObject method.
-   **/
+  /** Take the next Unique ID. */
   public UID nextUID() {
     return new UID(prefix, nextID());
   }
 
-  /** assign a new UID to a unique object.
-   **/
+  /**
+   * Assign the next UID to a unique object.
+   * <p>
+   * This is equivalent to <code>o.setUID(nextUID())</code>.
+   */
   public UID registerUniqueObject(UniqueObject o) {
     UID uid = nextUID();
     o.setUID(uid);
     return uid;
   }
     
-  /** called by persistence to get a snapshot of the state. **/
+  // persistence backwards compatibility
+  //
+  // This is no longer used, since we assume that a rehydrated
+  // agent's current time is greater than its crashed instance's
+  // counter.  If we hand out UIDs faster than one a millisecond
+  // then this could cause problems!
   public synchronized PersistenceState getPersistenceState() {
     return new UIDServerPersistenceState(count);
   }
-
-  /** called during persistence rehydration to reset the state **/
   public synchronized void setPersistenceState(PersistenceState state) {
     if (state instanceof UIDServerPersistenceState) {
       long persistedCount = ((UIDServerPersistenceState)state).count;
@@ -88,10 +95,6 @@ final class UIDServiceImpl implements UIDService {
       throw new IllegalArgumentException(state.toString());
     }
   }
-
-  /** private implementation of PersistenceState for saving the
-   * UID counter.
-   **/
   private static class UIDServerPersistenceState implements PersistenceState {
     public long count;
     public UIDServerPersistenceState(long count) {

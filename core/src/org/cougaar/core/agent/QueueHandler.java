@@ -45,7 +45,7 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The QueueHandler buffers blackboard messages while the agent is
+ * This component buffers blackboard messages while the agent is
  * loading, plus switches threads when receiving messages to avoid
  * blocking the message transport thread.
  */

@@ -32,9 +32,10 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.DemoControlService;
 
-/** a Service for getting at Alarm information
- **/
-
+/**
+ * The service provider for the DemoControlService, based upon the
+ * ClusterServesClocks API.
+ */
 public class DemoControlServiceProvider implements ServiceProvider {
   private ClusterServesClocks agentClock;
 

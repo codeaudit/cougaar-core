@@ -54,9 +54,10 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 
 /**
- * The MessageSwitch registers the agent in the
+ * This component registers the agent in the
  * {@link MessageTransportService} and forwards all received
- * messages through the {@link MessageSwitchService}.
+ * messages through the {@link MessageSwitchService} to the
+ * agent-internal message handlers.
  *
  * @property org.cougaar.core.agent.showTraffic
  *   If <em>true</em>, shows '+' and '-' on message sends and receives
@@ -232,7 +233,7 @@ implements Component
   }
 
   private void load_internal_register_with_mts() {
-    // get the Messenger instance from ClusterManagement
+    // register with the message transport
     if (log.isInfoEnabled()) {
       log.info("Registering with the message transport");
     }
@@ -614,12 +615,12 @@ implements Component
    * MessageSwitchImpl is a MessageHandler which calls an ordered 
    * list of other MessageHandler instances in order until 
    * one returns a true value from handle.
-   **/
+   */
   private static final class MessageSwitchImpl implements MessageHandler {
     private final LoggingService log;
-    /** List of MessageHandler instances **/
+    /** List of MessageHandler instances */
     private final List handlers = new ArrayList(11);
-    /** list of pending (unhandled) messages - protected by lock on handlers. **/
+    /** list of pending (unhandled) messages - protected by lock on handlers. */
     private List pendingMessages = new ArrayList(11);
 
     public MessageSwitchImpl(LoggingService log) {

@@ -29,8 +29,10 @@ package org.cougaar.core.agent;
 import org.cougaar.core.component.Service;
 
 /**
- * This service is used by the MessageSwitch service to
- * obtain the local agent's incarnation number.
+ * This service is used by the {@link MessageSwitch} to
+ * obtain the local agent's incarnation number, which is
+ * updated every time the agent is rehydrated (but not on
+ * moves).
  *
  * @see Topology
  * @see MessageSwitch

@@ -45,9 +45,9 @@ import org.cougaar.core.service.identity.TransferableIdentity;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The AcquireIdentity component acquires the agent's security
- * identity from the optional {@link AgentIdentityService} and
- * transfers the identity when the agent moves.
+ * This component acquires the agent's security identity from the
+ * optional {@link AgentIdentityService} and transfers the identity
+ * when the agent moves.
  *
  * @see AgentIdentityService 
  */

@@ -36,8 +36,8 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The AgentIdentificationServiceComponent is a provider class for the 
- * AgentIdentification service within an agent.
+ * This component advertises the AgentIdentificationService.
+ * @deprecated AgentImpl does this now. 
  */
 public final class AgentIdentificationServiceComponent 
 extends GenericStateModelAdapter

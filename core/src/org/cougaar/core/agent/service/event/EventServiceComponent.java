@@ -38,8 +38,9 @@ import org.cougaar.util.log.LoggerFactory;
 import org.cougaar.util.log.Logging;
 
 /**
- * The EventServiceComponent is a provider class for the 
- * Event service within an agent.
+ * This component advertises the EventService, which is implemented
+ * as a wrapper around the LoggingService with an "EVENT." category
+ * prefix.
  */
 public final class EventServiceComponent 
 extends GenericStateModelAdapter

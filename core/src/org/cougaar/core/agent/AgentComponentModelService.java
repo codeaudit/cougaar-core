@@ -30,8 +30,8 @@ import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.Service;
 
 /**
- * Allow a component within the agent to capture the agent's
- * component hierarchy and StateObject state.
+ * This service allows a component to capture its agent's
+ * component model state. 
  * <p>
  * This is only for use by {@link RehydrateEarly}, to capture
  * the ComponentDescriptions.  In the future this will be

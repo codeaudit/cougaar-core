@@ -41,7 +41,7 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The Events component generates {@link EventService} events
+ * This component generates {@link EventService} events
  * to announce the agent's load/start/stop/<i>etc</i> and move.
  */
 public final class Events 

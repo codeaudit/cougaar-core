@@ -40,7 +40,7 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The AlarmComponent adds the agent's {@link AlarmService}, based
+ * This component adds the agent's {@link AlarmService}, based
  * upon the node-level {@link RealTimeService} and
  * {@link NaturalTimeService}.
  * 

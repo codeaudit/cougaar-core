@@ -31,12 +31,15 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 
-/** Allow Agent subcomponents access to Message send and receive in a controlled way **/
+/**
+ * Service for agent subcomponents to send/receive messages.
+ * This wraps the MessageTransportService. 
+ */
 public interface MessageSwitchService extends Service {
-  /** Send a message via the Agent's MTS **/
+  /** Send a message via the Agent's MTS */
   void sendMessage(Message m);
-  /** Register a MessageHandler for getting messages from the MTS **/
+  /** Register a MessageHandler for getting messages from the MTS */
   void addMessageHandler(MessageHandler mh);
-  /** What is the MessageAddress for the entity which will actually send messages? **/
+  /** What is the MessageAddress for the entity which will actually send messages? */
   MessageAddress getMessageAddress();
 }

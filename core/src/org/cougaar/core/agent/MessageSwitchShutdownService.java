@@ -29,7 +29,7 @@ package org.cougaar.core.agent;
 import org.cougaar.core.component.Service;
 
 /**
- * This service is used to shutdown the message switch during
+ * This service is used to shutdown the {@link MessageSwitch} during
  * agent "suspend()" and restart the message switch during
  * agent "resume()".
  */

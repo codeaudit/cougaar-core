@@ -26,16 +26,17 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-/** Interface for Periodic Alarms which are alarms which do not
+/**
+ * Interface for Periodic Alarms which are alarms which do not
  * naturally expire.
- *  hasExpired should only be true when the alarm was cancelled.
- **/
-
+ * hasExpired should only be true when the alarm was cancelled.
+ */
 public interface PeriodicAlarm extends Alarm {
-  /** start counting down again.  The current time is passed in
+  /**
+   * start counting down again.  The current time is passed in
    * so that the computation of the next expirationtime can 
    * take it into account - typically, by adding some number of
    * millis to currentTime.
-   **/
+   */
   void reset(long currentTime);
 }

@@ -32,9 +32,7 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.AgentContainmentService;
 
 /**
- * Agent's service provider for its "containment service",
- * which allows child components of the agent to interact
- * with the agent's container (add, remove, etc).
+ * Service provider for the AgentContainmentService. 
  */
 public class AgentContainmentServiceProvider
 implements ServiceProvider

@@ -37,25 +37,29 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
-/** Implement a basic timer class that activates Alarm instances on or
- * after a specific time.  The base class operated on System time, but 
- * subclasses may operate on different scales.
- *
- * Visible feedback may be controlled by standard logging for class:
+/**
+ * Implement a basic timer class (not to be confused with
+ * {@link java.util.Timer}) that invokes Alarm "expire()" methods
+ * when they are due.
+ * <p>
+ * The base class operated on System time, but subclasses may operate
+ * on different scales.
+ * <p>
+ * Visible feedback may be controlled by standard logging for class:<pre>
  * org.cougaar.core.agent.service.alarm.Timer:
- * 
  * WARN also enables logging of when (real-time only) alarms are more than Epsilon millis late 
  * INFO also enables logging of when alarms take more than Epsilon millis to ring
  * DEBUG also enables reports of every alarm ringing.
- *
+ * </pre> 
+ * <p> 
  * Subclasses may override the feedback printed.
+ *
  * @property org.cougaar.core.agent.service.alarm.Timer.epsilon=10000 milliseconds
  * considered a relatively long time for alarm delivery.
  * @property org.cougaar.core.agent.service.alarm.Timer.useSchedulable=true Set to false
  * to use in-band delivery of alarm sounding rather than using a schedulable to wrap the
  * delivery.
- **/
-
+ */
 public abstract class Timer implements Runnable {
   protected final static Logger log = Logging.getLogger(Timer.class);
 
@@ -68,7 +72,7 @@ public abstract class Timer implements Runnable {
         "org.cougaar.core.agent.service.alarm.Timer.useSchedulable",
         true);
 
-  /** all alarms **/
+  /** all alarms */
   // this could be optimized to use a heap
   private final ArrayList alarms = new ArrayList();
 
@@ -77,13 +81,13 @@ public abstract class Timer implements Runnable {
    * need to be added back on.  These are collected and added
    * back in a second pass so that we don't get terrible behavior
    * if someone abuses a periodic alarm
-   **/
+   */
   // only modified in the run loop
   private final ArrayList ppas = new ArrayList();
 
   /** Pending Alarms.  
    * alarms which need to be rung, but we haven't gotten around to yet.
-   **/
+   */
   // only modified in the run loop thread
   private final ArrayList pas = new ArrayList();
 
@@ -147,7 +151,7 @@ public abstract class Timer implements Runnable {
   /**
    * Override this to specify time before next rate change. It is
    * always safe to underestimate.
-   **/
+   */
   protected long getMaxWait() {
     return 10000000000L;        // A long time
   }

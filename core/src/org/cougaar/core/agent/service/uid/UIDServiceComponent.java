@@ -35,8 +35,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The UIDServiceComponent is a provider class for the UID 
- * service within an agent.
+ * Ths component advertises the UIDService.
  */
 public final class UIDServiceComponent 
 extends GenericStateModelAdapter

@@ -36,10 +36,8 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The SchedulerServiceComponent is a provider class for the Scheduler 
- * service within an agent.
- * <p>
- * This is typically just a wrapper for the ThreadService.
+ * This component advertises the SchedulerService, which is typically
+ * just a wrapper around the ThreadService. 
  */
 public final class SchedulerServiceComponent 
 extends GenericStateModelAdapter

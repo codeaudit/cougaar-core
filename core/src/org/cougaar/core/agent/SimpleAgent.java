@@ -26,6 +26,6 @@
 
 package org.cougaar.core.agent;
 
-/** @deprecated see AgentImpl */
+/** @deprecated see {@link AgentImpl} */
 public class SimpleAgent extends AgentImpl {
 }

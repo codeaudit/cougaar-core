@@ -30,8 +30,8 @@ import org.cougaar.core.component.Service;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * Allow a component within the agent to transition the agent's state
- * (suspend/resume/stop/unload).
+ * This service allows a component within the agent to transition the
+ * agent's state (suspend/resume/stop/unload).
  * <p>
  * This is only for use by {@link RehydrateEarly}, to transition
  * the state for agent mobility.

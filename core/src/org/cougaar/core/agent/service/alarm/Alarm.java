@@ -26,18 +26,22 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-/** Interface for Alp-time-based Alarms.
+/**
+ * Interface for an object telling the AlarmService to wake a client
+ * in the future.
  *
  * @see org.cougaar.core.service.AlarmService
- **/
+ */
 public interface Alarm {
-  /** @return absolute time (in milliseconds) that the Alarm should
-   * go off.  
-   * This value must be implemented as a fixed value.
-   **/
+  /**
+   * @return absolute time (in milliseconds) that the Alarm should
+   * go off.  This value must be implemented as a fixed value.
+   */
   long getExpirationTime();
   
-  /** Called by the cluster clock when clock-time >= getExpirationTime().
+  /**
+   * Called by the agent's alarm time when clock-time &gt;= getExpirationTime().
+   * <p> 
    * The system will attempt to Expire the Alarm as soon as possible on 
    * or after the ExpirationTime, but cannot guarantee any specific
    * maximum latency.
@@ -45,15 +49,19 @@ public interface Alarm {
    * Implementations should make certain that this code does not block
    * for a significant length of time.
    * If the alarm has been canceled, this should be a no-op.
-   **/
+   */
   void expire();
 
-  /** @return true IFF the alarm has rung (expired) or was canceled. **/
+  /**
+   * @return true IFF the alarm has rung (expired) or was canceled.
+   */
   boolean hasExpired();
 
-  /** can be called by a client to cancel the alarm.  May or may not remove
-   * the alarm from the queue, but should prevent expire from doing anything.
+  /**
+   * This method can be called by a client to cancel the alarm.
+   * May or may not remove the alarm from the queue, but should
+   * prevent expire from doing anything.
    * @return false IF the the alarm has already expired or was already canceled.
-   **/
+   */
   boolean cancel();
 }

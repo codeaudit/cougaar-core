@@ -30,8 +30,9 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Track blackboard message traffic, which is used to poll
- * for agent restarts and force reconciliation.
+ * This service tracks blackboard message traffic, which is used to
+ * poll for agent restarts and force reconciliation in case state
+ * was lost.
  */
 public interface ReconcileAddressWatcherService extends Service {
   void sentMessageTo(MessageAddress addr);

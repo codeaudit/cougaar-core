@@ -54,9 +54,9 @@ import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The Reconcile component watches blackboard message traffic
- * and periodically checks the white pages for agent restarts,
- * which require blackboard-to-blackboard state reconciliation.
+ * This component watches blackboard message traffic and periodically
+ * checks the white pages for agent restarts, which require
+ * blackboard-to-blackboard state reconciliation.
  */
 public final class Reconcile
 extends GenericStateModelAdapter
@@ -284,7 +284,7 @@ implements Component
    * agent or we have just restarted and are sending restart messages. In 
    * both cases, it is ok to store the special "unknown incarnation" marker
    * because we do not want to detect any restart.
-   **/
+   */
   private void recordAddress(MessageAddress agentId) {
     // only include agent addresses in restart checking
     synchronized (incarnationMap) {

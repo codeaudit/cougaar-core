@@ -50,8 +50,12 @@ import org.cougaar.util.Trigger;
  * Package-private scheduler service provider implementation, for
  * use by the SchedulerServiceComponent.
  * <p>
- * Scheduler that runs its schedulees in a shared thread
- * The schedulees tell the Scheduler they want to be run via a Trigger.
+ * The standard "normal" scheduler just wraps the new ThreadService.
+ * In fact, all SchedulerService clients will likely be ported to
+ * use the ThreadService directly, making this class obsolete. 
+ * <p>
+ * Scheduler that runs its schedulees in a shared thread.<br>
+ * The schedulees tell the Scheduler they want to be run via a Trigger.<br>
  * The schedulees pass in a Trigger that the Scheduler calls to activate them.
  * <p>
  * Debugging and behavior parameters: The basic idea is to watch how simple
@@ -77,26 +81,26 @@ import org.cougaar.util.Trigger;
  * @property org.cougaar.core.service.SchedulerService.schedulerThreads=4
  * The number of threads to use as workers for the MultiScheduler - these
  * threads are shared among all scheduled components in the node.
- **/
+ */
 class SchedulerServiceProvider 
   implements ServiceProvider
 {
-  /** Should we keep statistics on plugin runtimes? **/
+  /** Should we keep statistics on plugin runtimes? */
   static boolean keepingStatistics = false;
 
-  /** Should we dump the stats periodically? **/
+  /** Should we dump the stats periodically? */
   static boolean dumpingStatistics = false;
 
-  /** Should we watch for blocked plugins? **/
+  /** Should we watch for blocked plugins? */
   static boolean isWatching = true;
 
-  /** how long a plugin runs before we complain when watching (default 2 minutes)**/
+  /** how long a plugin runs before we complain when watching (default 2 minutes)*/
   static long warningTime = 120*1000L; 
 
-  /** Should we use a single per-node/vm scheduler (true) or per-agent (false)? **/
+  /** Should we use a single per-node/vm scheduler (true) or per-agent (false)? */
   static boolean staticScheduler = false;
 
-  /** How many threads should we use to schedule components when using the MultiScheduler (4) **/
+  /** How many threads should we use to schedule components when using the MultiScheduler (4) */
   static int nThreads = 4;
 
   static final Class[] emptyTypeArray = new Class[0];
@@ -170,16 +174,16 @@ class SchedulerServiceProvider
       removeClient(stopPokingMe);
     }
 
-    /** Lazy startup of scheduler threads **/
+    /** Lazy startup of scheduler threads */
     abstract void assureStarted();
 
-    /** add a client to the schedule list **/
+    /** add a client to the schedule list */
     abstract void addClient(Trigger client, Object requestor);
 
-    /** called to request that client stop being scheduled **/
+    /** called to request that client stop being scheduled */
     abstract void removeClient(Trigger client);
 
-    /** called to request that client be activated asap **/
+    /** called to request that client be activated asap */
     abstract void scheduleClient(Trigger client);
 
     void suspend() {}
@@ -187,7 +191,7 @@ class SchedulerServiceProvider
 
     /**
      * Components hook into me
-     **/
+     */
     class SchedulerCallback implements Trigger {
       private Trigger client;
       public SchedulerCallback (Trigger manageMe) {
@@ -195,7 +199,7 @@ class SchedulerServiceProvider
       }
       /**
        * Add component to the list of pokables to be triggerd
-       **/
+       */
       public void trigger() {
         scheduleClient(client);
       }
@@ -240,7 +244,7 @@ class SchedulerServiceProvider
   /**
    * NormalScheduler applies threads from a ThreadService to scheduled
    * clients. Requests are handled in the order they are requested.
-   **/
+   */
   static class NormalScheduler
     extends SchedulerBase 
   {
@@ -249,7 +253,7 @@ class SchedulerServiceProvider
 
     /**
      * Maps client Triggers to Worker instances
-     **/
+     */
     private final Map clients = new HashMap(13);
 
     NormalScheduler(ThreadService threadService, LoggingService log) {
@@ -315,7 +319,7 @@ class SchedulerServiceProvider
 
   /** MultiScheduler applies a fixed set of workers against scheduled
    * clients. Requests are handled in the order they are requested.
-   **/
+   */
   static class MultiScheduler
     extends SchedulerBase 
   {
@@ -354,7 +358,7 @@ class SchedulerServiceProvider
       }
     }
 
-    /** the scheduler instance (if started) **/
+    /** the scheduler instance (if started) */
     private boolean running = false;
 
     private ArrayList threads = null;
@@ -437,7 +441,7 @@ class SchedulerServiceProvider
 
   /** SimpleScheduler is a simple on-demand scheduler of trigger requests.
    * Requests are handled in the order they are requested.
-   **/
+   */
   static class SimpleScheduler
     extends SchedulerBase 
   {
@@ -469,7 +473,7 @@ class SchedulerServiceProvider
       sem.set();
     }
 
-    /** the scheduler instance (if started) **/
+    /** the scheduler instance (if started) */
     private Thread schedulerThread = null;
     private boolean running = false;
 
@@ -563,14 +567,14 @@ class SchedulerServiceProvider
       }
     }
 
-    /** List<WorkerBase> **/
+    /** List<WorkerBase> */
     private ArrayList pims = new ArrayList();
     
     synchronized void register(WorkerBase worker) {
       pims.add(worker);
     }
 
-    /** dump reports on plugin usage **/
+    /** dump reports on plugin usage */
     private synchronized void report() {
         
       String nodeName = System.getProperty("org.cougaar.core.node.Node.name", "unknown");
@@ -585,7 +589,7 @@ class SchedulerServiceProvider
       }
     }
 
-    /** check the health of each plugin manager, reporting problems **/
+    /** check the health of each plugin manager, reporting problems */
     private synchronized void check() {
       for (Iterator i = pims.iterator(); i.hasNext(); ) {
         WorkerBase pim = (WorkerBase) i.next();
@@ -642,7 +646,7 @@ class SchedulerServiceProvider
 
   // support classes
 
-  /** proxy class to shield the real scheduler from clients **/
+  /** proxy class to shield the real scheduler from clients */
   static final class SchedulerProxy implements SchedulerService {
     private final SchedulerBase scheduler;
     private final Object requestor;

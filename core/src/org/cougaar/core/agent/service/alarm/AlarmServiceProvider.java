@@ -31,9 +31,10 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.AlarmService;
 
-/** a Service for getting at Alarm information
- **/
-
+/**
+ * The service provider for the AlarmService, based upon the
+ * ClusterServesClocks API.
+ */
 public class AlarmServiceProvider implements ServiceProvider {
   private ClusterServesClocks agentClock;
 
@@ -49,7 +50,9 @@ public class AlarmServiceProvider implements ServiceProvider {
     }
   }
 
-  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
+  public void releaseService(
+      ServiceBroker sb, Object requestor,
+      Class serviceClass, Object service) {
   }
 
   private final class AlarmServiceImpl implements AlarmService {

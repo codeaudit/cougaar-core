@@ -28,8 +28,9 @@ package org.cougaar.core.agent;
 
 
 /**
- * Service for components to be notified of agent mobility.
- *
+ * This service allows {@link MobilityNotificationClient} clients to
+ * register for agent mobility callbacks.
+ * <p>
  * The service requestor must implement the
  * {@link MobilityNotificationClient} API.
  */

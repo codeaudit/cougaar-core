@@ -38,8 +38,11 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.util.PropertyParser;
 
 /**
- * Hard-coded components, for use by agent boostrappers until the
- * file reader is completed (bug 2522).
+ * Hard-coded components for INI and DB configurations, which
+ * have been moved into the XML reader's XSL templates.
+ * <p>
+ * This is all deprecated but preserved (for now) for backwards
+ * compatibility. 
  */
 abstract class DefaultComponents {
 

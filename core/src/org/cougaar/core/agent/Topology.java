@@ -51,7 +51,7 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The Topology component binds the agent's "version://" and
+ * This component binds the agent's "version://" and
  * "node://" information in the white pages, and preserves the
  * incarnation across agent moves.
  * <p> 

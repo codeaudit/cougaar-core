@@ -33,10 +33,7 @@ import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The AgentContainmentServiceComponent is a provider class for the
- * AgentContainment service within an agent.
- * <p>
- * This is essentially a back-pointer to the agent's Container API.
+ * This component provides the AgentContainmentService.
  */
 public final class AgentContainmentServiceComponent 
 extends GenericStateModelAdapter

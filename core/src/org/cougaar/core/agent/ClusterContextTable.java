@@ -30,32 +30,35 @@ import java.util.HashMap;
 
 import org.cougaar.core.mts.MessageAddress;
 
-/** Keep track of the Agents (Clusters) running in the 
- * current VM so that we can reconnect newly-deserialized
- * objects in the Agent's processes.
+/**
+ * Table of agent addresses on this VM, allowing static
+ * deserialization threads to find their agent's address.
  * <p>
- * @note This is a pretty dangerous security hole.
- **/
+ * @note This is a minor security hole, but at least it only
+ * allows access to the agent addresses and not the agents
+ * themselves.
+ */
 public final class ClusterContextTable {
+
   /**
-   * VM-cluster registry.
-   *  This table of clusterids to cluster objects is available
-   * via the package-protected method findContext so that the deserialization 
-   * stream can hook objects back up to the environment when
-   * they are read.
-   **/
+   * Our map from a MessageAddress to the ClusterContext wrapper.
+   * <p>
+   * Most values are simple MessageAddress wrappers, but the
+   * table can also contain MessageContext wrappers that add
+   * to/from address information.
+   */
   private static final HashMap contextTable = new HashMap(89);
   
   /** find the agent named by the parameter in my local VM.
    * Anyone caught using this in plugins will be shot.
-   **/
+   */
   static ClusterContext findContext(MessageAddress cid) {
     synchronized (contextTable) {
       return (ClusterContext) contextTable.get(cid);
     }
   }
 
-  /** Add a context to the context table **/
+  /** Add a context to the context table */
   static void addContext(final MessageAddress cid) {
     ClusterContext c = new ClusterContext() {
       public MessageAddress getMessageAddress() {
@@ -67,17 +70,17 @@ public final class ClusterContextTable {
     }
   }
   
-  /** Remove a context from the context table **/
+  /** Remove a context from the context table */
   static void removeContext(MessageAddress cid) {
     synchronized (contextTable) {
       contextTable.remove(cid);
     }
   }
 
-  /** The thread-local "current" context **/
+  /** The thread-local "current" context */
   private static final ThreadLocal theContext = new ThreadLocal() {};
 
-  /** Internal object for keeping track of contexts. **/
+  /** Internal object for keeping track of contexts. */
   public static class ContextState {
     private ClusterContext cc;
     public ContextState(ClusterContext c) {
@@ -86,6 +89,10 @@ public final class ClusterContextTable {
     public final ClusterContext getClusterContext() { return cc; }
   }
 
+  /**
+   * A context for message deserialization, which includes the
+   * source and target addresses.
+   */
   public static final class MessageContext extends ContextState {
     private MessageAddress from;
     private MessageAddress to;
@@ -121,17 +128,17 @@ public final class ClusterContextTable {
    * this call around the deserialization will at least allow 
    * avoiding warning messages.  <em>WARNING</em>:  This must <em>never</em> be
    * used within society code.
-   **/
+   */
   public static final void withEmptyClusterContext(Runnable thunk) {
     withClusterContext(_dummyContext, thunk);
   }
 
-  /** Convenient shortcut for a safe enterContext - exitContext pair **/
+  /** Convenient shortcut for a safe enterContext - exitContext pair */
   public static final void withClusterContext(ClusterContext cc, Runnable thunk) {
     withContextState(new ContextState(cc), thunk);
   }
 
-  /** Convenient shortcut for a safe enterContext - exitContext pair **/
+  /** Convenient shortcut for a safe enterContext - exitContext pair */
   public static final void withClusterContext(MessageAddress ma, Runnable thunk) {
     ClusterContext cc = findContext(ma);
     if (cc == null) {
@@ -141,7 +148,7 @@ public final class ClusterContextTable {
     }
   }
 
-  /** Convenient shortcut for a safe enterContext - exitContext pair **/
+  /** Convenient shortcut for a safe enterContext - exitContext pair */
   public static final void withMessageContext(MessageAddress ma, MessageAddress from, MessageAddress to, 
                                               Runnable thunk) {
     ClusterContext cc = getClusterContext();

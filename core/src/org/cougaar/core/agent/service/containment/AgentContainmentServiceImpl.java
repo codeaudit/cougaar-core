@@ -30,6 +30,9 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.service.AgentContainmentService;
 
+/**
+ * AgentContainmentService implementation. 
+ */
 public class AgentContainmentServiceImpl
 implements AgentContainmentService
 {

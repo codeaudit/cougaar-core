@@ -29,16 +29,19 @@ package org.cougaar.core.agent;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Interface required for out-of-band communication with clusters.
- * This is a privileged access point interface which only be used
- * by internal cluster mechanisms.
- **/
-
+ * Interface to the {@link ClusterContextTable} ThreadLocal that
+ * allows static deserialization clients to find the thread's agent
+ * address.
+ * <p>
+ * For example, an object deep in RMI deserialization may need to
+ * know which agent it belongs to.
+ */
 public interface ClusterContext
 {
   /** The current agent's address */
   MessageAddress getMessageAddress();
   
+  /** A null {@link ClusterContext}. */
   final class DummyClusterContext implements ClusterContext {
     private static final MessageAddress cid = MessageAddress.NULL_SYNC;
     public MessageAddress getMessageAddress() { return cid; }

@@ -41,14 +41,18 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * FIXME 
+ * AgentImpl is the base class for all agents.
+ * <p>
+ * An agent starts with a single "bootstrap" component that uses
+ * the AgentBootstrapService to specify the subsequent agent
+ * components.
  */
 public class AgentImpl extends Agent {
 
   // this agent's address
   private MessageAddress localAgent;
 
-  /** Alias for getMessageAddress, required by Agent superclass **/
+  /** Alias for getMessageAddress, required by Agent superclass */
   public MessageAddress getAgentIdentifier() {
     return localAgent;
   }

@@ -30,8 +30,9 @@ import java.util.List;
 import org.cougaar.core.component.Service;
 
 /**
- * Allow a component within the agent to modify a loading agent's list
- * of components that will be loaded.
+ * This service allows a component to modify its agent's list of
+ * components as it is being loaded, which is part of the agent's
+ * bootstrap process.
  * <p>
  * This is only for use by {@link Bootstrap} and
  * {@link FindComponentsEarly}, to override the default list

@@ -43,7 +43,8 @@ import org.cougaar.util.GenericStateModelAdapter;
  * is used to bootstrap the agent with the minimal initial
  * components.
  * <p>
- * The last component bootstrapped in is {@link FindComponentsEarly}. 
+ * The last component bootstrapped in is {@link FindComponentsEarly},
+ * which checks for persisted component model state.
  *
  * @see FindComponentsEarly 
  */
