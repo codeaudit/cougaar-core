@@ -44,6 +44,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
   protected AlarmService alarmService = null;
   protected boolean primed = false;
   private PluginBindingSite pluginBindingSite = null;
+  private ServiceBroker serviceBroker = null;
   private ThinWatcher watcher = null;
   private Collection parameters = null;
 
@@ -96,9 +97,9 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
       throw new RuntimeException("Tried to load "+this+" into "+bs);
     }
 
-    ServiceBroker myServiceBroker = pluginBindingSite.getServiceBroker();
+    serviceBroker = pluginBindingSite.getServiceBroker();
     myScheduler = (SchedulerService )
-      myServiceBroker.getService(this, SchedulerService.class, 
+      serviceBroker.getService(this, SchedulerService.class, 
 			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
 				  if (SchedulerService.class.equals(re.getRevokedService()))
@@ -113,7 +114,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
     }
 
     blackboard = (BlackboardService)
-      myServiceBroker.getService(this, BlackboardService.class,
+      serviceBroker.getService(this, BlackboardService.class,
  			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
 				  if (BlackboardService.class.equals(re.getRevokedService())) {
@@ -124,7 +125,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
 			      });
 
     alarmService = (AlarmService)
-      myServiceBroker.getService(this, AlarmService.class,
+      serviceBroker.getService(this, AlarmService.class,
  			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
 				  if (AlarmService.class.equals(re.getRevokedService())) {
@@ -146,6 +147,11 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
 
   protected PluginBindingSite getBindingSite() {
     return pluginBindingSite;
+  }
+
+
+  protected ServiceBroker getServiceBroker() {
+    return serviceBroker;
   }
 
 
