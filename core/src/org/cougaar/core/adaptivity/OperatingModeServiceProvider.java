@@ -86,10 +86,14 @@ public class OperatingModeServiceProvider
       }
     }
     public OperatingMode getOperatingModeByName(String knobName) {
-      return omSet.getOperatingMode(knobName);
+      synchronized (omSet) {
+        return omSet.getOperatingMode(knobName);
+      }
     }
     public Set getAllOperatingModeNames() {
-      return new ReadOnlySet(omSet.keySet());
+      synchronized (omSet) {
+        return new ReadOnlySet(omSet.keySet());
+      }
     }
   }
 
@@ -153,7 +157,7 @@ public class OperatingModeServiceProvider
    **/
   public void setupSubscriptions() {
     operatingModes = (IncrementalSubscription)
-      getBlackboardService().subscribe(operatingModePredicate, omSet);
+      getBlackboardService().subscribe(operatingModePredicate);
   }
 
   /**
@@ -162,18 +166,26 @@ public class OperatingModeServiceProvider
    * where it is referenced directly by the service API.
    **/
   public void execute() {
-    if (operatingModes.hasChanged()) {
-      if (operatingModes.getAddedCollection().size() > 0) {
-        if (logger.isDebugEnabled()) logger.debug("OM Added");
-        Collectors.apply(listenerAddThunk, listeners);
-      }
-      if (operatingModes.getChangedCollection().size() > 0) {
-        if (logger.isDebugEnabled()) logger.debug("OM Changed");
-        Collectors.apply(listenerChangeThunk, listeners);
-      }
-      if (operatingModes.getRemovedCollection().size() > 0) {
-        if (logger.isDebugEnabled()) logger.debug("OM Removed");
-        Collectors.apply(listenerRemoveThunk, listeners);
+    synchronized (omSet) {
+      if (operatingModes.hasChanged()) {
+        Collection c;
+        c = operatingModes.getAddedCollection();
+        if (c.size() > 0) {
+          omSet.addAll(c);
+          if (logger.isDebugEnabled()) logger.debug("OM Added");
+          Collectors.apply(listenerAddThunk, listeners);
+        }
+        c = operatingModes.getChangedCollection();
+        if (c.size() > 0) {
+          if (logger.isDebugEnabled()) logger.debug("OM Changed");
+          Collectors.apply(listenerChangeThunk, listeners);
+        }
+        c = operatingModes.getRemovedCollection();
+        if (c.size() > 0) {
+          omSet.removeAll(c);
+          if (logger.isDebugEnabled()) logger.debug("OM Removed");
+          Collectors.apply(listenerRemoveThunk, listeners);
+        }
       }
     }
   }
