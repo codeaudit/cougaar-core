@@ -606,6 +606,14 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public AspectValue getPoint() { 
       return point; 
     }
+
+    public boolean equals(Object o) {
+      if (o instanceof SinglePointScoringFunction) {
+        SinglePointScoringFunction that = (SinglePointScoringFunction) o;
+        return that.point.equals(this.point);
+      }
+      return false;
+    }
   }
 
 
@@ -625,6 +633,13 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 
     public StrictValueScoringFunction(AspectValue value) {
       super(value);
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof StrictValueScoringFunction) {
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
@@ -681,6 +696,15 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
         basp = new AspectScorePoint(point, BEST);
       }
       return basp;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof PreferredValueScoringFunction) {
+        PreferredValueScoringFunction that = (PreferredValueScoringFunction) o;
+        if (that.slope != this.slope) return false;
+        return super.equals(o);
+      }
+      return false;
     }
 
     public PreferredValueScoringFunction(AspectValue value, double slope) { 
@@ -744,6 +768,15 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       this.point1=point1;
       this.point2=point2;
     }
+
+    public boolean equals(Object o) {
+      if (o instanceof TwoPointScoringFunction) {
+        TwoPointScoringFunction that = (TwoPointScoringFunction) o;
+        return (this.point1 == that.point1 && this.point2 == that.point2);
+      }
+      return false;
+    }
+
     public AspectValue getPoint1() { 
       return point1; 
     }
@@ -766,6 +799,16 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       super(low, high);
       this.best = best;
       this.ok = OK;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof VScoringFunction) {
+        VScoringFunction that = (VScoringFunction) o;
+        if (that.ok != this.ok) return false;
+        if (!that.best.equals(this.best)) return false;
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
@@ -859,6 +902,13 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     extends TwoPointScoringFunction {
     public StrictBetweenScoringFunction(AspectValue low, AspectValue high) {
       super(low,high);
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof StrictBetweenScoringFunction) {
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
@@ -964,6 +1014,15 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       this.slope = slope;
     }
 
+    public boolean equals(Object o) {
+      if (o instanceof PreferredBetweenScoringFunction) {
+        PreferredBetweenScoringFunction that = (PreferredBetweenScoringFunction) o;
+        if (that.slope != this.slope) return false;
+        return super.equals(o);
+      }
+      return false;
+    }
+
     public Object clone() {
       return new PreferredBetweenScoringFunction((AspectValue) point1.clone(),
                                                  (AspectValue) point2.clone(),
@@ -1041,6 +1100,15 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public AboveScoringFunction(AspectValue value, double slope) {
       super(value);
       this.slope = slope;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof AboveScoringFunction) {
+        AboveScoringFunction that = (AboveScoringFunction) o;
+        if (that.slope != this.slope) return false;
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
@@ -1133,6 +1201,15 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public BelowScoringFunction(AspectValue value, double slope) {
       super(value);
       this.slope = slope;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof BelowScoringFunction) {
+        BelowScoringFunction that = (BelowScoringFunction) o;
+        if (that.slope != this.slope) return false;
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
@@ -1228,6 +1305,16 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       super(changepoint);
       v0 = prescore;
       v1 = postscore;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof StepScoringFunction) {
+        StepScoringFunction that = (StepScoringFunction) o;
+        if (that.v0 != this.v0) return false;
+        if (that.v1 != this.v1) return false;
+        return super.equals(o);
+      }
+      return false;
     }
 
     public Object clone() {
