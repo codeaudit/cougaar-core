@@ -26,6 +26,7 @@
 
 package org.cougaar.core.node;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +46,11 @@ import org.cougaar.util.log.Logging;
  * @property org.cougaar.society.file
  *   The name of the XML file from which to read this Node's
  *   definition
+ * @property org.cougaar.agent.defaultFile
+ *   The name of the default XML configuration file for an agent,
+ *   used if the agent configuration is not found in the node's
+ *   XML (-Dorg.cougaar.society.file) or agent's XML (name+".xml").
+ *   Defaults to "DefaultAgent.xml"
  * </pre> 
  */ 
 public class XMLComponentInitializerServiceProvider
@@ -54,6 +60,25 @@ public class XMLComponentInitializerServiceProvider
     "org.cougaar.society.file";
   private static final String XML_FILE_NAME = 
     System.getProperty(XML_FILE_NAME_PROP);
+
+  private static final String DEFAULT_AGENT_PROP =
+    "org.cougaar.agent.defaultFile";
+  private static final String DEFAULT_AGENT;
+  static {
+    String s = 
+      System.getProperty(DEFAULT_AGENT_PROP, "DefaultAgent.xml");
+    // trim off trailing ".xml"
+    String x = ".xml";
+    int xlen = x.length();
+    int offset = s.length() - xlen;
+    if (s.regionMatches(true, offset, x, 0, xlen)) {
+      s = s.substring(0, offset);
+    }
+    if (s.length() == 0) {
+      s = null;
+    }
+    DEFAULT_AGENT = s;
+  }
 
   private static final String NODE_NAME_PROP =
     "org.cougaar.node.name";
@@ -218,23 +243,51 @@ public class XMLComponentInitializerServiceProvider
           //
           // we could cache a parse failure, but these are probably
           // rare 
-          if (logger.isInfoEnabled()) {
-            logger.info("Parsing "+agentName+".xml");
-          }
-          Map m = 
-            XMLConfigParser.parseAgents(
+          try {
+            if (logger.isInfoEnabled()) {
+              logger.info("Parsing "+agentName+".xml");
+            }
+            Map m = XMLConfigParser.parseAgents(
                 agentName+".xml",
                 null, // no "<node>"
                 agentName, // just this agent
                 get_overrides());
-          l = (List) m.get(agentName);
-          if (logger.isDetailEnabled()) {
-            logger.detail(
-                "found "+(l == null ? 0 : l.size())+" components");
-          }
+            l = (List) m.get(agentName);
+            if (logger.isDetailEnabled()) {
+              logger.detail(
+                  "found "+(l == null ? 0 : l.size())+" components");
+            }
 
-          // cache
-          agents.put(agentName, l);
+            // cache
+            agents.put(agentName, l);
+          } catch (Exception e) {
+            // look for a simple file-not-found error
+            FileNotFoundException fnfe = null;
+            for (Throwable t = e; t != null; t = t.getCause()) {
+              if (t instanceof FileNotFoundException) {
+                fnfe = (FileNotFoundException) t;
+                break;
+              }
+            }
+            if (fnfe == null) {
+              throw e;
+            }
+            // look for default agent xml
+            if (agentName.equals(DEFAULT_AGENT) ||
+                DEFAULT_AGENT == null) {
+              return null;
+            }
+            if (logger.isInfoEnabled()) { 
+              logger.info(
+                  "Unable to find "+agentName+".xml, will try "+
+                  DEFAULT_AGENT);
+            }
+            // single-step recursion
+            l = getAgentDescs(DEFAULT_AGENT);
+            if (l == null) {
+              throw e;
+            }
+          }
 
           return l;
         }
