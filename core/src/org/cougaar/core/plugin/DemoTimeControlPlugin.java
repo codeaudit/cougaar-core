@@ -18,7 +18,7 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
- 
+
 package org.cougaar.core.plugin;
 
 import java.text.*;
@@ -34,20 +34,24 @@ import org.cougaar.core.service.*;
 import org.cougaar.core.agent.service.alarm.*;
 
 /**
- * @author wwright
- *
- * To change this generated comment edit the template variable "typecomment":
- * Window>Preferences>Java>Templates.
- * To enable and disable the creation of type comments go to
- * Window>Preferences>Java>Code Generation.
+ * Servlet plugin that implements a simple controller for setting the
+ * demo (aka "execution") time for the local node.
+ * <p>
+ * One plugin paramter if present and Boolean <tt>true</tt> will cause the plugin to 
+ * print the system and demo time every 10 secs (as measured by system and demo time)
+ * <p>
+ * @see org.cougaar.core.service.DemoControlService
  */
 public class DemoTimeControlPlugin extends ComponentPlugin {
+
+  private boolean debug = false;
 
   long lastScenarioTime = 0;
   long lastRealTime = 0;
 
   ServletService servletService;
   DemoControlService demoControlService;
+  LoggingService loggingService;
 
   DateFormat fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 
@@ -57,8 +61,10 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
     long scenarioDelta = scenarioNow - lastScenarioTime;
     long realDelta = realNow - lastRealTime;
 
-    String ret = "\n"+pfx +
-      "Time at "
+    String ret =
+      "\n"
+        + pfx
+        + "Time at "
         + this.getAgentIdentifier().getAddress()
         + ".  Scenario Time is "
         + scenarioNow
@@ -93,21 +99,19 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
         this.exp = System.currentTimeMillis() + delta;
       else
         this.exp = alarmService.currentTimeMillis() + delta;
-        
+
       this.realTime = realTime;
     }
     public long getExpirationTime() {
       return exp;
     }
     public void expire() {
-      //System.err.println("Alarm "+exp+" expired.");
-      printTime(realTime?"Real ":"Demo ");
-      //getBlackboardService().signalClientActivity();
+      printTime(realTime ? "Real " : "Demo ");
       if (realTime)
         alarmService.addRealTimeAlarm(new MyAlarm(10000, true));
       else
         alarmService.addAlarm(new MyAlarm(10000, false));
-       
+
     }
     public String toString() {
       return "<" + exp + ">";
@@ -128,14 +132,19 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
    * @see org.cougaar.core.blackboard.BlackboardClientComponent#setupSubscriptions()
    */
   protected void setupSubscriptions() {
-    System.err.println(
-      "TIMEPLUGIN loaded at " + alarmService.currentTimeMillis());
-    printTime("setup");
+    Collection params = this.getParameters();
+    if (params.contains("true"))
+      debug = true;
+    if (debug) {
+      System.err.println(
+        "timeControl plugin loaded at scenario time:" + alarmService.currentTimeMillis());
+      printTime("setup");
+    }
 
     try {
-      servletService.register("/time", new MyServlet());
+      servletService.register("/timeControl", new MyServlet());
     } catch (Exception ex) {
-      System.err.println("Unable to register servlet");
+      System.err.println("Unable to register timeControl servlet");
       ex.printStackTrace();
     }
 
@@ -145,51 +154,57 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
    * @see org.cougaar.core.blackboard.BlackboardClientComponent#execute()
    */
   protected void execute() {
-    //System.err.println("EXECUTE");
-    printTime("execute");
-    alarmService.addRealTimeAlarm(new MyAlarm(10000, true));
-    alarmService.addRealTimeAlarm(new MyAlarm(10000, false));
+    if (debug) {
+      printTime("execute");
+      alarmService.addRealTimeAlarm(new MyAlarm(10000, true));
+      alarmService.addRealTimeAlarm(new MyAlarm(10000, false));
+    }
   }
 
   protected void updateTime(String advance, String rate) {
-         System.out.println("timeAdvance = "+advance);
-      System.out.println("executionRate = "+rate);
-      if ((advance == null) && (rate == null)) return;
-      
-      long l_advance = 0;
-      if (advance != null) {
-        try {
-          l_advance = Long.parseLong(advance);
-        } catch (NumberFormatException nfe) {
-          System.err.println("Bad advance");
-          nfe.printStackTrace();
-        }
+    if (loggingService.isDebugEnabled()) {
+      loggingService.debug("Time to advance = "+advance+" New Rate = "+rate);
+    }
+    if ((advance == null) && (rate == null))
+      return;
+
+    long l_advance = 0;
+    if (advance != null) {
+      try {
+        l_advance = Long.parseLong(advance);
+      } catch (NumberFormatException nfe) {
+        System.err.println("Bad advance");
+        nfe.printStackTrace();
       }
-      double d_rate = 1.0;
-      if (rate != null) {
-        try {
-          d_rate = Double.parseDouble(rate);
-        } catch (NumberFormatException nfe) {
-          System.err.println("Bad rate");
-          nfe.printStackTrace();
-        }
+    }
+    double d_rate = 1.0;
+    if (rate != null) {
+      try {
+        d_rate = Double.parseDouble(rate);
+      } catch (NumberFormatException nfe) {
+        System.err.println("Bad rate");
+        nfe.printStackTrace();
       }
-      
-      demoControlService.advanceNodeTime(l_advance, d_rate);
+    }
+
+    demoControlService.advanceNodeTime(l_advance, d_rate);
   }
-  
+
   protected void doit(HttpServletRequest req, HttpServletResponse res)
     throws IOException {
-      
-      updateTime(req.getParameter("timeAdvance"), req.getParameter("executionRate"));
-      
+
+    updateTime(
+      req.getParameter("timeAdvance"),
+      req.getParameter("executionRate"));
+
     PrintWriter out = res.getWriter();
     out.println("<html><head></head><body>");
 
     out.println("<FORM METHOD=\"GET\" ACTION=\"time\">");
     out.println("<table>");
     out.println(
-      "<tr><td>Scenario Time</td><td>"+fmt.format(new Date(alarmService.currentTimeMillis()))
+      "<tr><td>Scenario Time</td><td>"
+        + fmt.format(new Date(alarmService.currentTimeMillis()))
         + "</td></tr>");
     out.println(
       "<tr><td>Time Advance (millisecs)</td><td><input type=\"text\" name=\"timeAdvance\" size=10 value=\""
@@ -197,7 +212,7 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
         + "\"> <i>1 Day = 86400000</i></td></tr>");
     out.println(
       "<tr><td>Execution Rate</td><td><input type=\"text\" name=\"executionRate\" size=10 value=\""
-              + demoControlService.getExecutionRate()
+        + demoControlService.getExecutionRate()
         + "\"> <i>(required)</i></td></tr>");
     out.println("</table>");
     out.println("<INPUT TYPE=\"submit\" Value=\"Submit\">");
@@ -247,6 +262,22 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
    */
   public void setDemoControlService(DemoControlService demoControlService) {
     this.demoControlService = demoControlService;
+  }
+
+  /**
+   * Returns the loggingService.
+   * @return LoggingService
+   */
+  public LoggingService getLoggingService() {
+    return loggingService;
+  }
+
+  /**
+   * Sets the loggingService.
+   * @param loggingService The loggingService to set
+   */
+  public void setLoggingService(LoggingService loggingService) {
+    this.loggingService = loggingService;
   }
 
 }
