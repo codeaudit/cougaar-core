@@ -34,7 +34,7 @@ public interface LoggingService extends Logger, Service {
    * </pre>
    * returns null.
    */
-  public static final LoggingService NULL = 
+  LoggingService NULL = 
     NullLoggingServiceImpl.getNullLoggingServiceImpl();
 
 }
