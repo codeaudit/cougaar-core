@@ -672,8 +672,9 @@ extends ContainerSupport
   }
   
   private void initializeFromConfigFiles(List descs) {
+    InputStream in = null;
     try {
-      InputStream in = org.cougaar.util.ConfigFinder.getInstance().open(
+      in = org.cougaar.util.ConfigFinder.getInstance().open(
           FILENAME);
       InputStreamReader isr = new InputStreamReader(in);
       BufferedReader br = new BufferedReader(isr);
@@ -705,6 +706,13 @@ extends ContainerSupport
       if (! (ex instanceof FileNotFoundException)) {
         loggingService.error(FILENAME+" exception: "+ex);
         ex.printStackTrace();
+      }
+    } finally {
+      if (in != null) {
+	try {
+	  in.close();
+	} catch(Exception e) {}
+	in = null;
       }
     }
   }
