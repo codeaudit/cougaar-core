@@ -21,7 +21,10 @@
 
 package org.cougaar.core.qos.metrics;
 
+import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
+import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
@@ -176,6 +179,23 @@ public final class MetricsServiceProvider
     // Reconstitute from the previously returned snapshot.
     public void setState(Object state) {
     }
+
+    private static class QosBinderFactory
+      extends BinderFactorySupport {
+        public Binder getBinder(Object child) {
+          return new QosBinder(this, child);
+        }
+        private static class QosBinder 
+          extends BinderSupport
+          implements BindingSite {
+            public QosBinder(BinderFactory bf, Object child) {
+              super(bf, child);
+            }
+            protected final BindingSite getBinderProxy() {
+              return this;
+            }
+          }
+      }
 
 }
 

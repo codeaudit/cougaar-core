@@ -26,11 +26,8 @@ import org.cougaar.core.component.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.plugin.PluginManagerForBinder;
 import org.cougaar.core.service.BlackboardService;
 
 /** A plugin's view of its parent component (Container).
@@ -57,26 +54,16 @@ public class PluginServiceFilter
       super(bf,child);
     }
 
-    protected final PluginManagerForBinder getPluginManager() { return (PluginManagerForBinder)getContainer(); }
-
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
-    protected ContainerAPI createContainerProxy() { return new PluginFilteringBinderProxy(); }
+    protected ContainerAPI createContainerProxy() {
+      return new ServiceFilterContainerProxy();
+    }
 
     // this method installs the "filtering" service broker
     protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return new PluginFilteringServiceBroker(sb); 
     }
-
-    // this class implements a simple proxy for a plugin wrapper binder
-    protected class PluginFilteringBinderProxy
-      extends ServiceFilterContainerProxy
-      implements PluginManagerForBinder
-    {
-      public MessageAddress getAgentIdentifier() { return getPluginManager().getAgentIdentifier(); }
-      public ConfigFinder getConfigFinder() { return getPluginManager().getConfigFinder(); }
-    }
-
 
     // this class catches requests for blackboard services, and 
     // installs its own service proxy.
@@ -99,19 +86,32 @@ public class PluginServiceFilter
 
   // this class is a proxy for the blackboard service which audits subscription
   // requests.
-  public static class BlackboardServiceProxy implements BlackboardService {
-    private BlackboardService bs;
-    private Object client;
+  private static class BlackboardServiceProxy extends BlackboardServiceDelegate {
+    private final Object client;
     public BlackboardServiceProxy(BlackboardService bs, Object client) {
-      this.bs = bs;
+      super(bs);
       this.client=client;
     }
     public Subscriber getSubscriber() { 
       System.err.println("Warning: "+client+" is calling BlackboardService.getSubscriber()!");
-      return bs.getSubscriber();
+      return super.getSubscriber();
     }
     public Subscription subscribe(UnaryPredicate isMember) { 
       System.err.println("BlackboardService.subscribe("+isMember+") called by: "+client);
+      return super.subscribe(isMember); 
+    }
+  }
+
+  // dumb delegate, could be promoted to a reusable public class
+  private static class BlackboardServiceDelegate implements BlackboardService {
+    private final BlackboardService bs;
+    public BlackboardServiceDelegate(BlackboardService bs) {
+      this.bs = bs;
+    }
+    public Subscriber getSubscriber() { 
+      return bs.getSubscriber();
+    }
+    public Subscription subscribe(UnaryPredicate isMember) { 
       return bs.subscribe(isMember); 
     }
     public Subscription subscribe(UnaryPredicate isMember, Collection realCollection) {

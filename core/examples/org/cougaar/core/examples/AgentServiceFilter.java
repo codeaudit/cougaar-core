@@ -50,7 +50,6 @@ extends ServiceFilter
   // This is a "Wrapper" binder which installs a service filter for plugins
   public static class AgentServiceFilterBinder
     extends ServiceFilterBinder
-    implements AgentBinder
   {
     public AgentServiceFilterBinder(BinderFactory bf, Object child) {
       super(bf,child);

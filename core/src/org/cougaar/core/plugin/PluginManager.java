@@ -27,11 +27,14 @@ import java.util.List;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BoundComponent;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ComponentFactory;
+import org.cougaar.core.component.ContainedBinderSupport;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
@@ -46,10 +49,6 @@ import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.util.ConfigFinder;
 
 /** A container for Plugin Components.
- * <p>
- * A PluginManager expects all subcomponents to be bound with 
- * implementations of PluginBinder.  In return, the PluginManager
- * offers the PluginManagerForBinder to each PluginBinder.
  **/
 public class PluginManager 
   extends ContainerSupport
@@ -167,8 +166,8 @@ public class PluginManager
     return INSERTION_POINT;
   }
 
-  private PluginManagerForBinder containerProxy = 
-    new PluginManagerForBinder() {
+  private ContainerAPI containerProxy = 
+    new ContainerAPI() {
         public ServiceBroker getServiceBroker() {
           return PluginManager.this.getServiceBroker();
         }
@@ -176,15 +175,6 @@ public class PluginManager
           return PluginManager.this.remove(childComponent);
         }
         public void requestStop() {}
-        public MessageAddress getAgentIdentifier() {
-          if (PluginManager.this.getAgentIdentifier() == null) {
-            throw new RuntimeException("TWRIGHT null agent-id!");
-          }
-          return PluginManager.this.getAgentIdentifier();
-        }
-        public ConfigFinder getConfigFinder() {
-          return PluginManager.this.getConfigFinder();
-        }
       };
 
   protected ContainerAPI getContainerProxy() {
@@ -266,11 +256,49 @@ public class PluginManager
   // support classes
   //
 
+  private static class DefaultPluginBinderFactory
+    extends BinderFactorySupport {
+
+      public Binder getBinder(Object child) {
+        return new DefaultPluginBinder(this, child);
+      }
+
+      // publish the ContainedService to the subcomponent
+      private static class DefaultPluginBinder 
+        extends ContainedBinderSupport {
+          /** All subclasses must implement a matching constructor. **/
+          public DefaultPluginBinder(BinderFactory bf, Object child) {
+            super(bf, child);
+          }
+
+          protected BindingSite getBinderProxy() {
+            return new PluginBindingSiteImpl();
+          }
+
+          /** Implement the binding site delegate **/
+          protected class PluginBindingSiteImpl implements BindingSite {
+            public final ServiceBroker getServiceBroker() {
+              return DefaultPluginBinder.this.getServiceBroker();
+            }
+            public final void requestStop() {
+              DefaultPluginBinder.this.requestStop();
+            }
+          }
+        }
+      /*
+      // old stateless "Plugin" support, now disabled!
+      private final static ComponentFactory pluginCF = new PurePluginFactory();
+      public final ComponentFactory getComponentFactory() {
+      return pluginCF;
+      }
+       */
+    }
+
   private static class PluginManagerServiceBroker 
     extends PropagatingServiceBroker 
-  {
-    public PluginManagerServiceBroker(BindingSite bs) {
-      super(bs);
+    {
+      public PluginManagerServiceBroker(BindingSite bs) {
+        super(bs);
     }
   }
   

@@ -28,8 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.BoundComponent;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ComponentFactory;
@@ -66,23 +69,9 @@ public class AgentManager
     }
   }
 
-  private AgentManagerBindingSite bindingSite = null;
-
   public final void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof AgentManagerBindingSite) {
-      bindingSite = (AgentManagerBindingSite) bs;
-      setChildServiceBroker(new AgentManagerServiceBroker(bindingSite));
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into "+bs);
-    }
-
-    // We cannot start adding services until after the serviceBroker has been created.
-    // add some services for the agents (clusters).
-    // maybe this can be hooked in from Node soon.
-    //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    //childContext.addService(MessageTransportService.class, new MessageTransportServiceProvider(agent));
-
+    setChildServiceBroker(new AgentManagerServiceBroker(bs));
   }
 
   /** Load up any externally-specified AgentBinders **/
@@ -257,4 +246,40 @@ public class AgentManager
     // no such agent
     return null;
   }
+
+  /**
+   * The default factory for binding Agents to the AgentManager.
+   **/
+  private static class DefaultAgentBinderFactory extends BinderFactorySupport {
+
+    public Binder getBinder(Object child) {
+      if (child instanceof ComponentDescription) {
+        ComponentDescription cd = (ComponentDescription) child;
+        if (Agent.INSERTION_POINT.equals(cd.getInsertionPoint())) {
+          //Might want to differentiate between Agent and specializations of
+          //agents such as Clusters at some point.  But for now...
+          return new DefaultAgentBinder(this, child);
+        }
+      } else if (child instanceof Agent) {
+        return new DefaultAgentBinder(this, child);
+      }
+      return null;
+    }
+
+    /**
+     * The default Binder for Agents.
+     */
+    private static class DefaultAgentBinder
+      extends BinderSupport
+      implements BindingSite {
+        public DefaultAgentBinder(BinderFactory bf, Object child) {
+          super(bf, child);
+        }
+        protected final BindingSite getBinderProxy() {
+          // horribly unsecure!
+          return this;
+        }
+      }
+  }
+
 }

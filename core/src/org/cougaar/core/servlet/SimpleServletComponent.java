@@ -29,7 +29,6 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;

@@ -30,7 +30,6 @@ import java.util.Properties;
 import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentBinder;
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.Binder;
@@ -182,8 +181,7 @@ public class NodeAgent
 
     // add the default agent-identity provider, which does
     // nothing if a high-priority id provider already exists
-    ComponentDescription defaultAgentIdCDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           (getIdentifier()+"DefaultAgentIdentity"),
           Agent.INSERTION_POINT + ".Identity",
           "org.cougaar.core.node.DefaultAgentIdentityComponent",
@@ -191,8 +189,7 @@ public class NodeAgent
           null,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(defaultAgentIdCDesc);
+          null)); //policy
   }
 
   protected void loadInternalPriorityComponents() {
@@ -201,8 +198,7 @@ public class NodeAgent
     ArrayList threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
-    ComponentDescription threadServiceDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           (getIdentifier()+"Threads"),
           Agent.INSERTION_POINT + ".Threads",
           "org.cougaar.core.thread.ThreadServiceProvider",
@@ -210,8 +206,7 @@ public class NodeAgent
           threadServiceParams,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(threadServiceDesc);
+          null)); //policy
 
     try {
       rootsb.addService(NamingService.class,
@@ -221,8 +216,7 @@ public class NodeAgent
       throw new Error("Couldn't initialize NamingService ", ne);
     }
 
-    ComponentDescription topologyWriterSCDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           (getIdentifier()+"TopologyWriter"),
           Agent.INSERTION_POINT + ".Topology",
           "org.cougaar.core.topology.TopologyWriterServiceComponent",
@@ -230,11 +224,9 @@ public class NodeAgent
           null,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(topologyWriterSCDesc);
+          null)); //policy
 
-    ComponentDescription topologyReaderSCDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           (getIdentifier()+"TopologyReader"),
           Agent.INSERTION_POINT + ".Topology",
           "org.cougaar.core.topology.TopologyReaderServiceComponent",
@@ -242,22 +234,17 @@ public class NodeAgent
           null,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(topologyReaderSCDesc);
+          null)); //policy
 
-    String msp = new String(getIdentifier()+"MetricsServices");
-    ComponentDescription mspdesc = 
-      new ComponentDescription(
-          msp,
+    add(new ComponentDescription(
+          (getIdentifier()+"MetricsServices"),
           Agent.INSERTION_POINT + ".MetricsServices",
           "org.cougaar.core.qos.metrics.MetricsServiceProvider",
           null,  //codebase
           null,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(mspdesc);
-
+          null)); //policy
 
     //add the vm metrics
     rootsb.addService(NodeMetricsService.class,
@@ -282,49 +269,15 @@ public class NodeAgent
     //
     // NB: The order is important for now - MTS *must* be created
     // first.
-    String mts = new String(getIdentifier()+"MessageTransport");
-    ComponentDescription mtsdesc = 
-      new ComponentDescription(
-          mts,
+    add(new ComponentDescription(
+          (getIdentifier()+"MessageTransport"),
           Agent.INSERTION_POINT + ".MessageTransport",
           "org.cougaar.core.mts.MessageTransportServiceProvider",
           null,  //codebase
           null,  //parameters
           null,  //certificate
           null,  //lease
-          null); //policy
-    add(mtsdesc);
-
-    // start up the NodeTrust component
-    String ntc = new String(getIdentifier()+"NodeTrust");
-    ComponentDescription ntcdesc = 
-      new ComponentDescription(
-          ntc,
-          Agent.INSERTION_POINT + ".NodeTrust",
-          "org.cougaar.planning.plugin.node.NodeTrustComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null); //policy
-    add(ntcdesc);         // let a ComponentLoadFailure pass through
-
-    // start up the Node-level ServletService component
-    ComponentDescription nsscDesc = 
-      new ComponentDescription(
-          (getIdentifier()+"ServletService"),
-          Agent.INSERTION_POINT + ".NodeServletService",
-          "org.cougaar.lib.web.service.RootServletServiceComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null); //policy
-    try {
-      add(nsscDesc);
-    } catch (RuntimeException re) {
-      re.printStackTrace();
-    }
+          null)); //policy
 
     {
       TimeServiceProvider tsp = new TimeServiceProvider();
@@ -333,9 +286,29 @@ public class NodeAgent
       rootsb.addService(RealTimeService.class, tsp);
     }
 
+    // start up the Node-level ServletService component
+    add(new ComponentDescription(
+          (getIdentifier()+"ServletService"),
+          Agent.INSERTION_POINT + ".NodeServletService",
+          "org.cougaar.lib.web.service.RootServletServiceComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null)); //policy
+
+    // start up the NodeTrust component
+    add(new ComponentDescription(
+          (getIdentifier()+"NodeTrust"),
+          Agent.INSERTION_POINT + ".NodeTrust",
+          "org.cougaar.planning.plugin.node.NodeTrustComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null)); //policy
+
     super.loadInternalPriorityComponents();
-
-
   }
 
   protected void loadBinderPriorityComponents() {
@@ -351,8 +324,7 @@ public class NodeAgent
   }
 
   protected void loadComponentPriorityComponents() {
-    ComponentDescription commInitDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           "community-init",
           Agent.INSERTION_POINT+".Init",
           "org.cougaar.community.init.CommunityInitializerServiceComponent",
@@ -361,11 +333,9 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT);
-    add(commInitDesc);
+          ComponentDescription.PRIORITY_COMPONENT));
 
-    ComponentDescription assetInitDesc = 
-      new ComponentDescription(
+    add(new ComponentDescription(
           "asset-init",
           Agent.INSERTION_POINT+".Init",
           "org.cougaar.planning.ldm.AssetInitializerServiceComponent",
@@ -374,8 +344,7 @@ public class NodeAgent
           null,  //certificate
           null,  //lease
           null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT);
-    add(assetInitDesc);
+          ComponentDescription.PRIORITY_COMPONENT));
 
     super.loadComponentPriorityComponents();
   }
@@ -391,19 +360,8 @@ public class NodeAgent
     // Wait until the end to deal with outstanding queued messages
     emptyQueuedMessages();
 
-    // load the clusters
-    //
-    // once bulk-add ComponentMessages are implements this can
-    //   be done with "this.receiveMessage(compMsg)"
+    // load the agents
     addAgents(agentDescs);
-  }
-
-  // replace with Container's add, but keep this basic code
-  protected void addAgent(ComponentDescription desc) {
-    // simply wrap as a single-element "bulk" operation
-    ComponentDescription[] descs = new ComponentDescription[1];
-    descs[0] = desc;
-    addAgents(descs);
   }
 
   /**
@@ -535,7 +493,7 @@ public class NodeAgent
   //
   // Binder for children
   //
-  private class NodeAgentBinderFactory extends BinderFactorySupport {
+  private static class NodeAgentBinderFactory extends BinderFactorySupport {
     // bind everything but NodeAgent's PluginManager
     public Binder getBinder(Object child) {
       if (! (child instanceof PluginManager)) {
@@ -544,19 +502,17 @@ public class NodeAgent
         return null;
       }
     }
+    private static class NodeAgentBinder 
+      extends BinderSupport
+      implements BindingSite {
+        public NodeAgentBinder(BinderFactory bf, Object child) {
+          super(bf, child);
+        }
+        protected BindingSite getBinderProxy() {
+          return this;
+        }
+      }
   }
-
-  private class NodeAgentBinder 
-    extends BinderSupport
-    implements NodeAgentBindingSite, AgentBinder
-    {
-      public NodeAgentBinder(BinderFactory bf, Object child) {
-        super(bf, child);
-      }
-      protected BindingSite getBinderProxy() {
-        return this;
-      }
-    }
 
   //
   // heartbeat

@@ -48,9 +48,12 @@ import javax.naming.NamingException;
 import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.AgentManagerBinderFactory;
+import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentFactory;
 import org.cougaar.core.component.ContainerAPI;
@@ -658,14 +661,31 @@ implements ContainerAPI, ServiceRevokedListener
   //support classes
   //
 
-  // Children's view of the parent component Node - as accessed through 
-  // the NodeForBinder interface.  Keeps the actual Node safe.
-  private class NodeProxy implements NodeForBinder, BindingSite {
+  private static class AgentManagerBinderFactory 
+    extends BinderFactorySupport {
+      public Binder getBinder(Object child) {
+        return new AgentManagerBinder(this, child);
+      }
+      private static class AgentManagerBinder
+        extends BinderSupport 
+        implements BindingSite
+        {
+          public AgentManagerBinder(BinderFactory parentInterface, Object child) {
+            super(parentInterface, child);
+          }
+          protected BindingSite getBinderProxy() {
+            // do the right thing later
+            return this;
+          }
+        }
+    }
+
+  private class NodeProxy implements ContainerAPI {
     public boolean remove(Object o) {return true;}
-    // BindingSite
-    public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }
+    public ServiceBroker getServiceBroker() {
+      return Node.this.getServiceBroker();
+    }
     public void requestStop() {}
-    // extra pieces
   }
 
   private static class NodeServiceBroker extends ServiceBrokerSupport {}

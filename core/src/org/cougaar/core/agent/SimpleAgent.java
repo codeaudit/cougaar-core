@@ -178,17 +178,7 @@ public class SimpleAgent
     isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
   }
 
-  private AgentBindingSite bindingSite = null;
   private Timer restartTimer;
-
-  public void setBindingSite(BindingSite bs) {
-    super.setBindingSite(bs);
-    if (bs instanceof AgentBindingSite) {
-      bindingSite = (AgentBindingSite) bs;
-    } else {
-      throw new RuntimeException("Tried to load "+this+" into "+bs);
-    }
-  }
 
   /**
    * myMessageAddress_ is a private representation of this instance's

@@ -46,20 +46,7 @@ public abstract class ComponentPlugin
   public ComponentPlugin() { 
   }
   
-  /**
-   * Binding site is set by reflection at creation-time.
-   */
-  public void setBindingSite(BindingSite bs) {
-    if (bs instanceof PluginBindingSite) {
-      super.setBindingSite(bs);
-    } else {
-      throw new RuntimeException("Tried to load "+this+" into "+bs);
-    }
-  }
-
   // 10.0: Old method PluginBindingSite getBindingSite() is gone!
-  // However, callers may cast the return of getBindingSite()
-  // if _absolutely_ necessary.
   // If you want the AgentIdentifier, you may simply call getAgentIdentifier()
   // -- inherited from BlackboardClientComponent
 
@@ -78,7 +65,7 @@ public abstract class ComponentPlugin
   //
 
   protected ConfigFinder getConfigFinder() {
-    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
+    return ConfigFinder.getInstance();
   }
   
 }

@@ -21,9 +21,13 @@
 
 package org.cougaar.core.agent;
 
+import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerBinderSupport;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
@@ -120,7 +124,23 @@ public abstract class Agent
       super.destroy();
     }
   }
+
+  private static class AgentChildBinderFactory extends BinderFactorySupport {
+    public Binder getBinder(Object child) {
+      return new AgentChildBinder(this, child);
+    }
+    private static class AgentChildBinder 
+      extends ContainerBinderSupport 
+      implements BindingSite
+      {
+        public AgentChildBinder(BinderFactory bf, Object child) {
+          super(bf, child);
+        }
+        protected BindingSite getBinderProxy() {
+          // do the right thing later
+          return this;
+        }
+      }
+  }
+
 }
-
-
-
