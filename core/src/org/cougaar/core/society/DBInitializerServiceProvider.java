@@ -74,16 +74,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
 //      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
     try {
       String dbtype = dbp.getDBType();
-      String driverParam = "driver." + dbtype;
-      String driverClass = Parameters.findParameter(driverParam);
-      if (driverClass == null) {
-        // this is likely a "cougaar.rc" problem.
-        // Parameters should be modified to help generate this exception:
-        throw new SQLException(
-            "Unable to find driver class for \""+
-            driverParam+"\" -- check your \"cougaar.rc\"");
-      }
-      Class.forName(driverClass);
+      insureDriverClass(dbtype);
       Connection conn = DBConnectionPool.getConnection(database, username, password);
       try {
         Statement stmt = conn.createStatement();
@@ -112,6 +103,18 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     } catch (ClassNotFoundException e) {
       throw new SQLException("Driver not found for " + database);
     }
+  }
+
+  private void insureDriverClass(String dbtype) throws SQLException, ClassNotFoundException {
+    String driverParam = "driver." + dbtype;
+    String driverClass = Parameters.findParameter(driverParam);
+    if (driverClass == null) {
+      // this is likely a "cougaar.rc" problem.
+      // Parameters should be modified to help generate this exception:
+      throw new SQLException("Unable to find driver class for \""+
+                             driverParam+"\" -- check your \"cougaar.rc\"");
+    }
+    Class.forName(driverClass);
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -431,6 +434,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         String db = dbp.getProperty(type + ".database", database);
         String un = dbp.getProperty(type + ".username", username);
         String pw = dbp.getProperty(type + ".password", password);
+        try {
+          insureDriverClass(dbp.getDBType(db));
+        } catch (ClassNotFoundException cnfe) {
+          throw new InitializerServiceException("Driver not found for " + db);
+        }
+
         Connection conn = DBConnectionPool.getConnection(db, un, pw);
         try {
           Statement stmt = conn.createStatement();
