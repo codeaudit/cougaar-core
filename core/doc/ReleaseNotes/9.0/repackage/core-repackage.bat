@@ -1,9 +1,9 @@
 @ECHO ON
 
-set ORIG_SRC=E:\alp\core-rpkg\core\src
-set NODOMAIN=E:\alp\core-rpkg\final\nodomaincore
-set PRE_DEST=E:\alp\core-rpkg\final\precore
-set REPKG_DEST=E:\alp\core-rpkg\final\newcore
+set ORIG_SRC=%1
+set NODOMAIN=%2\..\nodomaincore
+set PRE_DEST=%2\..\precore
+set REPKG_DEST=%2
 
 CALL core-rpkg.pl -m -d %NODOMAIN% %ORIG_SRC% undomain.pkg
 

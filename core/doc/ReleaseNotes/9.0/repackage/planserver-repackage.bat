@@ -11,5 +11,9 @@ CALL core-rpkg.pl -m -d %REPKG_DEST% %REPKG_DEST% postprocess.pkg
 
 CALL core-rpkg.pl -m -d %REPKG_DEST% %REPKG_DEST% unclustersociety.pkg
 
-REM CALL specialplanserver.pl %REPKG_DEST%\src\org\cougaar\lib\planserver\psp
+CALL specialplanserver.pl %REPKG_DEST%\src\org\cougaar\lib\planserver\psp
+
+
+
+
 

@@ -20,8 +20,9 @@
 #  PERFORMANCE OF THE COUGAAR SOFTWARE.
 # </copyright>
 
-# deals with very special cases in the org.cougaar.lib.planserver.psp
-# package due to global imports
+# deals with very special cases in the
+# org.cougaar.glm.plugins.inventory package
+# also works with org.cougaar.glm.plugins.multiplesuppliers
 
 # adds global imports
 use Cwd;
@@ -50,21 +51,21 @@ sub process_dir {
     local($_);
     foreach $_ (@files) {
 	$file = $_;
-#	local($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_);
+	#local($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_);
 #	print "\nfile name is: ", $file;
-	if (substr($file, -19) eq "PSP_AgentMover.java") {
+	if (substr($file, -28) eq "GeneralInventoryManager.java") {
 	    $found++;
-	    process_bbandmts($_);
-	} elsif (substr($file, -23) eq "PSP_LoggingControl.java") {
+	    process_bb($_);
+	} elsif (substr($file, -20) eq "SourceAllocator.java") {
 	    $found++;
-	    process_bbservice($_);
-	#}  elsif (substr($file, -17) eq "PSP_PlanView.java") {
-	    #$found++;
-	    #process_bbservice($_);
-	}  elsif (substr($file, -21) eq "PSP_PlugInLoader.java") {
+	    process_bb($_);
+	} elsif (substr($file, -19) eq "SourceExpander.java") {
 	    $found++;
-	    process_bbandmts($_);
-	} 
+	    process_bb($_);
+	} elsif (substr($file, -12) eq "Utility.java") {
+	    $found++;
+	    process_domain($_);
+	}
     }
 }
 
@@ -77,7 +78,7 @@ sub findfiles {
       $File::Find::prune = 1;
       return;
     }
-#    (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_));
+    #(($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_));
     push @stuff, $File::Find::name;
   };
   local(%ref);
@@ -86,7 +87,31 @@ sub findfiles {
   @stuff;
 }
 
-sub process_bbservice {
+sub process_bb {
+    local($file) = @_;
+    #print "\nprocessing file:", $file;
+    open(IN, $file);
+    open(OUT, ">".$tmp);
+    while (<IN>) {
+	$input_line = $_;
+# fix this too
+	if (substr($input_line,0,34) eq "import org.cougaar.planning.ldm.\*;") {
+	    $input_line = "import org.cougaar.core.domain.\*;\n";
+	}
+	printf (OUT $input_line);
+	# find the package line and put the import lines after it.
+	if (substr($input_line,0,7) eq "package") {
+	    $found++;
+	    printf OUT ("\nimport org.cougaar.core.blackboard.IncrementalSubscription\;\n");
+	}
+
+    }
+    close(OUT);
+    close(IN);
+    rename($tmp, $file);
+}
+
+sub process_domain {
     local($file) = @_;
     #print "\nprocessing file:", $file;
     open(IN, $file);
@@ -97,7 +122,7 @@ sub process_bbservice {
 	# find the package line and put the import lines after it.
 	if (substr($input_line,0,7) eq "package") {
 	    $found++;
-	    printf OUT ("\nimport org.cougaar.core.blackboard.Subscription\;\n");
+	    printf OUT ("\nimport org.cougaar.core.domain.RootFactory\;\n");
 	}
 
     }
@@ -106,27 +131,6 @@ sub process_bbservice {
     rename($tmp, $file);
 }
 
-sub process_bbandmts {
-    local($file) = @_;
-    #print "\nprocessing file:", $file;
-    open(IN, $file);
-    open(OUT, ">".$tmp);
-    while (<IN>) {
-	$input_line = $_;
-	printf (OUT $input_line);
-	# find the package line and put the import lines after it.
-	if (substr($input_line,0,7) eq "package") {
-	    $found++;
-	    printf OUT ("\nimport org.cougaar.core.mts.Message\;\n");
-	    printf OUT ("\nimport org.cougaar.core.mts.MessageAddress\;\n");
-	    printf OUT ("\nimport org.cougaar.core.blackboard.Subscription\;\n");
-	}
-
-    }
-    close(OUT);
-    close(IN);
-    rename($tmp, $file);
-}
 
 
 
