@@ -688,6 +688,25 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
   }
 
 
+  /** @return true IFF the specified PG class is set, available and non-null on 
+   * the Asset instance.  No checks for late-binding or prototype are ever performed
+   * for this check.
+   **/
+  public final boolean isPGLocal(Class pgc) {
+    return isPGLocal(pgc, UNSPECIFIED_TIME);
+  }
+
+  /** @return true IFF the specified PG class is set, available and non-null on 
+   * the Asset instance.  No checks for late-binding or prototype are ever performed
+   * for this check.  This variation is for querying at a specific time.  
+   * If time is specified as Asset.UNSPECIFIED_TIME, then this call is equivalent to
+   * the single-argument isPGLocal(class).
+   **/
+  public final boolean isPGLocal(Class pgc, long t) {
+    return getLocalPG(pgc, t) != null;
+  }
+
+
   /** get and possibly cache a PG value.
    * The information can come from a number of places:
    *   a local slot 

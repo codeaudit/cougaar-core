@@ -238,7 +238,7 @@ public abstract class AssetSkeletonBase
   // new PG resolution support
   //
   
-  protected final static long UNSPECIFIED_TIME = LDMServesClient.UNSPECIFIED_TIME;
+  public final static long UNSPECIFIED_TIME = LDMServesClient.UNSPECIFIED_TIME;
 
   /** External api for finding a property group by class at no specific time **/
   public final PropertyGroup searchForPropertyGroup(Class pgc) {
