@@ -152,6 +152,10 @@ public abstract class ComponentPlugin
     return alarmService;
   }
   
+  protected final void requestCycle() {
+    tm.trigger();
+  }
+
   //
   // implement GenericStateModel:
   //
@@ -169,7 +173,7 @@ public abstract class ComponentPlugin
         public void signalNotify(int event) {
           // gets called frequently as the blackboard objects change
           super.signalNotify(event);
-          tm.trigger();
+          requestCycle();
         }
         public String toString() {
           return "ThinWatcher("+ComponentPlugin.this.toString()+")";
@@ -220,7 +224,7 @@ public abstract class ComponentPlugin
     super.start();
     tm.start();
     // Tell the scheduler to run me at least this once
-    tm.trigger();
+    requestCycle();
   }
 
   public void suspend() {
