@@ -115,10 +115,13 @@ public abstract class BinderSupport
     BindingUtility.setBindingSite(child, proxy);
     if (getServiceBroker() != null) {
       BindingUtility.setServices(child, getServiceBroker());
-    } else {
+    }
+    /*
+    else {
       System.err.println("BinderSupport: No ServiceBroker from "+getContainer()+" for "+child);
       Thread.dumpStack();
     }
+    */
 
     // cascade
     child.initialize();

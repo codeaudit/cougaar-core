@@ -108,7 +108,19 @@ public class PluginManager
         // PluginManager should only load plugins!
         if (ip != null &&
             ip.startsWith("Node.AgentManager.Agent.PluginManager.")) {
-          add(child);
+          try {
+            add(child);
+          } catch (ComponentRuntimeException cre) {
+            // cre.printStackTrace();
+            Throwable th = cre;
+            while (true) {
+              Throwable nx = th.getCause();
+              if (nx == null) break;
+              th = nx;
+            }
+            System.err.println("Failed to load "+child+":");
+            th.printStackTrace();
+          }
         }
       }
     }

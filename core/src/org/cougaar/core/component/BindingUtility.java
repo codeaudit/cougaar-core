@@ -136,10 +136,16 @@ public abstract class BindingUtility {
         return true;
       }
     } catch (java.lang.reflect.InvocationTargetException ite) {
-      ite.getCause().printStackTrace();
+      //ite.getCause().printStackTrace();
+      throw new ComponentRuntimeException("failed while calling "+method+"()", 
+                                          child,
+                                          ite.getCause());
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
       //throw e;
+      throw new ComponentRuntimeException("failed to call "+method+"()", 
+                                          child,
+                                          e);
     }
     return false;
   }

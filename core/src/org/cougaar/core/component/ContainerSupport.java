@@ -301,22 +301,18 @@ public abstract class ContainerSupport
    * @throws ComponentLoadFailure When the component Cannot be loaded.
    **/
   protected boolean loadComponent(Object c, Object cstate) {
-    Binder b = bindComponent(c);
-    if (b != null) {
-      BoundComponent bc = new BoundComponent(b,c);
-      synchronized (boundComponents) {
-        boundComponents.add(bc);
-      }
-      if (cstate != null) {
-        // provide the state during load
-        b.setState(cstate);
-      }
-      b.load();
-      b.start();
-      return true;
-    } else {
-      return false;
+    Binder b = bindComponent(c); // cannot return null any more
+    BoundComponent bc = new BoundComponent(b,c);
+    synchronized (boundComponents) {
+      boundComponents.add(bc);
     }
+    if (cstate != null) {
+      // provide the state during load
+      b.setState(cstate);
+    }
+    b.load();
+    b.start();
+    return true;
   }
 
   /**  These BinderFactories
