@@ -37,6 +37,11 @@ import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.naming.NamingService;
 
+import org.cougaar.core.cluster.LoggingService;
+import org.cougaar.core.cluster.LoggingControlService;
+import org.cougaar.core.cluster.LoggingServiceProvider;
+
+
 import org.cougaar.core.component.*;
 
 import java.io.Serializable;
@@ -533,6 +538,12 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
+
+    LoggingServiceProvider loggingServiceProvider = new LoggingServiceProvider(System.getProperties());
+    sb.addService(LoggingService.class,
+		  loggingServiceProvider);
+    sb.addService(LoggingControlService.class,
+		  loggingServiceProvider);
 
     //add the vm metrics
     sb.addService(NodeMetricsService.class,
