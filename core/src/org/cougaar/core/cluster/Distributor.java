@@ -371,6 +371,10 @@ public class Distributor {
       outboxes.add(outbox);
       outbox = alpPlan.receiveEnvelope(outbox);
       haveSomethingToDistribute = true;
+
+      // outbox should be empty at this point.
+      // execute any pending DelayedLPActions
+      outbox = alpPlan.executeDelayedLPActions();
     }
     boolean busy = haveSomethingToDistribute;
     if (persistence != null) {
