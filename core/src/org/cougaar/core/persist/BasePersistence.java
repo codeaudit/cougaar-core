@@ -454,7 +454,8 @@ public class BasePersistence
     dataProtectionService = (DataProtectionService)
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
-      if (logger.isWarnEnabled()) logger.warn("No DataProtectionService Available");
+      if (logger.isWarnEnabled()) logger.warn("No DataProtectionService Available.");
+//       dataProtectionService = new DataProtectionServiceStub();
     } else {
       if (logger.isInfoEnabled()) logger.info("DataProtectionService is "
                                               + dataProtectionService.getClass().getName());
@@ -698,7 +699,7 @@ public class BasePersistence
           RehydrationSet rs1 = (RehydrationSet) o1;
           RehydrationSet rs2 = (RehydrationSet) o2;
           int diff = rs1.sequenceNumbers.compareTo(rs1.sequenceNumbers);
-          if (diff != 0) return diff;
+          if (diff != 0) return -diff;
           return rs1.ppi.getName().compareTo(rs2.ppi.getName());
         }
       });
