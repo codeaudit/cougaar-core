@@ -90,4 +90,25 @@ public interface ServletService extends Service
    */
   void unregisterAll();
 
+  /**
+   * Get the HTTP port for the local servlet server.
+   * <p>
+   * A typical HTTP port is 8800, but a different port may be
+   * used due to either node configuration or to support multiple
+   * nodes on the same machine.
+   *
+   * @return the HTTP port, or -1 if HTTP is disabled.
+   */
+  int getHttpPort();
+
+  /**
+   * Get the HTTPS port for the local servlet server.
+   * <p>
+   * A typical HTTPS port is 8400, but a different port may be
+   * used due to either node configuration or to support multiple
+   * nodes on the same machine.
+   *
+   * @return the HTTPS port, or -1 if HTTPS is disabled.
+   */
+  int getHttpsPort();
 }
