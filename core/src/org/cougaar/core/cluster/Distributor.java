@@ -24,10 +24,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
+import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceSubscriberState;
+import org.cougaar.core.cluster.persist.RehydrationResult;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.domain.planning.ldm.plan.Directive;
-import org.cougaar.core.blackboard.*;
 
 public class Distributor {
   /*
@@ -49,6 +51,10 @@ public class Distributor {
 
   /** The maximum interval between persistence deltas. **/
   private static final long MAX_PERSIST_INTERVAL = 37000L;
+  private static final long LAZY_PERSIST_INTERVAL = 300000L;
+
+  /** True if using lazy persistence **/
+  private boolean lazyPersistence = true;
 
   /** The object we use to persist ourselves. */
   private Persistence persistence = null;
@@ -154,8 +160,9 @@ public class Distributor {
     // requiring our client to call this.start().
   }
 
-  public void setPersistence(Persistence newPersistence) {
+  public void setPersistence(Persistence newPersistence, boolean lazy) {
     persistence = newPersistence;
+    lazyPersistence = lazy;
   }
 
   public Persistence getPersistence() {
@@ -209,26 +216,42 @@ public class Distributor {
   }
 
   public MessageManager getMessageManager() {
-    if (persistence == null) {
-      if (myMessageManager == null) {
-	myMessageManager = new MessageManagerImpl(false);
-      }
-      return myMessageManager;
-    } else {
-      return persistence.getMessageManager();
-    }
+    return myMessageManager;
   }
 
-  private void rehydrate() {
+  /**
+   * Rehydrate this blackboard. If persistence is off, just create a
+   * MessageManager that does nothing. If persistence is on, try to
+   * rehydrate from existing persistence deltas. The result of this is
+   * a List of undistributed envelopes and a MessageManager. There
+   * might be no MessageManager in the result signifying that either
+   * there were no persistence deltas or that lazyPersistence was on
+   * so the message manager did not need to be saved. In either case
+   * the existence of an appropriate message manager is assured. The
+   * undistributed envelopes might be null signifying that there was
+   * no persistence deltas in existence. This is reflected in the
+   * value of the didRehydrate flag.
+   **/
+  private void rehydrate(Object state) {
     if (persistence != null) {
       rehydrationEnvelope = new PersistenceEnvelope();
-      List undistributedEnvelopes = persistence.rehydrate(rehydrationEnvelope);
-      if (undistributedEnvelopes != null) {
+      RehydrationResult rr = persistence.rehydrate(rehydrationEnvelope, state);
+      if (lazyPersistence) {    // Ignore any rehydrated message manager
+        myMessageManager = new MessageManagerImpl(false);
+      } else {
+        myMessageManager = rr.messageManager;
+        if (myMessageManager == null) {
+          myMessageManager = new MessageManagerImpl(true);
+        }
+      }
+      if (rr.undistributedEnvelopes != null) {
         didRehydrate = true;
 	postRehydrationEnvelopes = new ArrayList();
-        postRehydrationEnvelopes.addAll(undistributedEnvelopes);
-        epochEnvelopes.addAll(undistributedEnvelopes);
+        postRehydrationEnvelopes.addAll(rr.undistributedEnvelopes);
+        epochEnvelopes.addAll(rr.undistributedEnvelopes);
       }
+    } else {
+      myMessageManager = new MessageManagerImpl(false);
     }
   }
 
@@ -286,8 +309,8 @@ public class Distributor {
    * Note that although Distributor is Runnable, it does not extend Thread,
    * rather, it maintains it's own thread state privately.
    **/
-  public synchronized void start(Cluster theCluster) {
-    rehydrate();
+  public synchronized void start(Cluster theCluster, Object state) {
+    rehydrate(state);
     getMessageManager().start(theCluster, didRehydrate);
   }
 
@@ -363,7 +386,7 @@ public class Distributor {
     if (persistence != null) {
       if (needToPersist) {
         if (timeToPersist()) {
-          setPersistPending(true);  // Lock out new transactions
+          maybeSetPersistPending();  // Lock out new transactions
         }
       }
     }
@@ -388,6 +411,10 @@ public class Distributor {
     //        haveSomethingToDistribute = true;
     //      }
 
+    /**
+     * busy indicates that we have found evidence that things are
+     * still happening or are about to happen in this agent.
+     **/
     boolean busy = haveSomethingToDistribute;
     if (persistence != null) {
       if (!needToPersist && haveSomethingToDistribute) {
@@ -419,7 +446,7 @@ public class Distributor {
       if (!busy && transactionCount > 0) busy = true;
       if (needToPersist) {
         if (!busy) {
-          setPersistPending(true);  // Lock out new transactions
+          maybeSetPersistPending();  // Lock out new transactions
         }
       }
       if (persistPending) {
@@ -445,7 +472,12 @@ public class Distributor {
         DirectiveMessage msg = (DirectiveMessage) m;
         int code = getMessageManager().receiveMessage(msg);
         if ((code & MessageManager.RESTART) != 0) {
-          alpPlan.restart(msg.getSource());
+          try {
+            alpPlan.startTransaction();
+            alpPlan.restart(msg.getSource());
+          } finally {
+            alpPlan.stopTransaction();
+          }
         }
         if ((code & MessageManager.IGNORE) == 0) {
           if (logWriter != null) {
@@ -490,18 +522,37 @@ public class Distributor {
    * with needToPersist being true.
    **/
   private void doPersistence() {
+    doPersistence(false);
+  }
+
+  private Object doPersistence(boolean persistedStateNeeded) {
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
       if (subscriber.isReadyToPersist()) {
         subscriberStates.add(new PersistenceSubscriberState(subscriber));
       }
     }
-    persistence.persist(epochEnvelopes, emptyList, subscriberStates);
+    Object result;
+    synchronized (getMessageManager()) {
+      getMessageManager().advanceEpoch();
+      result = persistence.persist(epochEnvelopes, emptyList, subscriberStates,
+                                   persistedStateNeeded,
+                                   lazyPersistence ? null : getMessageManager());
+    }
     epochEnvelopes.clear();
     subscriberStates.clear();
     setPersistPending(false);
     needToPersist = false;
     lastPersist = System.currentTimeMillis();
+    return result;
+  }
+
+  protected boolean timeToLazilyPersist() {
+    long overdue = System.currentTimeMillis() - (lastPersist + LAZY_PERSIST_INTERVAL);
+    if (overdue > 0L) {
+      System.out.println("Lazy persistence overdue by " + overdue);
+    }
+    return overdue > 0L;
   }
 
   private boolean timeToPersist() {
@@ -534,6 +585,62 @@ public class Distributor {
     }
     synchronized (this) {
       distribute(outbox, client);
+    }
+  }
+
+  /**
+   * Force a persistence delta to be generated.
+   **/
+  public void persistNow() throws PersistenceNotEnabledException {
+    persist(false);
+  }
+
+  /**
+   * Force a (full) persistence delta to be generated and return result
+   **/
+  public Object getState() throws PersistenceNotEnabledException {
+    persist(false);
+    System.gc();
+    return persist(true);
+  }
+
+  /**
+   * Generate a persistence delta and (maybe) return the data of that
+   * delta. We call startTransaction to insure that persistence is
+   * neither in progress nor can begin. Then we wait until there are
+   * no other transactions in progress and then call doPersistence.
+   * @param isStateWanted true if the data of a full persistence delta is wanted
+   * @return a state Object including all the data from a full
+   * persistence delta if isStateWanted is true, null if isStateWanted
+   * is false.
+   **/
+  private Object persist(boolean isStateWanted)
+    throws PersistenceNotEnabledException
+  {
+    if (persistence == null)
+      throw new PersistenceNotEnabledException();
+    synchronized (transactionLock) {
+      startTransaction();
+      try {
+        // Invariant: persistPending==false transactionCount >= 1
+        while (transactionCount > 1) {
+          try {
+            transactionLock.wait();
+          }
+          catch (InterruptedException ie) {
+          }
+        }
+        // We are the only one left in the pool
+        return doPersistence(isStateWanted);
+      } finally {
+        --transactionCount;
+      }
+    }
+  }
+
+  private void maybeSetPersistPending() {
+    if (!lazyPersistence || timeToLazilyPersist()) {
+      setPersistPending(true);
     }
   }
 

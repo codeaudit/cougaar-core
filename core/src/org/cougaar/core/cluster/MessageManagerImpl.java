@@ -693,6 +693,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
    * performed externally.
    **/
   public void advanceEpoch() {
+    if (!USE_MESSAGE_MANAGER) return;
     // Advance the information about every other cluster
     for (Iterator clusters = clusterInfo.values().iterator(); clusters.hasNext(); ) {
       ClusterInfo info = (ClusterInfo) clusters.next();

@@ -13,6 +13,7 @@ package org.cougaar.core.cluster;
 
 import org.cougaar.core.blackboard.BlackboardService;
 import org.cougaar.core.blackboard.BlackboardClient;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.util.LockFlag;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
 import org.cougaar.util.EmptyIterator;
@@ -92,6 +93,14 @@ public class Subscriber implements BlackboardService {
   public boolean didRehydrate() {
     boolean result = theDistributor.didRehydrate(this);
     return result;
+  }
+
+  public void persistNow() throws PersistenceNotEnabledException {
+    boolean inTransaction =
+      transactionLock.getBusyFlagOwner() == Thread.currentThread();
+    if (inTransaction) closeTransaction();
+    theDistributor.persistNow();
+    if (inTransaction) openTransaction();
   }
 
   /**

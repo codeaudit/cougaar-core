@@ -12,6 +12,7 @@ package org.cougaar.core.cluster;
 import java.util.*;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.domain.planning.ldm.plan.Plan;
@@ -473,4 +474,7 @@ public class Blackboard extends Subscriber
     return privateGetPublishedChanges();
   }
 
+  public Object getState() throws PersistenceNotEnabledException {
+    return myDistributor.getState();
+  }
 }

@@ -262,10 +262,66 @@ public class ClusterImpl extends Agent
       if (myDistributor == null) {
         myDistributor = new Distributor(getClusterIdentifier().getAddress());
         Persistence persistence = createPersistence();
-        myDistributor.setPersistence(persistence);
-        myDistributor.start(this);
+        boolean lazyPersistence =
+          System.getProperty("org.cougaar.core.cluster.persistence.lazy", "true")
+          .equals("true");
+        myDistributor.setPersistence(persistence, lazyPersistence);
+        Object state = null;
+        final long kludgeDelay = Long.parseLong(System.getProperty("kludge", "0"));
+        if (kludgeDelay > 0L) {
+          File kludge = new File("kludge.dat");
+          if (kludge.exists()) {
+            try {
+              ObjectInputStream ois = new ObjectInputStream(new FileInputStream(kludge));
+              try {
+                state = ois.readObject();
+                System.out.println("Read state object");
+              } finally {
+                ois.close();
+              }
+            } catch (Exception ex) {
+              ex.printStackTrace();
+            }
+          }
+          new Thread("Kludge Killer") {
+            public void run() {
+              try {
+                while (true) {
+                  try {
+                    Thread.sleep(kludgeDelay);
+                  } catch (InterruptedException ie) {
+                  }
+                  writeKludge();
+                  break;
+                }
+              } catch (Throwable e) {
+                e.printStackTrace();
+              }
+              System.out.println("Exiting");
+              System.exit(0);
+            }
+          }.start();
+        }
+        myDistributor.start(this, state);
       }
       return myDistributor;
+    }
+  }
+
+  public void writeKludge() {
+    try {
+      ObjectOutputStream oos =
+        new ObjectOutputStream(new FileOutputStream("kludge.dat"));
+      try {
+        Object state = myBlackboard.getState();
+        oos.writeObject(state);
+        System.out.println("Wrote " + state);
+      } finally {
+        oos.close();
+      }
+    } catch (Throwable ex) {
+      System.err.println("Exception " + ex);
+      ex.printStackTrace();
     }
   }
 
