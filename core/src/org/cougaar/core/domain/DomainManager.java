@@ -40,10 +40,12 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.SupportsDelayedLPActions;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.component.*;
+import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.node.NodeControlService;
+
 
 import java.beans.*;
 import java.lang.reflect.*;
@@ -124,10 +126,9 @@ public class DomainManager
     }
 
     // display the agent id
-    MessageAddress cid = getBindingSite().getAgentIdentifier();
-    String cname = cid.toString();
-
     if (loggingService.isDebugEnabled()) {
+      MessageAddress cid = getBindingSite().getAgentIdentifier();
+      String cname = cid.toString();
       loggingService.debug("DomainManager "+this+" loading Domains for agent "+cname);
     }
 
@@ -137,35 +138,29 @@ public class DomainManager
       // use the existing state
       children = (StateTuple[])loadState;
       loadState = null;
+      // load the child Components (Domains, etc)
+      int n = ((children != null) ? children.length : 0);
+      for (int i = 0; i < n; i++) {
+        add(children[i]);
+      }
     } else {
-      // create a list for component-descriptions
+      /* Order - root, LDMDomains.ini, agent.ini */
       List descs = new ArrayList(5);
       addDomain(descs, "root", 
                 "org.cougaar.core.domain.RootDomain"); // setup the root domain
+
+      /* read  LDMDomains.ini */ 
       initializeFromProperties(descs);
       initializeFromConfigFiles(descs);
 
+      /* load root domain and domains specified in LDMDomains.ini */
       children = descs.toArray();
-      /* Create DomainInitializerService
-      ServiceBroker sb = getServiceBroker();
-      InitializerService is = (InitializerService)
-        sb.getService(this, InitializerService.class, null);
-      try {
-        children = is.getComponentDescriptions(cname, specifyContainmentPoint());
-      } catch (Exception e) {
-        loggingService.error("Unable to add "+cname+"'s child Components: "+e);
-        e.printStackTrace();
-        children = null; 
-      } finally {
-        sb.releaseService(this, InitializerService.class, is);
-        } */
-    }
+      for (int i = 0; i < children.length; i++) {
+        add(children[i]);
+      }      
 
-
-    // load the child Components (Domains, etc)
-    int n = ((children != null) ? children.length : 0);
-    for (int i = 0; i < n; i++) {
-      add(children[i]);
+      /* load domains specified in  agent.ini */
+      loadFromInitializer();
     }
   }
 
@@ -187,23 +182,6 @@ public class DomainManager
     } 
   }
 
-  //
-  // binding services
-  //
-
-  protected final AgentChildBindingSite getBindingSite() {
-    return bindingSite;
-  }
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
-  protected String specifyContainmentPoint() {
-    return "Node.AgentManager.Agent.DomainManager";
-  }
-
-  protected ClusterServesLogicProvider getClusterServesLogicProvider() {
-    return bindingSite.getCluster();
-  }
 
   public Collection getXPlans() {
     return (Collection) xplans.clone();
@@ -298,8 +276,73 @@ public class DomainManager
     }
   }
 
+  //
+  // binding services
+  //
+
+  protected final AgentChildBindingSite getBindingSite() {
+    return bindingSite;
+  }
+  protected ComponentFactory specifyComponentFactory() {
+    return super.specifyComponentFactory();
+  }
+  protected String specifyContainmentPoint() {
+    return "Node.AgentManager.Agent.DomainManager";
+  }
+
+  protected ClusterServesLogicProvider getClusterServesLogicProvider() {
+    return bindingSite.getCluster();
+  }
+
   protected Blackboard getBlackboard() {
     return blackboard;
+  }
+
+
+  /* load domains specified in  agent.ini */
+  protected void loadFromInitializer() {
+    ComponentDescription [] children;
+    ServiceBroker sb = getServiceBroker();
+    InitializerService is = (InitializerService)
+      sb.getService(this, InitializerService.class, null);
+    MessageAddress cid = getBindingSite().getAgentIdentifier();
+    String cname = cid.toString();
+
+    try {
+      children = is.getComponentDescriptions(cname, specifyContainmentPoint());
+    } catch (Exception e) {
+        loggingService.error("Unable to add "+cname+"'s child Components: "+e);
+        e.printStackTrace();
+        children = null; 
+    } finally {
+      sb.releaseService(this, InitializerService.class, is);
+    } 
+    
+    // load the child Components (Plugins, etc)
+    int n = ((children != null) ? children.length : 0);
+    for (int i = 0; i < n; i++) {
+      ComponentDescription cd = (ComponentDescription) children[i];
+      
+      if (cd != null) {
+        String ip = cd.getInsertionPoint();
+        // DomainManager should only load Domains!
+        if (ip != null &&
+            ip.startsWith(specifyContainmentPoint())) {
+          try {
+            add(cd);
+          } catch (ComponentRuntimeException cre) {
+            Throwable th = cre;
+            while (true) {
+              Throwable nx = th.getCause();
+              if (nx == null) break;
+              th = nx;
+            }
+            loggingService.error("Failed to load "+cd+":");
+            th.printStackTrace();
+          }
+        }
+      }
+    }
   }
 
   
@@ -350,8 +393,13 @@ public class DomainManager
       // find the domain we just loaded
       Domain domain = null;
       if (c instanceof ComponentDescription) {
-        String domainName = 
-          ((ComponentDescription) c).getName();
+        Object []parameters = ((List)((ComponentDescription) c).getParameter()).toArray();
+
+        if (parameters.length < 1) {
+        throw new RuntimeException("First element of the Domain ComponentDescription parameter List must specify the Domain name.");
+        }
+ 
+        String domainName = (String) parameters[0]; 
         for (Iterator childBinders = binderIterator();
             childBinders.hasNext();) {
           DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
@@ -474,7 +522,7 @@ public class DomainManager
    * @param className the name of the class to instantiate as the domain.
    **/
   private void addDomain(List descs, String domainName, 
-      String className) {
+                         String className) {
     // Unique?
     for (int i = 0, n = descs.size(); i < n; i++) {
       ComponentDescription cd =
