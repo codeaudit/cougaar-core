@@ -46,7 +46,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   private HashMap mapOfMaps = new HashMap(11);
   
   public NSImpl() throws RemoteException {
-    super();
+    super(0, NamingSocketFactory.getInstance(), NamingSocketFactory.getInstance());
     putDirMap(ROOT, new NSDirMap());
   }
 

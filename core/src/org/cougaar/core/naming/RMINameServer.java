@@ -28,6 +28,8 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.RMISecurityManager;
 import java.rmi.registry.*;
+import java.rmi.server.RMIServerSocketFactory;
+import java.rmi.server.RMIClientSocketFactory;
   
 import java.util.*;
 
@@ -100,13 +102,14 @@ public class RMINameServer implements NameServer, InitialContextFactory {
 
     int port = Communications.getPort();
     String addr = Communications.getFdsAddress();
+    RMIClientSocketFactory csf = NamingSocketFactory.getInstance();
 
     String url = "//"+addr+":"+port+"/NameService";
     if (verbosity>1) System.err.print("Attempting to contact "+url+": ");
     while (remote == null) {
       if (verbosity>1) System.err.print(" .");
       try {
-        Registry r = LocateRegistry.getRegistry(addr, port);
+        Registry r = LocateRegistry.getRegistry(addr, port, csf);
         remote = r.lookup(url);
       } catch (Exception e) { 
         // ignore
@@ -388,13 +391,15 @@ public class RMINameServer implements NameServer, InitialContextFactory {
     int port = Communications.getPort();
     String addr = Communications.getFdsAddress();
     String url = "//"+addr+":"+port+"/NameService";
+    RMIClientSocketFactory csf = NamingSocketFactory.getInstance();
+    RMIServerSocketFactory ssf = NamingSocketFactory.getInstance();
     
     if (verbosity>1) System.err.print("Creating RMIRegistry at port "+port+":");
     Registry r = null;
     while (r == null) {
       if (verbosity>1) System.err.print(" .");
       try {
-        r = LocateRegistry.createRegistry(port);
+        r = LocateRegistry.createRegistry(port, csf, ssf);
       } catch (RemoteException re) {
         re.printStackTrace();
         if (! tryHard) return;  //  bail
