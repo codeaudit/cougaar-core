@@ -50,6 +50,13 @@ public class SchedulerServiceProvider
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service){
   }
 
+  public void suspend() {
+    scheduler.suspend();
+  }
+
+  public void resume() {
+    scheduler.resume();
+  }
 
   protected class SchedulerServiceImpl implements SchedulerService{
 
@@ -64,13 +71,33 @@ public class SchedulerServiceProvider
     }
 
     /** the scheduler instance (if started) **/
-    private EasyScheduler scheduler = null;
+    private Thread schedulerThread = null;
+    private boolean running = false;
 
     synchronized private void assureStarted() {
-      if (scheduler == null) {
-	scheduler = new EasyScheduler();
-	(new Thread(scheduler, "SchedulerServiceProvider/" + agent.getClusterIdentifier())).start();
+      if (schedulerThread == null) {
+	Runnable scheduler = new EasyScheduler();
+        String name = "SchedulerServiceProvider/" + agent.getClusterIdentifier();
+	schedulerThread = new Thread(scheduler, name);
+        running = true;
+        schedulerThread.start();
       }
+    }
+
+    synchronized void suspend() {
+      if (!running) throw new RuntimeException("Not running");
+      running = false;
+      signalActivity();
+      try {
+        schedulerThread.join(60000);
+      } catch (InterruptedException ie) {
+      }
+      schedulerThread = null;
+    }
+
+    synchronized void resume() {
+      if (running) throw new RuntimeException("Not suspended");
+      assureStarted();
     }
 
     /** Semaphore to signal activity in one or more plugins **/
@@ -80,7 +107,6 @@ public class SchedulerServiceProvider
     private boolean activitySignaled = false;
     
     protected void signalActivity() {
-      if (activitySignaled) return; // reduce lock contention
       synchronized (activitySignal) {
 	if (!activitySignaled) {  // reduce lock,notify contention
 	  activitySignaled = true;
@@ -106,7 +132,7 @@ public class SchedulerServiceProvider
 
     protected class EasyScheduler implements Runnable {
       public void run() {
-	while (true) {
+	while (running) {
 	  waitForActivity();
 	  //make copy to prevent concurrent modification error. (I couldn't figure out the synchronization)
 	  ArrayList pokables;
@@ -114,7 +140,7 @@ public class SchedulerServiceProvider
 	    pokables = new ArrayList(runThese);
 	    runThese.clear();
 	  }
-	  for (Iterator it = pokables.iterator(); it.hasNext();) {
+	  for (Iterator it = pokables.iterator(); running && it.hasNext();) {
 	    Trigger pc = (Trigger)it.next();
 	    pc.trigger();
 	  }

@@ -164,6 +164,7 @@ public class ClusterImpl extends Agent
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
   private SharedThreadingServiceProvider sharedThreadingServiceProvider;
+  private SchedulerServiceProvider schedulerServiceProvider;
 
   private static boolean isHeartbeatOn = true;
   private static boolean isMetricsHeartbeatOn = false;
@@ -445,7 +446,8 @@ public class ClusterImpl extends Agent
     sb.addService(DemoControlService.class, new DemoControlServiceProvider(this));
 
     // scheduler for new plugins
-    sb.addService(SchedulerService.class, new SchedulerServiceProvider(this));
+    schedulerServiceProvider = new SchedulerServiceProvider(this);
+    sb.addService(SchedulerService.class, schedulerServiceProvider);
 
     // placeholder for LDM Services should go away and be replaced by the
     // above domainservice and prototyperegistry service
@@ -587,6 +589,9 @@ public class ClusterImpl extends Agent
     System.out.println("suspend shared threading");
     sharedThreadingServiceProvider.suspend(); // suspend the plugin scheduling
 
+    System.out.println("suspend scheduler service");
+    schedulerServiceProvider.suspend(); // suspend the plugin scheduling
+
     System.out.println("unregisterClient");
     messenger.unregisterClient(ClusterImpl.this);
   }
@@ -597,6 +602,7 @@ public class ClusterImpl extends Agent
     // re-register for MessageTransport
 
     sharedThreadingServiceProvider.resume(); // resume the plugin scheduling
+    schedulerServiceProvider.resume(); // suspend the plugin scheduling
 
     // resume the alarms 
 
