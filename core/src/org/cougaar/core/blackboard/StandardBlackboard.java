@@ -199,6 +199,10 @@ public class StandardBlackboard
     public PersistenceObject getPersistenceObject() {
       return blackboard.getDistributor().getPersistenceObject();
     }
+
+    public void persistNow() {
+      blackboard.getDistributor().persistNow();
+    }
   }
 }
 

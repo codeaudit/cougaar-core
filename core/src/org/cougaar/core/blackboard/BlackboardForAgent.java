@@ -37,4 +37,6 @@ public interface BlackboardForAgent
   void restartAgent(MessageAddress cid);
 
   PersistenceObject getPersistenceObject();
+
+  void persistNow();
 }
