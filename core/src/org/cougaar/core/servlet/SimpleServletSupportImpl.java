@@ -121,11 +121,13 @@ implements SimpleServletSupport
         ns.getRootContext(); 
       d = (javax.naming.directory.DirContext) 
         d.lookup("WEBSERVERS");
-      javax.naming.NamingEnumeration en = d.list("");
+      javax.naming.NamingEnumeration en = d.listBindings("");
       while (en.hasMoreElements()) {
-        javax.naming.NameClassPair ncp = 
-          (javax.naming.NameClassPair) en.nextElement();
-        toList.add(ncp.getName());
+        javax.naming.Binding binding =  
+          (javax.naming.Binding) en.nextElement();
+        org.cougaar.lib.web.arch.root.GlobalEntry entry = 
+          (org.cougaar.lib.web.arch.root.GlobalEntry)binding.getObject();
+        toList.add(entry.getName());
       }
       Collections.sort(toList);
     } catch (Exception e) {
