@@ -5,124 +5,187 @@
  * Raytheon Systems Company (RSC) Consortium).
  * This software to be used only in accordance with the
  * COUGAAR licence agreement.
- * </copyright>/** Serve some default prototypes to the system.
- * At this point, this only serves stupid prototypes for
- * (temporary) backward compatability.
- *
- * At start, loads some low-level basics into the registry.
- * On demand, serve a few more.
+ * </copyright>
  **/
 
- 
 package org.cougaar.core.examples;
+
+import java.util.*;
 
 import org.cougaar.core.society.*;
 import org.cougaar.core.cluster.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.mts.*;
 import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.util.UnaryPredicate;
 
-
-
+/**
+ * Example Plugin that requests it's Agent to move to another Node.
+ */
 public class MobilePlugin 
   extends ComponentPlugin
 {
     
-  public MobilePlugin() {}
+  public MobilePlugin() {
+  }
   
   protected void setupSubscriptions() {
 
+    // parse the parameters
+    String paramOrigNode;
+    String paramDestNode;
+    final int paramSleepSeconds;
+    try {
+      List params = (List)getParameters();
+      paramOrigNode = (String)params.get(0);
+      paramDestNode = (String)params.get(1);
+      paramSleepSeconds = Integer.parseInt((String)params.get(2));
+    } catch (Exception e) {
+      System.err.println(
+          "Expecting three parameters to "+getClass().getName()+
+          ": (origNode, destNode, sleepSeconds)\n"+
+          e);
+      return;
+    }
+
+    // get our agent's ID
     final ClusterIdentifier thisAgentID =
       getBindingSite().getAgentIdentifier();
 
-    System.out.println("-----------***INSIDE MOBILE PLUGIN***---------------");
-    System.out.println("-------Agent is: " + (thisAgentID.toString()) +"-------");
-    // only move if this is 3ID
-    if (!("3ID".equals(thisAgentID.toString()))) {
+    // parse the destination node ID
+    final NodeIdentifier toNodeID = new NodeIdentifier(paramDestNode);
+
+    // get the nodeID service          
+    NodeIdentificationService nodeService = (NodeIdentificationService) 
+      getBindingSite().getServiceBroker().getService(
+          this, 
+          NodeIdentificationService.class,
+          null);
+    final NodeIdentifier thisNodeID = 
+      ((nodeService != null) ? 
+       nodeService.getNodeIdentifier() :
+       null);
+
+    // only move if on the correct Node
+    if ((thisNodeID == null) ||
+        (!(paramOrigNode.equals(thisNodeID.toString())))) {
+      System.err.println(
+          "Not moving, since Agent "+thisAgentID+" is on Node "+
+          thisNodeID+", not "+paramOrigNode);
+
+      // see if a TestObject is in the Blackboard
+      UnaryPredicate pred = 
+        new UnaryPredicate() {
+          public boolean execute(Object o) {
+            return (o instanceof TestObject);
+          }
+        };
+      Collection c = blackboard.query(pred);
+      int n = ((c != null) ? c.size() : 0);
+      if (n > 0) {
+        Iterator iter = c.iterator();
+        for (int i = 0; i < n; i++) {
+          System.out.println(
+              "Found TestObject["+i+" / "+n+"]: "+
+              iter.next());
+        }
+      } else {
+        System.out.println("No TestObjects found");
+      }
+
       return;
     }
 
-    // hack to simulate a client - get the message service
-    MessageTransportClient mtc = new MessageTransportClient() {
-	public void receiveMessage(Message message) {
-	  // error!!  shouldn't receive a message on this component level!!
-	}
-	public MessageAddress getMessageAddress() {   // overload to this agent's address
-	  return thisAgentID;
-	}
+    // put something in the Blackboard to see if it moves with us
+    TestObject tObj = new TestObject(thisNodeID, thisAgentID);
+    System.out.println(
+        "Agent "+thisAgentID+" on Node "+thisNodeID+
+        " publishing a TestObject: "+tObj);
+    blackboard.publishAdd(tObj);
+
+    // create a dummy message transport client
+    MessageTransportClient mtc = 
+      new MessageTransportClient() {
+        public void receiveMessage(Message message) {
+          // never
+        }
+        public MessageAddress getMessageAddress() {
+          return thisAgentID;
+        }
       };
-    
+
+    // get the message transport
     final MessageTransportService mts = (MessageTransportService) 
       getBindingSite().getServiceBroker().getService(
-						     mtc,   // simulated client 
-						     MessageTransportService.class,
-						     null);
-    
-    if( mts == null) {
-      System.out.println("-------MTS is null, be warned!!!-------");
-      return;
-   }
-    
-    // get the message service  	
-    NodeIdentificationService nodeService = (NodeIdentificationService) 
-      getBindingSite().getServiceBroker().getService(
-						     this, 
-						     NodeIdentificationService.class,
-						     null);
-    
-    
-    // no message transport
-    if (nodeService == null) {
-      //error
+          mtc,   // simulated client 
+          MessageTransportService.class,
+          null);
+    if (mts == null) {
+      System.out.println(
+          "Unable to get message transport service");
       return;
     }
-    
-    final NodeIdentifier thisNodeID = 
-      nodeService.getNodeIdentifier();
-     
-    // only move if on MiniNode
-    if (!("MiniNode".equals(thisNodeID.toString()))) {
-      return;
-    }
-    
-    // after 30 seconds move my "3ID" from "MiniNode" to "TestNode"
-    final long sleepMS = 10 * 1000;
-    final NodeIdentifier toNodeID = new NodeIdentifier("TestNode");
+
+    // create a runner to do our work
     Runnable moveAgentRunner = new Runnable() {
-	public void run() {
-	  try {
-	    // wait
-	    for (long t = 0; t < sleepMS; t += 1000) {
-	      System.out.println(
-				 "Agent "+thisAgentID+" set to move from "+
-				 thisNodeID+" to "+toNodeID+
-				 " in "+(sleepMS - t)+" MS");
-	      Thread.sleep(1000);
-	    }
-	    
-	    // create the message
-	    MoveAgentMessage moveMsg = 
-	      new MoveAgentMessage(
-				   thisAgentID, // from me
-				   thisNodeID,  // tell my node
-				   thisAgentID, // to move me
-				   toNodeID);   // to destination node
-	    
-	    System.out.println("Agent "+thisAgentID+" sending "+moveMsg);
-	    
-	    // send
-	    mts.sendMessage(moveMsg);
-	  } catch (Exception e) {
-	    System.out.println(thisAgentID+" unable to move");
-	    e.printStackTrace();
-	  }
-	}
-      };
+      public void run() {
+        try {
+          // sleep a while
+          for (int t = paramSleepSeconds; t > 0; t--) {
+            System.out.println(
+                "Move Agent "+thisAgentID+" from "+
+                thisNodeID+" to "+toNodeID+
+                " in T-MINUS "+t+" seconds");
+            Thread.sleep(1000);
+          }
+
+          // create the move-message
+          MoveAgentMessage moveMsg = 
+            new MoveAgentMessage(
+                thisAgentID, // from me
+                thisNodeID,  // tell my node
+                thisAgentID, // to move me
+                toNodeID);   // to destination node
+
+          System.out.println("Agent "+thisAgentID+" sending "+moveMsg);
+
+          // send
+          mts.sendMessage(moveMsg);
+
+          // hopefully it'll happen...
+        } catch (Exception e) {
+          System.out.println(
+              "Agent "+thisAgentID+" on Node "+
+              thisNodeID+" unable to move");
+          e.printStackTrace();
+        }
+      }
+    };
     Thread moveThread = new Thread(moveAgentRunner);
     moveThread.start();
+
+    // let the thread run..
   }
-    
+
   // no subscriptions, so we'll never actually be run.
   protected void execute() {
+  }
+
+  /**
+   * Simple test object for the Blackboard.
+   * <p>
+   * Should probably make this a <code>UniqueObject</code>
+   * and <code>XMLable</code> for the UI.
+   */
+  private static class TestObject {
+    private String s;
+    public TestObject(
+        NodeIdentifier nid,
+        ClusterIdentifier aid) {
+      s = "{Node "+nid+" Agent "+aid+"}";
+    }
+    public String toString() {
+      return s;
+    }
   }
 }
