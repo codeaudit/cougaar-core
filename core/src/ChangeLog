@@ -1,5 +1,12 @@
 2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/wp/ListAllAgents.java:
+	No Bug.
+	Fix encodeAndSort so that the names are sorted before they are URL
+	encoded. The only reason for sorting is presentation so it is the
+	appearance that counts. The name should be changed to
+	sortAndEncode, but that would break all the users of this method.
+
 	* org/cougaar/core/naming/JNDIWhitePagesServiceComponent.java: 
 	Bug #2658 -- Components incompatible with automatic service revocation feature
 	Test for null service before trying to use it.
