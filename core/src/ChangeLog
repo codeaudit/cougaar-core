@@ -1,3 +1,18 @@
+2002-06-05  Michael Thome  <mthome@bbn.com>
+
+	* org/cougaar/core/logging/LoggingServiceProvider.java
+	Moved much of this to
+	util:org.cougaar.util.log.log4j.Log4jFactoryImpl
+
+	* org/cougaar/core/logging/NullLoggingServiceImpl.java
+	refactored
+
+	* org/cougaar/core/node/NodeAgent.java
+	Simplify startup of LoggingService
+
+	* org/cougaar/core/service/LoggingService.java
+	Simplify slightly.
+
 2002-05-29  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/core/blackboard/Subscriber.java, org/cougaar/core/blackboard/BlackboardServiceProvider.java

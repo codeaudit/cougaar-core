@@ -166,16 +166,10 @@ public class NodeAgent
       throw new Error("Couldn't initialize NamingService ", ne);
     }
 
-    try {
-      LoggingServiceProvider loggingServiceProvider = 
-        new LoggingServiceProvider(
-            SystemProperties.getSystemPropertiesWithPrefix("org.cougaar.core.logging."));
-      rootsb.addService(LoggingService.class,
-          loggingServiceProvider);
-      rootsb.addService(LoggingControlService.class,
-          loggingServiceProvider);
-    } catch (IOException ioe) {
-      throw new Error("Couldn't initialize LoggingService ", ioe);
+    {
+      LoggingServiceProvider lsp = new LoggingServiceProvider();
+      rootsb.addService(LoggingService.class, lsp);
+      rootsb.addService(LoggingControlService.class, lsp);
     }
 
     ComponentDescription topologyWriterSCDesc = 

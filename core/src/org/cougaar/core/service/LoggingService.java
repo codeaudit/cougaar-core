@@ -15,26 +15,16 @@ import org.cougaar.core.logging.NullLoggingServiceImpl;
 import org.cougaar.util.log.Logger;
 
 /** 
- * Marker interface for a Service that provides the
+ * Abstract API for a Service that provides the
  * generic Logger API.
  *
  * @see Logger
  */
-public interface LoggingService extends Logger, Service {
 
-  // see Logger
+public interface LoggingService 
+  extends Service, Logger
+{
+  LoggingService NULL = NullLoggingServiceImpl.getNullLoggingServiceImpl();
 
-  /**
-   * <i>NULL</i> is a dummy LoggingService instance where all 
-   * "is*()" methods return false, and all "log()" methods are 
-   * ignored.
-   * <p>
-   * This instance can be used if<pre> 
-   *   serviceBroker.getService(.., LoggingService.class, ..);
-   * </pre>
-   * returns null.
-   */
-  LoggingService NULL = 
-    NullLoggingServiceImpl.getNullLoggingServiceImpl();
+}  
 
-}

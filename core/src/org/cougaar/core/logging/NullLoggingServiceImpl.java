@@ -22,16 +22,18 @@ import org.cougaar.util.log.NullLogger;
  * </pre>
  * returns null.
  */
-public class NullLoggingServiceImpl 
-extends NullLogger
-implements LoggingService {
-
+public final class NullLoggingServiceImpl 
+  extends NullLogger
+  implements LoggingService 
+{
   // singleton:
-  private static final NullLoggingServiceImpl 
-    NULL_LOGGING_SERVICE_IMPL_SINGLETON =
-    new NullLoggingServiceImpl();
+  private static final NullLoggingServiceImpl SINGLETON = new NullLoggingServiceImpl();
 
+  /** @deprecated old version of getLoggingService() **/
   public static NullLoggingServiceImpl getNullLoggingServiceImpl() {
-    return NULL_LOGGING_SERVICE_IMPL_SINGLETON;
+    return SINGLETON;
   }
+
+  /** @return a singleton instance of the NullLoggingService **/
+  public static LoggingService getLoggingService() { return SINGLETON; }
 }

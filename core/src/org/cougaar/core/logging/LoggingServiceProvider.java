@@ -48,33 +48,9 @@ import org.cougaar.util.ConfigFinder;
  *
  * @see Logger
  * @see LoggerController
- *
- * <pre>
- * @property org.cougaar.core.logging.config.filename
- *    Load logging properties from the named file, which is
- *    found using the ConfigFinder.  Currently uses log4j-style
- *    properties; see
- *    <a href="http://jakarta.apache.org/log4j/docs/manual.html"
- *    >the log4j manual</a> for valid file contents.
- * @property org.cougaar.core.logging.*
- *    Non-"config.filename" properties are stripped of their 
- *    "org.cougaar.core.logging." prefix and passed to the
- *    logger configuration.  These properties override any 
- *    properties defined in the (optional) 
- *    "org.cougaar.core.logging.config.filename=STRING" 
- *    property.
- * </pre>
+ * @see org.cougaar.util.log.log4j.Log4jLoggerFactory
  */
 public class LoggingServiceProvider implements ServiceProvider {
-
-  private static final String PREFIX = "org.cougaar.core.logging.";
-  private static final int PREFIX_LENGTH;
-  static {
-    PREFIX_LENGTH = PREFIX.length();
-  }
-  private static final String FILE_NAME_PROPERTY =
-    PREFIX + "config.filename";
-
   private final LoggerFactory lf;
 
   /**
@@ -86,38 +62,19 @@ public class LoggingServiceProvider implements ServiceProvider {
    *    "org.cougaar.core.logging.config.filename=STRING"
    *    will read properties from a file.
    */
-  public LoggingServiceProvider(
-      Properties props) throws IOException {
-    Map m = null;
-    Enumeration en;
-    if ((props != null) &&
-        ((en = props.propertyNames()).hasMoreElements())) {
-      m = new HashMap();
-      // take filename property, load from file
-      String filename = props.getProperty(FILE_NAME_PROPERTY);
-      if (filename != null) {
-        ConfigFinder configFinder = ConfigFinder.getInstance();
-        InputStream in = configFinder.open(filename);
-        Properties tmpP = new Properties();
-        tmpP.load(in);
-        m.putAll(tmpP);
-      }
-      // override with other properties
-      while (en.hasMoreElements()) {
-        String name = (String) en.nextElement();
-        if ((name == null) ||
-            (name.equals(FILE_NAME_PROPERTY))) {
-          continue;
-        }
-        // assert (name.startsWith(PREFIX))
-        String value = props.getProperty(name);
-        name = name.substring(PREFIX_LENGTH);
-        m.put(name, value);
-      }
-    }
+  public LoggingServiceProvider() 
+  {
+    lf = LoggerFactory.getInstance();
+  }
 
-    this.lf = LoggerFactory.getInstance();
-    lf.configure(m);
+  /**
+   * @param props Ignored. Retained for backwards compatability.
+   * @deprecated Use the no-argument constructor.
+   */
+  public LoggingServiceProvider(Properties props) 
+  {
+    Thread.dumpStack();
+    lf = LoggerFactory.getInstance();
   }
 
   /**
@@ -137,7 +94,8 @@ public class LoggingServiceProvider implements ServiceProvider {
       Logger l = lf.createLogger(requestor);
       return new LoggingServiceImpl(l);
     } else if (LoggingControlService.class.isAssignableFrom(serviceClass)) {
-      LoggerController lc = lf.createLoggerController(requestor);
+      String name = requestor.getClass().getName();
+      LoggerController lc = lf.createLoggerController(name);
       return new LoggingControlServiceImpl(lc);
     } else {
       return null;

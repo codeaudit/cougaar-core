@@ -40,8 +40,6 @@ import org.cougaar.core.service.NamingService;
 
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.logging.LoggingControlService;
-import org.cougaar.core.logging.LoggingServiceProvider;
-
 
 import org.cougaar.core.component.*;
 
