@@ -813,6 +813,12 @@ public class Subscriber {
     closeTransaction(false);
   }
 
+  /** check to see if we've already got an open transaction
+   **/
+  public final boolean isTransactionOpen() {
+    return (transactionLock.getBusyFlagOwner() == Thread.currentThread());
+  }
+
   /** Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction().
    * @param resetSubscriptions IFF true, all subscriptions will have

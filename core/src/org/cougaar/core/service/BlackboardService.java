@@ -190,6 +190,16 @@ public interface BlackboardService extends Service {
   void closeTransaction(boolean resetp) throws SubscriberException;
 
 
+  /** Check to see if a transaction is open and owned by the current thread.
+   * There is no method to check to see if the subscribe has a transaction 
+   * open which is owned by a different thread, since that would not be a safe 
+   * operation.
+   * @return true IFF the current thread already has an open transaction.
+   * @note This method should really only be used in assertions and the like, since
+   * code should generally know exactly when it is or is not inside an open transaction.
+   **/
+  boolean isTransactionOpen();
+    
   //
   // ScheduleablePlugin API 
   //

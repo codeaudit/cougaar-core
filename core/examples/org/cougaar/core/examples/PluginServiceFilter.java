@@ -179,6 +179,9 @@ public class PluginServiceFilter
     public void closeTransaction(boolean resetp) throws SubscriberException {
       bs.closeTransaction(resetp);
     }
+    public boolean isTransactionOpen() {
+      return bs.isTransactionOpen();
+    }
     public void signalClientActivity() {
       bs.signalClientActivity();
     }
