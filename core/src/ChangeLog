@@ -1,3 +1,9 @@
+2002-01-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/plugin/AssetDataDBReader.java:
+	Parse relationship start and end times independently. Use default
+	for null and in case of parse failure.
+
 2001-12-13  Todd Wright  <twright@bbn.com>
 
 	* Trigger, Plugin-base-classes, SchedulerService:
