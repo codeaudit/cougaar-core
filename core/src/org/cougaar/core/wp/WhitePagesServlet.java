@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.util;
+package org.cougaar.core.wp;
 
 import java.io.*;
 import java.net.URI;
@@ -43,7 +43,7 @@ import org.cougaar.util.GenericStateModelAdapter;
  * An option servlet for viewing and altering the white pages.
  * <p>
  * Load into any agent:<pre>
- *   plugin = org.cougaar.core.util.WhitePagesServlet(/wp)
+ *   plugin = org.cougaar.core.wp.WhitePagesServlet(/wp)
  * </pre>
  * <p>
  * FIXME: document URL parameters.
