@@ -52,7 +52,7 @@ public class AgentSensorPlugin extends ComponentPlugin
     }
   
     protected void execute() {
-	System.out.println("Uninteresting");
+	//System.out.println("ExecutedAgentSensorPlugin");
     }
 
 }
