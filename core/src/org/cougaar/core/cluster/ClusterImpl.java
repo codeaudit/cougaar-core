@@ -21,151 +21,113 @@
 
 package org.cougaar.core.cluster;
 
-// java.util classes
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.GenericStateModel;
+import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.StateModelException;
 
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentBindingSite;
 
-import org.cougaar.core.blackboard.BlackboardService;
-import org.cougaar.core.blackboard.BlackboardServiceProvider;
-
-import org.cougaar.core.cluster.Cluster;
-
-import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.ClusterServesLogicProvider;
-import org.cougaar.core.cluster.LogicProvider;
-import org.cougaar.core.cluster.Subscriber;
-
-// ClusterIdentification
-import org.cougaar.core.cluster.ClusterIdentifier;
-
-// root = ClusterMessage
-import org.cougaar.core.cluster.ClusterMessage;
-import org.cougaar.core.society.Message;
 import org.cougaar.core.society.ComponentMessage;
-// inherits from ClusterMessage
-import org.cougaar.domain.planning.ldm.plan.Directive;
-import org.cougaar.core.cluster.DirectiveMessage;
-import org.cougaar.core.cluster.AckDirectiveMessage;
-// inherits from Directive; Directive inherits from ClusterMessage
-//import org.cougaar.domain.planning.ldm.plan.Asset;
-import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
-import org.cougaar.domain.planning.ldm.plan.Notification;
-import org.cougaar.domain.planning.ldm.plan.Task;
+import org.cougaar.core.society.Message;
+import org.cougaar.core.society.MessageAddress;
+import org.cougaar.core.society.MessageStatistics;
 
-import org.cougaar.core.plugin.PluginManager;
+// cluster context registration
+import org.cougaar.core.cluster.ClusterContext;
+
+// blackboard support
+import org.cougaar.core.blackboard.BlackboardForAgent;
+import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.blackboard.BlackboardServiceProvider;
+
+// message-transport support
+import org.cougaar.core.mts.MessageStatisticsService;
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.MessageTransportWatcher;
+import org.cougaar.core.mts.MessageWatcherService;
+
+// LDM service
 import org.cougaar.core.plugin.LDMService;
 import org.cougaar.core.plugin.LDMServiceProvider;
 
-// new LDM plugins
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.core.plugin.LDMPlugInServesLDM;
-import org.cougaar.core.plugin.PlugInServesCluster;
+// prototype and property providers
+import org.cougaar.core.plugin.LatePropertyProvider;
 import org.cougaar.core.plugin.PrototypeProvider;
 import org.cougaar.core.plugin.PropertyProvider;
-import org.cougaar.core.plugin.LatePropertyProvider;
-import org.cougaar.core.plugin.ParameterizedPlugIn;
-import org.cougaar.core.plugin.PlugIn;
-import org.cougaar.core.plugin.StatelessPlugInAdapter;
 
-//
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.domain.planning.ldm.Factory;
+// domain and factory support
+import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.domain.planning.ldm.Domain;
 import org.cougaar.domain.planning.ldm.DomainManager;
 import org.cougaar.domain.planning.ldm.DomainService;
 import org.cougaar.domain.planning.ldm.DomainServiceImpl;
 import org.cougaar.domain.planning.ldm.DomainServiceProvider;
+import org.cougaar.domain.planning.ldm.Factory;
+import org.cougaar.domain.planning.ldm.RootFactory;
 
-// Advertised services I provide to my collaborators
-import org.cougaar.util.GenericStateModel;
-import org.cougaar.util.StateModelException;
-import org.cougaar.core.cluster.ClusterStateModel;
-import org.cougaar.core.cluster.ClusterServesClusterManagement;
-import org.cougaar.core.cluster.NoResponseException;
-import org.cougaar.core.cluster.ClusterServesPlugIn;
-import org.cougaar.core.cluster.ClusterServesMessageTransport;
+// types for factory support
+import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 
-// Services I require from my collaborators
-import org.cougaar.core.society.ClusterManagementServesCluster;
-import org.cougaar.core.society.UniqueObject;
-import org.cougaar.domain.planning.ldm.Registry;
-import org.cougaar.domain.planning.ldm.RegistryException;
-import org.cougaar.domain.planning.ldm.PrototypeRegistryServiceProvider;
-import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
+// prototype registry service
 import org.cougaar.domain.planning.ldm.PrototypeRegistry;
+import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
+import org.cougaar.domain.planning.ldm.PrototypeRegistryServiceProvider;
 
-// ClusterFactories
+// Object factories
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
-
-// cluster context registration
-import org.cougaar.core.cluster.ClusterContext;
-
-import java.io.*;
-
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactoryImpl;
 
-// alternate messenger service
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportWatcher;
-import org.cougaar.core.mts.MessageTransportService;
-import org.cougaar.core.mts.MessageStatisticsService;
-import org.cougaar.core.mts.MessageWatcherService;
-import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageStatistics;
-
 // Scenario time support
-import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.AdvanceClockMessage;
+import org.cougaar.core.cluster.Alarm;
 
 // Persistence
-import org.cougaar.core.cluster.persist.BasePersistence;
 import org.cougaar.core.cluster.persist.DatabasePersistence;
 import org.cougaar.core.cluster.persist.Persistence;
-import org.cougaar.core.cluster.persist.PersistenceException;
-import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
-
-import org.cougaar.core.blackboard.*;
-
-import java.beans.Beans;
 
 /**
- * ClusterObject is designed specifically for the December
- * 1997 Workshop.  The inention is to create a temporary place holder
- * for ClusterManagement until more mature implementations of ClusterManagement
- * emerges.  The choice of making the class final is intended to confirm
- * that this class is NOT the generalization of ClusterManagement behaviors, but
- * rather, a concrete prototype.
- *
+ * Implementation of Agent which creates a PlugInManager and Blackboard and 
+ * provides basic services to Agent Components.
+ * <p>
+ * <pre>
  * System properties:
- * org.cougaar.core.cluster.heartbeat : a low-priority thread runs and prints
- *  a '.' every few seconds when nothing else much is going on.
- *  This is a one-per-vm function.  Default true.
- * org.cougaar.core.cluster.idleInterval : how long between idle detection and heartbeat cycles (prints '.');
- * org.cougaar.core.cluster.idle.verbose : if true, will print elapsed time (seconds) since
+ * org.cougaar.core.cluster.heartbeat : 
+ *   a low-priority thread runs and prints
+ *   a '.' every few seconds when nothing else much is going on.
+ *   This is a one-per-vm function.  Default true.
+ * org.cougaar.core.cluster.idleInterval : 
+ *   how long between idle detection and heartbeat cycles (prints '.');
+ * org.cougaar.core.cluster.idle.verbose : 
+ *   if true, will print elapsed time (seconds) since
  *   cluster start every idle.interval millis.
- * org.cougaar.core.cluster.idle.verbose.interval=60000 : millis between verbose idle reports
- * org.cougaar.core.cluster.showTraffic : if True, shows '+' and '-' on message sends and receives.  if
- *  false, also turns off reports of heartbeat ('.') and other status chars.
- * org.cougaar.core.cluster.trafficPeriod : how many traffic characters to print before LF.
- *
- * @see org.cougaar.core.society.MessageTransport
- **/
-public class ClusterImpl extends Agent
+ * org.cougaar.core.cluster.idle.verbose.interval=60000 : 
+ *   millis between verbose idle reports
+ * org.cougaar.core.cluster.showTraffic : 
+ *   if True, shows '+' and '-' on message sends and receives.  if
+ *   false, also turns off reports of heartbeat ('.') and other status chars.
+ * </pre>
+ */
+public class ClusterImpl 
+  extends Agent
   implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
-  private LogPlan myLogPlan = null;
   private MessageTransportService messenger = null;
 
   private BlackboardForAgent myBlackboard = null;
@@ -179,7 +141,6 @@ public class ClusterImpl extends Agent
   private static boolean idleVerbose = false; // don't be verbose
   private static long idleVerboseInterval = 60*1000L; // 1 minute
   private static long maxIdleInterval;
-  private static int trafficPeriod = 80;
   private static boolean usePlugInLoader = false;
   private static boolean showTraffic = true;
 
@@ -189,13 +150,8 @@ public class ClusterImpl extends Agent
     usePlugInLoader=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.pluginloader", "false"))).booleanValue();
     idleInterval=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.idleInterval", "5000"))).intValue();
     maxIdleInterval = (idleInterval+(idleInterval/10));
-
     showTraffic=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.showTraffic", "true"))).booleanValue();
-    trafficPeriod=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.trafficPeriod", "80"))).intValue();
-    trafficPeriod--; // 0 origin, so if the variable is <0, no output
-
     idleVerbose = (Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.idle.verbose", "true"))).booleanValue();
-    //idleVerbose =true;
     idleVerboseInterval = (Integer.valueOf(props.getProperty("org.cougaar.core.cluster.idle.verbose.interval", "60000"))).intValue();
   }
 
@@ -204,11 +160,10 @@ public class ClusterImpl extends Agent
 
   public final void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    //System.err.println("ClusterImpl.setBindingSite("+bs+")");
     if (bs instanceof AgentBindingSite) {
       bindingSite = (AgentBindingSite) bs;
     } else {
-      throw new RuntimeException("Tried to load "+this+"into "+bs);
+      throw new RuntimeException("Tried to load "+this+" into "+bs);
     }
   }
 
@@ -251,80 +206,6 @@ public class ClusterImpl extends Agent
    **/
   private ClusterIdentifier myClusterIdentity_;
     
-  /*
-  protected Persistence createPersistence() {
-    if (System.getProperty("org.cougaar.core.cluster.persistence.enable", "false").equals("false"))
-      return null;		// Disable persistence for now
-    try {
-      Persistence result = BasePersistence.find(this);
-      if (System.getProperty("org.cougaar.core.cluster.persistence.disableWrite", "false").equals("true")) {
-        result.disableWrite();
-      }
-      return result;
-    }
-    catch (PersistenceException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-    
-  public Distributor getDistributor() {
-    synchronized (this) {
-      if (myDistributor == null) {
-        myDistributor = new Distributor(getClusterIdentifier().getAddress());
-        Persistence persistence = createPersistence();
-        boolean lazyPersistence =
-          System.getProperty("org.cougaar.core.cluster.persistence.lazy", "true")
-          .equals("true");
-        myDistributor.setPersistence(persistence, lazyPersistence);
-        Object state = null;
-        final long kludgeDelay = Long.parseLong(System.getProperty("kludge", "0"));
-        if (kludgeDelay > 0L) {
-          File kludge = new File("kludge.dat");
-          if (kludge.exists()) {
-            try {
-              ObjectInputStream ois = new ObjectInputStream(new FileInputStream(kludge));
-              try {
-                state = ois.readObject();
-                System.out.println("Read state object");
-              } finally {
-                ois.close();
-              }
-            } catch (Exception ex) {
-              ex.printStackTrace();
-            }
-          }
-          new Thread("Kludge Killer") {
-            public void run() {
-              try {
-                try {
-                  Thread.sleep(kludgeDelay);
-                } catch (InterruptedException ie) {
-                }
-                System.out.println("unregisterClient");
-                messenger.unregisterClient(ClusterImpl.this);
-                System.out.println("gettingState");
-                writeKludge(myBlackboard.getState());
-                System.out.println("flushMessages");
-                messenger.flushMessages();
-              } catch (Throwable e) {
-                e.printStackTrace();
-              }
-              System.out.println("Exiting");
-              System.exit(0);
-            }
-          }.start();
-        } else if (loadState instanceof AgentState) {
-          AgentState agentState = (AgentState) loadState;
-          state = agentState.bbState;
-        }
-        myDistributor.start(this, state);
-      }
-      return myDistributor;
-    }
-  }
-  */
-
   /** 
    * @return the cluster's ConfigFinder.
    **/
@@ -379,12 +260,14 @@ public class ClusterImpl extends Agent
     //System.err.println("Cluster.load()");
     // Confirm that my container is indeed ClusterManagement
     if (!( getBindingSite() instanceof AgentBindingSite ) ) {
-      throw new StateModelException ("Container ("+getBindingSite()+") does not implement AgentBindingSite");
+      throw new StateModelException(
+          "Container ("+getBindingSite()+") does not implement AgentBindingSite");
     }
     ServiceBroker sb = getServiceBroker();
 
     // get the Messenger instance from ClusterManagement
-    messenger = (MessageTransportService) sb.getService(this, MessageTransportService.class, null);
+    messenger = 
+      (MessageTransportService) sb.getService(this, MessageTransportService.class, null);
     messenger.registerClient(this);
 
     statisticsService = 
@@ -396,7 +279,6 @@ public class ClusterImpl extends Agent
 	(MessageWatcherService) sb.getService(this,
 					      MessageWatcherService.class,
 					      null);
-
 
 
     // add ourselves to our VM's cluster table
@@ -441,39 +323,6 @@ public class ClusterImpl extends Agent
     // above domainservice and prototyperegistry service
     sb.addService(LDMService.class, new LDMServiceProvider(this));
 
-    // set up Blackboard and LogicProviders
-    /*
-      // MIK BB
-    myBlackboard = new Blackboard(this);
-    myBlackboard.init();
-    // add blackboard service
-    sb.addService(BlackboardService.class, new BlackboardServiceProvider(getDistributor()));
-
-    // load the domains & lps
-    try {
-      Collection domains = DomainManager.values();
-      Domain rootDomain = DomainManager.find("root"); // HACK to let Metrics see plan objects
-
-      for (Iterator i = domains.iterator(); i.hasNext(); ) {
-        Domain d = (Domain) i.next();
-
-        myBlackboard.connectDomain(d);
-
-        // Replace HACK to let Metrics count plan objects - there should be
-        // a blackboard-level metrics service which deals with this.
-        if (d == rootDomain) {
-          myLogPlan = (LogPlan) myBlackboard.getXPlanForDomain(d);
-        }
-      }
-
-    } catch (Exception e) { 
-      synchronized (System.err) {
-        System.err.println("Problem loading Blackboard: ");
-        e.printStackTrace(); 
-      }
-    }
-    */
-
     // force set up all the factories
     Collection keys = DomainManager.keySet();
     for (Iterator i = keys.iterator(); i.hasNext(); ) {
@@ -517,7 +366,6 @@ public class ClusterImpl extends Agent
 
       // start up the pluginManager component - should really itself be loaded
       // as an agent subcomponent.
-      //pluginManager = new PluginManager();
       //create a component description for pluginmanager instead of an instance
       String pimname = new String(getClusterIdentifier()+"PluginManager");
       ComponentDescription pimdesc = 
@@ -531,9 +379,7 @@ public class ClusterImpl extends Agent
             null,  //lease
             null); //policy
 
-      //add(pluginManager);
-      boolean pimwasadded = add(pimdesc);
-      //System.err.println("Added "+pimwasadded+" PluginManager: "+pimdesc+" to "+this);
+      add(pimdesc);
     }
 
     //System.err.println("Cluster.load() completed");
@@ -675,16 +521,6 @@ public class ClusterImpl extends Agent
         }
       }
     }
-
-    System.out.println("gettingState of Blackboard (disabled)");
-    /*
-    try {
-      result.bbState = myBlackboard.getState();
-    } catch (PersistenceNotEnabledException pnee) {
-      pnee.printStackTrace();
-      throw new RuntimeException(pnee.toString());
-    }
-    */
 
     // Do this here because we might not get another opportunity
     System.out.println("flushMessages");
@@ -915,7 +751,8 @@ public class ClusterImpl extends Agent
       getQueueHandler().start();
       isQueueHandlerStarted = true;
     } else {
-      System.err.println("QueueHandler in " + getClusterIdentifier() + " asked to restart.");
+      System.err.println(
+          "QueueHandler in " + getClusterIdentifier() + " asked to restart.");
     }
   }
 
@@ -1172,23 +1009,12 @@ public class ClusterImpl extends Agent
     _rTimer.addAlarm(alarm);
   }
 
-  private static int _progressCount = 0;
-  private static Object _progressLock = new Object();
   private static void showProgress(String p) {
     if (showTraffic) {
       // Too many threads in a multi-cluster node are printing progress 
       // at the same time and we don't really care about the newlines
       // so we'll drop the synchronized and live with the consequences.
-      //synchronized (_progressLock) { body; }
       System.out.print(p);
-      /*
-      if (trafficPeriod>=0) { 
-        if (_progressCount++ >= trafficPeriod) {
-          _progressCount=0;
-          System.out.println();
-        }
-      }
-      */
     }
   }
 
@@ -1213,7 +1039,6 @@ public class ClusterImpl extends Agent
   }
 
   private static class AgentState implements java.io.Serializable {
-    Object bbState;
     StateTuple[] children;
   }
 }
