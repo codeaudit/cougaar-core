@@ -21,8 +21,17 @@ public final class Collectors {
 
   /** apply the Thunk to each element of the collection. **/
   public static void apply(Thunk t, Collection c) {
-    for (Iterator i = c.iterator(); i.hasNext();) {
-      t.apply(i.next());
+    // BOZO - this should not be necessary. Under some set of circumstances however the VM
+    // calls this version of apply with a List
+    if (c instanceof List) {
+      /* System.err.println("org.cougaar.util.Collectors.apply(Thunk t, Collection c): c is actually a List. " +
+                         "Calling apply(Thunk t, List l)");
+      */
+      apply(t, (List) c);
+    } else {
+      for (Iterator i = c.iterator(); i.hasNext();) {
+        t.apply(i.next());
+      }
     }
   }
 
