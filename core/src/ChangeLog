@@ -1,3 +1,28 @@
+2001-11-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/lps/ReceiveAssetVerificationLP.java:
+	Fix getUnmatched method to compare relationships both ways:
+	assuming that roleA of one relationship corresponds to roleA of
+	the other and again with roleA corresponding to roleB.
+	Relationships can be expressed from both points of view and are
+	equivalent.
+
+	* org/cougaar/core/blackboard/StandardBlackboard.java:
+	Implement restartAgent method by invoking restartAgent on the
+	Distributor.
+
+	* org/cougaar/core/blackboard/BlackboardForAgent.java:
+	Add restartAgent method to inform the blackboard that some agent
+	has restarted. This kicks off the agent state reconcilation
+	procedure relative to the restarted agent.
+
+	* org/cougaar/core/naming/NSLS.java:
+	Add class name of object to output.
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java:
+	Control query logging through a system property.
+	Add class javadoc documenting the property.
+
 2001-11-20  Michael Thome  <mthome@bbn.com>
 
 	* SharedThreading*, SharedPlugInManager

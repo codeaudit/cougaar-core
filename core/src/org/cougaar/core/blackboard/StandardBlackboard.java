@@ -204,5 +204,9 @@ public class StandardBlackboard
     public void receiveMessages(List messages) {
       blackboard.getDistributor().receiveMessages(messages);
     }
+
+    public void restartAgent(ClusterIdentifier cid) {
+      blackboard.getDistributor().restartAgent(cid);
+    }
   }
 }

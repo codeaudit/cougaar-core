@@ -242,6 +242,7 @@ public class DirectiveMessage extends ClusterMessage
     public Plan getPlan() { return real.getPlan(); }
     public ClusterIdentifier getSource() { return real.getSource(); }
     public ClusterIdentifier getDestination() { return real.getDestination(); }
+    public String toString() {return real.toString(); }
   }
 
 }

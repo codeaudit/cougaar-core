@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
+import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.cluster.persist.Persistence;
 
 /**
@@ -33,4 +34,6 @@ public interface BlackboardForAgent
 {
   // might be better for blackboard to be a messagetransport client, eh?
   void receiveMessages(List messages);
+
+  void restartAgent(ClusterIdentifier cid);
 }

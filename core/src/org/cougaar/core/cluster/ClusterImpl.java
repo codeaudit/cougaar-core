@@ -23,9 +23,15 @@ package org.cougaar.core.cluster;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import javax.naming.directory.DirContext;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.NameClassPair;
 
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.GenericStateModel;
@@ -41,6 +47,8 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
+
+import org.cougaar.core.naming.NamingService;
 
 import org.cougaar.core.society.ComponentMessage;
 import org.cougaar.core.society.Message;
@@ -157,7 +165,19 @@ public class ClusterImpl
 
   private BlackboardForAgent myBlackboardService;
 
+  private NamingService myNamingService;
+
+  private Map clusterInfo = new HashMap();
+
+  private static final String TOPOLOGY_CONTEXT_NAME =
+    org.cougaar.core.mts.NameSupport.TOPOLOGY_DIR;
+  private static final String INCARNATION_ATTRIBUTE_NAME =
+    org.cougaar.core.mts.NameSupport.INCARNATION_ATTR;
+  private static final String[] incarnationAttributes =
+  {INCARNATION_ATTRIBUTE_NAME};
+
   // properties
+  private static long RESTART_CHECK_INTERVAL = 43000L;
   private static boolean isHeartbeatOn = true;
   private static int idleInterval = 5*1000;
   private static boolean idleVerbose = false; // don't be verbose
@@ -426,6 +446,13 @@ public class ClusterImpl
       throw new RuntimeException("Couldn't get BlackboardForAgent!");
     }
 
+    // get naming service
+    myNamingService = (NamingService) 
+      sb.getService(this, NamingService.class, null);
+    if (myNamingService == null) {
+      throw new RuntimeException("Couldn't get NamingService!");
+    }
+
     //System.err.println("Cluster.load() completed");
   }
 
@@ -447,6 +474,16 @@ public class ClusterImpl
 
     // register with node - temporary hack.
     getBindingSite().registerAgent(this);
+    restart();
+    java.util.Timer restartTimer = new java.util.Timer();
+    restartTimer.schedule(new java.util.TimerTask() {
+      public void run() {
+        checkRestarts();
+      }
+    },
+      RESTART_CHECK_INTERVAL,
+      RESTART_CHECK_INTERVAL);
+
 
   }
 
@@ -641,6 +678,9 @@ public class ClusterImpl
   // MessageTransportClient
   //
   public void receiveMessage(Message message) {
+    if (message instanceof ClusterMessage) {
+      checkClusterInfo(((ClusterMessage) message).getSource());
+    }
     showProgress("-");
 
     try {
@@ -756,9 +796,109 @@ public class ClusterImpl
     return getDomainService().getFactory(domainname);
   }
 
+  private boolean updateIncarnation(DirContext topologyContext,
+                                    ClusterIdentifier cid)
+    throws NamingException
+  {
+    Long oldIncarnation = (Long) clusterInfo.get(cid);
+    if (oldIncarnation != null) {
+      String av = (String)
+        topologyContext.getAttributes(cid.toString(), incarnationAttributes)
+        .get(INCARNATION_ATTRIBUTE_NAME)
+        .get();
+      Long newIncarnation = new Long(av);
+      clusterInfo.put(cid, newIncarnation);
+      System.out.println("  " + cid
+                         + ": oldIncarnation=" + oldIncarnation
+                         + ", newIncarnation=" + newIncarnation);
+      return !newIncarnation.equals(oldIncarnation);
+    }
+    return false;
+  }
+
+  /**
+   * Called periodically to check for restarted agents. ClusterInfo
+   * has an entry for every agent that we have communicated with. The
+   * value is the last known incarnation number of the agent.
+   *
+   * The first time we check restarts, we have ourself restarted so we
+   * proceed to verify our state against _all_ the other agents. We do
+   * this because we have no record with whom we have been in
+   * communication. In this case, we enumerate all the agents in the
+   * nameserver and "restart" against all of them. Messages will be
+   * sent only to those agents for which we have any tasks, assets,
+   * transferables, etc. in common. The sending of those messages will
+   * add entries to clusterInfo. So after doing a restart with an
+   * agent if there is an entry in clusterInfo for that agent, we set
+   * the saved incarnation number to the current value for that agent.
+   * This avoids repeating the restart later. If the current
+   * incarnation number differs, the agent must have restarted so we
+   * initiate the restart reconciliation process.
+   *
+   * On subsequent checks we only check agents listed in clusterInfo.
+   **/
+  private void checkRestarts() {
+    System.out.println("checkRestarts");
+    List restartAgents = new ArrayList();
+    synchronized (clusterInfo) {
+      try {
+        DirContext topologyContext =
+          (DirContext) myNamingService.getRootContext().lookup(TOPOLOGY_CONTEXT_NAME);
+        for (Iterator i = clusterInfo.keySet().iterator(); i.hasNext(); ) {
+          ClusterIdentifier cid = (ClusterIdentifier) i.next();
+          if (updateIncarnation(topologyContext, cid)) {
+            restartAgents.add(cid);
+          }
+        }
+        topologyContext.close();
+      } catch (Exception ne) {
+        ne.printStackTrace();
+      }
+    }
+    for (Iterator i = restartAgents.iterator(); i.hasNext(); ) {
+      ClusterIdentifier cid = (ClusterIdentifier) i.next();
+      myBlackboardService.restartAgent(cid);
+    }
+  }
+
+  private void restart() {
+    System.out.println("restart");
+    try {
+      DirContext topologyContext =
+        (DirContext) myNamingService.getRootContext().lookup(TOPOLOGY_CONTEXT_NAME);
+      for (NamingEnumeration e = topologyContext.list(""); e.hasMore(); ) {
+        NameClassPair ncp = (NameClassPair) e.next();
+        if (ncp.getClassName().equals(ClusterIdentifier.class.getName())) {
+          ClusterIdentifier cid = (ClusterIdentifier) topologyContext.lookup(ncp.getName());
+          myBlackboardService.restartAgent(cid);
+          synchronized(clusterInfo) {
+            updateIncarnation(topologyContext, cid);
+          }
+        }
+      }
+      topologyContext.close();
+    } catch (Exception ne) {
+      ne.printStackTrace();
+    }
+  }
+
+  private void checkClusterInfo(MessageAddress cid) {
+    System.out.println("Checking " + cid);
+    if (cid instanceof ClusterIdentifier) {
+      synchronized (clusterInfo) {
+        if (clusterInfo.get(cid) == null) {
+          System.out.println("Adding " + cid);
+          clusterInfo.put(cid, new Long(0L));
+        }
+      }
+    } else {
+      System.out.println("Message is " + cid.getClass().getName());
+    }
+  }
 
   public void sendMessage(ClusterMessage message)
   {
+    checkClusterInfo(message.getDestination());
     showProgress("+");
     try {
       if (messenger == null) {

@@ -1,3 +1,28 @@
+2001-11-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Distributor.java:
+	Implement restartAgent method: calls the blackboard restartAgent
+	method and executes an empty transaction for the purpose of
+	initiating the transmission of the resulting messages.
+	Also, add the sending of messages to the Distributor log. This
+	helps relate the sending of messages to other Distributor
+	activity.
+
+	* DirectiveMessage.java:
+	Implement DirectiveWithChangeReports.toString by calling toString
+	of the wrapped Directive.
+
+	* ClusterImpl.java:
+	Add restart logic -- Initiate restart actions with all other
+	agents by resending tasks, asset transfers, etc. and by verifying
+	received tasks, assets, etc. Maintain set of agents with which we
+	have communicated (Directive messages sent or received).
+	Periodically test if agents that we have communicated with have
+	changed their incarnation number in the naming service. This
+	periodic test is a stopgap method for detecting agent restart.
+	Better would be direct notification from the message transport
+	that an agent restart has occurred.
+
 2001-10-01  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
 
 	* PublishException.java (Repository):

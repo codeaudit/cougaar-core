@@ -78,10 +78,10 @@ public class ReceiveAssetVerificationLP
         return;
       } 
 
-
+      // One of ourselves
       HasRelationships localAsset = 
-        (HasRelationships)logplan.findAsset(av.getAsset());
-
+        (HasRelationships) logplan.findAsset(av.getAsset());
+      System.out.println(cluster + " localAsset: " + localAsset);
       Schedule rescindSchedule = null;
 
       if (localAsset == null) {
@@ -116,9 +116,10 @@ public class ReceiveAssetVerificationLP
     HasRelationships assignee = (HasRelationships)av.getAssignee();
     
     Collection localRelationships = 
-      localAsset.getRelationshipSchedule().getMatchingRelationships(assignee,
-                                                                    av.getSchedule().getStartTime(),
-                                                                    av.getSchedule().getEndTime());
+      localAsset.getRelationshipSchedule()
+      .getMatchingRelationships(assignee,
+                                av.getSchedule().getStartTime(),
+                                av.getSchedule().getEndTime());
     String assetID = av.getAsset().getItemIdentificationPG().getItemIdentification();
     String assigneeID = av.getAssignee().getItemIdentificationPG().getItemIdentification();
     
@@ -157,14 +158,19 @@ public class ReceiveAssetVerificationLP
           String localItemIDB = 
             ((Asset)localB).getItemIdentificationPG().getItemIdentification();
           
-          if ((verify.getRoleA().equals(localRelationship.getRoleA())) &&
-              (itemIDA.equals(localItemIDA)) &&
-              (verify.getRoleB().equals(localRelationship.getRoleB())) &&
-              (itemIDB.equals(localItemIDB)) &&
-              (verify.getStartTime() == localRelationship.getStartTime()) &&
-              (verify.getEndTime() == localRelationship.getEndTime()))
+          if (((verify.getRoleA().equals(localRelationship.getRoleA()) &&
+                itemIDA.equals(localItemIDA) &&
+                verify.getRoleB().equals(localRelationship.getRoleB()) &&
+                itemIDB.equals(localItemIDB)) ||
+               (verify.getRoleB().equals(localRelationship.getRoleA()) &&
+                itemIDB.equals(localItemIDA) &&
+                verify.getRoleA().equals(localRelationship.getRoleB()) &&
+                itemIDA.equals(localItemIDB))) &&
+              verify.getStartTime() == localRelationship.getStartTime() &&
+              verify.getEndTime() == localRelationship.getEndTime()) {
             found = true;
-          break;
+            break;
+          }
         }
       }
       

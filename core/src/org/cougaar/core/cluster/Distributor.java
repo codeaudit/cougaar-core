@@ -30,8 +30,11 @@ import java.lang.ref.WeakReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -42,6 +45,7 @@ import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceSubscriberState;
 import org.cougaar.core.cluster.persist.RehydrationResult;
 import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
+import org.cougaar.core.naming.NamingService;
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
 
@@ -70,7 +74,10 @@ public class Distributor {
 
   /** The maximum interval between persistence deltas. **/
   private static final long MAX_PERSIST_INTERVAL = 37000L;
-  private static final long LAZY_PERSIST_INTERVAL = 300000L;
+  private static final String PROP_LAZY_PERSIST_INTERVAL = "org.cougaar.core.cluster.persistence.lazyInterval";
+  private static final long DEFAULT_LAZY_PERSIST_INTERVAL = 300000L;
+  private static final long LAZY_PERSIST_INTERVAL =
+    Long.getLong(PROP_LAZY_PERSIST_INTERVAL, DEFAULT_LAZY_PERSIST_INTERVAL).longValue();
 
   /** True if using lazy persistence **/
   private boolean lazyPersistence = true;
@@ -346,11 +353,15 @@ public class Distributor {
     rehydrate(state);
     getMessageManager().start(theCluster, didRehydrate);
 
+    Timer distributorTimer = new Timer();
     if (lazyPersistence) {
-      Timer persistTimer = new Timer();
-      persistTimer.schedule(new DistributorTimerTask(), 
-                            LAZY_PERSIST_INTERVAL, 
-                            LAZY_PERSIST_INTERVAL);
+      distributorTimer.schedule(new TimerTask() {
+        public void run() {
+          timerPersist();
+        }
+      }, 
+        LAZY_PERSIST_INTERVAL, 
+        LAZY_PERSIST_INTERVAL);
     }
   }
 
@@ -472,6 +483,15 @@ public class Distributor {
     }
     blackboard.appendMessagesToSend(messagesToSend); // Fill messagesToSend
     if (messagesToSend.size() > 0) {
+      if (logWriter != null) {
+        for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
+          DirectiveMessage msg = (DirectiveMessage) i.next();
+          Directive[] dirs = msg.getDirectives();
+          for (int j = 0; j < dirs.length; j++) {
+            printLog("SEND   " + dirs[j]);
+          }
+        }
+      }
       getMessageManager().sendMessages(messagesToSend.iterator());
     }
     messagesToSend.clear();
@@ -500,6 +520,17 @@ public class Distributor {
       }
     }
     outboxes.clear();
+  }
+
+  public synchronized void restartAgent(ClusterIdentifier cid) {
+    try {
+      blackboard.startTransaction();
+      blackboard.restart(cid);
+      Envelope envelope = blackboard.receiveMessages(Collections.EMPTY_LIST);
+      distribute(envelope, blackboard.getClient());
+    } finally {
+      blackboard.stopTransaction();
+    }
   }
 
   /**
@@ -706,32 +737,11 @@ public class Distributor {
 
   protected void timerPersist() {
     if (needToPersist) {
-      
       try {
         persistNow();
       } catch (PersistenceNotEnabledException pnee) {
         pnee.printStackTrace();
       }
     }
-  }
-
-  private class DistributorTimerTask extends TimerTask {
-    
-    public DistributorTimerTask() {
-      super();
-    }
-
-    public void run() {
-      timerPersist();
-    }
-
-    public boolean cancel() {
-      return true;
-    }
-
-    public long scheduledExecutionTime() {
-      return lastPersist;
-    }
-      
   }
 }
