@@ -218,7 +218,7 @@ readDescriptions:
           // should load into an Agent
           insertionPoint = "Node.AgentManager.Agent.PluginManager.Plugin";
         } else if (insertionPoint.equals("cluster")) {
-          if (vParams.size() == 0) {
+          if (vParams == null) {
             // fix "cluster=name" to be "cluster=classname(name)"
             vParams = new Vector(1);
             vParams.add(classname);
