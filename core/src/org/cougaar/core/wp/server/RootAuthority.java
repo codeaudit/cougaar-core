@@ -515,51 +515,65 @@ implements Component
       // occurred.
       answer = new LeaseNotKnown(queryUID);
     } else if (rec == null) {
-      // this is a new record and the client passed us the data
+      // this is a new record and the client passed us the data,
+      // so accept it.
+    } else if (uid.getOwner().equals(queryUID.getOwner())) {
+      // same author (node), so compare modification counters.
+      if (uid.getId() <= queryUID.getId()) {
+        // larger counter, so accept this update
+      } else {
+        // reject out-of-order update (should we simply ignore it?)
+        Object reason = 
+          "Modify uid "+queryUID+" counter "+queryUID.getId()+
+          " is less than the local uid "+uid+" counter "+
+          uid.getId()+", out of order update?";
+        answer = new LeaseDenied(uid, reason, rec.getData());
+      } 
     } else {
-      // deconflict
+      // deconflict records from different authors
       //
-      // extract the version fields (if present)
-      Object data = (rec == null ? null : rec.getData());
+      // extract the optional "moveId" version fields
+      Object data = rec.getData();
       long version = getVersion(data);
       long queryVersion = getVersion(queryData);
 
-      if (version == 0) {
-        // no version info?
+      if (version < queryVersion) {
+        // accept the replacement record
         //
-        // simply overwrite?
+        // note that versions can be negative, e.g. use negative
+        // timestamps to favor old bindings. 
+      } else if (version == 0 && queryVersion != 0) {
+        // we always favor records with version numbers
       } else if (version == queryVersion) {
-        // identical versions, use UID comparison
-        if (uid.compareTo(queryUID) < 0) {
-          // accept the replacement record
-        } else {
-          // our uid is greater, so deny the request
+        // identical versions from different authors
+        //
+        // we need to compare *something* to prefer one of these
+        // equivalent records.  We can't simply favor our existing
+        // record or the new record, since then we could never settle
+        // conflicts between servers (e.g. races and mixed delivery
+        // orders).  We can't use virtual synchrony tricks and still
+        // be fault tolerant.
+        //
+        // here we hash the UIDs and favor the larger value.  We don't
+        // use "UID.hashCode()", since it uses "+" and is biased by
+        // authors and counters, so instead we use "^".  This will seem
+        // random to the clients but will behave identically when
+        // performed in any order by servers peers.
+        int h1 = 
+          uid.getOwner().hashCode() ^ (int) uid.getId();
+        int h2 = 
+          queryUID.getOwner().hashCode() ^ (int) queryUID.getId();
+        if (h2 < h1) {
           Object reason = 
-            "Modify uid "+queryUID+
-            " is less than the local uid "+uid;
+            "Modify uid "+queryUID+" hash "+h2+
+            " is less than the local uid "+uid+" hash "+h1;
           answer = new LeaseDenied(uid, reason, data);
         }
-      } else if (
-          0 < version ?
-          version < queryVersion :
-          queryVersion < version) {
-        // new version
-        //
-        // accept the replacement record
-      } else if (
-        queryVersion == 0 &&
-        (queryData == null ||
-         (queryData instanceof Map &&
-          ((Map) queryData).isEmpty())) &&
-        uid.compareTo(queryUID) < 0) {
-        // accept full unbind
       } else {
         // old version
         Object reason = 
           "Modify version "+queryVersion+
-          " is "+
-          (0 < version ? "less" : "greater")+
-          " than the local version "+version;
+          " is greater than the local version "+version;
         answer = new LeaseDenied(uid, reason, data);
       }
     }
