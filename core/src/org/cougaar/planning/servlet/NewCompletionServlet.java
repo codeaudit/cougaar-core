@@ -44,7 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.plugin.completion.CompletionCalculator;
+import org.cougaar.planning.plugin.completion.CompletionCalculator;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.TopologyReaderService;
