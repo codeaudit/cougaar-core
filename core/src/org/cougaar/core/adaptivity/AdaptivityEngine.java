@@ -108,6 +108,14 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     super(requiredServices);
   }
 
+  /**
+   * Test if the services we need to run have all been acquired. We
+   * use the non-null value of the primary service (playbookService)
+   * to indicate that all services have been acquired. If
+   * playbookService has not been set, we use the
+   * super.acquireServices to perform the test of whether all services
+   * are available or not.
+   **/
   protected boolean haveServices() {
     if (playbookService != null) return true;
     if (acquireServices()) {
@@ -129,6 +137,9 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     return false;
   }
 
+  /**
+   * Cleanup before we stop -- release all services.
+   **/
   public void stop() {
     ServiceBroker sb = getServiceBroker();
     if (playbookService != null) {
@@ -148,6 +159,12 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     super.stop();
   }
 
+  /**
+   * Setup subscriptions to listen for playbook and condition changes.
+   * The current implementation responds immedicately to changes. An
+   * alternative would be to introduce delays before responding to
+   * reduce chaotic behavior.
+   **/
   public void setupSubscriptions() {
     playbookListenerSubscription = blackboard.subscribe(playbookListener);
     conditionListenerSubscription = blackboard.subscribe(conditionListener);
@@ -174,7 +191,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     }
     if (haveServices()) {
       if (plays == null || playbookListenerSubscription.hasChanged()) {
-        getPlays(playbookService.getCurrentPlays());
+        plays = playbookService.getCurrentPlays();
         if (debug) logger.debug("got " + plays.length + " plays");
         if (debug) logger.debug("getting conditions");
         getConditions();
@@ -187,10 +204,6 @@ public class AdaptivityEngine extends ServiceUserPlugin {
       if (debug) logger.debug("updateOperatingModes");
       updateOperatingModes();
     }
-  }
-
-  private void getPlays(Play[] newPlays) {
-    plays = newPlays;
   }
 
   /**
