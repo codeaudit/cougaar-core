@@ -52,9 +52,11 @@ import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.community.CommunityChangeAdapter;
 import org.cougaar.core.service.community.CommunityChangeEvent;
 import org.cougaar.core.service.community.CommunityService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.PropertyParser;
@@ -80,8 +82,6 @@ import org.cougaar.util.log.Logging;
  * expensive.
  * @property org.cougaar.core.persistence.enable
  * When set to <em>true</em> will enable blackboard persistence.
- * @property org.cougaar.core.blackboard waitForSomeCommChanges Time in milliseconds to wait 
- * for some communitye changes before killing the Thread that does so. Default is 10,000.
  * @property org.cougaar.core.blackboard.waitForNewCommChangeNotifications Time in 
  * milliseconds to wait for more community changes before asking the community 
  * service for them. Default is 1,000.
@@ -98,6 +98,7 @@ public class Blackboard extends Subscriber
   protected ServiceBroker myServiceBroker;
   protected AlarmService alarmService;
   protected DomainForBlackboardService myDomainService;
+  protected ThreadService threadS;
   protected LoggingService logger;
 
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".Blackboard";
@@ -211,6 +212,7 @@ public class Blackboard extends Subscriber
     }
     alarmService = (AlarmService)
       sb.getService(this, AlarmService.class, null);
+    threadS = (ThreadService) sb.getService(this, ThreadService.class, null);
   }
 
   public void stop() {
@@ -917,7 +919,7 @@ public class Blackboard extends Subscriber
 
   private class CacheClearer implements Runnable {
     private Set changedCommunities = new HashSet();
-    private Thread thread;
+    private Schedulable thread;
 
     // The delay time spent waiting for additional community
     // change notifications to arrive before processing
@@ -931,67 +933,47 @@ public class Blackboard extends Subscriber
           "org.cougaar.core.blackboard.waitForNewCommChangeNotifications",
           1000L).longValue();
     
-    // If have no changed communities, time to wait for some to appear
-    // before giving up and killing this thread.
-    // Larger number means less allocating / releasing the thread
-    // This is in milliseconds
-    private long waitForSomeCommChanges =
-      Long.getLong(
-          "org.cougaar.core.blackboard.waitForSomeCommChanges",
-          10000L).longValue();
+    private void reschedule() {
+      if (thread != null) {
+        thread.schedule(waitForNewCommChangeNotifications);
+      }
+    }
 
     public synchronized void add(String communityName) {
       changedCommunities.add(communityName);
       if (thread == null) {
-        thread = new Thread(this, "ABA Cache Clearer");
-        thread.start();
-      } else {
-        notify();
+        thread = threadS.getThread(this, this, "ABA Cache Clearer");
       }
+      reschedule();
     }
 
     public void run() {
-      Set changes = new HashSet();
-      while (true) {
-        synchronized (this) {
-          if (changedCommunities.size() == 0) {
-	    // See if some change notifications appear
-            try {
-              wait(waitForSomeCommChanges);
-            } catch (InterruptedException ie) {
-            }
-          }
-          if (changedCommunities.size() == 0) {
-	    // Still no change notifications. Done with this thread
-            thread = null;
-            return;
-          }
-
-	  // OK. Had some change notifications.
-	  // Wait a little to get any others
-          try {
-            Thread.sleep(waitForNewCommChangeNotifications);
-          } catch (InterruptedException ie) {
-          }
+      Set changes = new HashSet(11);
+      synchronized (this) {
+        if (changedCommunities.size() == 0) {
+          // exit without rescheduling
+          return;
+        } else {
           changes.addAll(changedCommunities);
           changedCommunities.clear();
         } // end of synch block
+      }
 	
-	if (myDistributor == null) {
-	  // Blackboard was stopped?
-	  if (logger != null && logger.isInfoEnabled())
-	    logger.info(
-                "ABA Cache clearer dropping received changes cause"+
-               " Distributor is null -- assuming Blackboard is stopping");
-	  thread = null;
-	  return;
-	}
-
-	// Process the community changes
-        myDistributor.invokeABAChangeLPs(changes);
-        changes.clear();
-      } // end of while loop
-    } // end of run method
+      if (myDistributor == null) {
+        // Blackboard was stopped?
+        if (logger != null && logger.isInfoEnabled())
+          logger.info(
+                      "ABA Cache clearer dropping received changes cause"+
+                      " Distributor is null -- assuming Blackboard is stopping");
+        thread = null;
+        return;
+      }
+      
+      // Process the community changes
+      myDistributor.invokeABAChangeLPs(changes);
+      changes.clear();
+      reschedule();             // take another pass in a bit in case something else comes in
+    }
   }
 
   /**
