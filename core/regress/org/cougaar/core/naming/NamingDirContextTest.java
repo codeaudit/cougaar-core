@@ -36,7 +36,6 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.naming.spi.*;
 import junit.framework.*;
-import org.cougaar.core.society.NameServer;
 
 /**
  * A JUnit TestCase for testing the NamingDirContext and server
