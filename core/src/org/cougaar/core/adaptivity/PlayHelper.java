@@ -173,7 +173,11 @@ public class PlayHelper {
           if (logger.isDebugEnabled()) logger.debug("Skipping play: " + play);
         }
       } catch (Exception iae) {
-        logger.error("Error in play: " + play, iae);
+        if (logger.isDebugEnabled()) {
+          logger.debug(iae.getMessage() + " in play: " + play, iae);
+        } else {
+          logger.error(iae.getMessage() + " in play: " + play);
+        }
       }
     }
     Set operatingModes = new HashSet(operatingModeService.getAllOperatingModeNames());
