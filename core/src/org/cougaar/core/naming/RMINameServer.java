@@ -440,16 +440,17 @@ public class RMINameServer implements NameServer, InitialContextFactory {
     
     try {
       NS ns = new NSImpl();
-      rns.put(rns.getDirSeparator() + "fred", "fred");
-      Object o = rns.get(rns.getDirSeparator() + "fred");
+      rns.put(ns.getRoot(), "fred", "fred");
+      Object o = rns.get(ns.fullName(ns.getRoot(), "fred"));
       System.err.println("got " + o + " " + o.getClass());
 
-      rns.put(ns.getRoot().getPath() + "wilma", "wilma");
-      o = rns.get(ns.getRoot().getPath() + "wilma");
+      rns.put(ns.getRoot(), "wilma", "wilma");
+      o = rns.get(ns.fullName(ns.getRoot(),"wilma"));
       System.err.println("got " + o + " " + o.getClass());
 
 
-      String pathSpec = ns.getRoot().getPath() + "barney" + rns.getDirSeparator() + "bam bam";
+      NSKey barneyKey = ns.createSubDirectory(ns.getRoot(), "barney");
+      String pathSpec = ns.fullName(barneyKey, "bam bam");
       System.out.println(pathSpec);
       rns.put(pathSpec, "bam bam");
       o = rns.get(pathSpec);

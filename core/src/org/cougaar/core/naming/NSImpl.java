@@ -40,27 +40,28 @@ import org.cougaar.util.*;
 // Need to add check that names within a given directory do not have embedded DirSeparators
 
 public class NSImpl extends UnicastRemoteObject implements NS {
-  public static final NameServer.Directory ROOT = new NSDirectory(DirSeparator);
+  private static final String ROOT_NAME = "";
+  public static final NSKey ROOT = new NSDirKey(ROOT_NAME);
 
   // implement with a simple flat hashmap for now... set lookups will be slow
   private HashMap mapOfMaps = new HashMap(11);
-  
+
   public NSImpl() throws RemoteException {
     super(0, NamingSocketFactory.getInstance(), NamingSocketFactory.getInstance());
-    putDirMap(ROOT, new NSDirMap());
+    putDirMap((NSDirKey) ROOT, new NSDirMap(ROOT_NAME));
   }
 
-  public NameServer.Directory getRoot() {
+  public NSKey getRoot() {
     return ROOT;
   }
 
   public void clear(String path) {
     String dirName = parseDirectory(path);
-    clear(new NSDirectory(dirName));
+    clear(new NSDirKey(dirName));
   }
 
-  public void clear(NameServer.Directory directory) {
-    Map dirMap = getDirectory(directory, false);
+  public void clear(NSKey dirKey) {
+    Map dirMap = getDirectory(dirKey);
     
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -70,11 +71,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public boolean containsKey(String key) {
-    return containsKey(new NSDirectory(parseDirectory(key)), getTail(key));
+    return containsKey(new NSDirKey(parseDirectory(key)), getTail(key));
   }
 
-  public boolean containsKey(NameServer.Directory directory, String key) {
-    Map dirMap = getDirectory(directory, false);
+  public boolean containsKey(NSKey dirKey, String key) {
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -85,66 +86,64 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return false;
   }
 
-  public NameServer.Directory createSubDirectory(NameServer.Directory directory, 
-                                                 String subDirName) {
-    return createSubDirectory(directory, subDirName, null);
+  public NSKey createSubDirectory(NSKey dirKey, 
+                                  String subDirName) {
+    return createSubDirectory(dirKey, subDirName, null);
   }
 
-  public NameServer.Directory createSubDirectory(NameServer.Directory directory, 
-                                                 String subDirName,
-                                                 Collection attributes) {
-    Map dirMap = getDirectory(directory, false);
-    NameServer.Directory subDirectory = null;
+  public NSKey createSubDirectory(NSKey dirKey, 
+                                  String subDirName,
+                                  Collection attributes) {
+    NSDirMap dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
         NSObjectAndAttributes o = 
           (NSObjectAndAttributes) dirMap.get(subDirName);
         if (o == null) {
-          subDirectory = new NSDirectory(fullName(directory, subDirName));
-          o = new NSObjectAndAttributes(subDirectory, null);
+          String subDirPath = fullName(dirKey, subDirName);
+          NSDirMap subDirMap = new NSDirMap(subDirPath, attributes);
+          putDirMap(subDirMap.getKey(), subDirMap);
+
+          o = new NSObjectAndAttributes(subDirMap.getKey(), null);
           dirMap.put(subDirName, o);
-          
-          putDirMap(subDirectory, new NSDirMap(attributes));
+          return subDirMap.getKey();
         }
       }
     }
 
-    return subDirectory;
+    return null;
   }
 
-  public void destroySubDirectory(NameServer.Directory directory) { 
-    Map dirMap = getDirectory(directory, false);
+  public void destroySubDirectory(NSKey dirKey) { 
+    NSDirMap dirMap = getDirectory(dirKey);
 
     if ((dirMap != null) && (dirMap.size() == 0)) {
       synchronized (mapOfMaps) {
-        mapOfMaps.remove(directory);
+        mapOfMaps.remove(dirKey);
       }
 
 
       // strip trailing DirSeparators
-      String dirName = directory.getPath();
+      String dirName = dirMap.getFullPath();
       while (dirName.endsWith(DirSeparator)) {
         dirName = dirName.substring(0, dirName.length() - 1);
       }
 
-      Map parentMap = getDirectory(new NSDirectory(parseDirectory(dirName)), 
-                                   false);
-      if (dirMap != null) {
-        synchronized (parentMap) {
-          parentMap.remove(getTail(dirName));
-        }
+      Map parentMap = getDirectory(new NSDirKey(parseDirectory(dirName)));
+      synchronized (parentMap) {
+        parentMap.remove(getTail(dirName));
       }
     }
   }
 
   public Collection entrySet(String directory) {
-    return entrySet(new NSDirectory(directory));
+    return entrySet(new NSDirKey(directory));
   }
 
-  public Collection entrySet(NameServer.Directory directory) {
+  public Collection entrySet(NSKey dirKey) {
     ArrayList l = new ArrayList();
-    Map dirMap = getDirectory(directory, false);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -163,25 +162,26 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return l;
   }
 
-  public String fullName(NameServer.Directory directory, String name) {
-    return directory.getPath() + name;
+  public String fullName(NSKey dirKey, String name) {
+    NSDirMap dirMap = getDirectory(dirKey);
+
+    return dirMap.getFullPath() + NS.DirSeparator + name;
   }
 
   /** Look up an object in the NameService directory **/
   public Object get(String path) {
-    return get(new NSDirectory(parseDirectory(path)), getTail(path));
+    return get(new NSDirKey(parseDirectory(path)), getTail(path));
   }
 
-  public Object get(NameServer.Directory directory, String name) {
-    Map dirMap = getDirectory(directory, false);
-
-    if ((name == null) || (name.equals(""))) {
-      return directory;
-    }
-
+  public Object get(NSKey dirKey, String name) {
+    Map dirMap = getDirectory(dirKey);
     Object found = null;
 
     if (dirMap != null) {
+      if ((name == null) || (name.equals(""))) {
+        return dirKey;
+      }
+      
       synchronized (dirMap) {
         found = dirMap.get(name);
         if (found != null) {
@@ -194,15 +194,15 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public Collection getAttributes(String path) {
-    return getAttributes(new NSDirectory(parseDirectory(path)), getTail(path));
+    return getAttributes(new NSDirKey(parseDirectory(path)), getTail(path));
   }
     
-  public Collection getAttributes(NameServer.Directory directory, String name) {
+  public Collection getAttributes(NSKey dirKey, String name) {
     if ((name == null) || (name.equals(""))) {
-      return getDirAttributes(directory);
+      return getDirAttributes(dirKey);
     }
 
-    Map dirMap = getDirectory(directory, false);
+    Map dirMap = getDirectory(dirKey);
     Collection attr = null;
 
     if (dirMap != null) {
@@ -220,11 +220,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
 
   public boolean isEmpty(String directory) {
-    return isEmpty(new NSDirectory(parseDirectory(directory)));
+    return isEmpty(new NSDirKey(parseDirectory(directory)));
   }
 
-  public boolean isEmpty(NameServer.Directory directory) {
-    Map dirMap = getDirectory(directory, false);
+  public boolean isEmpty(NSKey dirKey) {
+    Map dirMap = getDirectory(dirKey);
    
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -236,12 +236,12 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public Collection keySet(String directory) {
-    return keySet(new NSDirectory(parseDirectory(directory)));
+    return keySet(new NSDirKey(parseDirectory(directory)));
   }
 
-  public Collection keySet(NameServer.Directory directory) {
+  public Collection keySet(NSKey dirKey) {
     ArrayList l = new ArrayList();
-    Map dirMap = getDirectory(directory, false);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -260,25 +260,25 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public Object put(String path, Object o, Collection attributes) {
-    return put(new NSDirectory(parseDirectory(path)), getTail(path), o, attributes);
+    return put(new NSDirKey(parseDirectory(path)), getTail(path), o, attributes);
   }
 
   /** add an object to the directory **/
-  public Object put(NameServer.Directory directory, String name, Object o) {
-    return put(directory, name, o, null);
+  public Object put(NSKey dirKey, String name, Object o) {
+    return put(dirKey, name, o, null);
   }
 
-  public Object put(NameServer.Directory directory, String name, Object o, 
+  public Object put(NSKey dirKey, String name, Object o, 
                     Collection attributes) {
     if ((name == null) || (name.equals(""))) {
       return null;
     }
 
-    if (o instanceof NameServer.Directory) {
+    if (o instanceof NSKey) {
       return null;
     }
 
-    Map dirMap = getDirectory(directory, true);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -298,17 +298,17 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public void putAttributes(String path, Collection attributes) {
-    putAttributes(new NSDirectory(parseDirectory(path)), getTail(path), attributes);
+    putAttributes(new NSDirKey(parseDirectory(path)), getTail(path), attributes);
   }
 
-  public void putAttributes(NameServer.Directory directory, String name, 
+  public void putAttributes(NSKey dirKey, String name, 
                             Collection attributes)  {
     if ((name == null) || name.equals("")) {
-      putDirAttributes(directory, attributes);
+      putDirAttributes(dirKey, attributes);
       return;
     }
 
-    Map dirMap = getDirectory(directory, true);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -326,22 +326,22 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
   /** remove an object (and name) from the directory **/
   public Object remove(String path) {
-    return remove(new NSDirectory(parseDirectory(path)), getTail(path));
+    return remove(new NSDirKey(parseDirectory(path)), getTail(path));
   }
 
   /** remove an object (and name) from the directory **/
-  public Object remove(NameServer.Directory directory, String name) {
+  public Object remove(NSKey dirKey, String name) {
     if ((name == null) || (name.equals(""))) {
       return null;
     }
 
-    Map dirMap = getDirectory(directory, false);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
         Object found = dirMap.get(name);
         if ((found == null) || 
-            (found instanceof NameServer.Directory)) {
+            (found instanceof NSKey)) {
           // Use destroySubDirectory to remove directories
           return null;
         } else {
@@ -360,20 +360,20 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   /** rename an object in the directory **/
-  public Object rename(NameServer.Directory directory, String oldName,
+  public Object rename(NSKey dirKey, String oldName,
                        String newName) {
     if ((oldName == null) || (oldName.equals("")) ||
         (newName == null) || (newName.equals(""))) {
       return null;
     }
 
-    Map dirMap = getDirectory(directory, false);
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
         Object found = dirMap.get(oldName);
         if ((found == null) || 
-            (found instanceof NameServer.Directory)) {
+            (found instanceof NSKey)) {
           // Use destroySubDirectory to remove directories
           return null;
         } else {
@@ -393,11 +393,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public int size(String directory) {
-    return size(new NSDirectory(parseDirectory(directory)));
+    return size(new NSDirKey(parseDirectory(directory)));
   }
 
-  public int size(NameServer.Directory directory) {
-    Map dirMap = getDirectory(directory, false);
+  public int size(NSKey dirKey) {
+    Map dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -409,11 +409,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   public Collection values(String directory) {
-    return values(new NSDirectory(parseDirectory(directory)));
+    return values(new NSDirKey(parseDirectory(directory)));
   }
 
-  public Collection values(NameServer.Directory directory) {
-    Map dirMap = getDirectory(directory, false);
+  public Collection values(NSKey dirKey) {
+    Map dirMap = getDirectory(dirKey);
     ArrayList l = new ArrayList();
 
     if (dirMap != null) {
@@ -459,31 +459,32 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     if (end != -1) {
       return path.substring(0, end);
     } else {
-      return ROOT.getPath();
+      return getDirectory(ROOT).getFullPath();
     }
   }
 
-  private NSDirMap getDirectory(NameServer.Directory directory, boolean  create) {
+  private NSDirMap getDirectory(NSKey dirKey) {
     synchronized (mapOfMaps) {
-      NSDirMap currentMap = getDirMap(directory);
+      NSDirMap currentMap = getDirMap(dirKey);
       
+      /*
       if ((currentMap == null) && (create)) {
         // Build multiple levels to get there? 
         StringTokenizer tokenizer = new StringTokenizer(directory.getPath(), DirSeparator);
-        NameServer.Directory currentDir = ROOT;
+        NSKey currentDir = ROOT;
         currentMap = getDirMap(ROOT);
         while (tokenizer.hasMoreTokens()) {
           String dirName = tokenizer.nextToken();
           Object o = currentMap.get(dirName);
           if (o == null) {
-            NameServer.Directory subDir = new NSDirectory(fullName(currentDir, dirName));
+            NSKey subDir = new NSDirKey(fullName(currentDir, dirName));
             currentMap.put(dirName, subDir);
             
             currentMap = new NSDirMap();
             currentDir = subDir;
             putDirMap(currentDir, currentMap);
-          } else if (o instanceof NameServer.Directory) {
-            currentDir = (NameServer.Directory) o;
+          } else if (o instanceof NSKey) {
+            currentDir = (NSKey) o;
             currentMap = getDirMap(currentDir);
           } else {
             // entry exists but isn't a directory - bail now
@@ -491,17 +492,17 @@ public class NSImpl extends UnicastRemoteObject implements NS {
             break;
           }
         }
-      }
+        } */
       return currentMap;
     }
   }
         
-  private NSDirMap getDirMap(NameServer.Directory directory) {
-    return (NSDirMap) mapOfMaps.get(directory);
+  private NSDirMap getDirMap(NSKey dirKey) {
+    return (NSDirMap) mapOfMaps.get(dirKey);
   }
 
-  private Collection getDirAttributes(NameServer.Directory directory) {
-    NSDirMap dirMap = getDirMap(directory);
+  private Collection getDirAttributes(NSKey dirKey) {
+    NSDirMap dirMap = getDirMap(dirKey);
 
     if (dirMap != null) {
       return dirMap.getAttributes();
@@ -510,16 +511,16 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
   }
 
-  private void putDirAttributes(NameServer.Directory directory, Collection attributes) {
-    NSDirMap dirMap = getDirMap(directory);
+  private void putDirAttributes(NSKey dirKey, Collection attributes) {
+    NSDirMap dirMap = getDirMap(dirKey);
 
     if (dirMap != null) {
       dirMap.setAttributes(attributes);
     }
   }
 
-  private void putDirMap(NameServer.Directory directory, NSDirMap dirMap) {
-    mapOfMaps.put(directory, dirMap);
+  private void putDirMap(NSDirKey dirKey, NSDirMap dirMap) {
+    mapOfMaps.put(dirKey, dirMap);
   }
 
   private static class NSEntry implements Map.Entry, Serializable {
@@ -537,41 +538,38 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
 
-  private static class NSDirectory implements NameServer.Directory, Serializable {
-    private String _path;
-    public NSDirectory(String path) {
-      _path = path.trim();
-      if (!path.endsWith(DirSeparator)) { 
-        _path = path + DirSeparator;
-      }
-    }
+  private static class NSDirKey implements NSKey, Serializable {
+    int _hashCode;
 
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      } else {
-        return ((obj instanceof NameServer.Directory) &&
-                (((NameServer.Directory) obj).getPath().equals(getPath())));
-      }
+    public NSDirKey(String path) {
+      _hashCode = path.hashCode();
     }
 
     public int hashCode() {
-      return getPath().hashCode();
+      return _hashCode;
     }
 
-    public String getPath() { return _path; }
-    public String toString() { return _path; }
+    public boolean equals(Object o) {
+      if (!(o instanceof NSDirKey)) {
+        return false;
+      } else {
+        return _hashCode == ((NSDirKey) o).hashCode();
+      }
+    }
   }
 
   private class NSDirMap extends HashMap {
-    Collection _attributes;
+    private Collection _attributes;
+    private String _fullPath;
 
-    public NSDirMap() {
-      this(null);
+    public NSDirMap(String fullPath) {
+      this(fullPath, null);
     }
 
-    public NSDirMap(Collection attributes) {
+    public NSDirMap(String fullPath, Collection attributes) {
       super(11);
+
+      _fullPath = fullPath;
 
       if (attributes == null) {
         _attributes = new ArrayList();
@@ -586,6 +584,14 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
     public Collection getAttributes() {
       return _attributes;
+    }
+
+    public String getFullPath() {
+      return _fullPath;
+    }
+
+    public NSDirKey getKey() {
+      return new NSDirKey(_fullPath);
     }
   }
 
@@ -604,16 +610,16 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
 
     public Collection getAttributes() {
-      if (getObject() instanceof NSDirectory) {
-        return getDirAttributes((NSDirectory) getObject());
+      if (getObject() instanceof NSDirKey) {
+        return getDirAttributes((NSDirKey) getObject());
       } else {
         return _attributes;
       }
     }
     
     public void setAttributes(Collection newAttributes) {
-      if (getObject() instanceof NSDirectory) {
-        putDirAttributes((NSDirectory) getObject(), newAttributes);
+      if (getObject() instanceof NSDirKey) {
+        putDirAttributes((NSDirKey) getObject(), newAttributes);
       } else {
         _attributes = newAttributes;
       }
@@ -630,72 +636,70 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
       Collection attrs = new ArrayList();
       attrs.add(new BasicAttribute("fact", "the letter A"));
-      foo.put(NS.DirSeparator + "foo", "Foo", new ArrayList(attrs));
+      foo.put(ROOT, "foo", "Foo", new ArrayList(attrs));
 
       attrs.clear();
       attrs.add(new BasicAttribute("fact", "the letter B"));
-      foo.put(NS.DirSeparator + "bar", "Bar", new ArrayList(attrs));
+      foo.put(ROOT, "bar", "Bar", new ArrayList(attrs));
 
+      NSKey clustersKey = foo.createSubDirectory(ROOT, "clusters");
       attrs.add(new BasicAttribute("fact", " the letter C"));
-      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "a", "aString", new ArrayList(attrs));
+      foo.put(clustersKey, "a", "aString", new ArrayList(attrs));
       
       attrs.add(new BasicAttribute("fact", " the letter D"));
-      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "b", "bString", new ArrayList(attrs));
+      foo.put(clustersKey, "b", "bString", new ArrayList(attrs));
 
-      System.out.println("foo = "+foo.get(NS.DirSeparator + "foo")+" " + foo.getAttributes(NS.DirSeparator + "foo"));
-      System.out.println("bar = "+foo.get(NS.DirSeparator + "bar")+ " " + foo.getAttributes(NS.DirSeparator + "bar"));
-      System.out.println("a = "+foo.get(NS.DirSeparator + "clusters" + NS.DirSeparator + "a") + " " + 
-                         foo.getAttributes(NS.DirSeparator + "clusters" + NS.DirSeparator + "a"));
-      System.out.println("b = "+foo.get(NS.DirSeparator + "clusters" + NS.DirSeparator + "b") + " " + 
-                         foo.getAttributes(NS.DirSeparator + "clusters" + NS.DirSeparator + "b"));
+      System.out.println("foo = "+ foo.get(ROOT, "foo")+ " " + foo.getAttributes(ROOT, "foo"));
+      System.out.println("bar = "+foo.get(ROOT, "bar")+ " " + foo.getAttributes(ROOT, "bar"));
+      System.out.println("a = "+foo.get(clustersKey, "a") + " " + 
+                         foo.getAttributes(clustersKey,"a"));
+      System.out.println("b = "+foo.get(clustersKey, "b") + " " + 
+                         foo.getAttributes(clustersKey, "b"));
 
-      System.out.println(": keys =");
+      System.out.println(foo.fullName(ROOT, "") + " : keys =");
       for (Iterator a = foo.keySet(ROOT).iterator(); a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
-      System.out.println(": values =");
+      System.out.println(foo.fullName(ROOT, "") + " : values =");
       for (Iterator a = foo.values(ROOT).iterator(); a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
-      System.out.println(": entries =");
+      System.out.println(foo.fullName(ROOT, "") + " : entries =");
       for (Iterator a = foo.entrySet(ROOT).iterator(); a.hasNext();){
         Map.Entry entry = (Map.Entry) a.next();
         System.out.println("\t"+entry.getKey()+ " " + entry.getValue());
       }
 
-      System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " keys =");
+      System.out.println(foo.fullName(clustersKey, "") + " : keys =");
       for (Iterator a = 
-             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+             foo.keySet(clustersKey).iterator(); 
            a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
-      System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " values =");
+      System.out.println(foo.fullName(clustersKey, "") + " : values =");
       for (Iterator a = 
-             foo.values(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+             foo.values(clustersKey).iterator(); 
            a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
-      System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " entries =");
+      System.out.println(foo.fullName(clustersKey, "") + " : entries =");
       for (Iterator a =
-             foo.entrySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+             foo.entrySet(clustersKey).iterator(); 
            a.hasNext();){
         Map.Entry entry = (Map.Entry) a.next();
         System.out.println("\t"+entry.getKey()+ " " + entry.getValue());
       }
 
-      System.out.println("createSubDirectory: " + NS.DirSeparator + 
-                         "clusters" + NS.DirSeparator + "subDir");
-      NameServer.Directory clustersDir = 
-        (NameServer.Directory) foo.get(NS.DirSeparator + "clusters" + 
-                                       NS.DirSeparator);
-      NameServer.Directory subDir = 
-        foo.createSubDirectory(clustersDir, "subDir");
+      System.out.println("createSubDirectory: " + 
+                         foo.fullName(clustersKey, "subDir"));
+      NSKey subDir = 
+        foo.createSubDirectory(clustersKey, "subDir");
       for (Iterator a = 
-             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+             foo.keySet(clustersKey).iterator(); 
            a.hasNext();){
         System.out.println("\t"+a.next());
       }
@@ -703,7 +707,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       System.out.println("destroySubDirectory: " + subDir);
       foo.destroySubDirectory(subDir);
       for (Iterator a = 
-             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+             foo.keySet(clustersKey).iterator(); 
            a.hasNext();){
         System.out.println("\t"+a.next());
       }

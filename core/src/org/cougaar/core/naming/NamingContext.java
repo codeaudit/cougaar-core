@@ -38,24 +38,25 @@ import org.cougaar.core.society.NameServer;
 public class NamingContext implements Context {
   protected Hashtable myEnv;
   protected NS myNS;
-  protected NameServer.Directory myDirectory;
+  protected NSKey myNSKey;
   protected String myDirectoryName;
+  protected String myFullPath;
   protected final static NameParser myParser = new NamingParser();
 
   protected String myClassName = NamingContext.class.getName();  
 
-  protected NamingContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
+  protected NamingContext(NS ns, NSKey nsKey, Hashtable inEnv) {
     myEnv = (inEnv != null) ? (Hashtable)(inEnv.clone()) : null;
     myNS = ns;
-    myDirectory = directory;
+    myNSKey = nsKey;
   }
 
   protected NS getNS() {
     return myNS;
   }
 
-  protected NameServer.Directory getDirectory() {
-    return myDirectory;
+  protected NSKey getNSKey() {
+    return myNSKey;
   }
   
   /**
@@ -95,7 +96,7 @@ public class NamingContext implements Context {
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
 
-    Object nsObj  = getNSObject(getDirectory(), atom);
+    Object nsObj  = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
@@ -173,7 +174,7 @@ public class NamingContext implements Context {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObj = getNSObject(getDirectory(), atom);
+    Object nsObj = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
@@ -189,7 +190,7 @@ public class NamingContext implements Context {
       
       // Add object to internal data structure
       try {
-        getNS().put(getDirectory(), atom, obj);
+        getNS().put(getNSKey(), atom, obj);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -255,7 +256,7 @@ public class NamingContext implements Context {
     if (nm.size() == 1) {
       // Atomic name
       
-      if (getNSObject(getDirectory(), atom) instanceof Context) {
+      if (getNSObject(getNSKey(), atom) instanceof Context) {
         throw new OperationNotSupportedException("Can not use rebind to replace a Context.");
       }
 
@@ -266,14 +267,14 @@ public class NamingContext implements Context {
       
       // Add object to internal data structure
       try {
-        getNS().put(getDirectory(), atom, obj);
+        getNS().put(getNSKey(), atom, obj);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
     } else {
       // Intermediate name: Consume name in this context and continue
       
-      Object nsObj = getNSObject(getDirectory(), atom);
+      Object nsObj = getNSObject(getNSKey(), atom);
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(atom + 
                                       " does not name a context");
@@ -336,19 +337,19 @@ public class NamingContext implements Context {
     
     // Remove object from internal data structure
     if (nm.size() == 1) {
-      if (!allowContext && getNSObject(getDirectory(), atom) instanceof Context) {
+      if (!allowContext && getNSObject(getNSKey(), atom) instanceof Context) {
         throw new OperationNotSupportedException("Can not unbind Context. Use destroySubContext instead.");
       }
         
       // Atomic name: Find object in internal data structure
       try {
-        getNS().remove(getDirectory(), atom);
+        getNS().remove(getNSKey(), atom);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
     } else {
       // Intermediate name: Consume name in this context and continue
-      Object nsObj = getNSObject(getDirectory(), atom);
+      Object nsObj = getNSObject(getNSKey(), atom);
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(atom + 
                                       " does not name a context");
@@ -416,7 +417,7 @@ public class NamingContext implements Context {
     if (oldnm.size() == 1) {
       // Atomic name: Add object to internal data structure
       // Check if new name exists
-      if (getNSObject(getDirectory(), newAtom) != null) {
+      if (getNSObject(getNSKey(), newAtom) != null) {
         throw new NameAlreadyBoundException(newName.toString() +
                                             " is already bound");
       }
@@ -430,7 +431,7 @@ public class NamingContext implements Context {
           throw new OperationNotSupportedException("Do not support rename of a Context");
         } 
 
-        oldBinding = getNS().rename(getDirectory(), oldAtom, newAtom);
+        oldBinding = getNS().rename(getNSKey(), oldAtom, newAtom);
         if (oldBinding == null) {
           throw new NamingException("Unable to rename " + oldName.toString());
         }
@@ -445,7 +446,7 @@ public class NamingContext implements Context {
       }
       
       // Intermediate name: Consume name in this context and continue
-      Object nsObj = getNSObject(getDirectory(), oldAtom);
+      Object nsObj = getNSObject(getNSKey(), oldAtom);
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(oldAtom +
                                       " does not name a context");
@@ -493,7 +494,7 @@ public class NamingContext implements Context {
     if (name.isEmpty()) {
       try {
         // listing this context
-        return new ListOfNames(getNS().entrySet(getDirectory()).iterator());
+        return new ListOfNames(getNS().entrySet(getNSKey()).iterator());
       } catch (RemoteException re) {
         re.printStackTrace();
         return null;
@@ -547,7 +548,7 @@ public class NamingContext implements Context {
     if (name.isEmpty()) {
       try {
         // listing this context
-        return new ListOfBindings(getNS().entrySet(getDirectory()).iterator());
+        return new ListOfBindings(getNS().entrySet(getNSKey()).iterator());
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -656,7 +657,7 @@ public class NamingContext implements Context {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObj = getNSObject(getDirectory(), atom);
+    Object nsObj = getNSObject(getNSKey(), atom);
     
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
@@ -666,9 +667,9 @@ public class NamingContext implements Context {
       
       // Add child to internal data structure
       try {
-        NameServer.Directory dir = getNS().createSubDirectory(getDirectory(), atom);
-        if (dir != null) {
-          return createContext(dir);
+        NSKey nsKey = getNS().createSubDirectory(getNSKey(), atom);
+        if (nsKey != null) {
+          return createContext(nsKey);
         } else {
           throw new NamingException("Unable to create subcontext.");
         }
@@ -909,20 +910,27 @@ public class NamingContext implements Context {
    * @since 1.3
    */
   public String getNameInNamespace() throws NamingException {
-    try {
-      String fullname = getNS().fullName(getDirectory(), "");
-      if (fullname.equals("/")) return "";
-      return fullname.substring(1, fullname.length() - 1);
-    } catch (RemoteException re) {
-      re.printStackTrace();
-      return null;
+    if (myFullPath == null) {
+      try {
+        myFullPath = getNS().fullName(getNSKey(), "");
+
+        // Strip trailing dir separator
+        while (myFullPath.endsWith(NS.DirSeparator)) {
+          myFullPath = myFullPath.substring(0, myFullPath.length() - 1);
+        }
+      } catch (RemoteException re) {
+        re.printStackTrace();
+        return null;
+      }
     }
+
+    return myFullPath;
   }
   
   public String toString() {
     if (myDirectoryName == null) {
       try {
-        Name name = myParser.parse(getDirectory().getPath());      
+        Name name = myParser.parse(getNameInNamespace());      
         if (!name.isEmpty()) {
           myDirectoryName = name.get(name.size() - 1);
         } else {
@@ -950,11 +958,11 @@ public class NamingContext implements Context {
 
 
   protected Context cloneContext() {
-    return new NamingContext(myNS, myDirectory, myEnv);
+    return new NamingContext(myNS, myNSKey, myEnv);
   }
 
-  protected Context createContext(NameServer.Directory dir) {
-    return new NamingContext(myNS, dir, myEnv);
+  protected Context createContext(NSKey nsKey) {
+    return new NamingContext(myNS, nsKey, myEnv);
   }
 
   /**
@@ -977,17 +985,17 @@ public class NamingContext implements Context {
   }
 
 
-  protected Object getNSObject(NameServer.Directory directory, String name) {
+  protected Object getNSObject(NSKey nsKey, String name) {
     Object nsObject = null;
 
     try {
-      nsObject = getNS().get(getDirectory(), name);
+      nsObject = getNS().get(getNSKey(), name);
     } catch (RemoteException re) {
       re.printStackTrace();
     }
     
-    if (nsObject instanceof NameServer.Directory) {
-      return createContext((NameServer.Directory) nsObject);
+    if (nsObject instanceof NSKey) {
+      return createContext((NSKey) nsObject);
     } else {
       return nsObject;
     }
@@ -1017,7 +1025,7 @@ public class NamingContext implements Context {
       Map.Entry entry = (Map.Entry) myEntries.next();
       String name = (String) entry.getKey();
       String className;
-      if (entry.getValue() instanceof NameServer.Directory) {
+      if (entry.getValue() instanceof NSKey) {
         className = myClassName;
       } else {
         className = entry.getValue().getClass().getName();
@@ -1047,9 +1055,9 @@ public class NamingContext implements Context {
     public Object next() throws NamingException {
       Map.Entry entry = (Map.Entry) myEntries.next();
       
-      if (entry.getValue() instanceof NameServer.Directory) {
+      if (entry.getValue() instanceof NSKey) {
         return new Binding((String) entry.getKey(), 
-                           createContext((NameServer.Directory) entry.getValue()));
+                           createContext((NSKey) entry.getValue()));
       } else {
         return new Binding((String) entry.getKey(), entry.getValue());
       }

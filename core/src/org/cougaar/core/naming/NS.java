@@ -35,60 +35,60 @@ public interface NS extends Remote {
   String DirSeparator = "/";
   
   void clear(String directory) throws RemoteException;
-  void clear(NameServer.Directory directory) throws RemoteException;
+  void clear(NSKey nsKey) throws RemoteException;
 
   boolean containsKey(String key) throws RemoteException;
-  boolean containsKey(NameServer.Directory directory, String key) throws RemoteException;
+  boolean containsKey(NSKey nsKey, String key) throws RemoteException;
 
   
-  NameServer.Directory createSubDirectory(NameServer.Directory directory, 
-                                          String subDirName) throws RemoteException;
+  NSKey createSubDirectory(NSKey nsKey, 
+                           String subDirName) throws RemoteException;
  
-  void destroySubDirectory(NameServer.Directory directory) throws RemoteException;
- 
-  Collection entrySet(String directory) throws RemoteException;
-  Collection entrySet(NameServer.Directory directory) throws RemoteException;
+  void destroySubDirectory(NSKey nsKey) throws RemoteException;
   
-  String fullName(NameServer.Directory directory, String name) throws RemoteException;
+  Collection entrySet(String directory) throws RemoteException;
+  Collection entrySet(NSKey nsKey) throws RemoteException;
+  
+  String fullName(NSKey nsKey, String name) throws RemoteException;
 
   /** Look up an object in the NameService directory **/
   Object get(String name) throws RemoteException;
-  Object get(NameServer.Directory directory, String name) throws RemoteException;
+  Object get(NSKey nsKey, String name) throws RemoteException;
 
   Collection getAttributes(String name) throws RemoteException;
-  Collection getAttributes(NameServer.Directory directory, 
+  Collection getAttributes(NSKey nsKey, 
                            String name) throws RemoteException;
 
-  NameServer.Directory getRoot() throws RemoteException;
+  NSKey getRoot() throws RemoteException;
  
   boolean isEmpty(String directory) throws RemoteException;
-  boolean isEmpty(NameServer.Directory directory) throws RemoteException;
+  boolean isEmpty(NSKey nsKey) throws RemoteException;
 
   Collection keySet(String directory) throws RemoteException;
-  Collection keySet(NameServer.Directory directory) throws RemoteException;
+  Collection keySet(NSKey nsKey) throws RemoteException;
 
   /** add an object to the directory **/
   Object put(String name, Object o) throws RemoteException;
   Object put(String name, Object o, Collection attributes) throws RemoteException;
-  Object put(NameServer.Directory directory, String name, Object o) throws RemoteException;
-  Object put(NameServer.Directory directory, String name, Object o, Collection attributes) throws RemoteException;
+  Object put(NSKey nsKey, String name, Object o) throws RemoteException;
+  Object put(NSKey nsKey, String name, Object o, Collection attributes) throws RemoteException;
 
   void putAttributes(String name, Collection attributes) throws RemoteException;
-  void putAttributes(NameServer.Directory directory, String name, 
+  void putAttributes(NSKey nsKey, String name, 
                            Collection attributes) throws RemoteException;
 
   /** remove an object (and name) from the directory **/
   Object remove(String name) throws RemoteException;
-  Object remove(NameServer.Directory directory, String name) throws RemoteException;
+  Object remove(NSKey nsKey, String name) throws RemoteException;
 
-  Object rename(NameServer.Directory directory, String oldName, String newName) throws RemoteException;
+  Object rename(NSKey nsKey, String oldName, String newName) throws RemoteException;
 
   int size(String directory) throws RemoteException;
-  int size(NameServer.Directory directory) throws RemoteException;
+  int size(NSKey nsKey) throws RemoteException;
 
   /** @return all objects in the specified directory **/
   Collection values(String directory) throws RemoteException;
-  Collection values(NameServer.Directory directory) throws RemoteException;
+  Collection values(NSKey nsKey) throws RemoteException;
 }
 
 

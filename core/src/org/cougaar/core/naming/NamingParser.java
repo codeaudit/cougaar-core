@@ -28,6 +28,13 @@ import javax.naming.NamingException;
 import java.util.Properties;
 
 
+/**
+ * Implementation of javax.naming.NameParser for 
+ * Cougaar Naming Service. Specfies left to right parsing,
+ * use of NS.DirSeparator as the CompoundName separator, and
+ * recognizes case distinctions in the text.
+ */
+
 public class NamingParser implements NameParser {
 
   private static final Properties syntax = new Properties();
@@ -36,8 +43,31 @@ public class NamingParser implements NameParser {
     syntax.put("jndi.syntax.separator", NS.DirSeparator);
     syntax.put("jndi.syntax.ignorecase", "false");
   }
+
+  /**
+   * Parses a name into its components.
+   *
+   * @param name The non-null string name to parse.
+   * @return A non-null parsed form of the name using the naming convention
+   * of this parser.
+   * @exception InvalidNameException If name does not conform to
+   * 	syntax defined for the namespace.
+   * @exception NamingException If a naming exception was encountered.
+   */
   public Name parse(String name) throws NamingException {
     return new CompoundName(name, syntax);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,5 +1,5 @@
 /*
- * <copyright>
+ * <Copyright>
  *  Copyright 1997-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
@@ -40,18 +40,18 @@ public class NamingDirContext extends NamingContext implements DirContext {
   protected final static SearchStringParser filterParser = new SearchStringParser();
   protected final static SearchControls defaultSearchControls = new SearchControls();
   
-  protected NamingDirContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
-    super(ns, directory, inEnv);
+  protected NamingDirContext(NS ns, NSKey nsKey, Hashtable inEnv) {
+    super(ns, nsKey, inEnv);
 
     myClassName = NamingDirContext.class.getName();
   }
 
   protected Context cloneContext() {
-    return new NamingDirContext(myNS, myDirectory, myEnv);
+    return new NamingDirContext(myNS, myNSKey, myEnv);
   }
 
-  protected Context createContext(NameServer.Directory dir) {
-    return new NamingDirContext(myNS, dir, myEnv);
+  protected Context createContext(NSKey nsKey) {
+    return new NamingDirContext(myNS, nsKey, myEnv);
   }
 
   /**
@@ -128,7 +128,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
       // Asking for attributes of this context.
       Collection attributes;
       try {
-        attributes = getNS().getAttributes(getDirectory(), "");
+        attributes = getNS().getAttributes(getNSKey(), "");
       } catch (RemoteException re) {
         re.printStackTrace();
         attributes = new ArrayList();
@@ -140,7 +140,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObject = getNSObject(getDirectory(), atom);
+    Object nsObject = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       if (nsObject == null) {
@@ -149,7 +149,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
       
       Collection attributes = null;
       try {
-        attributes = getNS().getAttributes(getDirectory(), atom);
+        attributes = getNS().getAttributes(getNSKey(), atom);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -281,10 +281,10 @@ public class NamingDirContext extends NamingContext implements DirContext {
         //Clone Attributes and ModificationItems so that parameters aren't 
         // modified by processing
         Collection cloneAttrs = 
-          deepClone(getNS().getAttributes(getDirectory(), ""));
+          deepClone(getNS().getAttributes(getNSKey(), ""));
         ModificationItem[] cloneMods = deepClone(mods);
 
-        getNS().putAttributes(getDirectory(), "", 
+        getNS().putAttributes(getNSKey(), "", 
                               doMods(cloneAttrs, cloneMods));
       } catch (RemoteException re) {
         re.printStackTrace();
@@ -295,7 +295,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObject = getNSObject(getDirectory(), atom);
+    Object nsObject = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       if (nsObject == null) {
@@ -307,10 +307,10 @@ public class NamingDirContext extends NamingContext implements DirContext {
         //Clone Attributes and ModificationItems so that parameters aren't 
         // modified by processing
         Collection cloneAttrs = 
-          deepClone(getNS().getAttributes(getDirectory(), atom));
+          deepClone(getNS().getAttributes(getNSKey(), atom));
         ModificationItem[] cloneMods = deepClone(mods);
 
-        getNS().putAttributes(getDirectory(), atom, 
+        getNS().putAttributes(getNSKey(), atom, 
                               doMods(cloneAttrs, cloneMods));
       } catch (RemoteException re) {
         re.printStackTrace();
@@ -340,7 +340,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObject = getNSObject(getDirectory(), atom);
+    Object nsObject = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
@@ -400,7 +400,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (name.isEmpty()) {
       try {
         // listing this context
-        return new ListOfDirBindings(getNS().entrySet(getDirectory()).iterator());
+        return new ListOfDirBindings(getNS().entrySet(getNSKey()).iterator());
       } catch (RemoteException re) {
         re.printStackTrace();
       }  
@@ -424,11 +424,12 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @param name
    *		the name to bind; may not be empty
    * @param obj
-   *		the object to bind; possibly null
+   *		the object to bind; may not be null or a Context
    * @throws	NameAlreadyBoundException if name is already bound
    * @throws	javax.naming.directory.InvalidAttributesException
    *	 	if object did not supply all mandatory attributes
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    *
    * @see #bind(Name, Object, javax.naming.directory.Attributes)
    */
@@ -443,7 +444,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @param name
    *		the name to bind; may not be empty
    * @param obj
-   *		the object to bind; possibly null
+   *		the object to bind; may not be null or a Context
    * @param attrs
    *		the attributes to associate with the binding
    *
@@ -451,6 +452,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @throws	InvalidAttributesException if some "mandatory" attributes
    *		of the binding are not supplied
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    */
   public void bind(String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -471,7 +473,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @param name
    *		the name to bind; may not be empty
    * @param obj
-   *		the object to bind; must not be null
+   *		the object to bind; must not be null or a Context
    * @param attrs
    *		the attributes to associate with the binding
    *
@@ -479,11 +481,11 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @throws	InvalidAttributesException if some "mandatory" attributes
    *		of the binding are not supplied
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    *
    */
   public void bind(Name name, Object obj, Attributes attrs)
     throws NamingException {
-//      System.out.println("Attempt to bind: " + name + " in " + myDirectory.getPath()); 
     if (name.isEmpty()) {
       throw new InvalidNameException("Cannot bind empty name");
     }
@@ -495,7 +497,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObject = getNSObject(getDirectory(), atom);
+    Object nsObject = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
@@ -518,7 +520,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
       
       // Add object to internal data structure
       try {
-        getNS().put(getDirectory(), atom, res.getObject(), arrayList);
+        getNS().put(getNSKey(), atom, res.getObject(), arrayList);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -550,6 +552,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @throws	javax.naming.directory.InvalidAttributesException
    *	 	if object did not supply all mandatory attributes
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    *
    */
   public void rebind(Name name, Object obj) throws NamingException {
@@ -571,6 +574,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @throws	InvalidAttributesException if some "mandatory" attributes
    *		of the binding are not supplied
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    */
   public void rebind(String name, Object obj, Attributes attrs)
     throws NamingException {
@@ -596,6 +600,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @throws	InvalidAttributesException if some "mandatory" attributes
    *		of the binding are not supplied
    * @throws	NamingException if a naming exception is encountered
+   * @throws    OperationNotSupportedException if obj is a Context
    *
    * @see #bind(Name, Object, Attributes)
    */
@@ -616,7 +621,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (nm.size() == 1) {
       // Atomic name
       
-      if (getNSObject(getDirectory(), atom) instanceof Context) {
+      if (getNSObject(getNSKey(), atom) instanceof Context) {
         throw new OperationNotSupportedException("Can not use rebind to replace a Context.");
       }
 
@@ -634,13 +639,13 @@ public class NamingDirContext extends NamingContext implements DirContext {
 
       // Add object to internal data structure
       try {
-        getNS().put(getDirectory(), atom, res.getObject(), arrayList);
+        getNS().put(getNSKey(), atom, res.getObject(), arrayList);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
     } else {
       // Intermediate name: Consume name in this context and continue
-      Object nsObject = getNSObject(getDirectory(), atom);
+      Object nsObject = getNSObject(getNSKey(), atom);
       if (!(nsObject instanceof DirContext)) {
         throw new NotContextException(atom + " does not name a DirContext.");
       }
@@ -1055,7 +1060,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Fill in expression
     String filter = format(filterExpr, filterArgs);
     
-//      System.out.println("filter string: " + filter);
     return search(name, filter, cons);
   }
 
@@ -1871,13 +1875,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     }
     System.out.println("");
 
-    System.out.println("Search initial context - SUBTREE_SCOPE for: " + searchString);
-    enum = ((NamingDirContext) ctx).search("", searchString1, cons);
-    while (enum.hasMore()) {
-      System.out.println(enum.next());
-    }
-    System.out.println("");
-
     System.out.println("Search initial context - SUBTREE_SCOPE for: " + searchString2);
     enum = ((NamingDirContext) ctx).search("", searchString2, cons);
     while (enum.hasMore()) {
@@ -1890,16 +1887,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     cons.setSearchScope(SearchControls.OBJECT_SCOPE);
     cons.setReturningAttributes(null);
     enum = ((NamingDirContext) ctx).search("b", searchString, cons);
-    while (enum.hasMore()) {
-      System.out.println(enum.next());
-    }
-    System.out.println("");
-
-    System.out.println("Search b in initial context - OBJECT_SCOPE for : " + 
-                       searchString1);
-    cons.setSearchScope(SearchControls.OBJECT_SCOPE);
-    cons.setReturningAttributes(null);
-    enum = ((NamingDirContext) ctx).search("b", searchString1, cons);
     while (enum.hasMore()) {
       System.out.println(enum.next());
     }
@@ -1920,16 +1907,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     cons.setSearchScope(SearchControls.ONELEVEL_SCOPE);
     cons.setReturningAttributes(null);
     enum = ((NamingDirContext) ctx).search("b", searchString, cons);
-    while (enum.hasMore()) {
-      System.out.println(enum.next());
-    }
-    System.out.println("");
-
-    System.out.println("Search b in initial context - ONELEVEL_SCOPE for : " +
-                       searchString1);
-    cons.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-    cons.setReturningAttributes(null);
-    enum = ((NamingDirContext) ctx).search("b", searchString1, cons);
     while (enum.hasMore()) {
       System.out.println(enum.next());
     }
@@ -1976,6 +1953,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     } 
     System.out.println("");
 
+    System.out.println("c.toString(): " + c.toString() + " c.getNameInNamespace(): " + c.getNameInNamespace());
 
     System.out.println("Contents of initial context with associated 'fact' attribute");
     bindings = ctx.listBindings("");
@@ -1992,10 +1970,14 @@ public class NamingDirContext extends NamingContext implements DirContext {
     } 
 
     // Boundary conditions -
-    Object o1 = ctx.lookup("/b/c/boo");
-    Object o2 = ctx.lookup("b/c/boo");
+    Object o1 = ctx.lookup(NS.DirSeparator + "b" + NS.DirSeparator + 
+                           "c" + NS.DirSeparator + "boo");
+    Object o2 = ctx.lookup("b" + NS.DirSeparator + "c" + 
+                           NS.DirSeparator + "boo");
     boolean same = (o1 == o2);
-    System.out.println("/b/c/boo == b/c/boo: " + same);
+    System.out.println(NS.DirSeparator + "b" + NS.DirSeparator + 
+                       "c" + NS.DirSeparator + "boo == b" + NS.DirSeparator + 
+                       "c" + NS.DirSeparator + "boo: " + same);
 
     System.out.println("Attempt to remove a Context");
     try {
