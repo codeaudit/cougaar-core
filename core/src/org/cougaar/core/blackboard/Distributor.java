@@ -253,13 +253,14 @@ final class Distributor {
    * Called by subscriber to discard rehydration info.
    */
   void discardRehydrationInfo(Subscriber subscriber) {
-    // FIXME this isn't locked!
-    if (rehydrationEnvelope != null) {
-      persistence.discardSubscriberState(subscriber);
-      if (!persistence.hasSubscriberStates()) {
-        // discard rehydration info:
-        rehydrationEnvelope = null;
-        postRehydrationEnvelopes = null;
+    synchronized (distributorLock) {
+      if (rehydrationEnvelope != null) {
+        persistence.discardSubscriberState(subscriber);
+        if (!persistence.hasSubscriberStates()) {
+          // discard rehydration info:
+          rehydrationEnvelope = null;
+          postRehydrationEnvelopes = null;
+        }
       }
     }
   }
