@@ -24,7 +24,6 @@ package org.cougaar.core.thread;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.PropertyParser;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 
 
@@ -37,13 +36,12 @@ abstract class Scheduler implements ThreadControlService
     static final boolean DebugThreads = 
 	Boolean.getBoolean("org.cougaar.thread.debug");
 
-    protected DynamicSortedQueue pendingThreads;
-    protected int maxRunningThreads;
-    protected int runningThreadCount = 0;
-    protected ThreadListenerProxy listenerProxy;
-    protected Scheduler parent;
-    protected ArrayList children;
-    protected String name;
+    DynamicSortedQueue pendingThreads;
+    int maxRunningThreads;
+    int runningThreadCount = 0;
+    ThreadListenerProxy listenerProxy;
+    String name;
+    PolicyTreeNode node;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -71,27 +69,25 @@ abstract class Scheduler implements ThreadControlService
 	    PropertyParser.getInt(MaxRunningCountProp, 
 				  MaxRunningCountDefault);
 	this.listenerProxy = listenerProxy;
-	children = new ArrayList();
-	this.name = "<Scheduler " +name+ ">";
+	this.name = name;
     }
 
-    public String toString() {
-	return name;
+
+
+    void setNode(PolicyTreeNode node) {
+	this.node = node;
     }
 
-    void setParent(Scheduler parent) {
-	this.parent = parent;
-	if (parent != null) parent.addChild(this);
-    }
-
-    private void addChild(Scheduler child) {
-	children.add(child);
-    }
 
     // ThreadControlService 
     public synchronized void setQueueComparator(Comparator comparator)
     {
 	pendingThreads.setComparator(comparator);
+    }
+
+    public synchronized void setTimeSlicePolicy(TimeSlicePolicy policy)
+    {
+	node.setPolicy(policy);
     }
 
     public synchronized void setMaxRunningThreadCount(int count) {
@@ -118,7 +114,21 @@ abstract class Scheduler implements ThreadControlService
 
 
 
-    void wakeup (){
+    boolean offerSlice(TimeSlice slice) {
+	return false;
+    }
+
+
+    TimeSlicePolicy getPolicy() {
+	return node.getPolicy();
+    }
+
+    TimeSlice getSlice() {
+	return getPolicy().getSlice();
+    }
+
+    void releaseSlice(TimeSlice slice) {
+	getPolicy().releaseSlice(slice);
     }
 
     void addPendingThread(ControllableThread thread) 

@@ -35,18 +35,20 @@ final class ThreadServiceProxy 	implements ThreadService
     private TimerRunnable timer;
     private ThreadGroup group;
     private Scheduler scheduler;
+    private PolicyTreeNode node;
 
     ThreadServiceProxy(ThreadServiceProxy parent,
 		       Scheduler scheduler,
 		       String name) 
     {
 	this.scheduler = scheduler;
+	TimeSlicePolicy policy = new DefaultTimeSlicePolicy();
+	node =  new PolicyTreeNode(policy, scheduler, 
+				   parent == null ? null : parent.node);
 
 	if (parent == null) {
-	    scheduler.setParent(null);
 	    group = new ThreadGroup(name);
 	} else {
-	    scheduler.setParent(parent.scheduler);
 	    group = new ThreadGroup(parent.group, name);
 	}
 

@@ -19,25 +19,28 @@
  * </copyright>
  */
 
-package org.cougaar.core.service;
+package org.cougaar.core.thread;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.thread.TimeSlicePolicy;
+import org.cougaar.core.service.ThreadControlService;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 
-public interface ThreadControlService extends Service
+public interface TimeSlicePolicy
 {
-    // General
-    void setMaxRunningThreadCount(int count);
-    void setQueueComparator(Comparator comparator);
-    
-    // TimeSlice management
-    void setTimeSlicePolicy(TimeSlicePolicy policy);
+    void setNode(PolicyTreeNode node);
 
-    // Status
-    int runningThreadCount();
-    int pendingThreadCount();
-    int activeThreadCount();
-    int maxRunningThreadCount();
+    // Get a slice for the scheduler
+    TimeSlice getSlice();
+
+    // Release a slice from the scheduler
+    void releaseSlice(TimeSlice slice);
+
+    // Get a slice from my parent
+    TimeSlice getSlice(TimeSlicePolicy child);
+
+    // Release a slice to my parent
+    void releaseSlice(TimeSlicePolicy child, TimeSlice slice);
+
+    // Offer a slice to a child
+    boolean offerSlice(TimeSlice slice);
 }
