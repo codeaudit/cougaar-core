@@ -31,7 +31,6 @@ import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.core.plugin.ScheduleablePlugIn;
 
-import org.cougaar.core.cluster.LoggingService;
 import org.cougaar.core.cluster.AlarmService;
 import org.cougaar.core.cluster.AlarmServiceProvider;
 import org.cougaar.core.cluster.ClusterServesPlugIn;
@@ -130,20 +129,6 @@ public abstract class PlugInAdapter
 //       ms = new MetricsSnapshot();
 //     return ms;
   }
-
-  // logging service
-  private LoggingService loggingService = null;
-  public final void setLoggingService(LoggingService s) {
-    loggingService = s;
-  }
-  protected final LoggingService getLoggingService() {
-    if (loggingService == null) {
-      ServiceBroker sb = getBindingSite().getServiceBroker();
-      setLoggingService((LoggingService)sb.getService(this,LoggingService.class,null));
-    }
-    return loggingService;
-  }
-
 
   // alarm service
   private AlarmService alarmService = null;
