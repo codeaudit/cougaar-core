@@ -218,9 +218,19 @@ public class ComponentPlugin
    **/
 
   protected ConfigFinder getConfigFinder() {
-    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
-  }
-	
+		 return ((PluginBindingSite) getBindingSite()).getConfigFinder();
+	}
+
+		public ClusterServesPlugIn getCluster() {
+      return ComponentPlugin.this.getCluster();
+    }
+		
+		
+			protected ClusterIdentifier getClusterIdentifier() { 
+			return ComponentPlugin.this.getClusterIdentifier();
+		}
+		
+		
   /**
    * This is the scheduler's hook into me
    **/
