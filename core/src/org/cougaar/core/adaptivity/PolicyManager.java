@@ -30,7 +30,6 @@ import org.cougaar.core.plugin.PluginBase;
  * - Manage the conflicts among policies
  * - Manage the enforcement of policy goals
  *
- * The product of expansion could be new policies or PolicyConstraints.
  * 
  */
 public interface PolicyManager extends PluginBase {
