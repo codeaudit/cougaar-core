@@ -51,10 +51,10 @@ public class BufferedFilePersistence
 {
   BufferedFileSystem bfs;
 
-  public void init(PersistencePluginSupport pps, String name, String[] params)
+  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
-    super.init(pps, name, params);
+    super.init(pps, name, params, deleteOldPersistence);
     bfs = new BufferedFileSystem(pps.getLoggingService());
   }
 

@@ -66,4 +66,14 @@ public class PersistencePluginAdapter
   public void releaseDatabaseConnection(Object locker) {
     throw new UnsupportedOperationException("FilePersistence.releaseDatabaseConnection not supported");
   }
+
+  public boolean checkOwnership() {
+    return true;
+  }
+
+  public void lockOwnership() {
+  }
+
+  public void unlockOwnership() {
+  }
 }

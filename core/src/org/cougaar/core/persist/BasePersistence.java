@@ -383,8 +383,7 @@ public class BasePersistence
           pluginParams[j] = (String) paramTokens.get(j + 2);
         }
         PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
-        ppi.init(result, pluginName, pluginParams);
-        result.addPlugin(ppi);
+        result.addPlugin(ppi, pluginName, pluginParams);
       }
       if (disabled) {
         result.disablePlugins();
@@ -457,7 +456,14 @@ public class BasePersistence
     }
   }
 
-  public void addPlugin(PersistencePlugin ppi) {
+  private void addPlugin(PersistencePlugin ppi, String pluginName, String[] pluginParams)
+    throws PersistenceException
+  {
+    boolean deleteOldPersistence = Boolean.getBoolean("org.cougaar.core.persistence.clear");
+    if (deleteOldPersistence && logger.isInfoEnabled()) {
+      logger.info("Clearing old persistence data");
+    }
+    ppi.init(this, pluginName, pluginParams, deleteOldPersistence);
     plugins.put(ppi.getName(), new PersistencePluginInfo(ppi));
   }
 
@@ -514,16 +520,6 @@ public class BasePersistence
     synchronized (identityTable) {
       identityTable.setRehydrationCollection(new ArrayList());
       try {
-        if (Boolean.getBoolean("org.cougaar.core.persistence.clear")
-            || pObject != null) {
-          if (logger.isInfoEnabled()) {
-            logger.info("Clearing old persistence data");
-          }
-          for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
-            PersistencePluginInfo p = (PersistencePluginInfo) i.next();
-            p.ppi.deleteOldPersistence();
-          }
-        }
         final RehydrationSet[] rehydrationSets = getRehydrationSets(sequenceNumberSuffix);
         if (pObject != null || rehydrationSets.length > 0) { // Deltas exist
           try {
@@ -1072,6 +1068,9 @@ public class BasePersistence
           sequenceNumbers.first = sequenceNumbers.current;
           selectNextPlugin();
         }
+        if (!currentPersistPluginInfo.ppi.checkOwnership()) {
+          return null;          // We are dead. Don't persist
+        }
         currentPersistPluginInfo.deltaCount++;
         if (sequenceNumbers.current == sequenceNumbers.first) {
           // First delta of this running
@@ -1288,10 +1287,12 @@ public class BasePersistence
     currentOutput = null;
   }
 
-  private void commitTransaction(boolean full) {
+  private void commitTransaction(boolean full) throws PersistenceException {
+    currentPersistPluginInfo.ppi.lockOwnership();
     sequenceNumbers.current += 1;
     currentPersistPluginInfo.ppi.finishOutputStream(sequenceNumbers, full);
     currentOutput = null;
+    currentPersistPluginInfo.ppi.unlockOwnership();
   }
 
   public java.sql.Connection getDatabaseConnection(Object locker) {

@@ -110,7 +110,7 @@ public class DatabasePersistence
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
-  public void init(PersistencePluginSupport pps, String name, String[] params)
+  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
     init(pps, name);
@@ -172,6 +172,7 @@ public class DatabasePersistence
       catch (SQLException e) {
         createTable(deltaTable);
       }
+      if (deleteOldPersistence) deleteOldPersistence();
     }
     catch (SQLException e) {
       ls.error("Persistence connection error");
@@ -380,7 +381,7 @@ public class DatabasePersistence
     // Nothing to do, just quietly abandon the input stream
   }
 
-  public void deleteOldPersistence() {
+  private void deleteOldPersistence() {
     try {
       Statement stmt = theConnection.createStatement();
       stmt.executeUpdate("delete from " + deltaTable);

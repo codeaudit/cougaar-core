@@ -1,3 +1,55 @@
+2003-01-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistencePluginAdapter.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Add stub implementations of new API.
+
+	* PersistencePlugin.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Add ownership methods. Add deleteOldPersistence argument.
+
+	* PersistenceException.java:
+	Add constructor accepting a message and an (caused by) exception.
+
+	* FilePersistenceBase.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Implement the new ownership methods of the API. Assume ownership
+	during init (lock mutex, write owner file, unlock mutex) and
+	implement lock/unlock methods where lock only succeeds if the
+	instance is the current owner.
+
+	* FileMutex.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	This class implement a simple mutual exclusion capability based on
+	the file rename operation being atomic. That is, it assumes that
+	if a file is renamed, the operation will only be successful if a
+	file with the new name did not previously exist and that only one
+	such rename can be successful regardless of the machine on which
+	it is executed.
+
+	* DummyPersistence.java: 
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Implement API changes.
+
+	* DatabasePersistence.java: 
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Clear persistence in init method.
+
+	* BufferedFilePersistence.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Clear persistence in init method.
+
+	* BasePersistence.java:
+	Bug #2346 -- 2 Agents writing to the same robustness directory
+	Use ownership control methods of persistence plugins to
+	synchronize access to persistence data (mutual exclusion) so that
+	multiple agent instances can coordinate activity and avoid actions
+	by agent instances no longer owning the persistence data (dead
+	agents).
+	Also, move old persistence clearing activity to plugin
+	initialization instead of rehydration. Persistence clearing
+	messes up the ownership logic.
+
 2003-01-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

@@ -37,7 +37,7 @@ public class DummyPersistence
   implements PersistencePlugin
 {
 
-  public void init(PersistencePluginSupport pps, String name, String[] params)
+  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
     init(pps, name);

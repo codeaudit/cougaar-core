@@ -34,7 +34,11 @@ public class PersistenceException extends Exception {
     super(message);
   }
 
+  public PersistenceException(String message, Exception e) {
+    super(message, e);
+  }
+
   public PersistenceException(Exception e) {
-    super("persistence: " + e.getMessage());
+    super("persistence", e);
   }
 }

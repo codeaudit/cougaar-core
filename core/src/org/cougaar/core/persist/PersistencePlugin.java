@@ -49,7 +49,7 @@ public interface PersistencePlugin {
      * parameters come from configuration information and
      * interpretation is up to the plugin.
      **/
-    void init(PersistencePluginSupport pps, String name, String[] params)
+    void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
         throws PersistenceException;
 
     /**
@@ -109,11 +109,12 @@ public interface PersistencePlugin {
     void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
 
     /**
-     * Open an OutputStream onto which a persistence delta can
-     * be written. The stream returned should be relatively
-     * non-blocking since it is possible for the entire agent to be
-     * blocked waiting for completion. Implementations that may block
-     * indefinitely should perform buffering as needed.
+     * Open an OutputStream onto which a persistence delta can be
+     * written. The stream returned should be relatively non-blocking
+     * since it is possible for the entire agent to be blocked waiting
+     * for completion. Implementations that may block indefinitely
+     * should perform buffering as needed. Also, the OutputStream
+     * should be unique relative to other instances of the same agent
      * @param deltaNumber the number of the delta that will be
      * written. Numbers are never re-used so this number can be used
      * to uniquely identify the delta.
@@ -136,7 +137,11 @@ public interface PersistencePlugin {
     void abortOutputStream(SequenceNumbers retainNumbers);
 
     /**
-     * Clean up after closing the output stream.
+     * Clean up after closing the output stream. This method is called
+     * within a mutual exclusion semaphore such that multiple
+     * instances of the same agent cannot both be calling this or
+     * related methods. This is the opportunity to rename the output
+     * stream to its real identity.
      * @param retainNumbers the numbers of the deltas including the
      * one just written that comprise a complete rehydration set.
      * Subsequent calls to readSequenceNumbers should return these
@@ -160,14 +165,6 @@ public interface PersistencePlugin {
      * Provided as a convenience to the method.
      **/
     void finishInputStream(int deltaNumber);
-
-    /**
-     * Clean out all old persistence information. Intended only as a
-     * debugging aid to facilitate startup without any previous
-     * persisted state. Generally, the media should be wiped clean of
-     * all previous persistence state.
-     **/
-    void deleteOldPersistence();
 
     /**
      * Get the connection to the database into which persistence
@@ -200,4 +197,19 @@ public interface PersistencePlugin {
      **/
     DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
         throws IOException;
+
+    /**
+     * Check that this agent instance still owns the persistence data
+     **/
+    boolean checkOwnership();
+
+    /**
+     * Lock out other instances of this agent.
+     **/
+    void lockOwnership() throws PersistenceException;
+
+    /**
+     * Release the lockout of other instances of this agent.
+     **/
+    void unlockOwnership() throws PersistenceException;
 }

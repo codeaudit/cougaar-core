@@ -28,11 +28,17 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.core.service.LoggingService;
@@ -64,6 +70,9 @@ public abstract class FilePersistenceBase
 {
   private static final String NEWSEQUENCE = "newSequence";
   private static final String SEQUENCE = "sequence";
+  private static final String MUTEX = "mutex";
+  private static final String OWNER = "owner";
+  private static final long MUTEX_TIMEOUT = 60000L;
 
   private static File getDefaultPersistenceRoot() {
     String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
@@ -74,8 +83,12 @@ public abstract class FilePersistenceBase
   }
 
   private File persistenceDirectory;
+  private File ownerFile;
+  private String instanceId;
+  private FileMutex mutex;
+  private int deltaNumber;      // The number of the currently open output file.
 
-  public void init(PersistencePluginSupport pps, String name, String[] params)
+  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
     init(pps, name);
@@ -99,6 +112,52 @@ public abstract class FilePersistenceBase
 	pps.getLoggingService().fatal(msg);
 	throw new PersistenceException(msg);
       }
+    }
+    if (deleteOldPersistence) deleteOldPersistence();
+    SimpleDateFormat format = new SimpleDateFormat("yyyyMMddHHmmssSSS");
+    instanceId = format.format(new Date());
+    mutex = new FileMutex(persistenceDirectory, MUTEX, MUTEX_TIMEOUT);
+    lockOwnership();
+    try {
+      ownerFile = new File(persistenceDirectory, OWNER);
+      DataOutputStream o = new DataOutputStream(new FileOutputStream(ownerFile));
+      o.writeUTF(instanceId);
+      o.close();
+      System.out.println("Wrote " + ownerFile);
+    } catch (IOException ioe) {
+      pps.getLoggingService().fatal("assertOwnership exception", ioe);
+      throw new PersistenceException("assertOwnership exception", ioe);
+    } finally {    
+      unlockOwnership();
+    }
+  }
+
+  public boolean checkOwnership() {
+    lockOwnership();
+    try {
+      DataInputStream i = new DataInputStream(new FileInputStream(ownerFile));
+      return i.readUTF().equals(instanceId);
+    } catch (IOException ioe) {
+      pps.getLoggingService().fatal("checkOwnership exception", ioe);
+      return false;
+    } finally {
+      unlockOwnership();
+    }
+  }
+
+  public void lockOwnership() {
+    try {
+      mutex.lock();
+    } catch (IOException ioe) {
+      pps.getLoggingService().fatal("lockOwnership exception", ioe);
+    }
+  }
+
+  public void unlockOwnership() {
+    try {
+      mutex.unlock();
+    } catch (IOException ioe) {
+      pps.getLoggingService().fatal("unlockOwnership exception", ioe);
     }
   }
 
@@ -200,17 +259,21 @@ public abstract class FilePersistenceBase
   }
 
   public OutputStream openOutputStream(int deltaNumber, boolean full) throws IOException {
-    File deltaFile = getDeltaFile(deltaNumber);
+    File tempFile = getTempFile(deltaNumber);
     LoggingService ls = pps.getLoggingService();
+    this.deltaNumber = deltaNumber;
     if (ls.isDebugEnabled()) {
-      ls.debug("Persist to " + deltaFile);
+      ls.debug("Persist to " + tempFile);
     }
-    return openFileOutputStream(deltaFile);
+    return openFileOutputStream(tempFile);
   }
 
   public void finishOutputStream(SequenceNumbers retainNumbers,
                                 boolean full)
   {
+    File tempFile = getTempFile(deltaNumber);
+    File deltaFile = getDeltaFile(deltaNumber);
+    tempFile.renameTo(deltaFile);
     writeSequenceNumbers(retainNumbers, "");
     if (full) writeSequenceNumbers(retainNumbers,
                                    BasePersistence.formatDeltaNumber(retainNumbers.first));
@@ -218,7 +281,7 @@ public abstract class FilePersistenceBase
 
   public void abortOutputStream(SequenceNumbers retainNumbers)
   {
-    getDeltaFile(retainNumbers.current).delete();
+    getTempFile(retainNumbers.current).delete();
   }
 
   public InputStream openInputStream(int deltaNumber) throws IOException {
@@ -233,7 +296,7 @@ public abstract class FilePersistenceBase
   public void finishInputStream(int deltaNumber) {
   }
 
-  public void deleteOldPersistence() {
+  private void deleteOldPersistence() {
     File[] files = persistenceDirectory.listFiles();
     for (int i = 0; i < files.length; i++) {
       files[i].delete();
@@ -266,6 +329,11 @@ public abstract class FilePersistenceBase
     } finally {
       ois.close();
     }
+  }
+
+  private File getTempFile(int sequence) {
+    return new File(persistenceDirectory,
+                    instanceId + "_" + BasePersistence.formatDeltaNumber(sequence));
   }
 
   private File getDeltaFile(int sequence) {
