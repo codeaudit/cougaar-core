@@ -769,6 +769,13 @@ public class ClusterImpl
     getClusterManagement().logEvent(anEvent);
   }
 
+  /**
+   * Temporary support for <code>MessageTransportServiceProvider</code>.  
+   */
+  MessageTransportServer getMessageTransportServer() {
+    return messenger;
+  }
+
   public void sendMessage(ClusterMessage message)
   {
     showProgress("+");

@@ -14,6 +14,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.*;
+import org.cougaar.core.society.MessageTransportServer;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import java.beans.*;
 import java.lang.reflect.*;
@@ -47,7 +48,7 @@ public class PluginManager
     childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
     childContext.addService(AlarmService.class, new AlarmServiceProvider(agent));
     childContext.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-
+    childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
     // hack service for demo control
     childContext.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
   }
