@@ -66,6 +66,7 @@ public abstract class BlackboardClientComponent
 {
   private Object parameter = null;
 
+  protected ClusterIdentifier agentId;
   private SchedulerService scheduler;
   protected BlackboardService blackboard;
   protected AlarmService alarmService;
@@ -150,6 +151,15 @@ public abstract class BlackboardClientComponent
   }
   public final void setAlarmService(AlarmService s) {
     alarmService = s;
+  }
+  public final void setAgentIdentificationService(AgentIdentificationService ais) {
+    MessageAddress an;
+    if ((ais != null) &&
+        ((an = ais.getMessageAddress()) instanceof ClusterIdentifier)) {
+      agentId = (ClusterIdentifier) an;
+    } else {
+      // FIXME: Log something?
+    }
   }
 
   /**
@@ -321,19 +331,14 @@ public abstract class BlackboardClientComponent
     return (wasAwakened() || blackboard.haveCollectionsChanged());
   }
 
+  /**
+   * Get the local agent's address.
+   *
+   * Also consider adding a "getNodeIdentifier()" method backed
+   * by the NodeIdentificationService.
+   */
   protected ClusterIdentifier getAgentIdentifier() {
-    MessageAddress an = null;
-    AgentIdentificationService ais = (AgentIdentificationService) serviceBroker.getService(this,AgentIdentificationService.class,null);
-    if (ais != null) {
-      an = ais.getMessageAddress();
-      if (an instanceof ClusterIdentifier)
-	return (ClusterIdentifier)an;
-      else {
-	// FIXME: Log something? Do something with it?
-	return null;
-      }
-    } else
-      return null;
+    return agentId;
   }
 
   /** @deprecated Use getAgentIdentifier() */

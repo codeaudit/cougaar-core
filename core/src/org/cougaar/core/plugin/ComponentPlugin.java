@@ -345,6 +345,7 @@ public abstract class ComponentPlugin
   //
 
   protected ConfigFinder getConfigFinder() {
+    // Fix to use service-based API instead of custom BindingSite
     return ((PluginBindingSite) getBindingSite()).getConfigFinder();
   }
   
@@ -353,14 +354,14 @@ public abstract class ComponentPlugin
    * instead.  This method will be removed.
    */
   protected ClusterIdentifier getClusterIdentifier() { 
-    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
+    return getAgentIdentifier();
   }
   
   /** 
-   * @deprecated Use the self Organization or plugin parameters 
-   * instead.  This method will be removed.
+   * Get the local agent's address.
    */
   protected ClusterIdentifier getAgentIdentifier() { 
+    // Fix to use service-based API instead of custom BindingSite
     return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }
   
