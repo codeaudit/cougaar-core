@@ -668,8 +668,9 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public Enumeration getValidRanges(AspectValue lowerbound, AspectValue upperbound){
       double v = point.getValue();
       int t = point.getAspectType();
-      AspectValue v0 = new AspectValue(t, v-(1/slope));
-      AspectValue v1 = new AspectValue(t, v+(1/slope));
+      double delta = (slope==0.0)?(0.0):(1/slope);
+      AspectValue v0 = new AspectValue(t, v-delta);
+      AspectValue v1 = new AspectValue(t, v+delta);
       AspectScorePoint p0 = new AspectScorePoint(v0, WORST);
       AspectScorePoint p1 = new AspectScorePoint(v1, WORST);
       return new SingleElementEnumeration(new AspectScoreRange(p0,p1));
@@ -939,8 +940,9 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 
     public Enumeration getValidRanges(AspectValue lowerbound, AspectValue upperbound){
       int t = point1.getAspectType();
-      AspectValue v0 = new AspectValue(t, point1.getValue()-(1/slope));
-      AspectValue v1 = new AspectValue(t, point1.getValue()+(1/slope));
+      double delta = (slope==0.0)?(0.0):(1/slope);
+      AspectValue v0 = new AspectValue(t, point1.getValue()-delta);
+      AspectValue v1 = new AspectValue(t, point1.getValue()+delta);
       AspectScorePoint p0 = new AspectScorePoint(v0, WORST);
       AspectScorePoint p1 = new AspectScorePoint(v1, WORST);
       return new SingleElementEnumeration(new AspectScoreRange(p0,p1));
@@ -1078,8 +1080,9 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 	// use ub
 	p1 = new AspectScorePoint(upperbound, ubScore);
       else {
+        double delta = (slope==0.0)?(0.0):(1/slope);
 	AspectValue v1 = new AspectValue(point.getAspectType(), 
-					 point.getValue()+(1/slope));
+					 point.getValue()+delta);
 	p1 = new AspectScorePoint(v1, WORST);
       }
       return new SingleElementEnumeration(new AspectScoreRange(p0,p1));
@@ -1161,8 +1164,9 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 	// lowerbound in good range
 	p0 = new AspectScorePoint(lowerbound, lbScore);
       } else {
+        double delta = (slope==0.0)?(0.0):(1/slope);
 	AspectValue v0 = new AspectValue(point.getAspectType(), 
-					 point.getValue()-(1/slope));
+					 point.getValue()-delta);
 	p0 = new AspectScorePoint(v0, WORST);
       }
 
