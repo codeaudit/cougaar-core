@@ -21,7 +21,6 @@
 package org.cougaar.core.persist;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -82,6 +81,7 @@ import org.cougaar.planning.ldm.plan.Aggregation;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.StringUtility;
 
 /**
@@ -1233,7 +1233,8 @@ public class BasePersistence
               stream.close();
             } // End of stream protection try-catch
             if (returnBytes) {
-              ByteArrayOutputStream returnByteStream = new ByteArrayOutputStream();
+              int estimatedSize = (int)(1.2 * bytesSerialized);
+              LinkedByteOutputStream returnByteStream = new LinkedByteOutputStream(estimatedSize);
               ObjectOutputStream returnOutput = new ObjectOutputStream(returnByteStream);
               writeFinalOutput(returnOutput, meta, referenceArrays, stream);
               returnOutput.close();

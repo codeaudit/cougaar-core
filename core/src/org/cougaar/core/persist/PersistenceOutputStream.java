@@ -22,7 +22,6 @@ package org.cougaar.core.persist;
 
 import java.io.ObjectOutputStream;
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.ArrayList;
@@ -32,8 +31,12 @@ import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.LinkedByteOutputStream;
 
 public class PersistenceOutputStream extends ObjectOutputStream {
+
+  private static final int DEFAULT_INITIAL_SIZE = 10000;
+
   private LoggingService logger;
   private boolean debug;
 
@@ -48,21 +51,21 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   /**
    * The stream to which the objects are written
    */
-  private ByteArrayOutputStream byteStream;
+  private LinkedByteOutputStream byteStream;
 
   /**
    * Public constructor
    */
   public PersistenceOutputStream(LoggingService logger) throws IOException {
-    this(new ByteArrayOutputStream(10000), logger);
+    this(new LinkedByteOutputStream(DEFAULT_INITIAL_SIZE), logger);
   }
 
   /**
-   * Private constructor needed to capture the ByteArrayOutputStream
+   * Private constructor needed to capture the byte buffer
    * we are using.
-   * @param stream the ByteArrayOutputStream into which we store everything.
+   * @param stream the byte buffer into which we store everything.
    */
-  private PersistenceOutputStream(ByteArrayOutputStream stream, LoggingService logger) throws IOException {
+  private PersistenceOutputStream(LinkedByteOutputStream stream, LoggingService logger) throws IOException {
     super(stream);
     byteStream = stream;
     enableReplaceObject(true);

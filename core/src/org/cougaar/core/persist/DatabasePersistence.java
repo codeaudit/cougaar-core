@@ -297,6 +297,8 @@ public class DatabasePersistence
     }
   }
 
+  // consider replacing superclass with 
+  //   org.cougaar.util.LinkedByteOutputStream
   private class MyOutputStream extends ByteArrayOutputStream {
     private int deltaNumber;
     private boolean full;
