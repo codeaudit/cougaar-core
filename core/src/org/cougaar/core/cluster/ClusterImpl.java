@@ -109,6 +109,7 @@ import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactoryImpl;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportWatcher;
 import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.MessageStatisticsService;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageStatistics;
 
@@ -157,6 +158,8 @@ public class ClusterImpl extends Agent
   private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
   private MessageTransportService messenger = null;
+    private MessageStatisticsService statisticsService;
+
   private static boolean isHeartbeatOn = true;
   private static boolean isMetricsHeartbeatOn = false;
   private static int metricsInterval = 2500; // how often send to metrics display
@@ -538,11 +541,18 @@ public class ClusterImpl extends Agent
   //
 
   public MessageStatistics.Statistics getMessageStatistics(boolean reset) {
-    if (messenger instanceof MessageStatistics) {
-      return ((MessageStatistics) messenger).getMessageStatistics(reset);
-    } else {
-      return null;
-    }
+      if (statisticsService == null) {
+	  statisticsService = 
+	      (MessageStatisticsService)
+	      getBindingSite().getServiceBroker().getService(this,
+							     MessageStatisticsService.class,
+							     null);
+      }
+      if (statisticsService != null) {
+	  return statisticsService.getMessageStatistics(reset);
+      } else {
+	  return null;
+      }
   }
 
   // 

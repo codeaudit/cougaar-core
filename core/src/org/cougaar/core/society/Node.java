@@ -13,6 +13,7 @@ package org.cougaar.core.society;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportException;
 import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.MessageStatisticsService;
 import org.cougaar.core.mts.MessageTransportServiceProvider;
 
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
@@ -565,6 +566,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 	new MessageTransportServiceProvider(name);
     add(mtsp);
     getServiceBroker().addService(MessageTransportService.class, mtsp);
+    getServiceBroker().addService(MessageStatisticsService.class, mtsp);
     theMessenger = (MessageTransportService)
       getServiceBroker().getService(this, MessageTransportService.class, null);
     System.err.println("Started "+theMessenger);
