@@ -33,8 +33,8 @@ final class TimeSliceScheduler extends Scheduler
     private static final long DEFAULT_SLICE_DURATION = 1000;
     private int outstandingChildSliceCount;
 
-    TimeSliceScheduler(ThreadListenerProxy listenerProxy) {
-	super(listenerProxy);
+    TimeSliceScheduler(ThreadListenerProxy listenerProxy, String name) {
+	super(listenerProxy, name);
 	outstandingChildSliceCount = 0;
     }
 
@@ -59,7 +59,7 @@ final class TimeSliceScheduler extends Scheduler
     private void runMoreThreads() {
 	// Maybe we can run some pending threads
 	while (!pendingThreads.isEmpty()) {
-	    TimeSlice slice = getSlice();
+	    TimeSlice slice = getSlice(this);
 	    if (slice == null) break;
 	    runNextThread(slice);
 	}
@@ -70,38 +70,53 @@ final class TimeSliceScheduler extends Scheduler
     // Getting and releasing TimeSlices.  For now, only the root
     // ThreadService does any work here.
 
-    private synchronized TimeSlice getSlice() {
-	if (parent != null)  return ((TimeSliceScheduler) parent).getSlice();
+    private synchronized TimeSlice getSlice(TimeSliceScheduler scheduler) {
+	if (parent != null)  
+	    return ((TimeSliceScheduler) parent).getSlice(scheduler);
 
 	// If we get here, we're supplying a slice to a child
 	int use_count = runningThreadCount+outstandingChildSliceCount;
 	if (use_count < maxRunningThreads) {
 	    ++outstandingChildSliceCount;
+
+	    // For now make a new one everytime.  Later cache them.
 	    long start = System.currentTimeMillis();
 	    long end = start + DEFAULT_SLICE_DURATION;
-	    System.out.println("Made a slice, " 
-			       +outstandingChildSliceCount+
-			       " outstanding");
-	    return new TimeSlice(start, end);
+	    if (DebugThreads)
+		System.out.println(name+
+				   " made a slice for " +scheduler+
+				   "; " +outstandingChildSliceCount+
+				   " now outstanding");
+	    TimeSlice slice = new TimeSlice(start, end);
+	    slice.in_use = true;
+
+	    return slice;
 	}
 
-	System.out.println("No slices available, " 
-			   +outstandingChildSliceCount+
-			   " outstanding");
+	if (DebugThreads)
+	    System.out.println("No slices available from " +name+
+			       " for " +scheduler+
+			       "; " +outstandingChildSliceCount+
+			       " outstanding");
 	return null;
     }
 
-    private synchronized void releaseSlice(TimeSlice slice) {
+    private synchronized void releaseSlice(TimeSlice slice, 
+					   TimeSliceScheduler scheduler)
+    {
 	if (parent != null) {
-	    ((TimeSliceScheduler) parent).releaseSlice(slice);
+	    ((TimeSliceScheduler) parent).releaseSlice(slice, scheduler);
 	    return;
 	}
 
 	// A child has released a slice
 	--outstandingChildSliceCount;
-	System.out.println("Released a slice, " 
-			   +outstandingChildSliceCount+
-			   " outstanding");
+	slice.in_use = false;
+	if (DebugThreads)
+	    System.out.println(name+
+			       " released a slice from " +scheduler+
+			       "; " +outstandingChildSliceCount+
+			       " now outstanding");
 	wakeup();
     }
 
@@ -113,16 +128,19 @@ final class TimeSliceScheduler extends Scheduler
 	    (ControllableThread)pendingThreads.next();
 	if (thread != null) {
 	    thread.slice(slice);
+	    if (DebugThreads)
+		System.out.println("Starting " +thread+ " with slice " +slice);
 	    thread.start();
 	} else {
-	    System.out.println("No threads on the queue!");
+	    System.err.println("No threads on the queue!");
 	}
     }
 
 
     private void releaseSliceToParent(ControllableThread thread) {
-	thread.slice().in_use = false;
-	((TimeSliceScheduler) parent).releaseSlice(thread.slice());
+	TimeSlice slice = thread.slice();
+	thread.slice(null);
+	((TimeSliceScheduler) parent).releaseSlice(slice, this);
     }
 
 
@@ -134,7 +152,7 @@ final class TimeSliceScheduler extends Scheduler
 	    releaseSliceToParent(thread);
 	    // Could re-use slice
 	    if (!pendingThreads.isEmpty()) {
-		TimeSlice slice  = getSlice();
+		TimeSlice slice  = getSlice(this);
 		if (slice != null) runNextThread(slice);
 	    }
 	}
@@ -149,6 +167,8 @@ final class TimeSliceScheduler extends Scheduler
 	synchronized (this) {
 	    boolean expired = thread.slice().isExpired();
 	    if (expired) {
+		if (DebugThreads) 
+		    System.out.println(thread+ "'s slice expired");
 		// If our slice expired, just give up control
 		// without looking for another thread to yield to.
 		threadSuspended(thread);
@@ -171,6 +191,8 @@ final class TimeSliceScheduler extends Scheduler
 	    }
 
 	    threadSuspended(thread);
+	    if (DebugThreads) 
+		System.out.println(thread+" giving slice to " +candidate);
 	    candidate.slice(thread.slice());
 		 
 	}
@@ -184,9 +206,10 @@ final class TimeSliceScheduler extends Scheduler
     // Called when a thread is about to suspend.
     synchronized void suspendThread(ControllableThread thread)
     {
+	super.suspendThread(thread);
 	releaseSliceToParent(thread);
 	if (!pendingThreads.isEmpty()) {
-	    TimeSlice slice = getSlice();
+	    TimeSlice slice = getSlice(this);
 	    if (slice != null) runNextThread(slice);
 	}
     }
@@ -196,10 +219,12 @@ final class TimeSliceScheduler extends Scheduler
     // otherwise.
     synchronized boolean maybeResumeThread(ControllableThread thread)
     {
-	TimeSlice slice = getSlice();
+	TimeSlice slice = getSlice(this);
 	if (slice != null) {
 	    thread.slice(slice);
-	    threadResumed(thread);
+	    if (DebugThreads)
+		System.out.println("Resuming " +thread+ " with slice " +slice);
+	    resumeThread(thread);
 	    return true;
 	} else {
 	    // couldn'resume - place the thread back on the queue
@@ -211,10 +236,16 @@ final class TimeSliceScheduler extends Scheduler
  
 
     synchronized void startOrQueue(ControllableThread thread) {
-	TimeSlice slice = getSlice();
-	if (slice != null) {
+	// If some external caller has tried to start the thread it
+	// should have no slice yet.  If the thread is been started or
+	// resumed from the scheduler itself, it will have a slice
+	// already.
+	TimeSlice slice = thread.slice();
+	if (slice == null) {
+	    slice = getSlice(this);
 	    thread.slice(slice);
-	    threadStarted(thread);
+	}
+	if (slice != null) {
 	    thread.thread_start();
 	} else {
 	    addPendingThread(thread);

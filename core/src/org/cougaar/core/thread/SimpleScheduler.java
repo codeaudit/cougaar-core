@@ -24,8 +24,8 @@ package org.cougaar.core.thread;
 
 final class SimpleScheduler extends Scheduler
 {
-    SimpleScheduler(ThreadListenerProxy listenerProxy) {
-	super(listenerProxy);
+    SimpleScheduler(ThreadListenerProxy listenerProxy, String name) {
+	super(listenerProxy, name);
     }
 
 
@@ -74,10 +74,10 @@ final class SimpleScheduler extends Scheduler
 		return false;
 	    }
 
+	    // We found a thread to yield to. 
+	    threadSuspended(thread);
 	}
 
-	// We found a thread to yield to. 
-	threadSuspended(thread);
 	candidate.start();
 	return true;
     }
@@ -86,16 +86,17 @@ final class SimpleScheduler extends Scheduler
 
     // Called when a thread is about to suspend.
     synchronized void suspendThread(ControllableThread thread) {
-	threadSuspended(thread);
+	super.suspendThread(thread);
 	if (!pendingThreads.isEmpty()) runNextThread();
     }
+
 
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
     synchronized boolean maybeResumeThread(ControllableThread thread) {
 	if (canStartThread()) {
-	    threadResumed(thread);
+	    resumeThread(thread);
 	    return true;
 	} else {
 	    // couldn'resume - place the thread back on the queue
@@ -108,7 +109,6 @@ final class SimpleScheduler extends Scheduler
 
     synchronized void startOrQueue(ControllableThread thread) {
 	if (canStartThread()) {
-	    threadStarted(thread);
 	    thread.thread_start();
 	} else {
 	    addPendingThread(thread);

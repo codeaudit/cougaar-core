@@ -124,7 +124,7 @@ final class ControllableThread extends ReusableThread
 		    } catch (InterruptedException ex) {
 		    }
 		}
-		pool.scheduler().threadResumed(this);
+		pool.scheduler().resumeThread(this);
 		suspended = false;
 	    } 
 	}
@@ -138,6 +138,7 @@ final class ControllableThread extends ReusableThread
     }
 
     void thread_start() {
+	pool.scheduler().threadStarting(this);
 	super.start();
     }
 

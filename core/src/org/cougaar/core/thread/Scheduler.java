@@ -43,6 +43,7 @@ abstract class Scheduler implements ThreadControlService
     protected ThreadListenerProxy listenerProxy;
     protected Scheduler parent;
     protected ArrayList children;
+    protected String name;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -64,15 +65,19 @@ abstract class Scheduler implements ThreadControlService
 
 
 
-    Scheduler(ThreadListenerProxy listenerProxy) {
+    Scheduler(ThreadListenerProxy listenerProxy, String  name) {
 	pendingThreads = new DynamicSortedQueue(timeComparator);
 	maxRunningThreads = 
 	    PropertyParser.getInt(MaxRunningCountProp, 
 				  MaxRunningCountDefault);
 	this.listenerProxy = listenerProxy;
 	children = new ArrayList();
+	this.name = "<Scheduler " +name+ ">";
     }
 
+    public String toString() {
+	return name;
+    }
 
     void setParent(Scheduler parent) {
 	this.parent = parent;
@@ -125,35 +130,55 @@ abstract class Scheduler implements ThreadControlService
 
 
 
-    void threadStarted(ControllableThread thread) {
+    // Called when a request has been made to start the thread (from
+    // some other thread).  The count needs to be adjusted here, not
+    // when the thread actually starts running.
+    void threadStarting(ControllableThread thread) {
 	synchronized (this) { ++runningThreadCount; }
 	if (DebugThreads)
-	    System.out.println("Started one, count=" +runningThreadCount);
+	    System.out.println("Started " +thread+
+			       ", count=" +runningThreadCount);
     }
 
+    // Called within the thread itself as the first thing it does.
     void threadClaimed(ControllableThread thread) {
 	listenerProxy.notifyStart(thread);
     }
 
+    // Called within the thread itself as the last thing it does.
     void threadReclaimed(ControllableThread thread) {
 	synchronized (this) { --runningThreadCount; }
 	if (DebugThreads)
-	    System.out.println("Ended one, count=" +runningThreadCount);
+	    System.out.println("Ended " +thread+ 
+			       ", count=" +runningThreadCount);
 	listenerProxy.notifyEnd(thread);
     }
 
     void threadResumed(ControllableThread thread) {
 	synchronized (this) { ++runningThreadCount; }
 	if (DebugThreads)
-	    System.out.println("Resumed one, count=" +runningThreadCount);
+	    System.out.println("Resumed " +thread+
+			       ", count=" +runningThreadCount);
     }
 
     void threadSuspended(ControllableThread thread) {
 	synchronized (this) { --runningThreadCount; }
 	if (DebugThreads)
-	    System.out.println("Suspended one, count=" +runningThreadCount);
+	    System.out.println("Suspended " +thread+
+			       ", count=" +runningThreadCount);
     }
 
+
+    // Called when a thread is about to suspend.
+    synchronized void suspendThread(ControllableThread thread) {
+	threadSuspended(thread);
+    }
+
+
+    // Called when a thread is about to resume
+    synchronized void resumeThread(ControllableThread thread) {
+	threadResumed(thread);
+    }
 
 
 
@@ -167,9 +192,6 @@ abstract class Scheduler implements ThreadControlService
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
     abstract boolean maybeYieldThread(ControllableThread thread);
-
-    // Called when a thread is about to suspend.
-    abstract void suspendThread(ControllableThread thread);
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
