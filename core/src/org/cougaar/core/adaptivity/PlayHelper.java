@@ -206,7 +206,6 @@ public class PlayHelper {
       Map.Entry entry = (Map.Entry) i.next();
       String operatingModeName = (String) entry.getKey();
       OMMapEntry omme = (OMMapEntry) entry.getValue();
-      int pos;
       IAOMPInfo iaompInfo = getIAOMPInfo(operatingModeName);
       if (iaompInfo != null) {
         // A remote operating mode. Create or update a policy to constrain it.
