@@ -21,12 +21,42 @@
 
 package org.cougaar.core.mts;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 
-public class UnresolvableReferenceException  extends java.io.IOException
+public class SerializationUtils
 {
-    public UnresolvableReferenceException(String msg) {
-	super(msg);
+
+    public static byte[] toByteArray(Object data) 
+	throws java.io.IOException
+    {
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ObjectOutputStream oos = null;
+
+	oos = new ObjectOutputStream(baos);
+	oos.writeObject(data);
+	oos.close();
+	return baos.toByteArray();
+    }
+
+
+    public static Object fromByteArray(byte[] data) 
+	throws java.io.IOException, ClassNotFoundException
+    {
+	ByteArrayInputStream bais = new ByteArrayInputStream(data);
+	ObjectInputStream ois = null;
+	Object udata = null;
+
+	ois = new ObjectInputStream(bais);
+	udata = ois.readObject();
+	
+	ois.close();
+	return udata;
     }
 
 }

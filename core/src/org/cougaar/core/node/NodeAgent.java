@@ -275,6 +275,15 @@ extends SimpleAgent
           null,  //lease
           null)); //policy
 
+    add(new ComponentDescription((getIdentifier()+".SocketFactory"),
+                                 Agent.INSERTION_POINT + ".SocketFactory",
+                                 "org.cougaar.mts.std.SocketFactorySPC", // goes with MTS, sigh.
+                                 null,  //codebase
+                                 null,  //parameters
+                                 null,  //certificate
+                                 null,  //lease
+                                 null)); //policy
+                                 
     if (isWPEnabled) {
       add(new ComponentDescription(
             (getIdentifier()+"WPClient"),
@@ -351,7 +360,7 @@ extends SimpleAgent
     add(new ComponentDescription(
           (getIdentifier()+"MessageTransport"),
           Agent.INSERTION_POINT + ".MessageTransport",
-          "org.cougaar.core.mts.MessageTransportServiceProvider",
+          "org.cougaar.mts.std.MessageTransportServiceProvider",
           null,  //codebase
           null,  //parameters
           null,  //certificate

@@ -31,11 +31,12 @@ import java.rmi.server.ExportException;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.RMISocketFactory;
-import org.cougaar.core.mts.SocketFactory;
+import org.cougaar.core.service.SocketFactoryService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.resolver.BootstrapLookupBase;
+import java.util.HashMap;
 
 /**
  * RMI-specific implementation of a bootstrap lookup.
@@ -68,8 +69,8 @@ import org.cougaar.core.wp.resolver.BootstrapLookupBase;
  * become the alias entry based upon which node is first to
  * launch and register in the rmi registry.
  * <p>
- * For now this happens to use the same SocketFactory implementation
- * as the MTS.
+ * We use the SocketFactoryService (generally supplied by the MTS) to
+ * find SocketFactories.
  *
  * @property org.cougaar.core.wp.resolver.rmi.resolveHosts
  *   Boolean-valued property to do an InetAddress resolution of the
@@ -144,13 +145,25 @@ extends BootstrapLookupBase
   private static final Object socFacLock = new Object();
   private static RMISocketFactory socFac;
 
+  private static SocketFactoryService socketFactoryService = null; // also locked by socFacLock to complete a disgusting hack.
+  public void setSocketFactoryService(SocketFactoryService socketFactoryService) {
+    synchronized (socFacLock) {
+      this.socketFactoryService = socketFactoryService;
+    }
+  }
+
   private static RMISocketFactory getRMISocketFactory() {
     synchronized (socFacLock) {
       if (socFac == null) {
         boolean useSSL =
           Boolean.getBoolean(USE_SSL_PROP) ||
           Boolean.getBoolean(OLD_USE_SSL_PROP);
-        socFac = new SocketFactory(useSSL, false);
+
+        HashMap p = new HashMap(11);
+        p.put("ssl", Boolean.valueOf(useSSL));
+        p.put("aspects", Boolean.FALSE);
+        
+        socFac = (RMISocketFactory) socketFactoryService.getSocketFactory(RMISocketFactory.class, p);
       }
       return socFac;
     }
