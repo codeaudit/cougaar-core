@@ -54,6 +54,7 @@ public class MetricsComponentPlugIn
     private int assetCount = 0;
     private int planElementCount = 0;
     private int taskCount = 0;
+    private int totalBlackboardCount = 0;
     private MessageStatisticsService messageStatsService = null;
     private MessageWatcherService  messageWatchService = null;
     private NodeMetricsService  nodeMetricsService = null;
@@ -129,9 +130,11 @@ public class MetricsComponentPlugIn
         assetCount = bbMetricsService.getAssetCount();
         planElementCount = bbMetricsService.getPlanElementCount();
         taskCount = bbMetricsService.getTaskCount();
+        totalBlackboardCount = bbMetricsService.getBlackboardObjectCount();
         System.out.println("Asset Count: " + assetCount);
         System.out.println("Plan Element Count: " + planElementCount);
         System.out.println("Task Count: " + taskCount);
+        System.out.println("Total Blackboard Object Count: " + totalBlackboardCount);
 
         nodeMetricsService = (NodeMetricsService)
             getServiceBroker().getService(this, NodeMetricsService.class, 
