@@ -26,19 +26,18 @@ import java.util.*;
 
 /**
  * COUGAAR Parameter String utilities.
- * Parameters may be specifed in the form "NAME" or "NAME:DEFAULT"
- * The NAME will be looked up in a passed-in parameter table (if supplied),
- * then the parameter map (e.g. from $HOME/.cougaarrc), 
- * then system properties and then the default value (if supplied).
+ *
+ * @see #findParameter(String,Map) for parameter lookup details
+ *
  * @property user.home Used to find .cougaarrc.
- **/
-
+ */
 public class Parameters {
 
   private static HashMap parameterMap = new HashMap(89);
 
   static {
-    // initialize parameter map from various places
+    // initialize parameter map from 
+    // "$HOME/.cougaarrc" and "./cougaar.rc"
     
     String home = System.getProperty("user.home");
     boolean found = false;
@@ -99,13 +98,14 @@ public class Parameters {
     br.close();
   }
 
-  /** Replace occurances of ${PARAM} in the argument with the result
+  /**
+   * Replace occurances of ${PARAM} in the argument with the result
    * of calling findParameter("PARAM");
    * Note: this is ugly, slow, inflexible and wastes lots of memory.
    * This code handles recursive expansions, but not nested parameter references.
-   * Example: "${FOO}" -> "This is a ${BAR}" -> "This is a test" 
+   * Example: "${FOO}" -&gt; "This is a ${BAR}" -&gt; "This is a test" 
    * but not "${FOO:${BAR}}"
-   **/
+   */
   public static String replaceParameters(String arg, Map map) {
     if (arg == null) return null;
     if (arg.indexOf(OPEN) == -1) return arg; // bail out quickly
@@ -129,6 +129,9 @@ public class Parameters {
     return buf.toString();
   }
 
+  /**
+   * @see #replaceParameters(String,Map) where the "map" is null
+   */
   public static String replaceParameters(String arg) {
     return replaceParameters(arg, null);
   }
@@ -148,16 +151,25 @@ public class Parameters {
     return -1;
   }
 
-  /** Look in various places for the value of a parameter.
-   * param is either of the form "PARAM" or "PARAM:defval"
-   * If no parameter is found and no defval is supplied, will return null.
-   * The places looked at to find values are (in order):
-   *  the extra argument map (if supplied)
-   *  the static parameter map (supplied by ConfigFinder/.cougaarrc);
-   *  the System properties
-   *  any default value.
-   **/
+  /**
+   * Look in various places for the value of a parameter.
+   * <p>
+   * The parameter may be specifed in the form "NAME" or 
+   * "NAME:DEFAULT", where "DEFAULT" is the default value.
+   * <p>
+   * The NAME will be looked up in this order:
+   * <ol>
+   *   <li>the passed-in parameter table (if supplied)</li>
+   *   <li>the System properties</li>
+   *   <li>the "$HOME/.cougaarrc" (if that file exists)</li>
+   *   <li>the "./cougaar.rc" (if that file exists)</li>
+   *   <li>the DEFAULT value (if "NAME:DEFAULT" is used)</li>
+   *   <li>lastly, if the NAME is not found in any of the above
+   *       cases, <tt>null</tt> will be returned.</li>
+   * </ol>
+   */
   public static String findParameter(String param, Map map) {
+    // parse "name:default"
     String defval = null;
     int di = param.indexOf(":");
     if (di>-1) {
@@ -165,14 +177,9 @@ public class Parameters {
       param = param.substring(0, di);
     }
     
-    // check our argument map
+    // check the given map argument
     if (map != null) {
       Object o = map.get(param);
-      if (o != null) return o.toString();
-    }
-
-    if (parameterMap != null) {
-      Object o = parameterMap.get(param);
       if (o != null) return o.toString();
     }
 
@@ -180,12 +187,21 @@ public class Parameters {
     String v = System.getProperty(param);
     if (v != null && v.length()>0) return v;
 
-    // use defval if we've got it
+    // check our parameter map
+    if (parameterMap != null) {
+      Object o = parameterMap.get(param);
+      if (o != null) return o.toString();
+    }
+
+    // use the default value if specified
     if (defval != null) return defval;
 
     return null;
   }
 
+  /**
+   * @see #findParameter(String,Map) where the "map" is null
+   */
   public static String findParameter(String param) {
     return findParameter(param, null);
   }
