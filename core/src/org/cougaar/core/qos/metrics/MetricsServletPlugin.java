@@ -42,7 +42,6 @@ public class MetricsServletPlugin extends ComponentPlugin
 	new AgentLoadServlet(sb);
 	new RemoteAgentServlet(sb);
 	new NodeResourcesServlet(sb);
-	new NodeTrafficServlet(sb);
 	new MetricQueryServlet(sb);
     }
 
