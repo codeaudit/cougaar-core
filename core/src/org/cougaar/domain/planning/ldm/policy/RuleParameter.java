@@ -38,7 +38,8 @@ public interface RuleParameter extends Cloneable {
   public final static int CLASS_PARAMETER = 6;
   public final static int KEY_PARAMETER = 7;
   public final static int RANGE_PARAMETER = 8;
- 
+  public final static int LONG_PARAMETER = 9;
+  public final static int PREDICATE_PARAMETER = 10;
 
   /**
    * Type of given parameter
