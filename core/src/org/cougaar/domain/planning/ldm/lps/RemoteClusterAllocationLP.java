@@ -99,7 +99,6 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
    * case they have been lost or are out of date.
    **/
   public void restart(final ClusterIdentifier cid) {
-    System.out.println("Resending tasks to " + cid);
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof Allocation) {
@@ -117,11 +116,9 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AllocationforCollections alloc = (AllocationforCollections) enum.nextElement();
-      System.out.println("Resending " + alloc);
       Task remoteTask = alloc.getAllocationTask();
       if (remoteTask != null) logplan.sendDirective(remoteTask);
     }
-    System.out.println("Resending finished");
   }
 
   private Task prepareNewTask(ClusterServesLogicProvider cluster, Task task, ClusterIdentifier dest) {

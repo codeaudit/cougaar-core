@@ -118,7 +118,6 @@ public class AssetTransferLP
    * longer valid.
    **/
   public void restart(final ClusterIdentifier cid) {
-    System.out.println("Resending assets to " + cid);
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof AssetTransfer) {
@@ -131,7 +130,6 @@ public class AssetTransferLP
     Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AssetTransfer at = (AssetTransfer) enum.nextElement();
-      System.out.println("Resending " + at);
       logplan.sendDirective(createAssetAssignment(at, AssetAssignment.REPEAT, true));
     }
     pred = new UnaryPredicate() {
@@ -185,7 +183,6 @@ public class AssetTransferLP
                                       verifySchedule);
           nav.setSource(cluster.getClusterIdentifier());
           nav.setDestination(cid);
-          System.out.println("Verifying " + asset + " with " + nav);
           logplan.sendDirective(nav);
         }
       } else {
@@ -195,7 +192,6 @@ public class AssetTransferLP
       }
         
     }
-    System.out.println("Verifying finished");
   }
   
   private final static boolean related(Asset a) {

@@ -81,7 +81,6 @@ public class ReceiveAssetVerificationLP
       // One of ourselves
       HasRelationships localAsset = 
         (HasRelationships) logplan.findAsset(av.getAsset());
-      System.out.println(cluster + " localAsset: " + localAsset);
       Schedule rescindSchedule = null;
 
       if (localAsset == null) {
@@ -134,7 +133,7 @@ public class ReceiveAssetVerificationLP
             itemIDB.equals(assigneeID)) &&
           !(itemIDA.equals(assigneeID) &&
             itemIDB.equals(assetID))) {
-        System.out.println("ReceiveAssetVerificationLP: schedule element - " 
+        System.err.println("ReceiveAssetVerificationLP: schedule element - " 
                            + verify + 
                            " does not match asset - " +
                            av.getAsset() + " - and assignee - " + 

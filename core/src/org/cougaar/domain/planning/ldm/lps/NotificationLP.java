@@ -86,7 +86,6 @@ public class NotificationLP
   }
 
   public void restart(final ClusterIdentifier cid) {
-    System.out.println("Verifying received tasks");
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof PlanElement) {

@@ -389,7 +389,6 @@ public class Blackboard extends Subscriber
   }
 
   public void restart(ClusterIdentifier cid) {
-    System.out.println("Blackboard restart " + cid);
     for (int i = 0, n = restartLPs.size(); i < n; i++) {
       RestartLogicProvider p = (RestartLogicProvider) restartLPs.get(i);
       try {
