@@ -24,6 +24,7 @@ package org.cougaar.core.thread;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.servlet.ServletFrameset;
 
 import java.io.PrintWriter;
 import java.util.Comparator;
@@ -158,17 +159,17 @@ class TopServlet extends ServletFrameset
 
     // Implementations of ServletFrameset's abstract methods
 
-    String getPath() 
+    public String getPath() 
     {
 	return "/threads/top";
     }
 
-    String getTitle() 
+    public String getTitle() 
     {
 	return "Threads";
     }
 
-    void printPage(PrintWriter out) 
+    public void printPage(PrintWriter out) 
     {
 	List status = statusService.getStatus();
 	if (status == null) {

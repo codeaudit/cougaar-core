@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.thread;
+package org.cougaar.core.servlet;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
@@ -32,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 
 
-abstract class ServletFrameset extends HttpServlet
+abstract public class ServletFrameset extends HttpServlet
 {
 
     // url paramter
@@ -47,7 +47,7 @@ abstract class ServletFrameset extends HttpServlet
     private MessageAddress nodeAddr;
 
 
-    ServletFrameset(ServiceBroker sb) 
+    public ServletFrameset(ServiceBroker sb) 
     {
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
@@ -55,9 +55,9 @@ abstract class ServletFrameset extends HttpServlet
     }
 
 
-    abstract String getTitle();
-    abstract String getPath();
-    abstract void printPage(PrintWriter out);
+    abstract public String getTitle();
+    abstract public String getPath();
+    abstract public void printPage(PrintWriter out);
 
 
     private void printRefreshForm(HttpServletRequest request,
