@@ -1,3 +1,8 @@
+2001-08-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ClusterImpl.java:
+	Release all services acquired during load() in unload().
+
 2001-08-16  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ClusterImpl.java:
