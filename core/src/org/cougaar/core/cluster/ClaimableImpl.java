@@ -31,17 +31,24 @@ import org.cougaar.util.PropertyParser;
  * Keep track of who is Disposing of me. <p>
  * Extends PublishableAdapter so that subclasses may
  * implicitly collect changes.
- * @property org.cougaar.core.cluster.claim.isLoud If set to true, will do additional 
- * checking for Claim conflicts.
+ * @property org.cougaar.core.cluster.Claimable.debug If set to true, will
+ * keep additional information for debugging claim conflicts, that is, multiple plugins
+ * attempting to operate directly on the same blackboard objects.  This information
+ * adds significant additional memory load.
  **/
 
 public class ClaimableImpl 
   extends PublishableAdapter    // sigh.
   implements Claimable 
 {
+  private static boolean isDebugging = false;
+  static {
+    isDebugging = PropertyParser.getBoolean("org.cougaar.core.cluster.Claimable.debug", isDebugging);
+  }
+
   private transient Object claimer = null;
   
-  private transient Throwable claimerStack = null; // @debug
+  private transient Throwable claimerStack = null;
 
   private static final Object postRehydrationClaimer = new Object();
 
@@ -98,26 +105,21 @@ public class ClaimableImpl
     // Always carry out the request even if complaints were issued
     claimer = newClaimer;
     // Remember how we got here for debugging.
-    claimerStack = new Throwable();
+    if (isDebugging) {
+      claimerStack = new Throwable();
+    }
   }
     
 
-  // warning quieting
-  /** true iff we should complain with stack traces every time **/
-  private static boolean isLoud = false;
   /** true when we've complained once and told the user how to enable loud mode. 
    * Only used when in non-loud mode.
    **/
   private static boolean hasComplained = false;
 
-  static {
-    isLoud = PropertyParser.getBoolean("org.cougaar.core.cluster.claim.isLoud", isLoud);
-  }
-
   private void complain(String complaint) {
     synchronized (System.err) { 
       System.err.println(complaint);
-      if (isLoud) {
+      if (isDebugging) {
         System.err.println("Current stack:"); 
         Thread.dumpStack();
         System.err.println("Claimer stack:");
@@ -127,7 +129,7 @@ public class ClaimableImpl
           System.err.println("(Never been claimed)");
       } else {
         if (! hasComplained) {
-          System.err.println("(Set system property org.cougaar.core.cluster.claim.isLoud=true for details)");
+          System.err.println("(Set system property org.cougaar.core.cluster.Claimable.debug=true for details)");
           hasComplained=true;
         }
       }
