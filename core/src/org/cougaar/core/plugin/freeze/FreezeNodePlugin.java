@@ -92,7 +92,7 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
   /**
    * Get the names of our target agents.
    * @return the names of agents in this node
-   **/
+   */
   protected Set getTargetNames() {
     // get local agent addresses
     Set addrs;
@@ -118,7 +118,7 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
 
   /**
    * Our children have become frozen, so we tell our parent(s) we are frozen, too
-   **/
+   */
   protected void setUnfrozenAgents(Set unfrozenAgents) {
     if (logger.isDebugEnabled()) logger.debug("unfrozen " + unfrozenAgents);
     for (Iterator i = relaySubscription.iterator(); i.hasNext(); ) {

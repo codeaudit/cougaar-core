@@ -44,7 +44,7 @@ import org.cougaar.util.ConfigFinder;
 public class PluginManager 
 extends ContainerSupport
 {
-  /** The insertion point for a PluginManager, defined relative to its parent, Agent. **/
+  /** The insertion point for a PluginManager, defined relative to its parent, Agent. */
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".PluginManager";
 
   private LoggingService logger;

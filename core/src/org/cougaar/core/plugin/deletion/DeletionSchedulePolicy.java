@@ -37,7 +37,7 @@ import java.util.TreeSet;
  * elements. The policy may be modified to add or remove ad hoc
  * times as well as altering the periodic schedule. Don't forget
  * to publishChange the policy after making modifications.
- **/
+ */
 public class DeletionSchedulePolicy implements Serializable {
     private SortedSet deletionTimes = new TreeSet();
     private long period;

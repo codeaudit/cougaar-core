@@ -119,17 +119,19 @@ public class SimpleDeletionPolicy
   }
 
   // UniqueObject interface
-  /** @return the UID of a UniqueObject.  If the object was created
+  /**
+   * @return the UID of a UniqueObject.  If the object was created
    * correctly (e.g. via a Factory), will be non-null.
-   **/
+   */
   public UID getUID() {
     return myUID;
   }
 
-  /** set the UID of a UniqueObject.  This should only be done by
+  /**
+   * Set the UID of a UniqueObject.  This should only be done by
    * an LDM factory.  Will throw a RuntimeException if
    * the UID was already set.
-   **/
+   */
   public void setUID(UID uid) {
     if (myUID != null) {
       RuntimeException rt = new RuntimeException("Attempt to call setUID() more than once.");

@@ -98,7 +98,7 @@ import org.cougaar.util.UnaryPredicate;
  * agent by making the first plugin parameter be "allow
  * java.lang.Object". Since every class extends java.lang.Object, this
  * will allow every class to run.
- **/
+ */
 public class FreezeServlet extends FreezePlugin implements ThreadListener {
   private static class BadGuy {
     private Thread thread;

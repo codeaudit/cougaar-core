@@ -91,7 +91,7 @@ import org.cougaar.util.UnaryPredicate;
  * and depends on some external process to tell all agents to freeze.  This older
  * mechanism has not been removed so that people can continue to use a single servlet
  * to freeze the entire society, but the FreezeServlet mechanism is preferred now.
- **/
+ */
 public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
   private static class BadGuy {
     private Thread thread;

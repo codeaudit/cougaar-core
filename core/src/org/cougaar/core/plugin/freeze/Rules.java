@@ -44,7 +44,7 @@ public class Rules {
      * Create a rule from a rule specificaton of the form:
      * [{allow,deny} ]<classname>
      * If allow/deny is missing, allow is assumed.
-     **/
+     */
     public Rule(String ruleSpec) throws ClassNotFoundException {
       int pos = ruleSpec.indexOf(' ');
       String spec = ruleSpec;

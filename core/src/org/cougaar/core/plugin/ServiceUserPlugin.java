@@ -54,7 +54,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
 
   /**
    * Everybody needs a logger, so we provide it here.
-   **/
+   */
   private LoggingService loggingService;
   protected LoggingService logger;
 
@@ -62,7 +62,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * Constructor
    * @param serviceClasses the service classes needed for this plugin
    * to operate.
-   **/
+   */
   protected ServiceUserPlugin(Class[] serviceClasses) {
     this.serviceClasses = serviceClasses;
     this.serviceAcquired = new boolean[serviceClasses.length];
@@ -70,7 +70,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
 
   /**
    * Override to get a logger on load
-   **/
+   */
   public void load() {
     super.load();
     loggingService = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
@@ -79,7 +79,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
 
   /**
    * Override to release a logger on load
-   **/
+   */
   public void unload() {
     if (loggingService != null) {
       getServiceBroker().releaseService(this, LoggingService.class, loggingService);
@@ -98,7 +98,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * method simply returns true. See <code>haveServices()</code> in
    * {@link org.cougaar.core.adaptivity.ConditionServiceProvider#execute ConditionServiceProvider}
    * for a typical usage pattern.
-   **/
+   */
   protected boolean acquireServices() {
     if (!allServicesAcquired) {
       allServicesAcquired = true; // Assume we will get them all
@@ -132,17 +132,17 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
     return allServicesAcquired;
   }
 
-  /** A timer for recurrent events.  All access should be synchronized on timerLock **/
+  /** A timer for recurrent events.  All access should be synchronized on timerLock */
   private Alarm timer = null;
 
-  /** Lock for accessing timer **/
+  /** Lock for accessing timer */
   private final Object timerLock = new Object();
 
   /**
    * Schedule a update wakeup after some interval of time
    * @param delay how long to delay before the timer expires.
    * @deprecated Use resetTimer(long) instead as a safer mechanism without so many race issues.
-   **/
+   */
   protected void startTimer(long delay) {
     synchronized (timerLock) {
       if (timer != null && !timer.hasExpired()) return; // pending event - don't restart
@@ -183,7 +183,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   /**
    * Schedule a update wakeup after some interval of time
    * @param delay how long to delay before the timer expires.
-   **/
+   */
   protected void resetTimer(long delay) {
     synchronized (timerLock) {
       Alarm old = timer;        // keep any old one around
@@ -197,7 +197,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
 
   /**
    * Cancel the timer.
-   **/
+   */
   protected void cancelTimer() {
     synchronized (timerLock) {
       if (timer == null) return;
@@ -207,14 +207,14 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
     }
   }
 
-  /** access the timer itself (if any) **/
+  /** access the timer itself (if any) */
   protected Alarm getTimer() {
     synchronized (timerLock) {
       return timer;
     }
   }
 
-  /** When will (has) the timer expire **/
+  /** When will (has) the timer expire */
   protected long getTimerExpirationTime() {
     synchronized (timerLock) {
       if (timer != null) {
@@ -226,7 +226,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   }
 
   /** Returns true IFF there is an unexpired timer.  
-   **/
+   */
   protected boolean hasUnexpiredTimer() {
     synchronized (timerLock) {
       if (timer != null) {
@@ -241,7 +241,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * Test if the timer has expired.
    * @return false if the timer is not running or has not yet expired
    * else return true.
-   **/
+   */
   protected boolean timerExpired() {
     synchronized (timerLock) {
       return timer != null && timer.hasExpired();

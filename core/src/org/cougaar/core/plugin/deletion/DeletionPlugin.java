@@ -139,7 +139,7 @@ public class DeletionPlugin extends ComponentPlugin {
    * Find deletable tasks that are subtasks of an expansion and
    * remove them from the expansion and remove them from the
    * logplan.
-   **/
+   */
   public void execute() {
     scenarioNow = currentTimeMillis();
     systemNow = System.currentTimeMillis();
@@ -294,7 +294,7 @@ public class DeletionPlugin extends ComponentPlugin {
   
   /**
    * The known unit names
-   **/
+   */
   private static Map intervals = new HashMap(11);
   static {
     intervals.put("seconds", new Long(1000L));
@@ -348,7 +348,7 @@ public class DeletionPlugin extends ComponentPlugin {
    * which the deletionDelay does not match the current deletionDelay,
    * it is removed. If no DefaultDeletionPolicy having the correct
    * deletionDelay is found, a new one created and added.
-   **/
+   */
   private void checkDefaultDeletionPolicy(long deletionDelay) {
     for (Iterator i = deletionPolicies.iterator(); i.hasNext();) {
       DeletionPolicy policy = (DeletionPolicy) i.next();
@@ -377,7 +377,7 @@ public class DeletionPlugin extends ComponentPlugin {
    * Subclasses may wish to set the periodic schedule parameters to
    * match the specified values, but the base implementation only uses
    * the values if a new policy must be created.
-   **/
+   */
   protected void checkDeletionSchedulePolicies(
     long deletionPeriod,
     long deletionPhase) {

@@ -35,6 +35,6 @@ import org.cougaar.core.component.Component;
 public interface PluginBase
   extends Component
 {
-  /** The insertion point for Plugins, defined relative to their parent, PluginManager. **/
+  /** The insertion point for Plugins, defined relative to their parent, PluginManager. */
   public static final String INSERTION_POINT = PluginManager.INSERTION_POINT + ".Plugin";
 }
