@@ -560,9 +560,7 @@ public class NodeAgent
       } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
         // we don't do anything with these. ignore it.
       } else {
-        throw new UnsupportedOperationException(
-            "Unsupported Message: "+
-            ((m != null) ? m.toString() : "null"));
+        super.receiveMessage(m);
       }
     } catch (Exception e) {
       System.err.println("Node received invalid message: "+e.getMessage());
