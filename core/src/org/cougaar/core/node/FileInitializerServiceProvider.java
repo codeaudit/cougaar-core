@@ -54,7 +54,10 @@ public class FileInitializerServiceProvider implements ServiceProvider {
       throws InitializerServiceException
     {
       try {
-        String filename = parentName + ".ini";
+        String filename = parentName;
+	if (! parentName.endsWith(".ini")) {
+	  filename = parentName + ".ini";
+	}
         InputStream in = ConfigFinder.getInstance().open(filename);
         try {
           return INIParser.parse(in, containerInsertionPoint);
