@@ -45,8 +45,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
 
   protected NamingDirContext(NS ns, NSKey nsKey, Hashtable inEnv) {
     super(ns, nsKey, inEnv);
-
-    myClassName = NamingDirContext.class.getName();
+    myClassName = getClass().getName();
   }
 
   protected Context cloneContext() {
@@ -225,7 +224,12 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (attrs == null || attrs.size() == 0) {
       throw new IllegalArgumentException("Cannot modify without an attribute");
     }
-    
+    modifyAttributes(name, createModificationItems(mod_op, attrs));
+  }
+
+  private ModificationItem[] createModificationItems(int mod_op, Attributes attrs)
+    throws NamingException
+  {
     checkAttributes(attrs);
     
     // Turn it into a modification list and pass it on
@@ -234,8 +238,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     for (int i = 0; i < mods.length && attrEnum.hasMoreElements(); i++) {
       mods[i] = new ModificationItem(mod_op, (Attribute)(attrEnum.next()));
     }
-    
-    modifyAttributes(name, mods);
+    return mods;
   }
   
     /**
@@ -704,16 +707,21 @@ public class NamingDirContext extends NamingContext implements DirContext {
    * @see NamingContext#createSubcontext(Name)
    */
   public DirContext createSubcontext(Name name, Attributes attrs)
-    throws NamingException {
-    // First create context
-    DirContext ctx = (DirContext)createSubcontext(name);
-    
-    
-    // Add attributes
-    if (attrs != null && attrs.size() > 0) {
-      ctx.modifyAttributes("", DirContext.ADD_ATTRIBUTE, attrs);
+    throws NamingException
+  {
+    Collection attrCollection = null;
+    if (attrs != null) {
+      ModificationItem[] items = createModificationItems(ADD_ATTRIBUTE, attrs);
+      attrCollection = doMods(attrCollection, items);
     }
-    return ctx;
+    // First create context
+    return (DirContext) createSubcontext(name, attrCollection);
+    
+//     // Add attributes
+//     if (attrs != null && attrs.size() > 0) {
+//       ctx.modifyAttributes("", DirContext.ADD_ATTRIBUTE, attrs);
+//     }
+//     return ctx;
   }
   
   /**
@@ -1158,7 +1166,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     return search(name, filterParser.parse(filter), cons);
   }
 
-  private NamingEnumeration search(Name name, Filter filter, SearchControls cons)
+  protected NamingEnumeration search(Name name, Filter filter, SearchControls cons)
     throws NamingException
   {
     // Vector for storing answers
@@ -1277,7 +1285,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     return true;
   }
   
-  private class FilterMatchingAttributes implements Filter {
+  private static class FilterMatchingAttributes implements Filter {
     private Attributes matchingAttrs;
 
     FilterMatchingAttributes(Attributes matchingAttrs) {

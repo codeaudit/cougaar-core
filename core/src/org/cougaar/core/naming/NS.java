@@ -34,14 +34,15 @@ import javax.naming.*;
  **/
 
 public interface NS extends Remote {
+
   String DirSeparator = "/";
   
-  void clear(NSKey nsKey) throws RemoteException, NameNotFoundException;
+//   void clear(NSKey nsKey) throws RemoteException, NameNotFoundException;
 
   
   NSKey createSubDirectory(NSKey nsKey, 
                            String subDirName,
-                           Collection attribute) 
+                           Collection attributes) 
     throws RemoteException, NamingException, NameAlreadyBoundException;
 
   NSKey createSubDirectory(NSKey nsKey, 
@@ -57,6 +58,9 @@ public interface NS extends Remote {
   String fullName(NSKey nsKey, String name) 
     throws RemoteException, NameNotFoundException, NamingException;
 
+  Object getKey(NSKey nsKey, String name)
+    throws RemoteException, NameNotFoundException, NamingException;
+        
   /** Look up an object in the NameService directory **/
   Object get(NSKey nsKey, String name) 
     throws RemoteException, NameNotFoundException, NamingException;
@@ -70,8 +74,8 @@ public interface NS extends Remote {
   boolean isEmpty(NSKey nsKey) 
     throws RemoteException, NamingException, NameNotFoundException;
 
-  Collection keySet(NSKey nsKey) 
-    throws RemoteException, NamingException, NameNotFoundException;
+//   Collection keySet(NSKey nsKey) 
+//     throws RemoteException, NamingException, NameNotFoundException;
 
   /** add an object to the directory **/
   Object put(NSKey nsKey, String name, Object o, boolean overwriteOkay) 
@@ -98,10 +102,16 @@ public interface NS extends Remote {
   /** @return all objects in the specified directory **/
   Collection values(NSKey nsKey) 
     throws RemoteException, NameNotFoundException, NamingException;
+
+  /**
+   * Register interest in an object.
+   **/
+  void registerInterest(NSKey nsKey, String[] names, NSCallback.Id cbid)
+      throws RemoteException, NamingException;
+
+  /**
+   * Unregister interest in an object.
+   **/
+  void unregisterInterest(NSKey dirKey, NSCallback.Id cbid)
+      throws RemoteException, NamingException;
 }
-
-
-
-
-
-

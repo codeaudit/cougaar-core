@@ -193,7 +193,7 @@ public class NamingServiceFactory implements InitialContextFactory {
     boolean first = true;
     while (true) {
       try {
-        return new NamingDirContext(getNS(), getNS().getRoot(), env);
+        return new NamingEventContext(getNS(), getNS().getRoot(), env);
       } catch (RemoteException re) {
         if (first) {
           re.printStackTrace();

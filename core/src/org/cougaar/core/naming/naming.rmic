@@ -1,1 +1,2 @@
 org.cougaar.core.naming.NSImpl
+org.cougaar.core.naming.NSCallbackImpl

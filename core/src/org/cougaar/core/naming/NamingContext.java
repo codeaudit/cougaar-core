@@ -660,6 +660,10 @@ public class NamingContext implements Context {
    * @see javax.naming.directory.DirContext#createSubcontext
    */
   public Context createSubcontext(Name name) throws NamingException {
+    return createSubcontext(name, null);
+  }
+
+  protected Context createSubcontext(Name name, Collection attrs) throws NamingException {
     if (name.isEmpty()) {
       throw new InvalidNameException("Cannot bind empty name");
     }
@@ -671,7 +675,7 @@ public class NamingContext implements Context {
     if (nm.size() == 1) {
       // Try to add child to internal data structure
       try {
-        NSKey nsKey = getNS().createSubDirectory(getNSKey(), atom);
+        NSKey nsKey = getNS().createSubDirectory(getNSKey(), atom, attrs);
         if (nsKey != null) {
           return createContext(nsKey);
         } else {
@@ -690,7 +694,7 @@ public class NamingContext implements Context {
         throw new NotContextException(atom + 
                                       " does not name a context");
       }
-      return ((Context) nsObj).createSubcontext(nm.getSuffix(1));
+      return ((NamingContext) nsObj).createSubcontext(nm.getSuffix(1), attrs);
     }
   }
   
