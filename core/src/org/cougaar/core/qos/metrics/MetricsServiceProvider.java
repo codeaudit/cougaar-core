@@ -53,8 +53,6 @@ public final class MetricsServiceProvider
     private static final String UPDATER_IMPL_CLASS =
 	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
 
-    private static final String SCFAC_CLASSNAME =
-	"org.cougaar.lib.mquo.SyscondFactory";
 
 
     private static long Start;
@@ -110,17 +108,6 @@ public final class MetricsServiceProvider
 	registrar = (DataFeedRegistrationService) retriever;
     }
 
-    private void startSyscondFactory() {
-	try {
-	    Class cl = Class.forName(SCFAC_CLASSNAME);
-	    Object scfac =  cl.newInstance();
-	    add(scfac);
-	} catch (ClassNotFoundException cnf) {
-	    // This means the quo jar isn't loaded
-	} catch (Exception ex) {
-	    ex.printStackTrace();
-	}
-    }
 
     // This is done before child-components are created
     public void loadHighPriorityComponents() {
@@ -157,8 +144,6 @@ public final class MetricsServiceProvider
     // After Child Components are loaded
     public void load() {
 	super.load();
-	ServiceBroker sb = getServiceBroker();
-	startSyscondFactory();
     }
 
 
