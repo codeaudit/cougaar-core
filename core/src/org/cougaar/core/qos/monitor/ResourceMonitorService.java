@@ -37,8 +37,8 @@ public interface ResourceMonitorService extends Service
 //     public double getExpectedMaxJipsForAgent(MessageAddress agentAddress);
 //     public double getExpectedAvailableJipsForAgent(MessageAddress agentAddress);
 
-    // public String getHostforAgent(MessageAddress agentAddress);
-    // public String getNodeforAgent(MessageAddress agentAddress);
+    public String getHostForAgent(MessageAddress agentAddress);
+    public String getNodeForAgent(MessageAddress agentAddress);
 
 }
 

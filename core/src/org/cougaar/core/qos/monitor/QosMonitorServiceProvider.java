@@ -75,7 +75,7 @@ public class QosMonitorServiceProvider
 	    } catch (Exception ex) {
 		// RSS not loaded
 		System.err.println("### No RSS, using default ResourceMonitorService");
-		rms = new ResourceMonitorServiceImpl();
+		rms = new ResourceMonitorServiceImpl(nameSupport);
 	    }
 	    return rms;
 	}
