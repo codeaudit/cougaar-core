@@ -19,17 +19,28 @@
  * </copyright>
  */
 package org.cougaar.core.adaptivity;
-
 import java.util.*;
 
-import org.cougaar.planning.ldm.policy.RuleParameter;
-
 /** 
- * A knob and its value 
+ * A class to hold a sensor measurement. Most sensors will subclass
+ * this class to add a private or package protected setValue method to
+ * preclude arbitrary classes from messing with the value.
  */
-public interface OperatingMode {
-  String getName();
-  void addOperatingModeListener(OperatingModeListener l);
-  void removeOperatingModeListener(OperatingModeListener l);
-  void setValue(Comparable newValue);
+public class SensorMeasurementImpl extends OMSMBase implements SensorMeasurement {
+  public SensorMeasurementImpl(String name, OMSMValueList allowedValues) {
+    super(name, allowedValues, allowedValues.getEffectiveValue());
+  }
+  public SensorMeasurementImpl(String name, OMSMValueList allowedValues, Comparable value) {
+    super(name, allowedValues, value);
+  }
+
+  /**
+   * No listeners.
+   **/
+  protected void fireListeners(Comparable oldValue) {
+  }
+
+  public String toString() {
+    return getName() + " = " + getValue();
+  }
 }

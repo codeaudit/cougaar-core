@@ -24,14 +24,14 @@ package org.cougaar.core.adaptivity;
  * Defines boolean operator constants.
  */
 public class BooleanOperator extends Operator {
-    private BooleanOperator(String op) {
-        super(op);
+    private BooleanOperator(String op, int nOps, int lp, int rp) {
+        super(op, nOps, lp, rp);
     }
-    public static final BooleanOperator AND = new BooleanOperator("&");
-    public static final BooleanOperator OR = new BooleanOperator("|");
-    public static final BooleanOperator NOT = new BooleanOperator("!");
-    public static final BooleanOperator TRUE = new BooleanOperator("TRUE");
-    public static final BooleanOperator FALSE = new BooleanOperator("FALSE");
+    public static final BooleanOperator AND = new BooleanOperator("&", 2, 5, 5);
+    public static final BooleanOperator OR = new BooleanOperator("|", 2, 6, 6);
+    public static final BooleanOperator NOT = new BooleanOperator("!", 1, 7, 4);
+    public static final BooleanOperator TRUE = new BooleanOperator("TRUE", 0, 0, 0);
+    public static final BooleanOperator FALSE = new BooleanOperator("FALSE", 0, 0, 0);
 }
 
 

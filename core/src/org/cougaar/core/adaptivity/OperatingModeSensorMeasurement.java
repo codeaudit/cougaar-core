@@ -20,16 +20,15 @@
  */
 package org.cougaar.core.adaptivity;
 
-import java.util.*;
-
-import org.cougaar.planning.ldm.policy.RuleParameter;
-
-/** 
- * A knob and its value 
- */
-public interface OperatingMode {
-  String getName();
-  void addOperatingModeListener(OperatingModeListener l);
-  void removeOperatingModeListener(OperatingModeListener l);
-  void setValue(Comparable newValue);
+public class OperatingModeSensorMeasurement
+    extends OperatingModeImpl
+    implements SensorMeasurement
+{
+  public OperatingModeSensorMeasurement(String name, OMSMValueList allowedValues) {
+    super(name, allowedValues, allowedValues.getEffectiveValue());
+  }
+  public OperatingModeSensorMeasurement(String name, OMSMValueList allowedValues, Comparable value) {
+    super(name, allowedValues, value);
+  }
+    
 }

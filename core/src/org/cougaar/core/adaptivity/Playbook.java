@@ -233,19 +233,19 @@ public class Playbook
         // applies, but the constraint policy does not apply
         ConstrainingClause playIfClause = play.getIfClause();
         ConstrainingClause newIfClause = new ConstrainingClause();
-        newIfClause.pushClause(playIfClause);
-        newIfClause.pushClause(ompIfClause);
-        newIfClause.pushOperator(BooleanOperator.NOT);
-        newIfClause.pushOperator(BooleanOperator.AND);
+        newIfClause.push(playIfClause);
+        newIfClause.push(ompIfClause);
+        newIfClause.push(BooleanOperator.NOT);
+        newIfClause.push(BooleanOperator.AND);
         Play newPlay = new Play(newIfClause, playConstraints);
         newConstrainedPlays.add(newPlay);
 
         // Now write a Play that applies when both the original play
         // and the constraint policy apply
         newIfClause = new ConstrainingClause();
-        newIfClause.pushClause(playIfClause);
-        newIfClause.pushClause(ompIfClause);
-        newIfClause.pushOperator(BooleanOperator.AND);
+        newIfClause.push(playIfClause);
+        newIfClause.push(ompIfClause);
+        newIfClause.push(BooleanOperator.AND);
         for (int j = 0; j < playConstraints.length; j++) {
           if (newConstraints[j] != null) continue; // Ok as is
           ConstraintPhrase cp = playConstraints[j];
@@ -280,16 +280,6 @@ public class Playbook
       }
     }
     constrainedPlays = (Play[]) newConstrainedPlays.toArray(constrainedPlays);
-  }
-
-  private static class SettableSensorMeasurement extends SensorMeasurement {
-    public SettableSensorMeasurement(String name, OMSMValueList allowedValues, Comparable value) {
-      super(name, allowedValues, value);
-    }
-
-    public void setValue(Comparable newValue) {
-      super.setValue(newValue);
-    }
   }
 
   public String toString() {

@@ -54,7 +54,7 @@ public class ThreatconTestPlugin extends ServiceUserPluginBase {
    * measurement. Others can only reference the base SensorMeasurement
    * class which has no setter method.
    **/
-  private static class ThreatconTestSensorMeasurement extends SensorMeasurement implements NotPersistable {
+  private static class ThreatconTestSensorMeasurement extends SensorMeasurementImpl implements NotPersistable {
     public ThreatconTestSensorMeasurement(String name, OMSMValueList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }

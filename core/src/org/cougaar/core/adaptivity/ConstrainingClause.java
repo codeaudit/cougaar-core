@@ -34,23 +34,12 @@ public class ConstrainingClause {
    * AND or OR ConstraintOperator previous c new ConstraintOperator(lause with the new clause) 
    * @param ConstraintPhrase 
    */
-  public void pushPhrase(ConstraintPhrase cp) {
-    list.add(cp);
-  }
-  
-  /**
-   * Add operator
-   * @param BooleanOperator
-   */
-  public void pushOperator(BooleanOperator operator) {
-    list.add(operator);
-  }
-
-  /**
-   * Push an entire ConstrainingClause into this clause
-   **/
-  public void pushClause(ConstrainingClause cc) {
-    list.addAll(cc.list);
+  public void push(Object o) {
+    if (o instanceof ConstrainingClause) {
+      list.addAll(((ConstrainingClause) o).list);
+    } else {
+      list.add(o);
+    }
   }
   
   /** 
@@ -71,12 +60,42 @@ public class ConstrainingClause {
     };
   }
 
-  public String toString() {
+  /**
+   * Print this clause in infix notation with liberal parentheses
+   **/
+  private String toString(Iterator x) {
+    if (!x.hasNext()) return "";
+    String r = null;
+    String l = null;
     StringBuffer buf = new StringBuffer();
-    for (Iterator i = iterator(); i.hasNext(); ) {
-      buf.append(' ').append(i.next());
+    Object o = x.next();
+    if (o instanceof ConstraintOpValue) {
+      buf.append('(').append(toString(x)).append(' ').append(o).append(')');
+    } else if (o instanceof Operator) {
+      Operator op = (Operator) o;
+      switch (op.getOperandCount()) {
+      case 2:
+        r = toString(x);
+        l = toString(x);
+        break;
+      case 1:
+        r = toString(x);
+        break;
+      default:
+      }
+      buf.append('(');
+      if (l != null) buf.append(l).append(' ');
+      buf.append(op);
+      if (r != null) buf.append(' ').append(r);
+      buf.append(')');
+    } else {
+      buf.append(o);
     }
-    return buf.substring(1);
+    return buf.toString();
+  }
+
+  public String toString() {
+    return toString(iterator());
   }
 }
 

@@ -31,15 +31,19 @@ public class Parser {
   StreamTokenizer st;
   boolean pushedBack = false;
   ConstrainingClause cc;
+  private static final boolean debug = true;
 
   public Parser(StreamTokenizer s) {
     st = s;
     st.wordChars('_', '_');
+    st.ordinaryChars('/', '/');
+    st.slashStarComments(true);
+    st.slashSlashComments(true);
   }
 
   public ConstrainingClause parseConstrainingClause() throws IOException {
     cc = new ConstrainingClause();
-    parseExpression();
+    parse(Operator.MAXP);
     ConstrainingClause result = cc;
     cc = null;
     return result;
@@ -89,9 +93,9 @@ public class Parser {
   public OperatingModePolicy[] parseOperatingModePolicies() throws IOException {
     List policies = new ArrayList();
     while (true) {
-      policies.add(parseOperatingModePolicy());
       if (nextToken() == StreamTokenizer.TT_EOF) break;
       pushBack();
+      policies.add(parseOperatingModePolicy());
     }
     return (OperatingModePolicy[]) policies.toArray(new OperatingModePolicy[policies.size()]);
   }
@@ -99,64 +103,103 @@ public class Parser {
   /**
    * Sensor, boolean exp, identifier, operator, value
    */
-  private void parseExpression() throws IOException {
-    parseTerm();
-    int token = nextToken();
-    switch (token) {
-    default:
-      pushBack();
-      return;
-    case '&':
-        parseExpression();
-        cc.pushOperator(BooleanOperator.AND);
-        return;
-    case '|':
-        parseExpression();
-        cc.pushOperator(BooleanOperator.OR);
-        return;
-    case '(':
-      parseExpression();
-      return;
-    case ')':
-      return;
-    } 
-  }
-  
-  private void parseTerm() throws IOException {
-    int token = nextToken();
-    switch (token) {
-    case StreamTokenizer.TT_WORD:
-      if (st.sval.equalsIgnoreCase(BooleanOperator.TRUE.toString())) {
-        cc.pushOperator(BooleanOperator.TRUE);
-        return;
+  private void parse(int lp) throws IOException {
+    if (debug) {
+      String caller = new Throwable().getStackTrace()[1].toString();
+      System.out.println("Parse from " + caller + " " + lp);
+    }
+    try {
+      int token = nextToken();
+      switch (token) {
+      default:
+        throw unexpectedTokenException(2);
+      case '!':
+        parse(BooleanOperator.NOT.getLP());
+        cc.push(BooleanOperator.NOT);
+        break;
+      case '-':
+        parse(ArithmeticOperator.NEGATE.getLP());
+        cc.push(ArithmeticOperator.NEGATE);
+        break;
+      case '(':
+        parse(Operator.MAXP);
+        token = nextToken();
+        if (token != ')') throw unexpectedTokenException(3);
+        break;
+      case StreamTokenizer.TT_WORD:
+        if (st.sval.equalsIgnoreCase(BooleanOperator.TRUE.toString())) {
+          cc.push(BooleanOperator.TRUE);
+          break;
+        }
+        if (st.sval.equalsIgnoreCase(BooleanOperator.FALSE.toString())) {
+          cc.push(BooleanOperator.FALSE);
+          break;
+        }
+        cc.push(st.sval);
+        break;
+      case StreamTokenizer.TT_NUMBER:
+        cc.push(new Double(st.nval));
+        break;
       }
-      if (st.sval.equalsIgnoreCase(BooleanOperator.FALSE.toString())) {
-        cc.pushOperator(BooleanOperator.FALSE);
-        return;
+      while (true) {
+        token = nextToken();        // Operator
+        if (token == ':') {
+          pushBack();
+          return;
+        }
+        Operator op;
+        switch (token) {
+        default: pushBack(); return;
+        case StreamTokenizer.TT_WORD:
+          if (!st.sval.equalsIgnoreCase("in") && !st.sval.equalsIgnoreCase("not")) {
+            pushBack();
+            return;
+          }
+          // Fall thru into parseConstraintOpValue
+        case '<':
+        case '>':
+        case '=':
+        case '!':
+          if (ConstraintOperator.IN.getRP() >= lp) {
+            // Not yet
+            pushBack();
+            return;
+          }
+          pushBack();
+          cc.push(parseConstraintOpValue(null));
+          return;
+        case '&': op = BooleanOperator.AND; break;
+        case '|': op = BooleanOperator.OR; return;
+        case '+': op = ArithmeticOperator.ADD; break;
+        case '-': op = ArithmeticOperator.SUBTRACT; break;
+        case '*': op = ArithmeticOperator.MULTIPLY; break;
+        case '/': op = ArithmeticOperator.DIVIDE; break;
+        }
+        int opp = op.getRP();
+        if (opp < lp) {
+          parse(opp);
+          cc.push(op);
+          continue;
+        } else {
+          pushBack();
+          return;
+        }
       }
-      cc.pushPhrase(parseConstraintPhrase(st.sval));
-      return;
-    case '!':
-      parseExpression();
-      cc.pushOperator(BooleanOperator.NOT);
-      return;
-    case '(':
-      parseExpression();
-      return;
-    default:
-      throw unexpectedTokenException(2);
-      
-    } 
-  }
-  private ConstraintPhrase parseConstraintPhrase() throws IOException {
-    if (nextToken() != StreamTokenizer.TT_WORD) throw unexpectedTokenException(3);
-    return parseConstraintPhrase(st.sval);
+    } finally {
+      if (debug) System.out.println("Exit parse " + lp);
+    }
   }
 
-  private ConstraintPhrase parseConstraintPhrase(String name) throws IOException {
+  private ConstraintPhrase parseConstraintPhrase() throws IOException {
+    if (nextToken() != StreamTokenizer.TT_WORD) throw unexpectedTokenException(5);
+    ConstraintPhrase cp = new ConstraintPhrase(st.sval);
+    parseConstraintOpValue(cp);
+    return cp;
+  }
+
+  private ConstraintOpValue parseConstraintOpValue(ConstraintOpValue cov) throws IOException {
     int token1 = nextToken();
-    ConstraintOperator op;
-    OMSMValueList parameter;
+    if (cov == null) cov = new ConstraintOpValue();
     
     switch (token1) {
     case '<':
@@ -167,47 +210,47 @@ public class Parser {
       if (token2 == '=') {
         switch (token1) {
         case '<':
-          op = ConstraintOperator.LESSTHANOREQUAL;
+          cov.setOperator(ConstraintOperator.LESSTHANOREQUAL);
           break;
         case '>':
-          op = ConstraintOperator.GREATERTHANOREQUAL;
+          cov.setOperator(ConstraintOperator.GREATERTHANOREQUAL);
           break;
         case '=':
-          op = ConstraintOperator.EQUAL;
+          cov.setOperator(ConstraintOperator.EQUAL);
           break;
         case '!':
-          op = ConstraintOperator.NOTEQUAL;
+          cov.setOperator(ConstraintOperator.NOTEQUAL);
           break;
         default:
-          throw unexpectedTokenException(4);
+          throw unexpectedTokenException(6);
         }
         token1 = nextToken();
       } else {
         switch (token1) {
         case '=':
-          op = ConstraintOperator.ASSIGN;
+          cov.setOperator(ConstraintOperator.ASSIGN);
           break;
         case '<':
-          op = ConstraintOperator.LESSTHAN;
+          cov.setOperator(ConstraintOperator.LESSTHAN);
           break;
         case '>':
-          op = ConstraintOperator.GREATERTHAN;
+          cov.setOperator(ConstraintOperator.GREATERTHAN);
           break;
         default:
-          throw unexpectedTokenException(5);
+          throw unexpectedTokenException(7);
         }
         token1 = token2;
       }
       break; // end of punctuation chars case
     case StreamTokenizer.TT_WORD:
       if (st.sval.equalsIgnoreCase(ConstraintOperator.IN.toString())) {
-        op = ConstraintOperator.IN;
+        cov.setOperator(ConstraintOperator.IN);
         token1 = nextToken();
         break;
       }
       if (st.sval.equalsIgnoreCase("NOT")) {
         if (nextToken() == StreamTokenizer.TT_WORD && st.sval.equalsIgnoreCase("IN")) {
-          op = ConstraintOperator.NOTIN;
+          cov.setOperator(ConstraintOperator.NOTIN);
           token1 = nextToken();
           break;
         }
@@ -216,15 +259,15 @@ public class Parser {
       throw unexpectedTokenException(6);
     }
     if (token1 == StreamTokenizer.TT_WORD) {
-      parameter = new OMSMValueList(parseRange(st.sval));
+      cov.setAllowedValues(new OMSMValueList(parseRange(st.sval)));
     } else if (token1 == StreamTokenizer.TT_NUMBER) {
-      parameter = new OMSMValueList(parseRange(new Double(st.nval)));
+      cov.setAllowedValues(new OMSMValueList(parseRange(new Double(st.nval))));
     } else if (token1 == '{') {
-      parameter = parseSet();
+      cov.setAllowedValues(parseSet());
     } else {
       throw unexpectedTokenException(7);
     }
-    return new ConstraintPhrase(name, op, parameter);
+    return cov;
   }
 
   private OMSMRange parseRange(Comparable first) throws IOException {
@@ -247,7 +290,7 @@ public class Parser {
           }
           last = new Double(st.nval);
         } else {
-          throw unexpectedTokenException(8);
+          throw unexpectedTokenException(10);
         }
         if (isTo) {
           return new OMSMToRange(first, last);
@@ -297,13 +340,15 @@ public class Parser {
 
   private int nextToken() throws IOException {
     int token;
+    String caller;
+    if (debug) caller = new Throwable().getStackTrace()[1].toString();
     if (pushedBack) {
       pushedBack = false;
       token = st.ttype;
-      System.out.println("repeat " + tokenAsString());
+      if (debug) System.out.println("nextToken from " + caller + ": repeat " + tokenAsString());
     } else {
       token = st.nextToken();
-      System.out.println("token " + tokenAsString());
+      if (debug) System.out.println("nextToken from " + caller + ": token " + tokenAsString());
     }
     return token;
   }

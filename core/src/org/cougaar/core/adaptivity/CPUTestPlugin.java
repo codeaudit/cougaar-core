@@ -45,28 +45,7 @@ public class CPUTestPlugin extends ServiceUserPluginBase {
   private LoggingService logger;
 
   private static final Double[] cpuValues = {
-    new Double(1.0),
-    new Double(0.9),
-    new Double(0.8),
-    new Double(0.7),
-    new Double(0.6),
-    new Double(0.5),
     new Double(0.4),
-    new Double(0.3),
-    new Double(0.2),
-    new Double(0.1),
-    new Double(0.09),
-    new Double(0.05),
-    new Double(0.09),
-    new Double(0.1),
-    new Double(0.2),
-    new Double(0.3),
-    new Double(0.4),
-    new Double(0.5),
-    new Double(0.6),
-    new Double(0.7),
-    new Double(0.8),
-    new Double(0.9)
   };
 
   private int cpuStep = 0;
@@ -76,7 +55,7 @@ public class CPUTestPlugin extends ServiceUserPluginBase {
    * measurement. Others can only reference the base SensorMeasurement
    * class which has no setter method.
    **/
-  private static class CPUTestSensorMeasurement extends SensorMeasurement implements NotPersistable {
+  private static class CPUTestSensorMeasurement extends SensorMeasurementImpl implements NotPersistable {
     public CPUTestSensorMeasurement(String name, OMSMValueList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }
@@ -134,6 +113,6 @@ public class CPUTestPlugin extends ServiceUserPluginBase {
       cpuStep++;
       if (cpuStep == cpuValues.length) cpuStep = 0;
     }
-    startTimer(10000);
+    startTimer(60000);
   }
 }

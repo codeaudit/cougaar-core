@@ -166,6 +166,97 @@ public class ComparableHelper {
     return Double.longBitsToDouble(bits);
   }
 
+  public static Comparable add(Comparable l, Comparable r) {
+    if (l.getClass() == String.class || r.getClass() == String.class) return l.toString() + r.toString();
+    if (l instanceof Number && r instanceof Number) {
+      Number ln = (Number) l;
+      Number rn = (Number) r;
+      if (ln instanceof Double || rn instanceof Double) {
+        return new Double(ln.doubleValue() + rn.doubleValue());
+      }
+      if (ln instanceof Long || rn instanceof Long) {
+        return new Long(ln.longValue() + rn.longValue());
+      }
+      if (ln instanceof Integer || rn instanceof Integer) {
+        return new Integer(ln.intValue() + rn.intValue());
+      }
+    }
+    throw new IllegalArgumentException("Unimplemented arithmetic");
+  }
+
+  public static Comparable subtract(Comparable l, Comparable r) {
+    if (l.getClass() == String.class || r.getClass() == String.class) {
+      throw new IllegalArgumentException("Strings cannot be subtracted");
+    }
+    if (l instanceof Number && r instanceof Number) {
+      Number ln = (Number) l;
+      Number rn = (Number) r;
+      if (ln instanceof Double || rn instanceof Double) {
+        return new Double(ln.doubleValue() - rn.doubleValue());
+      }
+      if (ln instanceof Long || rn instanceof Long) {
+        return new Long(ln.longValue() - rn.longValue());
+      }
+      if (ln instanceof Integer || rn instanceof Integer) {
+        return new Integer(ln.intValue() - rn.intValue());
+      }
+    }
+    throw new IllegalArgumentException("Unimplemented arithmetic");
+  }
+
+  public static Comparable multiply(Comparable l, Comparable r) {
+    if (l.getClass() == String.class || r.getClass() == String.class) {
+      throw new IllegalArgumentException("Strings cannot be multiplied");
+    }
+    if (l instanceof Number && r instanceof Number) {
+      Number ln = (Number) l;
+      Number rn = (Number) r;
+      if (ln instanceof Double || rn instanceof Double) {
+        return new Double(ln.doubleValue() * rn.doubleValue());
+      }
+      if (ln instanceof Long || rn instanceof Long) {
+        return new Long(ln.longValue() * rn.longValue());
+      }
+      if (ln instanceof Integer || rn instanceof Integer) {
+        return new Integer(ln.intValue() * rn.intValue());
+      }
+    }
+    throw new IllegalArgumentException("Unimplemented arithmetic");
+  }
+
+  public static Comparable divide(Comparable l, Comparable r) {
+    if (l.getClass() == String.class || r.getClass() == String.class) {
+      throw new IllegalArgumentException("Strings cannot be divided");
+    }
+    if (l instanceof Number && r instanceof Number) {
+      Number ln = (Number) l;
+      Number rn = (Number) r;
+      if (ln instanceof Double || rn instanceof Double) {
+        return new Double(ln.doubleValue() / rn.doubleValue());
+      }
+      if (ln instanceof Long || rn instanceof Long) {
+        return new Long(ln.longValue() / rn.longValue());
+      }
+      if (ln instanceof Integer || rn instanceof Integer) {
+        return new Integer(ln.intValue() / rn.intValue());
+      }
+    }
+    throw new IllegalArgumentException("Unimplemented arithmetic");
+  }
+
+  public static Comparable negate(Comparable v) {
+    if (v.getClass() == String.class) {
+      throw new IllegalArgumentException("Strings cannot be negated");
+    }
+    if (v instanceof Number) {
+      Number nv = (Number) v;
+      if (nv instanceof Double) return new Double(-nv.doubleValue());
+      if (nv instanceof Long) return new Long(-nv.longValue());
+      if (nv instanceof Integer) return new Integer(-nv.intValue());
+    }
+    throw new IllegalArgumentException("Unimplemented arithmetic");
+  }
+
   /**
    * Tests (should be moved to regress)
    **/

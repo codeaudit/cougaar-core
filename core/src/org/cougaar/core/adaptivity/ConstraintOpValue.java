@@ -25,8 +25,9 @@ package org.cougaar.core.adaptivity;
  * standing in for sensor data or an operating mode and a Object
  * holding the value and a set of valid values
  */
-public class ConstraintPhrase extends ConstraintOpValue {
-  String proxyName;
+public class ConstraintOpValue {
+  ConstraintOperator operator;
+  OMSMValueList allowedValues;
   
   /**
    * Constructor 
@@ -34,25 +35,43 @@ public class ConstraintPhrase extends ConstraintOpValue {
    * @param ConstraintOperator
    * @param an array of OMSMRange descriptions list allowed ranges.
    */
-  public ConstraintPhrase(String name, ConstraintOperator op, OMSMValueList av) {
-    this(name);
-    setOperator(op);
-    setAllowedValues(av);
+  public ConstraintOpValue() {
   }
 
-  public ConstraintPhrase(String name) {
-    super();
-    proxyName = name;
+  public void setOperator(ConstraintOperator op) {
+    operator = op;
+  }
+
+  public void setAllowedValues(OMSMValueList l) {
+    allowedValues = l;
   }
   
   /** 
-   * @return The name of the sensor or operating mode 
-   */
-  public String getProxyName() {
-    return proxyName;
+   * Get the effective value of the allowed values. This is always the
+   * the min of the first range.
+   * @return the value as a Comparable (String, Integer, Double, etc.)
+   **/
+  public Comparable getValue() {
+    return allowedValues.getEffectiveValue();
+  }
+
+  /**
+   * Get the ranges of allowed values.
+   * @return all allowed ranges as imposed by this constraint
+   **/
+  public OMSMValueList getAllowedValues() {
+    return allowedValues;
+  }
+  
+  /** 
+   * The relationship between the sensor or operating mode and the
+   * value.
+   * @return ConstraintOperator */
+  public ConstraintOperator getOperator() {
+    return operator;
   }
 
   public String toString() {
-    return proxyName + " " + super.toString();
+    return operator + " " + allowedValues;
   }
 }

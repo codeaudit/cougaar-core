@@ -60,6 +60,7 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
     }
   };
 
+  private PlayHelper helper;
   private PlaybookReadService playbookService;
   private OperatingModeService operatingModeService;
   private SensorMeasurementService sensorMeasurementService;
@@ -71,19 +72,8 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
     LoggingService.class
   };
 
-  private static class OMMapEntry {
-    public OMSMValueList newValue;
-    public List plays = new ArrayList();
-    public OMMapEntry(OMSMValueList nv, Play firstPlay) {
-      newValue = nv;
-      plays.add(firstPlay);
-    }
-  }
-
   private Subscription sensorMeasurementListenerSubscription;
   private Subscription playbookListenerSubscription;
-
-  private Map omMap = new HashMap();
 
   private Map smMap = new HashMap();
 
@@ -110,6 +100,7 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
         getServiceBroker().getService(this, SensorMeasurementService.class, null);
       sensorMeasurementService.addListener(sensorMeasurementListener);
       playbookService.addListener(playbookListener);
+      helper = new PlayHelper(logger, operatingModeService, sensorMeasurementService, blackboard, smMap);
       return true;
     }
     return false;
@@ -187,9 +178,8 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
       Play play = plays[i];
       for (Iterator x = play.getIfClause().iterator(); x.hasNext(); ) {
         Object o = x.next();
-        if (o instanceof ConstraintPhrase) {
-          ConstraintPhrase cp = (ConstraintPhrase) o;
-          String name = cp.getProxyName();
+        if (o instanceof String) {
+          String name = (String) o;
           if (!smMap.containsKey(name)) {
             SensorMeasurement sm = sensorMeasurementService.getSensorMeasurementByName(name);
             if (sm == null) {
@@ -227,110 +217,6 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
    **/
   private void updateOperatingModes() {
     if (logger.isDebugEnabled()) logger.debug("updateOperatingModes");
-
-    /* run the plays - that is, do the comparisons in the "If" parts
-     * of the plays and if they evaluate to true, set the operating modes in
-     * the "Then" parts of the plays and publish the new values to the
-     * blackboard.
-     *
-     *  operating modes may be mapped from their RuleParameter 
-     * representation into other objects by the service
-     */
-
-    for (int i = 0; i < plays.length; i++) {
-      Play play = plays[i];
-      try {
-        if (eval(play.getIfClause().iterator())) {
-          ConstraintPhrase[] playConstraints = play.getOperatingModeConstraints();
-          for (int j = 0; j < playConstraints.length; j++) {
-            ConstraintPhrase cp = playConstraints[j];
-            String operatingModeName = cp.getProxyName();
-            OMSMValueList av =
-              cp.getAllowedValues().applyOperator(cp.getOperator());
-            OMMapEntry omme = (OMMapEntry) omMap.get(operatingModeName);
-            if (omme == null) {
-              omMap.put(operatingModeName, new OMMapEntry(av, play));
-            } else {
-              OMSMValueList intersection = omme.newValue.intersect(av);
-              if (intersection.isEmpty()) {
-                logger.error("Play conflict for play " + play + " against " + omme.plays);
-              } else {
-                omme.newValue = intersection;
-              }
-            }
-          }
-        }
-      } catch (Exception iae) {
-        logger.error("Error in play: " + play, iae);
-      }
-    }
-    Set operatingModes = new HashSet(operatingModeService.getAllOperatingModeNames());
-    logger.debug("Updating operating modes");
-    for (Iterator i = omMap.entrySet().iterator(); i.hasNext(); ) {
-      Map.Entry entry = (Map.Entry) i.next();
-      String operatingModeName = (String) entry.getKey();
-      OMMapEntry omme = (OMMapEntry) entry.getValue();
-      Comparable value = omme.newValue.getEffectiveValue();
-      OperatingMode om = operatingModeService.getOperatingModeByName(operatingModeName);
-      if (logger.isInfoEnabled()) logger.info("Setting OperatingMode " + operatingModeName + " to " + value);
-      if (om == null) {
-        if (logger.isDebugEnabled()) logger.debug("OperatingMode not present: " + operatingModeName);
-      } else {
-        om.setValue(value);
-        blackboard.publishChange(om);
-      }
-      operatingModes.remove(operatingModeName); // This one has been accounted for
-    }
-    if (!operatingModes.isEmpty()) {
-      for (Iterator i = operatingModes.iterator(); i.hasNext(); ) {
-        logger.error("No play found to set operating mode: " + i.next());
-      }
-    }
-    omMap.clear();
-  }
-
-  /**
-   * Evaluate an if clause.
-   **/
-  private boolean eval(Iterator x) {
-    if (!x.hasNext()) throw new IllegalArgumentException("Incomplete play");
-    Object o = x.next();
-    if (o.equals(BooleanOperator.NOT)) {
-      return !eval(x);
-    }
-    if (o.equals(BooleanOperator.AND)) {
-      return eval(x) & eval(x);
-    }
-    if (o.equals(BooleanOperator.OR)) {
-      return eval(x) | eval(x);
-    }
-    if (o.equals(BooleanOperator.TRUE)) {
-      return true;
-    }
-    if (o.equals(BooleanOperator.FALSE)) {
-      return false;
-    }
-    if (o instanceof ConstraintPhrase) {
-      ConstraintPhrase phrase = (ConstraintPhrase) o;
-      String sensorName = phrase.getProxyName();
-      SensorMeasurement sensorMeasurement = (SensorMeasurement) smMap.get(sensorName);
-      Comparable paramValue = phrase.getValue();
-      OMSMValueList paramRanges = phrase.getAllowedValues();
-      ConstraintOperator op = phrase.getOperator();
-      if (op.equals(ConstraintOperator.IN) || op.equals(ConstraintOperator.NOTIN)) {
-        boolean isIn = paramRanges.isAllowed(sensorMeasurement.getValue());
-        if (op.equals(ConstraintOperator.IN)) return isIn;
-        return !isIn;
-      }
-      int diff = sensorMeasurement.getValue().compareTo(paramValue);
-      if (op.equals(ConstraintOperator.GREATERTHAN       )) return diff >  0;
-      if (op.equals(ConstraintOperator.GREATERTHANOREQUAL)) return diff >= 0;
-      if (op.equals(ConstraintOperator.LESSTHAN          )) return diff <  0;
-      if (op.equals(ConstraintOperator.LESSTHANOREQUAL   )) return diff <= 0;
-      if (op.equals(ConstraintOperator.EQUAL             )) return diff == 0;
-      if (op.equals(ConstraintOperator.NOTEQUAL          )) return diff != 0;
-      throw new IllegalArgumentException("invalid ConstraintOperator " + op);
-    }
-    throw new IllegalArgumentException("invalid if clause " + o);
+    helper.updateOperatingModes(plays);
   }
 }

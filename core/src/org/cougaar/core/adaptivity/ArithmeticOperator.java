@@ -24,23 +24,15 @@ package org.cougaar.core.adaptivity;
  * Defines constants for operators used for describing and interpreting
  * relations between policy components.
  */
-public class ConstraintOperator extends Operator {
-    private ConstraintOperator(String op) {
-        super(op, 2, 4, 4);
+public class ArithmeticOperator extends Operator {
+    private ArithmeticOperator(String op, int nOps, int lp, int rp) {
+        super(op, nOps, lp, rp);
     }
 
-    /* equality and inequalities */
-    public static final ConstraintOperator GREATERTHAN = new ConstraintOperator(">");
-    public static final ConstraintOperator GREATERTHANOREQUAL = new ConstraintOperator(">=");
-    public static final ConstraintOperator LESSTHAN = new ConstraintOperator("<");
-    public static final ConstraintOperator LESSTHANOREQUAL = new ConstraintOperator("<=");
-    public static final ConstraintOperator EQUAL = new ConstraintOperator("==");
-    public static final ConstraintOperator ASSIGN = new ConstraintOperator("=");
-    public static final ConstraintOperator NOTEQUAL = new ConstraintOperator("!=");
-    
-    /** set operators */
-    
-    public static final ConstraintOperator IN = new ConstraintOperator("IN");
-    public static final ConstraintOperator NOTIN = new ConstraintOperator("NOT IN");
-    /* What else ?*/
+    /* Arithmetic ops */
+    public static final ArithmeticOperator ADD = new ArithmeticOperator("+", 2, 2, 2);
+    public static final ArithmeticOperator SUBTRACT = new ArithmeticOperator("-", 2, 2, 2);
+    public static final ArithmeticOperator NEGATE = new ArithmeticOperator("-", 1, 3, 0);
+    public static final ArithmeticOperator MULTIPLY = new ArithmeticOperator("*", 2, 1, 1);
+    public static final ArithmeticOperator DIVIDE = new ArithmeticOperator("/", 2, 1, 1);
 }

@@ -24,9 +24,27 @@ package org.cougaar.core.adaptivity;
  * Defines boolean operator constants.
  */
 public class Operator {
+    public static final int MAXP = 10;
     protected String op;
-    protected Operator(String op) {
+    protected int lp;
+    protected int rp;
+    protected int nOperands;
+
+    protected Operator(String op, int nOps, int lp, int rp) {
         this.op = op;
+        this.lp = lp;
+        this.rp = rp;
+        nOperands = nOps;
+    }
+
+    public int getLP() {
+        return lp;
+    }
+    public int getRP() {
+        return rp;
+    }
+    public int getOperandCount() {
+        return nOperands;
     }
     public int hashCode() {
         return op.hashCode();
