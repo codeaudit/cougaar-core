@@ -34,20 +34,12 @@ import java.security.cert.*;
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $CLASSPATH
-<<<<<<<<<<<<<< variant A
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
- *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
- *
->>>>>>>>>>>>>> variant B
- *  $ALP_INSTALL_PATH/lib/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/plugins/*.{jar,zip,plugin}
- *  -Dalp.system.path=whatever/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/sys/*.{jar,zip,plugin} 
+ *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
  * </pre>
  * <p>
-======= end of combination
  * As an added bonus, Bootstrapper may be run as an application
  * which takes the fully-qualified class name of the class to run
  * as the first argument.  All other arguments are passed
@@ -121,13 +113,13 @@ public class Bootstrapper
     accumulateClasspath(l, System.getProperty("java.class.path"));
     accumulateJars(l, new File(base,"lib"));
     accumulateJars(l, new File(base,"plugins"));
+    accumulateJars(l,new File(base,"sys"));
 
     String sysp = System.getProperty("org.cougaar.system.path");
     if (sysp!=null) {
       accumulateJars(l, new File(sysp));
     }
 
-    accumulateJars(l,new File(base,"sys"));
     URL urls[] = (URL[]) l.toArray(new URL[l.size()]);
     
     try {
