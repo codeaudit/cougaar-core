@@ -35,6 +35,9 @@ public abstract class BinderSupport
   private ComponentDescription childD;
   private Component child;
 
+  /** @return the ComponentDescription of the child (if known). **/
+  protected final ComponentDescription getComponentDescription() { return childD; }
+
   protected BinderSupport(BinderFactory bf, Object childX) {
     super(bf, childX);
   }
