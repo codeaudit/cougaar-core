@@ -1,0 +1,98 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Beth DePass">
+   <meta name="GENERATOR" content="Mozilla/4.77 [en] (Windows NT 5.0; U) [Netscape]">
+   <title>MetricsServices</title>
+</head>
+<body>
+<u><font color="#000000"><font size=+3>Cougaar 8.4 Metrics
+Services</font></font></u>
+<br><font size=+1>Metrics data has been split into 5 different metrics
+services for Cougaar 8.4.&nbsp; Descriptions and locations for each have
+been included below.&nbsp; A test plugin has been included in the core
+src package under core/src/org/cougaar/core/examples/MetricsComponentPlugIn.&nbsp;
+This plugin can be added to an agent .ini file to test metrics services.&nbsp;
+The plugin will start a small one button gui; when the 'Get Metrics' button
+is pressed each metrics service will be asked for data.&nbsp; The data
+retrieved will be printed to system.out.&nbsp; Note that the node level
+metrics will apply to the node that the agent is a member of and the agent
+level services will only apply to the agent that the plugin is loaded in.&nbsp;
+To add the plugin into an agent .ini file add the following line under
+the [PlugIns] section:</font><font size=+1></font>
+<p><font size=+1>plugin = org.cougaar.core.examples.MetricsComponentPlugIn</font><font size=+1></font>
+<p><font size=+1><font color="#FF0000">**</font> <font color="#FF0000">Important
+note regarding the MessageStatisticsService</font> <font color="#FF0000">**</font></font>
+<br><font size=+1>To use the MessageStatisticsService you must turn on
+the message statistics aspect.&nbsp; To do so add the following argument
+to the MYPROPERTIES variable found in COUGAAR_INSTALL_PATH/bin/setarguments.bat
+if you are running windows or in COUGAAR_INSTALL_PATH/bin/Node if your
+are running Linux.&nbsp; If you are using Node.sh instead of Node, modify
+COUGAAR_INSTALL_PATH/bin/setarguments.sh</font><font size=+1></font>
+<p><font size=+1>-Dorg.cougaar.message.transport.aspects=org.cougaar.core.mts.StatisticsAspect</font>
+<p><b><font color="#3333FF"><font size=+2>Node Level Metric Services:</font></font></b>
+<br><font size=+1>Node level metrics services provide metrics data about
+the entire Node.&nbsp; For example, the Free Memory data from the NodeMetricsService
+is the amount of free memory of the VM (in Cougaar a Node runs on 1 Java
+VM).</font>
+<br>&nbsp;
+<ul>
+<li>
+<font size=+1><font color="#3333FF">NodeMetricsService</font> - org.cougaar.core.society.NodeMetricsService</font></li>
+
+<ul>
+<li>
+<font size=+1>provides vm stats such as free memory, total memory and thread
+count</font></li>
+</ul>
+
+<li>
+<font size=+1><font color="#3333FF">MessageStatisticsService</font><font color="#FF0000">**</font>
+- org.cougaar.core.mts.MessageStatisticsService</font></li>
+
+<ul>
+<li>
+<font size=+1>provides stats about all messages traveling in and out of
+the Node.</font></li>
+</ul>
+
+<li>
+<font size=+1><font color="#3333FF">MessageWatcherService</font> - org.cougaar.core.mts.MessageWatcherService</font></li>
+
+<ul>
+<li>
+<font size=+1>provides an API to add a MessageTransportWatcher which can
+count specific types of messages being sent as well as messages being received.</font></li>
+</ul>
+</ul>
+
+<p><br><b><font color="#009900"><font size=+2>Agent Level Metric Services:</font></font></b>
+<br><font size=+1>Agent level metrics services provide metrics data about
+components that reside at the Agent level. For example, each Agent contains
+its own Blackboard Component for which metrics data is available.&nbsp;
+The BlackboardMetricsService only provides data for the Blackboard (singular)
+found in the local Agent.</font>
+<br>&nbsp;
+<ul>
+<li>
+<font size=+1><font color="#009900">BlackboardMetricsService</font> - org.cougaar.core.blackboard.BlackboardMetricsService</font></li>
+
+<ul>
+<li>
+<font size=+1>provides various counts of objects contained in the Blackboard
+such as Assets, PlanElements, etc.</font></li>
+</ul>
+
+<li>
+<font size=+1><font color="#009900">PrototypeRegistryService</font> - org.cougaar.domain.planning.ldm.PrototypeRegistryService</font></li>
+
+<ul>
+<li>
+<font size=+1>provides prototype and property provider counts as well as
+an accessor for the number of cached Prototypes the LDM currently has registered</font></li>
+</ul>
+</ul>
+
+</body>
+</html>
