@@ -76,7 +76,7 @@ implements Component
 
   private ServiceBroker sb;
 
-  private Set initialAgents;
+  private List initialAgents;
 
   private LoggingService log;
 
@@ -114,7 +114,10 @@ implements Component
             (o1 == null ? "null" : o1.getClass().getName()));
       }
       if (initialAgents == null) {
-        initialAgents = new HashSet();
+        initialAgents = new ArrayList();
+      } else if (initialAgents.contains(o1)) {
+        // n^2 duplicate check, but n is small...
+        continue;
       }
       initialAgents.add(o1);
     }
@@ -277,9 +280,8 @@ implements Component
     ComponentDescription[] ret = 
       new ComponentDescription[n];
 
-    Iterator iter = initialAgents.iterator();
     for (int i = 0; i < n; i++) {
-      String name = (String) iter.next();
+      String name = (String) initialAgents.get(i);
       ComponentDescription desc = 
         new ComponentDescription(
             "org.cougaar.core.agent.AgentImpl("+name+")",
