@@ -95,7 +95,9 @@ class QuiescenceState {
 
   public void setQuiescent(boolean isQuiescent, String requestor) {
     if (isQuiescent) {
-      removeBlocker(requestor);
+      // Remove this blocker, and log if that fails
+      if (! removeBlocker(requestor) && logger.isDebugEnabled())
+	logger.debug("Requestor " + requestor + " tried to say was quiescent, but was not on blockers list.");
       if (logger.isDetailEnabled()) {
         logger.detail("nonQuiescentCount is " + blockers.size() + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
 	if (! blockers.isEmpty())
@@ -104,7 +106,9 @@ class QuiescenceState {
         logger.debug(me + " is quiescent");
       }
     } else {
-      addBlocker(requestor);
+      // Add this blocker, and log if that fails
+      if (! addBlocker(requestor) && logger.isDebugEnabled())
+	logger.debug("Requestor " + requestor + " tried to say was blocking, but was already on blockers list.");
       if (logger.isDetailEnabled()) {
         logger.detail("nonQuiescentCount is " + blockers.size() + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
 	logger.detail(me + " Blockers: " + getBlockersString());

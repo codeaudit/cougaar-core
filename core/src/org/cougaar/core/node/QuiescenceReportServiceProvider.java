@@ -108,7 +108,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
         addr = addr.getPrimary(); // drop MessageAttributes
         return new QuiescenceReportServiceImpl(addr);
       } else {
-        String name = requestor.toString();
+        String name = requestor.toString() + " hash: " + requestor.hashCode();
         return new QuiescenceReportServiceImpl(name);
       }
     }
@@ -462,16 +462,24 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
   }
 
+  // FIXME: Need a factory so can ensure unique requestorNames?
+
   private class QuiescenceReportServiceImpl implements QuiescenceReportService {
     protected QuiescenceState quiescenceState = null;
-    private boolean isQuiescent = true; // We haven't been counted as not quiescent yet
+
+    // We haven't been counted as not quiescent yet
+    // This tracks whether this particular client of the QRS says it is quiescent, where the Distributor
+    // is just one
+    private boolean isServiceImplQuiescent = true; 
     private String requestorName;
 
+    // constructor used only by NodeAgent
     public QuiescenceReportServiceImpl(MessageAddress agent) {
       quiescenceState = getQuiescenceState(agent); // Drop messageAttributes
       this.requestorName= agent.toString();
     }
 
+    // requestorName is the toString on the service requestor object, plus uniqueID
     public QuiescenceReportServiceImpl(String requestorName) {
       this.requestorName= requestorName;
     }
@@ -506,32 +514,53 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * agent is quiescent.
      **/
     public void setQuiescentState() {
-      // RFE 3760: Remove this requestor from qState's list of blockers
-      if (isQuiescent) return;
-      if (logger.isDebugEnabled()) {
-        logger.debug("setQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
+      if (quiescenceState == null) {
+        throw new RuntimeException("AgentIdentificationService has not been set.");
       }
-      isQuiescent = true;
-      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true, requestorName);
+
+      // RFE 3760: Remove this requestor from qState's list of blockers
+      if (isServiceImplQuiescent) {
+	// If this serviceImpl already thinks it is quiescent, no need to say so twice
+	if (logger.isDebugEnabled())
+	  logger.debug("setQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName() + ", but this ServiceImpl already quiescent.");
+      } else {
+	if (logger.isDebugEnabled()) {
+	  logger.debug("setQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
+	}
+	isServiceImplQuiescent = true;
+	QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true, requestorName);
+      }
     }
 
     /**
-     * Specifies that this agent is no longer quiescent.
+     * Specifies that this agent is no longer quiescent. That is, this client of the QRS (requestor)
+     * is saying that it has work to do, and therefore the agent cannot be quiescent.
      **/
     public void clearQuiescentState() {
       if (quiescenceState == null) {
         throw new RuntimeException("AgentIdentificationService has not been set.");
       }
+
       // RFE 3760: Add this requestor to qState's list of blockers
       // [Commented this out so can track all blockers of quiescence...]
-      //      if (!isQuiescent) return;
-      if (logger.isDebugEnabled()) {
-        logger.debug("clearQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
+      if (!isServiceImplQuiescent) {
+	// FIXME: Without this return, 2 requestors with same name can conflict - second will make both non-q
+	// but also it only takes 1 to make both Q
+	// return;
+
+	// If this serviceImpl already thinks it is blocking quiescence, no need to say so twice
+	if (logger.isDebugEnabled()) {
+	  logger.debug("clearQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName() + ", but this ServiceImpl already not quiescent.");
+	}
+      } else {
+	if (logger.isDebugEnabled()) {
+	  logger.debug("clearQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
+	}
+	isServiceImplQuiescent = false;
+	QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false, requestorName);
       }
-      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false, requestorName);
-      isQuiescent = false;
     }
-  }
+  } // end of QuiescenceReportServiceImpl
 
   private synchronized MessageAddress[] listQuiescenceStates() {
     // return a new collection from quiescenceStates.keySet();
