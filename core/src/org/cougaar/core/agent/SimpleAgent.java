@@ -646,7 +646,7 @@ implements AgentIdentityClient
 
     // get event service
     eventService = (EventService)
-      getServiceBroker().getService(
+      getChildServiceBroker().getService(
           this, EventService.class, null);
 
     if (log.isInfoEnabled()) {
