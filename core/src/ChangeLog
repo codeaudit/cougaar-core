@@ -1,3 +1,20 @@
+2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	Redo DeletionSchedulePolicy using RuleParameters exclusively.
+	Explicit scheduled deletion times are LongRuleParameters that have
+	a name with a particular prefix. The rest of the name is the time
+	of the deletion in a particular format.
+
+	* org/cougaar/domain/planning/ldm/policy/Policy.java:
+	Add Remove method so RuleParameters can be removed.
+
+	* org/cougaar/core/blackboard/BlackboardService.java:
+	Add persistNow() method to force a persistence snapshot to be
+	taken. Using this method requires care because it must manipulate
+	the transaction state of the plugin. See the caution in the
+	javadoc.
+	
 2001-08-13  Beth DePass <bdepass@bbn.com>
 	* PrototypeRegistry*, ClusterImpl
 	Hook back in Prototype Provider, Property Provider and Cached
