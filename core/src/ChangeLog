@@ -1,3 +1,8 @@
+2001-02-21  Michael Thome  <mthome@bbn.com>
+
+	* DBConnectionPool
+	Add control parameters and debugging support.
+
 2001-02-15  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* DeletionPlugIn

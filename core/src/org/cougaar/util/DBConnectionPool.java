@@ -1,9 +1,19 @@
-/**
+/*
+ * <copyright>
+ *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ *  Raytheon Systems Company (RSC) Consortium).
+ *  This software to be used only in accordance with the
+ *  COUGAAR licence agreement.
+ * </copyright>
+ */
+
+/*
+ * Originally from delta/fgi package mil.darpa.log.alpine.delta.plugin;
  * Copyright 1997 BBN Systems and Technologies, A Division of BBN Corporation
  * 10 Moulton Street, Cambridge, MA 02138 (617) 873-3000
- **/
+ */
 
-// originally from delta/fgi package mil.darpa.log.alpine.delta.plugin;
 package org.cougaar.util;
 
 import java.sql.*;
@@ -12,7 +22,17 @@ import java.util.*;
 /**
  * A database connection manager that creates pools of db connections that can
  * be reused to improve performance.
- */
+ * 
+ * System properties:
+ * org.cougaar.util.DBConnectionPool.maxConnections=10  number of simulataneous 
+ * connections allowed per pool.
+ * org.cougaar.util.DBConnectionPool.timeoutCheckInterval=60000 milliseconds between
+ * checks to see if any old connections should be collected.
+ * org.cougaar.util.DBConnectionPool.timeout=120000 milliseconds that a connection
+ * must be idle in order to be collected by the reaper.
+ * org.cougaar.util.DBConnectionPool.verbosity=0 should verbose debugging
+ * messages be turned on? 1=progress, 2=warnings, 3=loud progress
+ **/
 public class DBConnectionPool {
 
   /**
@@ -27,23 +47,43 @@ public class DBConnectionPool {
    */
   private static final String SEP = "#";
 
-  /**
-   * The number of cursors created after which we always release the
-   * connection. This tries to avoid an accumulation of never released
-   * cursors as the pooled connection is re-used.
-   */
-  private static final int MAX_CONNECTIONS = 10;
-
-  /**
-   * How often to run the timeout out checker.
-   */
+  /** How often to run the timeout out checker, in milliseconds. */
   private static long TIMEOUT_CHECK_INTERVAL = 60*1000L;
 
   /**
    * How long to keep old connections before closing and releasing
    * them.
+   *
+   * The default value may be controlled with the
+   * System Property org.cougaar.util.DBConnectionPool.maxConnections
    */
   private static long TIMEOUT = 120*1000L;
+
+  /**
+   * The number of cursors created after which we always release the
+   * connection. This tries to avoid an accumulation of never released
+   * cursors as the pooled connection is re-used.  Default is 5.
+   */
+  private static int MAX_CONNECTIONS = 5;
+
+  /** 
+   * Is debugging enabled?  Defaults to 0 (quiet).  1=progress, 2=warnings, 3=loudprogress
+   **/
+  private static int VERBOSITY = 0;
+
+  static {
+    String prefix = "org.cougaar.util.DBConnectionPool.";
+
+    TIMEOUT_CHECK_INTERVAL = (Long.valueOf(System.getProperty(prefix+"timeoutCheckInterval", 
+                                                              String.valueOf(TIMEOUT_CHECK_INTERVAL)))).longValue();
+    TIMEOUT = (Long.valueOf(System.getProperty(prefix+"timeout", 
+                                               String.valueOf(TIMEOUT)))).longValue();
+    MAX_CONNECTIONS = (Integer.valueOf(System.getProperty(prefix+"maxConnections", 
+                                                          String.valueOf(MAX_CONNECTIONS)))).intValue();
+
+    VERBOSITY = (Integer.valueOf(System.getProperty(prefix+"verbosity", 
+                                                    String.valueOf(VERBOSITY)))).intValue();
+  }
 
   /**
    * Record the key for this pool for debugging purposes.
@@ -53,11 +93,23 @@ public class DBConnectionPool {
   /**
    * Construct a new pool. Record the key for debugging.
    */
+  private DBConnectionPool(String key, int max_connections) {
+    this.key = key;
+    this.maxConnections = (max_connections>0?max_connections:MAX_CONNECTIONS);
+  }
+
+  /**
+   * Construct a new pool. Record the key for debugging.
+   */
   private DBConnectionPool(String key) {
     this.key = key;
+    this.maxConnections = MAX_CONNECTIONS;
   }
 
   int entryCounter = 0;
+
+  /** how many clients are waiting for a connection in this pool? **/
+  int waitingCounter = 0;
 
   /**
    * Inner class to record individual connections
@@ -1359,29 +1411,56 @@ public class DBConnectionPool {
   private synchronized Connection findConnection(String dbURL, String user, String passwd)
     throws SQLException 
   {
-    while (true) {
-      for (Iterator e = entries.iterator(); e.hasNext(); ) {
-	DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
-	if (!entry.inUse) {
-	  entry.inUse = true;
-	  return entry.getPoolConnection();
-	}
+    boolean waitingP = false;
+    try {
+      while (true) {
+        for (Iterator e = entries.iterator(); e.hasNext(); ) {
+          DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
+          if (!entry.inUse) {
+            entry.inUse = true;
+            return entry.getPoolConnection();
+          }
+        }
+        if (maxConnections < 0 || entries.size() < maxConnections) {
+          Connection conn = DriverManager.getConnection(dbURL, user, passwd);
+          if (maxConnections < 0) {
+            maxConnections = conn.getMetaData().getMaxConnections();
+            if (maxConnections < 1 || maxConnections > MAX_CONNECTIONS) {
+              maxConnections = MAX_CONNECTIONS;
+            }
+          }
+          DBConnectionPoolEntry entry = new DBConnectionPoolEntry(conn);
+          entries.add(entry);
+          if (waitingP) {
+            waitingCounter--;
+            if (VERBOSITY>=1) {
+              if (VERBOSITY>=3) {
+                System.err.println("DBConnectionPool finished waiting for "+key+" ("+waitingCounter+")");
+              } else {
+                System.err.print("f");
+              }
+            }
+          }
+        } else {
+          try {
+            if (!waitingP) {
+              waitingP = true;
+              waitingCounter++;
+              if (VERBOSITY>=1) {
+                if (VERBOSITY>=3) {
+                  System.err.println("DBConnectionPool waiting for "+key+" ("+waitingCounter+")");
+                } else {
+                  System.err.print("w");
+                }
+              }
+            }
+            wait();
+          } catch (InterruptedException e) { }
+        }
       }
-      if (maxConnections < 0 || entries.size() < maxConnections) {
-	Connection conn = DriverManager.getConnection(dbURL, user, passwd);
-	if (maxConnections < 0) {
-	  maxConnections = conn.getMetaData().getMaxConnections();
-	  if (maxConnections < 1 || maxConnections > MAX_CONNECTIONS) {
-	    maxConnections = MAX_CONNECTIONS;
-	  }
-	}
-	DBConnectionPoolEntry entry = new DBConnectionPoolEntry(conn);
-	entries.add(entry);
-      } else {
-	try {
-	  wait();
-	} catch (InterruptedException e) { }
-      }
+    } catch (SQLException sqle) {
+      if (VERBOSITY>=2) System.err.println("DBConnectionPool "+key+" saw: "+sqle);
+      throw sqle;
     }
   }
 
@@ -1406,10 +1485,12 @@ public class DBConnectionPool {
 	}
       }
     }
+    if (VERBOSITY>=3) System.err.println("DBConnectionPool "+key+" dropping "+entriesToDelete.size()+" entries");
     for (Iterator e = entriesToDelete.iterator(); e.hasNext(); ) {
       DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
       delete(entry);
     }
+    
   }
 
   //
