@@ -20,8 +20,9 @@
  */
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StreamTokenizer;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
@@ -57,12 +58,12 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     OperatingModePolicy[] tempPolicies = null;
     String policyFileName = getParameters().iterator().next().toString();
     try {
-      InputStream is = getConfigFinder().open(policyFileName);
+      Reader r = new InputStreamReader(getConfigFinder().open(policyFileName));
       try {
-        Parser p = new Parser(new StreamTokenizer(is));
+        Parser p = new Parser(new StreamTokenizer(r));
         tempPolicies = p.parseOperatingModePolicies();
       } finally {
-        is.close();
+        r.close();
       }
     } catch (Exception e) {
       logger.error("Error parsing policy file", e);
