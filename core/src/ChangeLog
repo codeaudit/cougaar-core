@@ -1,3 +1,10 @@
+2001-02-27  Todd Wright  <twright@bbn.com>
+
+	* PluginAdapter:
+	Fixed "load()" race-condition bug, where blackboard watcher
+	could be triggered before the trigger-handler was set.
+
+
 2002-01-29  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/domain/planning/plugin/AssetDataDBReader.java:
