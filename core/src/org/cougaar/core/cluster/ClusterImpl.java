@@ -376,7 +376,6 @@ public class ClusterImpl
         add(agentState.children[i]);
       }
     } else {
-      // TWRIGHT
       if (Boolean.getBoolean("org.cougaar.core.servlet.enable")) {
         // start up the Agent-level ServletService component
         ComponentDescription nsscDesc = 
@@ -391,7 +390,6 @@ public class ClusterImpl
               null); //policy
         super.add(nsscDesc);
       }
-      // TWRIGHT
 
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       add(new ComponentDescription(getClusterIdentifier()+"Blackboard",
