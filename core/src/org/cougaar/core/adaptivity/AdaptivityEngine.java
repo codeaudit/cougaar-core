@@ -243,6 +243,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
         getConditions();
         if (debug) logger.debug("got " + smMap.size() + " conditions");
       } else if (operatingModeListenerSubscription.hasChanged()) {
+	if (debug) logger.debug("operating mode subscription changed");
       } else if (timerExpired()) {
         if (debug) logger.debug("missing condition timer expired");
       } else {
