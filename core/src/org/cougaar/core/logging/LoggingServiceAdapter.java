@@ -10,7 +10,11 @@
 
 package org.cougaar.core.logging;
 
-/** a Service for getting at Logging information
+/** 
+ * This class is to make binding of the LoggingServiceImpl
+ * easier.
+ * @see LoggingService
+ * @see LoggingServiceProvider
  **/
 
 public class LoggingServiceAdapter implements LoggingService {

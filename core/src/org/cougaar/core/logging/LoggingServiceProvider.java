@@ -32,15 +32,56 @@ import java.util.Hashtable;
 import java.io.OutputStream;
 import java.io.IOException;
 
-/** a Service for getting at Logging information
+/**
+ * LoggingServiceProvider is a ServiceProvider which provides two 
+ * services. It provides a LoggingService which allows an object to
+ * log messages. It also provides a LoggingControlService which 
+ * determines how those messages will be displayed and controls what
+ * level of messages are displayed. The point of this is to abstract
+ * away how log information is displayed when writting log statements,
+ * but to also allow those who are interested in this display to 
+ * have fine control over it. Logging display tools will be the 
+ * primary users of LoggingControlService, but it may be that some
+ * plugins will want to adjust logging levels when certain conditions
+ * are detected i.e. once an error is detected you may want to to log
+ * more detailed information.
+ * <p>
+ * LoggingServiceProvider currently uses log4j as a logging utility 
+ * and was built with log4j in mind. Note that JSR47, the logging
+ * utility soon to be shipped with java by Sun, is very similar in
+ * structure to log4j. LoggingServiceProvider should be the only class
+ * that is dependant on the lo4j jar, and switching to another logging
+ * utility should consist of rewritting only this class.
  **/
 
 public class LoggingServiceProvider implements ServiceProvider {
   private ClusterServesPlugIn cluster;
 
+  /**
+   * LoggingServiceProvider creates the ServiceProvider. This should
+   * be done be the component that wishes to provide the service and
+   * should be handled by the ServiceBroker. LoggingServiceProvider
+   * takes in the enviroment variables and could easily use them to 
+   * adjust the way logging is done. This means of control exists in
+   * addition to PSP bsed contol. Currently environment variables are
+   * ignored and a default logging setup is used.
+   * @param env The environment variables which can be used to configure
+   *            how logging is performed.
+
   public LoggingServiceProvider(Hashtable env) {
     BasicConfigurator.configure();
   }
+
+  /**
+   * Implementation of ServiceProvider method. The requestor is used
+   * for log4j category purposes and the service class can be either
+   * LoggingService of LoggingControlService.
+   * @param sb The ServiceBroker controlling this service
+   * @param requestor The object requesting the service used to mark
+   *                  the object category
+   * @param serviceClass The service requested. It will be either
+   *                     LoggingService or LoggingControlService.
+   */
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (LoggingService.class.isAssignableFrom(serviceClass)) {
@@ -52,9 +93,25 @@ public class LoggingServiceProvider implements ServiceProvider {
     }
   }
 
+  /**
+   * Implementation of ServiceProvider abstract method. Currently does
+   * nothing because no resources need to be released.
+   * @param sbThe ServiceBroker controlling this service
+   * @param requestor The object requesting the service used to mark
+   *                  the object category
+   * @param serviceClass The service requested. It will be either
+   *                     LoggingService or LoggingControlService.
+   * @param service The actual service being released
+   */
+
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
   }
 
+  /**
+   * Private utility to change between int defined by LoggingService
+   * and Priority class of log4j.
+   * @param level An integer from LoggingService.
+   */
   private Priority convertIntToPriority(int level) {
     switch (level) {
     case LoggingService.DEBUG   : return Priority.toPriority(Priority.DEBUG_INT);
@@ -66,7 +123,11 @@ public class LoggingServiceProvider implements ServiceProvider {
       return null;
     }
   }
-
+  /**
+   * Private utility to change between int defined by LoggingService
+   * and Priority class of log4j.
+   * @param level A log4j Priority
+   */
   private int convertPriorityToInt(Priority level) {
     switch (level.toInt()) {
     case Priority.DEBUG_INT: return LoggingService.DEBUG;
@@ -79,13 +140,37 @@ public class LoggingServiceProvider implements ServiceProvider {
     }
   }
 
+  /**
+   * This is an log4j based implementation of LoggingService. One
+   * important note is that when this ServiceImpl is created it
+   * creates a log4j Category based on the class passed in. If 
+   * subclasses use the same LoggingServiceImpl as the superclass
+   * they will have the same log4j Category. This may possibly
+   * cause confusion. To avoid this each object can get its own
+   * instance of LogginServiceImpl or the class and method name
+   * can be passed in.
+   */
   private class LoggingServiceImpl implements LoggingService {
     Category log4jCategory;
 
+    /** 
+     * Constructor which uses the object requesting the service
+     * to form a log4j Category. See notes above.
+     * @param requestor Object requesting this service.
+     */
     public LoggingServiceImpl(Object requestor) {
       log4jCategory = Category.getInstance(requestor.getClass());
     }
 
+    /**
+     * Records a Debug level log message.
+     * @param s Debug message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void debug(String s) { log4jCategory.debug(s); }
     public void debug(String s, Exception e) { log4jCategory.debug(s,e); }
     public void debug(String s, String sourceClass, String sourceMethod) { 
@@ -110,6 +195,15 @@ public class LoggingServiceProvider implements ServiceProvider {
       }
     }
 
+    /**
+     * Records a Info level log message.
+     * @param s Info message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void info(String s) { log4jCategory.info(s); }
     public void info(String s, Exception e) { log4jCategory.info(s,e); }
     public void info(String s, String sourceClass, String sourceMethod) { 
@@ -134,6 +228,15 @@ public class LoggingServiceProvider implements ServiceProvider {
       }
     }
 
+    /**
+     * Records a Warning level log message.
+     * @param s Warning message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void warning(String s) { log4jCategory.warn(s); }
     public void warning(String s, Exception e) { log4jCategory.warn(s,e); }
     public void warning(String s, String sourceClass, String sourceMethod) { 
@@ -157,7 +260,16 @@ public class LoggingServiceProvider implements ServiceProvider {
 	}
       }
     }
-
+    
+    /**
+     * Records a Error level log message.
+     * @param s Error message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void error(String s) { log4jCategory.error(s); }
     public void error(String s, Exception e) { log4jCategory.error(s,e); }
     public void error(String s, String sourceClass, String sourceMethod) { 
@@ -179,6 +291,15 @@ public class LoggingServiceProvider implements ServiceProvider {
       }
     }
 
+    /**
+     * Records a Fatal level log message.
+     * @param s Fatal message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void fatal(String s) { log4jCategory.fatal(s); }
     public void fatal(String s, Exception e) { log4jCategory.fatal(s,e); }
     public void fatal(String s, String sourceClass, String sourceMethod) { 
@@ -200,11 +321,27 @@ public class LoggingServiceProvider implements ServiceProvider {
       }
     }
    
-    /* These exist as checks you can put around logging messages to avoid costly String creations */
+    /**
+     * Mode query messages exist and should be used when a log message consists
+     * a string that is costly to create. Surrounding log messages with these
+     * queries will prevent a performance hit created by potentially complex
+     * calls and extensive string creation.
+     */
     public boolean isDebugEnabled() { return log4jCategory.isDebugEnabled(); }
     public boolean isInfoEnabled() { return log4jCategory.isInfoEnabled(); }
     public boolean isWarningEnabled() { return log4jCategory.isEnabledFor(Priority.WARN); }
 
+    /**
+     * Records a log message of arbitrary priority level.
+     * @param level An integer describing the log level as defined in 
+     *              LoggingService
+     * @param s Log message
+     * @param e An exception that has been generated
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     */ 
     public void log(int level, String s) { 
       log4jCategory.log(convertIntToPriority(level),s); 
     }
@@ -234,18 +371,32 @@ public class LoggingServiceProvider implements ServiceProvider {
       }
     }
 
-    /* if condition is true then this will be logged as an Error (default) otherwise it will be ignored*/
+    /**
+     * These assets can be used to attach a conditional to a log message. If the 
+     * conditional passed in is false a log message will be generated. Unless 
+     * a specific log level is passed in it will default to an error level log
+     * message. If the conditional is true no further action will be taken.
+     * @param condition A boolean conditional which if false causes a log message
+     *                  to be generated and does nothing if true.
+     * @param s Log message
+     * @param sourceClass If you want class and method information added to 
+     *                    the log message you can add the class name.
+     * @param sourceMethod If you want class and method information added to 
+     *                     the log message you can add the method.
+     * @param level An integer describing the log level as defined in 
+     *              LoggingService
+     */
     public void assert(boolean condition, String s) {
-      if (condition) error(s);
+      if (!condition) error(s);
     }    
     public void assert(boolean condition, String s, int level) {
-      if (condition) log(level,s);
+      if (!condition) log(level,s);
     }
     public void assert(boolean condition, String s, String sourceClass, String sourceMethod) {
-      if (condition) error(s,sourceClass,sourceMethod);
+      if (!condition) error(s,sourceClass,sourceMethod);
     }
     public void assert(boolean condition, String s, String sourceClass, String sourceMethod, int level) {
-      if (condition) log(level,s,sourceClass,sourceMethod);
+      if (!condition) log(level,s,sourceClass,sourceMethod);
     }
 
   }
