@@ -78,7 +78,7 @@ public class ComplainingLP
       Object found = logplan.findUniqueObject(objuid);
       boolean thereP = (found != null);
       if ((! thereP) && o.isChange() && level >= levelERROR)
-        complain("change of non-existent object "+obj);
+        complain("change of non-existent object "+obj, obj);
 
       /*
         // cannot do these because LPs are applied after subscription updates.
@@ -89,11 +89,13 @@ public class ComplainingLP
         complain("redundant add of object "+obj);
       */
       if (thereP && found != obj && level >= levelWARN)
-        complain("action="+o.getAction()+" on "+obj+" which is not == "+found);
+        complain("action="+o.getAction()+" on "+obj+" which is not == "+found, obj);
 
     }
   }
-  private void complain(String complaint) {
+  private void complain(String complaint, Object obj) {
     System.err.println("Warning: "+cid+" ComplainingLP observed "+complaint);
+    PublishHistory history = logplan.getHistory();
+    if (history != null) history.dumpStacks(obj);
   }
 }
