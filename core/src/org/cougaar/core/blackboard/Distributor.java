@@ -54,8 +54,11 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
+
+import EDU.oswego.cs.dl.util.concurrent.Mutex;
 
 /**
  * The Distributor coordinates blackboard transactions, subscriber
@@ -77,6 +80,9 @@ import org.cougaar.util.log.Logging;
  * @property org.cougaar.core.agent.keepPublishHistory
  *   if set to <em>true</em>, enables tracking of
  *   all publishes.  Extremely expensive.
+ * @property org.cougaar.core.agent.singleTransactionModel
+ *   Enables a blackboard/agent run model where only one
+ *   transaction may be open at a given time.
  **/
 final class Distributor {
 
@@ -148,6 +154,13 @@ final class Distributor {
       }
     };
 
+  private static final String SINGLE_TRANSACTION_PROP = 
+    "org.cougaar.core.agent.singleTransactionModel";
+  /** The default setting for single transaction model **/
+  public static final boolean DEFAULT_SINGLE_TRANSACTION = false;
+  private static final boolean SINGLE_TRANSACTION = 
+    PropertyParser.getBoolean(SINGLE_TRANSACTION_PROP, DEFAULT_SINGLE_TRANSACTION);
+
   //
   // these are set in the constructor and are final:
   //
@@ -184,7 +197,7 @@ final class Distributor {
   private boolean dummyPersistence;
 
   /** The reservation manager for persistence **/
-  private static ReservationManager persistenceReservationManager =
+  private static final ReservationManager persistenceReservationManager =
       new ReservationManager(PERSISTENCE_RESERVATION_TIMEOUT);
 
   //
@@ -192,6 +205,31 @@ final class Distributor {
   //
 
   private final Object transactionLock = new Object();
+
+  /** when singleTransactionModel is enabled, transactionMutex is
+   * locked for the duration of the transaction.  
+   **/
+  private final Mutex transactionMutex = new Mutex();
+
+  /** Acquire the transaction mutex.  No-op if not running in SINGLE_TRANSACTION mode.
+   **/
+  protected final void acquireTransactionMutex() {
+    if (SINGLE_TRANSACTION) {
+      try {
+        transactionMutex.acquire();
+      } catch (InterruptedException ie) {
+        logger.error("Interrupted while acquiring transactionMutex", ie);
+      }
+    }
+  }
+
+  /** Release the transaction mutex. No-op if not running in SINGLE_TRANSACTION mode.
+   **/
+  protected final void releaseTransactionMutex() {
+    if (SINGLE_TRANSACTION) {
+      transactionMutex.release();
+    }
+  }
 
   // the following are locked under the transactionLock:
 
@@ -284,6 +322,14 @@ final class Distributor {
     if (logger.isInfoEnabled()) {
       logger.info("Distributor started");
     }
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("transaction options: "+
+                   "deferCommit="+ ActiveSubscriptionObject.deferCommit+
+                   ", singleTransaction="+ SINGLE_TRANSACTION);
+    }
+
+
     this.sb = sb;
     nodeBusyService = (NodeBusyService)
       sb.getService(this, NodeBusyService.class, null);
@@ -811,6 +857,7 @@ final class Distributor {
       // execute any pending DelayedLPActions
       outbox = blackboard.executeDelayedLPActions();
     }
+    Blackboard.getTracker().clearLocalSet();
 
     //      while (outbox != null && outbox.size() > 0) {
     //        outboxes.add(outbox);
@@ -1173,7 +1220,7 @@ final class Distributor {
   public void invokeABAChangeLPs(Set communities) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    synchronized (distributorLock) {
+    synchronized (transactionLock) { 
       try {
         blackboard.startTransaction();
         blackboard.invokeABAChangeLPs(communities);
@@ -1260,6 +1307,9 @@ final class Distributor {
   public void startTransaction() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
+
+    acquireTransactionMutex();
+
     synchronized (transactionLock) {
       while (persistFlags != 0) {
         try {
@@ -1308,6 +1358,9 @@ final class Distributor {
         }
       }
     }
+
+    releaseTransactionMutex();
+
     if (doIt) {
       doPersistence(false, false);
       if (logger.isInfoEnabled()) {
