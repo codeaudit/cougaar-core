@@ -66,12 +66,24 @@ import org.cougaar.util.PropertyParser;
  * @property org.cougaar.core.load.planning
  *   If enabled, the domain manager will load the planning-specific
  *   PlanningDomain.  See bug 2522.  Default <em>true</em>
+ *
+ * @property org.cougaar.core.domain.config.enable
+ *   Enable the "-Dorg.cougaar.core.domain.config.filename" option
+ *   to read the <i>LDMDomains.ini</i> file.  Defaults to <em>true</em>.
+ *
+ * @property org.cougaar.core.domain.config.filename
+ *   The domain manager will read the specified ".ini" configuration
+ *   file (using the config finder) to load domains.  See bug 2977.
+ *   Defaults to <i>LDMDomains.ini</i>.
  */
 public class DomainManager 
 extends ContainerSupport
 {
 
-  private static final String FILENAME = "LDMDomains.ini";
+  private static final String FILENAME = 
+    (PropertyParser.getBoolean("org.cougaar.core.domain.config.enable", true) ?
+     System.getProperty("org.cougaar.core.domain.config.filename", "LDMDomains.ini") :
+     null);
 
   private final static String PREFIX = "org.cougaar.domain.";
   private final static int PREFIXLENGTH = PREFIX.length();
@@ -672,6 +684,9 @@ extends ContainerSupport
   }
   
   private void initializeFromConfigFiles(List descs) {
+    if (FILENAME == null || FILENAME.equals("")) {
+      return;
+    }
     InputStream in = null;
     try {
       in = org.cougaar.util.ConfigFinder.getInstance().open(
