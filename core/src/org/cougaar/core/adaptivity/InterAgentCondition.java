@@ -170,17 +170,29 @@ public class InterAgentCondition
 
   /**
    * Update with new content. The only part of the source content used
-   * is the value of the operating mode.
+   * is the value of the operating mode.  This will accept an InterAgentOperatingMode
+   * or an InterAgentCondition as the content.  Anything else will cause a ClassCastException.
    * @return true if the update changed the Relay. The LP should
    * publishChange the Relay. This implementation returns true only
    * if the new value differs from the current value.
    **/
   public int updateContent(Object content, Relay.Token token) {
     if (token != owner) throw new IllegalArgumentException("Not owner");
-    InterAgentCondition newCond = (InterAgentCondition) content;
-    if (getValue().compareTo(newCond.getValue()) != 0) {
-      setValue(newCond.getValue());
-      return Relay.CONTENT_CHANGE;
+    if (content instanceof InterAgentOperatingMode) {
+      InterAgentOperatingMode newMode = (InterAgentOperatingMode) content;
+      if (getValue().compareTo(newMode.getValue()) != 0) {
+        setValue(newMode.getValue());
+        return Relay.CONTENT_CHANGE;
+      }
+    } else {
+      // In this case this should be an InterAgentCondition.  This currently has a Protected
+      // contructor, so this is probably not the case, but it used this way in
+      // CPURemoteTestPlugin. Let it throw the ClassCastException if it's anything else.
+      InterAgentCondition newCond = (InterAgentCondition) content;
+      if (getValue().compareTo(newCond.getValue()) != 0) {
+        setValue(newCond.getValue());
+        return Relay.CONTENT_CHANGE;
+      }
     }
     return Relay.NO_CHANGE;
   }
