@@ -22,28 +22,24 @@
 package org.cougaar.core.adaptivity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.qos.metrics.MetricsService;
+import org.cougaar.core.qos.metrics.StandardVariableEvaluator;
+import org.cougaar.core.qos.metrics.VariableEvaluator;
 import org.cougaar.core.service.ConditionService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.PlaybookReadService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.qos.metrics.Metric;
-import org.cougaar.core.qos.metrics.MetricsService;
-import org.cougaar.core.qos.metrics.VariableEvaluator;
-import org.cougaar.core.qos.metrics.StandardVariableEvaluator;
 
 /**
  * Sets OperatingModes for components based on plays in the playbook

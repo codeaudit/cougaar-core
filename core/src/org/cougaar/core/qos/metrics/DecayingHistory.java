@@ -21,8 +21,8 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 public abstract class DecayingHistory
 {

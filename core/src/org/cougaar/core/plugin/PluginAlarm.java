@@ -6,11 +6,8 @@
  */
 package org.cougaar.core.plugin;
 
-import java.util.Date;
-
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.service.BlackboardService;
-import org.cougaar.util.log.Logger;
 
 /**
  * @author RTomlinson

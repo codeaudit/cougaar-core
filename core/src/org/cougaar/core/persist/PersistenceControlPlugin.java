@@ -23,16 +23,11 @@ package org.cougaar.core.persist;
 
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.adaptivity.OperatingModeImpl;
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.blackboard.Subscription;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.util.UnaryPredicate;
 

@@ -27,15 +27,15 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.TimeZone;
-import javax.servlet.Servlet;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.ServletService;
-import org.cougaar.core.component.ServiceProvider;
 
 public class PersistenceMetricsServlet extends ServiceUserPlugin {
   private static final String PERSIST_NOW = "Persist Now";

@@ -25,9 +25,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
+
 import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;
-import org.cougaar.util.UnaryPredicate;
 
 /**
  * A subscription which collects EnvelopeMetrics.

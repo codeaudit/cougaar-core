@@ -21,10 +21,9 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.mts.MessageAddress;
 import java.util.Map;
+
+import org.cougaar.core.component.Service;
 
 public interface QuiescenceReportService extends Service {
   /**

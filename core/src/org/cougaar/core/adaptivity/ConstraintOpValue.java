@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /** 
  * A phrase fragment used to express a boolean comparison and a set of

@@ -24,6 +24,7 @@ package org.cougaar.core.domain;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
 import org.cougaar.core.blackboard.ChangeEnvelopeTuple;
 import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveMessage;

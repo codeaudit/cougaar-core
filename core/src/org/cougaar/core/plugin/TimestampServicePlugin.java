@@ -21,12 +21,10 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.TimestampEntry;
 import org.cougaar.core.blackboard.TimestampSubscription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.BlackboardTimestampService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;

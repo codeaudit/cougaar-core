@@ -21,12 +21,11 @@
 
 package org.cougaar.core.persist;
 
-import java.sql.Connection;
 import java.util.List;
+
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.component.ServiceBroker;
 
 /**
  * The public interface for persistence. This is the old interface to

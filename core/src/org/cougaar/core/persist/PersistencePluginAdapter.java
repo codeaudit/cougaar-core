@@ -21,10 +21,8 @@
 
 package org.cougaar.core.persist;
 
-import java.sql.Connection;
 import org.cougaar.core.adaptivity.OMCRange;
 import org.cougaar.core.adaptivity.OMCRangeList;
-import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.Logger;
 
 /**

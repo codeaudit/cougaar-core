@@ -21,17 +21,21 @@
 
 package org.cougaar.core.plugin;
 
-import java.text.*;
-import java.util.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
 
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-import org.cougaar.util.*;
-import org.cougaar.core.plugin.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.agent.service.alarm.*;
+import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ServletService;
 
 /**
  * Servlet plugin that implements a simple controller for setting the

@@ -21,10 +21,7 @@
 
 package org.cougaar.core.mts;
 
-import org.cougaar.core.service.*;
-import org.cougaar.core.node.*;
-
-import java.io.*;
+import java.io.Externalizable;
 import java.net.URI;
 
 /**

@@ -22,7 +22,6 @@
 package org.cougaar.core.adaptivity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -30,13 +29,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.util.UID;
 import org.cougaar.multicast.AttributeBasedAddress;
 
 /**

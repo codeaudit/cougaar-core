@@ -21,8 +21,8 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.Service;
 
 /**
  * Component model configuration service.

@@ -22,8 +22,10 @@
 package org.cougaar.core.service.community;
 
 import java.util.Collection;
+
 import javax.naming.directory.Attributes;
 import javax.naming.directory.ModificationItem;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 

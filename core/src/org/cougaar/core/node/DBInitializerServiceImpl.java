@@ -22,22 +22,16 @@
 package org.cougaar.core.node;
 
 import java.io.IOException;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.ResultSet;
-import java.sql.Connection;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
-import java.util.Collection;
 import java.util.Collections;
-import org.cougaar.util.DBProperties;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.cougaar.util.DBConnectionPool;
+import org.cougaar.util.DBProperties;
 import org.cougaar.util.Parameters;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

@@ -22,15 +22,14 @@
 package org.cougaar.core.plugin;
 
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ComponentRuntimeException;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.ConfigFinder;
 
 /**

@@ -21,11 +21,12 @@
 
 package org.cougaar.core.node;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.ResultSet;
-import java.sql.Connection;
 import java.util.Map;
+
 import org.cougaar.core.component.Service;
 
 /**

@@ -22,6 +22,7 @@
 package org.cougaar.core.domain;
 
 import java.util.Collection;
+
 import org.cougaar.core.blackboard.EnvelopeTuple;
 
 /** 

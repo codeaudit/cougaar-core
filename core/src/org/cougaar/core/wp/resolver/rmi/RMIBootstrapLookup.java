@@ -22,21 +22,17 @@
 package org.cougaar.core.wp.resolver.rmi;
 
 import java.net.URI;
-import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.RMISocketFactory;
+import java.util.HashMap;
+
 import org.cougaar.core.service.SocketFactoryService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.resolver.BootstrapLookupBase;
-import java.util.HashMap;
 
 /**
  * RMI-specific implementation of a bootstrap lookup.

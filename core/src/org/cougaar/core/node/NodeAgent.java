@@ -21,28 +21,23 @@
 
 package org.cougaar.core.node;
 
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-import org.cougaar.bootstrap.SystemProperties;
+
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
-import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
@@ -54,9 +49,7 @@ import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceServiceForAgent;
 import org.cougaar.core.persist.RehydrationData;
-import org.cougaar.core.plugin.PluginManager;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.core.service.QuiescenceReportService;

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.Serializable;
 
 /**
  * The creation time and most recent modification time for a

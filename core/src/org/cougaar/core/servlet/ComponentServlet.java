@@ -21,15 +21,20 @@
 
 package org.cougaar.core.servlet;
 
-import java.util.*;
-import java.net.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.service.*;
-import org.cougaar.util.*;
+import java.net.URLEncoder;
+import java.util.List;
+
+import javax.servlet.http.HttpServlet;
+
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.ServletService;
+import org.cougaar.util.GenericStateModel;
+import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.StateModelException;
 
 /**
  * Abstract base-class for a Component that is also a Servlet.

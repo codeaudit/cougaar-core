@@ -23,10 +23,8 @@ package org.cougaar.core.qos.metrics;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;

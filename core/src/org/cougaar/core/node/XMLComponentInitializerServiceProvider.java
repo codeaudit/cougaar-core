@@ -35,7 +35,6 @@ import java.util.Vector;
 
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
-import org.cougaar.core.node.ComponentInitializerService.InitializerException;
 import org.cougaar.util.log.*;
 import org.cougaar.util.ConfigFinder;
 

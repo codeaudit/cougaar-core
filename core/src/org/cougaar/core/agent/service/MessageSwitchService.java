@@ -21,7 +21,7 @@
 
 package org.cougaar.core.agent.service;
 
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;

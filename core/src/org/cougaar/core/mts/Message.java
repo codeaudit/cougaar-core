@@ -27,12 +27,6 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 
 /**
-*   imports
-**/
-import java.io.*;
-import java.util.*;
-
-/**
  *   Class Is Basic Structure for Alp Message
  *   <p>
  *   All forms of Messages in the Alp system are derived from this base class

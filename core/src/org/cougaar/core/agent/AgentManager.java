@@ -21,26 +21,22 @@
 
 package org.cougaar.core.agent;
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.cougaar.core.component.Component;
+
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.Node;
 import org.cougaar.core.node.ComponentInitializerService;
+import org.cougaar.core.node.Node;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /** A container for Agents.

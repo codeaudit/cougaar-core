@@ -21,12 +21,12 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * A component which creates and advertises a XMLComponentInitializerService

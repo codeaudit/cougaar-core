@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 public interface OperatingModeListener extends java.io.Serializable {
     void operatingModeChanged(OperatingMode m, Comparable oldValue);

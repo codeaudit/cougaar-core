@@ -22,8 +22,8 @@
 // Later this will move elsewhere...
 package org.cougaar.core.thread;
 
-import org.cougaar.util.CircularQueue;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.util.CircularQueue;
 
 public class RunnableQueue implements Runnable
 {

@@ -22,12 +22,9 @@
 package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.ConditionService;
-import org.cougaar.core.service.LoggingService;
 
 public class CPUTestPlugin extends ServiceUserPlugin {
   public static final String CPU_CONDITION_NAME = "CPUTestPlugin.CPU";

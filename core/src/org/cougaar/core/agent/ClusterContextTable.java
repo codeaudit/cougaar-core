@@ -22,6 +22,7 @@
 package org.cougaar.core.agent;
 
 import java.util.HashMap;
+
 import org.cougaar.core.mts.MessageAddress;
 
 /** Keep track of the Agents (Clusters) running in the 

@@ -21,8 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * An implementation of the most common, simple OperatingMode. Most

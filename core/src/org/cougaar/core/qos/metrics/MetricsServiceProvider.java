@@ -28,8 +28,8 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.ComponentInitializerService;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 
 public final class MetricsServiceProvider

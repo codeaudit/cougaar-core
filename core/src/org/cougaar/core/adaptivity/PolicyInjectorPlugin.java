@@ -21,19 +21,13 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Collection;
 import java.util.Iterator;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
-import org.cougaar.util.ConfigFinder;
 
 /**
  * Plugin that reads OperatingModePolicies from files and publishes them

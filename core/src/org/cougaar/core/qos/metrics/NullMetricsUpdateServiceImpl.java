@@ -21,8 +21,6 @@
 
 
 package org.cougaar.core.qos.metrics;
-import java.util.Properties;
-import java.util.Observer;
 
 /* Null Metric Update service that just sends upldates into oblivion
  */

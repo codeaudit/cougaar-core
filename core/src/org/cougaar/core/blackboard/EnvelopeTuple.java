@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.Serializable;
 
 /** EnvelopeTuple is a semi-private datastructure used as
  * the atomic member of an envelope.

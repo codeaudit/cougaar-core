@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 import org.cougaar.core.util.UniqueObject;
 
 interface Policy extends UniqueObject, java.io.Serializable {

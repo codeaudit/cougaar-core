@@ -22,6 +22,7 @@
 package org.cougaar.core.service;
 
 import java.util.Collection;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.util.UnaryPredicate;
 

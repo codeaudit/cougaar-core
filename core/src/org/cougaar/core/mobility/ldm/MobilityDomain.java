@@ -23,15 +23,11 @@ package org.cougaar.core.mobility.ldm;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.domain.DomainAdapter;
-import org.cougaar.core.domain.Factory;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;

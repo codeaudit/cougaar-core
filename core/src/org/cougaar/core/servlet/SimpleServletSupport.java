@@ -22,7 +22,7 @@
 package org.cougaar.core.servlet;
 
 import java.util.Collection;
-import java.util.List;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;

@@ -21,29 +21,19 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import java.io.IOException;
-import java.io.FileWriter;
-import java.io.PrintWriter;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.ResultSet;
 import java.sql.Connection;
-import java.util.Map;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Map;
 import java.util.Vector;
-import java.util.Collection;
-import java.util.Collections;
+
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-import org.cougaar.core.component.Service;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ComponentDescription;
 
 /**
  * Implementation of ComponentInitializerServiceProvider that reads

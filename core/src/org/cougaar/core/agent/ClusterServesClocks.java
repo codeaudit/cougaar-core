@@ -21,9 +21,9 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * <b>ONLY</b> for use by AlarmServiceProvider and 

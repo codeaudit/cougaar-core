@@ -20,14 +20,11 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.io.PrintStream;
 import java.util.Observable;
 import java.util.Observer;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.Schedulable;
 
 public class MetricsBlasterPlugin

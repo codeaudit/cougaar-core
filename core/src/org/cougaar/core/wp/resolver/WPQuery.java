@@ -22,6 +22,7 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.Map;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.WhitePagesMessage;

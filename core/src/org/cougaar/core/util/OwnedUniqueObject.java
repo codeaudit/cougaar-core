@@ -20,9 +20,10 @@
  */
 package org.cougaar.core.util;
 
-import org.cougaar.core.mts.MessageAddress;
-import java.io.ObjectOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Simple implementation of UniqueObject for objects that don't manage the UID themselves.

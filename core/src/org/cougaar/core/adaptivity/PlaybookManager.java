@@ -21,23 +21,19 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.core.service.PlaybookReadService;
 import org.cougaar.util.CircularQueue;
-import org.cougaar.util.ConfigFinder;
 
 /**
  * A container for the active Plays. The plays are initialized from a

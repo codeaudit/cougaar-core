@@ -1,14 +1,9 @@
 package org.cougaar.core.persist;
 
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.util.UnaryPredicate;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.Random;
-import java.util.Iterator;
+
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.util.UnaryPredicate;
 
 public class TestFullSnapshot extends ComponentPlugin {
   private static class Item implements Serializable {

@@ -23,9 +23,9 @@ package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.cougaar.core.component.ServiceBroker;

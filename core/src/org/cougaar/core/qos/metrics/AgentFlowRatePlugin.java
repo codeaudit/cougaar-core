@@ -21,18 +21,16 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.TrafficMatrixStatisticsService;
 import org.cougaar.core.mts.TrafficMatrix;
-import org.cougaar.core.thread.Schedulable;
+import org.cougaar.core.mts.TrafficMatrixStatisticsService;
+import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 
 /* Load this Plugin at LOW priority since it needs another plugin's service
  */

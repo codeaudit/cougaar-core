@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.util.Map;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.KeyedSet;

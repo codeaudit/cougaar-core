@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import org.cougaar.util.UnaryPredicate;
 
 /** 

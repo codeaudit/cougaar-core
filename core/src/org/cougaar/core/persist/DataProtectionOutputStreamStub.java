@@ -24,6 +24,7 @@ package org.cougaar.core.persist;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+
 import org.cougaar.core.service.DataProtectionKey;
 
 public class DataProtectionOutputStreamStub extends FilterOutputStream {

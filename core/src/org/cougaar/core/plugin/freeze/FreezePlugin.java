@@ -21,9 +21,6 @@
 
 package org.cougaar.core.plugin.freeze;
 
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.LoggingService;

@@ -21,15 +21,12 @@
 
 package org.cougaar.core.node;
 
-import java.io.PrintStream;
-import java.io.Serializable;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignedObject;
-import java.security.cert.Certificate;
+
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageSecurityManager;
 
 /** A useful MessageSecurityManager which signs each message, but depends on

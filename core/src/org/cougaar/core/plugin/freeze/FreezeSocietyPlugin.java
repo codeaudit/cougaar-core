@@ -23,21 +23,17 @@ package org.cougaar.core.plugin.freeze;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.Set;
-import java.util.Date;
 import java.text.SimpleDateFormat;
-import javax.servlet.Servlet;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Set;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.ServletService;
+
 import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.ListAllNodes;
 

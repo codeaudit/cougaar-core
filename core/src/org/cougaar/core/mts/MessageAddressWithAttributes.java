@@ -21,13 +21,12 @@
 
 package org.cougaar.core.mts;
 
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
-
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * A MessageAddress which includes MessageAttributes

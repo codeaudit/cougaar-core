@@ -25,6 +25,7 @@
 package org.cougaar.core.persist;
 
 import java.util.List;
+
 import org.cougaar.core.blackboard.MessageManager;
 
 /**

@@ -21,9 +21,10 @@
 
 package org.cougaar.core.agent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
+
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;

@@ -21,28 +21,25 @@
 
 package org.cougaar.core.agent;
 
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.agent.service.democontrol.DemoControlServiceProvider;
-import org.cougaar.core.blackboard.Blackboard; // inlined
+import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
@@ -51,22 +48,20 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mobility.MobileAgentService;
-import org.cougaar.core.mts.Attributes;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageHandler;
+import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.ComponentMessage;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
+import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceServiceForAgent;
-import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.RehydrationData;
-import org.cougaar.core.persist.PersistenceServiceComponent;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
@@ -78,14 +73,14 @@ import org.cougaar.core.service.identity.AgentIdentityService;
 import org.cougaar.core.service.identity.CrlReason;
 import org.cougaar.core.service.identity.TransferableIdentity;
 import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.service.wp.Callback;
 import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
-import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 

@@ -21,16 +21,15 @@
 
 package org.cougaar.core.servlet;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
+
 import javax.servlet.Servlet;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;

@@ -21,17 +21,16 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import java.io.PrintStream;
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
 import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
-import org.cougaar.util.log.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Control the advancement of Execution time. Execution time is a

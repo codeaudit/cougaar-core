@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /**
  * Defines boolean operator constants.

@@ -22,6 +22,7 @@
 package org.cougaar.core.service;
 
 import java.util.Set;
+
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;

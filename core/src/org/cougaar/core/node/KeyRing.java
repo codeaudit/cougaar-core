@@ -23,12 +23,10 @@ package org.cougaar.core.node;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.security.Key;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.cert.Certificate;
 import java.util.HashMap;
+
 import org.cougaar.util.ConfigFinder;
 
 /** A common holder for Security keystore information and functionality

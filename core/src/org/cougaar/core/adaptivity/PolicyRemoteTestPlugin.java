@@ -21,20 +21,12 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Collection;
-import java.util.Iterator;
+
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
-import org.cougaar.util.ConfigFinder;
 
 /**
  * Test plugin that reads policies from a file, creates 

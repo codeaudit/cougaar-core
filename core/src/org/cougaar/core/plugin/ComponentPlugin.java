@@ -20,10 +20,7 @@
  */
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.component.BindingSite;
-
 import org.cougaar.core.blackboard.BlackboardClientComponent;
-
 import org.cougaar.util.ConfigFinder;
 
 /**

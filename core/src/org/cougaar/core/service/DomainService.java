@@ -22,6 +22,7 @@
 package org.cougaar.core.service;
 
 import java.util.List;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.domain.Factory;
 

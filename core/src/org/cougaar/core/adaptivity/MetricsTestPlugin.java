@@ -22,14 +22,11 @@
 package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricsService;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.ConditionService;
-import org.cougaar.core.service.LoggingService;
 
 public class MetricsTestPlugin extends ServiceUserPlugin {
   public static final String JIPS_CONDITION_NAME = "MetricsTestPlugin.JIPS";

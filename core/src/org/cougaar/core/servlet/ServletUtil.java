@@ -24,7 +24,7 @@ package org.cougaar.core.servlet;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 /**

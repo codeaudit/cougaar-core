@@ -23,17 +23,14 @@ package org.cougaar.core.mobility.arch;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
+
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobilityException;
-import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**

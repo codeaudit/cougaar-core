@@ -21,8 +21,8 @@
 
 
 package org.cougaar.core.qos.metrics;
-import java.util.Properties;
 import java.util.Observer;
+import java.util.Properties;
 
 /* Null Metric Sevice that returns only Undefined Metrics
  */

@@ -21,21 +21,17 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.io.PrintWriter;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.HashMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServlet;
-import org.cougaar.core.service.ServletService;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.SerializationUtils;
-import java.util.StringTokenizer;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.StringTokenizer;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.ServletService;
 
 /*
  * Servlet to allow remote access into the metrics service.

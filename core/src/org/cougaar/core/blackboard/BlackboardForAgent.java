@@ -22,8 +22,9 @@
 package org.cougaar.core.blackboard;
 
 import java.util.List;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceObject;
 
 /**

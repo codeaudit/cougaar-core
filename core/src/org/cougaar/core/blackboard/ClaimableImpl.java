@@ -24,7 +24,7 @@ package org.cougaar.core.blackboard;
 import java.io.IOException;
 import java.io.NotActiveException;
 import java.io.ObjectInputStream;
-import java.io.PrintStream;
+
 import org.cougaar.util.PropertyParser;
 
 /** 

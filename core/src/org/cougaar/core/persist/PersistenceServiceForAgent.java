@@ -21,7 +21,6 @@
 
 package org.cougaar.core.persist;
 
-import org.cougaar.core.persist.PersistenceObject;
 
 /**
  * The public interface for persistence

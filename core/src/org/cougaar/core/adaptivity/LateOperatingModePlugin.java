@@ -22,10 +22,7 @@
 package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.OperatingModeService;
 
 public class LateOperatingModePlugin extends ServiceUserPlugin {

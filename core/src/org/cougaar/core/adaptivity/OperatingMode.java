@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /** 
  * A control input for a component (for example, a plugin). The {@link

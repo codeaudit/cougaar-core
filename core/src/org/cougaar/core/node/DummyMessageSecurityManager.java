@@ -21,9 +21,7 @@
 
 package org.cougaar.core.node;
 
-import java.io.PrintStream;
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageSecurityManager;
 
 /** A vacuous MessageSecurityManager.  DMSM looks like a MSM, but

@@ -24,13 +24,13 @@ package org.cougaar.core.qos.metrics;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.wp.AddressEntry;
 
 public class NodeTrafficServlet
     extends org.cougaar.core.mts.BaseServlet // MetricsServlet

@@ -21,10 +21,11 @@
 
 package org.cougaar.core.node;
 
+import java.util.Set;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
-import java.util.Set;
 
 /** Service offered to components of NodeAgent to allow sufficient 
  * non-local access to the Node for control purposes.

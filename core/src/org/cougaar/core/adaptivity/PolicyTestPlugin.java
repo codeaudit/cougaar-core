@@ -21,17 +21,12 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Collection;
-import java.util.Iterator;
+
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PlaybookConstrainService;
-import org.cougaar.util.ConfigFinder;
 
 /**
  * Test plugin that alternately constrains and unconstrains

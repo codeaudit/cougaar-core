@@ -21,7 +21,6 @@
 
 package org.cougaar.core.thread;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;

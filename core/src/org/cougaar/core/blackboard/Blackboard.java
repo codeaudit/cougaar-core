@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,25 +32,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.MessageSwitchService;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.persist.BlackboardPersistence;
 import org.cougaar.core.persist.Persistence;
-import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceException;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.community.CommunityChangeAdapter;
 import org.cougaar.core.service.community.CommunityChangeEvent;
-import org.cougaar.core.service.community.CommunityChangeListener;
 import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;

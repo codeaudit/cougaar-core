@@ -22,7 +22,6 @@
 package org.cougaar.core.agent;
 
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

@@ -22,14 +22,9 @@
 package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 
 /**
  * A plugin to exercise the Relay mechanism by setting a

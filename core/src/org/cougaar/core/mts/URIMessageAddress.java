@@ -21,9 +21,10 @@
 
 package org.cougaar.core.mts;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.URI;
-import java.net.URL;
 
 
 /**

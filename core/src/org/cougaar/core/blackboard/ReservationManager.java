@@ -21,8 +21,9 @@
 
 package org.cougaar.core.blackboard;
 
-import java.util.LinkedList;
 import java.util.Iterator;
+import java.util.LinkedList;
+
 import org.cougaar.util.log.Logger;
 
 /**

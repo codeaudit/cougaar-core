@@ -21,9 +21,8 @@
 
 package org.cougaar.core.persist;
 
-import java.io.Serializable;
 import java.util.List;
-import org.cougaar.core.blackboard.BlackboardClient;
+
 import org.cougaar.core.blackboard.Subscriber;
 
 public class PersistenceSubscriberState implements java.io.Serializable {

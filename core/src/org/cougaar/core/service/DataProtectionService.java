@@ -27,6 +27,7 @@ package org.cougaar.core.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import org.cougaar.core.component.Service;
 
 public interface DataProtectionService

@@ -21,13 +21,12 @@
 
 package org.cougaar.core.mobility.ping;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;

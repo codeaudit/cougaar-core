@@ -21,7 +21,8 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A org.cougaar.core.node.NodeMessage  provides a basic implementation of 

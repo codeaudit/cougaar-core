@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.Serializable;
 
 /**
  * Metrics on the open and close times of transactions.

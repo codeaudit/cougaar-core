@@ -21,11 +21,11 @@
 // TO BE DONE move to cougaar utilities package
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.plugin.ComponentPlugin;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+
+import org.cougaar.core.plugin.ComponentPlugin;
 
 /**
  ** This Plugin is used to convert ordered standard parameter list from plugin

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.persist;
 
-import java.util.Random;
 import org.cougaar.core.service.DataProtectionKey;
 
 public class DataProtectionKeyStub implements DataProtectionKey {

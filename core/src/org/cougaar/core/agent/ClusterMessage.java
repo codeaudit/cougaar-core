@@ -24,6 +24,7 @@ package org.cougaar.core.agent;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 

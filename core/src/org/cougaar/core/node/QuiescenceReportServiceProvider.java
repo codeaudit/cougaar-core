@@ -21,26 +21,20 @@
 
 package org.cougaar.core.node;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
+
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.EventService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.QuiescenceReportService;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 

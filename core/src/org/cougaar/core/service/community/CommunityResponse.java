@@ -21,7 +21,6 @@
 
 package org.cougaar.core.service.community;
 
-import java.util.Set;
 
 /**
  * Response to request performed by Community Manger.

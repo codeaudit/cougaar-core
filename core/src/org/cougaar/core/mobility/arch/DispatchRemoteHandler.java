@@ -25,9 +25,7 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobilityException;
-import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.service;
 
-import java.util.ArrayList;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;

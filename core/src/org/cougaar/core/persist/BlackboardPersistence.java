@@ -23,37 +23,19 @@ package org.cougaar.core.persist;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Vector;
+
+import org.cougaar.core.blackboard.Envelope;
+import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.blackboard.Envelope;
-import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.DataProtectionKey;
-import org.cougaar.core.service.DataProtectionKeyEnvelope;
-import org.cougaar.core.service.DataProtectionService;
-import org.cougaar.core.service.DataProtectionServiceClient;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.PersistenceControlService;
-import org.cougaar.core.service.PersistenceMetricsService;
-import org.cougaar.util.LinkedByteOutputStream;
-import org.cougaar.util.StringUtility;
 
 public class BlackboardPersistence implements Persistence {
   private PersistenceServiceForBlackboard persistenceService;

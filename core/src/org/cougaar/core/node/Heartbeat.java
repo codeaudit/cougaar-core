@@ -21,7 +21,6 @@
 
 package org.cougaar.core.node;
 
-import java.io.PrintStream;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 

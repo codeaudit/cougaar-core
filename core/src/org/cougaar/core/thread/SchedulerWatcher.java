@@ -21,12 +21,10 @@
 
 package org.cougaar.core.thread;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.qos.metrics.Constants;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricImpl;

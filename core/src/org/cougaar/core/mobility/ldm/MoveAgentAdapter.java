@@ -21,10 +21,9 @@
 
 package org.cougaar.core.mobility.ldm;
 
-import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.relay.Relay; // inlined
+import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
 
 /**

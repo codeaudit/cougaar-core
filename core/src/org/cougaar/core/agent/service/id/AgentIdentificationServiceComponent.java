@@ -22,6 +22,7 @@
 package org.cougaar.core.agent.service.id;
 
 import java.util.List;
+
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;

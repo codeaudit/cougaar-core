@@ -21,12 +21,12 @@
 
 package org.cougaar.core.mobility;
 
-import java.io.Serializable;
 import java.util.List;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A ticket to add an agent.

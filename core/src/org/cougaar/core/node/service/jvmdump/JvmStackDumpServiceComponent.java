@@ -27,7 +27,6 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.JvmStackDumpService;
-import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * Component that provides the JvmStackDumpService.

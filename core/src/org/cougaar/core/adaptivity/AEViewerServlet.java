@@ -21,28 +21,24 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.IOException;
-import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.cougaar.core.blackboard.BlackboardClient;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.BlackboardQueryService;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.servlet.ComponentServlet;
-import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**

@@ -20,20 +20,14 @@
  */
 package org.cougaar.multicast;
 
+import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Externalizable;
 
-import org.cougaar.core.blackboard.Publishable;
-import org.cougaar.core.mts.MessageAddressWithAttributes;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageAddressWithAttributes;
 import org.cougaar.core.mts.MessageAttributes;
-import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.util.UID;
-
-import org.cougaar.core.blackboard.Directive;
-import org.cougaar.core.blackboard.DirectiveImpl;
 
 /**
  * Attribute Based Messaging support class, 

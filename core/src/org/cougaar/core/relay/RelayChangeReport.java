@@ -24,6 +24,7 @@ package org.cougaar.core.relay;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
+
 import org.cougaar.core.blackboard.ChangeReport;
 
 /**

@@ -1,13 +1,13 @@
 package org.cougaar.core.persist;
 
-import org.cougaar.core.plugin.ServiceUserPlugin;
-import org.cougaar.core.service.BlackboardService;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Random;
 import java.util.Iterator;
+import java.util.Random;
+
+import org.cougaar.core.plugin.ServiceUserPlugin;
 
 public class Exercise extends ServiceUserPlugin {
   private Item[] objects = new Item[1000];

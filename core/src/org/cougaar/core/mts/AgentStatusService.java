@@ -22,6 +22,7 @@
 package org.cougaar.core.mts;
 
 import java.util.Set;
+
 import org.cougaar.core.component.Service;
 
 public interface AgentStatusService extends Service

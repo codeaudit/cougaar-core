@@ -22,6 +22,7 @@
 package org.cougaar.core.plugin.freeze;
 
 import java.io.Serializable;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.relay.Relay;

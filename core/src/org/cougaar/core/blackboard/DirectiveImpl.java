@@ -21,12 +21,12 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.MessageAddress;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
-import java.io.IOException;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A DirectiveImpl  provides a basic implementation of

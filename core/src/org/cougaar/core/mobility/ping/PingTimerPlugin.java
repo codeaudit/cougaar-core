@@ -27,19 +27,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.blackboard.Subscription;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**

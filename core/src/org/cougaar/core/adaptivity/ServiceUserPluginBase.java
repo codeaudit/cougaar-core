@@ -24,10 +24,7 @@ package org.cougaar.core.adaptivity;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 
 /**

@@ -20,8 +20,9 @@
  */
 
 package org.cougaar.core.service;
-import org.cougaar.core.component.Service;
 import java.util.Map;
+
+import org.cougaar.core.component.Service;
 
 /** A service for finding the right SocketFactory for our current application.
  **/

@@ -23,11 +23,6 @@ package org.cougaar.core.service.community;
 import java.util.Collection;
 import java.util.Set;
 
-import javax.naming.directory.Attributes;
-
-import org.cougaar.core.service.community.CommunityChangeEvent;
-import org.cougaar.core.service.community.CommunityChangeListener;
-
 /**
  * Defines the attributes and child entities for a community.  This is the
  * primary class used by the community service infrastructure to describe the

@@ -21,16 +21,13 @@
 
 package org.cougaar.core.mts;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.DecimalFormat;
-import java.util.Date;
-import javax.servlet.Servlet;
+
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.ServletService;
 

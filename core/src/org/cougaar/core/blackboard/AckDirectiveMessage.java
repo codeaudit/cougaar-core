@@ -21,8 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterMessage;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.NotPersistable;
 
 /**

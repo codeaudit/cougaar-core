@@ -21,12 +21,12 @@
 
 package org.cougaar.core.thread;
 
+import java.util.Timer;
+
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
-
-import java.util.Timer;
 
 /**
  * This class creates a servlet which displays the state of COUGAAR

@@ -22,6 +22,7 @@
 package org.cougaar.core.service.wp;
 
 import java.io.Serializable;
+
 import org.cougaar.core.component.Service;
 
 /**

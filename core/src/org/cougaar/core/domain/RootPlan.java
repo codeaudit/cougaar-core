@@ -21,7 +21,7 @@
 
 package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.*;
+import org.cougaar.core.blackboard.BlackboardServesDomain;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 

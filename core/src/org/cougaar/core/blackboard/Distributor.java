@@ -21,20 +21,17 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.service.QuiescenceReportService;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
@@ -45,6 +42,7 @@ import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;

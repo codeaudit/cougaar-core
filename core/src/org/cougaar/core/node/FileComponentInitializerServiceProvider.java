@@ -22,7 +22,7 @@
 package org.cougaar.core.node;
 
 import java.io.InputStream;
-import java.util.Collection;
+
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;

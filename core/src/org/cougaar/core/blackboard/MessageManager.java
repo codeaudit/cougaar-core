@@ -22,6 +22,7 @@
 package org.cougaar.core.blackboard;
 
 import java.util.Iterator;
+
 import org.cougaar.core.agent.service.MessageSwitchService;
 
 public interface MessageManager {

@@ -21,20 +21,14 @@
 
 package  org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.SerializationUtils;
-import org.cougaar.core.service.ServletService;
-
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.HashMap;
+
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServlet;
+
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.ServletService;
 
 
 public class MetricsWriterServlet

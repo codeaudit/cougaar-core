@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /**
  * The base class for OperatingMode and Condition implementations.

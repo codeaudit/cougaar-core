@@ -21,11 +21,9 @@
 
 package org.cougaar.core.blackboard;
 
-import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
-import java.io.PrintStream;
 
 /**
    Override the default property descriptors.

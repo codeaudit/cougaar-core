@@ -21,18 +21,13 @@
 
 package org.cougaar.core.plugin;
 
-import java.io.PrintStream;
-import org.cougaar.core.mts.MessageAddress;
+import java.util.Date;
+
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
-import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.util.log.Logger;
-
-import java.util.Date;
 
 /**
  * Convenience base class for plugins that need to acquire services

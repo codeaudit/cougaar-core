@@ -26,6 +26,7 @@ package org.cougaar.core.persist;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 
 /**

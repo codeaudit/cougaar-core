@@ -25,7 +25,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import org.cougaar.core.service.LoggingService;
 
 /**
  * This persistence plugin saves and restores plan objects in

@@ -21,8 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.PrintStream;
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Date;

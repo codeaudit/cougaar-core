@@ -24,8 +24,8 @@ package org.cougaar.core.thread;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.UnaryPredicate;
 
 public class RootControlPlugin extends ComponentPlugin

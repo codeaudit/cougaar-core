@@ -21,12 +21,10 @@
 
 package org.cougaar.core.agent.service.event;
 
-import java.util.List;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.EventService;

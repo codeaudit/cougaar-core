@@ -21,12 +21,11 @@
 
 package org.cougaar.core.domain;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.blackboard.ChangeEnvelopeTuple;
 import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveMessage;
@@ -34,7 +33,7 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 

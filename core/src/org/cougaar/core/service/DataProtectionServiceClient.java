@@ -25,6 +25,7 @@
 package org.cougaar.core.service;
 
 import java.util.Iterator;
+
 import org.cougaar.core.mts.MessageAddress;
 
 public interface DataProtectionServiceClient

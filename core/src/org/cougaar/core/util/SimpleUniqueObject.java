@@ -23,7 +23,6 @@ package org.cougaar.core.util;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.PrintStream;
 
 /**
  * Simple implementation of UniqueObject for objects that don't manage the UID themselves.

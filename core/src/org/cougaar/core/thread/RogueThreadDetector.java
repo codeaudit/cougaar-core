@@ -21,14 +21,14 @@
 
 package org.cougaar.core.thread;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.TimerTask;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadControlService;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.TimerTask;
 
 
 /**

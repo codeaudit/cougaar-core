@@ -22,6 +22,7 @@
 package org.cougaar.core.service;
 
 import java.util.Collection;
+
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.SubscriberException;
 import org.cougaar.core.blackboard.Subscription;

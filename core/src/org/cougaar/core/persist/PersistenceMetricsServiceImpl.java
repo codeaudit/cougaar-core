@@ -21,8 +21,9 @@
 
 package org.cougaar.core.persist;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+
 import org.cougaar.core.service.PersistenceMetricsService;
 
 public class PersistenceMetricsServiceImpl implements PersistenceMetricsService {

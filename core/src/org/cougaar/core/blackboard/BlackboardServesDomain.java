@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.Collection;
 import java.util.Enumeration;
+
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
 

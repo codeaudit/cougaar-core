@@ -21,12 +21,11 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
-import org.cougaar.core.blackboard.Subscriber;
+
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

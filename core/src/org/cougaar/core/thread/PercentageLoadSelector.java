@@ -22,11 +22,6 @@
 package org.cougaar.core.thread;
 
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,7 +29,6 @@ import java.util.Properties;
 import java.util.TreeSet;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.PropertyParser;

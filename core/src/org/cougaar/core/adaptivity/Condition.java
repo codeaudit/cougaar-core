@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /** 
  * A Condition holds a value that the {@link AdaptivityEngine} or

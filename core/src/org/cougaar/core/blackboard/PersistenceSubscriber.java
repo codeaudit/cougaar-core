@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.Collection;
 import java.util.Enumeration;
+
 import org.cougaar.core.service.BlackboardService;
 
 public class PersistenceSubscriber extends Subscriber

@@ -23,6 +23,7 @@ package org.cougaar.core.wp.resolver.rmi;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
 import org.cougaar.core.service.wp.AddressEntry;
 
 /**

@@ -21,8 +21,9 @@
  
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.MessageAddress;
 import java.io.Serializable;
+
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A Directive is a blackboard object that directly corresponds

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.io.Serializable;
 
 /** 
  * Base class for Plays and OperatingModePolicies. Most of the

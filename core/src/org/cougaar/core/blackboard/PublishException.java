@@ -21,8 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.io.PrintStream;
-import java.io.PrintWriter;
 
 /**
  * An extension of IllegalArgumentException for capturing additional

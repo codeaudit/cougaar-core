@@ -28,6 +28,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;
 import org.cougaar.util.UnaryPredicate;

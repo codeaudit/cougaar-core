@@ -22,6 +22,7 @@
 package org.cougaar.core.mobility.ldm;
 
 import java.io.Serializable;
+
 import org.cougaar.core.util.UID;
 
 /**

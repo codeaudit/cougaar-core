@@ -22,6 +22,7 @@
 package org.cougaar.core.logging;
 
 import java.util.Properties;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;

@@ -22,12 +22,10 @@
 package org.cougaar.core.persist;
 
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.log.Logger;

@@ -21,8 +21,8 @@
 
 package org.cougaar.core.relay;
 
-import org.cougaar.core.util.UID;
 import org.cougaar.core.blackboard.DirectiveImpl;
+import org.cougaar.core.util.UID;
 
 /**
  * Define Directives for Relay messages. Directives can add, change,

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.mobility;
 
-import java.io.Serializable;
 
 /**
  * A ticket specifies the destination node and other parameters

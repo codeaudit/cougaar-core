@@ -21,14 +21,12 @@
 
 package org.cougaar.core.service.wp;
 
-import java.net.URI;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.util.log.Logging;
-import org.cougaar.util.log.Logger;
 
 /**
  * The white pages service provides access to the distributed name

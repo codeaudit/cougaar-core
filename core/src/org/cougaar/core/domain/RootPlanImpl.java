@@ -21,12 +21,17 @@
 
 package org.cougaar.core.domain;
 
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import org.cougaar.core.blackboard.*;
+
+import org.cougaar.core.blackboard.ABATranslation;
+import org.cougaar.core.blackboard.Blackboard;
+import org.cougaar.core.blackboard.CollectionSubscription;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.blackboard.PublishHistory;
+import org.cougaar.core.blackboard.UniqueObjectSet;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.multicast.AttributeBasedAddress;

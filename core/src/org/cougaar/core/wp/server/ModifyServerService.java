@@ -22,8 +22,9 @@
 package org.cougaar.core.wp.server;
 
 import java.util.Map;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * This is the "modify" transport layer of the white pages server.

@@ -20,10 +20,11 @@
 
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.mts.MessageAddress;
 import java.util.Observable;
 import java.util.Observer;
+
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Basic Metric Service Client subscribes to a Metric path given in

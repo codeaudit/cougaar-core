@@ -20,7 +20,6 @@
  */
 package org.cougaar.core.plugin.deletion;
 
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Comparator;
@@ -40,7 +39,6 @@ import org.cougaar.core.plugin.PluginAlarm;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.log.Logger;
 
 /**
  * @author RTomlinson

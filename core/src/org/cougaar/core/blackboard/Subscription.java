@@ -22,6 +22,7 @@
 package org.cougaar.core.blackboard;
 
 import java.util.List;
+
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
