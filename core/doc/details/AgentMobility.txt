@@ -1,0 +1,136 @@
+Agent Mobility is the ability to move a running Agent from one Node
+to another Node, possibly on a different host machine.
+
+Initial support for Agent Mobility has been incorporated into the 8.4
+release.  This support includes:
+
+  - core modifications to perform the move, detailed below.
+
+  - creation of a MoveAgentMessage that can be sent from any
+    MessageClient to initiate the move.  
+
+  - An example Plugin has been created:
+      /core/examples/org/cougaar/core/examples/MobilePlugin.java
+    which forces an Agent move after a configurable time wait.
+
+  - A PSP:
+      /planserver/src/org/cougaar/lib/planserver/psp/PSP_AgentMover.java
+    The URL will be "/alpine/demo/AGENT_MOVER.PSP"
+
+
+Not included in this release, but planned for the future (8.6+):
+  - Transactional safety
+     - Persistence and Message retransmission, used to survive JVM 
+       crashes and network disconnections
+     - Message Acknowledgements, used to know if the Agent move was 
+       successful
+     - Synchronization safety when attempting multiple dynamic
+       component operations at the same time
+  - Security 
+     - Encryption, authentication, policy
+  - Handling of "unwilling" Components
+  - Automated load-balancing and other uses
+
+
+Persistence must be turned on in order to use Agent Mobility.  This is 
+done with two system properties:
+  -Dorg.cougaar.core.cluster.persistence.enable=true 
+  -Xbootclasspath:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar
+Alter "PNode" for Linux, or "setargument.bat" for Windows.  See the
+persistence documentation for further details.
+
+A "P" persistence-capture directory will be created, typically as
+"$COUGAAR_INSTALL_PATH/P" or "/tmp/P", depending upon you configuration.
+These directories must be removed when starting a new run -- this will
+be simplified in a future (8.6) release.
+
+
+A good initial test is to use the example "MobilePlugin" to see if
+an Agent can move between two Nodes.  First modify your Node scripts 
+for persistence as noted above.  Next create these three ".ini" files:
+  ------- OrigNode.ini ---------
+  cluster = MobileAgent
+  ------------------------------
+
+  ------- DestNode.ini ---------
+  ------------------------------
+
+  ------- MobileAgent.ini ---------
+  plugin = org.cougaar.core.examples.MobilePlugin(OrigNode, DestNode, 5)
+  ---------------------------------
+Run both "OrigNode" and "DestNode" as separate Nodes,  In OrigNode
+you should see this output:
+  ------------------------------------------------------------------
+  [..startup..]
+  Agent MobileAgent on Node OrigNode publishing a TestObject: {Node OrigNode Agent MobileAgent}
+  Move Agent MobileAgent from OrigNode to DestNode in T-MINUS 5 seconds
+  Move Agent MobileAgent from OrigNode to DestNode in T-MINUS 4 seconds
+  Move Agent MobileAgent from OrigNode to DestNode in T-MINUS 3 seconds
+  Move Agent MobileAgent from OrigNode to DestNode in T-MINUS 2 seconds
+  Move Agent MobileAgent from OrigNode to DestNode in T-MINUS 1 seconds
+  Agent MobileAgent sending [..etc..]
+  ------------------------------------------------------------------
+Then, on DestNode you should see:
+  ------------------------------------------------------------------
+  [..startup..]
+  Not moving, since Agent MobileAgent is on Node DestNode, not OrigNode
+  Found TestObject[0 / 1]: {Node OrigNode Agent MobileAgent}
+  ------------------------------------------------------------------
+This shows that both the Agent and it's blackboard were moved.  If the
+TestObject is not found on DestNode then the blackboard was not moved,
+which indicates that persistence was not enabled.  The above test can
+be adapted to test other societies, or one can use the "AGENT_MOVER.PSP".
+
+
+Components can now implement the "org.cougaar.core.component.StateObject"
+interface to provide "Object getState()" and "void setState(Object)"
+methods.  During state-capture "getState()" will be called, and
+at the new Agent location "setState(Object)" will be called after
+"initialize()" but before "load()".  This state must be Serializable -- 
+be careful not to drag the entire Node along!
+
+It is recommended that Plugins keep their state in the Blackboard,
+and upon rehydration at the new Agent location they query the
+Blackboard for their state.  If a Plugin instead implements
+StateObject then it should only refer to Blackboard Objects by
+UIDs, since Blackboard Objects (Tasks, etc) typically require special 
+Serialization handling.
+
+Containers should capture their children as part of their state.
+This can partially be done with "org.cougaar.core.component.StateTuple"
+Objects, which is a pair of a ComponentDescription and a state Object.
+The advantage is that ContainerSupport's "add(Object)" will accept
+this StateTuple and call "setState(Object)" for the child at the
+appropriate time.  See PluginManager as an example.
+
+Requested Services and ServiceRevokedListeners are *not* moved with
+the Agent, in part because these Services may be unavailable at the
+new Agent location.  During or after "load()" the Agent and child 
+Component should request the Services again as necessary.
+
+An outline of the infrastructure's move sequence:
+  1) a MessageTransportClient creates a MoveAgentMessage and sends
+     it to the Agent's Node
+  2) the AgentManager on that Node then does:
+     2.1) suspend the Agent, its children, and its Plugin schedulers
+     2.2) clear the NameService entry for the Agent
+     2.3) unregister the MessageTransportService
+     2.4) recursively gather the Agent state, including a Blackboard 
+          persistence snapshot
+     2.5) create an ADD ComponentMessage with the state and send it to 
+          the destination Node
+     2.6) stop and unload the original Agent, recursively releasing and
+          revoking services
+     2.7) removes the Agent from the AgentManager for garbage collection
+  3) the destination Node receives the ADD ComponentMessage and uses it to 
+     recreate the Agent, using recursive "load()" and "setState()" calls
+  4) the Agent rebinds for naming and gets a new MessageTransportService
+  5) the Blackboard is rehydrated from the passed state
+  6) the Agent's Plugins are recreated.
+
+Components that need to do special suspend/stop/unload operations should
+override the default implementations in GenericStateModelAdapter.  For
+example, a Component that manages a database should override these
+methods to clean up after itself and kill any Threads it might have 
+running.
+
