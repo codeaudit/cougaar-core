@@ -22,19 +22,22 @@ public interface LoggingControlService extends Service {
   int STREAM  = 2;
   int FILE    = 3;
 
-  int getLoggingLevel(String node);
-  void setLoggingLevel(String node, int level);
-  //void setLoggingLevel(String node, int level, boolean recursiveSet);
+  public int getLoggingLevel(String node);
+  public void setLoggingLevel(String node, int level);
+  //public void setLoggingLevel(String node, int level, boolean recursiveSet);
 
-  Enumeration getAllLoggingNodes();
+  public Enumeration getAllLoggingNodes();
 
-  Enumeration getOutputTypes(String node);
-  void addOutputType(String node, int outputType, Object outputDevice);
-  void addOutputType(String node, int outputType);
-  //void removeOutputType(String node, int outputType);
-  //void setOutputType(String node, int outputType, boolean recursiveSet);
+  public LoggingOutputType[] getOutputTypes(String node);
+
+  public void addOutputType(String node, int outputType, Object outputDevice);
+  public void addOutputType(String node, int outputType);
+  public boolean removeOutputType(String node, int outputType, String outputDevice);
+  public boolean removeOutputType(String node, int outputType, Object outputDevice);
 
 }
+
+
 
 
 

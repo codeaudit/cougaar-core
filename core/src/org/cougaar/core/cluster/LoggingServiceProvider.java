@@ -189,9 +189,17 @@ public class LoggingServiceProvider implements ServiceProvider {
 	return v.elements();
     }
 
-    public Enumeration getOutputTypes(String node) {
-      return Category.getInstance(node).getAllAppenders();
-    }
+      public LoggingOutputType[] getOutputTypes(String node) {
+	  Enumeration appenders = Category.getInstance(node).getAllAppenders();
+	  Vector outputs = new Vector(10);
+
+	  while(appenders.hasMoreElements()){
+	      outputs.addElement(new LoggingProviderOutputTypeImpl(node,(Appender) appenders.nextElement()));
+	  }
+
+	  return (LoggingOutputType[]) outputs.toArray();	      
+      }
+
     public void addOutputType(String node, int outputType) {
       Category.getInstance(node).addAppender(convertIntToAppender(outputType,null));
     }
@@ -199,21 +207,31 @@ public class LoggingServiceProvider implements ServiceProvider {
       Category.getInstance(node).addAppender(convertIntToAppender(outputType,outputDevice));
     }
 
-     public boolean removeOutputType(String node, int outputType, Object outputDevice) {
+   public boolean removeOutputType(String node, int outputType, Object outputDevice) {
+       String deviceString=null;
+       if(outputType == FILE){
+	   deviceString = (String) outputDevice;
+       }
+       else if(outputType == STREAM) {
+	   deviceString = Integer.toString(((OutputStream) outputDevice).hashCode());
+       }
+       
+       return removeOutputType(node,outputType, deviceString);
+   }
+
+   public boolean removeOutputType(String node, int outputType, String outputDevice) {
 	Category cat = Category.getInstance(node);
 	Enumeration appenders = cat.getAllAppenders();
 	Appender matchingAppender=null;
 
 	while(appenders.hasMoreElements()){
 	    Appender appender = (Appender) appenders.nextElement();
-	    //MWD not done - do the matching.
-
 	    if(appender.getClass() == convertIntToAppenderType(outputType)) {
 		if((appender instanceof ConsoleAppender) ||
-		   ((appender instanceof FileAppender) && (((FileAppender)appender).getFile().equals((String) outputDevice)))){
+		   ((appender instanceof FileAppender) && (((FileAppender)appender).getFile().equals(outputDevice)))){
 		    matchingAppender = appender;
 		}
-		else if(appender.getName().equals(Integer.toString(((OutputStream) outputDevice).hashCode()))) {
+		else if(appender.getName().equals(outputDevice)) {
 		    matchingAppender = appender;
 		}
 	    }
@@ -227,7 +245,7 @@ public class LoggingServiceProvider implements ServiceProvider {
 	    return false;
 	}
 	
-     }
+   }
 	
       private Class convertIntToAppenderType(int outputType) {
 	switch (outputType) {
