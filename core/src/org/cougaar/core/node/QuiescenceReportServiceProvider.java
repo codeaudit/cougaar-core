@@ -144,6 +144,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return quiescenceState;
   }
 
+  /** Just like getQuiescenceState, except does not create empty ones for misses **/
+  private QuiescenceState accessQuiescenceState(MessageAddress me) {
+    return (QuiescenceState) quiescenceStates.get(me);
+  }
+
   private Iterator getQuiescenceStatesIterator() {
     return new FilteredIterator(quiescenceStates.values().iterator(), enabledQuiescenceStatePredicate);
   }
@@ -166,6 +171,8 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     // FIXME: To be safe, should do getPrimary() on all the addresses returned
     // by the agentContainer, to strip off MessageAttributes
     quiescenceStates.keySet().retainAll(agentContainer.getAgentAddresses());
+    // note that this expression short-circuits the expensive noMessagesAreOutstanding
+    // call when !allAgentsAreQuiescent()
     if (allAgentsAreQuiescent() && noMessagesAreOutstanding()) {
       announceQuiescence();
       if (!isQuiescent && logger.isInfoEnabled()) {
@@ -233,31 +240,61 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return result;
   }
 
+  /** Check known QS to see if all locally-sent messages have been recieved **/
   private boolean noMessagesAreOutstanding() {
-    checkQuiescence:
+    // Old version:  O(N^2)
+    //   for each X in local agents {
+    //    for each Y in local agents {
+    //     if (X.sentTo(Y) != Y.receivedFrom(X)) return false;
+    //   }} 
+    //   return true;
+    //
+    // this is bad because:
+    //  - major: VERY few agents talk to all (or even most) other local agents
+    //  - minor: sentTo cannot be < receivedFrom (factor of 2)
+    //
+    // So now, we'll do:
+    //   for each X in local agents {
+    //    foreach Y in (X.sentToList) {
+    //     if (Y.isLocal) {
+    //      if (X.sentTo(Y) != Y.receivedFrom(X)) return false;
+    //   }}}
+    //   return true;
+    
+    int local_agents = 0;
+    int number_compares = 0;
     for (Iterator theseStates = getQuiescenceStatesIterator(); theseStates.hasNext(); ) {
+      local_agents++;
       QuiescenceState thisAgentState = (QuiescenceState) theseStates.next();
       MessageAddress thisAgent = thisAgentState.getAgent();
-      for (Iterator thoseStates = getQuiescenceStatesIterator(); thoseStates.hasNext(); ) {
-        QuiescenceState thatAgentState = (QuiescenceState) thoseStates.next();
-        MessageAddress thatAgent = thatAgentState.getAgent();
-        Integer sentNumber = thisAgentState.getOutgoingMessageNumber(thatAgent);
-        Integer rcvdNumber = thatAgentState.getIncomingMessageNumber(thisAgent);
-        boolean match;
-        if (sentNumber == null) {
-          match = rcvdNumber == null;
-        } else {
-          match = sentNumber.equals(rcvdNumber);
-        }
-        if (!match) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Quiescence prevented by "
-                         + thisAgent + " sent " + sentNumber + ", but "
-                         + thatAgent + " rcvd " + rcvdNumber);
+      for (Iterator theseNumbers = thisAgentState.getOutgoingEntrySet().iterator(); theseNumbers.hasNext(); ) {
+        Map.Entry thisNumber = (Map.Entry) theseNumbers.next();
+
+        MessageAddress thatAgent = (MessageAddress) thisNumber.getKey();
+        QuiescenceState thatAgentState = accessQuiescenceState(thatAgent);
+        if (thatAgentState != null && thatAgentState.isEnabled()) {
+          number_compares++;
+          Integer sentNumber = thisAgentState.getOutgoingMessageNumber(thatAgent);
+          Integer rcvdNumber = thatAgentState.getIncomingMessageNumber(thisAgent);
+          boolean match;
+          if (sentNumber == null) {
+            match = rcvdNumber == null;
+          } else {
+            match = sentNumber.equals(rcvdNumber);
           }
-          return false;
+          if (!match) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("Quiescence prevented by "
+                           + thisAgent + " sent " + sentNumber + ", but "
+                           + thatAgent + " rcvd " + rcvdNumber);
+            }
+            return false;
+          }
         }
       }
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug("Quiescence message compare statistics:  locals="+local_agents+", compares="+number_compares);
     }
     return true;
   }

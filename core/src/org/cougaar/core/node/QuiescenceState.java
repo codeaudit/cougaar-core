@@ -29,6 +29,7 @@ package org.cougaar.core.node;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 
@@ -55,6 +56,13 @@ class QuiescenceState {
 
   public Integer getIncomingMessageNumber(MessageAddress sender) {
     return (Integer) getIncomingMessageNumbers().get(sender);
+  }
+
+  public Set getOutgoingEntrySet() {
+    return getOutgoingMessageNumbers().entrySet();
+  }
+  public Set getIncomingEntrySet() {
+    return getIncomingMessageNumbers().entrySet();
   }
 
   public boolean isEnabled() {
