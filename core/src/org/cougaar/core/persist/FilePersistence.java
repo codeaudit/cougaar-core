@@ -88,9 +88,10 @@ public class FilePersistence
   }
 
   private static File getDefaultPersistenceRoot() {
-    File installDirectory =
-      new File(System.getProperty("org.cougaar.install.path", "/tmp"));
-    return new File(installDirectory,
+    String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
+    File workspaceDirectory =
+      new File(System.getProperty("org.cougaar.workspace", installPath + "/workspace"));
+    return new File(workspaceDirectory,
                     System.getProperty("org.cougaar.core.persistence.path", "P"));
   }
 

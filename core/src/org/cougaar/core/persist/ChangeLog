@@ -1,3 +1,9 @@
+2002-05-07  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* FilePersistence.java:
+	Default persistenct root directory to <org.cougaar.workspace>/P
+	Default <org.cougaar.workspace> to <org.cougaar.install.path>/workspace
+
 2002-04-29  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* FilePersistence.java:
