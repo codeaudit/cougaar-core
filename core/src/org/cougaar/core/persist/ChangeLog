@@ -1,3 +1,60 @@
+2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceServiceComponent.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Separate node-wide and per-agent variables so the former specify
+	default configuration and the later specify per-agent configure.
+	Add per-agent defaults for per-media parameters. Move all
+	per-media parameterization to the media plugins.
+	Revise setParameter to expect multiple parameters the first of
+	which is the agent id and the remainder are per-agent
+	configuration parameters. In addition, add a system property to
+	specify these parameters to work-around a shortcoming of agent
+	parameterization in CSMART and ACME.
+
+	* Exercise.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Revise to test these changes.
+
+	* PersistenceServiceForBlackboard.java:
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Remove disableWrite method. This function is now controlled
+	directly with parameters of the PersistenceServiceComponent.
+
+	* PersistenceNames.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Move all parameter names to this interface to facilitate
+	uniformity of names for properties, parameters, and parsing
+	constants.
+
+	* PersistencePluginAdapter.java: 
+	* PersistencePlugin.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Move all per-plugin parameter handling from
+	PersistenceServiceComponent to the plugin itself. Part of
+	making parameter handling uniform. Also make the writability of
+	persistence a per-media parameter rather than node-wide. This
+	makes it possible to rehydrate from one medium, but not use that
+	medium for subsequent persistence.
+
+	* FilePersistenceBase.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Regularize parameter handling to facility multiple sources of
+	parameterization. Parameter names moved to a separate interface to
+	insure uniformity.
+
+	* Persistence.java: 
+	* BlackboardPersistence.java:
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Remove disableWrite method. This function is now controlled
+	directly with parameters of the PersistenceServiceComponent.
+
+	* BasePersistence.java:
+	Fix deprecation warnings resulting from use of old StringUtility
+	methods. Use CSVUtility instead.
+
 2003-04-07  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceServiceComponent.java: 
