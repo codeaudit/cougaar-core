@@ -1367,12 +1367,14 @@ final class Distributor {
         synchronized (transactionLock) {
           // First we must wait for any other persistence activity to cease
           lockoutPersistence();
-          // The we have to wait for our reservation to become ripe
-          if (logger.isInfoEnabled()) {
-            logger.info("reservation waitfor");
-          }
-          persistenceReservationManager.waitFor(persistence, logger);
-          // Now we try to persist
+        }
+        // Then we have to wait for our reservation to become ripe
+        if (logger.isInfoEnabled()) {
+          logger.info("reservation waitfor");
+        }
+        persistenceReservationManager.waitFor(persistence, logger);
+        synchronized (transactionLock) {
+          // Now we wait for all transactions to finish
           lockoutTransactions();
         }
         try {
