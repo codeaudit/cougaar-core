@@ -57,7 +57,7 @@ public class MobilityTestDomain extends DomainAdapter {
 
     LDMServesPlugin ldm = bindingSite.getClusterServesLogicProvider().getLDM();
     MessageAddress self = ldm.getMessageAddress();
-    UIDServer uidServer = ((ClusterContext) ldm).getUIDServer();
+    UIDServer uidServer = ldm.getUIDServer();
 
     Factory f = new MobilityTestFactoryImpl(self, uidServer);
     setFactory(f);

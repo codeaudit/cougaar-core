@@ -54,7 +54,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
   
   public ClusterObjectFactoryImpl(LDMServesPlugin ldm, MessageAddress cluster) {
     this.ldm = ldm;
-    myUIDServer = ((ClusterContext)ldm).getUIDServer();
+    myUIDServer = ldm.getUIDServer();
     cid = cluster;
     ldmcl = ldm.getLDMClassLoader();
     IDHashMap = new HashMap(89);
