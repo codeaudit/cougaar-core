@@ -39,10 +39,29 @@ import org.cougaar.core.qos.metrics.DecayingHistory;
 public interface AgentLoadService extends Service
 {
     
+    /**
+     * This struct-like class holds the four values of a CPU load
+     * snapshot.
+    */
     public class AgentLoad extends DecayingHistory.SnapShot {
+	/**
+	 * The name of the Agent.
+	 */
 	public String name;
+
+	/**
+	 * Zinky will fill this in.
+	 */
 	public int outstanding;
+
+	/**
+	 * Zinky will fill this in.
+	 */
 	public double loadAvgIntegrator;
+
+	/**
+	 * Zinky will fill this in.
+	 */
 	public double loadMjipsIntegrator;
     }
 
