@@ -1,3 +1,11 @@
+2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimpleAgent.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Open up handling of persistence data to subclasses (NodeAgent).
+	Add getPersistenceClient method so subclasses can override and
+	substitute their own client.
+
 2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleAgent.java:

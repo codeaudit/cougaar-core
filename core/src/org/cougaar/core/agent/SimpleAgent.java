@@ -515,6 +515,18 @@ public class SimpleAgent
     }
   }
 
+  protected PersistenceClient getPersistenceClient() {
+    return persistenceClient;
+  }
+
+  protected List getRehydrationList(PersistenceServiceForAgent persistenceService) {
+    RehydrationData rd = persistenceService.getRehydrationData();
+    if (rd != null) {
+      return rd.getObjects();
+    }
+    return null;
+  }
+
   public void load() {
     // get our log
     LoggingService newLog = (LoggingService) 
@@ -548,11 +560,11 @@ public class SimpleAgent
     ClusterContextTable.addContext(getMessageAddress());
 
     persistenceService = (PersistenceServiceForAgent)
-      getServiceBroker().getService(persistenceClient, PersistenceServiceForAgent.class, null);
+      getServiceBroker().getService(getPersistenceClient(), PersistenceServiceForAgent.class, null);
     persistenceService.rehydrate(persistenceObject);
-    RehydrationData rehydrationData = persistenceService.getRehydrationData();
-    if (rehydrationData != null) {
-      persistenceData = (PersistenceData) rehydrationData.getObjects().get(0);
+    List rehydrationList = getRehydrationList(persistenceService);
+    if (rehydrationList != null && rehydrationList.size() > 0) {
+      persistenceData = (PersistenceData) rehydrationList.get(0);
       // validate the state
       // verify state's agent id
       if (!(getMessageAddress().equals(persistenceData.agentId))) {
