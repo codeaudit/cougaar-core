@@ -45,6 +45,7 @@ import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.FilteredIterator;
+import org.cougaar.util.Memo;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -168,18 +169,36 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return (otherState.isEnabled() && otherState.isAlive());
   }
 
+  /** memoization of the quiescence state set.  Avoids bothering to make changes to 
+   * unless there might be a difference.
+   **/
+  private Memo _quiescenceStatesMemo = Memo.get(new Memo.Function() {
+      public String toString() { return "Memo<active quiescenceStates>"; }
+      public Object eval(Object o) {
+        Set agentAddresses = (Set) o;
+        if (quiescenceStates.keySet().retainAll(agentAddresses)) {
+          // retainAll() == true means that the collection changed, so we'll return
+          return quiescenceStates;
+        } else {
+          // if we executed this, but it didn't change, we'll return null to 
+          // indicate the same end-result as if we hadn't executed at all!
+          return null;
+        }
+      }});
+
   /**
    * An agent has become quiescent. If all agents are quiescent and no
    * messages are outstanding, we announce our quiescence. Otherwise,
    * we cancel quiescence.
    **/
-  private void checkQuiescence() {
-    // We could be quiescent
+  private void checkQuiescence() { // We might be quiescent...
     // If an agent moves out of this node, we need to clean out any
     // remembered message numbers.
     // FIXME: To be safe, should do getPrimary() on all the addresses returned
     // by the agentContainer, to strip off MessageAttributes
-    quiescenceStates.keySet().retainAll(agentContainer.getAgentAddresses());
+    _quiescenceStatesMemo.evalIfNew(agentContainer.getAgentAddresses());  // returns non-null if it changed!
+    // if the set of agents hasn't changed, can we skip any of the below?
+
     // note that this expression short-circuits the expensive noMessagesAreOutstanding
     // call when !allAgentsAreQuiescent()
     if (allAgentsAreQuiescent() && noMessagesAreOutstanding()) {
@@ -188,8 +207,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
         logger.info("Is quiescent");
       }
       isQuiescent = true;
-    } else if (isQuiescent) {
-      cancelQuiescence();
+    } else {
+      if (isQuiescent) {
+        cancelQuiescence();
+      } 
+      // else { still_quiescent(); }
     }
   }
 
