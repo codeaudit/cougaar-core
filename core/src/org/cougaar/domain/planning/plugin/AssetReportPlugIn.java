@@ -138,7 +138,7 @@ public class AssetReportPlugIn extends SimplePlugIn
                          "/AssetReportPlugIn: unable to process " + 
                          task.getVerb() + " task - " + 
                          reportingAsset + " reporting to " + reportee + ".\n" +
-                         localReportingAsset + " not local to this cluster."
+                         reportingAsset + " not local to this cluster."
                          );
       return;
     }
