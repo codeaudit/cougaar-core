@@ -297,9 +297,9 @@ public class ScheduleImpl
   
   public void setScheduleElementType(Class setype) {
     if (!ScheduleElement.class.isAssignableFrom(setype)) {
-      throw new ClassCastException("ScheduleElement class is not assignable from " + setype);
+      throw new ClassCastException(setype + " is  not a ScheduleElement");
     } else if (!isEmpty() &&
-               !scheduleElementType.isAssignableFrom(setype)) {
+               !setype.isAssignableFrom(scheduleElementType)) {
       throw new ClassCastException(setype + 
                                    " is not assignable from current ScheduleElement type " + 
                                    scheduleElementType);
@@ -341,7 +341,7 @@ public class ScheduleImpl
     ScheduleImpl lsSchedule = new ScheduleImpl();
     lsSchedule.setScheduleElementType(ScheduleElementType.LOCATION);
     lsSchedule.add(new LocationScheduleElementImpl());
-
+    lsSchedule.setScheduleElementType(ScheduleElementType.SIMPLE);
 
     ScheduleImpl schedule = new ScheduleImpl(vector);
     System.out.println(schedule);

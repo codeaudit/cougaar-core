@@ -31,6 +31,14 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
     super(c);
   }
 
+  public SynchronizedTimeSpanSet(TimeSpanSet t) {
+    super(t.size);
+
+    synchronized(t) {
+      unsafeUpdate(t);
+    }
+  }
+
   // Synchronization of ArrayList methods -  
 
   /**
@@ -46,7 +54,9 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
    * Should simply return false
    */
   public synchronized boolean addAll(Collection objects) {
-    return super.addAll(objects);
+    synchronized (objects) {
+      return super.addAll(objects);
+    }
   }
 
   public synchronized void clear() {
@@ -57,7 +67,9 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
   }
 
   public synchronized boolean containsAll(Collection c) {
-    return super.containsAll(c);
+    synchronized (c) {
+      return super.containsAll(c);
+    }
   }
 
   public synchronized Object get(int index) {
@@ -89,7 +101,9 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
    * Should simply return false
    */
   public synchronized boolean removeAll(Collection objects) {
-    return super.removeAll(objects);
+    synchronized (objects) {
+      return super.removeAll(objects);
+    }
   }
 
 
@@ -98,7 +112,9 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
    * Should simply return false
    */
   public synchronized boolean retainAll(Collection objects) {
-    return super.removeAll(objects);
+    synchronized (objects) {
+      return super.removeAll(objects);
+    }
   }
 
 
@@ -145,6 +161,18 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
     return super.hashCode();
   }
 
+   /** 
+   * unsafeUpdate - not synchronized. As a protected method it assumes that
+   * caller already has the synch lock.
+   * Should only be used if c has already been validated.
+   * @returns boolean - true if any elements added else false.
+   */
+  protected boolean unsafeUpdate(Collection c) {
+    synchronized (c) {
+      return super.unsafeUpdate(c);
+    }
+  }
+ 
 }
   
   

@@ -34,15 +34,17 @@ public class TimeSpanSet
 
   public TimeSpanSet(Collection c) {
     super(c.size());
-    if (c instanceof TimeSpanSet) {
-      super.addAll(c);
-    } else {
-      // otherwise, insert them carefully.
-      for (Iterator i = c.iterator(); i.hasNext();) {
-        add(i.next());
-      }
-    }
+    
+    addAll(c);
   }
+
+  public TimeSpanSet(TimeSpanSet t) {
+    super(t.size());
+
+    unsafeUpdate(t);
+  }
+
+
   public boolean add(Object o) {
     if (! (o instanceof TimeSpan)) 
       throw new IllegalArgumentException();

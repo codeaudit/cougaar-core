@@ -19,7 +19,7 @@ import java.util.*;
 /**
  * A copy of java.util.ArrayList, modified so that previously
  * private data members are here declared protected and which does not
- * use iterators to walk the collection. <p>
+ * use iterators to walk itself p>
  * 
  * This allows extending classes to have efficient access to the 
  * actual data storage elements so that the supported API extensions
@@ -417,10 +417,18 @@ public class ArrayListFoundation extends AbstractList
     int numNew = c.size();
     ensureCapacity(size + numNew);
     
-    Iterator e = c.iterator();
-    for (int i=0; i<numNew; i++)
-      elementData[size++] = e.next();
-    
+    if (c instanceof List) {
+      // Use List access if we can
+      List list = (List)c;
+      for (int i=0; i<numNew; i++)
+        elementData[size++] = list.get(i);
+    } else {
+      Iterator e = c.iterator();
+      for (int i=0; i<numNew; i++)
+        elementData[size++] = e.next();
+    }
+
+
     return numNew != 0;
   }
   
@@ -451,10 +459,17 @@ public class ArrayListFoundation extends AbstractList
       System.arraycopy(elementData, index, elementData, index + numNew,
                        numMoved);
     
-    Iterator e = c.iterator();
-    for (int i=0; i<numNew; i++)
-      elementData[index++] = e.next();
-    
+    if (c instanceof List) {
+      // Use List access if we can
+      List list = (List)c;
+      for (int i=0; i<numNew; i++)
+        elementData[index++] = list.get(i);
+    } else {
+      Iterator e = c.iterator();
+      for (int i=0; i<numNew; i++)
+        elementData[index++] = e.next();
+    }
+
     size += numNew;
     return numNew != 0;
   }
