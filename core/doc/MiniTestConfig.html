@@ -21,7 +21,7 @@ can be executed on a single computer or distributed across multiple computers.
 Note that only <b>minitestconfig</b> will work "out of the box". SingleNode
 can also be used to test domain specific threads by installing submissions
 by various subcontractors. PlugIn developers are encouraged to use minitestconfig
-and singlenode as a starting point for bringing PlugIns up to MB 8.2 compliance.
+and singlenode as a starting point for testing  plugins.
 <p>The minitestconfig consists of 3ID, 1BDE, 3-69-ARBN and MCCGlobalMode
 clusters. It handles the GetLogSupport and Transport tasks. This configuration
 contains a single transportation thread which illustrates some of the COUGAAR
@@ -30,6 +30,16 @@ allocated to MCCGlobalMode. These tasks are allocated to local assets and
 the allocation results propagated back to the task originator. The task
 originator (ARBN) evaluates the results and modifies the task preferences
 to achieve an acceptable solution.
+<p>Minitestconfig is typically run as a single node on one machine. To start
+it, run from the command line <i>$COUGAAR_INSTALL_PATH/bin/Node MiniNode</i>.
+Minitestconfig can also be run as a multinode society accross 2 or 4 machines.
+As with all societies run on multiple machines, the 
+<a href=../configs/common/alpreg.ini>$COUGAAR_INSTALL_PATH/configs/common/alpreg.ini</a>
+must be set so that address value is set to the same host name (other than
+"localhost") on all machines in the society. Use <i>MiniNodeA</i> and 
+<i>MiniNodeB</i> for a two node - two machine society. Use <i>MiniNode1</i>
+through <i>MiniNode4</i> for a four node - four machine society. Multiple nodes
+can be run on a single host.
 <p>When starting this configuration, the society "hooks up" on its own
 using a series of "OrgReportPlugIns,"&nbsp; and provides several control
 buttons. Press the "Publish Oplan" to send the Operation Plan to the clusters.
