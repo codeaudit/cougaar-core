@@ -153,7 +153,7 @@ public class AgentLoadLoggerPlugin
     }
   
     protected void execute() {
-	System.out.println("Uninteresting");
+	//System.out.println("Uninteresting");
     }
 
 }
