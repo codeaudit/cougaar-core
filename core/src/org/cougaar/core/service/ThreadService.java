@@ -36,13 +36,4 @@ public interface ThreadService extends Service
     void schedule(TimerTask task, long delay, long interval);
     void scheduleAtFixedRate(TimerTask task, long delay, long interval);
 
-    // Like sleep() but opens a thread slot
-    void suspendCurrentThread(long millis);
-
-    // Like yield() but opens a thread slot
-    void yieldCurrentThread();
-
-    // Like wait but opens a thread slot
-    void blockCurrentThread(Object lock, long millis);
-    void blockCurrentThread(Object lock);
 }
