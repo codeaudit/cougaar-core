@@ -1,0 +1,159 @@
+diff -bBudrw old/java/io/ObjectInputStream.java new/java/io/ObjectInputStream.java
+--- old/java/io/ObjectInputStream.java	2003-02-20 14:37:53.000000000 -0500
++++ new/java/io/ObjectInputStream.java	2003-01-23 12:58:33.000000000 -0500
+@@ -1,3 +1,24 @@
++/** Modified by cougaar
++ * <copyright>
++ *  Copyright 2003 BBNT Solutions, LLC
++ *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
++ * 
++ *  This program is free software; you can redistribute it and/or modify
++ *  it under the terms of the Cougaar Open Source License as published by
++ *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
++ * 
++ *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
++ *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
++ *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
++ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT
++ *  ANY WARRANTIES AS TO NON-INFRINGEMENT.  IN NO EVENT SHALL COPYRIGHT
++ *  HOLDER BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT OR CONSEQUENTIAL
++ *  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE OF DATA OR PROFITS,
++ *  TORTIOUS CONDUCT, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
++ *  PERFORMANCE OF THE COUGAAR SOFTWARE.
++ * </copyright>
++ **/
++
+ /*
+  * @(#)ObjectInputStream.java	1.142 02/07/19
+  *
+@@ -1628,7 +1649,9 @@
+ 
+ 	Object obj;
+ 	try {
+-	    obj = desc.isInstantiable() ? desc.newInstance() : null;
++          // obj = desc.isInstantiable() ? desc.newInstance() : null;
++          // COUGAAR mod
++          obj = desc.isInstantiable() ? newInstanceFromDesc(desc) : null;
+ 	} catch (Exception ex) {
+ 	    throw new InvalidClassException(
+ 		desc.forClass().getName(), "unable to create instance");
+@@ -2705,7 +2728,7 @@
+ 	}
+ 
+ 	public String readLine() throws IOException {
+-	    return din.readLine();	// deprecated, not worth optimizing
++	    return ((DataInput)din).readLine();	// deprecated, not worth optimizing
+ 	}
+ 	
+ 	/* -------------- primitive data array input methods --------------- */
+@@ -3342,4 +3365,19 @@
+ 	    }
+ 	}
+     }
++
++  // COUGAAR
++  protected Object newInstanceFromDesc(ObjectStreamClass desc) 
++    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException
++  {
++    return real_newInstanceFromDesc(desc);
++  }
++
++  // COUGAAR
++  protected final Object real_newInstanceFromDesc(ObjectStreamClass desc) 
++    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException
++  {
++    return desc.newInstance();
+ }
++}
++
+diff -bBudrw old/java/io/ObjectOutputStream.java new/java/io/ObjectOutputStream.java
+--- old/java/io/ObjectOutputStream.java	2003-02-20 14:37:53.000000000 -0500
++++ new/java/io/ObjectOutputStream.java	2003-10-22 11:51:22.000000000 -0400
+@@ -270,6 +270,7 @@
+      * 		OutputStream.
+      */
+     public final void writeObject(Object obj) throws IOException {
++      try {
+ 	if (enableOverride) {
+ 	    writeObjectOverride(obj);
+ 	    return;
+@@ -280,8 +281,70 @@
+ 	    if (depth == 0) {
+ 		writeFatalException(ex);
+ 	    }
++            //just rethrow
+ 	    throw ex;
+ 	}
++      } catch (NotSerializableException nse) {
++        throw new BrokenSerializationException("("+obj.getClass().getName()+")", nse);
++      }
++    }
++
++  public static class BrokenSerializationException extends NotSerializableException {
++    private String cname;
++    private BrokenSerializationException next;     // root cause (innermost exception) null if unknown
++    private Throwable root;
++    /** 
++     * @param obj is the object causing the exception
++     * @param nested is the next throwable down
++     */
++    public BrokenSerializationException(String cname, Throwable nested) {
++      super(computeName(cname, nested));
++      this.cname = cname;
++      if (nested instanceof BrokenSerializationException) {
++        next = (BrokenSerializationException) nested;
++        root = ((BrokenSerializationException) nested).getRoot();
++      } else {
++        initCause(nested);
++        root = nested;
++      }
++    }
++
++    private static String computeName(String cn, Throwable nested) {
++      String s = cn;
++      if (nested instanceof BrokenSerializationException) {
++        s = s+"-"+((BrokenSerializationException)nested).getChainString();
++      } 
++      return s;
++    }
++
++    BrokenSerializationException getNext() { return next; }
++
++    public Throwable getRoot() {
++      return root;
++    }
++
++    String getChainString() { 
++      String chain = cname;
++
++      BrokenSerializationException n = getNext();
++      if (n != null) {
++        chain = chain+"-"+n.getChainString();
++      }
++      return chain;
++    }
++
++    // print the root cause, not the top level
++    // I suppose we could call setStackTrace instead, but I really only want to do it once
++    public void printStackTrace(java.io.PrintStream s) {
++      s.print(this);
++      s.print(" caused by ");
++      root.printStackTrace(s);
++    }
++    public void printStackTrace(java.io.PrintWriter s) { 
++      s.print(this);
++      s.print(" caused by ");
++      root.printStackTrace(s);
++    }
+     }
+ 
+     /**
+@@ -1053,6 +1116,8 @@
+ 	    } else {
+ 		throw new NotSerializableException(cl.getName());
+ 	    }
++        } catch (NotSerializableException nse) {
++          throw new BrokenSerializationException(obj.getClass().getName(), nse);
+ 	} finally {
+ 	    depth--;
+ 	    bout.setBlockDataMode(oldMode);
