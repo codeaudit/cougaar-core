@@ -199,6 +199,17 @@ public class Subscriber {
                   pe.priorStack.printStackTrace();
                 }
               }
+            } 
+            catch (RuntimeException ire) {
+              BlackboardClient currentClient = null;
+              if (currentClient == null) {
+                currentClient = BlackboardClient.current.getClient();
+              }
+              String thisPublisher = null;
+              if (currentClient != null) {
+                thisPublisher = currentClient.getBlackboardClientName();
+              }
+              logger.error("Exception while applying envelopes in "+currentClient+"/"+thisPublisher, ire);
             }
           }
         }
