@@ -91,8 +91,13 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       String dbtype = dbp.getDBType();
       String driverParam = "driver." + dbtype;
       String driverClass = Parameters.findParameter(driverParam);
-      if (driverClass == null)
-        throw new SQLException("Unknown driver " + driverParam);
+      if (driverClass == null) {
+        // this is likely a "cougaar.rc" problem.
+        // Parameters should be modified to help generate this exception:
+        throw new SQLException(
+            "Unable to find driver class for \""+
+            driverParam+"\" -- check your \"cougaar.rc\"");
+      }
       Class.forName(driverClass);
       Connection conn = DBConnectionPool.getConnection(database, username, password);
       try {
