@@ -1,5 +1,10 @@
 2002-05-29  Michael Thome  <mthome@bbn.com>
 
+	* org/cougaar/core/blackboard/Subscriber.java, org/cougaar/core/blackboard/BlackboardServiceProvider.java
+	Subscriber no longer implements BlackboardService.  Instead, the
+	BlackboardServiceProvider returns a private class extending
+	Subscriber which actually does.  This fixes bug 1136.
+
 	* org/cougaar/core/blackboard/Subscriber.java
 	Check for open transactions earlier in call chain, e.g. in
 	publish* rather than in client*Object. bug 826.

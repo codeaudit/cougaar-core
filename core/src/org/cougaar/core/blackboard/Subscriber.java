@@ -44,10 +44,13 @@ import org.cougaar.planning.ldm.plan.*;
  * @property org.cougaar.core.blackboard.debug Set to true to additional checking on blackboard transactions.  
  * For instance, it will attempt to look for changes to blackboard objects which have not been published
  * at transaction close time.
+ * @note Although Subscriber directly implements all the methods of BlackboardService,
+ * it declines to implement the interface to avoid the Subscriber class itself 
+ * <em>and all extending classes</em> from being Services.
  * @property org.cougaar.core.blackboard.timestamp Set to true to enable EnvelopeMetrics
  *    and TimestampSubscriptions (defaults to false).
  **/
-public class Subscriber implements BlackboardService {
+public class Subscriber {
   private static boolean isEnforcing =
     (Boolean.valueOf(System.getProperty("org.cougaar.core.blackboard.enforceTransactions", "true"))).booleanValue();
 

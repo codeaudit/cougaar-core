@@ -47,12 +47,12 @@ public class BlackboardServiceProvider implements ServiceProvider {
   }
   
   public Object getService(BlackboardClient bbclient) {
-    return new Subscriber(bbclient, distributor);
+    return new BlackboardServiceImpl(bbclient);
   }
   
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (serviceClass == BlackboardService.class) {
-      return new Subscriber( (BlackboardClient)requestor, distributor );
+      return new BlackboardServiceImpl( (BlackboardClient)requestor);
     } else if (serviceClass == BlackboardMetricsService.class) {
       return getBlackboardMetricsService();
     } else if (serviceClass == BlackboardQueryService.class) {
@@ -97,6 +97,14 @@ public class BlackboardServiceProvider implements ServiceProvider {
       //qs.setSubscriber(null);  // ignored
       distributor.fillQuery(qs);
       return qs.getCollection();
+    }
+  }
+
+  private final class BlackboardServiceImpl extends Subscriber
+    implements BlackboardService
+  {
+    BlackboardServiceImpl(BlackboardClient client) {
+      super(client, distributor);
     }
   }
 }
