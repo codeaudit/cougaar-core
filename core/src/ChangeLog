@@ -1,3 +1,8 @@
+2001-08-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingContext.java:
+	Fix bug in getNameInNamespace for root directory.
+
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NamingDirContext.java:

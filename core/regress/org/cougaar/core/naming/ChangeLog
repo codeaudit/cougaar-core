@@ -1,3 +1,8 @@
+2001-08-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* NamingDirContextTest.java:
+	Add lots more tests including many search cases.
+
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SearchStringParserTest.java:
