@@ -131,7 +131,7 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        String ret = fullName(nsKey, name);
+        String ret = ns.fullName(nsKey, name);
         if (ntries > 0 && log.isWarnEnabled()) logSuccess("fullName");
         return ret;
       } catch (RemoteException re) {
