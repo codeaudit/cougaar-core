@@ -203,9 +203,11 @@ http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawi
 
   <tr>
  <td valign="Top"> xerces.jar </td>
- <td valign="Top"> 1.4.4 </td>
+ <td valign="Top"> 1.4.3 </td>
  <td valign="Top"> Apache xerces-j version 1.  We're stuck at xerces-1
-	    for now because jena doesn't support xerces2 yet.
+	    for now because jena doesn't support xerces2 yet. 1.4.4 gives errors
+		using the DOMParser in the ConfigFinder (an NPE in 
+		the XMLParser (xerces code).
 <a href="http://xml.apache.org/xerces-j/index.html"> http://xml.apache.org/xerces-j/index.html</a>
  </td>
  </tr>
