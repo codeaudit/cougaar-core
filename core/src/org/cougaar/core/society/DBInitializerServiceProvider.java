@@ -325,7 +325,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             String attributeName = getNonNullString(rs, 1, query);
             String attributeType = getNonNullString(rs, 2, query);
             boolean collection = !rs.getString(3).equals("SINGLE");
-            Object attributeId = rs.getObject(4);
+            Object attributeId = rs.getString(4);
             Statement stmt2 = conn.createStatement();
             substitutions.put(":pg_attribute_id:", attributeId);
             String query2 = dbp.getQuery("queryAgentProperties",  substitutions);
@@ -459,7 +459,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
           Object[] result = new Object[2];
           if (rs.next()) {
             result[0] = rs.getString(1);
-            result[1] = rs.getObject(2);
+            result[1] = rs.getString(2);
           } else {
             throw new InitializerServiceException("No row returned for attribute value query "
                                                   + type
