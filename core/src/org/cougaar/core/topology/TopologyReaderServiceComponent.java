@@ -674,8 +674,7 @@ implements Component
             if (ne instanceof NameNotFoundException) {
               ret = null;
             }
-            throw new RuntimeException(
-                                       "Unable to access name server", ne);
+            throw new RuntimeException("Unable to access name server", ne);
           }
           cache.put(cacheKey, ret);
           return ret;
@@ -700,9 +699,10 @@ implements Component
           } catch (NamingException ne) {
             if (ne instanceof javax.naming.NameNotFoundException) {
               ret = null;
+            } else {
+              throw new RuntimeException(
+                                         "Unable to access name server", ne);
             }
-            throw new RuntimeException(
-                                       "Unable to access name server", ne);
           }
           cache.put(cacheKey, ret);
           return ret;
@@ -748,9 +748,9 @@ implements Component
           } catch (NamingException ne) {
             if (ne instanceof javax.naming.NameNotFoundException) {
               ret = null;
+            } else {
+              throw new RuntimeException("Unable to access name server", ne);
             }
-            throw new RuntimeException(
-                                       "Unable to access name server", ne);
           }
           cache.put(cacheKey, ret);
           return ret;
