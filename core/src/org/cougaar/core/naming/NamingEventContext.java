@@ -1,6 +1,6 @@
 /*
- * <Copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ * <copyright>
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
