@@ -46,8 +46,6 @@ import java.util.Iterator;
  * each message's target, and enqueues the outgoing message there.  */
 final class SingleNodeRouterImpl
 {
-    static final String VERSION = "version";
-    
     private LoggingService loggingService;
     private HashMap agentStates = new HashMap();
     private HashMap clients; 
@@ -56,32 +54,11 @@ final class SingleNodeRouterImpl
 
     public SingleNodeRouterImpl(ServiceBroker sb)
     {
-	// talk
-	
-	
 	clients = new HashMap();
 	waitingMsgs = new HashMap();
-	// agentID = addr.getAddress();
 	
 	loggingService = (LoggingService)
 	    sb.getService(this, LoggingService.class, null);
-	
-// 	WhitePagesService wp = (WhitePagesService)
-// 	    sb.getService(this, WhitePagesService.class, null);
-// 	long incn = 0;
-// 	try {
-// 	    AddressEntry entry = wp.get(agentID, VERSION);
-// 	    if (entry != null) {
-// 		String path = entry.getURI().getPath();
-// 		int end = path.indexOf('/', 1);
-// 		String incn_str = path.substring(1, end);
-// 		incn = Long.parseLong(incn_str);
-// 	    }
-// 	} catch (Exception ex) {
-// 	    if (loggingService.isErrorEnabled())
-// 		loggingService.error("Failed Incarnation",ex);
-// 	}
-// 	incarnation = new Long(incn);
     }
     
     /** Find destination agent's receiving queue then deliver the message to the client**/
@@ -142,14 +119,7 @@ final class SingleNodeRouterImpl
     public void registerClient(MessageTransportClient client) {
 	MessageAddress key = client.getMessageAddress();
 	
-	// stick in hashmap
-	try {
-	    clients.put(key, client);
-	} catch (Exception e) {
-	    if (loggingService.isErrorEnabled())
-		loggingService.error(e.toString());
-	}
-	
+	// Deliver any pending messages.
 	ArrayList msgs = (ArrayList) waitingMsgs.get(key);
 	if (msgs != null) {
 	    // look for undelivered msgs & deliver them to newly registerd client
@@ -158,6 +128,15 @@ final class SingleNodeRouterImpl
 		deliverMessage(message, client);
 	    }
 	}
+
+	// stick in hashmap
+	try {
+	    clients.put(key, client);
+	} catch (Exception e) {
+	    if (loggingService.isErrorEnabled())
+		loggingService.error(e.toString());
+	}
+	
     }
     
     /**Redirects the request to the MessageTransportRegistry. */
