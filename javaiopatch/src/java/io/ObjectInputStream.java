@@ -3335,7 +3335,14 @@ public class ObjectInputStream
 
   // COUGAAR
   protected Object newInstanceFromDesc(ObjectStreamClass desc) 
-    throws InstantiationException, java.lang.reflect.InvocationTargetException
+    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException
+  {
+    return real_newInstanceFromDesc(desc);
+  }
+
+  // COUGAAR
+  protected final Object real_newInstanceFromDesc(ObjectStreamClass desc) 
+    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException
   {
     return desc.newInstance();
   }
