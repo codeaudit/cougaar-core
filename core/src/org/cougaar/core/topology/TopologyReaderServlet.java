@@ -121,6 +121,7 @@ public class TopologyReaderServlet
 extends BaseServletComponent
 {
 
+  // valid types
   public static final String[] VALID_TYPES = 
     new String[] {
       "agent",
@@ -128,6 +129,16 @@ extends BaseServletComponent
       "host",
       "site",
       "enclave",
+    };
+
+  // int constants to match valid types
+  public static final int[] TYPE_CODES = 
+    new int[] {
+      TopologyReaderService.AGENT,
+      TopologyReaderService.NODE,
+      TopologyReaderService.HOST,
+      TopologyReaderService.SITE,
+      TopologyReaderService.ENCLAVE,
     };
 
   // valid formats
@@ -367,7 +378,7 @@ extends BaseServletComponent
         }
         for (int i = 0; i < VALID_TYPES.length; i++) {
           if (s.equals(VALID_TYPES[i])) {
-            return i;
+            return TYPE_CODES[i];
           }
         }
         throw new MyIllegalArgumentException(
@@ -920,7 +931,7 @@ extends BaseServletComponent
               "<option value=\"");
           out.print(vi);
           out.print("\"");
-          if (i == matchType) {
+          if (TYPE_CODES[i] == matchType) {
             out.print(" selected");
           }
           out.print(">");
@@ -931,7 +942,6 @@ extends BaseServletComponent
           out.print("</option>");
         }
       }
-
     }
   }
 

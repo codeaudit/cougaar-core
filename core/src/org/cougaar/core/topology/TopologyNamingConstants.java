@@ -45,14 +45,4 @@ final class TopologyNamingConstants {
   public static final String TYPE_ATTR = "Type";
   public static final String STATUS_ATTR = "Status";
 
-  // matches TopologyReaderService types
-  public static final String[] TYPE_TO_ATTRIBUTE_NAME =
-    new String[] {
-      AGENT_ATTR,
-      NODE_ATTR,
-      HOST_ATTR,
-      SITE_ATTR,
-      ENCLAVE_ATTR,
-    };
-
 }

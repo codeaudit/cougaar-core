@@ -30,12 +30,52 @@ import org.cougaar.core.component.Service;
  */
 public interface TopologyReaderService extends Service {
 
-  // type constants, in order of containment:
-  int AGENT = 0;
-  int NODE = 1;
-  int HOST = 2;
-  int SITE = 3;
-  int ENCLAVE = 4;
+  /**
+   * Types of agent entries.
+   * <p>
+   * The "AGENT_TYPE" represents leaf agents within the node.  The
+   * node-agent uses the "NODE_AGENT_TYPE".  The "SYSTEM_TYPE" is
+   * reserved for infrastructure use.
+   * <p>
+   * These constants can be "OR'ed" together and used in the query 
+   * methods listed below.  For example, to list all node-agent
+   * entries:
+   * <pre>
+   *   getAll(NODE_AGENT_TYPE);
+   * </pre>
+   * and to list all leaf-agent or system entries:
+   * <pre>
+   *   getAll((AGENT_TYPE | SYSTEM_TYPE));
+   * </pre>
+   */
+  int AGENT_TYPE      = (1 << 0);
+  int NODE_AGENT_TYPE = (1 << 1);
+  int SYSTEM_TYPE     = (1 << 2);
+  // note that below "3" references match above "2"+1.
+
+  /**
+   * An agent type mask that matches any agent type.
+   */
+  int ANY_TYPE = ((1 << 3) - 1);
+
+  /**
+   * The default "AGENT" type matches all node-agents and
+   * leaf-agents:  (AGENT_TYPE | NODE_AGENT_TYPE).
+   */
+  int AGENT   = (AGENT_TYPE | NODE_AGENT_TYPE);
+
+  /**
+   * NODE, HOST, SITE, and ENCLAVE types.
+   * <p>
+   * A NODE contains one or more agents, minimally a node-agent.
+   * A HOST contains one or more nodes.
+   * A SITE contains one or more hosts.
+   * An ENCLAVE contains one or more sites.
+   */
+  int NODE    = (1 << (3+0));
+  int HOST    = (1 << (3+1));
+  int SITE    = (1 << (3+2));
+  int ENCLAVE = (1 << (3+3));
 
   /**
    * Get the parent name for the specified child type

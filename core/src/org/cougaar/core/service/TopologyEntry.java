@@ -34,10 +34,14 @@ public final class TopologyEntry implements java.io.Serializable {
   public static final int MOVING  = 2;
   // others TBA (unavailable, dead, etc)
 
-  // type constants
-  public static final int AGENT_TYPE = 0;
-  public static final int NODE_AGENT_TYPE = 1;
-  public static final int SYSTEM_TYPE = 2;
+  // type constants are defined in TopologyReaderService,
+  // copied here for convenience
+  public static final int AGENT_TYPE = 
+    TopologyReaderService.AGENT_TYPE;
+  public static final int NODE_AGENT_TYPE = 
+    TopologyReaderService.NODE_AGENT_TYPE;
+  public static final int SYSTEM_TYPE = 
+    TopologyReaderService.SYSTEM_TYPE;
 
   private final String enclave;
   private final String site;
@@ -79,8 +83,9 @@ public final class TopologyEntry implements java.io.Serializable {
   public long getMoveId() { return moveId; }
 
   /**
-   * @return an int matching the "AGENT_TYPE", "NODE_AGENT_TYPE", 
-   *    or "SYSTEM_TYPE" constants listed above.
+   * @return an int matching one of the type constants.
+   *
+   * @see TopologyReaderService defies the type codes
    */
   public int getType() { return type; }
 

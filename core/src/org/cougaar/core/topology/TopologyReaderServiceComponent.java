@@ -63,6 +63,10 @@ extends GenericStateModelAdapter
 implements Component 
 {
 
+  // save here for easy reference below
+  private static final int ANY_AGENT_TYPE = 
+    TopologyReaderService.ANY_TYPE;
+
   private ServiceBroker sb;
 
   private NamingService namingService;
@@ -207,15 +211,12 @@ implements Component
           String childName) {
         validate(childType, parentType);
         validateName(childType, childName);
-        String parentAttr = 
-          TopologyNamingConstants.TYPE_TO_ATTRIBUTE_NAME[
-            parentType];
-        if (childType == AGENT) {
-          return (String) searchAgent(childName, parentAttr);
+        String parentAttr = getAttributeName(parentType);
+        if ((childType & ANY_AGENT_TYPE) != 0) {
+          return (String) 
+            searchAgent(childType, childName, parentAttr);
         }
-        String childAttr = 
-          TopologyNamingConstants.TYPE_TO_ATTRIBUTE_NAME[
-            childType];
+        String childAttr = getAttributeName(childType);
         return (String)
           searchFirstValue(
               childAttr,
@@ -229,26 +230,19 @@ implements Component
           String parentName) {
         validate(childType, parentType);
         validateName(parentType, parentName);
-        String childAttr =
-          TopologyNamingConstants.TYPE_TO_ATTRIBUTE_NAME[
-            childType];
-        String parentAttr =
-          TopologyNamingConstants.TYPE_TO_ATTRIBUTE_NAME[
-            parentType];
+        String parentAttr = getAttributeName(parentType);
         Attributes match = new BasicAttributes();
         match.put(parentAttr, parentName);
-        return searchAllValues(match, childAttr);
+        return searchAllValues(match, childType);
       }
 
       public Set lookupAll(int type) {
-        validateRange(type);
-        if (type == AGENT) {
+        validateType(type);
+        if (type == ANY_AGENT_TYPE) {
           return searchAllAgents();
         }
-        String attr = 
-          TopologyNamingConstants.TYPE_TO_ATTRIBUTE_NAME[
-            type];
-        return searchAllValues(attr);
+        Attributes match = new BasicAttributes();
+        return searchAllValues(match, type);
       }
 
       public long lookupIncarnationForAgent(String agent) {
@@ -370,31 +364,33 @@ implements Component
 
       /** get named attribute, throw exception if not present */
       private Object getAttribute(Attributes ats, String id) {
-        Attribute at = ats.get(id);
-        if (at == null) {
-          throw new RuntimeException(
-              "Unknown attribute \""+id+"\"");
+        return getAttributeValue(ats, id, true);
+      }
+
+      // type to attribute name mapping:
+
+      private String getAttributeName(int type) {
+        // type already validated
+        int t = type;
+        if ((t & ANY_AGENT_TYPE) != 0) {
+          t = AGENT;
         }
-        Object val;
-        try {
-          val = at.get();
-        } catch (NamingException ne) {
-          throw new RuntimeException(
-              "Unable to get value for attribute \""+id+"\"");
+        switch (t) {
+          case AGENT: return TopologyNamingConstants.AGENT_ATTR;
+          case NODE: return TopologyNamingConstants.NODE_ATTR;
+          case HOST: return TopologyNamingConstants.HOST_ATTR;
+          case SITE: return TopologyNamingConstants.SITE_ATTR;
+          case ENCLAVE: return TopologyNamingConstants.ENCLAVE_ATTR;
+          default: throw new RuntimeException("Invalid type ("+type+")");
         }
-        if (val == null) {
-          throw new RuntimeException(
-              "Null value for attribute \""+id+"\"");
-        }
-        return val;
       }
 
       // validate utilities:
 
       private void validate(
           int childType, int parentType) {
-        validateRange(childType);
-        validateRange(parentType);
+        validateType(childType);
+        validateType(parentType);
         validateRelation(childType, parentType);
       }
 
@@ -407,24 +403,44 @@ implements Component
         }
       }
 
-      private void validateRange(int type) {
-        if ((type < AGENT) ||
-            (type > ENCLAVE)) {
-          throw new IllegalArgumentException(
-              "Invalid type \""+
-              getTypeAsString(type)+
-              "\"");
+      private void validateType(int type) {
+        int t = type;
+        if ((t & ANY_AGENT_TYPE) != 0) {
+          t &= ~ANY_AGENT_TYPE;
+          t |= AGENT;
         }
+        switch (t) {
+          case AGENT:
+          case NODE:
+          case HOST:
+          case SITE:
+          case ENCLAVE:
+            return;
+          default: 
+            break;
+        }
+        throw new IllegalArgumentException(
+            "Invalid type \""+
+            getTypeAsString(type)+
+            "\"");
       }
 
       private void validateRelation(
           int childType, int parentType) {
-        if (childType >= parentType) {
+        // types already validated
+        int ct = childType;
+        int pt = parentType;
+        if ((ct & ANY_AGENT_TYPE) != 0) {
+          ct = AGENT;
+        }
+        if ((pt & ANY_AGENT_TYPE) != 0) {
+          pt = AGENT;
+        }
+        if (ct >= pt) {
           throw new IllegalArgumentException(
               "Child type \""+
               getTypeAsString(childType)+
-              "\" must be "+
-              "less than the parent type \""+
+              "\" is not contained by parent type \""+
               getTypeAsString(parentType)+
               "\"");
         }
@@ -437,11 +453,64 @@ implements Component
           case HOST: return "HOST";
           case SITE: return "SITE";
           case ENCLAVE: return "ENCLAVE";
-          default: return "UNKNOWN ("+i+")";
+          default: break;
         }
+        if (((i & ANY_AGENT_TYPE) != 0) &&
+            ((i & ~ANY_AGENT_TYPE) == 0)) {
+          String s = "AGENT(";
+          if ((i & AGENT_TYPE) != 0) s += "L";
+          if ((i & NODE_AGENT_TYPE) != 0) s += "N";
+          if ((i & SYSTEM_TYPE) != 0) s += "S";
+          s += ")";
+          return s;
+        }
+        return "INVALID ("+i+")";
       }
 
       // search utils:
+
+      private Object getAttributeValue(Attributes ats, String id) {
+        return getAttributeValue(ats, id, false);
+      }
+
+      private Object getAttributeValue(
+          Attributes ats, String id, boolean confirm) {
+        if (ats == null) {
+          if (confirm) {
+            throw new RuntimeException(
+                "Null attributes set");
+          } else {
+            return null;
+          }
+        }
+        Attribute at = ats.get(id);
+        if (at == null) {
+          if (confirm) {
+            throw new RuntimeException(
+                "Unknown attribute \""+id+"\"");
+          } else {
+            return null;
+          }
+        }
+        Object val;
+        try {
+          val = at.get();
+        } catch (NamingException ne) {
+          throw new RuntimeException(
+              "Unable to get value for attribute \""+id+"\"",
+              ne);
+        }
+        if (val == null) {
+          if (confirm) {
+            throw new RuntimeException(
+                "Null value for attribute \""+id+"\"");
+          } else {
+            return null;
+          }
+
+        }
+        return val;
+      }
 
       private Attributes searchAgent(String agent) {
         try {
@@ -462,16 +531,36 @@ implements Component
           DirContext ctx = getTopologyContext();
           String[] ats_filter = { single_attr };
           Attributes ats = ctx.getAttributes(agent);
-          if (ats != null) {
-            Attribute at = ats.get(single_attr);
-            if (at != null) {
-              Object val = at.get();
-              if (val != null) {
-                return val;
-              }
-            }
+          return getAttributeValue(ats, single_attr);
+        } catch (NamingException ne) {
+          if (ne instanceof javax.naming.NameNotFoundException) {
+            return null;
           }
-          return null;
+          throw new RuntimeException(
+              "Unable to access name server", ne);
+        }
+      }
+
+      private Object searchAgent(
+          int type, String agent, String single_attr) {
+        if (type == ANY_AGENT_TYPE) {
+          return searchAgent(agent, single_attr);
+        }
+        try {
+          DirContext ctx = getTopologyContext();
+          String[] ats_filter = { 
+            single_attr, 
+            TopologyNamingConstants.TYPE_ATTR,
+          };
+          Attributes ats = ctx.getAttributes(agent);
+          Object val = getAttributeValue(ats, single_attr);
+          if (val == null) return null;
+          Object otype = getAttributeValue(ats, 
+              TopologyNamingConstants.TYPE_ATTR);
+          if (otype == null) return null;
+          int itype = ((Integer) otype).intValue();
+          if ((type & itype) == 0) return null;
+          return val;
         } catch (NamingException ne) {
           if (ne instanceof javax.naming.NameNotFoundException) {
             return null;
@@ -520,23 +609,7 @@ implements Component
         Attributes match = new BasicAttributes();
         match.put(filter_name, filter_value);
         Attributes ats = searchFirstAttributes(match);
-        if (ats != null) {
-          Attribute at = ats.get(single_attr);
-          if (at != null) {
-            Object val;
-            try {
-              val = at.get();
-            } catch (NamingException ne) {
-              throw new RuntimeException(
-                  "Unable to get value for attribute \""+
-                  single_attr+"\"");
-            }
-            if (val != null) {
-              return val;
-            }
-          }
-        }
-        return null;
+        return getAttributeValue(ats, single_attr);
       }
 
       private List searchAllAttributes(Attributes match) {
@@ -569,20 +642,27 @@ implements Component
         }
       }
 
-      private Set searchAllValues(String single_attr) {
-        Attributes match = new BasicAttributes();
-        return searchAllValues(match, single_attr);
-      }
-
-      private Set searchAllValues(Attributes match, String single_attr) {
+      private Set searchAllValues(
+          Attributes match, int type) {
+        String single_attr = getAttributeName(type);
+        boolean isAgentFilter = 
+          (((type & ANY_AGENT_TYPE) != 0) &&
+           ((type != ANY_AGENT_TYPE)));
         try {
-          String[] ats_filter = { single_attr };
           DirContext ctx = namingService.getRootContext();
-          NamingEnumeration e =
-            ctx.search(
-                TopologyNamingConstants.TOPOLOGY_DIR,
-                match,
+          NamingEnumeration e;
+          if (isAgentFilter) {
+            String[] ats_filter = { 
+              single_attr, 
+              TopologyNamingConstants.TYPE_ATTR,
+            };
+            e = ctx.search(TopologyNamingConstants.TOPOLOGY_DIR, match,
                 ats_filter);
+          } else {
+            String[] ats_filter = { single_attr };
+            e = ctx.search(TopologyNamingConstants.TOPOLOGY_DIR, match,
+                ats_filter);
+          }
           Set ret;
           if (!(e.hasMore())) {
             ret = Collections.EMPTY_SET;
@@ -590,18 +670,21 @@ implements Component
             ret = new HashSet(13);
             do {
               SearchResult result = (SearchResult) e.next();
-              if (result != null) {
-                Attributes ats = result.getAttributes();
-                if (ats != null) {
-                  Attribute at = ats.get(single_attr);
-                  if (at != null) {
-                    Object val = at.get();
-                    if (val != null) {
-                      ret.add(val);
-                    }
-                  }
-                }
+              // get value
+              if (result == null) continue;
+              Attributes ats = result.getAttributes();
+              Object val = getAttributeValue(ats, single_attr);
+              if (val == null) continue;
+              // check agent-type filter
+              if (isAgentFilter) {
+                Object otype = getAttributeValue(ats, 
+                    TopologyNamingConstants.TYPE_ATTR);
+                if (otype == null) continue;
+                int itype = ((Integer) otype).intValue();
+                if ((type & itype) == 0) continue;
               }
+              // add value
+              ret.add(val);
             } while (e.hasMore()); 
           }
           return ret;
@@ -609,7 +692,6 @@ implements Component
           throw new RuntimeException(
               "Unable to access name server", e);
         }
-
       }
 
       private DirContext getTopologyContext() throws NamingException {
