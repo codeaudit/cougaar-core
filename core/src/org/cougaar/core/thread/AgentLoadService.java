@@ -42,7 +42,7 @@ public interface AgentLoadService extends Service
     /**
      * This struct-like class holds the four values of a CPU load
      * snapshot.
-    */
+     */
     public class AgentLoad extends DecayingHistory.SnapShot {
 	/**
 	 * The name of the Agent.
@@ -50,17 +50,22 @@ public interface AgentLoadService extends Service
 	public String name;
 
 	/**
-	 * Zinky will fill this in.
+	 * Gauge of instantaneous Agent Load Average, i.e. number of 
+	 * outstanding threads currently being used by the Agent
 	 */
 	public int outstanding;
 
 	/**
-	 * Zinky will fill this in.
+	 * Integral of the Agent Load Average over time.
+	 * To calculate Agent Load Average, snapshot twice and 
+	 * divide delta value by delta time
 	 */
 	public double loadAvgIntegrator;
 
 	/**
-	 * Zinky will fill this in.
+	 * Integral of the Agent MJIPS  over time.
+	 * To calculate Agent average MJIPS snapshot twice and 
+	 * divide delta value by delta time.
 	 */
 	public double loadMjipsIntegrator;
     }
