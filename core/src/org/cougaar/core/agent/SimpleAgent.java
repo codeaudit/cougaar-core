@@ -2289,6 +2289,7 @@ implements AgentIdentityClient
       public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
       public void advanceNodeTime(long timePeriod, double newRate) {die();}
       public void setNodeTime(long time, double newRate) {die();}
+      public void setNodeTime(long time, double newRate, long changeTime) {die();}
 
       public double getExecutionRate() { die(); return -1; }
     }
@@ -2346,7 +2347,8 @@ implements AgentIdentityClient
                                              false, // millisIsAbsolute,
                                              newRate,
                                              false, // forceRunning,
-                                             NaturalTimeService.DEFAULT_CHANGE_DELAY);
+                                             NaturalTimeService.DEFAULT_CHANGE_DELAY,
+                                             false); // changeIsAbsolute
         getAgent().xTimer.setParameters(newParameters);
       }
       public void setNodeTime(long time, double newRate) {
@@ -2356,7 +2358,19 @@ implements AgentIdentityClient
                                              true, // millisIsAbsolute,
                                              newRate,
                                              false, // forceRunning,
-                                             NaturalTimeService.DEFAULT_CHANGE_DELAY);
+                                             NaturalTimeService.DEFAULT_CHANGE_DELAY,
+                                             false); // changeIsAbsolute
+        getAgent().xTimer.setParameters(newParameters);
+      }
+      public void setNodeTime(long time, double newRate, long changeTime) {
+        ExecutionTimer.Parameters newParameters =
+          getAgent().xTimer.createParameters(
+                                             time,
+                                             true, // millisIsAbsolute,
+                                             newRate,
+                                             false, // forceRunning,
+                                             changeTime,
+                                             true); // changeIsAbsolute
         getAgent().xTimer.setParameters(newParameters);
       }
       public double getExecutionRate() {
@@ -2371,7 +2385,7 @@ implements AgentIdentityClient
         ExecutionTimer.Parameters newParameters =
           getAgent().xTimer.createParameters(
               millis, millisIsAbsolute, newRate,
-              forceRunning, changeDelay);
+              forceRunning, changeDelay, false);
         sendAdvanceClockMessage(newParameters);
       }
       private void sendAdvanceClockMessage(

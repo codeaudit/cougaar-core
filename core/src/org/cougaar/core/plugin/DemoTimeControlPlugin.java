@@ -165,9 +165,9 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
     }
   }
 
-  protected void updateTime(String advance, String rate) {
+  protected void updateTime(String advance, String rate, String changeTime) {
     if (loggingService.isDebugEnabled()) {
-      loggingService.debug("Time to advance = "+advance+" New Rate = "+rate);
+      loggingService.debug("Time to advance = "+advance+"; New Rate = "+rate+"; Change Time is "+changeTime);
     }
     if ((advance == null) && (rate == null))
       return;
@@ -204,7 +204,20 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
     }
     newTime = (newTime / quantization) * quantization;
 
-    demoControlService.setNodeTime(newTime, d_rate);
+    if (changeTime != null && changeTime.length() > 0) {
+      long l_changeTime = 0;
+      if (changeTime != null) {
+        try {
+          l_changeTime = Long.parseLong(changeTime);
+        } catch (NumberFormatException nfe) {
+          System.err.println("Bad change time");
+          nfe.printStackTrace();
+        }
+      }
+      demoControlService.setNodeTime(newTime, d_rate, l_changeTime);
+    } else {
+      demoControlService.setNodeTime(newTime, d_rate);
+    }
   }
 
   protected void doit(HttpServletRequest req, HttpServletResponse res)
@@ -212,7 +225,8 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
 
     updateTime(
       req.getParameter("timeAdvance"),
-      req.getParameter("executionRate"));
+      req.getParameter("executionRate"),
+      req.getParameter("changeTime"));
 
     PrintWriter out = res.getWriter();
     out.println("<html><head></head><body>");
@@ -223,6 +237,10 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
       "<tr><td>Scenario Time</td><td>"
         + fmt.format(new Date(alarmService.currentTimeMillis()))
         + "</td></tr>");
+out.println(
+"<tr><td>Test Time</td><td>"
+ + System.currentTimeMillis()
+ + "</td></tr>");
     out.println(
       "<tr><td>Time Advance (millisecs)</td><td><input type=\"text\" name=\"timeAdvance\" size=10 value=\""
         + 0
@@ -231,6 +249,10 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
       "<tr><td>Execution Rate</td><td><input type=\"text\" name=\"executionRate\" size=10 value=\""
         + demoControlService.getExecutionRate()
         + "\"> <i>(required)</i></td></tr>");
+    out.println(
+      "<tr><td>Real Time for Change to take Effect</td><td><input type=\"text\" name=\"changeTime\" size=10 value=\""
+        + ""
+        + "\"> </td></tr>");
     out.println("</table>");
     out.println("<INPUT TYPE=\"submit\" Value=\"Submit\">");
     out.println("</FORM>");

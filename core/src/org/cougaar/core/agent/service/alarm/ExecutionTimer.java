@@ -74,15 +74,19 @@ import org.cougaar.util.log.Logging;
  *   New offset
  *   Changeover (real) time
  *
- * The changeover is redundant when the new rate is > 0.0 since it can
- * be computed from the current parameters and the new rate and
- * offset, but having it assists in sorting out a succession of time
- * changes from multiple origins. In particular, the changeover time
- * is the first order sorting factor. If the changeover times are
- * equal, the parameters yielding the highest execution time value at
- * the changeover time dominate. If the execution times at the
+ * The changeover time is the first order sorting factor. If the changeover
+ * times are equal, the parameters yielding the highest execution time value
+ * at the changeover time dominate. If the execution times at the
  * changeover time are equal, the change with the highest offset
- * dominates.
+ * dominates.  
+ * 
+ * The changeover time in this message is used as an offset from the
+ * current system time --- at current system time + changeover the new parameters
+ * will take effect.  Normally, though, an absolute real time sync point should be
+ * specified to ensure that all nodes change parameters at the same time (again,
+ * assuming all host clocks are synchronized using NTP).  An absolute real time
+ * change time can be specified using the ExecutionTimer.Parameters.create method,
+ * and setting changeIsAbsolute = true.
  *
  * We want the execution timer to have the ability to initialize the natural-time
  * clock to a particular time. This is
@@ -222,6 +226,14 @@ public class ExecutionTimer extends Timer {
     }
   }
 
+  /**
+   * Create Parameters that jump time by a specified amount and
+   * continue at a new rate thereafter. The new rate is 0.0 if running
+   * is false, the current rate if running is true and the current
+   * rate is greater than 0.0 or 1.0 if running is true and the
+   * current rate is stopped.
+   * @deprecated Use the version that allows specifying absolute change time instead
+   **/
   public Parameters create(long millis,
                            boolean millisIsAbsolute,
                            double newRate,
@@ -230,6 +242,30 @@ public class ExecutionTimer extends Timer {
   {
     synchronized (sem) {
       long changeTime = getNow() + changeDelay;
+      return create(millis, millisIsAbsolute, newRate, forceRunning, changeTime, theParameters[0]);
+    }
+  }
+
+  /**
+   * Create Parameters that jump time by a specified amount and
+   * continue at a new rate thereafter. The new rate is 0.0 if running
+   * is false, the current rate if running is true and the current
+   * rate is greater than 0.0 or 1.0 if running is true and the
+   * current rate is stopped.  
+   * The new parameters can go into effect at a time relative to
+   * the current system time (changeIsAbsolute == false), or at a
+   * specific system time (changeIsAbsolute == true)
+   **/
+  public Parameters create(long millis,
+                           boolean millisIsAbsolute,
+                           double newRate,
+                           boolean forceRunning,
+                           long changeTime,
+			   boolean changeIsAbsolute)
+  {
+    synchronized (sem) {
+      if (!changeIsAbsolute)
+        changeTime = getNow() + changeTime;
       return create(millis, millisIsAbsolute, newRate, forceRunning, changeTime, theParameters[0]);
     }
   }
@@ -385,7 +421,8 @@ public class ExecutionTimer extends Timer {
         return offset;
       }
     }
-
+    offset = 0L; // reset so not == DATE_ERROR
+    
     long now = System.currentTimeMillis();
     ParsedPropertyDate adt = new ParsedPropertyDate("org.cougaar.core.agent.startTime");
     ParsedPropertyDate sdt = new ParsedPropertyDate("org.cougaar.core.society.startTime");

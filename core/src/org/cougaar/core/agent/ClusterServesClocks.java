@@ -104,6 +104,13 @@ public interface ClusterServesClocks  {
    **/
   void setNodeTime(long time, double newRate);
 
+  /** General form of setNodeTime, allowing the clock to be left running at a new rate.
+   * <em>Only UI Plugins controlling the demonstration should use
+   * this method.</em>
+   * This affects the time on this node only.
+   **/
+  void setNodeTime(long time, double newRate, long changeTime);
+  
   /**
    * Get the current execution time rate.
    **/

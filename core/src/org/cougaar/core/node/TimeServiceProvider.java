@@ -193,9 +193,16 @@ class TimeServiceProvider
 
     protected Timer getTimer() { return xTimer; }
     public void setParameters(ExecutionTimer.Parameters x) { xTimer.setParameters(x); }
+    /**
+     * @deprecated Use the version that allows specifying absolute change time instead
+     */ 
     public ExecutionTimer.Parameters createParameters(long millis, boolean millisIsAbsolute, double newRate,
                                                       boolean forceRunning, long changeDelay) {
       return xTimer.create(millis, millisIsAbsolute, newRate, forceRunning, changeDelay);
+    }
+    public ExecutionTimer.Parameters createParameters(long millis, boolean millisIsAbsolute, double newRate,
+                                                      boolean forceRunning, long changeTime, boolean changeIsAbsolute) {
+      return xTimer.create(millis, millisIsAbsolute, newRate, forceRunning, changeTime, changeIsAbsolute);
     }
     public ExecutionTimer.Parameters[] createParameters(ExecutionTimer.Change[] changes) {
       return xTimer.create(changes);

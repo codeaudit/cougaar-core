@@ -63,6 +63,9 @@ public class DemoControlServiceProvider implements ServiceProvider {
     public void setNodeTime(long time, double rate) {
       agentClock.setNodeTime(time, rate);
     }
+    public void setNodeTime(long time, double rate, long changeTime) {
+      agentClock.setNodeTime(time, rate, changeTime);
+    }
 
   }
 }

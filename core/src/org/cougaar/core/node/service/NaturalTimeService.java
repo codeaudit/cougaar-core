@@ -30,8 +30,13 @@ public interface NaturalTimeService
   long DEFAULT_CHANGE_DELAY = ExecutionTimer.DEFAULT_CHANGE_DELAY;
 
   void setParameters(ExecutionTimer.Parameters x);
+  /**
+   * @deprecated Use the version that allows specifying absolute change time instead
+   */ 
   ExecutionTimer.Parameters createParameters(long millis, boolean millisIsAbsolute, double newRate,
                                              boolean forceRunning, long changeDelay);
+  ExecutionTimer.Parameters createParameters(long millis, boolean millisIsAbsolute, double newRate,
+                                             boolean forceRunning, long changeTime, boolean changeIsAbsolute);
   ExecutionTimer.Parameters[] createParameters(ExecutionTimer.Change[] changes);
   double getRate();
 }
