@@ -190,7 +190,7 @@ public class ConfigReader {
    * Also, if the line ends in ":5555", then this is trimmed off,
    * since this is the old PSP server port.
    */
-  private static AddressEntry parse(String line) {
+  protected static AddressEntry parse(String line) {
     if (line.startsWith("#") ||
         line.startsWith("[") ||
         line.startsWith("//")) {
