@@ -1,5 +1,11 @@
 2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* Persistable.java:
+	Interface for potentially persistable objects. The isPersistable()
+	method from the Publishable interface has been moved here and
+	Publishable now extends this interface. It was illogical that the
+	Publishable interface declared the isPersistable method.
+
 	* PersistenceObject.java:
 	Fix comment to accurately describe what this class is for.
 
