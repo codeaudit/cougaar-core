@@ -75,9 +75,8 @@ public class StandardBlackboard
     try {
       return bb.getState();
     } catch (Exception e) {
-      System.err.println("Unable to capture Blackboard state");
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(
+          "Unable to capture Blackboard state", e);
     }
   }
 
