@@ -27,10 +27,11 @@ import java.util.ArrayList;
 
 public interface TimeSlicePolicy extends TimeSliceConsumer
 {
-    void setTreeNode(PolicyTreeNode node);
-
     TimeSlice getSlice(TimeSliceConsumer consumer);
     void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice);
+    boolean offerSlice(TimeSlice slice);
     void noteChangeOfOwnership(TimeSliceConsumer consumer, TimeSlice slice);
+
+    void setTreeNode(PolicyTreeNode node);
     void setMaxRunningThreadCount(int count);
 }
