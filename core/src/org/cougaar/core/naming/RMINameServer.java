@@ -440,11 +440,11 @@ public class RMINameServer implements NameServer, InitialContextFactory {
     
     try {
       NS ns = new NSImpl();
-      rns.put(ns.getRoot(), "fred", "fred");
+      rns.put(ns.fullName(ns.getRoot(), "fred"), "fred");
       Object o = rns.get(ns.fullName(ns.getRoot(), "fred"));
       System.err.println("got " + o + " " + o.getClass());
 
-      rns.put(ns.getRoot(), "wilma", "wilma");
+      rns.put(ns.fullName(ns.getRoot(), "wilma"), "wilma");
       o = rns.get(ns.fullName(ns.getRoot(),"wilma"));
       System.err.println("got " + o + " " + o.getClass());
 
