@@ -18,4 +18,46 @@
 
 package org.cougaar.core.service.community;
 
-public interface SpokesagentList {}
+import java.util.Iterator;
+
+
+/** SpokesagentList Interface
+  * A SpokesagentList contains a list of SpokesagentDescriptor objects for a
+  * specific community.
+  **/
+
+public interface SpokesagentList {
+
+
+  /**
+   * The getCommunityName method returns the name of the community that
+   * this SpokesagentList represents.
+   * @return Returns the community name
+   **/
+  String getCommunityName();
+
+
+  /**
+   * Tests for the existence of a spokesagent providing the specified role.
+   * @return True if community currently has at least one spokesagent provding
+   *         the specified role.
+   */
+  boolean hasSpokesagent(String role);
+
+
+  /**
+   * Returns an array of community Spokesagent names that provide the specified
+   * role for the community.
+   * @return Array of Spokesagent names
+   */
+  Iterator getSpokesagent(String role);
+
+
+  /**
+   * Returns an Iterator for all Spokesagent descriptors associated with this
+   * community.
+   * @return Iterator for SpokesagentDescriptors
+   */
+  Iterator getAllSpokesagents();
+
+}

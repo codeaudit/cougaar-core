@@ -32,7 +32,7 @@ public class SpokesagentDescriptor {
   /**
    * Constructor.
    */
-  protected SpokesagentDescriptor (String identifier,
+  public SpokesagentDescriptor (String identifier,
                                    String[] roles) {
     this.identifier = identifier;
     this.roles = roles;
