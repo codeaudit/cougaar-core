@@ -40,8 +40,8 @@ import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.LoggerAdapter;
-import org.cougaar.util.log.LoggerFactory;
+import org.cougaar.util.log.Logging;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 
 /**
  * The Distributor coordinates blackboard transactions, subscriber
@@ -224,9 +224,8 @@ final class Distributor {
   public Distributor(Blackboard blackboard, String name) {
     this.blackboard = blackboard;
     this.name = (name != null ? name : "Anonymous");
-    Logger l = LoggerFactory.getInstance().createLogger(getClass());
-    l = new LoggerWithPrefix(l, (name+": "));
-    this.logger = l;
+    Logger l = Logging.getLogger(getClass());
+    this.logger = new LoggingServiceWithPrefix(l, this.name + ": ");
     if (logger.isInfoEnabled()) {
       logger.info("Distributor started");
     }
@@ -1019,23 +1018,6 @@ final class Distributor {
   public String toString() {
     return "<Distributor " + name + ">";
   }
-
-
-  /**
-   * Wrapper to prefix all log calls.
-   *
-   * @see org.cougaar.core.logging.LoggingServiceWithPrefix
-   */
-  public static class LoggerWithPrefix extends LoggerAdapter {
-    private final String prefix;
-    private final Logger logger;
-    public LoggerWithPrefix(Logger logger, String prefix) {
-      this.logger = logger;
-      this.prefix = prefix;
-    }
-    public boolean isEnabledFor(int level) { return logger.isEnabledFor(level); }
-    public void log(int level, String message, Throwable t) { logger.log(level, prefix + message, t); }
-  }  
 
   /**
    * Hold our set of registered Subscribers.
