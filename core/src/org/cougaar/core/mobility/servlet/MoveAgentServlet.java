@@ -142,20 +142,18 @@ implements BlackboardClient
   public void setAgentIdentificationService(
       AgentIdentificationService agentIdService) {
     this.agentIdService = agentIdService;
-    if (agentIdService == null) {
-      // Revocation
-    } else {
+    if (agentIdService != null) {
       this.localAgent = agentIdService.getMessageAddress();
+      //    } else {      // Revocation - nothing more to do
     }
   }
 
   public void setNodeIdentificationService(
       NodeIdentificationService nodeIdService) {
     this.nodeIdService = nodeIdService;
-    if (nodeIdService == null) {
-      // Revocation
-    } else {
+    if (nodeIdService != null) {
       this.localNode = nodeIdService.getMessageAddress();
+      //    } else {      // Revocation - nothing more to do
     }
   }
 
