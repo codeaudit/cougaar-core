@@ -26,25 +26,7 @@
 
 package org.cougaar.core.agent;
 
-import java.net.InetAddress;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.ComponentDescriptions;
-import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.Service;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.*;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
@@ -52,24 +34,28 @@ import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
-/** A container for Agents.
- * Although the AgentManager can hold Components other than Agents, the 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+
+/**
+ * A container for Agents.
+ * Although the AgentManager can hold Components other than Agents, the
  * default BinderFactory will only actually accept Agents and other Binders.
  * If you want to load other sorts of components into AgentManager, you'll
  * need to supply a Binder which knows how to bind your Component class.
- **/
-public class AgentManager 
-extends ContainerSupport
-implements AgentContainer
-{
+ */
+public class AgentManager
+    extends ContainerSupport
+    implements AgentContainer {
   public static final String INSERTION_POINT = "Node.AgentManager";
 
   private static final String FILENAME_PROP = "org.cougaar.filename";
   private static final String EXPTID_PROP = "org.cougaar.experiment.id";
-  private static final String INITIALIZER_PROP = 
-    "org.cougaar.core.node.InitializationComponent";
+  private static final String INITIALIZER_PROP =
+      "org.cougaar.core.node.InitializationComponent";
   private static final String NODE_AGENT_CLASSNAME_PROPERTY =
-    "org.cougaar.core.node.classname";
+      "org.cougaar.core.node.classname";
 
   public void load() {
     super.load();
@@ -103,8 +89,7 @@ implements AgentContainer
     try {
       return super.add(o);
     } catch (RuntimeException re) {
-      Logging.getLogger(this.getClass()).error(
-          "Failed to add "+o+" to "+this, re);
+      Logging.getLogger(this.getClass()).error("Failed to add " + o + " to " + this, re);
       return false;
     }
   }
@@ -128,15 +113,15 @@ implements AgentContainer
   }
 
   private void add_node_identification_service(String nodeName) {
-    final MessageAddress localNode = 
-      MessageAddress.getMessageAddress(nodeName);
+    final MessageAddress localNode =
+        MessageAddress.getMessageAddress(nodeName);
     Class clazz = NodeIdentificationService.class;
     Service service =
-      new NodeIdentificationService() {
-        public MessageAddress getMessageAddress() {
-          return localNode;
-        }
-      };
+        new NodeIdentificationService() {
+          public MessageAddress getMessageAddress() {
+            return localNode;
+          }
+        };
     add_service(clazz, service);
   }
 
@@ -147,48 +132,55 @@ implements AgentContainer
     // be fine.
     final ServiceBroker rootsb = getChildServiceBroker();
     // create a proxy for our agent manager, to prevent casting
-    final AgentContainer rootac = 
-      new AgentContainer() {
-        public boolean containsAgent(MessageAddress agentId) {
-          return AgentManager.this.containsAgent(agentId);
-        }
-        public Set getAgentAddresses() {
-          return AgentManager.this.getAgentAddresses();
-        }
-        public ComponentDescription getAgentDescription(
-            MessageAddress agentId) {
-          return AgentManager.this.getAgentDescription(agentId);
-        }
-        public Map getAgents() {
-          return AgentManager.this.getAgents();
-        }
-        public List getComponents() {
-          return AgentManager.this.getComponents();
-        }
-        public void addAgent(
-            MessageAddress agentId, StateTuple tuple) {
-          AgentManager.this.addAgent(agentId, tuple);
-        }
-        public boolean add(Object o) {
-          return AgentManager.this.add(o);
-        }
-        public void removeAgent(MessageAddress agentId) {
-          AgentManager.this.removeAgent(agentId);
-        }
-        public boolean remove(Object o) {
-          return AgentManager.this.remove(o);
-        }
-      };
+    final AgentContainer rootac =
+        new AgentContainer() {
+          public boolean containsAgent(MessageAddress agentId) {
+            return AgentManager.this.containsAgent(agentId);
+          }
+
+          public Set getAgentAddresses() {
+            return AgentManager.this.getAgentAddresses();
+          }
+
+          public ComponentDescription getAgentDescription(MessageAddress agentId) {
+            return AgentManager.this.getAgentDescription(agentId);
+          }
+
+          public Map getAgents() {
+            return AgentManager.this.getAgents();
+          }
+
+          public List getComponents() {
+            return AgentManager.this.getComponents();
+          }
+
+          public void addAgent(MessageAddress agentId, StateTuple tuple) {
+            AgentManager.this.addAgent(agentId, tuple);
+          }
+
+          public boolean add(Object o) {
+            return AgentManager.this.add(o);
+          }
+
+          public void removeAgent(MessageAddress agentId) {
+            AgentManager.this.removeAgent(agentId);
+          }
+
+          public boolean remove(Object o) {
+            return AgentManager.this.remove(o);
+          }
+        };
     Class clazz = NodeControlService.class;
     Service service =
-      new NodeControlService() {
-        public ServiceBroker getRootServiceBroker() {
-          return rootsb;
-        }
-        public AgentContainer getRootContainer() {
-          return rootac;
-        }
-      };
+        new NodeControlService() {
+          public ServiceBroker getRootServiceBroker() {
+            return rootsb;
+          }
+
+          public AgentContainer getRootContainer() {
+            return rootac;
+          }
+        };
     add_service(clazz, service);
   }
 
@@ -201,66 +193,57 @@ implements AgentContainer
     // possible if we must support agent binders.
     String classname = getComponentInitializerClass();
     return
-      new ComponentDescription(
-          classname,
-          AgentManager.INSERTION_POINT+".Component",
-          classname,
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT);
+        new ComponentDescription(classname,
+            AgentManager.INSERTION_POINT + ".Component",
+            classname,
+            null, //codebase
+            null, //params
+            null, //certificate
+            null, //lease
+            null, //policy
+            ComponentDescription.PRIORITY_COMPONENT);
   }
 
   private List getAgentBinderDescriptions(String nodeName) {
     ServiceBroker csb = getChildServiceBroker();
     ComponentDescriptions cds;
     try {
-      ComponentInitializerService cis = (ComponentInitializerService) 
-        csb.getService(this, ComponentInitializerService.class, null);
+      ComponentInitializerService cis = (ComponentInitializerService)
+          csb.getService(this, ComponentInitializerService.class, null);
       Logger logger = Logging.getLogger(AgentManager.class);
       if (logger.isInfoEnabled()) {
-        logger.info(
-          nodeName + 
-          " AgentManager.load about to look for CompDesc's"+
-          " of Agent Binders.");
+        logger.info(nodeName +
+            " AgentManager.load about to look for CompDesc's" +
+            " of Agent Binders.");
       }
       // Get all items _below_ given insertion point.
       // To get just binders, must use extract method later....
-      cds = new ComponentDescriptions(
-          cis.getComponentDescriptions(nodeName, INSERTION_POINT));
+      cds = new ComponentDescriptions(cis.getComponentDescriptions(nodeName, INSERTION_POINT));
       csb.releaseService(this, ComponentInitializerService.class, cis);
     } catch (Exception e) {
-      throw new Error(
-          "Couldn't initialize AgentManager Binders"+
+      throw new Error("Couldn't initialize AgentManager Binders" +
           "  with ComponentInitializerService ", e);
     }
 
-    return 
-      ComponentDescriptions.sort(
-          cds.extractInsertionPointComponent(
-            INSERTION_POINT + ".Binder"));
+    return
+        ComponentDescriptions.sort(cds.extractInsertionPointComponent(INSERTION_POINT + ".Binder"));
   }
 
-  private ComponentDescription getNodeAgentDescription(
-      String nodeName) {
-    String classname = System.getProperty(
-        NODE_AGENT_CLASSNAME_PROPERTY,
+  private ComponentDescription getNodeAgentDescription(String nodeName) {
+    String classname = System.getProperty(NODE_AGENT_CLASSNAME_PROPERTY,
         "org.cougaar.core.agent.AgentImpl");
     List params = new ArrayList(1);
     params.add(nodeName);
-    ComponentDescription desc = 
-      new ComponentDescription(
-          classname,
-          Agent.INSERTION_POINT,
-          classname,
-          null,  //codebase
-          params,
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT);
+    ComponentDescription desc =
+        new ComponentDescription(classname,
+            Agent.INSERTION_POINT,
+            classname,
+            null, //codebase
+            params,
+            null, //certificate
+            null, //lease
+            null, //policy
+            ComponentDescription.PRIORITY_COMPONENT);
     return desc;
   }
 
@@ -273,10 +256,10 @@ implements AgentContainer
     // if full class name not specified, intuit it
     if (component.indexOf(".") < 0) {
       // build up the name, full name was not specified.
-      component = 
-        "org.cougaar.core.node." +
-        component +
-        "ComponentInitializerServiceComponent";
+      component =
+          "org.cougaar.core.node." +
+          component +
+          "ComponentInitializerServiceComponent";
     }
     Logger logger = Logging.getLogger(AgentManager.class);
     if (logger.isInfoEnabled()) {
@@ -301,8 +284,8 @@ implements AgentContainer
     if ((filename == null) && (expt == null)) {
       // use the default "name.ini"
       if (logger.isWarnEnabled()) {
-        logger.warn(
-            "Got no filename or experimentId! Using default File");
+        logger.warn("Defaulting to DEPRECATED INI File based Initialization.");
+        logger.warn("Got no filename or experimentId! Using default File");
       }
       return "File";
     }
@@ -316,6 +299,7 @@ implements AgentContainer
     if (expt == null) {
       // use the filename provided
       if (logger.isWarnEnabled()) {
+        logger.warn("Defaulting to DEPRECATED INI File based Initialization.");
         logger.warn("Got no exptID, using given filename " + filename);
       }
     }
@@ -361,7 +345,7 @@ implements AgentContainer
       } else if (o instanceof String) {
         cid = MessageAddress.getMessageAddress((String) o);
       } else if (o instanceof List) {
-        List l = (List)o;
+        List l = (List) o;
         if (l.size() > 0) {
           Object o1 = l.get(0);
           if (o1 instanceof MessageAddress) {
@@ -381,14 +365,12 @@ implements AgentContainer
   public void addAgent(MessageAddress agentId, StateTuple tuple) {
     if (containsAgent(agentId)) {
       // agent already exists
-      throw new RuntimeException(
-          "Agent "+agentId+" already exists");
+      throw new RuntimeException("Agent " + agentId + " already exists");
     }
     
     // add the agent
-    if (! add(tuple)) {
-      throw new RuntimeException(
-          "Agent "+agentId+" returned \"false\"");
+    if (!add(tuple)) {
+      throw new RuntimeException("Agent " + agentId + " returned \"false\"");
     }
 
     // the agent has started and is now ACTIVE
@@ -399,57 +381,55 @@ implements AgentContainer
     ComponentDescription desc = getAgentDescription(agentId);
     if (desc == null) {
       // no such agent, or not loaded with a desc
-      throw new RuntimeException(
-          "Agent "+agentId+" is not loaded");
+      throw new RuntimeException("Agent " + agentId + " is not loaded");
     }
 
-    if (! remove(desc)) {
-      throw new RuntimeException(
-          "Unable to remove agent "+agentId+
+    if (!remove(desc)) {
+      throw new RuntimeException("Unable to remove agent " + agentId +
           ", \"remove()\" returned false");
     }
 
     // the agent has been UNLOADED and removed
   }
 
-  private ServiceProvider add_service(
-      Class clazz, Service service) {
+  private ServiceProvider add_service(Class clazz, Service service) {
     // we must use our service broker, otherwise our child components
     // will not be able to block our services
     ServiceBroker sb = getServiceBroker();
     ServiceProvider sp = new SimpleServiceProvider(clazz, service);
     if (!sb.addService(clazz, sp)) {
-      throw new RuntimeException("Unable to add service "+clazz);
+      throw new RuntimeException("Unable to add service " + clazz);
     }
     return sp;
   }
-  private void revoke_service(
-      Class clazz, ServiceProvider sp) {
+
+  private void revoke_service(Class clazz, ServiceProvider sp) {
     if (sp != null) {
       ServiceBroker sb = getServiceBroker();
       sb.revokeService(clazz, sp);
     }
   }
+
   private static final class SimpleServiceProvider
-    implements ServiceProvider {
-      private final Class clazz;
-      private final Service service;
-      public SimpleServiceProvider(
-          Class clazz, Service service) {
-        this.clazz = clazz;
-        this.service = service;
-      }
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (clazz.isAssignableFrom(serviceClass)) {
-          return service;
-        } else {
-          return null;
-        }
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
+      implements ServiceProvider {
+    private final Class clazz;
+    private final Service service;
+
+    public SimpleServiceProvider(Class clazz, Service service) {
+      this.clazz = clazz;
+      this.service = service;
+    }
+
+    public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
+      if (clazz.isAssignableFrom(serviceClass)) {
+        return service;
+      } else {
+        return null;
       }
     }
+
+    public void releaseService(ServiceBroker sb, Object requestor,
+                               Class serviceClass, Object service) {
+    }
+  }
 }
