@@ -1,4 +1,21 @@
+2002-04-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/Parser.java:
+	Improve javadoc.
+
 2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingServiceFactory.java:
+	Addresses Bug 1095
+	Try forever when errors occur trying to get initial context from
+	the NS. Pause between attempts.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Improve error logging when missing Conditions exist. Only log one
+	error line unless debug is on, the give a stack trace too.
+
+	* org/cougaar/core/adaptivity/InterAgentCondition.java:
+	Return bit flags from updateResponse
 
 	* org/cougaar/core/relay/RelayLP.java:
 	Use "instanceof" for distinguishing source and target objects. The
