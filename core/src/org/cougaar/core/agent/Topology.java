@@ -55,6 +55,13 @@ import org.cougaar.util.GenericStateModelAdapter;
  * "node://" information in the white pages, and preserves the
  * incarnation across agent moves.
  * <p> 
+ * @property org.cougaar.core.node.SkipReconciliation
+ *   If enabled, rehydrating agents will not run RestartLPs to do 
+ *   reconciliation with other agents, when the Node starts up. 
+ *   Use this (with caution) to quickly rehydate a society from
+ *   a consistent set of (quiescent) persistence snapshots. This
+ *   flag will be cleared once the Node and all its agents have loaded,
+ *   so that later added agents will do reconciliation. Default <em>false</em>.
  */
 public final class Topology
 extends GenericStateModelAdapter
@@ -71,6 +78,7 @@ implements Component
 
   private MessageAddress localAgent;
   private MessageAddress localNode;
+  private boolean isNode;
 
   // incarnation for this agent, which is incremented every time
   // this agent restarts but not when the agent moves.
@@ -81,6 +89,8 @@ implements Component
   private long moveId;
 
   private boolean needsRestart = true;
+
+  private static boolean skipReconciliation;
 
   public void setBindingSite(BindingSite bs) {
     this.sb = bs.getServiceBroker();
@@ -110,6 +120,10 @@ implements Component
           this, NodeIdentificationService.class, nis);
     }
 
+    boolean isNode = 
+      (localAgent == null ||
+       localAgent.equals(localNode));
+
     // get wp
     wps = (WhitePagesService) 
       sb.getService(this, WhitePagesService.class, null);
@@ -136,12 +150,25 @@ implements Component
       throw new RuntimeException(
           "Unable to load restart checker", e);
     }
+
+    if (isNode) {
+      // we haven't added our child agents yet, so we can set
+      // our skip-reconcile flag here or earlier.
+      initializeSkipReconciliation(log);
+    }
   }
 
   public void start() {
     super.start();
     // do restart reconciliation if necessary
     reconcileBlackboard();
+
+    if (isNode) {
+      // we've added our initial agents in AgentLoader's "load()",
+      // so now we clear our skip-reconcile flag.  This will make
+      // dynamically added agents do the usual reconcile.
+      clearSkipReconciliation(log);
+    }
   }
 
   public void unload() {
@@ -236,6 +263,40 @@ implements Component
     return o;
   }
 
+  private static void initializeSkipReconciliation(LoggingService log) {
+    // Set a static flag for whether to skip reconciliation,
+    // based on a -D argument
+    skipReconciliation =
+      Boolean.getBoolean(
+          "org.cougaar.core.node.SkipReconciliation");
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Before loads, SkipReconcile set to "+
+          skipReconciliation);
+    }
+  }
+
+  private static void clearSkipReconciliation(LoggingService log) {
+    // Clear the static flag for whether to skip reconciliation
+    // This way, mobile agents, or, during a run, restarting an
+    // agent, will not suppress reconciliation
+    skipReconciliation = false;
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "After loads, SkipReconcile set to "+skipReconciliation);
+    }
+  }
+
+  /**
+   * Used on startup to enquire whether we should skip
+   * doing reconciliation (as in when an entire society was 
+   * stopped and is being restored from a consistent persistence
+   * snapshot).
+   */
+  private static boolean shouldSkipReconciliation() {
+    return skipReconciliation;
+  }
+
   /**
    * The local agent has restarted.
    */
@@ -248,6 +309,20 @@ implements Component
     }
 
     needsRestart = false;
+
+    // Check the static flag to see if we should actually
+    // ask the BBoard to ask the Domains to run restart LPs on the agent.
+    // This forces reconciliation. In some cases, you do not want to run 
+    // the restart LPs, because that takes time, and you _know_ that is
+    // not needed. Note that this is dangerous in general.
+    // For now, do this here I guess
+    if (shouldSkipReconciliation()) {
+      if (log.isInfoEnabled()) {
+	log.info("Restarting but NOT RECONCILING!");
+      }
+      return;
+    }
+
     if (log.isInfoEnabled()) {
       log.info("Restarting, synchronizing blackboards");
     }
