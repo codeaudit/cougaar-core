@@ -677,6 +677,9 @@ public class NamingDirContext extends NamingContext implements DirContext {
     public boolean match(Attributes attrs) throws NamingException {
       return contains(attrs, matchingAttrs);
     }
+
+    // FIXME!!!
+    public void toString(StringBuffer buf) {}
   }
   
   
