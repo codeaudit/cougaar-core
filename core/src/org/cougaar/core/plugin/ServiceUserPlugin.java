@@ -106,9 +106,9 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
       for (int i = 0; i < serviceClasses.length; i++) {
         if (!serviceAcquired[i]) {
           if (sb.hasService(serviceClasses[i])) {
-            if (logger.isDebugEnabled()) {
-//               logger.debug(serviceClasses[i].getName() + " acquired");
-            }
+	    //            if (logger.isDebugEnabled()) {
+	    //               logger.debug(serviceClasses[i].getName() + " acquired");
+	    //            }
             Object o = sb.getService(this, serviceClasses[i], null);
             if (o == null) {
               System.out.println(serviceClasses[i].getName() + " exists but is unavailable");
@@ -118,9 +118,9 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
               serviceAcquired[i] = true;
             }
           } else {
-            if (logger.isDebugEnabled()) {
-//               logger.debug(serviceClasses[i].getName() + " missing");
-            }
+	    //            if (logger.isDebugEnabled()) {
+	    //               logger.debug(serviceClasses[i].getName() + " missing");
+	    //            }
             allServicesAcquired = false;
           }
         }
