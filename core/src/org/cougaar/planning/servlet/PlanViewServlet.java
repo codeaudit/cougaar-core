@@ -220,12 +220,16 @@ extends HttpServlet
               try {
                 mode = Integer.parseInt(value);
               } catch (Exception eBadNumber) {
-                System.err.println("INVALID MODE: "+name);
+                System.err.println("INVALID MODE: "+value);
                 mode = MODE_FRAME;
               }
             } else if (name.equalsIgnoreCase(ITEM_UID)) {
               if (value != null) {
-                itemUID = URLDecoder.decode(value);
+                try {
+                  itemUID = URLDecoder.decode(value, "UTF-8");
+                } catch (Exception eBadEnc) {
+                  System.err.println("INVALID UID: "+value);
+                }
               }
             } else if (name.equalsIgnoreCase(VERB)) {
               verbFilter = value;
@@ -1343,7 +1347,7 @@ extends HttpServlet
       out.print(
           "</select><br>\n"+
           "<select name=\"formType\">\n"+
-          "  <option value=\"0\">Tasks</option>\n"+
+          "  <option selected value=\"0\">Tasks</option>\n"+
           "  <option value=\"1\">PlanElements</option>\n"+
           "  <option value=\"2\">Assets</option>\n"+
           "  <option value=\"3\">UniqueObjects</option>\n"+
@@ -4262,7 +4266,12 @@ extends HttpServlet
       for (int i = 0; i < n; i++) {
         int c = (int)s.charAt(i);
         if (!(DONT_NEED_ENCODING[i])) {
-          return URLEncoder.encode(s);
+          try {
+            return URLEncoder.encode(s, "UTF-8");
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                "Unable to encode URL ("+s+")");
+          }
         }
       }
       return s;
