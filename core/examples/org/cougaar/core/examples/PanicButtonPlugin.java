@@ -97,8 +97,8 @@ public class PanicButtonPlugin
     JLabel categoryLabel = new JLabel("Choose a Trust Category:");
     categoryCB = new JComboBox();
     categoryCB.addItem("Society");
-    categoryCB.addItem("Host");
-    categoryCB.addItem("Subnet");
+    //categoryCB.addItem("Host");
+    //categoryCB.addItem("Subnet");
 
     // Create JRadioButtons and Group
     JLabel trustlevelLabel = new JLabel("Choose a Trust Level:");
@@ -175,8 +175,8 @@ public class PanicButtonPlugin
         trustlevel = 10;
       }
         
-      System.out.println("catgorycb: "+category+
-                         " trustlevel: "+trustlevel);
+      //System.out.println("catgorycb: "+category+
+      //                   " trustlevel: "+trustlevel);
       sendNodeTrustPolicy(category, trustlevel);
     }
   }
