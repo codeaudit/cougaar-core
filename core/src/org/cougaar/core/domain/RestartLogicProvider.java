@@ -20,7 +20,7 @@
  */
 package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.ClusterIdentifier;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 /** 
  * API for LogPlan LogicProviders which handle agent restarts
