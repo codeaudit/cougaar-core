@@ -1,3 +1,15 @@
+2001-11-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Persistence.java: 
+	* FilePersistence.java: 
+	* DummyPersistence.java:
+	Add getDatabaseConnection and releaseDatabaseConnection to
+	Persistence interface for use by Delta. This avoids casting the
+	Persistence interface into a DatabasePersistence in order to
+	access these methods. The methods throw
+	UnsupportedOperationException in the non-database implementations
+	of this interface.
+
 2001-09-27  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceException.java (Repository):

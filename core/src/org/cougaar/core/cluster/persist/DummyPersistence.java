@@ -104,4 +104,12 @@ public class DummyPersistence extends BasePersistence implements Persistence {
   protected PrintWriter getHistoryWriter(int deltaNumber, String prefix) throws IOException {
     return null;
   }
+
+  public java.sql.Connection getDatabaseConnection(Object locker) {
+    throw new UnsupportedOperationException("DummyPersistence.getDatabaseConnection not supported");
+  }
+
+  public void releaseDatabaseConnection(Object locker) {
+    throw new UnsupportedOperationException("DummyPersistence.releaseDatabaseConnection not supported");
+  }
 }

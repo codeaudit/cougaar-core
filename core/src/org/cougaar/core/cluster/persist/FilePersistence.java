@@ -231,4 +231,12 @@ public class FilePersistence extends BasePersistence implements Persistence {
   private File getDeltaFile(int sequence) {
     return new File(persistenceDirectory, "delta" + formatDeltaNumber(sequence));
   }
+
+  public java.sql.Connection getDatabaseConnection(Object locker) {
+    throw new UnsupportedOperationException("FilePersistence.getDatabaseConnection not supported");
+  }
+
+  public void releaseDatabaseConnection(Object locker) {
+    throw new UnsupportedOperationException("FilePersistence.releaseDatabaseConnection not supported");
+  }
 }
