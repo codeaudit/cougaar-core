@@ -56,6 +56,7 @@ public class AgentStatusRatePlugin
 
     private AgentStatusService agentStatusService;
     private MetricsUpdateService metricsUpdate;
+    private NodeHistory nodeHistory;
     private HashMap agentLocalHistories;
     private HashMap agentRemoteHistories;
     private MessageAddress nodeID;
@@ -77,26 +78,27 @@ public class AgentStatusRatePlugin
 	}
     }
 
-    private abstract class AgentHistory extends DecayingHistory {
+    private abstract class History extends DecayingHistory {
 	MessageAddress agent;
 
-	AgentHistory(MessageAddress address, HashMap store) {
+	History(MessageAddress address, HashMap store) {
 	    super(10, 3, BASE_PERIOD);
 	    this.agent = address;
-	    store.put(address, this);
+	    if (store != null) store.put(address, this);
 	}
 
-    }
-
-    private class AgentLocalHistory extends AgentHistory {
+    } 
+    
+  
+    private class LocalHistory extends History {
 	String msgInKey;
 	String msgOutKey;
 	String bytesInKey;
 	String bytesOutKey;
 
-	AgentLocalHistory(MessageAddress address) {
-	    super(address, agentLocalHistories);
-	    String agentKey ="Agent" +KEY_SEPR+ agent  +KEY_SEPR ;
+	LocalHistory(MessageAddress address, String type, HashMap store) {
+	    super(address, store);
+	    String agentKey = type +KEY_SEPR+ address +KEY_SEPR ;
 	    msgInKey = (agentKey + MSG_IN).intern();
 	    addKey( msgInKey);
 	    msgOutKey = (agentKey + MSG_OUT).intern();
@@ -108,8 +110,8 @@ public class AgentStatusRatePlugin
 	}
 
 	public void newAddition(KeyMap keys,
-			 DecayingHistory.SnapShot rawNow, 
-			 DecayingHistory.SnapShot rawLast) 
+				DecayingHistory.SnapShot rawNow, 
+				DecayingHistory.SnapShot rawLast) 
 	{
 	    AgentSnapShot now = (AgentSnapShot) rawNow;
 	    AgentSnapShot last = (AgentSnapShot) rawLast;
@@ -124,7 +126,20 @@ public class AgentStatusRatePlugin
 	}
     }
 
-    private class AgentRemoteHistory extends AgentHistory {
+    private class NodeHistory extends LocalHistory {
+	NodeHistory() {
+	    super(nodeID, "Node", null);
+	}
+    }
+
+    private class AgentLocalHistory extends LocalHistory {
+
+	AgentLocalHistory(MessageAddress address) {
+	    super(address, "Agent", agentLocalHistories);
+	}
+    }
+
+    private class AgentRemoteHistory extends History {
 	String msgFromKey;
 	String msgToKey;
 	String bytesFromKey;
@@ -165,12 +180,12 @@ public class AgentStatusRatePlugin
     }
 
 
-    private synchronized AgentHistory getAgentHistory(MessageAddress agent,
+    private synchronized History getAgentHistory(MessageAddress agent,
 						      int kind) 
     {
 	HashMap map = 
 	    kind == LOCAL ? agentLocalHistories : agentRemoteHistories;
-	AgentHistory history = (AgentHistory) map.get(agent);
+	History history = (History) map.get(agent);
 	if (history != null)
 	    return history;
 	else if (kind == LOCAL)
@@ -253,6 +268,8 @@ public class AgentStatusRatePlugin
 	    sb.getService(this, NodeIdentificationService.class, null);
  	nodeID = nis.getMessageAddress();
 
+	nodeHistory = new NodeHistory();
+
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {
 	    ThreadService tsvc = (ThreadService)
@@ -286,7 +303,17 @@ public class AgentStatusRatePlugin
 		getAgentHistory(addr, REMOTE).add(record);
 	    }
 	}
- 
+	
+	AgentStatusService.AgentState nodeState = agentStatusService.getNodeState();
+	if (nodeState != null) {
+	    // snapshot
+	    AgentSnapShot record = new AgentSnapShot(nodeState);
+	    nodeHistory.add(record);
+	} else {
+	    // Can't happen 
+	}
+	
+
     }
 
 

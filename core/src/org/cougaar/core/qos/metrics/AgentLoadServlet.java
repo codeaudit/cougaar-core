@@ -125,7 +125,7 @@ public class AgentLoadServlet
 	out.print("<table border=\"3\" cellpadding=\"2\"  rules=\"groups\">\n");
 	out.print("<colgroup> <colgroup span=\"2\"><colgroup span=\"4\"><colgroup>");
 	out.print("<tr><b>");
-	out.print("<th><b>AGENTS</b></th>");
+	out.print("<th><b>NODE</b></th>");
 	out.print("<th><b>CPUloadAvg</b></th>");
 	out.print("<th><b>CPUloadMJIPS</b></th>");
 	out.print("<th><b>MsgIn</b></th>");
@@ -135,7 +135,23 @@ public class AgentLoadServlet
 	out.print("<th><b>Size</b></th>");
 	out.print("</b></tr>");
 
-	//Rows
+
+	// Node data
+	printRow(getNodeID(), "Node", out);
+
+	out.print("<tbody>");
+	out.print("<tr><b>");
+	out.print("<th><b>AGENTS</b></th>");
+// 	out.print("<td><b>CPUloadAvg</b></td>");
+// 	out.print("<td><b>CPUloadMJIPS</b></td>");
+// 	out.print("<td><b>MsgIn</b></td>");
+// 	out.print("<td><b>MsgOut</b></td>");
+// 	out.print("<td><b>BytesIn</b></td>");
+// 	out.print("<td><b>BytesOut</b></td>");
+// 	out.print("<td><b>Size</b></td>");
+	out.print("</b></tr>");
+
+	//Agent Rows
 	for (Iterator itr = localAgents.iterator(); itr.hasNext(); ) {
 
 	    // Get Agent
@@ -177,22 +193,6 @@ public class AgentLoadServlet
 	ServletUtilities.valueTable(metricCpuMJIPS, 0.0, 500.0,true, f6_3, out);
 
 	out.print("</tr>\n");
-
-
-	// Node data
-	out.print("<tbody>");
-	out.print("<tr><b>");
-	out.print("<th><b>NODE</b></th>");
-// 	out.print("<td><b>CPUloadAvg</b></td>");
-// 	out.print("<td><b>CPUloadMJIPS</b></td>");
-// 	out.print("<td><b>MsgIn</b></td>");
-// 	out.print("<td><b>MsgOut</b></td>");
-// 	out.print("<td><b>BytesIn</b></td>");
-// 	out.print("<td><b>BytesOut</b></td>");
-// 	out.print("<td><b>Size</b></td>");
-	out.print("</b></tr>");
-
-	printRow(getNodeID(), "Node", out);
 
 
 	out.print("</table>");
