@@ -27,9 +27,11 @@
 
 package org.cougaar.util;
 
+import java.net.URL;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
@@ -47,7 +49,6 @@ public class DBProperties extends java.util.Properties {
     private String dbtype;
     private String dbspec;
     private boolean debug = false;
-    private String qfile;       // For debugging only
 
     /**
      * Read and parse a .q file relative to a particular database. The
@@ -57,10 +58,21 @@ public class DBProperties extends java.util.Properties {
     public static DBProperties readQueryFile(String dbspec, String qfile)
     throws IOException
     {
-        InputStream i = new BufferedInputStream(ConfigFinder.getInstance().open(qfile));
+        return createDBProperties(dbspec, ConfigFinder.getInstance().open(qfile));
+    }
+
+    public static DBProperties readQueryFile(String dbspec, URL url)
+    throws IOException
+    {
+        return createDBProperties(dbspec, url.openStream());
+    }
+
+    private static DBProperties createDBProperties(String dbspec, InputStream is)
+        throws IOException
+    {
+        InputStream i = new BufferedInputStream(is);
         try {
             DBProperties result = new DBProperties(dbspec);
-            result.qfile = qfile;
             result.load(i);
             return result;
         } finally {
@@ -123,7 +135,7 @@ public class DBProperties extends java.util.Properties {
         String result = getQuery1(queryName + "." + dbtype, substitutions);
         if (result == null) result = getQuery1(queryName, substitutions);
         if (result == null)
-            throw new IllegalArgumentException("No query named " + queryName + " in " + qfile);
+            throw new IllegalArgumentException("No query named " + queryName);
         return result;
     }
 
@@ -139,6 +151,8 @@ public class DBProperties extends java.util.Properties {
                 int ix = 0;
                 while ((ix = query.indexOf(key, 0)) >= 0) {
                     String subst = (String) substitutions.get(key);
+                    if (subst == null)
+                        throw new IllegalArgumentException("Null value for " + key);
                     query = query.substring(0, ix)
                         + subst
                         + query.substring(ix + key.length());
