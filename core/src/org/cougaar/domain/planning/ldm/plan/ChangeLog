@@ -1,3 +1,50 @@
+2001-05-01  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AllocationResult.java:
+	Add nearlyEquals method to use AspectValues.nearlyEquals . See
+	comments on the latter regarding problematic equality comparison
+	of doubles.
+
+	* AspectValue.java:
+	Add nearlyEquals method using MoreMath.nearlyEquals to compare
+	AspectValues. See comments on the latter regarding problematic
+	equality comparison of doubles.
+
+2001-04-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AllocationResult.java:
+	Bug #372
+	Use AspectValue.compare(AspectValue[], AspectValue[]) to compare
+	the aspect values of the result. Such arrays are really sets and
+	should be compared in an order-independent way.
+
+	* AspectValue.java:
+	Bug #372
+	Add method to compare two AspectValue[] that ignores differences
+	in the order of the values. Used by AllocationResult.isEqual to
+	correctly compute the equality of two AllocationResults.
+
+2001-04-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ExpansionImpl.java:
+	Debugging support
+	Change toString to show the UID of the plan element.
+
+2001-04-06  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AspectValue.java:
+	Applies to Bug #196
+	Add method for cloning arrays of AspectValue. Used in several
+	places in pending changes in glm to avoid aliasing bugs.
+
+2001-04-04  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AllocationResult.java:
+	Applies to Bug #248
+	Remove debugging code. This should cause the
+	IllegalArgumentException caused by an incorrect AspectValue for
+	the DEMANDRATE aspect to cease.
+
 2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* TimeAspectValue.java:

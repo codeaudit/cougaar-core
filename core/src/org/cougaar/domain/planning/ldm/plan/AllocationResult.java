@@ -384,13 +384,6 @@ public class AllocationResult
    */
   private void setAspectValueResults(AspectValue[] avresult) {
     avResults = avresult;
-    for (int i = 0; i < avResults.length; i++) {
-      if (avResults[i].getAspectType() == 14) {
-        if (!(avResults[i] instanceof AspectRate)) {
-          throw new IllegalArgumentException("Aspect 14 is not AspectRate");
-        }
-      }
-    }
     clearMemos();
   }
         
@@ -420,7 +413,6 @@ public class AllocationResult
     confrating = (float) rating;
   }
   
-  
   /** checks to see if the AllocationResult is equal to this one.
      * @param anAllocationResult
      * @return boolean
@@ -438,14 +430,14 @@ public class AllocationResult
     //check the aspect types
     //check the summary results
     synchronized (avResults) {
-      if (!Arrays.equals(this.avResults, that.avResults)) return false;
+      if (!AspectValue.nearlyEquals(this.avResults, that.avResults)) return false;
       // check the phased results
       if (isPhased()) {
         Iterator i1 = that.phasedavrs.iterator();
         Iterator i2 = this.phasedavrs.iterator();
         while (i1.hasNext()) {
           if (!i2.hasNext()) return false;
-          if (!Arrays.equals((AspectValue[]) i1.next(), (AspectValue[]) i2.next())) return false;
+          if (!AspectValue.nearlyEquals((AspectValue[]) i1.next(), (AspectValue[]) i2.next())) return false;
         }
         if (i2.hasNext()) return false;
       }

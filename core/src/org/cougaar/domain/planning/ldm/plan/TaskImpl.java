@@ -108,7 +108,7 @@ public class TaskImpl extends DirectiveImpl
   }
   
   public PrepositionalPhrase getPrepositionalPhrase(String preposition) {
-    if (phrases == null)
+    if (phrases == null || preposition == null)
       return null;
 
     preposition = preposition.intern(); // so we can use == below

@@ -34,7 +34,7 @@ import java.io.IOException;
 /** ExpansionImpl.java
  * Implementation for expansion - a form of PlanElement
  * @author ALPINE <alpine-software@bbn.com>
- * @version $Id: ExpansionImpl.java,v 1.2 2001-04-05 19:27:15 mthome Exp $
+ * @version $Id: ExpansionImpl.java,v 1.3 2001-05-15 15:23:38 tomlinso Exp $
  */
  
 public class ExpansionImpl extends PlanElementImpl 
@@ -180,7 +180,7 @@ public class ExpansionImpl extends PlanElementImpl
     }
   }
   public String toString() {
-    return "[Expansion to "+workflow+"]";
+    return "[Expansion " + getUID() + " to "+workflow+"]";
   }
 
   // beaninfo
