@@ -1,4 +1,24 @@
 2001-08-21  Beth DePass <bdepass@bbn.com>
+	* ClusterImpl, ClusterServesPlugIn, PlugInAdapter
+	Remove old metrics code such as getMetricsSnapshot,
+	getMetrics.  Also remove code related to the MetricsHeartbeat
+	which pushed metrics data to a client. All code should now
+	utilize the various node and agent level metrics services.
+	PlugInAdapter has some remaining getMetricsSnapshot() methods
+	for backwards compatability that currenlty throw a Runtime
+	Exception when called.  
+
+	* MetricsLP, MetricsMessage, RemoteClusterMetrics, MetricsService
+	Remove old code used for pushing metrics data to clients.
+	Also remove the temporary MetricsService and
+	MetricsServiceProvider classes which passed metrics requests 
+	through to metrics snapshots.
+
+	* StandardBlackboard
+	Add BlackboardMetricsService to the ServiceBroker after the 
+	BlackboardService is added. Note they are both created using
+	the BlackboardServiceProvider.
+
 	* NodeMetricsService, NodeMetricsServiceProvider, Node
 	Create a new node level metrics service that provides
 	VM level stats such as free memory, thread counts, etc.
