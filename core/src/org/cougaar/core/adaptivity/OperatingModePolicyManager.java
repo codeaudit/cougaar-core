@@ -20,8 +20,13 @@
  */
 package org.cougaar.core.adaptivity;
 
+import java.util.Collection;
+import java.util.Iterator;
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.PlaybookConstrainService;
+import org.cougaar.core.component.ServiceBroker;
 
 /** 
  * TBD
@@ -29,19 +34,82 @@ import org.cougaar.core.service.PlaybookConstrainService;
  * Must handle processing of policies: expand, forward, deconflict
  */
 
-public class OperatingModePolicyManager extends ComponentPlugin implements PolicyManager {
+public class OperatingModePolicyManager extends ServiceUserPluginBase {
+  private PlaybookConstrainService playbookConstrainService;
 
-  private PlaybookConstrainService myPlaybookService;
-  
-  public void setPlaybookConstrainService(PlaybookConstrainService cps) {
-    myPlaybookService = cps;
+  private static final Class[] requiredServices = {
+    PlaybookConstrainService.class
+  };
+
+
+  private static UnaryPredicate policyPredicate = 
+    new UnaryPredicate() {
+	public boolean execute(Object o) {
+	  if (o instanceof OperatingModePolicy) {
+	    return true;
+	  }
+	  return false;
+	}
+      };
+
+  private IncrementalSubscription policySubscription;
+
+  public OperatingModePolicyManager() {
+    super(requiredServices);
   }
 
   public void setupSubscriptions() {
+
+    policySubscription = (IncrementalSubscription) blackboard.subscribe(policyPredicate);
+
+  }
+
+  private boolean haveServices() {
+    if (playbookConstrainService != null) return true;
+    if (acquireServices()) {
+      ServiceBroker sb = getServiceBroker();
+      playbookConstrainService = (PlaybookConstrainService)
+        sb.getService(this, PlaybookConstrainService.class, null);
+      return true;
+    }
+    return false;
+  }
+
+  public void execute() {
+    if (policySubscription.hasChanged()) {
+      removePolicies(policySubscription.getRemovedCollection());
+      changePolicies(policySubscription.getChangedCollection());
+      addPolicies(policySubscription.getAddedCollection());
+    }
+  }
+
+  private void addPolicies(Collection newPolicies) {
+    if (logger.isInfoEnabled()) logger.info("Adding policy");
+    if (haveServices()) {
+      for (Iterator it = newPolicies.iterator(); it.hasNext();) {
+	playbookConstrainService.constrain((OperatingModePolicy)it.next());
+      }
+    }
+  }
+
+  private void removePolicies(Collection removedPolicies)  {
+    if (logger.isInfoEnabled()) logger.info("Removing policy");
+    if (haveServices()) {
+      for (Iterator it = removedPolicies.iterator(); it.hasNext();) {
+	playbookConstrainService.unconstrain((OperatingModePolicy)it.next());
+      }
+    }
   }
   
-  public void execute() {
-
+  private void changePolicies(Collection changedPolicies) {
+    if (logger.isInfoEnabled()) logger.info("Changing policy");
+    if (haveServices()) {
+      for (Iterator it = changedPolicies.iterator(); it.hasNext();) {
+	OperatingModePolicy omp = (OperatingModePolicy)it.next();
+	playbookConstrainService.unconstrain(omp);
+	playbookConstrainService.constrain(omp);
+      }
+    }
   }
 }
 
