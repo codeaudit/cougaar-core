@@ -392,11 +392,11 @@ implements Component
       }
 
       public long lookupIncarnationForAgent(String agent) {
-        Long l = (Long)
+        String sinc = (String) 
           searchAgent(
               agent,
               TopologyNamingConstants.INCARNATION_ATTR);
-        return ((l != null) ? l.longValue() : -1L);
+        return ((sinc != null) ? Long.parseLong(sinc) : -1L);
       }
 
       public TopologyEntry lookupEntryForAgent(String agent) {
