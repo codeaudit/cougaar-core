@@ -139,7 +139,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   public String fullName(NSKey dirKey, String name) {
     NSDirMap dirMap = getDirectory(dirKey);
 
-    return dirMap.getFullPath() + NS.DirSeparator + name;
+    if ((name == null) || (name.equals(""))) {
+      return  dirMap.getFullPath();
+    } else {
+      return dirMap.getFullPath() + NS.DirSeparator + name;
+    }
   }
 
   /** Look up an object in the NameService directory **/

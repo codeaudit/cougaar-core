@@ -911,10 +911,12 @@ public class NamingContext implements Context {
       try {
         myFullPath = getNS().fullName(getNSKey(), "");
 
-        // Strip trailing dir separator
-        while (myFullPath.endsWith(NS.DirSeparator)) {
-          myFullPath = myFullPath.substring(0, myFullPath.length() - 1);
+        // Strip leading dir separator
+        while (myFullPath.startsWith(NS.DirSeparator)) {
+          myFullPath = myFullPath.substring(1, myFullPath.length());
         }
+
+
       } catch (RemoteException re) {
         re.printStackTrace();
         return null;
