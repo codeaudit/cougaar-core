@@ -1,5 +1,12 @@
 2001-07-16  Jim Winston  <jwinston@bbn.com>
-	* NewScheduleElement.java, ScheduleElementImpl.java
+        * ScoringFunction.java:
+	Bug #406
+	Added public AspectValue getPoint() to SinglePointScoringFunction
+	Added public AspectValue getPoint1() and 
+	public AspectValue getPoint2() to TwoPointScoringFunction
+
+2001-07-16  Jim Winston  <jwinston@bbn.com>
+	* NewScheduleElement.java, ScheduleElementImpl.java:
 	Bug #335
 	Added setStartEndTimes(long starttime, long endtime).
 	Changed default starttime to TimeSpan.MIN_VALUE and

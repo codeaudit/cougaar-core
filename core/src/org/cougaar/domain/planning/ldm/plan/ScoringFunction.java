@@ -591,6 +591,10 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     protected SinglePointScoringFunction(AspectValue value) {
       point = value;
     }
+
+    public AspectValue getPoint() { 
+      return point; 
+    }
   }
 
 
@@ -728,6 +732,12 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     protected TwoPointScoringFunction(AspectValue point1, AspectValue point2) {
       this.point1=point1;
       this.point2=point2;
+    }
+    public AspectValue getPoint1() { 
+      return point1; 
+    }
+    public AspectValue getPoint2() { 
+      return point2; 
     }
   }
 
