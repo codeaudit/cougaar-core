@@ -382,9 +382,9 @@ public class MessageManagerImpl implements MessageManager, Serializable {
       retransmitter.start();
       ackSender = new AcknowledgementSender(clusterName);
       ackSender.start();
+      keepAliveSender = new KeepAliveSender(clusterName);
+      keepAliveSender.start();
     }
-    keepAliveSender = new KeepAliveSender(clusterName);
-    keepAliveSender.start();
   }
 
   private synchronized void sendKeepAlive() {

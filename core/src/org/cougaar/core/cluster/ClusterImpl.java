@@ -594,6 +594,8 @@ public class ClusterImpl extends Agent
 
     System.out.println("unregisterClient");
     messenger.unregisterClient(ClusterImpl.this);
+
+    getQueueHandler().halt();
   }
 
   public void resume() {
@@ -1004,15 +1006,26 @@ public class ClusterImpl extends Agent
   private class QueueHandler extends Thread {
     private List queue = new ArrayList();
     private List msgs = new ArrayList();
+    private boolean running = true;
     public QueueHandler(String name) {
       super(name);
+    }
+    public void halt() {
+      synchronized (queue) {
+        running = false;
+        queue.notify();
+      }
+      try {
+        join();                   // Wait for this thread to stop
+      } catch (InterruptedException ie) {
+      }
     }
     public void run() {
       ClusterMessage m;
       int size;
-      while (true) {
+      while (running) {
         synchronized (queue) {
-          while (queue.isEmpty()) {
+          while (running && queue.isEmpty()) {
             try {
               queue.wait();
             }
@@ -1022,7 +1035,7 @@ public class ClusterImpl extends Agent
           msgs.addAll(queue);
           queue.clear();
         }
-        receiveQueuedMessages(msgs);
+        if (msgs.size() > 0) receiveQueuedMessages(msgs);
         msgs.clear();
       }
     }
