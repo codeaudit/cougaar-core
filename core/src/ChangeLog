@@ -1,3 +1,35 @@
+2003-03-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/qos/metrics/MetricsServlet.java: 
+	* org/cougaar/core/qos/metrics/AgentLoadLoggerPlugin.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Remove now redundant check for
+	NodeControlService.getRootContainer() returning AgentContainer. It
+	is now defined to do so.
+
+	* org/cougaar/core/node/NodeControlService.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Change return type of getRootContainer to be AgentContainer rather
+	than Container. All uses assume it is an AgentContainer and there
+	is no point in exposing all the Container methods to users of this
+	service. An AgentContainer is also a whole lot simpler to wrap.
+
+	* org/cougaar/core/node/NodeAgent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Fix NodeControlService implementation to pass out a wrapper for
+	AgentContainer rather than the whole AgentManager. This is safer
+	and provides an opportunity to respond to adds and removes of
+	agents (and other AgentManager components) by persisting the node
+	state.
+
+	* org/cougaar/core/blackboard/StandardBlackboard.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Implement persistNow in BlackboardForAgent implementation.
+
+	* org/cougaar/core/blackboard/BlackboardForAgent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add persistNow method so agents can persist their own state.
+
 2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/node/NodeAgent.java: 

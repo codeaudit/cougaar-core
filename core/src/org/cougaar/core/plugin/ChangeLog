@@ -1,3 +1,11 @@
+2003-03-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* freeze/FreezeNodePlugin.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Remove now redundant check for
+	NodeControlService.getRootContainer() returning AgentContainer. It
+	is now defined to do so.
+
 2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* freeze/FreezeSocietyPlugin.java:
