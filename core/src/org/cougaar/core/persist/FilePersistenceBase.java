@@ -123,7 +123,6 @@ public abstract class FilePersistenceBase
       DataOutputStream o = new DataOutputStream(new FileOutputStream(ownerFile));
       o.writeUTF(instanceId);
       o.close();
-      System.out.println("Wrote " + ownerFile);
     } catch (IOException ioe) {
       pps.getLoggingService().fatal("assertOwnership exception", ioe);
       throw new PersistenceException("assertOwnership exception", ioe);
