@@ -296,12 +296,18 @@ class ThreadPool
 	    if (thread != null && thread.isRunning) {
 		try {
 		    SchedulableObject sched = thread.schedulable;
-		    Scheduler scheduler = sched.getScheduler();
-		    String scheduler_name = null;
-		    if (scheduler != null)
-			scheduler_name = scheduler.getName();
-		    body.run(scheduler_name, sched);
-		    count++;
+		    // Even though thread.isRunning was true just
+		    // above, thread.schedulable could have become
+		    // null by now (since iterateOverRunningThreads
+		    // doesn't lock anything).
+		    if (sched != null) {
+			Scheduler scheduler = sched.getScheduler();
+			String scheduler_name = null;
+			if (scheduler != null)
+			    scheduler_name = scheduler.getName();
+			body.run(scheduler_name, sched);
+			count++;
+		    }
 		} catch (Throwable t) {
 		    logger.error("ThreadStatusService error in body", t);
 		}
