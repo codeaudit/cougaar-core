@@ -391,15 +391,13 @@ public class AgentManager
 
       // the description of the agent on the other side will be 
       // exactly the same except that it will have a new name
-      List parameters = new ArrayList(1);
-      parameters.add(cloneAgentID);
-      ComponentDescription copyWithNewName = 
+      ComponentDescription cloneDesc = 
         new ComponentDescription (
             origDesc.getName(),
             origDesc.getInsertionPoint(),
             origDesc.getClassname(),
             origDesc.getCodebase(),
-            parameters,
+            cloneAgentID,
             origDesc.getCertificate(),
             origDesc.getLeaseRequested(),
             origDesc.getPolicy());
@@ -440,7 +438,7 @@ public class AgentManager
             new NodeIdentifier(bindingSite.getIdentifier()),
             nodeID,
             ComponentMessage.ADD,
-            origDesc,
+            cloneDesc,
             state);
 
       // send the message to destination node
