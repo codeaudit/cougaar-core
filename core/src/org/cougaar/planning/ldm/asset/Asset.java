@@ -688,6 +688,23 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
   }
 
 
+  /** return the value of the specified PG if it is 
+   * already present in a slot.
+   **/
+  protected PropertyGroupSchedule getLocalPGSchedule(Class pgc) {
+    return super.getLocalPGSchedule(pgc);
+  }
+
+  /** Set the apropriate slot in the asset to the specified pg.
+   * Scheduled PGs have the time range in them, so the time (range)
+   * should not be specified in the arglist.
+   **/
+  protected void setLocalPGSchedule(PropertyGroupSchedule pgSchedule) {
+    super.setLocalPGSchedule(pgSchedule);
+  }
+
+
+
   /** @return true IFF the specified PG class is set, available and non-null on 
    * the Asset instance.  No checks for late-binding or prototype are ever performed
    * for this check.
@@ -704,6 +721,15 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
    **/
   public final boolean isPGLocal(Class pgc, long t) {
     return getLocalPG(pgc, t) != null;
+  }
+
+
+  /** @return true IFF the specified PGSchedule class is set, available and non-null on 
+   * the Asset instance.  No checks for late-binding or prototype are ever performed
+   * for this check.
+   **/
+  public final boolean isPGScheduleLocal(Class pgc) {
+    return getLocalPGSchedule(pgc) != null;
   }
 
 
@@ -744,6 +770,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     return pg;
   }
 
+
   /** request late binding from the LDM for this asset/PGClass.
    * Late binders should set the asset's PG as appropriate in 
    * addition to returning the PG.
@@ -760,6 +787,31 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     else {
       System.err.println("Asset "+this+" is not bound to an LDM instance!");
     }
+    return null;
+  }
+
+  /** get and possibly cache a PropertyGroupSchedule.
+   * The information can come from a number of places:
+   *   a local slot 
+   *   the prototype (recurse to resolve on the prototype)
+   *
+   * Defined as abstract in AssetSkeletonBase
+   **/
+  public final PropertyGroupSchedule resolvePGSchedule(Class pgc) {
+    // check local slots - this call never sets
+    PropertyGroupSchedule pgSchedule = getLocalPGSchedule(pgc); 
+    if (pgSchedule != null) return pgSchedule;  // return it - already set
+
+    // check the prototype
+    if (myPrototype != null) {
+      // recurse
+      if ((pgSchedule = myPrototype.resolvePGSchedule(pgc)) != null) {
+        // should we cache the prototype's PG value?
+        // Let's not.
+        return pgSchedule;
+      }
+    }
+
     return null;
   }
 

@@ -294,6 +294,14 @@ public abstract class AssetSkeletonBase
     return lateBindPG(pgc, UNSPECIFIED_TIME);
   }
 
+  /** get and possibly cache a PropertyGroupSchedule.
+   * The information can come from a number of places:
+   *   a local slot 
+   *   the prototype (recurse to resolve on the prototype)
+   * implemented in Asset  
+   **/
+  public abstract PropertyGroupSchedule resolvePGSchedule(Class pgc);
+
   /** generate and set a default PG instance (usually empty) for 
    * an asset.  Generally will just do a new.  Concrete.
    * Asset implementations will override this.
@@ -345,6 +353,7 @@ public abstract class AssetSkeletonBase
     }
   }
 
+
   /** Set the apropriate slot in the asset to the specified pg.
    * Scheduled PGs have the time range in them, so the time (range)
    * should not be specified in the arglist.
@@ -367,6 +376,23 @@ public abstract class AssetSkeletonBase
       schedule.add(prop);
     } else {
       addOrReplaceLocalPG(prop);
+    }
+  }
+
+  /** return the value of the specified PropertyGroupSchedule if it is 
+   * already present in a slot.
+   **/
+  protected synchronized PropertyGroupSchedule getLocalPGSchedule(Class pgc) {
+    if ((!hasOtherTimePhasedProperties) ||
+        (!TimePhasedPropertyGroup.class.isAssignableFrom(pgc))) {
+      return null;    
+    }
+
+    int index = findLocalPGScheduleIndex(pgc);
+    if (index >=0) {
+      return (PropertyGroupSchedule) force().get(index);
+    } else {
+      return null;
     }
   }
 
