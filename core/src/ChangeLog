@@ -20,6 +20,24 @@
 	in order to activate it.  Better would be to move it to the
 	security jar.  Node updated to load the SecurityComponent if
 	requested.
+
+2001-11-13  Beth DePass  <bdepass@bbn.com>
+
+	* TrafficMaskingGeneratorAspect, TrafficMaskingStatistics
+	Implement the TrafficMaskingGeneratorService API.  Also generate
+	TrafficMaskingStatistics for each node. Cleanup Aspect to try to
+	share a Timer instance for multiple TimerTasks. Ensure that the
+	reply timertask is started whether we start from system params or
+	turn on request from the controller.
+
+	* TrafficMaskingGeneratorServiceProvider
+	New provider to provide TrafficMaskingGeneratorService.  This
+	service is hooked into the MT ServiceBroker so that other MT
+	Aspects (children) can access it.
+
+	* StandardAspect
+	Provide getBindingSite() for Aspects since StandardAspect has a
+	final setBindingSite().
 	
 2001-11-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
@@ -27,11 +45,41 @@
 	Throw exception if translateAttributeValue finds no translate
 	(query returns no row).
 
+2001-11-12  Beth DePass <bdepass@bbn.com>
+
+	* TrafficMaskingAspect, TrafficMaskingGeneratorAspect
+	Rename TrafficMaskingAspect to TrafficMaskingGeneratorAspect to
+	avoid conflicts with quo masking aspect that controls traffic
+	masking. Add ability to turn on and parameterize the generator
+	aspect with system properties. property for requestPeriod in ms is defined
+	-Dorg.cougaar.message.trafficGenerator.requestPeriod=<int of ms>
+	and optionally reply think time
+	-Dorg.cougaar.message.trafficGenerator.replyThinkTime=<int of ms>
+
+	* TrafficMaskingGeneratorService
+	New API for the Traffic Masking Controller to turn on and off (and
+	set parameters) in the Traffic Masking Generator
+
+	* TrafficMaskingStatistics
+	New object to hold traffic maskig statistics per node.
+
+	* MessageTransportServiceProvider
+	Always add the TrafficMaskingGeneratorAspect.  It will not
+	generate traffic unless system params are set or the masking
+	controller turns it on.
+
 2001-11-09  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/util/ConfigFinder
 	Add find(URL) method to return the URL used by open.  Useful for
 	debugging purposes, but expensive.
+
+2001-11-09  Beth DePass  <bdepass@bbn.com>
+
+	* TrafficMaskingAspect
+	New MT aspect that generates fake message traffic to include fake
+	requests and replies of varying sizes.  Request messages are sent
+	to random nodes.  Used in MT Adaptivity work.
 
 2001-11-08  Ray Tomlinson  <RTomlinson@bbn.com>
 
@@ -82,6 +130,27 @@
 	arg when reading a query file. The default dbspec is obtained from
 	the query file itself. Add methods for interpreting queries
 	relative to an arbitrary database.
+
+2001-11-01  Beth DePass	   <bdepass@bbn.com>
+
+	* NodeTrustComponent
+	New Node level component that recieves Node level policy messages
+	and provides a service to other Node level components to share the
+	current policy status.  Used in MT Adaptivity work.
+
+	* TrustStatusService, TrustStatusServiceImpl,
+	TrustStatusServiceProvider
+	New Service to disseminate Node level policy information.  Backed
+	by NodeTrustComponent.  Used in MT Adaptivity work.
+
+	* NodeTrustPolicy, PolicyMulticastMessage
+	New policy and message type to contain Node level security
+	policies.  Used in MT Adaptivity work.
+
+	* PanicButtonPlugin
+	Plugin that provides a GUI to define Node level security
+	Policies.  Plugin sends NodeTrustPolicies to Nodes. Used in MT
+	Adaptivity work.
 
 2001-10-31  Ray Tomlinson  <RTomlinson@bbn.com>
 
