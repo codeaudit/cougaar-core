@@ -1,3 +1,26 @@
+2001-02-15  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* DeletionPlugIn
+	Add DeletionPolicy for specifying deletion delay for classes of
+	Tasks. A DeletionPolicy has three RuleParameters: a
+	PredicateRuleParameter for selecting Tasks, a LongRuleParameter
+	for specifying the deletion delay and a IntegerRuleParameter for
+	specifying a priority. DeletionPolicies are used in descending
+	order of priority until one is found that matches a task and the
+	association deletion delay is added to the task end time to
+	determine when the task can be deleted.
+
+	A DefaultDeletionPolicy is used if no other DeletionPolicy is
+	found.
+
+	* PredicateRuleParameter
+	New RuleParameter holding a UnaryPredicate. "In range" means the
+	predicate returns true.
+
+	* LongRuleParameter
+	New RuleParameter a la IntegerRuleParameter holding longs instead
+	of ints.
+
 2001-02-15  Michael Thome  <mthome@bbn.com>
 
 	* org.cougaar.util.DBConnectionPool
