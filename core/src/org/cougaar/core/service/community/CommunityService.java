@@ -27,7 +27,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.ModificationItem;
 
 import org.cougaar.core.component.Service;
-import org.cougaar.core.mts.MessageAddress;
 
 /** A CommunityService is an API which may be supplied by a
  * ServiceProvider registered in a ServiceBroker that provides
@@ -53,6 +52,8 @@ public interface CommunityService extends Service {
    * @param communityName    Name of community to create
    * @param attrs            Attributes to associate with new community
    * @param crl              Listener to receive response
+   * @deprecated Use joinCommunity method with createIfNotFound argument
+   *             set to true
    */
   void createCommunity(String                    communityName,
                        Attributes                attrs,
@@ -92,11 +93,11 @@ public interface CommunityService extends Service {
                       CommunityResponseListener crl);
 
   /**
-   * Request to get a Community instance from local cache.  If community is
-   * found in cache a reference is returned by method call.  If the community
+   * Request to get a Community object.  If community is found in local cache
+   * a reference is returned by method call.  If the community
    * is not found in the cache a null value is returned and the Community
-   * reference is requested from the community manager.  After the Community
-   * instance has been obtained from the community manager the supplied
+   * object is requested from community's manager.  After the Community
+   * object has been obtained from the community manager the supplied
    * CommunityResponseListener callback is invoked to notify the requester.
    * Note that the supplied callback is not invoked if a non-null value is
    * returned.
@@ -122,7 +123,9 @@ public interface CommunityService extends Service {
                         CommunityResponseListener crl);
 
   /**
-   * Initiates a community search operation.  The results of the search are
+   * Initiates a community search operation.  The serach is performed against
+   * the specified community or all communities of the calling agent
+   * if the communityName argument is null.  The results of the search are
    * immediately returned as part of the method call if the search can be
    * resolved using locally cached data.  However, if the search requires
    * interaction with a remote community manager a null value is returned by
@@ -131,7 +134,8 @@ public interface CommunityService extends Service {
    * completed.  In the case where the search can be satisified using local
    * data (i.e., the method returns a non-null value) the
    * CommunityResponseListener is not invoked.
-   * @param communityName   Name of community to search
+   * @param communityName   Name of community to search or null to globally
+   *                        search parent communities of calling agent
    * @param searchFilter    JNDI compliant search filter
    * @param recursiveSearch True for recursive search into nested communities
    *                        [false = search top community only]
@@ -143,12 +147,25 @@ public interface CommunityService extends Service {
    *                        is returned if cache doesn't contained named
    *                        community.
    */
-  public Collection searchCommunity(String              communityName,
-                              String                    searchFilter,
-                              boolean                   recursiveSearch,
-                              int                       resultQualifier,
-                              CommunityResponseListener crl);
+  Collection searchCommunity(String                    communityName,
+                             String                    searchFilter,
+                             boolean                   recursiveSearch,
+                             int                       resultQualifier,
+                             CommunityResponseListener crl);
 
+
+  /**
+   * Performs attribute based search of community entities.  This is a general
+   * purpose search operation using a JNDI search filter.  This method is
+   * non-blocking.  An empty Collection will be returned if the local cache is
+   * empty.  Updated search results can be obtained by using the addListener
+   * method to receive change notifications.
+   * @param communityName Name of community to search
+   * @param filter        JNDI search filter
+   * @return              Collection of MessageAddress objects
+   */
+  Collection search(String communityName,
+                    String filter);
 
   /**
    * Requests a collection of community names identifying the communities that
@@ -160,12 +177,49 @@ public interface CommunityService extends Service {
    * Otherwise, the results will be returned in the CommunityResponseListener
    * callback in which case the method returns a null value.
    * @param name   Member name
-   * @param crl    Listner to receive results if remote lookup is required
+   * @param crl    Listener to receive results if remote lookup is required
    * @return A collection of community names if operation can be resolved using
    *         data from local cache, otherwise null
    */
   Collection listParentCommunities(String                    member,
                                    CommunityResponseListener crl);
+
+  /**
+   * Requests a collection of community names identifying the communities that
+   * contain the specified member and satisfy a given set of attributes.
+   * The results are returned directly if the member name is
+   * null or if a copy of the specified community is available in local cache.
+   * Otherwise, the results will be returned in the CommunityResponseListener
+   * callback in which case the method returns a null value.
+   * @param name   Member name
+   * @param filter Search filter defining community attributes
+   * @param crl Listener to receive results
+   * @return A collection of community names if operation can be resolved using
+   *         data from local cache, otherwise null
+   */
+  Collection listParentCommunities(String                    member,
+                                   String                    filter,
+                                   CommunityResponseListener crl);
+
+  /**
+   * Invokes callback when specified community is found.
+   * @param communityName Name of community
+   * @param fccb          Callback invoked after community is found or timeout
+   *                      has lapsed
+   * @param timeout       Length of time (in milliseconds) to wait for
+   *                      community to be located.  A value of -1 disables
+   *                      the timeout.
+   */
+  void findCommunity(String                communityName,
+                     FindCommunityCallback fccb,
+                     long                  timeout);
+
+  /**
+   * Lists all communities in bound in White Pages.  Results are returned
+   * in CommunityResponseListener callback.  The crl.getContent() method
+   * returns a Collection of community names found in white pages.
+   */
+  void listAllCommunities(CommunityResponseListener crl);
 
   /**
    * Add listener for CommunityChangeEvents.
@@ -179,208 +233,35 @@ public interface CommunityService extends Service {
    */
   void removeListener(CommunityChangeListener l);
 
-  /////////////////////////////////////////////////////////////////////////////
-  // D E P R E C A T E D    M E T H O D s
-  /////////////////////////////////////////////////////////////////////////////
-
-    String COMMUNITIES_CONTEXT_NAME = "Communities";
-
-    /**
-     * Returns an array of community names of all communities of which caller is
-     * a member.
-     * @param allLevels Set to false if the list should contain only those
-     *                  communities in which the caller is explicitly
-     *                  referenced.  If true the list will also include those
-     *                  communities in which the caller is implicitly a member
-     *                  as a result of community nesting.
-     * @return          Array of community names
-         * @deprecated      use listParentCommunities(String, CommunityResponseListener)
-     */
-    String[] getParentCommunities(boolean allLevels);
-
   /**
-   * Creates a new community in Name Server.
-   * @param communityName Name of community
-   * @param attributes    Community attributes
-   * @return              True if operation was successful
-   * @deprecated          Use joinCommunity with createIfNotFound parameter
+   * Returns an array of community names of all communities of which caller is
+   * a member.
+   * @param allLevels Set to false if the list should contain only those
+   *                  communities in which the caller is explicitly
+   *                  referenced.  If true the list will also include those
+   *                  communities in which the caller is implicitly a member
+   *                  as a result of community nesting.
+   * @return          Array of community names
+   * @deprecated      This method will be removed in 11.2.
+   *                  Use listParentCommunities(String, CommunityResponseListener)
    */
-  boolean createCommunity(String communityName, Attributes attributes);
-
-
-  /**
-   * Checks for the existence of a community in Name Server.
-   * @param communityName Name of community to look for
-   * @return              True if community was found
-   * @deprecated          Use getCommunity method with a timeout of 0ms.  If
-   *                      specified community does not exist a null Community
-   *                      will be returned in response.
-   */
-  boolean communityExists(String communityName);
-
+  String[] getParentCommunities(boolean allLevels);
 
   /**
    * Lists all communities in Name Server.
    * @return  Collection of community names
-   * @deprecated
+   * @deprecated      This method will be removed in 11.2.
+   *                  Use listAllCommunities(CommunityResponseListener)
    */
   Collection listAllCommunities();
-
-
-  /**
-   * Returns attributes associated with community.
-   * @param communityName Name of community
-   * @return              Communities attributes
-   * @deprecated
-   */
-  Attributes getCommunityAttributes(String communityName);
-
-
-  /**
-   * Sets the attributes associated with a community.
-   * @param communityName Name of community
-   * @param attributes    Communities attributes
-   * @return              True if operation was successful
-   * @deprecated
-   */
-  boolean setCommunityAttributes(String communityName, Attributes attributes);
-
-
-  /**
-   * Modifies the attributes associated with a community.
-   * @param communityName Name of community
-   * @param mods          Attribute modifications to be performed
-   * @return              True if operation was successful
-   * @deprecated
-   */
-  boolean modifyCommunityAttributes(String communityName, ModificationItem[] mods);
-
-
-  /**
-   * Adds an entity to a community.
-   * @param communityName        Community name
-   * @param entity               Entity to add
-   * @param entityName           Name of entity
-   * @param attributes           Attributes to associate with entity
-   * @return                     True if operation was successful
-   * @deprecated
-   */
-  boolean addToCommunity(String communityName, Object entity,
-                         String entityName, Attributes attributes);
-
-
-  /**
-   * Removes an entity from a community.
-   * @param communityName  Community name
-   * @param entityName     Name of entity to remove
-   * @return               True if operation was successful
-   * @deprecated
-   */
-  boolean removeFromCommunity(String communityName, String entityName);
-
-
-  /**
-   * Returns a collection of entity names associated with the specified
-   * community.
-   * @param communityName  Entities parent community
-   * @return               Collection of entity names
-   * @deprecated
-   */
-  Collection listEntities(String communityName);
-
-
-  /**
-   * Returns attributes associated with specified community entity.
-   * @param communityName  Entities parent community
-   * @param entityName     Name of community entity
-   * @return               Attributes associated with entity
-   * @deprecated
-   */
-  Attributes getEntityAttributes(String communityName, String entityName);
-
-
-  /**
-   * Sets the attributes associated with specified community entity.
-   * @param communityName  Entities parent community
-   * @param entityName     Name of community entity
-   * @param attributes     Attributes to associate with entity
-   * @return               True if operation was successful
-   * @deprecated
-   */
-  boolean setEntityAttributes(String communityName, String entityName,
-                              Attributes attributes);
-
-
-  /**
-   * Modifies the attributes associated with specified community entity.
-   * @param communityName  Entities parent community
-   * @param entityName     Name of community entity
-   * @param mods           Attribute modifications to be performed
-   * @return               True if operation was successful
-   * @deprecated
-   */
-  boolean modifyEntityAttributes(String communityName, String entityName,
-                                 ModificationItem[] mods);
-
-
-  /**
-   * Performs attribute based search of community context.  This search looks
-   * for communities with attributes that satisfy criteria specified by filter.
-   * Entities within communities are not searched.  This is a general
-   * purpose search operation using a JNDI search filter.  Refer to JNDI
-   * documentation for filter syntax.
-   * @param filter        JNDI search filter
-   * @return              Collection of community names that satisfy filter
-   * @deprecated
-   */
-  Collection search(String filter);
-
-
-  /**
-   * Performs attribute based search of community entities.  This is a general
-   * purpose search operation using a JNDI search filter.  This method is
-   * non-blocking.  An empty Collection will be returned if the local cache is
-   * empty.  Updated search results can be obtained by using the addListener
-   * method to receive change notifications.
-   * @param communityName Name of community to search
-   * @param filter        JNDI search filter
-   * @return              Collection of MessageAddress objects
-   * @deprecated
-   */
-  Collection search(String communityName, String filter);
-
-
-  /**
-   * Performs attribute based search of community entities.  This is a general
-   * purpose search operation using a JNDI search filter.  This method may
-   * be invoked in a blocking mode in which case the method may block for
-   * an extended period of time if the specified community is not found in
-   * the local cache.
-   * @param communityName Name of community to search
-   * @param filter        JNDI search filter
-   * @param blockingMode  Set to true if blocking mode is required
-   * @return              Collection of MessageAddress objects
-   * @deprecated
-   */
-  Collection search(String communityName, String filter, boolean blockingMode);
-
-
-  /**
-   * Requests the roster for the named community.
-   * @param communityName Name of community
-   * @return              Community roster (or null if agent is not authorized
-   *                      access)
-   * @deprecated
-   */
-  CommunityRoster getRoster(String communityName);
-
 
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member.
-   * @param name   Member name
-   * @return A collection of community names
-   * @deprecated
+   * @param name  Member name
+   * @return      A collection of community names
+   * @deprecated  This method will be removed in 11.2.
+   *              Use listParentCommunities(String, CommunityResponseListener)
    */
   Collection listParentCommunities(String member);
 
@@ -389,97 +270,10 @@ public interface CommunityService extends Service {
    * contain the specified member and satisfy a given set of attributes.
    * @param name   Member name
    * @param filter Search filter defining community attributes
-   * @return A collection of community names
-   * @deprecated
+   * @return       A collection of community names
+   * @deprecated   This method will be removed in 11.2.
+   *               Use listParentCommunities(String, String, CommunityResponseListener)
    */
   Collection listParentCommunities(String member, String filter);
-
-
-  /**
-   * Adds a listener to list of addresses that are notified of changes to
-   * specified community.
-   * @param addr          Listeners address
-   * @param communityName Community of interest
-   * @return              True if operation was successful
-   * @deprecated
-   */
-  boolean addListener(MessageAddress addr, String communityName);
-
-
-  /**
-   * Removes a listener from list of addresses that are notified of changes to
-   * specified community.
-   * @param addr          Listeners address
-   * @param communityName Community of interest
-   * @return              True if operation was successful
-   * @deprecated
-   */
-  boolean removeListener(MessageAddress addr, String communityName);
-
-
-  /**
-   * Returns a collection of MessageAddresses associated with the entities
-   * that have the attribute "ChangeListener".
-   * specified community.
-   * @param communityName Community of interest
-   * @return              Collection of listener MessageAddresses
-   * @deprecated
-   */
-  Collection getListeners(String communityName);
-
-
-  /**
-   * Finds all community entities associated with a given role.  This method
-   * is equivalent to using the search method with the filter
-   * "(Role=RoleName)".
-   * @param communityName Name of community to query
-   * @param roleName      Name of role provided
-   * @return              Collection of entity objects
-   * @deprecated
-   */
-  Collection searchByRole(String communityName, String roleName);
-
-
-  /**
-   * Returns a collection of all roles supported by the specified community
-   * entity.
-   * @param communityName  Parent community
-   * @param entityName     Name of community entity
-   * @return               Collection of role names
-   * @deprecated
-   */
-  Collection getEntityRoles(String communityName, String entityName);
-
-
-  /**
-   * Returns a list of all external roles supported by the specified community.
-   * @param communityName Community name
-   * @return              Collection of role names
-   * @deprecated
-   */
-  Collection getCommunityRoles(String communityName);
-
-
-  /**
-   * Associates a new role with specified community entity.
-   * @param communityName  Parent community
-   * @param entityName     Name of community entity
-   * @param roleName       Name of role to associate with entity
-   * @return               True if operation was successful
-   * @deprecated
-   */
-  boolean addRole(String communityName, String entityName, String roleName);
-
-
-  /**
-   * Removes a Role from attributes of specified community entity.
-   * @param communityName  Parent community
-   * @param entityName     Name of community entity
-   * @param roleName       Name of role to associate with entity
-   * @return               True if operation was successful
-   * @deprecated
-   */
-  boolean removeRole(String communityName, String entityName, String roleName);
-
 
 }
