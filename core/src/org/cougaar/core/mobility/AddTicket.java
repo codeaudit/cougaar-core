@@ -28,7 +28,7 @@ import org.cougaar.core.mts.MessageAddress;
  * <p>
  * A ticket is immutable.
  */
-public final class Ticket extends MoveTicket implements java.io.Serializable {
+public final class AddTicket extends AbstractTicket implements java.io.Serializable {
 
   private final Object id;
   private final MessageAddress mobileAgent;
@@ -40,7 +40,7 @@ public final class Ticket extends MoveTicket implements java.io.Serializable {
   // FIXME maybe add "clone" here + clone name
   // FIXME maybe add security tags here
 
-  public Ticket(
+  public AddTicket(
       Object id,
       MessageAddress mobileAgent,
       MessageAddress origNode,
@@ -54,7 +54,7 @@ public final class Ticket extends MoveTicket implements java.io.Serializable {
   }
 
   /**
-   * An optional identifier for this ticket instance.
+   * An optional identifier for this addticket instance.
    * <p>
    * The identifier <u>must</u> be serializable and should be
    * immutable.   A UID is a good identifier.
@@ -66,7 +66,7 @@ public final class Ticket extends MoveTicket implements java.io.Serializable {
   /**
    * The agent to be moved.
    * <p>
-   * An agent can only pass a Ticket to "dispatch(..)" if
+   * An agent can only pass a AddTicket to "dispatch(..)" if
    * the agent <i>is</i> the one moving.  Aside from this
    * sanity check, tagging the ticket with the agent address
    * aids debugging.
@@ -82,8 +82,8 @@ public final class Ticket extends MoveTicket implements java.io.Serializable {
    * Optional assertion on the current node that the mobile agent 
    * is running on.
    * <p>
-   * If the origin node is non-null then the ticket will only be 
-   * accepted if the agent is on that node.  Of course, a ticket 
+   * If the origin node is non-null then the addticket will only be 
+   * accepted if the agent is on that node.  Of course, a addticket 
    * can only be presented to the MobilityService <i>by</i> 
    * the local agent, but this is a sanity check that the agent
    * wasn't moved or restarted after the ticket was created.
@@ -151,10 +151,10 @@ public final class Ticket extends MoveTicket implements java.io.Serializable {
   public boolean equals(Object o) {
     if (o == this) {
       return true;
-    } else if (!(o instanceof Ticket)) {
+    } else if (!(o instanceof AddTicket)) {
       return false;
     } else {
-      Ticket t = (Ticket) o;
+      AddTicket t = (AddTicket) o;
       return
         ((forceRestart == t.forceRestart) &&
          ((id == null) ? 
