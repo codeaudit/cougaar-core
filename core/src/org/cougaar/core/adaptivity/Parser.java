@@ -28,7 +28,7 @@ import java.io.Reader;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Parser for plays to be stored in a Playbook. The grammar is mostly
+ * Parser for plays to be stored in a Playbook. The grammar is
  * straightforward with the exception of ranges and range lists.
  * <h3>Basic Syntax</h3>
  * <p>Each play consists of an if clause (predicate) and one or more
@@ -44,10 +44,41 @@ import org.cougaar.core.service.LoggingService;
  * <pre>
  * FooPlugin.MODE &lt; 5;
  * FooPlugin.MODE in {1 to 7};
- * FooPlugin.SPEED = "FAST";</pre>
- * <h3>Numeric Constants and Range Lists</h3><p>
- * Numeric constants are a degenerate form of a range list with a
- * single range in which the minimum and maximum are identically equal
+ * FooPlugin.SPEED = "FAST";</pre><p>
+ * Note that both relational and range operators (==, not it, etc.) as
+ * well as assignment may be used. Assignment explicitly specifies the
+ * allowed values. Relational and range operators implicitly specify
+ * the allowed values by specifying the test that any such value must
+ * satisfy. The operators =, ==, and in are all equivalent as are !=
+ * and not in. The other relational operators are usually used with
+ * single valued range lists (constants).
+ * <h3>Comments</h3><p>
+ * Comments are ignored by the parser. Both slash-slash and slash-star
+ * comments are recognized. The former beging with two adjacent
+ * slashes and terminate at the end of line. The latter terminate with
+ * a star-slash sequence.</p>
+ * <h3>Numeric Constants</h3><p>
+ * Numeric constants are interpreted as floating point numbers
+ * (doubles). When necessary, numbers will be automatically cast to integers or
+ * longs. A consequence of this is that plays may not use the full
+ * precision offered by longs (64 bits) and are restricted to the 56
+ * bits of precision in a double.
+ * <h3>Ranges</h3><p>
+ * A range is written as two numbers separated by the keyword "to" or
+ * "thru". The former excludes the end point and the latter includes
+ * the end point. A point range (a range having exactly one value) may
+ * be written as a single number; 7 is equivalent to 7 thru 7. 7 to 7,
+ * on the other hand, is an empty range; it allows no values.
+ * <h3>Range Lists</h3><p>
+ * A range list is a sequence of ranges enclosed in braces. The
+ * elements of a range list may be separated by commas, but they are
+ * not required; white space is sufficient. A range
+ * list consisting of exactly one range my omit the braces.
+ * Consequently, a numeric constant is also a range list. Range lists
+ * frequently have elements that are point ranges and express list of
+ * descrete values rather than a continuum. Range lists
+ * may appear only as the right-hand operand of relational operators
+ * (see below). Numeric constants may appear in arithmetic expressions.
  * to the written value. In general the context makes it clear which
  * should be used, but for example:</p><pre>
  * Foo &lt; {11 to 20, 25 thru 30, 1 to 3};</pre><p>
@@ -189,7 +220,9 @@ import org.cougaar.core.service.LoggingService;
  * "DefensePosture" concept. However, the local playbook is developed with an
  * awareness of the agent makeup so it can contain plays to set the
  * operating modes of its plugins based on this
- * DefensePosture value.</p>
+ * DefensePosture value.</p><h3>OperatingModePolicy</h3><p>
+ * An OperatingModePolicy has the same syntax as a Play except that it
+ * is prefixed with a name.</p>
  **/
 public class Parser {
   StreamTokenizer st;
@@ -197,6 +230,12 @@ public class Parser {
   ConstrainingClause cc;
   private LoggingService logger;
 
+  /**
+   * Construct from a Reader.
+   * @param s the Reader to read from
+   * @param logger a LoggingService onto which error and debug
+   * information will be written.
+   **/
   public Parser(Reader s, LoggingService logger) {
     this.logger = logger;
     st = new StreamTokenizer(s);
@@ -208,6 +247,12 @@ public class Parser {
     st.slashSlashComments(true);
   }
 
+  /**
+   * Parses and returns the next ConstrainingClause. The terminator
+   * (colon) is not consumed.
+   * @return the parsed constraining clause.
+   * @throws IOException if an error occurs reading from the input.
+   **/
   public ConstrainingClause parseConstrainingClause() throws IOException {
     cc = new ConstrainingClause();
     parse(Operator.MAXP);
@@ -216,6 +261,12 @@ public class Parser {
     return result;
   }
 
+  /**
+   * Parse a series of constraints from the Reader up through a
+   * semicolon. The terminating semicolon is consumed.
+   * @return an array of ConstraintPhrases parsed from the input.
+   * @throws IOException if an error occurs reading from the input.
+   **/
   public ConstraintPhrase[] parseConstraints() throws IOException {
     List constraintPhrases = new ArrayList();
     while (true) {
@@ -231,6 +282,10 @@ public class Parser {
   }
 
   /**
+   * Parses a single, complete Play from the input. The terminating
+   * semicolon is consumed.
+   * @return the parsed Play.
+   * @throws IOException if an error occurs reading from the input.
    **/
   public Play parsePlay() throws IOException {
     ConstrainingClause cc = parseConstrainingClause();          // Parse the ifClause
@@ -238,6 +293,11 @@ public class Parser {
     return new Play(cc, cp);
   }
 
+  /**
+   * Parses an entire file of Plays and returns them as an array.
+   * @return an array of plays from the file.
+   * @throws IOException if an error occurs reading from the input.
+   **/
   public Play[] parsePlays() throws IOException {
     List plays = new ArrayList();
     readPlays:
@@ -261,6 +321,12 @@ public class Parser {
   }
 
   /**
+   * Parses an OperatingModePolicy. Syntactically, an
+   * OperatingModePolicy is identical with a play except it is
+   * prefixed with a name token. The name token must be a string
+   * (quoted as necessary).
+   * @return an OperatingModePolicy
+   * @throws IOException if an error occurs reading from the input.
    **/
   public OperatingModePolicy parseOperatingModePolicy() throws IOException {
     // pull the first token, assume it is the policy name
@@ -275,6 +341,12 @@ public class Parser {
     return new OperatingModePolicy(policyName, cc, cp);
   }
 
+  /**
+   * Parses an entire file of OperatingModePolicies and returns them
+   * as an array.
+   * @return an array of OperatingModePolicies from the file.
+   * @throws IOException if an error occurs reading from the input.
+   **/
   public OperatingModePolicy[] parseOperatingModePolicies() throws IOException {
     List policies = new ArrayList();
     while (true) {
