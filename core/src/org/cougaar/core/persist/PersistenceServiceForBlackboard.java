@@ -40,5 +40,6 @@ public interface PersistenceServiceForBlackboard extends PersistenceService {
   PersistenceObject persist(boolean returnBytes, boolean full);
   java.sql.Connection getDatabaseConnection(Object locker);
   void releaseDatabaseConnection(Object locker);
+  boolean isDummyPersistence();
   long getPersistenceTime();
 }

@@ -141,6 +141,13 @@ final class Distributor {
   private static final boolean PERSIST_AT_STARTUP =
     Boolean.getBoolean(PERSIST_AT_STARTUP_PROP);
 
+  private static final UnaryPredicate anythingP = 
+    new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return (o != null);
+      }
+    };
+
   //
   // these are set in the constructor and are final:
   //
@@ -172,6 +179,9 @@ final class Distributor {
 
   /** The object we use to persist ourselves. */
   private Persistence persistence = null;
+
+  /** If persistence is non-null, is it a dummy? */
+  private boolean dummyPersistence;
 
   /** The reservation manager for persistence **/
   private static ReservationManager persistenceReservationManager =
@@ -208,12 +218,8 @@ final class Distributor {
   /** True if rehydration occurred at startup **/
   private boolean didRehydrate = false;
 
-  /**
-   * Tuples that have been distributed during a persistence ecoch.
-   * This could use a regular equals-based map, but for persistence
-   * consistency we use an =='s based identity map.
-   **/
-  private final Map epochTuples = new IdentityHashMap();
+  /** Tuples that have been distributed during a persistence ecoch */
+  private Map epochTuples;
 
   /** The message manager for this cluster **/
   private MessageManager myMessageManager = null;
@@ -298,6 +304,9 @@ final class Distributor {
     assert persistence == null : "persistence already set";
     persistence = newPersistence;
     lazyPersistence = lazy;
+    dummyPersistence = 
+      (persistence != null && persistence.isDummyPersistence());
+    initializeEpochEnvelopes();
   }
 
   /**
@@ -409,57 +418,60 @@ final class Distributor {
   private void rehydrate(Object state) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    if (persistence != null) {
-      rehydrationEnvelope = new PersistenceEnvelope();
-      RehydrationResult rr =
-        persistence.rehydrate(rehydrationEnvelope, state);
-      if (rr.quiescenceMonitorState != null) {
-        quiescenceMonitor.setState(rr.quiescenceMonitorState);
-      }
+    if (persistence == null) {
+      myMessageManager = new MessageManagerImpl(false);
+      return;
+    }
 
-      // Distributor tracks the subscribers who have yet to rehydrate
-      // However, we only really care about those for whom we require
-      // quiescence
-      subscribersToRehydrate = persistence.getSubscriberStateKeys();
-      if (logger.isDebugEnabled())
-	logger.debug("Initial number of subscribers: " + subscribersToRehydrate.size());
-      // Synchronize so that a subscriber who already 
-      // is in discardRehydrationInfo doesnt cause a ConcurrentModExc
-      synchronized (distributorLock) {
-	Iterator iter = subscribersToRehydrate.iterator();
-	List toRemove = new ArrayList();
-	while (iter.hasNext()) {
-	  String key = (String)iter.next();
-	  if (! quiescenceMonitor.isQuiescenceRequired(key)) {
-	    if (logger.isDebugEnabled())
-	      logger.debug("Ignoring subscriber " + key);
-	    toRemove.add(key);
-	  } else {
-	    if (logger.isDebugEnabled())
-	      logger.debug("NOT Ignoring subscriber " + key);
-	  }
-	}
-	subscribersToRehydrate.removeAll(toRemove);
-	if (logger.isDebugEnabled())
-	  logger.debug("Trimmed number of subscribers: " + subscribersToRehydrate.size());
-      } // end synchronized(distributorLock)
+    // Get the rehydration data.  Note that the passed "state" is
+    // always null, so we can't use it to check for dummyPersistence.
+    rehydrationEnvelope = new PersistenceEnvelope();
+    RehydrationResult rr =
+      persistence.rehydrate(rehydrationEnvelope, state);
+    if (rr.quiescenceMonitorState != null) {
+      quiescenceMonitor.setState(rr.quiescenceMonitorState);
+    }
 
-      if (lazyPersistence) {    // Ignore any rehydrated message manager
-        myMessageManager = new MessageManagerImpl(false);
-      } else {
-        myMessageManager = rr.messageManager;
-        if (myMessageManager == null) {
-          myMessageManager = new MessageManagerImpl(true);
+    // Distributor tracks the subscribers who have yet to rehydrate
+    // However, we only really care about those for whom we require
+    // quiescence
+    subscribersToRehydrate = persistence.getSubscriberStateKeys();
+    if (logger.isDebugEnabled())
+      logger.debug("Initial number of subscribers: " + subscribersToRehydrate.size());
+    // Synchronize so that a subscriber who already 
+    // is in discardRehydrationInfo doesnt cause a ConcurrentModExc
+    synchronized (distributorLock) {
+      Iterator iter = subscribersToRehydrate.iterator();
+      List toRemove = new ArrayList();
+      while (iter.hasNext()) {
+        String key = (String)iter.next();
+        if (! quiescenceMonitor.isQuiescenceRequired(key)) {
+          if (logger.isDebugEnabled())
+            logger.debug("Ignoring subscriber " + key);
+          toRemove.add(key);
+        } else {
+          if (logger.isDebugEnabled())
+            logger.debug("NOT Ignoring subscriber " + key);
         }
       }
-      if (rr.undistributedEnvelopes != null) {
-        didRehydrate = true;
-        postRehydrationEnvelopes = new ArrayList();
-        postRehydrationEnvelopes.addAll(rr.undistributedEnvelopes);
-        addEpochEnvelopes(rr.undistributedEnvelopes);
-      }
-    } else {
+      subscribersToRehydrate.removeAll(toRemove);
+      if (logger.isDebugEnabled())
+        logger.debug("Trimmed number of subscribers: " + subscribersToRehydrate.size());
+    } // end synchronized(distributorLock)
+
+    if (lazyPersistence) {    // Ignore any rehydrated message manager
       myMessageManager = new MessageManagerImpl(false);
+    } else {
+      myMessageManager = rr.messageManager;
+      if (myMessageManager == null) {
+        myMessageManager = new MessageManagerImpl(true);
+      }
+    }
+    if (rr.undistributedEnvelopes != null) {
+      didRehydrate = true;
+      postRehydrationEnvelopes = new ArrayList();
+      postRehydrationEnvelopes.addAll(rr.undistributedEnvelopes);
+      addEpochEnvelopes(rr.undistributedEnvelopes);
     }
   }
 
@@ -535,7 +547,9 @@ final class Distributor {
     disableTimer();
     // start a disabled periodic timer
     synchronized (distributorLock) {
-      if (lazyPersistence && distributorTimer == null) {
+      if (lazyPersistence && 
+          !dummyPersistence &&
+          distributorTimer == null) {
         Runnable task =
           new Runnable() {
             public void run() {
@@ -926,7 +940,24 @@ final class Distributor {
     return result;
   } // end of distribute()
 
+  private void initializeEpochEnvelopes() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (dummyPersistence) {
+      return;
+    }
+    //epochEnvelopes = new ArrayList();
+    // this could use a regular equals-based map, but for persistence
+    // consistency we use an =='s based identity map.
+    epochTuples = new IdentityHashMap();
+  }
+
   private void addEpochEnvelopes(List envelopes) {
+    assert Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (dummyPersistence) {
+      return;
+    }
     //epochEnvelopes.addAll(rr.undistributedEnvelopes);
     for (int i = 0, n = envelopes.size(); i < n; i++) {
       Envelope e = (Envelope) envelopes.get(i);
@@ -939,6 +970,9 @@ final class Distributor {
   }
 
   private void addEpochTuple(EnvelopeTuple tuple) {
+    assert Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    assert dummyPersistence;
     Object o = tuple.getObject();
     if (tuple.isBulk()) {
       Collection c = (Collection) o;
@@ -988,6 +1022,20 @@ final class Distributor {
   }
 
   private List getEpochEnvelopes() {
+    assert Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (dummyPersistence) {
+      // we haven't been collecting tuples, since persistence is
+      // disabled, but we must capture the full blackboard for a
+      // forced persist (e.g. mobility).
+      QuerySubscription everything = new QuerySubscription(anythingP);
+      blackboard.fillQuery(everything);
+      Envelope envelope = new Envelope();
+      envelope.bulkAddObject(everything.getCollection());
+      List ret = new ArrayList(1);
+      ret.add(envelope);
+      return ret;
+    }
     //return epochEnvelopes;
     // create a list with a single envelope that contains all our
     // epochTuples, where the list's "clear()" clears our tuple
@@ -1018,6 +1066,11 @@ final class Distributor {
   }
 
   private void clearEpochEnvelopes() {
+    assert Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (dummyPersistence) {
+      return;
+    }
     //epochEnvelopes.clear();
     epochTuples.clear();
   }
@@ -1178,6 +1231,9 @@ final class Distributor {
   }
 
   private boolean timeToLazilyPersist() {
+    if (dummyPersistence) {
+      return false;
+    }
     long overdue =
       System.currentTimeMillis() -
       persistence.getPersistenceTime();
@@ -1187,6 +1243,9 @@ final class Distributor {
   private boolean timeToPersist() {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
+    if (dummyPersistence) {
+      return false;
+    }
     long nextPersistTime =
       Math.min(
           lastPersist + MAX_PERSIST_INTERVAL,
@@ -1300,7 +1359,10 @@ final class Distributor {
   private PersistenceObject persist(boolean isStateWanted, boolean full) {
       assert !Thread.holdsLock(distributorLock);
       assert !Thread.holdsLock(transactionLock);
-      if (persistence == null) return null;
+      if (persistence == null ||
+          (dummyPersistence && !isStateWanted)) {
+        return null;
+      }
       while (true) {            // Loop until we succeed and return a result
         synchronized (transactionLock) {
           // First we must wait for any other persistence activity to cease
@@ -1319,7 +1381,10 @@ final class Distributor {
             if (logger.isInfoEnabled()) {
               logger.info("Persist started (persist)");
             }
-            PersistenceObject result = doPersistence(isStateWanted, full);
+            PersistenceObject result = 
+              doPersistence(
+                  isStateWanted,
+                  (full || dummyPersistence));
             if (logger.isInfoEnabled()) logger.info("reservation release");
             persistenceReservationManager.release(persistence);
             if (logger.isInfoEnabled()) {
@@ -1567,5 +1632,4 @@ final class Distributor {
       }
     }
   }
-
 }

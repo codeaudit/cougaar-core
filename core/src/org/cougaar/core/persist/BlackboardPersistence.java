@@ -97,6 +97,14 @@ public class BlackboardPersistence implements Persistence {
    **/
  
   /**
+   * @return true if persistence is disabled, except for
+   * "returnBytes" state-capture persistence
+   */
+  public boolean isDummyPersistence() {
+    return persistenceService.isDummyPersistence();
+  }
+
+  /**
    * Gets the system time when persistence should be performed. We do
    * persistence periodically with a period such that all the plugins
    * will, on the average create persistence deltas with their

@@ -96,18 +96,21 @@ class IdentityTable {
     while ((pAssoc = (PersistenceAssociation) referenceQueue.poll()) != null) {
       if (logger.isDetailEnabled()) logger.detail("processQueue removing " + pAssoc);
       int hashIndex = (pAssoc.hash & 0x7fffffff) % table.length;
-      for (PersistenceAssociation x = table[hashIndex], prev = null; x != null; prev = x, x = x.next) {
+      for (PersistenceAssociation x = table[hashIndex], prev = null; ; prev = x, x = x.next) {
+        if (x == null) {
+          break;  // Not found due to "clear()"
+        }
         if (x == pAssoc) {
           if (prev == null) {
             table[hashIndex] = pAssoc.next;
           } else {
             prev.next = pAssoc.next;
           }
+          count--;
           break;
         }
       }
       persistentObjects.set(pAssoc.getReferenceId().intValue(), null);
-      count--;
     }
   }
 
@@ -259,5 +262,11 @@ class IdentityTable {
         throw new UnsupportedOperationException("remove not supported");
       }
     };
+  }
+
+  public void clear() {
+    table = new PersistenceAssociation[123];
+    count = 0;
+    setRehydrationCollection(null);
   }
 }

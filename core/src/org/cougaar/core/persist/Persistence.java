@@ -72,5 +72,6 @@ public interface Persistence {
 
     java.sql.Connection getDatabaseConnection(Object locker);
     void releaseDatabaseConnection(Object locker);
+    boolean isDummyPersistence();
     long getPersistenceTime();
 }

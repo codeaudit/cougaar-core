@@ -482,6 +482,7 @@ public class PersistenceServiceComponent
       if (!haveWritablePlugin) {
         // Add a dummy persistence plugin
         addPlugin(getDummyPersistenceClass());
+        isDummy = true;
       }
     } catch (Exception e) {
       throw new RuntimeException("Exception in load()", e);
@@ -554,6 +555,7 @@ public class PersistenceServiceComponent
   private boolean writeDisabled = WRITE_DISABLED_DFLT;
   private String archiveNumber = "";
   private Map plugins = new HashMap();
+  private boolean isDummy = false;
   private Map rehydrationResult = null;
   private Map clients = new HashMap();
   private ServiceBroker sb;
@@ -588,6 +590,10 @@ public class PersistenceServiceComponent
 
   public MessageAddress getMessageAddress() {
     return agentId;
+  }
+
+  public boolean isDummyPersistence() {
+    return isDummy;
   }
 
   /**
@@ -641,6 +647,9 @@ public class PersistenceServiceComponent
    * state object. If null, rehydrate from media plugins
    */
   private void rehydrate(final PersistenceObject pObject) {
+    if (isDummy && pObject == null) {
+      return; // Nothing to rehydrate
+    }
     synchronized (identityTable) {
       final List rehydrationCollection = new ArrayList();
       identityTable.setRehydrationCollection(rehydrationCollection);
@@ -1113,6 +1122,9 @@ public class PersistenceServiceComponent
    * End a persistence epoch by generating a persistence delta.
    **/
   PersistenceObject persist(boolean returnBytes, boolean full) {
+    if (isDummy && !returnBytes) {
+      return null;
+    }
     int deltaNumber = -1;
     long startCPU = 0L;
     //startCPU = CpuClock.cpuTimeMillis();
@@ -1287,6 +1299,10 @@ public class PersistenceServiceComponent
       }
       catch (Exception e) {
         logger.error("Error writing persistence snapshot", e);
+      } finally {
+        if (isDummy) {
+          identityTable.clear(); // Perform garbage collection
+        }
       }
       // set persist time to persist completion + epsilon
       previousPersistenceTime = System.currentTimeMillis();
@@ -1444,6 +1460,9 @@ public class PersistenceServiceComponent
     }
     public void releaseDatabaseConnection(Object locker) {
       PersistenceServiceComponent.this.releaseDatabaseConnection(locker);
+    }
+    public boolean isDummyPersistence() {
+      return PersistenceServiceComponent.this.isDummyPersistence();
     }
     public long getPersistenceTime() {
       return PersistenceServiceComponent.this.getPersistenceTime();
