@@ -54,7 +54,10 @@ import java.util.*;
  * other scheduled Components</i> may be *random* (i.e. this 
  * ComponentPlugin might load first but be precycled last!).  In 
  * general a Component should <b>not</b> make assumptions about the 
- * load or schedule ordering.
+ * load or schedule ordering.<br>
+ * <b>Note</b>: This class will become an extension of <code>BlackboardClientComponent</code> in the near future.
+ *
+ * @see org.cougaar.core.blackboard.BlackboardClientComponent
  */
 public abstract class ComponentPlugin 
   extends org.cougaar.util.GenericStateModelAdapter
@@ -128,13 +131,19 @@ public abstract class ComponentPlugin
 
   /**
    * Get the binding site, for subclass use.
+   *
+   * @deprecated This method will not be going away, but the return 
+   * type will become a <code>BindingSite</code>, when this class
+   * becomes a simple extension of <code>BlackboardClientComponent</code>. 
+   * For access to the AgentIdentifier and ConfigFinder methods, 
+   * use the versions in the base class directly.
    */
   protected PluginBindingSite getBindingSite() {
     return pluginBindingSite;
   }
   
   /** 
-   * Get the binding site, for subclass use.
+   * Get the service broker, for subclass use.
    */
   protected ServiceBroker getServiceBroker() {
     return serviceBroker;
@@ -341,9 +350,17 @@ public abstract class ComponentPlugin
   
   /** 
    * @deprecated Use the self Organization or plugin parameters 
-   * instead.  This method with be removed for cougaar 9.0.
+   * instead.  This method will be removed.
    */
   protected ClusterIdentifier getClusterIdentifier() { 
+    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
+  }
+  
+  /** 
+   * @deprecated Use the self Organization or plugin parameters 
+   * instead.  This method will be removed.
+   */
+  protected ClusterIdentifier getAgentIdentifier() { 
     return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }
   
