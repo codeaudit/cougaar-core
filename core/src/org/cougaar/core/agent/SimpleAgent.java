@@ -21,131 +21,92 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.blackboard.*;
-
-import org.cougaar.core.agent.service.alarm.*;
-
-import org.cougaar.core.agent.service.containment.*;
-
-import org.cougaar.core.agent.service.democontrol.*;
-
-import org.cougaar.core.agent.service.registry.*;
-
-import org.cougaar.core.agent.service.scheduler.*;
-
-import org.cougaar.core.agent.service.uid.*;
-
-import org.cougaar.core.blackboard.*;
-
+import java.lang.ref.WeakReference;
+import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
-
-import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.GenericStateModel;
-import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.StateModelException;
-
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentBindingSite;
-
+//import java.util.Timer;  // conflicts with ".service.alarm.Timer"
+import java.util.TimerTask;
+import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
+import org.cougaar.core.agent.service.alarm.ExecutionTimer;
+import org.cougaar.core.agent.service.alarm.ExecutionTimer.Change;
+import org.cougaar.core.agent.service.alarm.ExecutionTimer.Parameters;
+import org.cougaar.core.agent.service.alarm.RealTimer;
+import org.cougaar.core.agent.service.alarm.Timer;
+import org.cougaar.core.agent.service.containment.AgentContainmentServiceProvider;
+import org.cougaar.core.agent.service.democontrol.DemoControlServiceProvider;
+import org.cougaar.core.agent.service.mobility.MobilityDispatchServiceProvider;
+import org.cougaar.core.agent.service.registry.PrototypeRegistry;
+import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;
+import org.cougaar.core.agent.service.scheduler.SchedulerServiceProvider;
+import org.cougaar.core.agent.service.uid.UIDServiceImpl;
+import org.cougaar.core.agent.service.uid.UIDServiceProvider;
+import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BoundComponent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.component.ServiceProvider;
-
-import org.cougaar.core.service.NamingService;
-
-import org.cougaar.core.node.ComponentMessage;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.domain.LDMServesPlugin;
+import org.cougaar.core.domain.RootFactory;
+import org.cougaar.core.mobility.MobilityDispatchService;
+import org.cougaar.core.mobility.MobilityListener;
+import org.cougaar.core.mobility.MobilityListenerService;
+import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageStatistics;
-
-// cluster context registration
-import org.cougaar.core.agent.ClusterContext;
-
-// mobility support
-import org.cougaar.core.mobility.MobilityDispatchService;
-import org.cougaar.core.agent.service.mobility.MobilityDispatchServiceProvider;
-
-// blackboard support
-import org.cougaar.core.blackboard.BlackboardForAgent;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.blackboard.BlackboardServiceProvider;
-
-// topology support
+import org.cougaar.core.mts.MessageStatistics.Statistics;
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.node.ComponentMessage;
+import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.plugin.LatePropertyProvider;
+import org.cougaar.core.plugin.LDMService;
+import org.cougaar.core.plugin.LDMServiceProvider;
+import org.cougaar.core.plugin.PropertyProvider;
+import org.cougaar.core.plugin.PrototypeProvider;
+import org.cougaar.core.service.AgentContainmentService;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.AlarmService;
+import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.service.DomainService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.MessageStatisticsService;
+import org.cougaar.core.service.MessageTransportService;
+import org.cougaar.core.service.MessageWatcherService;
+import org.cougaar.core.service.NamingService;
+import org.cougaar.core.service.PrototypeRegistryService;
+import org.cougaar.core.service.SchedulerService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.TopologyWriterService;
-
-// message-transport support
-import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.mts.MessageTransportWatcher;
-import org.cougaar.core.service.MessageWatcherService;
-
-// LDM service
-import org.cougaar.core.plugin.LDMService;
-import org.cougaar.core.plugin.LDMServiceProvider;
-
-// prototype and property providers
-import org.cougaar.core.plugin.LatePropertyProvider;
-import org.cougaar.core.plugin.PrototypeProvider;
-import org.cougaar.core.plugin.PropertyProvider;
-
-// domain and factory support
-import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.core.domain.Domain;
-import org.cougaar.core.domain.DomainManager;
-import org.cougaar.core.service.DomainService;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.RootFactory;
-
-// types for factory support
+import org.cougaar.core.service.UIDService;
+import org.cougaar.core.service.UIDServer;
+import org.cougaar.core.service.identity.AgentIdentityClient;
+import org.cougaar.core.service.identity.AgentIdentityService;
+import org.cougaar.core.service.identity.CrlReason;
+import org.cougaar.core.service.identity.TransferableIdentity;
+import org.cougaar.core.thread.ThreadServiceProvider;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.PropertyGroup;
-
-// prototype registry service
-import org.cougaar.core.agent.service.registry.PrototypeRegistry;
-import org.cougaar.core.service.PrototypeRegistryService;
-import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;
-
-// Object factories
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
-import org.cougaar.planning.ldm.plan.ClusterObjectFactoryImpl;
-
-// Scenario time support
-import org.cougaar.core.agent.AdvanceClockMessage;
-import org.cougaar.core.agent.service.alarm.Alarm;
-
-// agentid
-import org.cougaar.core.service.AgentIdentificationService;
-
-// Thread services
-import org.cougaar.core.thread.ThreadServiceProvider;
-import org.cougaar.core.service.ThreadService;
-
-// init info
-import org.cougaar.core.node.InitializerService;
-
-// Persistence
-//  import org.cougaar.core.persist.DatabasePersistence;
-import org.cougaar.core.persist.Persistence;
-
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.StateModelException;
 
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 
@@ -169,12 +130,24 @@ import org.cougaar.util.PropertyParser;
  *
  * @property org.cougaar.core.servlet.enable
  *   Used to enable ServletService; defaults to "true".
+ *
+ * @property org.cougaar.core.agent.removalCheckMillis
+ *   If set, this indicates the number of milliseconds after
+ *   agent "unload()" for a GC check of the agent.  This is 
+ *   primarily for agent mobility memory-leak testing.
  * </pre>
  */
 public class SimpleAgent 
-  extends Agent
-  implements Cluster, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
+extends Agent
+implements
+Cluster, AgentIdentityClient, LDMServesPlugin, 
+ClusterContext, MessageTransportClient, MessageStatistics, 
+MobilityListener, StateObject
 {
+
+  // this node's address
+  MessageAddress localNode;
+
   // incarnation for this agent, which is incremented every time
   // this agent restarts but not when the agent moves.
   private long incarnation;
@@ -185,17 +158,25 @@ public class SimpleAgent
 
   // state for this agent if it is arriving from a move
   // this is set in "setState(..)" and used within "load()"
-  private Object loadState;
-  
+  private AgentState agentState;
+
   // state from "suspend()", used within "getState()"
   private List unsentMessages;
+
+  // mobility destination node address
+  MessageAddress moveTargetNode;
+
+  // mobility transferable identity
+  TransferableIdentity mobileIdentity;
 
   // services, in order of "load()"
 
   private LoggingService log;
 
+  private AgentIdentityService myAgentIdService;
+
   private AgentContainmentServiceProvider myAgentContainmentServiceProvider;
-      
+
   private TopologyReaderService myTopologyReaderService;
   private TopologyWriterService myTopologyWriterService;
 
@@ -205,6 +186,7 @@ public class SimpleAgent
 
   private MobilityDispatchServiceProvider myMDSP;
   private MobilityDispatchService nodeMDS;
+  private MobilityListenerService myMobilityListenerService;
 
   private UIDServiceProvider myUIDServiceProvider;
   private UIDService myUIDService;
@@ -312,7 +294,7 @@ public class SimpleAgent
    * MessageAddress.
    **/
   private MessageAddress myMessageAddress_;
-    
+
   /** 
    * @return the cluster's ConfigFinder.
    **/
@@ -357,18 +339,95 @@ public class SimpleAgent
     }
     setClusterIdentifier(cid);
   }
-    
+
   /** Get the components from the InitializerService or the state **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
-    // display the agent id
-    String cname = getIdentifier();
 
+    if (agentState != null) {
+      // get descriptions from mobile state
+      return new ComponentDescriptions(agentState.tuples);
+    }
+
+    String cname = getIdentifier();
     ServiceBroker sb = getBindingSite().getServiceBroker();
-    InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
+    InitializerService is = (InitializerService) 
+      sb.getService(this, InitializerService.class, null);
     try {
       String cp = specifyContainmentPoint();
-      ComponentDescription[] cds = is.getComponentDescriptions(cname, specifyContainmentPoint());
-      return new ComponentDescriptions(cds);
+      ComponentDescription[] cds = 
+        is.getComponentDescriptions(cname, specifyContainmentPoint());
+      //
+      // FIXME by *luck* our descriptions are in this order:
+      //
+      //   - ".ini" high-priority components
+      //   - hard-coded component-priority components
+      //   - ".ini" component-priority components
+      //   - ".ini" low-priority components
+      //   - hard-coded low-priority components
+      //
+      // Note that all hard-coded components at all priority levels 
+      // are either all before or after all same-priority ".ini" 
+      // components.
+      //
+      // Here we take advantage of that property and merge all
+      // hard-coded and ".ini" components into one list.
+      //
+      List l = new ArrayList(cds.length + 4);
+      String enableServlets = 
+        System.getProperty("org.cougaar.core.servlet.enable");
+      if ((enableServlets == null) ||
+          (enableServlets.equalsIgnoreCase("true"))) {
+        // start up the Agent-level ServletService component
+        l.add(new ComponentDescription(
+              getMessageAddress()+"ServletService",
+              "Node.AgentManager.Agent.AgentServletService",
+              "org.cougaar.lib.web.service.LeafServletServiceComponent",
+              null,  //codebase
+              getMessageAddress().getAddress(),
+              null,  //certificate
+              null,  //lease
+              null,  //policy
+              ComponentDescription.PRIORITY_COMPONENT));
+      }
+      // Domains *MUST* be loaded before the blackboard
+      l.add(new ComponentDescription(
+            getMessageAddress()+"DomainManager",
+            "Node.AgentManager.Agent.DomainManager",
+            "org.cougaar.core.domain.DomainManager",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+      // blackboard *MUST* be loaded before pluginmanager (and plugins)
+      l.add(new ComponentDescription(
+            getMessageAddress()+"Blackboard",
+            "Node.AgentManager.Agent.Blackboard",
+            "org.cougaar.core.blackboard.StandardBlackboard",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+      // add in ".ini" descriptions
+      for (int i = 0; i < cds.length; i++) {
+        l.add(cds[i]);
+      }
+      // final step is to load the plugin manager which will make 
+      // the plugins go.
+      l.add(new ComponentDescription(
+            getMessageAddress()+"PluginManager",
+            "Node.AgentManager.Agent.PluginManager",
+            "org.cougaar.core.plugin.PluginManager",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_LOW));
+      return new ComponentDescriptions(l);
     } catch (Exception e) {
       System.err.println("\nUnable to add "+cname+"'s child Components: "+e);
       e.printStackTrace();
@@ -388,20 +447,8 @@ public class SimpleAgent
     // do the standard thing.
     super.load();
 
-    // final step is to load the plugin manager which will make the plugins go.
-    String pimname = new String(getMessageAddress()+"PluginManager");
-    ComponentDescription pimdesc = 
-      new ComponentDescription(
-                               pimname,
-                               "Node.AgentManager.Agent.PluginManager",
-                               "org.cougaar.core.plugin.PluginManager",
-                               null,  //codebase
-                               null,  //parameters
-                               null,  //certificate
-                               null,  //lease
-                               null); //policy
-    
-    add(pimdesc);
+    // release load-time agent state for GC
+    this.agentState = null;
   }
 
   protected void loadHighPriorityComponents() {
@@ -414,14 +461,59 @@ public class SimpleAgent
       log = LoggingService.NULL;
     }
 
-    // add ourselves to our VM's cluster table
-    ClusterContextTable.addContext(getMessageAddress(), this);
+    // validate the state
+    if (agentState != null) {
+      // verify state's agent id
+      MessageAddress agentAddr = agentState.agentAddr;
+      if (!(getMessageAddress().equals(agentAddr))) {
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Load state for "+getMessageAddress()+
+              " contains incorrect agent address "+agentAddr);
+        }
+        // continue anyways
+      }
+    }
+
+    // get the local node id
+    NodeIdentificationService nodeIdService = 
+      (NodeIdentificationService)
+      sb.getService(this, NodeIdentificationService.class, null);
+    if (nodeIdService == null) {
+      throw new RuntimeException("Unable to get node-id service");
+    }
+    localNode = nodeIdService.getNodeIdentifier();
+    if (localNode == null) {
+      throw new RuntimeException("Local node address is null?");
+    }
+    sb.releaseService(
+        this, NodeIdentificationService.class, nodeIdService);
 
     super.loadHighPriorityComponents();
   }
 
   protected void loadInternalPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
+
+    // acquire our identity
+    myAgentIdService = (AgentIdentityService) 
+      sb.getService(this, AgentIdentityService.class, null);
+    if (myAgentIdService == null) {
+      throw new RuntimeException(
+          "Unable to get the agent identity service for agent "+
+          getIdentifier());
+    }
+    TransferableIdentity priorIdentity = 
+      ((agentState != null) ?
+       agentState.identity :
+       null);
+    try {
+      myAgentIdService.acquire(priorIdentity);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to acquire agent identity for agent "+
+          getIdentifier(), e);
+    }
 
     // add the containment service
     myAgentContainmentServiceProvider = 
@@ -437,8 +529,7 @@ public class SimpleAgent
 
     // register in the topology
     moveId = System.currentTimeMillis();
-    if (loadState instanceof AgentState) {
-      AgentState agentState = (AgentState) loadState;
+    if (agentState != null) {
       // resume the prior incarnation number
       incarnation = agentState.incarnation;
       long priorMoveId = agentState.moveId;
@@ -458,10 +549,22 @@ public class SimpleAgent
           TopologyEntry.ACTIVE);
     }
 
+    // add ourselves to our VM's cluster table
+    ClusterContextTable.addContext(getMessageAddress(), this);
+
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) 
       sb.getService(this, MessageTransportService.class, null);
     messenger.registerClient(this);
+
+    if (agentState != null) {
+      // send all unsent messages
+      List l = agentState.unsentMessages;
+      for (int i = 0, n = l.size(); i < n; i++) {
+        ClusterMessage cmi = (ClusterMessage) l.get(i);
+        sendMessage(cmi);
+      }
+    }
 
     statisticsService = (MessageStatisticsService) 
       sb.getService(
@@ -470,6 +573,10 @@ public class SimpleAgent
     watcherService = (MessageWatcherService) 
       sb.getService(
           this, MessageWatcherService.class, null);
+
+    // get node-level listener service
+    myMobilityListenerService = (MobilityListenerService) 
+      sb.getService(this, MobilityListenerService.class, null);
 
     // override node-level mobility service
     nodeMDS = (MobilityDispatchService) 
@@ -483,7 +590,7 @@ public class SimpleAgent
     sb.addService(UIDService.class, myUIDServiceProvider);
 
     myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
-    
+
     // set up the PrototypeRegistry and the PrototypeRegistryService
     PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
     myPrototypeRegistryServiceProvider = 
@@ -513,24 +620,30 @@ public class SimpleAgent
       sb.getService(this, ThreadService.class, null);
 
     // scheduler for new plugins
-    mySchedulerServiceProvider = new SchedulerServiceProvider(myThreadService, log, this.toString());
+    mySchedulerServiceProvider = 
+      new SchedulerServiceProvider(myThreadService, log, this.toString());
     sb.addService(SchedulerService.class, mySchedulerServiceProvider);
 
     {
       final AgentIdentificationService ais = new AgentIdentificationService() {
-          public MessageAddress getMessageAddress() { return SimpleAgent.this.getMessageAddress(); }
-          public String getName() { return SimpleAgent.this.getIdentifier(); }
-        };
+        public MessageAddress getMessageAddress() { 
+          return SimpleAgent.this.getMessageAddress(); }
+        public String getName() { return SimpleAgent.this.getIdentifier(); }
+      };
       ServiceProvider aissp = new ServiceProvider() {
-          public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
-            if (serviceClass == AgentIdentificationService.class) {
-              return ais;
-            } else {
-              throw new IllegalArgumentException("AgentIdentificationServiceProvider cannot provide "+serviceClass);
-            }
+        public Object getService(
+            ServiceBroker xsb, Object requestor, Class serviceClass) {
+          if (serviceClass == AgentIdentificationService.class) {
+            return ais;
+          } else {
+            throw new IllegalArgumentException(
+                "AgentIdentificationServiceProvider cannot provide "+
+                serviceClass);
           }
-          public void releaseService(ServiceBroker xsb, Object r, Class sC, Object s) {}
-        };
+        }
+        public void releaseService(
+            ServiceBroker xsb, Object r, Class sC, Object s) {}
+      };
       sb.addService(AgentIdentificationService.class, aissp);
     }
 
@@ -539,34 +652,33 @@ public class SimpleAgent
     {
       final LDMServesPlugin lsp = this;
       final PrototypeRegistryService prs = myPrototypeRegistryService;
-      myLDMServiceProvider = new LDMServiceProvider(
-                                                    new LDMService() {
-                                                        public LDMServesPlugin getLDM() {
-                                                          return lsp;
-                                                        }
-                                                        public RootFactory getFactory() {
-                                                          return getDomainService().getFactory();
-                                                        }
-                                                        public Factory getFactory(String s) {
-                                                          return getDomainService().getFactory(s);
-                                                        }
-                                                        public Factory getFactory(Class c) {
-                                                          return getDomainService().getFactory(c);
-                                                        }
-                                                        public void addPrototypeProvider(PrototypeProvider plugin) {
-                                                          prs.addPrototypeProvider(plugin);
-                                                        }
-                                                        public void addPropertyProvider(PropertyProvider plugin) {
-                                                          prs.addPropertyProvider(plugin);
-                                                        }
-                                                        public void addLatePropertyProvider(LatePropertyProvider plugin) {
-                                                          prs.addLatePropertyProvider(plugin);
-                                                        }
-                                                      }
-                                                    );
+      LDMService ldms =
+        new LDMService() {
+          public LDMServesPlugin getLDM() {
+            return lsp;
+          }
+          public RootFactory getFactory() {
+            return getDomainService().getFactory();
+          }
+          public Factory getFactory(String s) {
+            return getDomainService().getFactory(s);
+          }
+          public Factory getFactory(Class c) {
+            return getDomainService().getFactory(c);
+          }
+          public void addPrototypeProvider(PrototypeProvider plugin) {
+            prs.addPrototypeProvider(plugin);
+          }
+          public void addPropertyProvider(PropertyProvider plugin) {
+            prs.addPropertyProvider(plugin);
+          }
+          public void addLatePropertyProvider(LatePropertyProvider plugin) {
+            prs.addLatePropertyProvider(plugin);
+          }
+        };
+      myLDMServiceProvider = new LDMServiceProvider(ldms);
       sb.addService(LDMService.class, myLDMServiceProvider);
     }
- 
 
     super.loadInternalPriorityComponents();
   }
@@ -576,74 +688,10 @@ public class SimpleAgent
   }
 
   protected void loadComponentPriorityComponents() {
+    super.loadComponentPriorityComponents();
+
     ServiceBroker sb = getServiceBroker();
 
-    if (loadState != null) {
-      // use the existing state
-      AgentState agentState = (AgentState) loadState;
-      this.loadState = null;
-      // verify state's agent id
-      if (!(getMessageAddress().equals(agentState.agentAddr))) {
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Load state for "+getMessageAddress()+
-              " contains incorrect agent address "+agentState);
-        }
-        // continue anyways
-      }
-      // load the child Components (Plugins, etc)
-      List tuples = agentState.tuples;
-      for (int i = 0, n = tuples.size(); i < n; i++) {
-        StateTuple ti = (StateTuple) tuples.get(i);
-        add(ti);
-      }
-      // send all unsent messages
-      List l = agentState.unsentMessages;
-      for (int i = 0, n = l.size(); i < n; i++) {
-        ClusterMessage cmi = (ClusterMessage) l.get(i);
-        sendMessage(cmi);
-      }
-    } else {
-
-      String enableServlets = 
-        System.getProperty("org.cougaar.core.servlet.enable");
-      if ((enableServlets == null) ||
-          (enableServlets.equalsIgnoreCase("true"))) {
-        // start up the Agent-level ServletService component
-        ComponentDescription nsscDesc = 
-          new ComponentDescription(
-              (getMessageAddress()+"ServletService"),
-              "Node.AgentManager.Agent.AgentServletService",
-              "org.cougaar.lib.web.service.LeafServletServiceComponent",
-              null,  //codebase
-              getMessageAddress().getAddress(),
-              null,  //certificate
-              null,  //lease
-              null); //policy
-        super.add(nsscDesc);
-      }
-
-
-      // Domains *MUST* be loaded before the blackboard
-      add(new ComponentDescription(getMessageAddress()+"DomainManager",
-                                   "Node.AgentManager.Agent.DomainManager",
-                                   "org.cougaar.core.domain.DomainManager",
-                                   null,
-                                   null,
-                                   null,
-                                   null,
-                                   null));
-
-      // blackboard *MUST* be loaded before pluginmanager (and plugins)
-      add(new ComponentDescription(getMessageAddress()+"Blackboard",
-                                   "Node.AgentManager.Agent.Blackboard",
-                                   "org.cougaar.core.blackboard.StandardBlackboard",
-                                   null,
-                                   null,
-                                   null,
-                                   null,
-                                   null));
-    }
     // get blackboard service
     myBlackboardService = (BlackboardForAgent) 
       sb.getService(this, BlackboardForAgent.class, null);
@@ -657,14 +705,7 @@ public class SimpleAgent
     if (myNamingService == null) {
       throw new RuntimeException("Couldn't get NamingService!");
     }
-
-    super.loadComponentPriorityComponents();
   }
-
-  protected void loadLowPriorityComponents() {
-    super.loadLowPriorityComponents();
-  }
-
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.
@@ -716,9 +757,9 @@ public class SimpleAgent
         moveId,
         TopologyEntry.MOVING,
         moveId);
-    
+
     if (messenger != null) {
-      messenger.unregisterClient(SimpleAgent.this);
+      messenger.unregisterClient(this);
     }
 
     stopQueueHandler();
@@ -733,52 +774,100 @@ public class SimpleAgent
           this, MessageTransportService.class, messenger);
       messenger = null;
     }
+
+    // suspend our identity
+    if (moveTargetNode != null) {
+      // moving, get transferrable identity
+      mobileIdentity = 
+        myAgentIdService.transferTo(
+            moveTargetNode);
+    } else {
+      // non-moving suspend?
+      myAgentIdService.release();
+    }
   }
 
   public void resume() {
     super.resume();
 
-    // FIXME for now, re-register MTS prior to topology
-    if (messenger == null) {
-      messenger = (MessageTransportService) 
-        getServiceBroker().getService(
-            this, MessageTransportService.class, null);
-      messenger.registerClient(this);
-    }
+    boolean acquiredIdentity = false;
+    try {
 
-    // move failed, re-aquire the topology entry
-    long priorMoveId = moveId;
-    ++moveId;
-    myTopologyWriterService.updateAgent(
-        getIdentifier(),
-        incarnation,
-        moveId,
-        TopologyEntry.ACTIVE,
-        priorMoveId);
+      // re-establish our identity
+      if (moveTargetNode != null) {
+        // failed move, restart
+        // take and clear the saved identity
+        TransferableIdentity tmp = mobileIdentity;
+        mobileIdentity = null;
+        try {
+          myAgentIdService.acquire(tmp);
+        } catch (Exception e) {
+          throw new RuntimeException(
+              "Unable to restart agent "+getIdentifier()+
+              " after failed move to "+moveTargetNode+
+              " and transfer-identity "+tmp, e);
+        }
+      } else {
+        // resume after non-move suspend
+        try {
+          myAgentIdService.acquire(null);
+        } catch (Exception e) {
+          throw new RuntimeException(
+              "Unable to resume agent "+getIdentifier()+
+              " after non-move suspend", e);
+        }
+      }
+      acquiredIdentity = true;
 
-    startQueueHandler();
+      // FIXME for now, re-register MTS prior to topology
+      if (messenger == null) {
+        messenger = (MessageTransportService) 
+          getServiceBroker().getService(
+              this, MessageTransportService.class, null);
+        messenger.registerClient(this);
+      }
 
-    // re-register for MessageTransport
-    // send all unsent messages
-    List l = unsentMessages;
-    unsentMessages = null;
-    for (int i = 0, n = ((l != null) ? l.size() : 0); i < n; i++) {
-      ClusterMessage cmi = (ClusterMessage) l.get(i);
-      sendMessage(cmi);
-    }
+      // move failed, re-aquire the topology entry
+      long priorMoveId = moveId;
+      ++moveId;
+      myTopologyWriterService.updateAgent(
+          getIdentifier(),
+          incarnation,
+          moveId,
+          TopologyEntry.ACTIVE,
+          priorMoveId);
 
-    startRestartChecker();
+      startQueueHandler();
 
-    // resume child (plugin) scheduling
-    mySchedulerServiceProvider.resume(); 
+      // re-register for MessageTransport
+      // send all unsent messages
+      List l = unsentMessages;
+      unsentMessages = null;
+      for (int i = 0, n = ((l != null) ? l.size() : 0); i < n; i++) {
+        ClusterMessage cmi = (ClusterMessage) l.get(i);
+        sendMessage(cmi);
+      }
 
-    // FIXME bug 989: resume alarm service
+      startRestartChecker();
 
-    // resume all children
-    List childBinders = listBinders();
-    for (int i = 0, n = childBinders.size(); i < n; i++) {
-      Binder b = (Binder) childBinders.get(i);
-      b.resume();
+      // resume child (plugin) scheduling
+      mySchedulerServiceProvider.resume(); 
+
+      // FIXME bug 989: resume alarm service
+
+      // resume all children
+      List childBinders = listBinders();
+      for (int i = 0, n = childBinders.size(); i < n; i++) {
+        Binder b = (Binder) childBinders.get(i);
+        b.resume();
+      }
+    } catch (RuntimeException re) {
+      if (acquiredIdentity) {
+        // unable to resume, release identity
+        myAgentIdService.release();
+      }
+      // should keep flags for other reverseable actions
+      throw re;
     }
   }
 
@@ -796,6 +885,8 @@ public class SimpleAgent
       Binder b = (Binder) childBinders.get(i);
       b.stop();
     }
+
+    // already transfered or released identity in "suspend()"
   }
 
   public void halt() {
@@ -837,9 +928,9 @@ public class SimpleAgent
     sb.revokeService(AlarmService.class, myAlarmServiceProvider);
 
     sb.releaseService(this, PrototypeRegistryService.class, 
-                      myPrototypeRegistryService);
+        myPrototypeRegistryService);
     sb.revokeService(PrototypeRegistryService.class, 
-                     myPrototypeRegistryServiceProvider);
+        myPrototypeRegistryServiceProvider);
 
     sb.releaseService(this, UIDService.class, myUIDService);
     sb.revokeService(UIDService.class, myUIDServiceProvider);
@@ -847,12 +938,14 @@ public class SimpleAgent
     sb.revokeService(MobilityDispatchService.class, myMDSP);
     sb.releaseService(this, MobilityDispatchService.class, nodeMDS);
 
+    sb.releaseService(
+        this,
+        MobilityListenerService.class, 
+        myMobilityListenerService);
+
     sb.revokeService(
         AgentContainmentService.class, 
         myAgentContainmentServiceProvider);
-
-    // remove ourselves from the VM-local context
-    ClusterContextTable.removeContext(getMessageAddress());
 
     //
     // release remaining services
@@ -862,6 +955,9 @@ public class SimpleAgent
     sb.releaseService(this, MessageStatisticsService.class, statisticsService);
 
     // messenger already released in "suspend()"
+
+    // remove ourselves from the VM-local context
+    ClusterContextTable.removeContext(getMessageAddress());
 
     sb.releaseService(this, DomainService.class, myDomainService);
 
@@ -877,6 +973,22 @@ public class SimpleAgent
     if ((log != null) && (log != LoggingService.NULL)) {
       sb.releaseService(this, LoggingService.class, log);
       log = null;
+    }
+
+    sb.releaseService(
+        this, AgentIdentityService.class, myAgentIdService);
+
+    // optionally spawn a thread to watch for clean agent removal
+    Long removalCheckMillis = Long.getLong(
+        "org.cougaar.core.agent.removalCheckMillis");
+    if (removalCheckMillis != null) {
+      AgentRemovalChecker arc = 
+        new AgentRemovalChecker(
+            this, removalCheckMillis.longValue());
+      // FIXME should use threading service, but already released it!
+      Thread arct = 
+        new Thread(arc, getIdentifier()+" Agent removal checker");
+      arct.start();
     }
   }
 
@@ -908,8 +1020,7 @@ public class SimpleAgent
       int n = boundComponents.size();
       tuples = new ArrayList(n);
       for (int i = 0; i < n; i++) {
-        org.cougaar.core.component.BoundComponent bc = 
-          (org.cougaar.core.component.BoundComponent)
+        BoundComponent bc = (BoundComponent)
           boundComponents.get(i);
         Object comp = bc.getComponent();
         if (comp instanceof ComponentDescription) {
@@ -943,6 +1054,7 @@ public class SimpleAgent
           getMessageAddress(),
           incarnation,
           moveId,
+          mobileIdentity,
           tuples,
           uMsgs);
 
@@ -950,7 +1062,7 @@ public class SimpleAgent
   }
 
   public void setState(Object loadState) {
-    this.loadState = loadState;
+    this.agentState = (AgentState) loadState;
   }
 
   /** Standard, no argument constructor. */
@@ -960,7 +1072,7 @@ public class SimpleAgent
     super(comdesc);
     // services added in load()
   }
-  
+
   /** Answer by allowing ClusterManagement to set the ClusterIdentifier for this instance.
    * Assert that this is called once and only once *before* ClusterManagement calls
    * initialize.
@@ -975,7 +1087,66 @@ public class SimpleAgent
       throw new RuntimeException ("Attempt to over-ride MessageAddress detected.");
     myMessageAddress_ = ma;
   }    
-    
+
+  //
+  // Agent identity client
+  //
+
+  public String getName() {
+    return getIdentifier();
+  }
+
+  public void identityRevoked(CrlReason reason) {
+    if (log.isWarnEnabled()) {
+      log.warn(
+          "Identity for agent "+getName()+
+          " has been revoked: "+reason);
+    }
+    // ignore for now, re-acquire or die TBA
+  }
+
+  //
+  // Mobility listener
+  //
+
+  public MessageAddress getAddress() {
+    return getMessageAddress();
+  }
+
+  public void onDispatch(Ticket ticket) {
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Agent "+getIdentifier()+
+          " preparing for move dispatch "+
+          ticket);
+    }
+    // save target node for later "suspend()" and "getState()" use
+    moveTargetNode = ticket.getDestinationNode();
+    if (moveTargetNode == null) {
+      moveTargetNode = localNode;
+    }
+  }
+
+  public void onArrival(Ticket ticket) {
+    // this is called after the "start()", so it's not very helpful
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Agent "+getIdentifier()+
+          " arrived from successful move "+
+          ticket);
+    }
+  }
+
+  public void onFailure(Ticket ticket, Throwable throwable) {
+    // this is called after the "start()", so it's not very helpful
+    if (log.isWarnEnabled()) {
+      log.warn(
+          "Agent "+getIdentifier()+
+          " restarted after failed move "+
+          ticket, throwable);
+    }
+  }
+
   ///
   /// ClusterServesMessageTransport
   ///
@@ -1017,7 +1188,7 @@ public class SimpleAgent
             // not implemented yet -- requires modifications to Container
           default:
             throw new UnsupportedOperationException(
-              "Unsupported ComponentMessage: "+message);
+                "Unsupported ComponentMessage: "+message);
         }
       } else if (message instanceof ClusterMessage) {
         // internal message queue
@@ -1048,11 +1219,11 @@ public class SimpleAgent
   //
 
   public MessageStatistics.Statistics getMessageStatistics(boolean reset) {
-      if (statisticsService != null) {
-	  return statisticsService.getMessageStatistics(reset);
-      } else {
-	  return null;
-      }
+    if (statisticsService != null) {
+      return statisticsService.getMessageStatistics(reset);
+    } else {
+      return null;
+    }
   }
 
   // 
@@ -1130,9 +1301,9 @@ public class SimpleAgent
         myTopologyReaderService.getIncarnationForAgent(agentName);
       Long newIncarnation = new Long(newNumber);
       restartIncarnationMap.put(agentName, newIncarnation);
-//        System.out.println("  " + agentName
-//                           + ": oldIncarnation=" + oldIncarnation
-//                           + ", newIncarnation=" + newIncarnation);
+      //        System.out.println("  " + agentName
+      //                           + ": oldIncarnation=" + oldIncarnation
+      //                           + ", newIncarnation=" + newIncarnation);
       long oldNumber = oldIncarnation.longValue();
       return oldNumber != 0L && oldNumber != newNumber;
     }
@@ -1188,7 +1359,7 @@ public class SimpleAgent
    * restartIncarnationMap.
    **/
   private void checkRestarts() {
-//      System.out.println("checkRestarts");
+    //      System.out.println("checkRestarts");
     List restartAgentNames = new ArrayList();
     synchronized (restartIncarnationMap) {
       try {
@@ -1199,7 +1370,7 @@ public class SimpleAgent
           }
         }
       } catch (Exception ne) {
-//        ne.printStackTrace();
+        //        ne.printStackTrace();
       }
     }
     for (Iterator i = restartAgentNames.iterator(); i.hasNext(); ) {
@@ -1211,7 +1382,7 @@ public class SimpleAgent
   }
 
   private void restart() {
-//      System.out.println("restart");
+    //      System.out.println("restart");
     try {
       Set allAgentNames = 
         myTopologyReaderService.getAll(
@@ -1230,7 +1401,7 @@ public class SimpleAgent
         }
       }
     } catch (Exception ne) {
-//      ne.printStackTrace();
+      //      ne.printStackTrace();
     }
   }
 
@@ -1243,16 +1414,16 @@ public class SimpleAgent
    * because we do not want to detect any restart.
    **/
   private void checkClusterInfo(MessageAddress cid) {
-//      System.out.println("Checking " + cid);
+    //      System.out.println("Checking " + cid);
     if (cid instanceof ClusterIdentifier) {
       synchronized (restartIncarnationMap) {
         if (restartIncarnationMap.get(cid) == null) {
-//            System.out.println("Adding " + cid);
+          //            System.out.println("Adding " + cid);
           restartIncarnationMap.put(cid, new Long(0L));
         }
       }
     } else {
-//        System.out.println("Message is " + cid.getClass().getName());
+      //        System.out.println("Message is " + cid.getClass().getName());
     }
   }
 
@@ -1316,37 +1487,37 @@ public class SimpleAgent
   private Object queueHandlerLock = new Object ();
 
   private void startQueueHandler() {
-	synchronized (queueHandlerLock) {
-	  if (! isQueueHandlerStarted ) {
-		getQueueHandler().start();
-		isQueueHandlerStarted = true;
-	  } else {
-		System.err.println(
-						   "QueueHandler in " + getAgentIdentifier() + " asked to restart.");
-	  }
-	}
+    synchronized (queueHandlerLock) {
+      if (! isQueueHandlerStarted ) {
+        getQueueHandler().start();
+        isQueueHandlerStarted = true;
+      } else {
+        System.err.println(
+            "QueueHandler in " + getAgentIdentifier() + " asked to restart.");
+      }
+    }
   }
 
   private void stopQueueHandler() {
-	synchronized (queueHandlerLock) {
-	  if (isQueueHandlerStarted ) {
-		getQueueHandler().halt();
-		isQueueHandlerStarted = false;
-		queueHandler = null;
-	  } else {
-		System.err.println(
-						   "QueueHandler in " + getAgentIdentifier() + " asked to stop.");
-	  }
-	}
+    synchronized (queueHandlerLock) {
+      if (isQueueHandlerStarted ) {
+        getQueueHandler().halt();
+        isQueueHandlerStarted = false;
+        queueHandler = null;
+      } else {
+        System.err.println(
+            "QueueHandler in " + getAgentIdentifier() + " asked to stop.");
+      }
+    }
   }
 
   private QueueHandler getQueueHandler() {
-	synchronized (queueHandlerLock) {
-	  if (queueHandler == null) {
-		queueHandler = new QueueHandler(this);
-	  }
-	  return queueHandler;
-	}
+    synchronized (queueHandlerLock) {
+      if (queueHandler == null) {
+        queueHandler = new QueueHandler(this);
+      }
+      return queueHandler;
+    }
   }
 
   private static class QueueHandler extends Thread {
@@ -1394,10 +1565,10 @@ public class SimpleAgent
 
     public void addMessage(ClusterMessage m) {
       synchronized (queue) {
-		if (!running)
-		  System.err.println ("SimpleAgent - QueueHandler - " +
-							  "ERROR - queue is not running -- message will be ignored!");
-		
+        if (!running)
+          System.err.println ("SimpleAgent - QueueHandler - " +
+              "ERROR - queue is not running -- message will be ignored!");
+
         queue.add(m);
         queue.notify();
       }
@@ -1499,24 +1670,24 @@ public class SimpleAgent
     sendAdvanceClockMessage(time, true, 0.0, false, _xTimer.DEFAULT_CHANGE_DELAY);
   }
 
- /**
-  * This method sets the COUGAAR scenario time to a specific time
-  * in the future.  
-  * @param time milliseconds in java time.
-  * @param running should the clock continue to run after setting the time?
-  **/
+  /**
+   * This method sets the COUGAAR scenario time to a specific time
+   * in the future.  
+   * @param time milliseconds in java time.
+   * @param running should the clock continue to run after setting the time?
+   **/
   public void setTime(long time, boolean running) {
     sendAdvanceClockMessage(time, true, 0.0, running, _xTimer.DEFAULT_CHANGE_DELAY);
   }
-	
- /**
-  * This method sets the COUGAAR scenario time to a specific rate.
-  * @param newRate the new rate. Execution time advance at the new rate after a brief delay
-  **/
+
+  /**
+   * This method sets the COUGAAR scenario time to a specific rate.
+   * @param newRate the new rate. Execution time advance at the new rate after a brief delay
+   **/
   public void setTimeRate(double newRate) {
     sendAdvanceClockMessage(0L, false, newRate, false, _xTimer.DEFAULT_CHANGE_DELAY);
   }
-	
+
   /**
    * This method advances the COUGAAR scenario time a period of time
    * in the future, leaving the clock stopped.
@@ -1558,10 +1729,10 @@ public class SimpleAgent
   }
 
   private void sendAdvanceClockMessage(long millis,
-                                       boolean millisIsAbsolute,
-                                       double newRate,
-                                       boolean forceRunning,
-                                       long changeDelay)
+      boolean millisIsAbsolute,
+      double newRate,
+      boolean forceRunning,
+      long changeDelay)
   {
     MessageAddress a = getAgentIdentifier();
     ExecutionTimer.Parameters newParameters =
@@ -1612,11 +1783,78 @@ public class SimpleAgent
   /** @deprecated Use BlackboardService.getPersistence().releaseDatabaseConnection() **/
   public void releaseDatabaseConnection(Object locker) {}
 
+  /**
+   * Runner to check for agent GC.
+   * <p>
+   * Note that the agent may be GC'ed and child components of the 
+   * agent may not be GC'ed, e.g. due to statics or back-pointers
+   * with the node.
+   * <p>
+   * This will likely be moved into the agent manager at some point...
+   */
+  private static class AgentRemovalChecker implements Runnable {
+
+    private final WeakReference agentRef;
+    private final long waitMillis;
+
+    public AgentRemovalChecker(
+        SimpleAgent agent,
+        long waitMillis) {
+      agentRef = new WeakReference(agent);
+      this.waitMillis = waitMillis;
+    }
+
+    public void run() {
+      // wait half the time
+      try {
+        Thread.sleep(waitMillis >> 1);
+      } catch (InterruptedException ie) {
+      }
+      SimpleAgent agent = (SimpleAgent) agentRef.get();
+      if (agent == null) {
+        // great!
+        return;
+      }
+      // force a GC and wait again
+      System.gc();
+      try {
+        Thread.sleep(waitMillis >> 1);
+      } catch (InterruptedException ie) {
+      }
+      agent = (SimpleAgent) agentRef.get();
+      if (agent == null) {
+        // great!
+        return;
+      }
+      // create error message
+      String msg = 
+        "Unload of agent "+agent.getIdentifier()+
+        " didn't result in garbage collection of the agent,"+
+        " please use a profiler to check for a memory leak";
+      // try to get the logger
+      try {
+        ServiceBroker sb = agent.getServiceBroker();
+        LoggingService xlog = (LoggingService)
+          sb.getService(
+              agent, LoggingService.class, null);
+        if ((xlog != null) && (xlog.isWarnEnabled())) {
+          xlog.warn(msg);
+        }
+        sb.releaseService(agent, LoggingService.class, xlog);
+        return;
+      } catch (Exception e) {
+      }
+      // minimally print to standard-err
+      System.err.println(msg);
+    }
+  }
+
   private static class AgentState implements java.io.Serializable {
 
     private final MessageAddress agentAddr;
     private final long incarnation;
     private final long moveId;
+    private final TransferableIdentity identity;
     private final List tuples;  // List<StateTuple>
     private final List unsentMessages; // List<ClusterMessage>
 
@@ -1624,11 +1862,13 @@ public class SimpleAgent
         MessageAddress agentAddr,
         long incarnation,
         long moveId,
+        TransferableIdentity identity,
         List tuples,
         List unsentMessages) {
       this.agentAddr = agentAddr;
       this.incarnation = incarnation;
       this.moveId = moveId;
+      this.identity = identity;
       this.tuples = tuples;
       this.unsentMessages = unsentMessages;
       if ((agentAddr == null) ||
@@ -1641,7 +1881,8 @@ public class SimpleAgent
     public String toString() {
       return 
         "Agent "+agentAddr+" state, incarnation "+incarnation+
-        ", moveId "+moveId+", tuples["+tuples.size()+
+        ", moveId "+moveId+", identity "+identity+
+        ", tuples["+tuples.size()+
         "], unsentMessages["+unsentMessages.size()+
         "]";
     }

@@ -21,136 +21,56 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.agent.SimpleAgent;
-
-import org.cougaar.core.service.*;
-import org.cougaar.core.mts.*;
-
-import org.cougaar.core.thread.ThreadServiceProvider;
-
-import org.cougaar.core.service.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.agent.service.alarm.*;
-import org.cougaar.core.agent.service.containment.*;
-import org.cougaar.core.agent.service.democontrol.*;
-import org.cougaar.core.agent.service.registry.*;
-import org.cougaar.core.agent.service.scheduler.*;
-import org.cougaar.core.agent.service.uid.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.naming.NamingServiceProvider;
-import org.cougaar.core.service.NamingService;
-import org.cougaar.core.topology.*;
-
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
-
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.agent.AgentManagementMessage;
+import org.cougaar.core.agent.AgentManager;
+import org.cougaar.core.agent.CloneAgentMessage;
+import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.agent.MoveAgentMessage;
+import org.cougaar.core.agent.SimpleAgent;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderFactorySupport;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.Container;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
-
-import java.util.*;
-import javax.naming.directory.DirContext;
-import javax.naming.*;
-
-import org.cougaar.util.*;
-
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentBindingSite;
-
-import org.cougaar.core.component.*;
-
-import org.cougaar.core.service.NamingService;
-
-import org.cougaar.core.node.ComponentMessage;
-import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageStatistics;
-
-// cluster context registration
-import org.cougaar.core.agent.ClusterContext;
-
-// blackboard support
-import org.cougaar.core.blackboard.BlackboardForAgent;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.blackboard.BlackboardServiceProvider;
-
-// message-transport support
-import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.mts.MessageTransportWatcher;
-import org.cougaar.core.service.MessageWatcherService;
-
-// LDM service
-import org.cougaar.core.plugin.LDMService;
-import org.cougaar.core.plugin.LDMServiceProvider;
-import org.cougaar.core.plugin.PluginManager;
-
-// prototype and property providers
-import org.cougaar.core.plugin.LatePropertyProvider;
-import org.cougaar.core.plugin.PrototypeProvider;
-import org.cougaar.core.plugin.PropertyProvider;
-
-// Persistence
-//  import org.cougaar.core.persist.DatabasePersistence;
-import org.cougaar.core.persist.Persistence;
-
-import org.cougaar.core.service.*;
-import org.cougaar.core.mts.*;
-
-import org.cougaar.core.thread.ThreadServiceProvider;
-
-import org.cougaar.core.qos.metrics.MetricsService;
-import org.cougaar.core.qos.metrics.MetricsUpdateService;
-import org.cougaar.core.qos.metrics.MetricsServiceProvider;
-
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.service.MessageWatcherService;
-
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.naming.NamingServiceProvider;
-import org.cougaar.core.service.NamingService;
-
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.logging.LoggingControlService;
-import org.cougaar.core.logging.LoggingServiceProvider;
-
 import org.cougaar.core.mobility.service.MobilityMessage;
 import org.cougaar.core.mobility.service.RootMobilityComponent;
-
-import org.cougaar.core.component.*;
-
-import java.io.Serializable;
-import java.io.*;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.lang.reflect.*;
-import java.rmi.*;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.zip.*;
-import java.util.jar.*;
-import java.security.*;
-import java.security.cert.*;
-import javax.naming.NamingException;
-
-import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.ClusterInitializedMessage;
-
-import org.cougaar.core.agent.*;
-import org.cougaar.util.*;
-
-import org.cougaar.core.component.*;
-import java.beans.Beans;
-import org.cougaar.util.PropertyParser;
-import org.cougaar.util.log.LoggerController;
-import org.cougaar.util.log.LogTarget;
+import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportServiceProvider;
+import org.cougaar.core.naming.NamingServiceProvider;
+import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.plugin.PluginManager;
+import org.cougaar.core.qos.metrics.MetricsService;
+import org.cougaar.core.qos.metrics.MetricsServiceProvider;
+import org.cougaar.core.qos.metrics.MetricsUpdateService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.MessageStatisticsService;
+import org.cougaar.core.service.MessageTransportService;
+import org.cougaar.core.service.MessageWatcherService;
+import org.cougaar.core.service.NamingService;
+import org.cougaar.core.service.NodeMetricsService;
+import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.TopologyWriterService;
+import org.cougaar.core.thread.ThreadServiceProvider;
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
@@ -192,30 +112,44 @@ public class NodeAgent
     // set up the NodeControlService
     { 
       final Service _nodeControlService = new NodeControlService() {
-          public ServiceBroker getRootServiceBroker() {
-            return agentServiceBroker;
-          }
-          public Container getRootContainer() {
-            return agentManager;
-          }
-        };
+        public ServiceBroker getRootServiceBroker() {
+          return agentServiceBroker;
+        }
+        public Container getRootContainer() {
+          return agentManager;
+        }
+      };
 
       ServiceProvider ncsp = new ServiceProvider() {
-          public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
-            if (serviceClass == NodeControlService.class) {
-              return _nodeControlService;
-            } else {
-              throw new IllegalArgumentException("Can only provide NodeControlService!");
-            }
+        public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
+          if (serviceClass == NodeControlService.class) {
+            return _nodeControlService;
+          } else {
+            throw new IllegalArgumentException("Can only provide NodeControlService!");
           }
-          public void releaseService(ServiceBroker xsb, Object requestor, Class serviceClass, Object service) {
-          }
-        };
+        }
+        public void releaseService(
+            ServiceBroker xsb, Object requestor, Class serviceClass, Object service) {
+        }
+      };
       getServiceBroker().addService(NodeControlService.class, ncsp);
     }
 
-
     super.loadHighPriorityComponents();
+
+    // add the default agent-identity provider, which does
+    // nothing if a high-priority id provider already exists
+    ComponentDescription defaultAgentIdCDesc = 
+      new ComponentDescription(
+          (getIdentifier()+"DefaultAgentIdentity"),
+          "Node.AgentManager.Agent.Identity",
+          "org.cougaar.core.node.DefaultAgentIdentityComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    super.add(defaultAgentIdCDesc);
   }
 
   protected void loadInternalPriorityComponents() {
@@ -228,20 +162,22 @@ public class NodeAgent
 
     try {
       rootsb.addService(NamingService.class,
-                    new NamingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("javax.naming.")));
-    } catch (javax.naming.NamingException ne) {
-      throw new Error("Couldn't initialize NamingService "+ne);
+          new NamingServiceProvider(
+            SystemProperties.getSystemPropertiesWithPrefix("javax.naming.")));
+    } catch (NamingException ne) {
+      throw new Error("Couldn't initialize NamingService ", ne);
     }
 
     try {
       LoggingServiceProvider loggingServiceProvider = 
-        new LoggingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("org.cougaar.core.logging."));
+        new LoggingServiceProvider(
+            SystemProperties.getSystemPropertiesWithPrefix("org.cougaar.core.logging."));
       rootsb.addService(LoggingService.class,
-                    loggingServiceProvider);
+          loggingServiceProvider);
       rootsb.addService(LoggingControlService.class,
-                    loggingServiceProvider);
-    } catch (java.io.IOException ioe) {
-      throw new Error("Couldn't initialize LoggingService "+ioe);
+          loggingServiceProvider);
+    } catch (IOException ioe) {
+      throw new Error("Couldn't initialize LoggingService ", ioe);
     }
 
     ComponentDescription topologyWriterSCDesc = 
@@ -267,7 +203,7 @@ public class NodeAgent
           null,  //lease
           null); //policy
     super.add(topologyReaderSCDesc);
-    
+
     TopologyWriterService tws = (TopologyWriterService)
       rootsb.getService(this, TopologyWriterService.class, null);
     long incarnation = System.currentTimeMillis();
@@ -280,15 +216,16 @@ public class NodeAgent
 
     //add the vm metrics
     rootsb.addService(NodeMetricsService.class,
-                  new NodeMetricsServiceProvider(new NodeMetricsProxy()));
+        new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
     try {
-      InitializerService is = (InitializerService) rootsb.getService(this, InitializerService.class, null);
+      InitializerService is = (InitializerService) 
+        rootsb.getService(this, InitializerService.class, null);
       agentDescs =
         is.getComponentDescriptions(nodeName, "Node.AgentManager");
       rootsb.releaseService(this, InitializerService.class, is);
     } catch (Exception e) {
-      throw new Error("Couldn't initialize NodeAgent from InitializerService "+e);
+      throw new Error("Couldn't initialize NodeAgent from InitializerService ", e);
     }
 
 
@@ -305,14 +242,14 @@ public class NodeAgent
     String ntc = new String(getIdentifier()+"NodeTrust");
     ComponentDescription ntcdesc = 
       new ComponentDescription(
-                                ntc,
-                                "Node.AgentManager.Agent.NodeTrust",
-                                "org.cougaar.core.node.NodeTrustComponent",
-                                null,  //codebase
-                                null,  //parameters
-                                null,  //certificate
-                                null,  //lease
-                                null); //policy
+          ntc,
+          "Node.AgentManager.Agent.NodeTrust",
+          "org.cougaar.core.node.NodeTrustComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
     super.add(ntcdesc);         // let a ComponentLoadFailure pass through
 
     // node-level agent mobility service provider
@@ -360,7 +297,8 @@ public class NodeAgent
     {
       BinderFactory nabf = new NodeAgentBinderFactory();
       if (!attachBinderFactory(nabf)) {
-        throw new Error("Failed to load the NodeAgentBinderFactory in NodeAgent");
+        throw new Error(
+            "Failed to load the NodeAgentBinderFactory in NodeAgent");
       }
     }
 
@@ -382,7 +320,8 @@ public class NodeAgent
     AgentManager am = agentManager;
 
     try {
-      NodeIdentificationService nis = (NodeIdentificationService) rootsb.getService(this,NodeIdentificationService.class,null);
+      NodeIdentificationService nis = (NodeIdentificationService) 
+        rootsb.getService(this,NodeIdentificationService.class,null);
       if (nis != null) {
         nodeIdentifier = nis.getNodeIdentifier();
         nodeName = nodeIdentifier.toString();
@@ -390,7 +329,7 @@ public class NodeAgent
         throw new RuntimeException("No node name specified");
       }
     } catch (RuntimeException e) {
-      throw new Error("Couldn't figure out Node name "+e);
+      throw new Error("Couldn't figure out Node name ", e);
     }
 
     // set the MessageAddress to be a cid for now (sigh)
@@ -449,7 +388,7 @@ public class NodeAgent
     descs[0] = desc;
     addAgents(descs);
   }
- 
+
   /**
    * Add Agents and their child Components (Plugins, etc) to this Node.
    * <p>
@@ -484,13 +423,13 @@ public class NodeAgent
     }
   }
 
-    // **** QUO *****
-    // Change this to create (or find?) a MessageTransportManager as the
-    // value of theMessenger.
+  // **** QUO *****
+  // Change this to create (or find?) a MessageTransportManager as the
+  // value of theMessenger.
   private void initTransport(ServiceBroker rootsb, NodeIdentifier id) {
     String name = id.toString();
     MessageTransportServiceProvider mtsp = 
-	new MessageTransportServiceProvider(name);
+      new MessageTransportServiceProvider(name);
     add(mtsp);
 
     rootsb.addService(MessageTransportService.class, mtsp);
@@ -533,13 +472,13 @@ public class NodeAgent
           String ip = cd.getInsertionPoint();
           if (!("Node.Agent".equals(ip))) {
             throw new UnsupportedOperationException(
-              "Only Agent ADD supported for now, not "+ip);
+                "Only Agent ADD supported for now, not "+ip);
           }
           agentManager.add(st);
         } else {
           // not implemented yet!  will be okay once Node is a Container
           throw new UnsupportedOperationException(
-            "Unsupported ComponentMessage: "+m);
+              "Unsupported ComponentMessage: "+m);
         }
       } else if (m instanceof MobilityMessage) {
         if (agentMobility != null) {
@@ -602,13 +541,12 @@ public class NodeAgent
   private class NodeAgentBinder 
     extends BinderSupport
     implements NodeAgentBindingSite
-  {
-    public NodeAgentBinder(BinderFactory bf, Object child) {
-      super(bf, child);
+    {
+      public NodeAgentBinder(BinderFactory bf, Object child) {
+        super(bf, child);
+      }
+      protected BindingSite getBinderProxy() {
+        return this;
+      }
     }
-    protected BindingSite getBinderProxy() {
-      return this;
-    }
-  }
-
 }
