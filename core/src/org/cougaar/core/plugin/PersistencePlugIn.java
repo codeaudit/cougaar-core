@@ -14,10 +14,11 @@ import org.cougaar.core.cluster.Subscriber;
 import org.cougaar.core.cluster.PersistenceSubscriber;
 import org.cougaar.core.cluster.Distributor;
 import org.cougaar.core.cluster.ClusterContext;
+import org.cougaar.core.blackboard.BlackboardService;
 
 public abstract class PersistencePlugIn extends PlugInAdapter
 {
-  protected Subscriber constructSubscriber(Distributor distributor) {
+  protected BlackboardService constructSubscriber(Distributor distributor) {
     return new PersistenceSubscriber(this, distributor);
   }
 

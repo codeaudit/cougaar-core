@@ -315,7 +315,7 @@ public abstract class PlugInAdapter
   /** Was a method of specifying the class of Subscriber to use.  This is 
    * now a function of the Binder, so is no longer appropriate.
    */
-  protected Subscriber constructSubscriber(Distributor distributor) {
+  protected BlackboardService constructSubscriber(Distributor distributor) {
     throw new RuntimeException("Dont call me!");
   }
 
@@ -349,7 +349,7 @@ public abstract class PlugInAdapter
     theBlackboard = s;
   }
 
-  /** Safely return our BlackboardService (Subscriber)
+  /** Safely return our BlackboardService 
    * PlugIn.load() must have completed in order 
    * for the value to be defined.
    * This method is public as it is part of the API required by PluginBindingSite to
@@ -576,7 +576,7 @@ public abstract class PlugInAdapter
    *
    * NOTE: we'll probably want a "new things" sort of collection 
    * for expanders.
-   * Alias for getSubscriber().subscribe(UnaryPredicate);
+   * Alias for getBlackboardService().subscribe(UnaryPredicate);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember) {
     return getBlackboardService().subscribe(isMember);
@@ -585,20 +585,20 @@ public abstract class PlugInAdapter
   /** like subscribe(UnaryPredicate), but allows specification of
    * some other type of Collection object as the internal representation
    * of the collection.
-   * Alias for getSubscriber().subscribe(UnaryPredicate, Collection);
+   * Alias for getBlackboardService().subscribe(UnaryPredicate, Collection);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, Collection realCollection){
     return getBlackboardService().subscribe(isMember, realCollection);
   }
 
   /**
-   * Alias for getSubscriber().subscribe(UnaryPredicate, boolean);
+   * Alias for getBlackboardService().subscribe(UnaryPredicate, boolean);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
     return getBlackboardService().subscribe(isMember, isIncremental);
   }
   /**
-   * Alias for <code>getSubscriber().subscribe(UnaryPredicate, Collection, boolean);</code>
+   * Alias for <code>getBlackboardService().subscribe(UnaryPredicate, Collection, boolean);</code>
    * @param isMember a predicate to execute to ascertain
    * membership in the collection of the subscription.
    * @param realCollection a container to hold the contents of the subscription.
@@ -624,7 +624,7 @@ public abstract class PlugInAdapter
   /**
    * Cancels the given Subscription which must have been returned by a
    * previous invocation of subscribe().  Alias for
-   * <code> getSubscriber().unsubscribe(Subscription)</code>.
+   * <code> getBlackboardService().unsubscribe(Subscription)</code>.
    * @param subscription the subscription to cancel
    * @see org.cougaar.core.cluster.Subscriber#unsubscribe
    **/
@@ -823,9 +823,9 @@ public abstract class PlugInAdapter
       return parameters;
     }
     public boolean didRehydrate() {
-      return didRehydrate(getBlackboardService().getSubscriber());
+      return getBlackboardService().didRehydrate();
     }
-    public boolean didRehydrate(Subscriber subscriber) {
+    public boolean didRehydrate(BlackboardService subscriber) {
       return subscriber.didRehydrate();
     }
 
@@ -838,10 +838,10 @@ public abstract class PlugInAdapter
   }
 
   public boolean didRehydrate() {
-    return getBlackboardService().getSubscriber().didRehydrate();
+    return getBlackboardService().didRehydrate();
   }
 
-  public boolean didRehydrate(Subscriber subscriber) {
+  public boolean didRehydrate(BlackboardService subscriber) {
     return subscriber.didRehydrate();
   }
 
@@ -896,7 +896,7 @@ public abstract class PlugInAdapter
   }
 
   /** override to define cycle behavior **/
-  protected  void cycle() { }
+  protected void cycle() { }
 
 
   // 
