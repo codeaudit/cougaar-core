@@ -35,9 +35,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.util.GenericStateModelAdapter;
-
 
 /**
  * Test plugin that reads policies from a file, creates 
@@ -82,7 +80,7 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 	= new InterAgentOperatingModePolicy(tempPolicies[i].getName(),
 					    tempPolicies[i].getIfClause(), 
 					    tempPolicies[i].getOperatingModeConstraints(),
-					    ((PluginBindingSite)getBindingSite()).getAgentIdentifier().toString());
+					    getAgentIdentifier().toString());
 
       policies[i] = iaomp;
       if (haveServices()) {

@@ -211,8 +211,7 @@ public class MetricsComponentPlugin
           private int notificationsOut = 0;
         
           public MessageWatcher() {
-              //            me = getMessageAddress();
-              me = getBindingSite().getAgentIdentifier();
+	    me = getMessageAddress();
           }
         
           public void messageSent(Message m) {

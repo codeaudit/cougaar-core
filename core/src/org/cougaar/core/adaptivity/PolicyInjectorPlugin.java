@@ -27,7 +27,6 @@ import java.io.StreamTokenizer;
 import java.util.Iterator;
 
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.LoggingService;
@@ -53,7 +52,7 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
   }
 
   public void setupSubscriptions() {
-    String here = ((PluginBindingSite)getBindingSite()).getAgentIdentifier().toString();
+    String here = getAgentIdentifier().toString();
     for (Iterator fileIterator = getParameters().iterator(); 
 	 fileIterator.hasNext();) {
       String policyFileName = fileIterator.next().toString();
