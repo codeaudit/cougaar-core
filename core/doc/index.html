@@ -85,6 +85,10 @@ Further componentization of the agent infrastructure</li>
 
 <li>
 Further refactoring of MessageTransport</li>
+
+<li>
+The StrategicTransport package formerly known as TOPS has been replaced
+with a simpler package called glm-trans.</li>
 </ul>
 Build 8.2.1 is a patch release associated with the COUGAAR 8.2 release.
 Notable additions for this release include:
@@ -332,11 +336,6 @@ fixed, an appserver instance will have to have a specified classpath which
 includes core.jar.</li>
 
 <li>
-The TOPS TPFDD viewer fails to display aggregate TPFDDs. Until this is
-fixed in the next release, a workaround is to edit runNewTPFDDShell and
-change the setting of useDerivedTables to false.</li>
-
-<li>
 COUGAAR components now are all required to use a consistent set of 3rd
 party jar files. This required resolving a number of conflicts, especially
 with respect to various openmap versions. Cougaar now specifies openmap.jar
@@ -344,7 +343,7 @@ version 4.2 (included in cougaar-support.zip). All modules <i>except</i>
 for UIFramework have been updated appropriately. Expect UIFramework to
 be fixed for the next release.</li>
 </ul>
-None known.&nbsp;</td>
+</td>
 </tr>
 </table>
 
