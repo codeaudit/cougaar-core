@@ -1311,7 +1311,11 @@ public class PersistenceServiceComponent
 	  // other plugins have been in use. This is _ok_! The
 	  // snapshot we just took is invariably a full snapshot.
 	  if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
-	    logger.info("Consolidated deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
+            if (logger.isInfoEnabled()) {
+	      logger.info(
+                          "Consolidated deltas " +
+                          currentPersistPluginInfo.cleanupSequenceNumbers);
+            }
 	    currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
 	    currentPersistPluginInfo.ppi.cleanupArchive();
 	    currentPersistPluginInfo.cleanupSequenceNumbers = null;
