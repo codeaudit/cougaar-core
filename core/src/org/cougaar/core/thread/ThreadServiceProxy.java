@@ -24,8 +24,6 @@ package org.cougaar.core.thread;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.TimerTask;
 
 /**
@@ -36,24 +34,21 @@ final class ThreadServiceProxy 	implements ThreadService
     private ControllablePool pool;
     private ThreadGroup group;
     private TimerRunnable timer;
-    private ThreadServiceProxy parent;
-    private ArrayList children;
     private AbstractScheduler scheduler;
 
-    ThreadServiceProxy(ServiceBroker sb,  String name, AbstractScheduler scheduler) 
+    ThreadServiceProxy(ServiceBroker sb,  String name, 
+		       AbstractScheduler scheduler) 
     {
-	parent = (ThreadServiceProxy)
+	ThreadServiceProxy parent = (ThreadServiceProxy)
 	    sb.getService(this, ThreadService.class, null);
 
-	children = new ArrayList();
 	if (parent == null) {
 	    group = new ThreadGroup(name);
 	} else {
-	    parent.addChild(this);
+	    scheduler.setParent(parent.scheduler);
 	    group = new ThreadGroup(parent.group, name);
 	}
 
-	scheduler.setProxy(this);
 	this.scheduler = scheduler;
 	pool = new ControllablePool(group, scheduler);
 
@@ -68,25 +63,6 @@ final class ThreadServiceProxy 	implements ThreadService
 
 
 
-    Iterator children() {
-	return children.iterator();
-    }
-
-    AbstractScheduler parentScheduler() {
-	if (parent == null)
-	    return null;
-	else
-	    return parent.scheduler;
-    }
-
-    AbstractScheduler scheduler() {
-	return scheduler;
-    }
-
-
-    private synchronized void addChild(ThreadServiceProxy child) {
-	children.add(child);
-    }
 
     private Thread consumeThread(Thread thread,  Object consumer) {
 	((ControllableThread) thread).consumer(consumer);

@@ -24,6 +24,7 @@ package org.cougaar.core.thread;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.PropertyParser;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 
@@ -37,7 +38,8 @@ abstract class AbstractScheduler implements ThreadControlService
     protected int maxRunningThreads;
     protected int runningThreadCount = 0;
     protected ThreadListenerProxy listenerProxy;
-    protected ThreadServiceProxy proxy;
+    protected AbstractScheduler parent;
+    protected ArrayList children;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -65,12 +67,17 @@ abstract class AbstractScheduler implements ThreadControlService
 	    PropertyParser.getInt(MaxRunningCountProp, 
 				  MaxRunningCountDefault);
 	this.listenerProxy = listenerProxy;
-
+	children = new ArrayList();
     }
 
 
-    void setProxy(ThreadServiceProxy proxy) {
-	this.proxy = proxy;
+    void setParent(AbstractScheduler parent) {
+	this.parent = parent;
+	parent.addChild(this);
+    }
+
+    private void addChild(AbstractScheduler child) {
+	children.add(child);
     }
 
     // ThreadControlService 
