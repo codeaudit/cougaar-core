@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Callback;
+import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
@@ -95,6 +96,7 @@ public class WhitePagesServlet extends ComponentServlet {
     private String name;
     private String type;
     private String s_uri;
+    private String s_cert;
     private boolean useCache;
 
     public MyHandler(
@@ -131,6 +133,7 @@ public class WhitePagesServlet extends ComponentServlet {
       name = param("name");
       type = param("type");
       s_uri = param("uri");
+      s_cert = param("cert");
       useCache = !"false".equals(param("useCache"));
     }
 
@@ -154,9 +157,11 @@ public class WhitePagesServlet extends ComponentServlet {
           "     (s != \"bind\" &&\n"+
           "      s != \"rebind\" &&\n"+
           "      s != \"unbind\");\n"+
+          "  var noCert = noURI;\n"+
           "  disable(noLimit, document.f.limit)\n"+
           "  disable(noType,  document.f.type)\n"+
           "  disable(noURI,   document.f.uri)\n"+
+          "  disable(noCert,  document.f.cert)\n"+
           "}\n"+
         "function disable(b, txt) {\n"+
         "  txt.disabled=b;\n"+
@@ -229,6 +234,8 @@ public class WhitePagesServlet extends ComponentServlet {
         input("type", type)+
         "</td></tr>\n<tr><td>URI</td><td>"+
         input("uri", s_uri, 40)+
+        "</td></tr>\n<tr><td>Cert</td><td>"+
+        input("cert", s_cert, 40)+
         "</td></tr>\n</table>\n"+
         "</td></tr>\n"+
         "<tr><td>"+
@@ -354,7 +361,15 @@ public class WhitePagesServlet extends ComponentServlet {
         return null;
       }
       URI uri = URI.create(s_uri);
-      AddressEntry ae = AddressEntry.getAddressEntry(name, type, uri);
+      Cert cert;
+      if (s_cert == null ||
+          "null".equals(s_cert) ||
+          "null_cert".equals(s_cert)) {
+        cert = Cert.NULL;
+      } else {
+        cert = new Cert.Indirect(s_cert);
+      }
+      AddressEntry ae = AddressEntry.getAddressEntry(name, type, uri, cert);
       return ae;
     }
 
@@ -505,6 +520,7 @@ public class WhitePagesServlet extends ComponentServlet {
           "<th>Name</th>"+
           "<th>Type</th>"+
           "<th>URI</th>"+
+          "<th>Cert</th>"+
           "</tr>\n");
     }
 
@@ -551,6 +567,7 @@ public class WhitePagesServlet extends ComponentServlet {
             "<td align=right>"+ae.getName()+"</td>"+
             "<td align=right>"+ae.getType()+"</td>"+
             "<td>"+ae.getURI()+"</td>"+
+            "<td align=right>"+ae.getCert()+"</td>"+
             "</td></tr>\n");
         return true;
       }

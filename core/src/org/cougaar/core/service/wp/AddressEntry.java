@@ -34,14 +34,16 @@ public final class AddressEntry implements Serializable {
   private final String name;
   private final String type;
   private final URI uri;
+  private final Cert cert;
   private transient int _hc;
 
   private AddressEntry(
-      String name, String type, URI uri) {
+      String name, String type, URI uri, Cert cert) {
     this.name = name;
     this.type = type;
     this.uri = uri;
-    if (name==null || type==null || uri==null) {
+    this.cert = cert;
+    if (name==null || type==null || uri==null | cert==null) {
       throw new IllegalArgumentException("Null argument");
     }
     // validate name?
@@ -49,7 +51,12 @@ public final class AddressEntry implements Serializable {
 
   public static AddressEntry getAddressEntry(
       String name, String type, URI uri) {
-    return new AddressEntry(name, type, uri);
+    return new AddressEntry(name, type, uri, Cert.NULL);
+  }
+
+  public static AddressEntry getAddressEntry(
+      String name, String type, URI uri, Cert cert) {
+    return new AddressEntry(name, type, uri, cert);
   }
 
   /** @return the non-null name (e.g.: "foo.bar") */
@@ -61,6 +68,9 @@ public final class AddressEntry implements Serializable {
   /** @return the non-null uri (e.g.: "rmi://foo.com:123/xyz") */
   public URI getURI() { return uri; }
 
+  /** @return the non-null cert (e.g.: Cert.NULL) */
+  public Cert getCert() { return cert; }
+
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -71,7 +81,8 @@ public final class AddressEntry implements Serializable {
       return 
         name.equals(ae.name) &&
         type.equals(ae.type) &&
-        uri.equals(ae.uri);
+        uri.equals(ae.uri) &&
+        cert.equals(ae.cert);
     }
   }
 
@@ -81,6 +92,7 @@ public final class AddressEntry implements Serializable {
       h = 31*h + name.hashCode();
       h = 31*h + type.hashCode();
       h = 31*h + uri.hashCode();
+      h = 31*h + cert.hashCode();
       _hc = h;
     }
     return  _hc;
@@ -91,6 +103,7 @@ public final class AddressEntry implements Serializable {
       "(name="+name+
       " type="+type+
       " uri="+uri+
+      " cert="+cert+
       ")";
   }
 
@@ -105,12 +118,7 @@ public final class AddressEntry implements Serializable {
   /** @deprecated use "getAddressEntry(name, type, uri)" */
   public AddressEntry(
       String name, Application app, URI uri, Cert cert, long ttl) {
-    this(name, app.toString(), uri);
-    if (cert != Cert.NULL) {
-      throw new UnsupportedOperationException(
-          "The cert field has been deprecated."+
-          " Only the \"Cert.NULL\" cert is supported.");
-    }
+    this(name, app.toString(), uri, cert);
   }
   /** @deprecated use "String getType()" */
   public Application getApplication() { 
@@ -118,8 +126,6 @@ public final class AddressEntry implements Serializable {
   }
   /** @deprecated use "URI getURI()" */
   public URI getAddress() { return getURI(); }
-  /** @deprecated Cert field has been removed */
-  public Cert getCert() { return Cert.NULL; }
   /** @deprecated the TTL is a wp-internal variable */
   public long getTTL() { return 0; }
 }
