@@ -203,15 +203,15 @@ public class RemoteAgentServlet
 	    out.print("<tr><td><b>");
 	    out.print(name);
 	    out.print(" </b></td>");
-	    out.print(Color.valueTable(spoke, 0.0, 30.0, true, f3_0));
-	    out.print(Color.valueTable(heard, 0.0, 30.0, true, f3_0));
-	    out.print(Color.valueTable(error, 0.0, 30.0, true, f3_0));
-	    out.print(Color.valueTable(queue, 0.0, 1.0, true,  f4_2));
-	    out.print(Color.valueTable(msgTo, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(eMJIPS, 10.0, 400.0, false, f3_0));
-	    out.print(Color.valueTable(mMbps, 0.0, 0.10, false, f6_3));
-	    out.print(Color.valueTable(eMbps, 0.0, 0.10, false, f6_3));
+	    Color.valueTable(spoke, 0.0, 30.0, true, f3_0, out);
+	    Color.valueTable(heard, 0.0, 30.0, true, f3_0, out);
+	    Color.valueTable(error, 0.0, 30.0, true, f3_0, out);
+	    Color.valueTable(queue, 0.0, 1.0, true,  f4_2, out);
+	    Color.valueTable(msgTo, 0.0, 1.0, true, f4_2, out);
+	    Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2, out);
+	    Color.valueTable(eMJIPS, 10.0, 400.0, false, f3_0, out);
+	    Color.valueTable(mMbps, 0.0, 0.10, false, f6_3, out);
+	    Color.valueTable(eMbps, 0.0, 0.10, false, f6_3, out);
 	    out.print("</tr>\n");
 	}
 	out.print("</table>");

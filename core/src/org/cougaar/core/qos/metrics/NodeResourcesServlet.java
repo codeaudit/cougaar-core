@@ -55,10 +55,8 @@ public class NodeResourcesServlet
 	out.print("<tr><td><b>");
 	out.print(name);
 	out.print(" </b></td>");
-	out.print(Color.valueTable(metric, ignore, 
-				   highlight,greater,formatter));
-	out.print(Color.credTable(metric));
-
+	Color.valueTable(metric, ignore, 
+			 highlight,greater,formatter, out);
 	out.print("</tr>\n");	
     }
 
@@ -67,11 +65,10 @@ public class NodeResourcesServlet
 	
 	//Header Row
 	out.print("<table border=1>\n");
-	out.print("<tr><b>");
-	out.print("<td><b>RESOURCE</b></td>");
-	out.print("<td><b>Value</b></td>");
-	out.print("<td><b>Cred</b></td>");
-	out.print("</b></tr>");
+	out.print("<tr>");
+	out.print("<th>RESOURCE</th>");
+	out.print("<th>Value</th>");
+	out.print("</tr>");
 
 	//Rows
 	outputMetric(out,nodePath,"EffectiveMJips",

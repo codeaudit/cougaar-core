@@ -91,13 +91,13 @@ public class AgentLoadServlet
 	    out.print("<tr><td><b>");
 	    out.print(name);
 	    out.print(" </b></td>");
-	    out.print(Color.valueTable(cpuLoad, 0.0, 1.0,true, f4_2));
-	    out.print(Color.valueTable(cpuLoadJips, 0.0, 200,true, f6_3));
-	    out.print(Color.valueTable(msgIn, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(msgOut, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(bytesIn, 0.0, 10000, true, f7_0));
-	    out.print(Color.valueTable(bytesOut, 0.0, 10000, true, f7_0));
-	    out.print(Color.valueTable(persistSize, 0.0, 10000, true, f7_0));
+	    Color.valueTable(cpuLoad, 0.0, 1.0,true, f4_2, out);
+	    Color.valueTable(cpuLoadJips, 0.0, 200,true, f6_3, out);
+	    Color.valueTable(msgIn, 0.0, 1.0, true, f4_2, out);
+	    Color.valueTable(msgOut, 0.0, 1.0, true, f4_2, out);
+	    Color.valueTable(bytesIn, 0.0, 10000, true, f7_0, out);
+	    Color.valueTable(bytesOut, 0.0, 10000, true, f7_0, out);
+	    Color.valueTable(persistSize, 0.0, 10000, true, f7_0, out);
 	    out.print("</tr>\n");
 
 	}
@@ -108,25 +108,22 @@ public class AgentLoadServlet
 	out.print("<h2>Services</h2>\n");
 	//Header Row
 	out.print("<table border=1>\n");
-	out.print("<tr><b>");
-	out.print("<td><b>AGENT</b></td>");
-	out.print("<td><b>CPUloadAvg</b></td>");
-	out.print("<td><b>Cred</b></td>");
-	out.print("</b></tr>");
+	out.print("<tr>");
+	out.print("<th>AGENT</th>");
+	out.print("<th>CPUloadAvg</th>");
+	out.print("</tr>");
 
 	out.print("<tr><td><b>MTS</b></td>");
 	String mtsPath = "Service(MTS)" +PATH_SEPR+ CPU_LOAD_AVG_10_SEC_AVG;
 	Metric mtsCpuLoad = metricsService.getValue(mtsPath);
-	out.print(Color.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2));
-	out.print(Color.credTable(mtsCpuLoad));
+	Color.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2, out);
 	out.print("</tr>\n");
 
 	out.print("<tr><td><b>Metrics</b></td>");
 	String metricPath = "Service(Metrics)" +PATH_SEPR+ 
 	    CPU_LOAD_AVG_10_SEC_AVG;
 	Metric metricCpuLoad = metricsService.getValue(metricPath);
-	out.print(Color.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2));
-	out.print(Color.credTable(metricCpuLoad));
+	Color.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2, out);
 	out.print("</tr>\n");
 
 	out.print("</table>");

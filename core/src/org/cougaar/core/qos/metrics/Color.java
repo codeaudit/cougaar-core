@@ -36,100 +36,98 @@ import java.text.DecimalFormat;
  * tend to fade out.
  */
 public class Color  implements Constants {
-    // Colors are hand picked, since there are only 9 colors 
-    //ignore is a yellow-orange
-    public static final String ignoreMeas    = "<font color=\"#FFaa00\">"; 
-    public static final String ignoreConfig  = "<font color=\"#FFDD55\">"; 
-    public static final String ignoreDefault = "<font color=\"#FFDDBB\">"; 
-    // normal is black
-    public static final String normalMeas    = "<font color=\"#000000\">";
-    public static final String normalConfig  = "<font color=\"#888888\">";
-    public static final String normalDefault = "<font color=\"#cccccc\">";
-    // highlight is Purple
-    public static final String highlightMeas    = "<font color=\"#cc00cc\">";
-    public static final String highlightConfig  = "<font color=\"#e077e0\">";
-    public static final String highlightDefault = "<font color=\"#ffaaff\">";
-
-    private static final String unknown= "<font color=\"#e7e7e7\">";
-
-    private static final String endColor = "</font>";
     private static final DecimalFormat f2_1 = new DecimalFormat("0.0");
 
-    /* Metric values above or equal to highlight-threshold will be
-     * highlighted. Values below the threshold will be normal, Also,
-     * Ignore a specific value.
-     */
-    public static String valueColor(Metric metric, 
-				    double ignore, 
-				    double highlight,
-				    boolean greater) {
-	double value=metric.doubleValue();
-	double cred=metric.getCredibility();
-	if (cred == 0) return unknown;
-	else if (cred <=  DEFAULT_CREDIBILITY){
-	    if(value == ignore) return ignoreDefault;
-	    if((greater  & (value >= highlight)) | 
-	       (!greater & (value <= highlight)))
-	       return highlightDefault;
-	    return normalDefault;
-	}
-	else if (cred <=  SYS_DEFAULT_CREDIBILITY){
-	    if(value == ignore) return ignoreConfig;
-	    if((greater  & (value >= highlight)) | 
-	       (!greater & (value <= highlight)))
-		return highlightConfig;
-	    return normalConfig;
-	}
-	else{ // measured
-	    if(value == ignore) return ignoreMeas;
-	    if((greater  & (value >= highlight)) | 
-	       (!greater & (value <= highlight)))
-		return highlightMeas;
-	    return normalMeas;
+    private static final String PALE_YELLOW = "\"#ffffee\"";
+    private static final String PALE_GREEN = "\"#eeffee\"";
+    private static final String PALE_PINK = "\"#ffeeee\"";
+
+    private static final String LIGHT_GRAY = "\"#cccccc\"";
+    private static final String MEDIUM_GRAY = "\"#888888\"";
+    private static final String BLACK = "\"#000000\"";
+
+    private static String brightness(Metric metric) 
+    {
+	double credibility = metric.getCredibility();
+	if (credibility <=  DEFAULT_CREDIBILITY) {
+	    return LIGHT_GRAY;
+	} else if (credibility <=  SYS_DEFAULT_CREDIBILITY) {
+	    return MEDIUM_GRAY;
+	} else {
+	    return BLACK;
 	}
     }
-    public static String valueTable(Metric metric, 
-				    double ignore, 
-				    double highlight,
-				    boolean greater,
-				    DecimalFormat formatter) {
-	return "<td>" + 
-	    valueColor(metric,ignore,highlight,greater) +
-	    formatter.format(metric.doubleValue()) +
-	    endColor +
-	    "</td>";
+
+    private static String bgcolor(Metric metric,
+				  double uninteresting_value,
+				  double threshold,
+				  boolean increasing)
+    {
+	double value = metric.doubleValue();
+	if (value == uninteresting_value) {
+	    return  PALE_YELLOW;
+	} else if (increasing && value >= threshold ||
+		   !increasing && value <= threshold) {
+	    return PALE_PINK;
+	} else {
+	    return PALE_GREEN;
+	}
+    }
+
+
+    private static String mouse_doc(Metric metric)
+    {
+	return metric.toString();
+    }
+				  
+
+    public static void valueTable(Metric metric, 
+				  double uninteresting_value, // the SPECIAL! one
+				  double threshold,
+				  boolean increasing, // polarity of comparison
+				  DecimalFormat formatter,
+				  PrintWriter out) 
+    {
+	String brightness = brightness(metric);
+	String bgcolor = bgcolor(metric, uninteresting_value, threshold, increasing);
+	String mouse_doc = mouse_doc(metric);
+	String value_text = formatter.format(metric.doubleValue());
+
+	out.print("<td");
+	out.print(" onmouseover=\"window.status='");
+	out.print(mouse_doc);
+	out.print("'; return true;\"");
+
+	out.print(" onmouseout=\"window.status=''; return true;\"");
+
+	out.print(" bgcolor=");
+	out.print(bgcolor);
+
+	out.print(">");
+
+	out.print("<font color=");
+	out.print(brightness);
+	out.print(">");
+
+	out.print(value_text);
+
+	// end <font>
+	out.print("</font>");
+
+
+	out.print("</td>");
     }
 
     
-    /* We expect high credibility, so we highlight lower values 
-     *
-     */
-    public static String credColor(Metric metric){
-	double cred=metric.getCredibility();
-	if (cred == 0) return highlightMeas;
-	if (cred <=  DEFAULT_CREDIBILITY) return highlightConfig;
-	if (cred <=  SYS_DEFAULT_CREDIBILITY) return normalMeas;
-	//ignore actual measurements
-	return ignoreMeas;
-    }
-
-    public static String credTable(Metric metric){
-	return "<td>" + 
-	    credColor(metric) +
-	    f2_1.format(metric.getCredibility()) +
-	    endColor +
-	    "</td>";
-    }
-
     public static void colorTest(PrintWriter out) {
 	Metric metric;
 
 	out.print("<table border=1>\n <tr>");
 
-	out.print("<td><b>VALUE \\ CRED</b></td>");
-	out.print("<td><b>Default</b></td>");
-	out.print("<td><b>Config</b></td>");
-	out.print("<td><b>Measured</b></td>");
+	out.print("<th>VALUE \\ CRED</th>");
+	out.print("<th>Default</th>");
+	out.print("<th>Config</th>");
+	out.print("<th>Measured</th>");
 	out.print("</tr>");
 	
 	// row "ignore"
@@ -137,15 +135,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(0.00), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(0.00),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(0.00),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 	out.print("</tr>");
 
 	// row "Normal"
@@ -153,15 +151,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(0.50), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(0.50),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(0.50),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 	out.print("</tr>");
 
 	// row "highlight"
@@ -169,15 +167,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(1.00), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(1.00),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 
 	metric = new MetricImpl(new Double(1.00),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,true,f2_1));
+	valueTable(metric,0.0,1.0,true,f2_1, out);
 	out.print("</tr>");
 	
 	out.print("</table>");
