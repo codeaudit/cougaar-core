@@ -22,12 +22,16 @@
 package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.qos.metrics.DecayingHistory;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricImpl;
+import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.qos.metrics.Constants;
 
@@ -41,24 +45,71 @@ public class LoadWatcher
     private static final String UNITS = "cpusec/sec";
     private static final double CREDIBILITY = SECOND_MEAS_CREDIBILITY;
 
-    private class ConsumerRecord {
+    private class ConsumerSnapShot extends DecayingHistory.SnapShot {
+	double loadAvgIntegrator;
+	double loadMjipsIntegrator;
+	
+	ConsumerSnapShot(double loadAvgIntegrator,
+			 double loadMjipsIntegrator)
+	{
+	    this.loadAvgIntegrator = loadAvgIntegrator;
+	    this.loadMjipsIntegrator = loadMjipsIntegrator;
+	}
+
+    }
+
+    private class ConsumerRecord extends DecayingHistory {
 	String name;
 	String key;
 	int outstanding;
 	long timestamp;
-	double accumulator;
-	long snapshot_timestamp;
-	double snapshot_accumulator;
-	double rate;
+	double loadAvgIntegrator;
+	double loadMjipsIntegrator;
 
 	ConsumerRecord(String name) {
+	    super(10, 3);
 	    this.name = extractObjectName(name);
 	    if (this.name.startsWith("Service"))
-	    key = this.name
-		+KEY_SEPR+ CPU_LOAD_AVG_1_SEC_AVG;
-		else
-	    key = "Agent" +KEY_SEPR+ this.name
-		+KEY_SEPR+ CPU_LOAD_AVG_1_SEC_AVG;
+		key = this.name +KEY_SEPR+ "CPULoad";
+	    else
+		key = "Agent" +KEY_SEPR+ this.name +KEY_SEPR+ "CPULoad";
+	}
+
+
+	void addToHistory() {
+	    ConsumerSnapShot snap = null;
+	    synchronized (this) {
+		accumulate();
+		snap = new ConsumerSnapShot(loadAvgIntegrator,
+					    loadMjipsIntegrator);
+	    }
+	    add(snap);
+	}
+
+	public void newAddition(String period, 
+				DecayingHistory.SnapShot now_raw,
+				DecayingHistory.SnapShot last_raw) 
+	{
+	    ConsumerSnapShot now = (ConsumerSnapShot) now_raw;
+	    ConsumerSnapShot last = (ConsumerSnapShot) last_raw;
+	    double deltaT = now.timestamp -last.timestamp;
+	    double deltaLoad = now.loadAvgIntegrator-last.loadAvgIntegrator;
+	    double deltaMJips = 
+		now.loadMjipsIntegrator-last.loadMjipsIntegrator;
+
+	    String lavgKey = key + "Avg" + period;
+ 	    Metric lavg = new MetricImpl(new Double( deltaLoad/deltaT),
+					 CREDIBILITY,
+					 "threads/sec",
+					 "LoadWatcher");
+ 	    metricsUpdateService.updateValue(lavgKey, lavg);
+
+	    String mjipsKey = key + "Jips" + period;
+ 	    Metric mjips = new MetricImpl(new Double( deltaMJips/deltaT),
+					  CREDIBILITY,
+					  "mjips/sec",
+					  "LoadWatcher");
+ 	    metricsUpdateService.updateValue(mjipsKey, mjips);
 	}
 
 
@@ -75,38 +126,17 @@ public class LoadWatcher
 	    }
 	}	
 	
-	synchronized void snapshot() {
-	    accumulate();
-	    rate = (accumulator-snapshot_accumulator)/
-		(timestamp-snapshot_timestamp);
-	    snapshot_timestamp = timestamp;
-	    snapshot_accumulator = accumulator;
-	    // System.out.println(name+ " rate=" +rate);
- 	    Metric metric = new MetricImpl(new Double(rate),
-					   CREDIBILITY,
-					   UNITS,
-					   "LoadWatcher");
- 	    metricsUpdateService.updateValue(key, metric);
-// 	    if (key.equals("Service_MTS_OneSecondLoadAvg")){
-// 		loggingService.debug(key+"="+metric);
-// 	    }
-	}
-
-
 	synchronized void incrementOutstanding() {
 	    accumulate();
 	    ++outstanding;
-	    if (outstanding > controlService.maxRunningThreadCount())
-		loggingService.debug("Agent outstanding =" +total+ 
-				     " when rights given for " +name);
-
+	    // Can't get the specific max, so no applicable test
 	}
 
 	synchronized void decrementOutstanding() {
 	    accumulate();
 	    --outstanding;
 	    if (outstanding < 0) 
-		loggingService.debug("Agent outstanding =" +total+ 
+		loggingService.debug("Agent outstanding =" +outstanding+ 
 				   " when rights returned for " +name);
 	}
 
@@ -114,30 +144,36 @@ public class LoadWatcher
 	    long now = System.currentTimeMillis();
 	    if (timestamp > 0) {
 		double deltaT = now - timestamp;
-		accumulator += deltaT * outstanding;
+		loadMjipsIntegrator += deltaT* outstanding *effectiveMJIPS();
+		loadAvgIntegrator += deltaT * outstanding;
 	    } 
 	    timestamp = now;
 	}
     }
 
-    private class SnapShotter extends TimerTask {
+    private class HistoryPoller extends TimerTask {
 	public void run() {
 	    synchronized (records) {
 		Iterator itr = records.values().iterator();
 		while (itr.hasNext()) {
 		    ConsumerRecord rec = (ConsumerRecord) itr.next();
-		    rec.snapshot();
+		    rec.addToHistory();
 		}
 	    }
 	}
     }
 
 
+
     private int total;
     private HashMap records = new HashMap();
+
     private MetricsUpdateService metricsUpdateService;
+    private MetricsService metricsService;
     private LoggingService loggingService;
     private ThreadControlService controlService;
+    private int number_of_cpus;
+    private double capacity_mjips;
 
 
     public LoadWatcher(ServiceBroker sb) {
@@ -145,16 +181,39 @@ public class LoadWatcher
 	    sb.getService(this, LoggingService.class, null);
 	metricsUpdateService = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
+	metricsService = (MetricsService)
+	    sb.getService(this, MetricsService.class, null);
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
 	tls.addListener(this);
+
 	ThreadService ts = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
-	ts.schedule(new SnapShotter(), 5000, 1000);
+	ts.schedule(new HistoryPoller(), 5000, 1000);
+
 	controlService = (ThreadControlService)
 	    sb.getService(this, ThreadControlService.class, null);
 
+	NodeIdentificationService nis = (NodeIdentificationService)
+	    sb.getService(this, NodeIdentificationService.class, null);
+	MessageAddress my_node = nis.getNodeIdentifier();
+
+	String path = "Node(" +my_node+ ")" +PATH_SEPR+ "Jips";
+	Metric m = metricsService.getValue(path);
+	capacity_mjips = m.doubleValue()/1000000.0;
+
+	path = "Node(" +my_node+ ")" +PATH_SEPR+ "Count";
+	m = metricsService.getValue(path);
+	number_of_cpus = m.intValue();
     }
+
+
+    private double effectiveMJIPS() {
+	return capacity_mjips / Math.max(1,(total-number_of_cpus));
+    }
+
+
+
 
     ConsumerRecord findRecord(String name) {
 	ConsumerRecord rec = null;

@@ -36,97 +36,154 @@ public class AgentStatusRatePlugin
     extends ComponentPlugin
     implements Constants
 {
+    private static final int LOCAL = 0;
+    private static final int REMOTE = 1;
+
     private AgentStatusService agentStatusService;
     private MetricsUpdateService metricsUpdate;
-    private HashMap agentHistories;
+    private HashMap agentLocalHistories;
+    private HashMap agentRemoteHistories;
 
     public AgentStatusRatePlugin() {
 	super();
-	agentHistories = new HashMap();
+	agentLocalHistories = new HashMap();
+	agentRemoteHistories = new HashMap();
     }
 
 
-    private class SnapShot {
-	long timestamp ;
-	AgentStatusService.AgentState state ;
-	SnapShot(AgentStatusService.AgentState state){
-	    timestamp = System.currentTimeMillis();
-	    this.state= state;
+    private static class AgentSnapShot extends DecayingHistory.SnapShot {
+	AgentStatusService.AgentState state;
+
+	AgentSnapShot(AgentStatusService.AgentState state) {
+	    super();
+	    this.state = state;
 	}
     }
 
-
-    private static final String[] Periods = 
-    {  "10SecAvg","100SecAvg","1000SecAvg"};
-
-    private class AgentHistory implements DecayingHistory.Callback {
-	DecayingHistory history;
+    private abstract class AgentHistory extends DecayingHistory {
 	MessageAddress agent;
 
-	AgentHistory(MessageAddress address) {
+	AgentHistory(MessageAddress address, HashMap store) {
+	    super(10, 3);
 	    this.agent = address;
-	    history = new DecayingHistory(10, 3, this);
-	    agentHistories.put(address, this);
-	}
-
-	public void newAdditionLast(Object nowRaw, Object lastRaw) {
-	    handleNewAddition(agent, "1SecAvg",  nowRaw, lastRaw);
+	    store.put(address, this);
 	}
 
 
-	public void newAdditionHistory(int column, Object nowRaw,
-				       Object lastRaw) {
-	    handleNewAddition(agent, Periods[column], nowRaw, lastRaw);
+	public void newAddition(String period, 
+				DecayingHistory.SnapShot now,
+				DecayingHistory.SnapShot last) 
+	{
+	    handleNewAddition(agent, period, 
+			      (AgentSnapShot) now,
+			      (AgentSnapShot) last);
+	}
+
+	
+	abstract void handleNewAddition(MessageAddress agent,
+					String period,
+					AgentSnapShot now, 
+					AgentSnapShot last);
+    }
+
+    private class AgentLocalHistory extends AgentHistory {
+
+	AgentLocalHistory(MessageAddress address) {
+	    super(address, agentLocalHistories);
+	}
+
+	void handleNewAddition(MessageAddress agent,
+			       String period,
+			       AgentSnapShot now, 
+			       AgentSnapShot last) 
+	{
+	    updateAgentMetric(agent,"MsgIn",period, msgInRate(now,last),
+			      "msg/sec");
+	    updateAgentMetric(agent,"MsgOut",period, msgOutRate(now,last),
+			      "msg/sec");
+	    updateAgentMetric(agent,"BytesIn",period, bytesInRate(now,last),
+			      "bytes/sec");
+	    updateAgentMetric(agent,"BytesOut",period, bytesOutRate(now,last),
+			      "bytes/sec");
+
 	}
     }
 
+    private class AgentRemoteHistory extends AgentHistory {
+	AgentRemoteHistory(MessageAddress address) {
+	    super(address, agentRemoteHistories);
+	}
 
-    private synchronized AgentHistory getAgentHistory(MessageAddress agent) {
-	AgentHistory history = (AgentHistory) agentHistories.get(agent);
+	void handleNewAddition(MessageAddress agent,
+			       String period,
+			       AgentSnapShot now, 
+			       AgentSnapShot last) 
+	{
+	    updateFlowMetric(agent,"MsgFrom",period, msgInRate(now,last),
+			     "msg/sec");
+	    updateFlowMetric(agent,"MsgTo",period, msgOutRate(now,last),
+			     "msg/sec");
+	    updateFlowMetric(agent,"BytesFrom",period, bytesInRate(now,last),
+			     "bytes/sec");
+	    updateFlowMetric(agent,"BytesTo",period, bytesOutRate(now,last),
+			     "bytes/sec");
+	    // JAZ ADD QUEUE Metric
+	}
+
+    }
+
+
+    private synchronized AgentHistory getAgentHistory(MessageAddress agent,
+						      int kind) 
+    {
+	HashMap map = 
+	    kind == LOCAL ? agentLocalHistories : agentRemoteHistories;
+	AgentHistory history = (AgentHistory) map.get(agent);
 	if (history != null)
 	    return history;
+	else if (kind == LOCAL)
+	    return new AgentLocalHistory(agent);
 	else
-	    return new AgentHistory(agent);
+	    return new AgentRemoteHistory(agent);
     }
 
 
-    private void updateMetric(MessageAddress agent,
-			      String lable,
-			      String period,
-			      double value, 
-			      String units)
+
+    private void updateAgentMetric(MessageAddress agent,
+				   String lable,
+				   String period,
+				   double value, 
+				   String units)
     {
 	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR +lable + period;
 	Metric metric = new MetricImpl(value,
-				      SECOND_MEAS_CREDIBILITY,
-				      "units",
-				      "AgentStatusRatePlugin");
+				       SECOND_MEAS_CREDIBILITY,
+				       "units",
+				       "AgentStatusRatePlugin");
 	metricsUpdate.updateValue(key, metric);
     }
 
   
-    private void handleNewAddition(MessageAddress agent,
-				   String period,
-				   Object nowRaw, 
-				   Object lastRaw) 
+    
+    private void updateFlowMetric(MessageAddress agent,
+				  String lable,
+				  String period,
+				  double value, 
+				  String units)
     {
-	SnapShot now = (SnapShot) nowRaw;
-	SnapShot last = (SnapShot) lastRaw;
-	updateMetric(agent,"MsgIn",period, msgInRate(now,last),"msg/sec");
-	updateMetric(agent,"MsgOut",period, msgOutRate(now,last),"msg/sec");
-	updateMetric(agent,"BytesIn",period, bytesInRate(now,last),
-		     "bytes/sec");
-	updateMetric(agent,"BytesOut",period, bytesOutRate(now,last),
-		     "bytes/sec");
+	// JAZ To Do
 
     }
-    
 
-    private double deltaSec(SnapShot now, SnapShot last) {
+
+
+    private double deltaSec(AgentSnapShot now, AgentSnapShot last) 
+    {
 	return (now.timestamp - last.timestamp)/1000.0;
     }
 
-    private double msgInRate(SnapShot now, SnapShot last) {
+    private double msgInRate(AgentSnapShot now, AgentSnapShot last) 
+    {
 	double deltaT=  deltaSec(now,last);
 	if (deltaT > 0) {
 	    return (now.state.receivedCount - last.state.receivedCount)/deltaT;
@@ -134,7 +191,8 @@ public class AgentStatusRatePlugin
 	else return 0.0;
     }
 
-    private double msgOutRate(SnapShot now, SnapShot last) {
+    private double msgOutRate(AgentSnapShot now, AgentSnapShot last) 
+    {
 	double deltaT=  deltaSec(now,last);
 	if (deltaT > 0) {
 	    return (now.state.deliveredCount - last.state.deliveredCount)
@@ -143,7 +201,8 @@ public class AgentStatusRatePlugin
 	else return 0.0;
     }
 
-    private double bytesOutRate(SnapShot now, SnapShot last) {
+    private double bytesOutRate(AgentSnapShot now, AgentSnapShot last) 
+    {
 	double deltaT=  deltaSec(now,last);
 	if (deltaT > 0) {
 	    return (now.state.deliveredBytes - last.state.deliveredBytes)
@@ -152,7 +211,8 @@ public class AgentStatusRatePlugin
 	else return 0.0;
     }
 
-    private double bytesInRate(SnapShot now, SnapShot last) {
+    private double bytesInRate(AgentSnapShot now, AgentSnapShot last) 
+    {
 	double deltaT=  deltaSec(now,last);
 	if (deltaT > 0) {
 	    return (now.state.receivedBytes - last.state.receivedBytes)
@@ -161,16 +221,6 @@ public class AgentStatusRatePlugin
 	else return 0.0;
     }
 
-
-
-    protected  AgentStatusService.AgentState getState(MessageAddress agent)
-    {
-       	AgentStatusService.AgentState state = null;
-	if (agentStatusService!=null) {
-	    state = agentStatusService.getLocalAgentState(agent);
-	}
-	return state;
-    }
 
 
     public void load() {
@@ -183,23 +233,41 @@ public class AgentStatusRatePlugin
 	metricsUpdate = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
 
-	//start a 1 second poller
-	TimerTask poller = new TimerTask() { public void run() { poll(); } };
-	ThreadService threadService = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
-	threadService.schedule(poller, 0, 1000);
+	// Start a 1 second poller, if the required services exist.
+	if (agentStatusService != null && metricsUpdate != null) {
+	    TimerTask poller = new TimerTask() { 
+		    public void run() { 
+			poll(); 
+		    } };
+	    ThreadService threadService = (ThreadService)
+		sb.getService(this, ThreadService.class, null);
+	    threadService.schedule(poller, 0, 1000);
+	}
     }
 
     private void poll() {
 	Iterator itr = agentStatusService.getLocalAgents().iterator();
 	while (itr.hasNext()) {
 	    MessageAddress addr = (MessageAddress) itr.next();
-	    AgentStatusService.AgentState state = getState(addr);
+	    AgentStatusService.AgentState state = 
+		agentStatusService.getLocalAgentState(addr);
 	    if (state != null) {
-		SnapShot record = new SnapShot(state);
-		getAgentHistory(addr).history.add(record);
+		AgentSnapShot record = new AgentSnapShot(state);
+		getAgentHistory(addr, LOCAL).add(record);
 	    }
 	}
+
+	itr = agentStatusService.getRemoteAgents().iterator();
+	while (itr.hasNext()) {
+	    MessageAddress addr = (MessageAddress) itr.next();
+	    AgentStatusService.AgentState state = 
+		agentStatusService.getRemoteAgentState(addr);
+	    if (state != null) {
+		AgentSnapShot record = new AgentSnapShot(state);
+		getAgentHistory(addr, REMOTE).add(record);
+	    }
+	}
+ 
     }
 
 

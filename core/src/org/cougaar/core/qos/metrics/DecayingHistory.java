@@ -23,18 +23,27 @@ package org.cougaar.core.qos.metrics;
 
 import java.util.LinkedList;
 
-public class DecayingHistory
+public abstract class DecayingHistory
 {
     
-    public interface Callback {
-	void newAdditionLast(Object addition, Object last);
-	void newAdditionHistory(int column, Object addition, Object last);
+    public abstract void newAddition(String period, 
+				     SnapShot addition, 
+				     SnapShot last);
+
+
+    public static class SnapShot {
+	public long timestamp;
+
+	public SnapShot() {
+	    timestamp = System.currentTimeMillis();
+	}
     }
+	    
 
 
-
-   private class DecayingHistoryList extends LinkedList {
+    private class DecayingHistoryList extends LinkedList {
 	private int column;
+	private String period;
 	private int length;
 	private int index;
 	private boolean full;
@@ -42,29 +51,30 @@ public class DecayingHistory
 	DecayingHistoryList(int column, int length) {
 	    this.column = column;
 	    this.length = length;
+	    period = Math.pow(length, column+1) + "SecAvg";
 	    index = 0;
 	    full = false;
 	}
 
 
-	public boolean add(Object x, Object new_elt) {
+	public boolean add(SnapShot x, SnapShot new_elt) {
 	    // Do 1 second average
 	    if (column == 0 && !isEmpty()) {
-		Object first = getFirst();
-		callback.newAdditionLast(new_elt, first);
+		SnapShot first = (SnapShot) getFirst();
+		newAddition("1SecAvg", new_elt, first);
 	    }
 
-	    Object last = null;
-	    if (full) last = removeLast();	
+	    SnapShot last = null;
+	    if (full) last = (SnapShot) removeLast();	
 	    addFirst(x);
 
 	    // If the list isn't full yet, 'last' hasn't been set.
 	    // Set it now,
-	    if (last == null) last = getLast();
+	    if (last == null) last = (SnapShot) getLast();
 
 	    // Notify the listener
 	    // But listener column tags are incremented by one
-	    callback.newAdditionHistory(column, new_elt, last);
+	    newAddition(period, new_elt, last);
 
 	    boolean shift = ++index == length;
 	    if (shift) {
@@ -81,15 +91,13 @@ public class DecayingHistory
  
     private DecayingHistoryList[] data;
     private int total_count = 0;
-    private Callback callback;
 
-    public DecayingHistory(int rows, int columns, Callback callback)
+    public DecayingHistory(int rows, int columns)
     {
 	data = new DecayingHistoryList[columns];
 	for (int i=0; i<columns; i++) {
 	    data[i] = new DecayingHistoryList(i, rows);
 	}
-	this.callback = callback;
     }
 
     private DecayingHistoryList getList(int index) {
@@ -99,11 +107,12 @@ public class DecayingHistory
 	    return null;
     }
 
-    public synchronized void add(Object x) {
+    public synchronized void add(SnapShot x) {
 	data[0].add(x, x);
 	++total_count;
     }
 
+    
 
 
 }
