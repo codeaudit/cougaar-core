@@ -1,3 +1,10 @@
+2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/PlaybookManager.java:
+	Bug #1461
+	Check for presence of playbook file name and complain if it is
+	missing. Don't let the NPE or NoSuchElementException happen.
+
 2002-06-13  Michael Thome  <mthome@bbn.com>
 
 	* TimeServiceProvider, NaturalTimeService, RealTimeService,
