@@ -85,7 +85,39 @@ public class NamingServiceFactory implements InitialContextFactory {
 
   /**
    * Accessor for the ns slot. The first caller fills in the slot.
-   * Everyone else waits until it is filled.
+   * Everyone else waits until it is filled. The procedure is as
+   * follows:
+   *
+   * The first step is to locate the registry in which the name server
+   * object has been bound. The address information in alpreg.ini (or
+   * the equivalent system properties) is used for this purpose.
+   *
+   * If a working registry is found, the binding of the server is
+   * looked up. In rare cases, the binding might not yet be present.
+   * This is a transient condition because there is a separation in
+   * time between the creation of the registry and the binding of the
+   * name server in it. If this happens, we just wait a little while
+   * and try again. Barring major bugs, this condition should not
+   * persist for very long.
+   *
+   * If the name server is found in the registry, we are done.
+   *
+   * If there is no registry at the specified location, we check to
+   * see if we are allowed to run the name server within this node and
+   * if we are, in fact, on the host at the specified location. If
+   * both conditions are true, we create a registry and a name server
+   * and bind the name server into the registry.
+   *
+   * In rare cases, we may fail to create the registry. This can
+   * happen if there is another node running on our host and the other
+   * node happens to create the registry between when we tested for
+   * the existence of a valid registry and our attempt to create one
+   * ourselves. Again, we wait a little while and try again. The
+   * second try should find the registry created by the other node and
+   * we proceed as above.
+   *
+   * If we create the registry and name server, we just use our own
+   * name server directly.
    **/
   private synchronized static NS getNS() {
     if (ns == null) {           // Has this been set yet?
@@ -155,6 +187,9 @@ public class NamingServiceFactory implements InitialContextFactory {
     return ns;
   }
 
+  /**
+   * Implement the getInitialContext of the InitialContextFactory API.
+   **/
   public Context getInitialContext(Hashtable env) {
     try {
       return new NamingDirContext(getNS(), getNS().getRoot(), env);
