@@ -20,12 +20,14 @@
  */
 package org.cougaar.core.adaptivity;
 
+import java.io.Serializable;
+
 /**
  * Holds a range specification for an operating mode or condition
  * value. Ranges are half-open intervals. The value of max _must_
  * exceed low.
  **/
-public class OMCRange {
+public class OMCRange implements Serializable {
   protected Comparable min, max;
 
   /**

@@ -20,10 +20,11 @@
  */
 package org.cougaar.core.adaptivity;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 
-public class OMCRangeList {
+public class OMCRangeList implements Serializable {
   OMCRange[] allowedValues;
 
   public OMCRangeList(OMCRange[] av) {
