@@ -134,6 +134,7 @@ public class DomainManager
   }
 
   private NodeControlService nodeControlService = null;
+  /*
   public void setNodeControlService(NodeControlService ncs) {
     if (ncs == null) {
       // Revocation
@@ -141,6 +142,7 @@ public class DomainManager
       nodeControlService = ncs;
     }
   }
+  */
   protected NodeControlService getNodeControlService() {
     return nodeControlService;
   }
@@ -151,6 +153,9 @@ public class DomainManager
 
   public void load() {
     super.load();
+
+    // ugh
+    nodeControlService = (NodeControlService) serviceBroker.getService(this, NodeControlService.class, null);
 
     domainSP = new DomainServiceProvider(new DomainServiceImpl(this));
     serviceBroker.addService(DomainService.class, domainSP);
