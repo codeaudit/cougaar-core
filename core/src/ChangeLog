@@ -1,3 +1,28 @@
+2001-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Redo search in terms of the Filter interface. Implement the search
+	forms taking a search string.
+
+	* org/cougaar/core/naming/SearchStringParser.java:
+	Parses a jndi search string (RFC 2254) into a Filter. Doesn't do
+	arbitrary attribute descriptions or matching rules. Does do &, !,
+	|, simple, substring, present matches.
+
+	* org/cougaar/core/naming/Glob.java:
+	This class parses a Unix glob-style pattern matching filter string
+	into a form can be readily applied to strings to test for a match.
+
+	* org/cougaar/core/naming/Filter.java:
+	The interface to be implemented by all search filters.
+
+	* org/cougaar/util/ArrayListFoundation.java:
+	Don't hold the monitor (be synchronized) while serializing
+	sub-objects. Doing so is prone to deadlock when multiple threads
+	are serializing simultaneously. This requires copying the
+	elementData array to prevent its being modified while
+	serialization occurs.
+
 2001-08-21  Beth DePass <bdepass@bbn.com>
 	* ClusterImpl, ClusterServesPlugIn, PlugInAdapter
 	Remove old metrics code such as getMetricsSnapshot,
