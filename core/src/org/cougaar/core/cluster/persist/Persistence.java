@@ -12,6 +12,12 @@
  */
 package org.cougaar.core.cluster.persist;
 
+import org.cougaar.core.cluster.MessageManager;
+import org.cougaar.core.cluster.Subscriber;
+import org.cougaar.domain.planning.ldm.plan.Plan;
+import org.cougaar.core.cluster.PersistenceEnvelope;
+import java.util.List;
+
 public interface Persistence {
   /**
    * End a persistence epoch by generating a persistence delta
@@ -19,20 +25,21 @@ public interface Persistence {
    * @param epochEnvelopes All envelopes from this epoch
    * @param subscriberStates The subscriber states to record
    **/
-  void persist(java.util.List undistributedEnvelopes,
-               java.util.List allEpochEnvelopes,
-               java.util.List subscriberStates);
+    Object persist(List undistributedEnvelopes,
+                   List allEpochEnvelopes,
+                   List subscriberStates,
+                   boolean returnBytes,
+                   MessageManager messageManager);
 
   /**
    * Get the rehydration envelope from the most recent persisted state.
    * @return null if there is no persisted state.
    **/
-  java.util.List rehydrate(org.cougaar.core.cluster.PersistenceEnvelope oldObjects);
-  org.cougaar.domain.planning.ldm.plan.Plan getRealityPlan();
-  void setRealityPlan(org.cougaar.domain.planning.ldm.plan.Plan reality);
-  org.cougaar.core.cluster.MessageManager getMessageManager();
-  PersistenceSubscriberState getSubscriberState(org.cougaar.core.cluster.Subscriber subscriber);
+  RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state);
+  Plan getRealityPlan();
+  void setRealityPlan(Plan reality);
+  PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
   boolean hasSubscriberStates();
-  void discardSubscriberState(org.cougaar.core.cluster.Subscriber subscriber);
+  void discardSubscriberState(Subscriber subscriber);
   void disableWrite();
 }
