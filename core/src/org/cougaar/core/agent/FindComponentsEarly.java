@@ -382,7 +382,7 @@ implements Component
       if (log.isInfoEnabled()) {
         log.info(
             "Asked to \"getComponentList\" while loading,"+
-            " which would find a partially loaded model,"
+            " which would find a partially loaded model,"+
             " so instead return our initial component list["+
             initialDescs.size()+"]");
         if (log.isDebugEnabled()) {
