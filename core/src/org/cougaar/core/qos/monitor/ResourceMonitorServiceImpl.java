@@ -22,24 +22,29 @@
 package org.cougaar.core.qos.monitor;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.society.MessageAddress;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Observable;
 
-public class ResourceMonitorServiceImpl implements ResourceMonitorService
+public class ResourceMonitorServiceImpl 
+    extends QosImplBase
+    implements ResourceMonitorService
 {
-    protected NameSupport nameSupport;
-    protected ServiceBroker sb;
+
+    private HashMap nodes, hosts;
 
     protected ResourceMonitorServiceImpl(NameSupport nameSupport,
 					 ServiceBroker sb) 
     {
-	this.nameSupport = nameSupport;
-	this.sb = sb;
+	super(nameSupport, sb);
+	nodes = new HashMap();
+	hosts = new HashMap();
     }
 
     public double getJipsForAgent(MessageAddress agentAddress) {
@@ -51,7 +56,7 @@ public class ResourceMonitorServiceImpl implements ResourceMonitorService
     }
 
     
-   public String getHostForAgent(MessageAddress agentAddress) {
+   public String lookupHostForAgent(MessageAddress agentAddress) {
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
 	String attr = NameSupport.HOST_ATTR;
@@ -65,6 +70,7 @@ public class ResourceMonitorServiceImpl implements ResourceMonitorService
 	if (count == 0) {
 	    return null;
 	} else if (count == 1) {
+	    hosts.put(agentAddress, host);
 	    return host;
 	} else {
 	    // more than one match!
@@ -73,7 +79,8 @@ public class ResourceMonitorServiceImpl implements ResourceMonitorService
 	}
     }
 
-   public String getNodeForAgent(MessageAddress agentAddress) {
+
+   public String lookupNodeForAgent(MessageAddress agentAddress) {
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
 	String attr = NameSupport.NODE_ATTR;
@@ -87,6 +94,7 @@ public class ResourceMonitorServiceImpl implements ResourceMonitorService
 	if (count == 0) {
 	    return null;
 	} else if (count == 1) {
+	    nodes.put(agentAddress, node);
 	    return node;
 	} else {
 	    // more than one match!
@@ -95,5 +103,33 @@ public class ResourceMonitorServiceImpl implements ResourceMonitorService
 	}
     }
 
-}
+    
+    public String getNodeForAgent(MessageAddress agentAddress) {
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+	String node = (String) nodes.get(agentAddress);
+	if (node != null &&
+	    state.status == AgentStatusService.ACTIVE &&
+	    since <= STALE_TIME) {
+	    return node;
+	} else {
+	    return lookupNodeForAgent(agentAddress);
+	}
+    }
 
+    public String getHostForAgent(MessageAddress agentAddress) {
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+	String host = (String) hosts.get(agentAddress);
+	if (host != null &&
+	    state.status == AgentStatusService.ACTIVE &&
+	    since <= STALE_TIME) {
+	    return host;
+	} else {
+	    return lookupHostForAgent(agentAddress);
+	}
+    }
+
+}

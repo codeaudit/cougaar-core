@@ -21,31 +21,43 @@
 
 package org.cougaar.core.qos.monitor;
 
-import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.society.MessageAddress;
 
-public interface QosMonitorService extends Service
+
+class QosImplBase
 {
-    public static final int UNKNOWN = 0;
-    public static final int NOT_CREATED = 1;
-    public static final int ACTIVE = 2;
-    public static final int MOVING = 3;
-    public static final int RESTARTED = 4;
-    public static final int MISSING = 5;
-    public static final int FAILING = 6;
-    
-    /**
-     * Uses the naming service to determine the status of an Agent
-     */
-    public int lookupAgentStatus(MessageAddress agentAddress);
+    static final int STALE_TIME = 10000; // 10 seconds
 
-    /**
-     * Get the cached status, or look it up if the cache is stale. 
-     **/
-    public int getAgentStatus(MessageAddress agentAddress);
+    private ServiceBroker sb;
+    private AgentStatusService statusService;
+    NameSupport nameSupport;
 
-    public int getAgentCommStatus(MessageAddress agentAddress);
+    QosImplBase(NameSupport nameSupport, ServiceBroker sb) {
+	this.sb = sb;
+	this.nameSupport = nameSupport;
+    }
 
+
+    private void ensureService() {
+	if (statusService == null) {
+	    Object svc = 
+		sb.getService(this, AgentStatusService.class, null);
+	    if (svc == null) {
+		System.err.println("### Can't find AgentStatusService");
+	    } else {
+		statusService = (AgentStatusService) svc;
+		System.out.println("%%% Got AgentStatusService!");
+	    }
+	}
+    }
+
+    AgentStatusService.AgentState getAgentState(MessageAddress agentAddress) {
+	ensureService();
+	return statusService.getAgentState(agentAddress);
+    }
 
 }
 

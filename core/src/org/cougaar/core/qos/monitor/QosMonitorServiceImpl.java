@@ -30,16 +30,12 @@ import java.util.Iterator;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
 
-public class QosMonitorServiceImpl implements QosMonitorService
+public class QosMonitorServiceImpl 
+    extends QosImplBase
+    implements QosMonitorService
 {
-    private NameSupport nameSupport;
-    private ServiceBroker sb;
-    private AgentStatusService statusService;
-    private static final int STALE_TIME = 10000; // 10 seconds
-
     QosMonitorServiceImpl(NameSupport nameSupport, ServiceBroker sb) {
-	this.nameSupport = nameSupport;
-	this.sb = sb;
+	super(nameSupport, sb);
     }
 
     public int lookupAgentStatus(MessageAddress agentAddress) {
@@ -74,19 +70,9 @@ public class QosMonitorServiceImpl implements QosMonitorService
 	}
     }
 
+
     public int getAgentStatus(MessageAddress agentAddress) {
-	if (statusService == null) {
-	    Object svc = 
-		sb.getService(this, AgentStatusService.class, null);
-	    if (svc == null) {
-		System.err.println("### Can't find AgentStatusService");
-	    } else {
-		statusService = (AgentStatusService) svc;
-		System.out.println("%%% Got AgentStatusService!");
-	    }
-	}
-	AgentStatusService.AgentState state = 
-	    statusService.getAgentState(agentAddress);
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
 	long now = System.currentTimeMillis();
 	long since = now-state.timestamp;
 
@@ -95,7 +81,19 @@ public class QosMonitorServiceImpl implements QosMonitorService
 	else
 	    return lookupAgentStatus(agentAddress);
     }
-    
 
+
+    public int getAgentCommStatus(MessageAddress agentAddress){
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+	if (state.status == AgentStatusService.ACTIVE && since <= STALE_TIME) 
+	    return ACTIVE;	
+	else if (state.status == AgentStatusService.UNREACHABLE && 
+		 since <= STALE_TIME)
+	    return FAILING;
+	else 
+	    return lookupAgentStatus(agentAddress);
+    }
 }
 
