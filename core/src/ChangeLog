@@ -1,3 +1,38 @@
+2001-08-10  Beth DePass <bdepass@bbn.com>
+	* ClusterImpl
+	Create and add the PluginManager component via a
+	ComponentDescription instead of an instance.
+		
+	* PluginManager, AgentManager
+	Move Plugin creation from AgentManager.createCluster to
+	PluginManager.load().  PluginManager now reads the ini file to
+	create the Agent's plugins.
+	
+2001-08-09  Beth DePass <bdepass@bbn.com>
+	* PluginManager
+	Remove remaining ClusterImpl dependencies.  PluginManager can now
+	be constructed with an empty argument constructor.
+
+	* PluginManager, PluginBinder, PluginAdapter, etc.
+	Remove old style LDMservice and UIDServer dependencies up the
+	component chain.  PluginAdapter now uses the DomainService,
+	PrototypeRegistryService and UIDService.  The LDMService is still
+	being used for getLDM() calls, but this service eventually
+	delegates to getDomainService()... and
+	getPrototypeRegistryService()... in ClusterImpl.
+
+2001-08-07  Beth DePass <bdepass@bbn.com>
+	* PluginManager, ClusterImpl
+	Move services such as BlackboardService, SchedulerService, etc to
+	ClusterImpl so that they can become services provided by the
+	AgentServiceBroker. This removes some dependencies of
+	PluginManager on ClusterImpl being passed into the constructor.
+
+	* MessageTransportService, Binders, Node, etc
+	Hookup MessageTransportService and get rid of pass thru methods of
+	getMessageTransportServer() and sendMessage() in various binders
+	and components.  This work was done with John Zinky and Rich Shapiro.
+	
 2001-08-02  Michael Thome  <mthome@bbn.com>
 
 	* MessageTransportServerImpl
