@@ -322,11 +322,6 @@ implements Component {
 
   private void submitCached(final Response res) {
     final Request req = res.getRequest();
-    final long timeout = req.getTimeout();
-    if (timeout < 0) {
-      throw new IllegalArgumentException("Negative timeout: "+timeout);
-    }
-
     if (req instanceof Request.GetAll ||
         req instanceof Request.Get) {
       // "get" or "getAll"
@@ -355,44 +350,14 @@ implements Component {
         res.setResult(ret, FAKE_TTL);
         return;
       }
-      // wrap timeout response to allow removal
-      final Object qe;
-      if (req.getTimeout() <= 0) {
-        qe = res;
-      } else {
-        qe = new WrappedResponse(res);
-      }
       boolean mustQueue;
       synchronized (cacheWaiters) {
         // issue a big "fetch-all" to update the cache
         mustQueue = cacheWaiters.isEmpty();
-        cacheWaiters.add(qe);
+        cacheWaiters.add(res);
       }
       if (mustQueue) {
         fetchLater(null);
-      }
-      if (timeout > 0) {
-        TimerTask timerTask = new TimerTask() {
-          public void run() {
-            synchronized (cacheWaiters) {
-              cacheWaiters.remove(qe);
-            }
-            if (log.isDebugEnabled()) { 
-              log.debug("TIMEOUT "+res+" "+this);
-            }
-            res.setResult(Response.TIMEOUT, FAKE_TTL);
-          }
-          public String toString() {
-            return 
-              "(timer oid="+System.identityHashCode(this)+
-              " sched="+scheduledExecutionTime()+
-              " timeout="+timeout+" qe="+qe+")";
-          }
-        };
-        if (log.isDebugEnabled()) {
-          log.debug("Schedule "+timerTask);
-        }
-        threadService.schedule(timerTask, timeout);
       }
       return;
     }
@@ -426,36 +391,6 @@ implements Component {
       // optional: invalidate cache entry before NS update?
       // we'll let the callback do this
       fetchLater(res);
-      if (timeout > 0) {
-        TimerTask timerTask = new TimerTask() {
-          public void run() {
-            res.setResult(Response.TIMEOUT, FAKE_TTL);
-            if (log.isDebugEnabled()) {
-              log.debug("TIMEOUT "+res+" "+this);
-            }
-          }
-          public String toString() {
-            return 
-              "(timer oid="+System.identityHashCode(this)+
-              " sched="+scheduledExecutionTime()+
-              " timeout="+timeout+")";
-          }
-        };
-        if (log.isDebugEnabled()) {
-          log.debug("Scheduled "+timerTask);
-        }
-        threadService.schedule(timerTask, timeout);
-      }
-    }
-  }
-
-  private static class WrappedResponse {
-    public final Response res;
-    public WrappedResponse(Response res) {
-      this.res = res;
-    }
-    public String toString() { 
-      return "(wrapped "+res+")";
     }
   }
 
@@ -510,12 +445,7 @@ implements Component {
           for (int i = 0, n = queueResponses.size(); i < n; i++) {
             Map.Entry me = (Map.Entry) qrIter.next();
             Object o = me.getKey();
-            Response ri;
-            if (o instanceof WrappedResponse) {
-              ri = ((WrappedResponse) o).res;
-            } else {
-              ri = (Response) o;
-            }
+            Response ri = (Response) o;
             String name;
             Request req = ri.getRequest();
             if (req instanceof Request.Get) {
@@ -540,12 +470,7 @@ implements Component {
       for (int i = 0, n = queueResponses.size(); i < n; i++) {
         Map.Entry me = (Map.Entry) qrIter.next();
         Object o = me.getKey();
-        Response ri;
-        if (o instanceof WrappedResponse) {
-          ri = ((WrappedResponse) o).res;
-        } else {
-          ri = (Response) o;
-        }
+        Response ri = (Response) o;
         Object val = me.getValue();
         if (log.isDebugEnabled()) {
           log.debug("MISS "+ri+" "+val);
