@@ -18,6 +18,9 @@ import org.cougaar.util.*;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentBindingSite;
 
+import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.blackboard.BlackboardServiceProvider;
+
 import org.cougaar.core.cluster.Cluster;
 
 import org.cougaar.core.component.ComponentDescription;
@@ -51,6 +54,8 @@ import org.cougaar.domain.planning.ldm.plan.Task;
 import org.cougaar.core.plugin.PluginManager;
 import org.cougaar.core.plugin.AddPlugInMessage;
 import org.cougaar.core.plugin.RemovePlugInMessage;
+import org.cougaar.core.plugin.LDMService;
+import org.cougaar.core.plugin.LDMServiceProvider;
 
 // new LDM plugins
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
@@ -327,11 +332,30 @@ public class ClusterImpl extends Agent
     sb.addService(DomainService.class, new DomainServiceProvider(myDSI));
     //for backwards compatability
     myDomainService = (DomainService) sb.getService(this, DomainService.class, null);
+    //add metric service - impl will probably be moved from ClusterImpl
+    sb.addService(MetricsService.class, new MetricsServiceProvider(this));
+    // add alarm service
+    sb.addService(AlarmService.class, new AlarmServiceProvider(this));
+    // Should become a node level service
+    sb.addService(MessageTransportService.class, new MessageTransportServiceProvider(this));
+    // add older plugin style shared threading
+    sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(getClusterIdentifier()));
+    // hack service for demo control
+    sb.addService(DemoControlService.class, new DemoControlServiceProvider(this));
+
+    // scheduler for new plugins
+    sb.addService(SchedulerService.class, new SchedulerServiceProvider(this));
+
+    // placeholder for LDM Services should go away and be replaced by the
+    // above domainservice and prototyperegistry service
+    sb.addService(LDMService.class, new LDMServiceProvider(this));
 
     // set up Blackboard and LogicProviders
     try {
       myBlackboard = new Blackboard(getDistributor(), this);
       getDistributor().setBlackboard(myBlackboard);
+      // add blackboard service
+      sb.addService(BlackboardService.class, new BlackboardServiceProvider(getDistributor()));
 
       Collection domains = DomainManager.values();
       Domain rootDomain = DomainManager.find("root"); // HACK to let Metrics see plan objects
