@@ -33,7 +33,7 @@ import org.cougaar.core.plugin.PluginBase;
  * The product of expansion could be new policies or PolicyConstraints.
  * 
  */
-interface PolicyManager extends PluginBase {
+public interface PolicyManager extends PluginBase {
 
 }
 
