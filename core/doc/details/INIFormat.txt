@@ -58,3 +58,24 @@ Node.AgentManager.Agent.PluginManager.Plugin = somePackage.AnotherPlugin(arg)
 .PluginManager.Plugin = somePackage.LastPlugin
 -----------------------------------------------
 
+In 8.4 the INI parser supports line continuations with "\" 
+(bash-style), which allows one to write:
+
+--- an example INI file ---
+# typical one-line format
+insertionPoint = classname(arg1, arg2)
+
+# equivalent using optional line continuations:
+insertionPoint = \
+classname(\
+arg1, \
+arg2)
+
+# another equivalent example:
+inserti\
+onPoint\
+= \
+  classname(\
+    arg1, \
+arg2)
+----------------------------
