@@ -65,17 +65,26 @@ Build 8.3 is an <i>experimental</i> point release along the COUGAAR 8.0
 development branch. Notable additions for this release include:
 <ul>
 <li>
-New usage pattern for plugin development that directly interacts with the
-8.0 agent component infrastructure</li>
+New usage patterns for plugin development that directly interact with the
+8.x component infrastructure</li>
 
 <li>
-Sample implementation a PluginBinder wrapping Blackboard services</li>
+Sample implementation of a PluginBinder wrapping Blackboard services</li>
+
+<li>
+The capability to load binders and components specified in "ini" files</li>
+
+<li>
+Support at the Node level for implementing additional services and component
+managers</li>
 
 <li>
 Further componentization of the agent infrastructure</li>
-</ul>
 
-<p>Build 8.2.1 is a patch release associated with the COUGAAR 8.2 release.
+<li>
+Further refactoring of MessageTransport</li>
+</ul>
+Build 8.2.1 is a patch release associated with the COUGAAR 8.2 release.
 Notable additions for this release include:
 <ul>
 <li>
@@ -97,7 +106,8 @@ DelayedLP actions which allow batching of things like Notifications</li>
 New component architecture APIs&nbsp;</li>
 
 <li>
-APIs and implementations of PluginBinder, MessageTransportBinder and BlackboardService</li>
+Component APIs and implementations of PluginBinder, MessageTransportBinder
+and BlackboardService</li>
 
 <li>
 Dynamic Component API</li>
@@ -234,25 +244,24 @@ alpine/demo/OPLAN_EDIT.PSP</li>
 <br>&nbsp;</ul>
 
 <h2>
-<a NAME="example"></a>MiniTestConfig Example Implementations</h2>
-ALPINE maintains only the node configurations that we are currently using
-for testing purposes and for the COUGAAR demonstrations. These node configurations
+<a NAME="example"></a>Test Harness Example Implementations</h2>
+We only maintain society configurations that we are currently using for
+testing purposes and for&nbsp; COUGAAR demonstrations. These society configurations
 are available in subdirectories under "configs" in the release. To execute
-the COUGAAR society, these nodes can be combined to form a society that
-can be executed on a single computer or distributed across multiple computers.
-Note that only <b><a href="MiniTestConfig.html">minitestconfig</a></b>
+these COUGAAR societies, these nodes can be executed on a single computer
+or distributed across multiple computers.&nbsp;
+<p>One society, <b><a href="MiniTestConfig.html">minitestconfig</a></b>
 will work "out of the box". We intend to expand this test society in subsequent
-MiniBuild releases in size and complexity. PlugIn developers are encouraged
-to use <b>minitestconfig</b> as a starting point for bringing PlugIn compliance
-up to the latest infrastructure release. In addition, the subdirectory
-"flag-config" contains the configuration files used for the Flag Demonstration
-society. This society requires the use of PlugIns from various COUGAAR
-participants.&nbsp;
-<p>There is an additional, much larger, configuration in
+releases in size and complexity to test new infrastructure features and
+to provide reference examples of components component and service design
+patterns. Plugin and component developers are encouraged to use <b>minitestconfig</b>
+as a starting point for testing their software for compliance with the
+latest infrastructure release.&nbsp;
+<p>In addition, there is a much larger configuration in
 <b>configs/small-135</b>.
-Support for running a relatively small but interesting two node society
-that runs on two machines.&nbsp; See the small-135.readme.html file in
-the configuration directory for more information.&nbsp;
+The default configuration supports running a relatively small but interesting
+two node society distributed across two machines.&nbsp; See the small-135.readme.html
+file in the configuration directory for more information.&nbsp;
 <h2>
 <a NAME="delivering"></a>Delivering Software Products&nbsp;</h2>
 Please see the Integration Information Area that can be found on the <a href="http://www.ultralog.net">UltraLog</a>
