@@ -37,7 +37,7 @@ import org.cougaar.util.CircularQueue;
 
 /**
  * A container for Plays providing operations to constrain plays with
- * {@link OperatingModePolicy)s.
+ * {@link OperatingModePolicy OperatingModePolicy}s.
  **/
 public class Playbook
 {
@@ -122,6 +122,8 @@ public class Playbook
     ConstrainingClause ompIfClause = omp.getIfClause();
     ConstraintPhrase[] ompConstraints = omp.getOperatingModeConstraints();
     Map ompModes = new HashMap();
+    // First, append the constraint itself as a Play so it dominates all following plays
+    newConstrainedPlays.add(new Play(omp.getIfClause(), omp.getOperatingModeConstraints()));
     for (int i = 0; i < ompConstraints.length; i++) {
       ConstraintPhrase cp = ompConstraints[i];
       String proxyName = cp.getProxyName();
@@ -198,8 +200,6 @@ public class Playbook
         newConstrainedPlays.add(newPlay);
       }
     }
-    // Finally, append the constraint itself as a Play
-    newConstrainedPlays.add(new Play(omp.getIfClause(), omp.getOperatingModeConstraints()));
     constrainedPlays = (Play[]) newConstrainedPlays.toArray(constrainedPlays);
   }
 }
