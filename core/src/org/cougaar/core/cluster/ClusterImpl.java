@@ -110,6 +110,7 @@ import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportWatcher;
 import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.mts.MessageStatisticsService;
+import org.cougaar.core.mts.MessageWatcherService;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageStatistics;
 
@@ -159,6 +160,7 @@ public class ClusterImpl extends Agent
   private LogPlan myLogPlan = null;
   private MessageTransportService messenger = null;
     private MessageStatisticsService statisticsService;
+    private MessageWatcherService watcherService;
 
   private static boolean isHeartbeatOn = true;
   private static boolean isMetricsHeartbeatOn = false;
@@ -311,6 +313,18 @@ public class ClusterImpl extends Agent
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) sb.getService(this, MessageTransportService.class, null);
     messenger.registerClient(this);
+
+    statisticsService = 
+	(MessageStatisticsService) sb.getService(this,
+						 MessageStatisticsService.class,
+						 null);
+
+    watcherService = 
+	(MessageWatcherService) sb.getService(this,
+					      MessageWatcherService.class,
+					      null);
+
+
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
@@ -541,13 +555,6 @@ public class ClusterImpl extends Agent
   //
 
   public MessageStatistics.Statistics getMessageStatistics(boolean reset) {
-      if (statisticsService == null) {
-	  statisticsService = 
-	      (MessageStatisticsService)
-	      getBindingSite().getServiceBroker().getService(this,
-							     MessageStatisticsService.class,
-							     null);
-      }
       if (statisticsService != null) {
 	  return statisticsService.getMessageStatistics(reset);
       } else {
@@ -902,7 +909,7 @@ public class ClusterImpl extends Agent
 
   private MessageWatcher getMessageWatcher() {
     if (_messageWatcher == null)
-      messenger.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
+      watcherService.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
     return _messageWatcher;
   }
 
