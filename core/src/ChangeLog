@@ -1,3 +1,10 @@
+2002-03-11  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Blackboard.java: 
+	* org/cougaar/core/blackboard/StandardBlackboard.java:
+	Pass ServiceBroker to BasePersistence so it can use the logging
+	service.
+
 2002-03-94  Noelle Givler  <ngivler@bbn.com>
 
 	* PropertyGroupSchedule:
