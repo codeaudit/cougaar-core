@@ -23,7 +23,6 @@ package org.cougaar.core.service;
 
 import org.cougaar.core.component.Service;
 
-// soon to move to "org.cougaar.util.Trigger":
 import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerRegistry;
 
