@@ -34,7 +34,7 @@ import java.io.*;
  * 
  */
 
-public final class ClusterIdentifier extends MessageAddress {
+public class ClusterIdentifier extends MessageAddress {
 
   /** only for infrastructure **/
   public ClusterIdentifier() {}
