@@ -1,0 +1,214 @@
+- - - - - MODULE LIST - - - - - 
+
+The COUGAAR software distribution contains a number of separate
+modules of related classes with supporting documentation and sources.
+
+aggagent	Aggregation Agent
+antex		Initial support for building COUGAAR using ANT from
+		the Apache/Jakarta project.
+build		Release and build scripts, with code generators.
+configgen	A Society configuration tool.
+contract	Experimental domain-level contract code.
+core		Criticial Core COUGAAR infrastructure.
+glm		GenericLogisticsModel.  Currently also includes
+		MilitaryLogisticsModel as well.
+javaiopatch	Patch to jdk's java.io to support incremental
+		persistence of Agents with Blackboards.
+planserver	external world interface via http.
+scalability	toolkit for scalability and performance analysis.
+server		Application server for COUGAAR agents.
+toolkit		Collection of utilities.
+tutorial	The COUGAAR tutorial.
+uiframework	A generalized User interface framework.
+whatif		experimental whatif facility.
+
+- - - - - INTRA-MODULE ORGANIZATION - - - - - 
+Each module is organized in a similar way in the source repository:
+
+<module>/src	head of java sources for module, arranged like 
+		javac would expect to see in a CLASSPATH.
+	/bin	executables, scripts and support
+	/doc	documentation, in text and html
+	/data	arbitrary (static) data for runtime use.
+	/configs  Configuration directories.  Usually contains
+		only subdirectories, each is a valid configuration.
+	/examples Like src, but is never shipped compiled. 
+		The build process should attempt to
+		compile and regression-test anything in here,
+		but generated class files are never actually
+		shipped. 
+	/regress Unit test sources for this module.  Will be
+		compiled and run by build process, reporting
+		on compile, runtime and test
+		failures. produced binaries are never
+		installed or packaged.  test should be the
+		root of a java package tree - consider
+		following "junit" conventions for format.
+	/test	For COUGAAR integration team use.  May contain
+		additional regression tests and jigs.  Suggested
+		format for organizations submitting software
+		to the cougaar maintainers is a mirror of the
+		top directory, aimed at integrators.  Eg:
+			src/	integration sources
+			doc/	integrations notes, etc
+			data/
+			configs/
+			...
+		test will not be considered by autobuilds and
+		will not be (re)distributed.
+
+
+- - - - - BUILD ORGANIZATION - - - - - 
+
+The goal is to regularize the build process as much as possible.
+
+1. release building tool should be driven by a makefile-like
+dependency description.  E.g.:
+	core: build.jar xml.jar ...
+	utils: build.jar core.jar xml.jar ...
+	...
+We are already non-portable for system building - perhaps we should
+just give in and use make to arrange the dependencies between modules,
+invocation of AlpMake/alpc.
+
+2. modules should be built separately from the "releases".  So a
+"nightly" build does the following:
+  a. build modules according to dependencies.  All module builds
+involve exactly the same steps and result in indentically organized
+products.  Example: after this pass, the following directory might
+show up in the filesystem:
+	.../builds/COUGAAR_8_0/20010630/modules/
+		build.zip
+		core.zip (e.g. has:
+			core/lib/core.jar
+			core/src.jar
+			core/doc.jar
+			core/bin/*
+			core/configs/*)
+		util.zip
+		alpine.zip
+					...
+
+  b. build nightly releases from the above products:
+	.../builds/COUGAAR_8_0/20010630/
+		cougaar.zip =
+			(file/dir)	(where it came from)
+			bin/*		modules/core.zip/core/bin/*
+			configs/*	modules/core.zip/core/configs/*
+			...
+			lib/build.jar	modules/build.zip/build/lib/build.jar
+			lib/core.jar	modules/core.zip/core/lib/core.jar
+			lib/...
+		cougaar_doc.zip =
+			...
+		cougaar_src.zip = 
+			... (or maybe just rely on separate modules)
+		alp.zip =
+			bin/*		modules/alpine.zip/alpine/bin/*
+			...
+		alp_doc.zip =
+			...
+  c. Standard "releases" would be the zip files produced in step b.
+module products from step (a) would be also be available, but are
+considered merely building blocks of real systems.  "Module builds"
+could be trivially unpacked in a "release build" directory if someone
+wanted the sources or docs.  We could also produce "moby builds" which 
+have everything - restartable ftp clients are pretty common nowadays.
+
+
+  d. other build-level wishlist items:
+	- automatic rmic instead of checked-in-stubs/skels.
+	- nice and portable module and release builders, e.g. ANT
+	- exercise regression a regression test api: introspect on
+generated .class files, anything that has a "regress()" method will be 
+classloaded and invoked.  Any output will be reported as regression
+failure. 
+	- "continuous" builds when repository is changing.  Tag successful
+builds (e.g. those which clean compile and pass all regression
+tests).  Consider using a compile server (e.g. holodeck) for this
+purpose.
+
+- - - - - PACKAGE ORGANIZATION: - - - - - 
+
+Software intended to replace core functionality should match the below
+package layout (or provide detailed arguments why it should be
+changed).
+
+Software intended to augment the core and/or provide optional core
+functionality, but is not intended to replace the "standard" software
+suite, should mirror the above layout rooted in an
+organization/project/product-specific (new) package rather than
+org.cougaar.  E.g. a reimplementation of the cluster agent
+(cluster/oc.cluster.ClusterImpl) which was optimized for small devices
+might be delivered as part of FooCo's module as
+	fooco/com.fooco.cougaar.palmtop.cluster.ClusterImpl
+where:
+"fooco/" is the module
+"com.fooco" is the company prefix
+"cougaar.palmtop" is the project's root
+"cluster" is the parallel to the core's "org.cougaar.cluster" package.
+
+None-core functionality should follow standard java package
+arrangement standards and so should not interset with any core
+packages.  In particular, "org.cougaar" may only be used by core
+cougaar software, and use of "mil.darpa.log" may only be used on
+approval. 
+
+Package view:
+
+(package)		(module)	(description)
+org.cougaar				root of the cougaar platform.
+ .lib					root of the "lib" addons
+  .gss			toolkit
+  .xml			toolkit
+  .util			toolkit
+  .param		toolkit
+  .callback		toolkit
+  .filter		toolkit
+  .aggagent.*		aggagent
+  .contract.*		contract
+  .planserver.*		planserver
+ .core			core		core cougaar system
+  .component		core		component model
+  .society		core		society-level entities
+  .cluster		core		agent-level entities
+  .plugin		core		sub-agent-level entities
+  .util			core		cougaar-related utilities.
+ .util			core		java extensions
+ .tools					root of separable tools
+  .build		build		
+  .scalability		scalability
+  .server		server
+ .domain				root of problem domains
+  .planning.*		core		Generic planning
+  .glm.*		glm		Generic Logistics
+  .mlm.*		glm		Military Logistics
+
+
+Notes:
+- Complex domain-defining packages should follow the following
+layout:
+	..domain	Core domain objects
+	    .lp		logic providers
+	    .plan	"plan" objects
+	    .asset	Assets and PGs
+	    .plugin	domain-level plugins (usually base classes)
+	    .*		anything else that is appropriate to the
+			specific domain (e.g. policy, oplan, etc).
+
+- org.cougaar.tools, org.cougaar.lib, and org.cougaar.domain are just
+deeper package roots: modules with symbols in tools should be
+completely rooted below tools (e.g. scalability) .
+	oc.lib is a package to hold (only) subpackages which are to be
+		used by other consumers - e.g. utility base classes
+		and libraries of (cougaar-specific) functionality.
+		Most of the initial contents of lib is legacy code
+		contributed to cougaar during earlier release cycles.
+	
+	oc.tools is a package to hold subpackages which implement
+		various high-level facilities, usually not used
+		directly by any other modules/packages/etc.  E.g
+		Scalability toolkit.
+
+	oc.domain is a package to hold subpackages which implement
+		alternate problem domains.

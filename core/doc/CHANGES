@@ -34,6 +34,16 @@ people to use the official name exclusively.  All core modules have
 been updated to use "glm" over "alp", but "alp" and "mlm" may also be
 used in the interim.
 
+XML support is in the process of upgrading to use the standard XERCES
+package which is part of the APACHE project.  Until complete, COUGAAR
+will continue to require both XERCES and IBM's XML4J.  We expect this
+to be fixed in the next minor release (8.0.1).
+
+Initial checkin of Component Model with BindingSite, Binder.  See
+org.cougaar.core.component.* for information.  This is still a work in
+progress.  Expect to see some parts of cougaar infrastructure ported
+to the component model in the next release (8.0.1).
+
 * MB 7.2
 
 Minor patches.  Released as a separate supported build as the basis
