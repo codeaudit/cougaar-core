@@ -38,6 +38,11 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	outstandingChildSliceCount = 0;
     }
 
+
+    public String toString() {
+	return node.getName();
+    }
+
     public void setNode(PolicyTreeNode node) {
 	this.node = node;
 	PolicyTreeNode parent = node.getParent();
@@ -98,7 +103,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	    if (use_count >= node.getScheduler().maxRunningThreadCount()) {
 		if (Scheduler.DebugThreads)
 		    System.out.println("No slices available from " 
-				       +node.getName()+
+				       +this+
 				       " for " +child+
 				       "; " +outstandingChildSliceCount+
 				       " outstanding");
@@ -117,7 +122,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 		slice.in_use = true;
 		
 		if (Scheduler.DebugThreads)
-		    System.out.println(node.getName() +
+		    System.out.println(this +
 				       " made a slice for " +child+
 				       "; " +outstandingChildSliceCount+
 				       " now outstanding");
@@ -137,7 +142,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	    // available.
 	    --outstandingChildSliceCount;
 	    if (Scheduler.DebugThreads)
-		System.out.println(node.getName() +
+		System.out.println(this +
 				   " released a slice from " +child+
 				   "; " +outstandingChildSliceCount+
 				   " now outstanding");
