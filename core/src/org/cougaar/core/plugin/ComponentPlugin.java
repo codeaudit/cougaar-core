@@ -179,9 +179,14 @@ public abstract class ComponentPlugin
     // create a callback for running this component
     Trigger myTrigger = 
       new Trigger() {
+        String pluginName = null;
         private boolean didPrecycle = false;
         // no need to "sync" when using "SyncTriggerModel"
         public void trigger() {
+          Thread currentThread = Thread.currentThread();
+          String savedName = currentThread.getName();
+          if (pluginName == null) pluginName = getBlackboardClientName();
+          currentThread.setName(pluginName);
           awakened = watcher.clearSignal();
           try {
             if (didPrecycle) {
@@ -192,6 +197,7 @@ public abstract class ComponentPlugin
             }
           } finally {
             awakened = false;
+            currentThread.setName(savedName);
           }
         }
         public String toString() {
