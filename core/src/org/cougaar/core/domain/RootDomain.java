@@ -67,8 +67,10 @@ public class RootDomain
   public Collection createLogicProviders(BlackboardServesLogicProvider alpplan, 
                                          ClusterServesLogicProvider cluster) 
   {
-    ArrayList l = new ArrayList(14); // don't let this be too small.
+    ArrayList l = new ArrayList(15); // don't let this be too small.
     LogPlanServesLogicProvider logplan = (LogPlanServesLogicProvider) alpplan;
+
+    l.add(new org.cougaar.core.relay.RelayLP(logplan, cluster));
 
     // MessageLPs
     l.add(new ReceiveAssetLP(logplan, cluster));
