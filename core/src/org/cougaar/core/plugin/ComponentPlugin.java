@@ -74,7 +74,7 @@ public class ComponentPlugin
    **/
   protected String blackboardClientName = null;
   
-  public String getBlackboardClientName() {
+  public synchronized String getBlackboardClientName() {
     if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
       buf.append(getClass().getName());
@@ -117,6 +117,7 @@ public class ComponentPlugin
     serviceBroker = pluginBindingSite.getServiceBroker();
   }
 
+  // rely on setSchedulerService for now - don't worry about revokation
   public final void setSchedulerService(SchedulerService ss) {
     myScheduler = ss;
   }
@@ -128,59 +129,11 @@ public class ComponentPlugin
   }
   public void load() {
     super.load();
-    /*
-      // rely on setSchedulerService for now - don't worry about revokation
-    myScheduler = (SchedulerService )
-      serviceBroker.getService(
-          this, 
-          SchedulerService.class, 
-          new ServiceRevokedListener() {
-            public void serviceRevoked(ServiceRevokedEvent re) {
-              if (SchedulerService.class.equals(re.getService()))
-                myScheduler = null;
-              }
-            });
-    */
-    
-
     if (myScheduler != null) {
       Trigger pokeMe = new PluginCallback();
       // Tell him to schedule me, and get his callback object
       schedulerProd = myScheduler.register(pokeMe);
     }
-    
-
-    /*
-    // proceed to get blackboard service
-    blackboard = (BlackboardService)
-      serviceBroker.getService(
-          this, 
-          BlackboardService.class,
-          new ServiceRevokedListener() {
-            public void serviceRevoked(ServiceRevokedEvent re) {
-              if (BlackboardService.class.equals(re.getService())) {
-                blackboard = null;
-                watcher = null;
-              }
-            }
-          });
-    */
-    
-    /*
-    // proceed to get alarm service
-    alarmService = (AlarmService)
-      serviceBroker.getService(
-          this, 
-          AlarmService.class,
-          new ServiceRevokedListener() {
-            public void serviceRevoked(ServiceRevokedEvent re) {
-              if (AlarmService.class.equals(re.getService())) {
-                alarmService = null;
-              }
-            }
-          });
-    */
-    
     // someone to watch over me
     watcher = new ThinWatcher();
     if (blackboard != null) {
@@ -291,6 +244,9 @@ public class ComponentPlugin
         cycle();
       }
     }
+    public String toString() {
+      return "Trigger("+ComponentPlugin.this.toString()+")";
+    }
   }
   
   protected void precycle() {
@@ -354,6 +310,9 @@ public class ComponentPlugin
         readyToRun = true;
         schedulerProd.trigger();
       }
+    }
+    public String toString() {
+      return "ThinWatcher("+ComponentPlugin.this.toString()+")";
     }
   }
 }

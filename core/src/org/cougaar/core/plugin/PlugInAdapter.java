@@ -1141,7 +1141,14 @@ public abstract class PlugInAdapter
         super.signalNotify(event);
         requestTrigger.trigger();
       }
+      public String toString() {
+        return "ThinWatcher("+PlugInAdapter.this.toString()+")";
+      }
     }
+    public String toString() {
+      return this.getClass().getName()+"("+PlugInAdapter.this.toString()+")";
+    }
+
   }
 
   /** has its own Thread **/
