@@ -127,7 +127,6 @@ public class HierarchyWorker
    * This method mainly checks that the parameters are the right 
    * number and sets the format and recurse fields.
    * <p>
-   * Uses the ServletUtil to parse the parameters.
    * @see #getHierarchyData(HttpServletRequest,SimpleServletSupport,HasRelationships,boolean,boolean,Set)
    */
   public void execute(HttpServletRequest request, 
