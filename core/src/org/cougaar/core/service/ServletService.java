@@ -45,9 +45,6 @@ import org.cougaar.core.component.Service;
  * <p>
  * "Servlet.init(..)" will be called upon <tt>register</tt>
  * and "Servlet.destroy()" will be called upon <tt>unregister</tt>.
- * Note that a <i>dummy</i> ServletConfig implementation will
- * be passed in both cases, where most methods return <tt>null</tt>.
- * This is done partially as a security precaution...
  * <p>
  * Also note that multiple concurrent "Servlet.service(..)" calls 
  * can occur, so your Servlet must be reentrant.
@@ -116,4 +113,5 @@ public interface ServletService extends Service {
    * @return the HTTPS port, or -1 if HTTPS is disabled.
    */
   int getHttpsPort();
+
 }
