@@ -83,12 +83,14 @@ public class PercentageLoadSelector
 
     private class SnapShotter extends TimerTask {
 	public void run() {
-	    Iterator itr = records.values().iterator();
-	    while (itr.hasNext()) {
-		ConsumerRecord rec = (ConsumerRecord) itr.next();
-		rec.snapshot();
+	    synchronized (records) {
+		Iterator itr = records.values().iterator();
+		while (itr.hasNext()) {
+		    ConsumerRecord rec = (ConsumerRecord) itr.next();
+		    rec.snapshot();
+		}
 	    }
-	    TreeSet set = rankChildren();
+	    rankChildren();
 	}
     }
 
@@ -153,11 +155,14 @@ public class PercentageLoadSelector
 	ts.schedule(new SnapShotter(), 5000, 1000);
     }
 
-    synchronized ConsumerRecord findRecord(String name) {
-	ConsumerRecord rec = (ConsumerRecord) records.get(name);
-	if (rec == null) {
-	    rec = new ConsumerRecord(name);
-	    records.put(name, rec);
+    ConsumerRecord findRecord(String name) {
+	ConsumerRecord rec = null;
+	synchronized (records) {
+	    rec = (ConsumerRecord) records.get(name);
+	    if (rec == null) {
+		rec = new ConsumerRecord(name);
+		records.put(name, rec);
+	    }
 	}
 	return rec;
     }
@@ -207,16 +212,16 @@ public class PercentageLoadSelector
     // RightsSelector
 
     // Too inefficient to use but simple to write...
-    private TreeSet rankChildren() {
-	orderedChildren = new TreeSet(comparator);
+    private void rankChildren() {
+	TreeSet children = new TreeSet(comparator);
 	Iterator itr = scheduler.getTreeNode().getChildren().iterator();
 	TreeNode child = null;
 	while (itr.hasNext()) {
 	    child = (TreeNode) itr.next();
-	    orderedChildren.add(child.getScheduler());
+	    children.add(child.getScheduler());
 	}
-	orderedChildren.add(scheduler);
-	return orderedChildren;
+	children.add(scheduler);
+	orderedChildren = children;
     }
 
     public SchedulableObject getNextPending() {
