@@ -21,47 +21,25 @@
 
 package org.cougaar.core.society;
 
-
-
-import java.io.*;
-import java.util.Date;
-
-/** A vacuous MessageSecurityManager.  DMSM looks like a MSM, but
- * doesn't actually add any real security at all.  Instead, it 
- * merely wraps each "secure" message inside another message for transmission.
- *
- * For debugging use, it prints '{' for each message "encoded" and
- * '}' for each message decoded.
- **/
-
-public class DummyMessageSecurityManager implements MessageSecurityManager 
+abstract public class MessageEnvelope extends Message 
 {
-    public Message secureMessage(Message m) {
-	System.err.print("{");
-	return new DummySecureMessage(m);
+
+    private Message contents;
+
+    public MessageEnvelope(Message contents) {
+	super();
+	this.contents = contents;
     }
 
-    public Message unsecureMessage(SecureMessage m) {
-	if (m instanceof DummySecureMessage) {
-	    System.err.print("}");
-	    return ((DummySecureMessage)m).getMessage();
-	} else {
-	    return null;
-	}
+    public MessageEnvelope(Message contents, MessageAddress src, MessageAddress dst) {
+	super(src, dst);
+	this.contents = contents;
     }
 
- 
-    private static class DummySecureMessage 
-	extends MessageEnvelope
-	implements SecureMessage 
-    {
-	private Message getMessage() { 
-	    return getContents();
-	}
-
-	private DummySecureMessage(Message m) {
-	    super(m, m.getOriginator(), m.getTarget());
-	}
+    // Security issue?
+    protected Message getContents() {
+	return contents;
     }
 
 }
+
