@@ -29,7 +29,6 @@ import java.net.*;
  * Parameters:
  * org.cougaar.name.server=host[:port[:lpsport]]
  * org.cougaar.name.server.port=port
- * org.cougaar.message.transportClass=name-or-class
  *
  * Arguments:
  * -ns foo sets org.cougaar.name.server.
@@ -136,7 +135,6 @@ public class Communications {
   }
 
   private void setup_defaults() {
-    put("transport", defaultTransportClass);
     put("port", REGISTRY_DEFAULT_PORT);
     put("lpsport", REGISTRY_DEFAULT_LPSPORT);
     try {
@@ -189,91 +187,12 @@ public class Communications {
   }
 
 
-  /** map of key->classname **/
-  private static final HashMap transports = new HashMap(7);
 
-  /** default transport key **/
-  private static String defaultTransportClass = null;
-
-  public static final boolean putTransport(String key, String classname) {
-    synchronized (transports) {
-      if (transports.get(key) != null) return false;
-      transports.put(key, classname);
-      transports.put(key.toLowerCase(), classname);
-      transports.put(classname, classname);
-      return true;
-    }
-  }
-  public static final String getTransport(String key) {
-    synchronized (transports) {
-      return (String) transports.get(key);
-    }
-  }
-
-  public static final String getTransport() {
-    return getTransport(defaultTransportClass);
-  }
-
-  // initialize static vars from system properties.
-  static {
-    Properties props = System.getProperties();
-    putTransport("RMI", "org.cougaar.core.society.rmi.SimpleRMIMessageTransport");
-    // putTransport("Pipe", "org.cougaar.core.society.PipedMessageTransport");
-
-    String key = props.getProperty("org.cougaar.message.transport");
-    if (key != null) {
-      if (key.indexOf('.') > -1)
-        defaultTransportClass = key;
-      else 
-        defaultTransportClass = getTransport(key);
-    }
-
-    //putTransport("Voyager", "org.cougaar.core.society.voyager.VoyagerMessageTransport");
-    String mtc = props.getProperty("org.cougaar.message.transportClass");
-    if (mtc != null) {
-      defaultTransportClass = mtc;
-    }
-
-    if (defaultTransportClass==null) {
-      defaultTransportClass = getTransport("RMI");
-    }
-  }
-
-  private static Object defaultLock = new Object();
-  private static MessageTransportService defaultMessageTransport = null;
-  private static NameServer defaultNameServer = null;
-
-  public static void setDefaultMessageTransport(MessageTransportService mt) {
-    synchronized (defaultLock) {
-      if (defaultMessageTransport!=null) 
-        throw new RuntimeException("Default MessageTransport already set.");
-      defaultMessageTransport = mt;
-    }
-  }
-
-  public static MessageTransportService getDefaultMessageTransport() {
-    return defaultMessageTransport;
-  }
-  public static NameServer getDefaultNameServer() {
-    return defaultNameServer;
-  }
     
 
   /** Start an actual NameServer instance **/
   public void startNameServer() {
-    /*
-    String tname = get("transport");
-    String clname = getTransport(tname);
-    */
-    String clname = defaultTransportClass;
-    
-    try {
-      Class cl = Class.forName(clname);
-      Method meth = cl.getMethod("startNameService", null);
-      meth.invoke(null, null);
-    } catch (Exception e) {
-      System.err.println("Exception starting transport "+clname+" :");
-      e.printStackTrace();
-    }
+	RMINameServer.create();
   }
+
 }

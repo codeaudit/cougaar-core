@@ -577,7 +577,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     getServiceBroker().addService(MessageTransportService.class, mtsp);
     theMessenger = (MessageTransportService)
       getServiceBroker().getService(this, MessageTransportService.class, null);
-    Communications.setDefaultMessageTransport(theMessenger);
+    // Communications.setDefaultMessageTransport(theMessenger);
     // theMessenger.setDisableRetransmission(disableRetransmission);
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
