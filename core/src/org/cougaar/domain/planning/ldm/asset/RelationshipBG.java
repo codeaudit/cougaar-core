@@ -27,18 +27,13 @@ import org.cougaar.domain.planning.ldm.plan.RelationshipScheduleImpl;
 public class RelationshipBG implements PGDelegate {
   protected transient NewRelationshipPG myPG;
   
+
+  public RelationshipBG() {
+  }
+
   public RelationshipBG(NewRelationshipPG pg, 
                         HasRelationships hasRelationships) {
-    myPG = (NewRelationshipPG) pg;
-
-    RelationshipScheduleImpl pgSchedule = (RelationshipScheduleImpl) pg.getRelationshipSchedule();
-    if ((pgSchedule == null) ||
-        (pgSchedule.isEmpty())){
-      init(hasRelationships);
-    } else if (!pgSchedule.getHasRelationships().equals(hasRelationships)) {
-      throw new java.lang.IllegalArgumentException("");
-    }
-
+    init(pg, hasRelationships);
   }
 
   
@@ -66,7 +61,7 @@ public class RelationshipBG implements PGDelegate {
      } else {
        // If not persistence, need to initialize the relationship schedule
        myPG = (NewRelationshipPG) in.readObject();
-       init(myPG.getRelationshipSchedule().getHasRelationships());
+       init(myPG, myPG.getRelationshipSchedule().getHasRelationships());
      }
     } catch (IOException ioe) {
       ioe.printStackTrace();
@@ -95,8 +90,18 @@ public class RelationshipBG implements PGDelegate {
     }
   }
 
-  public void init(HasRelationships hasRelationships) {
-    myPG.setRelationshipSchedule(new RelationshipScheduleImpl(hasRelationships));
+  public void init(NewRelationshipPG pg, HasRelationships hasRelationships) {
+    myPG = (NewRelationshipPG) pg;
+
+    RelationshipScheduleImpl pgSchedule = (RelationshipScheduleImpl) pg.getRelationshipSchedule();
+    if ((pgSchedule == null) ||
+        (pgSchedule.isEmpty())){
+      myPG.setRelationshipSchedule(new RelationshipScheduleImpl(hasRelationships));
+    } else if (!pgSchedule.getHasRelationships().equals(hasRelationships)) {
+       throw new java.lang.IllegalArgumentException("");
+    }
+
+
   }
 
   public boolean isSelf() {

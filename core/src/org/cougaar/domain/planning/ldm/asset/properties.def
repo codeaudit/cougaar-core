@@ -64,7 +64,7 @@ delegates=RelationshipBG relationshipBG
 relationshipBG.delegate=PGDelegate copy(PropertyGroup pg);\
         void readObject(java.io.ObjectInputStream in);\
         void writeObject(java.io.ObjectOutputStream out);\
-        void init(org.cougaar.domain.planning.ldm.plan.HasRelationships hasRelationships);\
+        void init(NewRelationshipPG pg, org.cougaar.domain.planning.ldm.plan.HasRelationships hasRelationships);\
         boolean isLocal();\
         boolean isSelf();
 
