@@ -279,6 +279,9 @@ public class ClusterImpl
     }
     ServiceBroker sb = getServiceBroker();
 
+    // add ourselves to our VM's cluster table
+    ClusterContextTable.addContext(getClusterIdentifier(), this);
+
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) 
       sb.getService(this, MessageTransportService.class, null);
@@ -292,9 +295,6 @@ public class ClusterImpl
       sb.getService(
           this, MessageWatcherService.class, null);
 
-
-    // add ourselves to our VM's cluster table
-    ClusterContextTable.addContext(getClusterIdentifier(), this);
 
     // set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
