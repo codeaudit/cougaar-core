@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * This is a simple API for a <code>Servlet</code> to access
@@ -114,6 +115,13 @@ public interface SimpleServletSupport {
    * @see #getEncodedAgentName
    */
   ClusterIdentifier getAgentIdentifier();
+
+  /**
+   * Obtain access to the logging service.
+   * <p>
+   * This is guaranteed to be non-null.
+   */
+  LoggingService getLog();
 
   /**
    * Equivalent to 

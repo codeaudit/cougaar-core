@@ -27,7 +27,9 @@ import java.util.*;
 import org.cougaar.util.UnaryPredicate;
 
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.logging.NullLoggingServiceImpl;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 
 /**
@@ -46,6 +48,7 @@ implements SimpleServletSupport
   protected ClusterIdentifier agentId;
   protected BlackboardService blackboard;
   protected NamingService ns;
+  protected LoggingService log;
 
   protected String encAgentName;
 
@@ -54,10 +57,22 @@ implements SimpleServletSupport
       ClusterIdentifier agentId,
       BlackboardService blackboard,
       NamingService ns) {
+    this(path, agentId, blackboard, ns, null);
+  }
+
+  public SimpleServletSupportImpl(
+      String path,
+      ClusterIdentifier agentId,
+      BlackboardService blackboard,
+      NamingService ns,
+      LoggingService log) {
     this.path = path;
     this.agentId = agentId;
     this.blackboard = blackboard;
     this.ns = ns;
+    this.log = 
+      ((log != null) ? log : 
+       NullLoggingServiceImpl.getNullLoggingServiceImpl());
     // cache:
     encAgentName = encodeAgentName(agentId.getAddress());
   }
@@ -84,6 +99,10 @@ implements SimpleServletSupport
 
   public ClusterIdentifier getAgentIdentifier() {
     return agentId;
+  }
+
+  public LoggingService getLog() {
+    return log;
   }
 
   public List getAllEncodedAgentNames() {

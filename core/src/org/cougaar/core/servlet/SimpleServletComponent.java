@@ -2,11 +2,11 @@
  * <copyright>
  *  Copyright 2000-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -21,6 +21,8 @@
 package org.cougaar.core.servlet;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -31,6 +33,7 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.*;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.servlet.ServletService;
 
@@ -45,25 +48,39 @@ import javax.servlet.Servlet;
  *   plugin = &lt;this-class&gt;(&lt;servlet-class&gt;, &lt;path&gt;)
  *   ...</pre><br>
  * where<pre>
- *   &lt;this-class&gt; is "org.cougaar.core.servlet.SimpleServletComponent"
- *   &lt;servlet-class&gt; is the class name of a Servlet.  If the
- *      Servlet has a "public classname(SimpleServletSupport support)"
- *      constructor then a SimpleServletSupport is passed.
- *   &lt;path&gt; is the path for the Servlet, such as "/test".
+ *   &lt;this-class&gt;
+ *      is "org.cougaar.core.servlet.SimpleServletComponent"
+ *   &lt;servlet-class&gt;
+ *      is the class name of a Servlet.
+ *      The servlet must have a zero-argument constructor.
+ *      If the Servlet has a
+ *        public void setSimpleServletSupport(SimpleServletSupport support)
+ *      method then a SimpleServletSupport is passed, which provides
+ *      <i>limited</i> access to Cougaar internals.
+ *   &lt;path&gt;
+ *      is the path for the Servlet, such as "/test".
  * </pre><br>
  * <p>
  *
  * Most of this code is "reflection-glue" to:<ul>
  *   <li>capture the (classname, path) parameters</li>
- *   <li>examine the class's constructor method(s)</li>
  *   <li>construct the class instance</li>
+ *   <li>examine the class's method(s)</li>
  *   <li>setup and create a <code>SimpleServletSupportImpl</code>
  *       instance</li>
  * </ul>
  * Most subclass developers have the classname and path hard-coded,
  * so they should consider not extending SimpleServletComponent and
- * instead use <code>BaseServletComponent</code> and 
- * SimpleServletSupportImpl directly.
+ * instead use <code>BaseServletComponent</code>.  The additional
+ * benefit is that subclasses of BaseServletComponent have full
+ * access to the ServiceBroker.
+ * <p>
+ * Bug 1073 allows for a single constructor that accepts a
+ * SimpleServletSupport, which skips the two phase<ol>
+ *   <li>construct with the zero-arg constructor</li>
+ *   <li>call the setSimpleServletSupport(support) method</li>
+ * </ol> This usage is <i>deprecated</i>, primarily due to security 
+ * concerns.  See the bug report for details.
  *
  * @see SimpleServletSupport
  */
@@ -87,11 +104,15 @@ public class SimpleServletComponent
    */
   protected ClusterIdentifier agentId;
 
+  // servlet that we'll load
+  protected Servlet servlet;
+
   //
   // Services for our SimpleServletSupport use
   //
   protected BlackboardService blackboard;
   protected NamingService ns;
+  protected LoggingService log;
 
 
   /**
@@ -120,8 +141,8 @@ public class SimpleServletComponent
 
   /**
    * Save our Servlet's configurable path, for example
-   * "/test/FOO".
-   *
+   * "/test".
+   * <p>
    * This is only set during initialization and is constant
    * for the lifetime of the Servlet.
    */
@@ -169,55 +190,98 @@ public class SimpleServletComponent
           "Class \""+classname+"\" does not implement \""+
           Servlet.class.getName()+"\"");
     }
-    
-    // find the appropriate constructor
-    boolean needsSupport;
-    java.lang.reflect.Constructor cons;
+
+    // old-style constructor (deprecated!)
+    //
+    // see bug 1073
     try {
-      cons = cl.getConstructor(
+      Constructor cons = cl.getConstructor(
           new Class[]{SimpleServletSupport.class});
-      needsSupport = true;
-    } catch (Exception e) {
+      /*
+      System.err.println(
+          "Warning: Support for the \""+
+          classname+"(SimpleServletSupport)"+
+          "\" constructor has been deprecated; see bug 1073");
+          */
+      SimpleServletSupport support;
       try {
-        cons = cl.getConstructor(new Class[]{});
-        needsSupport = false;
-      } catch (Exception e2) {
+         support = createSimpleServletSupport();
+      } catch (Exception e) {
         throw new RuntimeException(
-            "Servlet \""+classname+"\" lacks both a \""+
-            classname+"(SimpleServletSupport)\" and \""+
-            classname+"()\" constructors");
+            "Unable to create Servlet support: "+
+            e.getMessage());
       }
+      Servlet ret;
+      try {
+        ret = (Servlet) cons.newInstance(new Object[]{support});
+      } catch (Exception e) {
+        throw new RuntimeException(
+            "Unable to create Servlet instance: "+
+            e.getMessage());
+      }
+      return ret;
+    } catch (Exception e) {
+      // good
     }
 
-    // obtain the services required for support
-    SimpleServletSupport support =
-      (needsSupport ?
-       createSimpleServletSupport() :
-       null);
-
-    // create the servlet instance
-    Servlet ret;
+    // create a zero-arg instance
     try {
-      Object[] args = 
-          ((needsSupport) ? 
-           (new Object[]{support}) :
-           (new Object[] {}));
-      ret = (Servlet) cons.newInstance(args);
+      this.servlet = (Servlet) cl.newInstance();
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to create Servlet instance: "+
           e.getMessage());
     }
-    return ret;
+
+    // check for the support requirement
+    Method supportMethod;
+    try {
+      supportMethod = cl.getMethod(
+          "setSimpleServletSupport",
+          new Class[]{SimpleServletSupport.class});
+    } catch (NoSuchMethodException e) {
+      // simple non-cougaar-aware servlet
+      return servlet;
+    }
+
+    // create the support
+    SimpleServletSupport support;
+    try {
+      support = createSimpleServletSupport(servlet);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to create Servlet support: "+
+          e.getMessage());
+    }
+
+    // set the support
+    try {
+      supportMethod.invoke(servlet, new Object[]{support});
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to set Servlet support: "+
+          e.getMessage());
+    }
+
+    return servlet;
   }
-  
-  protected SimpleServletSupport createSimpleServletSupport() {
+
+  /**
+   * Obtain services for the servlet, using the servlet as
+   * the requestor.
+   */
+  protected SimpleServletSupport createSimpleServletSupport(
+      Servlet servlet) {
     // the agentId is known from "setBindingSite(..)"
 
     // get the blackboard service (for "query")
+    // FIXME the servlet wants the service (bug 1073)!!!
+    // The BlackboardClient API is awkward; maybe suggest
+    //   a simplistic BlackboardQueryService that doesn't
+    //   require the requestor to implement a special API???
     blackboard = (BlackboardService)
       serviceBroker.getService(
-          this, 
+          this, // FIXME (bug 1073)
           BlackboardService.class,
           null);
     if (blackboard == null) {
@@ -228,7 +292,7 @@ public class SimpleServletComponent
     // get the naming service (for "listAgentNames")
     ns = (NamingService)
       serviceBroker.getService(
-          this, 
+          servlet,
           NamingService.class,
           null);
     if (ns == null) {
@@ -236,31 +300,100 @@ public class SimpleServletComponent
           "Unable to obtain naming service");
     }
 
+    // get the logging service (for "getLogger")
+    log = (LoggingService)
+      serviceBroker.getService(
+          servlet,
+          LoggingService.class,
+          null);
+    if (log == null) {
+      // continue loading -- let the "support" use a null-logger.
+    }
+
     // create a new "SimpleServletSupport" instance
-    return 
+    return
       new SimpleServletSupportImpl(
-        path,
-        agentId,
-        blackboard,
-        ns);
+        path, agentId, blackboard, ns, log);
+  }
+
+  /**
+   * @deprecated see bug 1073
+   */
+  protected SimpleServletSupport createSimpleServletSupport() {
+    // just like "createSimpleServletSupport(servlet)", but
+    // passes "this" as the requestor
+
+    blackboard = (BlackboardService)
+      serviceBroker.getService(this, BlackboardService.class, null);
+    if (blackboard == null) {
+      throw new RuntimeException(
+          "Unable to obtain blackboard service");
+    }
+    ns = (NamingService)
+      serviceBroker.getService(
+          this, NamingService.class, null);
+    if (ns == null) {
+      throw new RuntimeException(
+          "Unable to obtain naming service");
+    }
+    log = (LoggingService)
+      serviceBroker.getService(
+          this, LoggingService.class, null);
+    if (log == null) {
+      // continue loading -- let the "support" use a null-logger.
+    }
+    return
+      new SimpleServletSupportImpl(
+        path, agentId, blackboard, ns, log);
   }
 
   public void unload() {
     // release all services
     super.unload();
-    if (ns != null) {
-      serviceBroker.releaseService(
-          this, NamingService.class, ns);
+
+    // old-style
+    if (servlet == null) {
+      if (log != null) {
+        serviceBroker.releaseService(
+            this, LoggingService.class, log);
+        log = null;
+      }
+      if (ns != null) {
+        serviceBroker.releaseService(
+            this, NamingService.class, ns);
+        ns = null;
+      }
+      if (blackboard != null) {
+        serviceBroker.releaseService(
+            this, BlackboardService.class, blackboard);
+        blackboard = null;
+      }
+      return;
     }
-    if (blackboard != null) {
-      serviceBroker.releaseService(
-          this, BlackboardService.class, blackboard);
+
+    // new-style
+    if (servlet != null) {
+      if (log != null) {
+        serviceBroker.releaseService(
+            servlet, LoggingService.class, log);
+        log = null;
+      }
+      if (ns != null) {
+        serviceBroker.releaseService(
+            servlet, NamingService.class, ns);
+        ns = null;
+      }
+      if (blackboard != null) {
+        serviceBroker.releaseService(
+            servlet, BlackboardService.class, blackboard);
+        blackboard = null;
+      }
+      servlet = null;
     }
   }
 
   public String toString() {
-    return 
-      classname+"("+path+")";
+    return classname+"("+path+")";
   }
 
   // odd BlackboardClient method:
