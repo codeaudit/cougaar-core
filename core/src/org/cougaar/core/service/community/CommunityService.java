@@ -44,7 +44,7 @@ public interface CommunityService extends Service {
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member.
-   * @pram name   Member name
+   * @param name   Member name
    * @return A collection of community names
    */
   Collection listParentCommunities(String member);
@@ -56,7 +56,7 @@ public interface CommunityService extends Service {
    * @param member   Name of agent to add
    * @param type     Type of member (Agent or Community)
    * @param roles    Roles provided by member agent
-   * @result              True if operation was successful
+   * @return         True if operation was successful
    */
   boolean addMember(String parent, String member, int type, String[] roles);
 
@@ -66,7 +66,7 @@ public interface CommunityService extends Service {
    * community.
    * @param agentName     Name of listener agent
    * @param communityName Community of interest
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean addListener(String agentName, String communityName);
 
@@ -76,7 +76,7 @@ public interface CommunityService extends Service {
    * specified community.
    * @param agentName    Name of listener agent
    * @param communityName Community of interest
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean removeListener(String agentName, String communityName);
 
@@ -86,7 +86,7 @@ public interface CommunityService extends Service {
    * listener list.
    * specified community.
    * @param communityName Community of interest
-   * @result              Names of listener agents
+   * @return              Names of listener agents
    */
   Collection getListeners(String communityName);
 
@@ -95,7 +95,7 @@ public interface CommunityService extends Service {
    * Removes a member (agent or community) from a community.
    * @param parent        Name of parent community
    * @param member        Name of member to remove
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean removeMember(String parent, String member);
 
@@ -130,7 +130,7 @@ public interface CommunityService extends Service {
    * Creates a new community in Yellow Pages.
    * @param communityName Name of community
    * @param attributes    Community attributes
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean createCommunity(String communityName, PropertyNameValue[] attributes);
 
@@ -139,7 +139,7 @@ public interface CommunityService extends Service {
    * Adds a new spokesagent to a community.
    * @param communityName Name of community
    * @param spokesagent   Defines agent, roles and attributes for spokesagent
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean addSpokesagent(String communityName, SpokesagentDescriptor spokesagent);
 
@@ -148,14 +148,14 @@ public interface CommunityService extends Service {
    * Removes a spokesagent from a community.
    * @param communityName Name of community
    * @param agent         Identifier for agent to remove
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean removeSpokesagent(String communityName, String agentName);
 
 
   /**
    * Lists all communities in Yellow Pages.
-   * @result  Collection of community names
+   * @return  Collection of community names
    */
   Collection listAllCommunities();
 
@@ -164,7 +164,7 @@ public interface CommunityService extends Service {
    * Finds all community members that support a given role.
    * @param communityName Name of community to query
    * @param roleName      Name of role provided by a member
-   * @result              Collection of member names
+   * @return              Collection of member names
    */
   Collection findMembersByRole(String communityName, String roleName);
 
@@ -172,7 +172,7 @@ public interface CommunityService extends Service {
   /**
    * Returns a list of roles supported by the specified community.
    * @param communityName Agents parent community
-   * @result              Collection of role names
+   * @return              Collection of role names
    */
   Collection listCommunityRoles(String communityName);
 
@@ -181,7 +181,7 @@ public interface CommunityService extends Service {
    * Returns a list of roles supported by the specified community member.
    * @param communityName Agents parent community
    * @param memberName     Name of community member
-   * @result              Collection of members role names
+   * @return              Collection of members role names
    */
   Collection listAgentRoles(String communityName, String agentName);
 
