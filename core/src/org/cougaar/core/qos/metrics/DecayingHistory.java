@@ -136,7 +136,6 @@ public abstract class DecayingHistory
 		full = true;
 		index = 0;
 	    } 
-	    return ;
 	}
     }
 
