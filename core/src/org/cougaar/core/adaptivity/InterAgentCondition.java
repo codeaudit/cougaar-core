@@ -36,8 +36,12 @@ import org.cougaar.core.relay.Relay;
  **/
 public class InterAgentCondition
   extends OMCBase
-  implements Relay.Target, Condition, UniqueObject
+  implements Relay.Source, Relay.Target, Condition, UniqueObject
 {
+
+  // FIXME this shouldn't be transient!
+  private transient Set targets = Collections.EMPTY_SET;
+
   private UID uid;
   private MessageAddress source;
   private Relay.Token owner;
@@ -51,20 +55,100 @@ public class InterAgentCondition
     this.source = src;
   }
 
+  InterAgentCondition(
+      InterAgentCondition other, UID uid, MessageAddress src, 
+      Relay.Token owner) {
+    super(other.getName(), other.getAllowedValues(), other.getValue());
+    this.owner = owner;
+    this.uid = uid;
+    this.source = src;
+  }
+
+  InterAgentCondition(String name, OMCRangeList allowedValues) {
+    super(name, allowedValues);
+  }
+
+  InterAgentCondition(String name, OMCRangeList allowedValues, Comparable initialValue) {
+    super(name, allowedValues, initialValue);
+  }
+
   // UniqueObject implementation
   public UID getUID() {
     return uid;
   }
 
+  // Initialization methods
   /**
-   * Set the UID (unique identifier) of this UniqueObject. Should
-   * never be used. The uid is always set in the constructor to match
-   * that of the Relay.Source.
+   * Set the message address of the target. This implementation
+   * presumes that there is but one target.
+   * @param target the address of the target agent.
+   **/
+  public void setTarget(MessageAddress target) {
+    targets = Collections.singleton(target);
+  }
+
+  /**
+   * Set the UID (unique identifier) of this UniqueObject. Used only
+   * during initialization.
    * @param uid the UID to be given to this
    **/
   public void setUID(UID uid) {
-    throw new RuntimeException("Attempt to change UID");
+    if (this.uid != null) throw new RuntimeException("Attempt to change UID");
+    this.uid = uid;
   }
+
+  // Relay.Source implementation
+  /**
+   * Get all the addresses of the target agents to which this Relay
+   * should be sent. For this implementation this is always a
+   * singleton set contain just one target.
+   **/
+  public Set getTargets() {
+    return targets;
+  }
+
+  /**
+   * Get an object representing the value of this Relay suitable
+   * for transmission. This implementation uses itself to represent
+   * its Content.
+   **/
+  public Object getContent() {
+    return this;
+  }
+
+  /**
+   * @return a factory to convert the content to a Relay Target.
+   **/
+  public Relay.TargetFactory getTargetFactory() {
+    return InterAgentConditionFactory.INSTANCE;
+  }
+
+  /**
+   * Set the response that was sent from a target. For LP use only.
+   * This implemenation does nothing because responses are not needed
+   * or used.
+   **/
+  public boolean updateResponse(MessageAddress target, Object response) {
+    // No response expected
+    return false;
+  }
+
+  /**
+   * This factory creates a new InterAgentCondition.
+   **/
+  private static class InterAgentConditionFactory 
+    implements Relay.TargetFactory, java.io.Serializable {
+      public static final InterAgentConditionFactory INSTANCE = 
+        new InterAgentConditionFactory();
+      private InterAgentConditionFactory() { }
+      public Relay.Target create(
+          UID uid, MessageAddress source, Object content, Relay.Token owner) {
+        InterAgentCondition iac = (InterAgentCondition) content;
+        return new InterAgentCondition(iac, uid, source, owner);
+      }
+      private Object readResolve() { return INSTANCE; }
+    }
+
 
   // Relay.Target implementation
   /**
@@ -93,9 +177,9 @@ public class InterAgentCondition
    **/
   public boolean updateContent(Object content, Relay.Token token) {
     if (token != owner) throw new IllegalArgumentException("Not owner");
-    InterAgentOperatingMode newOM = (InterAgentOperatingMode) content;
-    if (getValue().compareTo(newOM.getValue()) != 0) {
-      setValue(newOM.getValue());
+    InterAgentCondition newCond = (InterAgentCondition) content;
+    if (getValue().compareTo(newCond.getValue()) != 0) {
+      setValue(newCond.getValue());
       return true;
     }
     return false;

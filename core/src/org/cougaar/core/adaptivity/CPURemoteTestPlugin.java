@@ -49,7 +49,7 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
 
   private UIDService uidService;
 
-  private InterAgentOperatingMode cpu;
+  private InterAgentCondition cpu;
 
   private static final Double[] cpuValues = {
     new Double(1.0),
@@ -85,7 +85,7 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
   }
 
   public void setupSubscriptions() {
-    cpu = new InterAgentOperatingMode(CPU_CONDITION_NAME,
+    cpu = new InterAgentCondition(CPU_CONDITION_NAME,
                                       CPU_VALUES, cpuValues[0]);
     cpu.setTarget(new ClusterIdentifier("Provider"));
     getBlackboardService().publishAdd(cpu);
