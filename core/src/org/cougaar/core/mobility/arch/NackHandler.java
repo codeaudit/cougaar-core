@@ -51,7 +51,7 @@ public class NackHandler extends AbstractHandler {
     if (log.isInfoEnabled()) {
       log.info(
           "Handling failed move of agent "+id+
-          " to node "+((MoveTicket)ticket).getDestinationNode());
+          " to node "+moveTicket.getDestinationNode());
     }
 
     // agent is suspended -- let's resume it.

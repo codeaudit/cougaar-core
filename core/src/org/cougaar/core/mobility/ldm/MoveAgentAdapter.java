@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceInputStream;
 import org.cougaar.core.persist.PersistenceOutputStream;
@@ -42,7 +42,7 @@ import org.cougaar.core.util.XMLize;
  * Backwards compatibility for the old MoveAgent API.
  */
 class MoveAgentAdapter
-extends AgentMoveImpl 
+extends AgentControlImpl 
 implements MoveAgent, XMLizable {
 
   private transient Status myStatus;
@@ -52,7 +52,7 @@ implements MoveAgent, XMLizable {
       UID ownerUID,
       MessageAddress source,
       MessageAddress target,
-      MoveTicket ticket) {
+      Ticket ticket) {
     super(uid, ownerUID, source, target, ticket);
   }
 
@@ -60,8 +60,12 @@ implements MoveAgent, XMLizable {
       UID uid,
       MessageAddress source,
       MessageAddress target,
-      MoveTicket ticket) {
+      Ticket ticket) {
     super(uid, null, source, target, ticket);
+  }
+
+  public Ticket getTicket() {
+    return (Ticket) getAbstractTicket();
   }
 
   public Status getStatus() {
@@ -72,8 +76,8 @@ implements MoveAgent, XMLizable {
     if (xStatus != null) {
       setStatus(
           ((xStatus.getCode() == Status.OKAY) ? 
-           (SUCCESS_STATUS) : 
-           FAILURE_STATUS),
+           (MOVED) : 
+           FAILURE),
           xStatus.getThrowable());
     }
   }
@@ -93,9 +97,9 @@ implements MoveAgent, XMLizable {
   }
 
   private void setMyStatus(int status, Throwable stack) {
-    if (status == NO_STATUS) {
+    if (status == NONE) {
       myStatus = null;
-    } else if (status == SUCCESS_STATUS) {
+    } else if (status == MOVED) {
       myStatus = new Status(
           Status.OKAY, 
           ("Agent arrived at time "+System.currentTimeMillis()), 

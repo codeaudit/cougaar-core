@@ -21,7 +21,7 @@
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
@@ -35,7 +35,7 @@ public abstract class AbstractHandler implements Runnable {
 
   protected final MessageAddress id;
   protected final MessageAddress nodeId;
-  protected final AbstractTicket ticket;
+  protected final MoveTicket moveTicket;
   protected final LoggingService log;
 
   public AbstractHandler(MobilitySupport support) {
@@ -43,7 +43,7 @@ public abstract class AbstractHandler implements Runnable {
     // save these for easy base-class access
     this.id = support.getId();
     this.nodeId = support.getNodeId();
-    this.ticket = support.getTicket();
+    this.moveTicket = support.getTicket();
     this.log = support.getLog();
   }
 

@@ -38,17 +38,17 @@ implements MobilitySupport
 
   protected final MessageAddress id;
   protected final MessageAddress nodeId;
-  protected final AbstractTicket ticket;
+  protected final MoveTicket moveTicket;
   protected final LoggingService log;
 
   public AbstractMobilitySupport(
       MessageAddress id,
       MessageAddress nodeId,
-      AbstractTicket ticket,
+      MoveTicket moveTicket,
       LoggingService log) {
     this.id = id;
     this.nodeId = nodeId;
-    this.ticket = ticket;
+    this.moveTicket = moveTicket;
     this.log = log;
   }
 
@@ -66,8 +66,8 @@ implements MobilitySupport
     return nodeId;
   }
 
-  public AbstractTicket getTicket() {
-    return ticket;
+  public MoveTicket getTicket() {
+    return moveTicket;
   }
 
   // model-reg

@@ -29,7 +29,7 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.core.plugin.*;
 import org.cougaar.core.service.*;
 import org.cougaar.core.mobility.*;
-import org.cougaar.core.mobility.ldm.AgentMove;
+import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mobility.ldm.TicketIdentifier;
 import org.cougaar.core.mts.MessageAddress;
@@ -38,14 +38,14 @@ import org.cougaar.util.*;
 
 /**
  * The "RedirectMovePlugin" runs in leaf (non node-agent) agents
- * and redirects move requests (AgentMove) to the parent
+ * and redirects control requests (AgentControl) to the parent
  * node of this agent.
  * <p>
  * Note: this plugin assumes<ul>
- *   <li>All AgentMoves targetted to this agent will be redirected
+ *   <li>All AgentControls targetted to this agent will be redirected
  *       by this plugin</li>
- *   <li>All AgentMoves created by this agent are assumed to
- *       be created by this plugin, unless the move's "ownerUID"
+ *   <li>All AgentControls created by this agent are assumed to
+ *       be created by this plugin, unless the control's "ownerUID"
  *       is null.</li> 
  * </ul>
  */
@@ -57,8 +57,8 @@ extends ComponentPlugin
   private MessageAddress nodeId;
   private boolean isNode;
 
-  private IncrementalSubscription incomingMoveSub;
-  private IncrementalSubscription outgoingMoveSub;
+  private IncrementalSubscription incomingControlSub;
+  private IncrementalSubscription outgoingControlSub;
 
   private MobilityFactory mobilityFactory;
 
@@ -85,7 +85,7 @@ extends ComponentPlugin
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Loading the redirect-move-plugin in agent "+
+          "Loading the redirect-control-plugin in agent "+
           agentId+" on node "+nodeId);
     }
 
@@ -130,15 +130,15 @@ extends ComponentPlugin
       return;
     }
 
-    // agent move requests with this agent as the target
-    incomingMoveSub = (IncrementalSubscription) 
+    // agent control requests with this agent as the target
+    incomingControlSub = (IncrementalSubscription) 
       blackboard.subscribe(
-          createIncomingMovePredicate(agentId));
+          createIncomingControlPredicate(agentId));
 
-    // agent move requests with this agent as the source
-    outgoingMoveSub = (IncrementalSubscription) 
+    // agent control requests with this agent as the source
+    outgoingControlSub = (IncrementalSubscription) 
       blackboard.subscribe(
-          createOutgoingMovePredicate(agentId));
+          createOutgoingControlPredicate(agentId));
   }
 
   protected void execute() {
@@ -150,46 +150,46 @@ extends ComponentPlugin
       log.debug("Execute");
     }
 
-    if (incomingMoveSub.hasChanged()) {
+    if (incomingControlSub.hasChanged()) {
       // additions
-      Enumeration en = incomingMoveSub.getAddedList();
+      Enumeration en = incomingControlSub.getAddedList();
       while (en.hasMoreElements()) {
-        AgentMove inMove = (AgentMove) en.nextElement();
-        addedIncomingMove(inMove);
+        AgentControl inControl = (AgentControl) en.nextElement();
+        addedIncomingControl(inControl);
       }
       // ignore changes: this plugin does them
       // removals
-      en = incomingMoveSub.getRemovedList();
+      en = incomingControlSub.getRemovedList();
       while (en.hasMoreElements()) {
-        AgentMove inMove = (AgentMove) en.nextElement();
-        removedIncomingMove(inMove);
+        AgentControl inControl = (AgentControl) en.nextElement();
+        removedIncomingControl(inControl);
       }
     }
 
-    if (outgoingMoveSub.hasChanged()) {
+    if (outgoingControlSub.hasChanged()) {
       // ignore additions: this plugin does them
       // changes
-      Enumeration en = outgoingMoveSub.getChangedList();
+      Enumeration en = outgoingControlSub.getChangedList();
       while (en.hasMoreElements()) {
-        AgentMove inMove = (AgentMove) en.nextElement();
-        changedOutgoingMove(inMove);
+        AgentControl inControl = (AgentControl) en.nextElement();
+        changedOutgoingControl(inControl);
       }
       // ignore removals: this plugin does them
     }
   }
 
-  private void addedIncomingMove(AgentMove inMove) {
+  private void addedIncomingControl(AgentControl inControl) {
 
-    // assert (agentId.equals(inMove.getTarget()))
+    // assert (agentId.equals(inControl.getTarget()))
 
     // redirect to our parent node
 
-    MoveTicket ticket = inMove.getTicket();
+    AbstractTicket abstractTicket = inControl.getAbstractTicket();
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Redirecting agent mobility request "+
-          inMove.getUID()+" for agent "+
+          "Redirecting agent control request "+
+          inControl.getUID()+" for agent "+
           agentId+" to the parent node "+nodeId);
     }
 
@@ -197,171 +197,176 @@ extends ComponentPlugin
       String msg =
         "The agent mobility domain (\"mobility\")"+
         " is not available for agent "+
-        agentId+", so move request "+inMove.getUID()+
+        agentId+", so control request "+inControl.getUID()+
         " has been failed";
       if (log.isErrorEnabled()) {
         log.error(msg);
       }
-      inMove.setStatus(
-          AgentMove.FAILURE_STATUS, 
+      inControl.setStatus(
+          AgentControl.FAILURE, 
           new RuntimeException(msg));
-      blackboard.publishChange(inMove);
+      blackboard.publishChange(inControl);
       return;
     }
 
-    // FIXME - only supports moves 
-    
     // expand the ticket
-    boolean anyMissing = false;
-    MessageAddress moveA = ticket.getMobileAgent();
-    if (moveA == null) {
-      anyMissing = true;
-      moveA = agentId;
-    }
-    MessageAddress origN = ticket.getOriginNode();
-    if (origN == null) {
-      anyMissing = true;
-      origN = nodeId;
-    }
-    MessageAddress destN = ticket.getDestinationNode();
-    if (destN == null) {
-      anyMissing = true;
-      destN = nodeId;
-    }
-    MoveTicket fullTicket = ticket;
-    if (anyMissing) {
-      fullTicket = new MoveTicket(
-          ticket.getIdentifier(),
-          moveA,
-          origN,
-          destN,
-          ticket.isForceRestart());
+    AbstractTicket fullTicket = abstractTicket;
+    if (abstractTicket instanceof MoveTicket) {
+      MoveTicket ticket = (MoveTicket) abstractTicket;
+      boolean anyMissing = false;
+      MessageAddress controlA = ticket.getMobileAgent();
+      if (controlA == null) {
+	anyMissing = true;
+	controlA = agentId;
+      }
+      MessageAddress origN = ticket.getOriginNode();
+      if (origN == null) {
+	anyMissing = true;
+	origN = nodeId;
+      }
+      MessageAddress destN = ticket.getDestinationNode();
+      if (destN == null) {
+	anyMissing = true;
+	destN = nodeId;
+      }
+      if (anyMissing) {
+	fullTicket = new MoveTicket(
+				    ticket.getIdentifier(),
+				    controlA,
+				    origN,
+				    destN,
+				    ticket.isForceRestart());
+      }
+    } else if (abstractTicket instanceof AddTicket) {
+      // SARAH!
+    } else if (abstractTicket instanceof RemoveTicket) {
+    } else {
     }
 
-    AgentMove outMove = 
-      mobilityFactory.createAgentMove(
-          inMove.getUID(),
+    AgentControl outControl = 
+      mobilityFactory.createAgentControl(
+          inControl.getUID(),
           nodeId,
           fullTicket);
-    blackboard.publishAdd(outMove);
+    blackboard.publishAdd(outControl);
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Submitted redirected move request "+
-          outMove.getUID()+
+          "Submitted redirected control request "+
+          outControl.getUID()+
           " for agent "+agentId+" to node "+nodeId+
-          ", original move request is "+inMove.getUID());
+          ", original control request is "+inControl.getUID());
     }
   }
 
-  private void removedIncomingMove(AgentMove inMove) {
-    UID inMoveUID = inMove.getUID();
-    AgentMove outMove = findOutgoingMove(inMoveUID);
-    if (outMove != null) {
-      // attempt to cancel the move
+  private void removedIncomingControl(AgentControl inControl) {
+    UID inControlUID = inControl.getUID();
+    AgentControl outControl = findOutgoingControl(inControlUID);
+    if (outControl != null) {
+      // attempt to cancel the control
       if (log.isInfoEnabled()) {
         log.info(
-            "Removing in-progress move request "+outMove.getUID()+
-            " redirected from original request "+inMoveUID);
+            "Removing in-progress control request "+outControl.getUID()+
+            " redirected from original request "+inControlUID);
       }
-      blackboard.publishRemove(outMove);
+      blackboard.publishRemove(outControl);
     }
   }
 
-  private void changedOutgoingMove(AgentMove outMove) {
+  private void changedOutgoingControl(AgentControl outControl) {
 
-    int outMoveStatus = outMove.getStatusCode();
-    if (outMoveStatus == AgentMove.NO_STATUS) {
+    int outControlStatus = outControl.getStatusCode();
+    if (outControlStatus == AgentControl.NONE) {
       // not done yet.
       if (log.isDebugEnabled()) {
         log.debug(
-            "Ignoring \"no status\" change of move request "+
-            outMove.getUID()+" for agent "+agentId);
+            "Ignoring \"no status\" change of control request "+
+            outControl.getUID()+" for agent "+agentId);
       }
       return;
     }
 
-    UID inMoveUID = outMove.getOwnerUID();
-    if (inMoveUID == null) {
+    UID inControlUID = outControl.getOwnerUID();
+    if (inControlUID == null) {
       // we need a better tag!
       if (log.isDebugEnabled()) {
         log.debug(
-            "Ignoring change to move "+outMove.getUID()+
+            "Ignoring change to control "+outControl.getUID()+
             ", it has a null ownerUID and is therefore"+
             " not a redirect");
       }
       return;
     }
 
-    AgentMove inMove = findIncomingMove(
-        inMoveUID);
-    if (inMove == null) {
+    AgentControl inControl = findIncomingControl(
+        inControlUID);
+    if (inControl == null) {
       // already removed?
       if (log.isWarnEnabled()) {
         log.warn(
-            "Agent "+agentId+" move completed with status "+
-            outMove.getStatusCodeAsString()+
-            ", but the original move request "+inMoveUID+
+            "Agent "+agentId+" control completed with status "+
+            outControl.getStatusCodeAsString()+
+            ", but the original control request "+inControlUID+
             " is no longer in the blackboard");
       }
       return;
     }
 
-    if (inMove.getStatusCode() != AgentMove.NO_STATUS) {
+    if (inControl.getStatusCode() != AgentControl.NONE) {
       // already removed?
       if (log.isWarnEnabled()) {
         log.warn(
-            "Agent "+agentId+" move completed with status "+
-            outMove.getStatusCodeAsString()+
-            ", but the original move request "+
-            inMoveUID+
+            "Agent "+agentId+" control completed with status "+
+            outControl.getStatusCodeAsString()+
+            ", but the original control request "+
+            inControlUID+
             " already has its status set to "+
-            inMove.getStatusCodeAsString());
+            inControl.getStatusCodeAsString());
       }
       return;
     }
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Copying redirected agent "+agentId+" move status "+
-          outMove.getStatusCodeAsString()+
-          " from "+outMove.getUID()+" to original "+
-          inMove.getUID());
+          "Copying redirected agent "+agentId+" control status "+
+          outControl.getStatusCodeAsString()+
+          " from "+outControl.getUID()+" to original "+
+          inControl.getUID());
     }
 
-    inMove.setStatus(
-        outMoveStatus, 
-        outMove.getFailureStackTrace());
-    blackboard.publishChange(inMove);
+    inControl.setStatus(
+        outControlStatus, 
+        outControl.getFailureStackTrace());
+    blackboard.publishChange(inControl);
 
-    // we're done with the move now
-    blackboard.publishRemove(outMove);
+    // we're done with the control now
+    blackboard.publishRemove(outControl);
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Original move request \""+inMove.getUID()+
-          "\" status updated to "+inMove.getStatusCodeAsString());
+          "Original control request \""+inControl.getUID()+
+          "\" status updated to "+inControl.getStatusCodeAsString());
     }
   }
 
   // could cache this:
 
-  private AgentMove findIncomingMove(
-      UID incomingMoveUID) {
-    return (AgentMove) query(
-        incomingMoveSub, incomingMoveUID);
+  private AgentControl findIncomingControl(
+      UID incomingControlUID) {
+    return (AgentControl) query(
+        incomingControlSub, incomingControlUID);
   }
 
-  private AgentMove findOutgoingMove(
-      UID incomingMoveUID) {
-    if (incomingMoveUID != null) {
-      Collection real = outgoingMoveSub.getCollection();
+  private AgentControl findOutgoingControl(
+      UID incomingControlUID) {
+    if (incomingControlUID != null) {
+      Collection real = outgoingControlSub.getCollection();
       int n = real.size();
       if (n > 0) {
         for (Iterator iter = real.iterator(); iter.hasNext(); ) {
-          AgentMove move = (AgentMove) iter.next();
-          if (incomingMoveUID.equals(move.getOwnerUID())) {
-            return move;
+          AgentControl control = (AgentControl) iter.next();
+          if (incomingControlUID.equals(control.getOwnerUID())) {
+            return control;
           }
         }
       }
@@ -389,14 +394,14 @@ extends ComponentPlugin
     return null;
   }
 
-  private static UnaryPredicate createIncomingMovePredicate(
+  private static UnaryPredicate createIncomingControlPredicate(
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
         public boolean execute(Object o) {
-          if (o instanceof AgentMove) {
-            AgentMove move = (AgentMove) o;
-            MessageAddress target = move.getTarget();
+          if (o instanceof AgentControl) {
+            AgentControl control = (AgentControl) o;
+            MessageAddress target = control.getTarget();
             return 
               ((target == null) || 
                agentId.equals(target));
@@ -406,14 +411,14 @@ extends ComponentPlugin
       };
   }
 
-  private static UnaryPredicate createOutgoingMovePredicate(
+  private static UnaryPredicate createOutgoingControlPredicate(
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
         public boolean execute(Object o) {
-          if (o instanceof AgentMove) {
-            AgentMove move = (AgentMove) o;
-            MessageAddress source = move.getSource();
+          if (o instanceof AgentControl) {
+            AgentControl control = (AgentControl) o;
+            MessageAddress source = control.getSource();
             return 
               ((source == null) ||
                (agentId.equals(source)));

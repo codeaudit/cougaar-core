@@ -39,7 +39,6 @@ import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.RemoveTicket;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.arch.*;
-import org.cougaar.core.mobility.ldm.AgentMove;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.AgentTransfer;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
@@ -70,14 +69,16 @@ extends AbstractMobilityPlugin
   protected void addedAgentControl(AgentControl control) {
     if (!(isNode)) return;
     
-    //if(control instanceof AgentMove) {
-    AbstractTicket ticket = control.getAbstractTicket();
-    if(ticket instanceof MoveTicket) {
-    
-      //Ticket ticket = ((AgentMove)control).getTicket();  
-    MessageAddress id = ((MoveTicket)ticket).getMobileAgent();
-    MessageAddress origNode = ((MoveTicket)ticket).getOriginNode();
-    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
+    AbstractTicket abstractTicket = control.getAbstractTicket();
+    if (!(abstractTicket instanceof MoveTicket)) {
+      // SARAH!
+      return;
+    }
+
+    MoveTicket moveTicket = (MoveTicket) abstractTicket;
+    MessageAddress id = moveTicket.getMobileAgent();
+    MessageAddress origNode = moveTicket.getOriginNode();
+    MessageAddress destNode = moveTicket.getDestinationNode();
     
     if ((id == null) ||
         (id.equals(nodeId))) {
@@ -89,7 +90,7 @@ extends AbstractMobilityPlugin
         log.error(s);
       }
       Throwable stack = new RuntimeException(s);
-      control.setStatus(AgentMove.FAILURE_STATUS, stack);
+      control.setStatus(AgentControl.FAILURE, stack);
       blackboard.publishChange(control);
       return;
     }
@@ -108,7 +109,7 @@ extends AbstractMobilityPlugin
         log.error(s);
       }
       Throwable stack = new RuntimeException(s);
-      control.setStatus(AgentMove.FAILURE_STATUS, stack);
+      control.setStatus(AgentControl.FAILURE, stack);
       blackboard.publishChange(control);
       return;
     }
@@ -117,7 +118,7 @@ extends AbstractMobilityPlugin
     if ((destNode == null) || 
         (nodeId.equals(destNode))) {
       // already at destination node
-      isTrivialMove = (!(((MoveTicket)ticket).isForceRestart()));
+      isTrivialMove = (!(moveTicket.isForceRestart()));
     } else {
       // check remote destination node
       //
@@ -192,7 +193,7 @@ extends AbstractMobilityPlugin
         // mark as moving
         if (!(isTrivialMove)) {
           ae.isMoving = true;
-          ae.move = (AgentMove)control;
+          ae.control = control;
           ae.transfer = null;
         }
       }
@@ -234,7 +235,7 @@ extends AbstractMobilityPlugin
     MobilitySupportImpl support = 
       new MobilitySupportImpl(
           agent, control, null,
-          id, ticket);
+          id, moveTicket);
 
     AbstractHandler h;
     if ((destNode == null) ||
@@ -247,7 +248,6 @@ extends AbstractMobilityPlugin
     }
 
     queue(id, h, support);
-    }
   }
   
   /** a control was changed. */
@@ -264,98 +264,110 @@ extends AbstractMobilityPlugin
 
     if (!(isNode)) return;
 
-    AbstractTicket ticket = transfer.getTicket();
-    
-    if(ticket instanceof MoveTicket)
-      {
-	MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
-	if (destNode == null) {
-	  // not expected, since only remote controls
-	  // create transfers
-	  if (log.isErrorEnabled()) {
-	    log.error(
-		      "Unexpected agent-transfer "+transfer.getUID()+
-		      " added on node "+nodeId+
-		      " with null destination node, ticket: "+ticket);
-	  }
-	  return;
-	} else if (!(nodeId.equals(destNode))) {
-	  // created by this plugin
-	  if (log.isDebugEnabled()) {
-	    log.debug(
-		      "Ignoring agent transfer to node "+destNode+
-		      " that doesn't match this node "+nodeId);
-	  }
-	  return;
-	}
-	
-	MessageAddress id = ((MoveTicket)ticket).getMobileAgent();
-	
-	// make sure agent is not registered, lock in arrival
-	String errorMsg = null;
-	synchronized (entries) {
-	  AgentEntry ae = (AgentEntry) entries.get(id);
-	  if (ae == null) {
-	    ae = new AgentEntry(id);
-	  }
-	  if (ae.isMoving) {
-	    // agent is leaving this node?
-	    errorMsg = "Unable to accept remote agent "+id+
-	      ", a move is already in progress: "+ae;
-	  } else if (ae.isRegistered) {
-	    // already moving or adding the agent?
-	    errorMsg = 
-	      "Unable to accept remote agent "+id+
-	      ", that agent is already on node "+nodeId+": "+ae;
-	  } else {
-	    ae.isMoving = true;
-	    ae.move = null;
-	    ae.transfer = transfer;
-	  }
-	}
-	
-	if (errorMsg != null) {
-	  if (log.isErrorEnabled()) {
-	    log.error(errorMsg);
-	  }
-	  Throwable stack = new RuntimeException(errorMsg);
-	  transfer.setStatus(AgentTransfer.FAILURE_STATUS, stack);
-	  blackboard.publishChange(transfer);
-	  return;
-	}
-	
-	StateTuple state = transfer.getState();
-	
-	// remove the completed transfer
-	//
-	// this may complicate debugging, but it helps ensure
-	// GC of captured agent state
-	blackboard.publishRemove(transfer);
-	
-	MobilitySupportImpl support = 
-	  new MobilitySupportImpl(
-				  null, null, transfer,
-				  id, ticket);
-	
-	AbstractHandler h =
-	  new ArrivalHandler(
-			     support, state);
-	
-	queue(id, h, support);
+    AbstractTicket abstractTicket = transfer.getTicket();
+
+    if (!(abstractTicket instanceof MoveTicket)) {
+      if (log.isErrorEnabled()) {
+	log.error("Invalid transfer ticket "+abstractTicket);
       }
+      return;
+    }
+
+    // must be a move ticket
+    MoveTicket moveTicket = (MoveTicket) abstractTicket;
+
+    MessageAddress destNode = moveTicket.getDestinationNode();
+    if (destNode == null) {
+      // not expected, since only remote controls
+      // create transfers
+      if (log.isErrorEnabled()) {
+	log.error(
+		  "Unexpected agent-transfer "+transfer.getUID()+
+		  " added on node "+nodeId+
+		  " with null destination node, ticket: "+moveTicket);
+      }
+      return;
+    } else if (!(nodeId.equals(destNode))) {
+      // created by this plugin
+      if (log.isDebugEnabled()) {
+	log.debug(
+		  "Ignoring agent transfer to node "+destNode+
+		  " that doesn't match this node "+nodeId);
+      }
+      return;
+    }
+    
+    MessageAddress id = moveTicket.getMobileAgent();
+    
+    // make sure agent is not registered, lock in arrival
+    String errorMsg = null;
+    synchronized (entries) {
+      AgentEntry ae = (AgentEntry) entries.get(id);
+      if (ae == null) {
+	ae = new AgentEntry(id);
+      }
+      if (ae.isMoving) {
+	// agent is leaving this node?
+	errorMsg = "Unable to accept remote agent "+id+
+	  ", a move is already in progress: "+ae;
+      } else if (ae.isRegistered) {
+	// already moving or adding the agent?
+	errorMsg = 
+	  "Unable to accept remote agent "+id+
+	  ", that agent is already on node "+nodeId+": "+ae;
+      } else {
+	ae.isMoving = true;
+	ae.control = null;
+	ae.transfer = transfer;
+      }
+    }
+    
+    if (errorMsg != null) {
+      if (log.isErrorEnabled()) {
+	log.error(errorMsg);
+      }
+      Throwable stack = new RuntimeException(errorMsg);
+      transfer.setStatus(AgentTransfer.FAILURE_STATUS, stack);
+      blackboard.publishChange(transfer);
+      return;
+    }
+    
+    StateTuple state = transfer.getState();
+    
+    // remove the completed transfer
+    //
+    // this may complicate debugging, but it helps ensure
+    // GC of captured agent state
+    blackboard.publishRemove(transfer);
+    
+    MobilitySupportImpl support = 
+      new MobilitySupportImpl(
+			      null, null, transfer,
+			      id, moveTicket);
+    
+    AbstractHandler h =
+      new ArrivalHandler(
+			 support, state);
+    
+    queue(id, h, support);
   }
+
   /** handle response to a control of a local agent. */
   protected void changedAgentTransfer(AgentTransfer transfer) {
     
     if (!(isNode)) return;
     
-    AbstractTicket ticket = transfer.getTicket();
+    AbstractTicket abstractTicket = transfer.getTicket();
     
-    // FIXME - only supports moves
+    if (!(abstractTicket instanceof MoveTicket)) {
+      // only care about moves
+      return;
+    }
+    MoveTicket moveTicket = (MoveTicket) abstractTicket;
 
-    MessageAddress id = ((MoveTicket)ticket).getMobileAgent();
+    MessageAddress id = moveTicket.getMobileAgent();
 
-    MessageAddress origNode = ((MoveTicket)ticket).getOriginNode();
+    MessageAddress origNode = moveTicket.getOriginNode();
     if ((origNode != null) &&
         (!(nodeId.equals(origNode)))) {
       if (log.isDebugEnabled()) {
@@ -417,7 +429,7 @@ extends AbstractMobilityPlugin
       } else {
         agent = ae.agent;
         ae.isMoving = true;
-        ae.move = null;
+        ae.control = null;
         ae.transfer = transfer;
       }
     }
@@ -449,7 +461,7 @@ extends AbstractMobilityPlugin
     MobilitySupportImpl support = 
       new MobilitySupportImpl(
           agent, control, transfer,
-          id, ticket);
+          id, moveTicket);
 
     AbstractHandler h;
     if (isNack) {
@@ -617,7 +629,7 @@ extends AbstractMobilityPlugin
 
     public boolean isMoving;
 
-    public AgentMove move;
+    public AgentControl control;
     public AgentTransfer transfer;
 
     public AgentEntry(MessageAddress id) {
@@ -626,9 +638,9 @@ extends AbstractMobilityPlugin
 
     public String toString() {
       return 
-        "move request agent "+id+
-        ((move != null) ? 
-         (" moving with "+ move.getTicket()) :
+        "control request for agent "+id+
+        ((control != null) ? 
+         (" with ticket "+ control.getAbstractTicket()) :
          "");
     }
   }
@@ -647,11 +659,11 @@ extends AbstractMobilityPlugin
           AgentControl control,
           AgentTransfer transfer,
           MessageAddress id,
-          AbstractTicket ticket) {
+          MoveTicket moveTicket) {
         super(
             id, 
             RootMobilityPlugin.this.nodeId, 
-            ticket, 
+            moveTicket, 
             RootMobilityPlugin.this.log);
         this.agent = agent;
         this.control = control;
@@ -659,7 +671,7 @@ extends AbstractMobilityPlugin
       } 
 
       public void onDispatch() {
-        MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
+        MessageAddress destNode = moveTicket.getDestinationNode();
         try {
           Method m = agent.getClass().getMethod(
               "onDispatch",
@@ -710,7 +722,7 @@ extends AbstractMobilityPlugin
         AgentTransfer newTransfer = 
           createAgentTransfer(
 			      control.getUID(),
-			      ticket,
+			      moveTicket,
 			      tuple);
         transfer = newTransfer;
         publishAddLater(newTransfer);

@@ -23,6 +23,7 @@ package org.cougaar.core.mobility.ldm;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
@@ -39,39 +40,24 @@ public interface MobilityFactory extends Factory {
   Object createTicketIdentifier();
 
   /**
-   * Create a request that an agent be moved, which is
-   * sent to the mobile agent itself.
+   * Create a request that an agent be added/removed/moved, 
+   * which is sent directly to the specified target.
    * <p>
-   * This is the <i>typical usage</i>, where the request 
-   * first passes through the mobile agent before passing 
-   * to that agent's node.
+   * Add requests must specify the node address as the 
+   * target.
    * <p>
-   * Equivalent to calling:<pre>
-   *   MessageAddress addr = ticket.getMobileAgent();
-   *   if (addr == null) use the local agent
-   *   createAgentMove(ownerUID, addr, ticket);
-   * </pre>
+   * Remove requests must specify either the agent or its
+   * node as the target.
+   * <p>
+   * Move requests must specify either null, the agent,
+   * or the node running the agent that is to be moved.
+   * If the agent is specified, the request first
+   * passes through the agent (RedirectMovePlugin).
    */
-  AgentMove createAgentMove(
-      UID ownerUID,
-      MoveTicket ticket);
-
-  /**
-   * Create a request that an agent be moved, which
-   * is sent directly to the specified target.
-   * <p>
-   * The target is either null, the mobile agent,
-   * or the node running the mobile agent.  If the
-   * mobile agent is specified, the request first
-   * passes through the mobile agent.
-   * <p>
-   * In the future this may be used to send the request
-   * directly to the node that contains the agent.
-   */
-  AgentMove createAgentMove(
+  AgentControl createAgentControl(
       UID ownerUID,
       MessageAddress target,
-      MoveTicket ticket);
+      AbstractTicket abstractTicket);
 
 
   // old API
@@ -88,7 +74,7 @@ public interface MobilityFactory extends Factory {
    *
    * @see AgentMove new API
    */
-  MoveAgent createMoveAgent(MoveTicket ticket);
+  MoveAgent createMoveAgent(Ticket ticket);
 
 
   // the rest is for the infrastructure:
@@ -100,7 +86,7 @@ public interface MobilityFactory extends Factory {
    */
   AgentTransfer createAgentTransfer(
       UID ownerUID,
-      AbstractTicket ticket,
+      MoveTicket moveTicket,
       StateTuple state);
 
 }

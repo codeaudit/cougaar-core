@@ -61,7 +61,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
       if (log.isInfoEnabled()) {
         log.info(
             "Begin remote transfer of agent "+id+" from "+
-            nodeId+" to "+((MoveTicket)ticket).getDestinationNode());
+            nodeId+" to "+moveTicket.getDestinationNode());
       }
 
       checkTicket();
@@ -121,11 +121,11 @@ public class DispatchRemoteHandler extends AbstractHandler {
     if (log.isDebugEnabled()) {
       log.debug(
           "Check dispatch ticket on node "+nodeId+
-          " of agent "+id+" and ticket "+ticket);
+          " of agent "+id+" and ticket "+moveTicket);
     }
 
     // check for non-local destination
-    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
+    MessageAddress destNode = moveTicket.getDestinationNode();
     if ((destNode == null) ||
         (destNode.equals(nodeId))) {
       throw new InternalError(
@@ -133,7 +133,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
 
     // check agent assertion
-    MessageAddress mobileAgent = ((MoveTicket)ticket).getMobileAgent();
+    MessageAddress mobileAgent = moveTicket.getMobileAgent();
     if ((mobileAgent != null) &&
         (!(mobileAgent.equals(id)))) {
       throw new MobilityException(
@@ -142,7 +142,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
 
     // check origin assertion
-    MessageAddress originNode = ((MoveTicket)ticket).getOriginNode();
+    MessageAddress originNode = moveTicket.getOriginNode();
     if ((originNode != null) &&
         (!(originNode.equals(nodeId)))) {
       throw new MobilityException(

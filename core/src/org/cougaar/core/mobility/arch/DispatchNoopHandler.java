@@ -77,17 +77,17 @@ public class DispatchNoopHandler extends AbstractHandler {
     if (log.isDebugEnabled()) {
       log.debug(
           "Check dispatch ticket on node "+nodeId+
-          " of agent "+id+" and ticket "+ticket);
+          " of agent "+id+" and ticket "+moveTicket);
     }
 
     // check for non-restart
-    if (((MoveTicket)ticket).isForceRestart()) {
+    if (moveTicket.isForceRestart()) {
       throw new MobilityException(
           "Noop dispatch on a force-restart?");
     }
 
     // check for local
-    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
+    MessageAddress destNode = moveTicket.getDestinationNode();
     if ((destNode != null) &&
         (!(destNode.equals(nodeId)))) {
       throw new MobilityException(
@@ -95,7 +95,7 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
 
     // check agent assertion
-    MessageAddress mobileAgent = ((MoveTicket)ticket).getMobileAgent();
+    MessageAddress mobileAgent = moveTicket.getMobileAgent();
     if ((mobileAgent != null) &&
         (!(mobileAgent.equals(id)))) {
       throw new MobilityException(
@@ -104,7 +104,7 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
 
     // check origin assertion
-    MessageAddress originNode = ((MoveTicket)ticket).getOriginNode();
+    MessageAddress originNode = moveTicket.getOriginNode();
     if ((originNode != null) &&
         (!(originNode.equals(nodeId)))) {
       throw new MobilityException(

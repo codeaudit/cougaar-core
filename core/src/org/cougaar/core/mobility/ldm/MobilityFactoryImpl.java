@@ -25,6 +25,7 @@ import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentifier;
 import org.cougaar.core.service.UIDService;
@@ -53,7 +54,7 @@ class MobilityFactoryImpl implements MobilityFactory {
     return new TicketIdentifier(uid);
   }
 
-  public MoveAgent createMoveAgent(MoveTicket ticket) {
+  public MoveAgent createMoveAgent(Ticket ticket) {
     Object tid = ticket.getIdentifier();
     if (!(tid instanceof TicketIdentifier)) {
       throw new IllegalArgumentException(
@@ -76,42 +77,23 @@ class MobilityFactoryImpl implements MobilityFactory {
           uid, source, target, ticket);
   }
 
-  public AgentMove createAgentMove(
-      UID ownerUID,
-      MoveTicket ticket) {
-    MessageAddress target = ticket.getMobileAgent();
-    if ((target == null) ||
-        (target.equals(agentId))) {
-      target = nodeId;
-    } else {
-      target = ticket.getOriginNode();
-      if (target != null) {
-        // warning: if origin-node doesn't exist, this 
-        // request will retransmit forever.
-      } else {
-        target = agentId;
-      }
-    }
-    return createAgentMove(ownerUID, target, ticket);
-  }
-
-  public AgentMove createAgentMove(
+  public AgentControl createAgentControl(
       UID ownerUID,
       MessageAddress target,
-      MoveTicket ticket) {
+      AbstractTicket ticket) {
     MessageAddress source = agentId;
     // bug 1325
     source = makeCID(source);
     target = makeCID(target);
     //
     UID uid = uidService.nextUID();
-    return new AgentMoveImpl(
+    return new AgentControlImpl(
         uid, ownerUID, agentId, target, ticket);
   }
 
   public AgentTransfer createAgentTransfer(
 					   UID ownerUID,
-					   AbstractTicket ticket,
+					   MoveTicket moveTicket,
 					   StateTuple state) {
     if (!(agentId.equals(nodeId))) {
       throw new RuntimeException(
@@ -123,7 +105,7 @@ class MobilityFactoryImpl implements MobilityFactory {
     // FIXME - only set up for move tickets
     
     MessageAddress source = agentId;
-    MessageAddress target = ((MoveTicket)ticket).getDestinationNode();
+    MessageAddress target = moveTicket.getDestinationNode();
     if (target == null) {
       target = nodeId;
     }
@@ -133,7 +115,7 @@ class MobilityFactoryImpl implements MobilityFactory {
     //
     UID uid = uidService.nextUID();
     return new AgentTransferImpl(
-				 uid, ownerUID, source, target, ticket, state);
+				 uid, ownerUID, source, target, moveTicket, state);
     
   }
   

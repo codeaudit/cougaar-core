@@ -39,9 +39,8 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobileAgentService;
 import org.cougaar.core.mobility.MobilityException;
-import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.arch.*;
-//import org.cougaar.core.mobility.ldm.AgentMove;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.AgentTransfer;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
@@ -402,7 +401,7 @@ public abstract class AbstractMobilityPlugin
 
   protected AgentTransfer createAgentTransfer(
       UID controlUID,
-      AbstractTicket ticket,
+      MoveTicket moveTicket,
       StateTuple state) {
     if (mobilityFactory == null) {
       throw new RuntimeException(
@@ -412,7 +411,7 @@ public abstract class AbstractMobilityPlugin
     return
       mobilityFactory.createAgentTransfer(
           controlUID,
-          ticket,
+          moveTicket,
           state);
   }
 

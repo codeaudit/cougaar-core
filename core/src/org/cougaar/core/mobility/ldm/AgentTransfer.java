@@ -44,7 +44,7 @@ public interface AgentTransfer extends UniqueObject {
 
   /**
    * Get the optional UID of the object that "owns" this 
-   * transfer request, which is typically an AgentMove
+   * transfer request, which is typically an AgentControl
    * object's UID.
    */
   UID getOwnerUID();

@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.BlackboardClient;
 
-import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.ldm.MoveAgent;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 
@@ -237,8 +237,8 @@ implements BlackboardClient
     }
     Object ticketId =
       mobilityFactory.createTicketIdentifier();
-    MoveTicket ticket = 
-      new MoveTicket(
+    Ticket ticket = 
+      new Ticket(
 		 ticketId,
 		 mobileAgentAddr,
 		 originNodeAddr,
