@@ -29,7 +29,7 @@ package org.cougaar.core.thread;
 
 /**
  * The standard hiearchical thread service implementation uses this
- * extension of @link Scheduler to handle the propagation of rights.
+ * extension of {@link Scheduler} to handle the propagation of rights.
  */
 public class PropagatingScheduler extends Scheduler
 {

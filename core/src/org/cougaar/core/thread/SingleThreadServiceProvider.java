@@ -27,9 +27,9 @@ import java.util.List;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * This Component provides a very simple, serializing @link
- * ThreadService for its container.  The implementation is @link
- * SingleThreadServiceProxy,
+ * This Component provides a very simple, serializing {@link
+ * ThreadService} for its container.  The implementation is
+ * SingleThreadServiceProxy.
  */
 public class SingleThreadServiceProvider
     extends TrivialThreadServiceProvider

@@ -45,8 +45,8 @@ import org.cougaar.core.servlet.ServletFrameset;
  * This servlet displays a more or less current list of {@link
  * Schedulable}s, both running and queued, at all levels and for all
  * lanes, in a way that's vaguely remniscent of the unix 'top'
- * command.  It's created by @link TopPlugin and uses the @link
- * ThreadStatusService to get its snapshot lists.  The access path is
+ * command.  It's created by {@link TopPlugin} and uses the {@link
+ * ThreadStatusService} to get its snapshot lists.  The access path is
  * <b>/threads/top</b>.
  */
 final class TopServlet extends ServletFrameset

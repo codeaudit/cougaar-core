@@ -29,7 +29,7 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 
 /**
- * This is the standard implementation of @link RightsSelector.  It
+ * This is the standard implementation of {@link RightsSelector}.  It
  * uses a round-robin approach to offer rights equally among its
  * own {@link Scheduler}'s thread and those of its children.
  */

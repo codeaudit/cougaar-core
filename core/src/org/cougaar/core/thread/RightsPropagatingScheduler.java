@@ -29,7 +29,7 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 
 /**
- * This experimenatal extension of @Scheduler is not currently used.
+ * This experimenatal extension of {@link Scheduler} is not currently used.
  */
 public class RightsPropagatingScheduler extends Scheduler
 {

@@ -38,7 +38,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * The ServiceProvider for the simple {@link ThreadService}s. The
- * default implementation is @link TrivialThreadServiceProxy.
+ * default implementation is TrivialThreadServiceProxy.
  *
  */
 public class TrivialThreadServiceProvider 

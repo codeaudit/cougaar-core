@@ -41,7 +41,7 @@ import org.cougaar.core.service.ThreadService;
  * This class listens for events on the closest ThreadService,
  * collects information about every consumer, and periodically uploads
  * that information the the metrics service.  It's typically
- * instantiated by the @link AgentControlPlugin, which implies that
+ * instantiated by the {@link AgentControlPlugin}, which implies that
  * it's watching the ThreadService for an Agent.
  */
 public class SchedulerWatcher

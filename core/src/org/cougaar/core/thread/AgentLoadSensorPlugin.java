@@ -47,8 +47,8 @@ import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * This Plugin provides the @klink AgentLoadService for other Plugins
- * in the same Agetnt.  The service implementation is an inner class.
+ * This Plugin provides the {@link AgentLoadService} for other Plugins
+ * in the same Agent.  The service implementation is an inner class.
  */
 public class AgentLoadSensorPlugin
     extends ComponentPlugin

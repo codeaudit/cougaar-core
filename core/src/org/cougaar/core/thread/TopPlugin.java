@@ -27,26 +27,35 @@
 package org.cougaar.core.thread;
 
 import java.util.Timer;
+import java.util.TimerTask; // imported only for javadoc
 
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * This component is used to create the {@link TopServlet}, which it
- * will do unless the "servlet" parameter is set to "false", and the
- * {@link RogueThreadDetector}, which it will do unless the "detector"
- * parameter is set to "false".  
+ * This component is used to create the TopServlet, which it will do
+ * unless the "servlet" parameter is set to "false", and the
+ * RogueThreadDetector, which it will do unless the "detector"
+ * parameter is set to "false".
+ *
+ * The servlet displays a more or less current list of {@link
+ * Schedulable}s, both running and queued, at all levels and for all
+ * lanes, in a way that's vaguely remniscent of the unix 'top'
+ * command. The access path is <b>/threads/top</b>.
  * 
- * The period of the @link RogueThreadDetector defaults to 5000 and
- * can be set to some other value with the "period" value.  It will
- * run as a TimerTask in a native @link Timer, rather than using
- * the {@link ThreadService}.
+ * The RogueThreadDetector is a {@link TimerTask} running a {@link
+ * Timer} (i.e., it does not use the {@link ThreadService}).  Its
+ * function is to log {@link Schedulable}s that have been running too long.
+ * The period of the task defaults to 5000 and can be set to some
+ * other value with the "period" value.
+ * 
  *
  * As if that weren't enough, it can also be used for yet another
- * purpose, to run a test of the @link RogueThreadDetector, which it
- * exercises by running a Schedulable that intentionally runs for too
- * long.  To enable this test, set the "test" parameter to "true".
+ * purpose, to run a test of the RogueThreadDetector, which it
+ * exercises by running a {@link Schedulable} that intentionally runs
+ * for too long.  To enable this test, set the "test" parameter to
+ * "true".
  *
  * This is designed to be a Node-level plugin.
  */

@@ -26,8 +26,8 @@ import java.util.ArrayList;
 
 /**
  * The serializing trivial implementation of Thread Service.  It
- * consists of a single @link SerialThreadRunner and @link
- * SerialThreadQueue.
+ * consists of a single {@link SerialThreadRunner} and {@link
+ * SerialThreadQueue}.
  */
 final class SingleThreadServiceProxy
     extends TrivialThreadServiceProxy

@@ -31,9 +31,9 @@ import java.util.Timer;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * The trivial implementation of @link ThreadService.  It uses {@link
- * TrivialSchedulable}s and a very simple pool (@link
- * TrivialThreadPool).
+ * The trivial implementation of {@link ThreadService}.  It uses {@link
+ * TrivialSchedulable}s and a very simple pool ({@link
+ * TrivialThreadPool}).
  */
 class TrivialThreadServiceProxy
     implements ThreadService

@@ -31,8 +31,8 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.CircularQueue;
 
 /**
- * This utility class embads a @link CircularQueue in its
- * own @Schedulable, the body of which processes elements on the queue
+ * This utility class embads a {@link CircularQueue} in its
+ * own {@link Schedulable}, the body of which processes elements on the queue
  * for up to 500ms or until the queue is empty, whichever comes
  * first.  Every addition to the queue (re)starts the Schedulable.
  */
