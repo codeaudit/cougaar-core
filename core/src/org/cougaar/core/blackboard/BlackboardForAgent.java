@@ -33,6 +33,4 @@ public interface BlackboardForAgent
 {
   // might be better for blackboard to be a messagetransport client, eh?
   void receiveMessages(List messages);
-  // not sure if this is really needed - check out ClusterImpl.getDatabaseConnection()
-  Persistence getPersistence();
 }

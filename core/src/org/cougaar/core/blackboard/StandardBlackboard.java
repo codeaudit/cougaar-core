@@ -204,9 +204,5 @@ public class StandardBlackboard
     public void receiveMessages(List messages) {
       blackboard.getDistributor().receiveMessages(messages);
     }
-    // not sure if this is really needed - check out ClusterImpl.getDatabaseConnection()
-    public Persistence getPersistence() {
-      return blackboard.getDistributor().getPersistence();
-    }
   }
 }

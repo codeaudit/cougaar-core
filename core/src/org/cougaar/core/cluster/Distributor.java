@@ -178,7 +178,8 @@ public class Distributor {
     lazyPersistence = lazy;
   }
 
-  public Persistence getPersistence() {
+  /** called by Subscriber to link into Blackboard persistence mechanism **/
+  Persistence getPersistence() {
     return persistence;
   }
 

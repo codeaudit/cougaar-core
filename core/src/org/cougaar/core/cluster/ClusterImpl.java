@@ -1075,25 +1075,11 @@ public class ClusterImpl
     }
   }
 
-  /**
-   **/
-  public java.sql.Connection getDatabaseConnection(Object locker) {
-    Persistence persistence = myBlackboardService.getPersistence();
-    if (persistence instanceof DatabasePersistence) {
-      DatabasePersistence dbp = (DatabasePersistence) persistence;
-      return dbp.getDatabaseConnection(locker);
-    } else {
-      return null;
-    }
-  }
+  /** @deprecated Use BlackboardService.getPersistence().getDatabaseConnection() **/
+  public java.sql.Connection getDatabaseConnection(Object locker) { return null; }
 
-  public void releaseDatabaseConnection(Object locker) {
-    Persistence persistence = myBlackboardService.getPersistence();
-    if (persistence instanceof DatabasePersistence) {
-      DatabasePersistence dbp = (DatabasePersistence) persistence;
-      dbp.releaseDatabaseConnection(locker);
-    }
-  }
+  /** @deprecated Use BlackboardService.getPersistence().releaseDatabaseConnection() **/
+  public void releaseDatabaseConnection(Object locker) {}
 
   private static class AgentState implements java.io.Serializable {
     StateTuple[] children;
