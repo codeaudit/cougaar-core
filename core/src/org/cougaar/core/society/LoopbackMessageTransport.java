@@ -20,6 +20,10 @@ class LoopbackMessageTransport
     implements DestinationLink
 {
 
+    public LoopbackMessageTransport(String id, java.util.ArrayList aspects) {
+	super(aspects);
+    }
+
     public DestinationLink getDestinationLink(MessageAddress address) {
 	return this;
     }

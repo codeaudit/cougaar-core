@@ -22,7 +22,7 @@ import java.lang.reflect.Constructor;
  * of the factory.  The aspect delegates are made on the fly by each
  * aspect, if it wishes to attach one for a given factory
  * interface. */
-abstract public class AspectFactory
+abstract public class AspectFactory implements MessageTransportCutpoints
 {
     private static final boolean debug =
 	Boolean.getBoolean("org.cougaar.core.society.transport.DebugTransport");
@@ -39,13 +39,13 @@ abstract public class AspectFactory
      * attach a delegate, the original object, as created by the
      * factory, is returned.  The 'iface' argument describes the
      * abstract type of the objects which the factory creates.  */
-    public Object attachAspects(Object delegate, Class iface) {
+    public Object attachAspects(Object delegate, int cutpoint) {
 	if (aspects != null) {
 	    Iterator itr = aspects.iterator();
 	    while (itr.hasNext()) {
 		MessageTransportAspect aspect = 
 		    (MessageTransportAspect) itr.next();
-		Object candidate = aspect.getDelegate(delegate, iface);
+		Object candidate = aspect.getDelegate(delegate, cutpoint);
 		if (candidate != null) delegate = candidate;
 		if (debug) System.out.println("======> " + delegate);
 	    }

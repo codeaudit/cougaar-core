@@ -32,6 +32,6 @@ public interface MessageSecurityManager {
    * It will be called exactly once immediately after instantiation
    * of the MSM instance.
    **/
-  void setMessageTransport(MessageTransportServer mts);
+   void setMessageTransport(MessageTransport mts);
 
 }

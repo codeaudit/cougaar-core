@@ -27,29 +27,33 @@ import java.util.Date;
  * '}' for each message decoded.
  **/
 
-public class DummyMessageSecurityManager implements MessageSecurityManager {
-  public Message secureMessage(Message m) {
-    System.err.print("{");
-    return new DummySecureMessage(m);
-  }
-
-  public Message unsecureMessage(SecureMessage m) {
-    if (m instanceof DummySecureMessage) {
-      System.err.print("}");
-      return ((DummySecureMessage)m).getMessage();
-    } else {
-      return null;
+public class DummyMessageSecurityManager implements MessageSecurityManager 
+{
+    public Message secureMessage(Message m) {
+	System.err.print("{");
+	return new DummySecureMessage(m);
     }
-  }
 
-  public void setMessageTransport(MessageTransportServer mts) {}
-
-  private static class DummySecureMessage extends Message implements SecureMessage {
-    private Message message;
-    Message getMessage() { return message; }
-    DummySecureMessage(Message m) {
-      message=m;
+    public Message unsecureMessage(SecureMessage m) {
+	if (m instanceof DummySecureMessage) {
+	    System.err.print("}");
+	    return ((DummySecureMessage)m).getMessage();
+	} else {
+	    return null;
+	}
     }
-  }
+
+    public void setMessageTransport(MessageTransport mts) {}
+
+
+    private static class DummySecureMessage 
+	extends Message implements SecureMessage 
+    {
+	private Message message;
+	Message getMessage() { return message; }
+	DummySecureMessage(Message m) {
+	    message=m;
+	}
+    }
 
 }

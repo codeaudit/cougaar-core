@@ -30,7 +30,14 @@ import org.cougaar.core.society.rmi.RMIMessageTransport;
  * transport of that class will always be preferred over any others.  */
 public final class MessageTransportFactory 
 {
+    private static final String CLASSES_PROPERTY =
+	"org.cougaar.message.transport.classes";
+    private static final String PREFERRED_PROPERTY =
+	"org.cougaar.message.transport.preferredClass";
+
+
     private ArrayList transports;
+    private ArrayList aspects;
     private String id;
     private MessageTransport defaultTransport, loopbackTransport;
     private MessageTransportRegistry registry;
@@ -39,23 +46,27 @@ public final class MessageTransportFactory
 
     public MessageTransportFactory(String id, 
 				   MessageTransportRegistry registry,
-				   NameSupport nameSupport)
+				   NameSupport nameSupport,
+				   ArrayList aspects)
     {
 	this.id = id;
 	this.registry = registry;
 	this.nameSupport = nameSupport;
+	this.aspects = aspects;
     }
 
     void setRecvQ(ReceiveQueue recvQ) {
 	this.recvQ = recvQ;
     }
 
-
     private MessageTransport makeTransport(String classname) {
 	// Assume for now all transport classes have a constructor of
 	// one argument (the id string).
-	Class[] types = { String.class };
-	Object[] args = { registry.getIdentifier() };
+	Class[] types = { String.class, ArrayList.class };
+	Object[] args = 
+	    { registry.getIdentifier(),
+	      aspects
+	    };
 	MessageTransport transport = null;
 	try {
 	    Class transport_class = Class.forName(classname);
@@ -75,8 +86,7 @@ public final class MessageTransportFactory
 
 
     private void makeOtherTransports() {
-	String property = "org.cougaar.message.transportClasses";
-	String transport_classes = System.getProperty(property);
+	String transport_classes = System.getProperty(CLASSES_PROPERTY);
 	if (transport_classes == null) return;
 
 	StringTokenizer tokenizer = 
@@ -92,9 +102,7 @@ public final class MessageTransportFactory
 
 	transports = new ArrayList();
 
-
-	String prop = "org.cougaar.message.transportClass";
-	String preferredClassname = System.getProperty(prop);
+	String preferredClassname = System.getProperty(PREFERRED_PROPERTY);
 	if (preferredClassname != null) {
 	    MessageTransport transport = makeTransport(preferredClassname);
 	    if (transport != null) {
@@ -108,16 +116,16 @@ public final class MessageTransportFactory
 
 	// No preferred transport, make all the usual ones.
 
-	loopbackTransport = new LoopbackMessageTransport();
+	loopbackTransport = new LoopbackMessageTransport(id, aspects);
 	loopbackTransport.setRecvQ(recvQ);
 	loopbackTransport.setRegistry(registry);
 	loopbackTransport.setNameSupport(nameSupport);
 	transports.add(loopbackTransport);
 	
 	if (Boolean.getBoolean("org.cougaar.core.society.UseSimpleRMI"))
-	    defaultTransport = new SimpleRMIMessageTransport(id);
+	    defaultTransport = new SimpleRMIMessageTransport(id, aspects);
 	else
-	    defaultTransport = new RMIMessageTransport(id);
+	    defaultTransport = new RMIMessageTransport(id, aspects);
 	defaultTransport.setRecvQ(recvQ);
 	defaultTransport.setRegistry(registry);
 	defaultTransport.setNameSupport(nameSupport);

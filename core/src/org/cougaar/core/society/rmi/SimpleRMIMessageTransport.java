@@ -30,29 +30,47 @@ import java.util.HashMap;
  *
  * The cost function of the DestinationLink inner subclass is
  * currently hardwired to an arbitrary value of 1000.  This should be
- * made smarter eventually. */
+ * made smarter eventually. 
+ *
+ * The RMI transport supports two additional factory methods in
+ * addition to the standard getDestinationLink (which is supported by
+ * all transports).  For RMI, we also have factory methods for
+ * constructing an RMI server object to be registered in the
+ * nameserver, and for constructing RMI client stubs which refer to
+ * remote MTs.  The registered servers are ordinarily MTImpls, one per
+ * node.  By using the factory style, we allow aspects to "wrap" the
+ * MTImpl before the final wrapped object is registered, without
+ * requiring new subclasses of the transort itself. The RMI client
+ * stubs are MTs, as returned by the nameserver.  Again, by using the
+ * factory style, aspects can wrap the stub returned by the
+ * nameserver.  QuO uses these two new aspects to add qos support to
+ * the RMI pieces of Alp.
+ * */
 public class SimpleRMIMessageTransport 
     extends MessageTransport
 {
     private static final String TRANSPORT_TYPE = "/simpleRMI";
     
 
-    private boolean madeNodeProxy;
+    private MessageAddress myAddress;
     private HashMap links;
 
 
-    public SimpleRMIMessageTransport(String id) {
-	super(); 
+    public SimpleRMIMessageTransport(String id, java.util.ArrayList aspects) {
+	super(aspects); 
 	links = new HashMap();
     }
+
 
 
     private MT lookupRMIObject(MessageAddress address) throws Exception {
 	Object object = 
 	    nameSupport.lookupAddressInNameServer(address, TRANSPORT_TYPE);
-	if (object == null) return null;
 
-	object = generateClientSideProxy(object);
+	if (object == null) {
+	    return null;
+	} 
+	object = getClientSideProxy(object);
 	if (object instanceof MT) {
 	    return (MT) object;
 	} else {
@@ -63,27 +81,15 @@ public class SimpleRMIMessageTransport
 
     }
 
-    /** Override or wrap to generate a different proxy for a client object **/
-    protected Object generateClientSideProxy(Object object) {
-	return object;
-    }
-
-
-    /** Override or wrap to generate a different proxy for a server object **/
-    protected Object generateServerSideProxy(MessageAddress clientAddress) 
-	throws RemoteException
-    {
-	return new MTImpl(this, clientAddress, recvQ);
-    }
 
     private final void registerNodeWithSociety() 
 	throws RemoteException
     {
 	synchronized (this) {
-	    if (!madeNodeProxy) {
-		madeNodeProxy = true;
-		Object proxy =
-		    generateServerSideProxy(nameSupport.getNodeMessageAddress());
+	    if (myAddress == null) {
+		myAddress = nameSupport.getNodeMessageAddress();
+		MTImpl impl = new MTImpl(this, myAddress, recvQ);
+		Object proxy = getServerSideProxy(impl);
 		nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
 	    }
 	}
@@ -96,11 +102,8 @@ public class SimpleRMIMessageTransport
 	    // Attempt every time you register a Client
 	    registerNodeWithSociety();
 
-	    MessageAddress addr = client.getMessageAddress();
-	    if (NameSupport.DEBUG)
-		System.out.println("***Client address is  " + addr);
-	    
-	    Object proxy = generateServerSideProxy(addr);
+	    // Assume node-redirect
+	    Object proxy = myAddress;
 	    nameSupport.registerAgentInNameServer(proxy,client,TRANSPORT_TYPE);
 	} catch (Exception e) {
 	    System.err.println("Error registering MessageTransport:");
@@ -118,14 +121,38 @@ public class SimpleRMIMessageTransport
 	return false;
     }
 
+
+
+
+    // Factory methods:
+
     public DestinationLink getDestinationLink(MessageAddress address) {
 	DestinationLink link = (DestinationLink) links.get(address);
 	if (link == null) {
-	    link = new Link(address);
+	    link = new Link(address); // attach aspects
+	    link = (DestinationLink) attachAspects(link, DestinationLink);
 	    links.put(address, link);
 	}
 	return link;
     }
+
+
+
+    private MT getClientSideProxy(Object object) {
+	return (MT) attachAspects(object, RemoteProxy);
+    }
+
+
+    // For now this can return an object of any arbitrary type!  The
+    // corresponding client proxy code has the responsibility for
+    // extracting a usable MT out of the object.
+    private Object getServerSideProxy(Object object) 
+	throws RemoteException
+    {
+	return attachAspects(object, RemoteImpl);
+    }
+
+
 
 
 
@@ -149,6 +176,8 @@ public class SimpleRMIMessageTransport
 
 
 	public void forwardMessage(Message message) {
+	    // The retries for the lookup may want to happen in a
+	    // dedicated thread.
 	    while (remote == null) {
 		try {
 		    remote = lookupRMIObject(target);
@@ -162,12 +191,22 @@ public class SimpleRMIMessageTransport
 	    }
 
 
-	    try {
-		remote.rerouteMessage(message);
-	    } 
-	    catch (RemoteException ex) {
-		System.err.println("Reroute failure on " + message);
-		ex.printStackTrace();
+	    // The retries for the reroute may want to happen in a
+	    // dedicated thread.
+	    while (true) {
+		try {
+		    remote.rerouteMessage(message);
+		    break;
+		} 
+		catch (RemoteException ex) {
+		    // We should probably be more specific about the
+		    // error catching, since with some exceptions
+		    // there's no point in retrying.
+		    System.err.println("Reroute failure on " + message +
+				       ": " + ex);
+		    System.err.println("Retrying...");
+		}
+		try {Thread.sleep(500);} catch (InterruptedException int_ex) {}
 	    }
 
 	}

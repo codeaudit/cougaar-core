@@ -48,7 +48,8 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
     }
   }
 
-  public void setMessageTransport(MessageTransportServer mts) {}
+
+    public void setMessageTransport(MessageTransport mts) {}
 
   private static class SignedSecureMessage extends Message implements SecureMessage {
     private SignedObject secret;

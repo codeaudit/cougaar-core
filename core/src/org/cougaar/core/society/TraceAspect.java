@@ -24,20 +24,64 @@ public class TraceAspect
     }
 
 
-    public Object getDelegate(Object delegate, Class iface) {
-	if (iface == SendQueue.class) {
+    public Object getDelegate(Object delegate, int cutpoint) {
+	switch (cutpoint) {
+	case ServiceProxy:
+	    return new ServiceProxyDelegate((MessageTransportServer) delegate);
+
+	case SendQueue:
 	    return new SendQueueDelegate((SendQueue) delegate);
-	} else if (iface == Router.class) {
+
+	case Router:
 	    return new RouterDelegate((Router) delegate);
-	} else if (iface == DestinationQueue.class) {
+
+	case DestinationQueue:
 	    return new DestinationQueueDelegate((DestinationQueue) delegate);
-	} else if (iface == ReceiveQueue.class) {
+
+	case DestinationLink:
+	    return new DestinationLinkDelegate((DestinationLink) delegate);
+
+	case ReceiveQueue:
 	    return new ReceiveQueueDelegate((ReceiveQueue) delegate);
-	} else if (iface == ReceiveLink.class) {
+
+	case ReceiveLink:
 	    return new ReceiveLinkDelegate((ReceiveLink) delegate);
-	} else {
+
+	default:
 	    return null;
 	}
+    }
+
+
+    public class ServiceProxyDelegate implements MessageTransportServer
+    {
+	private MessageTransportServer server;
+	
+	public ServiceProxyDelegate (MessageTransportServer server) {
+	    this.server = server;
+	}
+
+	public void sendMessage(Message message) {
+	    server.sendMessage(message);
+	}
+
+	public void registerClient(MessageTransportClient client) {
+	    server.registerClient(client);
+	}
+
+	public void addMessageTransportWatcher(MessageTransportWatcher watcher)
+	{
+	    server.addMessageTransportWatcher(watcher);
+	}
+
+	public String getIdentifier() {
+	    return server.getIdentifier();
+	}
+
+	public boolean addressKnown(MessageAddress address) {
+	    return server.addressKnown(address);
+	}
+	
     }
 
 
@@ -59,6 +103,7 @@ public class TraceAspect
 	    return server.matches(name);
 	}
     }
+
 
 
     public class RouterDelegate implements Router
@@ -103,6 +148,26 @@ public class TraceAspect
 	
 	public boolean matches(MessageAddress addr){
 	    return server.matches(addr);
+	}
+    }
+
+
+    public class DestinationLinkDelegate implements DestinationLink
+    {
+	private DestinationLink server;
+	
+	public DestinationLinkDelegate (DestinationLink server)
+	{
+	    this.server = server;
+	}
+	
+	public void forwardMessage(Message message) {
+	    System.err.print("DestinationLink_");
+	    server.forwardMessage(message);
+	}
+	
+	public int cost(Message message){
+	    return server.cost(message);
 	}
     }
 

@@ -27,12 +27,15 @@ public class WatcherAspect
     }
 
 
-    public Object getDelegate(Object delegate, Class iface) {
-	if (iface == SendQueue.class) {
+    public Object getDelegate(Object delegate, int cutpoint) {
+	switch (cutpoint) {
+	case SendQueue:
 	    return new SendQueueDelegate((SendQueue) delegate);
-	} else if (iface == ReceiveQueue.class) {
+
+	case ReceiveQueue:
 	    return new ReceiveQueueDelegate((ReceiveQueue) delegate);
-	} else {
+
+	default:
 	    return null;
 	}
     }

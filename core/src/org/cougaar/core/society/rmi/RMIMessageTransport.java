@@ -204,7 +204,7 @@ public class RMIMessageTransport
     }
   }
 
-  public RMIMessageTransport(String id) {
+  public RMIMessageTransport(String id, ArrayList aspects) {
     super();
     synchronized (getClass()) {
       if (keepStatistics) {

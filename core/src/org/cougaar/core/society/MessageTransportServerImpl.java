@@ -91,9 +91,9 @@ class MessageTransportServerImpl
 	if (aspects == null) aspects = new ArrayList();
 	aspects.add(watcherAspect);
 
-	serviceFactory = new MessageTransportServerServiceFactoryImpl();
+	serviceFactory = new MessageTransportServerServiceFactoryImpl(aspects);
 	transportFactory = 
-	    new MessageTransportFactory(id, registry, nameSupport);
+	    new MessageTransportFactory(id, registry, nameSupport, aspects);
 	receiveLinkFactory = new ReceiveLinkFactory(registry,
 						    aspects);
 
@@ -138,29 +138,40 @@ class MessageTransportServerImpl
 
     // ServiceProvider factory
 
-    // TO BE DONE - register this with node as a service provider for
-    // MessageTransportServer.class
-    
+
+
+    /** 
+     * This class instantiates the service proxies for the Message
+     * Transport Service.  Since this factory is a subclass of
+     * AspectFactory, aspects can be attached to the proxies when
+     * they're instantiated.  */
     private final class MessageTransportServerServiceFactoryImpl
+	extends AspectFactory
 	implements MessageTransportServerServiceFactory
     {
 
-	public MessageTransportServerServiceFactoryImpl() {
+	public MessageTransportServerServiceFactoryImpl(ArrayList aspects) {
+	    super(aspects);
+	}
+
+	private boolean validateRequestor(Object requestor, 
+					  Class serviceClass) 
+	{
+	    return requestor instanceof Communications &&
+		serviceClass == MessageTransportServer.class;
 	}
 
 	public Object getService(ServiceBroker sb, 
 				 Object requestor, 
 				 Class serviceClass) 
 	{
-	    if (requestor instanceof Communications &&
-		serviceClass == MessageTransportServer.class)
-		{
-		    return new MessageTransportServerProxy(registry, sendQ);
-		}
-	    else
-		{
-		    return null;
-		}
+	    if (validateRequestor(requestor, serviceClass)) {
+		Object proxy = 
+		    new MessageTransportServerProxy(registry, sendQ);
+		return attachAspects(proxy, ServiceProxy);
+	    } else {
+		return null;
+	    }
 	}
 
 
