@@ -251,6 +251,26 @@ public abstract class Response implements Callback, Serializable {
     public Get(Request.Get q) {
       super(q);
     }
+    /**
+     * @return true if the named agent exists, even if it
+     * lacks the requested entry type
+     * (<code>getAddressEntry() == null</code>).
+     */
+    public boolean agentExists() {
+      // this implementation requires the server to respond with a
+      // "getAll" map or non-null entry.  NULL should only be used
+      // if the agent is unknown.
+      Object r = getResult();
+      return 
+        (r instanceof AddressEntry ||
+         ((r instanceof Map) && 
+          (!((Map) r).isEmpty())));
+    }
+    /**
+     * @return the matching entry, or null if the agent does
+     * not exist (<code>!agentExists()</code>) or the agent exists
+     * but lacks the requested entry type.
+     */
     public AddressEntry getAddressEntry() { 
       Object r = getResult();
       if (r instanceof AddressEntry) {
@@ -282,8 +302,15 @@ public abstract class Response implements Callback, Serializable {
       super(q);
     }
     /**
+     * @return true if the agent exists
+     */
+    public boolean agentExists() {
+      Map m = getAddressEntries();
+      return (m != null && !m.isEmpty());
+    }
+    /**
      * @return a Map of (String type, AddressEntry entry) pairs,
-     *   where the type matches the `entry.getType()`
+     * or either an empty map or null if the agent does not exist.
      */
     // Map<String,AddressEntry>
     public Map getAddressEntries() { 
@@ -305,6 +332,13 @@ public abstract class Response implements Callback, Serializable {
     }
     public List(Request.List q) {
       super(q);
+    }
+    /**
+     * @return true if the listed suffix contains entries.
+     */
+    public boolean suffixExists() {
+      Set s = getNames();
+      return (s != null && !s.isEmpty());
     }
     /**
      * @return a Set of entry names.
