@@ -136,13 +136,21 @@ implements BlackboardClient
   public void setAgentIdentificationService(
       AgentIdentificationService agentIdService) {
     this.agentIdService = agentIdService;
-    this.localAgent = agentIdService.getMessageAddress();
+    if (agentIdService == null) {
+      // Revocation
+    } else {
+      this.localAgent = agentIdService.getMessageAddress();
+    }
   }
 
   public void setNodeIdentificationService(
       NodeIdentificationService nodeIdService) {
     this.nodeIdService = nodeIdService;
-    this.localNode = nodeIdService.getMessageAddress();
+    if (nodeIdService == null) {
+      // Revocation
+    } else {
+      this.localNode = nodeIdService.getMessageAddress();
+    }
   }
 
   public void setBlackboardService(BlackboardService blackboard) {
@@ -151,8 +159,12 @@ implements BlackboardClient
 
   public void setDomainService(DomainService domain) {
     this.domain = domain;
-    mobilityFactory = 
-      (MobilityFactory) domain.getFactory("mobility");
+    if (domain == null) {
+      mobilityFactory = null;
+    } else {
+      mobilityFactory = 
+        (MobilityFactory) domain.getFactory("mobility");
+    }
   }
 
   // release services:
