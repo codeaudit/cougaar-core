@@ -44,6 +44,7 @@ import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadService;
 
 public class AgentLoadSensorPlugin
     extends ComponentPlugin
@@ -184,7 +185,9 @@ public class AgentLoadSensorPlugin
 	    ThreadListenerService tls = (ThreadListenerService)
 		rootsb.getService(this, ThreadListenerService.class, null);
 	    if (tls != null) {
-		tls.addListener(this);
+		for(int lane = 0; lane < ThreadService.LANE_COUNT; lane++) {
+		    tls.addListener(this,lane);
+		}
 		rootsb.releaseService(this, ThreadListenerService.class, tls);
 	    }
 	} else {
