@@ -24,6 +24,9 @@ package org.cougaar.core.qos.metrics;
 
 public class MetricImpl implements Metric
 {
+    public static MetricImpl UndefinedMetric = 
+	new MetricImpl(0.0, 0.0, null, "undefined");
+
     private Object rawValue;
     private double credibility;
     private String units;

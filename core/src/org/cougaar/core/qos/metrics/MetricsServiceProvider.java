@@ -21,11 +21,14 @@
 
 package org.cougaar.core.qos.metrics;
 
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
@@ -33,8 +36,11 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
+import org.cougaar.core.node.ComponentInitializerService;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.thread.ThreadServiceProvider;
+
 
 public final class MetricsServiceProvider
     extends ContainerSupport
@@ -58,6 +64,7 @@ public final class MetricsServiceProvider
 
     private MetricsService retriever;
     private MetricsUpdateService updater;
+    private DataFeedRegistrationService registrar;
 
     public MetricsServiceProvider() {
 	BinderFactory bf = new QosBinderFactory();
@@ -67,51 +74,43 @@ public final class MetricsServiceProvider
 
     }
 
-    public void load() {
-
-	super.load();
-
-	ServiceBroker sb = getServiceBroker();
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
-	ServiceBroker rootsb = ncs.getRootServiceBroker();
-	
-	// Could do this as a ComponentDescription
-// 	ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Metrics");
-// 	tsp.provideServices(sb);
-
-	// Could use a ComponentDescription
-	ThreadServiceProvider tsp = new ThreadServiceProvider();
-	tsp.setParameter("name=Metrics");
-	add(tsp);
-
-
-	// Later these two instances will be out child components
-	Start = System.currentTimeMillis();
-
+    private void makeUpdaterService() {
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
 	    updater = (MetricsUpdateService) cl.newInstance();
 	    add(updater);
-	    rootsb.addService(MetricsUpdateService.class, this);
 	} catch (ClassNotFoundException cnf) {
-	    // qos jar not loaded
+	    // The qos jar isn't loaded.
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 	}
+	
+	if (updater == null) {
+	    // Make a dummy service instead.
+	    updater = new NullMetricsUpdateServiceImpl() ;
+	}
+    }
 
-
+    private void makeRetrieverService() {
 	try {
 	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
 	    retriever = (MetricsService) cl.newInstance();
 	    add(retriever);
-	    rootsb.addService(MetricsService.class, this);
 	} catch (ClassNotFoundException cnf) {
-	    // qos jar not loaded
+	    // The qos jar isn't loaded. 
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 	}
 
+	if (retriever == null) {
+	    // Make a dummy service instead.
+	    retriever = new NullMetricsServiceImpl ();
+	}
+	// MetricService Implementation also implements Registration service
+	registrar = (DataFeedRegistrationService) retriever;
+    }
+
+    private void startSyscondFactory() {
 	try {
 	    Class cl = Class.forName(SCFAC_CLASSNAME);
 	    Object scfac =  cl.newInstance();
@@ -123,6 +122,48 @@ public final class MetricsServiceProvider
 	}
     }
 
+    // This is done before child-components are created
+    public void loadHighPriorityComponents() {
+        super.loadHighPriorityComponents();
+	ServiceBroker sb = getServiceBroker();
+	NodeControlService ncs = (NodeControlService)
+	    sb.getService(this, NodeControlService.class, null);
+	ServiceBroker rootsb = ncs.getRootServiceBroker();
+	
+	Start = System.currentTimeMillis();
+	// DataFeeds could need a thread service
+	// JAZ needs a ComponentDescription?
+	ThreadServiceProvider tsp = new ThreadServiceProvider();
+	tsp.setParameter("name=Metrics");
+	add(tsp);
+
+	// Childern Components need Registration Service
+	// but the Registration need the MetricServiceImplementation
+	// make Metric Updater Service
+	makeUpdaterService();
+	rootsb.addService(MetricsUpdateService.class, this);
+	// make Metric Service and Feed registration service
+	makeRetrieverService();
+	rootsb.addService(MetricsService.class, this);
+	// register registration service
+	sb.addService(DataFeedRegistrationService.class, this);
+    }
+
+    // Child Components loaded here
+    public void loadComponentPriorityComponents() {
+        super.loadComponentPriorityComponents();
+    }
+
+    // After Child Components are loaded
+    public void load() {
+	super.load();
+	ServiceBroker sb = getServiceBroker();
+	startSyscondFactory();
+    }
+
+
+
+    // Service Provider API
 
     public Object getService(ServiceBroker sb, 
 			     Object requestor, 
@@ -132,6 +173,8 @@ public final class MetricsServiceProvider
 	    return retriever;
 	} else if (serviceClass == MetricsUpdateService.class) {
 	    return updater;
+	} else if (serviceClass == DataFeedRegistrationService.class) {
+	    return registrar;
 	} else {
 	    return null;
 	}
@@ -146,12 +189,32 @@ public final class MetricsServiceProvider
 
 
 
-    // Container
+    // Container API
 
 
-    // We're not using this yet but leave it in anyway.
+    protected ComponentDescriptions findExternalComponentDescriptions() {
+	ServiceBroker sb = getServiceBroker();
+	ComponentInitializerService cis = (ComponentInitializerService) 
+	    sb.getService(this, ComponentInitializerService.class, null);
+	NodeIdentificationService nis = (NodeIdentificationService)
+	    sb.getService(this, NodeIdentificationService.class, null);
+	try {
+	    String cp = specifyContainmentPoint();
+	    String id = nis.getMessageAddress().toString();
+	    ComponentDescription[] descs = cis.getComponentDescriptions(id,cp);
+ 	    // Want only items _below_. Could filter (not doing so now)
+	    return new ComponentDescriptions(descs);
+	} catch (ComponentInitializerService.InitializerException cise) {
+	    cise.printStackTrace();
+	    return null;
+	} finally {
+	    sb.releaseService(this, ComponentInitializerService.class, cis);
+	    sb.releaseService(this, NodeIdentificationService.class, nis);
+	}
+    }
+
     protected String specifyContainmentPoint() {
-	return "Node.AgentManager.Agent.MetricsService";
+	return Agent.INSERTION_POINT + ".MetricsServices";
     }
 
     public void requestStop() {}
@@ -167,7 +230,7 @@ public final class MetricsServiceProvider
     }
 
 
-    // StateModel
+    // StateModel API
 
     // Return a (serializable) snapshot that can be used to
     // reconstitute the state later.
