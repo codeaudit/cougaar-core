@@ -372,8 +372,10 @@ extends ComponentPlugin
     }
 
     // check step status
+    long startTime = -1;
     if (step != null) {
       StepStatus status = step.getStatus();
+      startTime = status.getStartTime();
       long endTime = status.getEndTime();
       if (endTime <= 0) {
         if (log.isDebugEnabled()) {
@@ -464,7 +466,8 @@ extends ComponentPlugin
 
     // create fleshed-out step options
     StepOptions nextOpts = 
-      createStepOptions(proc, nextScriptStep);
+      createStepOptions(
+          proc, startTime, nextScriptStep);
 
     // create step
     Step nextStep = mobilityTestFactory.createStep(nextOpts);
@@ -473,7 +476,6 @@ extends ComponentPlugin
     // update proc
     proc.setScriptIndex(nextIdx);
     proc.setMoveCount(1 + proc.getMoveCount());
-System.out.println("\nTWRIGHT incremented move count to "+proc.getMoveCount());
     proc.setStepUID(nextStep.getUID());
     blackboard.publishChange(proc);
 
@@ -482,14 +484,17 @@ System.out.println("\nTWRIGHT incremented move count to "+proc.getMoveCount());
     
     if (log.isInfoEnabled()) {
       log.info(
-          "Created step "+nextStep.getUID()+" for proc "+
-          procUID+" at script "+script.getUID()+
-          " index "+nextIdx);
+          "Created step #"+proc.getMoveCount()+
+          " at script index "+nextIdx+
+          " (script: "+script.getUID()+
+          ", proc: "+proc.getUID()+
+          ", step: "+nextStep.getUID()+
+          ")");
     }
   }
 
   private StepOptions createStepOptions(
-      Proc proc, ScriptStep scriptStep) {
+      Proc proc, long priorMoveStartTime, ScriptStep scriptStep) {
     StepOptions opts = scriptStep.getStepOptions();
     MessageAddress newTarget = opts.getTarget();
     if (newTarget == null) {
@@ -508,12 +513,18 @@ System.out.println("\nTWRIGHT incremented move count to "+proc.getMoveCount());
     long newPauseTime = opts.getPauseTime();
     if (scriptStep.hasFlag(ScriptStep.ADD_PAUSE)) {
       newPauseTime += nowTime;
+    } else if (scriptStep.hasFlag(ScriptStep.PRI_PAUSE)) {
+      newPauseTime += 
+        (priorMoveStartTime > 0 ? priorMoveStartTime : nowTime);
     } else if (scriptStep.hasFlag(ScriptStep.REL_PAUSE)) {
       newPauseTime += proc.getStartTime();
     }
     long newTimeoutTime = opts.getTimeoutTime();
     if (scriptStep.hasFlag(ScriptStep.ADD_TIMEOUT)) {
-      newTimeoutTime += nowTime;
+      newTimeoutTime += newPauseTime;
+    } else if (scriptStep.hasFlag(ScriptStep.PRI_TIMEOUT)) {
+      newTimeoutTime += 
+        (priorMoveStartTime > 0 ? priorMoveStartTime : nowTime);
     } else if (scriptStep.hasFlag(ScriptStep.REL_TIMEOUT)) {
       newTimeoutTime += proc.getStartTime();
     }

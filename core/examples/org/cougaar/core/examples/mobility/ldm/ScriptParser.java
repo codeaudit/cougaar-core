@@ -39,6 +39,10 @@ import org.cougaar.util.StringUtility;
 /**
  * Package-private script parser.
  * <p>
+ * Note that, at this time, the scripting language is rather 
+ * limited.  Future enhancements will include variables, 
+ * conditionals, loops, math, etc.
+ * <p>
  * Expects lines of text:<ul>
  *   <li>Empty lines are ignored</li>
  *   <li>Lines starting with "#" are ignored</li>
@@ -53,49 +57,40 @@ import org.cougaar.util.StringUtility;
  *       and are detailed below.</li>
  * </ul>
  * <p>
- * Note that, at this time, the scripting language is rather 
- * limited.  Future enhancements will include variables, 
- * conditionals, loops, math, etc.
- * <p>
- * Step commands are single with 7 comma-separated parameters:<ol>
+ * "move" commands, also called "step"s, look like:
+ *  <i>(example)</i><pre>
+ *     move ActorAgent, ^0:30, +1:20, MobileAgent, OrigNode, DestNode, true
+ * </pre><br>
+ * and require 7 comma-separated parameters:<ol>
  *   <li><i>actor</i><br>
  *   The agent that should run the step.  If an empty value is 
  *   specified then the script runner's agent is assumed.
  *   </li>
- *   <li><i>[+@]pauseTime</i> with ":" time dividers<br>
- *   The pause time in seconds before starting the step.
- *   If <i>+</i> is specified then the time is relative to the 
- *   runtime completion time of the prior step.  If <i>@</i> is 
- *   specified then the time is relative to the start time of
- *   the script process.  If no ":"s are present in the time,
- *   then milliseconds is assumed.  If one ":" is present, then
- *   the time is the addition of the value before the ":" as 
- *   seconds, and the value after the ":" as milliseconds, 
- *   i.e.:<pre>
- *      (v[1] + 1000 * (v[0]))
- *   </pre>
- *   If two ":"s are present, then the formula yields
- *   minutes:seconds:millis<pre>
- *      (v[3] + 1000 * (v[1] * 60 * (v[0])))
- *   </pre>
+ *   <li><i>[+^@]pauseTime</i> with ":" time dividers<br>
+ *   The pause time before starting the move.  See the notes 
+ *   below on time formats.
  *   <p>
  *   If no value or a negative value is specified, then there 
- *    will be zero pause.
+ *   will be zero pause.
  *   </li>
- *   <li><i>[+@]timeoutTime</i> with ":" time dividers<br>
- *   The timeout time in milliseconds for the step, following the 
- *   optional pause time.  See the pauseTime <i>+@</i> notes.
+ *   <li><i>[+^@]timeoutTime</i> with ":" time dividers<br>
+ *   The timeout time for the move, relative to before the 
+ *   above (optional) pause time.  See the notes below on
+ *   time formats.
+ *   <p>
+ *   If no value or a negative value is specified, then there 
+ *   will be no timeout.
  *   </li>
  *   <li><i>mobileAgent</i><br>
  *   Agent that should be moved, or the script runner's agent
  *   if an empty value is specified.
  *   </li>
  *   <li><i>origNode</i><br>
- *   Node that the mobile agent should be on when the step
+ *   Node that the mobile agent should be on when the move
  *   is started, or an empty value if any node is allowed.
  *   </li>
  *   <li><i>destNode</i><br>
- *   Node that the mobile agent should be on when the step
+ *   Node that the mobile agent should be on when the move
  *   has completed, or an empty value if the agent should
  *   move to its current node.  See the "forceRestart" 
  *   option below.
@@ -107,29 +102,81 @@ import org.cougaar.util.StringUtility;
  *   </li>
  * </ol>
  * <p>
- * Example script:<pre>
+ * Time is formatted as <i>[+^@]time</i>, where the 
+ * <i>time</i> is further separated with <i>:</i> 
+ * and <i>.</i>characters:<ol>
+ *   <li>If <i>+</i> is specified then the time is relative 
+ *   to the runtime start of the current step.  This can
+ *   be used to create a sequence of moves where you're
+ *   not counting the time to do the agent move.</li>
+ *   <li>If <i>^</i> is specified then the time is relative 
+ *   to the runtime start of the prior step excluding the
+ *   pause time (same as + on the first step).  This can
+ *   be used to create a sequence of moves where you want
+ *   to count the move as part of the pause time.</li>
+ *   <li>If <i>@</i> is specified then the time is relative 
+ *   to the start time of first step in the script (same as
+ *   + on the first step)</li>
+ *   <li>If no <i>[+^@]</i> modifier is used an absolute
+ *   system time in millseconds since Jan 1st 1970 is assumed.
+ *   <li>If no ":" or "." is present in the time, then 
+ *   milliseconds is assumed.</li>
+ *   <li>If one ":" is present and no ".", then the time is 
+ *   the addition of the value before the ":" as minutes, and 
+ *   the value after the ":" as milliseconds, i.e.:<pre>
+ *      (v[1] + 1000 * (v[0]))
+ *   </pre></li>
+ *   <li>If one ":" and one "." is present, then the formula 
+ *   yields minutes:seconds.millis<pre>
+ *      (v[3] + 1000 * (v[1] * 60 * (v[0])))
+ *   </pre></li>
+ * </ol>
+ * <p>
+ * Ugly example script:<pre>
  *
  *   # my comment
- *   # 20 seconds after launch, move agent A from node X to node Y
- *   move , @20:00, , A, X, Y,
+ *   # pause until it's 20 seconds after the script launch
+ *   # move agent A from node X to node Y
+ *   # no timeout for this move
+ *   move , @0:20, , A, X, Y,
  *
- *   # 60 seconds after launch, move A to Z, timeout after 30 seconds
- *   # note that if a time ends in ":", then ":00" is assumed
- *   move , @60:, , A, , Z, +30:
+ *   # pause until it's 60 seconds after script launch
+ *   # move agent A from whichever node it happens to be to node Z
+ *   # timeout if the move doesn't complete within
+ *   #    30 seconds (which is equivalent to @(60+30) == @90
+ *   move , @0:60, +:30, A, , Z,
  *
- *   # have agent B move A to X after the above step finishes
- *   # must complete by 1 minute 5 seconds 10 milliseconds after 
- *   # script launch
- *   move B, , @1:5:10, A, , X,
+ *   # pause until at least 50 seconds have passed since the
+ *   #   prior move was started (excluding the above 60 second
+ *   #   pause).  If the above agent move took 10 seconds, this
+ *   #   would be equivalent to @(60+50-10) == @100
+ *   # have agent B request that agent A move to node X
+ *   # timeout if the move doesn't complete before it's 
+ *   #   1 minute 5 seconds 100 milliseconds after the script
+ *   #   launch
+ *   move B, ^0:50, @1:5.1, A, , X,
  *
- *   # begin infinite loop
+ *   # pause for 30 seconds
+ *   # move A to X
+ *   # no timeout for this move
+ *   # force a restart even if agent A is already on node X
+ *   move , +:30, , A, , X, true
+ *
+ *   # begin an infinite loop
  *   label foo
  *   
- *     # after 20 seconds, move B from X to Y, wait at most 60 seconds
- *     move , +20:, +60:, B, X, Y,
+ *     # pause for 30 seconds
+ *     # move B from X to Y
+ *     # timeout after 60 seconds
+ *     move , +:30, +:60, B, X, Y,
  *
- *     # move B back with no pause and same timeout
- *     move , , +60:, B, Y, X,
+ *     # pause until it's 1 minute 20 seconds after the prior 
+ *     #   started its move (after its 30 second pause)
+ *     # move B back
+ *     # timeout after 1 minute
+ *     move , ^1:20, +1:, B, Y, X,
+ *
+ *     # note that we can't use "@" times in a loop
  *
  *     # keep moving B back and forth forever
  *   goto foo
@@ -282,6 +329,9 @@ class ScriptParser {
       } else if (ch == '+') {
         flags |= ScriptStep.ADD_PAUSE;
         s = s.substring(1);
+      } else if (ch == '^') {
+        flags |= ScriptStep.PRI_PAUSE;
+        s = s.substring(1);
       }
       pauseTime = parseTime(s);
     } else {
@@ -297,6 +347,9 @@ class ScriptParser {
         s = s.substring(1);
       } else if (ch == '+') {
         flags |= ScriptStep.ADD_TIMEOUT;
+        s = s.substring(1);
+      } else if (ch == '^') {
+        flags |= ScriptStep.PRI_TIMEOUT;
         s = s.substring(1);
       }
       timeoutTime = parseTime(s);

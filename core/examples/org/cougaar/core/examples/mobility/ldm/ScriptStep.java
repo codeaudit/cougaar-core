@@ -34,8 +34,10 @@ implements Script.Entry, Serializable
   // flag modifiers; for infrastructure use only!
   public static final int ADD_PAUSE     = (1 <<  0);
   public static final int REL_PAUSE     = (1 <<  1);
-  public static final int ADD_TIMEOUT   = (1 <<  2);
-  public static final int REL_TIMEOUT   = (1 <<  3);
+  public static final int PRI_PAUSE     = (1 <<  2);
+  public static final int ADD_TIMEOUT   = (1 <<  3);
+  public static final int REL_TIMEOUT   = (1 <<  4);
+  public static final int PRI_TIMEOUT   = (1 <<  5);
 
   public final int flags;
 
@@ -75,10 +77,12 @@ implements Script.Entry, Serializable
       ", "+
       (hasFlag(ADD_PAUSE) ? "+" : "")+
       (hasFlag(REL_PAUSE) ? "@" : "")+
+      (hasFlag(PRI_PAUSE) ? "^" : "")+
       opts.getPauseTime()+
       ", "+
       (hasFlag(ADD_TIMEOUT) ? "+" : "")+
       (hasFlag(REL_TIMEOUT) ? "@" : "")+
+      (hasFlag(PRI_TIMEOUT) ? "^" : "")+
       opts.getTimeoutTime()+
       ", "+
       ((t.getMobileAgent() != null) ? 

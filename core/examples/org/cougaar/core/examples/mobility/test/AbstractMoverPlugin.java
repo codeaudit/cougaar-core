@@ -75,7 +75,7 @@ extends ComponentPlugin
   }
 
   protected void setupSubscriptions() {
-    agentId = getClusterIdentifier();
+    agentId = getAgentIdentifier();
 
     // watch for changed MoveAgent objects
     moveAgentSub = (IncrementalSubscription) 

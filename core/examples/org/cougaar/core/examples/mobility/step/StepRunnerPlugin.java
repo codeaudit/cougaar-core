@@ -277,8 +277,23 @@ extends ComponentPlugin
             break;
           case StepStatus.SUCCESS:
           case StepStatus.FAILURE:
-          case StepStatus.TIMEOUT:
-            // completed
+          case StepStatus.TIMEOUT: 
+            {
+              // completed, but we still need it in the
+              // table for later remote removal
+              StepOptions options = step.getOptions();
+              Ticket ticket = options.getTicket();
+              Object id = ticket.getIdentifier();
+              MoveAgent ma = findMove(id);
+              Entry entry = new Entry(ticket, null, step);
+              entry.moveAgent = ma;
+              idToEntry.put(id, entry);
+              if (log.isDebugEnabled()) {
+                log.debug(
+                    "Re-added entry "+id+" with move "+
+                    ((ma != null) ? ma.getUID().toString() : "null"));
+              }
+            }
             break;
         }
       }
@@ -579,11 +594,7 @@ extends ComponentPlugin
         idToEntry.remove(id);
         timeoutEntry(entry);
       } else {
-        // shouldn't still be in the table
-        if (log.isErrorEnabled()) {
-          log.error(todd+
-              "Unexpected entry in ("+state+") state "+entry);
-        }
+        // ignore, already completed
       }
     }
   }
@@ -607,7 +618,7 @@ extends ComponentPlugin
 
     // alarm may be running
     MyAlarm alarm = entry.alarm;
-    if ((alarm == null) ||
+    if ((alarm != null) &&
         (!(alarm.hasExpired()))) {
       alarm.cancel();
     }
@@ -786,17 +797,18 @@ extends ComponentPlugin
 
     // cancel alarm
     MyAlarm alarm = entry.alarm;
-    if ((alarm != null) &&
-        (!(alarm.hasExpired()))) {
-      alarm.cancel();
-      if (log.isDebugEnabled()) {
-        log.debug(todd+
-            "Cancelled alarm for step "+step.getUID());
+    if (alarm != null) {
+      entry.alarm = null;
+      if (!(alarm.hasExpired())) {
+        alarm.cancel();
+        if (log.isDebugEnabled()) {
+          log.debug(todd+
+              "Cancelled alarm for step "+step.getUID());
+        }
       }
     }
 
-    // remove entry
-    idToEntry.remove(id);
+    // keep entry for later removal
 
     if (log.isDebugEnabled()) {
       log.debug(todd+
@@ -951,8 +963,11 @@ extends ComponentPlugin
     }
 
     public boolean equals(Object o) {
-      long ot = ((MyAlarm) o).expirationTime;
-      return (expirationTime == ot);
+      if (o instanceof MyAlarm) {
+        long ot = ((MyAlarm) o).expirationTime;
+        return (expirationTime == ot);
+      }
+      return false;
     }
     public int compareTo(Object o) {
       long ot = ((MyAlarm) o).expirationTime;
