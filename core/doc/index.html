@@ -285,6 +285,15 @@ can be submitted through the <a href="HTTPS://www.alpine.bbn.com/">ALPINE</a>
 or <a href="http://www.cougaar.org">COUGAAR</a> websites.&nbsp;
 <h2>
 <a NAME="bugs"></a>Known bugs and other issues</h2>
+<ul>
+<li>
+The NodeServer module (server.jar) does not currently work as an
+executable jar file because of an unresolved dependency on core.jar.
+Until this is fixed, an appserver instance will have to have a
+specified classpath which includes core.jar.
+</li>
+</ul>
+
 None known.&nbsp;</td>
 </tr>
 </table>
