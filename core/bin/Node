@@ -91,7 +91,8 @@ if ("$os" == "Linux") then
     #setenv JAVA_COMPILER javacomp
 else if ("$os" == "Darwin") then
 # Darwin jvm doesn't support -Xoss128k
-    set MYMEMORY="-Xmx600m -Xms64m -Xmaxf0.9 -Xminf0.1"
+# As of 10.1, OSX wants mx <= 500m (in 10.0, 600m worked)
+    set MYMEMORY="-Xmx500m -Xms64m -Xmaxf0.9 -Xminf0.1"
 endif
 
 #set javaargs="$osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS -Dorg.cougaar.core.message.isLogging=true -Djava.rmi.server.logCalls=true -Dsun.rmi.server.exceptionTrace=true -Dsun.rmi.transport.tcp.readTimeout=150000 "
