@@ -40,6 +40,7 @@ public interface AttributeConstants
     String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion";
 
     String MESSAGE_BYTES_ATTRIBUTE = "MessageBytes";
+    String HEADER_BYTES_ATTRIBUTE = "HeaderBytes";
     String SENT_BYTES_ATTRIBUTE = "SentBytes";
     String RECEIVED_BYTES_ATTRIBUTE = "ReceivedBytes";
 
