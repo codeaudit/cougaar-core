@@ -48,7 +48,6 @@ import org.cougaar.planning.ldm.plan.RelationshipScheduleImpl;
 import org.cougaar.planning.ldm.plan.Role;
 import org.cougaar.planning.ldm.plan.Schedule;
 
-import org.cougaar.util.Debug;
 import org.cougaar.util.Enumerator;
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;

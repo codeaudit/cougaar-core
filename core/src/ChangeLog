@@ -1,3 +1,13 @@
+2002-05-03  Michael Thome  <mthome@bbn.com>
+
+	* Debug
+	references to org.cougaar.util.Debug removed as dead code.
+
+2002-05-01  Michael Thome  <mthome@bbn.com>
+
+	* Version
+	Release 9.2.0
+	
 2002-04-25  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Blackboard.java:
