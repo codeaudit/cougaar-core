@@ -98,7 +98,7 @@ public abstract class BaseServletComponent
             "Unable to register servlet \""+
             servlet.getClass().getName()+
             "\" with path \""+
-            path+"\": "+e);
+            path+"\"", e);
       }
     }
   }
