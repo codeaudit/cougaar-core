@@ -44,7 +44,7 @@ public interface CommunityService extends Service {
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member.
-   * @pram name   Member name
+   * @param name   Member name
    * @return A collection of community names
    */
   Collection listParentCommunities(String member);
