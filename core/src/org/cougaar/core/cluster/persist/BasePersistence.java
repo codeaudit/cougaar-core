@@ -379,7 +379,7 @@ public abstract class BasePersistence implements Persistence {
   private void fixAsset(Asset asset, PlanElement pe) {
     // Compute role-schedules
     RoleScheduleImpl rsi = (RoleScheduleImpl) asset.getRoleSchedule();
-    rsi.addToRoleSchedule(pe);
+    rsi.add(pe);
   }
 
   private List rehydrateOneDelta(int deltaNumber, boolean lastDelta)
