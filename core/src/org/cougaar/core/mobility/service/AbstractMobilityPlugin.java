@@ -198,8 +198,7 @@ public abstract class AbstractMobilityPlugin
             "Unable to obtain node-control service");
       }
       this.nodeSB = nodeControlService.getRootServiceBroker();
-      this.agentContainer = (AgentContainer) 
-        nodeControlService.getRootContainer();
+      this.agentContainer = nodeControlService.getRootContainer();
 
       // get the thread service
       threadService = (ThreadService)
