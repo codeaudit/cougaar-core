@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2001 BBNT Solutions, LLC
+ *  Copyright 2001,2002 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ public abstract class ComponentPlugin
   }
   
   /**
-   * @return the parameter set by {@link #setParameter()}
+   * @return the parameter set by {@link #setParameter}
    **/
   public Object getParameter() {
     return parameter;
