@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2002 BBNT Solutions, LLC and Networks Associates Technology, Inc.
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,13 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
-import org.cougaar.core.mts.ProtectedOutputStream;
 import org.cougaar.core.mts.ProtectedInputStream;
+import org.cougaar.core.mts.ProtectedOutputStream;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 /** Cryptographic Service used to cryptographically protect incoming
  * and outgoing messages.
@@ -60,10 +62,13 @@ public interface MessageProtectionService extends Service
    * @param source      The source of the message
    * @param destination The destination of the message
    * @return the protected header (sign and/or encrypted)
+   * @throws GeneralSecurityException
+   * @throws IOException
    */
   byte[] protectHeader(byte[] rawData, 
 		       MessageAddress source,
-		       MessageAddress destination);
+		       MessageAddress destination) 
+    throws GeneralSecurityException, IOException;
 
   /**
    * Verify the signed and/or encrypted header of an incoming message.
@@ -72,10 +77,13 @@ public interface MessageProtectionService extends Service
    * @param source      The source of the message
    * @param destination The destination of the message
    * @return the header in the clear
+   * @throws GeneralSecurityException
+   * @throws IOException
    */
   byte[] unprotectHeader(byte[] rawData, 
 			 MessageAddress source,
-			 MessageAddress destination);
+			 MessageAddress destination) 
+    throws GeneralSecurityException, IOException;
 
   /** 
    * Gets a stream to encrypt and/or sign outgoing messages
@@ -101,11 +109,13 @@ public interface MessageProtectionService extends Service
    * @param destination The destination of the outgoing message
    * @param attrs       The attributes of the outgoing message
    * @return A filter output stream
+   * @throws IOException
    */
   ProtectedOutputStream getOutputStream(OutputStream os,
-					MessageAddress src,
-					MessageAddress dst,
-					MessageAttributes attrs);
+					MessageAddress source,
+					MessageAddress destination,
+					MessageAttributes attrs)
+    throws IOException;
 
   /** 
    * Gets a stream to verify incoming messages
@@ -130,9 +140,11 @@ public interface MessageProtectionService extends Service
    * @param destination The destination of the incoming message
    * @param attrs       The attributes of the incoming message
    * @return A filter intput stream
+   * @throws IOException
    */
   ProtectedInputStream getInputStream(InputStream is,
 				      MessageAddress src,
 				      MessageAddress dst,
-				      MessageAttributes attrs);
+				      MessageAttributes attrs)
+    throws IOException;
 }
