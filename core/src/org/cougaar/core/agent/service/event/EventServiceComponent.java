@@ -57,10 +57,9 @@ implements Component
   }
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
-    if (ais == null) {
-      // Revocation
-    } else {
+    if (ais != null) {
       prefix = ais.getMessageAddress()+": ";
+      //    } else { -- Revocation - Nothing to do.
     }
   }
 
