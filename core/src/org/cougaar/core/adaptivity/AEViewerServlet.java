@@ -267,7 +267,7 @@ public class AEViewerServlet extends HttpServlet {
    */
   private void writeOMTable(PrintWriter out) {
     out.println ("<table>");
-    out.println("<tr><th>OperatingMode Name</th><th>Value</th></tr>");
+    out.println("<tr><th>OperatingMode Name</th><th>Valid Values</th><th>Value</th></tr>");
 
     Collection oms = support.queryBlackboard(omPredicate);
     for (Iterator it = oms.iterator(); it.hasNext();) {
@@ -281,6 +281,10 @@ public class AEViewerServlet extends HttpServlet {
 
       out.print("<td>");
       out.print(om.getName());
+      out.println("</td>");
+
+      out.print("<td>");
+      out.print(om.getAllowedValues().toString());
       out.println("</td>");
 
       out.print("<td>");
