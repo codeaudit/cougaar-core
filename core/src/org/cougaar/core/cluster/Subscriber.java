@@ -136,7 +136,11 @@ public class Subscriber {
                     System.err.println("Prior publisher: Unknown");
                   }
                 } else {
-                  pe.priorStack.printStackTrace();
+                  if (pe.priorStack == null) {
+                    System.err.println("Prior publisher: Not set");
+                  } else {
+                    pe.priorStack.printStackTrace();
+                  }
                 }
               }
             }
