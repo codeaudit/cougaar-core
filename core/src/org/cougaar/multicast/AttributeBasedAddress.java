@@ -39,28 +39,28 @@ import org.cougaar.planning.ldm.plan.DirectiveImpl;
  */
 public class AttributeBasedAddress extends ClusterIdentifier implements Serializable
 {
-  String commName;
-  String AttributeRole, AttributeValue;
+  String communityName;
+  String attributeName, attributeValue;
   
-  public AttributeBasedAddress(String commName, String role, String value) {
-    this.commName = commName;
-    AttributeRole = role;
-    AttributeValue = value;
+  public AttributeBasedAddress(String commName, String attrName, String attrValue) {
+    communityName = commName;
+    attributeName = attrName;
+    attributeValue = attrValue;
   }
   
-  public AttributeBasedAddress() {}
-  
-  public String getRoleValue() {
-    return AttributeValue;
+  public String getAttributeValue() {
+    return attributeValue;
   }
   
-  public String getRoleName() {
-    return AttributeRole;
+  public String getAttributeName() {
+    return attributeName;
   }
+
+  public String getCommunityName() {
+    return communityName;
+  }
+
   public boolean isPersistable(){
     return false;
   }
-
-  
-  
 }

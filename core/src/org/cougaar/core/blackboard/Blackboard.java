@@ -532,7 +532,7 @@ public class Blackboard extends Subscriber
   }
  
   
-  // -------- Methods for ABA Handling Below --------  //
+  // -------- Methods for ABA Handling Below --------  needs work //
   
   // (String)role to (List)agentnames cache
   private static java.util.HashMap cache = new java.util.HashMap(89);
@@ -556,7 +556,7 @@ public class Blackboard extends Subscriber
 	//System.out.println("roleValue is: " + roleValue);
 	
 	// if ABA's role = rolevalue, get out of hashmap a set of clusterids
-	if(dest.getRoleValue().equals(roleValue)) {
+	if(dest.getAttributeValue().equals(roleValue)) {
 	  List values = (ArrayList) ent.getValue();
 	  if(values != null) {
 	    l = new ArrayList();
@@ -597,8 +597,8 @@ public class Blackboard extends Subscriber
   public ArrayList lookupABAinNameServer(AttributeBasedAddress aba) {
     
     ArrayList cis = new ArrayList();
-    String roleValue = aba.getRoleValue();
-    String roleName = aba.getRoleName();
+    String roleValue = aba.getAttributeValue();
+    String roleName = aba.getAttributeName();
     //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
     
     DirContext dirContext = getNameServer();
