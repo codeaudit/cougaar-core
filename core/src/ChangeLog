@@ -1,3 +1,16 @@
+2002-05-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Check getSource() for null before proceeding with Relay.Target
+	processing. This handles the case of an all-in-one-class Relay
+	implementation being erroneously handled as a Target at the Source
+	end. The opposite case of mishandling as a Source at the Target
+	end is already dealt with.
+
+	* org/cougaar/core/relay/Relay.java:
+	Augment javadoce with cautions about aliasing possibilities when
+	sending Relays between agents in the same node.
+
 2002-05-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/service/SchedulerService.java:
