@@ -81,6 +81,56 @@ public abstract class PlugInAdapter
   //
   // implement ParameterizedPlugIn
   //
+
+
+    /**
+     * Support "interval parameters" which are long values that can be
+     * expressed with time period units (e.g. seconds)
+     **/
+    private static class Interval {
+        String name;
+        long factor;
+        public Interval(String name, long factor) {
+            this.name = name;
+            this.factor = factor;
+        }
+    }
+
+    /**
+     * The known unit names
+     **/
+    private static Interval[] intervals = {
+        new Interval("seconds", 1000L),
+        new Interval("minutes", 1000L * 60L),
+        new Interval("hours",   1000L * 60L * 60L),
+        new Interval("days",    1000L * 60L * 60L * 24L),
+        new Interval("weeks",   1000L * 60L * 60L * 24L * 7L),
+    };
+
+    /**
+     * Make this utility trivially accessible to plugins
+     **/
+    public long parseIntervalParameter(int paramIndex) {
+        return parseInterval((String) getParameters().get(paramIndex));
+    }
+
+    public long parseInterval(String param) {
+        param = param.trim();
+        int spacePos = param.indexOf(' ');
+        long factor = 1L;
+        if (spacePos >= 0) {
+            String units = param.substring(spacePos + 1).toLowerCase();
+            param = param.substring(0, spacePos);
+            for (int i = 0; i < intervals.length; i++) {
+                if (intervals[i].name.startsWith(units)) {
+                    factor = intervals[i].factor;
+                    break;
+                }
+            }
+        }
+        return Long.parseLong(param) * factor;
+    }
+
   
   private Vector parameters = null;
 
