@@ -106,5 +106,6 @@ public class DummyPersistence
   public DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
     throws IOException
   {
+    return null;
   }
 }
