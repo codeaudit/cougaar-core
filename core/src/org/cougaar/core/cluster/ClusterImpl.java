@@ -808,9 +808,9 @@ public class ClusterImpl
         .get();
       Long newIncarnation = new Long(av);
       clusterInfo.put(cid, newIncarnation);
-      System.out.println("  " + cid
-                         + ": oldIncarnation=" + oldIncarnation
-                         + ", newIncarnation=" + newIncarnation);
+//        System.out.println("  " + cid
+//                           + ": oldIncarnation=" + oldIncarnation
+//                           + ", newIncarnation=" + newIncarnation);
       return !newIncarnation.equals(oldIncarnation);
     }
     return false;
@@ -838,7 +838,7 @@ public class ClusterImpl
    * On subsequent checks we only check agents listed in clusterInfo.
    **/
   private void checkRestarts() {
-    System.out.println("checkRestarts");
+//      System.out.println("checkRestarts");
     List restartAgents = new ArrayList();
     synchronized (clusterInfo) {
       try {
@@ -852,7 +852,7 @@ public class ClusterImpl
         }
         topologyContext.close();
       } catch (Exception ne) {
-        ne.printStackTrace();
+//        ne.printStackTrace();
       }
     }
     for (Iterator i = restartAgents.iterator(); i.hasNext(); ) {
@@ -862,7 +862,7 @@ public class ClusterImpl
   }
 
   private void restart() {
-    System.out.println("restart");
+//      System.out.println("restart");
     try {
       DirContext topologyContext =
         (DirContext) myNamingService.getRootContext().lookup(TOPOLOGY_CONTEXT_NAME);
@@ -878,21 +878,21 @@ public class ClusterImpl
       }
       topologyContext.close();
     } catch (Exception ne) {
-      ne.printStackTrace();
+//      ne.printStackTrace();
     }
   }
 
   private void checkClusterInfo(MessageAddress cid) {
-    System.out.println("Checking " + cid);
+//      System.out.println("Checking " + cid);
     if (cid instanceof ClusterIdentifier) {
       synchronized (clusterInfo) {
         if (clusterInfo.get(cid) == null) {
-          System.out.println("Adding " + cid);
+//            System.out.println("Adding " + cid);
           clusterInfo.put(cid, new Long(0L));
         }
       }
     } else {
-      System.out.println("Message is " + cid.getClass().getName());
+//        System.out.println("Message is " + cid.getClass().getName());
     }
   }
 
