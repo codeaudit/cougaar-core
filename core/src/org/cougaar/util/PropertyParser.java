@@ -32,7 +32,7 @@ public abstract class PropertyParser {
   }
 
   public static final boolean getBoolean(String prop, boolean def) {
-    return getBoolean(System.getProperties(), prop, def);
+    return (Boolean.valueOf(System.getProperty(prop, String.valueOf(def)))).booleanValue();
   }
 
   public static final int getInt(Properties props, String prop, int def) {
@@ -43,7 +43,11 @@ public abstract class PropertyParser {
     }
   }
   public static final int getInt(String prop, int def) {
-    return getInt(System.getProperties(), prop, def);
+    try {
+      return Integer.parseInt(System.getProperty(prop, String.valueOf(def)));
+    } catch (NumberFormatException e) {
+      return def;
+    }
   }
 
   public static final long getLong(Properties props, String prop, long def) {
@@ -55,7 +59,11 @@ public abstract class PropertyParser {
 
   }
   public static final long getLong(String prop, long def) {
-    return getLong(System.getProperties(), prop, def);
+    try {
+      return Long.parseLong(System.getProperty(prop, String.valueOf(def)));
+    } catch (NumberFormatException e) {
+      return def;
+    }
   }
 
   public static final float getFloat(Properties props, String prop, float def) {
@@ -66,7 +74,11 @@ public abstract class PropertyParser {
     }
   }
   public static final float getFloat(String prop, float def) {
-    return getFloat(System.getProperties(), prop, def);
+    try {
+      return Float.parseFloat(System.getProperty(prop, String.valueOf(def)));
+    } catch (NumberFormatException e) {
+      return def;
+    }
   }
 
   public static final double getDouble(Properties props, String prop, double def) {
@@ -77,6 +89,10 @@ public abstract class PropertyParser {
     }
   }
   public static final double getDouble(String prop, double def) {
-    return getDouble(System.getProperties(), prop, def);
+    try {
+      return Double.parseDouble(System.getProperty(prop, String.valueOf(def)));
+    } catch (NumberFormatException e) {
+      return def;
+    }
   }
 }

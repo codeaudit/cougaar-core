@@ -70,6 +70,7 @@ import org.cougaar.util.*;
 
 import org.cougaar.core.component.*;
 import java.beans.Beans;
+import org.cougaar.util.PropertyParser;
 
 /**
  * This class is responsible for creating and maintaining a Node in the alp
@@ -167,7 +168,7 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
    * @see #launch(String[])
    **/
   static public void main(String[] args){
-    if ("true".equals(System.getProperty("org.cougaar.useBootstrapper", "true"))) {
+    if (PropertyParser.getBoolean("org.cougaar.useBootstrapper", true)) {
       Bootstrapper.launch(Node.class.getName(), args);
     } else {
       launch(args);
@@ -184,10 +185,8 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     setSystemProperties(args);
 
     // check for valid plugin jars
-    String validateJars = System.getProperty("org.cougaar.validate.jars");
-    if ((validateJars != null) &&
-        ((validateJars.equalsIgnoreCase("true")) ||
-         (validateJars.equals("")))) {
+    boolean validateJars = PropertyParser.getBoolean("org.cougaar.validate.jars", false);
+    if (validateJars) {
       // validate
       if (validatePluginJarsByStream()) {
         // validation succeeded
@@ -231,7 +230,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
    * @see ArgTable
    */
   private static void setSystemProperties(String[] args) {
-    java.util.Properties props = System.getProperties();
     List revisedArgs = new ArrayList();
 
     // separate the args into "-D" properties and normal arguments
@@ -241,9 +239,9 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
         // transfer a "late" system property
         int sepIdx = argi.indexOf('=');
         if (sepIdx < 0) {
-          props.put(argi.substring(2), "");
+          System.setProperty(argi.substring(2), "");
         } else {
-          props.put(argi.substring(2, sepIdx), argi.substring(sepIdx+1));
+          System.setProperty(argi.substring(2, sepIdx), argi.substring(sepIdx+1));
         }
       } else {
         // keep a non "-D" argument
@@ -259,50 +257,50 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     String validateJars = 
       (String) myArgs.get(ArgTableIfc.SIGNED_PLUGIN_JARS);
     if (validateJars != null) {
-      props.put("org.cougaar.validate.jars", validateJars);
+      System.setProperty("org.cougaar.validate.jars", validateJars);
       System.err.println("Set name to "+validateJars);
     }
 
     String name = (String) myArgs.get(ArgTableIfc.NAME_KEY);
     if (name != null) {
-      props.put("org.cougaar.node.name", name);
+      System.setProperty("org.cougaar.node.name", name);
       System.err.println("Set name to "+name);
     }
 
     String config = (String) myArgs.get(ArgTableIfc.CONFIG_KEY);
     if (config != null) {
-      props.put("org.cougaar.config", config);
+      System.setProperty("org.cougaar.config", config);
       System.err.println("Set config to "+config);
     }
 
     String cs = (String) myArgs.get(ArgTableIfc.CS_KEY);
     if (cs != null && cs.length()>0) {
-      props.put("org.cougaar.config.server", cs);
+      System.setProperty("org.cougaar.config.server", cs);
       System.err.println("Using ConfigurationServer at "+cs);
     }
 
     String ns = (String) myArgs.get(ArgTableIfc.NS_KEY);
     if (ns != null && ns.length()>0) {
-      props.put("org.cougaar.name.server", ns);
+      System.setProperty("org.cougaar.name.server", ns);
       System.err.println("Using NameServer at "+ns);
     }
 
     String port = (String) myArgs.get(ArgTableIfc.PORT_KEY);
     if (port != null && port.length()>0) {
-      props.put("org.cougaar.name.server.port", port);
+      System.setProperty("org.cougaar.name.server.port", port);
       System.err.println("Using NameServer on port " + port);
     }
 
     String filename = (String) myArgs.get(ArgTableIfc.FILE_KEY);
     if (filename != null) {
-      props.put("org.cougaar.filename", filename);
+      System.setProperty("org.cougaar.filename", filename);
       System.err.println("Using file "+filename);
     }
 
     String experimentId = 
       (String) myArgs.get(ArgTableIfc.EXPERIMENT_ID_KEY);
     if (experimentId != null) {
-      props.put("org.cougaar.experiment.id", experimentId);
+      System.setProperty("org.cougaar.experiment.id", experimentId);
       System.err.println("Using experiment ID "+experimentId);
     }
   }
@@ -310,13 +308,12 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
 
   /** Returns true if all plugin jars are signed, else false **/
   private static boolean validatePluginJarsByStream() {
-    Properties props = System.getProperties();
     String jarSubdirectory = "plugins";
-    String installpath = props.getProperty("org.cougaar.install.path");
+    String installpath = System.getProperty("org.cougaar.install.path");
     String defaultCertPath = "configs" + File.separatorChar + "common"
       + File.separatorChar + "alpcertfile.cer";
 
-    String certPath = props.getProperty("org.cougaar.security.certificate",
+    String certPath = System.getProperty("org.cougaar.security.certificate",
         defaultCertPath);
 
     try{

@@ -22,6 +22,7 @@
 package org.cougaar.util;
 
 import java.util.Properties;
+
 /**
  * Provide a pool of reusable threads to reduce the overhead of 
  * construction/destruction of large numbers of standard thread,
@@ -53,9 +54,9 @@ public class ReusableThreadPool {
    */
   static {
     Properties prop = System.getProperties();
-    defaultInitialPoolSize = (Integer.valueOf(prop.getProperty("org.cougaar.ReusableThread.initialPoolSize", "32"))).intValue();
+    defaultInitialPoolSize = PropertyParser.getInt("org.cougaar.ReusableThread.initialPoolSize", 32);
 
-    defaultMaximumPoolSize = (Integer.valueOf(prop.getProperty("org.cougaar.ReusableThread.maximumPoolSize", "64"))).intValue();
+    defaultMaximumPoolSize = PropertyParser.getInt("org.cougaar.ReusableThread.maximumPoolSize", 64);
 
   }
 

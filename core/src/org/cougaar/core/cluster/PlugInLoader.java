@@ -88,14 +88,13 @@ class PlugInLoader {
    **/
   private PlugInLoader() {
     installpath = System.getProperty("org.cougaar.install.path");
-    Properties props = System.getProperties();
-    checkplugins = (Boolean.valueOf(props.getProperty("org.cougaar.security.plugin.check", "false"))). booleanValue();
-    debugging = (Boolean.valueOf(props.getProperty("org.cougaar.security.plugin.debug", "false"))). booleanValue();
+    checkplugins = PropertyParser.getBoolean("org.cougaar.security.plugin.check", false);;
+    debugging = PropertyParser.getBoolean("org.cougaar.security.plugin.debug", false);
 
     if (checkplugins) {
       quiet = false;
     } else {
-      quiet = (Boolean.valueOf(props.getProperty("org.cougaar.security.plugin.quiet", "false"))). booleanValue();
+      quiet = PropertyParser.getBoolean("org.cougaar.security.plugin.quiet", false);
     }
 
     // find lib/*

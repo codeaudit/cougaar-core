@@ -44,15 +44,13 @@ public final class KeyRing {
   private static KeyStore keystore = null;
 
   static {
-    Properties props = System.getProperties();
-
-    String installpath = props.getProperty("org.cougaar.install.path");
+    String installpath = System.getProperty("org.cougaar.install.path");
     String defaultKeystorePath = installpath + File.separatorChar
                                 + "configs" + File.separatorChar + "common"
                                 + File.separatorChar + ".keystore";
 
-    ksPass = props.getProperty("org.cougaar.security.keystore.password","alpalp");
-    ksPath = props.getProperty("org.cougaar.security.keystore", defaultKeystorePath);
+    ksPass = System.getProperty("org.cougaar.security.keystore.password","alpalp");
+    ksPath = System.getProperty("org.cougaar.security.keystore", defaultKeystorePath);
 
     System.out.println("Secure message keystore: path=" + ksPath + ", pass=" + ksPass);
   }
