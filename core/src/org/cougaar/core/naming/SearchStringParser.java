@@ -394,7 +394,12 @@ public class SearchStringParser {
 
         public boolean match(Attributes attrs) throws NamingException {
             try {
-                return value.equals(attrs.get(attrdesc).get());
+                Attribute attr = attrs.get(attrdesc);
+                for (int i = 0, n = attr.size(); i < n; i++) {
+                    String attrValue = attr.get(i).toString();
+                    if (value.equals(attrValue)) return true;
+                }
+                return false;
             } catch (Exception e) {
                 return false;
             }
