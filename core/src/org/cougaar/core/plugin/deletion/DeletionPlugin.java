@@ -1,8 +1,22 @@
-/*
- * Created on Dec 9, 2003
- *
- * To change the template for this generated file go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+/* 
+ * <copyright>
+ * Copyright 2003 BBNT Solutions, LLC
+ * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
+
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the Cougaar Open Source License as published by
+ * DARPA on the Cougaar Open Source Website (www.cougaar.org).
+
+ * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
+ * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
+ * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT
+ * ANY WARRANTIES AS TO NON-INFRINGEMENT.  IN NO EVENT SHALL COPYRIGHT
+ * HOLDER BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT OR CONSEQUENTIAL
+ * DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE OF DATA OR PROFITS,
+ * TORTIOUS CONDUCT, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THE COUGAAR SOFTWARE.
+ * </copyright>
  */
 package org.cougaar.core.plugin.deletion;
 
@@ -54,19 +68,19 @@ public class DeletionPlugin extends ComponentPlugin {
         parseLongParameter(param, DELETION_PHASE_PREFIX, deletionPhase);
       archivingEnabled =
         parseBooleanParameter(
-          param,
-          ARCHIVING_ENABLED_PREFIX,
-          archivingEnabled);
+			      param,
+			      ARCHIVING_ENABLED_PREFIX,
+			      archivingEnabled);
     }
     deletionPolicies =
       (CollectionSubscription) blackboard.subscribe(
-        deletionPolicyPredicate,
-        false);
+						    deletionPolicyPredicate,
+						    false);
     checkDeletionPolicies(deletionDelay);
     deletionSchedulePolicies =
       (CollectionSubscription) blackboard.subscribe(
-        deletionSchedulePolicyPredicate,
-        false);
+						    deletionSchedulePolicyPredicate,
+						    false);
     checkDeletionSchedulePolicies(deletionPeriod, deletionPhase);
     getBlackboardService().setShouldBePersisted(false);
     // All subscriptions are created as needed
@@ -131,21 +145,21 @@ public class DeletionPlugin extends ComponentPlugin {
     deletionTimeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
   protected static UnaryPredicate truePredicate = new UnaryPredicate() {
-    public boolean execute(Object o) {
-      return true;
-    }
-  };
+      public boolean execute(Object o) {
+	return true;
+      }
+    };
   
   private static UnaryPredicate deletablePredicate =
-   new UnaryPredicate() {
-     public boolean execute(Object o) {
-       if (o instanceof Deletable) {
-         Deletable d = (Deletable) o;
-         return d.isDeletable();
-       }
-       return false;
-     }
-   };
+    new UnaryPredicate() {
+      public boolean execute(Object o) {
+	if (o instanceof Deletable) {
+	  Deletable d = (Deletable) o;
+	  return d.isDeletable();
+	}
+	return false;
+      }
+    };
 
   protected static final String DELETION_DELAY_PREFIX = "deletionDelay=";
 
@@ -175,39 +189,39 @@ public class DeletionPlugin extends ComponentPlugin {
   protected DeletionSchedulePolicy theDeletionSchedulePolicy;
 
   protected UnaryPredicate deletionPolicyPredicate = new UnaryPredicate() {
-    public boolean execute(Object o) {
-      return o instanceof DeletionPolicy;
-    }
-  };
+      public boolean execute(Object o) {
+	return o instanceof DeletionPolicy;
+      }
+    };
 
   protected UnaryPredicate deletionSchedulePolicyPredicate =
     new UnaryPredicate() {
-    public boolean execute(Object o) {
-      return o instanceof DeletionSchedulePolicy;
-    }
-  };
+      public boolean execute(Object o) {
+	return o instanceof DeletionSchedulePolicy;
+      }
+    };
 
   protected SortedSet deletionPolicySet = new TreeSet(new Comparator() {
-    public int compare(Object o1, Object o2) {
-      DeletionPolicy p1 = (DeletionPolicy) o1;
-      DeletionPolicy p2 = (DeletionPolicy) o2;
-      int diff = p1.getPriority() - p2.getPriority();
-      if (diff != 0)
-        return diff;
-      String n1 = p1.getName();
-      String n2 = p2.getName();
-      if (n1 != n2) {
-        if (n1 == null)
-          return -1;
-        if (n2 == null)
-          return +1;
-        diff = n1.compareTo(n2);
-        if (diff != 0)
-          return diff;
+      public int compare(Object o1, Object o2) {
+	DeletionPolicy p1 = (DeletionPolicy) o1;
+	DeletionPolicy p2 = (DeletionPolicy) o2;
+	int diff = p1.getPriority() - p2.getPriority();
+	if (diff != 0)
+	  return diff;
+	String n1 = p1.getName();
+	String n2 = p2.getName();
+	if (n1 != n2) {
+	  if (n1 == null)
+	    return -1;
+	  if (n2 == null)
+	    return +1;
+	  diff = n1.compareTo(n2);
+	  if (diff != 0)
+	    return diff;
+	}
+	return o1.hashCode() - o2.hashCode();
       }
-      return o1.hashCode() - o2.hashCode();
-    }
-  });
+    });
 
   protected CollectionSubscription deletionPolicies;
 
@@ -224,8 +238,8 @@ public class DeletionPlugin extends ComponentPlugin {
     if (!(logger instanceof LoggingServiceWithPrefix)) {
       logger =
         LoggingServiceWithPrefix.add(
-          logger,
-          getMessageAddress().toString() + ": ");
+				     logger,
+				     getAgentIdentifier().toString() + ": ");
     }
   }
   
@@ -270,9 +284,9 @@ public class DeletionPlugin extends ComponentPlugin {
   }
 
   protected boolean parseBooleanParameter(
-    String param,
-    String prefix,
-    boolean dflt) {
+					  String param,
+					  String prefix,
+					  boolean dflt) {
     if (param.startsWith(prefix)) {
       return Boolean.valueOf(param.substring(prefix.length())).booleanValue();
     }
@@ -297,10 +311,10 @@ public class DeletionPlugin extends ComponentPlugin {
     }
     SimpleDeletionPolicy policy =
       new SimpleDeletionPolicy(
-        "Default Deletion Policy",
-        truePredicate,
-        deletionDelay,
-        DeletionPolicy.MIN_PRIORITY);
+			       "Default Deletion Policy",
+			       truePredicate,
+			       deletionDelay,
+			       DeletionPolicy.MIN_PRIORITY);
     blackboard.publishAdd(policy);
   }
 
@@ -312,8 +326,8 @@ public class DeletionPlugin extends ComponentPlugin {
    * found, all but one is deleted.
    **/
   protected void checkDeletionSchedulePolicies(
-    long deletionPeriod,
-    long deletionPhase) {
+					       long deletionPeriod,
+					       long deletionPhase) {
     for (Iterator i = deletionSchedulePolicies.iterator(); i.hasNext();) {
       DeletionSchedulePolicy policy = (DeletionSchedulePolicy) i.next();
       if (theDeletionSchedulePolicy == null) {
@@ -333,10 +347,10 @@ public class DeletionPlugin extends ComponentPlugin {
 
   private Alarm createAlarm(long delay) {
     return new PluginAlarm(delay) {
-      public BlackboardService getBlackboardService() {
-        return blackboard;
-      }
-    };
+	public BlackboardService getBlackboardService() {
+	  return blackboard;
+	}
+      };
   }
 
 
