@@ -38,7 +38,7 @@ import org.cougaar.domain.planning.ldm.policy.Policy;
  **/
 public class NodeTrustComponent
   extends ContainerSupport
-  implements StateObject, MessageTransportClient
+  implements StateObject, MessageTransportClient, NodePolicyWatcher
 {
   private AgentManagerBindingSite bindingSite = null;
   private Object loadState = null;
@@ -104,7 +104,7 @@ public class NodeTrustComponent
           }
         }
       });
-
+    //System.out.println("\n Loaded NodeTrustComponent");
   }
 
   public void unload() {
@@ -146,6 +146,7 @@ public class NodeTrustComponent
           // set this on the TrustStatusService
           theTSS.changeSocietyTrust(level);
           found = true;
+          System.out.println("\n NODETRUSTCOMPONENT recieved a message");
         }
       }
     }

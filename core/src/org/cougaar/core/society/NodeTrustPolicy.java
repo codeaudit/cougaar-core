@@ -43,36 +43,8 @@ public class NodeTrustPolicy extends Policy {
   private final String TRUST_LEVEL = "Trust Level";
   private final String TRAFFIC_NODES = "Traffic Nodes";
   
-  public NodeTrustPolicy(String category, int trust_level, String []nodes) {
+  public NodeTrustPolicy() {
     super("NodeTrustPolicy");
-    //check categor value
-    if (! category.equals(SOCIETY) || category.equals(HOST) || 
-        category.equals(SUBNET)) {
-      throw new IllegalArgumentException("\n"+this+" category parameter "+
-                                         "must be either NodeTrustPolicy.SOCIETY "+
-                                         ", NodeTrustPolicy.HOST or " +
-                                         "NodeTrustPolicy.SUBNET");
-    }
-    StringRuleParameter srp = new StringRuleParameter(TRUST_CATEGORY);
-    try {
-      srp.setValue(category);
-    } catch (RuleParameterIllegalValueException ex) {
-      System.out.println(ex);
-    }
-    Add(srp);
-
-    try {
-      IntegerRuleParameter irp = 
-        new IntegerRuleParameter(TRUST_LEVEL, 0, 10, trust_level);
-    Add(irp);
-    } catch (RuleParameterIllegalValueException ex) {
-      System.out.println(ex);
-    }
-
-    if (nodes != null || nodes.length != 0) {
-      EnumerationRuleParameter erp  = new EnumerationRuleParameter(TRAFFIC_NODES, nodes);
-      Add(erp);
-    }
   }
 
   public String getTrustCategory() {
@@ -91,6 +63,41 @@ public class NodeTrustPolicy extends Policy {
       return null;
     } else {
       return param.getEnumeration();
+    }
+  }
+
+  public void setTrustCategory(String category) {
+    //check categor value
+    if (! category.equals(SOCIETY) || category.equals(HOST) || 
+        category.equals(SUBNET)) {
+      throw new IllegalArgumentException("\n"+this+" category parameter "+
+                                         "must be either NodeTrustPolicy.SOCIETY "+
+                                         ", NodeTrustPolicy.HOST or " +
+                                         "NodeTrustPolicy.SUBNET");
+    }
+    StringRuleParameter srp = new StringRuleParameter(TRUST_CATEGORY);
+    try {
+      srp.setValue(category);
+    } catch (RuleParameterIllegalValueException ex) {
+      System.out.println(ex);
+    }
+    Add(srp);
+  }
+
+  public void setTrustLevel(int trust_level) {
+    try {
+      IntegerRuleParameter irp = 
+        new IntegerRuleParameter(TRUST_LEVEL, 0, 10, trust_level);
+    Add(irp);
+    } catch (RuleParameterIllegalValueException ex) {
+      System.out.println(ex);
+    }
+  }
+
+  public void setNodes(String []nodes) {
+   if (nodes != null && nodes.length != 0) {
+      EnumerationRuleParameter erp  = new EnumerationRuleParameter(TRAFFIC_NODES, nodes);
+      Add(erp);
     }
   }
 

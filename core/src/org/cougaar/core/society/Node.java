@@ -615,6 +615,20 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     add(agentDescs);
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
+
+    // start up the NodeTrust component
+    String ntc = new String(getIdentifier()+"NodeTrust");
+    ComponentDescription ntcdesc = 
+      new ComponentDescription(
+                                ntc,
+                                "Node.NodeTrust",
+                                "org.cougaar.core.society.NodeTrustComponent",
+                                null,  //codebase
+                                null,  //parameters
+                                null,  //certificate
+                                null,  //lease
+                                null); //policy
+    super.add(ntcdesc);
   }
 
 
