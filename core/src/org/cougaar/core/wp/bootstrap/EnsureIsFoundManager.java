@@ -28,24 +28,22 @@ package org.cougaar.core.wp.bootstrap;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.SimpleMessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
-import org.cougaar.core.wp.MessageTimeoutUtils;
 import org.cougaar.core.wp.Parameters;
-import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This component advertises the {@link EnsureIsFoundService}, which
@@ -74,6 +72,14 @@ import org.cougaar.util.RarelyModifiedList;
  * However, this code only runs on nodes containing servers, and
  * the data is typically in the cache, so this shouldn't be a real
  * problem.
+ * 
+ * @property org.cougaar.core.wp.bootstrap.ensureIsFound.checkNamesPeriod
+ * Specify how often to check for WP server names.
+ * Set to 45 seconds by default.
+ * 
+ * @property org.cougaar.core.wp.bootstrap.ensureIsFound.checkMtsReachability
+ * Specify if MTS-reachability should be tested when checking WP server names.
+ * Set to true by default. Should never be set to false (see bug 3907).
  */
 public class EnsureIsFoundManager
 extends GenericStateModelAdapter
@@ -98,6 +104,8 @@ implements Component
 
   // locked by table
   private boolean searching;
+  
+  private AgentStatusService agentStatusService;
 
   public void setParameter(Object o) {
     configure(o);
@@ -139,6 +147,17 @@ implements Component
 
     configure(null);
 
+    // get the AgentStatusService in load, *but* it's loaded after the
+    // WP, so we must use a ServiceAvailableLister.
+    ServiceFinder.Callback sfc =
+      new ServiceFinder.Callback() {
+        public void foundService(Service s) {
+          EnsureIsFoundManager.this.foundService(s);
+        }
+      };
+    ServiceFinder.findServiceLater(
+        sb, AgentStatusService.class, null, sfc);
+
     // advertise our service
     ensureSP = new EnsureIsFoundSP();
     rootsb.addService(EnsureIsFoundService.class, ensureSP);
@@ -160,6 +179,11 @@ implements Component
       sb.releaseService(
           this, LoggingService.class, logger);
       logger = null;
+    }
+    if (agentStatusService != null) {
+      sb.releaseService(
+          this, AgentStatusService.class, agentStatusService);
+      agentStatusService = null;
     }
     super.unload();
   }
@@ -242,13 +266,14 @@ implements Component
       if (logger.isDebugEnabled()) {
         logger.debug(
             (searching ? "Checking" : "Verifying")+
-            " white pages for names["+table.size()+"]: "+
+            " reachability for names["+table.size()+"]: "+
             table.keySet());
       }
       if (table.isEmpty()) {
         return;
       }
       String missingName = null;
+      boolean missingDueToQueue = false;
       for (Iterator iter = table.entrySet().iterator();
           iter.hasNext();
           ) {
@@ -271,6 +296,28 @@ implements Component
           missingName = name;
           break;
         }
+        // A successfull White Pages lookup is not sufficient.
+        // It's possible to access the white pages without being able to
+        // send messages. See bug 3907.
+        if (config.checkMtsReachability) {
+          AgentStatusService.AgentState state =
+            (agentStatusService == null ?
+                (null) :
+                  agentStatusService.getRemoteAgentState(
+                      SimpleMessageAddress.getMessageAddress(name)));
+          if (logger.isDetailEnabled()) {
+            logger.detail("Length of " + name + " MTS queue: " +
+                (state == null ?
+                    "AgentStatusService not available yet" :
+                      state.queueLength + " messages"));
+          }
+          if (state == null || state.queueLength > 0) {
+            missingDueToQueue = true;
+            missingName = name;
+            break;
+          }
+        }
+        // White pages and MTS reachability tests were successful.
         e.found = true;
       }
       if (missingName == null) {
@@ -278,15 +325,15 @@ implements Component
         if (searching) {
           if (logger.isInfoEnabled()) {
             logger.info(
-                "Stopping bootstrap search, found all "+table.size()+
-                " names in white pages: "+table.keySet());
+                "Stopping bootstrap search, all "+table.size()+
+                " names are reachable: "+table.keySet());
           }
           bootstrapService.stopSearching();
           searching = false;
         } else {
           if (logger.isDebugEnabled()) {
             logger.debug(
-                "Verified that all names are in white pages");
+                "Verified that all names are reachable");
           }
         }
       } else {
@@ -294,14 +341,20 @@ implements Component
         if (searching) {
           if (logger.isDebugEnabled()) {
             logger.debug(
-                "Keep searching, did not find "+missingName+
-                " in white pages");
+                "Keep searching, "+missingName+
+                " was not reachable yet " +
+                (missingDueToQueue ?
+                    "due to MTS queue" :
+                    "due to failed white pages lookup"));
           }
         } else {
           if (logger.isInfoEnabled()) {
             logger.info(
-                "Starting bootstrap search, did not find "+
-                missingName+" in white pages");
+                "Starting bootstrap search, "+
+                missingName+" was not reachable yet " +
+                (missingDueToQueue ?
+                    "due to MTS queue" :
+                    "due to failed white pages lookup"));
           }
           bootstrapService.startSearching();
           searching = true;
@@ -309,6 +362,15 @@ implements Component
       }
       // wake later
       checkNamesThread.schedule(config.checkNamesPeriod);
+    }
+  }
+  
+  private void foundService(Service s) {
+    if (logger.isDetailEnabled()) {
+      logger.detail("foundService("+s+"), searching="+searching);
+    }
+    if (s instanceof AgentStatusService) {
+      agentStatusService = (AgentStatusService) s;
     }
   }
 
@@ -346,11 +408,13 @@ implements Component
   /** config options */
   private static class EnsureIsFoundManagerConfig {
     public final long checkNamesPeriod;
-
+    public final boolean checkMtsReachability;
+    
     public EnsureIsFoundManagerConfig(Object o) {
       Parameters p =
         new Parameters(o, "org.cougaar.core.wp.bootstrap.ensureIsFound.");
       checkNamesPeriod = p.getLong("checkNamesPeriod", 45000);
+      checkMtsReachability = p.getBoolean("checkMtsReachability", true);
     }
   }
 }
