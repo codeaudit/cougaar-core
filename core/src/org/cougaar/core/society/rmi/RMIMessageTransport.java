@@ -297,7 +297,6 @@ public class RMIMessageTransport
 
   /** send a single message to its destination without blocking */
   private void sendMessageToTarget(Message m, MessageAddress addr) {
-      System.out.print('>');
     queueForDelivery(secure(m), addr);
   }
 

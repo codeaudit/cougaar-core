@@ -4,7 +4,6 @@ class LoopbackMessageTransport extends MessageTransport
 {
 
     public void routeMessage(Message message) {
-	System.out.print('!');
 	getBinder().deliverMessage(message);
     }
 
