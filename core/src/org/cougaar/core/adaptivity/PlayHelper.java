@@ -246,7 +246,7 @@ public class PlayHelper {
     }
     if (!operatingModes.isEmpty()) {
       for (Iterator i = operatingModes.iterator(); i.hasNext(); ) {
-        logger.error("No play found to set operating mode: " + i.next());
+        if (logger.isDebugEnabled()) logger.debug("No play found to set operating mode: " + i.next());
       }
     }
     omMap.clear();
