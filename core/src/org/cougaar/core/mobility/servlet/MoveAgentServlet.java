@@ -396,7 +396,21 @@ implements BlackboardClient
         if (n == 0) {
           out.print("<i>none</i>");
         } else {
-          out.print("<table>\n");
+          out.print(
+              "<table border=1 cellpadding=1\n"+
+              " cellspacing=1 width=95%\n"+
+              " bordercolordark=#660000 bordercolorlight=#cc9966>\n"+
+              "<tr>"+
+              "<td>\n"+
+              "<font size=+1 color=mediumblue><b>UID</b></font>"+
+              "</td>"+
+              "<td>"+
+              "<font size=+1 color=mediumblue><b>Ticket</b></font>"+
+              "</td>"+
+              "<td>"+
+              "<font size=+1 color=mediumblue><b>Status</b></font>"+
+              "</td>"+
+              "</tr>\n");
           Iterator iter = c.iterator();
           for (int i = 0; i < n; i++) {
             MoveAgent ma = (MoveAgent) iter.next();
@@ -404,8 +418,19 @@ implements BlackboardClient
             out.print(ma.getUID());
             out.print("</td><td>");
             out.print(ma.getTicket());
-            out.print("</td><td>");
-            out.print(ma.getStatus());
+            out.print("</td><td bgcolor=\"");
+            MoveAgent.Status status = ma.getStatus();
+            if (status == null) {
+              out.print(
+                  "#FFFFBB\">"+ // yellow
+                  "In progress");
+            } else {
+              out.print(
+                  (status.getCode() == MoveAgent.Status.OKAY) ?
+                  "#BBFFBB\">" : // green
+                  "#FFBBBB\">"); // red
+              out.print(status);
+            }
             out.print("</td></tr>\n");
           }
           out.print("</table>\n");
