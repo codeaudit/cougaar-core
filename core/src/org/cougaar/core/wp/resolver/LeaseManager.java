@@ -925,7 +925,7 @@ implements Component
     public final double renewRatio;
     public final double tripWeight;
     public final long minBundleTTD;
-    public final long checkLeasesPeriod = 20*1000;
+    public final long checkLeasesPeriod;
 
     public LeaserConfig(Object o) {
       Parameters p = 
@@ -933,6 +933,7 @@ implements Component
       renewRatio = p.getDouble("renewRatio", 0.75);
       tripWeight = p.getDouble("tripWeight", 0.75);
       minBundleTTD = p.getLong("minBundleTTD", 60000);
+      checkLeasesPeriod = p.getLong("checkLeasesPeriod", 20000);
     }
   }
 
