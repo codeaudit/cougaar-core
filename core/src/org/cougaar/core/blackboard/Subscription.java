@@ -105,6 +105,7 @@ public abstract class Subscription {
   protected final UnaryPredicate predicate;
 
   public Subscription(UnaryPredicate p) {
+    if (p == null) throw new IllegalArgumentException("Predicate must be non-null");
     predicate = p;
   }
 
