@@ -71,7 +71,7 @@ public abstract class SimplePlugIn extends PlugInAdapter {
       setupSubscriptions();
     } catch (Exception e) {
       synchronized (System.err) {
-        System.err.println("Caught "+e);
+        System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
         e.printStackTrace();
       }
     } finally {
@@ -119,7 +119,6 @@ public abstract class SimplePlugIn extends PlugInAdapter {
     } catch (Exception e) {
       synchronized (System.err) {
         System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
-        //System.err.println("Caught "+e);
         e.printStackTrace();
       }
       doExecute = true;
