@@ -25,7 +25,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * A LocationRangeScheduleElement is a subclass of ScheduleElement which provides
  * a two slots for a start and end location 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: LocationRangeScheduleElement.java,v 1.3 2001-08-22 20:14:11 mthome Exp $
+ *
  **/
 
 public interface LocationRangeScheduleElement extends ScheduleElement {

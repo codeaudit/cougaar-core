@@ -27,7 +27,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * Note that the Asset is probably a prototype
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: TypedQuantityAspectValue.java,v 1.3 2001-08-22 20:14:17 mthome Exp $
+ *
  */
  
 public class TypedQuantityAspectValue extends AspectValue {

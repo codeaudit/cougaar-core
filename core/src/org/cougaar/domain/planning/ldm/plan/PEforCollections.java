@@ -30,7 +30,7 @@ import org.cougaar.domain.planning.ldm.plan.AllocationResult;
   * setter methods for the NotificationLP to set the 
   * Reported Result for PlanElements
   * @author       ALPINE <alpine-software@bbn.com>
-  * @version      $Id: PEforCollections.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
+  *
   **/
 
 public interface PEforCollections extends PlanElementForAssessor {

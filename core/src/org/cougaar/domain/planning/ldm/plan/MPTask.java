@@ -28,7 +28,7 @@ import java.util.Enumeration;
   * multiple ParentTasks instead of one ParentTask
   * @see org.cougaar.domain.planning.ldm.plan.Task
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: MPTask.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+  *
   **/
 	
 public interface MPTask extends Task

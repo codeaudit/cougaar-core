@@ -26,7 +26,7 @@ package org.cougaar.util;
  * Signals that an assertion has failed.
  *
  * @author unascribed
- * @version $Revision: 1.3 $, $Date: 2001-08-22 20:14:20 $
+ *
  * @see Assert
  */
 public class AssertionException extends RuntimeException {

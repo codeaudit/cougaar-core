@@ -31,7 +31,7 @@ import java.util.Date;
  * A LocationRangeScheduleElement is an encapsulation of temporal relationships
  * and locations over that interval.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: LocationRangeScheduleElementImpl.java,v 1.3 2001-08-22 20:14:11 mthome Exp $
+ *
  **/
 
 public class LocationRangeScheduleElementImpl extends ScheduleElementImpl

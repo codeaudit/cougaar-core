@@ -26,7 +26,7 @@ import org.cougaar.util.MoreMath;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectValue.java,v 1.4 2001-08-22 20:14:09 mthome Exp $
+ *
  */
  
 public class AspectValue implements AspectType, Serializable, Cloneable {

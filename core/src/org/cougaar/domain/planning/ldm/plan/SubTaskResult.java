@@ -27,7 +27,7 @@ package org.cougaar.domain.planning.ldm.plan;
    * used to aggregate this Expansion's latest reported allocationresult
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: SubTaskResult.java,v 1.3 2001-08-22 20:14:16 mthome Exp $
+   *
    **/
 
 public class SubTaskResult implements java.io.Serializable {

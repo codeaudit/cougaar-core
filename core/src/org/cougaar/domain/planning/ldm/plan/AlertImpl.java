@@ -34,7 +34,7 @@ import org.cougaar.core.util.XMLize;
 
 /** Alert Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AlertImpl.java,v 1.4 2001-08-22 20:14:08 mthome Exp $
+ *
  *
  * Open issues - 
  * what happens when no one is subscribed to listen for this alert

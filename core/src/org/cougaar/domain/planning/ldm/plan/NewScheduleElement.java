@@ -27,7 +27,7 @@ import java.util.Date;
    * setter methods for building valid ScheduleElement objects.
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: NewScheduleElement.java,v 1.4 2001-08-22 20:14:14 mthome Exp $
+   *
    **/
  	 
 public interface NewScheduleElement extends ScheduleElement {

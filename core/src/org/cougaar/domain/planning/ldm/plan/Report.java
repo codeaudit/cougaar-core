@@ -25,7 +25,7 @@ import java.util.Date;
 
 /** Report interface
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Report.java,v 1.3 2001-08-22 20:14:15 mthome Exp $
+ *
  **/
 
 /**

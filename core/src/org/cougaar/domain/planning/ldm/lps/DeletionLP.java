@@ -37,7 +37,7 @@ import java.util.Collection;
  * rescinded PlanElements (removed from collection)
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: DeletionLP.java,v 1.4 2001-08-22 20:14:06 mthome Exp $
+  *
   **/
 
 public class DeletionLP

@@ -27,7 +27,7 @@ package org.cougaar.domain.planning.ldm.plan;
   * for possible rolechedule and available schedule conflicts.  Setters are
   * only called by the INFRASTRUCTURE!!! 
   * @author       ALPINE <alpine-software@bbn.com>
-  * @version      $Id: RoleScheduleConflicts.java,v 1.3 2001-08-22 20:14:15 mthome Exp $
+  *
   **/
 
 public interface RoleScheduleConflicts {

@@ -24,7 +24,7 @@ package org.cougaar.domain.planning.ldm.plan;
 /** NewBulkEstimate Interface
   * Provides setters for pieces of the object that will change.
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NewBulkEstimate.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+  *
   **/
 
 public interface NewBulkEstimate extends BulkEstimate {	

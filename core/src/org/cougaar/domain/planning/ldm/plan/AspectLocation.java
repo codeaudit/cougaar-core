@@ -25,7 +25,7 @@ import java.io.Serializable;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectLocation.java,v 1.5 2001-08-22 20:14:09 mthome Exp $
+ *
  */
  
 public class AspectLocation extends AspectValue {

@@ -26,7 +26,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 /**
  * AssetAssignment Setter Interface
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewAssetAssignment.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+ *
  **/
 	
 public interface NewAssetAssignment extends AssetAssignment, NewDirective  {

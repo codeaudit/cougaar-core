@@ -27,7 +27,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * AssignedAvailabilityElement represents the availability to a specific asset
  * over a time interval.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedAvailabilityElementImpl.java,v 1.4 2001-08-22 20:14:10 mthome Exp $
+ *
  **/
 
 

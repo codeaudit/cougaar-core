@@ -36,7 +36,7 @@ import java.util.ArrayList;
   * Each AllocationResult will represent the results of allocating the Task
   * with one of the Preference sets.
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: BulkEstimateImpl.java,v 1.3 2001-08-22 20:14:10 mthome Exp $
+  *
   **/
 
 public class BulkEstimateImpl implements BulkEstimate, NewBulkEstimate {

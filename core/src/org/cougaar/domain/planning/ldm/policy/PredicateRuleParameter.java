@@ -28,7 +28,7 @@ import org.cougaar.util.UnaryPredicate;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PredicateRuleParameter.java,v 1.4 2001-08-22 20:14:18 mthome Exp $
+ *
  **/
 
 /**

@@ -28,7 +28,7 @@ import java.util.List;
    * into a single task.  Compositions are referenced by Aggregation PlanElements.
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: Composition.java,v 1.3 2001-08-22 20:14:10 mthome Exp $
+   *
    **/
 
 public interface Composition

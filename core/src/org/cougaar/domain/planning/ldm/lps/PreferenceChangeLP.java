@@ -40,7 +40,7 @@ import org.cougaar.util.*;
 /** PreferenceChangeLogicProvider class provides the logic to propogate
  *  preference changes to tasks that have been sent to other clusters
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PreferenceChangeLP.java,v 1.4 2001-08-22 20:14:06 mthome Exp $
+ *
  **/
 
 public class PreferenceChangeLP extends LogPlanLogicProvider implements EnvelopeLogicProvider {

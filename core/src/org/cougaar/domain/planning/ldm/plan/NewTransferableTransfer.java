@@ -30,7 +30,7 @@ import org.cougaar.domain.planning.ldm.plan.Transferable;
   * build a complete object.
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NewTransferableTransfer.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
+  *
   */
 public interface NewTransferableTransfer extends TransferableTransfer {
   

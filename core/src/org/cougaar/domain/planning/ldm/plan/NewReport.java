@@ -25,7 +25,7 @@ import java.util.Date;
 
 /** NewReport interface
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewReport.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
+ *
  **/
 
 public interface NewReport extends Report

@@ -29,7 +29,7 @@ import org.cougaar.domain.planning.ldm.plan.Transferable;
   * another cluster (org asset).
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: TransferableTransfer.java,v 1.3 2001-08-22 20:14:17 mthome Exp $
+  *
   */
 public interface TransferableTransfer {
   

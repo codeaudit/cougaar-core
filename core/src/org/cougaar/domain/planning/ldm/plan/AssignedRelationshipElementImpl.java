@@ -30,7 +30,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * ItemIdentification from their ItemIdentificationPG
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedRelationshipElementImpl.java,v 1.4 2001-08-22 20:14:10 mthome Exp $
+ *
  **/
 
 public class AssignedRelationshipElementImpl extends ScheduleElementImpl

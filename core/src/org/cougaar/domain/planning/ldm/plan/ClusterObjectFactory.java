@@ -53,8 +53,8 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterObjectFactory.java,v 1.6 2001-09-06 14:59:58 mthome Exp $
- * @version $Id: ClusterObjectFactory.java,v 1.6 2001-09-06 14:59:58 mthome Exp $
+ *
+ *
  *
  * @see org.cougaar.component.ComponentServesPlugIn
  */

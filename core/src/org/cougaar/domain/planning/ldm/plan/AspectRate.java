@@ -32,7 +32,7 @@ import org.cougaar.domain.planning.ldm.measure.TimeRate;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectRate.java,v 1.4 2001-08-22 20:14:09 mthome Exp $
+ *
  */
  
 public class AspectRate extends AspectValue {

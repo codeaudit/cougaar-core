@@ -54,7 +54,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
   * returns null when there are no subtasks or any task has no result.
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: SimpleAspectValueARA.java,v 1.4 2001-08-22 20:14:16 mthome Exp $
+  *
   **/
   public class SimpleAspectValueARA implements AllocationResultAggregator {
     public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar) {

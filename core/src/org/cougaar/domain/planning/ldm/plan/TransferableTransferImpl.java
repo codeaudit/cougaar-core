@@ -31,7 +31,7 @@ import org.cougaar.domain.planning.ldm.plan.NewTransferableTransfer;
   * another cluster (org asset).
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: TransferableTransferImpl.java,v 1.3 2001-08-22 20:14:17 mthome Exp $
+  *
   */
 public class TransferableTransferImpl
   implements TransferableTransfer, NewTransferableTransfer, java.io.Serializable

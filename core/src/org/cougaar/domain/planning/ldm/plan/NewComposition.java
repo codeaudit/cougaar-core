@@ -28,7 +28,7 @@ import java.util.Collection;
    * Used to build complete Composition objects.
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: NewComposition.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+   *
    **/
 
 public interface NewComposition extends Composition {

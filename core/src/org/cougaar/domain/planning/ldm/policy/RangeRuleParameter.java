@@ -30,7 +30,7 @@ import org.cougaar.core.util.SelfPrinter;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: RangeRuleParameter.java,v 1.5 2001-08-22 20:14:18 mthome Exp $
+ *
  **/
 
 /**

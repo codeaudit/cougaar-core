@@ -29,7 +29,7 @@ import org.cougaar.util.GenericStateModel;
  * retained for future expansion.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PlugInStateModel.java,v 1.3 2001-08-22 20:13:57 mthome Exp $
+ *
  */
 
 public interface PlugInStateModel extends GenericStateModel {

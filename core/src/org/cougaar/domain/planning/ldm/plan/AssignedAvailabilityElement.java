@@ -28,7 +28,7 @@ import org.cougaar.util.TimeSpan;
  * AssignedAvailabilityElement represents the availability to a specific asset
  * for the specified time interval.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedAvailabilityElement.java,v 1.3 2001-08-22 20:14:10 mthome Exp $
+ *
  **/
 
 

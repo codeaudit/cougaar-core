@@ -27,7 +27,7 @@ import org.cougaar.util.GenericStateModel;
  *  This is the interface that defines state transitions for clusters.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterStateModel.java,v 1.3 2001-08-22 20:13:45 mthome Exp $
+ *
  */
 
 public interface ClusterStateModel extends GenericStateModel {

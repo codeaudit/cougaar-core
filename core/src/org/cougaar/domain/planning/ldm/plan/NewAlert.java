@@ -23,7 +23,7 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /** NewAlert interface
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewAlert.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+ *
  **/
 
 public interface NewAlert extends Alert {

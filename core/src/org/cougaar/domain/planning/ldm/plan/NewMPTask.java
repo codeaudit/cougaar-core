@@ -28,7 +28,7 @@ import java.util.Enumeration;
   * MPTask is a subclass of Task
   * @see org.cougaar.domain.planning.ldm.plan.NewTask
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NewMPTask.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+  *
   **/
 	
 public interface NewMPTask extends MPTask, NewTask

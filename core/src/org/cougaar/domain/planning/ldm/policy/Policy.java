@@ -44,7 +44,7 @@ import org.cougaar.core.society.UID;
 
 /** Policy implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Policy.java,v 1.6 2001-08-22 20:14:18 mthome Exp $
+ *
  **/
 
 

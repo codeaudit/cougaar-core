@@ -29,7 +29,7 @@ import org.cougaar.core.util.SelfPrinter;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: DoubleRuleParameter.java,v 1.4 2001-08-22 20:14:17 mthome Exp $
+ *
  **/
 
 /**

@@ -27,7 +27,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * of an expansion of a Task.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Expansion.java,v 1.3 2001-08-22 20:14:11 mthome Exp $
+ *
  **/
 
 public interface Expansion extends PlanElement {

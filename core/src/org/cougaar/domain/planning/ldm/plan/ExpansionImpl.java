@@ -45,7 +45,7 @@ import java.io.IOException;
 /** ExpansionImpl.java
  * Implementation for expansion - a form of PlanElement
  * @author ALPINE <alpine-software@bbn.com>
- * @version $Id: ExpansionImpl.java,v 1.4 2001-08-22 20:14:11 mthome Exp $
+ *
  */
  
 public class ExpansionImpl extends PlanElementImpl 

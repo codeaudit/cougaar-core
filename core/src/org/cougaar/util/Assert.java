@@ -53,7 +53,7 @@ package org.cougaar.util;
  *
  * @author unascribed
  * @author Maintained by: Tom Mitchell (tmitchell@bbn.com)
- * @version $Revision: 1.3 $, $Date: 2001-08-22 20:14:20 $
+ *
  */
 public final class Assert {
 

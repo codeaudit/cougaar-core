@@ -25,7 +25,7 @@ package org.cougaar.domain.planning.ldm.plan;
 /**
   * TransferableAssignment Setter Interface
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NewTransferableAssignment.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
+  *
   **/
 	
 public interface NewTransferableAssignment extends TransferableAssignment, NewDirective  {

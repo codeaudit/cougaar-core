@@ -31,7 +31,7 @@ import org.cougaar.util.TimeSpan;
  * overlaps, inclusion, exclusion, etc with other schedules.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ScheduleElement.java,v 1.3 2001-08-22 20:14:15 mthome Exp $
+ *
  **/
 
 public interface ScheduleElement 

@@ -29,7 +29,7 @@ import org.cougaar.core.cluster.PrivilegedClaimant;
  *  logplan objects another plugin may have created.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Assessor.java,v 1.3 2001-08-22 20:13:56 mthome Exp $
+ *
  */
 
 public interface Assessor extends PrivilegedClaimant {

@@ -28,7 +28,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
    * objects.
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: NewAssignedAvailabilityElement.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+   *
    **/
  	 
 public interface NewAssignedAvailabilityElement extends AssignedAvailabilityElement, NewScheduleElement {

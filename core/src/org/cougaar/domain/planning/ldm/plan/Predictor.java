@@ -43,7 +43,7 @@ import java.io.Serializable;
  * OrganizationalAsset copy of itself when it hooks up with other clusters.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Predictor.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
+ *
  */
   
 public interface Predictor extends Serializable {

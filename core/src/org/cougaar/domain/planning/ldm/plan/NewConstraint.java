@@ -26,7 +26,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * setter methods for building valid Constraint objects.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewConstraint.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+ *
  **/
 public interface NewConstraint extends Constraint {
      /**

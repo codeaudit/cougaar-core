@@ -31,7 +31,7 @@ import org.cougaar.util.TimeSpan;
  * ItemIdentification from their ItemIdentificationPG
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedRelationshipElement.java,v 1.3 2001-08-22 20:14:10 mthome Exp $
+ *
  **/
 
 

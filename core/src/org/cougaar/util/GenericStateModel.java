@@ -26,7 +26,7 @@ package org.cougaar.util;
  *  clusters, components and plugins.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: GenericStateModel.java,v 1.6 2001-09-06 14:59:59 mthome Exp $
+ *
  */
 
 public interface GenericStateModel {

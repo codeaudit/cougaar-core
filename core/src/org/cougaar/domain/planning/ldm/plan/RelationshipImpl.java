@@ -30,7 +30,7 @@ import org.cougaar.util.TimeSpan;
 /**
  * A RelationshipImpl is the encapsulation of a time phased relationship
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: RelationshipImpl.java,v 1.4 2001-08-22 20:14:15 mthome Exp $
+ *
  **/
 
 public class RelationshipImpl extends ScheduleElementImpl 

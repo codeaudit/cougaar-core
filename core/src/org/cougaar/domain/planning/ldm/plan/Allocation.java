@@ -27,7 +27,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * the Task.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Allocation.java,v 1.3 2001-08-22 20:14:08 mthome Exp $
+ *
  **/
 
 public interface Allocation extends PlanElement {

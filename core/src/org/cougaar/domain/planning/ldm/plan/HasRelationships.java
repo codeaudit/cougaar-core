@@ -24,7 +24,7 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /** HasRelationships - marker for clases which contain a relationship
   * schedule.
-  * @version      $Id: HasRelationships.java,v 1.4 2001-08-22 20:14:11 mthome Exp $
+  *
   **/
 
 public interface HasRelationships {

@@ -25,7 +25,7 @@ import java.io.Serializable;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectScorePoint.java,v 1.3 2001-08-22 20:14:09 mthome Exp $
+ *
  */
  
 public class AspectScorePoint implements Serializable, Cloneable {

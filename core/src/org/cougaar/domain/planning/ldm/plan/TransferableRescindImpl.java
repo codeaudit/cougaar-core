@@ -36,7 +36,7 @@ import java.io.ObjectOutputStream;
 /** TransferableRescind implementation
  * TransferableRescind allows a transferable to be rescinded from the Plan. 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: TransferableRescindImpl.java,v 1.3 2001-08-22 20:14:17 mthome Exp $
+ *
  **/
 
 public class TransferableRescindImpl 

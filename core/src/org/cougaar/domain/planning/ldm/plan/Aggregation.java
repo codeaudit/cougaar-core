@@ -25,7 +25,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * An Aggregation is a kind of PlanElement that
  * merges multiple tasks into a single task.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Aggregation.java,v 1.3 2001-08-22 20:14:08 mthome Exp $
+ *
  **/
 
 public interface Aggregation extends PlanElement {

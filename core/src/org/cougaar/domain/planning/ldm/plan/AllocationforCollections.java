@@ -28,7 +28,7 @@ import org.cougaar.domain.planning.ldm.plan.Task;
   * setter methods for the RemoteClusterAllocationLP and the Rescind
   * LP to keep track of what tasks were to sent out. 
   * @author       ALPINE <alpine-software@bbn.com>
-  * @version      $Id: AllocationforCollections.java,v 1.3 2001-08-22 20:14:09 mthome Exp $
+  *
   **/
 
 public interface AllocationforCollections extends PEforCollections {

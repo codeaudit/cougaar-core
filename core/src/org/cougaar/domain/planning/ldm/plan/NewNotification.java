@@ -28,7 +28,7 @@ import java.util.Enumeration;
 /** NewNotification Interface
  * provides setter methods to create a Notification object
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewNotification.java,v 1.3 2001-08-22 20:14:13 mthome Exp $
+ *
  **/
 
 public interface NewNotification extends Notification, NewDirective {

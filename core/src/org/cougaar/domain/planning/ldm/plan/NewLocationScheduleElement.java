@@ -24,7 +24,7 @@ package org.cougaar.domain.planning.ldm.plan;
 /**
  * NewLocationScheduleElement provides setters to build a complete object.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewLocationScheduleElement.java,v 1.3 2001-08-22 20:14:12 mthome Exp $
+ *
  **/
 
 public interface NewLocationScheduleElement extends 

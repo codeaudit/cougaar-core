@@ -25,7 +25,7 @@ import org.cougaar.domain.planning.ldm.plan.NewAlertParameter;
 
 /** AlertParameter Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AlertParameterImpl.java,v 1.3 2001-08-22 20:14:08 mthome Exp $
+ *
  **/
 
 public class AlertParameterImpl implements AlertParameter, NewAlertParameter {

@@ -23,7 +23,7 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectScoreRange.java,v 1.3 2001-08-22 20:14:09 mthome Exp $
+ *
  */
  
 public class AspectScoreRange {

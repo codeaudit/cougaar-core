@@ -37,7 +37,7 @@ import org.cougaar.core.util.XMLize;
 
 /** Report Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ReportImpl.java,v 1.4 2001-08-22 20:14:15 mthome Exp $
+ *
  *
  * Informational report contains a text and an associated date. 
  **/

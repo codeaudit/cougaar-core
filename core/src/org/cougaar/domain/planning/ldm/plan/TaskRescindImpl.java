@@ -36,7 +36,7 @@ import java.io.ObjectOutputStream;
 /** TaskRescind implementation
  * TaskRescind allows a task to be rescinded from the Plan. 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: TaskRescindImpl.java,v 1.3 2001-08-22 20:14:16 mthome Exp $
+ *
  **/
 
 public class TaskRescindImpl 

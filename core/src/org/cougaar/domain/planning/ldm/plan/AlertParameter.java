@@ -23,7 +23,7 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /** AlertParameter interface
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AlertParameter.java,v 1.3 2001-08-22 20:14:08 mthome Exp $
+ *
  *
  * BOZO - Use of AlertParameter is not clearly defined. Object will probably change
  * when we attempt to actually use it.
