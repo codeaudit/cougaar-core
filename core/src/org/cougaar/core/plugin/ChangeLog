@@ -1,3 +1,28 @@
+2003-12-11  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* deletion/SimpleDeletionPolicy.java:
+	A simple implementation of DeletionPolicy.
+
+	* deletion/DeletionSchedulePolicy.java:
+	New class to specify the scheduling of when the deletion plugin
+	runs. Allows the period and phase of the periodic scheduling plus
+	the specification of ad hoc, arbitrary times.
+
+	* deletion/DeletionPolicy.java:
+	New interface defining the API of deletion policies.
+
+	* deletion/DeletionPlugin.java:
+	New plugin class to perform periodic deletion of Deletable objects
+	on the blackboard.
+
+	* deletion/Deletable.java:
+	New interface defining the API for deletable blackboard objects.
+
+	* ServiceUserPlugin.java: 
+	* PluginAlarm.java:
+	Factored Alarm implementation out of ServiceUserPlugin so can be
+	used by DeletionPlugin.
+
 2003-04-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* freeze/Rules.java:
