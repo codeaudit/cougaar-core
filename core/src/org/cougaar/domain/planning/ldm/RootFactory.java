@@ -195,7 +195,11 @@ public class RootFactory
    **/
   public final Asset createAsset(String classname) {
     try {
-      Asset asset = createAsset(findAssetClass(classname));
+      Class ac = findAssetClass(classname);
+      if (ac == null) {
+        throw new IllegalArgumentException("createAsset(String): \""+classname+"\" is not a known Asset class.  This may be due to a misloaded LDM domain.");
+      }
+      Asset asset = createAsset(ac);
       return asset;
     } catch (Exception e) {
       throw new FactoryException("Could not createAsset("+classname+"): "+e, e);
