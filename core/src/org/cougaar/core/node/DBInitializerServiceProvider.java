@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
 import java.util.Collection;
+import java.util.Collections;
 import org.cougaar.util.DBProperties;
 import org.cougaar.util.DBConnectionPool;
 import org.cougaar.util.Parameters;
@@ -59,16 +60,19 @@ import org.cougaar.planning.plugin.AssetDataDBReader;
  **/
 public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String QUERY_FILE = "DBInitializer.q";
+
+  // should be replaced by the Logger
   private static final String PROP_LOG_FILE =
     "org.cougaar.core.initializer.log";
   private static final String logFileName = System.getProperty(PROP_LOG_FILE);
+  private final PrintWriter log;
 
-  private DBProperties dbp;
-  private String database;
-  private String username;
-  private String password;
-  private Map substitutions = new HashMap();
-  private PrintWriter log;
+  private final DBProperties dbp;
+  private final String database;
+  private final String username;
+  private final String password;
+  private final String trialId;
+  private final String assemblyMatch;
 
   /**
    * Constructor creates a DBProperties object from the
@@ -82,36 +86,42 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   public DBInitializerServiceProvider(String trialId)
     throws SQLException, IOException
   {
+    log = 
+      ((logFileName == null) ? null :
+       (new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"))));
+
     dbp = DBProperties.readQueryFile(QUERY_FILE);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
-    substitutions.put(":trial_id:", trialId);
-    if (logFileName != null)
-      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
+    this.trialId = trialId;
+
     try {
       String dbtype = dbp.getDBType();
       insureDriverClass(dbtype);
-      Connection conn = DBConnectionPool.getConnection(database, username, password);
+      Connection conn = 
+        DBConnectionPool.getConnection(database, username, password);
       try {
         Statement stmt = conn.createStatement();
-        String query = dbp.getQuery("queryExperiment", substitutions);
+        String query = dbp.getQuery(
+            "queryExperiment", 
+            Collections.singletonMap(":trial_id:", trialId));
         ResultSet rs = executeQuery(stmt, query);
         boolean first = true;
-        StringBuffer assemblyMatch = new StringBuffer();
-        assemblyMatch.append("in (");
+        StringBuffer asbBuffer = new StringBuffer();
+        asbBuffer.append("in (");
         while (rs.next()) {
           if (first) {
             first = false;
           } else {
-            assemblyMatch.append(", ");
+            asbBuffer.append(", ");
           }
-          assemblyMatch.append("'");
-          assemblyMatch.append(getNonNullString(rs, 1, query));
-          assemblyMatch.append("'");
+          asbBuffer.append("'");
+          asbBuffer.append(getNonNullString(rs, 1, query));
+          asbBuffer.append("'");
         }
-        assemblyMatch.append(")");
-        substitutions.put(":assemblyMatch:", assemblyMatch.toString());
+        asbBuffer.append(")");
+        assemblyMatch = asbBuffer.toString();
         rs.close();
         stmt.close();
       } finally {
@@ -120,6 +130,13 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     } catch (ClassNotFoundException e) {
       throw new SQLException("Driver not found for " + database);
     }
+  }
+
+  private Map createSubstitutions() {
+    Map m = new HashMap(7);
+    m.put(":trial_id:", trialId);
+    m.put(":assemblyMatch:", assemblyMatch);
+    return m;
   }
 
   private void insureDriverClass(String dbtype) throws SQLException, ClassNotFoundException {
@@ -188,6 +205,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       if (parentName == null) throw new IllegalArgumentException("parentName cannot be null");
       // append a dot to containerInsertionPoint if not already there
       if (!containerInsertionPoint.endsWith(".")) containerInsertionPoint += ".";
+      Map substitutions = createSubstitutions();
       substitutions.put(":parent_name:", parentName);
       substitutions.put(":container_insertion_point:", containerInsertionPoint);
       try {
@@ -273,6 +291,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String getAgentPrototype(String agentName)
       throws InitializerServiceException
     {
+      Map substitutions = createSubstitutions();
       substitutions.put(":agent_name:", agentName);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
@@ -298,6 +317,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String[] getAgentPropertyGroupNames(String agentName)
       throws InitializerServiceException
     {
+      Map substitutions = createSubstitutions();
       substitutions.put(":agent_name:", agentName);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
@@ -332,6 +352,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     {
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
+        Map substitutions = createSubstitutions();
         substitutions.put(":agent_name:", agentName);
         substitutions.put(":pg_name:", pgName);
         try {
@@ -391,6 +412,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     {
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
+        Map substitutions = createSubstitutions();
         substitutions.put(":agent_name:", agentName);
         try {
           Statement stmt = conn.createStatement();
@@ -458,6 +480,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public Object[] translateAttributeValue(String type, String key)
       throws InitializerServiceException
     {
+      Map substitutions = createSubstitutions();
       substitutions.put(":key:", key);
       try {
         String db = dbp.getProperty(type + ".database", database);
@@ -512,6 +535,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public Collection getCommunityDescriptions(String entityName, String empty)
       throws InitializerServiceException { 
       try {
+        Map substitutions = createSubstitutions();
         return CommunityConfigUtils.getCommunityConfigsFromDB(entityName, substitutions);
       }
       catch (RuntimeException ex) {
