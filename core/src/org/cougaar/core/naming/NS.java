@@ -26,52 +26,76 @@ import java.rmi.RemoteException;
 
 import java.util.*;
 
+import javax.naming.*;
+
 /** actual remote interface for NameServer objects.
  **/
 
 public interface NS extends Remote {
   String DirSeparator = "/";
   
-  void clear(NSKey nsKey) throws RemoteException;
+  void clear(NSKey nsKey) throws RemoteException, NameNotFoundException;
 
   
   NSKey createSubDirectory(NSKey nsKey, 
-                           String subDirName) throws RemoteException;
- 
-  void destroySubDirectory(NSKey nsKey) throws RemoteException;
+                           String subDirName,
+                           Collection attribute) 
+    throws RemoteException, NamingException, NameAlreadyBoundException;
+
+  NSKey createSubDirectory(NSKey nsKey, 
+                           String subDirName) 
+    throws RemoteException, NamingException, NameAlreadyBoundException;
   
-  Collection entrySet(NSKey nsKey) throws RemoteException;
+  void destroySubDirectory(NSKey nsKey, String subDirName) 
+    throws RemoteException, ContextNotEmptyException, NameNotFoundException, NamingException;
   
-  String fullName(NSKey nsKey, String name) throws RemoteException;
+  Collection entrySet(NSKey nsKey) 
+    throws RemoteException, NameNotFoundException, NamingException;
+  
+  String fullName(NSKey nsKey, String name) 
+    throws RemoteException, NameNotFoundException, NamingException;
 
   /** Look up an object in the NameService directory **/
-  Object get(NSKey nsKey, String name) throws RemoteException;
+  Object get(NSKey nsKey, String name) 
+    throws RemoteException, NameNotFoundException, NamingException;
 
   Collection getAttributes(NSKey nsKey, 
-                           String name) throws RemoteException;
+                           String name) 
+    throws RemoteException, NameNotFoundException, NamingException;
 
   NSKey getRoot() throws RemoteException;
  
-  boolean isEmpty(NSKey nsKey) throws RemoteException;
+  boolean isEmpty(NSKey nsKey) 
+    throws RemoteException, NamingException, NameNotFoundException;
 
-  Collection keySet(NSKey nsKey) throws RemoteException;
+  Collection keySet(NSKey nsKey) 
+    throws RemoteException, NamingException, NameNotFoundException;
 
   /** add an object to the directory **/
-  Object put(NSKey nsKey, String name, Object o) throws RemoteException;
-  Object put(NSKey nsKey, String name, Object o, Collection attributes) throws RemoteException;
+  Object put(NSKey nsKey, String name, Object o, boolean overwriteOkay) 
+    throws RemoteException, NamingException, NameNotFoundException, NameAlreadyBoundException;
+  Object put(NSKey nsKey, String name, Object o, Collection attributes, boolean overwriteOkay) 
+    throws RemoteException, NamingException, NameNotFoundException, NameAlreadyBoundException;
 
   void putAttributes(NSKey nsKey, String name, 
-                           Collection attributes) throws RemoteException;
+                           Collection attributes) 
+    throws RemoteException, NamingException, NameNotFoundException;
 
   /** remove an object (and name) from the directory **/
-  Object remove(NSKey nsKey, String name) throws RemoteException;
+  Object remove(NSKey nsKey, String name) 
+    throws RemoteException, NamingException, NameNotFoundException, 
+      OperationNotSupportedException;
 
-  Object rename(NSKey nsKey, String oldName, String newName) throws RemoteException;
+  Object rename(NSKey nsKey, String oldName, String newName) 
+    throws RemoteException, NamingException, NameAlreadyBoundException, 
+      NameNotFoundException, OperationNotSupportedException;
 
-  int size(NSKey nsKey) throws RemoteException;
+  int size(NSKey nsKey) 
+    throws RemoteException, NameNotFoundException, NamingException;
 
   /** @return all objects in the specified directory **/
-  Collection values(NSKey nsKey) throws RemoteException;
+  Collection values(NSKey nsKey) 
+    throws RemoteException, NameNotFoundException, NamingException;
 }
 
 

@@ -21,14 +21,16 @@
 
 package org.cougaar.core.naming;
 
+import java.io.Serializable;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.RMISecurityManager;
 import java.rmi.server.UnicastRemoteObject;
-import java.io.Serializable;
-
-import javax.naming.directory.*;
 import java.util.*;
+
+import javax.naming.*;
+import javax.naming.directory.BasicAttribute;
+
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
@@ -54,90 +56,144 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return ROOT;
   }
 
-  public void clear(NSKey dirKey) {
+  public void clear(NSKey dirKey) 
+    throws NameNotFoundException {
     Map dirMap = getDirectory(dirKey);
     
-    if (dirMap != null) {
-      synchronized (dirMap) {
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
+    synchronized (dirMap) {
         dirMap.clear();
-      }
     }
   }
 
-  public NSKey createSubDirectory(NSKey dirKey, 
-                                  String subDirName) {
+  public synchronized NSKey createSubDirectory(NSKey dirKey, 
+                                               String subDirName)
+    throws NamingException, NameAlreadyBoundException {
     return createSubDirectory(dirKey, subDirName, null);
   }
 
-  public NSKey createSubDirectory(NSKey dirKey, 
-                                  String subDirName,
-                                  Collection attributes) {
-    NSDirMap dirMap = getDirectory(dirKey);
+  public synchronized NSKey createSubDirectory(NSKey dirKey, 
+                                               String subDirName,
+                                               Collection attributes) 
+    throws NamingException, NameAlreadyBoundException, NameNotFoundException, InvalidNameException {
+    if ((subDirName == null) || (subDirName.equals(""))) {
+      throw new InvalidNameException("Can not specify empty Context name");
+    }
 
-    if (dirMap != null) {
+    synchronized (mapOfMaps) {
+      // Don't want any other thread modifying mapOfMaps while we're creating
+      // the directory.
+      NSDirMap dirMap = getDirectory(dirKey);
+      if (dirMap == null) {
+        throw new NameNotFoundException("No context found for NSKey - " + 
+                                        dirKey);
+      }
+      
       synchronized (dirMap) {
-        NSObjectAndAttributes o = 
+        NSObjectAndAttributes nsObj = 
           (NSObjectAndAttributes) dirMap.get(subDirName);
-        if (o == null) {
-          String subDirPath = fullName(dirKey, subDirName);
-          NSDirMap subDirMap = new NSDirMap(subDirPath, attributes);
-          putDirMap(subDirMap.getKey(), subDirMap);
 
-          o = new NSObjectAndAttributes(subDirMap.getKey(), null);
-          dirMap.put(subDirName, o);
-          return subDirMap.getKey();
+        if (nsObj != null) {
+          throw new NameAlreadyBoundException(fullName(dirKey, subDirName)  +
+                                              " already exists.");
         }
-      }
-    }
 
-    return null;
-  }
-
-  public void destroySubDirectory(NSKey dirKey) { 
-    NSDirMap dirMap = getDirectory(dirKey);
-
-    if ((dirMap != null) && (dirMap.size() == 0)) {
-      synchronized (mapOfMaps) {
-        mapOfMaps.remove(dirKey);
-      }
-
-
-      // strip trailing DirSeparators
-      String dirName = dirMap.getFullPath();
-      while (dirName.endsWith(DirSeparator)) {
-        dirName = dirName.substring(0, dirName.length() - 1);
-      }
-
-      Map parentMap = getDirectory(new NSDirKey(parseDirectory(dirName)));
-      synchronized (parentMap) {
-        parentMap.remove(getTail(dirName));
+        String subDirPath = fullName(dirKey, subDirName);
+        NSDirMap subDirMap = new NSDirMap(subDirPath, attributes);
+        putDirMap(subDirMap.getKey(), subDirMap);
+        
+        nsObj = new NSObjectAndAttributes(subDirMap.getKey(), null);
+        dirMap.put(subDirName, nsObj);
+        return subDirMap.getKey();
       }
     }
   }
 
-  public Collection entrySet(NSKey dirKey) {
-    ArrayList l = new ArrayList();
-    Map dirMap = getDirectory(dirKey);
+  synchronized public void destroySubDirectory(NSKey dirKey, String subDirName) 
+    throws ContextNotEmptyException, NameNotFoundException, NamingException {
+    if ((subDirName == null) || (subDirName.equals(""))) {
+      throw new InvalidNameException("Can not specify empty SubContext name");
+    }
 
-    if (dirMap != null) {
+    synchronized (mapOfMaps) {
+      // Don't leave any chance of someone getting a hold of the SubContext
+      // while we're in the process of deleting.
+      NSDirMap dirMap = getDirectory(dirKey);
+      if (dirMap == null) {
+        throw new NameNotFoundException("No context found for NSKey - " + 
+                                        dirKey);
+      }
+      
+      
       synchronized (dirMap) {
-        for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
-          Map.Entry ent = (Map.Entry) i.next();
-          Object key = ent.getKey();
-          Object value = ent.getValue();
-          
-          if (value instanceof NSObjectAndAttributes) {
-            value = ((NSObjectAndAttributes) value).getObject();
-          }
-          l.add(new NSEntry(key, value));
+        NSObjectAndAttributes nsObj = 
+          (NSObjectAndAttributes) dirMap.get(subDirName);
+        
+        if (nsObj == null) {
+          // No error if sub dir doesn't exist
+          return;
         }
+        
+        if (!(nsObj.getObject() instanceof NSKey)) {
+          throw new NotContextException(fullName(dirKey, subDirName) + 
+                                         " is not a Context.");
+        }
+        
+        NSKey subDirKey = (NSKey) nsObj.getObject();
+        NSDirMap subDirMap = getDirectory(subDirKey);
+        
+        if (subDirMap != null) {
+          synchronized (subDirMap) {
+            if (subDirMap.size() != 0) {
+              throw new ContextNotEmptyException(subDirMap.getFullPath() + 
+                                                 " is not empty.");
+            }
+            mapOfMaps.remove(subDirKey);
+          }
+        }
+        
+        dirMap.remove(subDirName);
+      } 
+    }
+  }
+  
+  public Collection entrySet(NSKey dirKey) 
+    throws NameNotFoundException, NamingException{
+    Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
+    ArrayList l = new ArrayList();
+    synchronized (dirMap) {
+      for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
+        Map.Entry ent = (Map.Entry) i.next();
+        Object key = ent.getKey();
+        Object value = ent.getValue();
+        
+        if (value instanceof NSObjectAndAttributes) {
+          value = ((NSObjectAndAttributes) value).getObject();
+        }
+        l.add(new NSEntry(key, value));
       }
     }
+
     return l;
   }
 
-  public String fullName(NSKey dirKey, String name) {
+  public String fullName(NSKey dirKey, String name) 
+    throws NameNotFoundException, NamingException {
     NSDirMap dirMap = getDirectory(dirKey);
+    
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
 
     if ((name == null) || (name.equals(""))) {
       return  dirMap.getFullPath();
@@ -147,109 +203,149 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   /** Look up an object in the NameService directory **/
-  public Object get(NSKey dirKey, String name) {
+  public Object get(NSKey dirKey, String name)
+    throws NameNotFoundException, NamingException {
     Map dirMap = getDirectory(dirKey);
     Object found = null;
 
-    if (dirMap != null) {
-      if ((name == null) || (name.equals(""))) {
-        return dirKey;
-      }
-      
-      synchronized (dirMap) {
-        found = dirMap.get(name);
-        if (found != null) {
-          found = ((NSObjectAndAttributes) found).getObject();
-        }
-      }
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
     }
 
-    return found;
+    if ((name == null) || (name.equals(""))) {
+      return dirKey;
+    }
+    
+    synchronized (dirMap) {
+      found = dirMap.get(name);
+      if (found != null) {
+        found = ((NSObjectAndAttributes) found).getObject();
+        return found;
+      } else {
+        throw new NameNotFoundException(fullName(dirKey, name) + 
+                                        " not found.");
+      }
+    }
   }
 
-  public Collection getAttributes(NSKey dirKey, String name) {
+  public Collection getAttributes(NSKey dirKey, String name) 
+    throws NamingException, NameNotFoundException {
+
     if ((name == null) || (name.equals(""))) {
       return getDirAttributes(dirKey);
     }
 
     Map dirMap = getDirectory(dirKey);
-    Collection attr = null;
-
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
-        if (found != null) {
-          attr = found.getAttributes();
-        }
-      }
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
     }
 
-    return attr;
+    synchronized (dirMap) {
+      NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
+      if (found != null) {
+        return found.getAttributes();
+      } else {
+        throw new NameNotFoundException(fullName(dirKey, name) + 
+                                        " not found.");
+      }
+    }
   }
 
-  public boolean isEmpty(NSKey dirKey) {
+  public boolean isEmpty(NSKey dirKey)
+    throws NameNotFoundException, NamingException {
     Map dirMap = getDirectory(dirKey);
+
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
    
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        return (dirMap.size() == 0);
-      }
-    } else {
-      return true;
+    synchronized (dirMap) {
+      return (dirMap.size() == 0);
     }
   }
 
-  public Collection keySet(NSKey dirKey) {
+  public Collection keySet(NSKey dirKey) 
+    throws NameNotFoundException, NamingException {
     ArrayList l = new ArrayList();
     Map dirMap = getDirectory(dirKey);
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        for (Iterator i = dirMap.keySet().iterator(); i.hasNext(); ) {
-          String key = (String) i.next();
-          l.add(key);
-        }
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
+    synchronized (dirMap) {
+      for (Iterator i = dirMap.keySet().iterator(); i.hasNext(); ) {
+        String key = (String) i.next();
+        l.add(key);
       }
     }
+
     return l;
   }
 
   /** add an object to the directory **/
-  public Object put(NSKey dirKey, String name, Object o) {
-    return put(dirKey, name, o, null);
+  public Object put(NSKey dirKey, String name, Object o, boolean overwrite)
+    throws NameAlreadyBoundException, NameNotFoundException, 
+    InvalidNameException, OperationNotSupportedException, NamingException{
+    return put(dirKey, name, o, null, overwrite);
   }
 
   public Object put(NSKey dirKey, String name, Object o, 
-                    Collection attributes) {
+                    Collection attributes, boolean overwrite) 
+    throws NameAlreadyBoundException, NameNotFoundException, 
+    InvalidNameException, OperationNotSupportedException, NamingException{
     if ((name == null) || (name.equals(""))) {
-      return null;
+      throw new InvalidNameException("Can't bind to empty name.");
     }
 
+    if (o == null) {
+      throw new OperationNotSupportedException("Can't bind to null Object.");
+    }
+    
     if (o instanceof NSKey) {
-      return null;
+      throw new OperationNotSupportedException("Can't insert NSKey directly.");
     }
 
     Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        NSObjectAndAttributes found = 
-          (NSObjectAndAttributes) dirMap.put(name, 
-                                             new NSObjectAndAttributes(o, attributes));
+    synchronized (dirMap) {
+      NSObjectAndAttributes nsObj = (NSObjectAndAttributes) dirMap.get(name);
 
-        if (found != null) {
-          return found.getObject();
-        } else {
-          return null;
+      if (nsObj != null) {
+        if (!overwrite) {
+          throw new NameAlreadyBoundException(fullName(dirKey, name) + 
+                                            " already exists.");
+        } 
+        if (nsObj.getObject() instanceof NSKey) {
+          throw new OperationNotSupportedException("Can't overWrite an NSKey - " +
+                                                   fullName(dirKey, name) + 
+                                                   ".");
         }
       }
-    } else {
-      return null;
+
+      NSObjectAndAttributes found = 
+        (NSObjectAndAttributes) dirMap.put(name, 
+                                           new NSObjectAndAttributes(o, attributes));
+      
+      if (found != null) {
+        return found.getObject();
+      } else {
+        return null;
+      }
     }
   }
 
   public void putAttributes(NSKey dirKey, String name, 
-                            Collection attributes)  {
+                            Collection attributes)  
+    throws NameNotFoundException, NamingException {
     if ((name == null) || name.equals("")) {
       putDirAttributes(dirKey, attributes);
       return;
@@ -257,110 +353,132 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
     Map dirMap = getDirectory(dirKey);
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
-        if (found != null) {
-          found.setAttributes(attributes);
-        } else {
-          
-          // ??? Is it okay to have a null object?
-          dirMap.put(name, new NSObjectAndAttributes(null, attributes));
-        }
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
+    
+    synchronized (dirMap) {
+      NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
+      if (found != null) {
+        found.setAttributes(attributes);
+      } else {
+          throw new NameNotFoundException(fullName(dirKey, name) + 
+                                          " does not exist");
       }
     }
   }
 
   /** remove an object (and name) from the directory **/
-  public Object remove(NSKey dirKey, String name) {
+  public Object remove(NSKey dirKey, String name) 
+    throws NamingException, NameNotFoundException, InvalidNameException, OperationNotSupportedException {
     if ((name == null) || (name.equals(""))) {
-      return null;
+      throw new InvalidNameException("Unable to remove object bound to empty name.");
     }
 
     Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        Object found = dirMap.get(name);
-        if ((found == null) || 
-            (found instanceof NSKey)) {
+    synchronized (dirMap) {
+      NSObjectAndAttributes nsObj = (NSObjectAndAttributes) dirMap.get(name);
+      if (nsObj == null) {
+        return null;
+      } else {
+        if (nsObj.getObject() instanceof NSKey) {
           // Use destroySubDirectory to remove directories
-          return null;
-        } else {
-          NSObjectAndAttributes remove = 
-            (NSObjectAndAttributes) dirMap.remove(name);
-          if (remove != null) {
-            return remove.getObject();
-          } else {
-            return null;
-          }
+          throw new OperationNotSupportedException("Can't unbind an NSKey - " +
+                                                   fullName(dirKey, name));
         }
+
+        dirMap.remove(name);
+        
+        return ((NSObjectAndAttributes) nsObj).getObject();
       }
-    } else {
-      return null;
     }
   }
 
   /** rename an object in the directory **/
   public Object rename(NSKey dirKey, String oldName,
-                       String newName) {
+                       String newName) 
+    throws InvalidNameException, NameNotFoundException, 
+      NameAlreadyBoundException, OperationNotSupportedException, NamingException {
     if ((oldName == null) || (oldName.equals("")) ||
         (newName == null) || (newName.equals(""))) {
-      return null;
+      throw new InvalidNameException("Can't use empty name.");
     }
 
-    Map dirMap = getDirectory(dirKey);
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        Object found = dirMap.get(oldName);
-        if ((found == null) || 
-            (found instanceof NSKey)) {
-          // Use destroySubDirectory to remove directories
-          return null;
-        } else {
-          NSObjectAndAttributes nsObj = 
-            (NSObjectAndAttributes) dirMap.remove(oldName);
-          dirMap.put(newName, nsObj);
-          if (nsObj != null) {
-            return nsObj.getObject();
-          } else {
-            return null;
-          }
-        }
+    Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
+    synchronized (dirMap) {
+      NSObjectAndAttributes nsObj = 
+        (NSObjectAndAttributes) dirMap.get(newName);
+      if (nsObj != null) {
+        throw new NameAlreadyBoundException(fullName(dirKey, newName) + 
+                                            " already exists.");
       }
-    } else {
-      return null;
+
+      nsObj = (NSObjectAndAttributes) dirMap.get(oldName);
+      if (nsObj == null)  {
+        throw new NameNotFoundException(fullName(dirKey, oldName) + 
+                                        " not found.");
+      }
+
+      if (nsObj.getObject() instanceof NSKey) {
+        throw new OperationNotSupportedException("Can't rebind an NSKey - " +
+                                                 fullName(dirKey, oldName) + 
+                                                 ".");
+      }
+
+
+      dirMap.remove(oldName);
+      dirMap.put(newName, nsObj);
+
+      // Checked that nsObj != null above
+      return nsObj.getObject();
     }
   }
 
-  public int size(NSKey dirKey) {
+  public int size(NSKey dirKey) 
+    throws NamingException, NameNotFoundException {
     Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        return dirMap.size();
-      }
-    } else {
-      return -1;
+    synchronized (dirMap) {
+      return dirMap.size();
     }
   }
 
-  public Collection values(NSKey dirKey) {
+  public Collection values(NSKey dirKey)
+    throws NamingException, NameNotFoundException {
     Map dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+
     ArrayList l = new ArrayList();
 
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
-          Map.Entry ent = (Map.Entry) i.next();
-          Object value = ent.getValue();
-          
-          if (value instanceof NSObjectAndAttributes) {
-            l.add(((NSObjectAndAttributes) value).getObject());
-          } else {
-            l.add(value);
-          }
+    synchronized (dirMap) {
+      for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
+        Map.Entry ent = (Map.Entry) i.next();
+        Object value = ent.getValue();
+        
+        if (value instanceof NSObjectAndAttributes) {
+          l.add(((NSObjectAndAttributes) value).getObject());
+        } else {
+          l.add(value);
         }
       }
     }
@@ -400,46 +518,23 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   private NSDirMap getDirectory(NSKey dirKey) {
     synchronized (mapOfMaps) {
       NSDirMap currentMap = getDirMap(dirKey);
-      
-      /*
-      if ((currentMap == null) && (create)) {
-        // Build multiple levels to get there? 
-        StringTokenizer tokenizer = new StringTokenizer(directory.getPath(), DirSeparator);
-        NSKey currentDir = ROOT;
-        currentMap = getDirMap(ROOT);
-        while (tokenizer.hasMoreTokens()) {
-          String dirName = tokenizer.nextToken();
-          Object o = currentMap.get(dirName);
-          if (o == null) {
-            NSKey subDir = new NSDirKey(fullName(currentDir, dirName));
-            currentMap.put(dirName, subDir);
-            
-            currentMap = new NSDirMap();
-            currentDir = subDir;
-            putDirMap(currentDir, currentMap);
-          } else if (o instanceof NSKey) {
-            currentDir = (NSKey) o;
-            currentMap = getDirMap(currentDir);
-          } else {
-            // entry exists but isn't a directory - bail now
-//              System.out.println("bailing on " + currentDir + " object " + o + " " + o.getClass());
-            break;
-          }
-        }
-        } */
       return currentMap;
     }
   }
         
   private NSDirMap getDirMap(NSKey dirKey) {
-    return (NSDirMap) mapOfMaps.get(dirKey);
+    synchronized (mapOfMaps) {
+      return (NSDirMap) mapOfMaps.get(dirKey);
+    }
   }
 
   private Collection getDirAttributes(NSKey dirKey) {
     NSDirMap dirMap = getDirMap(dirKey);
 
     if (dirMap != null) {
-      return dirMap.getAttributes();
+      synchronized (dirMap) {
+        return dirMap.getAttributes();
+      }
     } else { 
       return null;
     }
@@ -449,12 +544,16 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     NSDirMap dirMap = getDirMap(dirKey);
 
     if (dirMap != null) {
-      dirMap.setAttributes(attributes);
+      synchronized (dirMap) {
+        dirMap.setAttributes(attributes);
+      }
     }
   }
 
   private void putDirMap(NSDirKey dirKey, NSDirMap dirMap) {
-    mapOfMaps.put(dirKey, dirMap);
+    synchronized (mapOfMaps) {
+      mapOfMaps.put(dirKey, dirMap);
+    }
   }
 
   private static class NSEntry implements Map.Entry, Serializable {
@@ -570,18 +669,18 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
       Collection attrs = new ArrayList();
       attrs.add(new BasicAttribute("fact", "the letter A"));
-      foo.put(ROOT, "foo", "Foo", new ArrayList(attrs));
+      foo.put(ROOT, "foo", "Foo", new ArrayList(attrs), false);
 
       attrs.clear();
       attrs.add(new BasicAttribute("fact", "the letter B"));
-      foo.put(ROOT, "bar", "Bar", new ArrayList(attrs));
+      foo.put(ROOT, "bar", "Bar", new ArrayList(attrs), false);
 
       NSKey clustersKey = foo.createSubDirectory(ROOT, "clusters");
       attrs.add(new BasicAttribute("fact", " the letter C"));
-      foo.put(clustersKey, "a", "aString", new ArrayList(attrs));
+      foo.put(clustersKey, "a", "aString", new ArrayList(attrs), false);
       
       attrs.add(new BasicAttribute("fact", " the letter D"));
-      foo.put(clustersKey, "b", "bString", new ArrayList(attrs));
+      foo.put(clustersKey, "b", "bString", new ArrayList(attrs), false);
 
       System.out.println("foo = "+ foo.get(ROOT, "foo")+ " " + foo.getAttributes(ROOT, "foo"));
       System.out.println("bar = "+foo.get(ROOT, "bar")+ " " + foo.getAttributes(ROOT, "bar"));
@@ -639,7 +738,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       }
 
       System.out.println("destroySubDirectory: " + subDir);
-      foo.destroySubDirectory(subDir);
+      foo.destroySubDirectory(clustersKey, "subDir");
       for (Iterator a = 
              foo.keySet(clustersKey).iterator(); 
            a.hasNext();){

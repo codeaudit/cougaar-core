@@ -98,7 +98,7 @@ public class NamingContext implements Context {
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
       if (nsObj == null) {
-        throw new NameNotFoundException(name + " not found");
+        throw new OperationNotSupportedException("Null object not supported.");
       }
       
       // Call getObjectInstance for using any object factories
@@ -171,28 +171,27 @@ public class NamingContext implements Context {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObj = getNSObject(getNSKey(), atom);
 
     if (nm.size() == 1) {
-      // Atomic name: Find object in internal data structure
-      if (nsObj != null) {
-        throw new NameAlreadyBoundException(
-                                            "Use rebind to override");
-      }
-      
       // Call getStateToBind for using any state factories
       obj = NamingManager.getStateToBind(obj, 
                                          new CompositeName().add(atom), 
                                          this, myEnv);
       
+      boolean overWrite = false;
       // Add object to internal data structure
       try {
-        getNS().put(getNSKey(), atom, obj);
+        Object nsObj = getNS().put(getNSKey(), atom, obj, overWrite);
       } catch (RemoteException re) {
-        re.printStackTrace();
+        NamingException ne = 
+          new NamingException("NamingContext.bind() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } else {
       // Intermediate name: Consume name in this context and continue
+      Object nsObj = getNSObject(getNSKey(), atom);
+
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(atom + 
                                       " does not name a context");
@@ -262,15 +261,18 @@ public class NamingContext implements Context {
                                          new CompositeName().add(atom), 
                                          this, myEnv);
       
+      boolean overWrite = true;
       // Add object to internal data structure
       try {
-        getNS().put(getNSKey(), atom, obj);
+        getNS().put(getNSKey(), atom, obj, overWrite);
       } catch (RemoteException re) {
-        re.printStackTrace();
+        NamingException ne = 
+          new NamingException("NamingContext.rebind() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } else {
       // Intermediate name: Consume name in this context and continue
-      
       Object nsObj = getNSObject(getNSKey(), atom);
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(atom + 
@@ -320,10 +322,6 @@ public class NamingContext implements Context {
    * @see #unbind(String)
    */
   public void unbind(Name name) throws NamingException {
-    unbind1(name, false);
-  }
-  
-  protected void unbind1(Name name, boolean allowContext) throws NamingException {
     if (name.isEmpty()) {
       throw new InvalidNameException("Can not unbind empty name");
     }
@@ -334,15 +332,14 @@ public class NamingContext implements Context {
     
     // Remove object from internal data structure
     if (nm.size() == 1) {
-      if (!allowContext && getNSObject(getNSKey(), atom) instanceof Context) {
-        throw new OperationNotSupportedException("Can not unbind Context. Use destroySubContext instead.");
-      }
-        
       // Atomic name: Find object in internal data structure
       try {
         getNS().remove(getNSKey(), atom);
       } catch (RemoteException re) {
-        re.printStackTrace();
+        NamingException ne = 
+          new NamingException("NamingContext.unbind() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } else {
       // Intermediate name: Consume name in this context and continue
@@ -414,26 +411,15 @@ public class NamingContext implements Context {
     if (oldnm.size() == 1) {
       // Atomic name: Add object to internal data structure
       // Check if new name exists
-      if (getNSObject(getNSKey(), newAtom) != null) {
-        throw new NameAlreadyBoundException(newName.toString() +
-                                            " is already bound");
-      }
-      
       try {
-        Object oldBinding = lookup(oldAtom);
-        
-        if (oldBinding == null) {
-          throw new NameNotFoundException(oldName.toString() + " not bound");
-        } else if (oldBinding instanceof Context) {
-          throw new OperationNotSupportedException("Do not support rename of a Context");
-        } 
-
-        oldBinding = getNS().rename(getNSKey(), oldAtom, newAtom);
-        if (oldBinding == null) {
+        if (getNS().rename(getNSKey(), oldAtom, newAtom) == null) {
           throw new NamingException("Unable to rename " + oldName.toString());
         }
       } catch (RemoteException re) {
-        re.printStackTrace();
+        NamingException ne = 
+          new NamingException("NamingContext.rename() failed for " + oldName);
+        ne.setRootCause(re);
+        throw ne;
       }
     } else {
       // Simplistic implementation: support only rename within same context
@@ -493,8 +479,10 @@ public class NamingContext implements Context {
         // listing this context
         return new ListOfNames(getNS().entrySet(getNSKey()).iterator());
       } catch (RemoteException re) {
-        re.printStackTrace();
-        return null;
+        NamingException ne = 
+          new NamingException("NamingContext.list() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } 
     
@@ -547,7 +535,10 @@ public class NamingContext implements Context {
         // listing this context
         return new ListOfBindings(getNS().entrySet(getNSKey()).iterator());
       } catch (RemoteException re) {
-        re.printStackTrace();
+        NamingException ne = 
+          new NamingException("NamingContext.listBindings() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } 
     
@@ -602,9 +593,29 @@ public class NamingContext implements Context {
                                      "Cannot destroy context using empty name");
     }
     
-    // Simplistic implementation: not checking for nonempty context first
-    // Use same implementation as unbind, but allow context
-    unbind1(name, true);
+    // Extract components that belong to this namespace
+    Name nm = getMyComponents(name);
+    String atom = nm.get(0);
+    
+    if (nm.size() == 1) {
+      // Try to remove sub context from internal data structure
+      try {
+        getNS().destroySubDirectory(getNSKey(), atom);
+      } catch (RemoteException re) {
+        NamingException ne = 
+          new NamingException("NamingContext.destroySubContext() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
+      }
+    } else {
+      // Intermediate name: Consume name in this context and continue
+      Object nsObj = getNSObject(getNSKey(), atom);
+      if (!(nsObj instanceof Context)) {
+        throw new NotContextException(atom + 
+                                      " does not name a context");
+      }
+      ((Context) nsObj).destroySubcontext(nm.getSuffix(1));
+    }
   }
 
   
@@ -662,16 +673,13 @@ public class NamingContext implements Context {
         if (nsKey != null) {
           return createContext(nsKey);
         } else {
-          if (getNSObject(getNSKey(), atom) != null) {
-            // Failed because name already bound
-            throw new NameAlreadyBoundException("Use rebind to override");
-          } else {
-            throw new NamingException("Unable to create subcontext.");
-          }
+          throw new NamingException("Unable to create subcontext.");
         }
       } catch (RemoteException re) {
-        re.printStackTrace();
-        return null;
+        NamingException ne = 
+          new NamingException("NamingContext.createSubcontext() failed for " + name);
+        ne.setRootCause(re);
+        throw ne;
       }
     } else {
       // Intermediate name: Consume name in this context and continue
@@ -918,8 +926,10 @@ public class NamingContext implements Context {
 
 
       } catch (RemoteException re) {
-        re.printStackTrace();
-        return null;
+        NamingException ne = 
+          new NamingException("NamingContext.getNameInNamespace() failed for " + this);
+        ne.setRootCause(re);
+        throw ne;
       }
     }
 
@@ -984,13 +994,17 @@ public class NamingContext implements Context {
   }
 
 
-  protected Object getNSObject(NSKey nsKey, String name) {
+  protected Object getNSObject(NSKey nsKey, String name) 
+    throws NameNotFoundException, NamingException {
     Object nsObject = null;
 
     try {
       nsObject = getNS().get(getNSKey(), name);
     } catch (RemoteException re) {
-      re.printStackTrace();
+      NamingException ne = 
+        new NamingException("NamingContext.getNSObject() failed for " + name);
+      ne.setRootCause(re);
+      throw ne;
     }
     
     if (nsObject instanceof NSKey) {
