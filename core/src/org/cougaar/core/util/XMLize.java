@@ -25,6 +25,7 @@ package org.cougaar.core.util;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.AssetIntrospection;
 import org.cougaar.planning.ldm.asset.LockedPG;
+import org.cougaar.planning.ldm.asset.LockedPGSchedule;
 
 import org.cougaar.planning.ldm.measure.AbstractMeasure;
 import org.cougaar.planning.ldm.measure.Capacity;
@@ -317,10 +318,16 @@ public class XMLize {
       return;
     }
 
-    Class objectClass =
-     ((!(LockedPG.class.isInstance(obj))) ?
-      obj.getClass() :
-      ((LockedPG)obj).getIntrospectionClass());
+    Class objectClass;
+
+    if (LockedPG.class.isInstance(obj)) {
+      objectClass = ((LockedPG) obj).getIntrospectionClass();
+    } else if (LockedPGSchedule.class.isInstance(obj)) {
+      objectClass = ((LockedPGSchedule) obj).getIntrospectionClass();
+    } else {
+      objectClass = obj.getClass();
+    }
+
 
     if (((searchDepth <= 0) &&
          (obj instanceof UniqueObject)) ||
