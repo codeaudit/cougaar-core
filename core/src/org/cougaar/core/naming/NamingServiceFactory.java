@@ -92,11 +92,10 @@ public class NamingServiceFactory implements InitialContextFactory {
       int port = Communications.getPort();
       String addr = Communications.getFdsAddress();
       NamingSocketFactory nsf = NamingSocketFactory.getInstance();
-      
       String url = "//" + addr + ":" + port + "/NameService";
       if (verbosity > 0) System.err.print("Attempting to contact " + url + ": ");
       // First we have to locate (or become) the registry
-      while (ns == null) {
+      for (boolean first = true; ns == null; first = false) {
         Registry r = null;
         try {
           r = LocateRegistry.getRegistry(addr, port, nsf);
@@ -108,7 +107,7 @@ public class NamingServiceFactory implements InitialContextFactory {
           }
           ns = (NS) r.lookup(url);
         } catch (Exception e) {
-          if (verbosity > 0) {
+          if (first && verbosity > 0) {
             if (r != null)
               System.err.println("No name server bound in rmi registry " + r);
             else
@@ -118,8 +117,7 @@ public class NamingServiceFactory implements InitialContextFactory {
           }
           if (verbosity > 1) e.printStackTrace();
           // No name server at specified location. Should we be "it"
-          if (autoStart && isLocalServer()) {
-            autoStart = false;  //  only try once
+          if (first && autoStart && isLocalServer()) {
             try {
               if (verbosity > 0)
                 System.err.print("Creating name server at port " + port + ": ");
@@ -133,7 +131,7 @@ public class NamingServiceFactory implements InitialContextFactory {
                  when we tried to get it above and when we tried to
                  create it here. Just go around the loop again and get
                  the registry the other node just created */
-              if (verbosity > 0) {
+              if (first & verbosity > 0) {
                 if (r != null) {
                   System.err.println("Could not bind a new name server in our rmi registry");
                   System.err.println("This is bad news and should not be possible");
