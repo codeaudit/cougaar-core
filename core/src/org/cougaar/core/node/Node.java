@@ -21,7 +21,6 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.security.*;
 import org.cougaar.core.service.*;
 import org.cougaar.core.mts.*;
 
