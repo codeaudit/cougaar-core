@@ -29,8 +29,9 @@ import org.cougaar.domain.planning.ldm.plan.NewWorkflow;
 import org.cougaar.domain.planning.ldm.plan.NewConstraint;
 import org.cougaar.domain.planning.ldm.plan.Constraint;
 import org.cougaar.domain.planning.ldm.plan.Task;
+import org.cougaar.domain.planning.ldm.plan.NewTask;
 import org.cougaar.domain.planning.ldm.plan.MPTask;
-import org.cougaar.domain.glm.plugins.TaskUtils;
+import org.cougaar.core.plugin.util.PlugInHelper;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.SingleElementEnumeration;
 import org.cougaar.core.society.UID;
@@ -166,7 +167,7 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
      * logplan.
      **/
     public void execute() {
-        System.out.println("DeletionPlugIn.execute()");
+//          System.out.println("DeletionPlugIn.execute()");
         if (alarm.hasExpired()) { // Time to make the donuts
             checkDeletablePlanElements();
             alarm = wakeAfter(deletionPeriod);
@@ -184,7 +185,7 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
      **/
     private void checkDeletablePlanElements() {
         Collection c = query(deletablePlanElementsPredicate);
-        System.out.println("Found " + c.size() + " deletable PlanElements");
+//          System.out.println("Found " + c.size() + " deletable PlanElements");
         for (Iterator i = c.iterator(); i.hasNext(); ) {
             checkPlanElement((PlanElement) i.next());
         }
@@ -196,43 +197,81 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
      * is deletable.
      **/
     private void checkPlanElement(PlanElement pe) {
-        Task task = pe.getTask();
-//          if (task.getExpirationTime() == 0L) {
-//              task.setExpirationTime(computeExpirationTime(task));
-//          }
-        System.out.println("pe=" + pe);
-        System.out.println("task=" + task);
-        if (isTimeToDelete(pe)) {
-            System.out.println("Deleting " + task.getUID());
-            Enumeration e;
-            if (task instanceof MPTask) {
-                MPTask mpTask = (MPTask) task;
-                e = mpTask.getParentTasks();
-            } else {
-                e = new SingleElementEnumeration(task.getParentTaskUID());
-            }
-            while (e.hasMoreElements()) {
-                checkTask(task, (UID) e.nextElement());
-            }
-        } else {
-            System.out.println("Not time to delete");
-        }
-    }
-    
-    private void checkTask(Task task, UID ptuid) {
-        if (ptuid == null) {
-            deleteRootTask(task);
-            return;
-        }
-        PlanElement ppe = peSet.findPlanElement(ptuid);
-        if (ppe instanceof Expansion) {
-            deleteSubtask((Expansion) ppe, task);
-            return;
+        if (isDeleteAllowed(pe)) {
+            delete(pe.getTask());
         }
     }
 
-    private void deleteRootTask(Task rootTask) {
-        deleteTask(rootTask);
+    /**
+     * A plan element is ready to delete if is time to delete the plan
+     * element and if its task can be deleted without messing things
+     * up. Its task can be deleted if it has no parent, is a subtask
+     * of an expansion, or if its parent can be deleted.
+     **/
+    private boolean isDeleteAllowed(PlanElement pe) {
+        if (pe == null) return true; // Hmmmmm, can this happen?
+        Task task = pe.getTask();
+        if (task instanceof MPTask) {
+            MPTask mpTask = (MPTask) task;
+            for (Enumeration e = mpTask.getParentTasks(); e.hasMoreElements(); ) {
+                Task parent = (Task) e.nextElement();
+                PlanElement ppe = parent.getPlanElement(); // This is always an Aggregation
+                if (!isDeleteAllowed(ppe)) return false;
+            }
+            return true;
+        } else {
+            UID ptuid = task.getParentTaskUID();
+            if (ptuid == null) return true; // Can always delete a root task
+            PlanElement ppe = peSet.findPlanElement(ptuid);
+            if (ppe == null) {  // Parent is in another cluster
+                return true;    // It's ok to delete it
+            }
+            if (ppe instanceof Expansion) return true; // Can always delete a subtask
+            return isDeleteAllowed(pe); // Otherwise, can only delete if the pe can be deleted
+        }
+    }
+
+//      private void delete(PlanElement pe) {
+//          delete(pe.getTask());
+//      }
+
+    private void delete(Task task) {
+        System.out.println("Deleting " + task);
+        ((NewTask) task).setDeleted(true);  // Prevent LP from propagating deletion
+        if (task instanceof MPTask) {
+            // Delete multiple parent tasks
+            MPTask mpTask =(MPTask) task;
+            System.out.println("Task is MPTask, deleting parents");
+            for (Enumeration e = mpTask.getParentTasks(); e.hasMoreElements(); ) {
+                Task parent = (Task) e.nextElement();
+                delete(parent);    // ppe is always an Aggregation
+            }
+            System.out.println("All parents deleted");
+        } else {
+            System.out.println("Checking parent");
+            UID ptuid = task.getParentTaskUID();
+            if (ptuid != null) {
+                PlanElement ppe = peSet.findPlanElement(ptuid);
+                if (ppe == null) { // Parent is in another cluster
+                                // Nothing further to do
+                    System.out.println("Parent " + ptuid + " not found");
+                    deleteRootTask(task);
+                } else {
+                    if (ppe instanceof Expansion) {
+                        System.out.println("Parent is expansion, deleting subtask");
+                        deleteSubtask((Expansion) ppe, task);
+                    } else {
+                        System.out.println("Parent is expansion, deleting subtask");
+                        System.out.println("Parent is other, propagating");
+                        delete(ppe.getTask()); // Not sure this is possible, but parallels "isDeleteAllowed"
+                    }
+                }
+            }
+        }
+    }
+
+    private void deleteRootTask(Task task) {
+        publishRemove(task);
     }
 
     /**
@@ -257,33 +296,32 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
         for (Iterator i = constraintsToRemove.iterator(); i.hasNext(); ) {
             wf.removeConstraint((Constraint) i.next());
         }
-        if (!wf.getTasks().hasMoreElements()) {
+        if (!wf.getTasks().hasMoreElements() && isTimeToDelete(exp)) {
             checkPlanElement(exp); // Ready to be deleted.
         }
-        deleteTask(subtask);
-    }
-
-    private void deleteTask(Task task) {
-//          task.setDeleted(true);
-        publishRemove(task);  // Rely on RescindLP to propagate the deletion
+        publishRemove(subtask);
     }
 
     private boolean isTimeToDelete(PlanElement pe) {
         long et = 0L;
         if (et == 0L) et = computeExpirationTime(pe);
-	System.out.println("Expiration time is " + new java.util.Date(et));
-        return et == 0L || et < currentTimeMillis() - deletionDelay;
+//  	System.out.println("Expiration time is " + new java.util.Date(et));
+        boolean result = et == 0L || et < currentTimeMillis() - deletionDelay;
+        if (result) {
+            System.out.println("isTimeToDelete: " + new java.util.Date(et));
+        }
+        return result;
     }
 
     private long computeExpirationTime(PlanElement pe) {
         double et;
-        et = TaskUtils.getStartTime(pe.getEstimatedResult());
+        et = PlugInHelper.getEndTime(pe.getEstimatedResult());
         if (!Double.isNaN(et)) return (long) et;
-        et = TaskUtils.getEndTime(pe.getTask());
+        et = PlugInHelper.getEndTime(pe.getTask());
         if (!Double.isNaN(et)) return (long) et;
-        et = TaskUtils.getStartTime(pe.getEstimatedResult());
+        et = PlugInHelper.getStartTime(pe.getEstimatedResult());
         if (!Double.isNaN(et)) return (long) et;
-        et = TaskUtils.getStartTime(pe.getTask());
+        et = PlugInHelper.getStartTime(pe.getTask());
         if (!Double.isNaN(et)) return (long) et;
         return 0L;
     }
