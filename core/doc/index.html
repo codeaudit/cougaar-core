@@ -104,11 +104,14 @@ PlugIn Developers Guide, v8.0 (due out late June, 2001)</li>
 core/src/Changelog</li>
 
 <li>
+<a href="SoftwareOrganization.txt">Principles of COUGAAR Software Organization&nbsp;</a></li>
+
+<li>
 PlugIn Developer Workshop presentations (on the <a href="HTTPS://www.alpine.bbn.com/">ALPINE
 website</a>)</li>
 
 <li>
-<a href="SoftwareOrganization.txt">Principles of COUGAAR Software Organization&nbsp;</a></li>
+<a href="http://www.ultralog.net">UltraLog</a> - The UltraLog Web Sites</li>
 </ul>
 
 <h2>
@@ -213,54 +216,14 @@ society. This society requires the use of PlugIns from various COUGAAR
 participants.&nbsp;
 <br>&nbsp;
 <h2>
-<a NAME="delivering"></a>Delivering Software Products (PlugIns)</h2>
-Choose a product name that reflects the functionality of the family of
-PlugIns. Avoid names with obvious collision problems such as those associated
-with the Logistics domain. There needs to be a direct correlation between
-your product name and your Java package name. It is recommended that you
-follow the usual Java package naming guidelines (e.g., "com.bbn.tops...").&nbsp;
-<p>We will be providing a cvs repository for COUGAAR plugin developers
-that are ALPINE subcontractors and participating in the FY2000 demonstration.
-If you would like to participate, we will provide you with details as to
-how to interact with the cvs repository (setting CVSROOT and passwords).
-The directory structure should follow the one described at the March COUGAAR
-PlugIn Developers workshop.&nbsp;
-<ul>
-<li>
-product: root cvs directory and jar file name; this "jar" file should be
-sufficient for demonstration and testing and include non-COUGAAR jar dependencies</li>
-
-<li>
-product/lib: PlugIn developer produced jar files</li>
-
-<li>
-product/src/*: java source tree used to produce &lt;product.jar; these
-sources will be compiled by the ALPINE nightly build process to produce
-the demonstrated "jar" file (only include java source and jar resource
-files in this directory tree)</li>
-
-<li>
-product/bin/*: run-time information required by your software such as script
-files and non-java executables</li>
-
-<li>
-product/data/*: run-time information required by your software such as
-data files and initialization information</li>
-
-<li>
-product/doc/*; javadoc of source code, design documents, installation instructions,
-operating instructions</li>
-
-<li>
-product/configs/*; any test society configuration directories used for
-PlugIn testing</li>
-
-<br>&nbsp;</ul>
-All PlugIn software must use the Java system parameter "org.cougaar.install.path"
+<a NAME="delivering"></a>Delivering Software Products&nbsp;</h2>
+Please see the Integration Information Area that can be found on the <a href="http://www.ultralog.net">UltraLog</a>
+web site.
+<p>All PlugIn software must use the Java system parameter "org.cougaar.install.path"
 or the environment variable COUGAAR_INSTALL_PATH to find data files, scripts,
 and external programs. For example, if your product is "tops," your classes
 will be in:&nbsp;
-<blockquote>"$COUGAAR_INSTALL_PATH\plugins\tops.jar"</blockquote>
+<blockquote>"$COUGAAR_INSTALL_PATH\lib\tops.jar"</blockquote>
 and your java code could find your data files with:&nbsp;
 <dir>
 <dl>
@@ -311,14 +274,13 @@ User Interface Development&nbsp;</h3>
 
 <h2>
 <a NAME="future"></a>Future Releases</h2>
-We anticipate that there may be further releases as we address system deficiencies
-and enhancement requests. Please watch the alp-plugin-developers email
-list and carefully read the latest PlugIn Developers Guide (PDG) and all
-release notes.&nbsp;
+There will be further releases as we address system enhancements and deficiencies.
+Please watch the cougaar-developers@cougaar.org email list and carefully
+read the latest PlugIn Developers Guide (PDG) and all release notes.&nbsp;
 <h2>
 <a NAME="questions"></a>Questions and Bug Reports</h2>
 In addition, email infrastructure questions and initiate community discussions
-through alp-plugin-developers@bbn.com. Bug and system-enhancement reports
+through cougaar-developers@cougaar.org. Bug and system-enhancement reports
 can be submitted through the <a href="HTTPS://www.alpine.bbn.com/">ALPINE</a>
 or <a href="http://www.cougaar.org">COUGAAR</a> websites.&nbsp;
 <h2>
