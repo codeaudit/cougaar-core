@@ -14,7 +14,7 @@ package org.cougaar.domain.planning.ldm.policy;
 /** Simple entry for RangeRuleParameters : 
     holds int min/max range and a value 
 **/
-public class RangeRuleParameterEntry {
+public class RangeRuleParameterEntry implements java.io.Serializable {
 
     public RangeRuleParameterEntry
 	(String value, int range_min, int range_max) 
