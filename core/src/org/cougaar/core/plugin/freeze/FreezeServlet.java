@@ -328,8 +328,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
     if (stillRunning <= 0) {
       if (logger.isDebugEnabled()) {
         logger.debug("Frozen");
-        isFreezing = false;
       }
+      isFreezing = false;
     } else {
       if (logger.isDebugEnabled()) {
         Set consumerSet = new HashSet();
