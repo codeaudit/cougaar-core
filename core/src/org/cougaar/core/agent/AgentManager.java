@@ -151,6 +151,7 @@ public class AgentManager
     } catch (RuntimeException re) {
       System.err.println("Failed to add "+o+" to "+this+":");
       re.printStackTrace();
+      return false;
     }
   }
   //
