@@ -41,18 +41,23 @@ public class QosMonitorServiceProvider
 
     private QosMonitorService qms;
     private ResourceMonitorService rms;
+    private ContainerAPI owner;
     private NameSupport nameSupport;
     private String id;
 
-    public QosMonitorServiceProvider(String id) {
+    public QosMonitorServiceProvider(String id, ContainerAPI owner) {
 	this.id = id;
+	this.owner = owner;
     }
 
 
     public void initialize() {
-	// NB: This depends on the fact that MTS has already created
-	// the NameSupport singleton!
-	nameSupport = NameSupportImpl.instance();
+	// This is a problem.  We can't get at NameSupport here.
+	// nameSupport = NameSupportImpl.instance();
+
+	ServiceBroker sb = owner.getServiceBroker();
+	nameSupport = 
+	    (NameSupport) sb.getService(this, NameSupport.class, null);
         super.initialize();
     }
 
