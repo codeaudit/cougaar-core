@@ -1,3 +1,38 @@
+2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TimeAspectValue.java:
+	Applies Bug #196
+	Fix toString() to assist in debugging phased allocation results.
+
+	* ScheduleImpl.java:
+	Applies to whatever the bug is about debugging output
+	Remove debugging println. Lines saying "ListIterator" should
+	cease.
+
+	* AssetAspectValue.java:
+	Applies to Bug #196
+	Add missing clone method used when constructing new phase4d
+	allocation results.
+
+	* AspectRate.java:
+	Applies to Bug #196
+	Add missing clone method used when constructing new phased
+	allocation results. Fix setValue method to actually set a new Rate
+	value for an existing AspectValue. Needed to support changing
+	phased allocation results.
+
+	* AspectLocation.java:
+	Applies to Bug #196
+	Add missing clone method used when constructing new phased
+	allocation results.
+
+	* AllocationResult.java:
+	Applies to Bug #196
+	Correct bugs in handling of phased results. Redundant data
+	structures removed since they were not correctly tracking each
+	other and were of dubious benefit. Added toString() to assist
+	debugging. Add clone().
+
 1999-03-01  Beth DePass <bdepass@bbn.com>
   * ExtendedPenaltyImpl, PenaltyValueImpl, SinglePenaltyImpl, ClusterObjectFactoryImpl
   Support for ExtendedPenalty which can be defined on PenaltyValue.
