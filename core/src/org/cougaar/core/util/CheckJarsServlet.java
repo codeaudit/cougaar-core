@@ -45,17 +45,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.cougaar.bootstrap.XURLClassLoader;
-import org.cougaar.core.servlet.SimpleServletSupport;
+import org.cougaar.core.servlet.ComponentServlet;
 
 /**
- * Servlet which reports on the actual jars being used by the 
- * agent asked.
+ * This component loads the "/showJars" servlet, which displays
+ * the jars loaded by the agent's ClassLoader.
+ * <p>
+ * Load with:<pre>
+ *  &lt;component class="org.cougaar.core.util.CheckJarsServlet"&gt;
+ *    &lt;argument&gt;/showJars&lt;/argument&gt;
+ *  &lt;/component&gt;
+ * </pre> 
  */
-public class CheckJarsServlet extends HttpServlet {
-  private SimpleServletSupport support;
-  public void setSimpleServletSupport(SimpleServletSupport support) {
-    this.support = support;
-  }
+public class CheckJarsServlet extends ComponentServlet {
 
   public void doGet(
       HttpServletRequest request,
@@ -65,7 +67,7 @@ public class CheckJarsServlet extends HttpServlet {
     out.println("<html>");
     out.println("<head><title>");
     out.println("Jar version information from agent "+
-        support.getEncodedAgentName());
+        getEncodedAgentName());
     out.println("</title></head>");
     out.println("<body>");
     ClassLoader cl = this.getClass().getClassLoader();
