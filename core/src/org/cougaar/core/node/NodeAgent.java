@@ -21,8 +21,7 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.agent.SimpleAgent;
+import org.cougaar.core.agent.AgentImpl;
 
-/** @deprecated see SimpleAgent */
-public class NodeAgent extends SimpleAgent {
+public class NodeAgent extends AgentImpl {
 }
