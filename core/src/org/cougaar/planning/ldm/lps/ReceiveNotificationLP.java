@@ -22,14 +22,12 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.blackboard.*;
-
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanLogicProvider;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.blackboard.MessageLogicProvider;
 import org.cougaar.core.blackboard.DelayedLPAction;
+import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.MessageLogicProvider;
 
 import org.cougaar.planning.ldm.plan.Aggregation;
 import org.cougaar.planning.ldm.plan.Allocation;

@@ -23,6 +23,8 @@ package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.agent.*;
+import org.cougaar.core.domain.EnvelopeLogicProvider;
+import org.cougaar.core.domain.LogPlanLogicProvider;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Allocation;

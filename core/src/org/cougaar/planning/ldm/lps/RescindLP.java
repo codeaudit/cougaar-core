@@ -21,14 +21,12 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.blackboard.*;
-
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.EnvelopeLogicProvider;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.LogPlanLogicProvider;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
+import org.cougaar.core.domain.EnvelopeLogicProvider;
+import org.cougaar.core.domain.LogPlanLogicProvider;
 
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.ClusterPG;

@@ -36,9 +36,9 @@ import java.util.Vector;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.plugin.SimplePlugin;
+import org.cougaar.core.service.DomainService;
+
 import org.cougaar.planning.Constants;
-import org.cougaar.core.domain.DomainManager;
-import org.cougaar.core.domain.RootFactory;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.ClusterPG;
 import org.cougaar.planning.ldm.asset.ItemIdentificationPGImpl;
@@ -508,20 +508,24 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     // look up a zero-arg factory method in the ldmf
     String newname = "new"+ifcname;
     
-    Collection keys = DomainManager.keySet();
-    for (Iterator i = keys.iterator(); i.hasNext(); ) {
-      String key = (String) i.next();
+    DomainService domainService = 
+      (DomainService) getDelegate().getServiceBroker().getService(this, DomainService.class, null);
+
+    if (domainService == null) {
+      throw new RuntimeException ("Unable to get DomainService");
+    }
+
+    List factories = domainService.getFactories();
+    for (Iterator i = factories.iterator(); i.hasNext(); ) {
       try {
-        getFactory(key);
-        Class ldmfc = getFactory(key).getClass();
-        Method fm = ldmfc.getMethod(newname,nullClassList);
+        Class ldmfc = i.next().getClass();
+        Method fm = ldmfc.getMethod(newname, nullClassList);
         return fm.invoke(getFactory(), nullArgList);
       } catch (NoSuchMethodException nsme) {
         // This is okay - just try the next factory
-        //System.out.println("Unable to find " + newname + " method in factory for " + key);
       } catch (Exception e) { 
         synchronized (System.err) {
-          System.err.println("Problem loading Domain Factory \""+key+"\": ");
+          System.err.println("Problem loading Domain Factory");
           e.printStackTrace(); 
         }
       }

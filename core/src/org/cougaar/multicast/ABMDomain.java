@@ -21,18 +21,18 @@
 package org.cougaar.multicast;
 
 import org.cougaar.core.agent.ClusterServesLogicProvider;
+
+import org.cougaar.core.component.BindingSite;
+
 import org.cougaar.core.blackboard.LogPlan;
-import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
-import org.cougaar.core.domain.Domain;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.LDMServesPlugin;
+
+import org.cougaar.core.domain.DomainAdapter;
+import org.cougaar.core.domain.DomainBindingSite;
+
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.ArrayList;
-
 
 /**
  * Domain created and used in the <code>ABM</code>messgaging framework. 
@@ -43,47 +43,69 @@ import java.util.ArrayList;
  *
  * @see ABMFactory
  **/
-public class ABMDomain implements Domain {
+public class ABMDomain extends DomainAdapter {
+  private static final String ABM_NAME = "abm".intern();
+
   public ABMDomain() { }
   
-  /**
-   * Create the ABMFactory for creating ABMs and things
-   * @return the ABMFactory instance
-   **/
-  public Factory getFactory(LDMServesPlugin ldm) {
-    return new ABMFactory(ldm);
+  public String getDomainName() {
+    return ABM_NAME;
+  }
+
+  public void load() {
+    super.load();
   }
   
-  /**
-   * ABM has no Domain initialization as of yet
-   **/
-  public void initialize() {
+  protected void loadFactory() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
+
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain Factory without a binding site.");
+    } 
+
+    setFactory(new ABMFactory(bindingSite.getClusterServesLogicProvider().getLDM()));
   }
 
-  /**
-   * Return the basic LogPlan
-   * @return the <code>LogPlan</code>
-   **/
-  public XPlanServesBlackboard createXPlan(Collection existingXPlans) {
+  protected void loadXPlan() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
 
-    for (Iterator plans = existingXPlans.iterator(); plans.hasNext(); ) {
-      XPlanServesBlackboard xPlan = (XPlanServesBlackboard) plans.next();
-      if (xPlan != null) return xPlan;
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain XPlan without a binding site.");
+    } 
+
+    Collection xPlans = bindingSite.getXPlans();
+    LogPlan logPlan = null;
+    
+    for (Iterator iterator = xPlans.iterator(); iterator.hasNext();) {
+      XPlanServesBlackboard  xPlan = (XPlanServesBlackboard) iterator.next();
+      if (xPlan instanceof LogPlan) {
+        // Note that this means there are 2 paths to the plan.
+        // Is this okay?
+        logPlan = (LogPlan) logPlan;
+        break;
+      }
     }
     
-    return new LogPlan();
-  }  
+    if (logPlan == null) {
+      logPlan = new LogPlan();
+    }
+    
+    setXPlan(logPlan);
+  }
 
-  /**
-   * ABM has one LogicProvider - <code>ABMTransportLP</code>.
-   * @return a Collection of the ABM LogicProviders or null
-   * @see org.cougaar.core.domain.Domain
-   **/
-  public Collection createLogicProviders(BlackboardServesLogicProvider logplan,
-                                         ClusterServesLogicProvider cluster) {
-      ArrayList l = new ArrayList(1);
-      l.add(new ABMTransportLP((LogPlanServesLogicProvider)logplan, cluster));
-      return l;
+  protected void loadLPs() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
+
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain LPs without a binding site.");
+    } 
+
+    ClusterServesLogicProvider cluster = bindingSite.getClusterServesLogicProvider();
+    LogPlan logPlan = (LogPlan) getXPlan();
+    addLogicProvider(new ABMTransportLP(logPlan, cluster));
   }
 
 } // end of ABMDomain.java

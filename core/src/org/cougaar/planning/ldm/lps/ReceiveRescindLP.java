@@ -25,6 +25,8 @@ import org.cougaar.core.blackboard.*;
 
 import org.cougaar.planning.ldm.plan.*;
 import org.cougaar.core.agent.*;
+import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.asset.Asset;
 import java.util.*;

@@ -22,13 +22,11 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.blackboard.*;
-
 import java.util.Collection;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanLogicProvider;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.blackboard.MessageLogicProvider;
+import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.planning.ldm.plan.Deletion;
