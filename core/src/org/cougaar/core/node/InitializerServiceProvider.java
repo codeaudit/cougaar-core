@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Vector;
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.log.Logging;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
@@ -42,6 +43,9 @@ import org.cougaar.core.node.CommunityConfigUtils;
  * @see DBInitializerServiceProvider
  **/
 public final class InitializerServiceProvider implements ServiceProvider {
+  public static final String EXPTID_PROP = "org.cougaar.experiment.id";
+  public static final String FILENAME_PROP = "org.cougaar.filename";
+
   /** the real serviceProvider as chosen by chooseISP **/
   private ServiceProvider theInitializerSP;
 
@@ -65,17 +69,20 @@ public final class InitializerServiceProvider implements ServiceProvider {
   }
 
   private ServiceProvider chooseISP(String nodeName) {
-    String filename = System.getProperty("org.cougaar.filename");
-    String experimentId = System.getProperty("org.cougaar.experiment.id");
+    String filename = System.getProperty(FILENAME_PROP);
+    String experimentId = System.getProperty(EXPTID_PROP);
     if (filename == null) {
       if (experimentId == null) {
         // use the default "name.ini"
         filename = nodeName + ".ini";
+	Logging.getLogger(InitializerServiceProvider.class).info("Got no filename or experimentId! Using default " + filename);
       } else {
-        // use the filename
+        // use the experiment ID to read from the DB
+	Logging.getLogger(InitializerServiceProvider.class).info("Got no filename, using exptID " + experimentId);
       }
     } else if (experimentId == null) {
-      // use the experimentId
+      // use the filename provided
+      Logging.getLogger(InitializerServiceProvider.class).info("Got no exptID, using given filename " + filename);
     } else {
       throw new IllegalArgumentException(
           "Both file name (-f) and experiment -X) specified. "+
