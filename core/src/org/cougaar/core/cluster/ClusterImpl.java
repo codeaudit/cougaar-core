@@ -145,8 +145,6 @@ public class ClusterImpl
 
   private AlarmServiceProvider myAlarmServiceProvider;
 
-  private SharedThreadingServiceProvider sharedThreadingServiceProvider;
-
   private DemoControlServiceProvider myDemoControlServiceProvider;
 
   private SchedulerServiceProvider mySchedulerServiceProvider;
@@ -334,11 +332,6 @@ public class ClusterImpl
     myAlarmServiceProvider = new AlarmServiceProvider(this);
     sb.addService(AlarmService.class, myAlarmServiceProvider);
 
-    // add older plugin style shared threading
-    sharedThreadingServiceProvider =
-      new SharedThreadingServiceProvider(getClusterIdentifier());
-    sb.addService(SharedThreadingService.class, sharedThreadingServiceProvider);
-
     // hack service for demo control
     myDemoControlServiceProvider = new DemoControlServiceProvider(this);
     sb.addService(DemoControlService.class, myDemoControlServiceProvider);
@@ -452,9 +445,6 @@ public class ClusterImpl
 
     // suspend the alarms
 
-    System.out.println("suspend shared threading");
-    sharedThreadingServiceProvider.suspend(); // suspend the plugin scheduling
-
     System.out.println("suspend scheduler service");
     mySchedulerServiceProvider.suspend(); // suspend the plugin scheduling
 
@@ -469,7 +459,6 @@ public class ClusterImpl
 
     // re-register for MessageTransport
 
-    sharedThreadingServiceProvider.resume(); // resume the plugin scheduling
     mySchedulerServiceProvider.resume(); // suspend the plugin scheduling
 
     // resume the alarms 
@@ -532,8 +521,6 @@ public class ClusterImpl
     sb.revokeService(SchedulerService.class, mySchedulerServiceProvider);
 
     sb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
-
-    sb.revokeService(SharedThreadingService.class, sharedThreadingServiceProvider);
 
     sb.revokeService(AlarmService.class, myAlarmServiceProvider);
 

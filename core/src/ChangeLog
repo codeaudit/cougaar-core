@@ -1,5 +1,21 @@
 2001-11-07  Michael Thome  <mthome@bbn.com>
 
+	* PlugInAdapter
+	Port to use SchedulerServiceProvider.
+
+	* ComponentPlugin
+	Effective use of new per-node scheduler, avoiding occasional
+	multi-thread execution of the same scheduled instance.
+
+	* SchedulerServiceProvider
+	Rewrite and merge with PluginScheduler.  By default, now uses a
+	per-node scheduler of a pool of threads rather than single
+	per-agent thread for performance improvement and additional
+	parallelism. 
+
+	* ClusterImpl
+	Use only new SchedulerServiceProvider instead of PluginScheduler.
+
 	* org.cougaar.core.society.Bootstrapper
 	Changed rules for the bootstrap classloader to avoid the whole
 	package-prefix exclusion-list mess.  Essentially, the classloader

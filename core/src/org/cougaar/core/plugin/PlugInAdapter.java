@@ -148,13 +148,12 @@ public abstract class PlugInAdapter
     return demoControlService;
   }
 
-  // shared threading service
-  private SharedThreadingService sharedThreadingService = null;
-  public final void setSharedThreadingService(SharedThreadingService sts) {
-    sharedThreadingService = sts;
+  private SchedulerService schedulerService = null;
+  public final void setSchedulerService(SchedulerService ss) {
+    schedulerService = ss;
   }
-  protected final SharedThreadingService getSharedThreadingService() {
-    return sharedThreadingService;
+  protected final SchedulerService getSchedulerService() {
+    return schedulerService;
   }
 
   //UID service
@@ -1107,26 +1106,42 @@ public abstract class PlugInAdapter
     }
   }
 
-  /** shares a Thread with other SharedThreading plugins in the same cluster **/
-  protected class SharedThreading extends Threading implements ScheduleablePlugIn  {
+  /** shares a Thread with other SharedThreading plugins in the same cluster
+   * The chain of events is subscription activity calls sw.signalNotify() which
+   * calls requestTrigger which eventually will result in SharedThreading.trigger()
+   * getting called, which will run plugin_cycle().
+   **/
+  protected class SharedThreading extends Threading implements Trigger  {
+    private Trigger requestTrigger = null; // kick this trigger to ask to be run
+    private SubscriptionWatcher sw = null; // kicked by signalNotify when subscription activity
+
+    public void load() {
+      super.load();
+    }
+
     public void start() {
-      getSharedThreadingService().registerPlugIn(this);
-      plugin_prerun();
+      super.start();
+      getBlackboardService().registerInterest(sw = new ThinWatcher());
+      requestTrigger = getSchedulerService().register(this);
+      synchronized (this) {     //  make sure we don't get scheduled while initializing
+        plugin_prerun();
+      }
     }
 
-    //
-    // implementation of ScheduleablePlugIn API 
-    //
+    // implement Trigger
 
-    public void addExternalActivityWatcher(SubscriptionWatcher watcher) { 
-     getBlackboardService().registerInterest(watcher);
-    }
-
-    public final void externalCycle(boolean wasExplicit) {
-      setAwakened(wasExplicit);
+    // called by scheduler to activate (in the right thread context)
+    public synchronized void trigger() {
+      setAwakened(sw.clearSignal()); // get wake() right
       plugin_cycle();
     }
 
+    private class ThinWatcher extends SubscriptionWatcher {
+      public void signalNotify(int event) {
+        super.signalNotify(event);
+        requestTrigger.trigger();
+      }
+    }
   }
 
   /** has its own Thread **/

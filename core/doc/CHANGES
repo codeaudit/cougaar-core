@@ -1,3 +1,17 @@
+
+* 8.6.1
+New plugin scheduler allows running plugins (and other clients) from a
+pool of threads managed on a per-node basis rather than a single
+thread on a per-agent basis.  Improved resource utilization
+(especially on SMP machines), reduced thread load for nodes with > 2
+agents, simpler scheduling rules (simple fifo queue over pool).
+
+* 8.6.0
+
+* 8.4.1
+
+* 8.4.0
+
 * 8.3.0
 The Component chain Node->AgentManager->Agent/Cluster->PluginManager->Plugin 
 is complete, with appropriate Binders and connection of ServiceBrokers

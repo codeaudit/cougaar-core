@@ -53,6 +53,10 @@ public class SubscriptionWatcher {
         wait();
       } catch (InterruptedException ie) {}
     }
+    return clearSignal();
+  }
+
+  public synchronized boolean clearSignal() {
     boolean retval = clientFlag || internalFlag;
 
     externalFlag = false;

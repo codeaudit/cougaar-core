@@ -84,6 +84,7 @@ public class CircularQueue extends AbstractCollection
     size++;
     return true;
   }
+
   public boolean addAll(Collection c) {
     for (Iterator i = c.iterator(); i.hasNext(); ) {
       add(i.next());

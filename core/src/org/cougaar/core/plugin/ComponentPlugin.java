@@ -266,7 +266,7 @@ public class ComponentPlugin
    * This is the scheduler's hook into me
    **/
   protected class PluginCallback implements Trigger {
-    public void trigger() {
+    public synchronized void trigger() {
       if (!primed) {
         precycle();
       }

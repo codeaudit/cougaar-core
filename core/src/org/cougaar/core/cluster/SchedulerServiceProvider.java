@@ -24,8 +24,15 @@ package org.cougaar.core.cluster;
 import org.cougaar.core.component.ServiceProvider;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.io.PrintStream;
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.File;
+import org.cougaar.util.PropertyParser;
+import org.cougaar.util.CircularQueue;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.Trigger;
@@ -35,27 +42,100 @@ import org.cougaar.core.cluster.ClusterImpl;
  * Scheduler that runs its schedulees in a shared thread
  * The schedulees tell the Scheduler they want to be run via a Trigger.
  * The schedulees pass in a Trigger that the Scheduler calls to activate them.
- */
+ * <p>
+ * Debugging and behavior parameters: The basic idea is to watch how simple
+ * plugins are scheduled: we can watch how long "Shared Thread"
+ * plugins take to execute and keep statistics.  We also watch to see
+ * if plugins block or otherwise fail to return from execute(). 
+ * <p>
+ * @property org.cougaar.core.cluster.SchedulerService.statistics=false Set
+ * it to true to collect plugin statistics.
+ * @property org.cougaar.core.cluster.SchedulerService.dumpStatistics=false Set
+ * it to true to get periodic dumps of plugin statistics to the file
+ * NODENAME.statistics in the current directory. 
+ * @property org.cougaar.core.cluster.SchedulerService.watching=true Set it
+ * to false to disable the watcher (default is enabled). When enabled,
+ * will complain whever it sees a plugin run or block for more than
+ * 15 seconds.  It will also cause the above statistics file(s) to be
+ * (re)generated approximately every two minutes.  The watcher is one
+ * thread per vm, so it isn't too expensive.
+ * @property org.cougaar.core.cluster.SchedulerService.staticScheduler=false
+ * Set to true to do shared-thread scheduling over the whole node/vm rather than 
+ * per-agent.  Uses the MultiScheduler instead of SimpleScheduler to support
+ * multiple worker threads.
+ * @property org.cougaar.core.cluster.SchedulerService.schedulerThreads=4
+ * The number of threads to use as workers for the MultiScheduler - these
+ * threads are shared among all scheduled components in the node.
+ **/
 public class SchedulerServiceProvider 
   implements ServiceProvider
 {
+  /** Should we keep statistics on plugin runtimes? **/
+  static boolean keepingStatistics = false;
 
-  private HashSet clients = new HashSet(13);
-  private ArrayList runThese = new ArrayList(13);
-  private SchedulerServiceImpl scheduler = new SchedulerServiceImpl();
-  private Object runListSemaphore = new Object();
+  /** Should we dump the stats periodically? **/
+  static boolean dumpingStatistics = false;
+
+  /** Should we watch for blocked plugins? **/
+  static boolean isWatching = true;
+
+  /** how long a plugin runs before we complain when watching (default 2 minutes)**/
+  static long warningTime = 120*1000L; 
+
+  /** Should we use a single per-node/vm scheduler (true) or per-agent (false)? **/
+  static boolean staticScheduler = true;
+
+  /** How many threads should we use to schedule components when using the MultiScheduler (4) **/
+  static int nThreads = 4;
+
+  static {
+    String p = "org.cougaar.core.cluster.SchedulerService.";
+    keepingStatistics = PropertyParser.getBoolean(p+"statistics", keepingStatistics);
+    dumpingStatistics = PropertyParser.getBoolean(p+"dumpStatistics", dumpingStatistics);
+    if (dumpingStatistics) keepingStatistics=true;
+    isWatching = PropertyParser.getBoolean(p+"watching", isWatching);
+    warningTime = PropertyParser.getLong(p+"warningTime", warningTime);
+    staticScheduler = PropertyParser.getBoolean(p+"staticScheduler", staticScheduler);
+    nThreads = PropertyParser.getInt(p+"schedulerThreads", nThreads);
+  }
+
+
+  private SchedulerBase scheduler;
+  private SchedulerService schedulerProxy;
+
   protected ClusterImpl agent = null;
 
-  public SchedulerServiceProvider() {}
+  public SchedulerServiceProvider() {
+    scheduler = createScheduler("Anonymous");
+    schedulerProxy = new SchedulerProxy(scheduler);
+  }
 
   public SchedulerServiceProvider(ClusterImpl cluster) {
-  agent = cluster;
+    scheduler = createScheduler(cluster.toString());
+    schedulerProxy = new SchedulerProxy(scheduler);
   }
   
-  
+
+  private static final Object ssLock = new Object();
+  private static SchedulerBase singletonScheduler = null;
+
+  protected SchedulerBase createScheduler(String id) {
+    if (staticScheduler) {
+      synchronized (ssLock) {
+        if (singletonScheduler == null) {
+          //singletonScheduler = new SimpleScheduler(System.getProperty("org.cougaar.core.society.Node.name", "unknown"));
+          singletonScheduler = new MultiScheduler(System.getProperty("org.cougaar.core.society.Node.name", "unknown"));
+        }
+        return singletonScheduler;
+      }
+    } else {
+      return new SimpleScheduler(id);
+    }
+  }
+    
   // ServiceProvider methods
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    return scheduler;
+    return schedulerProxy;
   }
 
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service){
@@ -69,26 +149,238 @@ public class SchedulerServiceProvider
     scheduler.resume();
   }
 
-  protected class SchedulerServiceImpl implements SchedulerService{
-
+  static abstract class SchedulerBase implements SchedulerService {
     public Trigger register(Trigger manageMe) {
       assureStarted();
-      clients.add(manageMe);
+      addClient(manageMe);
       return new SchedulerCallback(manageMe);
     }
 
     public void unregister(Trigger stopPokingMe) {
-      clients.remove(stopPokingMe);
+      removeClient(stopPokingMe);
+    }
+
+    /** Lazy startup of scheduler threads **/
+    abstract void assureStarted();
+
+    /** add a client to the schedule list **/
+    abstract void addClient(Trigger client);
+
+    /** called to request that client stop being scheduled **/
+    abstract void removeClient(Trigger client);
+
+    /** called to request that client be activated asap **/
+    abstract void scheduleClient(Trigger client);
+
+    void suspend() {}
+    void resume() {}
+
+    /**
+     * Components hook into me
+     **/
+    class SchedulerCallback implements Trigger {
+      private Trigger client;
+      public SchedulerCallback (Trigger manageMe) {
+	client = manageMe;
+      }
+      /**
+       * Add component to the list of pokables to be triggerd
+       **/
+      public void trigger() {
+        scheduleClient(client);
+      }
+    }
+
+  }
+
+  public static class WorkerBase {
+    private long t0 = 0;
+    private Trigger currentTrigger = null;
+    public boolean runTrigger(Trigger t) {
+      try {
+        t0 = System.currentTimeMillis();
+        currentTrigger = t;
+        t.trigger();
+      } catch (Throwable die) {
+        System.err.println("\nWarning Trigger "+t+" threw "+die);
+        die.printStackTrace();
+        return true;
+      } finally {
+        if (keepingStatistics) {
+          long delta = System.currentTimeMillis() -t0;
+          accumulateStatistics(currentTrigger,delta);
+        }
+        currentTrigger = null;
+        t0 = 0;
+      }
+      return false;
+    }
+
+    public void checkHealth() {
+      long tx = t0;
+      if (tx>0) {
+        long delta = System.currentTimeMillis() -tx;
+        if (delta >= warningTime) {
+          System.err.println("Warning: Trigger "+currentTrigger+" has been running for "+(delta/1000.0)+" seconds.");
+        }
+      }
+    }
+  }
+
+
+  /** SimpleScheduler is a simple on-demand scheduler of trigger requests.
+   * Requests are handled in the order they are requested.
+   **/
+  static class MultiScheduler
+    extends SchedulerBase 
+  {
+    private final String id;
+    MultiScheduler(String id) { this.id = id; }
+
+    private final HashSet clients = new HashSet(13);
+
+    private final CircularQueue runnables = new CircularQueue(32);
+
+    void addClient(Trigger client) {
+      synchronized (clients) {
+        // only put it on the list if it hasn't already been scheduled
+        // Note that this will still allow rescheduling when it is currently
+        // being run!  Might be better to have three well-managed states: 
+        // idle, pending, running
+        // as is, the trigger probably needs to be synchronized to be 
+        // safe.
+        if (!clients.contains(client)) {
+          clients.add(client);
+        }
+      }
+    }
+    void removeClient(Trigger client) {
+      synchronized (clients) {
+        clients.remove(client);
+      }
+    }
+
+    void scheduleClient(Trigger client) {
+      synchronized (runnables) {
+        if (true) { // (!runnables.contains(client))
+          runnables.add(client);
+          runnables.notifyAll();
+        }
+      }
+    }
+
+    /** the scheduler instance (if started) **/
+    private boolean running = false;
+
+    private ArrayList threads = null;
+    synchronized void assureStarted() {
+      if (threads == null) {
+        threads = new ArrayList(nThreads);
+        for (int i = 0; i<nThreads;i++) {
+          Worker scheduler = new Worker(i);
+          if (isWatching) {
+            getWatcher().register(scheduler);
+          }
+          String name = "MultiScheduler/"+id+"("+i+")";
+          Thread thread = new Thread(scheduler, name);
+          running = true;
+          thread.start();
+          threads.add(thread);
+        }
+      }
+    }
+
+    synchronized void suspend() {
+      if (running) {
+        running = false;
+        synchronized (runnables) {
+          runnables.notifyAll();
+        }
+        try {
+          for (int i =0;i<nThreads;i++) {
+            ((Thread)threads.get(i)).join(60000);
+          }
+        } catch (InterruptedException ie) {
+        }
+        //schedulerThread = null;
+        threads = null;
+      }
+    }
+
+    synchronized void resume() {
+      if (!running) {
+        assureStarted();
+      }
+    }
+    
+    class Worker 
+      extends WorkerBase
+      implements Runnable
+    {
+      private int id;
+      Worker(int i) { id = i; }
+      public void run() {
+	while (running) {
+          Trigger t;
+          synchronized (runnables) {
+            while ((t = (Trigger) runnables.next()) == null) {
+              try {
+                runnables.wait();
+              } catch (InterruptedException ie) {}
+            }
+          }
+          //System.err.println("SPLAT("+id+")!");
+          runTrigger(t);
+	}
+      }
+    }
+  }
+
+  /** SimpleScheduler is a simple on-demand scheduler of trigger requests.
+   * Requests are handled in the order they are requested.
+   **/
+  static class SimpleScheduler
+    extends SchedulerBase 
+  {
+    private final String id;
+    SimpleScheduler(String id) { this.id = id; }
+
+    private final HashSet clients = new HashSet(13);
+    private final Semaphore sem = new Semaphore();
+
+    private final Object runnableLock = new Object();
+    private ArrayList runnables = new ArrayList(13);
+    private ArrayList working = new ArrayList(13);
+
+    void addClient(Trigger client) {
+      synchronized (clients) {
+        clients.add(client);
+      }
+    }
+    void removeClient(Trigger client) {
+      synchronized (clients) {
+        clients.remove(client);
+      }
+    }
+
+    void scheduleClient(Trigger client) {
+      synchronized (runnableLock) {
+        runnables.add(client);
+      }
+      sem.set();
     }
 
     /** the scheduler instance (if started) **/
     private Thread schedulerThread = null;
     private boolean running = false;
 
-    synchronized private void assureStarted() {
+    synchronized void assureStarted() {
       if (schedulerThread == null) {
-	Runnable scheduler = new EasyScheduler();
-        String name = "SchedulerServiceProvider/" + agent.getClusterIdentifier();
+	Worker scheduler = new Worker();
+        if (isWatching) {
+          getWatcher().register(scheduler);
+        }
+        String name = "SimpleScheduler/"+id;
 	schedulerThread = new Thread(scheduler, name);
         running = true;
         schedulerThread.start();
@@ -98,7 +390,7 @@ public class SchedulerServiceProvider
     synchronized void suspend() {
       if (running) {
         running = false;
-        signalActivity();
+        sem.set();
         try {
           schedulerThread.join(60000);
         } catch (InterruptedException ie) {
@@ -113,73 +405,182 @@ public class SchedulerServiceProvider
       }
     }
 
-    /** Semaphore to signal activity in one or more plugins **/
-    private Object activitySignal = new Object();
-    
-    /** flag to simplify synchronization on startup **/
-    private boolean activitySignaled = false;
-    
-    protected void signalActivity() {
-      synchronized (activitySignal) {
-	if (!activitySignaled) {  // reduce lock,notify contention
-	  activitySignaled = true;
-	  // only one consumer - no need for notifyAll, though
-	  // we could support multiple worker threads (neato!)
-	  activitySignal.notify();
-	}
-      }
-    }
-
-    /** Block until there is (or was) activity. 
-     */
-    protected void waitForActivity() {
-      synchronized (activitySignal) {
-	while (! activitySignaled ) {
-	  try {
-	    activitySignal.wait();
-	  } catch (InterruptedException ie) {}
-	}
-	activitySignaled = false;
-      }
-    }
-
-    protected class EasyScheduler implements Runnable {
+    class Worker 
+      extends WorkerBase
+      implements Runnable
+    {
       public void run() {
 	while (running) {
-	  waitForActivity();
-	  //make copy to prevent concurrent modification error. (I couldn't figure out the synchronization)
-	  ArrayList pokables;
-	  synchronized(runListSemaphore) {
-	    pokables = new ArrayList(runThese);
-	    runThese.clear();
+	  sem.waitForSet();
+          synchronized (runnableLock) {
+            // swap runnables and working arrays, leaving runnables clear
+            ArrayList tmp = runnables;
+            runnables = working;
+            runnables.clear();
+            working = tmp; 
+          }
+          
+          int l = working.size();
+	  for (int i = 0; i<l;i++) {
+	    Trigger pc = (Trigger)working.get(i);
+            runTrigger(pc);
 	  }
-	  for (Iterator it = pokables.iterator(); running && it.hasNext();) {
-	    Trigger pc = (Trigger)it.next();
-	    pc.trigger();
-	  }
-	}
-      }
-    }
-
-
-    /**
-     * Components hook into me
-     **/
-    protected class SchedulerCallback implements Trigger {
-      private Trigger componentsTrigger = null;
-      public SchedulerCallback (Trigger manageMe) {
-	componentsTrigger = manageMe;
-      }
-      /**
-       * Add component to the list of pokables to be triggerd
-       **/
-      public void trigger() {
-	//System.out.println("SchedulerServiceProvider.SchedulerCallback.trigger() - ouch! I've been triggerd");
-	synchronized(runListSemaphore) {
-	  runThese.add(componentsTrigger);
-	  signalActivity();
+          working.clear();
 	}
       }
     }
   }
+
+  // watcher and statistics support
+  
+  private static Watcher watcher = null;
+  private static synchronized Watcher getWatcher() {
+    if (watcher == null) {
+      watcher = new Watcher();
+      new Thread(watcher, "SchedulerService.Watcher").start();
+    }
+    return watcher;
+  }
+
+  private static class Watcher implements Runnable {
+    private long reportTime = 0;
+
+    public void run() {
+      while (true) {
+        try {
+          Thread.sleep(10*1000L); // sleep for a 10 seconds at a time
+          long now = System.currentTimeMillis();
+
+          if (isWatching) check();
+
+          // no more often then every two minutes
+          if (dumpingStatistics && keepingStatistics && (now-reportTime) >= 120*1000L) {
+            reportTime = now;
+            report();
+          }
+        } catch (Throwable t) {
+          t.printStackTrace();
+        }
+      }
+    }
+
+    /** List<WorkerBase> **/
+    private ArrayList pims = new ArrayList();
+    
+    synchronized void register(WorkerBase worker) {
+      pims.add(worker);
+    }
+
+    /** dump reports on plugin usage **/
+    private synchronized void report() {
+        
+      String nodeName = System.getProperty("org.cougaar.core.society.Node.name", "unknown");
+      try {
+        File f = new File(nodeName+".statistics");
+        FileOutputStream fos = new FileOutputStream(f);
+        PrintStream ps = new PrintStream(fos);
+        reportStatistics(ps);
+        ps.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    /** check the health of each plugin manager, reporting problems **/
+    private synchronized void check() {
+      for (Iterator i = pims.iterator(); i.hasNext(); ) {
+        WorkerBase pim = (WorkerBase) i.next();
+        pim.checkHealth();
+      }
+    }
+  }
+
+  // statistics keeper
+
+  private static final HashMap statistics = new HashMap(29);
+
+  static void accumulateStatistics(Trigger trig, long elapsed) {
+    synchronized (statistics) {
+      InvocationStatistics is = (InvocationStatistics) statistics.get(trig);
+      if (is == null) {
+        is = new InvocationStatistics(trig);
+        statistics.put(trig,is);
+      }
+      is.accumulate(elapsed);
+    }
+  }
+
+  public static void reportStatistics(PrintStream os) {
+    // the cid should be part of the stats toString
+    //os.println(cid.toString());
+    synchronized (statistics) {
+      for (Iterator i = statistics.values().iterator(); i.hasNext(); ) {
+        InvocationStatistics is = (InvocationStatistics) i.next();
+        os.println(is.toString());
+      }
+    }
+  }
+
+  public static class InvocationStatistics {
+    private int count = 0;
+    private long millis = 0L;
+
+    Trigger trigger;
+    InvocationStatistics(Trigger p) {
+      trigger = p;
+    }
+
+    synchronized void accumulate(long elapsed) {
+      count++;
+      millis+=elapsed;
+    }
+    public synchronized String toString() {
+      double mean = ((millis/count)/1000.0);
+      return trigger.toString()+"\t"+count+"\t"+mean;
+    }
+  }
+
+
+  // support classes
+
+  /** proxy class to shield the real scheduler from clients **/
+  static final class SchedulerProxy implements SchedulerService {
+    private final SchedulerService real;
+    SchedulerProxy(SchedulerService r) { real = r; }
+    public Trigger register(Trigger manageMe) {
+      return real.register(manageMe);
+    }
+    public void unregister(Trigger stopPokingMe) {
+      real.unregister(stopPokingMe);
+    }
+  }    
+
+  public static final class Semaphore {
+    public Semaphore() {};
+
+    private boolean attention = false;
+    public synchronized boolean isSet() {
+      if (attention) {
+        attention = false;
+        return true;
+      } else {
+        return false;
+      }
+    }
+    public synchronized void set() {
+      attention = true;
+      notifyAll();
+    }
+    public synchronized void waitForSet() {
+      while (! attention) {
+        try {
+          wait();
+        } catch (InterruptedException ie) {}
+      }
+      attention = false;
+    }
+  }
+
+
+
 }

@@ -30,7 +30,11 @@ import org.cougaar.core.component.Trigger;
 public interface SchedulerService extends Service {
 
   /**
-   * Tells Scheduler to handle scheduling this object
+   * Tells Scheduler to handle scheduling this object.  <p>
+   * <em>IMPORTANT</em> Note that it is possible for the
+   * trigger to be invoked in parallel under some scheduler service 
+   * implementations, so it is probably a good idea for scheduled
+   * Trigger.trigger() methods to be synchronized.
    * @param managedItem the trigger to be pulled to run the object
    * @return a handle that the caller can use to tell the scheduler that it wants to be run.
    **/
