@@ -31,7 +31,7 @@ import java.util.List;
  **/
 
 public interface NSCallback extends Remote {
-  static class Id implements Serializable {
+  class Id implements Serializable {
     NSCallback cb;              // The callback channel
     int id;                     // Listener id number
     int interestType;           // Type of interest of the listener
@@ -67,8 +67,8 @@ public interface NSCallback extends Remote {
     }
   }
 
-  static final int NAMESPACE_INTEREST = 1;
-  static final int OBJECT_INTEREST = 2;
+  int NAMESPACE_INTEREST = 1;
+  int OBJECT_INTEREST = 2;
 
   void dispatch(List events)
     throws RemoteException;
