@@ -335,6 +335,13 @@ public class PlayHelper {
     if (o instanceof String) {
       String conditionName = (String) o;
       Condition condition = (Condition) smMap.get(conditionName);
+      if (condition == null) {
+        OMMapEntry omme = (OMMapEntry) omMap.get(conditionName);
+        if (omme != null) {
+          return omme.newValue.getEffectiveValue();
+        }
+        throw new IllegalArgumentException("No Condition named " + conditionName);
+      }
       return condition.getValue();
     }
     throw new IllegalArgumentException("invalid if clause " + o);
