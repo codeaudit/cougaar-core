@@ -98,8 +98,6 @@ public class AgentManager
   
   public boolean add(Object o) {
     // this could go away if we turned the message into a ComponentDescription object.
-    //if (o instanceof AddClustersMessage ) {
-    //}
     return true;
   }
 

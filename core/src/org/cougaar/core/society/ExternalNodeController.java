@@ -93,27 +93,6 @@ public interface ExternalNodeController extends Remote {
   // All of these are subject to security checks, of course...
   //
 
-  /**
-   * Instruct the Node to load and start the Clusters specified in the 
-   * <code>PropertyTree</code>.
-   *
-   * The format of the PropertyTree must correspond with the existing
-   * <code>AddClustersMessage</code>, as listed below.
-   *
-   * The PropertyTree should have a "clusters" entry that maps to
-   * a List, where each entry in this "clusters" List should be either:<pre>
-   *    1) the name of a Cluster, which matches a local ".ini" file
-   * </pre>
-   * or<pre>
-   *    2) a PropertyTree for a parsed Cluster specification, as defined
-   *       in <code>ClusterINIParser.parse(BufferedReader)</code>.
-   * </pre>.
-   *
-   * Additional properties of the top-level PropertyTree may be added 
-   * at a future time.
-   */
-  public void addClusters(PropertyTree pt) throws RemoteException;
-
   //
   // Other control capabilities will be added here, such as:
   //   clusters: remove/halt/transfer/clone/etc

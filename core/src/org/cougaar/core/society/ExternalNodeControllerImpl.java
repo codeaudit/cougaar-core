@@ -58,13 +58,4 @@ implements ExternalNodeController {
     return node.getClusterIdentifiers();
   }
 
-  public void addClusters(PropertyTree pt) {
-    AddClustersMessage myMessage = new AddClustersMessage();
-    myMessage.setOriginator(null);  // from RMI!
-    myMessage.setTarget(node.getNodeIdentifier());
-    myMessage.setPropertyTree(pt);
-    // bypass the message system to send the message directly.
-    node.receiveMessage(myMessage);
-  }
-
 }
