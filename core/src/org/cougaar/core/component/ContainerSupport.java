@@ -61,6 +61,11 @@ public abstract class ContainerSupport
    **/
   protected abstract Class specifyChildBindingSite();
 
+  /** satisfy ContainerAPI extends BindingSite and provides access to the (local) ServiceBroker **/
+  public ServiceBroker getServiceBroker() {
+    return childServiceBroker;
+  }
+
   //
   // implement collection
   //

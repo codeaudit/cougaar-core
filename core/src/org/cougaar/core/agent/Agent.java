@@ -21,7 +21,10 @@ import org.cougaar.core.cluster.UIDServer;
  * This is the basic class required for
  * implementing an Agent.
  **/
-public abstract class Agent extends ContainerSupport implements ContainerAPI {
+public abstract class Agent 
+  extends ContainerSupport
+  implements ContainerAPI 
+{
 
   public Agent() {
     if (!loadComponent(new PluginManagerBinderFactory())) {
@@ -76,14 +79,7 @@ public abstract class Agent extends ContainerSupport implements ContainerAPI {
   // implement the API needed by agent binders
   //
 
-  /** Makes the child services available to child binders.
-   * should use package protection to give access only to AgentBinderSupport,
-   * but makes it public for use by Test example.
-   **/
-  public final ServiceBroker getChildServiceBroker() {
-    return childServiceBroker;
-  }
-
+  public final void requestStop() {} // used to satisfy ContainerAPI of BindingSite 
   //
   // support classes
   //

@@ -89,12 +89,13 @@ public class PluginManager
 
   private PluginManagerForBinder containerProxy = 
     new PluginManagerForBinder() {
-        public ServiceBroker getChildServiceBroker() {
-          return PluginManager.this.getChildServiceBroker();
+        public ServiceBroker getServiceBroker() {
+          return PluginManager.this.getServiceBroker();
         }
         public boolean remove(Object childComponent) {
           return PluginManager.this.remove(childComponent);
         }
+        public void requestStop() {}
         public ClusterIdentifier getAgentIdentifier() {
           return PluginManager.this.getAgentIdentifier();
         }
@@ -110,17 +111,6 @@ public class PluginManager
     return containerProxy;
   }
 
-  //
-  // implement the API needed by plugin binders
-  //
-
-  /** Makes the child services available to child binders.
-   * should use package protection to give access only to PluginBinderSupport,
-   * but makes it public for use by Test example.
-   **/
-  public final ServiceBroker getChildServiceBroker() {
-    return childServiceBroker;
-  }
 
   //
   // support classes

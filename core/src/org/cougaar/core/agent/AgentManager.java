@@ -62,18 +62,8 @@ public class AgentManager
   protected ContainerAPI getContainerProxy() {
     return this;
   }
-
-  //
-  // implement the API needed by agent binders
-  //
-
-  /** Makes the child services available to child binders.
-   * should use package protection to give access only to AgentBinderSupport,
-   * but makes it public for use by Test example.
-   **/
-  public final ServiceBroker getChildServiceBroker() {
-    return childServiceBroker;
-  }
+  
+  public void requestStop() { }
 
   //
   // support classes

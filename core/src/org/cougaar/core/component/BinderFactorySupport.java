@@ -10,6 +10,7 @@
 package org.cougaar.core.component;
 
 import java.util.*;
+import java.lang.reflect.*;
 
 /**
  * Implement the basics of a BinderFactory.  A full implementation
@@ -32,11 +33,11 @@ public abstract class BinderFactorySupport implements BinderFactory
   }
 
   // 
-  /** define/override to choose the class of the Binder to use.
+  /** Override to choose the class of the Binder to use.
    * This method should return null if the child is not bindable with
-   * this Factory.
+   * this Factory.  The default implementation returns null.
    **/
-  public abstract Class getBinderClass(Object child);
+  protected Class getBinderClass(Object child) { return null; }
   
   /** Bind the Child component.  <p>
    * The child component will already have been instantiated and any
@@ -49,10 +50,22 @@ public abstract class BinderFactorySupport implements BinderFactory
    * such as starting a thread, instructing the binder to provide additional
    * services, etc.
    *
+   * By default, it does the equivalent of return new <em>binderClass</em>(ContainerAPI,child);
+   *
    * @return A Binder instance of class bindingSite which is binding 
    * the child component or null.
    **/
-  public abstract Binder bindChild(Class binderClass, Object child);
+  protected Binder bindChild(Class binderClass, Object child) {
+    ContainerAPI pi = (ContainerAPI) getParentComponent();
+    try {
+      Constructor constructor = binderClass.getConstructor(new Class[]{Object.class, Component.class});
+      Binder binder = (Binder) constructor.newInstance(new Object[] {pi, child});
+      return binder;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e.toString());
+    }
+  }
 
   // implement Component
   public BinderFactorySupport() {}

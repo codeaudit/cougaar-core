@@ -200,11 +200,11 @@ class MessageTransportServerImpl
 	// TO BE DONE
 	return null;
     }
-  public ServiceBroker getChildServiceBroker() {
+  public ServiceBroker getServiceBroker() {
 	// TO BE DONE
     return null;
   }
-
+  public void requestStop() {}
 
     protected Class specifyChildBindingSite() {
 	return MessageTransportServerBindingSite.class;

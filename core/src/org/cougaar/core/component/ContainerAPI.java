@@ -20,9 +20,8 @@ import java.util.*;
  * from the container.
  **/
 public interface ContainerAPI
+  extends BindingSite
 {
-  /** Get the default service broker from the container **/
-  ServiceBroker getChildServiceBroker();
   /** Remove the component (presumably the child) from the container **/
   boolean remove(Object childComponent);
 }

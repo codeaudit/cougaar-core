@@ -22,7 +22,7 @@ public abstract class BinderSupport implements Binder
   private Component child;
 
   protected BinderSupport(ContainerAPI parent, Component child) {
-    this.servicebroker = parent.getChildServiceBroker();
+    this.servicebroker = parent.getServiceBroker();
     this.parent = parent;
     this.child = child;
   }
