@@ -57,10 +57,9 @@ extends ContainerSupport
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
-    if (ais == null) {
-      // Revocation
-    } else {
+    if (ais != null) {
       this.agentId = ais.getMessageAddress();
+      //    } else {      // Revocation
     }
   }
 

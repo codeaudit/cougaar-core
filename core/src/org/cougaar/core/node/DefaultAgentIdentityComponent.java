@@ -54,13 +54,12 @@ implements Component
 
   private ServiceProvider myAISP;
 
-  // ignore "setServiceBroker", we want the node-level service broke
+  // ignore "setServiceBroker", we want the node-level service broker
 
   public void setNodeControlService(NodeControlService ncs) {
-    if (ncs == null) {
-      // Revocation
-    } else {
+    if (ncs != null) {
       this.sb = ncs.getRootServiceBroker();
+      //    } else {      // Revocation
     }
   }
 
