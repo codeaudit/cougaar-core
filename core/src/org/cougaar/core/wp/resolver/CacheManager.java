@@ -1318,7 +1318,7 @@ implements Component
         Integer.parseInt(
             System.getProperty(
               "org.cougaar.core.wp.resolver.cache.maxSize",
-              "800"));
+              "2048"));
       if (maxSize <= 0 || maxSize < minSize) {
         throw new RuntimeException(
             "Invalid cache size (min="+minSize+", max="+maxSize+")");
