@@ -20,20 +20,6 @@ import org.cougaar.core.component.BindingSite;
    **/
 
 public interface PluginBase
-  extends Component, PlugInStateModel
+  extends Component
 {
-  /**
-   * Found by introspection
-   **/
-  void setBindingSite(BindingSite bs);
-
-  // BinderSupport looks for initialize() via introspection.
-  // Does it conflict with GenericStateModel initialize()?
-  // void initialize();
-
-  void setAwakened(boolean awake);
-
-  // better names?
-  void plugin_cycle();
-  void plugin_prerun();
 }
