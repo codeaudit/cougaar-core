@@ -99,7 +99,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
   private void planElementAdded(PlanElement pe) {
     Task task = pe.getTask();
     if (logplan.findTask(task) == null) {
-      System.out.println("Removing added planelement [task not found in the logplan] for " + task + " as " + pe);
+//        System.out.println("Removing added planelement [task not found in the logplan] for " + task + " as " + pe);
       removePlanElement(pe);
     }
   }
