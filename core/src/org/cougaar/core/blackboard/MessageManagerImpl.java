@@ -51,8 +51,6 @@ class MessageManagerImpl implements MessageManager, Serializable {
   private static final boolean debug =
     Boolean.getBoolean("org.cougaar.core.blackboard.MessageManager.debug");
 
-  private static final int MAXTRIES = 5;
-
   private static final long KEEP_ALIVE_INTERVAL = 55000L;
 
   private boolean USE_MESSAGE_MANAGER = false;
