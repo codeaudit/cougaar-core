@@ -20,7 +20,7 @@
  */
 package org.cougaar.core.persist;
 
-class SequenceNumbers {
+class SequenceNumbers implements Comparable {
     int first = 0;
     int current = 0;
     long timestamp;             // The time the highest delta in this set was written.
@@ -34,6 +34,12 @@ class SequenceNumbers {
     }
     public SequenceNumbers(SequenceNumbers numbers) {
         this(numbers.first, numbers.current, numbers.timestamp);
+    }
+    public int compareTo(Object o) {
+        SequenceNumbers that = (SequenceNumbers) o;
+        if (this.timestamp < that.timestamp) return -1;
+        if (this.timestamp > that.timestamp) return  1;
+        return this.current = that.current;
     }
     public String toString() {
         return first + ".." + current;

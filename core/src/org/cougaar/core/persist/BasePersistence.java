@@ -22,27 +22,35 @@ package org.cougaar.core.persist;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.CharArrayWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
-import java.io.FileWriter;
 import java.io.PrintWriter;
-import java.io.CharArrayWriter;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 
+import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.agent.ClusterIdentifier;
@@ -55,7 +63,9 @@ import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.MessageManagerImpl;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.Allocation;
 import org.cougaar.planning.ldm.plan.AssetTransfer;
@@ -66,6 +76,7 @@ import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
+import org.cougaar.tools.scalability.performance.jni.CpuClock;
 import org.cougaar.core.persist.PersistMetadata;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -96,9 +107,174 @@ import java.lang.reflect.Modifier;
  * @property org.cougaar.core.persistence.clear Set true to discard all deltas on startup
  * @property org.cougaar.core.persistence.consolidationPeriod
  * The number of incremental deltas between full deltas (default = 10)
+ * @property org.cougaar.core.persistence.lazyInterval specifies the
+ * interval in milliseconds between the generation of persistence
+ * deltas. Default is 300000 (5 minutes). This will be overridden if
+ * the persistence control and adaptivity engines are running.
  */
-public class BasePersistence implements Persistence, PersistencePluginSupport {
-//    private static List clusters = new ArrayList();
+public class BasePersistence
+  implements Persistence, PersistencePluginSupport, ServiceProvider
+{
+  private static final String PERSISTENCE_INTERVAL_CONTROL_NAME = "interval";
+  private static final String PERSISTENCE_ENCRYPTION_CONTROL_NAME = "encryption";
+  private static final String PERSISTENCE_SIGNING_CONTROL_NAME = "signing";
+  private static final String PERSISTENCE_CONSOLIDATION_PERIOD_NAME = "consolidationPeriod";
+  private static final long MIN_PERSISTENCE_INTERVAL = 5000L;
+  private static final long MAX_PERSISTENCE_INTERVAL = 24L*86400000L;
+  private static final String DEFAULT_PERSISTENCE_ENCRYPTION = "OFF";
+  private static final String DEFAULT_PERSISTENCE_SIGNING = "OFF";
+  private static final String PROP_LAZY_PERSIST_INTERVAL = "org.cougaar.core.persistence.lazyInterval";
+  private static final long DEFAULT_LAZY_PERSIST_INTERVAL = 300000L;
+  private static final long LAZY_PERSIST_INTERVAL =
+    Long.getLong(PROP_LAZY_PERSIST_INTERVAL, DEFAULT_LAZY_PERSIST_INTERVAL).longValue();
+  private static final int CONSOLIDATION_PERIOD =
+    Integer.getInteger("org.cougaar.core.persistence.consolidationPeriod", 10).intValue();
+
+  private static class RehydrationSet {
+    PersistencePlugin ppi;
+    SequenceNumbers sequenceNumbers;
+    RehydrationSet(PersistencePlugin ppi, SequenceNumbers sn) {
+      this.ppi = ppi;
+      this.sequenceNumbers = sn;
+    }
+  }
+
+  private class PersistencePluginInfo {
+    PersistencePlugin ppi;
+    long persistenceInterval = LAZY_PERSIST_INTERVAL;
+    long nextPersistenceTime = LAZY_PERSIST_INTERVAL + System.currentTimeMillis();
+    int consolidationPeriod = CONSOLIDATION_PERIOD;
+    int deltaCount = 0;
+    boolean encryption = false;
+    boolean signing = false;
+    SequenceNumbers cleanupSequenceNumbers = null;
+
+    PersistencePluginInfo(PersistencePlugin ppi) {
+      this.ppi = ppi;
+    }
+    long getBehind(long now) {
+      return now - nextPersistenceTime;
+    }
+
+    /**
+     * This is complicated because we want this plugin to be ahead or
+     * behind to the same degree it was ahead or behind before the
+     * change. To do this, we get how much we are currently behind and
+     * multiply that by the ratio of the new and old intervals. The
+     * new base time and delta count are set so that we appear to be
+     * behind by the adjusted amount.
+     **/
+    void setInterval(long newInterval) {
+      long now = System.currentTimeMillis();
+      long behind = getBehind(now);
+      long newBehind = behind * newInterval / persistenceInterval;
+      nextPersistenceTime = now - newBehind;
+      persistenceInterval = newInterval;
+      if (logger.isDebugEnabled()) {
+        logger.debug(ppi.getName() + " persistenceInterval = " + persistenceInterval);
+        logger.debug(ppi.getName() + " nextPersistenceTime = " + persistenceInterval);
+      }
+    }
+    void setConsolidationPeriod(int newPeriod) {
+      consolidationPeriod = newPeriod;
+      if (logger.isDebugEnabled()) {
+        logger.debug(ppi.getName() + " consolidationPeriod = " + consolidationPeriod);
+      }
+    }
+    void setEncryption(boolean newEncryption) {
+      encryption = newEncryption;
+      if (logger.isDebugEnabled()) {
+        logger.debug(ppi.getName() + " encryption = " + encryption);
+      }
+    }
+    void setSigning(boolean newSigning) {
+      signing = newSigning;
+      if (logger.isDebugEnabled()) {
+        logger.debug(ppi.getName() + " signing = " + signing);
+      }
+    }
+  }
+
+  private PersistencePluginInfo getPluginInfo(String pluginName) {
+    PersistencePluginInfo ppio = (PersistencePluginInfo) plugins.get(pluginName);
+    if (ppio != null) return ppio;
+    throw new IllegalArgumentException("No such persistence medium: "
+                                       + pluginName);
+  }
+
+  public class PersistenceControlServiceImpl
+    implements PersistenceControlService
+  {
+    public String[] getControlNames() {
+      return new String[0];
+    }
+
+    public OMCRangeList getControlValues(String controlName) {
+      throw new IllegalArgumentException("No such control: " + controlName);
+    }
+
+    public void setControlValue(String controlName, Comparable newValue) {
+      throw new IllegalArgumentException("No such control: " + controlName);
+    }
+
+    public String[] getMediaNames() {
+      return (String[]) plugins.keySet().toArray(new String[plugins.size()]);
+    }
+
+    public String[] getMediaControlNames(String mediaName) {
+      PersistencePluginInfo ppio = getPluginInfo(mediaName); // Test existence
+      return new String[] {
+        PERSISTENCE_INTERVAL_CONTROL_NAME,
+        PERSISTENCE_CONSOLIDATION_PERIOD_NAME,
+        PERSISTENCE_ENCRYPTION_CONTROL_NAME,
+        PERSISTENCE_SIGNING_CONTROL_NAME,
+      };
+    }
+
+    public OMCRangeList getMediaControlValues(String mediaName, String controlName) {
+      PersistencePluginInfo ppio = getPluginInfo(mediaName);
+      if (controlName.equals(PERSISTENCE_INTERVAL_CONTROL_NAME)) {
+        return new OMCRangeList(new Long(MIN_PERSISTENCE_INTERVAL),
+                                new Long(MAX_PERSISTENCE_INTERVAL));
+      }
+      if (controlName.equals(PERSISTENCE_CONSOLIDATION_PERIOD_NAME)) {
+        return new OMCRangeList(new Integer(1),
+                                new Integer(20));
+      }
+      if (controlName.equals(PERSISTENCE_ENCRYPTION_CONTROL_NAME)) {
+        return new OMCRangeList(new Comparable[] {"OFF", "ON"});
+      }
+      if (controlName.equals(PERSISTENCE_SIGNING_CONTROL_NAME)) {
+        return new OMCRangeList(new Comparable[] {"OFF", "ON"});
+      }
+      throw new IllegalArgumentException(mediaName + " has no control named: " + controlName);
+    }
+
+    public void setMediaControlValue(String mediaName,
+                                     String controlName,
+                                     Comparable newValue)
+    {
+      PersistencePluginInfo ppio = getPluginInfo(mediaName);
+      if (controlName.equals(PERSISTENCE_INTERVAL_CONTROL_NAME)) {
+        ppio.setInterval(((Number) newValue).longValue());
+        recomputeNextPersistenceTime = true;
+        return;
+      }
+      if (controlName.equals(PERSISTENCE_CONSOLIDATION_PERIOD_NAME)) {
+        ppio.setConsolidationPeriod(((Number) newValue).intValue());
+        return;
+      }
+      if (controlName.equals(PERSISTENCE_ENCRYPTION_CONTROL_NAME)) {
+        ppio.setEncryption(newValue.equals("ON"));
+        return;
+      }
+      if (controlName.equals(PERSISTENCE_SIGNING_CONTROL_NAME)) {
+        ppio.setSigning(newValue.equals("ON"));
+        return;
+      }
+      throw new IllegalArgumentException(mediaName + " has no control named: " + controlName);
+    }
+  }
 
   interface PersistenceCreator {
     BasePersistence create() throws PersistenceException;
@@ -119,13 +295,32 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     throws PersistenceException
   {
     try {
-      String persistenceClassName =
+      BasePersistence result = new BasePersistence(context, sb);
+      String persistenceClasses =
         System.getProperty("org.cougaar.core.persistence.class",
-                           FilePersistence.class.getName());
-      Class persistenceClass = Class.forName(persistenceClassName);
-      PersistencePlugin ppi = (PersistencePlugin) persistenceClass.newInstance();
-      BasePersistence result = new BasePersistence(context, sb, ppi);
-      ppi.init(result);
+                           FilePersistence.class.getName() + ":file");
+      StringTokenizer pluginTokens = new StringTokenizer(persistenceClasses, ",");
+      while (pluginTokens.hasMoreTokens()) {
+        String pluginSpec = pluginTokens.nextToken();
+        StringTokenizer paramTokens = new StringTokenizer(pluginSpec, ":");
+        if (!paramTokens.hasMoreTokens()) {
+          throw new PersistenceException("No persistence plugin class specified: "
+                                         + pluginSpec);
+        }
+        Class pluginClass = Class.forName(paramTokens.nextToken());
+        if (!paramTokens.hasMoreTokens()) {
+          throw new PersistenceException("No persistence plugin name specified: "
+                                         + pluginSpec);
+        }
+        String pluginName = paramTokens.nextToken();
+        String[] pluginParams = new String[paramTokens.countTokens()];
+        for (int i = 0; i < pluginParams.length; i++) {
+          pluginParams[i] = paramTokens.nextToken();
+        }
+        PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
+        ppi.init(result, pluginName, pluginParams);
+        result.addPlugin(ppi);
+      }
       return result;
     }
     catch (PersistenceException e) {
@@ -139,13 +334,10 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     
   /**
    * Keeps all associations of objects that have been persisted.
-   */
+   **/
   private IdentityTable identityTable = new IdentityTable();
 
-  private int consolidationPeriod =
-    Integer.getInteger("org.cougaar.core.persistence.consolidationPeriod", 10).intValue();
   private SequenceNumbers sequenceNumbers = null;
-  private SequenceNumbers cleanupSequenceNumbers = null;
   protected boolean archivingEnabled =
     !Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled");
   private ObjectOutputStream currentOutput;
@@ -155,15 +347,35 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
   private LoggingService logger;
   private boolean writeDisabled = false;
   private String sequenceNumberSuffix = "";
-  private PersistencePlugin ppi;
+  private Map plugins = new HashMap();
+  /**
+   * The current PersistencePlugin being used to generate persistence
+   * deltas. This is changed just prior to generating a full delta if
+   * there is a different plugin having priority.
+   **/
+  private PersistencePluginInfo currentPersistPluginInfo;
 
-  protected BasePersistence(ClusterContext clusterContext, ServiceBroker sb, PersistencePlugin ppi)
+  private long previousPersistenceTime = System.currentTimeMillis();
+
+  private long nextPersistenceTime;
+
+  private boolean recomputeNextPersistenceTime = true;
+
+  private List rehydrationSubscriberStates = null;
+
+  private Object rehydrationSubscriberStatesLock = new Object();
+
+  private PersistenceState uidServerState = null;
+
+  protected BasePersistence(ClusterContext clusterContext, ServiceBroker sb)
     throws PersistenceException
   {
     this.clusterContext = clusterContext;
     logger = (LoggingService) sb.getService(this, LoggingService.class, null);
-    System.out.println("logger = " + logger);
-    this.ppi = ppi;
+  }
+
+  public void addPlugin(PersistencePlugin ppi) {
+    plugins.put(ppi.getName(), new PersistencePluginInfo(ppi));
   }
 
   public ClusterIdentifier getClusterIdentifier() {
@@ -172,6 +384,33 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
 
   public boolean archivingEnabled() {
     return archivingEnabled;
+  }
+
+  /**
+   * Gets the system time when persistence should be performed. We do
+   * persistence periodically with a period such that all the plugins
+   * will, on the average create persistence deltas with their
+   * individual periods. The average frequence of persistence is the
+   * sum of the individual media frequencies. Frequency is the
+   * reciprocal of period. The computation is:<p>
+   *
+   * &nbsp;&nbsp;T = 1/(1/T1 + 1/T2 + ... + 1/Tn)
+   * <p>
+   * @return the time of the next persistence delta
+   **/
+  public long getPersistenceTime() {
+    if (recomputeNextPersistenceTime) {
+      double sum = 0.0;
+      for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+        PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+        sum += 1.0 / ppio.persistenceInterval;
+      }
+      long interval = (long) (1.0 / sum);
+      nextPersistenceTime = previousPersistenceTime + interval;
+      recomputeNextPersistenceTime = false;
+      if (logger.isDebugEnabled()) logger.debug("persistence interval=" + interval);
+    }
+    return nextPersistenceTime;
   }
 
   /**
@@ -193,36 +432,54 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
           if (logger.isInfoEnabled()) {
             print("Clearing old persistence data");
           }
-          ppi.deleteOldPersistence();
-        }
-        SequenceNumbers rehydrateNumbers = getBestSequenceNumbers(sequenceNumberSuffix);
-        if (pObject != null || rehydrateNumbers != null) { // Deltas exist
-          if (pObject != null) {
-            if (logger.isInfoEnabled()) {
-              printRehydrationLog("Rehydrating " + clusterContext.getClusterIdentifier()
-                                  + " from " + pObject);
-            }
-          } else {
-            if (logger.isInfoEnabled()) {
-              printRehydrationLog("Rehydrating "
-                                  + clusterContext.getClusterIdentifier()
-                                  + " "
-                                  + rehydrateNumbers.toString());
-            }
-            if (!archivingEnabled)
-              cleanupSequenceNumbers = new SequenceNumbers(rehydrateNumbers);
+          for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+            PersistencePluginInfo p = (PersistencePluginInfo) i.next();
+            p.ppi.deleteOldPersistence();
           }
+        }
+        RehydrationSet[] rehydrationSets = getRehydrationSets(sequenceNumberSuffix);
+        if (pObject != null || rehydrationSets.length > 0) { // Deltas exist
           try {
+            ClusterContextTable.enterContext(clusterContext);
             try {
-              ClusterContextTable.enterContext(clusterContext);
-
               if (pObject != null) {
+                if (logger.isInfoEnabled()) {
+                  printRehydrationLog("Rehydrating " + clusterContext.getClusterIdentifier()
+                                      + " from " + pObject);
+                }
                 result = rehydrateFromBytes(pObject.getBytes());
               } else {
-                while (rehydrateNumbers.first < rehydrateNumbers.current - 1) {
-                  rehydrateOneDelta(rehydrateNumbers.first++, false);
+                // Loop through the available RehydrationSets and
+                // attempt to rehydrate from each one until no errors
+                // occur. This will normally happen on the very first
+                // set, but might fail if the data has been corrupted
+                // in some way.
+                boolean success = false;
+                for (int i = 0; i < rehydrationSets.length; i++) {
+                  SequenceNumbers rehydrateNumbers = rehydrationSets[i].sequenceNumbers;
+                  PersistencePlugin ppi = rehydrationSets[i].ppi;
+                  if (logger.isInfoEnabled()) {
+                    printRehydrationLog("Rehydrating "
+                                        + clusterContext.getClusterIdentifier()
+                                        + " "
+                                        + rehydrateNumbers.toString());
+                  }
+                  try {
+                    while (rehydrateNumbers.first < rehydrateNumbers.current - 1) {
+                      rehydrateOneDelta(ppi, rehydrateNumbers.first++, false);
+                    }
+                    result = rehydrateOneDelta(ppi, rehydrateNumbers.first++, true);
+                    success = true;
+                    break;      // Successful rehydration
+                  } catch (Exception e) { // Rehydration failed
+                    logger.error("Rehydration from " + rehydrationSets[i] + " failed: ", e);
+                    resetRehydration();
+                    continue;   // Try next RehydrationSet
+                  }
                 }
-                result = rehydrateOneDelta(rehydrateNumbers.first++, true);
+                if (!success) {
+                  logger.error("Rehydration failed. Starting over from scratch");
+                }
               }
             } finally {
               ClusterContextTable.exitContext();
@@ -322,7 +579,6 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
           }
           catch (Exception e) {
             e.printStackTrace();
-            cleanupSequenceNumbers = null; // Leave tracks
             System.exit(13);
           }
         }
@@ -333,6 +589,33 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     }
     if (result == null) return new RehydrationResult();
     return result;
+  }
+
+  /**
+   * Loop through all plugins and get their available sequence number
+   * sets. Create RehydrationSets from the sequence numbers sets and
+   * sort them by timestamp.
+   * @return the sorted RehydrationSets
+   **/
+  private RehydrationSet[] getRehydrationSets(String suffix) {
+    List result = new ArrayList();
+    for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+      PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+      SequenceNumbers[] pluginNumbers = ppio.ppi.readSequenceNumbers(suffix);
+      for (int j = 0; j < pluginNumbers.length; j++) {
+        result.add(new RehydrationSet(ppio.ppi, pluginNumbers[j]));
+      }
+    }
+    Collections.sort(result, new Comparator() {
+        public int compare(Object o1, Object o2) {
+          RehydrationSet rs1 = (RehydrationSet) o1;
+          RehydrationSet rs2 = (RehydrationSet) o2;
+          int diff = rs1.sequenceNumbers.compareTo(rs1.sequenceNumbers);
+          if (diff != 0) return diff;
+          return rs1.ppi.getName().compareTo(rs2.ppi.getName());
+        }
+      });
+    return (RehydrationSet[]) result.toArray(new RehydrationSet[result.size()]);
   }
 
   private void logEnvelopeContents(Envelope env) {
@@ -361,7 +644,21 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     rsi.add(pe);
   }
 
-  private RehydrationResult rehydrateOneDelta(int deltaNumber, boolean lastDelta)
+  /**
+   * Erase all the effects of a failed rehydration attempt. Three
+   * variables are set or altered during a rehydration attempt. The
+   * identityTable may be partially filled in, so we replace it with a
+   * fresh one. The uidServer has been set and would be overwritten by
+   * the subsequent attempt, but we nullify it for luck. Finally, the
+   * rehydrationSubscriberStates is also nullified
+   **/
+  private void resetRehydration() {
+    identityTable = new IdentityTable();
+    uidServerState = null;
+    rehydrationSubscriberStates = null;
+  }
+
+  private RehydrationResult rehydrateOneDelta(PersistencePlugin ppi, int deltaNumber, boolean lastDelta)
     throws IOException, ClassNotFoundException
   {
     return rehydrateFromStream(ppi.openObjectInputStream(deltaNumber),
@@ -422,11 +719,11 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
       return result;
     }
     catch (IOException e) {
-      System.err.println("IOException reading " + (lastDelta ? "last " : " ") + "delta " + deltaNumber);
+      logger.error("IOException reading " + (lastDelta ? "last " : " ") + "delta " + deltaNumber);
       throw e;
     }
     finally {
-      ppi.closeObjectInputStream(deltaNumber, currentInput);
+      currentPersistPluginInfo.ppi.closeObjectInputStream(deltaNumber, currentInput);
     }
   }
 
@@ -479,26 +776,25 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
 
   private static Envelope[] emptyInbox = new Envelope[0];
 
-  private SequenceNumbers getBestSequenceNumbers(String sequenceNumberSuffix) {
-    SequenceNumbers[] availableNumbers =
-      ppi.readSequenceNumbers(sequenceNumberSuffix);
-    SequenceNumbers best = null;
-    for (int i = 0; i < availableNumbers.length; i++) {
-      SequenceNumbers t = availableNumbers[i];
-      if (best == null || t.timestamp > best.timestamp) {
-        best = t;
+  /**
+   * Get highest sequence numbers recorded on any medium
+   **/
+  private int getHighestSequenceNumber() {
+    int best = 0;
+    for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+      PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+      SequenceNumbers[] availableNumbers = ppio.ppi.readSequenceNumbers("");
+      for (int j = 0; j < availableNumbers.length; j++) {
+        SequenceNumbers t = availableNumbers[j];
+        best = Math.max(best, t.current);
       }
     }
     return best;
   }
 
   private void initSequenceNumbers() {
-    sequenceNumbers = getBestSequenceNumbers("");
-    if (sequenceNumbers == null) {
-      sequenceNumbers = new SequenceNumbers();
-    } else {
-      sequenceNumbers.first = sequenceNumbers.current;
-    }
+    int highest = getHighestSequenceNumber();
+    sequenceNumbers = new SequenceNumbers(highest, highest, System.currentTimeMillis());
   }
 
   /**
@@ -589,6 +885,34 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
   }
 
   /**
+   * Select the next plugin to use for persistence. This is only
+   * possible when the delta that is about to be generated will have
+   * the full state. For each plugin, we keep track of the
+   * nextPersistenceTime based on its persistenceInterval. We select
+   * the plugin with the earliest nextPersistenceTime. If the
+   * nextPersistenceTime of the selected plugin differs significantly
+   * from now, the nextPersistenceTimes of all plugins are adjusted to
+   * eliminate that difference.
+   **/
+  private void selectNextPlugin() {
+    PersistencePluginInfo best = null;
+    for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+      PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+      if (best == null || ppio.nextPersistenceTime < best.nextPersistenceTime) {
+        best = ppio;
+      }
+    }
+    long adjustment = System.currentTimeMillis() - best.nextPersistenceTime;
+    if (Math.abs(adjustment) > 10000L) {
+      for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+        PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+        ppio.nextPersistenceTime += adjustment;
+      }
+    }
+    currentPersistPluginInfo = best;
+  }
+
+  /**
    * Because PersistenceAssociations have WeakReference objects, the
    * actual object in the association may be garbage collected if
    * there are no other references to it. This list is used to hold a
@@ -616,6 +940,14 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
                         boolean full,
                         MessageManager messageManager)
   {
+    long startCPU = 0L;
+    long startTime = 0L;
+    if (logger.isInfoEnabled()) {
+      startCPU = CpuClock.cpuTimeMillis();
+      startTime = System.currentTimeMillis();
+    }
+    int bytesSerialized = 0;
+    recomputeNextPersistenceTime = true;
     if (writeDisabled) return null;
     PersistenceObject result = null; // Return value if wanted
     synchronized (identityTable) {
@@ -633,20 +965,30 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
         if (sequenceNumbers.current == 0) full = true;
         // Every so often generate a full delta to consolidate and
         // prevent the number of deltas from increasing without bound.
-        if (sequenceNumbers.current - sequenceNumbers.first >= consolidationPeriod && sequenceNumbers.current % consolidationPeriod == 0) {
-          full = true;
-        }
+        if (!full &&
+            currentPersistPluginInfo!= null &&
+            currentPersistPluginInfo.deltaCount >= currentPersistPluginInfo.consolidationPeriod &&
+            currentPersistPluginInfo.deltaCount % currentPersistPluginInfo.consolidationPeriod == 0)
+          {
+            full = true;
+          }
         if (full) {
-          cleanupSequenceNumbers = 			// Cleanup the existing since the full replaces them
-            new SequenceNumbers(sequenceNumbers);
-          System.out.println("Consolidating deltas " + cleanupSequenceNumbers);
-          if (archivingEnabled) {
-            cleanupSequenceNumbers.first++; // Don't clean up the base delta
-            if (cleanupSequenceNumbers.first == cleanupSequenceNumbers.current)
-              cleanupSequenceNumbers = null; // Nothing to cleanup
+          if (currentPersistPluginInfo != null) {
+            currentPersistPluginInfo.cleanupSequenceNumbers = // Cleanup the existing since the full replaces them
+              new SequenceNumbers(sequenceNumbers);
+            logger.info("Consolidating deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
+            if (archivingEnabled) {
+              currentPersistPluginInfo.cleanupSequenceNumbers.first++; // Don't clean up the base delta
+              if (currentPersistPluginInfo.cleanupSequenceNumbers.first == currentPersistPluginInfo.cleanupSequenceNumbers.current)
+                currentPersistPluginInfo.cleanupSequenceNumbers = null; // Nothing to cleanup
+            }
           }
           sequenceNumbers.first = sequenceNumbers.current;
+          selectNextPlugin();
         }
+        previousPersistenceTime = System.currentTimeMillis();
+        currentPersistPluginInfo.nextPersistenceTime += currentPersistPluginInfo.persistenceInterval;
+        currentPersistPluginInfo.deltaCount++;
         if (sequenceNumbers.current == sequenceNumbers.first) {
           // First delta of this running
           for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
@@ -733,9 +1075,11 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
               stream.close();
             }
           }
+          bytesSerialized = stream.size();
           commitTransaction(full);
-          if (needCleanup()) {
-            doCleanup();
+          if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
+            currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
+            currentPersistPluginInfo.cleanupSequenceNumbers = null;
           }
         }
         catch (Exception e) {
@@ -748,6 +1092,12 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
       catch (Exception e) {
         e.printStackTrace();
       }
+    }
+    if (bytesSerialized > 0 && logger.isInfoEnabled()) {
+      long finishCPU = CpuClock.cpuTimeMillis();
+      long finishTime = System.currentTimeMillis();
+      logger.info("bytes=" + bytesSerialized + ", cpu=" + (finishCPU - startCPU)
+                  + ", real=" + (finishTime - startTime));
     }
     return result;
   }
@@ -766,15 +1116,6 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     if (logger.isDebugEnabled()) {
       logger.debug(logTimeFormat.format(new Date(System.currentTimeMillis())));
     }
-  }
-
-  private boolean needCleanup() {
-    return cleanupSequenceNumbers != null;
-  }
-
-  private void doCleanup() {
-    ppi.cleanupOldDeltas(cleanupSequenceNumbers);
-    cleanupSequenceNumbers = null;
   }
 
   void printIdentityTable(String id) {
@@ -837,34 +1178,44 @@ public class BasePersistence implements Persistence, PersistencePluginSupport {
     return null;
   }
 
-  private List rehydrationSubscriberStates = null;
-
-  private Object rehydrationSubscriberStatesLock = new Object();
-
-  private Set objectsPendingRemoval = new HashSet();
-
-  private PersistenceState uidServerState = null;
-
   private void beginTransaction(boolean full) throws IOException {
-    currentOutput = ppi.openObjectOutputStream(sequenceNumbers.current, full);
+    currentOutput = currentPersistPluginInfo.ppi.openObjectOutputStream(sequenceNumbers.current, full);
   }
 
   private void rollbackTransaction() {
-    ppi.abortObjectOutputStream(sequenceNumbers, currentOutput);
+    currentPersistPluginInfo.ppi.abortObjectOutputStream(sequenceNumbers, currentOutput);
     currentOutput = null;
   }
 
   private void commitTransaction(boolean full) {
     sequenceNumbers.current += 1;
-    ppi.closeObjectOutputStream(sequenceNumbers, currentOutput, full);
+    currentPersistPluginInfo.ppi.closeObjectOutputStream(sequenceNumbers, currentOutput, full);
     currentOutput = null;
   }
 
   public java.sql.Connection getDatabaseConnection(Object locker) {
-    return ppi.getDatabaseConnection(locker);
+    return currentPersistPluginInfo.ppi.getDatabaseConnection(locker);
   }
 
   public void releaseDatabaseConnection(Object locker) {
-    ppi.releaseDatabaseConnection(locker);
+    currentPersistPluginInfo.ppi.releaseDatabaseConnection(locker);
+  }
+
+  // ServiceProvider implementation
+  public Object getService(ServiceBroker sb, Object requestor, Class cls) {
+    if (cls != PersistenceControlService.class) {
+      throw new IllegalArgumentException("Unknown service class");
+    }
+    return new PersistenceControlServiceImpl();
+  }
+  public void releaseService(ServiceBroker sb, Object requestor, Class cls, Object svc) {
+    if (cls != PersistenceControlService.class) {
+      throw new IllegalArgumentException("Unknown service class");
+    }
+  }
+
+  // More Persistence implementation
+  public ServiceProvider getServiceProvider() {
+    return this;
   }
 }

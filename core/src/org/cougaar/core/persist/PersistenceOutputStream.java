@@ -96,6 +96,10 @@ public class PersistenceOutputStream extends ObjectOutputStream {
     return byteStream.toByteArray();
   }
 
+  public int size() {
+    return byteStream.size();
+  }
+
   /**
    * Write a plan object from a PersistenceAssociation.
    * @param pAssoc the PersistenceAssocation having the object to save.

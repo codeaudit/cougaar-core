@@ -1,3 +1,15 @@
+2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SequenceNumbers.java: 
+	* PersistencePlugin.java: 
+	* PersistenceOutputStream.java: 
+	* Persistence.java: 
+	* FilePersistence.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java: 
+	* BasePersistence.java:
+	Changes to support persistence adaptivity.
+
 2002-03-11  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistencePlugin.java:

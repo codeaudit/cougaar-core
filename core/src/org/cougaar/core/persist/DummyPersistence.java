@@ -40,9 +40,17 @@ import org.cougaar.planning.ldm.plan.Plan;
 public class DummyPersistence implements PersistencePlugin {
 
   private PersistencePluginSupport pps;
+  private String name;
 
-  public void init(PersistencePluginSupport pps) throws PersistenceException {
+  public void init(PersistencePluginSupport pps, String name, String[] params)
+    throws PersistenceException
+  {
     this.pps = pps;
+    this.name = name;
+  }
+
+  public String getName() {
+    return name;
   }
 
   public SequenceNumbers[] readSequenceNumbers(String suffix) {

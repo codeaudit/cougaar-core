@@ -27,6 +27,7 @@ import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
+import org.cougaar.core.component.ServiceProvider;
 import java.util.List;
 
 public interface Persistence {
@@ -43,17 +44,19 @@ public interface Persistence {
                    boolean full,
                    MessageManager messageManager);
 
-  /**
-   * Get the rehydration envelope from the most recent persisted state.
-   * @return null if there is no persisted state.
-   **/
-  RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state);
-  Plan getRealityPlan();
-  void setRealityPlan(Plan reality);
-  PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
-  boolean hasSubscriberStates();
-  void discardSubscriberState(Subscriber subscriber);
-  void disableWrite(String sequenceNumberSuffix);
-  java.sql.Connection getDatabaseConnection(Object locker);
-  void releaseDatabaseConnection(Object locker);
+    /**
+     * Get the rehydration envelope from the most recent persisted state.
+     * @return null if there is no persisted state.
+     **/
+    RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state);
+    Plan getRealityPlan();
+    void setRealityPlan(Plan reality);
+    PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
+    boolean hasSubscriberStates();
+    void discardSubscriberState(Subscriber subscriber);
+    void disableWrite(String sequenceNumberSuffix);
+    java.sql.Connection getDatabaseConnection(Object locker);
+    void releaseDatabaseConnection(Object locker);
+    ServiceProvider getServiceProvider();
+    long getPersistenceTime();
 }

@@ -55,9 +55,6 @@ import org.cougaar.util.UnaryPredicate;
  * 
  * @property org.cougaar.core.agent.keepPublishHistory When set to <em>true</em>, enables tracking of 
  * all publishes.  Extremely expensive.
- * @property org.cougaar.core.persistence.lazyInterval specifies the
- * interval in milliseconds between the generation of persistence
- * deltas. Default is 300000 (5 minutes).
  **/
 public class Distributor {
   /*
@@ -79,10 +76,7 @@ public class Distributor {
 
   /** The maximum interval between persistence deltas. **/
   private static final long MAX_PERSIST_INTERVAL = 37000L;
-  private static final String PROP_LAZY_PERSIST_INTERVAL = "org.cougaar.core.persistence.lazyInterval";
-  private static final long DEFAULT_LAZY_PERSIST_INTERVAL = 300000L;
-  private static final long LAZY_PERSIST_INTERVAL =
-    Long.getLong(PROP_LAZY_PERSIST_INTERVAL, DEFAULT_LAZY_PERSIST_INTERVAL).longValue();
+  private static final long TIMER_PERSIST_INTERVAL = 33000L;
 
   /** True if using lazy persistence **/
   private boolean lazyPersistence = true;
@@ -365,8 +359,8 @@ public class Distributor {
           timerPersist();
         }
       }, 
-        LAZY_PERSIST_INTERVAL, 
-        LAZY_PERSIST_INTERVAL);
+        TIMER_PERSIST_INTERVAL, 
+        TIMER_PERSIST_INTERVAL);
     }
   }
 
@@ -628,7 +622,7 @@ public class Distributor {
   }
 
   protected boolean timeToLazilyPersist() {
-    long overdue = System.currentTimeMillis() - (lastPersist + LAZY_PERSIST_INTERVAL);
+    long overdue = System.currentTimeMillis() - persistence.getPersistenceTime();
     if (overdue > 0L) {
       System.out.println("Lazy persistence overdue by " + overdue);
     } 
@@ -636,7 +630,9 @@ public class Distributor {
   }
 
   private boolean timeToPersist() {
-    return (System.currentTimeMillis() - lastPersist > MAX_PERSIST_INTERVAL);
+    long nextPersistTime = Math.min(lastPersist + MAX_PERSIST_INTERVAL,
+                                    persistence.getPersistenceTime());
+    return (System.currentTimeMillis() >= nextPersistTime);
   }
 
   /**
@@ -741,9 +737,9 @@ public class Distributor {
   }
 
   protected void timerPersist() {
-    if (needToPersist) {
+    if (needToPersist && (!lazyPersistence || timeToLazilyPersist())) {
       try {
-        persistNow();
+        persist(false, false);
       } catch (PersistenceNotEnabledException pnee) {
         pnee.printStackTrace();
       }

@@ -36,12 +36,26 @@ import java.io.PrintWriter;
 public interface PersistencePlugin {
 
     /**
-     * Initialize the plugin. After initialization, the plugin should
-     * be ready to service all methods.
+     * Initialize the plugin with PersistencePluginSupport and
+     * parameters. After initialization, the plugin should be ready to
+     * service all methods.
      * @param pps the persistence plugin support specifies the context
      * within which persistence is being performed.
+     * @param name the name of this plugin.
+     * @param params String parameters to configure the plugin. The
+     * parameters come from configuration information and
+     * interpretation is up to the plugin.
      **/
-    void init(PersistencePluginSupport pps) throws PersistenceException;
+    void init(PersistencePluginSupport pps, String name, String[] params)
+        throws PersistenceException;
+
+    /**
+     * Gets the name of the PersistencePlugin. Every PersistencePlugin
+     * should have a distinct name. The name can be computed by the
+     * plugin based on its class and parameters or it can be specified
+     * as an argument in the constructor.
+     **/
+    String getName();
 
     /**
      * Read the specified set of sequence numbers. These numbers

@@ -115,13 +115,15 @@ public class DatabasePersistence implements PersistencePlugin {
   private PreparedStatement checkDelta;
   private PreparedStatement cleanDeltas;
   private String deltaTable;
+  private String name;
 
-  public void init(PersistencePluginSupport pps)
+  public void init(PersistencePluginSupport pps, String name, String[] params)
     throws PersistenceException
   {
     String clusterName = pps.getClusterIdentifier().getAddress().replace('-', '_');
     LoggingService ls = pps.getLoggingService();
     this.pps = pps;
+    this.name = name;
     deltaTable = "delta_" + clusterName;
     if (databaseDriver != null) {
       try {
@@ -206,6 +208,10 @@ public class DatabasePersistence implements PersistencePlugin {
     pps.getLoggingService().info("Creating table: " + qry);
     Statement stmt = theConnection.createStatement();
     stmt.executeUpdate(qry);
+  }
+
+  public String getName() {
+    return name;
   }
 
   public SequenceNumbers[] readSequenceNumbers(String suffix) {

@@ -45,11 +45,16 @@ import java.lang.reflect.Modifier;
 /**
  * This persistence class saves plan objects in files. It saves and
  * restores persistence deltas in files.
- * @property org.cougaar.install.path Used by FilePersistence as the parent directory for persistence
- * snapshots when org.cougaar.core.persistence.path is a relative pathname.
- * @property org.cougaar.core.persistence.path Specifies the directory in which persistence
- * snapshots should be saved.  If this is a relative path, it the base will be the value or org.cougaar.install.path.
- */
+ * @param parameter
+ * @property org.cougaar.install.path Used by FilePersistence as the
+ * parent directory for persistence snapshots when there is no
+ * directory specified in configuration parameters and
+ * org.cougaar.core.persistence.path is a relative pathname.
+ * @property org.cougaar.core.persistence.path Specifies the directory
+ * in which persistence snapshots should be saved. If this is a
+ * relative path, it the base will be the value or
+ * org.cougaar.install.path.
+ **/
 public class FilePersistence implements PersistencePlugin {
   protected PersistencePluginSupport pps;
 
@@ -74,27 +79,41 @@ public class FilePersistence implements PersistencePlugin {
     }
   }
 
-  private File persistenceDirectory;
-
-  public void init(PersistencePluginSupport pps) throws PersistenceException {
-    this.pps = pps;
-    String clusterName = pps.getClusterIdentifier().getAddress();
+  private static File getDefaultPersistenceRoot() {
     File installDirectory =
       new File(System.getProperty("org.cougaar.install.path", "/tmp"));
-    File persistenceRoot =
-      new File(installDirectory,
-               System.getProperty("org.cougaar.core.persistence.path", "P"));
+    return new File(installDirectory,
+                    System.getProperty("org.cougaar.core.persistence.path", "P"));
+  }
+
+  private File persistenceDirectory;
+
+  private String name;
+
+  public void init(PersistencePluginSupport pps, String name, String[] params)
+    throws PersistenceException
+  {
+    this.pps = pps;
+    this.name = name;
+    File persistenceRoot;
+    if (params.length < 1) {
+      persistenceRoot = getDefaultPersistenceRoot();
+    } else {
+      persistenceRoot = new File(params[0]);
+    }
     if (!persistenceRoot.isDirectory()) {
       if (!persistenceRoot.mkdirs()) {
 	pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
         throw new PersistenceException("Persistence root unavailable");
       }
     }
+    String clusterName = pps.getClusterIdentifier().getAddress();
     persistenceDirectory = new File(persistenceRoot, clusterName);
     if (!persistenceDirectory.isDirectory()) {
       if (!persistenceDirectory.mkdirs()) {
-	pps.getLoggingService().fatal("Not a directory: " + persistenceDirectory);
-	throw new PersistenceException("Not a directory: " + persistenceDirectory);
+        String msg = "FilePersistence(" + name + ") not a directory: " + persistenceDirectory;
+	pps.getLoggingService().fatal(msg);
+	throw new PersistenceException(msg);
       }
     }
   }
@@ -105,6 +124,10 @@ public class FilePersistence implements PersistencePlugin {
 
   private File getNewSequenceFile(String suffix) {
     return new File(persistenceDirectory, "newSequence" + suffix);
+  }
+
+  public String getName() {
+    return name;
   }
 
   public SequenceNumbers[] readSequenceNumbers(final String suffix) {
