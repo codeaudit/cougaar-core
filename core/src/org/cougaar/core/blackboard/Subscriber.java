@@ -795,12 +795,25 @@ public class Subscriber implements BlackboardService {
     return false;
   }
 
+  /**
+   * Close a transaction opened by openTransaction() or a successful
+   * tryOpenTransaction(), but don't reset subscription changes or
+   * clear delta lists.
+   * @exception SubscriberException IFF we did not own the transaction
+   * lock.
+   **/
+  public final void closeTransactionDontReset() {
+    closeTransaction(false);
+  }
+
   /** Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction().
    * @param resetSubscriptions IFF true, all subscriptions will have
    * their resetChanges() method called to clear any delta lists, etc.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
+   * @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+   * This method becomes private after deprecation period expires.
    **/
   public final void closeTransaction(boolean resetSubscriptions)
     throws SubscriberException {
@@ -865,7 +878,7 @@ public class Subscriber implements BlackboardService {
   /** Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction().
    * Will reset all subscription change tracking facilities.
-   * To avoid this, use closeTransaction(false) instead.
+   * To avoid this, use closeTransactionDontReset() instead.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
    **/

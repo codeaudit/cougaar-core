@@ -142,12 +142,44 @@ public interface BlackboardService extends Service {
   // aliases for Transaction handling 
   //
 
+  /**
+   * Open a transaction by grabbing the transaction lock and updating
+   * the subscriptions.  This method blocks waiting for the
+   * transaction lock.
+   **/
   void openTransaction();
 
+  /** Attempt to open a transaction by attempting to grab the 
+   * transaction lock and updating the collections (iff we got the 
+   * lock).
+   *
+   * This is equivalent to the old (misnamed) tryLockSubscriber method
+   * in PluginWrapper.
+   *
+   * @return true IFF a transaction was opened.
+   **/
   boolean tryOpenTransaction();
 
   void closeTransaction() throws SubscriberException;
     
+  /**
+   * Close a transaction opened by openTransaction() or a successful
+   * tryOpenTransaction(), but don't reset subscription changes or
+   * clear delta lists.
+   * @exception SubscriberException IFF we did not own the transaction
+   * lock.
+   **/
+  void closeTransactionDontReset();
+
+  /** Close a transaction opened by openTransaction() or a 
+   * successful tryOpenTransaction().
+   * @param resetSubscriptions IFF true, all subscriptions will have
+   * their resetChanges() method called to clear any delta lists, etc.
+   * @exception SubscriberException IFF we did not own the transaction
+   * lock.
+   * @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+   * This method becomes private after deprecation period expires.
+   **/
   void closeTransaction(boolean resetp) throws SubscriberException;
 
 

@@ -1,3 +1,32 @@
+2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/BlackboardService.java: 
+	Bug 1232
+	Define closeTransactionDontReset.
+	Deprecate closeTransaction(boolean);
+
+	* org/cougaar/core/servlet/SimpleServletSupportImpl.java: 
+	* org/cougaar/core/mobility/servlet/MoveAgentServlet.java: 
+	Bug 1232
+	Use closeTransactionDontReset.
+	
+	* org/cougaar/core/blackboard/Subscriber.java:
+	Bug 1232
+	Define closeTransactionDontReset.
+	Deprecate closeTransaction(boolean);
+
+2002-05-08  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Subscriber.java:
+	Avoid stuffing the inbox with envelopes if there are no
+	subscriptions. The inbox is not emptied until the next transaction
+	is opened and subscribers (such as servlets) may never open a
+	transaction causing unbounded build-up of envelopes until memory
+	is exhausted. New logic skips inbox stuffing if the number of
+	subscriptions is zero and there is no open transaction. In
+	addition, when an open transaction is closed and there are not
+	(remaining) subscriptions, the inbox is cleared.
+
 2002-05-06  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/SearchStringParser.java:

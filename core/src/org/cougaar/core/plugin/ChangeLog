@@ -1,3 +1,20 @@
+2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimplifiedPlugin.java: 
+	* SimplifiedFatPlugin.java: 
+	* SimplePlugin.java: 
+	Bug 1232
+	Use closeTransactionDontReset
+
+	* PluginDelegate.java: 
+	Bug 1232
+	Define closeTransactionDontReset.
+	Deprecate closeTransaction(boolean);
+
+	* PluginAdapter.java: 
+	Bug 1232
+	Use closeTransactionDontReset
+
 2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ServiceUserPlugin.java:

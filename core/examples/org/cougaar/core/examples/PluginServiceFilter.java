@@ -171,6 +171,11 @@ public class PluginServiceFilter
     public void closeTransaction() throws SubscriberException {
       bs.closeTransaction();
     }
+    public void closeTransactionDontReset() throws SubscriberException {
+      bs.closeTransactionDontReset();
+    }
+    /** @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+     **/
     public void closeTransaction(boolean resetp) throws SubscriberException {
       bs.closeTransaction(resetp);
     }

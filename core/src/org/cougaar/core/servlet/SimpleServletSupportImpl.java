@@ -88,7 +88,7 @@ implements SimpleServletSupport
       blackboard.openTransaction();
       col = blackboard.query(pred);
     } finally {
-      blackboard.closeTransaction(false);
+      blackboard.closeTransactionDontReset();
     }
     return col;
   }

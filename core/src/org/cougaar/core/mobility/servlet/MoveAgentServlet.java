@@ -152,7 +152,7 @@ implements BlackboardClient
       blackboard.openTransaction();
       ret = blackboard.query(MOVE_AGENT_PRED);
     } finally {
-      blackboard.closeTransaction(false);
+      blackboard.closeTransactionDontReset();
     }
     return ret;
   }
@@ -192,7 +192,7 @@ implements BlackboardClient
       blackboard.openTransaction();
       blackboard.publishAdd(ma);
     } finally {
-      blackboard.closeTransaction(false);
+      blackboard.closeTransactionDontReset();
     }
   }
 

@@ -64,6 +64,9 @@ public interface PluginDelegate {
   void openTransaction();
   boolean tryOpenTransaction();
   void closeTransaction() throws SubscriberException;
+  void closeTransactionDontReset() throws SubscriberException ;
+  /** @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+   **/
   void closeTransaction(boolean resetp) throws SubscriberException ;
   boolean wasAwakened();
   void wake();

@@ -84,7 +84,7 @@ public class AlertCreatorPlugin extends org.cougaar.core.plugin.SimplePlugin
     counter++;
     
     publishAdd(alert);
-    closeTransaction(false);
+    closeTransactionDontReset();
   }
 
   public void execute()

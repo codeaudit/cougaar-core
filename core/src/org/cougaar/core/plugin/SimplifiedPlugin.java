@@ -67,7 +67,7 @@ public abstract class SimplifiedPlugin extends ThinPlugin
         e.printStackTrace();
       }
     } finally {
-      closeTransaction(false);
+      closeTransactionDontReset();
     }
   }    
 

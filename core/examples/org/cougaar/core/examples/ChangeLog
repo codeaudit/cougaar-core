@@ -1,3 +1,16 @@
+2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PluginServiceFilter.java:
+	Bug 1232
+	Define closeTransactionDontReset.
+	Deprecate closeTransaction(boolean);
+
+	* servlet/AddTaskServletComponent.java: 
+	* ReportCreatorPlugin.java: 
+	* AlertCreatorPlugin.java:
+	Bug 1232
+	Use closeTransactionDontReset
+
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleSinkAllocatorPlugin.java:

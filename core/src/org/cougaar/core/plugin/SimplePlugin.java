@@ -88,7 +88,7 @@ public abstract class SimplePlugin extends PluginAdapter {
         e.printStackTrace();
       }
     } finally {
-      closeTransaction(false);
+      closeTransactionDontReset();
     }
   }
 

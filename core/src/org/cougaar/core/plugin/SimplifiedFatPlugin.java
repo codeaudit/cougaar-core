@@ -72,7 +72,7 @@ public abstract class SimplifiedFatPlugin extends SingleThreadedPlugin
         e.printStackTrace();
       }
     } finally {
-      closeTransaction(false);
+      closeTransactionDontReset();
     }
   }    
 

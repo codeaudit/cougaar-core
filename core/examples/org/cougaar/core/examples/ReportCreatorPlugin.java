@@ -59,7 +59,7 @@ public class ReportCreatorPlugin extends org.cougaar.core.plugin.SimplePlugin
     counter++;
     
     publishAdd(Report);
-    closeTransaction(false);
+    closeTransactionDontReset();
   }
 
   public void execute()

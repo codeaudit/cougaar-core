@@ -106,7 +106,7 @@ implements BlackboardClient
         blackboard.openTransaction();
         blackboard.publishAdd(nt);
       } finally {
-        blackboard.closeTransaction(false);
+        blackboard.closeTransactionDontReset();
       }
 
       out.println(
