@@ -75,6 +75,10 @@ public abstract class DomainAdapter
     return myBindingSite;
   }
 
+  public LoggingService getLoggingService() {
+    return myLoggingService;
+  }
+
   /**
    * construct an LDM factory to serve the specified LDM instance.
    **/

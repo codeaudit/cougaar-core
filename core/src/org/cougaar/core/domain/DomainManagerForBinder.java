@@ -27,7 +27,7 @@ import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.component.ContainerAPI;
 
 
-/** This is the interface presented to a PluginBinder from the PluginManager.
+/** This is the interface presented to a DomainBinder from the DomainManager.
  **/
 public interface DomainManagerForBinder
   extends ContainerAPI
