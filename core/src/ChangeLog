@@ -1,3 +1,21 @@
+2001-03-28  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Persistence
+	Modifications to reduce creation of byte arrays during
+	persistence. Requested by Mark Sutterlin. For large deltas, these
+	arrays consume lots of memory and having multiple copies of the
+	same information is problematic. Instead, serialized data is
+	streamed directly to the output stream. In the case of database
+	persistence, the outputstream streams directly to the database as
+	well.
+
+	* EnvelopeTuple
+	Bug #181
+	Check nullity of arguments in constructors of EnvelopeTuple to
+	catch bogus objects sooner. Throws IllegalArgumentException.
+	BulkEnvelopeTuple also checks objects when dispensing the objects,
+	but not in the constructor due to the cost.
+
 2001-03-26  Michael Thome  <mthome@bbn.com>
 
 	* rmi
