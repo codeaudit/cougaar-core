@@ -1,3 +1,9 @@
+2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceMetricsServlet.java:
+	Add "Persist Now" button to initiate persistence and facilitate
+	persistence debugging.
+
 2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* TestFullSnapshot.java:

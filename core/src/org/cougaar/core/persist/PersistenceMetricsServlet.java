@@ -38,6 +38,8 @@ import org.cougaar.core.service.ServletService;
 import org.cougaar.core.component.ServiceProvider;
 
 public class PersistenceMetricsServlet extends ServiceUserPlugin {
+  private static final String PERSIST_NOW = "Persist Now";
+
   private static final Class[] requiredServices = {
     ServletService.class,
     PersistenceMetricsService.class
@@ -156,11 +158,26 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
     protected void doPostOrGet(HttpServletRequest request, HttpServletResponse response, boolean doUpdate)
       throws IOException
     {
+      PrintWriter out = response.getWriter();
+      out.println("<html>");
+      out.println(" <head>");
+      out.println("  <title>Persistence Metrics For " + agentName + "</title>");
+      out.println(" </head>");
+      out.println(" </body>");
+      String submit = request.getParameter("submit");
+      if (PERSIST_NOW.equals(submit)) {
+        try {
+          blackboard.persistNow();
+        } catch (PersistenceNotEnabledException pnee) {
+          out.println(pnee);
+        }
+      }
       String sort = request.getParameter("sort");
       boolean rev = "true".equals(request.getParameter("rev"));
-      PrintWriter out = response.getWriter();
-      out.println("<html>\n  <head>\n    <title>Persistence Metrics For " + agentName + "</title>\n  </head>");
-      out.println(" <body>\n    <h1>Persistence Metrics For " + agentName + "</h1>");
+      out.println("  <h1>Persistence Metrics For " + agentName + "</h1>");
+      out.println("  <form method=\"GET\">");
+      out.println("   <input type=\"submit\" name=\"submit\" value=\"" + PERSIST_NOW + "\">");
+      out.println("  </form>");
       out.println("  <table border=1>");
       out.println("   <tr>");
       out.println("    <td><A href=\"?" + getSortParams(rev, sort, "time") + "\">Time (GMT)</a></td>");
