@@ -138,13 +138,14 @@ public class DomainManager
       children = (StateTuple[])loadState;
       loadState = null;
     } else {
-      ArrayList domains = new ArrayList();
-      addDomain(domains, "root", 
+      // create a list for component-descriptions
+      List descs = new ArrayList(5);
+      addDomain(descs, "root", 
                 "org.cougaar.core.domain.RootDomain"); // setup the root domain
-      initializeFromProperties(domains);
-      initializeFromConfigFiles(domains);
+      initializeFromProperties(descs);
+      initializeFromConfigFiles(descs);
 
-      children = domains.toArray();
+      children = descs.toArray();
       /* Create DomainInitializerService
       ServiceBroker sb = getServiceBroker();
       InitializerService is = (InitializerService)
@@ -180,8 +181,6 @@ public class DomainManager
           Binder b = bc.getBinder();
           Object state = b.getState();
           tuples[i] = new StateTuple(cd, state);
-        } else {
-          // error?
         }
       }
       return tuples;
@@ -347,7 +346,31 @@ public class DomainManager
   //   
   protected boolean loadComponent(Object c, Object cstate) {
     if (super.loadComponent(c, cstate)) {
-      Domain domain = (Domain) c;
+
+      // find the domain we just loaded
+      Domain domain = null;
+      if (c instanceof ComponentDescription) {
+        String domainName = 
+          ((ComponentDescription) c).getName();
+        for (Iterator childBinders = binderIterator();
+            childBinders.hasNext();) {
+          DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
+          Domain d = b.getDomain();
+          if (d.getDomainName().equals(domainName)) {
+            domain = d;
+            break;
+          }
+        }
+      } else if (c instanceof Domain) {
+        // should be disabled!
+        domain = (Domain) c;
+      }
+
+      if (domain == null) {
+        throw new RuntimeException(
+            "Unable to find domain for loaded "+c);
+      }
+
       if (loggingService.isDebugEnabled()) {
         loggingService.debug("Loading : " + domain.getDomainName());
       }
@@ -445,36 +468,54 @@ public class DomainManager
 
 
   /** Set up a Domain from the argument strings.
+   * @param descs a list of component-descriptions for all
+   *    previously added domains
    * @param domainName the name to register the domain under.
    * @param className the name of the class to instantiate as the domain.
    **/
-  private void addDomain(ArrayList domains, String domainName, 
-                         String className) {
+  private void addDomain(List descs, String domainName, 
+      String className) {
     // Unique?
-    for (Iterator i = domains.iterator(); i.hasNext();) {
-      if (((Domain) i.next()).getDomainName().equals(domainName)) {
-        loggingService.warn("Domain \""+domainName+"\" multiply defined!");
+    for (int i = 0, n = descs.size(); i < n; i++) {
+      ComponentDescription cd =
+        (ComponentDescription) descs.get(i);
+      if (domainName.equals(cd.getName())) {
+        if (loggingService.isWarnEnabled()) {
+          loggingService.warn(
+              "Domain \""+domainName+"\" multiply defined!  "+
+              cd.getClassname()+" and "+className);
+        }
         return;
       }
     }
 
     // we do not synchronize because it is only called from initialize()
     // which is synchronized...
-    try {
-      Class domainClass = Class.forName(className);
-      DomainBase d = (DomainBase) domainClass.newInstance();
-      
-      domains.add(d);
 
-      if (loggingService.isDebugEnabled()) {
-        loggingService.debug("Initialized LDM Domain \""+domainName+"\".");
-      }
-    } catch (Exception e) {
-      loggingService.error("Could not construct Domain \""+domainName+"\"");
+    // pass the domain-name as a parameter
+    Object parameter =
+      Collections.singletonList(domainName);
+
+    ComponentDescription desc = 
+      new ComponentDescription(
+          domainName,
+          containmentPrefix+"Domain",
+          className,
+          null,  // codebase
+          parameter,
+          null,  // certificate
+          null,  // lease
+          null); // policy
+
+    descs.add(desc);
+
+    if (loggingService.isDebugEnabled()) {
+      loggingService.debug(
+          "Will add LDM Domain \""+domainName+"\" from class \""+className+"\".");
     }
   }
 
-  private void initializeFromProperties(ArrayList domains) {
+  private void initializeFromProperties(List descs) {
     //Properties props = System.getProperties();
     Properties props = SystemProperties.getSystemPropertiesWithPrefix(PREFIX);
     for (Enumeration names = props.propertyNames(); names.hasMoreElements(); ) {
@@ -485,13 +526,13 @@ public class DomainManager
         // use -D arguments to control domain-related facilities.
         if (name.indexOf('.')<0) {
           String value = props.getProperty(key);
-          addDomain(domains, name, value);
+          addDomain(descs, name, value);
         }
       }
     }
   }
   
-  private void initializeFromConfigFiles(ArrayList domains) {
+  private void initializeFromConfigFiles(List descs) {
     try {
       InputStream in = org.cougaar.util.ConfigFinder.getInstance().open("LDMDomains.ini");
       InputStreamReader isr = new InputStreamReader(in);
@@ -518,7 +559,7 @@ public class DomainManager
           loggingService.error("LDMDomains.ini syntax error: line "+lc);
           continue;
         }
-        addDomain(domains, name, val);
+        addDomain(descs, name, val);
       }
     } catch (Exception ex) {
       if (! (ex instanceof FileNotFoundException)) {

@@ -57,8 +57,25 @@ public abstract class DomainAdapter
 
   private LoggingService myLoggingService = null;
 
+  private String myDomainName;
+
+  /** 
+   * Expecting a List containing one non-null String that
+   * will be used as the domain name.
+   */
+  public void setParameter(Object o) {
+    myDomainName = (String) (((List) o).get(0));
+    if (myDomainName == null) {
+      throw new IllegalArgumentException("Null domain name");
+    }
+    // is this necessary?
+    myDomainName = myDomainName.intern();
+  }
+
   /** returns the Domain name **/
-  abstract public String getDomainName();
+  public String getDomainName() {
+    return myDomainName;
+  }
 
   public void setBindingSite(BindingSite bindingSite) {
     if (bindingSite instanceof DomainBindingSite) {
