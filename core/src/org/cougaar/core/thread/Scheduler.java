@@ -196,6 +196,9 @@ public class Scheduler
 
     void decrementRunCount(Scheduler consumer) {
 	--runningThreadCount;
+	if (runningThreadCount < 0) 
+	    System.err.println(this+ " thread count negative " +
+			       runningThreadCount);
 	listenerProxy.notifyRightReturned(consumer);
     }
 
@@ -232,9 +235,9 @@ public class Scheduler
 	    handoff = getNextPending();
 	    if (handoff != null) handoff.thread_start();
 	} else {
-	    System.err.println("Decreased thread count prevented handoff " 
-			       +runningThreadCount+ ">" 
-			       +maxRunningThreads);
+// 	    System.err.println("Decreased thread count prevented handoff " 
+// 			       +runningThreadCount+ ">" 
+// 			       +maxRunningThreads);
 	}
     }
 
@@ -247,7 +250,7 @@ public class Scheduler
 		schedulable = getNextPending();
 	    }
 	    if (schedulable == null) return;
-	    System.err.println("Increased thread count let me start one!");
+// 	    System.err.println("Increased thread count let me start one!");
 	    schedulable.thread_start();
 	}
     }

@@ -76,21 +76,17 @@ final class SchedulableObject implements Schedulable
 
 
     void reclaim() {
-	boolean again = false;
-	// thread is done
+	// Notify listeners
 	synchronized (this) { 
 	    thread = null;
-	    again = restart;
 	}
-	if (again) scheduler.startOrQueue(this);
-
-	// Notify listeners
 	scheduler.threadReclaimed(this);
     }
 
     // Calback from the Reclaimer.
     void reclaimNotify() {
 	scheduler.releaseRights(scheduler);
+	if (restart) scheduler.startOrQueue(this);
     }
 
     void thread_start() {
