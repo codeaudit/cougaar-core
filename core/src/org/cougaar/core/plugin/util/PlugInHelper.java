@@ -4,6 +4,8 @@ import org.cougaar.domain.planning.ldm.RootFactory;
 import org.cougaar.domain.planning.ldm.plan.Allocation;
 import org.cougaar.domain.planning.ldm.plan.AllocationResult;
 import org.cougaar.domain.planning.ldm.plan.AspectScorePoint;
+import org.cougaar.domain.planning.ldm.plan.AspectType;
+import org.cougaar.domain.planning.ldm.plan.AspectValue;
 import org.cougaar.domain.planning.ldm.plan.Context;
 import org.cougaar.domain.planning.ldm.plan.Expansion;
 import org.cougaar.domain.planning.ldm.plan.NewTask;
@@ -215,16 +217,67 @@ public class PlugInHelper {
     }
 
     /** Publish a new Expansion and its subtasks **/
-  public static void publishAddExpansion(Subscriber sub, Expansion exp) {
-    sub.publishAdd(exp);
+    public static void publishAddExpansion(Subscriber sub, Expansion exp) {
+        sub.publishAdd(exp);
 
-    for (Enumeration esubTasks = exp.getWorkflow().getTasks(); esubTasks.hasMoreElements(); ) {
-      Task myTask = (Task) esubTasks.nextElement();
-      sub.publishAdd(myTask);
+        for (Enumeration esubTasks = exp.getWorkflow().getTasks(); esubTasks.hasMoreElements(); ) {
+            Task myTask = (Task) esubTasks.nextElement();
+            sub.publishAdd(myTask);
+        }
     }
-  }
 
+    // TASK PREFERENCE UTILS (taken from glm/.../TaskUtils
+    public static long getStartTime(Task task) {
+        double startTime = getPreferenceBestValue(task, AspectType.START_TIME);
+        if (startTime == Double.NaN) {
+            throw new IllegalArgumentException("Task has no START_TIME preference");
+        }
+        return (long) startTime;
+    }
+
+    public static long getEndTime(Task task) {
+        double endTime = getPreferenceBestValue(task, AspectType.END_TIME);
+        if (endTime == Double.NaN) {
+            throw new IllegalArgumentException("Task has no END_TIME preference");
+        }
+        return (long) endTime;
+    }
+
+    public static AspectValue getPreferenceBest(Task task, int aspect_type) {
+      if (task == null) throw new IllegalArgumentException("task cannot be null");
+        Preference task_pref = task.getPreference(aspect_type);
+	if (task_pref == null) {
+	    return null;
+	}
+        if (task_pref.getScoringFunction() == null) {
+	    return null;
+	}
+        return task_pref.getScoringFunction().getBest().getAspectValue();
+    }
+
+    public static double getPreferenceBestValue(Task task, int aspect_type) {
+	AspectValue best = getPreferenceBest(task, aspect_type);
+	if (best == null) return Double.NaN;
+        return best.getValue();
+    }
+
+  // AllocationResult utils (taken from glm/.../TaskUtils
+
+    public static double getStartTime(AllocationResult ar) {
+	return getARAspectValue(ar, AspectType.START_TIME);
+    }
+
+    public static double getEndTime(AllocationResult ar) {
+	return getARAspectValue(ar, AspectType.END_TIME);
+    }
+
+    public static double getARAspectValue(AllocationResult ar, int type) {
+	AspectValue[] avs = ar.getAspectValueResults();
+	for (int ii = 0; ii < avs.length; ii++) {
+	    if (avs[ii].getAspectType() == type) {
+		return avs[ii].getValue();
+	    }
+	}
+	return Double.NaN;
+    }
 }
-
-
-
