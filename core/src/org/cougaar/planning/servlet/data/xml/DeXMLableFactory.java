@@ -28,7 +28,7 @@ import org.xml.sax.Attributes;
 
 /**
  * Factory that produces sub-objects based on tags and attributes
- * @author Benjamin Lubin; last modified by: $Author: gvidaver $
+ * @author Benjamin Lubin; last modified by: $Author: ahelsing $
  *
  * @since 1/24/01
  **/
@@ -54,7 +54,7 @@ public interface DeXMLableFactory{
    * @return a new DeXMLable subobject if a subobject should be created,
    * otherwise null.
    **/
-  public DeXMLable beginSubObject(DeXMLable curObj, String name, 
+  DeXMLable beginSubObject(DeXMLable curObj, String name, 
 				  Attributes attr)
     throws UnexpectedXMLException;
 }

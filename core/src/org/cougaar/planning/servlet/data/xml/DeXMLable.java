@@ -37,7 +37,7 @@ import org.xml.sax.Attributes;
  * </PRE>
  * <BR><P>
  * 
- * @author Benjamin Lubin; last modified by: $Author: gvidaver $
+ * @author Benjamin Lubin; last modified by: $Author: ahelsing $
  *
  * @since 1/24/01
  **/
@@ -52,7 +52,7 @@ public interface DeXMLable{
    * @param attr attributes for this tag
    * @param data data for this tag
    **/
-  public void openTag(String name, Attributes attr, String data)
+  void openTag(String name, Attributes attr, String data)
     throws UnexpectedXMLException;
 
   /**
@@ -60,7 +60,7 @@ public interface DeXMLable{
    * @param name endElement tag
    * @return true iff the object is DONE being deXMLized
    **/
-  public boolean closeTag(String name)
+  boolean closeTag(String name)
     throws UnexpectedXMLException;
 
   /**
@@ -71,7 +71,7 @@ public interface DeXMLable{
    * to be created
    * @param obj the object itself
    **/
-  public void completeSubObject(String name, DeXMLable obj)
+  void completeSubObject(String name, DeXMLable obj)
     throws UnexpectedXMLException;
 }
 

@@ -26,7 +26,7 @@ import java.io.IOException;
 /**
  * Classes conforming to this interface can serialize themselves
  * out in XML format.
- * @author Benjamin Lubin; last modified by: $Author: gvidaver $
+ * @author Benjamin Lubin; last modified by: $Author: ahelsing $
  *
  * @since 1/24/01
  **/
@@ -36,5 +36,5 @@ public interface XMLable{
    * Write this class out to the Writer in XML format
    * @param w output Writer
    **/
-  public void toXML(XMLWriter w) throws IOException;
+  void toXML(XMLWriter w) throws IOException;
 }
