@@ -18,7 +18,7 @@ public abstract class ContainerSupport
 {
   protected final ComponentFactory componentFactory = specifyComponentFactory();
   protected final String myContainmentPoint = specifyContainmentPoint();
-  protected final Services childContext = specifyChildContext();
+  protected final ServiceBroker childContext = specifyChildContext();
   protected final Class childBindingSite = specifyChildBindingSite();
 
   /** The actual set of child BoundComponent loaded. 
@@ -48,12 +48,12 @@ public abstract class ContainerSupport
    **/
   protected abstract String specifyContainmentPoint();
 
-  /** override to specify a the services object to use for children. 
+  /** override to specify a the ServiceBroker object to use for children. 
    * this is called once during initialization.
    * Note that this value might be only part of the process for 
    * actually finding the services for children and/or peers.
    **/
-  protected abstract Services specifyChildContext();
+  protected abstract ServiceBroker specifyChildContext();
   
   /** Define to specify the BindingSite used to bind child components.
    **/
@@ -249,7 +249,7 @@ public abstract class ContainerSupport
       c.setParentComponent(parentProxy);
       // don't bother to keep a link around.
     }
-    public Services getServices() { return null; }
+    public ServiceBroker getServiceBroker() { return null; }
     public void requestStop() { }
   }
 

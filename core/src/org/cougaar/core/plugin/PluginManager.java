@@ -60,8 +60,8 @@ public class PluginManager
   protected String specifyContainmentPoint() {
     return "agent.plugin";
   }
-  protected Services specifyChildContext() {
-    return new PluginServices();
+  protected ServiceBroker specifyChildContext() {
+    return new PluginServiceBroker();
   }
 
   protected Class specifyChildBindingSite() {
@@ -80,7 +80,7 @@ public class PluginManager
    * should use package protection to give access only to PluginBinderSupport,
    * but makes it public for use by Test example.
    **/
-  public final Services getChildContext() {
+  public final ServiceBroker getChildContext() {
     return childContext;
   }
 
@@ -88,7 +88,7 @@ public class PluginManager
   // support classes
   //
 
-  private static class PluginServices extends ServicesSupport {}
+  private static class PluginServiceBroker extends ServiceBrokerSupport {}
   
   //
   // support for direct loading of old-style plugins

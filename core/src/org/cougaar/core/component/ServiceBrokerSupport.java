@@ -12,16 +12,16 @@ package org.cougaar.core.component;
 import java.util.*;
 
 /** Simple implementation of Cougaar component services layer.  
- * @see org.cougaar.core.component.Services
+ * @see org.cougaar.core.component.ServiceBroker
  **/
 
-public abstract class ServicesSupport 
-  implements Services 
+public abstract class ServiceBrokerSupport 
+  implements ServiceBroker 
 {
   /** the current set of Listeners.  Elements are of type ServiceListener **/
   private ArrayList listeners = new ArrayList();
 
-  /** add a ServiceListener to this Services Context **/
+  /** add a ServiceListener to this ServiceBroker Context **/
   public void addServiceListener(ServiceListener sl) {
     if (sl == null) 
       throw new IllegalArgumentException("Add of null ServiceListener");
@@ -66,7 +66,7 @@ public abstract class ServicesSupport
   /** the current set of services.  A map of Class serviceClass to ServiceProvider **/
   private HashMap services = new HashMap(89);
 
-  /** add a Service to this Services Context **/
+  /** add a Service to this ServiceBroker Context **/
   public boolean addService(Class serviceClass, ServiceProvider serviceProvider) {
     if (serviceClass == null)
       throw new IllegalArgumentException("serviceClass null");

@@ -39,7 +39,7 @@ import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.core.cluster.MetricsService;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.domain.planning.ldm.Factory;
@@ -253,7 +253,7 @@ public abstract class PlugInAdapter
     theLDM = ((PluginAdapterBinder) getBindingSite()).getLDM();
     theLDMF = ((PluginAdapterBinder) getBindingSite()).getFactory();
     
-    Services services = ((PluginAdapterBinder) getBindingSite()).getServices();
+    //ServiceBroker sb = getBindingSite().getServiceBroker();
   }
 
   /** */

@@ -19,12 +19,12 @@ public class ServiceRevokedEvent extends ServiceEvent {
   private Class revokedService;
 
   /** Construct a ServiceRevokedEvent **/
-  ServiceRevokedEvent(Services services, Class revokedService) {
-    super(services);
+  ServiceRevokedEvent(ServiceBroker servicebroker, Class revokedService) {
+    super(servicebroker);
     this.revokedService = revokedService;
   }
 
-  /** @return the revoked BindingSite **/
+  /** @return the revoked Service **/
   public final Class getRevokedService() { return revokedService; }
 
 }

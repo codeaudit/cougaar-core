@@ -22,7 +22,7 @@ public class MetricsServiceProvider implements ServiceProvider {
     this.cluster = cluster;
   }
 
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (MetricsService.class.isAssignableFrom(serviceClass)) {
       return new MetricsServiceImpl();
     } else {
@@ -30,7 +30,7 @@ public class MetricsServiceProvider implements ServiceProvider {
     }
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service) {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
   }
 
   private final class MetricsServiceImpl implements MetricsService {

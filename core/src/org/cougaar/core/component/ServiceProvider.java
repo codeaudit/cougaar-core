@@ -13,7 +13,7 @@ package org.cougaar.core.component;
 public interface ServiceProvider 
 {
   /** @param serviceClass a Class, usually an interface, which extends Service. **/
-  Object getService(Services services, Object requestor, Class serviceClass);
+  Object getService(ServiceBroker sb, Object requestor, Class serviceClass);
 
-  void releaseService(Services services, Object requestor, Class serviceClass, Object service);
+  void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service);
 }

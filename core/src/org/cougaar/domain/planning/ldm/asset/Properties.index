@@ -3,11 +3,17 @@
 An asset that is represented by an COUGAAR Cluster
     org.cougaar.core.cluster.ClusterIdentifier ClusterIdentifier;	//The ClusterIdentifier for adressing this asset.
     Predictor Predictor;	//Predictor (if any) for the Cluster
+* CommunityPG
+    Collection<String> Communities;	//Collection of community names to which the asset belongs at the specified time.
+* EntityPG
+    Collection<Role> Roles;	//Collection of Roles the organization is capable of fulfilling.
 * ItemIdentificationPG
 Identification of a unique, actual Asset, e.g. by VIN, SSN, etc.
     String ItemIdentification;	//A String of the form "<type>/<id>", e.g. "SN/105G13F7YM0G"
     String Nomenclature;	//A String describing the Asset in human-readable form.
     String AlternateItemIdentification;	// Not to be used as ClusterId.  Use ClusterPG.getClusterIdentifier() instead.
+* RelationshipPG
+    org.cougaar.domain.planning.ldm.plan.RelationshipSchedule RelationshipSchedule;	//a schedule of relationships for this asset.
 * TypeIdentificationPG
 Identification of a type of Asset, e.g. by NSN, part number, etc.
     String TypeIdentification;	//A String of the form "<type>/<id>", e.g. "NSN/0913801298439"
@@ -21,6 +27,8 @@ Identification of a type of Asset, e.g. by NSN, part number, etc.
     TypeIdentificationPG
 * ClusterIdentifier
     ClusterPG
+* Communities
+    CommunityPG
 * ItemIdentification
     ItemIdentificationPG
 * Nomenclature
@@ -28,5 +36,9 @@ Identification of a type of Asset, e.g. by NSN, part number, etc.
     TypeIdentificationPG
 * Predictor
     ClusterPG
+* RelationshipSchedule
+    RelationshipPG
+* Roles
+    EntityPG
 * TypeIdentification
     TypeIdentificationPG

@@ -14,7 +14,7 @@ import org.cougaar.core.plugin.ScheduleablePlugIn;
 import java.util.*;
 
 /** A SharedThreadingService is an API which may be supplied by a 
- * ServiceProvider registered in a Services object that provides shared
+ * ServiceProvider registered in a ServiceBroker object that provides shared
  * thread scheduling. This is used for SharedThreading Plugins, but 
  * could be extended in the future.
  **/

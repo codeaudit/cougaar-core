@@ -1,3 +1,11 @@
+* 8.2.1
+ComponentModel name change: org.cougaar.core.component.Services has
+been renamed ServiceBroker to better reflect the function of the
+class as decided during the June 2001 BBN CDR (and as documented in
+the distributed CDR slides).  Various other component/service model
+classes, methods, and argument names were modified to match
+(e.g. BindingSite.getServices() -> BindingSite.getServiceBroker()).
+
 * 8.2.0
 
 Initial integration of Component and Service Model (CSM).  Reimplementation

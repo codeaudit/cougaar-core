@@ -11,10 +11,13 @@ package org.cougaar.core.component;
 
 import java.util.*;
 
-/** Cougaar component services layer.  
+/** Cougaar component Service Broker.
+ * Note that this was previously called Services in deference to
+ * the analogous BeanContextServices object.
+ *
  * @see java.beans.beancontext.BeanContextServices 
  **/
-public interface Services {
+public interface ServiceBroker {
   /** add a ServiceListener to this Services Context **/
   void addServiceListener(ServiceListener sl);
   /** remove a services listener **/

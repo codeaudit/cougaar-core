@@ -22,7 +22,7 @@ public class AlarmServiceProvider implements ServiceProvider {
     this.cluster = cluster;
   }
 
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (AlarmService.class.isAssignableFrom(serviceClass)) {
       return new AlarmServiceImpl();
     } else {
@@ -30,7 +30,7 @@ public class AlarmServiceProvider implements ServiceProvider {
     }
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service) {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
   }
 
   private final class AlarmServiceImpl implements AlarmService {

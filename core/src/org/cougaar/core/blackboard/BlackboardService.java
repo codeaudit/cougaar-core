@@ -20,7 +20,7 @@ import org.cougaar.util.UnaryPredicate;
 import java.util.*;
 
 /** A BlackboardService is an API which may be supplied by a 
- * ServiceProvider registered in a Services object that provides basic
+ * ServiceProvider registered in a ServiceBroker that provides basic
  * blackboard publish, subscription and transaction services.
  **/
 public interface BlackboardService extends Service {

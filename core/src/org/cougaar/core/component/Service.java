@@ -12,7 +12,7 @@ package org.cougaar.core.component;
 import java.util.*;
 
 /** A Service is an abstract Service API which may be supplied by a 
- * ServiceProvider which may be registered in a Services object.
+ * ServiceProvider which may be registered in a ServiceBroker object.
  **/
 public interface Service
 {

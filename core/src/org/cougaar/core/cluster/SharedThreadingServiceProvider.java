@@ -10,7 +10,7 @@
 package org.cougaar.core.cluster;
 
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 
 import java.util.*;
 
@@ -27,11 +27,11 @@ public class SharedThreadingServiceProvider implements ServiceProvider {
     this.clusterid = cid;
   }
   
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     return getSharedPlugInManager();
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service)  {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
     // TODO:  put in an unregisterPlugin in the SharedPlugInManager
     // getSharedPlugInManager().unregisterPlugin((ScheduleablePlugIn)requester);
   }

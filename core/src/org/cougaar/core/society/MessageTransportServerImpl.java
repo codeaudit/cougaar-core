@@ -14,7 +14,7 @@ import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.society.rmi.RMIMessageTransport;
 import org.cougaar.util.CircularQueue;
 
@@ -119,7 +119,7 @@ class MessageTransportServerImpl
 	public MessageTransportServerServiceFactoryImpl() {
 	}
 
-	public Object getService(Services services, 
+	public Object getService(ServiceBroker sb, 
 				 Object requestor, 
 				 Class serviceClass) 
 	{
@@ -136,7 +136,7 @@ class MessageTransportServerImpl
 	}
 
 
-	public void releaseService(Services services, 
+	public void releaseService(ServiceBroker sb, 
 				   Object requestor, 
 				   Class serviceClass, 
 				   Object service)
@@ -194,7 +194,7 @@ class MessageTransportServerImpl
 	return "messagetransportservice.messagetransport";
     }
 
-    protected Services specifyChildContext() {
+    protected ServiceBroker specifyChildContext() {
 	// TO BE DONE
 	return null;
     }

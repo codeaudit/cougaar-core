@@ -10,7 +10,7 @@
 package org.cougaar.core.blackboard;
 
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.cluster.Subscriber;
 import org.cougaar.core.cluster.Distributor;
 
@@ -32,11 +32,11 @@ public class BlackboardServiceProvider implements ServiceProvider {
     return new Subscriber(bbclient, distributor);
   }
   
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
    return new Subscriber( (BlackboardClient)requestor, distributor );
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service)  {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
     // ?? each client will get its own subscriber - how can we clean them up??
   }
   

@@ -21,12 +21,12 @@ public interface BindingSite extends Service
   // service request API
   //
 
-  /** request access to the Services layer of the parent.
+  /** request access to the ServiceBroker layer of the parent.
    * Often, services will be attached using introspection at load time
    * but this accessor allows much more dynamic access to the 
    * service layer.
    **/
-  Services getServices();
+  ServiceBroker getServiceBroker();
 
   //
   // containment API

@@ -22,25 +22,25 @@ public class Test {
     PluginManager pm = new PluginManager();
 
     // add some services to the container
-    Services services = pm.getChildContext();
+    ServiceBroker sb = pm.getChildContext();
     // add a log service
-    services.addService(TestLogService.class,
-                        new ServiceProvider() {
-                            public Object getService(Services s, Object r, Class sc) {
-                              return new LogService();
-                            }
-                            public void releaseService(Services s, Object r, Class sc, Object service) {
-                            }
-                          });
+    sb.addService(TestLogService.class,
+                  new ServiceProvider() {
+                      public Object getService(ServiceBroker s, Object r, Class sc) {
+                        return new LogService();
+                      }
+                      public void releaseService(ServiceBroker s, Object r, Class sc, Object service) {
+                      }
+                    });
     // add the alarm service
-    services.addService(TestAlarmService.class,
-                        new ServiceProvider() {
-                            public Object getService(Services s, Object r, Class sc) {
-                              return new AlarmService((TestAlarmService.Client) r);
-                            }
-                            public void releaseService(Services s, Object r, Class sc, Object service) {
-                            }
-                          });
+    sb.addService(TestAlarmService.class,
+                  new ServiceProvider() {
+                      public Object getService(ServiceBroker s, Object r, Class sc) {
+                        return new AlarmService((TestAlarmService.Client) r);
+                      }
+                      public void releaseService(ServiceBroker s, Object r, Class sc, Object service) {
+                      }
+                    });
     
 
     ComponentDescription bd = 

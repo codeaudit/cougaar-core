@@ -17,17 +17,17 @@ import java.lang.reflect.*;
  **/
 public abstract class BinderSupport implements Binder
 {
-  private Services services;
+  private ServiceBroker servicebroker;
   private Container parentComponent;
   private Component childComponent;
 
-  protected BinderSupport(Services services, Container parent, Component child) {
-    this.services = services;
+  protected BinderSupport(ServiceBroker sb, Container parent, Component child) {
+    this.servicebroker = sb;
     this.parentComponent = parent;
     this.childComponent = child;
   }
 
-  public Services getServices() { return services; }
+  public ServiceBroker getServiceBroker() { return servicebroker; }
   public void requestStop() { 
     if (parentComponent == null) {
       throw new IllegalArgumentException("Cannot stop this Component.");
@@ -78,7 +78,7 @@ public abstract class BinderSupport implements Binder
       // care.
     }
 
-    if (services != null) {
+    if (servicebroker != null) {
       try {
         Method[] methods = childClass.getMethods();
 
@@ -101,7 +101,7 @@ public abstract class BinderSupport implements Binder
               if (s.endsWith(pname)) {
                 // ok: m is a "public setX(X)" method where X is a Service.
                 // Let's try getting the service...
-                Object service = services.getService(childComponent, p, null);
+                Object service = servicebroker.getService(childComponent, p, null);
                 Object[] args = new Object[] { service };
                 try {
                   m.invoke(childComponent, args);

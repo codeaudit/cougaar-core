@@ -10,7 +10,7 @@
 package org.cougaar.core.cluster;
 
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
@@ -30,7 +30,7 @@ public class MessageTransportServiceProvider implements ServiceProvider {
     this.mts = agent.getMessageTransportServer();
   }
 
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     return new MessageTransportServer() {
       public void sendMessage(Message m) {
         // should verify message contents
@@ -53,7 +53,7 @@ public class MessageTransportServiceProvider implements ServiceProvider {
     };
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service) {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
     // sharing cluster's MessageTransport, so do nothing
   }
 }

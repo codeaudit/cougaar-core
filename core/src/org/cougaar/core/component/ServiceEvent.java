@@ -11,13 +11,13 @@ package org.cougaar.core.component;
 
 import java.util.*;
 
-/** Service event is a base class for ServicesEvents **/
+/** Service event is a base class for all Service Events **/
 public abstract class ServiceEvent extends ComponentModelEvent {
-  public ServiceEvent(Services services) {
-    super(services);
+  public ServiceEvent(ServiceBroker sb) {
+    super(sb);
   }
 
-  /** @return the source object as a Services typed instance **/
-  public final Services getServices() { return (Services) getSource(); }
+  /** @return the source object as a ServiceBroker typed instance **/
+  public final ServiceBroker getServiceBroker() { return (ServiceBroker) getSource(); }
 
 }

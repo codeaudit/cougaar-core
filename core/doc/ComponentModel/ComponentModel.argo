@@ -35,7 +35,7 @@
     <stat name="longestHot"
          value="0" />
     <stat name="numCriticsFired"
-         value="3536" />
+         value="31408" />
     <stat name="numNotValid"
          value="0" />
     <stat name="numCriticsApplied"

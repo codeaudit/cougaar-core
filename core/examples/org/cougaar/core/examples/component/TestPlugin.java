@@ -50,8 +50,8 @@ public class TestPlugin
     System.err.println("TestPlugin.initialize()");    
 
     // example of getting a service from the binder dynamically
-    Services services = binder.getServices();
-    TestAlarmService alarmer = (TestAlarmService) services.getService(this, TestAlarmService.class, null);
+    ServiceBroker sb = binder.getServiceBroker();
+    TestAlarmService alarmer = (TestAlarmService) sb.getService(this, TestAlarmService.class, null);
     if (alarmer == null) {
       System.err.println("Warning: no alarm service available!");
     } else {

@@ -1,7 +1,7 @@
 package org.cougaar.core.society;
 
 import org.cougaar.core.component.BinderSupport;
-import org.cougaar.core.component.Services;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Component;
 

@@ -22,7 +22,7 @@ public class DemoControlServiceProvider implements ServiceProvider {
     this.cluster = cluster;
   }
 
-  public Object getService(Services services, Object requestor, Class serviceClass) {
+  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (DemoControlService.class.isAssignableFrom(serviceClass)) {
       return new DemoControlServiceImpl();
     } else {
@@ -30,7 +30,7 @@ public class DemoControlServiceProvider implements ServiceProvider {
     }
   }
 
-  public void releaseService(Services services, Object requestor, Class serviceClass, Object service) {
+  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
   }
 
   private final class DemoControlServiceImpl implements DemoControlService {
