@@ -62,6 +62,9 @@ public abstract class FilePersistenceBase
   extends PersistencePluginAdapter
   implements PersistencePlugin
 {
+  private static final String NEWSEQUENCE = "newSequence";
+  private static final String SEQUENCE = "sequence";
+
   private static File getDefaultPersistenceRoot() {
     String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
     File workspaceDirectory =
@@ -106,11 +109,11 @@ public abstract class FilePersistenceBase
   protected abstract boolean rename(File from, File to);
 
   private File getSequenceFile(String suffix) {
-    return new File(persistenceDirectory, "sequence" + suffix);
+    return new File(persistenceDirectory, SEQUENCE + suffix);
   }
 
   private File getNewSequenceFile(String suffix) {
-    return new File(persistenceDirectory, "newSequence" + suffix);
+    return new File(persistenceDirectory, NEWSEQUENCE + suffix);
   }
 
   public SequenceNumbers[] readSequenceNumbers(final String suffix) {
@@ -119,14 +122,14 @@ public abstract class FilePersistenceBase
     if (suffix.equals("")) {
       filter = new FilenameFilter() {
         public boolean accept(File dir, String path) {
-          return (path.startsWith("newSequence") || path.startsWith("sequence"));
+          return (path.startsWith(NEWSEQUENCE) || path.startsWith(SEQUENCE));
         }
       };
     } else {
       filter = new FilenameFilter() {
         public boolean accept(File dir, String path) {
           return (path.endsWith(suffix)
-                  && (path.startsWith("newSequence") || path.startsWith("sequence")));
+                  && (path.startsWith(NEWSEQUENCE) || path.startsWith(SEQUENCE)));
         }
       };
     }
@@ -134,9 +137,10 @@ public abstract class FilePersistenceBase
     List result = new ArrayList(names.length);
     File sequenceFile;
     for (int i = 0; i < names.length; i++) {
-      if (names[i].startsWith("newSequence")) {
-        File newSequenceFile = new File(names[i]);
-        sequenceFile = new File("sequence" + names[i].substring("newSequence".length()));
+      if (names[i].startsWith(NEWSEQUENCE)) {
+        File newSequenceFile = new File(persistenceDirectory, names[i]);
+        sequenceFile = new File(persistenceDirectory,
+                                SEQUENCE + names[i].substring(NEWSEQUENCE.length()));
         rename(newSequenceFile, sequenceFile);
       } else {
         sequenceFile = new File(persistenceDirectory, names[i]);
