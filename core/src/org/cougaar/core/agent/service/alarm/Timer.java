@@ -31,6 +31,8 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -128,17 +130,15 @@ public abstract class Timer implements Runnable {
     synchronized (sem) {
       insert(alarm);
       //System.err.println("Alarms = "+alarmsToString()); // debug
-      sem.notify();
     }
-    Thread.yield();
+    schedulable.start();
   }
 
   public void cancelAlarm(Alarm alarm) {
     synchronized (sem) {
       alarms.remove(alarm);
-      sem.notify();
     }
-    Thread.yield();
+    schedulable.start();
   }
 
   // must be called within sync(sem) 
@@ -159,39 +159,41 @@ public abstract class Timer implements Runnable {
   }
 
   public void run() {
+    schedulable.cancelTimer(); // cancel any outstanding timed restarts
     while (true) {
       long time;
       synchronized (sem) {
         Alarm top = peekAlarm();
-          
-        // wait block
-        try {
-          if (top == null) {    // no pending events?
-            sem.wait();         //   ... just wait forever
-          } else {              // otherwise, figure out how long to wait
-            long delta = top.getExpirationTime() - currentTimeMillis();
-            double rate = getRate();
-            long maxWait = getMaxWait();
-            if (rate > 0.0) {
-              delta = Math.min((long) (delta / rate), maxWait);
-            } else {            // Time is standing still
-              delta = maxWait;  // Wait until next significant change in timer
-            }
-            if (delta > 0) {
-              if (delta < 100) delta=100; // min of .1 second wait time
-              sem.wait(delta);
-            }
+
+        if (top == null) {
+          // no pending events?
+          // new events will restart us
+          return;
+        }
+
+        // figure out how long to wait
+        { 
+          long delta = top.getExpirationTime() - currentTimeMillis();
+          double rate = getRate();
+          long maxWait = getMaxWait();
+          if (rate > 0.0) {
+            delta = Math.min((long) (delta / rate), maxWait);
+          } else {            // Time is standing still
+            delta = maxWait;  // Wait until next significant change in timer
           }
-        } catch (InterruptedException ie) {
-          //System.err.println("Interrupted "+ie);
-          // don't care, just continue
+          if (delta > 0) {
+            if (delta < 100) delta=100; // min of .1 second wait time
+            schedulable.schedule(delta);   // restart after delta ms
+            return;
+            // sem.wait(delta);
+          }
         }
 
         // fire some alarms
         top = peekAlarm();
         time = currentTimeMillis();
-        while ( top != null && 
-                time >= top.getExpirationTime() ) {
+        while (top != null && 
+               time >= top.getExpirationTime()) {
           pas.add(top);
           top = nextAlarm();
         }
@@ -285,11 +287,15 @@ public abstract class Timer implements Runnable {
 
   public Timer() {}
 
-  private Thread timerThread = null;
+  private Schedulable schedulable;
 
-  public void start() {
-    timerThread = new Thread(this, getName());
-    timerThread.start();
+
+  public void start(ThreadService tsvc) {
+    schedulable = tsvc.getThread(this, this, getName()); // lane?
+    // should be nothing on the queue yet, so no need to start.
+    // On the other hand, starting is harmless, since it will quit 
+    // immediately if the queue is empty.
+    // For now we don't do a "schedulable.start()"
   }
 
   protected String getName() {

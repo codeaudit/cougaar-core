@@ -40,6 +40,7 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
+import org.cougaar.core.service.ThreadService;
 
 /** Pseudo-component implementing NaturalTimeService and RealTimeService ServiceProvider
  * and holding references to the actual timers.
@@ -49,16 +50,21 @@ class TimeServiceProvider
 {
   private ExecutionTimer xTimer;
   private Timer rTimer;
+  private ServiceBroker sb;
 
-  TimeServiceProvider() {
+  TimeServiceProvider(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   /** Starts the timers **/
   void start() {
+    ThreadService tsvc = (ThreadService)
+        sb.getService(this, ThreadService.class, null);
     xTimer = new ExecutionTimer();
-    xTimer.start();
+    xTimer.start(tsvc);
     rTimer = new RealTimer();
-    rTimer.start();
+    rTimer.start(tsvc);
+    sb.releaseService(this, ThreadService.class, tsvc);
   }
     
   void stop() {

@@ -66,7 +66,7 @@ implements Component
     rootsb = ncs.getRootServiceBroker();
     sb.releaseService(this, NodeControlService.class, ncs);
 
-    tsp = new TimeServiceProvider();
+    tsp = new TimeServiceProvider(sb);
     tsp.start();
     rootsb.addService(NaturalTimeService.class, tsp);
     rootsb.addService(RealTimeService.class, tsp);
