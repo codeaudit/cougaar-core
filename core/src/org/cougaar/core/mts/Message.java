@@ -46,8 +46,6 @@ public abstract class Message
 
   /**
    *   Default Constructor for factory.
-   *   <p>
-   *   @param aSource The creator of this message used to consruct the super class
    **/
   public Message() {
     this( sink, sink, 0 );
@@ -57,6 +55,7 @@ public abstract class Message
    *   Constructor with just the addresses
    *   <p>
    *   @param aSource The creator of this message used to consruct the super class
+   *   @param aTarget The target for this message
    **/
   public Message(MessageAddress aSource, MessageAddress aTarget) {
     this(aSource, aTarget, 0);
@@ -65,10 +64,9 @@ public abstract class Message
   /**
    *   Constructor with a full parameter list
    *   <p>
-   *   @param source The creator of this message used to consruct the super class
+   *   @param aSource The creator of this message used to consruct the super class
    *   @param aTarget The target for this message
-   *   @param aContents  The content of the message
-   *	@param anId Primative int value for message id used to create message
+   *   @param anId Primative int value for message id used to create message
    **/
   public Message(MessageAddress aSource, MessageAddress aTarget, int anId) {
     setOriginator(aSource);
@@ -109,7 +107,7 @@ public abstract class Message
 
   /**
    *   Modify Method for theContentsId Property
-   *   @param aContnetsId The modifies theContentsId variable with the int primative
+   *   @param aContentsId The modifies theContentsId variable with the int primative
    **/
   public final void setContentsId(int aContentsId) {
     theSequenceNumber = aContentsId;

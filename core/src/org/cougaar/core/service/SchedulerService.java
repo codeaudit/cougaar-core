@@ -40,8 +40,6 @@ public interface SchedulerService extends Service, TriggerRegistry {
    * See the notes in <tt>TriggerRegistry.register(Trigger)</tt>
    * for threading issues.
    * @param clientTrigger the trigger to run when scheduled
-   * @param owner the owner of the trigger. Scheduler decisions may
-   * depend on the identity of the owner.
    * @return a "schedulerTrigger" that the caller can use to tell 
    * the scheduler that it wants to be "clientTrigger.trigger()"ed.
    */

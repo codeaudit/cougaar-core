@@ -39,8 +39,8 @@ public class NodeMessage
   /**
    * Constructor
    * <p>
-   * @param source The MessageAddress of creator node 
-   * @param destination The MessageAddress of the target node
+   * @param s The MessageAddress of creator node 
+   * @param d The MessageAddress of the target node
    **/
   public NodeMessage(MessageAddress s, MessageAddress d) {
     super(s, d);

@@ -147,7 +147,6 @@ public interface PersistencePlugin {
 
   /**
    * Delete old archives
-   * @param archiveCount the number of archives to keep
    **/
   void cleanupArchive();
 
@@ -204,8 +203,6 @@ public interface PersistencePlugin {
    * Clean up after closing the input stream
    * @param deltaNumber the number of the delta being closed.
    * Provided as a convenience to the method
-   * @param currentInput the InputStream being closed.
-   * Provided as a convenience to the method.
    **/
   void finishInputStream(int deltaNumber);
 
@@ -227,15 +224,14 @@ public interface PersistencePlugin {
 
   /**
    * Store an encrypted key for a particular delta number
-   * @param keyEnvelope has the encrypted key to be stored
    * @param deltaNumber the number of the delta for which the key is used.
+   * @param key has the encrypted key to be stored
    **/
   void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
     throws IOException;
 
   /**
    * Retrieve an encrypted key for a particular delta number
-   * @param keyEnvelope where the retrieved key should should be put
    * @param deltaNumber the number of the delta for which the key is used.
    **/
   DataProtectionKey retrieveDataProtectionKey(int deltaNumber)

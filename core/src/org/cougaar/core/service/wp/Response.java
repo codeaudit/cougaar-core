@@ -100,7 +100,7 @@ public abstract class Response implements Callback, Serializable {
    * If the response is already available when this method is called,
    * the callback my be invoked in the calling thread immediately.
    * <p>
-   * @param callback A runnable to be executed when a result is
+   * @param c A runnable to be executed when a result is
    * available.  This will be called exactly once.  The
    * callback.execute(Result) method should execute quickly - under
    * no circumstances should it ever block or perform any non-trivial

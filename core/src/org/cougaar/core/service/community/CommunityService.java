@@ -70,7 +70,7 @@ public interface CommunityService extends Service {
    * @param entityType       Type of member entity to create (AGENT or COMMUNITY)
    * @param entityAttrs      Attributes for new member
    * @param createIfNotFound Create community if it doesn't exist
-   * @param communityAttrs   Attributes for created community (used if
+   * @param newCommunityAttrs   Attributes for created community (used if
    *                         createIfNotFound set to true, otherwise ignored)
    * @param crl              Listener to receive response
    */
@@ -176,7 +176,7 @@ public interface CommunityService extends Service {
    * null or if a copy of the specified community is available in local cache.
    * Otherwise, the results will be returned in the CommunityResponseListener
    * callback in which case the method returns a null value.
-   * @param name   Member name
+   * @param member   Member name
    * @param crl    Listener to receive results if remote lookup is required
    * @return A collection of community names if operation can be resolved using
    *         data from local cache, otherwise null
@@ -191,7 +191,7 @@ public interface CommunityService extends Service {
    * null or if a copy of the specified community is available in local cache.
    * Otherwise, the results will be returned in the CommunityResponseListener
    * callback in which case the method returns a null value.
-   * @param name   Member name
+   * @param member   Member name
    * @param filter Search filter defining community attributes
    * @param crl Listener to receive results
    * @return A collection of community names if operation can be resolved using
@@ -243,7 +243,7 @@ public interface CommunityService extends Service {
    *                  as a result of community nesting.
    * @return          Array of community names
    * @deprecated      This method will be removed in 11.2.
-   *                  Use listParentCommunities(String, CommunityResponseListener)
+   *                  @see #listParentCommunities(String, CommunityResponseListener)
    */
   String[] getParentCommunities(boolean allLevels);
 
@@ -251,28 +251,28 @@ public interface CommunityService extends Service {
    * Lists all communities in Name Server.
    * @return  Collection of community names
    * @deprecated      This method will be removed in 11.2.
-   *                  Use listAllCommunities(CommunityResponseListener)
+   *                  @see #listAllCommunities(CommunityResponseListener)
    */
   Collection listAllCommunities();
 
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member.
-   * @param name  Member name
+   * @param member  Member name
    * @return      A collection of community names
    * @deprecated  This method will be removed in 11.2.
-   *              Use listParentCommunities(String, CommunityResponseListener)
+   *              @see #listParentCommunities(String, CommunityResponseListener)
    */
   Collection listParentCommunities(String member);
 
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member and satisfy a given set of attributes.
-   * @param name   Member name
+   * @param member   Member name
    * @param filter Search filter defining community attributes
    * @return       A collection of community names
    * @deprecated   This method will be removed in 11.2.
-   *               Use listParentCommunities(String, String, CommunityResponseListener)
+   *               @see #listParentCommunities(String, String, CommunityResponseListener)
    */
   Collection listParentCommunities(String member, String filter);
 

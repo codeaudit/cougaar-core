@@ -45,14 +45,14 @@ public interface Community extends Entity {
 
   /**
    * Returns named Entity or null if it doesn't exist.
-   * @param  Name of requested entity
+   * @param  name of requested entity
    * @return named entity
    */
   public Entity getEntity(String name);
 
   /**
    * Returns true if community contains entity.
-   * @param  Name of requested entity
+   * @param  name of requested entity
    * @return true if community contains entity
    */
   public boolean hasEntity(String name);

@@ -71,7 +71,7 @@ import org.cougaar.util.log.LoggerFactory;
  * <p>
  * The name "WP" and names starting with "WP-" have special meaning
  * to the ClientTransport, since these identify white pages servers.
- * See {@link ClintTransport} for additional details.
+ * See {@link ClientTransport} for additional details.
  * 
  * @see #parse detailed parsing notes
  */

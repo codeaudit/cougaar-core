@@ -28,9 +28,8 @@ package org.cougaar.core.node;
  * Note that there is no additional public api for getting at the contents of 
  * the object.  This access is granted only to the MessageSecurityManager 
  * implementation.
- * @see MessageSecurityManager
+ * @see org.cougaar.core.mts.MessageSecurityManager
  **/
-
 public interface SecureMessage
 {
 }

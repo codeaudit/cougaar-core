@@ -439,7 +439,7 @@ public abstract class WhitePagesService implements Service {
    *    // keep going
    * </pre>
    *
-   * @param request the non-null request
+   * @param req the non-null request
    * @return a non-null response
    */
   public abstract Response submit(Request req);

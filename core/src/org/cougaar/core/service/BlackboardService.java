@@ -180,7 +180,7 @@ public interface BlackboardService extends Service {
 
   /** Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction().
-   * @param resetSubscriptions IFF true, all subscriptions will have
+   * @param resetp IFF true, all subscriptions will have
    * their resetChanges() method called to clear any delta lists, etc.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.

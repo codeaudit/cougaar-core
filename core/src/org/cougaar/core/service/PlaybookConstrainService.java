@@ -65,13 +65,13 @@ public interface PlaybookConstrainService extends Service {
 
   /**
    * might replace one play with two in current playbook 
-   * @param OperatingModePolicy may constrain the play
+   * @param omp OperatingModePolicy may constrain the play
    */
   void constrain(OperatingModePolicy omp);
 
   /**
    * might replace two plays with one in current playbook 
-   * @param OperatingModePolicy 
+   * @param omp OperatingModePolicy 
    */
   void unconstrain(OperatingModePolicy omp);
 

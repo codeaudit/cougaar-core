@@ -33,7 +33,7 @@ public interface AgentIdentityClient
    *  See RFC 2459, 5.3.1 for a list of possible reasons
    *  why the certificate was revoked.
    *
-   *  @param the reason code as defined in RFC 2459
+   *  @param reason the reason code as defined in RFC 2459
    */
   void identityRevoked(CrlReason reason);
 

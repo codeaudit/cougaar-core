@@ -112,7 +112,6 @@ public class BlackboardPersistence implements Persistence {
    * order keeping the latest (last encountered) values from
    * every object.
    * @param oldObjects Changes recorded in all but the last delta.
-   * @param newObjects Changes recorded in the last delta
    * @return List of all envelopes that have not yet been distributed
    */
   public RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state) {

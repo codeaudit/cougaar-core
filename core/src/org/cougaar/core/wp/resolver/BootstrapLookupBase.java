@@ -176,7 +176,7 @@ implements Component
   /**
    * Get the delay for the initial lookup, where subsequent failed
    * lookups double the delay until it reaches the
-   * {@link getMaxLookupDelay}.
+   * {@link #getMaxLookupDelay}.
    */
   protected abstract long getMinLookupDelay();
   protected abstract long getMaxLookupDelay();
@@ -184,7 +184,7 @@ implements Component
   /**
    * Get the delay for the initial verify, where subsequent
    * successful verifications double the delay until it
-   * reaches the {@link getMaxLookupDelay}.
+   * reaches the {@link #getMaxLookupDelay}.
    */ 
   protected abstract long getMinVerifyDelay();
   protected abstract long getMaxVerifyDelay();

@@ -60,7 +60,7 @@ public interface WhitePagesProtectionService extends Service {
    * certificate.
    *
    * @param agent - The agent making the request
-   * @param request - the request object
+   * @param w - the wrapped request object
    * @return the request object 
    * @throws Exception if the request can't be wrapped and the
    *   server must ignore the request

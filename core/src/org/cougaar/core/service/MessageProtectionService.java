@@ -58,7 +58,7 @@ public interface MessageProtectionService extends Service
    *    message to the output stream.
    * 7) The encrypted message is actually sent over the network.
    *
-   * @param rawData     The unencrypted header
+   * @param attributes     data about the message for the header
    * @param source      The source of the message
    * @param destination The destination of the message
    * @return the protected header (sign and/or encrypted)
@@ -135,9 +135,9 @@ public interface MessageProtectionService extends Service
    * Since messages may be resent, the method may be called multiple times
    * for the same message, but this is in a different context.
    *
-   * @param os The input stream containing the verified clear-text message
-   * @param source      The source of the incoming message
-   * @param destination The destination of the incoming message
+   * @param is The input stream containing the verified clear-text message
+   * @param src      The source of the incoming message
+   * @param dst The destination of the incoming message
    * @param attrs       The attributes of the incoming message
    * @return A filter intput stream
    * @throws IOException

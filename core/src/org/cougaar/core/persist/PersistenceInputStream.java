@@ -87,8 +87,9 @@ public class PersistenceInputStream extends ObjectInputStream {
   }
 
   /**
-   * Construct from the array of bytes containing the encoded objects.
-   * @param bytes the bytes containing the encoded objects.
+   * Construct from the object stream
+   * @param ois ObjectInputStream
+   * @param logger Logger to use for progress
    */
   public PersistenceInputStream(ObjectInputStream ois, Logger logger) throws IOException {
     super(new Substream(ois));
@@ -199,10 +200,7 @@ public class PersistenceInputStream extends ObjectInputStream {
    * to update the values of objects that already exist so we override
    * this method and return existing objects corresponding to the
    * reference ids we expect to encounter.
-   * @param clazz the class of the object to find/create.
-   * @param serializableClass the first serializable class in the
-   * ancestry chain of the class. All earlier base classes will be
-   * constructed using their default constructors.
+   * @param desc description of class to create
    * @return the object to be filled in.
    */
   protected Object newInstanceFromDesc(ObjectStreamClass desc) 

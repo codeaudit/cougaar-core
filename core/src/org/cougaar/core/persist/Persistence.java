@@ -38,7 +38,7 @@ public interface Persistence {
   /**
    * End a persistence epoch by generating a persistence delta
    * @param undistributedEnvelopes Envelopes that the distribute is about to distribute
-   * @param epochEnvelopes All envelopes from this epoch
+   * @param allEpochEnvelopes All envelopes from this epoch
    * @param subscriberStates The subscriber states to record
    **/
     PersistenceObject persist(List undistributedEnvelopes,
