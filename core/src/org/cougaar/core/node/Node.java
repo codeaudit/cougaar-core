@@ -30,6 +30,7 @@ import org.cougaar.core.thread.ThreadServiceProvider;
 import org.cougaar.core.qos.monitor.QosMonitorService;
 import org.cougaar.core.qos.monitor.QosMonitorServiceProvider;
 import org.cougaar.core.qos.metrics.MetricsService;
+import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.qos.metrics.MetricsServiceProvider;
 
 import org.cougaar.core.service.MessageTransportService;
@@ -639,8 +640,9 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
 		  loggingServiceProvider);
     
 
-
-    sb.addService(MetricsService.class, new MetricsServiceProvider(sb));
+    MetricsServiceProvider msp = new MetricsServiceProvider(sb);
+    sb.addService(MetricsService.class, msp);
+    sb.addService(MetricsUpdateService.class, msp);
 
 
     //add the vm metrics

@@ -27,18 +27,33 @@ import org.cougaar.core.component.ServiceProvider;
 public final class MetricsServiceProvider implements ServiceProvider
 {
     
-    private static final String IMPL_CLASS =
+    private static final String RETRIEVER_IMPL_CLASS =
 	"org.cougaar.core.qos.rss.RSSMetricsServiceImpl";
 
-    private MetricsService impl;
+    private static final String UPDATER_IMPL_CLASS =
+	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
+
+    private MetricsService retriever;
+    private MetricsUpdateService updater;
 
     public MetricsServiceProvider(ServiceBroker sb) {
 	try {
-	    Class cl = Class.forName(IMPL_CLASS);
+	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
 	    Class[] parameters = { ServiceBroker.class };
 	    Object[] args = { sb };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
-	    impl = (MetricsService) cons.newInstance(args);
+	    retriever = (MetricsService) cons.newInstance(args);
+	} catch (ClassNotFoundException cnf) {
+	    // qos jar not loaded
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+	}
+	try {
+	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
+	    Class[] parameters = { ServiceBroker.class };
+	    Object[] args = { sb };
+	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
+	    updater = (MetricsUpdateService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
 	    // qos jar not loaded
 	} catch (Exception ex) {
@@ -52,7 +67,9 @@ public final class MetricsServiceProvider implements ServiceProvider
 			     Class serviceClass) 
     {
 	if (serviceClass == MetricsService.class) {
-	    return impl;
+	    return retriever;
+	} else if (serviceClass == MetricsUpdateService.class) {
+	    return updater;
 	} else {
 	    return null;
 	}
