@@ -1,3 +1,18 @@
+2002-07-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceOutputStream.java: 
+	* PersistenceInputStream.java:
+	Bug # 1640 -- Exception when trying to rehydrate
+	References to PlanElements that have not been (or are no longer)
+	published should not be persisted. The code to do this erroneously
+	accounted for the omitted objecs (by counting them as existing).
+	However, omitting the object from the persistence snapshot will
+	result in null references after rehydration. In the case of the
+	tasks of workflows and the aggregations of compositions, these
+	null will usually lead to NPE. The presence of such objects is
+	indicates a problem at the application level so the debug message
+	has been rephrased as an ERROR message.
+
 2002-07-16  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

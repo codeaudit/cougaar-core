@@ -126,7 +126,7 @@ public class PersistenceInputStream extends ObjectInputStream {
     this.references = null;
     PersistenceAssociation pAssoc = identityTable.find(object);
     if (pAssoc == null) {
-      System.err.println("Null PersistenceAssociation found for " + object.getClass().getName() + ": " + object);
+      logger.error("Null PersistenceAssociation found for " + object.getClass().getName() + ": " + object);
     } else {
       pAssoc.setActive(active);
     }
@@ -204,13 +204,13 @@ public class PersistenceInputStream extends ObjectInputStream {
 	if (pAssoc == null) {
 	  Object object = callNewInstanceFromDesc(this, desc);
 	  pAssoc = identityTable.create(object, reference);
-	  if (logger.isDebugEnabled()) logger.debug("Allocating " + BasePersistence.getObjectName(object) + " @ " + reference);
+	  if (logger.isDebugEnabled()) logger.debug("Allocating " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(object) + " @ " + reference);
 	  return object;
 	}
 	Object result = pAssoc.getObject();
 	if (result == null) throw new InstantiationException("no object @ " + reference);
 	if (result.getClass() != clazz) throw new InstantiationException("wrong object @ " + reference);
-	if (logger.isDebugEnabled()) logger.debug("Overwriting " + BasePersistence.getObjectName(result) + " @ " + reference);
+	if (logger.isDebugEnabled()) logger.debug("Overwriting " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
         Object result = callNewInstanceFromDesc(this, desc);
@@ -253,9 +253,9 @@ public class PersistenceInputStream extends ObjectInputStream {
       PersistenceReference pRef = (PersistenceReference) o;
       PersistenceAssociation pAssoc = identityTable.get(pRef);
       if (pAssoc == null) {
-	System.err.println("Reference to non-existent object id = " + pRef);
+	logger.error("Reference to non-existent object id = " + pRef);
 	for (int i = 0; i < identityTable.size(); i++) {
-	  System.err.println(i + ": " + identityTable.get(i));
+	  logger.error(i + ": " + identityTable.get(i));
 	}
 	throw new IOException("Reference to non-existent object id = " + pRef);
 //  	return null;

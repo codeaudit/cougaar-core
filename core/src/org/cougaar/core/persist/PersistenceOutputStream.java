@@ -149,16 +149,24 @@ public class PersistenceOutputStream extends ObjectOutputStream {
       return o;
     }
     PersistenceAssociation pAssoc = identityTable.find(o);
+    String ix = null;
+    if (debug) {
+      if (writeIndex != null) {
+        ix = writeIndex.size() + " ";
+      } else {
+        ix = "";
+      }
+    }
     if (pAssoc == null) {
       // This is (probably) _not_ something we care about
+      if (o instanceof PlanElement) {
+        logger.error("Omitting PlanElement not on blackboard: " + o);
+	return null;            // Not published yet
+      }
       if (writeIndex != null) {
 	writeIndex.add(null);   // No identityTable fixup needed
       }
-      if (o instanceof PlanElement) {
-        if (debug) print("Omitting unpublished pe: " + o);
-	return null;            // Not published yet
-      }
-      if (debug) print("Writing " + o);
+      if (debug) print("Writing " + ix + getShortClassName(o) + " " + o);
       return o;
     }
     if (pAssoc.isMarked()) {
@@ -166,11 +174,18 @@ public class PersistenceOutputStream extends ObjectOutputStream {
         // Remember that we wrote it here
 	writeIndex.add(pAssoc.getReferenceId());
       }
-      if (debug) print("Writing ", pAssoc, " as ", o);
+      if (debug) print("Writing " + ix, pAssoc, " as ", o);
       return o;
     }
     if (debug) print("Subst ", pAssoc, " for ", o);
     return pAssoc.getReferenceId();
+  }
+
+  private String getShortClassName(Object o) {
+    String cn = o.getClass().getName();
+    int dot = cn.lastIndexOf('.');
+    if (dot >= 0) return cn.substring(dot + 1);
+    return cn;
   }
 
   private void print(String intro, PersistenceAssociation pAssoc,
