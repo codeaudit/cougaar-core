@@ -1,0 +1,122 @@
+How To Run the Completion Plugins
+
+The completion plugins comprise a set of sensors in all the agents
+that detect activity and plugins to aggregate the activity level back
+to a central point (NCA agent). Whenever a cessation of activity is
+detected the next activity action is taken. This continues until all
+activities are completed at which point all the agents are instructed
+to take a persistence snapshot. When that completes, the society can
+be shutdown and the persistence directories stashed away for later.
+
+The completion plugins are installed by CSMART recipes and configured
+by a servlet (NCA/completionControl). The servlet allows various
+timing parameters to be adjusted. The defaults offer a good starting
+point. Increasing the times reduces the chance of premature completion
+actions at the expense of slower operation. The parameters are
+summarized at the end of this note.
+
+The completion plugins are designed to work only in an unstressed
+environment. Running them under stress is pointless and will only
+cause grief.
+
+Creating Persistence Snapshots
+
+Before starting, the persistence directories should be cleared. This
+can be done with shell commands or the set
+org.cougaar.core.persistence.clear system property=true.
+
+Once the society is running, bring up the completionControl servlet in
+the NCA agent and fill in the first number of time steps. For example,
+if you want create a snapshot for 8/30/2005 and the society comes up
+with a date of 8/10/2005, then enter 20 steps to take and click
+Submit. Click on Refresh from time-to-time to monitor progress.
+Experience will tell how long each day of advancement requires. After
+the last advancement step, every agent is instructed to take a final
+persistence snapshot. Currently, there is no feedback to indicate that
+this has completed so you will just have to wait and check the nodes
+the old-fashioned way.
+
+Once the final persistence snapshot has been taken, all the
+persistence directories on all the nodes should be tarred/zipped. Name
+the files meaningfully with the node and date or the reason for
+choosing the date. Zip/tarring the entire persistence directory is
+overkill since not every file is required, but the simple approach is
+recommended because it removes human error from the equation.
+
+The results from one run can serve as the starting point for another
+run to a later time. Indeed, a whole series of snapshots can be
+created in one extended session. For example, first advance 20 days to
+8/30/3005. Zip/tar the results. Advance another 10 days to 9/9/2005
+(using the servlet as before) without restarting the society. Advance
+again and so on. The zip/tar files for the later snapshots will be
+burdened with the data from the earlier ones. The old files could be
+removed, but again, that is error-prone and should be undertaken only
+if the excess time or disk space warrants it.
+
+For the interested, the files required to rehydrate an agent consist
+of a full snapshot and subsequent incremental snapshots. The end of
+each advancement run takes a full snapshot. In principal, this should
+be sufficient. For the FilePersistence media plugin (probably the only
+one we will be using), the full snapshot is accompanied by a numbered
+sequence file. For example, you might see the following:
+
+  -rw-rw-rw-   1 RTomlinson root   135671 Jun 10 16:10 delta_00000
+  -rw-rw-rw-   1 RTomlinson root   135986 Jun 10 16:13 delta_00002
+  -rw-rw-rw-   1 RTomlinson root     2012 Jun 10 16:18 delta_00003
+  -rw-rw-rw-   1 RTomlinson root        8 Jun 10 16:18 sequence
+  -rw-rw-rw-   1 RTomlinson root        8 Jun 10 16:10 sequence_00000
+  -rw-rw-rw-   1 RTomlinson root        8 Jun 10 16:13 sequence_00002
+
+sequence_00000 and delta_00000 go together and represent a full
+snapshot taken early in the run. sequence_00002 and delta_00002 also
+go together and represent a second full snapshot taken three minutes
+later (at the end of the test run). delta_00003 is an incremental
+snapshot taken after the run completed, but before the agent was
+actually shutdown. The unnumbered sequence file identifies delta_00002
+and delta_00003 as constituting the most recent rehydration set and
+would be the default to use for rehydration.
+
+Note that delta_00001 is not present. It was deleted after the full
+snapshot in delta_00002 was created making the incremental snapshot
+superfluous.
+
+Rehydrating a Saved Session
+
+The procedure above creates a zip/tar file for every node or host for
+every saved session. To run a saved session, the standard persistence
+directories must be cleared and the relevant zip/tar files unpacked
+into them. Then the society can be started (without any of the
+completion plugins) and subjected to unimaginable torture.
+
+Parameters
+
+Scenario Time -- the scenario time when the servlet was last update.
+Click the Refresh button to get an updated value.
+
+Initial Time Advance Delay -- Some plugins delay before processing
+their first set of inputs for efficiency reasons. These delays are
+indistinguishable from ordinary quiescence and could cause premature
+time advancement.
+
+Normal Time Advance Delay -- This is similar to the above except the
+plugins are not intentionally delaying, but are simply encountering
+ordinary competition for CPU.
+
+Advance Time Delay -- The delay after a time advance before another
+time advance is allowed. This must at least cover the builtin delay
+for time advancement (ten seconds) plus the time it takes for an agent
+to notice and report that it is again busy.
+
+Advance Time Step -- How many milliseconds to step ahead. One day is
+the default. 12 hours is another reasonable value.
+
+Number of Time Steps to Advance -- This is counted down for each
+advancement step taken until it reaches zero. If the Advance Time Step
+is 86400000, then this is the number of days of advancement to
+perform. Clicking the Refresh button will bring this up-to-date.
+
+Submit -- Clicking this button posts the new values to the servlet and
+changes the operation of the CompletionSocietyPlugin.
+
+Refresh -- Simply reloads the page. Nothing is posted.
+
