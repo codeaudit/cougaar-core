@@ -32,23 +32,23 @@ public abstract class TaskConstraintEvent implements SettableConstraintEvent
   private NewTask task; /* constrained or constraining task */
   private int event; /* constrained or constraining aspect */
   private double value = NOVALUE; /* A value to use if a constraining task has NOVALUE */
-    
+
   protected TaskConstraintEvent(NewTask t, int aspect, double value) {
     task = t;
     event = aspect;
     this.value = value;
   }
-	
+
   public int getAspectType() {
     return event;
   }
-	                                    
+
   public Task getTask() {
     return task;
   }
 
   public abstract boolean isConstraining();
-	
+
   /**
    * getValue()
    * @return the allocation result of particular aspect if
@@ -56,14 +56,22 @@ public abstract class TaskConstraintEvent implements SettableConstraintEvent
    **/
   public double getValue() {
     if (isConstraining()) {
-      PlanElement pe = task.getPlanElement();
-      if (pe == null) return value;
-      AllocationResult ar = pe.getEstimatedResult();
-      if (ar == null) return value;
-      return ar.getValue(event);
+      return getResultValue();
     } else {
       return task.getPreferredValue(event);
     }
+  }
+
+  /**
+   * getResultValue()
+   * @return the allocation result of particular aspect
+   **/
+  public double getResultValue() {
+    PlanElement pe = task.getPlanElement();
+    if (pe == null) return value;
+    AllocationResult ar = pe.getEstimatedResult();
+    if (ar == null) return value;
+    return ar.getValue(event);
   }
 
   /**

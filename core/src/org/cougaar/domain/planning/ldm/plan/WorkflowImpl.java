@@ -39,10 +39,10 @@ import org.cougaar.core.society.UID;
 import org.cougaar.core.plugin.Annotation;
 
 /**
- * This class implements Workflow 
+ * This class implements Workflow
  **/
 
-public class WorkflowImpl 
+public class WorkflowImpl
   extends ClaimableImpl
   implements Workflow, NewWorkflow, XMLizable, java.io.Serializable
 {
@@ -67,19 +67,19 @@ public class WorkflowImpl
   /**@return Task for which this Workflow is an expansion */
   public Task getParentTask() { return basetask; }
 
-        
+
   /** @return Enumeration{Task} Enumerate over our subtasks. */
-  public Enumeration getTasks() { 
-    return subtasks.elements(); 
+  public Enumeration getTasks() {
+    return subtasks.elements();
   }
 
 
   /** @return Enumeration{Constraint} Enumerate over the constraints. */
-  public Enumeration getConstraints() { 
-    return constraints.elements(); 
+  public Enumeration getConstraints() {
+    return constraints.elements();
   }
-  
-  /** 
+
+  /**
    *@param task - task which you are inquiring about
    *@return Enumeration{Constraint} Enumerate over constraints that related to the passed in task. */
   public Enumeration getTaskConstraints(Task task) {
@@ -93,12 +93,12 @@ public class WorkflowImpl
     }
     return contasks.elements();
   }
-                
+
   /** @param constrainedTask - the task being constrained
    * @param constrainingTask - the task that is constraining another task
-   *@return Enumeration{Constraints} - Constraints that are related to both tasks */       
+   *@return Enumeration{Constraints} - Constraints that are related to both tasks */
   public Enumeration getPairConstraints(Task constrainedTask, Task constrainingTask) {
-    
+
     Enumeration c = constraints.elements();
     Vector contasks = new Vector();
     while (c.hasMoreElements() ) {
@@ -110,7 +110,7 @@ public class WorkflowImpl
     return contasks.elements();
   }
 
- 
+
   private transient TaskScoreTable _tst = null;
   private transient Task[] _tasks;
   private transient AllocationResult[] _ars;
@@ -131,7 +131,7 @@ public class WorkflowImpl
 	_ars = new AllocationResult[_tasks.length];
         _tst = new TaskScoreTable(_tasks, _ars);
       }
-    
+
       for (int i=0; i<_ars.length; i++) {
         PlanElement pe = _tasks[i].getPlanElement();
         if (pe != null) {
@@ -142,9 +142,9 @@ public class WorkflowImpl
     }
   }
 
-  
+
   /** Calls calculate on the defined AllocationResultAggregator
-   * @return a new AllocationResult representing aggregation of 
+   * @return a new AllocationResult representing aggregation of
    * all subtask results
    */
   public synchronized AllocationResult aggregateAllocationResults() {
@@ -181,11 +181,11 @@ public class WorkflowImpl
     }
     return false;
   }
-  
+
   /** Get the constraints that were violated.
     * @return Enumeration{Constraint}
     */
-    
+
   public Enumeration getViolatedConstraints() {
     Vector violations = getViolatedConstraintsVector(false);
     if (violations == null || violations.size() == 0) {
@@ -207,15 +207,15 @@ public class WorkflowImpl
     }
     return violations;
   }
-    
+
   //setter method implementations from NewWorkflow
 
   /** @param parentTask set the parent task */
   public void setParentTask(Task parentTask) {
     basetask = parentTask;
-  }  
-  
-  /** @param tasks set the tasks of the Workflow */     
+  }
+
+  /** @param tasks set the tasks of the Workflow */
   public void setTasks(Enumeration tasks) {
     if (tasks == null) {
         throw new IllegalArgumentException("Workflow.setTasks(Enum e): e must be a non-null Enumeration");
@@ -233,8 +233,8 @@ public class WorkflowImpl
       }
       clearTST();
     }
-  } 
-   
+  }
+
   /** @param newTask addTask allows you to add a Task to a Workflow.*/
   public void addTask(Task newTask) {
     if (newTask == null) {
@@ -244,13 +244,13 @@ public class WorkflowImpl
     subtasks.addElement(newTask);
     clearTST();
   }
-  
+
   /** @param remTask Remove the specified Task from the Workflow's sub-task collection  **/
   public void removeTask(Task remTask) {
     subtasks.removeElement(remTask);
     clearTST();
   }
-  
+
   /** Note any previous values will be dropped.
    * @param enumofConstraints setConstraints allows you to set the Enumeration
    * of Constraints of a Workflow.  */
@@ -309,12 +309,16 @@ public class WorkflowImpl
     Vector violations = getViolatedConstraintsVector(true);
     for (int i = 0; i < constraints.size(); i++) {
       Constraint c = (Constraint) constraints.elementAt(i);
-      if (isConstraintViolated(c)) return c;
+      if (isConstraintPendingOrViolated(c)) return c;
     }
     return null;
   }
 
-  public boolean isConstraintViolated(Constraint c) {
+  /**
+   * @return true iff the constraint is violated or the constrained
+   * event is undefined.
+   */
+  public boolean isConstraintPendingOrViolated(Constraint c) {
     ConstraintEvent ce1 = c.getConstrainingEventObject();
     ConstraintEvent ce2 = c.getConstrainedEventObject();
 
@@ -338,7 +342,36 @@ public class WorkflowImpl
     }
     return false;               // Bogus constraint
   }
-  
+
+  /**
+   * @return true iff the constrained event is defined and the
+   *  constraint is violated.
+   */
+  public boolean isConstraintViolated(Constraint c) {
+    ConstraintEvent ce1 = c.getConstrainingEventObject();
+    ConstraintEvent ce2 = c.getConstrainedEventObject();
+
+    double constrainingValue = ce1.getValue();
+    if (constrainingValue == ConstraintEvent.NOVALUE) return false;
+
+    double constrainedValue = ce2.getResultValue();
+    if (constrainedValue == ConstraintEvent.NOVALUE) return false;
+
+    double diff = constrainedValue - constrainingValue + c.getOffsetOfConstraint();
+    switch (c.getConstraintOrder()) {
+    case Constraint.BEFORE: // Same as LESSTHAN
+      if (diff <= 0.0) return true;
+      break;
+    case Constraint.AFTER: // Same as GREATERTHAN
+      if (diff >= 0.0) return true;
+      break;
+    case (Constraint.COINCIDENT): // Same as EQUALTO
+      if (diff == 0.0) return true;
+      break;
+    }
+    return false;               // Bogus constraint
+  }
+
   /** sets a specific compute algorithm to use while computing the aggregated
     * allocation results of the workflow.  If this method is not called, the allocationresult
     * will be aggregated using the default AllocationResultAggregator (Sum).
@@ -348,7 +381,7 @@ public class WorkflowImpl
   public void setAllocationResultAggregator(AllocationResultAggregator aragg) {
     currentARA = aragg;
   }
-  
+
   /** Return the Unique ID number for this object */
   public UID getUID() {
     return uid;
@@ -432,13 +465,13 @@ public class WorkflowImpl
     if (violations == null) return new Constraint[0];
     return (Constraint[]) violations.toArray(new Constraint[violations.size()]);
   }
- 
+
   private boolean _propagateP = true;
   public boolean isPropagatingToSubtasks() { return _propagateP; }
   public void setIsPropagatingToSubtasks(boolean isProp) { _propagateP = isProp; }
   /** @deprecated  Use setIsPropagatingToSubtasks(boolean isProp) -defaults to true*/
   public void setIsPropagatingToSubtasks() { _propagateP = true; }
-  
+
   // used by ExpansionImpl for infrastructure propagating rescinds.
   public List clearSubTasks() {
     ArrayList l = null;
@@ -447,7 +480,7 @@ public class WorkflowImpl
     return l;
   }
 
-  // 
+  //
   // XMLizable method for UI, other clients
   //
   public Element getXML(Document doc) {

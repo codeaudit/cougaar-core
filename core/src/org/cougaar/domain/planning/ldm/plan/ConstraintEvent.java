@@ -1,7 +1,7 @@
-/* ConstraintEvent objects can be used to denote 
+/* ConstraintEvent objects can be used to denote
  * either constraining or constrained events
  */
- 
+
 package org.cougaar.domain.planning.ldm.plan;
 
 public interface ConstraintEvent
@@ -14,15 +14,23 @@ public interface ConstraintEvent
 
   /* getValue returns the allocation result of the
    * aspect when the task is constraining or
-   * the preferred value of the aspect when the 
+   * the preferred value of the aspect when the
    * task is constrained. isConstraining is true
-   * when task is constraining, false when task is 
+   * when task is constraining, false when task is
    * constrained.
    * @return the value of this ConstrainEvent. NOVALUE is returned if
    * the value is not known. For example, the value for a constrained
    * task that has not yet been disposed will be NOVALUE.
    */
   double getValue();
+
+  /* getResultValue returns the allocation result of the
+   * aspect without regard to whether the event isConstraining()
+   * @return the value of this ConstrainEvent. NOVALUE is returned if
+   * the value is not known. For example, the value for a constrained
+   * task that has not yet been disposed will be NOVALUE.
+   */
+  double getResultValue();
 
   /**
    * The aspect involved in this end of the constraint.
