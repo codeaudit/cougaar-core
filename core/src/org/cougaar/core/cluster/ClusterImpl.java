@@ -123,6 +123,10 @@ import org.cougaar.util.PropertyParser;
  * @property org.cougaar.core.cluster.showTraffic
  *   If <em>true</em>, shows '+' and '-' on message sends and receives.  if
  *   <em>false</em>, also turns off reports of heartbeat ('.') and other status chars.
+ *
+ * @property org.cougaar.core.servlet.enable
+ *   Used to enable ServletService; disabled by default until this
+ *   Service has been tested.
  * </pre>
  */
 public class ClusterImpl 
@@ -372,6 +376,23 @@ public class ClusterImpl
         add(agentState.children[i]);
       }
     } else {
+      // TWRIGHT
+      if (Boolean.getBoolean("org.cougaar.core.servlet.enable")) {
+        // start up the Agent-level ServletService component
+        ComponentDescription nsscDesc = 
+          new ComponentDescription(
+              (getClusterIdentifier()+"ServletService"),
+              "Node.AgentManager.Agent.AgentServletService",
+              "org.cougaar.lib.web.service.LeafServletServiceComponent",
+              null,  //codebase
+              getClusterIdentifier().getAddress(),
+              null,  //certificate
+              null,  //lease
+              null); //policy
+        super.add(nsscDesc);
+      }
+      // TWRIGHT
+
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       add(new ComponentDescription(getClusterIdentifier()+"Blackboard",
                                    "Node.AgentManager.Agent.Blackboard",
