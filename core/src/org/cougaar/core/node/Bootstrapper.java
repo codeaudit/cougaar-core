@@ -22,6 +22,7 @@
 package org.cougaar.core.node;
 
 import org.cougaar.core.mts.*;
+import org.cougaar.core.util.XURLClassLoader;
 
 import java.io.*;
 import java.net.*;
