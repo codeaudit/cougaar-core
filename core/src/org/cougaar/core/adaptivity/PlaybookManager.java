@@ -138,7 +138,11 @@ public class PlaybookManager
    * Read the plays from a file.
    **/
   public void setupSubscriptions() {
-    String playFileName = getParameters().iterator().next().toString();
+    Iterator iter = getParameters().iterator();
+    if (!iter.hasNext()) {
+      logger.error("Missing playbook file name.");
+    }
+    String playFileName = iter.next().toString();
     try {
       Reader is = new InputStreamReader(getConfigFinder().open(playFileName));
       try {
