@@ -95,16 +95,13 @@ public class ScheduleImpl
     return max;
   }
 
-  /** get an enumeration of all of the schedule elements of this schedule.
-   * Note that this is not a copy, so you could get comodification errors
-   * if there is no synchronize on the schedule.
+  /** get an enumeration over a copy of all of the schedule elements of this 
+   * schedule.
+   * Note that this is a copy, changes to the underlying schedule will not be 
+   * reflected in the Enumeration.
    * @return Enumeration{ScheduleElement}
    */
   public synchronized Enumeration getAllScheduleElements() {
-    UnsupportedOperationException uae = 
-      new UnsupportedOperationException("ScheduleImpl.getAllScheduleElements");
-    uae.printStackTrace();
-    
     ArrayList copy = new ArrayList(this);
     return new Enumerator(copy);
   }

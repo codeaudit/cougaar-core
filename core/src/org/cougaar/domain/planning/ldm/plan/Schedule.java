@@ -42,7 +42,8 @@ public interface Schedule
    **/
   String getScheduleType();
                 
-  /** get an enumeration of all of the schedule elements of this schedule
+  /** get an enumeration of all of the schedule elements of this schedule.
+   *  Enumeration backed by a copy of the Schedule.
    * @return Enumeration{ScheduleElement}
    */
   Enumeration getAllScheduleElements();
