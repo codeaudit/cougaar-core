@@ -37,8 +37,6 @@ public class AckDirectiveMessage extends ClusterMessage
   implements NotPersistable
 {
   /** 
-   *	no-arg Constructor.
-   *  	@return org.cougaar.core.blackboard.DirectiveMessage
    */
   public AckDirectiveMessage(ClusterIdentifier theDirectiveSource,
                              ClusterIdentifier theDirectiveDestination,

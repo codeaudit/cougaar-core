@@ -43,7 +43,6 @@ public class SubTaskResult implements java.io.Serializable {
     * @param task  the subtask of the workflow
     * @param haschanged  whether this is a new allocationresult causing the recalculation
     * @param result the AllocationResult used to Aggregate the results of the workflow
-    * @return SubTaskResults
     */
   public SubTaskResult (Task task, boolean haschanged, AllocationResult result) {
     this.t = task;

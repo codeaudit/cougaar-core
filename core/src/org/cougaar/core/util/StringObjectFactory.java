@@ -461,7 +461,7 @@ public class StringObjectFactory {
     return null;
   }
 
-   /** @see #findInCache(HashMap,Class,name,Class[]) **/
+   /** @see #findInCache(HashMap,Class,String,Class[]) **/
   protected static void addToCache(HashMap classMethCache, Class c, Method m) {
     // found the method.  add to cache
     HashMap methCache = (HashMap)classMethCache.get(c);

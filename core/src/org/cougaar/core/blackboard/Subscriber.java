@@ -298,8 +298,8 @@ public class Subscriber implements BlackboardService {
    * @param realCollection The real container wrapped by the returned value.
    * @param isIncremental IFF true, returns a container that supports delta
    * lists.
-   * @return A Subscription.
-   * @see org.cougaar.core.blackboard.IncrementalSubscription.
+   * @return The resulting Subscription
+   * @see IncrementalSubscription
    **/
   public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental){
     Subscription sn;

@@ -51,7 +51,7 @@ public final class Role implements Serializable, BeanInfo {
   /** getRole - finds the specified role. Uses role cache
    *  
    * @param vs String name of the role
-   * @ return Role which has the specified name. Returns null if no such role exists.
+   * @return Role which has the specified name. Returns null if no such role exists.
    */
   public static Role getRole(String vs) {
     vs = vs.intern();

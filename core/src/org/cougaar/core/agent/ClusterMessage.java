@@ -43,24 +43,14 @@ public class ClusterMessage
   protected long theIncarnationNumber;
 
   /**
-   *   Constructor
-   *   <p>
-   *   @param source The ClusterIdentifier of creator cluster 
-   *		@param destination The ClusterIdentifier of the target cluster
-   *   @return org.cougaar.core.agent.ClusterMessage
+   * @param source The ClusterIdentifier of creator cluster 
+   * @param destination The ClusterIdentifier of the target cluster
    **/
   public ClusterMessage(ClusterIdentifier s, ClusterIdentifier d, long incarnationNumber) {
     super( s, d );
     theIncarnationNumber = incarnationNumber;
   }
-    
-  /** 
-   *	no-arg Constructor.
-   * 	This is not generally allowed in 1.1 event handling because EventObject requires
-   *	a source object during construction.  Base class does not support this type of 
-   *	construction so it cannot be done here.
-   *  	@return org.cougaar.core.agent.ClusterMessage
-   */
+
   public ClusterMessage() {
     super();
   }
@@ -77,7 +67,7 @@ public class ClusterMessage
    *  We provide the translation from the object version.  Unfortunately we cannot return
    *	a different type in java method overloading so the method signature is changed.
    *  Mark it final to allow the compilier to inline optimize the function.
-   * @return ClusterIdentifier Identifies the originator of this directive
+   * @return Identifies the originator of this directive
    */
   public final ClusterIdentifier getSource(){
     return (ClusterIdentifier)getOriginator();
@@ -87,7 +77,7 @@ public class ClusterMessage
    *	We provide the translation from the Object version in Message to the 
    *	Type sepecific version for the Cluster messageing subsystem.
    *  Mark it final to allow the compilier to inline optimize the function.
-   *	@return ClusterIdentifier Identifies the reciever of the directive
+   *	@return Identifies the reciever of the directive
    */
   public final ClusterIdentifier getDestination() {
     return (ClusterIdentifier)getTarget();
@@ -96,7 +86,7 @@ public class ClusterMessage
   /*
    *  Source is stored as na object so that message can service all objects.
    *  Mark it final to allow the compilier to inline optimize the function.
-   * @param asource - Set the ClusterIdentifier of the originator of this message
+   * @param asource Set the ClusterIdentifier of the originator of this message
    */
   public final void setSource(ClusterIdentifier asource) {
     setOriginator( asource );
@@ -105,7 +95,7 @@ public class ClusterMessage
   /*
    *  Target is stored as na object so that message can service all objects.
    *  Mark it final to allow the compilier to inline optimize the function.
-   * @param adestination - Set the ClusterIdentifier of the receiver of this message
+   * @param adestination Set the ClusterIdentifier of the receiver of this message
    */
   public final void setDestination(ClusterIdentifier adestination) {
     setTarget( adestination );

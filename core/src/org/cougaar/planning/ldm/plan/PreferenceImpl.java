@@ -48,7 +48,6 @@ public class PreferenceImpl
   /** Simple Constructor 
    * @param aspect
    * @param scoringfunction
-   * @return Preference
    * @see org.cougaar.planning.ldm.plan.AspectValue
    */
   
@@ -64,7 +63,6 @@ public class PreferenceImpl
    * @param aspect
    * @param scoringfunction
    * @param weight
-   * @return Preference
    * @see org.cougaar.planning.ldm.plan.AspectValue
    */
   public PreferenceImpl(int aspecttype, ScoringFunction scoringfunction, double weight) {

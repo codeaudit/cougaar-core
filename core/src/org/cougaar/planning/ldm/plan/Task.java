@@ -82,8 +82,8 @@ public interface Task
    * For example, in the task
    * "UnitA requisitions commodityB from UnitC"...
    * the PrepositionalPhrase is "from UnitC".
-   * @return Enum{PrepositionalPhrase}
-   * @see org.cougaar.Preposition
+   * @return An enumeration of PrepositionalPhrases
+   * @see Preposition
    **/
 			
   Enumeration getPrepositionalPhrases();
@@ -92,7 +92,7 @@ public interface Task
   /**
    * Return the first PrepositionalPhrase found with the
    * specified Preposition.  Returns null if not found.
-   * @parameter preposition One of the strings named in 
+   * @param preposition One of the strings named in 
    * org.cougaar.planning.ldm.plan.Preposition.
    **/
   PrepositionalPhrase getPrepositionalPhrase(String preposition);
@@ -103,8 +103,7 @@ public interface Task
    * For example, in the Task "fuel vehicles...", the
    * Verb is the object represented by "fuel".
    * <PRE> Verb mytaskverb = fueltask.getVerb(); </PRE>
-   * @return Verb  Returns the Verb Object of the Task.
-   * @see org.cougaar.Verb
+   * @return the Verb of the Task.
    **/
 			
   Verb getVerb();
@@ -113,7 +112,7 @@ public interface Task
   * Returns the Asset (or AssetGroup) that is being acted upon
   * by the Task.  For example, in the task "fuel
   * vehicle 14 ..." the direct object is "vehicle 14".
-  * @return Asset
+  * @return the Direct Object of the task.
   **/
   Asset getDirectObject();
 		
@@ -139,7 +138,6 @@ public interface Task
   /** return the preference for the given aspect type
     * will return null if there is not a preference defined for this aspect type
     * @param aspect_type The Aspect referenced by the preference
-    * @return Preference
     */
   Preference getPreference(int aspect_type);
   
@@ -147,14 +145,13 @@ public interface Task
     * from the defined preference (and scoring function)
     * will return -1 if there is not a preference defined for this aspect type
     * @param aspect_type The Aspect referenced by the preference
-    * @return double
     */
   double getPreferredValue(int aspect_type);
   
   /** Get the priority of this task.
     * Note that this should only be used when there are competing tasks
     * from the SAME customer.
-    * @return byte  The priority of this task
+    * @return  The priority of this task
     * @see org.cougaar.planning.ldm.plan.Priority
     */
   byte getPriority();
@@ -163,7 +160,6 @@ public interface Task
     * Get the Commitment date of this task.
     * After this date, the task is not allowed to be rescinded
     * or re-planned (change in preferences).
-    * @return Date
     */
   Date getCommitmentDate();
 
@@ -180,21 +176,19 @@ public interface Task
     * Will return true if the commitment date is undefined.
     * Will return false if we have passed the commitment date.
     * @param currentdate  The current date.
-    * @return boolean
     */
   boolean beforeCommitment(Date currentdate);
   
   /** Get a collection of the requested AuxiliaryQueryTypes (int).
     * Note:  if there are no types set, this will return an
     * array with one element = -1
-    * @return int[]
     * @see org.cougaar.planning.ldm.plan.AuxiliaryQueryType
     */
   int[] getAuxiliaryQueryTypes();
     
   /**
    * Get the problem Context (if any) for this task.
-   * @see org.cougaar.planning.ldm.plan.Context
+   * @see Context
    **/
   Context getContext();
 

@@ -53,10 +53,6 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- *
- *
- *
- * @see org.cougaar.component.ComponentServesPlugin
  */
 public interface ClusterObjectFactory {
 	
@@ -143,7 +139,7 @@ public interface ClusterObjectFactory {
    * @param anAsset - The Asset that the task is being assigned to.
    * @param estimatedresult - allowed to be null
    * @param aRole - The role of the Asset while performing this Task.
-   * @see org.cougaar.planning.ldm.Asset
+   * @see org.cougaar.planning.ldm.asset.Asset
    * @see org.cougaar.planning.ldm.plan.AllocationResult
    **/
   Allocation createAllocation(Plan aPlan, 

@@ -52,7 +52,6 @@ public class AssetRescindImpl extends DirectiveImpl
    * @param src
    * @param dest
    * @param assetUID
-   * @return AssetRescindImpl
    **/
   public AssetRescindImpl(ClusterIdentifier src, ClusterIdentifier dest, Plan plan,
                           Asset rescindedAsset, Asset rescindeeAsset, 

@@ -86,7 +86,6 @@ public class AssetTransferImpl extends PlanElementImpl
    * @param from  The Cluster that is provided this asset for use
    * @param estimatedresult
    * @param aRole
-   * @return AssetTransfer
    */
   public AssetTransferImpl(Plan p, Task t, Asset a, Schedule s, Asset to, ClusterIdentifier from, AllocationResult estimatedresult, Role aRole) {
     super(p, t);

@@ -37,8 +37,8 @@ public interface AllocationResultAggregator
    * @param wf The workflow that is using this aggregator to compute it's AllocationResult
    * @param tst The TaskScoreTable associated with this workflow
    * @param currentar The current AllocationResult
-   * @see org.cougaar.planning.ldm.plan.Workflow
-   * @see org.cougaar.clusteorbject.TaskPenaltyTable
+   * @see Workflow
+   * @see TaskScoreTable
    **/
   AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar);
   

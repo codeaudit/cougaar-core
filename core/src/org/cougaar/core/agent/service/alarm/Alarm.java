@@ -52,7 +52,7 @@ public interface Alarm {
 
   /** can be called by a client to cancel the alarm.  May or may not remove
    * the alarm from the queue, but should prevent expire from doing anything.
-   * @returns false IF the the alarm has already expired or was already canceled.
+   * @return false IF the the alarm has already expired or was already canceled.
    **/
   boolean cancel();
 }

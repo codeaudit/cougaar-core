@@ -37,12 +37,10 @@ public interface PrepositionalPhrase
   String getPreposition();
 	
   /** @return Object - the IndirectObject  which  will be of type
-   * Asset, Location, Schedule, Requisition, Vector, or OPLAN
+   * Asset, Location, Schedule, Vector, or other domain-dependent values.
    * @see org.cougaar.planning.ldm.asset.Asset
    * @see org.cougaar.planning.ldm.plan.Location
    * @see org.cougaar.planning.ldm.plan.Schedule
-   * @see org.cougaar.planning.ldm.plan.Requisition
-   * @see org.cougaar.planning.ldm.OPlan
    */
   Object getIndirectObject();
 	

@@ -47,7 +47,6 @@ public class Trigger implements java.io.Serializable {
     * @param monitor
     * @param tester
     * @param action
-    * @return Trigger
     */
   public Trigger(TriggerMonitor monitor, TriggerTester tester, TriggerAction action) {
     my_monitor = monitor;
@@ -68,7 +67,7 @@ public class Trigger implements java.io.Serializable {
     }
   }
   
-  /** @return TriggerMonitor  The monitor associated with this Trigger. */
+  /** @return The monitor associated with this Trigger. */
   public TriggerMonitor getMonitor() {
     return my_monitor;
   }

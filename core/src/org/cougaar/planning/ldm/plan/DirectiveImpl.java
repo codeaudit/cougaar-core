@@ -49,8 +49,6 @@ public class DirectiveImpl
   //protected transient Plan theplan;   // Made transient for Persistence
 
   /** 
-   *	no-arg Constructor.
-   * @return DirectiveImpl
    */
   protected DirectiveImpl() {
     super();

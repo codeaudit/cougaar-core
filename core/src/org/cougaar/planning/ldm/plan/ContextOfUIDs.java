@@ -33,8 +33,8 @@ import org.cougaar.core.util.UID;
 /** ContextOfUIDs is an implementation of Context. It is simply a collection of UIDs. 
  * It can be used when the "problem" or "problems" that a task is related to can be
  * be referenced by the "problem's" UID.
- * @see org.cougaar.core.util.UID
- * @see org.cougaar.lpm.plan.Context
+ * @see UID
+ * @see Context
  */
 public class ContextOfUIDs 
   extends AbstractCollection  implements Context, Collection

@@ -40,7 +40,6 @@ public class NodeMessage
    * <p>
    * @param source The NodeIdentifier of creator node 
    * @param destination The NodeIdentifier of the target node
-   * @return org.cougaar.core.node.NodeMessage
    **/
   public NodeMessage(NodeIdentifier s, NodeIdentifier d) {
     super(s, d);
@@ -52,7 +51,6 @@ public class NodeMessage
    * EventObject requires a source object during construction.  Base 
    * class does not support this type of construction so it cannot 
    * be done here.
-   * @return org.cougaar.core.node.NodeMessage
    */
   public NodeMessage() {
     super();

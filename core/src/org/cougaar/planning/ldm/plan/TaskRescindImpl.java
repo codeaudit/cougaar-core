@@ -49,7 +49,6 @@ public class TaskRescindImpl
   /** @param src
    * @param dest
    * @param t
-   * @return TaskRescindImpl
    **/
   public TaskRescindImpl(ClusterIdentifier src, ClusterIdentifier dest, Plan plan, Task t) {
     super.setSource(src);
@@ -67,7 +66,6 @@ public class TaskRescindImpl
 
   /**
    * Returns the task to be rescinded
-   * @return Task
    */
 
   public UID getTaskUID() {
@@ -76,7 +74,6 @@ public class TaskRescindImpl
      
   /**
    * Sets the task to be rescinded
-   * @param Task
    * @deprecated
    */
 
@@ -84,6 +81,10 @@ public class TaskRescindImpl
     taskUID = atask.getUID();
   }
 
+  /**
+   * Sets the task UID to be rescinded
+   * @deprecated
+   */
   public void setTaskUID(UID tuid) {
     taskUID = tuid;
   }

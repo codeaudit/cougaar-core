@@ -25,7 +25,8 @@ import org.cougaar.core.agent.*;
 
 import java.io.Serializable;
 
-/** A marker class describing a single change to an object (usually
+/** A marker class describing a single change to an object (usually, but
+ * not required to be
  * a Publishable object).  Subclasses describe specific types of changes. <p>
  *
  * hashCode and equals methods should compute their return values based
@@ -37,7 +38,7 @@ import java.io.Serializable;
  * be as compact as possible and must be Serializable so that they are
  * transferrable between distributed clusters and persistable. <p>
  *
- * @see org.cougaar.planning.ldm.plan.Publishable
+ * @see Publishable
  **/
 
 public interface ChangeReport 

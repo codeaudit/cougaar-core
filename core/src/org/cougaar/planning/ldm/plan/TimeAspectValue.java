@@ -34,7 +34,6 @@ public class TimeAspectValue extends AspectValue {
   /** Simple Constructor that takes the time value in Date format.
    * @param type  The AspectType
    * @param adate  The associated date.
-   * @return TimeAspectValue
    */
   public TimeAspectValue(int type, Date adate) {
     super(type, (double) adate.getTime());
@@ -43,13 +42,12 @@ public class TimeAspectValue extends AspectValue {
   /** Simple Constructor that takes the time value in long format.
    * @param type  The AspectType
    * @param along  The associated date.
-   * @return TimeAspectValue
    */
   public TimeAspectValue(int type, long along) {
     super(type, (double) along);
   }
    
-  /** @return Date The Date representation of the value of the aspect. */
+  /** @return The Date representation of the value of the aspect. */
   public Date dateValue() {
     return new Date(Math.round(value));
   }

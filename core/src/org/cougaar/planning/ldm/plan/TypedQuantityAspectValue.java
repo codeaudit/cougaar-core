@@ -35,15 +35,14 @@ public class TypedQuantityAspectValue extends AspectValue {
   
   /** Simple Constructor that takes the asset and the quantity.
    * @param anAsset  The Asset - probably a prototype
-   * @param aQuantity  The amount of assets.
-   * @return TypedQuantityAspectValue
+   * @param aQuantity  The quantity of the referenced asset type.
    */
   public TypedQuantityAspectValue(Asset anAsset, double aQuantity) {
     super(AspectType.TYPED_QUANTITY, aQuantity);
     this.theasset = anAsset;
   }
    
-  /** @return Asset The Asset represented by this aspect */
+  /** @return The Asset represented by this aspect */
   public Asset getAsset() {
     return theasset;
   }

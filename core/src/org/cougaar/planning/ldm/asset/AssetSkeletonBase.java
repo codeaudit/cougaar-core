@@ -153,7 +153,7 @@ public abstract class AssetSkeletonBase
   }
 
   /** Replace a PropertyGroupSchedule in the set properties.
-   *  @oaram schedule PropertyGroupSchedule to replace.
+   *  @param schedule PropertyGroupSchedule to replace.
    **/
   public void replaceOtherPropertyGroupSchedule(PropertyGroupSchedule schedule) {
     setLocalPGSchedule(schedule);

@@ -119,7 +119,7 @@ public class Transaction {
    * @return A List of ChangeReport instances or null.  Implementations
    * are encouraged to return null if no trackable changes were made, rather
    * than an empty List.
-   * @see org.cougaar.planning.ldm.plan.ChangeReport
+   * @see ChangeReport
    **/
   public synchronized final List getChangeReports(Object o) {
     // be careful not to create map unless we need to...

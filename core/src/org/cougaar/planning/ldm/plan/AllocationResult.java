@@ -48,7 +48,6 @@ public class AllocationResult
    * @param success  Whether the allocationresult violated any preferences.
    * @param aspecttypes  The AspectTypes (and order) of the results.
    * @param result  The value for each aspect.
-   * @return AllocationResult
    */
   public AllocationResult(double rating, boolean success, int[] aspecttypes, double[] result) {
     isSuccess = success;
@@ -65,7 +64,6 @@ public class AllocationResult
    * each phased List of results.
    * For Example a phased answer may look like
    * [ [10, 100.00, c0], [5, 50.00, c3], [5, 50.00, c6] ]
-   * @return AllocationResult
    */
   public AllocationResult(double rating, boolean success, int[] aspecttypes,
                           double[] rollup, Enumeration allresults)
@@ -83,7 +81,6 @@ public class AllocationResult
    * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
    * @param phasedresults  A List of the phased results. The List should contain
    * one List of AspectValues for each phase of the results.  
-   * @return AllocationResult
    */
   public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, List phasedresults) {
     isSuccess = success;
@@ -97,7 +94,6 @@ public class AllocationResult
    * @param rating The confidence rating of this result.
    * @param success  Whether the allocationresult violated any preferences.
    * @param aspectvalues  The AspectValues(can be aspectvalue subclasses) that represent the results.  
-   * @return AllocationResult
    */
   public AllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
     isSuccess = success;

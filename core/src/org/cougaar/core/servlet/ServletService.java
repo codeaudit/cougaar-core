@@ -50,7 +50,7 @@ import org.cougaar.core.component.Service;
  *   http://java.sun.com/docs/books/tutorial/servlets</a> for
  * tutorials on how to write Servlets and HttpServlets.
  *
- * @see ServletServiceProvider
+ * @see org.cougaar.lib.web.service.LeafServletServiceComponent
  */
 public interface ServletService extends Service
 {

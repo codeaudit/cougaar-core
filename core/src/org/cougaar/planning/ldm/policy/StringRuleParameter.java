@@ -66,7 +66,7 @@ public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.
 
   /**
    * Get parameter value (String)
-   * @returns Object parameter value (String). Note : could be null.
+   * @return Object parameter value (String). Note : could be null.
    */
   public Object getValue() {
     return my_value; 
@@ -74,7 +74,7 @@ public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.
 
   /**
    * Set parameter value
-   * @param Object new_value : must be String
+   * @param  new_value : must be String
    * @throws RuleParameterIllegalValueException (all strings accepted)
    */
   public void setValue(Object new_value) 
@@ -90,7 +90,7 @@ public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.
   }
 
   /**
-   * @param Object test_value : must be String
+   * @param test_value must be String
    * @return true if Object is a string, false otherwise
    */
   public boolean inRange(Object test_value)

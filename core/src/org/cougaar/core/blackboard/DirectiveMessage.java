@@ -48,7 +48,6 @@ public class DirectiveMessage extends ClusterMessage
    
   /** 
    *	no-arg Constructor.
-   *  	@return org.cougaar.core.blackboard.DirectiveMessage
    */
   public DirectiveMessage() {
     super();
@@ -56,7 +55,6 @@ public class DirectiveMessage extends ClusterMessage
     
   /** constructor that takes a directive
    * @param aDirective
-   * @return org.cougaar.core.blackboard.DirectiveMessage
    */
   public DirectiveMessage(Directive[] someDirectives) {
     directives = someDirectives;
@@ -66,7 +64,6 @@ public class DirectiveMessage extends ClusterMessage
    * @param source
    * @param destination
    * @param aDirective
-   * @return org.cougaar.core.blackboard.DirectiveMessage
    */
   public DirectiveMessage(ClusterIdentifier source, ClusterIdentifier destination,
                           long incarnationNumber,
