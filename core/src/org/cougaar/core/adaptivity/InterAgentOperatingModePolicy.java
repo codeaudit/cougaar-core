@@ -27,12 +27,12 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
 /**
- * A remotely-controlled Condition. Allows an adaptivity engine in one
- * agent to control a Condition of the adaptivity engine in another
- * agent. It is instantiated in the controlling agent and transferred
+ * A remotely-controlled OperatingModePolicy. Allows a policy manager in one
+ * agent to control a Policy of the in another. It is instantiated in 
+ * the controlling agent and transferred
  * to the controlled agent using the Relay logic providers. A copy
  * of the instance is published in the controlled agent's blackboard
- * and used like any other Condition.
+ * and used like any other OperatingModePolicy.
  **/
 public class InterAgentOperatingModePolicy
   extends OperatingModePolicy

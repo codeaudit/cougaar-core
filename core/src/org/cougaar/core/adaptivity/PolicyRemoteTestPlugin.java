@@ -39,6 +39,12 @@ import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.util.GenericStateModelAdapter;
 
 
+/**
+ * Test plugin that reads policies from a file, creates 
+ * InterAgentOperatingModePolicies and alternately forwards 
+ * the policy to another agent and revokes the policy.
+ *
+ **/
 public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 
   private boolean published = false;
@@ -112,7 +118,6 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 	policies[i].setTarget(new ClusterIdentifier("Provider"));
 	getBlackboardService().publishAdd(policies[i]);
 	published = true;
-	startTimer(75000);
       }
     } else {
       if (logger.isInfoEnabled()) logger.info("Removing policy");
@@ -123,5 +128,6 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
       }
       published = false;
     }
+    startTimer(75000);
   }
 }

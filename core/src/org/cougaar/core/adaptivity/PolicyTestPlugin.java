@@ -34,6 +34,10 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
+/**
+ * Test plugin that alternately constrains and unconstrains
+ * the playbook with an operating mode policy it read froma file
+ */
 public class PolicyTestPlugin extends ServiceUserPlugin {
   private PlaybookConstrainService playbookConstrainService;
 

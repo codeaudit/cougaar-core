@@ -29,9 +29,11 @@ import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.core.component.ServiceBroker;
 
 /** 
- * TBD
  * A PolicyManager that handles OperatingModePolicies
- * Must handle processing of policies: expand, forward, deconflict
+ * For now, it listens for OperatingModePolicies and uses the 
+ * PlaybookConstrainService to constrain the playbook with the OMPolicies.
+ * In the future, it will forward InterAgentOperatingModePolicies to
+ * other entities.
  */
 
 public class OperatingModePolicyManager extends ServiceUserPluginBase {
@@ -83,6 +85,9 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     }
   }
 
+  /**
+   * Constrain the playbook with the new policies
+   */
   private void addPolicies(Collection newPolicies) {
     if (logger.isInfoEnabled()) logger.info("Adding policy");
     if (haveServices()) {
@@ -92,6 +97,9 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     }
   }
 
+  /**
+   * Unconstrain the playbook with the removed policies
+   */
   private void removePolicies(Collection removedPolicies)  {
     if (logger.isInfoEnabled()) logger.info("Removing policy");
     if (haveServices()) {
@@ -101,6 +109,10 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     }
   }
   
+  /**
+   * Unconstrain, then reconstrain the playbook with the
+   * changed policies.
+   */
   private void changePolicies(Collection changedPolicies) {
     if (logger.isInfoEnabled()) logger.info("Changing policy");
     if (haveServices()) {

@@ -33,7 +33,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Plugin that reads policies from files and publishes them
+ * Plugin that reads OperatingModePolicies from files and publishes them
  * to the blackboard
  **/
 public class PolicyInjectorPlugin extends ComponentPlugin {
