@@ -21,15 +21,7 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.service.ThreadControlService;
-
-import java.util.ArrayList;
-
-public interface TimeSlicePolicy extends TimeSliceConsumer
+interface TimeSliceConsumer
 {
-    void setNode(PolicyTreeNode node);
-
-    TimeSlice getSlice(TimeSliceConsumer consumer);
-    void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice);
-
+    boolean offerSlice(TimeSlice slice);
 }

@@ -55,7 +55,7 @@ final class TimeSliceScheduler extends Scheduler
 
 
     // Parent offers us a slice
-    synchronized boolean offerSlice(TimeSlice slice) {
+    public synchronized boolean offerSlice(TimeSlice slice) {
 	if (!pendingThreads.isEmpty()) {
 	    runNextThread(slice);
 	    return true;

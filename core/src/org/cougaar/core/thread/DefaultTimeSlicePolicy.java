@@ -23,12 +23,12 @@ package org.cougaar.core.thread;
 
 import org.cougaar.core.service.ThreadControlService;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 
 
 public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 {
-    static final long DEFAULT_SLICE_DURATION = 1000;
+    static final long DEFAULT_SLICE_DURATION = 10000; // better
 
     int outstandingChildSliceCount;
     TimeSlice[] timeSlices;
@@ -37,6 +37,8 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     DefaultTimeSlicePolicy() {
 	outstandingChildSliceCount = 0;
     }
+
+
 
 
     public String toString() {
@@ -59,7 +61,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
 
 
-    // Only the root does this
+    // Find a slice that's not in use
     TimeSlice findSlice() {
 	TimeSlice slice = null;
 	for (int i=0; i<timeSlices.length; i++) {
@@ -70,96 +72,121 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     }
 
 
-    public TimeSlice getSlice() {
+
+    // Get a slice for a child.  This version passes the request all
+    // the way to the root, which is the only owner of slices.
+    public synchronized TimeSlice getSlice(TimeSliceConsumer consumer) {
 	TimeSlicePolicy parent = node.getParentPolicy();
+
 	if (parent != null) {
 	    return parent.getSlice(this);
 	} else {
-	    System.err.println("Called getSlice() on the root policy!");
+	    return getLocalSlice(consumer);
+	}
+    }
+
+
+    private void reinitializeSlice(TimeSlice slice) {
+	long start = System.currentTimeMillis();
+	long end = start + DEFAULT_SLICE_DURATION;
+	slice.start = start;
+	slice.end = end;
+    }
+
+    private TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
+	int use_count = node.getScheduler().runningThreadCount() +
+	    outstandingChildSliceCount;
+	if (use_count >= node.getScheduler().maxRunningThreadCount()) {
+	    if (Scheduler.DebugThreads)
+		System.out.println("No slices available from " 
+				   +this+
+				   " for " +consumer+
+				   "; " +outstandingChildSliceCount+
+				   " outstanding");
 	    return null;
 	}
-    }
 
-    public void releaseSlice(TimeSlice slice) {
-	TimeSlicePolicy parent = node.getParentPolicy();
-	if (parent != null) {
-	    parent.releaseSlice(this, slice);
-	} else {
-	    System.err.println("Called releaseSlice() on the root policy!");
-	}
-    }
-
-
-    public synchronized TimeSlice getSlice(TimeSlicePolicy child) {
-	TimeSlice slice = null;
-	TimeSlicePolicy parent = node.getParentPolicy();
-
-	if (parent != null) {
-	    slice =  parent.getSlice(this);
-	} else {
-	    // The root.
-	    int use_count = node.getScheduler().runningThreadCount() +
-		outstandingChildSliceCount;
-	    if (use_count >= node.getScheduler().maxRunningThreadCount()) {
-		if (Scheduler.DebugThreads)
-		    System.out.println("No slices available from " 
-				       +this+
-				       " for " +child+
-				       "; " +outstandingChildSliceCount+
-				       " outstanding");
-		return null;
-	    }
-
-	    slice = findSlice();
+	TimeSlice slice = findSlice();
 	    
-	    if (slice != null) {
-		++outstandingChildSliceCount;
+	if (slice != null) {
+	    ++outstandingChildSliceCount;
 
-		long start = System.currentTimeMillis();
-		long end = start + DEFAULT_SLICE_DURATION;
-		slice.start = start;
-		slice.end = end;
-		slice.in_use = true;
+	    reinitializeSlice(slice);
+	    slice.in_use = true;
 		
-		if (Scheduler.DebugThreads)
-		    System.out.println(this +
-				       " made a slice for " +child+
-				       "; " +outstandingChildSliceCount+
-				       " now outstanding");
-	    }
+	    if (Scheduler.DebugThreads)
+		System.out.println(this +
+				   " made a slice for " +consumer+
+				   "; " +outstandingChildSliceCount+
+				   " now outstanding");
 	}
 	
 	return slice;
     }
 
-    public void releaseSlice(TimeSlicePolicy child, TimeSlice slice) {
+
+
+    // Release a slice from a child.  This version passes it all the
+    // way to the root of the tree, which is the only owner of slices.
+    public void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice) {
 	TimeSlicePolicy parent = node.getParentPolicy();
-	slice.in_use = false;
 	if (parent != null) {
 	    parent.releaseSlice(this, slice);
 	} else {
-	    // The root of the tree: notify everyone that slices may be
-	    // available.
-	    --outstandingChildSliceCount;
-	    if (Scheduler.DebugThreads)
-		System.out.println(this +
-				   " released a slice from " +child+
-				   "; " +outstandingChildSliceCount+
-				   " now outstanding");
-	    if (!slice.isExpired()) offerSlice(slice);
+	    releaseLocalSlice(consumer, slice);
 	}
     }
 
 
-    // Parent wants to give us a slice
-    public boolean offerSlice(TimeSlice slice) {
-	if (node.getScheduler().offerSlice(slice)) return true;
-	// loop through children until one of them accepts
-	Iterator itr = node.getChildren();
-	while (itr.hasNext()) {
-	    TimeSlicePolicy child = (TimeSlicePolicy) itr.next();
-	    if (child.offerSlice(slice)) return true;
+
+    private void releaseLocalSlice (TimeSliceConsumer consumer,
+				    TimeSlice slice) 
+    {
+	// The root of the tree: notify everyone that slices may be
+	// available.
+	--outstandingChildSliceCount;
+	if (Scheduler.DebugThreads)
+	    System.out.println(this +
+			       " released a slice from " +consumer+
+			       "; " +outstandingChildSliceCount+
+			       " now outstanding");
+	if (slice.isExpired())  reinitializeSlice(slice);
+
+	offerSlice(slice);
+    }
+
+
+
+
+    // Round-robin scheduling
+    private int currentIndex = -1;
+    private TimeSliceConsumer getNextConsumer() {
+	TimeSliceConsumer result = null;
+	ArrayList children = node.getChildren();
+	if (currentIndex== -1) {
+	    result = node.getScheduler();	
+	    currentIndex = children.size() == 0 ? -1 : 0;
+	} else {
+	   PolicyTreeNode child =(PolicyTreeNode) children.get(currentIndex++);
+	   result = child.getPolicy();
+	   if (currentIndex == children.size()) currentIndex = -1;
 	}
+
+	return result;
+    }
+
+
+
+    // Parent wants to give us a slice. Offer it to consumers in
+    // round-robin style.
+    public boolean offerSlice(TimeSlice slice) {
+	int lastIndex = currentIndex;
+	while (true) {
+	    if (getNextConsumer().offerSlice(slice)) return true;
+	    if (lastIndex == currentIndex) break;
+	}
+
+	slice.in_use = false;
 	return false;
 
     }

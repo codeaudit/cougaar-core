@@ -22,7 +22,6 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 final class PolicyTreeNode
 {
@@ -63,8 +62,8 @@ final class PolicyTreeNode
 	children.add(child);
     }
 
-    Iterator getChildren() {
-	return children.iterator();
+    ArrayList getChildren() {
+	return children;
     }
 
 

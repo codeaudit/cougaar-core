@@ -27,7 +27,8 @@ import org.cougaar.util.PropertyParser;
 import java.util.Comparator;
 
 
-abstract class Scheduler implements ThreadControlService 
+abstract class Scheduler 
+    implements ThreadControlService, TimeSliceConsumer
 {
     static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
@@ -114,7 +115,7 @@ abstract class Scheduler implements ThreadControlService
 
 
 
-    boolean offerSlice(TimeSlice slice) {
+    public boolean offerSlice(TimeSlice slice) {
 	return false;
     }
 
@@ -124,11 +125,11 @@ abstract class Scheduler implements ThreadControlService
     }
 
     TimeSlice getSlice() {
-	return getPolicy().getSlice();
+	return getPolicy().getSlice(this);
     }
 
     void releaseSlice(TimeSlice slice) {
-	getPolicy().releaseSlice(slice);
+	getPolicy().releaseSlice(this, slice);
     }
 
     void addPendingThread(ControllableThread thread) 
