@@ -32,6 +32,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 
 /**
@@ -146,6 +147,13 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   protected void startTimer(final long delay) {
     if (timer != null) return;  // update already scheduled
 //     if (logger.isDebugEnabled()) logger.debug("Starting timer " + delay);
+    if (getBlackboardService() == null && 
+        logger != null && 
+        logger.isWarnEnabled()) {
+      logger.warn(
+          "Started service alarm before the blackboard service"+
+          " is available");
+    }
     timer = new Alarm() {
       long expirationTime = System.currentTimeMillis() + delay;
       boolean expired = false;
@@ -153,7 +161,17 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
       public synchronized void expire() {
         if (!expired) {
           expired = true;
-          getBlackboardService().signalClientActivity();
+          BlackboardService bb = getBlackboardService();
+          if (bb != null) {
+            bb.signalClientActivity();
+          } else {
+            if (logger != null && logger.isWarnEnabled()) {
+              logger.warn(
+                  "Alarm started "+delay+" millis ago has expired,"+
+                  " but the blackboard service is null.  Plugin "+
+                  " model state is "+getModelState());
+            }
+          }
         }
       }
       public boolean hasExpired() { return expired; }
