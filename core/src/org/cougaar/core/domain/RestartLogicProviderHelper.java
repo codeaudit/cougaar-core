@@ -49,10 +49,14 @@ public abstract class RestartLogicProviderHelper {
        MessageAddress self,
        MessageAddress cid,
        MessageAddress dest) {
+    // Do getPrimary on all non-null MessageAddresses to avoid comparing attributes
     return 
       cid != null ? 
-      cid.equals(dest) : 
-      (dest != null && !dest.equals(self));
+      cid.getPrimary().equals((dest != null ? dest.getPrimary() : dest)) : 
+      (dest != null && 
+       !dest.getPrimary().equals((self != null ? 
+				  self.getPrimary() : 
+				  self)));
   }
 
 }
