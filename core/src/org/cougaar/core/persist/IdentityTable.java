@@ -21,11 +21,11 @@
 
 package org.cougaar.core.persist;
 
-import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.cougaar.util.log.Logger;
 
 /**
