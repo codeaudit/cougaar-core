@@ -151,8 +151,7 @@ import org.cougaar.util.PropertyParser;
  *   <em>false</em>, also turns off reports of heartbeat ('.') and other status chars.
  *
  * @property org.cougaar.core.servlet.enable
- *   Used to enable ServletService; disabled by default until this
- *   Service has been tested.
+ *   Used to enable ServletService; defaults to "true".
  * </pre>
  */
 public class ClusterImpl 
@@ -416,7 +415,10 @@ public class ClusterImpl
         add(agentState.children[i]);
       }
     } else {
-      if (Boolean.getBoolean("org.cougaar.core.servlet.enable")) {
+      String enableServlets = 
+        System.getProperty("org.cougaar.core.servlet.enable");
+      if ((enableServlets == null) ||
+          (enableServlets.equalsIgnoreCase("true"))) {
         // start up the Agent-level ServletService component
         ComponentDescription nsscDesc = 
           new ComponentDescription(
