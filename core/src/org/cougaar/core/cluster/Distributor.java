@@ -237,6 +237,13 @@ public class Distributor {
     return blackboard.countBlackboard(predicate);
   }
 
+  /** Pass thru to blackboard to safely return the size of the blackboard
+   *  collection.
+   **/
+  public synchronized int getBlackboardSize() {
+    return blackboard.getBlackboardSize();
+  }
+
   /**
    * Rehydrate this blackboard. If persistence is off, just create a
    * MessageManager that does nothing. If persistence is on, try to

@@ -279,6 +279,10 @@ public class Blackboard extends Subscriber
     return c;
   }
 
+  public int getBlackboardSize() {
+    return everything.size();
+  }
+
   /**
    * Process incoming directive messages. All messages have been
    * blessed by the message manager. The messages are implicitly

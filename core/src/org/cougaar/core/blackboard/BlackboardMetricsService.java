@@ -45,5 +45,9 @@ public interface BlackboardMetricsService extends Service {
   /** @return int A count of the Tasks currently found in the Blackbaord **/
   int getTaskCount();
 
+  /** @return int A count of the total number of objects currently 
+   * found in the Blackbaord **/
+  int getBlackboardObjectCount();
+
 }
 

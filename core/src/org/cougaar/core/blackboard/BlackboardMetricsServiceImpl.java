@@ -62,6 +62,12 @@ public class BlackboardMetricsServiceImpl implements BlackboardMetricsService {
     return distributor.getBlackboardCount(taskpred);
   }
 
+  /** @return int A count of the total number of objects currently 
+   * found in the Blackbaord **/
+  public int getBlackboardObjectCount() {
+    return distributor.getBlackboardSize();
+  }
+
   // various UnaryPredicates
   private final UnaryPredicate taskpred = new UnaryPredicate() {
     public boolean execute(Object o) {
