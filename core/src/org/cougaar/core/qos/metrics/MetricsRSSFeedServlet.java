@@ -130,7 +130,7 @@ public class MetricsRSSFeedServlet
 	} else {
 	    Object data = metric.getRawValue();
 	    out.print("<description>");
-	    out.print(" Type ");
+	    out.print(" Type=");
 	    if (data instanceof Float || data instanceof Double)  
 		out.print("Double");
 	    else if (data instanceof Number)
@@ -142,24 +142,26 @@ public class MetricsRSSFeedServlet
 	    else if (data instanceof Character)
 		out.print("Character");
 
-	    out.print(" Value ");
+	    out.print(" Value=");
 	    out.print(data.toString());
 
-	    out.print(" Credibility ");
+	    out.print(" Credibility=");
 	    out.print(metric.getCredibility());
 
 	    if (metric.getUnits() != null) {
-		out.print(" Units ");
+		out.print(" Units=");
 		out.print(metric.getUnits());
 	    }
 
-	    out.print(" Halflife ");
+	    out.print(" Halflife=");
 	    out.print(metric.getHalflife());
 	    out.print("</description>\n");
 
-	    out.print("<source>");
-	    out.print(metric.getProvenance());
-	    out.print("</source>\n");
+	    if (metric.getProvenance() != null) {
+		out.print("<source>");
+		out.print(metric.getProvenance());
+		out.print("</source>\n");
+	    }
 
 
 	    // pubDate
