@@ -23,6 +23,7 @@ package org.cougaar.core.node;
 
 import java.io.PrintStream;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.Logging;
 
 /** implement a low-priority heartbeat function which
  * just prints '.'s every few seconds when nothing else
@@ -130,7 +131,7 @@ public final class Heartbeat
   }
 
   private static void showProgress(String p) {
-    System.out.print(p);
+    Logging.printDot(p);
   }
 
   /** @return an estimate of how long in milliseconds the VM has been 
