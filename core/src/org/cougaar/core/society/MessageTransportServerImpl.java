@@ -28,12 +28,11 @@ import org.cougaar.core.naming.NamingService;
  * org.cougaar.message.transport.aspects property. */
 
 public class MessageTransportServerImpl 
-  extends ContainerSupport
-  implements ContainerAPI
+    extends ContainerSupport
+    implements ContainerAPI, ServiceProvider, Debug, MessageTransportCutpoints
 {
 
     // Factories
-    private MessageTransportServerServiceFactory serviceFactory;
     protected MessageTransportFactory transportFactory;
     protected SendQueueFactory sendQFactory;
     protected ReceiveQueueFactory recvQFactory;
@@ -109,7 +108,6 @@ public class MessageTransportServerImpl
 	if (aspects == null) aspects = new ArrayList();
 	aspects.add(watcherAspect);
 
-	serviceFactory = new MessageTransportServerServiceFactoryImpl(aspects);
 	transportFactory = 
 	    new MessageTransportFactory(id, registry, nameSupport, aspects);
 	receiveLinkFactory = new ReceiveLinkFactory(registry,
@@ -154,69 +152,52 @@ public class MessageTransportServerImpl
 
 
 
-    // ServiceProvider factory
 
-
-
-    /** 
-     * This class instantiates the service proxies for the Message
-     * Transport Service.  Since this factory is a subclass of
-     * AspectFactory, aspects can be attached to the proxies when
-     * they're instantiated.  */
-    private final class MessageTransportServerServiceFactoryImpl
-	extends AspectFactory
-	implements MessageTransportServerServiceFactory
+    private boolean validateRequestor(Object requestor, 
+				      Class serviceClass) 
     {
+	return requestor instanceof Node &&
+	    serviceClass == MessageTransportServer.class;
+    }
 
-	public MessageTransportServerServiceFactoryImpl(ArrayList aspects) {
-	    super(aspects);
-	}
-
-	private boolean validateRequestor(Object requestor, 
-					  Class serviceClass) 
-	{
-	    return requestor instanceof Node &&
-		serviceClass == MessageTransportServer.class;
-	}
-
-	public Object getService(ServiceBroker sb, 
-				 Object requestor, 
-				 Class serviceClass) 
-	{
-	    if (validateRequestor(requestor, serviceClass)) {
-		Object proxy = 
-		    new MessageTransportServerProxy(registry, sendQ);
-		return attachAspects(proxy, ServiceProxy);
-	    } else {
-		return null;
+    // Hmm, this is copied from AspectFactory, since we can't extend
+    // it. Ugh.
+    private Object attachAspects(Object delegate, int cutpoint)
+    {
+	if (aspects != null) {
+	    Iterator itr = aspects.iterator();
+	    while (itr.hasNext()) {
+		MessageTransportAspect aspect = 
+		    (MessageTransportAspect) itr.next();
+		Object candidate = aspect.getDelegate(delegate, cutpoint);
+		if (candidate != null) delegate = candidate;
+		if (DEBUG_TRANSPORT) System.out.println("======> " + delegate);
 	    }
 	}
+	return delegate;
+    }
 
 
-	public void releaseService(ServiceBroker sb, 
-				   Object requestor, 
-				   Class serviceClass, 
-				   Object service)
-	{
+    public Object getService(ServiceBroker sb, 
+			     Object requestor, 
+			     Class serviceClass) 
+    {
+	if (validateRequestor(requestor, serviceClass)) {
+	    Object proxy = 
+		new MessageTransportServerProxy(registry, sendQ);
+	    return attachAspects(proxy, ServiceProxy);
+	} else {
+	    return null;
 	}
-
-	// This is an odd place to put this method.  It will stay here
-	// for now because Communications expects to find it here and
-	// we don't want to edit that class.
-//  	public NameServer getDefaultNameServer() {
-//  	    return nameSupport.getNameServer();
-//  	}
-
     }
 
 
-
-    // Return the sevice-proxy factory (singleton for now)
-    public MessageTransportServerServiceFactory getProvider() {
-	return serviceFactory;
+    public void releaseService(ServiceBroker sb, 
+			       Object requestor, 
+			       Class serviceClass, 
+			       Object service)
+    {
     }
-
-
 
 
 

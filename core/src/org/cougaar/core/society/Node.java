@@ -573,7 +573,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 //      }
     MessageTransportServerImpl mtsi = new MessageTransportServerImpl(name);
     add(mtsi);
-    getServiceBroker().addService(MessageTransportServer.class, mtsi.getProvider());
+    getServiceBroker().addService(MessageTransportServer.class, mtsi);
     theMessenger = (MessageTransportServer)
       getServiceBroker().getService(this, MessageTransportServer.class, null);
     Communications.setDefaultMessageTransport(theMessenger);
