@@ -24,6 +24,7 @@ package org.cougaar.core.node;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.agent.AgentContainer;
 
 /** Service offered to components of NodeAgent to allow sufficient 
  * non-local access to the Node for control purposes.
@@ -32,5 +33,5 @@ public interface NodeControlService
   extends Service 
 {
   ServiceBroker getRootServiceBroker();
-  Container getRootContainer();
+  AgentContainer getRootContainer();
 }
