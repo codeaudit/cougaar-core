@@ -55,6 +55,13 @@ public interface ComponentInitializerService extends Service {
     throws InitializerException;
 
   /**
+   * @return true if the component initializer implementation includes
+   * the default components (i.e. template based, such as the XML
+   * initializer)
+   */
+  boolean includesDefaultComponents();
+
+  /**
    * Generic exception for component initializer failures.
    */
   public class InitializerException extends Exception {

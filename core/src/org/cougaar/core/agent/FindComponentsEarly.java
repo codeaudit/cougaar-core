@@ -322,6 +322,8 @@ implements Component
     // get ".ini" descriptions
     ComponentInitializerService cis = (ComponentInitializerService)
       sb.getService(this, ComponentInitializerService.class, null);
+    boolean includesDefaultComponents = 
+      cis.includesDefaultComponents();
     try {
       ComponentDescription[] descs =
         cis.getComponentDescriptions(
@@ -339,9 +341,7 @@ implements Component
       sb.releaseService(this, ComponentInitializerService.class, cis);
     }
 
-    String configFormat =
-      System.getProperty("org.cougaar.core.node.InitializationComponent");
-    if (!"XML".equals(configFormat)) {
+    if (!includesDefaultComponents) {
       // backwards compatibility for non-XML configs!
       //
       // convert to component descriptions, for priority-based sorting

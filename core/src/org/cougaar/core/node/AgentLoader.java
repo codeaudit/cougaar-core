@@ -225,15 +225,14 @@ implements Component
   }
   
   private ComponentDescription[] readAgentsFromConfig() {
-    String configFormat =
-      System.getProperty("org.cougaar.core.node.InitializationComponent");
-    if (!"XML".equals(configFormat)) {
-      // backwards compatibility for non-XML configs!
-      ComponentDescription[] agentDescs = null;
-      try {
-        ComponentInitializerService cis = (ComponentInitializerService) 
-          sb.getService(
-              this, ComponentInitializerService.class, null);
+    ComponentDescription[] agentDescs = null;
+
+    // backwards compatibility for non-XML configs!
+    try {
+      ComponentInitializerService cis = (ComponentInitializerService)
+        sb.getService(this, ComponentInitializerService.class, null);
+      boolean oldStyle = !cis.includesDefaultComponents();
+      if (oldStyle) {
         if (log.isInfoEnabled()) {
           log.info("Asking component initializer service for agents");
         }
@@ -243,21 +242,16 @@ implements Component
           cis.getComponentDescriptions(
               localAgent.getAddress(),
               "Node.AgentManager");
-        sb.releaseService(this, ComponentInitializerService.class, cis);
-        if (log.isInfoEnabled()) {
-          log.info(
-              "Using ComponentInitializerService list of " +
-              agentDescs.length + " agents");
+        if (agentDescs == null) {
+          agentDescs = new ComponentDescription[0];
         }
-      } catch (Exception e) {
-        throw new Error(
-            "Couldn't initialize list of agents from"+
-            " ComponentInitializerService ", e);
       }
-      if (agentDescs == null) {
-        agentDescs = new ComponentDescription[0];
+      sb.releaseService(this, ComponentInitializerService.class, cis);
+      if (oldStyle) {
+        return agentDescs;
       }
-      return agentDescs;
+    } catch (Exception e) {
+      throw new Error("Couldn't initialize list of agents", e);
     }
 
     if (initialAgents == null) {

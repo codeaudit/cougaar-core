@@ -224,7 +224,11 @@ public class XMLComponentInitializerServiceProvider
 
           return ret;
         }
-        
+
+        public boolean includesDefaultComponents() {
+          return true;
+        }
+
         private List getAgentDescs(
             String agentName) throws Exception {
           if (agentName == null) {

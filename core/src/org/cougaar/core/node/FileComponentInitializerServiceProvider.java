@@ -99,5 +99,9 @@ public class FileComponentInitializerServiceProvider implements ServiceProvider 
             e);
       }
     }
+
+    public boolean includesDefaultComponents() {
+      return false;
+    }
   }
 }
