@@ -29,9 +29,11 @@ package org.cougaar.core.wp.resolver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.BindingSite;
@@ -63,11 +65,28 @@ import org.cougaar.util.GenericStateModelAdapter;
  * <p>
  * This component is responsible for the resolver-side hierarchy
  * traversal and replication.
+ *
+ * <pre>
+ * @property org.cougaar.core.wp.resolver.transport.nagleMillis
+ *   Delay in milliseconds before sending messages, to improve
+ *   batching.  Defaults to zero.
+ * @property org.cougaar.core.wp.resolver.transport.noListNagle
+ *   Ignore the "nagleMillis" delay if the request is a new
+ *   name list (e.g. "list ."), which is often a user request.
+ *   Defaults to false. 
+ * @property org.cougaar.core.wp.resolver.transport.graceMillis
+ *   Extended message timeout deadline after startup.  Defaults to
+ *   zero.
+ * @property org.cougaar.core.wp.resolver.transport.checkDeadlinesPeriod
+ *   Time in milliseconds between checks for message timeouts if
+ *   there are any outstanding messages.  Defaults to 10000.
+ * </pre> 
  */
 public class ClientTransport
 extends GenericStateModelAdapter
 implements Component
 {
+
 
   // this is a dummy address for messages that can't be
   // sent yet, e.g. because there are no WP servers.
@@ -97,7 +116,7 @@ implements Component
   private final SelectService.Client myClient = 
     new SelectService.Client() {
       public void onChange() {
-        ClientTransport.this.onChange();
+        ClientTransport.this.onServerChange();
       }
     };
 
@@ -118,27 +137,35 @@ implements Component
   // handshaking).
   private long graceTime;
 
-  private Schedulable checkSendQueuesThread;
-
-  // lookups that have been sent, where the keys are the names
-  // and the values are LookupEntry objects.
+  // lookup requests (name => Entry) that are either being delayed
+  // (nagle) or have been sent but not ack'ed (outstanding).
   //
-  // this could be sorted by the LookupEntry sendTime, by
-  // using a LinkedHashMap.  In practice we expect this map to
-  // be small.
-  //
-  // Map<String, LookupEntry>
+  // Map<String, Entry>
   private final Map lookups = new HashMap();
 
-  // modify requests that have been sent, where the keys are the
-  // names and the values are ModifyEntry objects.
+  // modify requests (name => Entry) that are either being delayed
+  // (nagle) or have been sent but not ack'ed (outstanding).
   //
-  // this could be sorted by the ModifyEntry sendTime, by
-  // using a LinkedHashMap.  In practice we expect this map to
-  // be small.
-  //
-  // Map<String, ModifyEntry>
+  // Map<String, Entry>
   private final Map mods = new HashMap();
+
+  // temporary fields for use in "send" and related methods.
+  // accessed within sendLock.
+  private long now;
+  private boolean sendNow;
+  private boolean sendLater;
+  private final Set lookupNames = new HashSet();
+  private final Set modifyNames = new HashSet();
+  private final Map lookupAddrs = new HashMap();
+  private final Map modifyAddrs = new HashMap();
+  
+  // "nagle" delayed release
+  private long releaseTime;
+  private Schedulable releaseThread;
+
+  // periodic check for late message acks
+  private long checkDeadlinesTime;
+  private Schedulable checkDeadlinesThread;
 
   //
   // input (receive from WP server):
@@ -155,6 +182,13 @@ implements Component
   //
   // List<Object>
   private final List receiveTmp = new ArrayList();
+
+  //
+  // statistics
+  //
+
+  private final Stats lookupStats = new Stats();
+  private final Stats modifyStats = new Stats();
 
   public void setParameter(Object o) {
     this.config = new ClientTransportConfig(o);
@@ -193,6 +227,19 @@ implements Component
     }
 
     // create threads
+    if (config.nagleMillis > 0) { 
+      Runnable releaseRunner =
+        new Runnable() {
+          public void run() {
+            // assert (thread == releaseThread);
+            releaseNow();
+          }
+        };
+      releaseThread = threadService.getThread(
+          this,
+          releaseRunner,
+          "White pages client \"nagle\" delayed sendler");
+    }
     Runnable receiveRunner =
       new Runnable() {
         public void run() {
@@ -205,16 +252,16 @@ implements Component
         receiveRunner,
         "White pages client handle incoming responses");
 
-    Runnable checkSendQueuesRunner =
+    Runnable checkDeadlinesRunner =
       new Runnable() {
         public void run() {
-          // assert (thread == checkSendQueuesThread);
-          checkSendQueues();
+          // assert (thread == checkDeadlinesThread);
+          checkDeadlinesNow();
         }
       };
-    checkSendQueuesThread = threadService.getThread(
+    checkDeadlinesThread = threadService.getThread(
         this,
-        checkSendQueuesRunner,
+        checkDeadlinesRunner,
         "White pages client transport send queue checker");
 
     // register to select servers
@@ -324,17 +371,19 @@ implements Component
       };
     mss.addMessageHandler(myMessageHandler);
     if (logger.isInfoEnabled()) {
-      logger.info("Registered resolver message handler");
+      logger.info("Registered with message transport");
     }
     // should this be synchronized?
     synchronized (sendLock) {
       this.messageSwitchService = mss;
-      if (0 <= config.graceMillis) {
-        this.graceTime = 
-          System.currentTimeMillis() + config.graceMillis;
+      long now = System.currentTimeMillis();
+      if (config.graceMillis >= 0) {
+        this.graceTime = now + config.graceMillis;
       }
+      // schedule a "send"
+      checkDeadlinesTime = now;
+      checkDeadlinesThread.start();
     }
-    checkSendQueuesThread.start();
   }
 
   private void register(LookupService.Client lsc) {
@@ -351,14 +400,21 @@ implements Component
     modifyClients.remove(usc);
   }
 
-  private void onChange() {
+  private void onServerChange() {
     // the list of servers has changed
     //
     // kick the thread, since either we've added a new server
     // (important if we had zero servers) or we've removed a
     // server (must revisit any messages we sent to that server).
-    checkSendQueuesThread.start();
+    synchronized (sendLock) {
+      checkDeadlinesTime = System.currentTimeMillis();
+      checkDeadlinesThread.start();
+    }
   }
+
+  //
+  // send:
+  //
 
   private void lookup(Map m) {
     send(true, m);
@@ -368,100 +424,413 @@ implements Component
     send(false, m);
   }
   
+  private void releaseNow() {
+    // call "send" with null, which will examine the releaseTime
+    send(true, null);
+  }
+
+  private void checkDeadlinesNow() {
+    // call "send" with null, which will examine the checkDeadlinesTime
+    send(false, null);
+  }
+
   private void send(boolean lookup, Map m) {
+    stats(lookup).send(m);
+
+    // The various callers are:
+    //   - our clients (cache, leases)
+    //   - our own releaseThread (adds batching delay)
+    //   - our own check checkDeadlinesThread (check for timeouts
+    //     or new servers)
+    // These last two clients pass a null map.
+
+    // stuff we will send:  (target => map(name => sendObj))
+    Map lookupsToSend;
+    Map modifiesToSend;
+
+    synchronized (sendLock) {
+      try {
+        // initialize temporary variables
+        init();
+
+        // create entries for the new queries
+        checkSendMap(lookup, m);
+
+        if (!hasMessageTransport()) {
+          // no MTS yet?  We'll kick a thread when the MTS shows up
+          return;
+        }
+
+        // check for delayed release entries, even if we're not the
+        // releaseThread
+        checkReleaseTimer();
+
+        // check for message timeouts, even if we're not the
+        // checkDeadlinesThread
+        checkDeadlineTimer();
+
+        if (!shouldReleaseNow()) {
+          // our releaseThread will wake us later, allowing us to
+          // batch these requests.
+          return;
+        }
+
+        if (!collectMessagesToSend()) {
+          // nothing to send.  Another possibility is that there are
+          // no WP servers yet, in which case we'll kick a thread when
+          // they show up.
+          return;
+        }
+
+        // we're sending something now, so make sure we'll wake
+        // up later to check timeouts
+        ensureDeadlineTimer();
+
+        // take maps stuff we will send
+        lookupsToSend = takeMessagesToSend(true);
+        modifiesToSend = takeMessagesToSend(false);
+      } finally {
+        cleanup();
+      }
+    }
+
+    // send messages
+    sendAll(lookupsToSend, modifiesToSend);
+  }
+
+  private void init() {
+    now = System.currentTimeMillis();
+
+    sendNow =
+      (config.nagleMillis <= 0 ||
+       (releaseTime > 0 && releaseTime <= now));
+
+    sendLater = false;
+
+    // these should already be cleared by "cleanup()":
+    lookupNames.clear();
+    modifyNames.clear();
+    lookupAddrs.clear();
+    modifyAddrs.clear();
+  }
+
+  private void checkSendMap(boolean lookup, Map m) {
     int n = (m == null ? 0 : m.size());
     if (n == 0) {
       return;
     }
 
-    // if (n == 1) then we just keep a single addr,
-    // otherwise we need to split the "m" map into
-    // per-target maps
-    MessageAddress singleAddr = null;
-    Map singleMap = null;
-    Map multiAddr = null;
-
-    long now;
-
-    synchronized (sendLock) {
-      now = System.currentTimeMillis();
-      boolean anyToSend = false;
+    // check to see if this map contains a forced sendNow
+    if (config.noListNagle && !sendNow) {
       Iterator iter = m.entrySet().iterator();
       for (int i = 0; i < n; i++) {
         Map.Entry me = (Map.Entry) iter.next();
         String name = (String) me.getKey();
         Object query = me.getValue();
-        // select the target, add to queue
-        if (!shouldSend(lookup, name, query, now)) {
+        if (mustSendNow(lookup, name, query)) {
+          if (logger.isDetailEnabled()) {
+            logger.detail(
+                "mustSendNow("+lookup+", "+name+", "+query+")");
+          }
+          sendNow = true;
+          break;
+        }
+      }
+    }
+
+    Map table = (lookup ? lookups : mods);
+    Set names = (lookup ? lookupNames : modifyNames);
+    Iterator iter = m.entrySet().iterator();
+    for (int i = 0; i < n; i++) {
+      Map.Entry me = (Map.Entry) iter.next();
+      String name = (String) me.getKey();
+      Object query = me.getValue();
+      // select the target, add to queue
+      if (!shouldSend(lookup, name, query, now)) {
+        continue;
+      }
+      // add or replace the entry
+      Entry e = new Entry(query, now);
+      table.put(name, e);
+      if (sendNow) {
+        names.add(name);
+        continue;
+      }
+      sendLater = true;
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "delaying initial release of "+
+            (lookup ? "lookup" : "modify")+
+            " "+name+"="+query);
+      }
+      stats(lookup).later();
+    }
+  }
+
+  private boolean hasMessageTransport() {
+    if (messageSwitchService != null) {
+      return true;
+    }
+    if (logger.isDetailEnabled()) {
+      logger.detail("waiting for message transport");
+    }
+    return false;
+  }
+
+  private void checkReleaseTimer() {
+    if (!sendNow || config.nagleMillis <= 0) {
+      return;
+    }
+    if (releaseTime > 0) {
+      // timer is due
+      releaseTime = 0;
+      // cancel the timer.  This is a no-op if it's our thread.
+      releaseThread.cancelTimer();
+    }
+    // find due entries (optimize me?)
+    for (int t = 0; t < 2; t++) { 
+      boolean tlookup = (t == 0);
+      Map table = (tlookup ? lookups : mods);
+      int tsize = table.size();
+      if (tsize <= 0) {
+        continue;
+      }
+      Set names = (tlookup ? lookupNames : modifyNames);
+      Iterator iter = table.entrySet().iterator();
+      for (int i = 0; i < tsize; i++) {
+        Map.Entry me = (Map.Entry) iter.next();
+        String name = (String) me.getKey();
+        Entry e = (Entry) me.getValue();
+        if (e.getTarget() != null) {
           continue;
         }
-        anyToSend = true;
+        names.add(name);
+      }
+    }
+  }
+
+  private void checkDeadlineTimer() {
+    if (checkDeadlinesTime <= 0 || checkDeadlinesTime > now) {
+      return;
+    }
+    // timer is due
+    checkDeadlinesTime = 0;
+    // now's a good time to dump debugging info
+    debugQueues();
+    boolean anyStillPending = false;
+    // find due entries (optimize me?)
+    for (int t = 0; t < 2; t++) { 
+      boolean tlookup = (t == 0);
+      Map table = (tlookup ? lookups : mods);
+      int tsize = table.size();
+      if (tsize <= 0) {
+        continue;
+      }
+      Set names = (tlookup ? lookupNames : modifyNames);
+      Iterator iter = table.entrySet().iterator();
+      for (int i = 0; i < tsize; i++) {
+        Map.Entry me = (Map.Entry) iter.next();
+        String name = (String) me.getKey();
+        Entry e = (Entry) me.getValue();
+        MessageAddress target = e.getTarget();
+        if (target == null) {
+          // waiting for releaseThread
+          continue;
+        }
+        if (target != NULL_ADDR) {
+          if (selectService.contains(target)) {
+            long deadline = e.getDeadline();
+            if (deadline <= 0 || deadline > now) {
+              // give it more time for the ack
+              anyStillPending = true; 
+              continue;
+            } 
+            if (shortcutNodeModify(tlookup, name, e, now)) {
+              // unusual case: local-node uid-based modify
+              continue;
+            }
+          }
+          // update server stats
+          selectService.update(
+              target,
+              (now - e.getSendTime()),
+              true);
+        }
+        if (!sendNow && logger.isDetailEnabled()) {
+          logger.detail(
+              "delaying retry release of "+
+              (tlookup ? "lookup" : "modify")+
+              " "+name+"="+e.getQuery()+", entry="+e.toString(now));
+        }
+        stats(tlookup).retry();
+        e.setTarget(null);
+        if (sendNow) {
+          names.add(name);
+          continue;
+        }
+        sendLater = true;
+        stats(tlookup).later();
+      }
+    }
+    if (anyStillPending) {
+      // schedule our next deadline check
+      ensureDeadlineTimer();
+    }
+  }
+
+  private boolean shouldReleaseNow() {
+    if (sendNow || !sendLater) {
+      return true;
+    }
+    // make sure timer is running to send later
+    if (releaseTime == 0) {
+      // start timer
+      releaseTime = now + config.nagleMillis; 
+      if (logger.isDetailEnabled()) {
+        logger.detail("starting delayed release timer");
+      }
+      releaseThread.schedule(config.nagleMillis);
+    }
+    // wait for timer
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "waiting "+(releaseTime - now)+" for release timer");
+    }
+    return false;
+  }
+
+  private boolean collectMessagesToSend() {
+    boolean anyToSend = false;
+    for (int x = 0; x < 2; x++) {
+      boolean xlookup = (x == 0);
+      Set names = (xlookup ? lookupNames : modifyNames);
+      if (names.isEmpty()) {
+        continue;
+      }
+      Iterator iter = names.iterator();
+      for (int i = 0, nsize = names.size(); i < nsize; i++) {
+        String name = (String) iter.next();
+        Map table = (xlookup ? lookups : mods);
+        Entry e = (Entry) table.get(name);
         // accessing the "selectService" within our lock may be an
         // issue someday, but for now we'll assume it's allowed
         MessageAddress target = 
-          (messageSwitchService == null ?
-           (null) :
-           selectService.select(lookup, name));
-        Object sendObj = query;
+          selectService.select(xlookup, name);
         if (target == null) {
-          target = NULL_ADDR;
-        } else if (query != null) {
-          sendObj = wrapQuery(lookup, name, query);
-          if (sendObj == null) {
-            continue;
-          }
-        }
-        recordSend(lookup, target, name, query, sendObj, now);
-        if (n == 1) {
-          // minor optimization for single-element map
-          singleAddr = target;
-          if (sendObj == query) {
-            singleMap = m;
-          } else {
-            singleMap = Collections.singletonMap(name, sendObj);
+          // no target?  mark entry
+          e.setTarget(NULL_ADDR); 
+          if (logger.isDetailEnabled()) {
+            logger.detail(
+                "queuing message until WP servers are available: "+
+                (xlookup ? "lookup" : "modify")+" "+e.toString(now));
           }
           continue;
         }
-        // add to the per-addr map
-        if (multiAddr == null) {
-          multiAddr = new HashMap();
-        }
-        Map nameMap = (Map) multiAddr.get(target);
-        if (nameMap == null) {
-          nameMap = new HashMap();
-          multiAddr.put(target, nameMap);
-        }
-        // assert (!nameMap.containsKey(name));
-        nameMap.put(name, sendObj);
-      }
+        e.setTarget(target);
 
-      if (!anyToSend) {
-        return;
+        // wrap query for security
+        Object query = e.getQuery();
+        Object sendObj = query;
+        if (query != null) {
+          sendObj = wrapQuery(xlookup, name, query);
+          if (sendObj == null) {
+            // wrapping rejected this query
+            table.remove(name); 
+            continue;
+          }
+        }
+
+        anyToSend = true;
+
+        // set timestamps
+        e.setSendTime(now);
+        long deadline = MessageTimeoutUtils.getDeadline(target);
+        if (deadline > 0 && graceTime > 0 && graceTime > deadline) {
+          // extend deadline to match initial "grace" period
+          deadline = graceTime;
+        }
+        e.setDeadline(deadline);
+
+        // add to (target => map(name => sendObj))
+        Map xaddrs = (xlookup ? lookupAddrs : modifyAddrs);
+        if (nsize == 1) {
+          // minor optimization for single-element map
+          xaddrs.put(target, Collections.singletonMap(name, sendObj));
+          break;
+        }
+        Map addrMap = (Map) xaddrs.get(target);
+        if (addrMap == null) {
+          addrMap = new HashMap();
+          xaddrs.put(target, addrMap);
+        }
+        // assert (!addrMap.containsKey(name));
+        addrMap.put(name, sendObj);
       }
     }
 
-    if (n == 1) {
-      send(lookup, singleAddr, singleMap, now);
-    } else {
-      sendAll(lookup, multiAddr, now);
-    }
-
-    // here we'd need to ensure that the checkSendQueues timer
-    // is running if our maps were empty, but for now we never
-    // stop that timer.
+    return anyToSend;
   }
 
-  private void sendAll(
-      boolean lookup,
-      Map addrMap,
-      long now) {
-    if (addrMap == null ||
-        addrMap.isEmpty()) {
+  private void ensureDeadlineTimer() {
+    if (checkDeadlinesTime > 0) {
       return;
     }
-    for (Iterator iter = addrMap.entrySet().iterator();
-        iter.hasNext();
-        ) {
+    // schedule our next deadline check
+    checkDeadlinesTime = now + config.checkDeadlinesPeriod;
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "will send messages, scheduling timer to check deadlines");
+    }
+    checkDeadlinesThread.schedule(config.checkDeadlinesPeriod);
+  }
+
+  private Map takeMessagesToSend(boolean lookup) {
+    Map addrs = (lookup ? lookupAddrs : modifyAddrs);
+    int n = addrs.size();
+    if (n == 0) {
+      return null;
+    }
+    if (n == 1) {
+      Iterator iter = addrs.entrySet().iterator();
+      Map.Entry me = (Map.Entry) iter.next();
+      return Collections.singletonMap(me.getKey(), me.getValue());
+    }
+    return new HashMap(addrs);
+  }
+
+  private void cleanup() {
+    now = 0;
+    sendNow = false;
+    sendLater = false;
+    lookupNames.clear();
+    modifyNames.clear();
+    lookupAddrs.clear();
+    modifyAddrs.clear();
+  }
+
+  private void sendAll(Map lookupsToSend, Map modifiesToSend) {
+    // send messages
+    //
+    // send the modifications first, so a lookup that matches our
+    // own modifications will see our modifications instead of
+    // the pre-modification state.
+    //
+    // we send the lookups and modifies separately, even if they're
+    // going to the same target.  We lose some of our batching, but
+    // this simplfies the security message-content checks.
+    long now = System.currentTimeMillis();
+    sendAll(false, modifiesToSend, now);
+    sendAll(true, lookupsToSend, now);
+  }
+
+  private void sendAll(boolean lookup, Map addrMap, long now) {
+    stats(lookup).sendAll(addrMap);
+    int n = (addrMap == null ? 0 : addrMap.size());
+    if (n == 0) {
+      return;
+    }
+    Iterator iter = addrMap.entrySet().iterator();
+    for (int i = 0; i < n; i++) {
       Map.Entry me = (Map.Entry) iter.next();
       MessageAddress target = (MessageAddress) me.getKey();
       Map map = (Map) me.getValue();
@@ -490,107 +859,6 @@ implements Component
       }
       messageSwitchService.sendMessage(wpq);
     }
-  }
-  
-  private boolean shouldSend(
-      boolean lookup,
-      String name,
-      Object query,
-      long now) {
-    // assert (Thread.holdsLock(sendLock));
-
-    Map queue = (lookup ? lookups : mods);
-
-    boolean create = false;
-    Entry e = (Entry) queue.get(name);
-    if (e == null) {
-      create = true;
-    } else {
-      Object sentObj = e.getObject();
-      Object sentO = sentObj;
-      if (sentO instanceof NameTag) {
-        sentO = ((NameTag) sentO).getObject();
-      }
-      Object q = query;
-      if (q instanceof NameTag) {
-        q = ((NameTag) q).getObject();
-      }
-      if (sentO == null ? q == null : sentO.equals(q)) {
-        // already sent?
-      } else {
-        if (lookup) {
-          if (q == null) {
-            // promote from uid-based validate to full-lookup
-            create = true;
-          } else if (q instanceof UID) {
-            if (sentO == null) {
-              // already sent a full-lookup
-            } else {
-              // possible bug in cache manager, which is supposed to
-              // prevent unequal uid-based validate races.  The uids
-              // may have different owners, so we can't figure out
-              // the correct order by comparing uid counters.
-              if (logger.isErrorEnabled()) {
-                logger.error(
-                  "UID mismatch in WP uid-based lookup validation, "+
-                  "sentObj="+sentObj+", query="+query+", entry="+
-                  e.toString(now));
-              }
-            }
-          } else {
-            // invalid
-          }
-        } else {
-          UID sentUID = 
-            (sentO instanceof UID ? ((UID) sentO) :
-             sentO instanceof Record ? ((Record) sentO).getUID() :
-             null);
-          UID qUID = 
-            (q instanceof UID ? ((UID) q) :
-             q instanceof Record ? ((Record) q).getUID() :
-             null);
-          if (sentUID != null &&
-              qUID != null &&
-              sentUID.getOwner().equals(qUID.getOwner())) {
-            if (sentUID.getId() < qUID.getId()) {
-              // send the query, since it has a more recent uid.
-              // Usually q is a full-renew that should replace an
-              // pending sentObj (either uid-renew or full-renew)
-              // that's now stale.
-              create = true;
-            } else if (
-                sentUID.getId() == qUID.getId() &&
-                sentO instanceof UID &&
-                q instanceof Record) {
-              // promote from uid-renew to full-renew.  This is
-              // necessary to handle a "lease-not-known" response
-              // while a uid-renew is pending.
-              create = true;
-            } else {
-              // ignore this query.  Usually the uids match, q is
-              // a uid-renew, and we're still waiting for the
-              // sentObj full-renew.  This also handles rare race
-              // conditions, where the order of multi-threaded queries
-              // passing through the lease manager is jumbled.
-            }
-          } else {
-            // invalid
-          }
-        }
-      }
-    }
-
-    if (!create && logger.isDebugEnabled()) {
-      logger.debug(
-          "Not sending "+
-          (lookup ? "lookup" : "modify")+
-          " (name="+name+
-          " query="+query+
-          "), since we've already sent: "+
-          (e == null ? "null" : e.toString(now)));
-    }
-
-    return create;
   }
   
   private Object wrapQuery(
@@ -630,175 +898,46 @@ implements Component
     return ret;
   }
 
-  private void recordSend(
-      boolean lookup,
-      MessageAddress target,
-      String name,
-      Object query,
-      Object sendObj,
-      long now) {
-    // assert (Thread.holdsLock(sendLock));
+  //
+  // receive:
+  //
 
-    Map queue = (lookup ? lookups : mods);
-
-    long deadline = MessageTimeoutUtils.getDeadline(target);
-    if (0 < deadline && 0 < graceTime && deadline < graceTime) {
-      // extend deadline
-      deadline = graceTime;
-    }
-
-    Entry e = new Entry(now, deadline, target, query);
-
-    queue.put(name, e);
-  }
-
-  private void checkSendQueues() {
-    debugQueues();
-
-    Map lookupAddrMap;
-    Map modifyAddrMap;
-    long now;
-    synchronized (sendLock) {
-      now = System.currentTimeMillis();
-      // get modify retries
-      modifyAddrMap = checkDeadline(false, now);
-      // get lookup retries
-      lookupAddrMap = checkDeadline(true, now);
-    }
-
-    // send messages
-    //
-    // send the modifications first, so a lookup that matches our
-    // own modifications will see our modifications instead of
-    // the pre-modification state.
-    sendAll(false, modifyAddrMap, now);
-    sendAll(true, lookupAddrMap, now);
-
-    // run me again later
-    //
-    // note that this isn't necessary if the maps are empty,
-    // but bug 3189 complicates the timer management.
-    checkSendQueuesThread.schedule(config.checkSendQueuesPeriod);
-  }
-
-  private Map checkDeadline(
-      boolean lookup,
-      long now) {
-    // assert (Thread.holdsLock(sendLock));
-    Map queue = (lookup ? lookups : mods);
-    int n = queue.size();
-    if (n == 0) {
-      return null;
-    }
-    Map addrMap = null;
-    for (Iterator iter = queue.entrySet().iterator();
-        iter.hasNext();
-        ) {
-      Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
-      Entry e = (Entry) me.getValue();
-      if (!shouldResend(lookup, name, e, now)) {
-        continue;
+  private boolean receive(Message m) {
+    if (m instanceof WPAnswer) {
+      WPAnswer wpa = (WPAnswer) m;
+      if (wpa.getAction() != WPAnswer.FORWARD) {
+        receiveLater(wpa);
+        return true;
       }
-      // resend now
-      MessageAddress oldTarget = e.getMessageAddress();
-      selectService.update(
-          oldTarget,
-          (now - e.getSendTime()),
-          true);
-      MessageAddress target =
-        (messageSwitchService == null ?
-         (null) :
-         selectService.select(lookup, name));
-      Object query = e.getObject();
-      Object sendObj = query;
-      if (target == null) {
-        target = NULL_ADDR;
-      } else if (query != null) {
-        sendObj = wrapQuery(lookup, name, query);
-        if (sendObj == null) {
-          iter.remove();
-          continue;
-        }
-      }
-      if (target.equals(oldTarget)) {
-        // ugh, we just tried this!  oh well...
-      }
-      recordSend(lookup, target, name, query, sendObj, now);
-      if (n == 1) {
-        Map nameMap = Collections.singletonMap(name, sendObj);
-        addrMap = Collections.singletonMap(target, nameMap);
-        continue;
-      }
-      // add to the per-addr map
-      if (addrMap == null) {
-        addrMap = new HashMap();
-      }
-      Map nameMap = (Map) addrMap.get(target);
-      if (nameMap == null) {
-        nameMap = new HashMap();
-        addrMap.put(target, nameMap);
-      }
-      nameMap.put(name, sendObj);
     }
-    return addrMap;
-  }
-
-  private boolean shouldResend(
-      boolean lookup,
-      String name,
-      Entry e,
-      long now) {
-    MessageAddress oldTarget = e.getMessageAddress();
-    long deadline = e.getDeadline();
-    if ((deadline <= 0 || now < deadline) &&
-        selectService.contains(oldTarget)) {
-      // give it more time for the ack
-      return false;
-    }
-    // see if this is a uid-based modify for our own node
-    if (lookup ||
-        !name.equals(agentId.getAddress())) {
-      return true;
-    }
-    Object query = e.getObject();
-    Object q = query;
-    if (q instanceof NameTag) {
-      q = ((NameTag) q).getObject();
-    }
-    if (!(q instanceof UID)) {
-      return true;
-    }
-    // this is a uid-based renewal, but maybe the server crashed
-    // and forgot the record data necessary to send back a
-    // "lease-not-known" response!
-    //
-    // the ugly fix is to pretend that the server sent back a
-    // lease-not-known response.  This will force the lease
-    // manager to send a renewal that contains the full record.
-    //
-    // if we're correct then the server's queued lease-not-known
-    // messages may stream back, which is wasteful but okay.
-    UID uid = (UID) q;
-    Object answer = new LeaseNotKnown(uid);
-    Map m = Collections.singletonMap(name, answer);
-    WPAnswer wpa = new WPAnswer(
-        oldTarget,       // from the server
-        agentId,         // back to us
-        e.getSendTime(), // our sendTime
-        now,             // the "server" sendTime
-        true,            // use the above time
-        WPAnswer.MODIFY, // modify
-        m);              // the lease-not-known answer
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          "Timeout waiting for uid-based modify response"+
-          " (uid="+uid+"), pretending that the server"+
-          " sent back a lease-not-known response: "+
-          wpa);
-    }
-    receiveLater(wpa);
     return false;
+  }
+
+  private void receiveLater(WPAnswer wpa) {
+    // queue to run in our thread
+    synchronized (receiveQueue) {
+      receiveQueue.add(wpa);
+    }
+    receiveThread.start();
+  }
+
+  private void receiveNow() {
+    synchronized (receiveQueue) {
+      if (receiveQueue.isEmpty()) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("input queue is empty");
+        }
+        return;
+      }
+      receiveTmp.addAll(receiveQueue);
+      receiveQueue.clear();
+    }
+    // receive messages
+    for (int i = 0, n = receiveTmp.size(); i < n; i++) {
+      WPAnswer wpa = (WPAnswer) receiveTmp.get(i);
+      receiveNow(wpa);
+    }
+    receiveTmp.clear();
   }
 
   private void receiveNow(WPAnswer wpa) {
@@ -806,7 +945,11 @@ implements Component
       logger.detail("receiving message: "+wpa);
     }
 
+    boolean lookup = (wpa.getAction() == WPQuery.LOOKUP);
     Map m = wpa.getMap();
+
+    stats(lookup).receiveNow(m);
+
     int n = (m == null ? 0 : m.size());
     if (n == 0) {
       return;
@@ -816,7 +959,6 @@ implements Component
     long sendTime = wpa.getSendTime();
     long replyTime = wpa.getReplyTime();
     boolean useServerTime = wpa.useServerTime();
-    boolean lookup = (wpa.getAction() == WPQuery.LOOKUP);
 
     long now = System.currentTimeMillis();
     long rtt = (now - sendTime);
@@ -831,9 +973,7 @@ implements Component
         String name = (String) me.getKey();
         Object answer = me.getValue();
         // tell a queue
-        boolean accepted =
-          receive(lookup, addr, name, answer, now);
-        if (!accepted) {
+        if (!shouldReceive(lookup, addr, name, answer, now)) {
           continue;
         }
         if (n == 1) {
@@ -865,23 +1005,278 @@ implements Component
       baseTime = sendTime + (rtt >> 1);
     }
 
+    stats(lookup).accept(answerMap);
+
     // tell our clients
     if (lookup) {
       List l = lookupClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         LookupService.Client c = (LookupService.Client) l.get(i);
-        c.lookupAnswer(baseTime, m);
+        c.lookupAnswer(baseTime, answerMap);
       }
     } else {
       List l = modifyClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         ModifyService.Client c = (ModifyService.Client) l.get(i);
-        c.modifyAnswer(baseTime, m);
+        c.modifyAnswer(baseTime, answerMap);
       }
     }
   }
 
-  private boolean receive(
+  //
+  // debug printer:
+  //
+
+  private Stats stats(boolean lookup) {
+    return (lookup ? lookupStats : modifyStats);
+  }
+
+  private void debugQueues() {
+    if (!logger.isDebugEnabled()) {
+      return;
+    }
+
+    // stats
+    logger.debug("header, agent, "+stats(true).getHeader());
+    logger.debug("lookup, "+agentId+", "+stats(true).getStats());
+    logger.debug("modify, "+agentId+", "+stats(false).getStats());
+
+    synchronized (receiveQueue) {
+      String s = "";
+      s += "\n##### client transport input queue ########################";
+      int n = receiveQueue.size();
+      s += "\nreceive["+n+"]: ";
+      for (int i = 0; i < n; i++) {
+        WPAnswer wpa = (WPAnswer) receiveQueue.get(i);
+        s += "\n   "+wpa;
+      }
+      s += "\n###########################################################";
+      logger.debug(s);
+    }
+
+    String currentServers = selectService.toString();
+    synchronized (sendLock) {
+      String s = "";
+      s += "\n##### client transport output queue #######################";
+      s += "\nservers="+currentServers;
+      s += "\nmessageSwitchService="+messageSwitchService;
+      long now = System.currentTimeMillis();
+      boolean firstPass = true;
+      while (true) {
+        Map m = (firstPass ? lookups : mods);
+        int n = m.size();
+        s += 
+          "\n"+
+          (firstPass ? "lookup" : "modify")+
+          "["+n+"]: ";
+        if (n > 0) { 
+          for (Iterator iter = m.entrySet().iterator();
+              iter.hasNext();
+              ) {
+            Map.Entry me = (Map.Entry) iter.next();
+            String name = (String) me.getKey();
+            Entry e = (Entry) me.getValue();
+            s += "\n   "+name+"\t => "+e.toString(now);
+          }
+        }
+        if (firstPass)  {
+          firstPass = false;
+        } else {
+          break;
+        }
+      }
+      s += "\n###########################################################";
+      logger.debug(s);
+    }
+  }
+
+  //
+  // The following methods have a lot of knowledge that's specific to
+  // the cache and lease managers, so perhaps it should be refactored
+  // to the client APIs.
+  //
+
+  /**
+   * Avoid nagle on first-time name listings, since these are
+   * typically user-interface requests.
+   */
+  private boolean mustSendNow(
+      boolean lookup,
+      String name,
+      Object query) {
+    // we could do an expensive stack check for a UI thread
+    return
+      lookup &&
+      name != null &&
+      name.length() > 0 &&
+      name.charAt(0) == '.' &&
+      query == null;
+  }
+
+  /**
+   * Figure out if we should send this request, either because it's
+   * new or it supercedes the pending request. 
+   */
+  private boolean shouldSend(
+      boolean lookup,
+      String name,
+      Object query,
+      long now) {
+    // assert (Thread.holdsLock(sendLock));
+
+    Map table = (lookup ? lookups : mods);
+
+    Entry e = (Entry) table.get(name);
+    if (e == null) {
+      return true;
+    }
+
+    Object sentObj = e.getQuery();
+    Object sentO = sentObj;
+    if (sentO instanceof NameTag) {
+      sentO = ((NameTag) sentO).getObject();
+    }
+    Object q = query;
+    if (q instanceof NameTag) {
+      q = ((NameTag) q).getObject();
+    }
+
+    boolean create = false;
+    if (sentO == null ? q == null : sentO.equals(q)) {
+      // already sent?
+    } else {
+      if (lookup) {
+        if (q == null) {
+          // promote from uid-based validate to full-lookup
+          create = true;
+        } else if (q instanceof UID) {
+          if (sentO == null) {
+            // already sent a full-lookup
+          } else {
+            // possible bug in cache manager, which is supposed to
+            // prevent unequal uid-based validate races.  The uids
+            // may have different owners, so we can't figure out
+            // the correct order by comparing uid counters.
+            if (logger.isErrorEnabled()) {
+              logger.error(
+                "UID mismatch in WP uid-based lookup validation, "+
+                "sentObj="+sentObj+", query="+query+", entry="+
+                e.toString(now));
+            }
+          }
+        } else {
+          // invalid
+        }
+      } else {
+        UID sentUID = 
+          (sentO instanceof UID ? ((UID) sentO) :
+           sentO instanceof Record ? ((Record) sentO).getUID() :
+           null);
+        UID qUID = 
+          (q instanceof UID ? ((UID) q) :
+           q instanceof Record ? ((Record) q).getUID() :
+           null);
+        if (sentUID != null &&
+            qUID != null &&
+            sentUID.getOwner().equals(qUID.getOwner())) {
+          if (sentUID.getId() < qUID.getId()) {
+            // send the query, since it has a more recent uid.
+            // Usually q is a full-renew that should replace an
+            // pending sentObj (either uid-renew or full-renew)
+            // that's now stale.
+            create = true;
+          } else if (
+              sentUID.getId() == qUID.getId() &&
+              sentO instanceof UID &&
+              q instanceof Record) {
+            // promote from uid-renew to full-renew.  This is
+            // necessary to handle a "lease-not-known" response
+            // while a uid-renew is pending.
+            create = true;
+          } else {
+            // ignore this query.  Usually the uids match, q is
+            // a uid-renew, and we're still waiting for the
+            // sentObj full-renew.  This also handles rare race
+            // conditions, where the order of multi-threaded queries
+            // passing through the lease manager is jumbled.
+          }
+        } else {
+          // invalid
+        }
+      }
+    }
+
+    if (!create && logger.isDebugEnabled()) {
+      logger.debug(
+          "Not sending "+
+          (lookup ? "lookup" : "modify")+
+          " (name="+name+
+          " query="+query+
+          "), since we've already sent: "+
+          (e == null ? "null" : e.toString(now)));
+    }
+
+    return create;
+  }
+
+  /**
+   * Special test for local-node uid-based modify requests.
+   */
+  private boolean shortcutNodeModify(
+      boolean lookup,
+      String name,
+      Entry e,
+      long now) {
+    // see if this is a uid-based modify for our own node
+    if (lookup || !name.equals(agentId.getAddress())) {
+      return false;
+    }
+    Object query = e.getQuery();
+    Object q = query;
+    if (q instanceof NameTag) {
+      q = ((NameTag) q).getObject();
+    }
+    if (!(q instanceof UID)) {
+      return false;
+    }
+    // this is a uid-based renewal of our node, but maybe the server
+    // crashed and forgot the record data necessary to send back a
+    // "lease-not-known" response!
+    //
+    // the ugly fix is to pretend that the server sent back a
+    // lease-not-known response.  This will force the lease
+    // manager to send a renewal that contains the full record.
+    //
+    // if we're correct then the server's queued lease-not-known
+    // messages may stream back, which is wasteful but okay.
+    UID uid = (UID) q;
+    Object answer = new LeaseNotKnown(uid);
+    Map m = Collections.singletonMap(name, answer);
+    WPAnswer wpa = new WPAnswer(
+        e.getTarget(),   // from the server
+        agentId,         // back to us
+        e.getSendTime(), // our sendTime
+        now,             // the "server" sendTime
+        true,            // use the above time
+        WPAnswer.MODIFY, // modify
+        m);              // the lease-not-known answer
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          "Timeout waiting for uid-based modify response"+
+          " (uid="+uid+"), pretending that the server"+
+          " sent back a lease-not-known response: "+
+          wpa);
+    }
+    receiveLater(wpa);
+    return true;
+  }
+
+  /**
+   * Figure out if we should accept this request response, including
+   * whether or not we sent it and any necessary ordering/version
+   * tests.
+   */
+  private boolean shouldReceive(
       boolean lookup, 
       MessageAddress addr,
       String name,
@@ -889,14 +1284,14 @@ implements Component
       long now) {
     // assert (Thread.holdsLock(sendLock));
 
-    Map queue = (lookup ? lookups : mods);
+    Map table = (lookup ? lookups : mods);
 
     boolean accepted = false;
-    Entry e = (Entry) queue.get(name);
+    Entry e = (Entry) table.get(name);
     if (e == null) {
       // not sent?
     } else {
-      Object sentObj = e.getObject();
+      Object sentObj = e.getQuery();
       // see if this matches what we sent
       if (lookup) {
         if (answer instanceof Record) {
@@ -961,8 +1356,8 @@ implements Component
     }
 
     if (accepted) {
-      // clear the queue entry
-      queue.remove(name);
+      // clear the table entry
+      table.remove(name);
     }
 
     if (logger.isInfoEnabled()) {
@@ -983,130 +1378,51 @@ implements Component
   }
 
   //
-  // message receive queue
+  // classes:
   //
-
-  private boolean receive(Message m) {
-    if (m instanceof WPAnswer) {
-      WPAnswer wpa = (WPAnswer) m;
-      if (wpa.getAction() != WPAnswer.FORWARD) {
-        receiveLater(wpa);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private void receiveLater(WPAnswer wpa) {
-    // queue to run in our thread
-    synchronized (receiveQueue) {
-      receiveQueue.add(wpa);
-    }
-    receiveThread.start();
-  }
-
-  private void receiveNow() {
-    synchronized (receiveQueue) {
-      if (receiveQueue.isEmpty()) {
-        if (logger.isDetailEnabled()) {
-          logger.detail("input queue is empty");
-        }
-        return;
-      }
-      receiveTmp.addAll(receiveQueue);
-      receiveQueue.clear();
-    }
-    // receive messages
-    for (int i = 0, n = receiveTmp.size(); i < n; i++) {
-      WPAnswer wpa = (WPAnswer) receiveTmp.get(i);
-      receiveNow(wpa);
-    }
-    receiveTmp.clear();
-  }
-
-  private void debugQueues() {
-    if (!logger.isDebugEnabled()) {
-      return;
-    }
-
-    synchronized (receiveQueue) {
-      String s = "";
-      s += "\n##### client transport input queue ########################";
-      int n = receiveQueue.size();
-      s += "\nreceive["+n+"]: ";
-      for (int i = 0; i < n; i++) {
-        WPAnswer wpa = (WPAnswer) receiveQueue.get(i);
-        s += "\n   "+wpa;
-      }
-      s += "\n###########################################################";
-      logger.debug(s);
-    }
-
-    String currentServers = selectService.toString();
-    synchronized (sendLock) {
-      String s = "";
-      s += "\n##### client transport output queue #######################";
-      s += "\nservers="+currentServers;
-      s += "\nmessageSwitchService="+messageSwitchService;
-      long now = System.currentTimeMillis();
-      boolean firstPass = true;
-      while (true) {
-        Map m = (firstPass ? lookups : mods);
-        int n = m.size();
-        s += 
-          "\n"+
-          (firstPass ? "lookup" : "modify")+
-          "["+n+"]: ";
-        if (0 < n) { 
-          for (Iterator iter = m.entrySet().iterator();
-              iter.hasNext();
-              ) {
-            Map.Entry me = (Map.Entry) iter.next();
-            String name = (String) me.getKey();
-            Entry e = (Entry) me.getValue();
-            s += "\n   "+name+"\t => "+e.toString(now);
-          }
-        }
-        if (firstPass)  {
-          firstPass = false;
-        } else {
-          break;
-        }
-      }
-      s += "\n###########################################################";
-      logger.debug(s);
-    }
-  }
 
   private static class Entry {
 
-    private final long sendTime;
-    private final long deadline;
-    private final MessageAddress addr;
-    private final Object obj;
+    private final Object query;
 
-    public Entry(
-        long sendTime,
-        long deadline,
-        MessageAddress addr,
-        Object obj) {
-      this.sendTime = sendTime;
-      this.deadline = deadline;
-      this.addr = addr;
-      this.obj = obj;
+    private final long creationTime;
+
+    private long sendTime;
+    private long deadline;
+    private MessageAddress target;
+
+    public Entry(Object query, long now) {
+      this.query = query;
+      this.creationTime = now;
+    }
+
+    public Object getQuery() {
+      return query;
+    }
+
+    public long getCreationTime() {
+      return creationTime;
     }
 
     public long getSendTime() {
       return sendTime;
     }
+    public void setSendTime(long sendTime) {
+      this.sendTime = sendTime;
+    }
+
     public long getDeadline() {
       return deadline;
     }
-    public MessageAddress getMessageAddress() {
-      return addr;
+    public void setDeadline(long deadline) {
+      this.deadline = deadline;
     }
-    public Object getObject() {
-      return obj;
+
+    public MessageAddress getTarget() {
+      return target;
+    }
+    public void setTarget(MessageAddress target) {
+      this.target = target;
     }
     
     public String toString() {
@@ -1116,11 +1432,120 @@ implements Component
 
     public String toString(long now) {
       return 
-        "(sendTime="+Timestamp.toString(sendTime, now)+
-        " deadline="+Timestamp.toString(deadline, now)+
-        " addr="+addr+
-        " obj="+obj+
+        "(created="+Timestamp.toString(getCreationTime(), now)+
+        " sent="+Timestamp.toString(getSendTime(), now)+
+        " deadline="+Timestamp.toString(getDeadline(), now)+
+        " target="+getTarget()+
+        " query="+getQuery()+
         ")";
+    }
+  }
+
+  private static class Stats {
+
+    private final Object lock = new Object();
+
+    private int count;
+    private int size;
+    private int later;
+    private int sendCount;
+    private int sendSize;
+    private int retrySize;
+    private int receiveCount;
+    private int receiveSize;
+    private int acceptCount;
+    private int acceptSize;
+
+    private String getHeader() {
+      return
+        "count"+
+        ", size"+
+        ", later"+
+        ", sendC"+
+        ", sendS"+
+        ", retryS"+
+        ", recvC"+
+        ", recvS"+
+        ", accC"+
+        ", accS";
+    }
+
+    private String getStats() {
+      synchronized (lock) {
+        return
+          count+
+          ", "+size+
+          ", "+later+
+          ", "+sendCount+
+          ", "+sendSize+
+          ", "+retrySize+
+          ", "+receiveCount+
+          ", "+receiveSize+
+          ", "+acceptCount+
+          ", "+acceptSize;
+      }
+    }
+
+    private void send(Map m) {
+      int s = (m == null ? 0 : m.size());
+      if (s <= 0) {
+        return;
+      }
+      synchronized (lock) {
+        count++;
+        size += s;
+      }
+    }
+    private void later() {
+      synchronized (lock) {
+        later++;
+      }
+    }
+    private void sendAll(Map addrMap) {
+      int n = (addrMap == null ? 0 : addrMap.size());
+      if (n <= 0) {
+        return;
+      }
+      synchronized (lock) {
+        sendCount += n;
+        int s = 0;
+        Iterator iter = addrMap.entrySet().iterator();
+        for (int i = 0; i < n; i++) {
+          Map.Entry me = (Map.Entry) iter.next();
+          Map m = (Map) me.getValue();
+          s += m.size();
+        }
+        sendSize += s;
+      }
+    }
+    private void retry() {
+      synchronized (lock) {
+        retrySize++;
+      }
+    }
+    private void receiveNow(WPAnswer wpa) {
+      synchronized (lock) {
+        if (wpa == null) {
+          return;
+        }
+        boolean lookup = (wpa.getAction() == WPQuery.LOOKUP);
+        Map m = wpa.getMap();
+        receiveNow(m);
+      }
+    }
+    private void receiveNow(Map m) {
+      synchronized (lock) {
+        receiveCount++;
+        int n = (m == null ? 0 : m.size());
+        receiveSize += n;
+      }
+    }
+    private void accept(Map answerMap) {
+      synchronized (lock) {
+        acceptCount++;
+        int n = (answerMap == null ? 0 : answerMap.size());
+        acceptSize += n;
+      }
     }
   }
 
@@ -1206,11 +1631,31 @@ implements Component
 
   /** config options, soon to be parameters/props */
   private static class ClientTransportConfig {
-    public static final long checkSendQueuesPeriod = 10*1000;
-    public static final long graceMillis = 0;
+    public final long nagleMillis;
+    public final boolean noListNagle;
+    public final long checkDeadlinesPeriod;
+    public final long graceMillis;
 
     public ClientTransportConfig(Object o) {
       // FIXME parse!
+      nagleMillis =  
+        Long.parseLong(
+            System.getProperty(
+              "org.cougaar.core.wp.resolver.transport.nagleMillis",
+              "0"));
+      noListNagle =
+        Boolean.getBoolean(
+            "org.cougaar.core.wp.resolver.transport.noListNagle");
+      checkDeadlinesPeriod =
+        Long.parseLong(
+            System.getProperty(
+              "org.cougaar.core.wp.resolver.transport.checkDeadlinesPeriod",
+              "10000"));
+      graceMillis =  
+        Long.parseLong(
+            System.getProperty(
+              "org.cougaar.core.wp.resolver.transport.graceMillis",
+              "0"));
     }
   }
 }
