@@ -39,10 +39,27 @@ public final class MetricsServiceProvider implements ServiceProvider
     private MetricsUpdateService updater;
 
     public MetricsServiceProvider(ServiceBroker sb, NodeIdentifier id) {
-	Class[] parameters = { ServiceBroker.class, NodeIdentifier.class };
-	Object[] args = { sb, id };
+
+	try {
+	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
+	    Class[] parameters = { ServiceBroker.class, NodeIdentifier.class };
+	    Object[] args = { sb, id };
+	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
+	    updater = (MetricsUpdateService) cons.newInstance(args);
+	} catch (ClassNotFoundException cnf) {
+	    // qos jar not loaded
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+	}
+
 	try {
 	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
+	    Class[] parameters = 
+	    { ServiceBroker.class,
+	      NodeIdentifier.class,
+	      MetricsUpdateService.class
+	    };
+	    Object[] args = { sb, id, updater };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
 	    retriever = (MetricsService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
@@ -51,16 +68,6 @@ public final class MetricsServiceProvider implements ServiceProvider
 	    ex.printStackTrace();
 	}
 
-
-	try {
-	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
-	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
-	    updater = (MetricsUpdateService) cons.newInstance(args);
-	} catch (ClassNotFoundException cnf) {
-	    // qos jar not loaded
-	} catch (Exception ex) {
-	    ex.printStackTrace();
-	}
     }
 
 
