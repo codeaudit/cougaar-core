@@ -49,6 +49,14 @@ import org.cougaar.core.service.ThreadService;
 /**
  * This Plugin provides the {@link AgentLoadService} for other Plugins
  * in the same Agent.  The service implementation is an inner class.
+ * In the <a
+ * href="../../../../../OnlineManual/MetricsService/sensors.html">Sensor
+ * Data Flow</a> pattern this class plays the role of <b>Sensor</b>
+ * for load data (CPU load average, CPU) for Agents, Nodes and
+ * Services.
+ *
+ * @see AgentLoadRatePlugin
+ * @see org.cougaar.core.qos.metrics.AgentLoadServlet
  */
 public class AgentLoadSensorPlugin
     extends ComponentPlugin

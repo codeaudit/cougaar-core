@@ -46,6 +46,15 @@ import org.cougaar.core.service.ThreadService;
  * loaded, and uplaads that data to the metrics service.  It
  * uses the {@link AgentLoadService} to collect the raw date and should
  * be loaded at LOW priority to ensure that the service is available.
+ *
+ * In the <a
+ * href="../../../../../OnlineManual/MetricsService/sensors.html">Sensor
+ * Data Flow</a> pattern this class plays the role of <b>Rate
+ * Converter</b> for load data (CPU load average, CPU) for Agents,
+ * Nodes and Services.
+ *
+ * @see AgentLoadSensorPlugin
+ * @see org.cougaar.core.qos.metrics.AgentLoadServlet
  */
 public class AgentLoadRatePlugin
     extends ComponentPlugin

@@ -36,8 +36,17 @@ import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This Servlet collects cpu and message metrics for each local Agent and
- * displays the result in a nicely formatted web page.
+ * This Servlet collects cpu and message metrics for each local Agent
+ * and displays the result in a nicely formatted web page.  In the <a
+ * href="../../../../../../OnlineManual/MetricsService/sensors.html">Sensor
+ * Data Flow</a> pattern this class plays the role of <b>Servlet</b>
+ * for load data (CPU load average, CPU) and messages sizes and counts
+ * for Agents, Nodes and Services.
+ *
+ * @see org.cougaar.core.thread.AgentLoadRatePlugin
+ * @see org.cougaar.core.thread.AgentLoadSensorPlugin
+ * @see AgentStatusService
+ * @see AgentStatusRatePlugin
  */
 public class AgentLoadServlet 
     extends MetricsServlet

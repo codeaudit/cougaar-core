@@ -44,6 +44,12 @@ import org.cougaar.core.thread.Schedulable;
  * metrics service rules and is responsible for publishing the message
  * traffic metrics for Agents and Nodes into the MetricsUpdateService.
  *
+ * In the <a
+ * href="../../../../../OnlineManual/MetricsService/sensors.html">Sensor
+ * Data Flow</a> pattern this class plays the role of <b>Sensor</b>
+ * for message counts and size among Agents and Nodes.
+ *
+ * @see AgentLoadServlet
  * @see AgentStatusService
  */
 public class AgentStatusRatePlugin 
