@@ -572,6 +572,11 @@ public class SimpleAgent
           e);
     }
 
+    // fill in prior restart incarnation details
+    if (agentState != null) {
+      setRestartState(agentState.restartState);
+    }
+
     loadRestartChecker();
 
     loadTopology();
@@ -581,11 +586,6 @@ public class SimpleAgent
       log.debug("Adding to the cluster context table");
     }
     ClusterContextTable.addContext(getMessageAddress());
-
-    // fill in prior restart incarnation details
-    if (agentState != null) {
-      setRestartState(agentState.restartState);
-    }
 
     // get the Messenger instance from ClusterManagement
     if (log.isInfoEnabled()) {
