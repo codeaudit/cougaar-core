@@ -367,15 +367,26 @@ public class Distributor {
       }
     }
     boolean haveSomethingToDistribute = false;
+    // nest loops in case delayed actions cascade into more
+    // lp actions.
     while (outbox != null && outbox.size() > 0) {
-      outboxes.add(outbox);
-      outbox = alpPlan.receiveEnvelope(outbox);
-      haveSomethingToDistribute = true;
+      while (outbox != null && outbox.size() > 0) {
+        outboxes.add(outbox);
+        outbox = alpPlan.receiveEnvelope(outbox);
+        haveSomethingToDistribute = true;
+      }
 
       // outbox should be empty at this point.
       // execute any pending DelayedLPActions
       outbox = alpPlan.executeDelayedLPActions();
     }
+
+    //      while (outbox != null && outbox.size() > 0) {
+    //        outboxes.add(outbox);
+    //        outbox = alpPlan.receiveEnvelope(outbox);
+    //        haveSomethingToDistribute = true;
+    //      }
+
     boolean busy = haveSomethingToDistribute;
     if (persistence != null) {
       if (!needToPersist && haveSomethingToDistribute) {
