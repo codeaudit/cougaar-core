@@ -494,7 +494,7 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     return new NodeProxy();
   }
 
-  public void serviceRevoked(ServiceRevokedEvent e) {}; 
+  public void serviceRevoked(ServiceRevokedEvent e) {}
 
   public void addStreamToRootLogging(OutputStream logStream) {
       ServiceBroker sb = getServiceBroker();
@@ -773,7 +773,7 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     return myNodeIdentity_;
   }
 
-  public void receiveMessage(Message m) {
+  public void receiveMessage(final Message m) {
     try {
       if (m instanceof ComponentMessage) {
         ComponentMessage cm = (ComponentMessage)m;
@@ -799,19 +799,28 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
           throw new UnsupportedOperationException(
             "Unsupported ComponentMessage: "+m);
         }
-      } else if (m instanceof MoveAgentMessage) {
-        MoveAgentMessage mam = (MoveAgentMessage)m;
-        final ClusterIdentifier agentID = mam.getAgentIdentifier();
-        final NodeIdentifier nodeID = mam.getNodeIdentifier();
-        Runnable moveRunner = new Runnable() {
+      } else if (m instanceof AgentManagementMessage) {
+        // run in a separate thread (in case the source is local)
+        Runnable r = new Runnable() {
           public void run() {
-            agentManager.moveAgent(agentID, nodeID);
+            if (m instanceof MoveAgentMessage) {
+              MoveAgentMessage mam = (MoveAgentMessage) m;
+              agentManager.moveAgent(
+                  mam.getAgentIdentifier(), 
+                  mam.getNodeIdentifier());
+            } else if (m instanceof CloneAgentMessage) {
+              CloneAgentMessage cam = (CloneAgentMessage) m;
+              agentManager.cloneAgent(
+                  cam.getAgentIdentifier(), 
+                  cam.getNodeIdentifier(),
+                  cam.getCloneAgentIdentifier(),
+                  cam.getCloneBlackboard());
+            } else {
+              // ignore
+            }
           }
         };
-        Thread t = 
-          new Thread(
-              moveRunner, 
-              "MoveAgent "+agentID+" to "+nodeID);
+        Thread t = new Thread(r, m.toString());
         t.start();
       } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
         // we don't do anything with these. ignore it.

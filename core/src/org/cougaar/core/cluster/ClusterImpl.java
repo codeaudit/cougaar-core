@@ -605,11 +605,25 @@ public class ClusterImpl
 
   /**
    * Get the state of this cluster, which should be suspended.
-   *
+   */
+  public Object getState() {
+    return getState(false);
+  }
+
+  /**
+   * Kluge, for use by AgentManager's "cloneAgent(..)".
+   */
+  public Object getStateExcludingBlackboard() {
+    return getState(true);
+  }
+
+  /**
+   * Get the state of this cluster, which should be suspended.
+   * <p>
    * Need to fix ContainerSupport for locking and hide
    * "boundComponents" access.
    */
-  public Object getState() {
+  private Object getState(final boolean excludeBlackboard) {
     AgentState result = new AgentState();
     // get the child components
     synchronized (boundComponents) {
@@ -621,9 +635,16 @@ public class ClusterImpl
           boundComponents.get(i);
         Object comp = bc.getComponent();
         if (comp instanceof ComponentDescription) {
-          ComponentDescription cd = (ComponentDescription)comp;
+          ComponentDescription cd = (ComponentDescription) comp;
           Binder b = bc.getBinder();
-          Object state = b.getState();
+          Object state;
+          if (excludeBlackboard &&
+              "Node.AgentManager.Agent.Blackboard".equals(
+                cd.getInsertionPoint())) {
+            state = null;
+          } else {
+            state = b.getState();
+          }
           result.children[i] = new StateTuple(cd, state);
         } else {
           // error?

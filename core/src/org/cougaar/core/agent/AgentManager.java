@@ -39,7 +39,7 @@ public class AgentManager
   extends ContainerSupport
   implements ContainerAPI
 {
-    public AgentManager() {
+  public AgentManager() {
     if (!attachBinderFactory(new AgentBinderFactory())) {
       throw new RuntimeException("Failed to load the AgentBinderFactory");
     }
@@ -54,7 +54,7 @@ public class AgentManager
     }
   }
 
- private AgentManagerBindingSite bindingSite = null;
+  private AgentManagerBindingSite bindingSite = null;
 
   public final void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
@@ -88,46 +88,8 @@ public class AgentManager
   protected ContainerAPI getContainerProxy() {
     return new AgentManagerProxy();
   }
-  
-  public void requestStop() { }
 
-  /**
-   * Recursively print the result of "agent.getState()".
-   * <p>
-   * This is expected to break once Components create
-   * customized state holders!
-   */
-  private static void debugState(Object state, String path) {
-    if (state instanceof StateTuple[]) {
-      StateTuple[] tuples = (StateTuple[])state;
-      for (int i = 0; i < tuples.length; i++) {
-        String prefix = path+"["+i+" / "+tuples.length+"]";
-        StateTuple sti = tuples[i];
-        if (sti == null) {
-          System.out.println(
-              prefix+": null");
-          continue;
-        }
-        ComponentDescription cdi = sti.getComponentDescription();
-        if (cdi == null) {
-          System.out.println(
-            prefix+": {null, ..}");
-          continue;
-        }
-        System.out.println(
-            prefix+": "+
-            cdi.getInsertionPoint()+" = "+
-            cdi.getClassname()+" "+
-            cdi.getParameter());
-        Object si = sti.getState();
-        if (si != null) {
-          debugState(si, prefix);
-        }
-      }
-    } else {
-      System.out.println(path+" non-StateTuple[] "+state);
-    }
-  }
+  public void requestStop() { }
 
   /**
    * Support Node-issued agent mobility requests.
@@ -138,42 +100,46 @@ public class AgentManager
   public void moveAgent(
       ClusterIdentifier agentID,
       NodeIdentifier nodeID) {
+    // wouldn't usually create a new AgentManagement per request...
+    AgentManagement stubAM = new AgentManagement();
+    stubAM.moveAgent(agentID, nodeID);
+  }
 
-    // check parameters, security, etc
-    if ((agentID == null) ||
-        (nodeID == null)) {
-      // error
-      System.err.println(
-          "Must specify an agentID ("+
-          agentID+") and nodeID ("+nodeID+")");
-      return;
-    }
+  /**
+   * Support Node-issued agent mobility requests.
+   * <p>
+   * @param agentID agent to move
+   * @param nodeID destination node address
+   */
+  public void cloneAgent(
+      ClusterIdentifier agentID,
+      NodeIdentifier nodeID,
+      ClusterIdentifier cloneAgentID,
+      boolean cloneBlackboard) {
+    AgentManagement stubAM = new AgentManagement();
+    stubAM.cloneAgent(agentID, nodeID, cloneAgentID, cloneBlackboard);
+  }
 
-    // get this node's id
-    NodeIdentificationService nis = (NodeIdentificationService)
-      getServiceBroker().getService(
-          this,
-          NodeIdentificationService.class,
-          null);
-    if (nis == null) {
-      System.err.println("Unable to get this Node's Identification");
-      return;
-    }
-    final NodeIdentifier thisNodeID = nis.getNodeIdentifier();
-    if (thisNodeID.equals(nodeID)) {
-      System.err.println("Agent "+agentID+" already on Node "+nodeID);
-      return;
-    }
+  public String getName() {
+    return getBindingSite().getName();
+  }
 
+  private void registerAgent(Agent agent) {
+    if (agent instanceof ClusterServesClusterManagement) {
+      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
+    } else {
+      System.err.println("Warning: attempted to registerAgent of non-cluster.");
+    }
+  }
+
+  private AgentEntry findAgent(ClusterIdentifier agentID) {
     // lookup the agent on this node
-    ComponentDescription origDesc = null;
+    ComponentDescription desc = null;
     Agent agent = null;
     for (Iterator iter = super.boundComponents.iterator(); ;) {
       if (!(iter.hasNext())) {
         // no such agent?
-        System.err.println(
-            "Agent "+agentID+" is not on Node "+thisNodeID);
-        return;
+        return null;
       }
       Object oi = iter.next();
       if (!(oi instanceof BoundComponent)) {
@@ -191,81 +157,18 @@ public class AgentManager
         agent = a;
         Object cmp = bc.getComponent();
         if (cmp instanceof ComponentDescription) {
-          origDesc = (ComponentDescription)cmp;
+          desc = (ComponentDescription)cmp;
         }
         break;
       }
     }
+    return new AgentEntry(desc, agent);
+  }
 
-    System.out.println("Suspend Agent "+agentID);
-
-    // suspend the agent's activity, prepare for state capture
-    agent.suspend();
-
-    System.out.println("Get the Agent state");
-
-    // recursively gather the agent state
-    Object state = 
-      ((agent instanceof StateObject) ?
-       ((StateObject)agent).getState() :
-       null);
-
-    System.out.println("The state is: "+state);
-    debugState(state, "");
-
-    // create an ADD ComponentMessage
-    ComponentMessage addMsg =
-      new ComponentMessage(
-          new NodeIdentifier(bindingSite.getIdentifier()),
-          nodeID,
-          ComponentMessage.ADD,
-          origDesc,
-          state);
-
-    // create a dummy message transport client
-    MessageTransportClient mtc = 
-      new MessageTransportClient() {
-        public void receiveMessage(Message message) {
-          // never
-        }
-        public MessageAddress getMessageAddress() {
-          return thisNodeID;
-        }
-      };
-
-    // get the message transport
-    MessageTransportService mts = (MessageTransportService)
-      getServiceBroker().getService(
-          mtc,
-          MessageTransportService.class,
-          null);
-    if (mts == null) {
-      // error!  we should have requested this earlier...
-      System.err.println(
-          "Unable to get MessageTransport for mobility message");
-      return;
-    }
-
-    // send the message to destination node
-    mts.sendMessage(addMsg);
-    System.out.println("Sent Message: "+addMsg);
-
-    // wait for an add acknowledgement -- postponed to 8.6+
-
-    // stop and unload the original agent
-    agent.stop();
-    agent.unload();
-
-    // disable the agent's ServiceBroker, cancel all services requested 
-    //   by the agent, and set all pointers leaving the agent to null.
-    //
-    // this could be done by a ServiceFilter using an
-    //   java.lang.reflect.InvocationHandler to proxy all
-    //   actual Services.
-    //
-    // postponed to 8.6+ -- we'll assume the Agent is well-behaved
-
+  private boolean removeAgent(ClusterIdentifier agentID) {
     // unhand the original agent, let GC reclaim it
+    //
+    // NOTE: assumes that "agent.unload()" has been called.
     //
     // ContainerSupport should be modified to clean this up...
     for (Iterator iter = super.boundComponents.iterator();
@@ -283,33 +186,13 @@ public class AgentManager
       Agent a = ((AgentBinder)b).getAgent();
       if ((a != null) &&
           (agentID.equals(a.getAgentIdentifier()))) {
-        // remove our agent
+        // remove the agent
         iter.remove();
-        break;
+        return true;
       }
     }
-
-    // the agent is isolated and will be GC'ed
-    //
-    // even if the agent spawned Threads it should be unable
-    //   to interact with the Node
-
-    System.out.println(
-        "Moved Agent "+agentID+" to Node "+nodeID);
+    return false;
   }
-
-  public String getName() {
-    return getBindingSite().getName();
-  }
-
-  private void registerAgent(Agent agent) {
-    if (agent instanceof ClusterServesClusterManagement) {
-      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
-    } else {
-      System.err.println("Warning: attempted to registerAgent of non-cluster.");
-    }
-  }
-
 
   //
   // support classes
@@ -317,19 +200,21 @@ public class AgentManager
 
   private static class AgentManagerServiceBroker 
     extends PropagatingServiceBroker
-  {
-    public AgentManagerServiceBroker(BindingSite bs) {
-      super(bs);
+    {
+      public AgentManagerServiceBroker(BindingSite bs) {
+        super(bs);
+      }
     }
-  }
- 
 
-  private class AgentManagerProxy implements AgentManagerForBinder, 
-                                             ClusterManagementServesCluster, 
-                                             BindingSite {
+  private class AgentManagerProxy 
+    implements AgentManagerForBinder, 
+  ClusterManagementServesCluster, 
+  BindingSite {
 
     public String getName() {return AgentManager.this.getName(); }
-    public void registerAgent(Agent agent) { AgentManager.this.registerAgent(agent); }
+    public void registerAgent(Agent agent) { 
+      AgentManager.this.registerAgent(agent); 
+    }
 
     // BindingSite
     public ServiceBroker getServiceBroker() {
@@ -339,5 +224,298 @@ public class AgentManager
     public boolean remove(Object o) {return true; }
   }
 
-}
+  /**
+   * For use by <tt>findAgent(..)</tt>.
+   */
+  private static class AgentEntry {
+    private final ComponentDescription desc;
+    private final Agent agent;
+    public AgentEntry(
+        ComponentDescription desc,
+        Agent agent) {
+      this.desc = desc;
+      this.agent = agent;
+      if ((desc == null) || (agent == null)) {
+        throw new NullPointerException();
+      }
+    }
+    public ComponentDescription getComponentDescription() {
+      return desc;
+    }
+    public Agent getAgent() {
+      return agent;
+    }
+  }
 
+  /**
+   * Agent management services for "moveAgent(..)" and "cloneAgent(..)".
+   * <p>
+   * This is an inner class just to make the code tidy.  This
+   * should be made a Service and moved out of AgentManager.
+   */
+  private class AgentManagement {
+
+    private static final boolean VERBOSE = true;
+
+    public void moveAgent(
+        ClusterIdentifier agentID,
+        NodeIdentifier nodeID) {
+      // check parameters, security, etc
+      if ((agentID == null) ||
+          (nodeID == null)) {
+        throw new IllegalArgumentException(
+            "Must specify an agentID ("+
+            agentID+") and nodeID ("+nodeID+")");
+      }
+
+      // get this node's id
+      NodeIdentifier thisNodeID = getNodeIdentifier();
+      if (thisNodeID.equals(nodeID)) {
+        throw new RuntimeException(
+            "Agent "+agentID+" already on Node "+nodeID);
+      }
+
+      // lookup the agent on this node
+      AgentEntry agentEntry = 
+        AgentManager.this.findAgent(agentID);
+      if (agentEntry == null) {
+        throw new RuntimeException(
+            "Agent "+agentID+" is not on Node "+thisNodeID);
+      }
+      ComponentDescription origDesc = 
+        agentEntry.getComponentDescription();
+      Agent agent = agentEntry.getAgent();
+
+      if (VERBOSE) {
+        System.out.println("Move Agent - Suspend Agent "+agentID);
+      }
+
+      // suspend the agent's activity, prepare for state capture
+      agent.suspend();
+
+      if (VERBOSE) {
+        System.out.println("Move Agent - Get the Agent state");
+      }
+
+      // recursively gather the agent state
+      Object state = 
+        ((agent instanceof StateObject) ?
+         ((StateObject)agent).getState() :
+         null);
+
+      if (VERBOSE) {
+        System.out.println("Move Agent - The state is: "+state);
+      }
+
+      // create an ADD ComponentMessage
+      ComponentMessage addMsg =
+        new ComponentMessage(
+            new NodeIdentifier(bindingSite.getIdentifier()),
+            nodeID,
+            ComponentMessage.ADD,
+            origDesc,
+            state);
+
+      // send the message to destination node
+      sendMessage(addMsg, thisNodeID);
+
+      if (VERBOSE) {
+        System.out.println("Move Agent - Sent Message: "+addMsg);
+      }
+
+      // wait for an add acknowledgement -- postponed to 8.6+
+
+      // stop and unload the original agent
+      agent.stop();
+      agent.unload();
+
+      // disable the agent's ServiceBroker, cancel all services requested 
+      //   by the agent, and set all pointers leaving the agent to null.
+      //
+      // this could be done by a ServiceFilter using an
+      //   java.lang.reflect.InvocationHandler to proxy all
+      //   actual Services.
+      //
+      // postponed to 8.6+ -- we'll assume the Agent is well-behaved
+
+      // unhand the original agent, let GC reclaim it
+      AgentManager.this.removeAgent(agentID);
+
+      // the agent is isolated and will be GC'ed
+      //
+      // even if the agent spawned Threads it should be unable
+      //   to interact with the Node
+
+      if (VERBOSE) {
+        System.out.println(
+            "Moved Agent "+agentID+" to Node "+nodeID);
+      }
+    }
+
+    public void cloneAgent(
+        ClusterIdentifier agentID,
+        NodeIdentifier nodeID,
+        ClusterIdentifier cloneAgentID,
+        boolean cloneBlackboard) {
+      // check parameters, security, etc
+      if ((agentID == null) ||
+          (nodeID == null) ||
+          (cloneAgentID == null)) {
+        throw new IllegalArgumentException(
+            "CloneAgent - Must specify an agentID ("+
+            agentID+") and nodeID ("+nodeID+") and cloneID ("+
+            cloneAgentID+")");
+      } else if (agentID.equals(cloneAgentID)) {
+        throw new IllegalArgumentException(
+            "Clone name must be different than original name ("+
+            agentID+")");
+      }
+
+      // get this node's id
+      final NodeIdentifier thisNodeID = getNodeIdentifier();
+      if (thisNodeID == null) {
+        throw new RuntimeException(
+            "Clone Agent - Unable to get this Node's Identification");
+      }
+
+      // lookup the agent on this node
+      AgentEntry agentEntry = 
+        AgentManager.this.findAgent(agentID);
+      if (agentEntry == null) {
+        throw new RuntimeException(
+            "Agent "+agentID+" is not on Node "+thisNodeID);
+      }
+      ComponentDescription origDesc = 
+        agentEntry.getComponentDescription();
+      Agent agent = agentEntry.getAgent();
+
+      // the description of the agent on the other side will be 
+      // exactly the same except that it will have a new name
+      List parameters = new ArrayList(1);
+      parameters.add(cloneAgentID);
+      ComponentDescription copyWithNewName = 
+        new ComponentDescription (
+            origDesc.getName(),
+            origDesc.getInsertionPoint(),
+            origDesc.getClassname(),
+            origDesc.getCodebase(),
+            parameters,
+            origDesc.getCertificate(),
+            origDesc.getLeaseRequested(),
+            origDesc.getPolicy());
+
+      if (VERBOSE) {
+        System.out.println("Clone Agent - Suspend Agent "+agentID);
+      }
+
+      // suspend the agent's activity, prepare for state capture
+      agent.suspend();
+
+      if (VERBOSE) {
+        System.out.println("Clone Agent - Get the Agent state");
+      }
+
+      // recursively gather the agent state
+      Object state;
+      if (agent instanceof StateObject) {
+        if (cloneBlackboard) {
+          state = ((StateObject) agent).getState();
+        } else {
+          // FIXME kluge:
+          if (!(agent instanceof ClusterImpl)) {
+            throw new RuntimeException(
+                "Unable to get Agent state without Blackboard; "+
+                "Agent class is: "+agent.getClass().toString());
+          }
+          state = ((ClusterImpl) agent).getStateExcludingBlackboard();
+        }
+      } else {
+        // error?
+        state = null;
+      }
+
+      // create an ADD ComponentMessage
+      ComponentMessage addMsg =
+        new ComponentMessage(
+            new NodeIdentifier(bindingSite.getIdentifier()),
+            nodeID,
+            ComponentMessage.ADD,
+            origDesc,
+            state);
+
+      // send the message to destination node
+      sendMessage(addMsg, thisNodeID);
+
+      if (VERBOSE) {
+        System.out.println("Sent Message: "+addMsg);
+      }
+
+      // wait for an add acknowledgement -- postponed to 8.6+
+
+      // resume the original agent
+      if (VERBOSE) {
+        System.out.println("Clone Agent - Resume Agent "+agentID);
+      }
+
+      agent.resume();
+
+      if (VERBOSE) {
+        System.out.println(
+            "Cloned Agent "+agentID+" to Node "+nodeID);
+      }
+    }
+
+    //
+    // utility methods
+    //
+    // should save these services and release!  turn this
+    // class into a Component and add load/unload methods.
+    //
+
+    private NodeIdentifier getNodeIdentifier() {
+      // get this node's id
+      NodeIdentificationService nis = (NodeIdentificationService)
+        AgentManager.this.getServiceBroker().getService(
+            this,
+            NodeIdentificationService.class,
+            null);
+      if (nis == null) {
+        System.err.println("Unable to get this Node's Identification");
+        return null;
+      }
+      return nis.getNodeIdentifier();
+    }
+
+    private boolean sendMessage(
+        Message m,
+        final NodeIdentifier thisNodeID) {
+      // create a dummy message transport client
+      MessageTransportClient mtc = 
+        new MessageTransportClient() {
+          public void receiveMessage(Message message) {
+            // never
+          }
+          public MessageAddress getMessageAddress() {
+            return thisNodeID;
+          }
+        };
+
+      // get the message transport
+      MessageTransportService mts = (MessageTransportService)
+        AgentManager.this.getServiceBroker().getService(
+            mtc,
+            MessageTransportService.class,
+            null);
+      if (mts == null) {
+        System.err.println(
+            "Unable to get MessageTransport for mobility message");
+        return false;
+      }
+
+      // send the message to destination node
+      mts.sendMessage(m);
+
+      return true;
+    }
+  }
+}

@@ -2,7 +2,7 @@
  * <copyright>
  *  Copyright 1997-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
@@ -24,28 +24,37 @@ package org.cougaar.core.society;
 import org.cougaar.core.cluster.ClusterIdentifier;
 
 /**
- * Tell a Node to move one of it's Agent to another Node.
+ * Tell a Node to clone one of its Agent to another Node;
+ * the new Agent name and whether or not to clone the
+ * Blackboard is provided.
+ * <p>
+ * Typically the Blackboard is not cloned, since it may
+ * contain data that's private or non-applicable for the 
+ * clone.
  * <p>
  * The agent must reside on the <code>getTarget()</code> Node.
  */
-public class MoveAgentMessage 
+public class CloneAgentMessage 
 extends AgentManagementMessage 
 {
 
-  // agent to move
   private ClusterIdentifier agentID;
-
-  // destination node
   private NodeIdentifier nodeID;
+  private final ClusterIdentifier cloneAgentID;
+  private final boolean cloneBlackboard;
 
-  public MoveAgentMessage(
-      MessageAddress aSource, 
+  public CloneAgentMessage(
+      MessageAddress aSource,
       MessageAddress aTarget,
       ClusterIdentifier agentID,
-      NodeIdentifier nodeID) {
+      NodeIdentifier nodeID,
+      ClusterIdentifier cloneAgentID,
+      boolean cloneBlackboard) {
     super(aSource, aTarget);
     this.agentID = agentID;
     this.nodeID = nodeID;
+    this.cloneAgentID = cloneAgentID;
+    this.cloneBlackboard = cloneBlackboard;
   }
 
   /**
@@ -65,14 +74,33 @@ extends AgentManagementMessage
     return nodeID;
   }
 
+  /**
+   * Get the new <code>ClusterIdentifier</code> for the clone.
+   */
+  public ClusterIdentifier getCloneAgentIdentifier() { 
+    return cloneAgentID; 
+  }
+
+  /**
+   * Whether or not to clone the blackboard.
+   */
+  public boolean getCloneBlackboard() { 
+    return cloneBlackboard; 
+  }
+
   public String toString() {
-    return 
-      "Move Agent "+
+    return
+      "Clone Agent "+
       getAgentIdentifier()+
       " from Node "+
       getTarget()+
-      " to Node "+
+      " on Node "+
       getNodeIdentifier()+
+      ", with the new name "+
+      getCloneAgentIdentifier()+
+      " and with"+
+      (getCloneBlackboard() ? "" : "out")+
+      " the blackboard"+
       ", as ordered by "+
       getOriginator();
   }
