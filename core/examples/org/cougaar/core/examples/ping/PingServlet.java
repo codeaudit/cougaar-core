@@ -117,6 +117,17 @@ implements BlackboardClient
     super.unload();
   }
 
+  protected Collection queryAllPings() {
+    Collection ret = null;
+    try {
+      blackboard.openTransaction();
+      ret = blackboard.query(PING_PRED);
+    } finally {
+      blackboard.closeTransactionDontReset();
+    }
+    return ret;
+  }
+
   protected Ping queryPing(final UID uid) {
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
@@ -292,7 +303,7 @@ implements BlackboardClient
           "</th><th>Status"+
           "</th></tr>\n");
 
-      Collection c = blackboard.query(PING_PRED);
+      Collection c = queryAllPings();
       int n = ((c != null) ? c.size() : 0);
       if (n > 0) {
         Iterator iter = c.iterator();
