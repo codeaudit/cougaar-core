@@ -1407,7 +1407,7 @@ public class ClusterImpl extends Agent
     }
   }
 
-  private static class AgentState {
+  private static class AgentState implements java.io.Serializable {
     Object bbState;
     StateTuple[] children;
   }
