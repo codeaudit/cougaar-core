@@ -279,8 +279,8 @@ public abstract class AbstractMobilityPlugin
     
     if (isNode) {
       if (blackboard.didRehydrate()) {
-        if (log.isWarnEnabled()) {
-          log.warn(
+        if (log.isInfoEnabled()) {
+          log.info(
               "Node rehydration for agent mobility is not supported");
         }
       }
