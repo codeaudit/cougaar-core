@@ -117,6 +117,7 @@ implements SimpleServletSupport
           (javax.naming.NameClassPair) en.nextElement();
         toList.add(ncp.getName());
       }
+      Collections.sort(toList);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
