@@ -105,8 +105,8 @@ public class AllocationResult
     int len2 = ar2.avResults.length;
     int nAspects = len1;
     float sumConfRating = ar1.confrating * nAspects;
-    System.arraycopy(ar1.avResults, 0, avResults, 0, nAspects);
     avResults = new AspectValue[len1 + len2];
+    System.arraycopy(ar1.avResults, 0, avResults, 0, nAspects);
   outer:
     for (int i = 0; i < len2; i++) {
       int aspectType = ar2.avResults[i].getAspectType();
