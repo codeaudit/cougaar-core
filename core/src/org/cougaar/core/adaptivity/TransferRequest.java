@@ -36,8 +36,9 @@ public class TransferRequest {
 
   /**
    * Constructor
-   * @param String 'to' destination/agent
-   * @param Object contents of the message
+   * @param to String 'to' destination/agent
+   * @param messageContents Object contents of the message
+   **/
   public TransferRequest(String to,  Object messageContents){
     destination = to;
     contents = messageContents;

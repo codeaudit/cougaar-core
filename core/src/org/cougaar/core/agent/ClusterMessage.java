@@ -39,8 +39,8 @@ public class ClusterMessage
   protected long theIncarnationNumber;
 
   /**
-   * @param source The MessageAddress of creator cluster 
-   * @param destination The MessageAddress of the target cluster
+   * @param s The MessageAddress of creator cluster 
+   * @param d The MessageAddress of the target cluster
    **/
   public ClusterMessage(MessageAddress s, MessageAddress d, long incarnationNumber) {
     super( (MessageAddress)s, (MessageAddress)d );

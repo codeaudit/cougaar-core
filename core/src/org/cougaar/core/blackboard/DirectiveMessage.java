@@ -60,17 +60,17 @@ public class DirectiveMessage extends ClusterMessage
     super();
   }
     
-  /** constructor that takes a directive
-   * @param aDirective
+  /** constructor that takes multiple directives
+   * @param someDirectives to send
    */
   public DirectiveMessage(Directive[] someDirectives) {
     directives = someDirectives;
   }
     
-  /** constructor that takes source, destination and a directive
+  /** constructor that takes source, destination and some directives
    * @param source
    * @param destination
-   * @param aDirective
+   * @param someDirectives
    */
   public DirectiveMessage(MessageAddress source, MessageAddress destination,
                           long incarnationNumber,
@@ -84,17 +84,15 @@ public class DirectiveMessage extends ClusterMessage
    * Returns an array of the directives in this message.  
    * @return Directive[]
    **/
-    
   public Directive[] getDirectives() {
     return directives;
   }
     
   /** setDirective method
-   * Sets an object that represents the directive
+   * Sets an object that represents the directives
    * that this message is in reference to.
-   * @param aDirective
+   * @param someDirectives
    **/
-
   public void setDirectives(Directive[] someDirectives) {
     directives = someDirectives;
   }

@@ -224,7 +224,7 @@ public abstract class DomainAdapter
    * to ensure that the specified domain name matches the domain name for
    * the class.
    *
-   * @param Object Expecting a List containing one non-null String that 
+   * @param o  Expecting a List containing one non-null String that 
    * specifies the domainName. 
    */
   public void setParameter(Object o) {

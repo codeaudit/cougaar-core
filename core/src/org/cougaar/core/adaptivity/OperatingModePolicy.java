@@ -43,20 +43,25 @@ public class OperatingModePolicy implements Policy, Publishable  {
   private String authority;
   private PolicyKernel policy;
 
+  public OperatingModePolicy (PolicyKernel pk) {
+    policy = pk;
+  }
+  
   /**
    * Constructor 
    * @param ifClause the 'if' ConstrainingClause 
    * @param omConstraints an array of constraints to apply to {@link OperatingMode}s
    */
-  public OperatingModePolicy (PolicyKernel pk) {
-    policy = pk;
-  }
-  
   public OperatingModePolicy (ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints) {
     this(new PolicyKernel(ifClause, omConstraints));
   }
   
+  /**
+   * Constructor 
+   * @param ifClause the 'if' ConstrainingClause 
+   * @param omConstraints an array of constraints to apply to {@link OperatingMode}s
+   */
   public OperatingModePolicy (String policyName,
 			      ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints) {
@@ -64,6 +69,11 @@ public class OperatingModePolicy implements Policy, Publishable  {
     this.policyName = policyName;
   }
 
+  /**
+   * Constructor 
+   * @param ifClause the 'if' ConstrainingClause 
+   * @param omConstraints an array of constraints to apply to {@link OperatingMode}s
+   */
   public OperatingModePolicy (String policyName,
 			      ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints,

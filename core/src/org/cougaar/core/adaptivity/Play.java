@@ -28,8 +28,8 @@ package org.cougaar.core.adaptivity;
 public class Play extends PlayBase {
   /**
    * Constructor
-   * @param ConstraingClause representing the 'if' clause
-   * @param ConstraingClause representing the 'then' clause
+   * @param ifClause representing the 'if' clause
+   * @param playConstraints representing the 'then' clause
    **/
   public Play (ConstrainingClause ifClause, ConstraintPhrase[] playConstraints) {
     super(ifClause, playConstraints);

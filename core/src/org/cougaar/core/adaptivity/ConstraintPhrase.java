@@ -31,10 +31,9 @@ public class ConstraintPhrase extends ConstraintOpValue implements java.io.Seria
   String proxyName;
   
   /**
-   * Constructor 
-   * @param String name of the input source, e.g., condition name
-   * @param ConstraintOperator
-   * @param an array of OMCRange descriptions list allowed ranges.
+   * @param name of the input source, e.g., condition name
+   * @param op ConstraintOperator
+   * @param av array of OMCRange descriptions list allowed ranges.
    */
   public ConstraintPhrase(String name, ConstraintOperator op, OMCRangeList av) {
     this(name);
