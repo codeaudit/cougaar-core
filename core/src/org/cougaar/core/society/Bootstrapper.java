@@ -45,20 +45,12 @@ import java.security.cert.*;
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $CLASSPATH
-<<<<<<<<<<<<<< variant A
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
  *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
- *
->>>>>>>>>>>>>> variant B
- *  $ALP_INSTALL_PATH/lib/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/plugins/*.{jar,zip,plugin}
- *  -Dalp.system.path=whatever/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/sys/*.{jar,zip,plugin} 
  * </pre>
  * <p>
-======= end of combination
  * As an added bonus, Bootstrapper may be run as an application
  * which takes the fully-qualified class name of the class to run
  * as the first argument.  All other arguments are passed
