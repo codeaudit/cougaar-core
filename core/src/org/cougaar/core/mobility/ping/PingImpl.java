@@ -320,21 +320,21 @@ implements Ping, Relay.Source, Relay.Target, Serializable {
     if (sc <= 0) {
       return 0.0;
     }
-    return (statSumRTT / sc);
+    return  ((double)statSumRTT / sc);
   }
   public double getStatSumSqrRTT() {
     return statSumSqrRTT;
   }
   public double getStatStdDevRTT() {
     int sc = statCount;
-    if (sc <= 0) {
+    if (sc <= 1) {
       return 0.0;
     }
     double d;
     d = statSumSqrRTT * statCount;
     d -= (statSumRTT * statSumRTT);
     d = Math.sqrt(d);
-    d /= sc;
+    d /= (sc-1);
     return d;
   }
   public void setError(String error) {
