@@ -29,7 +29,7 @@ package org.cougaar.core.persist;
 /**
  * A persistence sequence range and timestamp.
  */
-class SequenceNumbers implements Comparable {
+public class SequenceNumbers implements Comparable {
     int first = 0;
     int current = 0;
     long timestamp;             // The time the highest delta in this set was written.
