@@ -1,5 +1,9 @@
 2002-06-05  Michael Thome  <mthome@bbn.com>
 
+	* org/cougaar/core/node/NodeAgent.java
+	move LoggingService to HIGH pass (bug 1398).  Addded javadoc on
+	which components and services get loaded at which priorities.
+
 	* org/cougaar/core/logging/LoggingServiceProvider.java
 	Moved much of this to
 	util:org.cougaar.util.log.log4j.Log4jFactoryImpl

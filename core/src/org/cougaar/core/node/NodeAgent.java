@@ -72,6 +72,22 @@ import org.cougaar.core.thread.ThreadServiceProvider;
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
+ * <p>
+ * Components and services are loaded in the following order:
+ * <ul>
+ * <li> <em>HIGH<em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
+ * </li>
+ * <li> <em>INTERNAL<em>: ThreadService, NamingService, TopologyWriterServiceComponent, TopologyReaderServiceComponent,
+ * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport, NodeTrustComponent, RootMobilityComponent,
+ * RootServletComponent, external INTERNAL components.
+ * </li>
+ * <li> <em>BINDER<em>: NodeAgentBinderFactory, external BINDER components.
+ * </li>
+ * <li> <em>COMPONENT<em>: external COMPONENT components.
+ * </li>
+ * <li> <em>LOW<em>: external LOW components.
+ * </li>
+ * </ul>
  */
 public class NodeAgent
   extends SimpleAgent
@@ -133,6 +149,12 @@ public class NodeAgent
       getServiceBroker().addService(NodeControlService.class, ncsp);
     }
 
+    {
+      LoggingServiceProvider lsp = new LoggingServiceProvider();
+      rootsb.addService(LoggingService.class, lsp);
+      rootsb.addService(LoggingControlService.class, lsp);
+    }
+
     super.loadHighPriorityComponents();
 
     // add the default agent-identity provider, which does
@@ -164,12 +186,6 @@ public class NodeAgent
             SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
     } catch (NamingException ne) {
       throw new Error("Couldn't initialize NamingService ", ne);
-    }
-
-    {
-      LoggingServiceProvider lsp = new LoggingServiceProvider();
-      rootsb.addService(LoggingService.class, lsp);
-      rootsb.addService(LoggingControlService.class, lsp);
     }
 
     ComponentDescription topologyWriterSCDesc = 
