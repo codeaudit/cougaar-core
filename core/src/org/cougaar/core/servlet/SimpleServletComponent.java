@@ -314,22 +314,15 @@ public class SimpleServletComponent
   private class SimpleServletSupportImpl
   implements SimpleServletSupport 
   {
-
-    private String agentName;
     private String encAgentName;
 
     private SimpleServletSupportImpl() {
-      // cache these:
-      agentName = agentId.getAddress();
-      encAgentName = encodeAgentName(agentName);
+      // cache:
+      encAgentName = encodeAgentName(agentId.getAddress());
     }
 
     public String getPath() {
       return path;
-    }
-
-    public String encodeAgentName(String name) {
-      return URLEncoder.encode(name);
     }
 
     public Collection queryBlackboard(UnaryPredicate pred) {
@@ -346,10 +339,6 @@ public class SimpleServletComponent
 
     public String getEncodedAgentName() {
       return encAgentName;
-    }
-
-    public String getAgentName() {
-      return agentName;
     }
 
     public ClusterIdentifier getAgentIdentifier() {
@@ -394,14 +383,10 @@ public class SimpleServletComponent
       return toList;
     }
 
-    public List getAllAgentNames() {
-      return getAllAgentNames(new ArrayList());
-    }
+    // maybe add a "getAllAgentIdentifiers()"
 
-    public List getAllAgentNames(List toList) {
-      throw new UnsupportedOperationException(
-          "Not implemented yet --"+
-          " see \"getAllEncodedAgentNames()\"");
+    public String encodeAgentName(String name) {
+      return URLEncoder.encode(name);
     }
 
     // etc to match "SimpleServletSupport"

@@ -84,14 +84,6 @@ public interface SimpleServletSupport {
   public Collection queryBlackboard(UnaryPredicate pred);
 
   /**
-   * Utility method to encode an Agent name -- 
-   * equivalent to <tt>java.net.URLEncoder.encode(name)</tt>.
-   *
-   * @see #getEncodedAgentName
-   */
-  public String encodeAgentName(String name);
-
-  /**
    * Get the URL- and HTML-safe (encoded) name of the
    * Agent that contains this Servlet instance.
    * <p>
@@ -140,17 +132,12 @@ public interface SimpleServletSupport {
   public List getAllEncodedAgentNames(List toList);
 
   /**
-   * Equivalent to <tt>getAllAgentNames(new ArrayList())</tt>.
+   * Utility method to encode an Agent name -- 
+   * equivalent to <tt>java.net.URLEncoder.encode(name)</tt>.
+   *
+   * @see #getEncodedAgentName
    */
-  public List getAllAgentNames();
-
-  /**
-   * Fill the given <tt>toList</tt> with all the 
-   * <code>String</code> "raw" Agent names in the society.
-   * <p>
-   * This includes both local and remote Agent names.
-   */
-  public List getAllAgentNames(List toList);
+  public String encodeAgentName(String name);
 
   //
   // add other COUGAAR-specific methods here.
