@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.ServletService;
@@ -53,7 +52,6 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
 
   private ServletService servletService = null;
   private PersistenceMetricsService metricsService = null;
-  private ServiceProvider serviceProvider;
   private String agentName;
 
   public PersistenceMetricsServlet() {

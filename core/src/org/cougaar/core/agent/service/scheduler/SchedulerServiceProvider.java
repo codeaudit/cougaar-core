@@ -232,16 +232,6 @@ class SchedulerServiceProvider
     }
   }
 
-  private static Object invokeMethod(String methodName, Object on, Object dflt) {
-    try {
-      java.lang.reflect.Method method =
-        on.getClass().getMethod(methodName, emptyTypeArray);
-      return method.invoke(on, emptyObjectArray);
-    } catch (Throwable t) {
-      return dflt;
-    }
-  }
-
   /**
    * NormalScheduler applies threads from a ThreadService to scheduled
    * clients. Requests are handled in the order they are requested.

@@ -421,14 +421,6 @@ class MessageManagerImpl implements MessageManager, Serializable {
     sendMessages(messages.iterator());
   }
 
-  private void printMessage(String prefix, ClusterMessage aMessage) {
-    if (aMessage instanceof DirectiveMessage) {
-      printMessage(prefix, (DirectiveMessage) aMessage);
-    } else if (aMessage instanceof AckDirectiveMessage) {
-      printMessage(prefix, (AckDirectiveMessage) aMessage);
-    }
-  }
-
   private void printMessage(String prefix, DirectiveMessage aMessage) {
     printMessage(prefix,
                  aMessage.getIncarnationNumber(),
@@ -636,11 +628,6 @@ class MessageManagerImpl implements MessageManager, Serializable {
         if (debug) printMessage("QAck", aMessage);
       }
     }
-  }
-
-  private void resetAllConnections() {
-    clusterInfo.clear();
-    printLog("MessageManager connections clearer");
   }
 
   /**

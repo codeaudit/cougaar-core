@@ -54,9 +54,9 @@ extends GenericStateModelAdapter
 implements Component
 {
   // see bug 2837 + bug 2839
-  private static final boolean SHORTCUT_NON_VERSION_GET = 
-    Boolean.getBoolean(
-        "org.cougaar.core.wp.resolver.shortcutNonVersionLookup");
+//  private static final boolean SHORTCUT_NON_VERSION_GET = 
+//    Boolean.getBoolean(
+//        "org.cougaar.core.wp.resolver.shortcutNonVersionLookup");
 
   private LeaserConfig config;
 

@@ -114,14 +114,6 @@ public class DatabasePersistence
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
-  private String parseParam(String prefix, String dflt) {
-    for (int i = 0; i < params.length; i++) {
-      String param = params[i];
-      if (param.startsWith(prefix)) return param.substring(prefix.length());
-    }
-    return dflt;
-  }
-
   protected void handleParameter(String param) {
     String value;
     if ((value = parseParamValue(param, PERSISTENCE_DB_DRIVER_PREFIX)) != null) {

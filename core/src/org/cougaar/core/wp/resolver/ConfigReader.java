@@ -80,7 +80,6 @@ public class ConfigReader {
   private static final String FILENAME = "alpreg.ini";
   private static final String SERVER_PROP = "org.cougaar.name.server";
   private static final String PROP_PREFIX = SERVER_PROP+".";
-  private static final String PORT_PROP = PROP_PREFIX+"port";
 
   private static final Object lock = new Object();
 

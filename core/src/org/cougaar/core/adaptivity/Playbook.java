@@ -22,7 +22,6 @@
 package org.cougaar.core.adaptivity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -62,26 +61,6 @@ public class Playbook
 
   public synchronized Play[] getCurrentPlays() {
     return constrainedPlays;
-  }
-
-  /**
-   * Compute the intersection of two collections
-   **/
-  private static Collection intersect(Collection c1, Collection c2) {
-    List result = new ArrayList();
-    if (c1.size() > c2.size()) {
-      // Make c1 the smaller collection
-      Collection t = c1;
-      c1 = c2;
-      c2 = t;
-    }
-    for (Iterator i = c1.iterator(); i.hasNext(); ) {
-      Object ele = i.next();
-      if (c2.contains(ele)) {
-        result.add(ele);
-      }
-    }
-    return result;
   }
 
   private void constrainPlays() {

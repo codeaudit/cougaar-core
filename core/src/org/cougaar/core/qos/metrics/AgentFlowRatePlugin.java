@@ -39,7 +39,6 @@ public class AgentFlowRatePlugin
   implements Runnable, Constants
 {
     private static final int BASE_PERIOD = 10; //10SecAVG
-    private static final int COLUMNS=3;
     private LoggingService logging;
 
     private class AgentFlowHistory extends DecayingHistory {

@@ -131,8 +131,6 @@ extends ContainerSupport
   public static final String NODE_AGENT_CLASSNAME_PROPERTY =
     "org.cougaar.core.node.classname";
 
-  private MessageAddress myNodeIdentity_ = null;
-
   /**
    * Node entry point.
    * <p>

@@ -24,10 +24,8 @@ package org.cougaar.core.mobility.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentContainer;
@@ -100,10 +98,6 @@ public abstract class AbstractMobilityPlugin
   private MobileAgentServiceProviderImpl mobileAgentSP;
 
   private final List todo = new ArrayList(5);
-
-  // a map from agent MessageAddress to an AgentEntry
-  private final Map entries = new HashMap(13);
-
 
   public void load() {
     super.load();

@@ -326,12 +326,12 @@ public class LocateAgentServlet extends ComponentServlet {
       return s;
     }
 
-    private static String option(String n, String v) {
-      return 
-        "<option value=\""+n+"\""+
-        ((v!=null && v.equals(n)) ? " selected" : "")+
-        ">"+n+"</option>";
-    }
+//    private static String option(String n, String v) {
+//      return 
+//        "<option value=\""+n+"\""+
+//        ((v!=null && v.equals(n)) ? " selected" : "")+
+//        ">"+n+"</option>";
+//    }
 
     private static String input(String n, String v) {
       return input(n, v, 40);
@@ -371,16 +371,16 @@ public class LocateAgentServlet extends ComponentServlet {
       out.println("</table>");
     }
 
-    private void print(Exception e) {
-      out.println("Failure</td><td>");
-      if (e == null) {
-        out.print("null");
-        return;
-      }
-      out.println("<pre>");
-      e.printStackTrace(out);
-      out.println("</pre>");
-    }
+//    private void print(Exception e) {
+//      out.println("Failure</td><td>");
+//      if (e == null) {
+//        out.print("null");
+//        return;
+//      }
+//      out.println("<pre>");
+//      e.printStackTrace(out);
+//      out.println("</pre>");
+//    }
 
     ///// For later use
     protected List getAllEncodedAgentNames() {

@@ -79,11 +79,11 @@ public class Exercise extends ServiceUserPlugin {
     resetTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
   }
 
-  private void wasteTime(Item item, int factor) {
-    for (int i = 0; i < factor; i++) {
-      item.wasteTime();
-    }
-  }
+//  private void wasteTime(Item item, int factor) {
+//    for (int i = 0; i < factor; i++) {
+//      item.wasteTime();
+//    }
+//  }
 
   public void execute() {
     if (timerExpired()) {

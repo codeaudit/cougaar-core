@@ -710,20 +710,6 @@ extends AbstractMobilityPlugin
          "null");
   }
 
-  private interface Queueable extends Runnable {
-
-    public boolean completeTransaction();
-
-    public boolean beforeRun();
-
-    public void run();
-
-    public boolean afterRun();
-
-    public boolean resumeTransaction();
-
-  }
-
   private void queue(
       MessageAddress id,
       AbstractHandler h,
@@ -1042,9 +1028,9 @@ extends AbstractMobilityPlugin
         addPendingTuple(PendingTuple.CHANGE, o);
       }
 
-      private void publishRemoveLater(Object o) {
-        addPendingTuple(PendingTuple.REMOVE, o);
-      }
+//      private void publishRemoveLater(Object o) {
+//        addPendingTuple(PendingTuple.REMOVE, o);
+//      }
 
       private void addPendingTuple(int op, Object o) {
         addPendingTuple(new PendingTuple(op, o));

@@ -122,6 +122,8 @@ public class BufferedFileSystem implements Runnable {
               fileOutputStream.write(buf, 0, nbytes);
             } catch (IOException ioe) {
               throw new BufferedFileException(ioe);
+            } finally {
+              releaseBuffer(buf);
             }
           }
           public String toString() {

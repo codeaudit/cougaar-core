@@ -72,11 +72,6 @@ public final class INIParser {
           containerInsertionPoint);
   }
 
-  private static final Vector EMPTY_VECTOR = new Vector(0);
-  private static final Vector getEmptyVector() {
-    return EMPTY_VECTOR;
-  }
-
   /** Pattern for matching insertionPoint&priority **/
   final static Pattern namePattern = Pattern.compile("([a-zA-Z0-9.]+)(\\((.+)\\))?");
 

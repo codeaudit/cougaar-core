@@ -38,9 +38,6 @@ public class SchedulerWatcher
     private static final double CREDIBILITY = SECOND_MEAS_CREDIBILITY;
     private static final String PROVENANCE = "SchedulerWatcher";
 
-    private long totalLoad;
-    private long loadTimestamp;
-    private double sumTotalLoad;
     private String agentName;
 
     private class ConsumerRecord {

@@ -530,7 +530,6 @@ public class PersistenceServiceComponent
   private Map plugins = new HashMap();
   private Map rehydrationResult = null;
   private Map clients = new HashMap();
-  private boolean triedRehydrate = false;
   private ServiceBroker sb;
   private boolean full;         // Private to persist method and methods it calls
 
@@ -868,14 +867,14 @@ public class PersistenceServiceComponent
    * reference id.  Other references to objects in the identityTable
    * are replaced with reference objects.
    */
-  private boolean nonEmpty(List subscriberStates) {
-    for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
-      PersistenceSubscriberState subscriberState = (PersistenceSubscriberState) iter.next();
-      if (subscriberState.pendingEnvelopes.size() > 0) return true;
-      if (subscriberState.transactionEnvelopes.size() > 0) return true;
-    }
-    return false;
-  }
+//  private boolean nonEmpty(List subscriberStates) {
+//    for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
+//      PersistenceSubscriberState subscriberState = (PersistenceSubscriberState) iter.next();
+//      if (subscriberState.pendingEnvelopes.size() > 0) return true;
+//      if (subscriberState.transactionEnvelopes.size() > 0) return true;
+//    }
+//    return false;
+//  }
 
   private boolean isPersistable(Object o) {
     if (o instanceof NotPersistable) return false;

@@ -103,10 +103,6 @@ class TimeServiceProvider
       this.requestor = requestor;
       name = (this.getClass().getName())+" for "+(requestor.toString());
     }
-    /** @return the client **/
-    private Object getRequestor() {
-      return requestor;
-    }
 
     public String toString() { return name; }
 

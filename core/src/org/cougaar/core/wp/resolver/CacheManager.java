@@ -24,12 +24,10 @@ package org.cougaar.core.wp.resolver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
@@ -134,12 +132,12 @@ implements Component
   //
 
   // Set<String>
-  private final Set lookupQueue = new HashSet(13);
-
-  // temporary list to drain the lookupQueue, only used
-  // within the scheduled "sendGetAllRunner" thread.
-  // List<String>
-  private final List tmpLookupQueue = new ArrayList(13);
+//  private final Set lookupQueue = new HashSet(13);
+//
+//  // temporary list to drain the lookupQueue, only used
+//  // within the scheduled "sendGetAllRunner" thread.
+//  // List<String>
+//  private final List tmpLookupQueue = new ArrayList(13);
 
   //
   // clean the cache:
@@ -996,52 +994,52 @@ implements Component
    * </pre>
    * @param ae non-null if bind, otherwise should be oldAE
    */
-  private void bound(
-      AddressEntry oldAE,
-      AddressEntry ae,
-      long ttl) {
-    String name = oldAE.getName();
-    synchronized (lock) {
-      Entry e = (Entry) cache.get(name);
-      if (e == null) {
-        // no entry?
-        return;
-      }
-      long now = System.currentTimeMillis();
-      if (e.hasExpired(now)) {
-        // no data to patch
-        return;
-      }
-      if (e.canEvict(now, false)) {
-        // it's expired and no lookup is in progress
-        cache.remove(name);
-        return;
-      }
-      // patch the data
-      Map m = (Map) e.getData();
-      long oldTTL = e.getExpirationTime();
-      if (oldTTL < ttl) {
-        // keep the old ttl, swap in new data
-        //
-        // this may be a bit confusing, since the cache will contain
-        // a mix of server data and local bound overrides, but it's
-        // better than flushing the entry
-        Map newMap = new HashMap(m);
-        String type = oldAE.getType();
-        newMap.put(type, ae);
-        newMap = Collections.unmodifiableMap(newMap);
-        e.setData(newMap);
-      } else {
-        // unusual: the server has reduced the ttl!
-        //
-        // rather than patching the existing entry,
-        // we'll expire it immediately.
-        if (e.flush(now)) {
-          cache.remove(name);
-        }
-      }
-    }
-  }
+//  private void bound(
+//      AddressEntry oldAE,
+//      AddressEntry ae,
+//      long ttl) {
+//    String name = oldAE.getName();
+//    synchronized (lock) {
+//      Entry e = (Entry) cache.get(name);
+//      if (e == null) {
+//        // no entry?
+//        return;
+//      }
+//      long now = System.currentTimeMillis();
+//      if (e.hasExpired(now)) {
+//        // no data to patch
+//        return;
+//      }
+//      if (e.canEvict(now, false)) {
+//        // it's expired and no lookup is in progress
+//        cache.remove(name);
+//        return;
+//      }
+//      // patch the data
+//      Map m = (Map) e.getData();
+//      long oldTTL = e.getExpirationTime();
+//      if (oldTTL < ttl) {
+//        // keep the old ttl, swap in new data
+//        //
+//        // this may be a bit confusing, since the cache will contain
+//        // a mix of server data and local bound overrides, but it's
+//        // better than flushing the entry
+//        Map newMap = new HashMap(m);
+//        String type = oldAE.getType();
+//        newMap.put(type, ae);
+//        newMap = Collections.unmodifiableMap(newMap);
+//        e.setData(newMap);
+//      } else {
+//        // unusual: the server has reduced the ttl!
+//        //
+//        // rather than patching the existing entry,
+//        // we'll expire it immediately.
+//        if (e.flush(now)) {
+//          cache.remove(name);
+//        }
+//      }
+//    }
+//  }
 
   private void prefetch() {
     Map m = null;

@@ -123,8 +123,6 @@ extends SimpleAgent
   private String nodeName = null;
   private MessageAddress nodeIdentifier = null;
 
-  private List components = new ArrayList();
-
   private static final boolean isHeartbeatOn;
   private static final boolean isWPEnabled;
   private static final boolean isWPServerEnabled;

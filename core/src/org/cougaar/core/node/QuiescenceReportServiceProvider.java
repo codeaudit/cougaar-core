@@ -106,17 +106,6 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     eventService.event(msg);
   }
 
-  private static void setMessageMap(MessageAddress me, Map messageNumbers, Map newMap) {
-    Map existingMap = (Map) messageNumbers.get(me);
-    if (existingMap == null) {
-      existingMap = new HashMap(newMap);
-      messageNumbers.put(me, existingMap);
-    } else {
-      existingMap.clear();
-      existingMap.putAll(newMap);
-    }
-  }
-
   private QuiescenceState getQuiescenceState(MessageAddress me) {
     QuiescenceState quiescenceState = (QuiescenceState) quiescenceStates.get(me);
     if (quiescenceState == null) {
