@@ -23,7 +23,7 @@ package org.cougaar.core.society;
 
 import org.cougaar.core.component.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.*;
 import org.cougaar.util.*;
 import java.lang.reflect.*;
 /**
@@ -36,6 +36,7 @@ import java.lang.reflect.*;
 
 public final class StandardSecurityComponent
   extends SecurityComponent
+  implements MessageTransportClient
 {
   public final static String SMD_PROP = PROP_PREFIX+".Domain";
 
@@ -53,8 +54,11 @@ public final class StandardSecurityComponent
     }
   }
   protected MessageTransportService mts = null;
-  public final void setMessageTransportService(MessageTransportService mts) {
-    this.mts = mts;
+  public synchronized final void setMessageTransportService(MessageTransportService mts) {
+    if (this.mts == null && mts != null) {
+      this.mts = mts;
+      maybeActivate();
+    }
   }
 
   public void load() {
@@ -88,9 +92,9 @@ public final class StandardSecurityComponent
     String name = bindingSite.getName();
 
     if (dmId == null) {
-      System.err.println("System property "+SMD_PROP+" not set.\nProceeding without Guard!");
+      //System.err.println("System property "+SMD_PROP+" not set.\nProceeding without Guard!");
     } else {
-      System.err.println("Starting Guard");
+      System.err.println("Creating Guard");
       try {
         Class gc = Class.forName("SAFE.Guard.NodeGuard");
         Class pbc = Class.forName("org.cougaar.core.security.policy.PolicyBootstrapper");
@@ -100,41 +104,69 @@ public final class StandardSecurityComponent
                                               String.class, String.class,
                                               String.class, pbc
                                             });
-        System.out.println("Creating Guard.");
-        guard = gcc.newInstance(
-                                new Object[] { name, name, dmId, pbc.newInstance() });
+        //System.out.println("Creating Guard.");
+        guard = gcc.newInstance(new Object[] { name, name, dmId, pbc.newInstance() });
         
-        System.out.println("Initializing Guard.");
+        //System.out.println("Initializing Guard.");
         Method ginit = guard.getClass().getMethod("initialize", new Class[] {});
         ginit.invoke(guard, new Object[] {});
       } catch (Exception e) {
         System.err.println("ERROR: while loading NodeGuard: " + e);
       }
     }
-    if (guard != null) {
-      try {
-        Method gsmt = guard.getClass()
-          .getMethod("setMessageTransport", new Class[] { MessageTransportService.class });
-        gsmt.invoke(guard, new Object[] { mts } );
-      } catch (Exception e) {
-        e.printStackTrace();
-        System.exit(0);
+    
+    final ServiceBroker sb = bindingSite.getServiceBroker();
+    sb.addServiceListener(new ServiceAvailableListener() {
+        public void serviceAvailable(ServiceAvailableEvent ae) {
+          Class sc = ae.getService();
+          if (MessageTransportService.class.isAssignableFrom(sc)) {
+            Object ts = sb.getService(StandardSecurityComponent.this, MessageTransportService.class, null);
+            if (ts instanceof MessageTransportService) {
+              StandardSecurityComponent.this.setMessageTransportService((MessageTransportService)ts);
+              maybeActivate();
+            }
+          }
+        }
+      });
+
+    maybeActivate();
+  }
+  
+  private boolean isActivated = false;
+
+  protected synchronized void maybeActivate() {
+    if (!isActivated) {
+      if (guard != null && mts != null) {
+        System.err.println("Activating Guard");
+        try {
+          Method gsmt = guard.getClass()
+            .getMethod("setMessageTransport", new Class[] { MessageTransportService.class });
+          gsmt.invoke(guard, new Object[] { mts } );
+        } catch (Exception e) {
+          e.printStackTrace();
+          System.exit(0);
+        }
+        isActivated = true;
       }
     }
   }
-  
+
   public void setState(Object loadState) {}
   public Object getState() {return null;}
 
-  public void unload() {
+  public synchronized void unload() {
     super.unload();
     // unload services in reverse order of "load()"
     ServiceBroker sb = bindingSite.getServiceBroker();
     // release services
-    sb.releaseService(this, MessageTransportService.class, mts);
+    if (mts != null) {
+      sb.releaseService(this, MessageTransportService.class, mts);
+      mts = null;
+    }
   }
 
-
-
+  // implement MessageTransportClient
+  public void receiveMessage(Message m) {}
+  public MessageAddress getMessageAddress() {return null;}
 
 }

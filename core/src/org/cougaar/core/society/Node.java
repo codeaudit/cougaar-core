@@ -573,9 +573,39 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
       throw new RuntimeException(
           "Failed to load the AgentManagerBinderFactory in Node");
     }
+
     agentManager = new AgentManager();
     super.add(agentManager);
   
+    {
+      //String smn = System.getProperty(SecurityComponent.SMC_PROP);
+      String smn = System.getProperty(SecurityComponent.SMC_PROP, "org.cougaar.core.society.StandardSecurityComponent");
+      if (smn != null) {
+        try {
+          Class smc = Class.forName(smn);
+          if (SecurityComponent.class.isAssignableFrom(smc)) {
+            ComponentDescription smcd = 
+              new ComponentDescription(
+                                       getIdentifier()+"SecurityComponent",
+                                       "Node.SecurityComponent",
+                                       smn,
+                                       null,  //codebase
+                                       null,  //parameters
+                                       null,  //certificate
+                                       null,  //lease
+                                       null); //policy
+            super.add(smcd);
+          } else {
+            System.err.println("Error: SecurityComponent specified as "+smn+" which is not an instance of SecurityComponent");
+            System.exit(1);
+          }
+        } catch (Exception e) {
+          System.err.println("Error: Could not load SecurityComponent "+smn+": "+e);
+          e.printStackTrace();
+          System.exit(1);
+        }
+      }
+    }
 
     ServiceBroker sb = getServiceBroker();
 
@@ -615,34 +645,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     // first.
     initTransport();  
 
-    {
-      String smn = System.getProperty(SecurityComponent.SMC_PROP);
-      if (smn != null) {
-        try {
-          Class smc = Class.forName(smn);
-          if (SecurityComponent.class.isAssignableFrom(smc)) {
-            ComponentDescription smcd = 
-              new ComponentDescription(
-                                       getIdentifier()+"SecurityComponent",
-                                       "Node.SecurityComponent",
-                                       smn,
-                                       null,  //codebase
-                                       null,  //parameters
-                                       null,  //certificate
-                                       null,  //lease
-                                       null); //policy
-            super.add(smcd);
-          } else {
-            System.err.println("Error: SecurityComponent specified as "+smn+" which is not an instance of SecurityComponent");
-            System.exit(1);
-          }
-        } catch (Exception e) {
-          System.err.println("Error: Could not load SecurityComponent "+smn+": "+e);
-          e.printStackTrace();
-          System.exit(1);
-        }
-      }
-    }
     // start Qos
     initQos();
 
