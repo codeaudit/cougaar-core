@@ -44,10 +44,10 @@ public class WorkflowImplBeanInfo extends SimpleBeanInfo {
 					      workflowClass,
 					      "getTaskIDs", null,
 					      "getTaskID", null);
-      pd[i++] = new IndexedPropertyDescriptor("constraints",
-					      workflowClass,
-					      "getConstraintsAsArray", null,
-					      "getConstraintFromArray", null);
+      pd[i++] = new PropertyDescriptor("constraints",
+				       workflowClass,
+				       "getConstraintsAsArray", 
+				       null);
       pd[i++] = new PropertyDescriptor("allocationResult",
 				       workflowClass,
 				       "getAllocationResult",

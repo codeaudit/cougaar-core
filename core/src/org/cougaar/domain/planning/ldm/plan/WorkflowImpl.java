@@ -56,16 +56,7 @@ public class WorkflowImpl
   private transient AllocationResult cachedar = null;
 
   public String toString() {
-    String cons;
-    String subtsks;
-
-    if (subtasks == null) {
-      subtsks = "0 tasks";
-    } else {
-      subtsks = new Integer(subtasks.size()).toString();
-    }
-    cons = new Integer(constraints.size()).toString();
-    return "<workflow of " + subtsks + " tasks " + "and " + cons + " constraints>";
+    return "<workflow " +  uid + " of base task "  + basetask + " of  "  + subtasks.size() + " tasks " + "and " + constraints.size() + " constraints>";
   }
 
   public WorkflowImpl(ClusterIdentifier owner, UID uid) {
@@ -79,9 +70,7 @@ public class WorkflowImpl
         
   /** @return Enumeration{Task} Enumerate over our subtasks. */
   public Enumeration getTasks() { 
-    synchronized (subtasks) {
-      return subtasks.elements(); 
-    }
+    return subtasks.elements(); 
   }
 
 
@@ -134,22 +123,17 @@ public class WorkflowImpl
 
   private TaskScoreTable updateTST() {
     synchronized (subtasks) {
-      int l=subtasks.size();
 
       if (_tst == null) {
-        if (l == 0) return null;
-        _tasks = new Task[l];
-        _ars = new AllocationResult[l];
-        for (int i=0; i<l; i++) {
-          Task t = (Task) subtasks.get(i);
-          _tasks[i]=t;
-        }
+  	_tasks = new Task[subtasks.size()];
+  	_tasks = (Task[]) subtasks.toArray(_tasks);
+	if (_tasks.length == 0) return null;
+	_ars = new AllocationResult[_tasks.length];
         _tst = new TaskScoreTable(_tasks, _ars);
       }
     
-      for (int i=0; i<l; i++) {
-        Task t = _tasks[i];
-        PlanElement pe = t.getPlanElement();
+      for (int i=0; i<_ars.length; i++) {
+        PlanElement pe = _tasks[i].getPlanElement();
         if (pe != null) {
           _ars[i] = pe.getEstimatedResult();
         }
@@ -189,8 +173,13 @@ public class WorkflowImpl
   /** Has a constraint been violated?
    **/
   public boolean constraintViolation() {
-    Vector violations = getViolatedConstraintsVector(true);
-    return (violations != null && violations.size() > 0);
+    for (Enumeration cons = constraints.elements(); cons.hasMoreElements(); ) {
+      Constraint c = (Constraint) cons.nextElement();
+      if (isConstraintViolated(c)) {
+        return true;
+      }
+    }
+    return false;
   }
   
   /** Get the constraints that were violated.
@@ -208,9 +197,6 @@ public class WorkflowImpl
   private Vector getViolatedConstraintsVector(boolean firstOnly) {
     // check to see if there are any constraints
     if (constraints.size() == 0) return null;
-    // see if all of the tasks have been allocated and get the results if they have
-    TaskScoreTable mytsc = getCurrentTST();// Make sure allocation results are up-to-date
-    if (mytsc == null) return null;
     Vector violations = new Vector(constraints.size());
     for (Enumeration cons = constraints.elements(); cons.hasMoreElements(); ) {
       Constraint c = (Constraint) cons.nextElement();
@@ -231,17 +217,17 @@ public class WorkflowImpl
   
   /** @param tasks set the tasks of the Workflow */     
   public void setTasks(Enumeration tasks) {
+    if (tasks == null) {
+        throw new IllegalArgumentException("Workflow.setTasks(Enum e): e must be a non-null Enumeration");
+    }
     synchronized (subtasks) {
       subtasks.removeAllElements();
-      if (! (tasks instanceof Enumeration) ) {
-        throw new IllegalArgumentException("Workflow.setTasks(Enum e): e must be an Enumeration");
-      }
       while (tasks.hasMoreElements()) {
         Task t = (Task) tasks.nextElement();
-        if ( t instanceof Task ) {
+        if ( t != null ) {
           subtasks.addElement(t);
         } else {
-          // buzzz... wrong answer - tryed to pass in a null!
+          // buzzz... wrong answer - tried to pass in a null!
           throw new IllegalArgumentException("Workflow.setTasks(Enum e): all elements of e must be Tasks");
         }
       }
@@ -251,23 +237,18 @@ public class WorkflowImpl
    
   /** @param newTask addTask allows you to add a Task to a Workflow.*/
   public void addTask(Task newTask) {
-    synchronized (subtasks) {
-      if (newTask instanceof Task) {
-        subtasks.addElement(newTask);
-      } else {
-        // buzzzz wrong answer - tryed to pass in a null!!
-        throw new IllegalArgumentException("Workflow.addTask(arg): arg must be a Task");
-      }
-      clearTST();
+    if (newTask == null) {
+      // buzzzz wrong answer - tried to pass in a null!!
+      throw new IllegalArgumentException("Workflow.addTask(arg): arg must be a non-null Task");
     }
+    subtasks.addElement(newTask);
+    clearTST();
   }
   
   /** @param remTask Remove the specified Task from the Workflow's sub-task collection  **/
   public void removeTask(Task remTask) {
-    synchronized (subtasks) {
-      subtasks.removeElement(remTask);
-      clearTST();
-    }
+    subtasks.removeElement(remTask);
+    clearTST();
   }
   
   /** Note any previous values will be dropped.
@@ -288,7 +269,7 @@ public class WorkflowImpl
           throw new IllegalArgumentException("Workflow.setConstraints(): incompatible aspects");
         }
       } else {
-        //buzzzz... wrong answer - tryed to pass in a null!
+        //buzzzz... wrong answer - tried to pass in a null!
         throw new IllegalArgumentException("Workflow.setConstraints(Enum e): all elements of e must be Constraints");
       }
     }
@@ -312,7 +293,7 @@ public class WorkflowImpl
       }
       constraints.addElement(newConstraint);
     } else {
-      //buzzz... wrong answer - tryed to pass in a null!
+      //buzzz... wrong answer - tried to pass in a null!
       throw new IllegalArgumentException("Workflow.addConstraint(): illegal null argument");
     }
   }
@@ -461,10 +442,8 @@ public class WorkflowImpl
   // used by ExpansionImpl for infrastructure propagating rescinds.
   public List clearSubTasks() {
     ArrayList l = null;
-    synchronized (subtasks) {
-      l = new ArrayList(subtasks);
-      subtasks.removeAllElements();
-    }
+    l = new ArrayList(subtasks);
+    subtasks.removeAllElements();
     return l;
   }
 
