@@ -318,6 +318,9 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
                          pg.getEndTime());
     }
 
+    System.out.println("locked: pgClass " + locked.getPGClass());
+    System.out.println("schedule: pgClass " + schedule.getPGClass());
+
     try {
       locked.setDefault(defaultPG);
       System.out.println("Error: able to setDefault on locked");
