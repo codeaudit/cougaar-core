@@ -60,6 +60,15 @@ would need to define the following information:</font></font>
 <br><font color="#000066"><font size=+1>org.cougaar.configuration.database=DBConnectionString</font></font>
 <br><font color="#000066"><font size=+1>org.cougaar.configuration.user=User</font></font>
 <br><font color="#000066"><font size=+1>org.cougaar.configuration.password=Password</font></font>
-<br>&nbsp;
+<br>
+<font color="#000066" size="+1">
+<p># datagrabber database configuration<br>
+# On the next line, DATAGRABBER_DBNAME is typically "Grabber" but can be anything you like.<br>
+org.cougaar.domain.mlm.ui.grabber.config.DBConfig.connectionURL=jdbc:mysql://HOST/DATAGRABBER_DBNAME<br>
+ org.cougaar.domain.mlm.ui.grabber.config.DBConfig.user=User&nbsp;&nbsp; <br>
+ org.cougaar.domain.mlm.ui.grabber.config.DBConfig.password=Password<br>
+ org.cougaar.domain.mlm.ui.grabber.config.DBConfig.syntax=MySQL&nbsp; </p>
+</font>
+&nbsp;
 </body>
 </html>
