@@ -518,6 +518,7 @@ public class ClusterImpl
       RESTART_CHECK_INTERVAL);
 
 
+    // children started as part of "super.add(..)".
   }
 
 
@@ -525,10 +526,9 @@ public class ClusterImpl
     super.suspend();
 
     // suspend all children
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.suspend();
     }
 
@@ -557,10 +557,9 @@ public class ClusterImpl
     // resume the alarms 
 
     // resume all children
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+    List childBinders = listBinders();
+    for (int i = 0, n = childBinders.size(); i < n; i++) {
+      Binder b = (Binder) childBinders.get(i);
       b.resume();
     }
   }
@@ -573,10 +572,9 @@ public class ClusterImpl
     // should be okay...
 
     // stop all children
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.stop();
     }
   }
@@ -598,10 +596,9 @@ public class ClusterImpl
     sb.releaseService(this, BlackboardForAgent.class, myBlackboardService);
 
     // unload children
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.unload();
     }
     boundComponents.clear();

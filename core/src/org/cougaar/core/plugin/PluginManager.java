@@ -175,30 +175,33 @@ public class PluginManager
 
   public void suspend() {
     super.suspend();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+
+    // suspend all children
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.suspend();
     }
   }
 
   public void resume() {
     super.resume();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+
+    // resume all children
+    List childBinders = listBinders();
+    for (int i = 0, n = childBinders.size(); i < n; i++) {
+      Binder b = (Binder) childBinders.get(i);
       b.resume();
     }
   }
 
   public void stop() {
     super.stop();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+
+    // stop all children
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.stop();
     }
   }
@@ -211,10 +214,11 @@ public class PluginManager
 
   public void unload() {
     super.unload();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
+
+    // unload children
+    List childBinders = listBinders();
+    for (int i = childBinders.size() - 1; i >= 0; i--) {
+      Binder b = (Binder) childBinders.get(i);
       b.unload();
     }
   }
