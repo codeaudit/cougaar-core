@@ -46,7 +46,7 @@ import org.cougaar.util.log.NullLogger;
 /**
  * Database initializer implementation.
  **/
-class DBInitializerServiceImpl implements DBInitializerService {
+public class DBInitializerServiceImpl implements DBInitializerService {
 
   public static final String QUERY_FILE = "DBInitializer.q";
 
