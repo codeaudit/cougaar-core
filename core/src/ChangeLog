@@ -6,7 +6,7 @@
 	post-classname "-D" arguments to now behave like pre-classname
 	"-D" System Properties.
 
-2001-09-27  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+2001-09-27  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBProperties.java (Repository):
 	Allow for multiple occurances of the same variable.
@@ -55,7 +55,7 @@
 	if any AspectValues in failed allocations have been
 	changed or added by the allocator plugin.
 
-2001-09-18  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+2001-09-18  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/plugin/PluginManager.java (Repository):
 	Uses the InitializerService to read either a cluster .ini file or

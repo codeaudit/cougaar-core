@@ -1,4 +1,4 @@
-2001-09-27  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+2001-09-27  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceException.java (Repository):
 	Add a little javadoc.
