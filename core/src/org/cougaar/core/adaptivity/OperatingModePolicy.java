@@ -20,6 +20,7 @@
  */
 package org.cougaar.core.adaptivity;
 
+import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.util.UID;
 
 /** 
@@ -34,7 +35,7 @@ import org.cougaar.core.util.UID;
   *     (encription > 128) && (encryption < 512).
   */
 
-public class OperatingModePolicy implements Policy  {
+public class OperatingModePolicy implements Policy, Publishable  {
 
   private UID uid = null;
   private String policyName = "";
@@ -134,5 +135,9 @@ public class OperatingModePolicy implements Policy  {
       sb.append(cp[i].toString());
     }
     return sb.toString();
+  }
+
+  public boolean isPersistable() {
+    return true;
   }
 }

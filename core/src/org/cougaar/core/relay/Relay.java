@@ -178,7 +178,7 @@ public interface Relay extends UniqueObject {
    * that was used in the factory "create" and later assert that
    * all content-updates must pass the same Token instance.
    */
-  class Token {
+  class Token implements java.io.Serializable {
     /** Restricted to infrastructure-only construction. */
     Token() {} 
   }

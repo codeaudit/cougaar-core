@@ -218,7 +218,7 @@ public class PlayHelper {
         InterAgentOperatingModePolicy iaomp =
           (InterAgentOperatingModePolicy) iaompMap.get(operatingModeName);
         if (iaomp == null) {
-          iaomp = new InterAgentOperatingModePolicy(pk);
+          iaomp = new PlayHelperInterAgentOperatingModePolicy(pk);
           iaomp.setUID(uidService.nextUID());
           iaomp.setTarget(iaompInfo.getTargetAddress());
           iaompMap.put(operatingModeName, iaomp);
@@ -377,5 +377,18 @@ public class PlayHelper {
       return condition.getValue();
     }
     throw new IllegalArgumentException("invalid if clause " + o);
+  }
+
+  // Don't persist internally generated iaomp
+  private static class PlayHelperInterAgentOperatingModePolicy extends InterAgentOperatingModePolicy {
+
+      // Constructors
+    public PlayHelperInterAgentOperatingModePolicy(PolicyKernel pk) {
+      super(pk);
+    }
+    
+    public boolean isPersistable() {
+      return false;
+    }
   }
 }
