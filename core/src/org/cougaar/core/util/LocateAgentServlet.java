@@ -59,6 +59,8 @@ import org.cougaar.core.wp.ListAllAgents;
  */
 public class LocateAgentServlet extends ComponentServlet {
 
+  private static final String URL_ENCODING = "UTF-8";
+
   private LoggingService log;
   private WhitePagesService wps;
 
@@ -309,7 +311,7 @@ public class LocateAgentServlet extends ComponentServlet {
         s = null;
       } else {
 	for (int i = 0; i < s.length; i++) {
-	  s[i] = URLDecoder.decode(s[i]);
+	  s[i] = URLDecoder.decode(s[i], URL_ENCODING);
 	}
       }
       return s;
@@ -321,7 +323,7 @@ public class LocateAgentServlet extends ComponentServlet {
       if (s==null || s.length()==0) {
         s = null;
       } else
-	s = URLDecoder.decode(s);
+	s = URLDecoder.decode(s, URL_ENCODING);
 
       return s;
     }
