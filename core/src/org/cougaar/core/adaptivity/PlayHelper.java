@@ -241,8 +241,14 @@ public class PlayHelper {
           if (omValueClass != value.getClass()) value = coerceValue(value, omValueClass);
           if (!value.equals(oldValue)) {
             if (logger.isInfoEnabled()) logger.info("Setting OperatingMode " + operatingModeName + " to " + value);
-            om.setValue(value);
-            blackboard.publishChange(om);
+            try {
+              om.setValue(value);
+              blackboard.publishChange(om);
+            } catch (IllegalArgumentException iae) {
+              if (logger.isErrorEnabled()) {
+                logger.error(iae.getMessage(), iae);
+              }
+            }
           }
         }
         operatingModes.remove(operatingModeName); // This one has been accounted for
