@@ -172,15 +172,32 @@ public abstract class MessageTransport implements MessageTransportServer
   public void sendMessage(Message m) {
     int osize = 0;
 
-    synchronized (outQ) {
-      outQ.add(m);
-      outQ.notify();
-      osize = outQ.size();
+    if (checkMessage(m)) {
+      synchronized (outQ) {
+        outQ.add(m);
+        outQ.notify();
+        osize = outQ.size();
+      }
+
+      if (isLogging) log("outQ+", m.toString()+" ("+osize+")");
+
+      watchingOutgoing(m);
+    } else {
+      System.err.println("Warning: MessageTransport.sendMessage of malformed message: "+m);
+      Thread.dumpStack();
+      return;
     }
+  }
 
-    if (isLogging) log("outQ+", m.toString()+" ("+osize+")");
+  /** @return true IFF the message appears to be well-formed. **/
+  protected boolean checkMessage(Message m) {
+    MessageAddress t = m.getTarget();
+    // reasonable target?
+    if (t == null || t.toString().equals(""))
+      return false;
 
-    watchingOutgoing(m);
+    // looks ok to me
+    return true;
   }
 
   // (OutQ dispatch thread)
