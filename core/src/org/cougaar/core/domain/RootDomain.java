@@ -41,13 +41,6 @@ import org.cougaar.planning.ldm.lps.*;
 
 public class RootDomain extends DomainAdapter {
 
-  private static final String ROOT_NAME = "root".intern();
-
-  public String getDomainName() {
-    return ROOT_NAME;
-  }
-
-  
   public void load() {
     super.load();
   }
