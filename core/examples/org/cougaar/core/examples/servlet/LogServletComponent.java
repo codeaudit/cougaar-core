@@ -75,8 +75,22 @@ public class LogServletComponent extends BaseServletComponent {
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
       PrintWriter out = res.getWriter();
-      out.println("Hello from log-servlet!");
-      log.log(log.DEBUG, "my log debug message");
+      out.println("<html><body>");
+      out.println("<h2>Hello from log-servlet!</h2><p>");
+      out.println("this class: "+this.getClass().getName()+"<p>");
+      out.println("logger: "+log+"<p>");
+      out.println("<ul>log level:<p>");
+      out.println("<li>isDebug: "+log.isDebugEnabled()+"</li>");
+      out.println("<li>isInfo : "+log.isInfoEnabled()+"</li>");
+      out.println("<li>isWarn : "+log.isWarnEnabled()+"</li>");
+      out.println("<li>isError: "+log.isErrorEnabled()+"</li>");
+      out.println("<li>isFatal: "+log.isFatalEnabled()+"</li>");
+      out.println("</ul><p>");
+      out.println("logging sample debug message<p>");
+      log.debug("my log debug message");
+      out.println("logging sample error message<p>");
+      log.error("my log error message");
+      out.println("</body></html>");
     }
   }
 }
