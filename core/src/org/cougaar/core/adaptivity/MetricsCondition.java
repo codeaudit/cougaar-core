@@ -196,7 +196,6 @@ public abstract class MetricsCondition implements Condition {
     
     public Comparable getValue() {
       Metric metric = getMetric();
-      Object rawValue = metric.getRawValue();
       if (metric.booleanValue()) {
         return ONE;
       } else {
