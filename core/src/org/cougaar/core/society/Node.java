@@ -809,9 +809,18 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
         }
       } else if (m instanceof MoveAgentMessage) {
         MoveAgentMessage mam = (MoveAgentMessage)m;
-        agentManager.moveAgent(
-            mam.getAgentIdentifier(),
-            mam.getNodeIdentifier());
+        final ClusterIdentifier agentID = mam.getAgentIdentifier();
+        final NodeIdentifier nodeID = mam.getNodeIdentifier();
+        Runnable moveRunner = new Runnable() {
+          public void run() {
+            agentManager.moveAgent(agentID, nodeID);
+          }
+        };
+        Thread t = 
+          new Thread(
+              moveRunner, 
+              "MoveAgent "+agentID+" to "+nodeID);
+        t.start();
       } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
         // we don't do anything with these. ignore it.
       } else {
