@@ -38,7 +38,7 @@ public class NamingServiceProvider implements ServiceProvider {
         if (env.get(Context.INITIAL_CONTEXT_FACTORY) == null) {
             this.env = new Hashtable(env);
             this.env.put(Context.INITIAL_CONTEXT_FACTORY,
-                         RMINameServer.class.getName());
+                         NamingServiceFactory.class.getName());
         } else {
             this.env = env;
         }
