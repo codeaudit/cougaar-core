@@ -6,6 +6,9 @@
 	because there was not prior publisher. The exception message
 	reflects this difference.
 
+	* release
+	Released MB 7.0.1
+	
 2001-02-27  Michael Thome  <mthome@bbn.com>
 	
 	* SharedPlugInManager
