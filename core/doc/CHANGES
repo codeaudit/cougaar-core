@@ -1,3 +1,11 @@
+* 8.2.0
+
+Initial integration of Component and Service Model (CSM).  Reimplementation
+of PlugInAdapter in terms of CSM.  First pass reimplementation of
+MessageTransport.
+
+Forward-port 7.2 (ALP Demo2000) features and bugfixes into 8.x world.
+
 * MB 8.0.1
 
 Ported all XML code to use a single API, specifically Xerces-1.3.1.
