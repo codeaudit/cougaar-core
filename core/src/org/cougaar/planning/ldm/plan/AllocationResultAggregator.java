@@ -350,8 +350,8 @@ public interface AllocationResultAggregator
   HashMap hack = new HashMap();
   
   final class KeyHolder {
-    int[] keys;
-    KeyHolder(int keys[]) {
+    public int[] keys;
+    public KeyHolder(int keys[]) {
       this.keys = keys;
     }
   }
