@@ -26,8 +26,6 @@ import org.cougaar.core.mts.*;
 
 import org.cougaar.core.thread.ThreadServiceProvider;
 
-import org.cougaar.core.qos.monitor.QosMonitorService;
-import org.cougaar.core.qos.monitor.QosMonitorServiceProvider;
 import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.qos.metrics.MetricsServiceProvider;
