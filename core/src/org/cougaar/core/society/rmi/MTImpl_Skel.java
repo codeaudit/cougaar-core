@@ -11,7 +11,7 @@ public final class MTImpl_Skel
 	new java.rmi.server.Operation("void receiveMessage(org.cougaar.core.society.Message)")
     };
     
-    private static final long interfaceHash = 8364135813022741692L;
+    private static final long interfaceHash = 5489283831838389334L;
     
     public java.rmi.server.Operation[] getOperations() {
 	return (java.rmi.server.Operation[]) operations.clone();
@@ -21,9 +21,9 @@ public final class MTImpl_Skel
 	throws java.lang.Exception
     {
 	if (opnum < 0) {
-	    if (hash == -7855622025300351698L) {
+	    if (hash == -3927034548767378042L) {
 		opnum = 0;
-	    } else if (hash == 7057233312839370813L) {
+	    } else if (hash == -2674303520185462339L) {
 		opnum = 1;
 	    } else {
 		throw new java.rmi.UnmarshalException("invalid method hash");

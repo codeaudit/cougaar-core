@@ -12,7 +12,7 @@ public final class MTImpl_Stub
 	new java.rmi.server.Operation("void receiveMessage(org.cougaar.core.society.Message)")
     };
     
-    private static final long interfaceHash = 8364135813022741692L;
+    private static final long interfaceHash = 5489283831838389334L;
     
     private static final long serialVersionUID = 2;
     
@@ -53,7 +53,7 @@ public final class MTImpl_Stub
     {
 	try {
 	    if (useNewInvoke) {
-		Object $result = ref.invoke(this, $method_getMessageAddress_0, null, -7855622025300351698L);
+		Object $result = ref.invoke(this, $method_getMessageAddress_0, null, -3927034548767378042L);
 		return ((org.cougaar.core.society.MessageAddress) $result);
 	    } else {
 		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
@@ -86,7 +86,7 @@ public final class MTImpl_Stub
     {
 	try {
 	    if (useNewInvoke) {
-		ref.invoke(this, $method_receiveMessage_1, new java.lang.Object[] {$param_Message_1}, 7057233312839370813L);
+		ref.invoke(this, $method_receiveMessage_1, new java.lang.Object[] {$param_Message_1}, -2674303520185462339L);
 	    } else {
 		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 1, interfaceHash);
 		try {
