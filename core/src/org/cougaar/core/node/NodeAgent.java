@@ -268,7 +268,7 @@ extends SimpleAgent
 
     add(new ComponentDescription((getIdentifier()+".SocketFactory"),
                                  Agent.INSERTION_POINT + ".SocketFactory",
-                                 "org.cougaar.mts.std.SocketFactorySPC", // goes with MTS, sigh.
+                                 "org.cougaar.mts.base.SocketFactorySPC", // goes with MTS, sigh.
                                  null,  //codebase
                                  null,  //parameters
                                  null,  //certificate
@@ -351,7 +351,7 @@ extends SimpleAgent
     add(new ComponentDescription(
           (getIdentifier()+"MessageTransport"),
           Agent.INSERTION_POINT + ".MessageTransport",
-          "org.cougaar.mts.std.MessageTransportServiceProvider",
+          "org.cougaar.mts.base.MessageTransportServiceProvider",
           null,  //codebase
           null,  //parameters
           null,  //certificate
