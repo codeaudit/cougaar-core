@@ -8,7 +8,7 @@ import java.util.Set;
 public class LinkSender implements Runnable
 {
     private MessageAddress destination;
-    private MessageTransportServerImpl.MessageTransportFactory transportFactory;
+    private MessageTransportFactory transportFactory;
     private MessageTransportRegistry registry;
     private Thread thread;
     private DestinationQueue queue;
@@ -17,7 +17,7 @@ public class LinkSender implements Runnable
     protected LinkSender(String name, 
 			 MessageAddress destination, 
 			 MessageTransportRegistry registry,
-			 MessageTransportServerImpl.MessageTransportFactory transportFactory,
+			 MessageTransportFactory transportFactory,
 			 DestinationQueue queue) 
     {
 	this.destination = destination;

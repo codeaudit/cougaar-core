@@ -1,18 +1,10 @@
 package org.cougaar.core.society;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Vector;
-import java.util.StringTokenizer;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.society.rmi.RMIMessageTransport;
-import org.cougaar.core.society.rmi.SimpleRMIMessageTransport;
+
 
 
 class MessageTransportServerImpl 
@@ -22,210 +14,60 @@ class MessageTransportServerImpl
 
     // Factories
     private MessageTransportServerServiceFactory serviceFactory;
-    private MessageTransportFactory transportFactory;
-    private SendQueueFactory sendQFactory;
-    private ReceiveQueueFactory recvQFactory;
-    private DestinationQueueFactory destQFactory;
+    protected MessageTransportFactory transportFactory;
+    protected SendQueueFactory sendQFactory;
+    protected ReceiveQueueFactory recvQFactory;
+    protected DestinationQueueFactory destQFactory;
+    protected LinkSenderFactory linkSenderFactory;
+    protected RouterFactory routerFactory;
 
 
     // Singeltons
-    private NameSupport nameSupport;
-    private Router router;
-    private SendQueue sendQ;
-    private ReceiveQueue recvQ;
-    private MessageTransportRegistry registry;
+    protected NameSupport nameSupport;
+    protected MessageTransportRegistry registry;
+    protected Router router;
+    protected SendQueue sendQ;
+    protected ReceiveQueue recvQ;
 
     public MessageTransportServerImpl(String id) {
-
 	nameSupport = new NameSupport(id);
-
-	serviceFactory = new MessageTransportServerServiceFactoryImpl();
-	transportFactory = new MessageTransportFactory(id);
-
-	// register with Node
-	
-	destQFactory = new DestinationQueueFactory();
 	registry = new MessageTransportRegistry(id, this);
-	router = new Router(registry, destQFactory);
+	serviceFactory = new MessageTransportServerServiceFactoryImpl();
+	transportFactory = 
+	    new MessageTransportFactory(id, registry, nameSupport);
+	
 	registry.setTransportFactory(transportFactory);
 
-	sendQFactory = new SendQueueFactory();
-	sendQ = sendQFactory.getSendQueue(id+"/OutQ", router);
+	wireComponents(id);
 
-	recvQFactory = new ReceiveQueueFactory();
-	recvQ = recvQFactory.getReceiveQueue(id+"/InQ");
-
+	transportFactory.setRecvQ(recvQ);
 	// force transports to be created here
 	transportFactory.getTransports();
 
-
     }
 
-
-    // Transport factory
-    public class MessageTransportFactory {
-	private ArrayList transports;
-	private String id;
-	private MessageTransport defaultTransport, loopbackTransport;
-
-	public MessageTransportFactory(String id) {
-	    this.id = id;
-	}
-
-	private MessageTransport makeTransport(String classname) {
-	    // Assume for now all transport classes have a constructor of
-	    // one argument (the id string).
-	    Class[] types = { String.class };
-	    Object[] args = { registry.getIdentifier() };
-	    MessageTransport transport = null;
-	    try {
-		Class transport_class = Class.forName(classname);
-		Constructor constructor = 
-		    transport_class.getConstructor(types);
-		transport = (MessageTransport) constructor.newInstance(args);
-	    } catch (Exception xxx) {
-		xxx.printStackTrace();
-		return null;
-	    }
-	    transport.setRecvQ(recvQ);
-	    transport.setRegistry(registry);
-	    transport.setNameSupport(nameSupport);
-	    transports.add(transport);
-	    return transport;
-	}
+    protected void wireComponents(String id) {
+	recvQFactory = new ReceiveQueueFactory(registry);
+	recvQ = recvQFactory.getReceiveQueue(id+"/InQ");
 
 
-	private void makeOtherTransports() {
-	    String property = "org.cougaar.message.transportClasses";
-	    String transport_classes = System.getProperty(property);
-	    if (transport_classes == null) return;
-
-	    StringTokenizer tokenizer = 
-		new StringTokenizer(transport_classes, ",");
-	    while (tokenizer.hasMoreElements()) {
-		String classname = tokenizer.nextToken();
-		makeTransport(classname);
-	    }
-	}
-
-	public  ArrayList getTransports() {
-	    if (transports != null) return transports;
-
-	    transports = new ArrayList();
-
-
-	    String prop = "org.cougaar.message.transportClass";
-	    String preferredClassname = System.getProperty(prop);
-	    if (preferredClassname != null) {
-		MessageTransport transport = makeTransport(preferredClassname);
-		if (transport != null) {
-		    // If there's a preferred transport, never use any
-		    // others.
-		    defaultTransport = transport;
-		    loopbackTransport = transport;
-		    return transports;
-		}
-	    }
-
-	    // No preferred transport, make all the usual ones.
-
-	    loopbackTransport = new LoopbackMessageTransport();
-	    loopbackTransport.setRecvQ(recvQ);
-	    loopbackTransport.setRegistry(registry);
-	    loopbackTransport.setNameSupport(nameSupport);
-	    transports.add(loopbackTransport);
+	linkSenderFactory =
+	    new LinkSenderFactory(registry, transportFactory);
 	
-	    if (Boolean.getBoolean("org.cougaar.core.society.UseSimpleRMI"))
-		defaultTransport = new SimpleRMIMessageTransport(id);
-	    else
-		defaultTransport = new RMIMessageTransport(id);
-	    defaultTransport.setRecvQ(recvQ);
-	    defaultTransport.setRegistry(registry);
-	    defaultTransport.setNameSupport(nameSupport);
-	    transports.add(defaultTransport);
+	destQFactory = 
+	    new DestinationQueueFactory(registry, transportFactory, linkSenderFactory);
+	routerFactory =
+	    new RouterFactory(registry, destQFactory);
 
+	router = routerFactory.getRouter();
 
-	    makeOtherTransports();
-
-	    return transports;
-	}
-
-	MessageTransport getDefaultTransport() {
-	    return defaultTransport;
-	}
-
-	MessageTransport getLoopbackTransport() {
-	    return loopbackTransport;
-	}
-
-
+	sendQFactory = new SendQueueFactory(registry);
+	sendQ = sendQFactory.getSendQueue(id+"/OutQ", router);
 
     }
 
 
 
-
-
-
-
-    // SendQueue factory
-    class SendQueueFactory {
-	private ArrayList queues = new ArrayList();
-
-	SendQueue getSendQueue(String name, Router router) {
-	    Iterator i = queues.iterator();
-	    while (i.hasNext()) {
-		SendQueue candidate = (SendQueue) i.next();
-		if (candidate != null && candidate.matches(name, router)) return candidate;
-	    }
-	    // No match, make a new one
-	    SendQueue queue = new SendQueue(name, router, registry);
-	    queues.add(queue);
-	    return queue;
-	}
-    }
-
-
-    // ReceiveQueue factory
-    class ReceiveQueueFactory {
-	private ArrayList queues = new ArrayList();
-
-	ReceiveQueue getReceiveQueue(String name) {
-	    Iterator i = queues.iterator();
-	    while (i.hasNext()) {
-		ReceiveQueue candidate = (ReceiveQueue) i.next();
-		if (candidate != null && candidate.matches(name)) return candidate;
-	    }
-	    // No match, make a new one
-	    ReceiveQueue queue = new ReceiveQueue(name, registry);
-	    queues.add(queue);
-	    return queue;
-	}
-    }
-
-
-
-    // DestinationQueue factory
-    class DestinationQueueFactory {
-	private HashMap queues;
-	
-	DestinationQueueFactory() {
-	    queues = new HashMap();
-	}
-
-	DestinationQueue getDestinationQueue(MessageAddress destination) {
-	    
-	    DestinationQueue q = (DestinationQueue) queues.get(destination);
-	    if (q == null) { 
-		q = new DestinationQueue(destination.toString(), 
-					 destination,
-					 registry,
-					 transportFactory);
-		queues.put(destination, q);
-	    }
-	    return q;
-	}
-    }
 
 
 
@@ -234,7 +76,7 @@ class MessageTransportServerImpl
     // TO BE DONE - register this with node as a service provider for
     // MessageTransportServer.class
     
-    class MessageTransportServerServiceFactoryImpl
+    private final class MessageTransportServerServiceFactoryImpl
 	implements MessageTransportServerServiceFactory
     {
 

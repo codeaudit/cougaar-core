@@ -8,12 +8,11 @@ class DestinationQueue extends CircularQueue
     private LinkSender sender;
 
     DestinationQueue(String name, 
-		     MessageAddress destination, 
-		     MessageTransportRegistry registry,
-		     MessageTransportServerImpl.MessageTransportFactory transportFactory)
+		     MessageAddress destination,
+		     LinkSenderFactory factory)
     {
 	this.destination = destination;
-	sender = new LinkSender(name, destination, registry, transportFactory, this);
+	sender = factory.getLinkSender(name, destination, this);
     }
 
     void holdMessage(Message message) {

@@ -12,7 +12,7 @@ class MessageTransportRegistry
     private Vector watchers;
     private HashMap myClients = new HashMap(89);
     private MessageTransportServerImpl server;
-    private MessageTransportServerImpl.MessageTransportFactory transportFactory;
+    private MessageTransportFactory transportFactory;
 
     MessageTransportRegistry(String name, MessageTransportServerImpl server) {
 	this.name = name;
@@ -20,7 +20,7 @@ class MessageTransportRegistry
 	watchers = new Vector();
     }
 
-    void setTransportFactory(MessageTransportServerImpl.MessageTransportFactory transportFactory) {
+    void setTransportFactory(MessageTransportFactory transportFactory) {
 	this.transportFactory = transportFactory;
     }
 

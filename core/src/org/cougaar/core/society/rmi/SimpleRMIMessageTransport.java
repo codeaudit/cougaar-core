@@ -17,7 +17,7 @@ public class SimpleRMIMessageTransport
     private static final String TRANSPORT_TYPE = "/simpleRMI";
     
 
-    private boolean madeServerProxy;
+    private boolean madeNodeProxy;
     private HashMap links;
 
 
@@ -43,10 +43,60 @@ public class SimpleRMIMessageTransport
 
     }
 
+    /** Override or wrap to generate a different proxy for a client object **/
     protected Object generateClientSideProxy(Object object) {
 	return object;
     }
 
+
+    /** Override or wrap to generate a different proxy for a server object **/
+    protected Object generateServerSideProxy(MessageAddress clientAddress) 
+	throws RemoteException
+    {
+	return new MTImpl(this, clientAddress, recvQ);
+    }
+
+    private final void registerNodeWithSociety() 
+	throws RemoteException
+    {
+	synchronized (this) {
+	    if (!madeNodeProxy) {
+		madeNodeProxy = true;
+		Object proxy =
+		    generateServerSideProxy(nameSupport.getNodeMessageAddress());
+		nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
+	    }
+	}
+    }
+
+    public final void registerClient(MessageTransportClient client) {
+	try {
+	    // Register a MT for the Node
+	    // Since there is no explicit time for registering the Node
+	    // Attempt every time you register a Client
+	    registerNodeWithSociety();
+
+	    MessageAddress addr = client.getMessageAddress();
+	    if (NameSupport.DEBUG)
+		System.out.println("***Client address is  " + addr);
+	    
+	    Object proxy = generateServerSideProxy(addr);
+	    nameSupport.registerAgentInNameServer(proxy,client,TRANSPORT_TYPE);
+	} catch (Exception e) {
+	    System.err.println("Error registering MessageTransport:");
+	    e.printStackTrace();
+	}
+    }
+
+    public boolean addressKnown(MessageAddress address) {
+	try {
+	    return lookupRMIObject(address) != null;
+	} catch (Exception e) {
+	    //System.err.println("Failed in addressKnown:"+e);
+	    //e.printStackTrace();
+	}
+	return false;
+    }
 
     public DestinationLink getDestinationLink(MessageAddress address) {
 	DestinationLink link = (DestinationLink) links.get(address);
@@ -58,26 +108,6 @@ public class SimpleRMIMessageTransport
     }
 
 
-    /** Override or wrap to generate a different proxy for a client object **/
-    protected Object generateServerSideProxy(MessageAddress clientAddress) 
-	throws RemoteException
-    {
-	return new MTImpl(this, clientAddress, recvQ);
-    }
-
-
-    private final void registerMTWithSociety() 
-	throws RemoteException
-    {
-	synchronized (this) {
-	    if (!madeServerProxy) {
-		madeServerProxy = true;
-
-		Object proxy =   generateServerSideProxy(nameSupport.getNodeMessageAddress());
-		nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
-	    }
-	}
-    }
 
     class Link implements DestinationLink {
 	
@@ -116,33 +146,6 @@ public class SimpleRMIMessageTransport
 	    }
 
 	}
-    }
-
-
-    public final void registerClient(MessageTransportClient client) {
-	try {
-	    // always register the Node MT
-	    registerMTWithSociety();
-
-	    MessageAddress addr = client.getMessageAddress();
-	    if (NameSupport.DEBUG)
-		System.out.println("***Client address is  " + addr);
-	    Object proxy = generateServerSideProxy(addr);
-	    nameSupport.registerAgentInNameServer(proxy,client,TRANSPORT_TYPE);
-	} catch (Exception e) {
-	    System.err.println("Error registering MessageTransport:");
-	    e.printStackTrace();
-	}
-    }
-
-    public boolean addressKnown(MessageAddress address) {
-	try {
-	    return lookupRMIObject(address) != null;
-	} catch (Exception e) {
-	    //System.err.println("Failed in addressKnown:"+e);
-	    //e.printStackTrace();
-	}
-	return false;
     }
 
 }

@@ -3,11 +3,11 @@ package org.cougaar.core.society;
 class Router
 {
     private MessageTransportRegistry registry;
-    private MessageTransportServerImpl.DestinationQueueFactory destQFactory;
+    private DestinationQueueFactory destQFactory;
 
 
     Router(MessageTransportRegistry registry, 
-	   MessageTransportServerImpl.DestinationQueueFactory destQFactory)
+	   DestinationQueueFactory destQFactory)
     {
 	this.registry = registry;
 	this.destQFactory = destQFactory;
