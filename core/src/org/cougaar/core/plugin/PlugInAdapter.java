@@ -227,7 +227,8 @@ public abstract class PlugInAdapter
     }
 
   
-  private Vector parameters = null;
+  // Many plugins expect a non-null value
+  private Vector parameters = new Vector(0);
 
   public void setParameter(Object param) {
     if (param != null) {
