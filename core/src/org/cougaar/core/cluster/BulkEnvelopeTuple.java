@@ -20,6 +20,7 @@ public final class BulkEnvelopeTuple extends EnvelopeTuple {
   public Object getObject() { return bulk; }
 
   public BulkEnvelopeTuple(Collection o) {
+    if (o == null) throw new IllegalArgumentException("Collection is null");
     bulk = o;
   }
 
@@ -33,14 +34,16 @@ public final class BulkEnvelopeTuple extends EnvelopeTuple {
     if (bulk instanceof ArrayList) {
       ArrayList a = (ArrayList) bulk;
       int l = a.size();
-      for (int i = 0; i<l; i++) {
-        changedP |=  s.conditionalAdd(a.get(i),isVisible);
+      for (int i = 0; i < l; i++) {
+        Object o = a.get(i);
+        if (o == null) continue;
+        changedP |=  s.conditionalAdd(o, isVisible);
       }
     } else {
-      Collection c = bulk;
-      for (Iterator it = c.iterator(); it.hasNext(); ) {
+      for (Iterator it = bulk.iterator(); it.hasNext(); ) {
         Object o = it.next();
-        changedP |=  s.conditionalAdd(o,isVisible);
+        if (o == null) continue;
+        changedP |=  s.conditionalAdd(o, isVisible);
       }
     }
     return changedP;

@@ -18,6 +18,7 @@ public final class AddEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
   public Object getObject() { return object; }
   public AddEnvelopeTuple(Object o) {
+    if (o == null) throw new IllegalArgumentException("Object is null");
     object=o;
   }
 

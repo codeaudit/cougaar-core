@@ -22,6 +22,7 @@ public final class ChangeEnvelopeTuple extends EnvelopeTuple {
   // perhaps at some point we should complain if we aren't told what the
   // changes are...
   public ChangeEnvelopeTuple(Object o, List changes) {
+    if (o == null) throw new IllegalArgumentException("Object is null");
     object = o;
     this.changes = changes;
   }
