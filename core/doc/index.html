@@ -17,7 +17,7 @@
 <b><font size=+2>Release Notes</font></b></h2>
 
 <h2>
-<b><font size=+2>COUGAAR 8.3.0</font></b></h2>
+<b><font size=+2>COUGAAR 8.4.0</font></b></h2>
 </td>
 
 <td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 ></a></td>
@@ -61,6 +61,33 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
+Build 8.4 is a point release along COUGAAR 8.0.&nbsp; Notable additions
+for this release include:
+<ul>
+<li>
+Initial implementation of Mobile Agents (for details see <a href="details/AgentMobility.txt">AgentMobility.txt</a>)</li>
+
+<li>
+Componentization of Blackboard.&nbsp; StandardBlackboard is now a child
+component of Agent which encapsulates the old Blackboard and Distributor
+functionality.&nbsp; BlackboardClients should still access the Blackboard
+via the BlackboardService.</li>
+
+<li>
+New Naming Service implementation</li>
+
+<li>
+Componentize Message Transport and hook the new MessageTransportService
+into the component model.&nbsp; Also repackaged message transport related
+code to org.cougaar.core.mts.</li>
+
+<li>
+Reimplement metrics data services to componentize node and agent level
+metrics (for details see <a href="details/MetricsServices.html">MetricsServices.html</a>)</li>
+
+<li>
+Further componentization and cleanup of the agent infrastructure.</li>
+</ul>
 Build 8.3 is an <i>experimental</i> point release along the COUGAAR 8.0
 development branch. Notable additions for this release include:
 <ul>
@@ -84,8 +111,7 @@ managers</li>
 Further componentization of the agent infrastructure</li>
 
 <li>
-Further refactoring of MessageTransport
-(for details see <a href="MessageTransport.htm">MessageTransport.htm</a>)</li>
+Further refactoring of MessageTransport (for details see <a href="MessageTransport.htm">MessageTransport.htm</a>)</li>
 
 <li>
 The StrategicTransport package formerly known as TOPS has been replaced
@@ -99,7 +125,7 @@ An expanded test configuration: configs/small-135</li>
 
 <li>
 Partial refactoring of MessageTransport</li>
-</li>
+
 <li>
 Bug fixes</li>
 </ul>
