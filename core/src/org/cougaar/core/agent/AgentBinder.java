@@ -12,34 +12,44 @@ package org.cougaar.core.agent;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
+import org.cougaar.core.society.Message;
+import org.cougaar.core.society.MessageTransportException;
+import org.cougaar.core.society.MessageTransportServer;
 
 /** The standard Binder for Agents.
  **/
 public class AgentBinder extends BinderSupport implements AgentBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
-  public AgentBinder(BinderFactory bf, Component child) {
+  public AgentBinder(BinderFactory bf, Object child) {
     super(bf, child);
   }
 
   protected final Agent getAgent() {
     return (Agent) getComponent();
   }
-  protected final AgentManager getAgentManager() {
-    return (AgentManager)getContainer();
+// protected final AgentManager getAgentManager() {
+//     return (AgentManager)getContainer();
+//   }
+  protected final AgentManagerForBinder getAgentManager() {
+    return (AgentManagerForBinder)getContainer();
   }
-
   protected final BindingSite getBinderProxy() {
     // horribly unsecure! Means that the component has full access to the binder.
     return (BindingSite) this;
   }
 
-  //public ConfigFinder getConfigFinder() {
-  //  return getPluginManager().getConfigFinder();
-  //}
-
   public String toString() {
     return getAgent() + "'s AgentManagerBinder";
   }
+
+  // pass thru old ClusterManagerServesCluster stuff
+  public void sendMessage(Message message) throws MessageTransportException {
+    getAgentManager().sendMessage(message);
+  }
+  public MessageTransportServer getMessageTransportServer() {
+    return getAgentManager().getMessageTransportServer();
+  }
+  public String getName() {return getAgentManager().getName(); }
 
 }

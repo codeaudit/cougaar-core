@@ -230,20 +230,20 @@ public class ClusterImpl extends Agent
    * ClusterManagement container.  This value is set once and only
    * once during the #load(Object) phase.
    **/
-  ClusterManagementServesCluster myClusterManager_;
+  //ClusterManagementServesCluster myClusterManager_;
         
   /** 
    * Answer with the reference to the ClusterManagement instance
    * that manages me.
    * @return Object the enclosing ClusterManagement instance
    **/
-  private ClusterManagementServesCluster getClusterManagement() {
-    return myClusterManager_;
-  }
+//   private ClusterManagementServesCluster getClusterManagement() {
+//     return myClusterManager_;
+//   }
     
-  private void setClusterManagement(ClusterManagementServesCluster myClusterManagement){
-    myClusterManager_ = myClusterManagement;
-  }
+//   private void setClusterManagement(ClusterManagementServesCluster myClusterManagement){
+//     myClusterManager_ = myClusterManagement;
+//   }
   /**
    * myClusterIdentity_ is a private representation of this instance's
    * ClusterIdentifier.
@@ -312,15 +312,15 @@ public class ClusterImpl extends Agent
   public void load() throws StateModelException {
     //System.err.println("Cluster.load()");
     // Confirm that my container is indeed ClusterManagement
-    if (!( getBindingSite() instanceof ClusterManagementServesCluster ) ) {
-      throw new StateModelException ("Container ("+getBindingSite()+") does not implement ClusterManagementServesCluster");
+    if (!( getBindingSite() instanceof AgentBindingSite ) ) {
+      throw new StateModelException ("Container ("+getBindingSite()+") does not implement AgentBindingSite");
     }
 
-    ClusterManagementServesCluster cm = (ClusterManagementServesCluster) getBindingSite();
-    setClusterManagement(cm);
+    //ClusterManagementServesCluster cm = (ClusterManagementServesCluster) getBindingSite();
+    //setClusterManagement(cm);
 
     // get the Messenger instance from ClusterManagement
-    messenger = cm.getMessageTransportServer();
+    messenger = getBindingSite().getMessageTransportServer();
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
@@ -351,7 +351,6 @@ public class ClusterImpl extends Agent
     try {
       myBlackboard = new Blackboard(getDistributor(), this);
       getDistributor().setBlackboard(myBlackboard);
-      Domain rootDomain = DomainManager.find("root");
 
       Collection domains = DomainManager.values();
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
@@ -360,8 +359,8 @@ public class ClusterImpl extends Agent
         // add all the domain-specific logic providers
         XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
         myBlackboard.addXPlan(xPlan);
-        if (d == rootDomain) {
-          myLogPlan = (LogPlan) xPlan; // required for metrics (until we fix metrics)
+        if (d == getFactory()) {
+          myLogPlan = (LogPlan) xPlan;
         }
         Collection lps = d.createLogicProviders(xPlan, this);
         if (lps != null) {
@@ -606,32 +605,6 @@ public class ClusterImpl extends Agent
   //}
 
 
-  // bean instantiation
-  public Object instantiateBean(String aBeanAsString) throws ClassNotFoundException {
-    return getClusterManagement().instantiateBean(aBeanAsString);
-  }
-
-  public Object instantiateBean(ClassLoader classloader, String aBeanAsString) 
-    throws ClassNotFoundException 
-  {
-    return getClusterManagement().instantiateBean(classloader, aBeanAsString);
-  }
-
-  /**
-   *   This method is resposible for accepting any Object for logging and passing it to
-   *   the LogWriter.
-   *   <p><PRE>
-   *   PRE CONDITION:    Log Writer created and running under its own thread
-   *   POST CONDITION:   Object passed to the LogWriter Thread
-   *   INVARIANCE:
-   *   </PRE>
-   *   @param Object The object to write to the log file
-   **/
-  public void logEvent( Object anEvent )
-  {
-    getClusterManagement().logEvent(anEvent);
-  }
-
   /**
    * Temporary support for <code>MessageTransportServiceProvider</code>.  
    */
@@ -680,7 +653,7 @@ public class ClusterImpl extends Agent
 
   public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
     ms.clusterName = getClusterIdentifier().cleanToString();
-    ms.nodeName = getClusterManagement().getName();
+    ms.nodeName = getBindingSite().getName();
     ms.time = System.currentTimeMillis();
 
     // message transport stuff

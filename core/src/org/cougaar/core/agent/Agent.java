@@ -86,18 +86,8 @@ public abstract class Agent
   // support classes
   //
 
-  private static class AgentServiceBroker extends ServiceBrokerSupport {
-  
-    public boolean add(Object o) {
-      //??where we add pluginmanager and others??
-      return true;
-    }
-
-    public boolean remove(Object o) {
-      //stubbed for now
-      return true;
-    }
-  }
+  private static class AgentServiceBroker extends ServiceBrokerSupport { }
 
 
 }
+

@@ -1,3 +1,31 @@
+2001-07-26  Michael Thome  <mthome@bbn.com> (For Beth DePass <bdepass@bbn.com)
+
+	* Agent, AgentBinder, AgentBindingSite, ClusterImpl
+	Agent (ClusterImpl) is now a Container.
+
+	* AgentManager, ClusterManagermentServesCluster, AgentManagerBinder*, AgentManagerForBinder
+	AgentManager is an intermediate container between Node and Agent.
+
+	* Node, NodeForBinder
+	Node is now a Container.	
+
+2001-07-25  Michael Thome  <mthome@bbn.com>
+
+	* ServiceFilterBinder
+	Very flexible base class for a wrapping binder that watches
+	and optionally modifies service requests.  See
+	../examples/org/cougaar/core/examples/PluginServiceFilter 
+	for an example.
+
+	* BinderSupport
+	Support for WrappingBinders
+
+	* BinderWrapper
+	New base class for binders of binders.
+
+	* BinderBase
+	New base class for BinderSupport and new BinderWrapper.
+
 2001-07-23  Michael Thome  <mthome@bbn.com>
 
 	* GenericStateModel

@@ -13,7 +13,7 @@ package org.cougaar.core.society;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.society.ClusterManagementServesCluster;
 
-import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.*;
 
 import java.io.Serializable;
 import java.io.*;
@@ -30,6 +30,7 @@ import java.util.jar.*;
 import java.security.*;
 import java.security.cert.*;
 
+import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.plugin.AddPlugInMessage;
 import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.cluster.ClusterInitializedMessage;
@@ -63,8 +64,8 @@ import java.beans.Beans;
 * <li>-p     Port. allows you to specifcy a port number to run nameserver on.  Default = random </li>
 * </ul>
 **/
-public class Node 
-implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
+public class Node extends ContainerSupport
+implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
 {
   public static int NSPortNo;
   public static String NSHost = "127.0.0.1";
@@ -366,6 +367,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   private boolean theTested = false;
   /** Address and port number of this machine as provided by the cl args **/
   private static Vector theAddress;
+  // AgentManager component hook for now 
+  private AgentManager agentManager;
 
   /**
    *   Node constructor with command line arguments for port number.  
@@ -385,63 +388,51 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   public Node(ArgTable someArgs, Integer port) throws UnknownHostException {
     super();
     setArgs(someArgs);
+    BinderFactory ambf = new AgentManagerBinderFactory();
+    if (!attachBinderFactory(ambf)) {
+      throw new RuntimeException("Failed to load the AgentmanagerBinderFactory in Node");
+    }
+    // start this on our own for now
+    agentManager = new AgentManager();
+    super.add(agentManager);
   }
 
   public Node(ArgTable someArgs) throws UnknownHostException {
     setArgs(someArgs);
+    BinderFactory ambf = new AgentManagerBinderFactory();
+    if (!attachBinderFactory(ambf)) {
+      throw new RuntimeException("Failed to load the AgentmanagerBinderFactory in Node");
+    }
+    //start this on our own for now
+    agentManager = new AgentManager();
+    super.add(agentManager);
   }
 
-  /**
-   *   This method cleans up the application and releases all resources.  Called as part of a shutdown
-   *   procedure or a gracefull exit due to exception.
-   *   <p><PRE>
-   *   PRE CONDITION:    Node exiting alp system
-   *   POST CONDITION:   Resouces released and graceful exit accomplished
-   *   INVARIANCE:
-   *   </PRE>
-   **/
-  protected void cleanup(){
+  protected ComponentFactory specifyComponentFactory() {
+    return super.specifyComponentFactory();
   }
-
-  /**
-   *   Returns name of computer platform as an String version of an IPAddress
-   *   <p><PRE>
-   *   PRE CONDITION:   Locates InetAddress for node
-   *   POST CONDITION:  converts InetAddress to an IPAddress string represntation
-   *   INVARIANCE:      Does not chnage IPAddress for node
-   *   </PRE>
-   *   @return String The current value of the IPAddress as a string
-   */
-  public String findIPAddress() throws UnknownHostException {
-    return InetAddress.getLocalHost().toString();
+  protected String specifyContainmentPoint() {
+    return "Node";
   }
-
-  /**
-   *   Returns name of computer platform as an String version of an IPAddress
-   *   <p><PRE>
-   *   PRE CONDITION:   COUGAAR server started
-   *   POST CONDITION:  address located and returned
-   *   INVARIANCE:
-   *   </PRE>
-   *   @return String the network name for the platform as a string
-   */
-  public String findAddress() {
-    return NSHost;
+  protected ServiceBroker specifyChildContext() {
+    return new NodeServiceBroker();
+  }
+  protected ServiceBroker specifyChildServiceBroker() {
+    return new NodeServiceBroker();
+  }
+  protected Class specifyChildBindingSite() {
+    return AgentManagerBindingSite.class;
+  }
+  protected ContainerAPI getContainerProxy() {
+    return new NodeProxy();
   }
 
 
   /**
-   *   Returns Domain Name Services (DNS) name of computing platform
-   *   <p><PRE>
-   *   PRE CONDITION:   NA
-   *   POST CONDITION:  If localHost call is succesfful then will retunr the host name as
-   *           a string else throws an UnknownHostException
-   *   INVARIANCE:
-   *   </PRE>
    *   @return String the string object containing the local DNS name
    */
-  public String findHostName() throws UnknownHostException {
-    return InetAddress.getLocalHost().getHostName();
+  protected String findHostName() throws UnknownHostException {
+     return InetAddress.getLocalHost().getHostName();
   }
 
   /**
@@ -664,77 +655,110 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     }
   }
 
-  /**
-   * Create a Cluster from a ComponentDescription.
-   * <p>
-   * This should be moved into the future "AgentManager".
-   */
-  protected ClusterServesClusterManagement createCluster(
-      ComponentDescription desc) {
+//   /**
+//    * Create a Cluster from a ComponentDescription.
+//    * <p>
+//    * This should be moved into the future "AgentManager".
+//    */
+//   protected ClusterServesClusterManagement createCluster(
+//       ComponentDescription desc) {
 
-    // check the cluster classname
-    String clusterClassname = desc.getClassname();
+//     // check the cluster classname
+//     String clusterClassname = desc.getClassname();
 
-    // load an instance of the cluster
-    //
-    // FIXME use the "desc.getCodebase()" and other arguments
-    ClusterServesClusterManagement cluster;
-    try {
-      Class clusterClass = Class.forName(clusterClassname);
-      Object clusterInstance = clusterClass.newInstance();
-      if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
-        throw new ClassNotFoundException();
-      }
-      cluster = (ClusterServesClusterManagement)clusterInstance;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException(
-          "Unable to load agent class: \""+clusterClassname+"\"");
-    }
+//     // load an instance of the cluster
+//     //
+//     // FIXME use the "desc.getCodebase()" and other arguments
+//     ClusterServesClusterManagement cluster;
+//     try {
+//       Class clusterClass = Class.forName(clusterClassname);
+//       Object clusterInstance = clusterClass.newInstance();
+//       if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
+//         throw new ClassNotFoundException();
+//       }
+//       cluster = (ClusterServesClusterManagement)clusterInstance;
+//     } catch (Exception e) {
+//       e.printStackTrace();
+//       throw new IllegalArgumentException(
+//           "Unable to load agent class: \""+clusterClassname+"\"");
+//     }
 
-    // the parameter should be the cluster name
-    String clusterid;
-    try {
-      clusterid = (String)((List)desc.getParameter()).get(0);
-    } catch (Exception e) {
-      clusterid = null;
-    }
-    if (clusterid == null) {
-      throw new IllegalArgumentException(
-          "Agent specification lacks a String \"name\" parameter");
-    }
+//     // the parameter should be the cluster name
+//     String clusterid;
+//     try {
+//       clusterid = (String)((List)desc.getParameter()).get(0);
+//     } catch (Exception e) {
+//       clusterid = null;
+//     }
+//     if (clusterid == null) {
+//       throw new IllegalArgumentException(
+//           "Agent specification lacks a String \"name\" parameter");
+//     }
    
-    // set the ClusterId
-    ClusterIdentifier cid = new ClusterIdentifier(clusterid);
-    cluster.setClusterIdentifier(cid);
+//     // set the ClusterId
+//     ClusterIdentifier cid = new ClusterIdentifier(clusterid);
+//     cluster.setClusterIdentifier(cid);
 
-    //move the cluster to the intialized state
-    BindingUtility.activate(cluster,new NodeProxy(), null);
-    if (cluster.getState() != GenericStateModel.ACTIVE) {
-      System.err.println("Cluster "+cluster+" is not Active!");
-    }
+//     //move the cluster to the intialized state
+//     BindingUtility.activate(cluster,new NodeProxy(), null);
+//     if (cluster.getState() != GenericStateModel.ACTIVE) {
+//       System.err.println("Cluster "+cluster+" is not Active!");
+//     }
 
-    return cluster;
-  }
+//     return cluster;
+//   }
   
-  private class NodeProxy implements AgentBindingSite, ClusterManagementServesCluster, BindingSite {
+  private class NodeProxy implements NodeForBinder, BindingSite {
     // ClusterManagementServesCluster
-    public Object instantiateBean(String className) throws ClassNotFoundException {
-      return Node.this.instantiateBean(className);
-    }
-    public Object instantiateBean(ClassLoader classLoader, String className) throws ClassNotFoundException {
-      return Node.this.instantiateBean(classLoader, className);
-    }
-    public void logEvent( Object anEvent ) { Node.this.logEvent(anEvent);}
     public void sendMessage(Message message) throws MessageTransportException {
       Node.this.sendMessage(message);
     }
-    public MessageTransportServer getMessageTransportServer() {return Node.this.getMessageTransportServer(); }
+    public MessageTransportServer getMessageTransportServer() {
+      return Node.this.getMessageTransportServer(); 
+    }
     public String getName() {return Node.this.getName(); }
-
+    public String getIdentifier() {
+      return Node.this.getIdentifier();
+    }
+    public boolean remove(Object o) {return true;}
     // BindingSite
-    public ServiceBroker getServiceBroker() {return null; }
+    public ServiceBroker getServiceBroker() {return specifyChildServiceBroker(); }
     public void requestStop() {}
+    // extra pieces
+    public void registerCluster(ClusterServesClusterManagement cluster) {
+      Node.this.registerCluster(cluster);
+    }
+  }
+
+  private void registerCluster(ClusterServesClusterManagement cluster) {
+    // get the (optional) external listener
+    ExternalNodeActionListener eListener;
+    try {
+      eListener =
+        ((eController != null) ? 
+         eController.getExternalNodeActionListener() :
+         null);
+    } catch (Exception e) {
+      eListener = null;
+    }
+    
+    // notify the listener
+    if (eListener != null) {
+      if (cluster != null) {
+        try {
+          eListener.handleClusterAdd(eController, cluster.getClusterIdentifier());
+        } catch (Exception e) {
+          // lost listener?  should we kill this Node?
+          System.err.println("Lost connection to external listener? "+e.getMessage());
+          try {
+            eController.setExternalNodeActionListener(null);
+          } catch (Exception e2) {
+          }
+        }
+      }
+    }
+    //add to the cluster list
+    addCluster(cluster);
   }
 
 
@@ -746,6 +770,129 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     add(descs);
   }
  
+//   /**
+//    * Add Clusters and their child Components (Plugins, etc) to this Node.
+//    * <p>
+//    * Note that this is a bulk operation, since the loading process is:<ol>
+//    *   <li>Create the empty clusters</li>
+//    *   <li>Add the Plugins and initialize the clusters</li>
+//    * </ol>
+//    * <p>
+//    * This should be moved into the future "AgentManager".
+//    */
+//   protected void add(ComponentDescription[] descs) {
+
+//     int nDescs = ((descs != null) ? descs.length : 0);
+
+//     System.err.print("Creating Clusters:");
+//     List clusters = new ArrayList(nDescs);
+//     for (int i = 0; i < nDescs; i++) {
+//       try {
+//         ComponentDescription desc = descs[i];
+//         String insertionPoint = desc.getInsertionPoint();
+//         if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
+//           // fix to support non-agent components
+//           throw new IllegalArgumentException(
+//               "Currently only agent ADD is supported, not "+
+//               insertionPoint);
+//         }
+//         ClusterServesClusterManagement cluster = createCluster(desc);
+//         ClusterIdentifier cid = cluster.getClusterIdentifier();
+//         String cname = cid.toString();
+//         System.err.print("\n\t"+cname);
+//         clusters.add(cluster);
+//       } catch (Exception e) {
+//         System.err.println(
+//             "\nUnable to load cluster["+i+"]: "+e);
+//         e.printStackTrace();
+//       }
+//     }
+
+//     System.err.print("\nLoading Plugins:");
+//     int nClusters = clusters.size();
+//     for (int i = 0; i < nClusters; i++) {
+//       try {
+//         ClusterServesClusterManagement cluster = 
+//           (ClusterServesClusterManagement)clusters.get(i);
+//         ClusterIdentifier cid = cluster.getClusterIdentifier();
+//         String cname = cid.toString();
+//         // read from file
+//         System.err.print("\n\t"+cname);
+//         // parse the cluster properties
+//         // currently assume ".ini" files
+//         InputStream in = getConfigFinder().open(cname+".ini");
+//         ComponentDescription[] cDescs = 
+//           INIParser.parse(in, "Node.AgentManager.Agent");
+
+//         // add the plugins and other cluster components
+//         //
+//         // FIXME could benefit from a bulk-add message
+//         for (int j = 0; j < cDescs.length; j++) {
+//           ComponentMessage addCM = 
+//             new ComponentMessage(
+//                 cid,
+//                 cid,
+//                 ComponentMessage.ADD,
+//                 cDescs[j]);
+//           // bypass the message system to initialize the cluster
+//           cluster.receiveMessage(addCM);
+//         }
+
+//         // tell the cluster to proceed.
+//         ClusterInitializedMessage m = new ClusterInitializedMessage();
+//         m.setOriginator(cid);
+//         m.setTarget(cid);
+//         cluster.receiveMessage(m);
+//       } catch (Exception e) {
+//         System.err.println(
+//             "\nUnable to add cluster["+i+"] child omponents: "+e);
+//         e.printStackTrace();
+//         clusters.set(i, null);
+//       }
+//     }
+
+//     System.err.println("\nPlugins Loaded.");
+
+//     // save these clusters as children of the node
+//     addClusters(clusters);
+
+//     // get the (optional) external listener
+//     ExternalNodeActionListener eListener;
+//     try {
+//       eListener =
+//         ((eController != null) ? 
+//          eController.getExternalNodeActionListener() :
+//          null);
+//     } catch (Exception e) {
+//       eListener = null;
+//     }
+
+//     // notify the listener
+//     if (eListener != null) {
+//       int n = clusters.size();
+//       for (int i = 0; i < n; i++) {
+//         ClusterServesClusterManagement ci = 
+//           (ClusterServesClusterManagement)clusters.get(i);
+//         if (ci != null) {
+//           ClusterIdentifier ciId = ci.getClusterIdentifier();
+//           try {
+//             eListener.handleClusterAdd(eController, ciId);
+//           } catch (Exception e) {
+//             // lost listener?  should we kill this Node?
+//             System.err.println(
+//                 "Lost connection to external listener? "+e.getMessage());
+//             try {
+//               eController.setExternalNodeActionListener(null);
+//             } catch (Exception e2) {
+//             }
+//             break;
+//           }
+//         }
+//       }
+//     }
+//   }
+
+
   /**
    * Add Clusters and their child Components (Plugins, etc) to this Node.
    * <p>
@@ -754,116 +901,18 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
    *   <li>Add the Plugins and initialize the clusters</li>
    * </ol>
    * <p>
-   * This should be moved into the future "AgentManager".
    */
   protected void add(ComponentDescription[] descs) {
-
     int nDescs = ((descs != null) ? descs.length : 0);
-
     System.err.print("Creating Clusters:");
     List clusters = new ArrayList(nDescs);
     for (int i = 0; i < nDescs; i++) {
       try {
         ComponentDescription desc = descs[i];
-        String insertionPoint = desc.getInsertionPoint();
-        if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
-          // fix to support non-agent components
-          throw new IllegalArgumentException(
-              "Currently only agent ADD is supported, not "+
-              insertionPoint);
-        }
-        ClusterServesClusterManagement cluster = createCluster(desc);
-        ClusterIdentifier cid = cluster.getClusterIdentifier();
-        String cname = cid.toString();
-        System.err.print("\n\t"+cname);
-        clusters.add(cluster);
+        agentManager.add(desc);
       } catch (Exception e) {
-        System.err.println(
-            "\nUnable to load cluster["+i+"]: "+e);
+        System.err.println("Exception creating clusters: " + e);
         e.printStackTrace();
-      }
-    }
-
-    System.err.print("\nLoading Plugins:");
-    int nClusters = clusters.size();
-    for (int i = 0; i < nClusters; i++) {
-      try {
-        ClusterServesClusterManagement cluster = 
-          (ClusterServesClusterManagement)clusters.get(i);
-        ClusterIdentifier cid = cluster.getClusterIdentifier();
-        String cname = cid.toString();
-        // read from file
-        System.err.print("\n\t"+cname);
-        // parse the cluster properties
-        // currently assume ".ini" files
-        InputStream in = getConfigFinder().open(cname+".ini");
-        ComponentDescription[] cDescs = 
-          INIParser.parse(in, "Node.AgentManager.Agent");
-
-        // add the plugins and other cluster components
-        //
-        // FIXME could benefit from a bulk-add message
-        for (int j = 0; j < cDescs.length; j++) {
-          ComponentMessage addCM = 
-            new ComponentMessage(
-                cid,
-                cid,
-                ComponentMessage.ADD,
-                cDescs[j]);
-          // bypass the message system to initialize the cluster
-          cluster.receiveMessage(addCM);
-        }
-
-        // tell the cluster to proceed.
-        ClusterInitializedMessage m = new ClusterInitializedMessage();
-        m.setOriginator(cid);
-        m.setTarget(cid);
-        cluster.receiveMessage(m);
-      } catch (Exception e) {
-        System.err.println(
-            "\nUnable to add cluster["+i+"] child omponents: "+e);
-        e.printStackTrace();
-        clusters.set(i, null);
-      }
-    }
-
-    System.err.println("\nPlugins Loaded.");
-
-    // save these clusters as children of the node
-    addClusters(clusters);
-
-    // get the (optional) external listener
-    ExternalNodeActionListener eListener;
-    try {
-      eListener =
-        ((eController != null) ? 
-         eController.getExternalNodeActionListener() :
-         null);
-    } catch (Exception e) {
-      eListener = null;
-    }
-
-    // notify the listener
-    if (eListener != null) {
-      int n = clusters.size();
-      for (int i = 0; i < n; i++) {
-        ClusterServesClusterManagement ci = 
-          (ClusterServesClusterManagement)clusters.get(i);
-        if (ci != null) {
-          ClusterIdentifier ciId = ci.getClusterIdentifier();
-          try {
-            eListener.handleClusterAdd(eController, ciId);
-          } catch (Exception e) {
-            // lost listener?  should we kill this Node?
-            System.err.println(
-                "Lost connection to external listener? "+e.getMessage());
-            try {
-              eController.setExternalNodeActionListener(null);
-            } catch (Exception e2) {
-            }
-            break;
-          }
-        }
       }
     }
   }
@@ -929,64 +978,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   // ClusterManagementServesCluster
   //
 
-
-  /** Method for construction of all the contained beans.
-   *    Calls the chained method with a NULL value for the ClassLoader.
-   *    <p>
-   *    This is the method that contains the hook for swapping ClassLoaders prior to calling the chained method.
-   *    <p>
-   *    @param  aBean  The String object that contains the fully dot notated descriptin of the bean to construct
-   *    @return Object The refernce to the new bean as an Object. It is the requestors responsibility to check the type before casting.
-   *    @exception Exception If there is a problem instantiating the
-   *    bean.  Will most often be java.lang.ClassNotFoundException or 
-   *    java.io.IOException (the exceptions thrown by Beans.instantiate());
-   *   @see java.beans.Beans
-   **/
-  public Object instantiateBean( String aBean ) throws ClassNotFoundException {
-    return instantiateBean( null, aBean);
-  }
-
-  /** Overloaded method provides the interface for construction of the contained beans.
-   *    Uses the static interface in the java.bean.Beans class to create a bean.
-   *    <p>
-   *    In its simplest form this method instantiates and returns the bean for the requesting component.
-   *    In its most abstract form this will access a threaded BeanFactory that will validate all 
-   *    bean dependecies and versioning and then create the Bean using the proper ClassLoader.
-   *   <p><PRE>
-   *   PRE CONDITION:    Component requests the construction of a specific bean
-   *   POST CONDITION:   Bean is instantiated and the reference is returned to the requestor
-   *   INVARIANCE:       
-   *   </PRE>
-   *    @param  aBean  The String object that contains the fully dot notated descriptin of the bean to construct
-   *    @param  sClassLoader    The ClassLoader to use in te construction process.
-   *    @return Object The refernce to the new bean as an Object. It is the requestors responsibility to check the type before casting.
-   *    @exception IOException if an I/O error occurs.
-   *    @exception ClassNotFoundException if the class of a serilized object could not be found.
-   *    @exception Exception If there is a problem instantiating the
-   *    bean.  Will most often be java.lang.ClassNotFoundException or 
-   *    java.io.IOException (the exceptions thrown by Beans.instantiate());
-   *   @see java.beans.Beans
-   **/
-  public Object instantiateBean( ClassLoader aClassLoader, String aBean ) throws ClassNotFoundException {
-    try {
-      return Beans.instantiate( aClassLoader, aBean );
-    } catch (java.io.IOException ioe) {
-      ioe.printStackTrace();
-      throw new ClassNotFoundException(aBean);
-    }
-  }
-
   public MessageTransportServer getMessageTransportServer() {
     return getMessenger();
-  }
-
-  public void logEvent(Object event) {
-    try {
-      System.out.println(getIdentifier()+": "+event);
-    } catch (Exception e) {
-      System.err.println("logEvent caught: "+e);
-      e.printStackTrace();
-    }
   }
 
   public String getName() {
@@ -1021,6 +1014,14 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     }
 
   }
+
+  public void requestStop() {}
+
+  // 
+  //support classes
+  //
+
+  private static class NodeServiceBroker extends ServiceBrokerSupport {}
 
 }
 

@@ -21,44 +21,6 @@ import org.cougaar.core.society.MessageTransportServer;
 public interface ClusterManagementServesCluster {
   
   /**
-   * Provide software component instantiation service to cluster.
-   * Generally, calls something like Beans.instantiate(null, className)
-   * to find a class and then create a new instance of it. Note that unlike
-   * Beans.instantiate(), this method does not accept a classloader as
-   * an argument - ClusterManagement reserves the right to completely
-   * control which classloader(s) are used.
-   * @param className Fully qualified name of a class or bean (serialized
-   * instance).
-   * @exception ClassNotFoundException Thrown when there is a problem
-   * instantiating the bean.
-   **/
-  Object instantiateBean(String className) throws ClassNotFoundException;
-
-  /**
-   * Provide software component instantiation service to cluster.
-   * Generally, calls something like Beans.instantiate(classLoader, className)
-   * to find a class and then create a new instance of it.
-   * @param classLoader which classLoader to use.
-   * @param className Fully qualified name of a class or bean (serialized
-   * instance).
-   * @exception ClassNotFoundException Thrown when there is a problem
-   * instantiating the bean.
-   **/
-  Object instantiateBean(ClassLoader classLoader, String className) throws ClassNotFoundException;
-  
-  /**
-   *   This method is resposible for accepting any Object for logging and passing it to
-   *   the LogWriter.
-   *   <p><PRE>
-   *   PRE CONDITION:    Log Writer created and running under its own thread
-   *   POST CONDITION:   Object passed to the LogWriter Thread
-   *   INVARIANCE:
-   *   </PRE>
-   *   @param Object The object to write to the log file
-   **/
-  void logEvent( Object anEvent );
-    
-  /**
    * Send a Message to another entity on behalf of the (calling) Cluster.
    *
    * @param message Message to send

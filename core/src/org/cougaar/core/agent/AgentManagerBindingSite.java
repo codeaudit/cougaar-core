@@ -11,19 +11,23 @@ package org.cougaar.core.agent;
 
 import java.util.*;
 import org.cougaar.util.*;
+import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
 import org.cougaar.core.society.MessageTransportServer;
 
-/** An Agent's view of its parent component (Container).
+/** An agentmanager's view of its parent component (Container).
  *
  **/
-public interface AgentBindingSite 
+public interface AgentManagerBindingSite 
   extends BindingSite
 {
-  void sendMessage(Message message) throws MessageTransportException;
   MessageTransportServer getMessageTransportServer();
+  void sendMessage(Message message) throws MessageTransportException;
+  String getIdentifier();
+  void registerCluster(ClusterServesClusterManagement cluster);
+  //name of the node
   String getName();
 }
 
