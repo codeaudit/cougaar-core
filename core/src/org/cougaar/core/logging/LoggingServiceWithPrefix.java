@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.util.log;
+package org.cougaar.core.logging;
 
 import org.cougaar.util.log.LoggerAdapter;
 import org.cougaar.core.service.LoggingService;
