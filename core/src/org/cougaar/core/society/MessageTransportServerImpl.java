@@ -95,10 +95,11 @@ public class MessageTransportServerImpl
     }
 
     public void initialize() {
-	readAspects();
 
         nameSupport = createNameSupport(id);
 	registry = MessageTransportRegistry.makeRegistry(id, this);
+
+	readAspects();
 
 	//Watcher Aspect is special because the MTServicer interace
 	//needs it.  So we have to make the Watcher Aspect all the

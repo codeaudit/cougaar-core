@@ -40,6 +40,7 @@ class MessageTransportRegistry
 	if (instance != null) {
 	    return instance;
 	} else {
+	    Thread.dumpStack();
 	    System.err.println("##### Attempt to find registry before creating it");
 	    return null;
 	}
