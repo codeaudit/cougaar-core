@@ -48,6 +48,18 @@ import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
+/**
+ * The QRS collects quiescence information from the Agent Distributors
+ * and other QRS clients in the Node. It also matches sent and
+ * received messages between agents in the Node. When the collective
+ * quiescence state of the Node changs, the QRS sends an Event indicating
+ * this change.
+ *
+ * @property org.cougaar.core.node.quiescenceAnnounceDelay specifies the 
+ * number of millisecond that the Node waits when it thinks it has become 
+ * quiescent to send an event announcing the fact. This suppresses 
+ * possible toggling. Default is 20 seconds.
+ **/
 class QuiescenceReportServiceProvider implements ServiceProvider {
   private Map quiescenceStates = new HashMap();
   private boolean isQuiescent = false;
@@ -66,7 +78,9 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   private ServiceBroker sb;
   private QuiescenceAnnouncer quiescenceAnnouncer;
 
-  private static final long ANNOUNCEMENT_DELAY = 30000L;
+  private static final long ANNOUNCEMENT_DELAY = Long.parseLong(System.getProperty("org.cougaar.core.node.quiescenceAnnounceDelay", "20000"));
+
+  //  private static final long ANNOUNCEMENT_DELAY = 30000L;
   private static final String EOL = " "; //System.getProperty("line.separator");
 
   QuiescenceReportServiceProvider(String nodeName,
