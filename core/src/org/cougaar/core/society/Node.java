@@ -698,7 +698,7 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
       //    Boolean enable/disable client authentication
       Object[] nsscParam = new Object[] {
         "org.cougaar.lib.web.tomcat.TomcatServletEngine",
-        "tomcat/data",
+        "webtomcat/data",
         ((httpPort  > 0) ? (new Integer(httpPort )) : null),
         ((httpsPort > 0) ? (new Integer(httpsPort)) : null),
         keystore, // use the same keystore for client certs
