@@ -84,6 +84,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         protected static final long NO_DELETION_DELAY = Long.MIN_VALUE;
         protected static final int NO_PRIORITY = Integer.MIN_VALUE;
         protected static final int MIN_PRIORITY = Integer.MIN_VALUE + 1;
+        protected static final int MAX_PRIORITY = Integer.MAX_VALUE;
 
         public DeletionPolicy() {
         }
@@ -103,9 +104,9 @@ public class DeletionPlugIn extends SimplePlugIn {
             try {
                 Add(new PredicateRuleParameter(PREDICATE_PARAM, aPredicate));
                 Add(new IntegerRuleParameter(PRIORITY_PARAM,
-                                             priority, priority, priority));
+                                             MIN_PRIORITY, MAX_PRIORITY, priority));
                 Add(new LongRuleParameter(DELETION_DELAY_PARAM,
-                                          deletionDelay, deletionDelay, deletionDelay));
+                                          0L, Long.MAX_VALUE, deletionDelay));
             } catch (RuleParameterIllegalValueException e) {
                 // No way this should happen because x <= x <= x is never false;
                 e.printStackTrace();
