@@ -126,11 +126,14 @@ public class Scheduler
 			record.lane = getLane();
 			records.add(record);
 		    } catch (Throwable t) {
+                      _logger.error("SchedulableObject "+sched+" threw an uncaught exception", t);
 		    }
 		}};
 	try {
 	    pendingThreads.processEach(processor);
 	} catch (Throwable r) {
+          // probably cannot get here
+          _logger.error("SchedulableObject "+sched+" threw an uncaught exception", t);
 	}
     }
 
