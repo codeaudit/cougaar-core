@@ -44,6 +44,14 @@ import org.cougaar.core.servlet.BlackboardServletSupport;
  */
 public class AEViewerServlet extends HttpServlet {
 
+  public static final String OPERATINGMODE = "OperatingMode";
+  public static final String POLICY = "Policy";
+  public static final String CHANGE = "change";
+  public static final String UID = "uid";
+  public static final String NAME = "name";
+  public static final String KERNEL = "kernel";
+  public static final String VALUE = "value";
+
   private BlackboardServletSupport support;
 
   private static UnaryPredicate conditionPredicate = 
@@ -86,16 +94,19 @@ public class AEViewerServlet extends HttpServlet {
 
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) {
-    String uid = request.getParameter("uid");
-    //System.out.println("\n\nAEViewer got request " + uid);
+    String objectType = request.getParameter(CHANGE);
+    //System.out.println("\n\nAEViewer got request " + objectType);
     response.setContentType("text/html");
 
     try {
       PrintWriter out = response.getWriter();
 
-      /* Policy change request */
-      if (uid != null) {
-	changePolicy(request, out, uid);
+      if (objectType != null) {
+	if (objectType.equals(POLICY)) {
+	  changePolicy(request, out);
+	} else if (objectType.equals(OPERATINGMODE)) {
+	  changeOperatingMode(request, out);
+	}
       } else {
 	/* send adaptivity objects */
 	sendData(out);
@@ -104,10 +115,12 @@ public class AEViewerServlet extends HttpServlet {
     } catch (java.io.IOException ie) { ie.printStackTrace(); }
   }
 
-  private void changePolicy(HttpServletRequest request, PrintWriter out, String uid) {
+  private void changePolicy(HttpServletRequest request, PrintWriter out) {
+
+    String uid = request.getParameter(UID);
 
     // get the string representing the policy
-    String policyString = request.getParameter("kernel");
+    String policyString = request.getParameter(KERNEL);
     StringReader reader = new StringReader(policyString);
     OperatingModePolicy[] policies = null;
     try {
@@ -138,6 +151,47 @@ public class AEViewerServlet extends HttpServlet {
     out.println("<html><head></head><body><h1>Policy Changed</h1><br>" );
     out.println(bbPolicy.toString());
   }
+
+  private void changeOperatingMode(HttpServletRequest request, PrintWriter out) {
+
+    // get the string representing the operating mode
+    String omName = request.getParameter(NAME);
+    // find the existing operating mode on the blackboard
+    Collection blackboardCollection 
+      = support.queryBlackboard(new OMByNamePredicate(omName));
+    OperatingMode bbOM = (OperatingMode)blackboardCollection.iterator().next();
+
+    String newValue = request.getParameter(VALUE);
+    Double numValue = null;
+    try {
+      numValue = new Double(newValue);
+    } catch (NumberFormatException nfe) { 
+      /* no-op */ 
+    }
+    
+    try {
+      if (numValue != null) {
+	bbOM.setValue(numValue) ;
+      } else {
+	bbOM.setValue(newValue);
+      }
+    } catch (IllegalArgumentException iae) {
+      out.println("<html><head></head><body><h1>ERROR - OperatingMode Not Changed</h1><br>" );
+      out.print(newValue);
+      out.print(" is not a valid value for ");
+      out.println(bbOM.getName());
+      return;
+    }
+    
+    BlackboardService blackboard = support.getBlackboardService();
+    blackboard.openTransaction();
+    // write the updated policy to the blackboard
+    blackboard.publishChange(bbOM);
+    blackboard.closeTransaction();
+    
+    out.println("<html><head></head><body><h1>OperatingMode Changed</h1><br>" );
+    out.println(bbOM.toString());
+  }
   
   /**
    * Suck the Policies, Conditions, and Operating Modes out of the
@@ -151,22 +205,62 @@ public class AEViewerServlet extends HttpServlet {
       out.print("<LI>");
       out.println(it.next().toString());
     }
-    out.print("</UL>");
+    out.println("</UL>");
     
-    out.println("<html><head></head><body><h1><CENTER>OperatingModes</CENTER></h1><br>" );
-    Collection operatingModes = support.queryBlackboard(omPredicate);
-    out.print("<UL>");
-    for (Iterator it = operatingModes.iterator(); it.hasNext();) {
-      out.println("<LI>");
-      out.println(it.next().toString());
-    }
-    out.print("</UL>");
-    
+    out.println("<h1><CENTER>OperatingModes</CENTER></h1>" );
+    writeOMTable(out);
+
     out.print("<H1><CENTER>Operating Mode Policies</CENTER></H1><P>\n");
-    
-    out.print("<font size=+1>Edit Policies for <b>" + support.getAgentIdentifier() + "</b></font><p>\n");
-  
     writePolicyTable(out);
+  }
+
+
+  /**
+   * Create a HTML table with a form in each row for editing a policy
+   */
+  private void writeOMTable(PrintWriter out) {
+    out.println ("<table>");
+    out.println("<tr><th>OperatingMode Name</th><th>Value</th></tr>");
+
+    Collection oms = support.queryBlackboard(omPredicate);
+    for (Iterator it = oms.iterator(); it.hasNext();) {
+      
+      out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
+      out.print(support.getEncodedAgentName());
+      out.print(support.getPath());
+      out.println("\">");
+      
+      OperatingMode om = (OperatingMode) it.next();
+
+      out.print("<td>");
+      out.print(om.getName());
+      out.println("</td>");
+
+      out.print("<td>");
+      out.print("<INPUT TYPE=text NAME=");
+      out.print(VALUE);
+      out.print(" VALUE=\"");
+      out.print(om.getValue().toString());
+      out.print("\"SIZE=20>");
+      out.println("</td>");
+
+      out.print("<td> <INPUT TYPE=submit value=\"Submit\"> </td>");
+
+      out.print("<tr> <td><INPUT TYPE=hidden NAME=");
+      out.print(CHANGE);
+      out.print(" VALUE=\"");
+      out.print(OPERATINGMODE);
+      out.println("\"</td>");
+
+      out.print("<td>");
+      out.print("<INPUT TYPE=hidden NAME=");
+      out.print(NAME);
+      out.print(" VALUE=\"");
+      out.print(om.getName());
+      out.println("\"> </td> </tr>");
+      out.println("</form>");
+    }
+    out.println("</table>");	
   }
 
 
@@ -175,8 +269,7 @@ public class AEViewerServlet extends HttpServlet {
    */
   private void writePolicyTable(PrintWriter out) {
     out.println ("<table>\n");
-    out.println ("<tr><th>");
-    out.print("Name</th><th>Authority</th><th>UID</th><th>Kernel</th>");
+    out.println("<tr><th>Name</th><th>Authority</th><th>UID</th><th>Kernel</th></tr>");
     Collection policies = support.queryBlackboard(omPolicyPredicate);
     for (Iterator it = policies.iterator(); it.hasNext();) {
       
@@ -186,26 +279,39 @@ public class AEViewerServlet extends HttpServlet {
       out.print("\">\n");
       
       OperatingModePolicy omp = (OperatingModePolicy) it.next();
-      out.println ("<tr><td>");
+      out.println ("<tr> <td>");
       out.print(omp.getName());
       out.println("</td><td>");
       out.println(omp.getAuthority());
       out.println("</td><td>");
-      out.println(omp.getUID());
-      out.print("<INPUT TYPE=hidden NAME=uid VALUE=\"");
       out.print(omp.getUID());
-      out.print("\"SIZE=20>");
-      out.println("</td><td>");
-      out.print("<INPUT TYPE=\"text\" NAME=kernel VALUE=\"");
+      out.println("</td>");
+
+      out.print("<td> <INPUT TYPE=\"text\" NAME=");
+      out.print(KERNEL);
+      out.print(" VALUE=\"");
       out.print(omp.getPolicyKernel().toString());
-      out.print("\"SIZE=80>");
-      out.println("</td><td>");
-      out.print("<input type=submit value=\"Submit\">");
-      out.println("</td></tr>");
+      out.print(";\"SIZE=80> </td>");
+
+      out.println("<td> <input type=submit value=\"Submit\"></td></tr>");
+
+      out.print("<td> <INPUT TYPE=hidden NAME=");
+      out.print(CHANGE);
+      out.print(" VALUE=\"");
+      out.print(POLICY);
+      out.println("\" <td>");
+
+      out.print("<td> <INPUT TYPE=hidden NAME=");
+      out.print(UID);
+      out.print(" VALUE=\"");
+      out.print(omp.getUID());
+      out.print("\" </td>");
+
       out.println("</form>");
     }
     out.println("</table></body></html>");	
   }
+
   private class UIDPredicate implements UnaryPredicate { 
     String uid;
     public UIDPredicate(String uidString) {
@@ -216,6 +322,23 @@ public class AEViewerServlet extends HttpServlet {
       if (o instanceof OperatingModePolicy) {
 	OperatingModePolicy omp = (OperatingModePolicy) o;
 	if (uid.equals(omp.getUID().toString())) {
+	  return true;
+	}
+      }
+      return false;
+    }
+  }
+
+  private class OMByNamePredicate implements UnaryPredicate { 
+    String name;
+    public OMByNamePredicate(String omName) {
+      name = omName;
+    }
+	
+    public boolean execute(Object o) {
+      if (o instanceof OperatingMode) {
+	OperatingMode om = (OperatingMode) o;
+	if (name.equals(om.getName())) {
 	  return true;
 	}
       }
