@@ -36,6 +36,7 @@ public final class ComponentDescription implements Serializable {
   private Object certificate;
   private Object lease;
   private Object policy;
+  private Object state;
 
   public ComponentDescription(String name,
                               String insertionPoint,
@@ -44,7 +45,8 @@ public final class ComponentDescription implements Serializable {
                               Object parameter,
                               Object certificate,
                               Object lease,
-                              Object policy) {
+                              Object policy,
+                              Object state) {
     this.name = name;
     this.insertionPoint = insertionPoint;
     this.classname = classname;
@@ -53,6 +55,7 @@ public final class ComponentDescription implements Serializable {
     this.certificate = certificate;
     this.lease = lease;
     this.policy = policy;
+    this.state = state;
   }
 
   /** The name of a particular component, used
@@ -102,11 +105,6 @@ public final class ComponentDescription implements Serializable {
    * This is defined as just an Object, but we will likely 
    * have to impose additional restrictions (e.g. Serializable) 
    * for safety reasons.
-   * <p>
-   * Rovers and other "mobile" components will include accumulated
-   * state or an instance of themselves in the parameter.  This allows
-   * receiving agents more flexibility in determining trustability
-   * of the component being sent.
    **/
   public Object getParameter() { return parameter; }
 
@@ -131,6 +129,17 @@ public final class ComponentDescription implements Serializable {
    * policy is sufficient.
    **/
   public Object getPolicy() { return policy; }
+
+  /**
+   * Mobile Component state information, such as the child 
+   * ComponentDescription and their state.
+   * <p>
+   * The state should be null when creating a new Component.  For mobile
+   * Containers, such as an Agent, the state is typically an array of child 
+   * ComponentDescriptions, each potentially containing their children in 
+   * a recursive fashion.
+   */
+  public Object getState() { return state; }
 
   // utilities
   public String toString() {

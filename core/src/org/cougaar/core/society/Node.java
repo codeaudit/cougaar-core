@@ -40,8 +40,6 @@ import java.security.cert.*;
 import javax.naming.NamingException;
 
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.plugin.AddPlugInMessage;
-import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.cluster.ClusterInitializedMessage;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
@@ -776,6 +774,11 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
           throw new UnsupportedOperationException(
             "Unsupported ComponentMessage: "+m);
         }
+      } else if (m instanceof MoveAgentMessage) {
+        MoveAgentMessage mam = (MoveAgentMessage)m;
+        agentManager.moveAgent(
+            mam.getAgentIdentifier(),
+            mam.getNodeIdentifier());
       } else {
         throw new UnsupportedOperationException(
             "Unsupported Message: "+
