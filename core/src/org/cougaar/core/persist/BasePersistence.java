@@ -1316,4 +1316,8 @@ public class BasePersistence
   public ServiceProvider getServiceProvider() {
     return this;
   }
+
+  public String toString() {
+    return "Persist(" + getAgentName() + ")";
+  }
 }
