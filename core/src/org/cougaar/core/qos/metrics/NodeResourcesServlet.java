@@ -58,7 +58,7 @@ public class NodeResourcesServlet
 	out.print("<tr><td><b>");
 	out.print(name);
 	out.print(" </b></td>");
-	Color.valueTable(metric, ignore, 
+	ServletUtilities.valueTable(metric, ignore, 
 			 highlight,greater,formatter, out);
 	out.print("</tr>\n");	
     }

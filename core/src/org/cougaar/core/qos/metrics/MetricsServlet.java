@@ -90,7 +90,7 @@ public abstract class MetricsServlet
 				PrintWriter out)
     {
 	out.print("<p><b>Color key</b>");
-	Color.colorTest(out);
+	ServletUtilities.colorTest(out);
     }
 
     public int dataPercentage() 

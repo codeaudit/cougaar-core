@@ -92,13 +92,13 @@ public class AgentLoadServlet
 	    out.print("<tr><td><b>");
 	    out.print(name);
 	    out.print(" </b></td>");
-	    Color.valueTable(cpuLoad, 0.0, 1.0,true, f4_2, out);
-	    Color.valueTable(cpuLoadJips, 0.0, 200,true, f6_3, out);
-	    Color.valueTable(msgIn, 0.0, 1.0, true, f4_2, out);
-	    Color.valueTable(msgOut, 0.0, 1.0, true, f4_2, out);
-	    Color.valueTable(bytesIn, 0.0, 10000, true, f7_0, out);
-	    Color.valueTable(bytesOut, 0.0, 10000, true, f7_0, out);
-	    Color.valueTable(persistSize, 0.0, 10000, true, f7_0, out);
+	    ServletUtilities.valueTable(cpuLoad, 0.0, 1.0,true, f4_2, out);
+	    ServletUtilities.valueTable(cpuLoadJips, 0.0, 200,true, f6_3, out);
+	    ServletUtilities.valueTable(msgIn, 0.0, 1.0, true, f4_2, out);
+	    ServletUtilities.valueTable(msgOut, 0.0, 1.0, true, f4_2, out);
+	    ServletUtilities.valueTable(bytesIn, 0.0, 10000, true, f7_0, out);
+	    ServletUtilities.valueTable(bytesOut, 0.0, 10000, true, f7_0, out);
+	    ServletUtilities.valueTable(persistSize, 0.0, 10000, true, f7_0, out);
 	    out.print("</tr>\n");
 
 	}
@@ -117,14 +117,14 @@ public class AgentLoadServlet
 	out.print("<tr><td><b>MTS</b></td>");
 	String mtsPath = "Service(MTS)" +PATH_SEPR+ CPU_LOAD_AVG_10_SEC_AVG;
 	Metric mtsCpuLoad = metricsService.getValue(mtsPath);
-	Color.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2, out);
+	ServletUtilities.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2, out);
 	out.print("</tr>\n");
 
 	out.print("<tr><td><b>Metrics</b></td>");
 	String metricPath = "Service(Metrics)" +PATH_SEPR+ 
 	    CPU_LOAD_AVG_10_SEC_AVG;
 	Metric metricCpuLoad = metricsService.getValue(metricPath);
-	Color.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2, out);
+	ServletUtilities.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2, out);
 	out.print("</tr>\n");
 
 	out.print("</table>");
