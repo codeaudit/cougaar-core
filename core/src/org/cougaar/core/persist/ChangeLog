@@ -1,3 +1,9 @@
+2004-01-05  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceServiceComponent.java:
+	Bug #3438 -- Persist exception fails to clearMarks()
+	Moved clearMarks call to finally clause of try block.
+
 2003-09-04  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceServiceComponent.java: 
