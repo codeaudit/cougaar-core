@@ -103,20 +103,10 @@ public final class MetricsServiceProvider
 	    ex.printStackTrace();
 	}
 
-	startSyscondFactory(sb);
-
-    }
-
-
-    private synchronized void startSyscondFactory(ServiceBroker sb) {
-	// Make the SyscondFactory here if the class is available
 	try {
-	    Class scfac_class = Class.forName(SCFAC_CLASSNAME);
-	    Class[] types = { ServiceBroker.class };
-	    Object[] args = { sb };
-	     java.lang.reflect.Constructor cons =
-		 scfac_class.getConstructor(types);
-	    cons.newInstance(args);
+	    Class cl = Class.forName(SCFAC_CLASSNAME);
+	    Object scfac =  cl.newInstance();
+	    add(scfac);
 	} catch (ClassNotFoundException cnf) {
 	    // This means the quo jar isn't loaded
 	} catch (Exception ex) {
