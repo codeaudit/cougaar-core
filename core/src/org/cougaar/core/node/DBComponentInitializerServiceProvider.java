@@ -87,6 +87,7 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
             "Looking for direct sub-components of " + parentName +
             " just below insertion point " + containerInsertionPoint);
       }
+
       try {
         Connection conn = dbInit.getConnection();
         try {
@@ -110,6 +111,7 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
             Statement stmt2 = conn.createStatement();
             substitutions.put(":component_id:", componentId);
             String query2 = dbInit.getQuery("queryComponentParams",  substitutions);
+
             ResultSet rs2 = dbInit.executeQuery(stmt2, query2);
             ArrayList vParams = null;
             while (rs2.next()) {
@@ -119,6 +121,7 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
                 vParams.add(param);
               }
             }
+
             ComponentDescription desc =
               new ComponentDescription(componentName,
                   insertionPoint,
@@ -132,7 +135,8 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
             componentDescriptions.add(desc);
             rs2.close();
             stmt2.close();
-          }
+          } // end of loop over result set
+
           int len = componentDescriptions.size();
           if (logger.isDebugEnabled()) {
             logger.debug("... returning " + len + " CDescriptions");
@@ -140,7 +144,9 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
           ComponentDescription[] result = new ComponentDescription[len];
           result = (ComponentDescription[])
             componentDescriptions.toArray(result);
-          if (false) {
+
+	  // Print out each component description
+          if (logger.isDetailEnabled()) {
             for (int i = 0; i < result.length; i++) {
               StringBuffer buf = new StringBuffer();
               buf.append(result[i].getInsertionPoint());
@@ -164,9 +170,10 @@ class DBComponentInitializerServiceProvider implements ServiceProvider {
                 }
                 buf.append(")");
               }
-              System.out.println(buf);
+	      logger.detail(buf.toString());
             }
-          }
+          } // end of if(detail)
+
           return result;
         } finally {
           conn.close();
