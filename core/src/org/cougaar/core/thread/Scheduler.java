@@ -32,7 +32,9 @@ abstract class Scheduler
 {
     private static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
-    private static final int MaxRunningCountDefault = 100;
+    
+    // O means unlimited
+    private static final int MaxRunningCountDefault = 0;
 
     private DynamicSortedQueue pendingThreads;
     private int maxRunningThreads;
@@ -101,6 +103,7 @@ abstract class Scheduler
 
     public synchronized void setMaxRunningThreadCount(int count) {
 	maxRunningThreads = count;
+	treeNode.getPolicy().setMaxRunningThreadCount(count);
 	changedMaxRunningThreadCount();
     }
 
@@ -216,11 +219,7 @@ abstract class Scheduler
 
 
 
-    void changedMaxRunningThreadCount() {
-    }
-
-
-
+    abstract void changedMaxRunningThreadCount();
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).

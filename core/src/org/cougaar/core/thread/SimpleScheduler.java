@@ -30,7 +30,8 @@ final class SimpleScheduler extends Scheduler
 
 
     private boolean canStartThread() {
-	return runningThreadCount() < maxRunningThreadCount();
+	int max = maxRunningThreadCount();
+	return max <= 0 || runningThreadCount() < max;
     }
 
 

@@ -32,7 +32,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     static final long DEFAULT_SLICE_DURATION = 10000; // better
 
     private int outstandingChildSliceCount;
-    private TimeSlice[] timeSlices;
+    private ArrayList timeSlices;
     private PolicyTreeNode treeNode;
     private String printString;
 
@@ -58,6 +58,10 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	return "DefaultTimeSlicePolicy";
     }
 
+    public void  setMaxRunningThreadCount(int count) {
+	makeSlices(count);
+    }
+
     public void setTreeNode(PolicyTreeNode treeNode) {
 	this.treeNode = treeNode;
 	printString = "<" + getPolicyID() + " " + getName() + ">";
@@ -65,12 +69,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
 	if (parent == null) {
 	    // Root policy, make some shares
-	    int maxRunningThreads = 
-		treeNode.getScheduler().maxRunningThreadCount();
-	    timeSlices = new TimeSlice[maxRunningThreads];
-	    for (int i=0; i<maxRunningThreads; i++) {
-		timeSlices[i] = new TimeSlice(this);
-	    }
+	    makeSlices(treeNode.getScheduler().maxRunningThreadCount());
 	}
     }
 
@@ -80,14 +79,33 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     }
 
 
+    synchronized void makeSlices(int count) {
+	// count <= 0 means unlimited
+	int size = count <= 0 ? 20 : count;
+	timeSlices = new ArrayList(size);
+	for (int i=0; i<size; i++) {
+	    timeSlices.add(new TimeSlice(this));
+	}
+    }
+
     // Find a slice that's not in use
     TimeSlice findSlice() {
 	TimeSlice slice = null;
-	for (int i=0; i<timeSlices.length; i++) {
-	    slice = timeSlices[i];
-	    if (!slice.in_use) 	return slice;
+	Iterator itr = timeSlices.iterator();
+	while (itr.hasNext()) {
+	    slice = (TimeSlice) itr.next();
+	    if (!slice.in_use) return slice;
 	}
-	return null;
+
+	int max = treeNode.getScheduler().maxRunningThreadCount();
+	if (max <= 0) {
+	    // max <= 0 means unlimited
+	    slice = new TimeSlice(this);
+	    timeSlices.add(slice);
+	    return slice;
+	} else {
+	    return null;
+	}
     }
 
 
@@ -123,7 +141,8 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     synchronized TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
 	int use_count = treeNode.getScheduler().runningThreadCount() +
 	    outstandingChildSliceCount;
-	if (use_count >= treeNode.getScheduler().maxRunningThreadCount()) {
+	int max = treeNode.getScheduler().maxRunningThreadCount();
+	if (max > 0 && use_count >= max) {
 	    if (CougaarThread.Debug)
 		System.out.println("No slices available from " 
 				   +this+
