@@ -47,6 +47,12 @@ public class PluginManager
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
+    
+    /*
+    if (! attachBinderFactory(new PluginServiceFilter())) {
+      throw new RuntimeException("Failed to load the PluginServiceFilter");
+    }
+    */
 
     ServiceBroker sb = childServiceBroker;
     //ServiceBroker sb = testsb; // test
@@ -189,6 +195,10 @@ public class PluginManager
 
   public ConfigFinder getConfigFinder() {
     return agent.getConfigFinder();
+  }
+
+  public String toString() {
+    return getAgentIdentifier().toString()+"/PluginManager";
   }
 
 }

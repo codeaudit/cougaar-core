@@ -41,6 +41,7 @@ public abstract class BindingUtility {
       }
 
       if (m != null) {          // use a non-throwing variation in the future
+        //System.err.println("Invoking "+child+".setBindingSite("+bindingSite+")");
         m.invoke(child, new Object[]{bindingSite});
         return true;
       } 

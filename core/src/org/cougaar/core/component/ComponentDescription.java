@@ -134,7 +134,7 @@ public final class ComponentDescription implements Serializable {
 
   // utilities
   public String toString() {
-    return "<ComponenentDescription "+classname+
+    return "<ComponentDescription "+classname+
       ((parameter==null)?"":(" "+parameter))+
       ">";
   }

@@ -58,6 +58,7 @@ public abstract class BinderFactorySupport
       Binder binder = (Binder) constructor.newInstance(new Object[] {this, child});
       return binder;
     } catch (Exception e) {
+      System.err.println("Failed to construct "+binderClass+" to bind "+child+":");
       e.printStackTrace();
       throw new RuntimeException(e.toString());
     }

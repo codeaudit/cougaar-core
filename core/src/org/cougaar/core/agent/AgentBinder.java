@@ -22,12 +22,6 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
     super(bf, child);
   }
 
-  /** package-private kickstart method for use by the AgentBinderFactory **/
-  public void initialize() {
-    super.initialize();
-    initializeChild();          // set up initial services
-  }
-
   protected final Agent getAgent() {
     return (Agent) getComponent();
   }

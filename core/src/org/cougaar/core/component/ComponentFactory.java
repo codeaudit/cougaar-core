@@ -25,7 +25,8 @@ public abstract class ComponentFactory
     try {
       return Class.forName(desc.getClassname());
     } catch (Exception e) {
-      throw new ComponentFactoryException("loading class", desc, e);
+      e.printStackTrace();
+      throw new ComponentFactoryException("loadClass failure:", desc, e);
     }
   }
 

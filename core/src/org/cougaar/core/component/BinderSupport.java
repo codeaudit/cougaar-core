@@ -19,26 +19,13 @@ import java.lang.reflect.*;
  * Binder Construction time.
  **/
 public abstract class BinderSupport 
-  implements Binder
+  extends BinderBase
 {
-  private BinderFactory binderFactory;
-  private ServiceBroker servicebroker;
-  private ContainerAPI parent;
   private ComponentDescription childD;
   private Component child;
 
-  protected BinderSupport(BinderFactory bf, Object cd) {
-    binderFactory = bf;
-    attachChild(cd);
-  }
-
-  public void setBindingSite(BindingSite bs) {
-    if (bs instanceof ContainerAPI) {
-      parent = (ContainerAPI) bs;
-      servicebroker = parent.getServiceBroker();
-    } else {
-      throw new RuntimeException("Help: BindingSite of Binder not a ContainerAPI!");
-    }
+  protected BinderSupport(BinderFactory bf, Object childX) {
+    super(bf, childX);
   }
 
   protected void attachChild(Object cd) {
@@ -50,14 +37,6 @@ public abstract class BinderSupport
       child = (Component) cd;
     } else {
       throw new IllegalArgumentException("Child is neither a ComponentDescription nor a Component: "+cd);
-    }
-  }
-
-  protected ComponentFactory getComponentFactory() {
-    if (binderFactory != null) {
-      return binderFactory.getComponentFactory();
-    } else {
-      throw new RuntimeException("No ComponentFactory");
     }
   }
 
@@ -79,13 +58,13 @@ public abstract class BinderSupport
     }
   }
 
-  public ServiceBroker getServiceBroker() { return servicebroker; }
+  // implement the BindingSite api
+
   public void requestStop() { 
-    if (child != null) parent.remove(child);
+    if (child != null)
+      getContainer().remove(child);
   }
-  protected final ContainerAPI getContainer() {
-    return parent;
-  }
+
   protected final Component getComponent() {
     return child;
   }
@@ -101,20 +80,7 @@ public abstract class BinderSupport
   // child services initialization
   //
   
-  public void initialize() {
-    if (child == null) {
-      child = constructChild();
-    }
-    initializeChild();
-  }
-  public void load() {
-    child.load();
-  }
-  public void start() {
-    child.start();
-  }
-
-  /** Call (once) from subclass
+  /** Called
    * to hook up all the requested services for the child component.
    * <p>
    * Initialization steps:
@@ -132,19 +98,27 @@ public abstract class BinderSupport
    * Often, the
    * child.initialize() method will call back into the services api.
    */
-  protected void initializeChild() {
+  public void initialize() {
+    if (child == null) {
+      child = constructChild();
+    }
+
     BindingSite proxy = getBinderProxy();
     BindingUtility.setBindingSite(child, proxy);
-    if (servicebroker != null) {
-      BindingUtility.setServices(child, servicebroker);
+    if (getServiceBroker() != null) {
+      BindingUtility.setServices(child, getServiceBroker());
+    } else {
+      System.err.println("BinderSupport: No ServiceBroker from "+getContainer()+" for "+child);
+      Thread.dumpStack();
     }
+
+    // cascade
     child.initialize();
-  }    
-
-  public String toString() {
-    String s = this.getClass().toString();
-    int i = s.lastIndexOf(".");
-    return s.substring(i+1);
   }
-
+  public void load() {
+    child.load();
+  }
+  public void start() {
+    child.start();
+  }
 }

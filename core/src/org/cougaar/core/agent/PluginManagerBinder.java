@@ -25,12 +25,6 @@ public class PluginManagerBinder extends BinderSupport implements PluginManagerB
     super(parentInterface, child);
   }
 
-  /** package-private kickstart method for use by the PluginManagerBinderFactory **/
-  public void initialize() {
-    super.initialize();
-    initializeChild();          // set up initial services
-  }
-
   protected final PluginManager getPluginManager() {
     return (PluginManager) getComponent();
   }

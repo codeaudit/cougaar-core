@@ -1,3 +1,13 @@
+* 8.3.0
+Binders control construction of components rather than the container.
+
+Wrapping Binders are now functional - see ServiceFilter and
+ServiceFilterBinder as examples.  ServiceFilterBinder is a base class
+for installing Service monitors/proxies/wrappers between a standard
+binder and the component.  There is an example of an instantiable
+extension in core/examples/org/cougaar/core/examples/PluginServiceFilter.java
+PluginServiceFilter monitors new subscription requests of the bound plugin.
+
 * 8.2.2
 New INI file format to support BinderFactory loading:
   "insertionPoint = classname(Vector of Strings)"
