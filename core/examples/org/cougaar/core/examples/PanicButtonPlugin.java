@@ -22,6 +22,7 @@
 package org.cougaar.core.examples;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.LayoutManager;
 import java.awt.BorderLayout;
@@ -45,6 +46,9 @@ public class PanicButtonPlugin
   /** frame for 1-button UI **/
   private JFrame frame;    
   JLabel panicLabel;
+  private JComboBox categoryCB;
+  private ButtonGroup trustlevelBG;
+  private JRadioButton trustNoOne, trustFew, trustMedium, trustEveryone;
   protected JButton panicButton;
   
   private MessageTransportService messageTransService = null;
@@ -81,21 +85,76 @@ public class PanicButtonPlugin
 
   private void createGUI() {
     frame = new JFrame("PanicButtonPlugin");
-    //          JPanel panel = new JPanel((LayoutManager) null);
-    
+        
     JPanel panel = new JPanel(new BorderLayout());
     // Create the button
-    panicButton = new JButton("Panic");
-    panicLabel = new JLabel("Press to send Node Trust policies.");
-    panicLabel.setHorizontalAlignment(JLabel.RIGHT);
+    JPanel buttonPanel = new JPanel();
+    panicButton = new JButton("Create and Send New NodeTrustPolicy");
+    buttonPanel.add(panicButton);
+
+    // Create the JComboBox
+    JPanel trustPanel = new JPanel(new GridBagLayout());
+    JLabel categoryLabel = new JLabel("Choose a Trust Category:");
+    categoryCB = new JComboBox();
+    categoryCB.addItem("Society");
+    categoryCB.addItem("Host");
+    categoryCB.addItem("Subnet");
+
+    // Create JRadioButtons and Group
+    JLabel trustlevelLabel = new JLabel("Choose a Trust Level:");
+    trustlevelBG = new ButtonGroup();
+    trustNoOne = new JRadioButton("0 - Very High Security");
+    trustNoOne.setSelected(true);
+    trustFew = new JRadioButton("2 - High Security");
+    trustMedium = new JRadioButton("5 - Medium Security");
+    trustEveryone = new JRadioButton("10 - Low Security");
+    trustlevelBG.add(trustNoOne);
+    trustlevelBG.add(trustFew);
+    trustlevelBG.add(trustMedium);
+    trustlevelBG.add(trustEveryone);
 
     // Register a listener for the check box
     PanicButtonListener myPanicListener = new PanicButtonListener();
     panicButton.addActionListener(myPanicListener);
     panicButton.setEnabled(true);
-        
-    panel.add(panicButton, BorderLayout.WEST);
-    panel.add(panicLabel, BorderLayout.EAST);
+
+    trustPanel.add(categoryLabel,
+                   new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 0, 5, 5), 0, 0));
+    trustPanel.add(categoryCB,
+                   new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 0, 5, 5), 0, 0));
+    trustPanel.add(trustlevelLabel,
+                   new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 0, 5, 5), 0, 0));
+    trustPanel.add(trustNoOne,
+                   new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 20, 5, 5), 0, 0));
+    trustPanel.add(trustFew,
+                   new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 20, 5, 5), 0, 0));
+    trustPanel.add(trustMedium,
+                   new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 20, 5, 5), 0, 0));
+    trustPanel.add(trustEveryone,
+                   new GridBagConstraints(0, 5, 1, 1, 0.0, 0.0,
+                                          GridBagConstraints.WEST,
+                                          GridBagConstraints.HORIZONTAL,
+                                          new Insets(10, 20, 5, 5), 0, 0));
+    panel.add(buttonPanel, BorderLayout.SOUTH);
+    panel.add(trustPanel, BorderLayout.CENTER);
     frame.setContentPane(panel);
     frame.pack();
     frame.setVisible(true);
@@ -104,7 +163,21 @@ public class PanicButtonPlugin
   /** An ActionListener that listens to the GLS buttons. */
   class PanicButtonListener implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
-      sendNodeTrustPolicy();
+      int trustlevel = 33;
+      String category = (String) categoryCB.getSelectedItem();
+      if (trustNoOne.isSelected()) {
+        trustlevel = 0;
+      } else if (trustFew.isSelected()) {
+        trustlevel = 2;
+      } else if (trustMedium.isSelected()) {
+        trustlevel = 5;
+      } else if (trustEveryone.isSelected()) {
+        trustlevel = 10;
+      }
+        
+      System.out.println("catgorycb: "+category+
+                         " trustlevel: "+trustlevel);
+      sendNodeTrustPolicy(category, trustlevel);
     }
   }
 
@@ -113,13 +186,13 @@ public class PanicButtonPlugin
    */
   public void execute() {}
 
-  public void sendNodeTrustPolicy() {
+  public void sendNodeTrustPolicy(String category, int trustlevel) {
     // for now assume that pushing the button means to create a
     // society wide trust policy of '0' (trust no one level)
     NodeTrustPolicy trustpolicy = 
       (NodeTrustPolicy)domainService.getFactory().newPolicy(NodeTrustPolicy.class.getName());
-    trustpolicy.setTrustCategory(NodeTrustPolicy.SOCIETY);
-    trustpolicy.setTrustLevel(0);
+    trustpolicy.setTrustCategory(category);
+    trustpolicy.setTrustLevel(trustlevel);
     //create a message to contain the trust policy
     MulticastMessageAddress dest = 
       new MulticastMessageAddress(org.cougaar.core.society.NodePolicyWatcher.class);
