@@ -71,11 +71,11 @@ class TopServlet extends HttpServlet
 
     private void printHeaders(PrintWriter out) {
 	out.print("<tr>");
-	out.print("<th><b>State</b></th>");
-	out.print("<th><b>Time</b></th>");
-	out.print("<th><b>Level</b></th>");
-	out.print("<th><b>Thread</b></th>");
-	out.print("<th><b>Client</b></th>");
+	out.print("<th align=left><b>State</b></th>");
+	out.print("<th align=left><b>Time</b></th>");
+	out.print("<th align=left><b>Level</b></th>");
+	out.print("<th align=left><b>Thread</b></th>");
+	out.print("<th align=left><b>Client</b></th>");
 	out.print("</tr>");
     }
 
@@ -111,7 +111,7 @@ class TopServlet extends HttpServlet
     void printPage(PrintWriter out) {
 	List status = service.getStatus();
 	if (status == null || status.size() == 0) {
-	    out.print("<i>none</i>");
+	    out.print("<br><i>none</i>");
 	    return;
 	}
 
