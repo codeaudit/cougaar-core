@@ -195,11 +195,25 @@ object.</li>
 
 <li>
 <b>PropagationPlugIn</b>: The PropagationPlugIn uses an XML file (forward.xml)
-to send Log Plan objects that implement the Transportable interface to
-other clusters. Currently, Oplan and Policy are the only objects that implement
-the Transportable interface. Eventually, each cluster will need its own
-XML file. Currently all clusters use forward.xml which tells the PropagationPlugIn
-to send Oplan to Subordinates and ShipPolicy to Supporting StrategicTransportationProviders.</li>
+to send Log Plan objects that implement the Transferable interface to
+other clusters.  Currently all clusters use forward.xml which tells the PropagationPlugIn
+to send OplanCoupon to Subordinates and AdminstrativeSubordinates and ShipPolicy 
+to Supporting StrategicTransportationProviders. Each cluster can have its own XML file to
+direct Transferables as needed.</li>
+
+<li>
+<b>OplanPlugIn</b>: The OplanPlugIn reads an XML file containing an Operation Plan (Oplan).
+It publishes the Oplan consisting of an Oplan object and several OrgActivity objects. In addition,
+the OplanPlugIn publishes an OplanCoupon object which is forwarded to subordinate clusters via 
+the PropagationPlugIn.</li>
+
+<li>
+<b>GetOplanPlugIn</b>: The GetOplanPlugIn is used in subordinate organization to "redeem"
+the OplanCoupon. When it receives the OplanCoupon, it publishes a QueryRequest containing the
+information from the OplanCoupon and about the organization. Various LogicProviders retreive
+the requested Oplan and OrgActivities from the originating organization and publishes those
+objects in the cluster.</li>
+
 </ul>
 
 </body>
