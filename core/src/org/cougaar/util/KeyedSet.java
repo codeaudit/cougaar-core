@@ -31,7 +31,7 @@ import java.util.*;
 public class KeyedSet
   implements Set
 {
-  protected HashMap inner;
+  protected Map inner;
 
   public KeyedSet() { 
     inner = new HashMap(89);
@@ -43,19 +43,26 @@ public class KeyedSet
     inner = new HashMap(c.size()*2+1);
     addAll(c);
   }
-  
+
+  public KeyedSet makeSynchronized() {
+    inner = Collections.synchronizedMap(inner);
+    return this;
+  }
+
   public void clear() { inner.clear(); }
   public boolean contains(Object o) { return inner.containsValue(o); }
-  public boolean containsAll(Collection c) { 
-    for (Iterator i = c.iterator(); i.hasNext();) 
-      if (! inner.containsValue(i.next())) return false;
-    return true;
+  public boolean containsAll(Collection c) {
+    return inner.values().containsAll(c);
   }
   public boolean isEmpty() { return inner.isEmpty(); }
   public Iterator iterator() { return inner.values().iterator(); }
   public int size() { return inner.size(); }
   public Object[] toArray() { return inner.values().toArray(); }
   public Object[] toArray(Object[] a) { return inner.values().toArray(a); }
+
+  public Set keySet() {
+    return inner.keySet();
+  }
 
   public int hashCode() { return 7+inner.hashCode(); }
   public boolean equals(Object o) {
