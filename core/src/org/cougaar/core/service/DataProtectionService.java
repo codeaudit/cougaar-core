@@ -28,6 +28,7 @@ package org.cougaar.core.service;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
 
 // Cougaar core services
 import org.cougaar.core.component.Service;
@@ -65,7 +66,8 @@ public interface DataProtectionService
    *  @return    An output stream that the client uses to protect data.
    */
   OutputStream getOutputStream(DataProtectionKeyEnvelope pke,
-				      OutputStream os);
+				      OutputStream os)
+      throws IOException;
 
   /** 
    * Unprotects a data stream by verifying and/or decrypting the stream.
@@ -77,6 +79,7 @@ public interface DataProtectionService
    *  @return    An input stream containing the un-encrypted and/or verified data.
    */
   InputStream getInputStream(DataProtectionKeyEnvelope pke,
-				    InputStream is);
+				    InputStream is)
+      throws IOException;
 }
 

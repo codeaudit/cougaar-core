@@ -1,3 +1,11 @@
+2002-06-18  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Bug #1511
+	Rehydration sets are reversed preferring oldest over newest.
+	Reversed to the sign of the comparisons to fix.
+	
+
 2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistencePlugin.java:

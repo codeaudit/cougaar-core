@@ -1,3 +1,29 @@
+2002-06-18  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/multicast/AttributeBasedAddress.java:
+	Bug #1518
+	Add constructor allowing the specification of MessageAttributes.
+
+	* org/cougaar/core/service/DataProtectionService.java:
+	Design refinement.
+	Add IOException to getOutputStream and getInputStream.
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #1518
+	MessageAttributes are not copied from AttributeBasedAddress
+	instances to the addresses of the expansion.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java: 
+	* org/cougaar/core/adaptivity/MissingConditionException.java:
+	Bug #1430
+	Partial fix reduces logging level to WARN for missing conditions.
+
+2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/DataProtectionKeyEnvelope.java:
+	Declare both getDataProtectionKey and setDataProtectionKey to
+	throw IOException
+
 2002-06-14  Michael Thome  <mthome@bbn.com>
 
 	* NodeAgent
