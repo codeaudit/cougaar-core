@@ -22,7 +22,13 @@
 package org.cougaar.core.blackboard;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.RandomAccess;
+import java.util.Set;
 
 /**
  * A change report for an anonymous (unspecified) change.

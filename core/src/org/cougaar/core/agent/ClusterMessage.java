@@ -21,17 +21,11 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
-import java.io.Serializable;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
-
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A org.cougaar.core.agent.ClusterMessage  provides a basic implementation of 

@@ -21,12 +21,17 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
+import java.io.PrintStream;
 import java.util.Hashtable;
-import javax.naming.*;
-import javax.naming.directory.*;
-import org.cougaar.core.component.*;
+import javax.naming.Binding;
+import javax.naming.Context; // inlined
+import javax.naming.NameClassPair;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 
 public class NSLS {
     public static void main(String[] args) {

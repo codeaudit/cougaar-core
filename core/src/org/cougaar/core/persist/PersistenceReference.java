@@ -18,9 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * Objects of this class replace objects that have been previously

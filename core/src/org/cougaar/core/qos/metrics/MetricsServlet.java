@@ -21,20 +21,19 @@
 
 package org.cougaar.core.qos.metrics;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
-import java.util.Iterator;
-import java.util.Set;
-
-
-import javax.servlet.*;
-import javax.servlet.http.*;
-
+import java.util.Date;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.TopologyReaderService;
-import org.cougaar.core.servlet.ServletService;
 
 public abstract class MetricsServlet extends HttpServlet implements Constants
 {
@@ -62,7 +61,7 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
 
 	NodeIdentificationService node_id_svc = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	nodeID = node_id_svc.getMessageAddress().toString();
+ 	nodeID = node_id_svc.getMessageAddress().toString();
 	
 
 	// register our servlet

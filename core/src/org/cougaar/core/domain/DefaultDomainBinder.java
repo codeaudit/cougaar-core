@@ -18,18 +18,17 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
-import java.util.*;
-
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BinderSupport;
-import org.cougaar.core.component.ServiceBroker;
-
+import java.util.Collection;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
-
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ServiceBroker;
 
 /** The standard Binder for Domains.
  **/
@@ -71,11 +70,11 @@ public class DefaultDomainBinder
       return getDomainManager().getXPlans();
     }
 
-    public final XPlanServesBlackboard getXPlanForDomain(String domainName) {
+    public final XPlan getXPlanForDomain(String domainName) {
       return getDomainManager().getXPlanForDomain(domainName);
     }
 
-    public final XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+    public final XPlan getXPlanForDomain(Class domainClass) {
       return getDomainManager().getXPlanForDomain(domainClass);
     }
 

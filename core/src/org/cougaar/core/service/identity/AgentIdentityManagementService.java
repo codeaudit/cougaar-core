@@ -22,7 +22,6 @@
 
 package org.cougaar.core.service.identity;
 
-// Cougaar core services
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 

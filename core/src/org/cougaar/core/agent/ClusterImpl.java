@@ -21,7 +21,6 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.component.ComponentDescription;
 
 /**
  * Implementation of standard non-node agent.

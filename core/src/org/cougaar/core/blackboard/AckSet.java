@@ -21,14 +21,10 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.io.Serializable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 /**
  * A bit set for keeping track of sequence numbers. This is similar to
@@ -36,7 +32,7 @@ import java.io.ObjectOutputStream;
  * zero bit in the set can be queried and the representation shifted
  * so that the one bits prior to that first zero don't require storage.
  **/
-public class AckSet implements Serializable {
+class AckSet implements Serializable {
   /** The sequence number of the first zero bit.**/
   private int minSequence = 0;
 

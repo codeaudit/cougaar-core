@@ -21,10 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
 import java.io.Serializable;
 
 /** A marker class describing a single change to an object (usually, but

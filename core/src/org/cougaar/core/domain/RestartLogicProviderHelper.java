@@ -18,6 +18,7 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
 import org.cougaar.core.mts.MessageAddress;
@@ -40,9 +41,9 @@ public abstract class RestartLogicProviderHelper {
    *    specified "dest" agent.
    */
   public static final boolean matchesRestart(
-      MessageAddress self,
-      MessageAddress cid,
-      MessageAddress dest) {
+       MessageAddress self,
+       MessageAddress cid,
+       MessageAddress dest) {
     return 
       cid != null ? 
       cid.equals(dest) : 

@@ -18,15 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.node;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.Message;
+import org.cougaar.core.component.BindingSite;
 
 /** BindingSite for children of NodeAgent other than PluginManager
  **/

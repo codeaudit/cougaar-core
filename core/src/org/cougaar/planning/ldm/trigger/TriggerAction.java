@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * A TriggerAction performs an action (presumed to be publishing changes

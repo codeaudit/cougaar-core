@@ -21,7 +21,10 @@
 
 package org.cougaar.core.util;
 
-import java.io.*;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * A society-unique reference to a named object in a society.

@@ -23,13 +23,13 @@ package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 

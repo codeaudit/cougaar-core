@@ -10,10 +10,8 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
-import javax.naming.directory.Attributes;
 import javax.naming.NamingException;
+import javax.naming.directory.Attributes;
 
 public interface Filter {
     boolean match(Attributes a) throws NamingException;

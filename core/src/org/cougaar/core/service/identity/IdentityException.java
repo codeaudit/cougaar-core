@@ -26,6 +26,7 @@
 
 package org.cougaar.core.service.identity;
 
+
 /**
  * Class of exceptions thrown in dealing with identity credentials.
  */

@@ -18,10 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
 import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.mts.MessageAddress;
 
 /**

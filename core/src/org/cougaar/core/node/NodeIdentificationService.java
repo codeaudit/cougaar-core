@@ -18,11 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 public interface NodeIdentificationService extends Service {
   MessageAddress getMessageAddress();

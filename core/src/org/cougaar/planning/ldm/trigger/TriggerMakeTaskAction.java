@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * Trigger action to generate a new task when fired - abstract method

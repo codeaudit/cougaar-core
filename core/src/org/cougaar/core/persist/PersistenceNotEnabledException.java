@@ -18,7 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
+
 
 public class PersistenceNotEnabledException extends Exception {
     public PersistenceNotEnabledException() {

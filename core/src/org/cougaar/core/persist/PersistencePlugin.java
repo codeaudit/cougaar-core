@@ -18,14 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.sql.Connection;
 import org.cougaar.core.adaptivity.OMCRangeList;
-import org.cougaar.core.service.DataProtectionKeyEnvelope;
 import org.cougaar.core.service.DataProtectionKey;
 
 /**

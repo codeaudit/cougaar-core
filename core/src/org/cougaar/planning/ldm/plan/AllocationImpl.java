@@ -179,7 +179,6 @@ public class AllocationImpl extends PlanElementImpl
   // ActiveSubscriptionObject
   public void addingToBlackboard(Subscriber s) {
     super.addingToBlackboard(s);
-
     // check for conflicts
     addToRoleSchedule(asset);
   }

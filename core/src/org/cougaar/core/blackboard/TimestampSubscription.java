@@ -18,6 +18,7 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
 import java.util.ArrayList;

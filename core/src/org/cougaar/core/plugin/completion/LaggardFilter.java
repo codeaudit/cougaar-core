@@ -21,6 +21,7 @@
 
 package org.cougaar.core.plugin.completion;
 
+
 public class LaggardFilter {
   public static final long LAGGARD_UPDATE_INTERVAL = 15000L;
   public static final long NON_LAGGARD_UPDATE_INTERVAL = 120000L;

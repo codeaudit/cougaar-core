@@ -30,11 +30,7 @@ import org.cougaar.util.Filters;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.node.*;
 
 import org.cougaar.planning.ldm.asset.Asset;

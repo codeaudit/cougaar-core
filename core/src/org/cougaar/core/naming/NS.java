@@ -21,14 +21,14 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-
-import java.util.*;
-
-import javax.naming.*;
+import java.util.Collection;
+import javax.naming.ContextNotEmptyException;
+import javax.naming.NameAlreadyBoundException;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+import javax.naming.OperationNotSupportedException;
 
 /** actual remote interface for NameServer objects.
  **/

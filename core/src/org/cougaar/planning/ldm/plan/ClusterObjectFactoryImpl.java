@@ -21,8 +21,6 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.domain.LDMServesPlugin;
-
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.service.UIDServer;
@@ -62,8 +60,6 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     IDHashMap = new HashMap(89);
   }
   
-  public LDMServesPlugin getLDM() { return ldm; }
-
   protected Class loadClass(String className) throws ClassNotFoundException {
     if (ldmcl == null) {
       return Class.forName(className);

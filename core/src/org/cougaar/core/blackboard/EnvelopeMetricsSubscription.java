@@ -18,15 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
+import org.cougaar.util.Empty;
+import org.cougaar.util.Enumerator;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * A subscription which collects EnvelopeMetrics.

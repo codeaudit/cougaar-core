@@ -21,7 +21,7 @@
 
 package org.cougaar.core.thread;
 
-
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 public class RightsPropagatingScheduler extends Scheduler

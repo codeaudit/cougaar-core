@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * A Trigger is an object containing information indicating an action

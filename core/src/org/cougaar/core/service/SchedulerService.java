@@ -22,7 +22,6 @@
 package org.cougaar.core.service;
 
 import org.cougaar.core.component.Service;
-
 import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerRegistry;
 

@@ -22,6 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
+import org.cougaar.core.blackboard.NewDirective;
 
 /** NewTaskRescind Interface
  * Provides setter methods for object creation 

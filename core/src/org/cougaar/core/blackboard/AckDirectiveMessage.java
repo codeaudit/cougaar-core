@@ -21,21 +21,16 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.ClusterMessage;
+import org.cougaar.core.persist.NotPersistable;
 
 /**
  * A AckDirectiveMessage  provides a basic implementation of 
  *  AckDirectiveMessage
  */
 
-public class AckDirectiveMessage extends ClusterMessage
+class AckDirectiveMessage extends ClusterMessage
   implements NotPersistable
 {
   /** 

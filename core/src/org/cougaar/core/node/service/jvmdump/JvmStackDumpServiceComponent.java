@@ -21,9 +21,13 @@
 
 package org.cougaar.core.node.service.jvmdump;
 
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.JvmStackDumpService;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * Component that provides the JvmStackDumpService.

@@ -21,24 +21,20 @@
 
 package org.cougaar.core.agent.service.democontrol;
 
-import org.cougaar.core.agent.service.alarm.*;
-
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.component.*;
+import org.cougaar.core.agent.ClusterServesClocks;
+import org.cougaar.core.agent.service.alarm.ExecutionTimer;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.DemoControlService;
 
 /** a Service for getting at Alarm information
  **/
 
 public class DemoControlServiceProvider implements ServiceProvider {
-  private ClusterServesPlugin cluster;
+  private ClusterServesClocks agentClock;
 
-  public DemoControlServiceProvider(ClusterServesPlugin cluster) {
-    this.cluster = cluster;
+  public DemoControlServiceProvider(ClusterServesClocks agentClock) {
+    this.agentClock = agentClock;
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -53,13 +49,13 @@ public class DemoControlServiceProvider implements ServiceProvider {
   }
 
   private final class DemoControlServiceImpl implements DemoControlService {
-    public void setTime(long time) { cluster.setTime(time); }
-    public void setTime(long time, boolean foo) {cluster.setTime(time,foo);}
-    public void setTimeRate(double rate) {cluster.setTimeRate(rate); }
-    public void advanceTime(long period) {cluster.advanceTime(period); }
-    public void advanceTime(long period, boolean foo) {cluster.advanceTime(period,foo); }
-    public void advanceTime(long period, double rate) {cluster.advanceTime(period,rate); }
-    public void advanceTime(ExecutionTimer.Change[] changes) {cluster.advanceTime(changes); }
-    public double getExecutionRate() { return cluster.getExecutionRate(); }
+    public void setTime(long time) { agentClock.setTime(time); }
+    public void setTime(long time, boolean foo) {agentClock.setTime(time,foo);}
+    public void setTimeRate(double rate) {agentClock.setTimeRate(rate); }
+    public void advanceTime(long period) {agentClock.advanceTime(period); }
+    public void advanceTime(long period, boolean foo) {agentClock.advanceTime(period,foo); }
+    public void advanceTime(long period, double rate) {agentClock.advanceTime(period,rate); }
+    public void advanceTime(ExecutionTimer.Change[] changes) {agentClock.advanceTime(changes); }
+    public double getExecutionRate() { return agentClock.getExecutionRate(); }
   }
 }

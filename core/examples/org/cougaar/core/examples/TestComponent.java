@@ -22,8 +22,6 @@
 package org.cougaar.core.examples;
 
 import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.node.*;
 import org.cougaar.core.service.AgentIdentificationService;
 

@@ -1,14 +1,10 @@
-package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
+package org.cougaar.core.naming;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
 
 /**
  * Matches unix-style glob patterns

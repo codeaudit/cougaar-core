@@ -21,7 +21,6 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
 
 /**
 *       This interface publishes the static keys for all known arguments for running a Node or SANode.

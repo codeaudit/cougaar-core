@@ -18,8 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility;
 
+import java.io.Serializable;
 import org.cougaar.core.mts.MessageAddress;
 
 /**

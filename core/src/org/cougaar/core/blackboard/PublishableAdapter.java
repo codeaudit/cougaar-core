@@ -21,11 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
 
 /** 
  * A useful base class for objects which implement the Publishable

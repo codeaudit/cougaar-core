@@ -10,8 +10,8 @@
 
 package org.cougaar.core.logging;
 
-import org.cougaar.util.log.LoggerController;
 import org.cougaar.core.component.Service;
+import org.cougaar.util.log.LoggerController;
 
 /** 
  * Marker interface for a Service that provides the

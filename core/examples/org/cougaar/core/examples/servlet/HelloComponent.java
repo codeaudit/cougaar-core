@@ -29,7 +29,7 @@ import javax.servlet.http.*;
 import org.cougaar.util.GenericStateModelAdapter;
 
 import org.cougaar.core.component.*;
-import org.cougaar.core.servlet.ServletService;
+import org.cougaar.core.service.ServletService;
 
 /**
  * Example Component that creates a "hello world!" Servlet and

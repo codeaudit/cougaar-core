@@ -21,13 +21,7 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.component.Service;
 
-//marker for now - should eventually be the real thing 
-// will eventually take over from UIDServer
 public interface UIDService extends UIDServer {
  
 }

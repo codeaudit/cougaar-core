@@ -21,6 +21,7 @@
 
 package org.cougaar.core.node;
 
+import java.io.PrintStream;
 import org.cougaar.util.PropertyParser;
 
 /** implement a low-priority heartbeat function which

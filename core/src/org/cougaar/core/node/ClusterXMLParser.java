@@ -21,18 +21,23 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import java.io.*;
-import java.util.*;
-
-import org.w3c.dom.*;
-import org.apache.xerces.parsers.*;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import org.apache.xerces.parsers.DOMParser;
 import org.cougaar.util.PropertyTree;
 import org.cougaar.util.StringUtility;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public final class ClusterXMLParser {
 

@@ -21,11 +21,10 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.UnaryPredicate;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * A simple queue, built on array list, that uses a Comparator to

@@ -21,11 +21,9 @@
 
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.Service;
-
-import java.util.Properties;
 import java.util.Observer;
-
+import java.util.Properties;
+import org.cougaar.core.component.Service;
 
 public interface MetricsService extends Service
 {

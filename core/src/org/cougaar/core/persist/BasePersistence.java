@@ -18,14 +18,17 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
+import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -36,51 +39,34 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-
 import org.cougaar.core.adaptivity.OMCRangeList;
-import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterContextTable;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.NoResponseException;
 import org.cougaar.core.blackboard.BulkEnvelopeTuple;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.MessageManager;
-import org.cougaar.core.blackboard.MessageManagerImpl;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.persist.PersistMetadata;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.core.service.DataProtectionKeyEnvelope;
 import org.cougaar.core.service.DataProtectionService;
 import org.cougaar.core.service.DataProtectionServiceClient;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PersistenceControlService;
-import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.planning.ldm.plan.Allocation;
-import org.cougaar.planning.ldm.plan.AssetTransfer;
-import org.cougaar.planning.ldm.plan.Expansion;
-import org.cougaar.planning.ldm.plan.Plan;
-import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
-import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.planning.ldm.plan.MPTask;
-import org.cougaar.planning.ldm.plan.Composition;
-import org.cougaar.planning.ldm.plan.NewComposition;
-import org.cougaar.planning.ldm.plan.Aggregation;
-import org.cougaar.planning.ldm.plan.TaskImpl;
-import org.cougaar.planning.ldm.plan.Workflow;
-import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.core.service.UIDService;
+import org.cougaar.core.util.UID;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.StringUtility;
 
@@ -89,7 +75,7 @@ import org.cougaar.util.StringUtility;
  * classes. It manages everything except the actual storage of
  * persistence deltas.
  *
- * As the Distributor is about to about to distribute the objects in a
+ * As the distributor is about to about to distribute the objects in a
  * set of envelopes, those envelopes are passed to an instance of this
  * class.  The contents of those envelopes are serialized into a
  * storage medium. These objects may refer to other plan objects that
@@ -215,7 +201,7 @@ public class BasePersistence
         return getDataProtectionKeyIterator();
       }
       public MessageAddress getAgentIdentifier() {
-        return clusterContext.getMessageAddress();
+        return BasePersistence.this.getMessageAddress();
       }
     };
 
@@ -261,7 +247,7 @@ public class BasePersistence
   }
 
   private String getAgentName() {
-    return clusterContext.getMessageAddress().toString();
+    return getMessageAddress().toString();
   }
 
   /**
@@ -363,11 +349,11 @@ public class BasePersistence
    * a PersistencePlugin. The persistence.class property now specifies
    * the class of the plugin.
    **/
-  public static Persistence find(ClusterContext context, ServiceBroker sb)
+  public static Persistence find(ServiceBroker sb)
     throws PersistenceException
   {
     try {
-      BasePersistence result = new BasePersistence(context, sb);
+      BasePersistence result = new BasePersistence(sb);
       String defaultPlugin;
       boolean disabled = System.getProperty("org.cougaar.core.persistence.enable", "false").equals("false");
       String persistenceClasses =
@@ -422,8 +408,8 @@ public class BasePersistence
   protected boolean archivingEnabled =
     !Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled");
   private ObjectOutputStream currentOutput;
-  private ClusterContext clusterContext;
-  private Plan reality = null;
+  private MessageAddress agentId;
+  private UIDService uidService;
   private List objectsToPersist = new ArrayList();
   private LoggingService logger;
   private DataProtectionService dataProtectionService;
@@ -447,12 +433,15 @@ public class BasePersistence
 
   private Object rehydrationSubscriberStatesLock = new Object();
 
-  private PersistenceState uidServerState = null;
+  private PersistenceState uidServiceState = null;
 
-  protected BasePersistence(ClusterContext clusterContext, ServiceBroker sb)
+  protected BasePersistence(ServiceBroker sb)
     throws PersistenceException
   {
-    this.clusterContext = clusterContext;
+    AgentIdentificationService agentIdService = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    agentId = (MessageAddress) agentIdService.getMessageAddress();
+    uidService = (UIDService) sb.getService(this, UIDService.class, null);
     logger = (LoggingService) sb.getService(this, LoggingService.class, null);
     logger = LoggingServiceWithPrefix.add(logger, getAgentName() + ": ");
     dataProtectionService = (DataProtectionService)
@@ -473,7 +462,11 @@ public class BasePersistence
   }
 
   public MessageAddress getMessageAddress() {
-    return clusterContext.getMessageAddress();
+    return agentId;
+  }
+
+  protected UIDService getUIDService() {
+    return uidService;
   }
 
   public boolean archivingEnabled() {
@@ -540,7 +533,7 @@ public class BasePersistence
                   try {
                     if (pObject != null) {
                       if (logger.isInfoEnabled()) {
-                        logger.info("Rehydrating " + clusterContext.getMessageAddress()
+                        logger.info("Rehydrating " + getMessageAddress()
                                     + " from " + pObject);
                       }
                       resultPtr[0] = rehydrateFromBytes(pObject.getBytes());
@@ -556,7 +549,7 @@ public class BasePersistence
                         PersistencePlugin ppi = rehydrationSets[i].ppi;
                         if (logger.isInfoEnabled()) {
                           logger.info("Rehydrating "
-                                      + clusterContext.getMessageAddress()
+                                      + getMessageAddress()
                                       + " "
                                       + rehydrateNumbers.toString());
                         }
@@ -582,7 +575,7 @@ public class BasePersistence
                   }
                 }};
 
-            ClusterContextTable.withClusterContext(clusterContext, thunk);
+            ClusterContextTable.withClusterContext(getMessageAddress(), thunk);
             result = resultPtr[0];
           
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
@@ -630,63 +623,21 @@ public class BasePersistence
               logger.debug(rehydrationSubscriberStates.size() + " subscribers");
             }
 
-            if (uidServerState != null) {
+            if (uidServiceState != null) {
               // For some reason this is sometimes null. Avoid NPE.
-              // Restoring uidServerState is not essential and could
+              // Restoring uidServiceState is not essential and could
               // be eliminated entirely.
-              clusterContext.getUIDServer().setPersistenceState(uidServerState);
+              getUIDService().setPersistenceState(uidServiceState);
             }
 
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
               PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
               Object obj = pAssoc.getObject();
-              if (obj instanceof PlanElement) {
-                PlanElement pe = (PlanElement) obj;
-                if (logger.isDebugEnabled()) {
-                  logger.debug("Rehydrated " + pAssoc);
-                }
-                TaskImpl task = (TaskImpl) pe.getTask();
-                if (task != null) {
-                  PlanElement taskPE = task.getPlanElement();
-                  if (taskPE != pe) {
-                    if (taskPE != null) {
-                      if (logger.isDebugEnabled()) {
-                        logger.debug("Bogus plan element for task: " + hc(task));
-                      }
-                      task.privately_resetPlanElement();
-                    }
-                    task.privately_setPlanElement(pe); // These links can get severed during rehydration
-                    if (logger.isDebugEnabled()) {
-                      logger.debug("Fixing " + pAssoc.getActive() + ": " + hc(task) + " to " + hc(pe));
-                    }
-                  }
-                }
-                if (pe instanceof Allocation) {
-                  fixAsset(((Allocation)pe).getAsset(), pe);
-                } else if (pe instanceof AssetTransfer) {
-                  fixAsset(((AssetTransfer)pe).getAsset(), pe);
-                  fixAsset(((AssetTransfer)pe).getAssignee(), pe);
-                }
-                if (logger.isDebugEnabled()) {
-                  if (pe instanceof Expansion) {
-                    Expansion exp = (Expansion) pe;
-                    Workflow wf = exp.getWorkflow();
-                    for (Enumeration enum = wf.getTasks(); enum.hasMoreElements(); ) {
-                      Task subtask = (Task) enum.nextElement();
-                      PlanElement subtaskPE = subtask.getPlanElement();
-                      if (subtaskPE == null) {
-                        logger.debug("Subtask " + subtask.getUID() + " not disposed");
-                      } else {
-                        logger.debug("Subtask " + subtask.getUID() + " disposed " + hc(subtaskPE));
-                      }
-                    }
-                  }
-                }
-              } else if (obj instanceof MPTask) {
-                fixMPTask((MPTask) obj);
+              if (obj instanceof ActivePersistenceObject) {
+                ((ActivePersistenceObject) obj).postRehydration(logger);
               }
             }
-            clusterContext.getUIDServer().setPersistenceState(uidServerState);
+            getUIDService().setPersistenceState(uidServiceState);
           } catch (Exception e) {
             logger.error("Error during rehydration", e);
             result = null;
@@ -750,50 +701,16 @@ public class BasePersistence
   }
 
   /**
-   * Under some circumstances, compositions of MPTasks come back
-   * containing nulls. It's not clear, but they lead to exceptions
-   * later. This fixup scans the composition for nulls and replaces
-   * the aggregation collection if necessary with one containing no
-   * nulls.
-   **/
-  private void fixMPTask(MPTask mpTask) {
-    NewComposition comp = (NewComposition) mpTask.getComposition();
-    List aggregations = comp.getAggregations();
-    List newAggregations = null;
-    for (int i = 0, n = aggregations.size(); i < n; i++) {
-      Aggregation agg = (Aggregation) aggregations.get(i);
-      if (agg == null) {
-        logger.warn("Removing null aggregation from composition of " + mpTask);
-        if (newAggregations == null) {
-          newAggregations = new ArrayList(n - 1);
-          newAggregations.addAll(aggregations.subList(0, i));
-        }
-      } else if (newAggregations != null) {
-        newAggregations.add(agg);
-      }
-    }
-    if (newAggregations != null) {
-      comp.setAggregations(newAggregations);
-    }
-  }
-
-  private void fixAsset(Asset asset, PlanElement pe) {
-    // Compute role-schedules
-    RoleScheduleImpl rsi = (RoleScheduleImpl) asset.getRoleSchedule();
-    rsi.add(pe);
-  }
-
-  /**
    * Erase all the effects of a failed rehydration attempt. Three
    * variables are set or altered during a rehydration attempt. The
    * identityTable may be partially filled in, so we replace it with a
-   * fresh one. The uidServer has been set and would be overwritten by
+   * fresh one. The uidService has been set and would be overwritten by
    * the subsequent attempt, but we nullify it for luck. Finally, the
    * rehydrationSubscriberStates is also nullified
    **/
   private void resetRehydration() {
     identityTable = new IdentityTable();
-    uidServerState = null;
+    uidServiceState = null;
     rehydrationSubscriberStates = null;
   }
 
@@ -829,7 +746,7 @@ public class BasePersistence
     try {
       identityTable.setNextId(currentInput.readInt());
       PersistMetadata meta = (PersistMetadata) currentInput.readObject();
-      uidServerState = meta.getUIDServerState();
+      uidServiceState = meta.getUIDServerState();
 
       int length = currentInput.readInt();
       if (logger.isDebugEnabled()) {
@@ -845,7 +762,6 @@ public class BasePersistence
       if (logger.isDebugEnabled()) {
         writeHistoryHeader();
       }
-      stream.setClusterContext(clusterContext);
       stream.setIdentityTable(identityTable);
       try {
 	for (int i = 0; i < referenceArrays.length; i++) {
@@ -1184,7 +1100,6 @@ public class BasePersistence
             if (logger.isDebugEnabled()) {
               writeHistoryHeader();
             }
-            stream.setClusterContext(clusterContext);
             stream.setIdentityTable(identityTable);
             // One agent at a time to avoid inter-agent deadlock due to shared objects
             try {
@@ -1221,8 +1136,7 @@ public class BasePersistence
                 }
                 stream.writeObject(messageManager);
                 bytesSerialized = stream.size();
-                meta.setUIDServerState(clusterContext.getUIDServer()
-                                       .getPersistenceState());
+                meta.setUIDServerState(getUIDService().getPersistenceState());
                 if (logger.isInfoEnabled()) {
                   logger.info(
                       "Serialized "+bytesSerialized+
@@ -1342,10 +1256,6 @@ public class BasePersistence
     return o.getClass().getName() + "@" + System.identityHashCode(o);
   }
 
-  public Plan getRealityPlan() {
-    return reality;
-  }
-
   public void disableWrite(String sequenceNumberSuffix) {
     this.sequenceNumberSuffix = sequenceNumberSuffix;
     writeDisabled = true;
@@ -1353,21 +1263,6 @@ public class BasePersistence
 
   public boolean isWriteDisabled() {
     return writeDisabled;
-  }
-
-  public void setRealityPlan(Plan plan) {
-    synchronized (identityTable) {
-      if (reality == null) {
-	reality = plan;
-	identityTable.findOrCreate(plan);
-      } else if (reality != null) {
-	throw new IllegalArgumentException("attempt to change reality plan");
-      }
-    }
-  }
-
-  ClusterContext getClusterContext() {
-    return null;
   }
 
   private void beginTransaction(boolean full) throws IOException {

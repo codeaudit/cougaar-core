@@ -21,6 +21,7 @@
 /**
  * The public interface for persistence
  */
+
 package org.cougaar.core.persist;
 
 import java.util.List;

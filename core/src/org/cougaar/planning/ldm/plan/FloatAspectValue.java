@@ -46,7 +46,6 @@ public class FloatAspectValue extends TypedAspectValue {
     } else {
       throw new IllegalArgumentException("Cannot construct a FloatAspectValue from "+o);
     }
-
     return create(type, value);
   }
 

@@ -18,10 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service;
 
-import javax.naming.directory.InitialDirContext;
 import javax.naming.NamingException;
+import javax.naming.directory.InitialDirContext;
 import org.cougaar.core.component.Service;
 
 public interface NamingService extends Service {

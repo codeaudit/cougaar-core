@@ -31,8 +31,8 @@ import org.cougaar.util.log.Logging;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.planning.plugin.AssetDataReader;
-import org.cougaar.planning.plugin.AssetDataFileReader;
+import org.cougaar.planning.plugin.asset.AssetDataReader;
+import org.cougaar.planning.plugin.asset.AssetDataFileReader;
 
 import org.cougaar.core.node.CommunityConfig;
 import org.cougaar.core.node.CommunityConfigUtils;

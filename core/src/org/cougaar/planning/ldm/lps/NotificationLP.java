@@ -21,16 +21,12 @@
 
 package org.cougaar.planning.ldm.lps;
 
+import org.cougaar.planning.ldm.*;
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.RestartLogicProvider;
-import org.cougaar.core.domain.RestartLogicProviderHelper;
+import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.asset.Asset;
 
@@ -39,7 +35,6 @@ import org.cougaar.planning.ldm.plan.Allocation;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 import org.cougaar.planning.ldm.plan.AssetTransfer;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Disposition;
 import org.cougaar.planning.ldm.plan.Expansion;
 import org.cougaar.planning.ldm.plan.MPTask;
@@ -71,17 +66,27 @@ import java.util.Collection;
   **/
 
 public class NotificationLP
-  extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider, RestartLogicProvider
+implements LogicProvider, EnvelopeLogicProvider, RestartLogicProvider
 {
   private static Logger logger = Logging.getLogger(NotificationLP.class);
 
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
   private final MessageAddress self;
 
-  public NotificationLP(LogPlanServesLogicProvider logplan,
-                        ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
-    self = cluster.getMessageAddress();
+  public NotificationLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   /**
@@ -112,7 +117,7 @@ public class NotificationLP
         return false;
       }
     };
-    Enumeration enum = logplan.searchBlackboard(pred);
+    Enumeration enum = rootplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       PlanElement pe = (PlanElement) enum.nextElement();
       checkValues(pe, null);
@@ -151,8 +156,9 @@ public class NotificationLP
   private void createNotification(UID ptuid, Task t, AllocationResult ar, Collection changes) {
     MessageAddress dest = t.getSource();
     if (self == dest || self.equals(dest)) {
-      // deliver intra-cluster notifications directly
-      ReceiveNotificationLP.propagateNotification(logplan,ptuid,ar,t.getUID(), changes);
+      // deliver intra-agent notifications directly
+      ReceiveNotificationLP.propagateNotification(
+          rootplan,logplan,ptuid,ar,t.getUID(), changes);
     } else {
       // need to send an actual notification
       NewNotification nn = ldmf.newNotification();
@@ -172,7 +178,7 @@ public class NotificationLP
       
       nn.setSource(newSource);
       nn.setDestination(newDest);
-      logplan.sendDirective(nn, changes);
+      rootplan.sendDirective(nn, changes);
     }
   }
 }

@@ -21,19 +21,14 @@
 
 package org.cougaar.core.domain;
 
-import java.util.Collection;
 import java.util.Set;
-
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
 
 /**
  * Describe an COUGAAR "Pluggable Domain Package" which consists of
- * a set of domain-specific LDM objects as represented by a 
+ * a set of domain-specific objects as represented by a 
  * Factory class, and a set of LogicProviders.
  *
  * Domain classes must also implement a static
@@ -49,7 +44,7 @@ import org.cougaar.core.blackboard.XPlanServesBlackboard;
 public interface Domain 
 {
 
-  /** Return the LDM factory for this Domain. **/
+  /** Return the Factory for this Domain. **/
   Factory getFactory();
 
   /** invoke the MessageLogicProviders for this domain **/
@@ -74,7 +69,7 @@ public interface Domain
 
   /** returns the XPlan instance for the domain - instance may be **/
   /** be shared among domains **/
-  XPlanServesBlackboard getXPlan();
+  XPlan getXPlan();
 }
 
 

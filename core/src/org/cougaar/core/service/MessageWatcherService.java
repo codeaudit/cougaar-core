@@ -21,11 +21,8 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.mts.MessageTransportClient;
-
-import org.cougaar.core.mts.MessageTransportWatcher;
-
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageTransportWatcher;
 
 public interface MessageWatcherService extends Service
 {

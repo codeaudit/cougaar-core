@@ -7,19 +7,20 @@
  * COUGAAR licence agreement.
  * </copyright>
  */
+
 package org.cougaar.core.naming;
 
-
-import org.cougaar.core.naming.*;
-import org.cougaar.core.node.Communications;
-
-import org.cougaar.util.log.*;
+//import com.sun.jndi.ldap.LdapCtxFactory; FIXME bug 2495
+import java.util.Hashtable;
+import java.util.Properties;
+import javax.naming.Context;
+import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
+import javax.naming.spi.InitialContextFactory;
 import org.cougaar.bootstrap.SystemProperties;
-
-import java.util.*;
-import javax.naming.directory.*;
-import javax.naming.spi.*;
-import javax.naming.*;
+import org.cougaar.core.node.Communications;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Naming context factory that wraps the SUN LDAP factory for Cougaar.  Properties can be set in

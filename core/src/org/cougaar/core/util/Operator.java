@@ -21,11 +21,9 @@
 
 package org.cougaar.core.util;
 
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
-
-import org.w3c.dom.Element;
+import org.cougaar.util.UnaryPredicate;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * An extended <code>UnaryPredicate</code> with improved <tt>toString<tt>,

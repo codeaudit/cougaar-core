@@ -18,11 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FilterInputStream;
 import org.cougaar.core.service.DataProtectionKey;
 
 public class DataProtectionInputStreamStub extends FilterInputStream {

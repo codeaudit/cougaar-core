@@ -21,14 +21,11 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
-import javax.naming.NameParser;
-import javax.naming.Name;
-import javax.naming.CompoundName;
-import javax.naming.NamingException;
 import java.util.Properties;
-
+import javax.naming.CompoundName;
+import javax.naming.Name;
+import javax.naming.NameParser;
+import javax.naming.NamingException;
 
 /**
  * Implementation of javax.naming.NameParser for 

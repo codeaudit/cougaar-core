@@ -21,8 +21,8 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.mts.MessageStatistics;
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageStatistics;
 
 public interface MessageStatisticsService extends Service
 {

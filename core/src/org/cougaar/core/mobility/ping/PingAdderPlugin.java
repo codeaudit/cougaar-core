@@ -21,23 +21,16 @@
 
 package org.cougaar.core.mobility.ping;
 
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -174,7 +167,6 @@ extends ComponentPlugin
     // parse optional set of targets
     for (int i = targetsIdx, n = params.size(); i < n; i++) {
       String si = (String) params.get(i);
-      // FIXME RelayLP bug!
       MessageAddress ai = MessageAddress.getMessageAddress(si);
       if (agentId.equals(ai)) {
         throw new IllegalArgumentException(

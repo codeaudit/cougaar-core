@@ -22,11 +22,11 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.domain.*;
+import org.cougaar.core.domain.LogicProvider;
 
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.ClusterPG;
@@ -37,7 +37,6 @@ import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.planning.ldm.plan.AssetRescind;
 import org.cougaar.planning.ldm.plan.AssetTransfer;
 import org.cougaar.planning.ldm.plan.AssignedAvailabilityElement;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Disposition;
 import org.cougaar.planning.ldm.plan.Expansion;
 import org.cougaar.planning.ldm.plan.HasRelationships;
@@ -71,28 +70,33 @@ import java.util.*;
  * being re-called to do the "next" level of rescind.
  **/
 
-public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProvider {
-  public static class DeferredRescind implements java.io.Serializable {
-    public TaskRescind tr;
-    public int tryCount = 0;
-    public DeferredRescind(TaskRescind tr) {
-      this.tr = tr;
-    }
-  }
+public class RescindLP
+implements LogicProvider, EnvelopeLogicProvider {
 
-  private static Logger logger = Logging.getLogger(RescindLP.class);
-    
+  private static final Logger logger = Logging.getLogger(RescindLP.class);
+
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
+
   //private List conflictlist = new ArrayList();
 
-  public RescindLP(LogPlanServesLogicProvider logplan,
-		   ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  public RescindLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+  }
+
+  public void init() {
   }
 
   /**
    *  @param Object  Envelope.Tuple
    *             where Envelope.Tuple.object is an ADDED PlanElement which contains
-   *                             an Allocation to a clustered asset.
+   *                             an Allocation to an agent asset.
    * Do something if the test returned true i.e. it was a PlanElement being removed
    **/
   public void execute(EnvelopeTuple o, Collection changes) {
@@ -128,9 +132,9 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     Task t = logplan.findTask(rtuid);
     if (t != null) {
       removeTask(t);
-      logplan.remove(deferredRescind);
+      rootplan.remove(deferredRescind);
     } else {
-      logplan.remove(deferredRescind);
+      rootplan.remove(deferredRescind);
     }
   }
 
@@ -138,7 +142,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
   private void removePlanElement(PlanElement pe, boolean force) {
      if (pe != null) {
        if (force || logplan.findPlanElement(pe.getTask()) != null) {
-         logplan.remove(pe);
+         rootplan.remove(pe);
 //      planElementRemoved(pe);
        }
      }
@@ -180,7 +184,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
           if (rt.isDeleted()) return; // Already deleted
           TaskRescind trm = ldmf.newTaskRescind(rt, cid);
           ((AllocationforCollections) all).setAllocationTask(null);
-          logplan.sendDirective((Directive) trm);
+          rootplan.sendDirective((Directive) trm);
         }
       }
     }
@@ -189,7 +193,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
   /** remove a task and any PE addressing it */
   private void removeTask(Task task) {
     if (task != null) {
-      logplan.remove(task);
+      rootplan.remove(task);
     }
   }
 
@@ -281,8 +285,8 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         }
       }
 
-      logplan.change(localAsset, null);
-      logplan.change(localAssignee, null);
+      rootplan.change(localAsset, null);
+      rootplan.change(localAssignee, null);
     } else {
       rescindSchedule = at.getSchedule();
 
@@ -320,13 +324,13 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
           }
         }
       }
-      logplan.change(localAsset, null);
+      rootplan.change(localAsset, null);
     }
    
     AssetRescind arm = ldmf.newAssetRescind(at.getAsset(), 
                                             at.getAssignee(),
                                             rescindSchedule);
-    logplan.sendDirective((Directive)arm);
+    rootplan.sendDirective((Directive)arm);
   }
   
   /** remove the plan element from the asset's roleschedule **/
@@ -415,11 +419,20 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         // run again on the publish change in case this pe had conflicts with
         // other pe's (besides the one that was just rescinded)
         conpe.setCheckConflicts(true);
-        logplan.change(conpe);
+        rootplan.change(conpe);
       }
     }
   }
   */
+
+  public static class DeferredRescind implements java.io.Serializable {
+    public TaskRescind tr;
+    public int tryCount = 0;
+    public DeferredRescind(TaskRescind tr) {
+      this.tr = tr;
+    }
+  }
+
 }
 
 

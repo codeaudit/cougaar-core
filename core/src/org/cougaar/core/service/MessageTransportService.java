@@ -21,12 +21,12 @@
 
 package org.cougaar.core.service;
 
+import java.util.ArrayList;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportWatcher;
-import org.cougaar.core.component.Service;
 
 /**
  * Abstract MessageTransport layer for Society interaction.

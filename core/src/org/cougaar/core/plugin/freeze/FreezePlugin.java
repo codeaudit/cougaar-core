@@ -21,16 +21,12 @@
 
 package org.cougaar.core.plugin.freeze;
 
-import java.text.SimpleDateFormat;
-import java.util.AbstractCollection;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.TimeZone;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.util.EmptyIterator;
 import org.cougaar.util.UnaryPredicate;
 
 public abstract class FreezePlugin extends ServiceUserPlugin {

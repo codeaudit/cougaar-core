@@ -27,7 +27,7 @@ import org.cougaar.core.mts.*;
 
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.planning.plugin.AssetDataReader;
+import org.cougaar.planning.plugin.asset.AssetDataReader;
 
 public interface InitializerService extends Service {
   /**

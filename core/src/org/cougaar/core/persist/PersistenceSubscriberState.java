@@ -18,12 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
-import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.blackboard.Envelope;
+import java.io.Serializable;
 import java.util.List;
-import java.util.ArrayList;
+import org.cougaar.core.blackboard.BlackboardClient;
+import org.cougaar.core.blackboard.Subscriber;
 
 public class PersistenceSubscriberState implements java.io.Serializable {
   public String clientName;	// The name of the client of the subscriber

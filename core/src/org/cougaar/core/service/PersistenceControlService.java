@@ -18,10 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service;
 
-import org.cougaar.core.component.Service;
 import org.cougaar.core.adaptivity.OMCRangeList;
+import org.cougaar.core.component.Service;
 
 public interface PersistenceControlService extends Service {
     /**

@@ -18,18 +18,19 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
+package org.cougaar.core.persist;
+
+import java.sql.Connection;
+import java.util.List;
+import org.cougaar.core.blackboard.MessageManager;
+import org.cougaar.core.blackboard.PersistenceEnvelope;
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.component.ServiceProvider;
+
 /**
  * The public interface for persistence
  */
-package org.cougaar.core.persist;
-
-import org.cougaar.core.blackboard.MessageManager;
-import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.planning.ldm.plan.Plan;
-import org.cougaar.core.blackboard.PersistenceEnvelope;
-import org.cougaar.core.component.ServiceProvider;
-import java.util.List;
-
 public interface Persistence {
   /**
    * End a persistence epoch by generating a persistence delta
@@ -49,8 +50,6 @@ public interface Persistence {
      * @return null if there is no persisted state.
      **/
     RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state);
-    Plan getRealityPlan();
-    void setRealityPlan(Plan reality);
     PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
     boolean hasSubscriberStates();
     void discardSubscriberState(Subscriber subscriber);

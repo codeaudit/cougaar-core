@@ -18,27 +18,36 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.node;
 
-import java.util.*;
-import java.io.*;
-import java.io.StringReader;
-import java.sql.*;
-
+import java.io.File;
+import java.io.FileReader;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Vector;
+import javax.naming.directory.Attribute;
+// import javax.naming.directory.Attributes; // conflict
+import javax.naming.directory.BasicAttribute;
+import javax.naming.directory.BasicAttributes;
+import org.apache.xerces.parsers.SAXParser;
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.DBConnectionPool;
 import org.cougaar.util.DBProperties;
 import org.cougaar.util.Parameters;
-
-import org.cougaar.util.ConfigFinder;
-
-import org.xml.sax.XMLReader;
-import org.xml.sax.InputSource;
-import org.xml.sax.helpers.XMLReaderFactory;
-import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.Attributes;
-
-import javax.naming.*;
-import javax.naming.directory.*;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Static methods for retrieving Community configurations from XML file or

@@ -18,17 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.servlet;
 
-import java.io.*;
-import java.util.*;
-
-import org.cougaar.util.GenericStateModelAdapter;
-
-import org.cougaar.core.component.*;
-import org.cougaar.core.servlet.ServletService;
-
 import javax.servlet.Servlet;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.service.ServletService;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * Abstract base-class for a Component that obtains the ServletService

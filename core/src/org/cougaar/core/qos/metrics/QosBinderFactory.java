@@ -18,6 +18,7 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.BinderFactorySupport;

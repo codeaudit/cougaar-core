@@ -28,23 +28,20 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
-import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.ChangeReport;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
-import org.cougaar.planning.ldm.plan.AllocationResult;
-import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.planning.ldm.plan.Verb;
-import org.cougaar.util.Collectors;
-import org.cougaar.util.EmptyIterator;
-import org.cougaar.util.Thunk;
+import org.cougaar.core.service.AlarmService;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
  * This plugin gathers and integrates completion information from one
- * agent to determine the "completion" of the current tasks. It
- * gathers the information and forwards the completion status of the
+ * agent to determine the "completion" of the current blackboard objects.
+ * It gathers the information and forwards the completion status of the
  * agent to another agent. This is typically the NodeAgent of the node
  * on which the agent is running.
  **/
@@ -69,24 +66,19 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   protected long scenarioNow;   // Scenario time of current execute()
   private long lastActivity;    // Time of last activity
   private double cpuConsumption = 0.0;
-  private double taskCompletion = 0.0;
-  private boolean updateTaskCompletionPending = true;
+  private double blackboardCompletion = 0.0;
+  private boolean updateBlackboardCompletionPending = true;
   private boolean debug = false;
   private Map filters = new WeakHashMap();
-
-  private static UnaryPredicate activityPredicate =
-    new UnaryPredicate() {
-      public boolean execute(Object o) {
-        if (o instanceof Task) return true;
-        if (o instanceof PlanElement) return true;
-        return false;
-      }
-    };
 
   protected CompletionCalculator calc;
 
   public CompletionTargetPlugin() {
     super(requiredServices);
+  }
+
+  protected UnaryPredicate createActivityPredicate() {
+    return new CompletionActivityPredicate();
   }
 
   protected CompletionCalculator getCalculator() {
@@ -118,6 +110,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
     debug = true;//getMessageAddress().toString().equals("47-FSB");
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
+    UnaryPredicate activityPredicate = createActivityPredicate();
     activitySubscription = (IncrementalSubscription)
       blackboard.subscribe(activityPredicate, new AmnesiaCollection(), true);
     lastActivity = System.currentTimeMillis();
@@ -151,12 +144,13 @@ public class CompletionTargetPlugin extends CompletionPlugin {
     scenarioNow = getAlarmService().currentTimeMillis();
     if (activitySubscription.hasChanged()) {
       lastActivity = now;
-      updateTaskCompletionPending = true; // Activity has changed task completion
+      // Activity has changed blackboard completion
+      updateBlackboardCompletionPending = true; 
     }
     updateCPUConsumption(now);
     if (timerExpired) {
-      if (updateTaskCompletionPending) {
-        updateTaskCompletion();
+      if (updateBlackboardCompletionPending) {
+        updateBlackboardCompletion();
       }
       cancelTimer();
       startTimer(SLEEP_INTERVAL);
@@ -180,21 +174,21 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       Math.max(0.0, 1.0 - (((double) (now - lastActivity)) / ACTIVITY_DELAY));
   }
 
-  private void updateTaskCompletion() {
+  private void updateBlackboardCompletion() {
     CompletionCalculator cc = getCalculator();
     Collection objs = blackboard.query(cc.getPredicate());
-    taskCompletion = cc.calculate(objs);
-    updateTaskCompletionPending = false;
+    blackboardCompletion = cc.calculate(objs);
+    updateBlackboardCompletionPending = false;
   }
 
   /**
    * Create a new Laggard if the conditions warrant. The conditions
    * warranting a new laggard are embodied in the LaggardFilter, but
-   * we want to defer recomputing task completion as long as possible
+   * we want to defer recomputing blackboard completion as long as possible
    * because it is moderately expensive. So, if the filter suppresses
-   * transmission for either value of task completion, then task
+   * transmission for either value of blackboard completion, then blackboard
    * completion is not updated transmission is suppressed. Otherwise,
-   * task completion is updated and a new laggard created.
+   * blackboard completion is updated and a new laggard created.
    **/
   private Laggard createLaggard(CompletionRelay relay) {
     boolean cpuConsumed = cpuConsumption > relay.getCPUThreshold();
@@ -203,16 +197,18 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       filter = new LaggardFilter();
       filters.put(relay, filter);
     }
-    if (updateTaskCompletionPending) {
+    if (updateBlackboardCompletionPending) {
       if (filter.filter(true, now) || !cpuConsumed && filter.filter(false, now)) {
-        updateTaskCompletion();
+        updateBlackboardCompletion();
       }
     }
-    boolean tasksIncomplete = taskCompletion < relay.getCompletionThreshold();
-    boolean isLaggard = cpuConsumed || tasksIncomplete;
+    boolean isBlackboardIncomplete = 
+      blackboardCompletion < relay.getCompletionThreshold();
+    boolean isLaggard = cpuConsumed || isBlackboardIncomplete;
     if (filter.filter(isLaggard, now)) {
       Laggard newLaggard =
-        new Laggard(getAgentIdentifier(), taskCompletion, cpuConsumption, isLaggard);
+        new Laggard(
+            getAgentIdentifier(), blackboardCompletion, cpuConsumption, isLaggard);
       filter.setOldLaggard(newLaggard);
       return newLaggard;
     }

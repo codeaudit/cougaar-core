@@ -1,9 +1,10 @@
+
 package org.cougaar.core.service;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.adaptivity.OperatingMode;
-import org.cougaar.core.persist.NotPersistable;
 import java.util.Set;
+import org.cougaar.core.adaptivity.OperatingMode;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.persist.NotPersistable;
 
 /** 
  * This service looks up operating modes in the blackboard.

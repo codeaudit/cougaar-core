@@ -10,14 +10,12 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
-import javax.naming.NamingException;
 
 /**
  * Parse a RFC 2554 search string. A simple recursive descent parser.

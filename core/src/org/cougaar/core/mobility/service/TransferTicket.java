@@ -18,13 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.service;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.MoveTicket;

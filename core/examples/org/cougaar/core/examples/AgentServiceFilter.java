@@ -22,14 +22,10 @@ package org.cougaar.core.examples;
 
 import java.util.*;
 import org.cougaar.util.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.domain.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.node.*;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -97,9 +93,6 @@ extends ServiceFilter
     {
       public String getName() {
         return getAgentManager().getName();
-      }
-      public void registerAgent(Agent agent) {
-        getAgentManager().registerAgent(agent);
       }
     }
 

@@ -7,14 +7,18 @@
  * COUGAAR licence agreement.
  * </copyright>
  */
+
 package org.cougaar.core.naming;
 
-
-import java.util.*;
-import javax.naming.*;
-
-import org.cougaar.util.log.*;
-
+import java.util.Properties;
+import java.util.Stack;
+import java.util.StringTokenizer;
+import javax.naming.CompoundName;
+import javax.naming.Name;
+import javax.naming.NameParser;
+import javax.naming.NamingException;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * NameParser that converts "cougaar" names (eg /Agents/foo) into X500 names

@@ -246,18 +246,15 @@ public class AssetTransferImpl extends PlanElementImpl
   // ActiveSubscriptionObject
   public void addingToBlackboard(Subscriber s) {
     super.addingToBlackboard(s);
-
     // check for conflicts.
     addToRoleSchedule(asset);
   }
   public void changingInBlackboard(Subscriber s) {
     super.changingInBlackboard(s);
-
     // check for conflicts
   }
   public void removingFromBlackboard(Subscriber s) {
     super.removingFromBlackboard(s);
-
     // check for conflicts
     removeFromRoleSchedule(asset);
   }

@@ -22,30 +22,10 @@
 package org.cougaar.core.service;
 
 import java.util.List;
-
-import org.cougaar.core.domain.*;
-
 import org.cougaar.core.component.Service;
-
-import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
+import org.cougaar.core.domain.Factory;
 
 public interface DomainService extends Service {
-  /**
-   * Answer with a reference to the Factory
-   * It is intended that there be one and only one ClusterObjectFactory
-   * per Cluster instance.  Hence, ClusterManagment will always provide
-   * plugins with access to the ClusterObjectFactory
-   **/
-  ClusterObjectFactory getClusterObjectFactory();
-
-  /** expose the LDM factory instance to consumers.
-   *  @return LdmFactory The fatory object to use in constructing LDM Objects
-   **/
-  RootFactory getFactory();
- 
-  /** @deprecated use getFactory() **/
-  RootFactory getLdmFactory();
-
   /** return a domain-specific factory **/
   Factory getFactory(String domainName);
 

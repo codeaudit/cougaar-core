@@ -25,9 +25,9 @@ package org.cougaar.planning.ldm.trigger;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.plugin.SimplifiedFatPlugin;
-import org.cougaar.core.plugin.PluginDelegate;
-import org.cougaar.core.plugin.Assessor;
+import org.cougaar.planning.plugin.legacy.SimplifiedFatPlugin;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.Assessor;
 import java.util.*;
 
 import org.cougaar.util.UnaryPredicate;

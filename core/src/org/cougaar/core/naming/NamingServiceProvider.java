@@ -18,15 +18,17 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
 import java.util.Hashtable;
+import java.util.Map;
+import javax.naming.Context; // inlined
 import javax.naming.NamingException;
-import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.NamingService;
 
 public class NamingServiceProvider implements ServiceProvider {
     private Hashtable env;

@@ -10,17 +10,15 @@
 
 package org.cougaar.core.logging;
 
-import java.io.InputStream;
-import java.io.IOException;
-import java.util.*;
-
+import java.util.Properties;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
-
-import org.cougaar.core.component.*;
-
-import org.cougaar.util.log.*;
-
-import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerController;
+import org.cougaar.util.log.LoggerControllerProxy;
+import org.cougaar.util.log.LoggerFactory;
+import org.cougaar.util.log.LoggerProxy;
 
 /**
  * This LoggingServiceProvider is a ServiceProvider which provides

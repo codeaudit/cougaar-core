@@ -21,6 +21,8 @@
 
 package org.cougaar.core.node.service.jvmdump;
 
+import java.io.PrintStream;
+
 /**
  * Package-private JNI implementation.
  */

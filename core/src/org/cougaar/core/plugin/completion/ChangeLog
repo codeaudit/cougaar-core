@@ -1,27 +1,3 @@
-2002-10-23  Ray Tomlinson  <RTomlinson@bbn.com>
-
-	* CompletionSourcePlugin.java:
-	Bug 2364 -- NO "Planning  Complete" message with runs associetd with RESTARTS
-	Added DEAD_NODE_TIMEOUT. If the timestamp on a Laggard report is
-	more than certain interval in the past, it is ignored. The
-	reasoning is that laggard reports occur at a certain minimum
-	frequency and the lack of a laggard report within some interval of
-	time is evidence that the agent has been restarted on another node
-	and that the report about that agent from the dead node is
-	irrelevant.
-	The interval defaults to 15 minutes. This is based on the 10
-	minute node failure timeout plus 5 minutes for the agent to be
-	restarted and start reporting its completion status.
-	The timeout can be set using a plugin parameter of the form:
-	DEAD_NODE_TIMEOUT=<milliseconds>
-
-2002-10-10  Ray Tomlinson  <RTomlinson@bbn.com>
-
-	* CompletionRelay.java:
-	Bug #2417 -- ConcurrentModificationException in GLMCompletionSocietyPlugin
-	Synchronized on wrong object. Should sync on laggardsByTarget to
-	match the modifier of the Map.
-
 2002-09-19  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* HowTo.txt:
@@ -31,15 +7,6 @@
 	Add TASK_COMPLETION_THRESHOLD=<long milliseconds> parameter.
 	Determine the fraction of tasks that must be completed for the
 	agent to have completed. Defaults to 0.99 (99%). 
-
-
-2002-09-11  Ray Tomlinson  <RTomlinson@bbn.com>
-
-	* CompletionTargetPlugin.java:
-	Bug #2270 -- NotSerializable sending CompletionRelay
-	Define static inner class instead of anonymous inner class. The
-	latter has a reference to the outer (plugin) class and can't be
-	serialized.
 
 2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
 

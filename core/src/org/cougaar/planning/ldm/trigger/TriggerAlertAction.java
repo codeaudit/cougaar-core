@@ -23,7 +23,7 @@
 package org.cougaar.planning.ldm.trigger;
 
 import org.cougaar.planning.ldm.plan.Alert;
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * A trigger action to generate an alert

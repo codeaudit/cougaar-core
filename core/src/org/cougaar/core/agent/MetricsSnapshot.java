@@ -21,8 +21,6 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
 import java.io.Serializable;
 import java.util.Date;
 

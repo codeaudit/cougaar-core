@@ -18,12 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.service;
 
 import java.lang.reflect.Method;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -33,17 +33,22 @@ import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.AddTicket;
 import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mobility.MoveTicket;
-import org.cougaar.core.mobility.AddTicket;
 import org.cougaar.core.mobility.RemoveTicket;
-import org.cougaar.core.mobility.Ticket;
-import org.cougaar.core.mobility.RemoveTicket;
-import org.cougaar.core.mobility.AbstractTicket;
-import org.cougaar.core.mobility.arch.*;
+import org.cougaar.core.mobility.arch.AbstractHandler;
+import org.cougaar.core.mobility.arch.AckHandler;
+import org.cougaar.core.mobility.arch.ArrivalHandler;
+import org.cougaar.core.mobility.arch.DispatchRemoteHandler;
+import org.cougaar.core.mobility.arch.DispatchTestHandler;
+import org.cougaar.core.mobility.arch.MobilitySupport;
+import org.cougaar.core.mobility.arch.NackHandler;
 import org.cougaar.core.mobility.ldm.AgentControl;
-import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;

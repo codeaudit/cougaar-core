@@ -18,21 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent.service.uid;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.persist.PersistenceState;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.persist.PersistenceState;
-import org.cougaar.core.persist.StatePersistable;
 
 /** A UIDServiceProvider is a provider class for the UID services. **/
 public class UIDServiceProvider implements ServiceProvider {

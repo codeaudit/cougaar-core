@@ -21,9 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
 public class SubscriptionWatcher {
   // we use this as the wait/notify semaphore

@@ -18,20 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
- 
+
 package org.cougaar.core.persist;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
-
-import org.cougaar.core.agent.ClusterContext;
-import org.cougaar.core.blackboard.Envelope;
-import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.PersistenceEnvelope;
-import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.planning.ldm.plan.Plan;
-import org.cougaar.core.service.DataProtectionKeyEnvelope;
 import org.cougaar.core.service.DataProtectionKey;
 
 /**

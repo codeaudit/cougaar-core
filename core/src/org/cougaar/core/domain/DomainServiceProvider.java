@@ -18,19 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
 import java.util.List;
-
-import org.cougaar.core.mts.MessageAddress;
-
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.EnvelopeTuple;
-
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.DomainService;
-import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 /** A DomainServiceProvider is a provider class for domain factory services. **/
 public class DomainServiceProvider implements ServiceProvider {
@@ -52,17 +46,6 @@ public class DomainServiceProvider implements ServiceProvider {
   }
 
   private final class DomainServiceProxy implements DomainService {
-    public ClusterObjectFactory getClusterObjectFactory() {
-      return theService.getClusterObjectFactory();
-    }
-    public RootFactory getFactory() {
-      return theService.getFactory();
-    }
-    /** @deprecated **/
-    public RootFactory getLdmFactory() {
-      return theService.getFactory();
-    }
-
     public Factory getFactory(String domainName) {
       return theService.getFactory(domainName);
     }
@@ -74,7 +57,6 @@ public class DomainServiceProvider implements ServiceProvider {
     public List getFactories() {
       return theService.getFactories();
     }
-
   } // end of DomainServiceProxy
 
 }

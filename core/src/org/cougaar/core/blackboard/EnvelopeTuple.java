@@ -18,14 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.util.UnaryPredicate;
+import java.io.Serializable;
 
 /** EnvelopeTuple is a semi-private datastructure used as
  * the atomic member of an envelope.

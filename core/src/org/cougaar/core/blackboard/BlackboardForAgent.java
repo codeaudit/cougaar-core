@@ -18,17 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
+import java.util.List;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.component.Service;
 
 /**
  * The service which the Blackboard serves back to the Agent.

@@ -18,13 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.plugin;
 
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.UIDServer;
+import org.cougaar.core.component.Binder;
 
 /** The standard Binder api for Binders.  This is the interface
  * which the container may call on the Binder.

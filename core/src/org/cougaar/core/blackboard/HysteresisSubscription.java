@@ -21,9 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
 /** Marker interface to specify that a subscription is actually 
  * the authoritative source for a set of objects.

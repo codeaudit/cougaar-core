@@ -22,16 +22,9 @@
 package org.cougaar.core.plugin.freeze;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.relay.Relay;
-import org.cougaar.core.util.SimpleUniqueObject;
 import org.cougaar.core.util.UID;
 
 public class FreezeRelayFactory

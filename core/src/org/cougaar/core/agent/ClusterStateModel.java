@@ -21,8 +21,6 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
 import org.cougaar.util.GenericStateModel;
 
 /** ClusterStateModel interface.

@@ -21,13 +21,8 @@
 
 package org.cougaar.core.naming;
 
-import javax.naming.event.NamingEvent;
-import javax.naming.event.NamingListener;
-import javax.naming.event.EventContext;
-import javax.naming.Binding;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
+import javax.naming.Binding;
 
 /**
  * A structure for holding naming event information. Used in two ways:

@@ -23,24 +23,20 @@ package org.cougaar.core.mobility.ping;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageAddress;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.blackboard.BlackboardClient;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.servlet.ServletService;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
@@ -246,9 +242,7 @@ implements BlackboardClient
         if (target == null) {
           isError = true;
         } else {
-          // FIXME RelayLP
           targetId = MessageAddress.getMessageAddress(target);
-
           if (agentId.equals(targetId)) {
             isError = true;
           }
@@ -553,13 +547,4 @@ implements BlackboardClient
         this+" asked for the current time???");
   }
 
-  // unused BlackboardClient method:
-  public boolean triggerEvent(Object event) {
-    // if we had Subscriptions we'd need to implement this.
-    //
-    // see "ComponentPlugin" for details.
-    throw new UnsupportedOperationException(
-        this+" only supports Blackboard queries, but received "+
-        "a \"trigger\" event: "+event);
-  }
 }

@@ -23,27 +23,21 @@ package org.cougaar.core.plugin.freeze;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.plugin.PluginAdapter;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.plugin.PluginBase;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.ThreadListener;
-import org.cougaar.planning.ldm.plan.AllocationResult;
-import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.planning.ldm.plan.Verb;
-import org.cougaar.util.Collectors;
-import org.cougaar.util.EmptyIterator;
-import org.cougaar.util.Thunk;
 import org.cougaar.util.UnaryPredicate;
 
 public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
@@ -137,8 +131,7 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
 
   private boolean isGoodGuy(Object consumer) {
     if (goodClasses.contains(consumer.getClass())) return true;
-    if (consumer instanceof ComponentPlugin) return false;
-    if (consumer instanceof PluginAdapter) return false;
+    if (consumer instanceof PluginBase) return false;
     return true;
   }
 

@@ -18,9 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.service;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -32,32 +32,30 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.StateObject;
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.MobileAgentService;
-import org.cougaar.core.mobility.MobilityException;
-import org.cougaar.core.mobility.MoveTicket;
-import org.cougaar.core.mobility.arch.*;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
-import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -181,7 +179,7 @@ public abstract class AbstractMobilityPlugin
         log.warn(
           "Unable to obtain the agent mobility domain"+
           " (\"mobility\"), please check your "+
-          "LDMDomains.ini configuration.");
+          "domain configuration.");
       }
       // okay, will fail most mobility requests
     }

@@ -2,11 +2,9 @@
  * <copyright>
  * Copyright 2002 BBNT Solutions, LLC
  * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
-
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the Cougaar Open Source License as published by
  * DARPA on the Cougaar Open Source Website (www.cougaar.org).
-
  * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -18,22 +16,16 @@
  * PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
-import java.io.StreamTokenizer;
-import java.util.*;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.plugin.ComponentPlugin;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.PlaybookReadService;
-import org.cougaar.core.service.PlaybookConstrainService;
-import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.CircularQueue;
 
 /**
  * A container for Plays providing operations to constrain plays with

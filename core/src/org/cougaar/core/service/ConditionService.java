@@ -1,9 +1,10 @@
+
 package org.cougaar.core.service;
 
+import java.util.Set;
+import org.cougaar.core.adaptivity.Condition;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
-import org.cougaar.core.adaptivity.Condition;
-import java.util.Set;
 
 /** 
  * This service looks up sensor data in the blackboard, 

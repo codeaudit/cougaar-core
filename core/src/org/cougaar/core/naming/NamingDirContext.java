@@ -21,16 +21,35 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-import org.cougaar.util.log.*;
-
 import java.rmi.RemoteException;
-
-import javax.naming.*;
-import javax.naming.directory.*;
-import javax.naming.spi.*;
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.naming.CompositeName;
+import javax.naming.Context;
+import javax.naming.InvalidNameException;
+import javax.naming.Name;
+import javax.naming.NameClassPair;
+import javax.naming.NameParser;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.NotContextException;
+import javax.naming.OperationNotSupportedException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InvalidSearchFilterException;
+import javax.naming.directory.ModificationItem;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.spi.DirStateFactory;
+import javax.naming.spi.DirectoryManager;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Implementation of javax.naming.directory.DirContext for 

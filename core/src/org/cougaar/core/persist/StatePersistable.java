@@ -18,7 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
+
 
 /** A marker class and interface for persisting the state of an
  * object which is not itself persistable is such a way that the

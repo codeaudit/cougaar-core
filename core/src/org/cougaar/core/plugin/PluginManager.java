@@ -18,22 +18,34 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.plugin;
 
-import java.io.InputStream;
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.util.log.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentChildBindingSite;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BoundComponent;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.ComponentFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.PropagatingServiceBroker;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.StateObject;
+import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.node.InitializerServiceException;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageAddress;
-import java.beans.*;
-import java.lang.reflect.*;
-
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** A container for Plugin Components.
  * <p>
@@ -45,13 +57,11 @@ public class PluginManager
   extends ContainerSupport
   implements StateObject
 {
-
-  private Object loadState = null;
-  
-  private final Logger logger;
-
   /** The insertion point for a PluginManager, defined relative to its parent, Agent. **/
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".PluginManager";
+
+  private Object loadState = null;
+  private final Logger logger;
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {

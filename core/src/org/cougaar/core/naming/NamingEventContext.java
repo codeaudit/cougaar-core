@@ -21,17 +21,41 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-import org.cougaar.util.log.*;
-
-import java.rmi.RemoteException;
-
-import javax.naming.*;
-import javax.naming.event.*;
-import javax.naming.directory.*;
-import javax.naming.spi.*;
-import java.util.*;
+import java.io.PrintStream;
 import java.io.Serializable;
+import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.naming.Binding;
+import javax.naming.CompositeName;
+import javax.naming.Context;
+import javax.naming.InvalidNameException;
+import javax.naming.Name;
+import javax.naming.NameAlreadyBoundException;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.NotContextException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.SearchControls;
+import javax.naming.directory.SearchResult;
+import javax.naming.event.EventContext;
+import javax.naming.event.EventDirContext;
+import javax.naming.event.NamespaceChangeListener;
+import javax.naming.event.NamingEvent;
+import javax.naming.event.NamingExceptionEvent;
+import javax.naming.event.NamingListener;
+import javax.naming.event.ObjectChangeListener;
+import javax.naming.spi.NamingManager;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Implementation of javax.naming.directory.DirContext for 

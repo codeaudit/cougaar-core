@@ -21,6 +21,8 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 
 import org.cougaar.core.blackboard.Subscriber;
@@ -31,11 +33,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 
 import org.cougaar.core.blackboard.Transaction;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.util.XMLizable;
 
@@ -52,7 +51,6 @@ import java.beans.PropertyChangeSupport;
 
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.plugin.Annotation;
  
 /** Implementation of Task.  Instances of Tasks
  * are created by the Expander Plug-ins.  All Tasks
@@ -854,7 +852,6 @@ public class TaskImpl extends DirectiveImpl
       }
     }
   }
-
 
   // 
   // XMLizable method for UI, other clients

@@ -22,6 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.core.blackboard.NewDirective;
 
 /**
  * Verification Interface Verification is a response to an asset

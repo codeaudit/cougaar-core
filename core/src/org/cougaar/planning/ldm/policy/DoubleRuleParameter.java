@@ -24,9 +24,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -36,7 +33,7 @@ import org.cougaar.core.util.SelfPrinter;
  * An DoubleRuleParameter is a RuleParameter with specified/protected
  * double bounds that returns a Double
  */
-public class DoubleRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+public class DoubleRuleParameter implements RuleParameter, java.io.Serializable {
   protected String my_name;
   protected double my_min;
   protected double my_max;
@@ -152,13 +149,6 @@ public class DoubleRuleParameter implements RuleParameter, SelfPrinter, java.io.
     }
     return false;
       
-  }
-
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_min, "Min");
-    pr.print(my_max, "Max");
-    pr.print(my_value, "Value");
   }
 
   public static void Test() 

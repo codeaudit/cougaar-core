@@ -48,8 +48,8 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.node.CommunityConfig;
 import org.cougaar.core.node.CommunityConfigUtils;
-import org.cougaar.planning.plugin.AssetDataReader;
-import org.cougaar.planning.plugin.AssetDataDBReader;
+import org.cougaar.planning.plugin.asset.AssetDataReader;
+import org.cougaar.planning.plugin.asset.AssetDataDBReader;
 
 
 /**

@@ -18,14 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.util.UnaryPredicate;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 
 /** An EnvelopeTuple indicating that a set of objects have been added to the Plan.
  **/

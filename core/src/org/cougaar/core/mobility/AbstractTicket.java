@@ -18,9 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility;
 
-import org.cougaar.core.mts.MessageAddress;
+import java.io.Serializable;
 
 /**
  * A ticket specifies the destination node and other parameters

@@ -23,7 +23,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 import org.cougaar.planning.ldm.plan.Allocation;
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * TriggerAction to make given allocation object

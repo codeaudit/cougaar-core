@@ -23,19 +23,15 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.blackboard.DelayedLPAction;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.MessageLogicProvider;
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.blackboard.*;
+import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.plan.Aggregation;
 import org.cougaar.planning.ldm.plan.Allocation;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 import org.cougaar.planning.ldm.plan.AssetTransfer;
-import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Disposition;
 import org.cougaar.planning.ldm.plan.Expansion;
 import org.cougaar.planning.ldm.plan.ExpansionImpl;
@@ -67,14 +63,24 @@ import org.cougaar.util.UnaryPredicate;
  **/
 
 public class ReceiveNotificationLP
-  extends LogPlanLogicProvider
-  implements MessageLogicProvider
+implements LogicProvider, MessageLogicProvider
 {
-  private static Logger logger = Logging.getLogger(ReceiveNotificationLP.class);
+  private static final Logger logger = Logging.getLogger(ReceiveNotificationLP.class);
 
-  public ReceiveNotificationLP(LogPlanServesLogicProvider logplan,
-                               ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
+
+  public ReceiveNotificationLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+  }
+
+  public void init() {
   }
 
   /**
@@ -117,20 +123,24 @@ public class ReceiveNotificationLP
 
     if (needToRescind) {
       TaskRescind trm = ldmf.newTaskRescind(childuid, not.getSource());
-      logplan.sendDirective(trm, changes);
+      rootplan.sendDirective(trm, changes);
     } else {
       AllocationResult ar = not.getAllocationResult();
-      propagateNotification(logplan, pe, tuid, ar, childuid, changes);
+      propagateNotification(
+          rootplan, logplan, pe, tuid, ar, childuid, changes);
     }
   }
 
   // default protection so that NotificationLP can call this method
-  static final void propagateNotification(LogPlanServesLogicProvider logplan,
-                                          UID tuid, AllocationResult result,
-                                          UID childuid, Collection changes) {
+  static final void propagateNotification(
+      RootPlan rootplan,
+      LogPlan logplan,
+      UID tuid, AllocationResult result,
+      UID childuid, Collection changes) {
     PlanElement pe = logplan.findPlanElement(tuid);
     if (pe != null) {
-      propagateNotification(logplan, pe, tuid, result, childuid, changes);
+      propagateNotification(
+          rootplan, logplan, pe, tuid, result, childuid, changes);
     } else {
       if (logger.isDebugEnabled()) {
 	logger.debug("Received notification about unknown task: "+tuid);
@@ -139,17 +149,19 @@ public class ReceiveNotificationLP
   }
 
   // default protection so that NotificationLP can call this method
-  static final void propagateNotification(LogPlanServesLogicProvider logplan,
-                                          PlanElement pe,
-                                          UID tuid, AllocationResult result,
-                                          UID childuid, Collection changes) {
+  static final void propagateNotification(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanElement pe,
+      UID tuid, AllocationResult result,
+      UID childuid, Collection changes) {
     if ((pe instanceof Allocation) ||
         (pe instanceof AssetTransfer) ||
         (pe instanceof Aggregation)) {
       ((PEforCollections) pe).setReceivedResult(result);
-      logplan.change(pe, changes);
+      rootplan.change(pe, changes);
     } else if (pe instanceof Expansion) {
-      logplan.delayLPAction(
+      rootplan.delayLPAction(
           new DelayedAggregateResults((Expansion)pe, childuid));
 
       /*
@@ -161,7 +173,7 @@ public class ReceiveNotificationLP
 	// get the UID of the child task that caused this aggregation
 	((ExpansionImpl)pe).setSubTaskResults(aggTST,childuid);
         ((PEforCollections) pe).setReceivedResult(ar);
-	logplan.change(pe, changes);
+	rootplan.change(pe, changes);
       } // if we can't successfully aggregate the results - don't send a notification
       */
     /*
@@ -191,7 +203,7 @@ public class ReceiveNotificationLP
       ids.add(id);
     }
 
-    public void execute(LogPlanServesLogicProvider logplan) {
+    public void execute(BlackboardServesDomain bb) {
       Workflow wf = pe.getWorkflow();
 
       // compute the new result from the subtask results.
@@ -215,8 +227,8 @@ public class ReceiveNotificationLP
           ((PEforCollections) pe).setReceivedResult(ar);
 
           // publish the change to the blackboard.
-          logplan.change(pe, null); // drop the change details.
-          //logplan.change(pe, changes);
+          bb.change(pe, null); // drop the change details.
+          //bb.change(pe, changes);
           //System.err.print("=");
         }
       } catch (RuntimeException re) {

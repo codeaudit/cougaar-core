@@ -19,12 +19,8 @@
  * </copyright>
  */
 
-
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
 /** Blackboard objects which implement this interface
  * will have the appropriate methods invoked when

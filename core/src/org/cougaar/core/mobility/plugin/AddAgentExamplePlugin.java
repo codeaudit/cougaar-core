@@ -21,18 +21,23 @@
 
 package org.cougaar.core.mobility.plugin;
 
-import java.util.*;
-import java.io.*;
-import org.cougaar.core.mobility.AddTicket;
+import java.io.PrintStream;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.domain.Factory;
 import org.cougaar.core.mobility.AbstractTicket;
-import org.cougaar.core.mobility.ldm.*;
+import org.cougaar.core.mobility.AddTicket;
+import org.cougaar.core.mobility.ldm.AgentControl;
+import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.util.UID;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
+import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.blackboard.IncrementalSubscription;
 
 /*
  * Example plugin to demonstrate how one would add agents to a node

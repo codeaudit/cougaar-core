@@ -20,7 +20,6 @@ package org.cougaar.core.service.community;
 
 import java.util.Collection;
 
-
 /** CommunityRoster Interface
   * A CommunityRoster identifies the agents that are currently the member
   * of a specified community.

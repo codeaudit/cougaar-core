@@ -23,11 +23,9 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
+import org.cougaar.planning.ldm.*;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Allocation;
@@ -55,10 +53,17 @@ import org.cougaar.util.*;
   * assetavailabilityconflict flag will be set.
   **/
 
-public class RoleScheduleConflictLP extends LogPlanLogicProvider implements EnvelopeLogicProvider {
-  public RoleScheduleConflictLP(LogPlanServesLogicProvider logplan,
-                        ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+public class RoleScheduleConflictLP
+implements LogicProvider, EnvelopeLogicProvider {
+
+  private final RootPlan rootplan;
+
+  public RoleScheduleConflictLP(
+      RootPlan rootplan) {
+    this.rootplan = rootplan;
+  }
+
+  public void init() {
   }
 
   public void execute(EnvelopeTuple o, Collection changes) {
@@ -106,20 +111,20 @@ public class RoleScheduleConflictLP extends LogPlanLogicProvider implements Enve
         }
         if ( ! othercurrentpc ) {
           ((RoleScheduleConflicts)tomark).setPotentialConflict(true);
-          logplan.change(tomark, changes);
+          rootplan.change(tomark, changes);
         }
       }
       // now mark ourselves if our potentialconflict flag isn't already true
       if ( ! currentpc ) {
         ((RoleScheduleConflicts)pe).setPotentialConflict(true);
-        logplan.change(pe, changes);
+        rootplan.change(pe, changes);
       }
     } else {
       // If there are no conflicts, check to see if our conflict flag was
       // previously set to true.  If it was, re-set it to false.
       if ( currentpc ) {
           ((RoleScheduleConflicts)pe).setPotentialConflict(false);
-          logplan.change(pe, changes);
+          rootplan.change(pe, changes);
       } 
     }
       
@@ -128,13 +133,13 @@ public class RoleScheduleConflictLP extends LogPlanLogicProvider implements Enve
     if ( (! withinAvailSched) && (! currentaac) ) {
       // if there was a conflict here set our asset availability conflict flag
         ((RoleScheduleConflicts)pe).setAssetAvailabilityConflict(true);
-        logplan.change(pe, changes);
+        rootplan.change(pe, changes);
     } else {
       // if there was no conflict, check to see if our conflict flag was
       // previously set to true.  If it was, re-set if to false.
       if ( currentaac ) {
         ((RoleScheduleConflicts)pe).setAssetAvailabilityConflict(false);
-        logplan.change(pe, changes);
+        rootplan.change(pe, changes);
       }
     }
   }

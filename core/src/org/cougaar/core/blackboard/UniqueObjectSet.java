@@ -18,18 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
-
-import org.cougaar.core.util.UniqueObject;
+import java.util.Map;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
+import org.cougaar.util.KeyedSet;
 
 /**
  * UniqueObjectSet is a custom container which maintains a hashtable-like

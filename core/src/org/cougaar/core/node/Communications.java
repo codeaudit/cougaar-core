@@ -21,16 +21,20 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import java.io.*;
-import java.lang.reflect.*;
-
-import org.cougaar.core.mts.MessageAddress;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.core.component.ServiceProvider;
-import java.util.*;
-import java.net.*;
+import org.cougaar.util.StringUtility;
 
 /**
  * Rendezvous for consistent communications within an alp society.

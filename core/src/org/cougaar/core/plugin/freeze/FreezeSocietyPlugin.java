@@ -23,19 +23,18 @@ package org.cougaar.core.plugin.freeze;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.TopologyReaderService;
-import org.cougaar.core.servlet.ServletService;
 
 /**
  * This plugin initiates a society-wide freeze for assessment

@@ -21,24 +21,20 @@
 
 package org.cougaar.core.domain;
 
-import java.util.*;
-
+import java.util.Collection;
+import java.util.Iterator;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-
-import org.cougaar.core.blackboard.LogPlan;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
-
 import org.cougaar.core.component.BindingSite;
-
 import org.cougaar.core.relay.RelayLP;
-
-import org.cougaar.planning.ldm.lps.*;
 
 /**
  * This is the "root" or infrastructure domain, defining the
  * objects and behavior shared by all COUGAAR-based systems.
- **/
-
+ * <p>
+ * The root domain only loads the "RelayLP".  User-defined
+ * domains can load other logic providers and XPlans.
+ */
 public class RootDomain extends DomainAdapter {
   public static final String ROOT_NAME = "root";
 
@@ -51,82 +47,54 @@ public class RootDomain extends DomainAdapter {
   }
 
   protected void loadFactory() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain Factory without a binding site.");
-    } 
-
-    setFactory(new RootFactory(bindingSite.getClusterServesLogicProvider().getLDM()));
+    // no factory
   }
 
   protected void loadXPlan() {
     DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
 
     if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain XPlan without a binding site.");
+      throw new RuntimeException(
+          "Binding site for the domain has not be set.\n" +
+          "Unable to initialize domain XPlan without a binding site.");
     } 
 
-    Collection xPlans = bindingSite.getXPlans();
-    LogPlan logPlan = null;
-    
-    for (Iterator iterator = xPlans.iterator(); iterator.hasNext();) {
-      XPlanServesBlackboard  xPlan = (XPlanServesBlackboard) iterator.next();
-      if (xPlan instanceof LogPlan) {
-        // Note that this means there are 2 paths to the plan.
-        // Is this okay?
-        logPlan = (LogPlan) logPlan;
+    // ensure that the RootPlan has been loaded
+    Collection xplans = bindingSite.getXPlans();
+    RootPlan rootPlan = null;
+    Iterator iterator = xplans.iterator();
+    while (true) {
+      if (!iterator.hasNext()) {
+        // typical case:
+        rootPlan = new RootPlanImpl();
+        break;
+      }
+      XPlan xplan = (XPlan) iterator.next();
+      if (xplan instanceof RootPlan) {
+        // already loaded?
+        rootPlan = (RootPlan) xplan;
         break;
       }
     }
     
-    if (logPlan == null) {
-      logPlan = new LogPlan();
-    }
-    
-    setXPlan(logPlan);
+    setXPlan(rootPlan);
   }
 
   protected void loadLPs() {
     DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
 
     if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain LPs without a binding site.");
+      throw new RuntimeException(
+          "Binding site for the domain has not be set.\n" +
+          "Unable to initialize domain LPs without a binding site.");
     } 
 
     ClusterServesLogicProvider cluster = bindingSite.getClusterServesLogicProvider();
-    LogPlan logPlan = (LogPlan) getXPlan();
-    
-    addLogicProvider(new ReceiveAssetLP(logPlan, cluster));
-    addLogicProvider(new ReceiveAssetVerificationLP(logPlan, cluster));
-    addLogicProvider(new ReceiveAssetRescindLP(logPlan, cluster));
-    addLogicProvider(new ReceiveNotificationLP(logPlan, cluster));
-    addLogicProvider(new ReceiveDeletionLP(logPlan, cluster));
-    addLogicProvider(new ReceiveRescindLP(logPlan, cluster));
-    addLogicProvider(new ReceiveTaskLP(logPlan, cluster));
-    
-    // envelopeLPs
-    addLogicProvider(new AssetTransferLP(logPlan, cluster));    
-    addLogicProvider(new NotificationLP(logPlan, cluster));
-    addLogicProvider(new DeletionLP(logPlan, cluster));
-    addLogicProvider(new RemoteClusterAllocationLP(logPlan, cluster));
-    addLogicProvider(new PreferenceChangeLP(logPlan, cluster));
-    addLogicProvider(new RescindLP(logPlan, cluster));
-    
-    // error detection LP
-    addLogicProvider(new ComplainingLP(logPlan, cluster));
-    
-    addLogicProvider(new RelayLP(logPlan, cluster));
+    MessageAddress self = cluster.getMessageAddress();
+
+    RootPlan rootplan = (RootPlan) getXPlan();
+
+    addLogicProvider(new RelayLP(rootplan, self));
+    // maybe include "ComplainingLP" as well...
   }
 }
-
-
-
-
-
-
-
-

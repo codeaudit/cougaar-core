@@ -25,10 +25,9 @@ package org.cougaar.planning.ldm.lps;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.MessageLogicProvider;
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.asset.Asset;
 
@@ -36,7 +35,6 @@ import org.cougaar.planning.ldm.plan.AssetVerification;
 import org.cougaar.planning.ldm.plan.AssetRescind;
 import org.cougaar.planning.ldm.plan.AssignedAvailabilityElement;
 import org.cougaar.planning.ldm.plan.AssignedRelationshipElement;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.HasRelationships;
 import org.cougaar.planning.ldm.plan.NewSchedule;
 import org.cougaar.planning.ldm.plan.Relationship;
@@ -58,14 +56,24 @@ import org.cougaar.util.TimeSpan;
   **/
 
 public class ReceiveAssetVerificationLP
-  extends LogPlanLogicProvider
-  implements MessageLogicProvider
+implements LogicProvider, MessageLogicProvider
 {
-  private static Logger logger = Logging.getLogger(ReceiveAssetVerificationLP.class);
+  private static final Logger logger = Logging.getLogger(ReceiveAssetVerificationLP.class);
 
-  public ReceiveAssetVerificationLP(LogPlanServesLogicProvider logplan,
-                                    ClusterServesLogicProvider cluster) {
-    super(logplan, cluster);
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
+
+  public ReceiveAssetVerificationLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+  }
+
+  public void init() {
   }
 
   /**
@@ -97,7 +105,7 @@ public class ReceiveAssetVerificationLP
           ldmf.newAssetRescind(ldmf.cloneInstance(av.getAsset()), 
                                ldmf.cloneInstance(av.getAssignee()),
                                rescindSchedule);
-        logplan.sendDirective((Directive) arm); 
+        rootplan.sendDirective((Directive) arm); 
       }
     } 
   }

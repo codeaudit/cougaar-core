@@ -21,59 +21,53 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.service.*;
-import org.cougaar.core.mts.*;
-
-import org.cougaar.core.thread.ThreadServiceProvider;
-
-import org.cougaar.core.qos.metrics.MetricsService;
-import org.cougaar.core.qos.metrics.MetricsUpdateService;
-import org.cougaar.core.qos.metrics.MetricsServiceProvider;
-
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.service.MessageWatcherService;
-
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.naming.NamingServiceProvider;
-import org.cougaar.core.service.NamingService;
-
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.logging.LoggingControlService;
-
-import org.cougaar.core.component.*;
-
-import java.io.Serializable;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
-import java.lang.reflect.*;
-import java.rmi.*;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.sql.SQLException;
-import java.util.*;
-import java.util.zip.*;
-import java.util.jar.*;
-import java.security.*;
-import java.security.cert.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Vector;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import javax.naming.NamingException;
-
-import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.ClusterInitializedMessage;
-
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.util.*;
-
-import org.cougaar.core.component.*;
-import java.beans.Beans;
-import org.cougaar.util.PropertyParser;
-import org.cougaar.util.log.*;
 import org.cougaar.bootstrap.Bootstrapper;
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.AgentManager;
+import org.cougaar.core.agent.AgentManagerBinderFactory;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceBrokerSupport;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedEvent;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.logging.LoggingControlService;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerController;
+import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.LogTarget; // inlined
 
 /**
  * This class is responsible for creating and maintaining a Node in the alp
@@ -137,17 +131,13 @@ import org.cougaar.bootstrap.Bootstrapper;
  *   the interface org.cougaar.core.security.SecurityComponent.  If set and
  *   not found or not loaded properly, Node will refuse to run.  See 
  *   org.cougaar.core.node.StandardSecurityComponent for sample implementation.
- *  
- * @property org.cougaar.core.servlet.enable
- *   Used to enable ServletService; defaults to "true".
  *
  * </pre>
  */
 public class Node extends ContainerSupport
-implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
+implements ContainerAPI, ServiceRevokedListener
 {
   public static final String INSERTION_POINT = "Node";
-
   private MessageAddress myNodeIdentity_ = null;
 
   public String getIdentifier() {
@@ -158,10 +148,6 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
   }
 
   public void setMessageAddress(MessageAddress aMessageAddress) {
-    if (myNodeIdentity_ != null) {
-      throw new RuntimeException(
-          "Attempt to over-ride NodeIdentity detected.");
-    }
     myNodeIdentity_ = aMessageAddress;
   }
 
@@ -624,14 +610,6 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     return myNodeIdentity_;
   }
 
-  //
-  // ClusterManagementServesCluster
-  //
-
-  public String getName() {
-    return getIdentifier();
-  }
-
   private static void printVersion(boolean fullFormat) {
     String version = null;
     long buildTime = -1;
@@ -702,9 +680,7 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
   // Children's view of the parent component Node - as accessed through 
   // the NodeForBinder interface.  Keeps the actual Node safe.
   private class NodeProxy implements NodeForBinder, BindingSite {
-    // ClusterManagementServesCluster
-   
-    public String getName() {return Node.this.getName(); }
+    public String getName() {return getIdentifier(); }
     public String getIdentifier() {
       return Node.this.getIdentifier();
     }
@@ -713,9 +689,6 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }
     public void requestStop() {}
     // extra pieces
-    public void registerCluster(ClusterServesClusterManagement cluster) {
-      // NOOP
-    }
   }
 
   private static class NodeServiceBroker extends ServiceBrokerSupport {}

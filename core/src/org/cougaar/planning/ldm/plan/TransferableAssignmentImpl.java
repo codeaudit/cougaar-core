@@ -24,7 +24,8 @@ package org.cougaar.planning.ldm.plan;
 import org.cougaar.planning.ldm.plan.Transferable;
 import org.cougaar.planning.ldm.plan.TransferableAssignment;
 import org.cougaar.planning.ldm.plan.NewTransferableAssignment;
-import org.cougaar.planning.ldm.plan.Directive;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.mts.MessageAddress;
 
 import java.io.ObjectOutputStream;

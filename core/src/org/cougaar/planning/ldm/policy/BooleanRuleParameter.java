@@ -25,9 +25,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -37,7 +34,7 @@ import org.cougaar.core.util.SelfPrinter;
  * A BooleanRuleParameter is a RuleParameter that contains a single true
  * or false value
  */
-public class BooleanRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+public class BooleanRuleParameter implements RuleParameter, java.io.Serializable {
   protected String my_name;
   protected Boolean my_value;
 
@@ -126,11 +123,6 @@ public class BooleanRuleParameter implements RuleParameter, SelfPrinter, java.io
       brp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return brp;
-  }
-
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_value, "Value");
   }
 
 }

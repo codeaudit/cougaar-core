@@ -21,9 +21,11 @@
 
 package org.cougaar.core.qos.metrics;
 
-// We need to redefine the RSS constants here, since rss.jar isn't
-// accessible.
 
+/**
+ * We need to redefine the RSS constants here, since rss.jar isn't
+ * accessible.
+ */
 public interface Constants
 {
     /**

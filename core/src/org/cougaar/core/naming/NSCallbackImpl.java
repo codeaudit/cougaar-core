@@ -21,15 +21,10 @@
 
 package org.cougaar.core.naming;
 
-import java.rmi.server.UnicastRemoteObject;
 import java.rmi.RemoteException;
-import java.util.Set;
-import java.util.HashSet;
+import java.rmi.server.RMIServerSocketFactory;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
-import javax.naming.*;
-import javax.naming.event.*;
-import javax.naming.directory.*;
-import javax.naming.spi.*;
 import org.cougaar.core.mts.SocketFactory;
 
 class NSCallbackImpl extends UnicastRemoteObject implements NSCallback {

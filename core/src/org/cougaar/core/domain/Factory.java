@@ -21,19 +21,14 @@
 
 package org.cougaar.core.domain;
 
-import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.planning.ldm.asset.PropertyGroup;
 
 /**
- * Marker for LDM factory instances.  Although no particular API
+ * Marker for domain factory instances.  Although no particular API
  * is specified, instances will support domain-specific factory methods
  * and constants for the use of domain-specific plugins.
  * 
  * Factory instances are created exclusively by their matching Domain object.
- * 
- * @see org.cougaar.core.domain.RootFactory for the factory used to create infrastructure objects.
- **/
-
+ */
 public interface Factory
 {
 }

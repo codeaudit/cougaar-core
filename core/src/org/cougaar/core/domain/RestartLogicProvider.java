@@ -18,17 +18,18 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
 import org.cougaar.core.mts.MessageAddress;
 
 /** 
- * API for LogPlan LogicProviders which handle agent restarts
+ * API for Blackboard LogicProviders which handle agent restarts
  */
 public interface RestartLogicProvider extends LogicProvider {
 
   /**
-   * Called by the LogPlan whenever this agent or a remote agent 
+   * Called by the Blackboard whenever this agent or a remote agent 
    * restarts.
    * <p>
    * The primary function of this API is to allow a logic providers 

@@ -21,13 +21,12 @@
 
 package org.cougaar.planning.ldm.lps;
 
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
+import org.cougaar.planning.ldm.*;
 import org.cougaar.planning.ldm.plan.NewDeletion;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.core.util.UID;
@@ -56,13 +55,10 @@ import org.cougaar.util.log.Logging;
  * only definite errors), and 2 (report anything suspicious).
  * The default value is 2.
  **/
-
-
 public class ComplainingLP
-  extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider
+implements LogicProvider, EnvelopeLogicProvider
 {
-  private static Logger logger = Logging.getLogger(ComplainingLP.class);
+  private static final Logger logger = Logging.getLogger(ComplainingLP.class);
 
   private final static String levelPROP = "org.cougaar.planning.ldm.lps.ComplainingLP.level";
 
@@ -78,17 +74,22 @@ public class ComplainingLP
     if (level > levelWARN) level = levelWARN;
   }
 
-  private MessageAddress cid;
+  private final RootPlan rootplan;
+  private final MessageAddress self;
 
-  public ComplainingLP(LogPlanServesLogicProvider logplan,
-                       ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
-    cid = cluster.getMessageAddress();
+  public ComplainingLP(
+      RootPlan rootplan,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   /**
    * Complain in any of the following cases:
-   *  Unique Object Changed but not in logplan (error).
+   *  Unique Object Changed but not in blackboard (error).
    *  Unique Object add/removed/changed which has the same UID as an existing object
    * but that is not identical (warning).
    **/
@@ -98,7 +99,7 @@ public class ComplainingLP
     Object obj = o.getObject();
     if (obj instanceof UniqueObject) {
       UID objuid = ((UniqueObject)obj).getUID();
-      Object found = logplan.findUniqueObject(objuid);
+      Object found = rootplan.findUniqueObject(objuid);
       boolean thereP = (found != null);
       if ((! thereP) && o.isChange() && level >= levelERROR)
         complain("change of non-existent object "+obj, obj);
@@ -117,8 +118,8 @@ public class ComplainingLP
     }
   }
   private void complain(String complaint, Object obj) {
-    logger.warn("Warning: "+cid+" ComplainingLP observed "+complaint);
-    PublishHistory history = logplan.getHistory();
+    logger.warn("Warning: "+self+" ComplainingLP observed "+complaint);
+    PublishHistory history = rootplan.getHistory();
     if (history != null) history.dumpStacks(obj);
   }
 }

@@ -21,10 +21,9 @@
 
 package org.cougaar.core.naming;
 
+import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import javax.naming.*;
-import java.io.Serializable;
 import java.util.List;
 
 /** Callback interface for NameServer.

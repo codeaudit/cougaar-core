@@ -21,14 +21,16 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import org.cougaar.util.*;
-import org.cougaar.util.log.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.util.*;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.PropagatingServiceBroker;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
-
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** 
  * This is the basic class required for
@@ -38,9 +40,9 @@ public abstract class Agent
   extends ContainerSupport
   implements ContainerAPI 
 {
-
   /** The Insertion point for any Agent, defined relative to the AgentManager. **/
   public static final String INSERTION_POINT = AgentManager.INSERTION_POINT + ".Agent";
+
   private ServiceBroker childServiceBroker;
   private Logger logger;
 

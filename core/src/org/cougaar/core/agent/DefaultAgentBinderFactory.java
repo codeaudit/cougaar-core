@@ -18,13 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import java.lang.reflect.*;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.BinderFactorySupport;
+import org.cougaar.core.component.ComponentDescription;
 
 /**
  * The default factory for binding Agents to the AgentManager.

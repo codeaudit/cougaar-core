@@ -18,40 +18,56 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import java.util.*;
-
-import org.cougaar.util.*;
+import java.io.PrintStream;
+import java.io.Reader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import org.cougaar.bootstrap.SystemProperties;
-
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentChildBindingSite;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.SupportsDelayedLPActions;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BoundComponent;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentFactory;
+import org.cougaar.core.component.ComponentRuntimeException;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.PropagatingServiceBroker;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.StateObject;
+import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.node.InitializerServiceException;
 import org.cougaar.core.node.NodeControlService;
-import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.DomainForBlackboardService;
+import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
-
-
-import java.beans.*;
-import java.lang.reflect.*;
-
+import org.cougaar.util.ConfigFinder;
 
 /** A container for Domain Components.
  * <p>
@@ -63,6 +79,9 @@ public class DomainManager
   extends ContainerSupport
   implements StateObject
 {
+
+  private static final String FILENAME = "L"+"DMDomains.ini";
+
   private final static String PREFIX = "org.cougaar.domain.";
   private final static int PREFIXLENGTH = PREFIX.length();
 
@@ -151,16 +170,24 @@ public class DomainManager
         add(children[i]);
       }
     } else {
-      /* Order - root, LDMDomains.ini, agent.ini */
+      /* Order - root, planning, domain-file, agent.ini */
       List descs = new ArrayList(5);
+      // setup the root domain
       addDomain(descs, "root", 
-                "org.cougaar.core.domain.RootDomain"); // setup the root domain
+                "org.cougaar.core.domain.RootDomain");
 
-      /* read  LDMDomains.ini */ 
+// setup the planning domain
+// FIXME remove from core!!! TWRIGHT
+addDomain(
+descs,
+"planning", 
+"org.cougaar.planning.ldm.PlanningDomain");
+
+      /* read domain file */ 
       initializeFromProperties(descs);
       initializeFromConfigFiles(descs);
 
-      /* load root domain and domains specified in LDMDomains.ini */
+      /* load root domain and domains specified in domain file */
       children = descs.toArray();
       for (int i = 0; i < children.length; i++) {
         add(children[i]);
@@ -194,7 +221,7 @@ public class DomainManager
     return (Collection) xplans.clone();
   }
 
-  public XPlanServesBlackboard getXPlanForDomain(String domainName) {
+  public XPlan getXPlanForDomain(String domainName) {
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();) {
       DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
@@ -205,7 +232,7 @@ public class DomainManager
     return null;
   }
 
-  public XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+  public XPlan getXPlanForDomain(Class domainClass) {
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();) {
       DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
@@ -229,14 +256,14 @@ public class DomainManager
     this.blackboard = blackboard;
     
     for (Iterator i = xplans.iterator(); i.hasNext();) {
-      XPlanServesBlackboard xplan = (XPlanServesBlackboard) i.next();
+      XPlan xplan = (XPlan) i.next();
       xplan.setupSubscriptions(this.blackboard);
     }
   }
 
   public void invokeDelayedLPActions() {
     for (Iterator i = xplans.iterator(); i.hasNext();) {
-      XPlanServesBlackboard xplan = (XPlanServesBlackboard) i.next();
+      XPlan xplan = (XPlan) i.next();
       if (xplan instanceof SupportsDelayedLPActions) {
         ((SupportsDelayedLPActions) xplan).executeDelayedLPActions();
       }
@@ -271,7 +298,10 @@ public class DomainManager
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();) {
       DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      factories.add(b.getDomain().getFactory());
+      Factory f = b.getDomain().getFactory();
+      if (f != null) {
+        factories.add(f);
+      }
     }
     return factories;
   }
@@ -347,7 +377,6 @@ public class DomainManager
     String cname = cid.toString();
 
     try {
-      // Want only items _below_. Could filter (not doing so now)
       children = is.getComponentDescriptions(cname, specifyContainmentPoint());
     } catch (InitializerServiceException e) {
       //loggingService.error("Unable to add "+cname+"'s Domains", e);
@@ -405,11 +434,11 @@ public class DomainManager
           return DomainManager.this.getXPlans();
         }
 
-        public XPlanServesBlackboard getXPlanForDomain(String domainName) {
+        public XPlan getXPlanForDomain(String domainName) {
           return DomainManager.this.getXPlanForDomain(domainName);
         }
 
-        public XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+        public XPlan getXPlanForDomain(Class domainClass) {
           return DomainManager.this.getXPlanForDomain(domainClass);
         }
 
@@ -445,7 +474,8 @@ public class DomainManager
         Object []parameters = ((List)((ComponentDescription) c).getParameter()).toArray();
 
         if (parameters.length < 1) {
-        throw new RuntimeException("First element of the Domain ComponentDescription parameter List must specify the Domain name.");
+          throw new RuntimeException(
+              "First element of the Domain ComponentDescription parameter List must specify the Domain name.");
         }
  
         String domainName = (String) parameters[0]; 
@@ -472,9 +502,11 @@ public class DomainManager
         loggingService.debug("Loading : " + domain.getDomainName());
       }
 
-      if ((xplans.add(domain.getXPlan())) &&
-           (getBlackboard() != null)) {
-        domain.getXPlan().setupSubscriptions(blackboard);
+      XPlan xplan = domain.getXPlan();
+      if ((xplan != null) &&
+          (xplans.add(xplan)) &&
+          (getBlackboard() != null)) {
+        xplan.setupSubscriptions(blackboard);
       }
       return true;
     } else {
@@ -608,7 +640,7 @@ public class DomainManager
 
     if (loggingService.isDebugEnabled()) {
       loggingService.debug(
-          "Will add LDM Domain \""+domainName+"\" from class \""+className+"\".");
+          "Will add domain \""+domainName+"\" from class \""+className+"\".");
     }
   }
 
@@ -630,7 +662,8 @@ public class DomainManager
   
   private void initializeFromConfigFiles(List descs) {
     try {
-      InputStream in = org.cougaar.util.ConfigFinder.getInstance().open("LDMDomains.ini");
+      InputStream in = org.cougaar.util.ConfigFinder.getInstance().open(
+          FILENAME);
       InputStreamReader isr = new InputStreamReader(in);
       BufferedReader br = new BufferedReader(isr);
 
@@ -646,20 +679,20 @@ public class DomainManager
         }
         int l = line.indexOf('=');
         if (l == -1) {
-          loggingService.error("LDMDomains.ini syntax error: line "+lc);
+          loggingService.error(FILENAME+" syntax error: line "+lc);
           continue;
         }
         String name = line.substring(0,l).trim();
         String val = line.substring(l+1).trim();
         if (name.length()==0 || val.length()==0) {
-          loggingService.error("LDMDomains.ini syntax error: line "+lc);
+          loggingService.error(FILENAME+" syntax error: line "+lc);
           continue;
         }
         addDomain(descs, name, val);
       }
     } catch (Exception ex) {
       if (! (ex instanceof FileNotFoundException)) {
-        loggingService.error("LDMDomains.ini exception: "+ex);
+        loggingService.error(FILENAME+" exception: "+ex);
         ex.printStackTrace();
       }
     }

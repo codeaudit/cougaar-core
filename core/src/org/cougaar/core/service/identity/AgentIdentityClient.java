@@ -28,9 +28,6 @@ package org.cougaar.core.service.identity;
 
 import java.security.Principal;
 
-// Cougaar core infrastructure
-import org.cougaar.core.mts.MessageAddress;
-
 public interface AgentIdentityClient
   extends Principal
 {

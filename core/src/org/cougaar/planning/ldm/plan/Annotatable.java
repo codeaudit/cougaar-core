@@ -21,11 +21,8 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.plugin.Annotation;
-
 /** Annotatable marks a Plan Object which supports attachment
  * of a plugin annotation.
- * @see org.cougaar.core.plugin.Annotation
  **/
 
 public interface Annotatable 

@@ -21,13 +21,10 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
+import java.util.List;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.log.*;
-import java.util.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** 
  * Represent a view of a Plan with in three parts, (1) a description
@@ -246,4 +243,5 @@ public abstract class Subscription {
   protected final boolean privateApply(Envelope envelope) {
     return envelope.applyToSubscription(this);
   }
+
 }

@@ -21,13 +21,25 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
-
 import java.rmi.RemoteException;
-
-import javax.naming.*;
-import javax.naming.spi.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import javax.naming.Binding;
+import javax.naming.CompositeName;
+import javax.naming.Context;
+import javax.naming.InvalidNameException;
+import javax.naming.Name;
+import javax.naming.NameClassPair;
+import javax.naming.NameNotFoundException;
+import javax.naming.NameParser;
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.NotContextException;
+import javax.naming.OperationNotSupportedException;
+import javax.naming.spi.NamingManager;
 
 /**
  * Implementation of javax.naming.directory.Context for 

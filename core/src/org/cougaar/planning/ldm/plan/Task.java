@@ -27,15 +27,13 @@ import org.cougaar.core.blackboard.ChangeReport;
 
 import java.util.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.planning.ldm.asset.Asset;
 
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 
-import org.cougaar.core.plugin.Annotation;
+import org.cougaar.core.blackboard.Directive;
 
 /** Task Interface
   * Task is the essential "execute" directive,

@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;

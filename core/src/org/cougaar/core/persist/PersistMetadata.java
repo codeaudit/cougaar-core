@@ -18,18 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
 import java.io.Serializable;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.ObjectOutputStream;
-import java.util.Hashtable;
-import java.util.Vector;
-import java.util.Enumeration;
-
-import org.cougaar.core.persist.PersistenceState;
 
 /**
  * Metadata object which is persisted.  Contains state which cannot be easily

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.util.log.*;
 
 /** InitializeSubscriptionEnvelope is a special envelope which is
  * sent <em>in band</em> during subscription initialization.

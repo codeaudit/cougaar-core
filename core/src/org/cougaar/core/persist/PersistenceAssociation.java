@@ -18,12 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-
-import org.cougaar.core.blackboard.Envelope;
 
 /**
  * This class establishes an association between an object that has

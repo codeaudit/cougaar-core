@@ -18,14 +18,15 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
-  
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
 import org.cougaar.core.service.DataProtectionKey;
-import org.cougaar.core.service.DataProtectionService;
 import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionService;
 
 public class DataProtectionServiceStub implements DataProtectionService {
   public OutputStream getOutputStream(DataProtectionKeyEnvelope pke, OutputStream os)

@@ -21,16 +21,6 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.agent.service.alarm.PeriodicAlarm;
-import java.util.*;
-
 /** 
  * Instantiable Timer to track Real (System, "Wall Clock") Time.
  **/

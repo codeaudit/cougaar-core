@@ -18,7 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
+
 
 /**
  * An envelope that additionally notes the subscriber name,

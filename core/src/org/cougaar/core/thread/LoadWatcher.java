@@ -21,23 +21,24 @@
 
 package org.cougaar.core.thread;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.TimerTask;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress; // inlined
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.ThreadListenerService;
-import org.cougaar.core.service.ThreadControlService;
-import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.qos.metrics.Constants;
 import org.cougaar.core.qos.metrics.DecayingHistory;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricImpl;
 import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
-import org.cougaar.core.qos.metrics.Constants;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.TimerTask;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadService;
 
 public class LoadWatcher
     implements ThreadListener, Constants
@@ -197,7 +198,7 @@ public class LoadWatcher
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	MessageAddress my_node = nis.getMessageAddress();
+ 	MessageAddress my_node = nis.getMessageAddress();
 
 	String path = "Node(" +my_node+ ")" +PATH_SEPR+ "Jips";
 	Metric m = metricsService.getValue(path);

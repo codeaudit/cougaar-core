@@ -21,21 +21,22 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.qos.metrics.MetricsServiceProvider;
-import org.cougaar.core.service.ThreadControlService;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
-import org.cougaar.util.PropertyParser;
-import org.cougaar.util.UnaryPredicate;
-
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.util.Comparator;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
+import org.cougaar.core.qos.metrics.MetricsServiceProvider;
+import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.util.PropertyParser;
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * The base class of thread-scheduler.  It allows a certain maximum
@@ -201,9 +202,8 @@ public class Scheduler
     }
 
     private void log(String action, Object item) {
-	// if (!ensureLog()) return;
-	if (true) return; // disable this completely for now
-
+	if (!ensureLog()) return;
+ 	if (true) return; // disable this completely for now
 	long now = MetricsServiceProvider.relativeTimeMillis();
 	StringBuffer buf = new StringBuffer();
 	buf.append(Double.toString(now/1000.0));

@@ -21,20 +21,18 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
-/** A Claimable object is something that may be "claimed" by a single
- * actor, generally an instance of a plugin.  For instance, a Claimable Task
- * would likely be "claimed" by a plugin when that plugin creates the
- * task or the task is entered into the logplan.
+/**
+ * A Claimable object is something that may be "claimed" by a single
+ * actor, generally an instance of a plugin.
+ * <p>
+ * For instance, a Claimable object would likely be "claimed" by a
+ * plugin when that plugin creates the object or the object is
+ * added into the blackboard.
  *
  * Claiming of objects is done by the infrastruture *only* - plugins should
  * *never* call claim().
- * 
  **/
-
 public interface Claimable 
 {
   /** @return true IFF this object been claimed. **/
@@ -59,4 +57,3 @@ public interface Claimable
    **/
   void resetClaim(Object oldClaimHolder);
 }
-  

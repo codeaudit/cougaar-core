@@ -21,29 +21,27 @@
 
 package org.cougaar.core.agent;
 
-import java.lang.ref.WeakReference;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.lang.ref.WeakReference;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-//import java.util.Timer;  // conflicts with ".service.alarm.Timer"
+import java.util.Timer;
 import java.util.TimerTask;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
-import org.cougaar.core.agent.service.alarm.ExecutionTimer.Change;
-import org.cougaar.core.agent.service.alarm.ExecutionTimer.Parameters;
-import org.cougaar.core.agent.service.alarm.RealTimer;
-import org.cougaar.core.agent.service.alarm.Timer;
 import org.cougaar.core.agent.service.containment.AgentContainmentServiceProvider;
 import org.cougaar.core.agent.service.democontrol.DemoControlServiceProvider;
-import org.cougaar.core.agent.service.registry.PrototypeRegistry;
-import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;
 import org.cougaar.core.agent.service.scheduler.SchedulerServiceProvider;
 import org.cougaar.core.agent.service.uid.UIDServiceImpl;
 import org.cougaar.core.agent.service.uid.UIDServiceProvider;
@@ -54,29 +52,27 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BoundComponent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.core.domain.RootFactory;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mobility.MobileAgentService;
+import org.cougaar.core.mts.AgentState;
+import org.cougaar.core.mts.Attributes;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageStatistics;
-import org.cougaar.core.mts.MessageStatistics.Statistics;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.node.ComponentMessage;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.node.InitializerServiceException;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.plugin.LatePropertyProvider;
-import org.cougaar.core.plugin.LDMService;
-import org.cougaar.core.plugin.LDMServiceProvider;
-import org.cougaar.core.plugin.PropertyProvider;
-import org.cougaar.core.plugin.PrototypeProvider;
+import org.cougaar.core.node.service.NaturalTimeService;
+import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AlarmService;
@@ -87,27 +83,34 @@ import org.cougaar.core.service.MessageStatisticsService;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.service.MessageWatcherService;
 import org.cougaar.core.service.NamingService;
-import org.cougaar.core.service.PrototypeRegistryService;
 import org.cougaar.core.service.SchedulerService;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.TopologyEntry; // inlined
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.TopologyWriterService;
-import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.UIDServer;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.identity.AgentIdentityClient;
 import org.cougaar.core.service.identity.AgentIdentityService;
 import org.cougaar.core.service.identity.CrlReason;
 import org.cougaar.core.service.identity.TransferableIdentity;
 import org.cougaar.core.thread.ThreadServiceProvider;
+import org.cougaar.planning.ldm.ClusterServesPlugin;
+import org.cougaar.planning.ldm.LDMServesPlugin;
+import org.cougaar.planning.ldm.PlanningFactory;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.PropertyGroup;
-import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
+import org.cougaar.planning.ldm.asset.PrototypeRegistry;
+import org.cougaar.planning.ldm.LatePropertyProvider;
+import org.cougaar.planning.ldm.LDMServiceProvider;
+import org.cougaar.planning.ldm.PropertyProvider;
+import org.cougaar.planning.ldm.PrototypeProvider;
+import org.cougaar.planning.ldm.PrototypeRegistryServiceProvider;
+import org.cougaar.planning.service.LDMService;
+import org.cougaar.planning.service.PrototypeRegistryService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
-
-import org.cougaar.core.node.service.*;
 
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 
@@ -119,9 +122,6 @@ import org.cougaar.core.node.service.*;
  * @property org.cougaar.core.agent quiet
  *   Makes standard output as quiet as possible.
  *
- * @property org.cougaar.core.servlet.enable
- *   Used to enable ServletService; defaults to "true".
- *
  * @property org.cougaar.core.agent.removalCheckMillis
  *   If set, this indicates the number of milliseconds after
  *   agent "unload()" for a GC check of the agent.  This is 
@@ -129,7 +129,17 @@ import org.cougaar.core.node.service.*;
  */
 public class SimpleAgent 
   extends Agent
-  implements Cluster, AgentIdentityClient, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
+  implements 
+  ClusterStateModel,
+  ClusterServesLogicProvider,
+  ClusterServesPlugin,
+  ClusterServesClocks,
+  AgentIdentityClient,
+  LDMServesPlugin,
+  ClusterContext,
+  MessageTransportClient,
+  MessageStatistics,
+  StateObject
 {
 
   // this node's address
@@ -217,18 +227,16 @@ public class SimpleAgent
   // properties
   private static final boolean VERBOSE_RESTART = false;
   private static final long RESTART_CHECK_INTERVAL = 43000L;
-  private static boolean usePluginLoader = false;
   private static boolean showTraffic = true;
   private static boolean isQuiet = false;
 
   static {
-    usePluginLoader=PropertyParser.getBoolean("org.cougaar.core.agent.pluginloader", false);
     showTraffic=PropertyParser.getBoolean("org.cougaar.core.agent.showTraffic", true);
     isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
   }
 
   private AgentBindingSite bindingSite = null;
-  private java.util.Timer restartTimer;
+  private Timer restartTimer;
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
@@ -372,22 +380,17 @@ public class SimpleAgent
       // hard-coded and ".ini" components into one list.
       //
       List l = new ArrayList(cds.length + 4);
-      String enableServlets = 
-        System.getProperty("org.cougaar.core.servlet.enable");
-      if ((enableServlets == null) ||
-          (enableServlets.equalsIgnoreCase("true"))) {
-        // start up the Agent-level ServletService component
-        l.add(new ComponentDescription(
-              getMessageAddress()+"ServletService",
-              Agent.INSERTION_POINT + ".AgentServletService",
-              "org.cougaar.lib.web.service.LeafServletServiceComponent",
-              null,  //codebase
-              getMessageAddress().getAddress(),
-              null,  //certificate
-              null,  //lease
-              null,  //policy
-              ComponentDescription.PRIORITY_COMPONENT));
-      }
+      // start up the Agent-level ServletService component
+      l.add(new ComponentDescription(
+            getMessageAddress()+"ServletService",
+            Agent.INSERTION_POINT + ".AgentServletService",
+            "org.cougaar.lib.web.service.LeafServletServiceComponent",
+            null,  //codebase
+            getMessageAddress().getAddress(),
+            null,  //certificate
+            null,  //lease
+            null,  //policy
+            ComponentDescription.PRIORITY_COMPONENT));
       // Domains *MUST* be loaded before the blackboard
       l.add(new ComponentDescription(
             getMessageAddress()+"DomainManager",
@@ -605,21 +608,6 @@ public class SimpleAgent
       setRestartState(agentState.restartState);
     }
 
-    // set up the PrototypeRegistry and the PrototypeRegistryService
-    // this needs to happen before we start accepting messages.
-    PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
-    myPrototypeRegistryServiceProvider = 
-      new PrototypeRegistryServiceProvider(thePrototypeRegistry);
-    sb.addService(
-        PrototypeRegistryService.class, 
-        myPrototypeRegistryServiceProvider);
-
-    //for backwards compatability
-    myPrototypeRegistryService = (PrototypeRegistryService) 
-      sb.getService(
-          this, PrototypeRegistryService.class, null);
-
-
     // get the Messenger instance from ClusterManagement
     if (log.isInfoEnabled()) {
       log.info("Registering with the message transport");
@@ -656,11 +644,25 @@ public class SimpleAgent
           this, MessageWatcherService.class, null);
 
     // set up the UIDServer and UIDService
-    UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
+    UIDServiceImpl theUIDServer = new UIDServiceImpl(getMessageAddress());
     myUIDServiceProvider = new UIDServiceProvider(theUIDServer);
     sb.addService(UIDService.class, myUIDServiceProvider);
 
     myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
+
+    // set up the PrototypeRegistry and the PrototypeRegistryService
+    // this needs to happen before we start accepting messages.
+    PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
+    myPrototypeRegistryServiceProvider = 
+      new PrototypeRegistryServiceProvider(thePrototypeRegistry);
+    sb.addService(
+        PrototypeRegistryService.class, 
+        myPrototypeRegistryServiceProvider);
+
+    //for backwards compatability
+    myPrototypeRegistryService = (PrototypeRegistryService) 
+      sb.getService(
+          this, PrototypeRegistryService.class, null);
 
     // add alarm service
     myAlarmServiceProvider = new AlarmServiceProvider(this);
@@ -717,17 +719,26 @@ public class SimpleAgent
       final PrototypeRegistryService prs = myPrototypeRegistryService;
       LDMService ldms =
         new LDMService() {
+          public MessageAddress getMessageAddress() {
+            return SimpleAgent.this.getMessageAddress();
+          }
           public LDMServesPlugin getLDM() {
             return lsp;
           }
-          public RootFactory getFactory() {
-            return getDomainService().getFactory();
+          public UIDServer getUIDServer() {
+            return SimpleAgent.this.getUIDServer();
+          }
+          public PlanningFactory getFactory() {
+            return (PlanningFactory) getFactory("planning");
           }
           public Factory getFactory(String s) {
             return getDomainService().getFactory(s);
           }
           public Factory getFactory(Class c) {
             return getDomainService().getFactory(c);
+          }
+          public List getFactories() {
+            return getDomainService().getFactories();
           }
           public void addPrototypeProvider(PrototypeProvider plugin) {
             prs.addPrototypeProvider(plugin);
@@ -789,9 +800,6 @@ public class SimpleAgent
 
     // start the message queue
     startQueueHandler();
-
-    // register with node - temporary hack.
-    getBindingSite().registerAgent(this);
 
     // do restart reconciliation if necessary
     restart();
@@ -1314,6 +1322,10 @@ public class SimpleAgent
     myMessageAddress_ = ma;
   }    
 
+  public String getIdentifier() {
+    return myMessageAddress_.getAddress();
+  }
+
   //
   // Agent identity client
   //
@@ -1347,21 +1359,14 @@ public class SimpleAgent
     moveTargetNode = destinationNode;
   }
 
-  ///
-  /// ClusterServesMessageTransport
-  ///
-
-  public String getIdentifier() {
-    return myMessageAddress_.getAddress();
-  }
+  // 
+  // MessageTransportClient
+  //
 
   public MessageAddress getMessageAddress() {
     return myMessageAddress_;
   }
 
-  // 
-  // MessageTransportClient
-  //
   public void receiveMessage(Message message) {
     if (message instanceof ClusterMessage) {
       checkClusterInfo((MessageAddress) ((ClusterMessage) message).getSource());
@@ -1456,31 +1461,24 @@ public class SimpleAgent
   public PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pgclass, long t) {
     return getPrototypeRegistryService().lateFillPropertyGroup(anAsset, pgclass, t);
   }
-
+  public int getPrototypeProviderCount() {
+    return getPrototypeRegistryService().getPrototypeProviderCount();
+  }
+  public int getPropertyProviderCount() {
+    return getPrototypeRegistryService().getPropertyProviderCount();
+  }
+  public int getCachedPrototypeCount() {
+    return getPrototypeRegistryService().getCachedPrototypeCount();
+  }
 
   // 
   //Domain Service backwards compatability
   //
 
-  /** 
-   * Answer with a reference to the Factory
-   * It is inteded that there be one and only one ClusterObjectFactory
-   * per Cluster instance.  Hence, ClusterManagment will always provide
-   * plugins with access to the ClusterObjectFactory
-   **/
-  public ClusterObjectFactory getClusterObjectFactory()  {
-    return getDomainService().getClusterObjectFactory();
+  public PlanningFactory getFactory() {
+    return (PlanningFactory) getFactory("planning");
   }
-  /** expose the LDM factory instance to consumers.
-   *    @return LdmFactory The fatory object to use in constructing LDM Objects
-   **/
-  public RootFactory getFactory(){
-    return getDomainService().getFactory();
-  }
-  /** @deprecated use getFactory() **/
-  public RootFactory getLdmFactory() {
-    return getFactory();
-  }
+
   /** get a domain-specific factory **/
   public Factory getFactory(String domainName) {
     return getDomainService().getFactory(domainName);
@@ -1532,9 +1530,9 @@ public class SimpleAgent
 
   private void startRestartChecker() {
     if (restartTimer == null) {
-      restartTimer = new java.util.Timer();
-      java.util.TimerTask tTask = 
-        new java.util.TimerTask() {
+      restartTimer = new Timer();
+      TimerTask tTask = 
+        new TimerTask() {
           public void run() {
             checkRestarts();
           }
@@ -1566,8 +1564,8 @@ public class SimpleAgent
    * this because we have no record with whom we have been in
    * communication. In this case, we enumerate all the agents in the
    * nameserver and "restart" against all of them. Messages will be
-   * sent only to those agents for which we have any tasks, assets,
-   * transferables, etc. in common. The sending of those messages will
+   * sent only to those agents for which we have any directives
+   * in common. The sending of those messages will
    * add entries to the restart incarnation map. So after doing a restart 
    * with an agent if there is an entry in the map for that agent, we set
    * the saved incarnation number to the current value for that agent.
@@ -1664,11 +1662,6 @@ public class SimpleAgent
   }
 
   // required by the interface - ClusterMessage should really go away. Ugh.
-  public void sendMessage(ClusterMessage message)
-  {
-    sendMessage((Message)message);
-  }
-
   public void sendMessage(Message message)
   {
     checkClusterInfo(message.getTarget());
@@ -1686,7 +1679,6 @@ public class SimpleAgent
     }
   }
 
-
   // hook into Agent
   /** Alias for getMessageAddress **/
   public MessageAddress getAgentIdentifier() {
@@ -1699,17 +1691,12 @@ public class SimpleAgent
   }
 
   public ClassLoader getLDMClassLoader() {
-    if (usePluginLoader) {
-      return PluginLoader.getInstance().getClassLoader();
-    } else {
-      ClassLoader cl = this.getClass().getClassLoader();
-      if (cl == null) {
-        cl = ClassLoader.getSystemClassLoader();
-      }
-      return cl;
+    ClassLoader cl = this.getClass().getClassLoader();
+    if (cl == null) {
+      cl = ClassLoader.getSystemClassLoader();
     }
+    return cl;
   }
-
 
   //
   // Queue Handler
@@ -1934,12 +1921,6 @@ public class SimpleAgent
       System.out.print(p);
     }
   }
-
-  /** @deprecated Use BlackboardService.getPersistence().getDatabaseConnection() **/
-  public java.sql.Connection getDatabaseConnection(Object locker) { return null; }
-
-  /** @deprecated Use BlackboardService.getPersistence().releaseDatabaseConnection() **/
-  public void releaseDatabaseConnection(Object locker) {}
 
   /**
    * Runner to check for agent GC.

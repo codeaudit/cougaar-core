@@ -125,12 +125,6 @@ public interface AspectType {
     String getName();
     /** The factory to use for creating AspectValues of the AspectType. **/
     AspectValue newAspectValue(Object o);
-
-    //numeric options
-    AspectValue newAspectValue(long o);
-    AspectValue newAspectValue(double o);
-    AspectValue newAspectValue(float o);
-    AspectValue newAspectValue(int o);
   }
  
   /** Undefined - Illegal to use **/
@@ -138,10 +132,6 @@ public interface AspectType {
       public int getKey() { return -1; }
       public String getName() { return "Undefined"; }
       public AspectValue newAspectValue(Object o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
-      public AspectValue newAspectValue(long o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
-      public AspectValue newAspectValue(double o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
-      public AspectValue newAspectValue(float o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
-      public AspectValue newAspectValue(int o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
     };
 
   /** Start time of given Task **/
@@ -149,71 +139,42 @@ public interface AspectType {
       public int getKey() { return START_TIME; }
       public String getName() { return "START_TIME"; }
       public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(START_TIME,o); }
-      public AspectValue newAspectValue(long o) { return TimeAspectValue.create(START_TIME,o); }
-      public AspectValue newAspectValue(double o) { return TimeAspectValue.create(START_TIME, (long) o); }
-      public AspectValue newAspectValue(float o) { return TimeAspectValue.create(START_TIME, (long) o); }
-      public AspectValue newAspectValue(int o) { return TimeAspectValue.create(START_TIME, (long) o); }
-
     };
   /** End time of given Task **/
   Factory EndTime = new Factory () { 
       public int getKey() { return END_TIME; }
       public String getName() { return "END_TIME"; }
       public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(END_TIME,o); }
-      public AspectValue newAspectValue(long o) { return TimeAspectValue.create(END_TIME,o); }
-      public AspectValue newAspectValue(double o) { return TimeAspectValue.create(END_TIME, (long) o); }
-      public AspectValue newAspectValue(float o) { return TimeAspectValue.create(END_TIME, (long) o); }
-      public AspectValue newAspectValue(int o) { return TimeAspectValue.create(END_TIME, (long) o); }
     };
   /** (requested) Duration of a task **/
   Factory Duration = new Factory () { 
       public int getKey() { return DURATION; }
       public String getName() { return "DURATION"; }
       public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(DURATION,o); }
-      public AspectValue newAspectValue(long o) { return TimeAspectValue.create(DURATION,o); }
-      public AspectValue newAspectValue(double o) { return TimeAspectValue.create(DURATION, (long) o); }
-      public AspectValue newAspectValue(float o) { return TimeAspectValue.create(DURATION, (long) o); }
-      public AspectValue newAspectValue(int o) { return TimeAspectValue.create(DURATION, (long) o); }
     };
   /** Cost (in $) of allocating given Task **/
   Factory Cost = new Factory () { 
       public int getKey() { return COST; }
       public String getName() { return "COST"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(COST,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(COST, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(COST,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(COST,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(COST, (float)o); }
     };
   /** Probability of loss of assets associated with allocation **/
   Factory Danger = new Factory () { 
       public int getKey() { return DANGER; }
       public String getName() { return "DANGER"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(DANGER,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(DANGER, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(DANGER,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(DANGER,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(DANGER, (float)o); }
     };
   /** Probability of failure of the Mission **/
   Factory Risk = new Factory () { 
       public int getKey() { return RISK; }
       public String getName() { return "RISK"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(RISK,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(RISK, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(RISK,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(RISK,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(RISK, (float)o); }
     };
   /** Quantities associated with allocation (number of elements sourced, e.g.) **/
   Factory Quantity = new Factory () { 
       public int getKey() { return QUANTITY; }
       public String getName() { return "QUANTITY"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(QUANTITY,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(QUANTITY, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(QUANTITY,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(QUANTITY,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(QUANTITY, (float)o); }
     };
   /** For repetitive tasks - specify the amount of time(milliseconds) 
    * in between deliveries 
@@ -222,20 +183,12 @@ public interface AspectType {
       public int getKey() { return INTERVAL; }
       public String getName() { return "INTERVAL"; }
       public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(INTERVAL,o); }
-      public AspectValue newAspectValue(long o) { return TimeAspectValue.create(DURATION,o); }
-      public AspectValue newAspectValue(double o) { return TimeAspectValue.create(DURATION, (long) o); }
-      public AspectValue newAspectValue(float o) { return TimeAspectValue.create(DURATION, (long) o); }
-      public AspectValue newAspectValue(int o) { return TimeAspectValue.create(DURATION, (long) o); }
     };
   /**For repetitive tasks the total sum quantity of item for the time span **/
   Factory TotalQuantity = new Factory () { 
       public int getKey() { return TOTAL_QUANTITY; }
       public String getName() { return "TOTAL_QUANTITY"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TOTAL_QUANTITY,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(TOTAL_QUANTITY, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(TOTAL_QUANTITY,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(TOTAL_QUANTITY,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(TOTAL_QUANTITY, (float)o); }
     };
   /** For repetitive tasks the total number of shipments requested across 
    * the time span.
@@ -245,20 +198,12 @@ public interface AspectType {
       public int getKey() { return TOTAL_SHIPMENTS; }
       public String getName() { return "TOTAL_SHIPMENTS"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TOTAL_SHIPMENTS,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(TOTAL_SHIPMENTS, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(TOTAL_SHIPMENTS,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(TOTAL_SHIPMENTS,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(TOTAL_SHIPMENTS, (float)o); }
     };
   /**   **/
   Factory CustomerSatisfaction = new Factory () { 
       public int getKey() { return CUSTOMER_SATISFACTION; }
       public String getName() { return "CUSTOMER_SATISFACTION"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION, (float)o); }
     };
   /** Used to represent an Asset/Quantity relationship
    * @see org.cougaar.planning.ldm.plan.TypedQuantityAspectValue
@@ -267,20 +212,12 @@ public interface AspectType {
       public int getKey() { return TYPED_QUANTITY; }
       public String getName() { return "TYPED_QUANTITY"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TYPED_QUANTITY,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(TYPED_QUANTITY, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(TYPED_QUANTITY,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(TYPED_QUANTITY,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(TYPED_QUANTITY, (float)o); }
     };
   /** The extent to which a task has been satisfactorily completed **/
   Factory Readiness = new Factory () { 
       public int getKey() { return READINESS; }
       public String getName() { return "READINESS"; }
       public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(READINESS,o); }
-      public AspectValue newAspectValue(long o) { return FloatAspectValue.create(READINESS, (float) o); }
-      public AspectValue newAspectValue(double o) { return FloatAspectValue.create(READINESS,(float) o); }
-      public AspectValue newAspectValue(float o) { return FloatAspectValue.create(READINESS,o); }
-      public AspectValue newAspectValue(int o) { return FloatAspectValue.create(READINESS, (float)o); }
     };
     
   /** The point of debarkation of a task **/
@@ -288,20 +225,12 @@ public interface AspectType {
       public int getKey() { return POD; }
       public String getName() { return "POD"; }
       public AspectValue newAspectValue(Object o) { return AspectLocation.create(POD,o); }
-      public AspectValue newAspectValue(long o) { throw new IllegalArgumentException("Cannot make numeric POD AspectValues"); }
-      public AspectValue newAspectValue(double o) { throw new IllegalArgumentException("Cannot make numeric POD AspectValues"); }
-      public AspectValue newAspectValue(float o) { throw new IllegalArgumentException("Cannot make numeric POD AspectValues"); }
-      public AspectValue newAspectValue(int o) { throw new IllegalArgumentException("Cannot make numeric POD AspectValues"); }
     };
   /** The time at which a task should arrive at the POD **/
   Factory PodDate = new Factory () { 
       public int getKey() { return POD_DATE; }
       public String getName() { return "POD_DATE"; }
       public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(POD_DATE,o); }
-      public AspectValue newAspectValue(long o) { return TimeAspectValue.create(POD_DATE,o); }
-      public AspectValue newAspectValue(double o) { return TimeAspectValue.create(POD_DATE, (long) o); }
-      public AspectValue newAspectValue(float o) { return TimeAspectValue.create(POD_DATE, (long) o); }
-      public AspectValue newAspectValue(int o) { return TimeAspectValue.create(POD_DATE, (long) o); }
     };
   
   /** Array of the "standard" AspectValue Factories.  This should match the other
@@ -362,12 +291,7 @@ public interface AspectType {
         }
       }
       synchronized (table) {
-        Factory f = (Factory) table.get(key);
-        if (f == null) {
-          return Undefined;
-        } else {
-          return f;
-        }
+        return (Factory) table.get(key);
       }
     }
     public Factory get(int key) {
@@ -375,12 +299,7 @@ public interface AspectType {
         return AspectFactories[key];
       }
       synchronized (table) {
-        Factory f = (Factory) table.get(new Integer(key));
-        if (f == null) {
-          return Undefined;
-        } else {
-          return f;
-        }
+        return (Factory) table.get(new Integer(key));
       }
     }
   }

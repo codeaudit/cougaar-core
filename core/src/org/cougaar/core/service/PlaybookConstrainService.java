@@ -1,7 +1,8 @@
+
 package org.cougaar.core.service;
 
-import org.cougaar.core.component.Service;
 import org.cougaar.core.adaptivity.OperatingModePolicy;
+import org.cougaar.core.component.Service;
 
 /**  
  * Part of the PlaybookService which manages plays and playbooks. 

@@ -31,6 +31,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.util.*;
+import org.cougaar.planning.ldm.PlanningFactory;
 import org.cougaar.planning.ldm.plan.RoleSchedule;
 import org.cougaar.planning.ldm.plan.Schedule;
 import org.cougaar.planning.ldm.plan.PlanElement;
@@ -43,9 +44,8 @@ import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.blackboard.ChangeReport;
-import org.cougaar.core.domain.LDMServesPlugin;
+import org.cougaar.planning.ldm.LDMServesPlugin;
 import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.RootFactory;
 
 // only for transition period
 import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
@@ -164,7 +164,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     Asset a = instanceForCopy();
     
     // bind the new asset to our LDM
-    a.bindToLDM(getBoundLDM());
+    a.bindToLDM(_ldm);
 
     a.privatelySetPrototype(getPrototype());
     // set the itemID to a copy of the original
@@ -330,8 +330,8 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
   boolean wasSentTo(MessageAddress address) {
     return false;               // HACK!! always fail so that we always send the proto
     //synchronized (_sentTo) {
-    //      return _sentTo.contains(address);
-    //    }
+    //  return _sentTo.contains(address);
+    //}
   }
   // default protection!
   /** this asset was sent (as a prototype) to address **/
@@ -436,7 +436,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
           // so we'll create a proto with the tid and no other
           // props.
           if (myPrototype == null) {
-            RootFactory ldmf = ldm.getFactory();
+            PlanningFactory ldmf = (PlanningFactory) ldm.getFactory("planning");
             Asset prot = ldmf.createPrototype(Asset.class, tid);
             // even though there is no prototype provider, there
             // might be property providers that can handle it, so

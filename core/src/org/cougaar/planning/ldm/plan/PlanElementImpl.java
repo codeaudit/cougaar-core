@@ -21,6 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.blackboard.Claimable;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 
 import org.cougaar.core.blackboard.Subscriber;
@@ -36,8 +37,6 @@ import org.cougaar.core.util.XMLizable;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 
 import org.cougaar.core.blackboard.Transaction;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.util.XMLize;
@@ -53,9 +52,10 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import org.cougaar.core.plugin.Annotation;
 
 import org.cougaar.core.util.UID;
+import org.cougaar.core.persist.ActivePersistenceObject;
+import org.cougaar.util.log.Logger;
 
 /** PlanElement Implementation
  * PlanElements represent the association of a Plan, a Task,
@@ -69,7 +69,7 @@ import org.cougaar.core.util.UID;
 
 public abstract class PlanElementImpl 
   extends PublishableAdapter
-  implements PlanElement, NewPlanElement, PEforCollections, ScheduleElement, XMLizable, ActiveSubscriptionObject, BeanInfo
+  implements PlanElement, NewPlanElement, PEforCollections, ScheduleElement, XMLizable, ActiveSubscriptionObject, ActivePersistenceObject, BeanInfo
 {
         
   protected transient Task task;   // changed to transient : Persistence
@@ -124,6 +124,15 @@ public abstract class PlanElementImpl
         
   public Task getTask() {
     return task;
+  }
+
+  // ClaimableHolder interface implementation
+  public Claimable getClaimable() {
+    Task t = getTask();
+    if (t != null && t instanceof Claimable) {
+      return ((Claimable) t);
+    }
+    return null;
   }
 
   // NewPlanElement interface implementations
@@ -361,14 +370,88 @@ public abstract class PlanElementImpl
       throw new BlackboardException("publishAdd of miswired PlanElement (task already has PE): "+this);
     }
   }
-
   public void changingInBlackboard(Subscriber s) {}
-
   public void removingFromBlackboard(Subscriber s) {
     Task t = getTask();
-    ((TaskImpl)t).privately_resetPlanElement();;
+    ((TaskImpl)t).privately_resetPlanElement();
   }
 
+  // ActivePersistenceObject
+  public boolean skipUnpublishedPersist(Logger logger) {
+    logger.error("Omitting PlanElement not on blackboard: " + this);
+    return true;
+  }
+  public void checkRehydration(Logger logger) {
+    if (this instanceof AssetTransfer) {
+    } else {
+      Task task = getTask();
+      if (task != null) {
+        PlanElement taskPE = task.getPlanElement();
+        if (taskPE != this) {
+          //            if (logger.isWarnEnabled()) logger.warn("Bad " + getClass().getName() + ": getTask()=" + task + " task.getPlanElement()=" + taskPE);
+        }
+      } else {
+        //          if (logger.isWarnEnabled()) logger.warn("Bad " + getClass().getName() + ": getTask()=null");
+      }
+    }
+  }
+  public void postRehydration(Logger logger) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Rehydrated plan element: " + this);
+    }
+    TaskImpl task = (TaskImpl) getTask();
+    if (task != null) {
+      PlanElement taskPE = task.getPlanElement();
+      if (taskPE != this) {
+        if (taskPE != null) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Bogus plan element for task: " + hc(task));
+          }
+          task.privately_resetPlanElement();
+        }
+        task.privately_setPlanElement(this); // These links can get severed during rehydration
+        if (logger.isDebugEnabled()) {
+          logger.debug("Fixing plan element : " + hc(task) + " to " + hc(this));
+        }
+      }
+    }
+    if (this instanceof Allocation) {
+      fixAsset(((Allocation)this).getAsset());
+    } else if (this instanceof AssetTransfer) {
+      fixAsset(((AssetTransfer)this).getAsset());
+      fixAsset(((AssetTransfer)this).getAssignee());
+    }
+    if (logger.isDebugEnabled()) {
+      if (this instanceof Expansion) {
+        Expansion exp = (Expansion) this;
+        Workflow wf = exp.getWorkflow();
+        for (Enumeration en = wf.getTasks(); en.hasMoreElements(); ) {
+          Task subtask = (Task) en.nextElement();
+          PlanElement subtaskPE = subtask.getPlanElement();
+          if (subtaskPE == null) {
+            logger.debug("Subtask " + subtask.getUID() + " not disposed");
+          } else {
+            logger.debug("Subtask " + subtask.getUID() + " disposed " + hc(subtaskPE));
+          }
+        }
+      }
+    }
+  }
+  protected void fixAsset(Asset asset) {
+    // Compute role-schedules
+    RoleScheduleImpl rsi = (RoleScheduleImpl) asset.getRoleSchedule();
+    rsi.add(this);
+  }
+  // Should match BasePersistence.hc(o), without compile dependency
+  protected static String hc(Object o) {
+    return (Integer.toHexString(System.identityHashCode(o)) +
+            " " +
+            (o == null ? "<null>" : o.toString()));
+  }
+
+  //
+  // annotation
+  //
   private transient Annotation myAnnotation = null;
   public void setAnnotation(Annotation pluginAnnotation) {
     myAnnotation = pluginAnnotation;

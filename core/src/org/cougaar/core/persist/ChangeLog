@@ -1,3 +1,11 @@
+2002-11-12  Todd Wright  <twright@bbn.com>
+
+        * BasePersistence.java:
+        * PersistenceInputStream.java:
+        * PersistenceOutputStream.java:
+        Moved planning-specific handling to new "ActivePersistenceObject"
+        interface.  Altered PlanElement and MPTask to match.
+
 2002-10-16  Todd Wright  <twright@bbn.com>
 
         * BasePersistence.java:

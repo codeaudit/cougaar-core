@@ -21,9 +21,8 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.agent.service.alarm.*;
-
-import org.cougaar.core.component.*;
+import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.component.Service;
 
 /** a Service for getting at Metrics information
  **/

@@ -18,15 +18,15 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.planning.ldm.plan.*;
-import org.cougaar.util.UnaryPredicate;
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.List;
 
 /** Envelope is an encapsulation of an atomic update
  * of a set data structure.  E.g. A representation of Container-level transaction.
@@ -40,9 +40,9 @@ import java.util.*;
  *                functional semantics.  In particular, since these are
  *                only emitted Blackboard on
  *                initialization of subscriptions, and by PersistenceSubscribers
- *                on LogPlan rehydration, LogicProviders function differently
+ *                on Blackboard rehydration, LogicProviders function differently
  *                on BULKs than ADDs, for instance, business rules which
- *                fire on new LogPlan elements and produce other LogPlan
+ *                fire on new Blackboard elements and produce other Blackboard
  *                elements will not fire on BULKs because the BULK delta
  *                should already include *those* products.
  *   EVENT	An indication of an Event distributed in-band with respect
@@ -148,13 +148,6 @@ public class Envelope implements java.io.Serializable {
     }
 
     EnvelopeTuple t = new BulkEnvelopeTuple(v);
-    deltas.add(t);
-    return t;
-  }
-
-  public final EnvelopeTuple addEvent(Object o) {
-    if (o == null) throw new IllegalArgumentException("Null Object");
-    EnvelopeTuple t = new EventEnvelopeTuple(o);
     deltas.add(t);
     return t;
   }

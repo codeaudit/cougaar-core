@@ -21,6 +21,7 @@
 
 package org.cougaar.core.thread;
 
+
 public interface RightsSelector
 {
     void setScheduler(PropagatingScheduler scheduler);

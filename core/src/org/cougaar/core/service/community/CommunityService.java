@@ -18,14 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service.community;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.mts.MessageAddress;
+import java.util.Collection;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.ModificationItem;
-
-import java.util.*;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 /** A CommunityService is an API which may be supplied by a
  * ServiceProvider registered in a ServiceBroker that provides

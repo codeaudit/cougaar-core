@@ -25,9 +25,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -40,7 +37,7 @@ import org.cougaar.core.util.SelfPrinter;
  * within some range, that value is returned. Otherwise, the default
  * is returned.
  */
-public class RangeRuleParameter implements RuleParameter, SelfPrinter, 
+public class RangeRuleParameter implements RuleParameter,
   java.io.Serializable {
   protected String my_name;
   protected RangeRuleParameterEntry []my_ranges;
@@ -155,12 +152,6 @@ public class RangeRuleParameter implements RuleParameter, SelfPrinter,
     return rrp;
   }
 
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_ranges, "Ranges");
-    pr.print(my_default_value, "Value");
-  }
-  
   public static void main(String []args) {
     RangeRuleParameterEntry p1 = 
       new RangeRuleParameterEntry("LOW", 1, 3);

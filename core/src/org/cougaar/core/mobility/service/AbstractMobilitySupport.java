@@ -18,16 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.service;
 
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MoveTicket;
-import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.arch.MobilitySupport;
-import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.util.GenericStateModel;
 
 /**
  * Base class for mobility-support class.

@@ -23,24 +23,22 @@ package org.cougaar.core.plugin.completion;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Map;
 import org.cougaar.core.mts.MessageAddress;
 
 class Laggard implements Comparable, Serializable {
   private long timestamp = System.currentTimeMillis();
   private MessageAddress agent;
-  private double taskCompletion;
+  private double blackboardCompletion;
   private double cpuConsumption;
   private boolean isLaggard;
 //   private Map verbCounts = new HashMap();
   Laggard(MessageAddress me,
-          double taskCompletion,
+          double blackboardCompletion,
           double cpuConsumption,
           boolean isLaggard)
   {
     this.agent = me;
-    this.taskCompletion= taskCompletion;
+    this.blackboardCompletion= blackboardCompletion;
     this.cpuConsumption = cpuConsumption;
     this.isLaggard = isLaggard;
   }
@@ -48,7 +46,7 @@ class Laggard implements Comparable, Serializable {
   Laggard(MessageAddress me, Laggard oldLaggard) {
     agent = me;
     if (oldLaggard != null) {
-      taskCompletion = oldLaggard.taskCompletion;
+      blackboardCompletion = oldLaggard.blackboardCompletion;
       cpuConsumption = oldLaggard.cpuConsumption;
       isLaggard = oldLaggard.isLaggard;
     }
@@ -62,8 +60,8 @@ class Laggard implements Comparable, Serializable {
     return agent;
   }
 
-  public double getTaskCompletion() {
-    return taskCompletion;
+  public double getBlackboardCompletion() {
+    return blackboardCompletion;
   }
 
   public double getCPUConsumption() {
@@ -86,7 +84,7 @@ class Laggard implements Comparable, Serializable {
       if (that.isLaggard()) return 1;
       return 1;
     }
-    double diff = (this.taskCompletion - that.taskCompletion +
+    double diff = (this.blackboardCompletion - that.blackboardCompletion +
                    that.cpuConsumption - this.cpuConsumption);
     if (diff < 0.0) return -1;
     if (diff > 0.0) return 1;
@@ -100,7 +98,7 @@ class Laggard implements Comparable, Serializable {
       "Laggard("
       + agent + ","
       + isLaggard + ","
-      + format.format(taskCompletion) + ","
+      + format.format(blackboardCompletion) + ","
       + format.format(cpuConsumption) + ")@"
       + CompletionSourcePlugin.formatDate(timestamp);
   }

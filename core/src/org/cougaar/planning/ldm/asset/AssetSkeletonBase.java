@@ -28,8 +28,6 @@ package org.cougaar.planning.ldm.asset;
 import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.planning.ldm.asset.*;
 import org.cougaar.planning.ldm.plan.*;
@@ -242,7 +240,8 @@ public abstract class AssetSkeletonBase
   // new PG resolution support
   //
   
-  public final static long UNSPECIFIED_TIME = LDMServesClient.UNSPECIFIED_TIME;
+  /** the (internal) time to mean unspecified **/
+  public final static long UNSPECIFIED_TIME = 0L;
 
   /** External api for finding a property group by class at no specific time **/
   public final PropertyGroup searchForPropertyGroup(Class pgc) {

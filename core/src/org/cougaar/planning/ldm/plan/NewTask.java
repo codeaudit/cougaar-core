@@ -24,6 +24,7 @@ package org.cougaar.planning.ldm.plan;
 import org.cougaar.core.blackboard.Publishable;
 
 import org.cougaar.core.blackboard.ChangeReport;
+import org.cougaar.core.blackboard.NewDirective;
 
 import java.util.Enumeration;
 import java.util.Date;
@@ -31,8 +32,6 @@ import java.util.Date;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.Priority;
-
-import org.cougaar.core.plugin.Annotation;
 
 /** NewTask Interface
  * Provide setters for building Task objects.

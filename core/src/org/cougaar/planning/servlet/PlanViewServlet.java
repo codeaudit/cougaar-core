@@ -1580,7 +1580,7 @@ extends HttpServlet
               printLinkToLocalTask((Task)uo);
               break;
             case ITEM_TYPE_ASSET:
-              // found this asset in local LogPlan
+              // found this asset in local blackboard
               printLinkToLocalAsset((Asset)uo);
               break;
             case ITEM_TYPE_WORKFLOW:
@@ -1935,7 +1935,7 @@ extends HttpServlet
               printLinkToLocalTask((Task)o);
               break;
             case ITEM_TYPE_ASSET:
-              // found this asset in local LogPlan
+              // found this asset in local blackboard
               printLinkToLocalAsset((Asset)o);
               break;
             case ITEM_TYPE_WORKFLOW:
@@ -2303,7 +2303,7 @@ extends HttpServlet
     /**
      * printPlanElementDetails.
      *
-     * PlanElements are always in the LogPlan and have UIDs, so we
+     * PlanElements are always in the blackboard and have UIDs, so we
      * don't need a "baseObj" (e.g. the Task that this PlanElement
      * is attached to).
      */
@@ -2521,7 +2521,7 @@ extends HttpServlet
             "<font size=small color=mediumblue>");
         out.print(isRemoteAgent ? "Agent" : "Asset");
         out.print("= ");
-        // allocations are always to an asset in the local LogPlan
+        // allocations are always to an asset in the local blackboard
         printLinkToLocalAsset(asset);
         out.print(
             "</font>"+
@@ -2667,7 +2667,7 @@ extends HttpServlet
             "<li>"+
             "<font size=small color=mediumblue>"+
             "Assignee= ");
-        // assignee asset is always in the local LogPlan
+        // assignee asset is always in the local blackboard
         printLinkToLocalAsset(assignee);
         out.print(
             "</font>"+
@@ -2980,7 +2980,7 @@ extends HttpServlet
     /**
      * printAssetTableRow.
      *
-     * Asset that is in the local LogPlan and has a UID.  Treat this
+     * Asset that is in the local blackboard and has a UID.  Treat this
      * as an Asset attached to itself.
      */
     private void printAssetTableRow(Asset asset)
@@ -3650,7 +3650,7 @@ extends HttpServlet
     /**
      * printLinkToLocalAsset.
      * <p>
-     * Asset that is in the local LogPlan and has a UID.  Treat this
+     * Asset that is in the local blackboard and has a UID.  Treat this
      * as an Asset attached to itself.
      **/
     private void printLinkToLocalAsset(Asset asset)

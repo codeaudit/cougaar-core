@@ -22,13 +22,11 @@
 package org.cougaar.planning.ldm.lps;
 
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.MessageLogicProvider;
+import org.cougaar.core.domain.*;
 import org.cougaar.core.util.UID;
+import org.cougaar.planning.ldm.*;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.*;
 import org.cougaar.util.log.Logger;
@@ -49,13 +47,22 @@ import org.cougaar.planning.ldm.plan.TaskImpl;
   *   RescindLP.
   **/
 
-public class ReceiveRescindLP extends LogPlanLogicProvider implements MessageLogicProvider
+public class ReceiveRescindLP
+implements LogicProvider, MessageLogicProvider
 {
-  private static Logger logger = Logging.getLogger(ReceiveRescindLP.class);
+  private static final Logger logger = Logging.getLogger(ReceiveRescindLP.class);
 
-  public ReceiveRescindLP(LogPlanServesLogicProvider logplan,
-                          ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+
+  public ReceiveRescindLP(
+      RootPlan rootplan,
+      LogPlan logplan) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+  }
+
+  public void init() {
   }
 
   /**
@@ -77,12 +84,12 @@ public class ReceiveRescindLP extends LogPlanLogicProvider implements MessageLog
     //
     Task t = logplan.findTask(tuid);
     if (t != null) {
-      logplan.remove(t);
+      rootplan.remove(t);
     } else {
       if (logger.isDebugEnabled()) {
 	logger.debug("Couldn't find task to rescind: " + tuid);
       }
-      logplan.add(new RescindLP.DeferredRescind(tr));
+      rootplan.add(new RescindLP.DeferredRescind(tr));
     }
   }
 }

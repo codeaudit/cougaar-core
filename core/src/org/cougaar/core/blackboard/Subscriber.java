@@ -19,27 +19,23 @@
  * </copyright>
  */
 
-
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.blackboard.BlackboardClient;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.util.LockFlag;
-import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.util.EmptyIterator;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.log.*;
-import java.util.*;
-
-// pollution of subscriber purity for completion checking
-import org.cougaar.planning.ldm.plan.*;
-import java.io.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** Subscriber is the most common implementation of BlackboardService
  *
@@ -319,7 +315,7 @@ public class Subscriber {
    * Tells the Distributor about its interest, but should not block,
    * even if there are lots of "back issues" to transmit.
    * This is the full form.
-   * @param isMember The defining predicate for the slice of the logplan.
+   * @param isMember The defining predicate for the slice of the blackboard.
    * @param realCollection The real container wrapped by the returned value.
    * @param isIncremental IFF true, returns a container that supports delta
    * lists.
@@ -628,7 +624,7 @@ public class Subscriber {
 
   /** A extension subscriber may call this method to execute bulkAdd transactions.
    * This is protected because it is of very limited to other than persistance plugins.
-   *  Note that LogPlan does something like
+   *  Note that Blackboard does something like
    * this by hand constructing an entire special-purpose envelope.  This, however, is
    * for use in-band, in-transaction.  
    *  The Collection passed MUST be immutable, since there may be many consumers,
@@ -687,7 +683,7 @@ public class Subscriber {
    * The is only kept around as a check to pass to Transaction.close()
    * in order to make sure we're closing the right one.
    * In particular, we cannot use this in the publishWhatever methods 
-   * because the LogPlan methods are executing in the wrong thread.
+   * because the Blackboard methods are executing in the wrong thread.
    **/
   private Transaction theTransaction = null;
 
@@ -1011,75 +1007,24 @@ public class Subscriber {
       theDistributor+">";
   }
 
-
-  /** Quality Assurance for logplan object adds.
-   * Checks to make sure that adds of complex objects also
-   * add the simpler subs.
-   **/
-  protected void checkAdds(Envelope outbox) {
-    List tuples = outbox.getRawDeltas();
-    int l = tuples.size();
-    for (int i = 0; i<l; i++) {
-      EnvelopeTuple tup = (EnvelopeTuple) tuples.get(i);
-      if (tup.getAction() == Envelope.ADD) {
-        Object obj = tup.getObject();
-        if (obj instanceof PlanElement) {
-          if (obj instanceof Expansion) {
-            Workflow w = ((Expansion) obj).getWorkflow();
-            if (! checkFor(w, Envelope.ADD, outbox)) {
-              logger.warn("Add of PE Expansion without WF:\n"+
-                                 "\tPE = "+obj+"\n"+
-                          "\tWF = "+w, new Throwable());
-            }
-          }
-        } else if (obj instanceof Workflow) {
-          Enumeration tasks = ((Workflow) obj).getTasks();
-          while (tasks.hasMoreElements()) {
-            Task t = (Task) tasks.nextElement();
-            if (! checkFor(t, Envelope.ADD, outbox)) {
-              logger.warn("Add of Workflow without SUBTASK:\n"+
-                                 "\tWF = "+obj+"\n"+
-                          "\tSubTask = "+t, new Throwable());
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // used by checkAdds to see if added objects are in
-  // the same envelope.
-  private boolean checkFor(Object o, int action, Envelope outbox) {
-    List tuples = outbox.getRawDeltas();
-    int l = tuples.size();
-    for (int i = 0; i<l; i++) {
-      EnvelopeTuple tup = (EnvelopeTuple) tuples.get(i);
-      if (tup.getObject() == o && tup.getAction() == action) return true;
-    }
-    return false;
-  }
-    
   /** utility to claim an object as ours **/
   protected void claimObject(Object o) {
-    if (o instanceof PlanElement) {
-      PlanElement pe = (PlanElement) o;
-      Task t = pe.getTask();
-      if (t instanceof Claimable) {
-        //System.err.println("\n->"+getClient()+" claimed "+t);
-        ((Claimable)t).setClaim(getClient());
+    if (o instanceof ClaimableHolder) {
+      Claimable c = ((ClaimableHolder) o).getClaimable();
+      if (c != null) {
+        //System.err.println("\n->"+getClient()+" claimed "+c);
+        c.setClaim(getClient());
       }
     }
   }
 
   /** utility to release a claim on an object **/
   protected void unclaimObject(Object o) {
-    if (o instanceof PlanElement) {
-      PlanElement pe = (PlanElement) o;
-      Task t = pe.getTask();
-      // done in planelementimpl
-      //((mil.darpa.log.org.cougaar.planning.ldm.plan.TaskImpl)t).privately_resetPlanElement();
-      if (t instanceof Claimable) {
-        ((Claimable)t).resetClaim(getClient());
+    if (o instanceof ClaimableHolder) {
+      Claimable c = ((ClaimableHolder) o).getClaimable();
+      if (c != null) {
+        //System.err.println("\n->"+getClient()+" unclaimed "+c);
+        c.resetClaim(getClient());
       }
     }
   }
@@ -1092,15 +1037,7 @@ public class Subscriber {
     return theClient;
   }
 
-  /** Accept an event from an EventSubscription.
-   * @param event The event to be accepted.
-   * @return true IFF the event is actually accepted.
-   **/
-  public boolean triggerEvent(Object event) {
-    return theClient.triggerEvent(event);
-  }
-  
-  //Leftover from PluginAdapter - now in BlackboardService... may want to 
+  //Leftover from ancient code - now in BlackboardService... may want to 
   //deprecate next release?
   public Subscriber getSubscriber() {
     return this;

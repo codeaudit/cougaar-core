@@ -26,6 +26,7 @@
 
 package org.cougaar.core.service.identity;
 
+
 public class PendingRequestException
   extends IdentityException
 {

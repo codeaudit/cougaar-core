@@ -18,14 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.node;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.NodeMetricsService;
 
 /** A NodeMetricsServiceProvider is a provider class for the NodeMetricsService
  * which provides Node/VM metrics.

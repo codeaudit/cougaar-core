@@ -18,19 +18,25 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.servlet;
 
-import java.io.*;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
-import java.util.*;
-
-import org.cougaar.util.UnaryPredicate;
-
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import javax.naming.Binding;
+import javax.naming.NamingEnumeration;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.logging.NullLoggingServiceImpl;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * This is a generic API, provided by "SimpleServletComponent",
@@ -97,55 +103,11 @@ implements SimpleServletSupport
   }
 
   public List getAllEncodedAgentNames() {
-    return getAllEncodedAgentNames(new ArrayList());
+    return NSUtil.getAllEncodedAgentNames(ns);
   }
 
   public List getAllEncodedAgentNames(List toList) {
-    toList.clear();
-
-    // FIXME abstract away this naming-service use!
-    //
-    // here we find all Servlet-server names, which
-    // (for now) are the encoded Agent names.  this is 
-    // equal-to or a subset-of the list of all Agent names.
-    //
-    // should add a "ServerQueryService" to provide
-    // this lookup, plus a flag in this registry
-    // to distinguish between Agent and other (future)
-    // root names (e.g. Node-level Servlets, etc).
-    // additionally should consider caching...
-    //
-    // for now this is tolerable:
-    try {
-      javax.naming.directory.DirContext d = 
-        ns.getRootContext(); 
-      d = (javax.naming.directory.DirContext) 
-        d.lookup("WEBSERVERS");
-      javax.naming.NamingEnumeration en = d.listBindings("");
-      while (en.hasMoreElements()) {
-        javax.naming.Binding binding =  
-          (javax.naming.Binding) en.nextElement();
-        //
-        // This strangeness keeps us from having a dependency on 
-        // the "webserver" package, which is compiled after core.jar
-        //
-        Object o = binding.getObject();
-        java.lang.reflect.Method m = o.getClass().getMethod("getName", new Class[0]);
-        toList.add(m.invoke(o, new Object[0]));
-	/*
-        // This is what the code above should be....
-        org.cougaar.lib.web.arch.root.GlobalEntry entry = 
-          (org.cougaar.lib.web.arch.root.GlobalEntry)binding.getObject();
-        toList.add(entry.getName());
-	*/
-        
-      }
-      Collections.sort(toList);
-    } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
-    }
-
-    return toList;
+    return NSUtil.getAllEncodedAgentNames(ns, toList);
   }
 
   // maybe add a "getAllAgentIdentifiers()"

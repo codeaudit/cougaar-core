@@ -1,4 +1,3 @@
-
 /*
  * <copyright>
  *  Copyright 1997-2001 BBNT Solutions, LLC
@@ -19,13 +18,15 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class BufferedFileSystem implements Runnable {
   private boolean active;
 
   private CircularQueue queue = new CircularQueue();
-  private boolean executingTask = false;
+  private boolean executingJob = false;
 
   /**
    * Wrap a FileOutputStream to provide safe close semantics.
@@ -114,7 +115,7 @@ public class BufferedFileSystem implements Runnable {
     }
 
     private void switchBuffer(final int nbytes) {
-      enqueueTask(new Runnable() {
+      enqueueJob(new Runnable() {
           byte[] buf = buffer;
           public void run() {
             try {
@@ -156,7 +157,7 @@ public class BufferedFileSystem implements Runnable {
 
     public void close() throws IOException {
       flush();
-      enqueueTask(new Runnable() {
+      enqueueJob(new Runnable() {
           public void run() {
             try {
               fileOutputStream.flush();
@@ -184,9 +185,9 @@ public class BufferedFileSystem implements Runnable {
     logger = ls;
   }
 
-  private void enqueueTask(Runnable task) {
+  private void enqueueJob(Runnable job) {
     synchronized (queue) {
-      queue.add(task);
+      queue.add(job);
       if (thread == null) {
         active = true;
         thread = new Thread(this, "BufferedFileSystem");
@@ -197,7 +198,7 @@ public class BufferedFileSystem implements Runnable {
 
   public void run() {
     while (true) {
-      Runnable task;
+      Runnable job;
       synchronized (queue) {
         while (queue.size() == 0) {
           try {
@@ -206,17 +207,17 @@ public class BufferedFileSystem implements Runnable {
           }
           if (!active) return;
         }
-        task = (Runnable) queue.next();
-        executingTask = true;
+        job = (Runnable) queue.next();
+        executingJob = true;
       }
-      if (logger.isInfoEnabled()) logger.info("Buffered task " + task);
+      if (logger.isInfoEnabled()) logger.info("Buffered job " + job);
       try {
-        task.run();
+        job.run();
       } catch (Throwable bfe) {
         logger.error(bfe.getMessage(), bfe.getCause());
       }
       synchronized (queue) {
-        executingTask = false;
+        executingJob = false;
         queue.notifyAll();
       }
     }
@@ -224,7 +225,7 @@ public class BufferedFileSystem implements Runnable {
 
   public void waitForPrevious() {
     synchronized (queue) {
-      while (queue.size() > 0 || executingTask) {
+      while (queue.size() > 0 || executingJob) {
         try {
           queue.wait();
         } catch (InterruptedException ie) {
@@ -254,7 +255,7 @@ public class BufferedFileSystem implements Runnable {
   }
 
   public boolean rename(final File from, final File to) {
-    enqueueTask(new Runnable() {
+    enqueueJob(new Runnable() {
         public void run() {
           from.renameTo(to);
         }

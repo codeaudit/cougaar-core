@@ -20,7 +20,6 @@ package org.cougaar.core.service.community;
 
 import org.cougaar.core.blackboard.Publishable;
 
-
 /** CommunityRequest Interface
   * The CommunityRequest provides a mechanism for components
   * to interact with the community management infrastructure.  A

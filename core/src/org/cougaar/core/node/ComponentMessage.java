@@ -21,9 +21,9 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Message to a <code>Container</code> that a <code>Component</code> be 

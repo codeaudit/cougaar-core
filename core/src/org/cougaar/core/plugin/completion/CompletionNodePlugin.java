@@ -24,12 +24,15 @@ package org.cougaar.core.plugin.completion;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.WeakHashMap;
 import java.util.Set;
-import java.util.Date;
-import java.util.TimeZone;
+import java.util.WeakHashMap;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * This plugin gathers and integrates completion information from

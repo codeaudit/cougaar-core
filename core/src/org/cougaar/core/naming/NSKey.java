@@ -21,7 +21,6 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.service.*;
 
 /** Marker class of NS directory key
  **/

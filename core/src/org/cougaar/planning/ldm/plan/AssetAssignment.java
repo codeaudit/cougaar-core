@@ -22,6 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import java.util.Enumeration;
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetAssignment Interface identifies those method signatures associated 

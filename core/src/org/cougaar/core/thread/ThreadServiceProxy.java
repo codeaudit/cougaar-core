@@ -21,11 +21,9 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.ThreadService;
-
 import java.util.Timer;
 import java.util.TimerTask;
+import org.cougaar.core.service.ThreadService;
 
 /**
  * The proxy implementation of Thread Service.

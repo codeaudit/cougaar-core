@@ -21,17 +21,17 @@
 
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.AgentStatusService;
-import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.service.ThreadService;
-
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.TimerTask;
-
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.ThreadService;
 
 public class AgentStatusRatePlugin 
     extends ComponentPlugin
@@ -245,7 +245,7 @@ public class AgentStatusRatePlugin
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	nodeID = nis.getMessageAddress();
+ 	nodeID = nis.getMessageAddress();
 
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {

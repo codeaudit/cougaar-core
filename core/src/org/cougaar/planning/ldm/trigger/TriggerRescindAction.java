@@ -23,7 +23,7 @@
 package org.cougaar.planning.ldm.trigger;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * Trigger action to rescind given Plan Element when fired

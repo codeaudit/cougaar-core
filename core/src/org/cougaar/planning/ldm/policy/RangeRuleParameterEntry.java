@@ -22,13 +22,10 @@
 
 package org.cougaar.planning.ldm.policy;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** Simple entry for RangeRuleParameters : 
     holds int min/max range and a value 
 **/
-public class RangeRuleParameterEntry implements SelfPrinter, java.io.Serializable {
+public class RangeRuleParameterEntry implements java.io.Serializable {
   
   private Object my_value;
   private int my_min;
@@ -73,12 +70,6 @@ public class RangeRuleParameterEntry implements SelfPrinter, java.io.Serializabl
     return "[" + my_value + "/" + my_min + "-" + 
       my_max + "]"; 
   }
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_min, "Min");
-    pr.print(my_max, "Max");
-    pr.print(my_value, "Value");
-  }
-
   
 }
 

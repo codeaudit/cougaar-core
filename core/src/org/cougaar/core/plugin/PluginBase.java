@@ -22,7 +22,6 @@
 package org.cougaar.core.plugin;
 
 import org.cougaar.core.component.Component;
-import org.cougaar.core.component.BindingSite;
 
 /** 
  * Inteface that describes the minimum expected capabilities of

@@ -89,12 +89,12 @@ public class ExpansionImpl extends PlanElementImpl
     return workflow;
   }
 
-  public boolean removingFromLogPlan(Subscriber s) {
+  public void removingFromBlackboard(Subscriber s) {
     Task t = getTask();
     ((TaskImpl)t).privately_resetPlanElement();
     Workflow w = getWorkflow();
 
-    if (w == null) return true; // if already disconnected...
+    if (w == null) return; // if already disconnected...
 
     if (w.isPropagatingToSubtasks() ) { // if we're auto-propagating
       WorkflowImpl wi = (WorkflowImpl) w;
@@ -116,7 +116,6 @@ public class ExpansionImpl extends PlanElementImpl
       }
       // the plugin should reattach this workflow to a parent task. 
     }
-    return true;
   }
   
   

@@ -18,18 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
-import java.util.Vector;
-import java.util.Enumeration;
-
-import org.cougaar.planning.ldm.plan.*;
-
-/** An envelope sent by a PersistencePlugin as the result of rehydration of a saved LogPlan.
+/** An envelope sent by a PersistencePlugin as the result of rehydration of a saved Blackboard.
  * The essential difference from a standard Envelope is that PersistenceEnvelope does
  * not update the delta lists of any subscription.
  **/

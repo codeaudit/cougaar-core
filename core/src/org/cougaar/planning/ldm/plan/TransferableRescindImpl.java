@@ -27,8 +27,7 @@ import org.cougaar.planning.ldm.plan.NewTransferableRescind;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.Transferable;
 import org.cougaar.planning.ldm.plan.TransferableRescind;
-import org.cougaar.core.persist.PersistenceOutputStream;
-
+import org.cougaar.core.blackboard.DirectiveImpl;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;

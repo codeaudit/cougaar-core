@@ -6,8 +6,6 @@ import java.lang.reflect.*;
 import org.cougaar.core.component.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -66,6 +64,5 @@ public class DAB
       return (AgentManagerForBinder)getContainer();
     }
     public String getName() {return getAgentManager().getName(); }
-    public void registerAgent(Agent agent) { getAgentManager().registerAgent(agent); }
   }
 }

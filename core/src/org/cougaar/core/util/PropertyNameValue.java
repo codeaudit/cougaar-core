@@ -18,8 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
- 
+
 package org.cougaar.core.util;
+
 
 public class PropertyNameValue {
   public String name;

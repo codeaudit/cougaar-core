@@ -24,7 +24,8 @@ package org.cougaar.planning.ldm.plan;
 import org.cougaar.planning.ldm.asset.Asset;
 
 import org.cougaar.planning.ldm.plan.AssetVerification;
-import org.cougaar.planning.ldm.plan.Directive;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.plan.NewAssetVerification;
 
 import java.io.IOException;

@@ -21,8 +21,8 @@
 
 package org.cougaar.core.util;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /** An interface to advertise that an object is a plan object
  * that can be converted to XML.

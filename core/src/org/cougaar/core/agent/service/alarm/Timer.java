@@ -21,16 +21,14 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.agent.service.alarm.PeriodicAlarm;
-import java.util.*;
-import org.cougaar.util.log.*;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.ListIterator;
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** Implement a basic timer class that activates Alarm instances on or
  * after a specific time.  The base class operated on System time, but 

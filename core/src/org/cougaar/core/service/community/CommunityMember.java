@@ -18,9 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service.community;
 
-import java.util.*;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.Vector;
 import org.cougaar.core.mts.MessageAddress;
 
 /**

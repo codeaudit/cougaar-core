@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 
 import java.util.List;

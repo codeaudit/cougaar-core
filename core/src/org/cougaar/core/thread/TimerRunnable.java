@@ -1,10 +1,10 @@
-package org.cougaar.core.thread;
 
-import org.cougaar.core.service.ThreadService;
+package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TimerTask;
+import org.cougaar.core.service.ThreadService;
 
 public class TimerRunnable implements Runnable
 {

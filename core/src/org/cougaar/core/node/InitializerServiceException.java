@@ -21,7 +21,6 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
 
 public class InitializerServiceException extends Exception {
     public InitializerServiceException() {

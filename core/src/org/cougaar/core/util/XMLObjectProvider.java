@@ -19,14 +19,11 @@
  * </copyright>
  */
 
-
 package org.cougaar.core.util;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-
 import org.w3c.dom.Document;
-
 
 public interface XMLObjectProvider
 {

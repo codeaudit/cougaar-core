@@ -21,15 +21,11 @@
 
 package org.cougaar.core.domain;
 
-import java.util.List;
 import java.util.Set;
-
 import org.cougaar.core.mts.MessageAddress;
-
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-
 import org.cougaar.core.service.DomainForBlackboardService;
 
 public class DomainForBlackboardServiceImpl extends DomainServiceImpl

@@ -21,10 +21,9 @@
 
 package org.cougaar.core.service;
 
+import java.util.TimerTask;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.Schedulable;
-
-import java.util.TimerTask;
 
 public interface ThreadService extends Service
 {

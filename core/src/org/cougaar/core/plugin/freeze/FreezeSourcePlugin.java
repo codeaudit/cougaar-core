@@ -21,19 +21,18 @@
 
 package org.cougaar.core.plugin.freeze;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.SortedSet;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.relay.RelayChangeReport;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.UIDService;
+import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**

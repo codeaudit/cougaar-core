@@ -23,13 +23,12 @@ package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
+import org.cougaar.planning.ldm.*;
 import org.cougaar.core.domain.MessageLogicProvider;
 
 import java.util.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.planning.ldm.asset.Asset;
@@ -37,7 +36,6 @@ import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.AssetRescind;
 import org.cougaar.planning.ldm.plan.AssignedAvailabilityElement;
 import org.cougaar.planning.ldm.plan.AssignedRelationshipElement;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.HasRelationships;
 import org.cougaar.planning.ldm.plan.NewSchedule;
 import org.cougaar.planning.ldm.plan.Relationship;
@@ -60,15 +58,26 @@ import org.cougaar.util.log.Logging;
  **/
 
 public class ReceiveAssetRescindLP
-  extends LogPlanLogicProvider implements MessageLogicProvider
+implements LogicProvider, MessageLogicProvider
 {
-  private static Logger logger = Logging.getLogger(ReceiveAssetRescindLP.class);
+  private static final Logger logger = Logging.getLogger(ReceiveAssetRescindLP.class);
 
-  public ReceiveAssetRescindLP(LogPlanServesLogicProvider logplan,
-                               ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
+
+  public ReceiveAssetRescindLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
   }
   
+  public void init() {
+  }
+
   /**
    *  perform updates -- per Rescind ALGORITHM --
    *
@@ -107,8 +116,8 @@ public class ReceiveAssetRescindLP
 
     updateAvailSchedule(ar, localAsset, localAssignee);
   
-    logplan.change(localAsset, null);
-    logplan.change(localAssignee, null);
+    rootplan.change(localAsset, null);
+    rootplan.change(localAssignee, null);
   }
 
   private void updateRelationshipSchedules(AssetRescind ar,
@@ -131,7 +140,7 @@ public class ReceiveAssetRescindLP
   }
 
   // Update availability info for the asset (aka transferring asset)
-  // AvailableSchedule reflects availablity within the current cluster
+  // AvailableSchedule reflects availablity within the current agent
   private void updateAvailSchedule(AssetRescind ar,
                                    Asset asset,
                                    final Asset assignee) {

@@ -21,35 +21,27 @@
 
 package org.cougaar.core.topology;
 
-import org.cougaar.core.mts.MessageAddress;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.BasicAttributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
-import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.TopologyEntry; // inlined
 import org.cougaar.core.service.TopologyWriterService;
-
 import org.cougaar.util.GenericStateModelAdapter;
-
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Iterator;
-
-import javax.naming.Name;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.SearchResult;
 
 /**
  * This component creates and maintains the node-level

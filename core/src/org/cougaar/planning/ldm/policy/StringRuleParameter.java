@@ -25,9 +25,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -36,7 +33,7 @@ import org.cougaar.core.util.SelfPrinter;
 /**
  * An StringRuleParameter is a RuleParameter that returns an arbitrary string
  */
-public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+public class StringRuleParameter implements RuleParameter, java.io.Serializable {
   protected String my_name;
   protected String my_value;
 
@@ -112,11 +109,6 @@ public class StringRuleParameter implements RuleParameter, SelfPrinter, java.io.
       srp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return srp;
-  }
-
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_value, "Value");
   }
 
 }

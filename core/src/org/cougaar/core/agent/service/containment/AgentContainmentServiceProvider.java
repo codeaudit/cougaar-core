@@ -18,13 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent.service.containment;
 
-import org.cougaar.core.service.AgentContainmentService;
+package org.cougaar.core.agent.service.containment;
 
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.AgentContainmentService;
 
 /**
  * Agent's service provider for its "containment service",

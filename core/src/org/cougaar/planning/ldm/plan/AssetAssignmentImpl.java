@@ -21,9 +21,10 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.AssetAssignment;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.NewAssetAssignment;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.Schedule;

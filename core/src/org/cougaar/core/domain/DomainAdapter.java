@@ -21,26 +21,21 @@
 
 package org.cougaar.core.domain;
 
-import java.util.*;
-
-import org.cougaar.util.GenericStateModelAdapter;
-
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-
 import org.cougaar.core.blackboard.ChangeEnvelopeTuple;
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.PersistenceEnvelope;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
-
 import org.cougaar.core.component.BindingSite;
-
-import org.cougaar.core.persist.PersistenceNotEnabledException;
-
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.LoggingService;
-
-import org.cougaar.planning.ldm.plan.Directive;
+import org.cougaar.util.GenericStateModelAdapter;
 
 public abstract class DomainAdapter 
   extends GenericStateModelAdapter implements DomainBase {
@@ -54,7 +49,7 @@ public abstract class DomainAdapter
 
   private DomainBindingSite myBindingSite;
 
-  private XPlanServesBlackboard myXPlan;
+  private XPlan myXPlan;
 
   private LoggingService myLoggingService = null;
 
@@ -84,14 +79,14 @@ public abstract class DomainAdapter
     return myLoggingService;
   }
 
-  /** returns the LDM factory for this Domain. **/
+  /** returns the Factory for this Domain. **/
   public Factory getFactory() {
     return myFactory;
   }
 
   /** returns the XPlan instance for the domain - instance may be **/
   /** be shared among domains **/
-  public XPlanServesBlackboard getXPlan() {
+  public XPlan getXPlan() {
     return myXPlan;
   }
 
@@ -229,7 +224,7 @@ public abstract class DomainAdapter
     return myABAChangeLPs;
   }
 
-  /** load the LDMFactory for this Domain. Should call setFactory() to set the
+  /** load the Factory for this Domain. Should call setFactory() to set the
    *  factory for this Domain
    **/
   abstract protected void loadFactory();
@@ -255,7 +250,7 @@ public abstract class DomainAdapter
   }
 
   /** set the XPlan for this Domain **/
-  protected void setXPlan(XPlanServesBlackboard xPlan) {
+  protected void setXPlan(XPlan xPlan) {
     if ((myXPlan != null) && myLoggingService.isDebugEnabled()) {
       // Should we even allow this?
       myLoggingService.debug("DomainAdapter: resetting XPlan");

@@ -23,7 +23,6 @@ package org.cougaar.core.agent.service.containment;
 
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.Container;
-
 import org.cougaar.core.service.AgentContainmentService;
 
 public class AgentContainmentServiceImpl

@@ -35,12 +35,11 @@ import java.util.Set;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.servlet.ServletService;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
@@ -215,9 +214,7 @@ implements BlackboardClient
 
       MessageAddress targetId = null;
       if (target != null) {
-        // FIXME RelayLP
         targetId = MessageAddress.getMessageAddress(target);
-
         if (agentId.equals(targetId)) {
           // use "setStatus" instead of "sendError" -- see bug 1259
           res.setStatus(HttpServletResponse.SC_BAD_REQUEST);

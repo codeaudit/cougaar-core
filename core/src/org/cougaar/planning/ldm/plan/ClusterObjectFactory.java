@@ -96,7 +96,7 @@ public interface ClusterObjectFactory {
 
  
   /** Low-level task duplication.  Tasks created by this method are
-   * not suitable for use as LogPlan Objects.  This method should
+   * not suitable for use as blackboard Objects.  This method should
    * only be called by networking infrastructure.
    **/
   NewTask shadowTask(Task t);
@@ -222,6 +222,17 @@ public interface ClusterObjectFactory {
    * @see org.cougaar.planning.ldm.plan.AssignedRelationshipElement
    **/
   NewSchedule newAssignedRelationshipSchedule();
+
+  /** Build an asset transfer availabity schedule.
+   * @param Enumeration{AssignedAvailabilityElement}
+   * @see org.cougaar.planning.ldm.plan.AssignedAvailabilityElement 
+   **/
+  NewSchedule newAssignedAvailabilitySchedule(Enumeration availElements);
+
+  /** Build a an asset transfer availabity schedule
+   * @see org.cougaar.planning.ldm.plan.AssignedAvailabilityElement 
+   **/
+  NewSchedule newAssignedAvailabilitySchedule();
 
   /** Create a location schedule.  This schedule is a container of 
    * LocationScheduleElements.
@@ -419,5 +430,7 @@ public interface ClusterObjectFactory {
    * "reality" in this cluster.
    **/
   Plan getRealityPlan();
+
+  MessageAddress getMessageAddress();
 
 }

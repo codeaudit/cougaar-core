@@ -21,16 +21,15 @@
 
 package org.cougaar.core.service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.security.GeneralSecurityException;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.ProtectedInputStream;
 import org.cougaar.core.mts.ProtectedOutputStream;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 /** Cryptographic Service used to cryptographically protect incoming
  * and outgoing messages.

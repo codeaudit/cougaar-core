@@ -23,10 +23,9 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-
+import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-import org.cougaar.util.PropertyParser;
 
 class ThreadPool 
 {

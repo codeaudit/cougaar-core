@@ -19,19 +19,11 @@
  * </copyright>
  */
 
-
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.service.BlackboardService;
-
-import java.util.Enumeration;
 import java.util.Collection;
-import java.util.Iterator;
-
-import org.cougaar.core.blackboard.*;
+import java.util.Enumeration;
+import org.cougaar.core.service.BlackboardService;
 
 public class PersistenceSubscriber extends Subscriber
   implements BlackboardService

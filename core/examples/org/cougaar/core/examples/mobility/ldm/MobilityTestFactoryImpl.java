@@ -20,9 +20,6 @@
  */
 package org.cougaar.core.examples.mobility.ldm;
 
-import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.core.agent.ClusterContext;
-
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.UIDServer;
 import org.cougaar.core.util.UID;
@@ -32,12 +29,14 @@ import org.cougaar.core.util.UID;
  */
 class MobilityTestFactoryImpl implements MobilityTestFactory {
 
-  private MessageAddress self;
-  private UIDServer uidServer;
+  private final MessageAddress self;
+  private final UIDServer uidServer;
 
-  public MobilityTestFactoryImpl(LDMServesPlugin ldm) {
-    self = ldm.getMessageAddress();
-    uidServer = ((ClusterContext) ldm).getUIDServer();
+  public MobilityTestFactoryImpl(
+      MessageAddress self,
+      UIDServer uidServer) {
+    this.self = self;
+    this.uidServer = uidServer;
   }
 
   public Script createScript(String text) {

@@ -10,9 +10,9 @@
 
 package org.cougaar.core.logging;
 
-import org.cougaar.util.log.LoggerAdapter;
-import org.cougaar.util.log.Logger;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerAdapter;
 
 public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingService {
   public static LoggingService add(LoggingService ls, String prefix) {

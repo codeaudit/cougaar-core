@@ -18,19 +18,18 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service;
 
-import org.cougaar.core.component.Service;
+import java.util.Collection;
 import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.SubscriberException;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.SubscriptionWatcher;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.util.UnaryPredicate;
-
-
-import java.util.*;
 
 /** A BlackboardService is an API which may be supplied by a 
  * ServiceProvider registered in a ServiceBroker that provides basic
@@ -116,7 +115,7 @@ public interface BlackboardService extends Service {
   boolean haveCollectionsChanged();
 
   //
-  // LogPlan changes publishing
+  // Blackboard changes publishing
   //
 
   void publishAdd(Object o);
@@ -201,7 +200,7 @@ public interface BlackboardService extends Service {
   boolean isTransactionOpen();
     
   //
-  // ScheduleablePlugin API 
+  // plugin hooks
   //
 
   /** called when the client (Plugin) requests that it be waked again.

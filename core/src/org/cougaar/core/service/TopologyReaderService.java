@@ -22,7 +22,6 @@
 package org.cougaar.core.service;
 
 import java.util.Set;
-
 import org.cougaar.core.component.Service;
 
 /**

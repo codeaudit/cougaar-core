@@ -18,13 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.plugin;
 
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.util.ConfigFinder;
 
 /** A plugin's view of its parent component (Container).
  *

@@ -21,17 +21,15 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import org.cougaar.util.ConfigFinder;
-
-import java.io.*;
-import java.util.Date;
+import java.io.File;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.security.Key;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
 import java.util.HashMap;
-import java.util.Properties;
-
-import java.security.*;
-import java.security.cert.*;
+import org.cougaar.util.ConfigFinder;
 
 /** A common holder for Security keystore information and functionality
  * @property org.cougaar.install.path Used to find keystore as "org.cougaar.install.path/configs/common/.keystore"

@@ -21,6 +21,7 @@
 
 package org.cougaar.core.topology;
 
+
 /**
  * Package-private name server directory and attribute 
  * constants.

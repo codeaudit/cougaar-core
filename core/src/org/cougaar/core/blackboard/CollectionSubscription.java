@@ -21,14 +21,18 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import org.cougaar.util.DynamicUnaryPredicate;
+import org.cougaar.util.Empty;
+import org.cougaar.util.Enumerator;
+import org.cougaar.util.UnaryPredicate;
 
 /** 
  * Adds a real delegate Collection to the Subscription, accessible 

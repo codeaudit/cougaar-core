@@ -21,45 +21,54 @@
 
 package org.cougaar.core.relay;
 
-import java.io.Serializable;
-import java.util.*;
-
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import org.cougaar.core.blackboard.ABATranslation;
-import org.cougaar.core.blackboard.AnonymousChangeReport;
 import org.cougaar.core.blackboard.ChangeReport;
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
+import org.cougaar.core.domain.RootPlan;
+import org.cougaar.core.domain.ABAChangeLogicProvider;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.LogicProvider;
 import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
-import org.cougaar.core.domain.ABAChangeLogicProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
 import org.cougaar.multicast.AttributeBasedAddress;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.log.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerFactory;
 
 /**
  * Logic provider to transmit and update Relay objects.
  *
  * @see Relay
  */
-public class RelayLP extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, ABAChangeLogicProvider
+public class RelayLP
+implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, ABAChangeLogicProvider
 {
-  private Relay.Token token = new Relay.Token();
-  private MessageAddress self;
-  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
+  private final RootPlan rootplan;
+  private final MessageAddress self;
+
+  private final Logger logger = LoggerFactory.getInstance().createLogger(getClass());
+
+  private Relay.Token token = new Relay.Token(); // FIXME reconcile bug 
 
   public RelayLP(
-      LogPlanServesLogicProvider logplan, 
-      ClusterServesLogicProvider cluster) {
-    super(logplan, cluster);
-    self = cluster.getMessageAddress();
+      RootPlan rootplan, 
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   // EnvelopeLogicProvider implementation
@@ -213,33 +222,33 @@ public class RelayLP extends LogPlanLogicProvider
   private void sendAdd(Relay.Source rs, MessageAddress target, Object content) {
     RelayDirective.Add dir = 
       new RelayDirective.Add(rs.getUID(), content, rs.getTargetFactory());
-    dir.setSource((MessageAddress) self);
-    dir.setDestination((MessageAddress) target);
-    logplan.sendDirective(dir);
+    dir.setSource(self);
+    dir.setDestination(target);
+    rootplan.sendDirective(dir);
   }
 
   private void sendChange(
       Relay.Source rs, MessageAddress target, Object content, Collection c) {
     RelayDirective.Change dir =
       new RelayDirective.Change(rs.getUID(), content, rs.getTargetFactory());
-    dir.setSource((MessageAddress) self);
-    dir.setDestination((MessageAddress) target);
-    logplan.sendDirective(dir, c);
+    dir.setSource(self);
+    dir.setDestination(target);
+    rootplan.sendDirective(dir, c);
   }
 
   private void sendRemove(UID uid, MessageAddress target) {
     RelayDirective.Remove dir = new RelayDirective.Remove(uid);
-    dir.setSource((MessageAddress) self);
-    dir.setDestination((MessageAddress) target);
-    logplan.sendDirective(dir);
+    dir.setSource(self);
+    dir.setDestination(target);
+    rootplan.sendDirective(dir);
   }
 
   private void sendResponse(
       Relay.Target rt, MessageAddress source, Object resp, Collection c) {
     RelayDirective.Response dir = new RelayDirective.Response(rt.getUID(), resp);
-    dir.setSource((MessageAddress) self);
-    dir.setDestination((MessageAddress) source);
-    logplan.sendDirective(dir, c);
+    dir.setSource(self);
+    dir.setDestination(source);
+    rootplan.sendDirective(dir, c);
   }
 
   private void sendVerification(Relay.Target rt, MessageAddress source) {
@@ -283,7 +292,7 @@ public class RelayLP extends LogPlanLogicProvider
       return;
     }
     if (rt == null) return;     // Target should not exist here
-    logplan.add(rt);
+    rootplan.add(rt);
     // Check for immediate response due to arrival
     Object resp = rt.getResponse();
     if (resp != null) {
@@ -301,7 +310,7 @@ public class RelayLP extends LogPlanLogicProvider
         c = new ArrayList(changes);
         c.add(MarkerReport.INSTANCE);
       }
-      logplan.change(rt, c);
+      rootplan.change(rt, c);
       if (rt instanceof Relay.Source) localChange((Relay.Source) rt, changes);
     }
     if ((flags & Relay.RESPONSE_CHANGE) != 0) {
@@ -310,7 +319,7 @@ public class RelayLP extends LogPlanLogicProvider
   }
 
   private void receiveAdd(RelayDirective.Add dir) {
-    Relay.Target rt = (Relay.Target) logplan.findUniqueObject(dir.getUID());
+    Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
     if (rt == null) {
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
@@ -320,7 +329,7 @@ public class RelayLP extends LogPlanLogicProvider
   }
 
   private void receiveChange(RelayDirective.Change dir, Collection changes) {
-    Relay.Target rt = (Relay.Target) logplan.findUniqueObject(dir.getUID());
+    Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
     if (rt == null) {
       // Unusual. Treat as add.
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
@@ -330,19 +339,19 @@ public class RelayLP extends LogPlanLogicProvider
   }
 
   private void receiveRemove(RelayDirective.Remove dir) {
-    Relay.Target rt = (Relay.Target) logplan.findUniqueObject(dir.getUID());
+    Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
     if (rt == null) {
       // Unusual. Ignore.
     } else {
-      logplan.remove(rt);
+      rootplan.remove(rt);
     }
   }
 
   private void receiveResponse(RelayDirective.Response dir, Collection changes) {
-    Relay.Source rs = (Relay.Source) logplan.findUniqueObject(dir.getUID());
+    Relay.Source rs = (Relay.Source) rootplan.findUniqueObject(dir.getUID());
     MessageAddress target = dir.getSource();
     if (rs == null) {
-      // No longer part of our logplan. Rescind it.
+      // No longer part of our blackboard. Rescind it.
       sendRemove(dir.getUID(), target);
     } else {
       Object resp = dir.getResponse();
@@ -356,7 +365,7 @@ public class RelayLP extends LogPlanLogicProvider
             c = new ArrayList(changes);
           }
           c.add(MarkerReport.INSTANCE);
-          logplan.change(rs, c);
+          rootplan.change(rs, c);
           if (rs instanceof Relay.Target) localResponse((Relay.Target) rs, changes);
         }
         if ((flags & Relay.CONTENT_CHANGE) != 0) {
@@ -383,7 +392,7 @@ public class RelayLP extends LogPlanLogicProvider
         return o instanceof Relay;
       }
     };
-    Enumeration en = logplan.searchBlackboard(pred);
+    Enumeration en = rootplan.searchBlackboard(pred);
     while (en.hasMoreElements()) {
       Relay r = (Relay) en.nextElement();
       if (r instanceof Relay.Source) {
@@ -456,7 +465,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   public void abaChange(Set communities) {
     if (logger.isDebugEnabled()) logger.debug(self+": abaChange");
-    Enumeration en = logplan.searchBlackboard(relaySourcePred);
+    Enumeration en = rootplan.searchBlackboard(relaySourcePred);
     while (en.hasMoreElements()) {
       Relay.Source rs = (Relay.Source) en.nextElement();
       Set targets = rs.getTargets();
@@ -467,7 +476,7 @@ public class RelayLP extends LogPlanLogicProvider
           Object o = i.next();
           if (o instanceof AttributeBasedAddress) {
             AttributeBasedAddress aba = (AttributeBasedAddress) o;
-            ABATranslation abaTranslation = logplan.getABATranslation(aba);
+            ABATranslation abaTranslation = rootplan.getABATranslation(aba);
             if (abaTranslation != null) {
               oldTranslation.addAll(abaTranslation.getOldTranslation());
               newTranslation.addAll(abaTranslation.getCurrentTranslation());

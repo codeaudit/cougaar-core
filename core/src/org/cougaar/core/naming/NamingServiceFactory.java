@@ -21,25 +21,21 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.mts.SocketFactory;
-import org.cougaar.core.node.Communications;
-
-import java.rmi.Naming;
+import java.io.PrintStream;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.RMIServerSocketFactory;
 import java.util.Hashtable;
-
+import javax.naming.Binding;
 import javax.naming.Context;
+import javax.naming.NamingEnumeration;
 import javax.naming.spi.InitialContextFactory;
-
-import javax.naming.*;
-
-//  import org.cougaar.core.util.*;
-//  import org.cougaar.util.*;
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import org.cougaar.core.mts.SocketFactory;
+import org.cougaar.core.node.Communications;
 
 /**
  * Creates an RMI stub for communicating with the name server or the

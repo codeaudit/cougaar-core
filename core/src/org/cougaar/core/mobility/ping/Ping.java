@@ -21,7 +21,6 @@
 
 package org.cougaar.core.mobility.ping;
 
-import java.io.Serializable;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;

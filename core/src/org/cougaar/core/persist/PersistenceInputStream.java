@@ -18,12 +18,17 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
-import java.io.*;
-import java.util.*;
-import java.lang.reflect.*;
-import org.cougaar.core.agent.ClusterContext;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectStreamClass;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
@@ -122,7 +127,9 @@ public class PersistenceInputStream extends ObjectInputStream {
     nextReadIndex = 0;
     int active = readInt();
     Object object = readObject();
-    checkObject(object);
+    if (object instanceof ActivePersistenceObject) {
+      ((ActivePersistenceObject) object).checkRehydration(logger);
+    }
     this.references = null;
     PersistenceAssociation pAssoc = identityTable.find(object);
     if (pAssoc == null) {
@@ -224,23 +231,6 @@ public class PersistenceInputStream extends ObjectInputStream {
     return result;
   }
 
-  private void checkObject(Object object) {
-    if (object instanceof org.cougaar.planning.ldm.plan.PlanElement) {
-      if (object instanceof org.cougaar.planning.ldm.plan.AssetTransfer) {
-      } else {
-        org.cougaar.planning.ldm.plan.PlanElement pe = (org.cougaar.planning.ldm.plan.PlanElement) object;
-        org.cougaar.planning.ldm.plan.Task task = pe.getTask();
-        if (task != null) {
-          if (task.getPlanElement() != pe) {
-            //            if (logger.isWarnEnabled()) logger.warn("Bad " + object.getClass().getName() + ": pe.getTask()=" + pe.getTask() + " task.getPlanElement()=" + task.getPlanElement());
-          }
-        } else {
-          //          if (logger.isWarnEnabled()) logger.warn("Bad " + object.getClass().getName() + ": pe.getTask()=null");
-        }
-      }
-    }
-  }
-
   /**
    * Resolve an object just read from the stream into the actual
    * result object. We replace PersistenceReference objects with the
@@ -275,11 +265,6 @@ public class PersistenceInputStream extends ObjectInputStream {
   private IdentityTable identityTable = new IdentityTable();
 
   /**
-   * The ClusterContext
-   */
-  private ClusterContext clusterContext;
-
-  /**
    * Get the IdentityTable being used by this stream. This is not
    * normally used since the IdentityTable is usually maintained by
    * the creator of this stream.
@@ -298,23 +283,5 @@ public class PersistenceInputStream extends ObjectInputStream {
    */
   public void setIdentityTable(IdentityTable identityTable) {
     this.identityTable = identityTable;
-  }
-
-  /**
-   * Get the ClusterContext object that we are supporting. The
-   * ClusterContext object is supplied by our creator.
-   * @return the ClusterContext object of this stream.
-   */
-  public ClusterContext getClusterContext() {
-    return clusterContext;
-  }
-
-  /**
-   * Set the ClusterContext object for this stream. We remember this
-   * to return from the getClusterContext method.
-   * @param newClusterContext the ClusterContext object to remember.
-   */
-  public void setClusterContext(ClusterContext newClusterContext) {
-    clusterContext = newClusterContext;
   }
 }

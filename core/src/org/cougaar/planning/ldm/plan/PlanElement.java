@@ -23,18 +23,17 @@ package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.blackboard.Publishable;
 
+import org.cougaar.core.blackboard.ClaimableHolder;
 import org.cougaar.core.blackboard.ChangeReport;
 
 import java.util.Enumeration;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.TimeSpan;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-/** PlanElement Interface
+/**
  * PlanElements are the primitive building blocks from which 
- * LogPlans are constructed. A single PlanElement represents a 
+ * planning models are constructed. A single PlanElement represents a 
  * cycle of work completed against a Task. A PlanElement is of 
  * type Expansion (represented by a Workflow and the implied tasks 
  * embodied in it), Allocation (represented by an Asset),
@@ -42,7 +41,7 @@ import org.cougaar.core.agent.*;
  **/
 
 public interface PlanElement 
-  extends ScheduleElement, UniqueObject, Annotatable, Publishable
+  extends ScheduleElement, UniqueObject, Annotatable, ClaimableHolder, Publishable
 {
 	
   /** @return Plan the Plan of this plan element.

@@ -21,6 +21,8 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.blackboard.Directive;
+
 /** Directive to transfer Transferables
  **/
 public interface TransferableAssignment extends Directive

@@ -18,8 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
- 
+
 package org.cougaar.core.persist;
+
 
 /**
  * Marker class for objects that should not be persisted. Such objects

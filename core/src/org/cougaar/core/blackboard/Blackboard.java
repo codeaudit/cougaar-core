@@ -18,50 +18,44 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
-import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.blackboard.*;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
+import javax.naming.event.EventContext;
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.ServiceBroker;
-// Persistence
-import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
-import org.cougaar.util.log.*;
-import org.cougaar.core.logging.LoggingServiceWithPrefix;
-
-import org.cougaar.core.service.community.CommunityService;
+import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.NamingService;
-
-import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.planning.ldm.plan.Plan;
-
+import org.cougaar.core.service.community.CommunityChangeAdapter;
+import org.cougaar.core.service.community.CommunityChangeEvent;
+import org.cougaar.core.service.community.CommunityChangeListener;
+import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.multicast.AttributeBasedAddress;
-import org.cougaar.core.mts.MessageAttributes;
-import org.cougaar.core.mts.MessageAddress;
-
-import javax.naming.NamingException;
-import javax.naming.NameNotFoundException;
-import javax.naming.directory.SearchResult;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.DirContext;
-import javax.naming.event.EventContext;
-// import javax.naming.event.NamespaceChangeListener;
-// import javax.naming.event.NamingEvent;
-// import javax.naming.event.NamingExceptionEvent;
-// import javax.naming.event.NamingListener;
-// import javax.naming.event.ObjectChangeListener;
-import org.cougaar.core.service.community.*;
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** The Blackboard
  *
@@ -82,7 +76,7 @@ import org.cougaar.core.service.community.*;
  **/
 public class Blackboard extends Subscriber
   implements
-  BlackboardServesLogicProvider,
+  BlackboardServesDomain,
   BlackboardClient,
   PrivilegedClaimant
 {
@@ -93,10 +87,9 @@ public class Blackboard extends Subscriber
   protected DomainForBlackboardService myDomainService;
   protected LoggingService logger;
 
-  /** The insertion point for a Blackboard, defined relative to its parent, Agent. **/
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".Blackboard";
-
   public MessageAddress getCID() { return myCluster.getMessageAddress();}
+
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
@@ -326,19 +319,19 @@ public class Blackboard extends Subscriber
   }
 
   /**
-   * Add Object to the LogPlan Collection
+   * Add Object to the Blackboard Collection
    **/
   public void add(Object o) {
     publishAdd(o);
   }
 
-  /** Removed Object to the LogPlan Collection
+  /** Removed Object to the Blackboard Collection
    **/
   public void remove(Object o) {
     publishRemove(o);
   }
 
-  /** Change Object to the LogPlan Collection
+  /** Change Object to the Blackboard Collection
    **/
   public void change(Object o) {
     publishChange(o,null);
@@ -574,11 +567,6 @@ public class Blackboard extends Subscriber
     myDomainService.invokeEnvelopeLogicProviders(obj, isPersistenceEnvelope);
   }
 
-  // handle events - right now do nothing.
-  public boolean triggerEvent(Object event) {
-    return false;
-  }
-
   public PublishHistory getHistory() {
     return myDistributor.history;
   }
@@ -627,7 +615,7 @@ public class Blackboard extends Subscriber
 
   protected Persistence createPersistence(ClusterServesLogicProvider cluster) {
     try {
-      Persistence result = BasePersistence.find(cluster, myServiceBroker);
+      Persistence result = BasePersistence.find(myServiceBroker);
       if (System.getProperty("org.cougaar.core.persistence.disableWrite", "false").equals("true")) {
         String sequence =
           System.getProperty("org.cougaar.core.persistence.sequence", "");

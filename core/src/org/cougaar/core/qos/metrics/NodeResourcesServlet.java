@@ -22,18 +22,8 @@
 package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
-import java.util.Iterator;
-import java.util.Set;
 import java.text.DecimalFormat;
-
-
-import javax.servlet.*;
-import javax.servlet.http.*;
-
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
-
 
 public class NodeResourcesServlet 
     extends MetricsServlet

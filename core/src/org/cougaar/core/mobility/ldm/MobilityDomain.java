@@ -21,22 +21,22 @@
 
 package org.cougaar.core.mobility.ldm;
 
-import java.util.*;
-
-import org.cougaar.core.mts.MessageAddress;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.LogPlan;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
+import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.domain.Domain;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.domain.DomainAdapter;
 import org.cougaar.core.domain.DomainBindingSite;
 import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.UIDService;
 
 /**
@@ -55,48 +55,16 @@ public class MobilityDomain extends DomainAdapter {
   }
 
   protected void loadFactory() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain Factory without a binding site.");
-    } 
-
     UIDService uidService = getUIDService();
     MessageAddress nodeId = getNodeId();
-    MessageAddress agentId =
-      (MessageAddress) bindingSite.getClusterServesLogicProvider().getLDM().getMessageAddress();
+    MessageAddress agentId = getAgentId();
     MobilityFactory f = new MobilityFactoryImpl(uidService, nodeId, agentId);
 
     setFactory(f);
   }
 
   protected void loadXPlan() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain XPlan without a binding site.");
-    } 
-
-    Collection xPlans = bindingSite.getXPlans();
-    LogPlan logPlan = null;
-    
-    for (Iterator iterator = xPlans.iterator(); iterator.hasNext();) {
-      XPlanServesBlackboard  xPlan = (XPlanServesBlackboard) iterator.next();
-      if (xPlan instanceof LogPlan) {
-        // Note that this means there are 2 paths to the plan.
-        // Is this okay?
-        logPlan = (LogPlan) logPlan;
-        break;
-      }
-    }
-    
-    if (logPlan == null) {
-      logPlan = new LogPlan();
-    }
-    
-    setXPlan(logPlan);
+    // no xplan
   }
 
   private UIDService getUIDService() {
@@ -112,6 +80,29 @@ public class MobilityDomain extends DomainAdapter {
           "Unable to obtain uid service");
     }
     return uidService;
+  }
+
+  private MessageAddress getAgentId() {
+    // get the agentId
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    AgentIdentificationService agentIdService = 
+      (AgentIdentificationService)
+      sb.getService(
+          this,
+          AgentIdentificationService.class,
+          null);
+    if (agentIdService == null) {
+      throw new RuntimeException(
+          "Unable to obtain node-id service");
+    }
+    MessageAddress agentId = agentIdService.getMessageAddress();
+    sb.releaseService(
+        this, AgentIdentificationService.class, agentIdService);
+    if (agentId == null) {
+      throw new RuntimeException(
+          "Unable to obtain agent id");
+    }
+    return agentId;
   }
 
   private MessageAddress getNodeId() {

@@ -21,13 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.AckDirectiveMessage;
 import java.util.Iterator;
+import org.cougaar.core.agent.ClusterServesLogicProvider;
 
 public interface MessageManager {
   int OK      = 0;

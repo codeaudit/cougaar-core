@@ -21,6 +21,7 @@
 
 package org.cougaar.core.thread;
 
+
 /**
  * An extension of Scheduler that uses a globally shared max thread
  * count.  This is the default scheduler class.

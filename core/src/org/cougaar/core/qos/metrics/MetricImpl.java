@@ -21,6 +21,7 @@
 
 package org.cougaar.core.qos.metrics;
 
+
 public class MetricImpl implements Metric
 {
     private Object rawValue;

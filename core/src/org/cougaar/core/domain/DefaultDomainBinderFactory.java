@@ -18,11 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
-import java.util.*;
-import java.lang.reflect.*;
-import org.cougaar.core.component.*;
+import java.io.PrintStream;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BinderFactorySupport;
 
 /**
  * A simple BinderFactory for binding domain Domains.

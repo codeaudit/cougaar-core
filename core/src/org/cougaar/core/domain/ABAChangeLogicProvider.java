@@ -18,13 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
 import java.util.Set;
-import org.cougaar.core.mts.MessageAddress;
 
 /** 
- * API for LogPlan LogicProviders which handle ABA changes
+ * API for Blackboard LogicProviders which handle ABA changes
  */
 public interface ABAChangeLogicProvider extends LogicProvider {
   /**

@@ -23,14 +23,12 @@
 package org.cougaar.planning.ldm.lps;
 
 import java.util.Collection;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.MessageLogicProvider;
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.blackboard.Directive;
+import org.cougaar.core.domain.*;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.planning.ldm.plan.Deletion;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.NewTask;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Task;
@@ -43,12 +41,16 @@ import org.cougaar.util.UnaryPredicate;
  **/
 
 public class ReceiveDeletionLP
-  extends LogPlanLogicProvider
-  implements MessageLogicProvider
+implements LogicProvider, MessageLogicProvider
 {
-  public ReceiveDeletionLP(LogPlanServesLogicProvider logplan,
-                           ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  private final LogPlan logplan;
+
+  public ReceiveDeletionLP(
+      LogPlan logplan) {
+    this.logplan = logplan;
+  }
+
+  public void init() {
   }
 
   /**

@@ -23,18 +23,12 @@ package org.cougaar.core.examples.mobility.ldm;
 
 import java.util.*;
 
+import org.cougaar.core.agent.*;
+import org.cougaar.core.blackboard.*;
+import org.cougaar.core.domain.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.LogPlan;
-import org.cougaar.core.blackboard.XPlanServesBlackboard;
-import org.cougaar.core.domain.Domain;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.LDMServesPlugin;
-
-import org.cougaar.core.domain.DomainAdapter;
-import org.cougaar.core.domain.DomainBindingSite;
+import org.cougaar.core.service.UIDServer;
+import org.cougaar.planning.ldm.LDMServesPlugin;
 
 /**
  * The mobility test domain ("mobilityTest") just has a 
@@ -62,37 +56,15 @@ public class MobilityTestDomain extends DomainAdapter {
     } 
 
     LDMServesPlugin ldm = bindingSite.getClusterServesLogicProvider().getLDM();
-    Factory f = new MobilityTestFactoryImpl(ldm);
+    MessageAddress self = ldm.getMessageAddress();
+    UIDServer uidServer = ((ClusterContext) ldm).getUIDServer();
+
+    Factory f = new MobilityTestFactoryImpl(self, uidServer);
     setFactory(f);
   }
 
   protected void loadXPlan() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException(
-          "Binding site for the domain has not be set.\n" +
-          "Unable to initialize domain XPlan without a binding site.");
-    } 
-
-    Collection xPlans = bindingSite.getXPlans();
-    LogPlan logPlan = null;
-    
-    for (Iterator iterator = xPlans.iterator(); iterator.hasNext();) {
-      XPlanServesBlackboard  xPlan = (XPlanServesBlackboard) iterator.next();
-      if (xPlan instanceof LogPlan) {
-        // Note that this means there are 2 paths to the plan.
-        // Is this okay?
-        logPlan = (LogPlan) logPlan;
-        break;
-      }
-    }
-    
-    if (logPlan == null) {
-      logPlan = new LogPlan();
-    }
-    
-    setXPlan(logPlan);
+    // none
   }
 
   // zero LPs

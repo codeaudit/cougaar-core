@@ -21,23 +21,33 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.mts.SocketFactory;
-import org.cougaar.core.service.*;
-
+import java.io.PrintStream;
 import java.io.Serializable;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.rmi.RMISecurityManager;
+import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.*;
-
-import javax.naming.*;
-import javax.naming.event.NamingEvent;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.naming.Binding;
+import javax.naming.ContextNotEmptyException;
+import javax.naming.InvalidNameException;
+import javax.naming.NameAlreadyBoundException;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+import javax.naming.NotContextException;
+import javax.naming.OperationNotSupportedException;
 import javax.naming.directory.BasicAttribute;
-
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
-import org.cougaar.util.log.*;
+import javax.naming.event.NamingEvent; // inlined
+import org.cougaar.core.mts.SocketFactory;
+import org.cougaar.util.CircularQueue;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerFactory;
 
 /** Actual RMI remote object providing the implementation of NameServer.
  * Now implements a hierarchy of directory objects

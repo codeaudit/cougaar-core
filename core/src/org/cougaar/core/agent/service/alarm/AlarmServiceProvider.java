@@ -21,22 +21,19 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.component.*;
+import org.cougaar.core.agent.ClusterServesClocks;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.AlarmService;
 
 /** a Service for getting at Alarm information
  **/
 
 public class AlarmServiceProvider implements ServiceProvider {
-  private ClusterServesPlugin cluster;
+  private ClusterServesClocks agentClock;
 
-  public AlarmServiceProvider(ClusterServesPlugin cluster) {
-    this.cluster = cluster;
+  public AlarmServiceProvider(ClusterServesClocks agentClock) {
+    this.agentClock = agentClock;
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -52,13 +49,13 @@ public class AlarmServiceProvider implements ServiceProvider {
 
   private final class AlarmServiceImpl implements AlarmService {
     public long currentTimeMillis() {
-      return cluster.currentTimeMillis();
+      return agentClock.currentTimeMillis();
     }
     public void addAlarm(Alarm alarm) {
-      cluster.addAlarm(alarm);
+      agentClock.addAlarm(alarm);
     }
     public void addRealTimeAlarm(Alarm alarm) {
-      cluster.addRealTimeAlarm(alarm);
+      agentClock.addRealTimeAlarm(alarm);
     }
   }
 }

@@ -21,6 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.blackboard.NewDirective;
 
 /**
   * TransferableAssignment Setter Interface

@@ -18,11 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service;
 
-import org.cougaar.core.mts.*;
-
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 /** A service to provide access to the identity of the agent 
  * the requestor is resident in.

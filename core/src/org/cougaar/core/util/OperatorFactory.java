@@ -21,9 +21,8 @@
 
 package org.cougaar.core.util;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
+import java.io.FileReader;
+import java.io.PrintStream;
 
 /**
  * Factory which can <tt>create</tt> <code>Operator</code>s.

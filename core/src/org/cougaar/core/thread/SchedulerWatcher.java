@@ -21,17 +21,18 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.ThreadListenerService;
-import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.qos.metrics.Metric;
-import org.cougaar.core.qos.metrics.MetricImpl;
-import org.cougaar.core.qos.metrics.MetricsUpdateService;
-import org.cougaar.core.qos.metrics.Constants;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TimerTask;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.qos.metrics.Constants;
+import org.cougaar.core.qos.metrics.Metric;
+import org.cougaar.core.qos.metrics.MetricImpl;
+import org.cougaar.core.qos.metrics.MetricsUpdateService;
+import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadService;
 
 public class SchedulerWatcher
     implements ThreadListener, Constants

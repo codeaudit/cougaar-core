@@ -18,14 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.servlet;
- 
+
 import java.util.Collection;
 import java.util.List;
-
-import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * This is a simple API for a <code>Servlet</code> to access
@@ -152,8 +152,4 @@ public interface SimpleServletSupport {
   //
   // note that we want this to remain a *simple* API.
   //
-
-  /*
-  public MessageAddress getMessageAddress();
-  */
 }

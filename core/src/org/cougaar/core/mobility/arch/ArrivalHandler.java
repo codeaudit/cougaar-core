@@ -18,11 +18,13 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.MobilityException;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * Received a TRANSFER request on the destination node.

@@ -21,20 +21,22 @@
 
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
-
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.TopologyReaderService;
 
 public class AgentLoadLoggerPlugin 
     extends ComponentPlugin
@@ -128,7 +130,7 @@ public class AgentLoadLoggerPlugin
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	node = nis.getMessageAddress().toString();
+ 	node = nis.getMessageAddress().toString();
 
 
 	ThreadService threadService = (ThreadService)

@@ -22,21 +22,23 @@
 package org.cougaar.core.plugin.completion;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.TopologyReaderService;
-import org.cougaar.core.servlet.ServletService;
 import org.cougaar.util.CougaarEvent;
 import org.cougaar.util.CougaarEventType;
 
@@ -99,7 +101,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
 
   private int nextCompletionAction = 0;
 
-  private boolean planningComplete = false;
+  private boolean isComplete = false;
 
   private LaggardFilter filter = new LaggardFilter();
 
@@ -232,9 +234,9 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
             }
             persistenceNeeded = false;
           }
-          if (!planningComplete) {
+          if (!isComplete) {
             CougaarEvent.postEvent(CougaarEventType.STATUS, "Planning Complete");
-            planningComplete = true;
+            isComplete = true;
           }
           return;
         }
@@ -262,9 +264,9 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
         timeToAdvanceTime = now + ADVANCE_TIME_ADVANCE_DELAY;
       }
     }
-    if (planningComplete) {
+    if (isComplete) {
       CougaarEvent.postEvent(CougaarEventType.STATUS, "Planning Active");
-      planningComplete = false;
+      isComplete = false;
     }
   }
 

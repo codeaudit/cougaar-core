@@ -2,11 +2,9 @@
  * <copyright>
  * Copyright 2002 BBNT Solutions, LLC
  * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
-
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the Cougaar Open Source License as published by
  * DARPA on the Cougaar Open Source Website (www.cougaar.org).
-
  * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -21,34 +19,35 @@
 
 package org.cougaar.core.adaptivity;
 
-import java.lang.reflect.Constructor;
-
-import java.io.PrintWriter;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.Reader;
 import java.io.StringReader;
-import java.io.StreamTokenizer;
-
-import java.util.Comparator;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
-
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.servlet.SimpleServletSupport;
-import org.cougaar.core.servlet.BlackboardServletSupport;
-
+import org.cougaar.core.service.BlackboardQueryService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.NamingService;
+import org.cougaar.core.servlet.ComponentServlet;
+import org.cougaar.core.servlet.NSUtil;
+import org.cougaar.core.util.UID;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * Servlet to view adaptivity objects and edit operating mode policies
  */
-public class AEViewerServlet extends HttpServlet {
+public class AEViewerServlet extends ComponentServlet {
 
   public static final String OPERATINGMODE = "OperatingMode";
   public static final String POLICY = "Policy";
@@ -58,7 +57,10 @@ public class AEViewerServlet extends HttpServlet {
   public static final String KERNEL = "kernel";
   public static final String VALUE = "value";
 
-  private BlackboardServletSupport support;
+  private LoggingService logger = LoggingService.NULL;
+  private BlackboardQueryService blackboardQuery;
+  private BlackboardService blackboard;
+  private NamingService ns;
 
   private OMComparator omComparator = new OMComparator();
   private OMPComparator ompComparator = new OMPComparator();
@@ -93,14 +95,46 @@ public class AEViewerServlet extends HttpServlet {
 	}
       };
 
-  public void setSimpleServletSupport(SimpleServletSupport support) {
-    if (support instanceof BlackboardServletSupport) {
-      this.support = (BlackboardServletSupport)support;
-    } else {
-      throw new RuntimeException("AEViewerServlet must be started with BlackboardServletComponent");
+  public void setLoggingService(LoggingService logger) {
+    if (logger != null) { 
+      this.logger = logger;
     }
   }
 
+  public void setBlackboardQueryService(BlackboardQueryService blackboardQuery) {
+    this.blackboardQuery = blackboardQuery;
+  }
+
+  public void setBlackboardService(BlackboardService blackboard) {
+    this.blackboard = blackboard;
+  }
+
+  public void setNamingService(NamingService ns) {
+    this.ns = ns;
+  }
+
+  public void unload() {
+    if (ns != null) {
+      serviceBroker.releaseService(
+          this, NamingService.class, ns);
+      ns = null;
+    }
+    if (blackboard != null) {
+      serviceBroker.releaseService(
+          this, BlackboardService.class, blackboard);
+      blackboard = null;
+    }
+    if (blackboardQuery != null) {
+      serviceBroker.releaseService(
+          this, BlackboardQueryService.class, blackboardQuery);
+      blackboardQuery = null;
+    }
+    if (logger != LoggingService.NULL) {
+      serviceBroker.releaseService(this, LoggingService.class, logger);
+      logger = LoggingService.NULL;
+    }
+    super.unload();
+  }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) {
     String objectType = request.getParameter(CHANGE);
@@ -134,7 +168,7 @@ public class AEViewerServlet extends HttpServlet {
     OperatingModePolicy[] policies = null;
     try {
       // Use the parser to create a new policy
-      Parser parser = new Parser(reader, support.getLog());
+      Parser parser = new Parser(reader, logger);
       policies = parser.parseOperatingModePolicies();
     } catch (java.io.IOException ioe) {
       ioe.printStackTrace();
@@ -144,14 +178,13 @@ public class AEViewerServlet extends HttpServlet {
 
     // find the existing policy on the blackboard
     Collection blackboardCollection 
-      = support.queryBlackboard(new UIDPredicate(uid));
+      = blackboardQuery.query(new UIDPredicate(uid));
     OperatingModePolicy bbPolicy = (OperatingModePolicy)blackboardCollection.iterator().next();
 
     // set the existing policy's kernel to be that of the newly
     // parsed policy
     bbPolicy.setPolicyKernel(policies[0].getPolicyKernel());
     
-    BlackboardService blackboard = support.getBlackboardService();
     blackboard.openTransaction();
     // write the updated policy to the blackboard
     blackboard.publishChange(bbPolicy);
@@ -167,7 +200,7 @@ public class AEViewerServlet extends HttpServlet {
     String omName = request.getParameter(NAME);
     // find the existing operating mode on the blackboard
     Collection blackboardCollection 
-      = support.queryBlackboard(new OMByNamePredicate(omName));
+      = blackboardQuery.query(new OMByNamePredicate(omName));
     OperatingMode bbOM = (OperatingMode)blackboardCollection.iterator().next();
 
     String newValue = request.getParameter(VALUE);
@@ -239,7 +272,6 @@ public class AEViewerServlet extends HttpServlet {
       return;
     }
     
-    BlackboardService blackboard = support.getBlackboardService();
     blackboard.openTransaction();
     // write the updated operating mode to the blackboard
     blackboard.publishChange(bbOM);
@@ -276,14 +308,14 @@ public class AEViewerServlet extends HttpServlet {
 	      "  var tidx = document.myForm.formCluster.selectedIndex\n"+
 	      "  var cluster = document.myForm.formCluster.options[tidx].text\n"+
 	      "  document.myForm.action=\"/$\"+cluster+\"");
-    out.print(support.getPath());
+    out.print(getPath());
     out.print("\"\n"+
 	      "  return true\n"+
 	      "}\n"+
 	      "// -->\n"+
 	      "</script>\n");
     out.print("<h2><center>Adaptivity Viewer at ");
-    out.print(support.getEncodedAgentName());
+    out.print(getEncodedAgentName());
     out.print(
 	      "</center></h2>\n"+
 	      "<form name=\"myForm\" method=\"get\" "+
@@ -291,12 +323,12 @@ public class AEViewerServlet extends HttpServlet {
 	      "Adaptivity Objects at "+
 	      "<select name=\"formCluster\">\n");
     // lookup all known cluster names
-    List names = support.getAllEncodedAgentNames();
+    List names = NSUtil.getAllEncodedAgentNames(ns);
     int sz = names.size();
     for (int i = 0; i < sz; i++) {
       String n = (String) names.get(i);
       out.print("  <option ");
-      if (n.equals(support.getEncodedAgentName())) {
+      if (n.equals(getEncodedAgentName())) {
 	out.print("selected ");
       }
       out.print("value=\"");
@@ -315,7 +347,7 @@ public class AEViewerServlet extends HttpServlet {
    **/
   private void writeConditions(PrintWriter out) {
     out.println("<h2><CENTER>Conditions</CENTER></h2><br>" );
-    Collection conditions = support.queryBlackboard(conditionPredicate);
+    Collection conditions = blackboardQuery.query(conditionPredicate);
 
     // Sort the Conditions. Is there a better way of doing this?
     TreeSet sortedConditions = new TreeSet();
@@ -338,7 +370,7 @@ public class AEViewerServlet extends HttpServlet {
     out.println("<tr><th>OperatingMode Name</th><th>Valid Values</th><th>Value</th></tr>");
 
     // Sort the OperatingModes
-    List oms = (List) support.queryBlackboard(omPredicate);
+    List oms = (List) blackboardQuery.query(omPredicate);
     try {
       Collections.sort(oms, omComparator);
     } catch (ClassCastException e) {
@@ -348,8 +380,8 @@ public class AEViewerServlet extends HttpServlet {
     for (Iterator it = oms.iterator(); it.hasNext();) {
       
       out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
-      out.print(support.getEncodedAgentName());
-      out.print(support.getPath());
+      out.print(getEncodedAgentName());
+      out.print(getPath());
       out.println("\">");
       
       OperatingMode om = (OperatingMode) it.next();
@@ -398,7 +430,7 @@ public class AEViewerServlet extends HttpServlet {
     out.println("<tr><th>Name</th><th>Authority</th><th>UID</th><th>Kernel</th></tr>");
 
     // Sort the OperatingModePolicies
-    List policies = (List) support.queryBlackboard(omPolicyPredicate);
+    List policies = (List) blackboardQuery.query(omPolicyPredicate);
     try {
       Collections.sort(policies, ompComparator);
     } catch (ClassCastException e) {
@@ -408,8 +440,8 @@ public class AEViewerServlet extends HttpServlet {
     for (Iterator it = policies.iterator(); it.hasNext();) {
       
       out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
-      out.print(support.getEncodedAgentName());
-      out.print(support.getPath());
+      out.print(getEncodedAgentName());
+      out.print(getPath());
       out.print("\">\n");
       
       OperatingModePolicy omp = (OperatingModePolicy) it.next();

@@ -22,12 +22,10 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
 
+import org.cougaar.planning.ldm.*;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Expansion;
 import org.cougaar.planning.ldm.plan.Workflow;
@@ -40,13 +38,21 @@ import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 import java.util.*;
 
-public class WorkflowAllocationLP extends LogPlanLogicProvider implements EnvelopeLogicProvider
+public class WorkflowAllocationLP
+implements LogicProvider, EnvelopeLogicProvider
 {
-  public WorkflowAllocationLP(LogPlanServesLogicProvider logplan,
-                              ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+
+  public WorkflowAllocationLP(
+      RootPlan rootplan,
+      LogPlan logplan) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
   }
 
+  public void init() {
+  }
 
   /** @param Object  Object Envelope.tuple
    *        where Envelope.Tuple.object
@@ -64,9 +70,9 @@ public class WorkflowAllocationLP extends LogPlanLogicProvider implements Envelo
 
   private void processExpansion(Expansion exp) {
     Workflow work = exp.getWorkflow();
-    logplan.add(work);
+    rootplan.add(work);
 
-      // Add each subtask of the workflow to the logplan so
+      // Add each subtask of the workflow to the blackboard so
       // that allocators can allocate against single tasks
       // (and we don't need pass-thru expanders
     Enumeration tasks = work.getTasks();
@@ -74,7 +80,7 @@ public class WorkflowAllocationLP extends LogPlanLogicProvider implements Envelo
       Task t = (Task) tasks.nextElement();
       if (t != null) {
         if (logplan.findTask(t) == null)
-          logplan.add(t);
+          rootplan.add(t);
       }
     }
   }

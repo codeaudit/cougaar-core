@@ -38,7 +38,6 @@ import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerAdapter;
@@ -65,7 +64,7 @@ import org.cougaar.util.log.LoggerFactory;
  *   if set to <em>true</em>, enables tracking of
  *   all publishes.  Extremely expensive.
  **/
-public final class Distributor {
+final class Distributor {
 
   /*
    * Design summary:
@@ -975,6 +974,7 @@ public final class Distributor {
   }
 
   public String getName() { return name; } // agent name
+
   public String toString() {
     return "<Distributor " + name + ">";
   }

@@ -2,11 +2,9 @@
  * <copyright>
  * Copyright 2002 BBNT Solutions, LLC
  * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
-
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the Cougaar Open Source License as published by
  * DARPA on the Cougaar Open Source Website (www.cougaar.org).
-
  * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -18,25 +16,34 @@
  * PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.service;
 
-import java.io.Serializable;
-import java.util.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.util.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.plugin.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.mobility.*;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.Iterator;
+import org.cougaar.core.blackboard.CollectionSubscription;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.AddTicket;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.RemoveTicket;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
-import org.cougaar.core.mobility.ldm.TicketIdentifier;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.util.*;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.DomainService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * The "RedirectMovePlugin" runs in leaf (non node-agent) agents

@@ -21,11 +21,10 @@
 
 package org.cougaar.core.service;
 
+import java.util.Comparator;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.RightsSelector;
 import org.cougaar.util.UnaryPredicate;
-
-import java.util.Comparator;
 
 public interface ThreadControlService extends Service
 {

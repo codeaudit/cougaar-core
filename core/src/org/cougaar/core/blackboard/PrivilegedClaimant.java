@@ -21,13 +21,10 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
 
 /**
  * Plugins and internal subscription clients which implement 
- * PrivilegedClaimant are allowed to manipulate logplan objects 
+ * PrivilegedClaimant are allowed to manipulate blackboard objects 
  * freely, effectively ignoring claims (without warnings, etc).
  * 
  * Note that Claim warnings are currently just warnings, 

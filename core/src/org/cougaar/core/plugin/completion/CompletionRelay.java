@@ -21,6 +21,7 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

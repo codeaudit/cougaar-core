@@ -28,7 +28,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 
 import org.cougaar.core.component.*;
-import org.cougaar.core.servlet.ServletService;
+import org.cougaar.core.service.ServletService;
 
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.GenericStateModelAdapter;

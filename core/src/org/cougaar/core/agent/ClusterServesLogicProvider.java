@@ -18,23 +18,46 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
+import org.cougaar.planning.ldm.LDMServesPlugin;
+import org.cougaar.core.service.UIDServer;
 
 /**
- * @author ALPINE <alpine-software@bbn.com>
- **/
-public interface ClusterServesLogicProvider extends LDMServesClient
-{
+ * Agent support for Domains.
+ */
+public interface ClusterServesLogicProvider {
+
   /** Send an asynchronous message.
    **/
-  void sendMessage(ClusterMessage message);
+  void sendMessage(Message message);
 
   /** @return current scenario time in milliseconds **/
   long currentTimeMillis();
+
+  /** @return the Requested Domain's LDM Factory.
+   **/
+  Factory getFactory(String domainName);
+
+  /** @return the Requested Domain's LDM Factory.
+   **/
+  Factory getFactory(Class domainClass);
+
+  /** @return the classloader to be used for loading classes for the LDM.
+   * Domain Plugins should not use this, as they will have been themselves
+   * loaded by this ClassLoader.  Some infrastructure components which are
+   * not loaded in the same way will require this for correct operation.
+   **/
+  ClassLoader getLDMClassLoader();
+
+  /** The current cluster's CID */
+  MessageAddress getMessageAddress();
+  
+  UIDServer getUIDServer();
+
+  LDMServesPlugin getLDM();
 }

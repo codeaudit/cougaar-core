@@ -19,15 +19,16 @@
  * </copyright>
  */
 
-
 package org.cougaar.planning.ldm.predicate;
+
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.plan.*;
+import org.cougaar.util.UnaryPredicate;
 
 /** Utility predicate for selecting Directives 
  **/
 
-public class DirectivePredicate
-  implements org.cougaar.util.UnaryPredicate
+public class DirectivePredicate implements UnaryPredicate
 {
   public final boolean execute(Object o) {
     return (o instanceof Directive) && execute((Directive) o);

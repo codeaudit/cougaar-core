@@ -22,11 +22,10 @@
 package org.cougaar.core.service;
 
 import java.util.Set;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 public interface DomainForBlackboardService extends DomainService {
   /** set the blackboard for all the domains **/

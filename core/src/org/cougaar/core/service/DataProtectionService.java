@@ -26,13 +26,10 @@
 
 package org.cougaar.core.service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
-
-// Cougaar core services
 import org.cougaar.core.component.Service;
-import org.cougaar.core.mts.MessageAddress;
 
 public interface DataProtectionService
   extends Service

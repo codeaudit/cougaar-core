@@ -18,7 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.service.community;
+
 
 public abstract class CommunityChangeAdapter implements CommunityChangeListener {
   private String communityName;

@@ -21,6 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetRescind Interface

@@ -20,17 +20,16 @@
  */
 package org.cougaar.planning.ldm.lps;
 
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.MessageLogicProvider;
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.domain.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Vector;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.planning.ldm.asset.Asset;
@@ -41,7 +40,6 @@ import org.cougaar.planning.ldm.asset.PropertyGroupSchedule;
 import org.cougaar.planning.ldm.plan.AssetAssignment;
 import org.cougaar.planning.ldm.plan.AssignedRelationshipElement;
 import org.cougaar.planning.ldm.plan.AssignedAvailabilityElement;
-import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.HasRelationships;
 import org.cougaar.planning.ldm.plan.NewRelationshipSchedule;
 import org.cougaar.planning.ldm.plan.NewRoleSchedule;
@@ -67,15 +65,29 @@ import org.cougaar.util.log.Logging;
   * other subscribers.
   **/
 
-public class ReceiveAssetLP extends LogPlanLogicProvider 
-  implements MessageLogicProvider {
+public class ReceiveAssetLP
+implements LogicProvider, MessageLogicProvider {
   private static Logger logger = Logging.getLogger(ReceiveAssetLP.class);
+
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
+  private final PlanningFactory ldmf;
+  private final MessageAddress self;
 
   private static TimeSpan ETERNITY = new MutableTimeSpan();
 
-  public ReceiveAssetLP(LogPlanServesLogicProvider logplan,
-                       ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+  public ReceiveAssetLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   /**
@@ -102,7 +114,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     
     if (assigneeL == null) {
       logger.error("ReceiveAssetLP: Unable to find receiving asset " + 
-                   assigneeT + " in "+cluster);
+                   assigneeT + " in "+self);
       return;
     }
     Asset assignee = assigneeL;
@@ -114,7 +126,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     Asset asset = assetL;
 
     if (asset == null) {
-      // Clone to ensure that we don't end up with cross cluster asset 
+      // Clone to ensure that we don't end up with cross agent asset 
       // references
       asset = ldmf.cloneInstance(assetT);
       if (related(asset)) {
@@ -151,7 +163,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
       
       Collection changeReports = new ArrayList();
       changeReports.add(new RelationshipSchedule.RelationshipScheduleChangeReport());
-      logplan.change(assignee, changeReports);
+      rootplan.change(assignee, changeReports);
     }
 
 
@@ -189,14 +201,14 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
       
     // publish the add or change
     if (assetL == null) {            // add it if it wasn't already there
-      logplan.add(asset);
+      rootplan.add(asset);
     } else {
       if (updateRelationships) {
         Collection changeReports = new ArrayList();
         changeReports.add(new RelationshipSchedule.RelationshipScheduleChangeReport());
-        logplan.change(asset, changeReports);
+        rootplan.change(asset, changeReports);
       } else {
-        logplan.change(asset, null);
+        rootplan.change(asset, null);
       }
     }
 
@@ -260,7 +272,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
   }
 
   // Update availability info for the transferred asset
-  // AvailableSchedule reflects availability within the current cluster
+  // AvailableSchedule reflects availability within the current agent
   private void fixAvailSchedule(AssetAssignment aa, Asset asset,
                                 final Asset assignee) {
     NewSchedule availSchedule = 

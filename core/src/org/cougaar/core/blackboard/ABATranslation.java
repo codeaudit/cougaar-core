@@ -21,7 +21,6 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.multicast.AttributeBasedAddress;
 import java.util.Collection;
 
 public interface ABATranslation {

@@ -21,15 +21,16 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Properties;
-
-import java.security.*;
-import java.security.cert.*;
+import java.io.PrintStream;
+import java.io.Serializable;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignedObject;
+import java.security.cert.Certificate;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageSecurityManager;
 
 /** A useful MessageSecurityManager which signs each message, but depends on
  * the destination to recover the public key of the sender.

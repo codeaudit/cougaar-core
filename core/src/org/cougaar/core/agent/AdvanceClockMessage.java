@@ -21,12 +21,8 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.agent.service.alarm.*;
-
-import org.cougaar.core.blackboard.*;
-
+import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 
 /**

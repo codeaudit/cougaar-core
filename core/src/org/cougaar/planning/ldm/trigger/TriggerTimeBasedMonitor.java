@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 import java.util.List;
 import java.util.Arrays;

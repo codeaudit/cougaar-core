@@ -21,36 +21,30 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.core.blackboard.AckDirectiveMessage;
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.util.StringUtility;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
-import java.net.Socket;
+import java.io.Writer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.TreeSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.TreeSet;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.ClusterMessage;
+import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.util.StringUtility;
 
-public class MessageManagerImpl implements MessageManager, Serializable {
+class MessageManagerImpl implements MessageManager, Serializable {
 
   public static final long serialVersionUID = -8662117243114391926L;
 

@@ -41,6 +41,8 @@ import org.cougaar.planning.ldm.plan.NewMPTask;
 import org.cougaar.planning.ldm.plan.Composition;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
+import org.cougaar.core.persist.ActivePersistenceObject;
+import org.cougaar.util.log.Logger;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
@@ -57,7 +59,7 @@ import java.io.IOException;
         
 public final class MPTaskImpl 
   extends TaskImpl 
-  implements MPTask, NewMPTask
+  implements MPTask, NewMPTask, ActivePersistenceObject
 {
         
   //private transient  Vector parenttasks = new Vector();
@@ -180,6 +182,35 @@ public final class MPTaskImpl
   private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
     stream.defaultReadObject();
     parenttasks = (ArrayList) stream.readObject();
+  }
+
+  // ActivePersistenceObject
+  public void postRehydration(Logger logger) {
+    NewComposition comp = (NewComposition) getComposition();
+    List aggregations = comp.getAggregations();
+    List newAggregations = null;
+    for (int i = 0, n = aggregations.size(); i < n; i++) {
+      Aggregation agg = (Aggregation) aggregations.get(i);
+      if (agg == null) {
+        logger.warn("Removing null aggregation from composition of " + this);
+        if (newAggregations == null) {
+          newAggregations = new ArrayList(n - 1);
+          newAggregations.addAll(aggregations.subList(0, i));
+        }
+      } else if (newAggregations != null) {
+        newAggregations.add(agg);
+      }
+    }
+    if (newAggregations != null) {
+      comp.setAggregations(newAggregations);
+    }
+  }
+  public void checkRehydration(Logger logger) {
+    // okay
+  }
+  public boolean skipUnpublishedPersist(Logger logger) {
+    // persist me as usual
+    return false;
   }
 
   // for UI

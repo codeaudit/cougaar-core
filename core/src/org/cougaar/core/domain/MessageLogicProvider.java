@@ -18,10 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.domain;
 
-import org.cougaar.planning.ldm.plan.Directive;
 import java.util.Collection;
+import org.cougaar.core.blackboard.Directive;
 
 /** Marker interface indicating that the Logic Provider is for
  * handling Directives rather than transaction Envelopes.
@@ -29,7 +30,7 @@ import java.util.Collection;
 
 public interface MessageLogicProvider extends LogicProvider {
 
-  /** Called by LogPlan on each received Message.
+  /** Called by the Blackboard on each received Message.
    * @return true iff it actually performed an action based on the 
    * message.
    **/

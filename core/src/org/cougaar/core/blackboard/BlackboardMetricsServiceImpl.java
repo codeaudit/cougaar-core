@@ -18,15 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.blackboard.Distributor;
+import org.cougaar.core.service.BlackboardMetricsService;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Task;
@@ -37,7 +32,7 @@ import org.cougaar.util.UnaryPredicate;
  * the entire Blackboard.
  */
 
-public class BlackboardMetricsServiceImpl implements BlackboardMetricsService {
+class BlackboardMetricsServiceImpl implements BlackboardMetricsService {
   
   private Distributor distributor;
 

@@ -21,7 +21,6 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
 
 /** SecureMessage is marker class for securing the contents of 
  * a message using cryptography.

@@ -18,13 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.ContainerAPI;
 
 /** This is the interface presented to an AgentBinder from the AgentManager.
  **/

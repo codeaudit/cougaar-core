@@ -18,19 +18,26 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.plugin;
 
-import java.util.*;
-import org.cougaar.core.relay.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Set;
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.service.UIDService;
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
-import org.cougaar.multicast.AttributeBasedAddress;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.relay.Relay;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.SimpleUniqueObject;
 import org.cougaar.core.util.UID;
-import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.multicast.AttributeBasedAddress;
+import org.cougaar.util.UnaryPredicate;
 
 public class TestABA extends ComponentPlugin {
   private IncrementalSubscription relays;
@@ -60,7 +67,8 @@ public class TestABA extends ComponentPlugin {
     if (is135ARBN) {
       logger.info("Adding relay at " + cid);
       AttributeBasedAddress target =
-        AttributeBasedAddress.getAttributeBasedAddress("2-BDE-1-AD-COMM", "Role", "Member");
+        AttributeBasedAddress.getAttributeBasedAddress(
+            "2-BDE-1-AD-COMM", "Role", "Member");
       myRelay = new MyRelay(Collections.singleton(target));
       myRelay.setUID(uidService.nextUID());
       blackboard.publishAdd(myRelay);

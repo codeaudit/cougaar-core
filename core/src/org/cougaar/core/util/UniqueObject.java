@@ -20,6 +20,7 @@
  */
 
 package org.cougaar.core.util;
+
 import java.io.Serializable;
 
 /**
@@ -40,7 +41,7 @@ public interface UniqueObject extends Serializable {
   UID getUID();
 
   /** set the UID of a UniqueObject.  This should only be done by
-   * an LDM factory.  Will throw a RuntimeException if
+   * a domain factory.  Will throw a RuntimeException if
    * the UID was already set.
    **/
   void setUID(UID uid);

@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 import javax.servlet.*;
 import javax.servlet.http.*;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.component.ServiceBroker;
@@ -153,7 +152,6 @@ extends ComponentPlugin
     // parse optional set of targets
     for (int i = 3, n = params.size(); i < n; i++) {
       String si = (String) params.get(i);
-      // FIXME RelayLP bug!
       MessageAddress ai = MessageAddress.getMessageAddress(si);
       if (agentId.equals(ai)) {
         throw new IllegalArgumentException(

@@ -108,12 +108,12 @@ public class AggregationImpl extends PlanElementImpl
   
   // ActiveSubscription code
   // override PlanElementImpls remove stuff
-  public boolean removingFromLogPlan(Subscriber s) {
+  public void removingFromBlackboard(Subscriber s) {
     Task t = getTask();
     ((TaskImpl)t).privately_resetPlanElement();
     Composition c = getComposition();
 
-    if (c == null) return true; // if already disconnected...
+    if (c == null) return; // if already disconnected...
 
     if (c.isPropagating() ) { // if we're auto-propagating
       CompositionImpl ci = (CompositionImpl) c;
@@ -151,7 +151,6 @@ public class AggregationImpl extends PlanElementImpl
         s.publishRemove(combtask);
       }
     }
-    return true;
   }
 
   // beaninfo

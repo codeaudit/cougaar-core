@@ -22,11 +22,9 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
+import org.cougaar.planning.ldm.*;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Allocation;
@@ -49,13 +47,17 @@ import org.cougaar.util.*;
  *
  **/
 
-public class PreferenceChangeLP extends LogPlanLogicProvider implements EnvelopeLogicProvider {
-        
-  public PreferenceChangeLP(LogPlanServesLogicProvider logplan,
-                            ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
+public class PreferenceChangeLP
+implements LogicProvider, EnvelopeLogicProvider {
+
+  private final RootPlan rootplan;
+
+  public PreferenceChangeLP(RootPlan rootplan) {
+    this.rootplan = rootplan;
   }
  
+  public void init() {
+  }
 
   /**
    * Do something if the test returned true i.e. it was an Allocation
@@ -96,8 +98,8 @@ public class PreferenceChangeLP extends LogPlanLogicProvider implements Envelope
       if (((TaskImpl)senttask).private_updatePreferences((TaskImpl)task)) {
         // we changed task, so:
 
-        // Give the task to the logplan for transmission
-        logplan.sendDirective(senttask, changes);
+        // Give the task to the blackboard for transmission
+        rootplan.sendDirective(senttask, changes);
       }
     }
   }

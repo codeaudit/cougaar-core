@@ -2,11 +2,9 @@
  * <copyright>
  * Copyright 2002 BBNT Solutions, LLC
  * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
-
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the Cougaar Open Source License as published by
  * DARPA on the Cougaar Open Source Website (www.cougaar.org).
-
  * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -18,8 +16,11 @@
  * PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.mobility.ping;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Random;
@@ -29,6 +30,8 @@ import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.XMLizable;
 import org.cougaar.core.util.XMLize;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * Package-private implementation of a Ping.

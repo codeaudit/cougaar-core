@@ -21,9 +21,9 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
+import java.io.PrintStream;
 import java.util.Hashtable;
+import java.util.List;
 
 /**
 * This class provides the containment of all arguments passed into the main command line.
@@ -57,7 +57,7 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
   public ArgTable( String[] args ) {
     //Check to see if help was requested
     checkForHelp( args );
-    //if not then map the args
+    //if not hte map the args
     mapArgs( args );
   }
 

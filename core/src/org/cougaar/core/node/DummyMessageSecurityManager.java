@@ -21,12 +21,10 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-
-
-import java.io.*;
-import java.util.Date;
+import java.io.PrintStream;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageSecurityManager;
 
 /** A vacuous MessageSecurityManager.  DMSM looks like a MSM, but
  * doesn't actually add any real security at all.  Instead, it 

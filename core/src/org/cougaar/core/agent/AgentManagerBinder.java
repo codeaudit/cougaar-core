@@ -18,18 +18,15 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.component.*;
-import org.cougaar.core.node.ClusterManagementServesCluster;
-import org.cougaar.core.node.Node;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.node.NodeForBinder;
-import org.cougaar.core.mts.Message;
 
 /** The standard Binder for AgentManagers and possibly others attaching to a Node.
  **/
@@ -71,9 +68,6 @@ public class AgentManagerBinder extends BinderSupport
   }
   public String getName() {
     return getNode().getName();
-  }
-  public void registerCluster(ClusterServesClusterManagement cluster) {
-    getNode().registerCluster(cluster);
   }
 
 }

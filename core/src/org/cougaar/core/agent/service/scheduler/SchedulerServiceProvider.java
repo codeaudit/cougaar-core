@@ -21,30 +21,27 @@
 
 package org.cougaar.core.agent.service.scheduler;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.component.ServiceProvider;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.io.PrintStream;
-import java.io.IOException;
-import java.io.FileOutputStream;
 import java.io.File;
-import org.cougaar.util.PropertyParser;
-import org.cougaar.util.CircularQueue;
-
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.SchedulerService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
+import org.cougaar.util.CircularQueue;
+import org.cougaar.util.PropertyParser;
 import org.cougaar.util.Trigger;
-import org.cougaar.core.agent.ClusterImpl;
 
 /**
  * Scheduler that runs its schedulees in a shared thread

@@ -47,8 +47,6 @@ import java.io.IOException;
 
 import org.cougaar.core.util.UID;
 
-import org.cougaar.core.plugin.Annotation;
-
 /**
  * This class implements Workflow
  **/

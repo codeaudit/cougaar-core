@@ -21,19 +21,23 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.ThreadListenerService;
-import org.cougaar.core.service.ThreadService;
-import org.cougaar.util.PropertyParser;
-
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.util.PropertyParser;
 
 /**
  * A sample RightsSelector that attempts to select among the children

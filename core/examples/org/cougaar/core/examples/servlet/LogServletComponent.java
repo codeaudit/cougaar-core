@@ -26,8 +26,8 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ServletService;
 import org.cougaar.core.servlet.BaseServletComponent;
-import org.cougaar.core.servlet.ServletService;
 
 /**
  * Example subclass of "BaseServletComponent" that illustrates

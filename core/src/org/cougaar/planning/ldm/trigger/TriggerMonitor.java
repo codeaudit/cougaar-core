@@ -23,7 +23,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PluginDelegate;
+import org.cougaar.planning.plugin.legacy.PluginDelegate;
 
 /**
  * A TriggerMonitor determines a particular set of objects on which to

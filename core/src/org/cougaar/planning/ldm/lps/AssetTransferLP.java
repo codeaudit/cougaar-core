@@ -21,17 +21,17 @@
 
 package org.cougaar.planning.ldm.lps;
 
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
+import org.cougaar.core.domain.LogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
 import org.cougaar.core.domain.RestartLogicProviderHelper;
 
+import org.cougaar.planning.ldm.*;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.ClusterPG;
 
@@ -65,27 +65,37 @@ import java.util.*;
   *
   * it provides the logic to capture
   * PlanElements that are AssetTransfers and send AssetAssignment tasks
-  * to the proper remote cluster.
+  * to the proper remote agent.
   **/
 
 public class AssetTransferLP
-  extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider, RestartLogicProvider
+implements LogicProvider, EnvelopeLogicProvider, RestartLogicProvider
 {
-  private static Logger logger = Logging.getLogger(AssetTransferLP.class);
-  private static TimeSpan ETERNITY = new MutableTimeSpan();
+  private static final Logger logger = Logging.getLogger(AssetTransferLP.class);
+  private static final TimeSpan ETERNITY = new MutableTimeSpan();
+  private final RootPlan rootplan;
+  private final LogPlan logplan;
   private final MessageAddress self;
+  private final PlanningFactory ldmf;
 
-  public AssetTransferLP(LogPlanServesLogicProvider logplan,
-                         ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
-    self = cluster.getMessageAddress();
+  public AssetTransferLP(
+      RootPlan rootplan,
+      LogPlan logplan,
+      PlanningFactory ldmf,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.logplan = logplan;
+    this.ldmf = ldmf;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   /**
    * @param Object Envelopetuple,
    *          where tuple.object
-   *             == PlanElement with an Allocation to an cluster ADDED to LogPlan
+   *             == PlanElement with an Allocation to an agent ADDED to LogPlan
    *
    * If the test returned true i.e. it was an AssetTransfer...
    * create an AssetAssignment task and send itto a remote Cluster 
@@ -118,9 +128,9 @@ public class AssetTransferLP
                               AssetAssignment.UPDATE : AssetAssignment.NEW,
                               sendRelationships);
       if (assetassign != null) {
-        // Give the AssetAssignment to the logplan for transmission
+        // Give the AssetAssignment to the blackboard for transmission
         if (logger.isDebugEnabled()) logger.debug("Sending " + assetassign);
-        logplan.sendDirective(assetassign);
+        rootplan.sendDirective(assetassign);
       } else {
         if (logger.isDebugEnabled()) logger.debug("Not sending AssetAssignment for " + at);
       }
@@ -131,9 +141,9 @@ public class AssetTransferLP
 
   /**
    * Cluster restart handler. Resend all our assets to the restarted
-   * cluster marking them as "REPEAT". Also send AssetVerification
+   * agent marking them as "REPEAT". Also send AssetVerification
    * messages for all the assets we have received from the restarted
-   * cluster. The restarted cluster will rescind them if they are no
+   * agent. The restarted agent will rescind them if they are no
    * longer valid.
    **/
   public void restart(final MessageAddress cid) {
@@ -150,10 +160,10 @@ public class AssetTransferLP
         return false;
       }
     };
-    Enumeration enum = logplan.searchBlackboard(pred);
+    Enumeration enum = rootplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AssetTransfer at = (AssetTransfer) enum.nextElement();
-      logplan.sendDirective(createAssetAssignment(at, AssetAssignment.REPEAT, true));
+      rootplan.sendDirective(createAssetAssignment(at, AssetAssignment.REPEAT, true));
     }
     pred = new UnaryPredicate() {
       public boolean execute(Object o) {
@@ -170,7 +180,7 @@ public class AssetTransferLP
         return false;
       }
     };
-    for (enum = logplan.searchBlackboard(pred); enum.hasMoreElements(); ) {
+    for (enum = rootplan.searchBlackboard(pred); enum.hasMoreElements(); ) {
       Asset asset = (Asset) enum.nextElement();
       
       if (related(asset)) {
@@ -209,7 +219,7 @@ public class AssetTransferLP
                                       verifySchedule);
           nav.setSource(self);
           nav.setDestination(asset.getClusterPG().getMessageAddress());
-          logplan.sendDirective(nav);
+          rootplan.sendDirective(nav);
         }
       } else {
         // BOZO - we have not tested transferring non-org assets
@@ -230,7 +240,7 @@ public class AssetTransferLP
     NewAssetAssignment naa = ldmf.newAssetAssignment();
 
     /* copy the asset so we don't share roleschedule across
-     * cluster boundaries.
+     * agent boundaries.
      */
     naa.setAsset(ldmf.cloneInstance(at.getAsset()));
     
@@ -328,7 +338,7 @@ public class AssetTransferLP
     if (localTransferringAsset == null) {
       logger.error("AssetTransferLP: unable to process AssetTransfer - " + 
                          at.getAsset() + " - transferring to " + 
-                         at.getAssignee()+ " - is not local to this cluster.");
+                         at.getAssignee()+ " - is not local to this agent.");
       return false;
     } else if (localTransferringAsset == at.getAsset()) {
       logger.error("AssetTransferLP: Assets in AssetTransfer must be " +
@@ -363,21 +373,21 @@ public class AssetTransferLP
     
     Collection changes = new ArrayList();
     changes.add(new RelationshipSchedule.RelationshipScheduleChangeReport());
-    logplan.change(localTransferringAsset, changes);
+    rootplan.change(localTransferringAsset, changes);
 
     if (localReceivingAsset == null) {
-      logplan.add(receivingAsset);
+      rootplan.add(receivingAsset);
     } else {
       changes.clear();
       changes.add(new RelationshipSchedule.RelationshipScheduleChangeReport());
-      logplan.change(receivingAsset, changes);
+      rootplan.change(receivingAsset, changes);
     }
     
     return true;
   }
 
   // Update availability info for the receiving asset
-  // AvailableSchedule reflects availablity within the current cluster
+  // AvailableSchedule reflects availablity within the current agent
   private void fixAvailSchedule(final Asset receivingAsset, 
                                 final Asset transferringAsset,
                                 byte kind,

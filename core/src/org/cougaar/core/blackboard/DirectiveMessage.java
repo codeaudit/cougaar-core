@@ -21,19 +21,20 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.mts.UnresolvableReferenceException;
-import org.cougaar.core.mts.MessageAddress;
-
-import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.util.StringUtility;
-import org.cougaar.planning.ldm.plan.Plan;
-import org.cougaar.util.log.*;
-
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
-import java.io.*;
+import org.cougaar.core.agent.ClusterContextTable;
+import org.cougaar.core.agent.ClusterMessage;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.planning.ldm.plan.Plan;
+import org.cougaar.util.StringUtility;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * A org.cougaar.core.blackboard.DirectiveMessage  provides a basic implementation of 

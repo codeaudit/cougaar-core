@@ -18,18 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.*;
 
 /** An EnvelopeTuple indicating that an object has been removed from the Plan.
  **/
 
-public final class RemoveEnvelopeTuple extends EnvelopeTuple {
+final class RemoveEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
   public Object getObject() { return object; }
   public RemoveEnvelopeTuple(Object o) {

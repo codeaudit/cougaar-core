@@ -22,6 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UID;
+import org.cougaar.core.blackboard.Directive;
 
 /** Directive to verify Transferables
  * 

@@ -18,17 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.persist;
 
-import java.io.ObjectOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
+import java.io.NotSerializableException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-
-import org.cougaar.core.agent.ClusterContext;
-import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.planning.ldm.plan.Task;
+import java.util.List;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.LinkedByteOutputStream;
@@ -162,8 +161,9 @@ public class PersistenceOutputStream extends ObjectOutputStream {
     }
     if (pAssoc == null) {
       // This is (probably) _not_ something we care about
-      if (o instanceof PlanElement) {
-        logger.error("Omitting PlanElement not on blackboard: " + o);
+      if ((o instanceof ActivePersistenceObject) &&
+          ((ActivePersistenceObject) o).skipUnpublishedPersist(logger)) {
+        if (debug) print("Skipping " + ix + getShortClassName(o) + " " + o);
 	return null;            // Not published yet
       }
       if (writeIndex != null) {
@@ -202,19 +202,12 @@ public class PersistenceOutputStream extends ObjectOutputStream {
 
   private void print(String message) {
     logger.debug(message);
-//  String clusterName = clusterContext.getMessageAddress().getAddress();
-//  System.out.println(clusterName + " -- " + message);
   }
 
   /**
    * Object identity table. Normally, this is supplied by the creator of this stream.
    */
   private IdentityTable identityTable = new IdentityTable();
-
-  /**
-   * Thc ClusterContext
-   */
-  private ClusterContext clusterContext;
 
   /**
    * Get the IdentityTable being used by this stream. This is not
@@ -236,23 +229,4 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   public void setIdentityTable(IdentityTable identityTable) {
     this.identityTable = identityTable;
   }
-
-  /**
-   * Get the ClusterContext object that we are supporting. The
-   * ClusterContext object is supplied by our creator.
-   * @return the ClusterContext object of this stream.
-   */
-  public ClusterContext getClusterContext() {
-    return clusterContext;
-  }
-
-  /**
-   * Set the ClusterContext object for this stream. We remember this
-   * to return from the getClusterContext method.
-   * @param newClusterContext the ClusterContext object to remember.
-   */
-  public void setClusterContext(ClusterContext newClusterContext) {
-    clusterContext = newClusterContext;
-  }
 }
-

@@ -21,9 +21,14 @@
 
 package org.cougaar.core.topology;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.cougaar.util.CircularQueue;
-import org.cougaar.util.log.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerFactory;
 
 /**
  * Cache for timed topology lookups.

@@ -21,17 +21,9 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.blackboard.*;
-
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
-
-import java.io.*;
+import org.cougaar.planning.ldm.LDMServesPlugin;
+import org.cougaar.core.service.UIDServer;
 
 /**
  * Interface required for out-of-band communication with clusters.

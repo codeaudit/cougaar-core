@@ -18,13 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import java.lang.reflect.*;
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.BinderFactorySupport;
 
 /**
  * A BinderFactory for binding PluginManagers and such to Agents.

@@ -22,14 +22,9 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
-import org.cougaar.core.domain.RestartLogicProvider;
-import org.cougaar.core.domain.RestartLogicProviderHelper;
-
+import org.cougaar.planning.ldm.*;
+import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Allocation;
@@ -54,17 +49,27 @@ import java.util.Enumeration;
  *
  **/
 
-public class RemoteClusterAllocationLP extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider, RestartLogicProvider
+public class RemoteClusterAllocationLP
+implements LogicProvider, EnvelopeLogicProvider, RestartLogicProvider
 {
         
-  private final MessageAddress self;
-  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
+  private static final Logger logger = 
+    LoggerFactory.getInstance().createLogger(RemoteClusterAllocationLP.class);
 
-  public RemoteClusterAllocationLP(LogPlanServesLogicProvider logplan,
-                                   ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
-    self = cluster.getMessageAddress();
+  private final RootPlan rootplan;
+  private final PlanningFactory ldmf;
+  private final MessageAddress self;
+
+  public RemoteClusterAllocationLP(
+      RootPlan rootplan,
+      PlanningFactory ldmf,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.ldmf = ldmf;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   private void examine(Object obj, Collection changes) {
@@ -82,13 +87,13 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     Task copytask = ((AllocationforCollections)all).getAllocationTask();
     if (copytask == null) {
       // if not, make a new task to send.
-      copytask = prepareNewTask(cluster, task, destination);
+      copytask = prepareNewTask(task, destination);
       ((AllocationforCollections)all).setAllocationTask(copytask);
-      logplan.change(all, changes); 
+      rootplan.change(all, changes); 
     }
 
-    // Give the task directive to the logplan for transmission
-    logplan.sendDirective(copytask, changes);
+    // Give the task directive to the blackboard for transmission
+    rootplan.sendDirective(copytask, changes);
   }
 
 
@@ -109,7 +114,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
   }
 
   /**
-   * If a cluster restarts, we resend all the tasks we sent before in
+   * If a agent restarts, we resend all the tasks we sent before in
    * case they have been lost or are out of date.
    **/
   public void restart(final MessageAddress cid) {
@@ -133,7 +138,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
         return false;
       }
     };
-    Enumeration enum = logplan.searchBlackboard(pred);
+    Enumeration enum = rootplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AllocationforCollections alloc = (AllocationforCollections) enum.nextElement();
       Task remoteTask = alloc.getAllocationTask();
@@ -146,7 +151,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
               " with remoteUID="+remoteTask.getUID()+
               " "+localTask);
         }
-        logplan.sendDirective(remoteTask);
+        rootplan.sendDirective(remoteTask);
       }
     }
     if (logger.isInfoEnabled()) {
@@ -154,7 +159,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     }
   }
 
-  private Task prepareNewTask(ClusterServesLogicProvider cluster, Task task, MessageAddress dest) {
+  private Task prepareNewTask(Task task, MessageAddress dest) {
     NewTask nt;
     /*
     if (task instanceof MPTask) {
@@ -166,11 +171,11 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     nt.setParentTask(task);             // set ParenTask to original task
 
     // redundant: ldmf initializes it.
-    //nt.setSource(cluster.getMessageAddress());
+    //nt.setSource(self);
 
     // FIXME MIK WARNING! WARNING!
     // as a hack, we've made setDestination bark if it isn't the current
-    // cluster (suspicious use).  In order to prevent the below from 
+    // agent (suspicious use).  In order to prevent the below from 
     // generating barkage, we've got a (privately) muzzle...
     //nt.setDestination(dest);
     // 
@@ -189,7 +194,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
 
     /*
       NewTask nt = ldmf.shadowTask(task);
-      nt.setSource(cluster.getMessageAddress());
+      nt.setSource(self);
       nt.setDestination(dest);
     */
     return nt;

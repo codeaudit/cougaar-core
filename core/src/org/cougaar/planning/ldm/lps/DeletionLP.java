@@ -21,14 +21,13 @@
 
 package org.cougaar.planning.ldm.lps;
 
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.planning.ldm.*;
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogPlanLogicProvider;
+import org.cougaar.core.domain.*;
 
 import org.cougaar.planning.ldm.plan.NewDeletion;
 import org.cougaar.planning.ldm.plan.Task;
@@ -51,17 +50,24 @@ import java.util.Collection;
   **/
 
 public class DeletionLP
-  extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider
+implements LogicProvider, EnvelopeLogicProvider
 {
-  private static Logger logger = Logging.getLogger(DeletionLP.class);
+  private static final Logger logger = Logging.getLogger(DeletionLP.class);
 
-  private MessageAddress cid;
+  private final RootPlan rootplan;
+  private final PlanningFactory ldmf;
+  private final MessageAddress self;
 
-  public DeletionLP(LogPlanServesLogicProvider logplan,
-                    ClusterServesLogicProvider cluster) {
-    super(logplan,cluster);
-    cid = cluster.getMessageAddress();
+  public DeletionLP(
+      RootPlan rootplan,
+      PlanningFactory ldmf,
+      MessageAddress self) {
+    this.rootplan = rootplan;
+    this.ldmf = ldmf;
+    this.self = self;
+  }
+
+  public void init() {
   }
 
   /**
@@ -78,17 +84,17 @@ public class DeletionLP
           UID ptuid = task.getParentTaskUID();
           if (ptuid != null) {
             MessageAddress dst = task.getSource();
-            if (!dst.equals(cid)) {
+            if (!dst.equals(self)) {
               NewDeletion nd = ldmf.newDeletion();
               nd.setTaskUID(ptuid);
               nd.setPlan(task.getPlan());
-              nd.setSource(cid);
+              nd.setSource(self);
               nd.setDestination(dst);
 	      if (logger.isDebugEnabled()) {
-		logger.debug(cid + ": sendDeletion to " + dst + " for task " + ptuid);
+		logger.debug(self + ": sendDeletion to " + dst + " for task " + ptuid);
 	      }
 
-              logplan.sendDirective(nd);
+              rootplan.sendDirective(nd);
             }
           }
         }

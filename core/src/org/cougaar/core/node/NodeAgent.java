@@ -21,16 +21,17 @@
 
 package org.cougaar.core.node;
 
-import java.io.IOException;
-import java.io.PrintStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Properties;
 import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentBinder;
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
@@ -43,34 +44,23 @@ import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
-import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportServiceProvider;
 import org.cougaar.core.naming.NamingServiceProvider;
-import org.cougaar.core.node.InitializerService;
-import org.cougaar.core.node.NodeControlService;
-import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.node.service.NaturalTimeService;
+import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.plugin.PluginManager;
-import org.cougaar.core.qos.metrics.MetricsService;
-import org.cougaar.core.qos.metrics.MetricsServiceProvider;
-import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.service.MessageWatcherService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.NodeMetricsService;
-import org.cougaar.core.thread.ThreadServiceProvider;
-import org.cougaar.util.log.*;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.CircularQueue;
-
-import org.cougaar.core.node.service.*;
+import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
@@ -310,17 +300,13 @@ public class NodeAgent
           null); //policy
     add(mtsdesc);
 
-
-    // register for external control by the AppServer
-    //   -- disabled for now --
-
     // start up the NodeTrust component
     String ntc = new String(getIdentifier()+"NodeTrust");
     ComponentDescription ntcdesc = 
       new ComponentDescription(
           ntc,
           Agent.INSERTION_POINT + ".NodeTrust",
-          "org.cougaar.core.node.NodeTrustComponent",
+          "org.cougaar.planning.plugin.node.NodeTrustComponent",
           null,  //codebase
           null,  //parameters
           null,  //certificate
@@ -328,26 +314,21 @@ public class NodeAgent
           null); //policy
     add(ntcdesc);         // let a ComponentLoadFailure pass through
 
-    String enableServlets = 
-      System.getProperty("org.cougaar.core.servlet.enable");
-    if ((enableServlets == null) ||
-        (enableServlets.equalsIgnoreCase("true"))) {
-      // start up the Node-level ServletService component
-      ComponentDescription nsscDesc = 
-        new ComponentDescription(
-            (getIdentifier()+"ServletService"),
-            Agent.INSERTION_POINT + ".NodeServletService",
-            "org.cougaar.lib.web.service.RootServletServiceComponent",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null); //policy
-      try {
-        add(nsscDesc);
-      } catch (RuntimeException re) {
-        re.printStackTrace();
-      }
+    // start up the Node-level ServletService component
+    ComponentDescription nsscDesc = 
+      new ComponentDescription(
+          (getIdentifier()+"ServletService"),
+          Agent.INSERTION_POINT + ".NodeServletService",
+          "org.cougaar.lib.web.service.RootServletServiceComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    try {
+      add(nsscDesc);
+    } catch (RuntimeException re) {
+      re.printStackTrace();
     }
 
     {

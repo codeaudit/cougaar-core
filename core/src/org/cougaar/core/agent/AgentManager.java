@@ -18,30 +18,33 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.mts.Message;
-
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BoundComponent;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.ComponentFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.PropagatingServiceBroker;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
-
-import org.cougaar.core.mts.MessageAddress;
-
-import org.cougaar.core.blackboard.*;
-
-import java.io.InputStream;
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.util.log.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.MessageTransportService;
-
-import java.beans.*;
-import java.lang.reflect.*;
-
+import org.cougaar.core.node.Node;
+import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** A container for Agents.
  * Although the AgentManager can hold Components other than Agents, the 
@@ -55,6 +58,7 @@ public class AgentManager
 {
   /** The Insertion point for the AgentManager, defined relative to that of Node. **/
   public static final String INSERTION_POINT = Node.INSERTION_POINT + ".AgentManager";
+
   public AgentManager() {
     BinderFactory bf = new DefaultAgentBinderFactory();
     if (!attachBinderFactory(bf)) {
@@ -141,14 +145,6 @@ public class AgentManager
     return getBindingSite().getName();
   }
 
-  private void registerAgent(Agent agent) {
-    if (agent instanceof ClusterServesClusterManagement) {
-      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
-    } else {
-      System.err.println("Warning: attempted to registerAgent of non-cluster.");
-    }
-  }
-
   //
   // support classes
   //
@@ -162,14 +158,9 @@ public class AgentManager
     }
 
   private class AgentManagerProxy 
-    implements AgentManagerForBinder, 
-  ClusterManagementServesCluster, 
-  BindingSite {
+    implements AgentManagerForBinder, BindingSite {
 
     public String getName() {return AgentManager.this.getName(); }
-    public void registerAgent(Agent agent) { 
-      AgentManager.this.registerAgent(agent); 
-    }
 
     // BindingSite
     public ServiceBroker getServiceBroker() {

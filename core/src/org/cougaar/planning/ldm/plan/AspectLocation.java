@@ -36,11 +36,29 @@ public class AspectLocation extends TypedAspectValue {
     this.loc_value = new_loc_value;
   }
 
+  private static boolean hack_warnedUser; // FIXME big hack!
+
   public static AspectValue create(int type, Object o) {
+    if (o instanceof Number && ((Number)o).doubleValue() == 0.0) {
+      if (!hack_warnedUser) {
+        // this bug can easily occur in the thousands, so we
+        // only make a fuss this once
+        hack_warnedUser = true;
+        org.cougaar.util.log.LoggerFactory.getInstance().createLogger(AspectLocation.class).error(
+            "BUG <TBA>: create("+type+", "+o+") with non-location type "+
+            (o==null?"null":(o.getClass().getName()+": "+o))+
+            "!  This will be the *only* warning!", 
+            new RuntimeException("Trace"));
+      }
+      // bogus!
+      o = new Location(){};
+    }
     if (o instanceof Location) {
       return new AspectLocation(type, (Location) o);
     } else {
-      throw new IllegalArgumentException("Cannot construct an AspectLocation from "+o);
+      throw new IllegalArgumentException(
+          "Cannot construct an AspectLocation from "+
+          (o==null?"null":(o.getClass().getName()+": "+o)));
     }
   }
 

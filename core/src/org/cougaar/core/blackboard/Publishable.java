@@ -21,17 +21,12 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import java.util.List;
 
 /** Objects marked as Publishable may be published directly to the Plan.
  * Provides hooks for additional Plan-related functionality.
  *
  * NOTE: at some point, <em>only</em> Publishable objects will be
- * admitted to the logplan.  Initially, however, this requirement will
+ * admitted to the blackboard.  Initially, however, this requirement will
  * not be enforced: Publishing other objects will work, but Publishable
  * services will not be available.
  **/

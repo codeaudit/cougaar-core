@@ -18,10 +18,12 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.util;
 
-import java.io.ObjectOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
 
 /**
  * Simple implementation of UniqueObject for objects that don't manage the UID themselves.
@@ -53,7 +55,7 @@ public abstract class SimpleUniqueObject implements UniqueObject {
 
   /**
    * Set the UID of a UniqueObject.  This should only be done by
-   * an LDM factory.  Will throw a RuntimeException if
+   * a domain factory.  Will throw a RuntimeException if
    * the UID was already set.
    **/
   public void setUID(UID newUID) {

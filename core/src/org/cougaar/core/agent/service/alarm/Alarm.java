@@ -21,16 +21,10 @@
 
 package org.cougaar.core.agent.service.alarm;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-/** Interface for Alp-time-based Alarms.  See
- * ClusterServesPlugin.addAlarm(Alarm).
+/** Interface for Alp-time-based Alarms.
+ *
+ * @see org.cougaar.core.service.AlarmService
  **/
-
 public interface Alarm {
   /** @return absolute time (in milliseconds) that the Alarm should
    * go off.  

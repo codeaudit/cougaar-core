@@ -18,19 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.plugin.PluginManager;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ContainerBinderSupport;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.util.ConfigFinder;
 
 /** 
  * The standard Binder for PluginManagers and others children of agent.

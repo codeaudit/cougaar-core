@@ -23,7 +23,6 @@ package org.cougaar.core.service.community;
 
 import org.cougaar.core.blackboard.Publishable;
 
-
 /** CommunityResponse Interface
   * A CommunityResponse is a direct reply to a CommunityRequest published
   * by a client.  The CommunityResponse will identify the result of the request

@@ -18,16 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageTransportException;
-import org.cougaar.core.service.MessageTransportService;
+import org.cougaar.core.component.ContainerAPI;
 
 /** This is the interface presented to an AgentManagerBinder from the Node.
  **/
@@ -35,6 +29,5 @@ public interface NodeForBinder
   extends ContainerAPI
 {
   String getIdentifier();
-  void registerCluster(ClusterServesClusterManagement cluster);
   String getName();
 }

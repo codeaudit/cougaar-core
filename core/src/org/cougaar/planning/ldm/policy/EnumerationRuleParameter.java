@@ -25,9 +25,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -37,7 +34,7 @@ import org.cougaar.core.util.SelfPrinter;
  * An EnumerationRuleParameter is a RuleParameter with specified/protected
  * string selections that returns a string
  */
-public class EnumerationRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+public class EnumerationRuleParameter implements RuleParameter, java.io.Serializable {
   protected String my_name;
   protected String []my_enums;
   protected String my_value;
@@ -182,12 +179,6 @@ public class EnumerationRuleParameter implements RuleParameter, SelfPrinter, jav
       erp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
     return erp;
-  }
-
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_enums, "Enumeration");
-    pr.print(my_value, "Value");
   }
 
   protected String Enum_List() {

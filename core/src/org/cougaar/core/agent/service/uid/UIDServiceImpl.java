@@ -21,31 +21,23 @@
 
 package org.cougaar.core.agent.service.uid;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceState;
-import org.cougaar.core.persist.StatePersistable;
+import org.cougaar.core.service.UIDService;
+import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
 
 /** Essential services for serving UniqueObjects to
  * parts of a cluster.
  **/
 
 public final class UIDServiceImpl implements UIDService {
-  private ClusterContext cc;
   private MessageAddress cid;
   private String prefix;
   private long count = System.currentTimeMillis();
 
-  public UIDServiceImpl(ClusterContext context) {
-    cc = context;
-    cid = context.getMessageAddress();
+  public UIDServiceImpl(MessageAddress cid) {
+    this.cid = cid;
     prefix = cid.getAddress();
   }
 

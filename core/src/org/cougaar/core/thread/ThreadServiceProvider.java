@@ -24,17 +24,16 @@ package org.cougaar.core.thread;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 import java.util.List;
-
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeControlService;
-import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
-
 
 /**
  * The ServiceProvider for ThreadService and ThreadControlService.

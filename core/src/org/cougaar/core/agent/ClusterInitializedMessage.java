@@ -21,7 +21,6 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
 
 /** 
  * Private message sent from ClusterManagement to Cluster 

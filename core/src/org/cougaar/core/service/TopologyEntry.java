@@ -21,6 +21,8 @@
 
 package org.cougaar.core.service;
 
+import java.io.Serializable;
+
 /**
  * An agent-level view of the society topology.
  *

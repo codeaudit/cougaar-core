@@ -20,7 +20,9 @@
  *
  * Created on September 12, 2001, 10:55 AM
  */
+
 package org.cougaar.core.service.identity;
+
 
 /**
  * Reasons for revoking a certificate.

@@ -21,21 +21,16 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.mts.*;
-
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Vector;
-import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.planning.plugin.AssetDataReader;
-import org.cougaar.planning.plugin.AssetDataFileReader;
-
-import org.cougaar.core.node.CommunityConfig;
-import org.cougaar.core.node.CommunityConfigUtils;
-
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.planning.plugin.asset.AssetDataFileReader;
+import org.cougaar.planning.plugin.asset.AssetDataReader;
+import org.cougaar.util.ConfigFinder;
 
 public class FileInitializerServiceProvider implements ServiceProvider {
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {

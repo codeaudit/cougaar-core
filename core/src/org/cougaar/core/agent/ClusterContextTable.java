@@ -21,15 +21,8 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
+import java.util.HashMap;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterContext;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.UnresolvableReferenceException;
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
 
 /** Keep track of the Agents (Clusters) running in the 
  * current VM so that we can reconnect newly-deserialized

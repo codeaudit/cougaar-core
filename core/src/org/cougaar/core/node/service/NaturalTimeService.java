@@ -21,15 +21,8 @@
 
 package org.cougaar.core.node.service;
 
-import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
-import org.cougaar.core.agent.service.alarm.ExecutionTimer.Change;
-import org.cougaar.core.agent.service.alarm.ExecutionTimer.Parameters;
-import org.cougaar.core.agent.service.alarm.RealTimer;
-import org.cougaar.core.agent.service.alarm.Timer;
-
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.Service;
 
 public interface NaturalTimeService 
   extends TimeServiceBase, Service 

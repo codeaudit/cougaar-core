@@ -18,18 +18,20 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.logging;
 
-import java.io.*;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import java.util.*;
-//import org.apache.log4j.*;
-import org.apache.log4j.Category; // deprecated - should use Logger
-import org.apache.log4j.Priority; // deprecated - should use Level
-import org.cougaar.core.servlet.*;
-import org.cougaar.util.log.*;
-import org.cougaar.util.log.log4j.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import javax.servlet.Servlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.apache.log4j.Category;
+import org.apache.log4j.Priority;
+import org.cougaar.core.servlet.BaseServletComponent;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.log4j.ShoutPriority;
 
 /**
  * Servlet which allows the client to view and modify

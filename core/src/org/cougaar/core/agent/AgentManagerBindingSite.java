@@ -18,15 +18,10 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.ClusterServesClusterManagement;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.Message;
+import org.cougaar.core.component.BindingSite;
 
 /** An agentmanager's view of its parent component (Container).
  *
@@ -35,7 +30,6 @@ public interface AgentManagerBindingSite
   extends BindingSite
 {
   String getIdentifier();
-  void registerCluster(ClusterServesClusterManagement cluster);
   //name of the node
   String getName();
 }

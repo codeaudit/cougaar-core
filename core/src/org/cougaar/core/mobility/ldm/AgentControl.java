@@ -21,7 +21,6 @@
 
 package org.cougaar.core.mobility.ldm;
 
-import java.io.Serializable;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;

@@ -18,16 +18,14 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
@@ -63,5 +61,4 @@ implements AgentBinder, AgentBindingSite
   }
 
   public String getName() {return getAgentManager().getName(); }
-  public void registerAgent(Agent agent) { getAgentManager().registerAgent(agent); }
 }

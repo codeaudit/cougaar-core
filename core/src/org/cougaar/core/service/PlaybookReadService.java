@@ -1,8 +1,9 @@
+
 package org.cougaar.core.service;
 
+import org.cougaar.core.adaptivity.Play;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
-import org.cougaar.core.adaptivity.Play;
 
 /**  
  * Part of the PlaybookService responsible for sending the

@@ -21,9 +21,9 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.Container;
 
 /** Service offered to components of NodeAgent to allow sufficient 
  * non-local access to the Node for control purposes.

@@ -24,14 +24,9 @@ package org.cougaar.core.topology;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-
-import javax.naming.Name;
-import javax.naming.NameClassPair;
+import javax.naming.Binding;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -39,26 +34,25 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
+import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchResult;
-import javax.naming.event.EventContext;
+import javax.naming.event.EventContext; // inlined
 import javax.naming.event.EventDirContext;
 import javax.naming.event.NamespaceChangeListener;
 import javax.naming.event.NamingEvent;
 import javax.naming.event.NamingExceptionEvent;
 import javax.naming.event.NamingListener;
 import javax.naming.event.ObjectChangeListener;
-
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
-
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**

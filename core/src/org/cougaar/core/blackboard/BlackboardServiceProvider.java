@@ -18,23 +18,16 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.service.*;
-
-import org.cougaar.core.mts.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.component.ServiceProvider;
+import java.util.Collection;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.blackboard.Distributor;
-
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.BlackboardMetricsService;
+import org.cougaar.core.service.BlackboardQueryService;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.blackboard.QuerySubscription;
-
-import java.util.*;
 
 /** A BlackboardServiceProvider is a provider class that PluginManager calls
  * when a client requests a BlackboardService.

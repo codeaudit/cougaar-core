@@ -25,11 +25,6 @@ package org.cougaar.planning.ldm.policy;
 import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
-
-import org.cougaar.core.util.AsciiPrinter;
-import org.cougaar.core.util.SelfPrinter;
-
-
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
  *
@@ -42,7 +37,7 @@ import org.cougaar.core.util.SelfPrinter;
  * for that key, that value is returned. Otherwise, the default
  * is returned.
  */
-public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Serializable {
+public class KeyRuleParameter implements RuleParameter, java.io.Serializable {
 
   protected String my_name;
   protected KeyRuleParameterEntry []my_keys;
@@ -162,12 +157,6 @@ public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Ser
   {
     return "#<KEY_PARAMETER : " + my_value + 
       " [" + Key_List() + "] >";
-  }
-
-  public void printContent(AsciiPrinter pr) {
-    pr.print(my_name, "Name");
-    pr.print(my_keys, "Keys");
-    pr.print(my_value, "Value");
   }
 
   protected String Key_List() {
