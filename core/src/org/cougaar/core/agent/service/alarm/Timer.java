@@ -28,6 +28,7 @@ import org.cougaar.core.agent.*;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.PeriodicAlarm;
 import java.util.*;
+import org.cougaar.util.log.*;
 
 /** Implement a basic timer class that activates Alarm instances on or
  * after a specific time.  The base class operated on System time, but 
@@ -181,7 +182,7 @@ public abstract class Timer implements Runnable {
             }
           }
         } catch (InterruptedException ie) {
-          System.err.println("Interrupted "+ie);
+          //System.err.println("Interrupted "+ie);
           // don't care, just continue
         }
 
@@ -238,7 +239,15 @@ public abstract class Timer implements Runnable {
   private void ring(Alarm alarm) {
     if (!alarm.hasExpired()) {  // only ring if it wasn't cancelled already
       if (isVisible) report(alarm);
-      alarm.expire();
+      try {
+        alarm.expire();
+      } finally {
+        // see if the alarm has been evil and as has opened a transaction
+        // but neglected to close it
+        if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
+          Logging.getLogger(Timer.class).warn("Alarm"+alarm+" expiration failed to close it's transaction");
+        }
+      }
     }
   }
 
@@ -246,7 +255,7 @@ public abstract class Timer implements Runnable {
     if (isLoud) {
       System.err.println(this.toString()+" ringing "+alarm);
     } else {
-      System.err.print("*");
+      //System.err.print("*");
     }
   }
 

@@ -158,40 +158,41 @@ public class Subscriber {
             try {
               changedp |= subscription.apply(envelope);
             } catch (PublishException pe) {
-              synchronized (System.err) {
-                System.err.println(pe.getMessage());
-                BlackboardClient currentClient = null;
-//                 if (envelope instanceof OutboxEnvelope) {
-//                   OutboxEnvelope e = (OutboxEnvelope) envelope;
-//                   currentClient = e.theClient;
-//                 }
-                if (currentClient == null) {
-                  currentClient = BlackboardClient.current.getClient();
-                }
-                String thisPublisher = null;
-                if (currentClient != null) {
-                  thisPublisher = currentClient.getBlackboardClientName();
-                }
-                if (envelope instanceof Blackboard.PlanEnvelope) {
-                  if (thisPublisher == null) {
-                    thisPublisher = "Blackboard";
-                  } else {
-                    thisPublisher = "Blackboard after " + thisPublisher;
-                  }
-                } else if (thisPublisher == null) {
-                  thisPublisher = "Unknown";
-                }
-                pe.printStackTrace(" This publisher: " + thisPublisher);
-                if (!pe.priorStackUnavailable) {
-                  if (pe.priorStack == null) {
-                    System.err.println("Prior publisher: Unknown");
-                  }
+              Logger logger =  Logging.getLogger(Subscriber.class);
+              String message = pe.getMessage();
+              logger.error(message);
+
+              BlackboardClient currentClient = null;
+              //                 if (envelope instanceof OutboxEnvelope) {
+              //                   OutboxEnvelope e = (OutboxEnvelope) envelope;
+              //                   currentClient = e.theClient;
+              //                 }
+              if (currentClient == null) {
+                currentClient = BlackboardClient.current.getClient();
+              }
+              String thisPublisher = null;
+              if (currentClient != null) {
+                thisPublisher = currentClient.getBlackboardClientName();
+              }
+              if (envelope instanceof Blackboard.PlanEnvelope) {
+                if (thisPublisher == null) {
+                  thisPublisher = "Blackboard";
                 } else {
-                  if (pe.priorStack == null) {
-                    System.err.println("Prior publisher: Not set");
-                  } else {
-                    pe.priorStack.printStackTrace();
-                  }
+                  thisPublisher = "Blackboard after " + thisPublisher;
+                }
+              } else if (thisPublisher == null) {
+                thisPublisher = "Unknown";
+              }
+              pe.printStackTrace(" This publisher: " + thisPublisher);
+              if (!pe.priorStackUnavailable) {
+                if (pe.priorStack == null) {
+                  System.err.println("Prior publisher: Unknown");
+                }
+              } else {
+                if (pe.priorStack == null) {
+                  System.err.println("Prior publisher: Not set");
+                } else {
+                  pe.priorStack.printStackTrace();
                 }
               }
             }
@@ -748,6 +749,7 @@ public class Subscriber {
       setHaveCollectionsChanged();
       resetHaveNewSubscriptions();
     }
+    noteOpenTransaction(this);
   }
 
   protected final void startTransaction() {
@@ -854,6 +856,7 @@ public class Subscriber {
     } else {
       throw new SubscriberException("Attempt to close a non-open transaction");
     }
+    noteCloseTransaction(this);
   }
 
   protected final void stopTransaction() {
@@ -1098,4 +1101,31 @@ public class Subscriber {
   public Subscriber getSubscriber() {
     return this;
   }
+
+  // try and save the state so that we can abort open transactions if
+  // someone is bad.
+  private static final ThreadLocal _openTransaction = new ThreadLocal();
+
+  private static void noteOpenTransaction(Subscriber s) {
+    _openTransaction.set(s);
+  }
+  private static void noteCloseTransaction(Subscriber s) {
+    if (s != _openTransaction.get()) {
+      Logging.getLogger(Subscriber.class).error("Attempt to close a transaction from a different thread than the one which opened it:\n\t"+s+
+                                          "\t"+_openTransaction.get(),
+                                          new Throwable());
+    }
+    _openTransaction.set(null);
+  }
+
+  public static boolean abortTransaction() {
+    Subscriber s = (Subscriber)_openTransaction.get();
+    if (s!=null) {
+      s.closeTransaction();
+      return true;
+    } else {
+      return false;
+    }
+  }
+
 }
