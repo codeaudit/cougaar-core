@@ -22,16 +22,30 @@ package org.cougaar.core.agent;
 
 import org.cougaar.core.blackboard.*;
 
-/** API for LogPlan LogicProviders which handle cluster restarts
- **/
-
+/** 
+ * API for LogPlan LogicProviders which handle agent restarts
+ */
 public interface RestartLogicProvider extends LogicProvider {
 
   /**
-   * Called by LogPlan whenever another cluster restarts. Allows an
-   * opportunity for the logic provider to reconcile the state of the
-   * other cluster with this one.
-   * @param cid the ClusterIdentifier of the other cluster
+   * Called by the LogPlan whenever this agent or a remote agent 
+   * restarts.
+   * <p>
+   * The primary function of this API is to allow a logic providers 
+   * to reconcile the state of restarted agents.
+   * <p>
+   * If the given "cid" is null then <i>this</i> agent has 
+   * restarted.  This logic provider should resend/confirm its 
+   * state with all (remote) agents that it has communicated 
+   * with.
+   * <p>
+   * If the given "cid" is non-null then the "cid" is
+   * for a remote agent that has been restarted.  This
+   * logic provider should resend/confirm its state 
+   * <i>with regards to that one remote agent</i>.
+   *
+   * @param cid null if this agent restarted, otherwise the
+   *            ClusterIdentifier of a remote agent that restarted
    **/
   void restart(ClusterIdentifier cid);
 }
