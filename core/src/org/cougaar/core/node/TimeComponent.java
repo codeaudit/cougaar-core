@@ -34,7 +34,7 @@ import org.cougaar.util.GenericStateModelAdapter;
  * The TimeComponent adds the {@link NaturalTimeService}
  * and {@link RealTimeService} services to the root-level
  * service broker, which are used to implement the agent's
- * {@link AlarmService}.
+ * {@link org.cougaar.core.service.AlarmService}.
  */
 public final class TimeComponent
 extends GenericStateModelAdapter
