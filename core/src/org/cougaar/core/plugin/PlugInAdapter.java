@@ -54,7 +54,7 @@ import org.cougaar.util.UnaryPredicate;
 
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
-  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, Plugin
+  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, PluginBase
 {
 
   /** keep this around for compatability with old plugins **/

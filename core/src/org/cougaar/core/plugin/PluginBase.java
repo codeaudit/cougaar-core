@@ -16,7 +16,7 @@ import org.cougaar.core.component.BindingSite;
   /** @see org.cougaar.core.component.BinderSupport#initializeChild()
    **/
 
-public interface Plugin
+public interface PluginBase
   extends Component
 {
   /**
