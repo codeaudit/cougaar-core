@@ -1,5 +1,9 @@
 2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Bug #1540 -- Message could be more explanatory on setValue exception
+	Print all the plays that went into determining the value being set.
+
 	* org/cougaar/core/relay/RelayLP.java:
 	Bug #1573 -- NPE in RelayLP
 	Added checks for null target set in all places where it is

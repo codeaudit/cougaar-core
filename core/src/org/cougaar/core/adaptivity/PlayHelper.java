@@ -179,6 +179,7 @@ public class PlayHelper {
                 logger.error("Play conflict for play " + play + " against " + omme.plays);
               } else {
                 omme.newValue = intersection;
+                omme.plays.add(play);
               }
             }
           }
@@ -247,6 +248,9 @@ public class PlayHelper {
             } catch (IllegalArgumentException iae) {
               if (logger.isErrorEnabled()) {
                 logger.error(iae.getMessage(), iae);
+                for (Iterator iter = omme.plays.iterator(); iter.hasNext(); ) {
+                  logger.error("Play of previous error: " + iter.next().toString());
+                }
               }
             }
           }
