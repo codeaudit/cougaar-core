@@ -70,6 +70,7 @@ import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
+import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.service.identity.AgentIdentityClient;
@@ -154,6 +155,8 @@ public class SimpleAgent
 
   // services, in order of "load()"
 
+  private String localHost;
+  private EventService eventService;
   private LoggingService log = LoggingService.NULL;
 
   private AgentIdentityService myAgentIdService;
@@ -503,6 +506,11 @@ public class SimpleAgent
     // release load-time agent state for GC
     this.agentState = null;
 
+    // get event service
+    eventService = (EventService)
+      getServiceBroker().getService(
+          this, EventService.class, null);
+
     if (log.isInfoEnabled()) {
       log.info("Loaded");
     }
@@ -543,6 +551,14 @@ public class SimpleAgent
 
   protected void loadInternalPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
+
+    // lookup localhost, for WP and event use
+    try {
+      InetAddress localAddr = InetAddress.getLocalHost();
+      localHost = localAddr.getHostName();
+    } catch (Exception e) {
+      localHost = "?";
+    }
 
     // acquire our identity
     TransferableIdentity priorIdentity = 
@@ -704,6 +720,16 @@ public class SimpleAgent
     if (log.isInfoEnabled()) {
       log.info("Started");
     }
+
+    if (eventService != null &&
+        eventService.isEventEnabled()) {
+      eventService.event(
+          "AgentLifecycle("+"Started"+
+          ") Agent("+getIdentifier()+
+          ") Node("+localNode+
+          ") Host("+localHost+
+          ")");
+    }
   }
 
 
@@ -772,6 +798,40 @@ public class SimpleAgent
 
     if (log.isInfoEnabled()) {
       log.info("Suspended");
+    }
+
+    if (moveTargetNode != null) {
+      // record event
+      if (eventService != null &&
+          eventService.isEventEnabled()) {
+        String moveTargetHost = "?";
+        try {
+          AddressEntry nodeEntry = 
+            whitePagesService.get(
+                moveTargetNode.getAddress(),
+                Application.getApplication("topology"),
+                "node",
+                10000); // wait at most 10 seconds
+          if (nodeEntry != null) {
+            moveTargetHost = nodeEntry.getAddress().getHost();
+          }
+        } catch (Exception e) {
+          if (log.isInfoEnabled()) {
+            log.info(
+                "Unable to get host for destination node "+
+                moveTargetNode,
+                e);
+          }
+        }
+        eventService.event(
+            "AgentLifecycle("+"Moving"+
+            ") Agent("+getIdentifier()+
+            ") Node("+localNode+
+            ") Host("+localHost+
+            ") ToNode("+moveTargetNode+
+            ") ToHost("+moveTargetHost+
+            ")");
+      }
     }
   }
 
@@ -888,9 +948,23 @@ public class SimpleAgent
       // should keep flags for other reverseable actions
       throw re;
     }
-
+    
     if (log.isInfoEnabled()) {
       log.info("Resumed");
+    }
+
+    if (moveTargetNode != null) {
+      if (eventService != null &&
+          eventService.isEventEnabled()) {
+        eventService.event(
+            "AgentLifecycle("+"NotMoved"+
+            ") Agent("+getIdentifier()+
+            ") Node("+localNode+
+            ") Host("+localHost+
+            ") toNode("+moveTargetNode+
+            ")");
+      }
+      moveTargetNode = null;
     }
   }
 
@@ -927,6 +1001,26 @@ public class SimpleAgent
 
     if (log.isInfoEnabled()) {
       log.info("Stopped");
+    }
+
+    if (eventService != null &&
+        eventService.isEventEnabled()) {
+      if (moveTargetNode == null) {
+        eventService.event(
+            "AgentLifecycle("+"Stopped"+
+            ") Agent("+getIdentifier()+
+            ") Node("+localNode+
+            ") Host("+localHost+
+            ")");
+      } else {
+        eventService.event(
+            "AgentLifecycle("+"Moved"+
+            ") Agent("+getIdentifier()+
+            ") Node("+localNode+
+            ") Host("+localHost+
+            ") toNode("+moveTargetNode+
+            ")");
+      }
     }
   }
 
@@ -1406,8 +1500,6 @@ public class SimpleAgent
     whitePagesService.rebind(versionEntry);
 
     // register WP node location
-    InetAddress localAddr = InetAddress.getLocalHost();
-    String localHost = localAddr.getHostName();
     URI nodeURI = 
       URI.create("node://"+localHost+"/"+localNode.getAddress());
     AddressEntry nodeEntry = 
