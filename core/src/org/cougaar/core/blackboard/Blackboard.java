@@ -352,6 +352,18 @@ public class Blackboard extends Subscriber
     return vec.elements();
   }
 
+  public int countBlackboard(Class cl) {
+    // could optimize by maintaining an LRU table
+    int c = 0;
+    for (Iterator i = everything.getCollection().iterator(); i.hasNext(); ) {
+      Object o = i.next();
+      if (o != null && cl.isAssignableFrom(o.getClass())) {
+        c++;
+      }
+    }
+    return c;
+  }
+
   public int countBlackboard(UnaryPredicate predicate) {
     int c = 0;
     for (Iterator i = everything.getCollection().iterator(); i.hasNext(); ) {

@@ -31,24 +31,27 @@ import org.cougaar.util.UnaryPredicate;
 
 public interface BlackboardMetricsService extends Service {
   
-  /** Get a count of objects currently in the Blackboard.
-   * @param predicate Specify the objects to count in the Blackboard.
-   * @return int The count of objects that match the predicate.
+  /**
+   * Get a count of the total number of objects currently 
+   * found in the Blackboard.
+   * <p>
+   * Equivalent to "getBlackboardCount(Object.class)".
    **/
+  int getBlackboardCount();
+
+  /**
+   * Get a count of all instances of the given type currently found
+   * in the Blackboard.
+   * <p>
+   * This is more efficient than the equivalent predicate-based
+   * approach.
+   */
+  int getBlackboardCount(Class cl);
+
+  /**
+   * Get a count of objects currently in the Blackboard that
+   * match the given predicate.
+   */
   int getBlackboardCount(UnaryPredicate predicate);
 
-  /** @return int A count of the Asset's currently found in the Blackboard **/
-  int getAssetCount();
-
-  /** @return int A count of the PlanElements currently found in the Blackbaord **/
-  int getPlanElementCount();
-
-  /** @return int A count of the Tasks currently found in the Blackbaord **/
-  int getTaskCount();
-
-  /** @return int A count of the total number of objects currently 
-   * found in the Blackbaord **/
-  int getBlackboardObjectCount();
-
 }
-

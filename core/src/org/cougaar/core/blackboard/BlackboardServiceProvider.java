@@ -62,31 +62,49 @@ public class BlackboardServiceProvider implements ServiceProvider {
     // ?? each client will get its own subscriber - how can we clean them up??
   }
 
-  // blackboard metrics
-  private BlackboardMetricsService bbmetrics = null;
-
   // only need one instance of this service.
+  private BlackboardMetricsService bbmetrics = null;
   private BlackboardMetricsService getBlackboardMetricsService() {
-    if (bbmetrics != null) {
-      return bbmetrics;
-    } else {
-      //create one
-      bbmetrics = new BlackboardMetricsServiceImpl(distributor);
-      return bbmetrics;
+    if (bbmetrics == null) {
+      bbmetrics = new BlackboardMetricsServiceImpl();
     }
+    return bbmetrics;
   }
   
-  /** The implementation of BlackboardQueryService
-   **/
+  /** BlackboardService is a Subscriber */
+  private final class BlackboardServiceImpl
+    extends Subscriber
+    implements BlackboardService
+  {
+    BlackboardServiceImpl(BlackboardClient client) {
+      super(client, distributor);
+    }
+  }
+
+  /** The implementation of BlackboardMetricsService **/
+  private final class BlackboardMetricsServiceImpl
+    implements BlackboardMetricsService
+  {
+    public int getBlackboardCount() {
+      return distributor.getBlackboardSize();
+    }
+    public int getBlackboardCount(Class cl) {
+      return distributor.getBlackboardCount(cl);
+    }
+    public int getBlackboardCount(UnaryPredicate predicate) {
+      return distributor.getBlackboardCount(predicate);
+    }
+  }
+
+  /** The implementation of BlackboardQueryService **/
   private final class BlackboardQueryServiceImpl 
     implements BlackboardQueryService 
   {
     // keep the requestor around just in case...
-    private Object requestor;  
+    private final Object requestor;  
     private BlackboardQueryServiceImpl(Object requestor) {
       this.requestor = requestor;
     }
-
     public final Collection query(UnaryPredicate isMember) {
       QuerySubscription qs = new QuerySubscription(isMember);
       //qs.setSubscriber(null);  // ignored
@@ -94,16 +112,4 @@ public class BlackboardServiceProvider implements ServiceProvider {
       return qs.getCollection();
     }
   }
-
-  private final class BlackboardServiceImpl extends Subscriber
-    implements BlackboardService
-  {
-    BlackboardServiceImpl(BlackboardClient client) {
-      super(client, distributor);
-    }
-  }
 }
-
-
-  
-  

@@ -259,6 +259,20 @@ final class Distributor {
    * Pass thru to blackboard to safely return blackboard object
    * counts.
    * Used by BlackboardMetricsService
+   * @param cl The class type
+   **/
+  public int getBlackboardCount(Class cl) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      return blackboard.countBlackboard(cl);
+    }
+  }
+
+  /**
+   * Pass thru to blackboard to safely return blackboard object
+   * counts.
+   * Used by BlackboardMetricsService
    * @param predicate The objects to count in the blackboard
    * @return int The count of objects that match the predicate
    *   currently in the blackboard
