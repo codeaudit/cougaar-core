@@ -34,7 +34,13 @@ import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 
-// Make PersistenceMetrics look like (real) Metrics
+/**
+ * Gathers persistence metrics from the PersistenceMetricsService and
+ * publishes them as Metrics into the MetricsUpdateService.  Should be
+ * loaded into every Agent.
+ *
+ * @see PersistenceMetricsService
+ */
 public class PersistenceAdapterPlugin
     extends ComponentPlugin
     implements Runnable, Constants

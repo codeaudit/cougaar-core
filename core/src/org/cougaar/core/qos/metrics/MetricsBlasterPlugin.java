@@ -33,6 +33,12 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 
+/**
+ * This test Plugin publishes data into the MetricsUpdateService at
+ * high rates and subscribes to formulas using that data.  The
+ * arguments are <code>key</code> (the publish key) and
+ * <code>path</code> (the subscription path).
+ */
 public class MetricsBlasterPlugin
     extends ParameterizedPlugin
     implements Observer

@@ -33,6 +33,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.cougaar.core.component.ServiceBroker;
 
+/**
+ * This Servlet displays the Host resource metrics, using the Node to
+ * get at it.
+ */
 public class NodeResourcesServlet 
     extends MetricsServlet
     implements Constants

@@ -29,18 +29,33 @@ package org.cougaar.core.qos.metrics;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+/**
+ * This helper class is used to keep a history of sensor values and
+ * process them into metrics representing rates. The snapshots of
+ * the sensor values are kept in a series of cascading stores thats
+ * systematically discard the data as it gets older.  Instantiable
+ * extensions must implement the {@link #newAddition newAddition}, which is
+ * called when a snapshot is added or when its propagate to the next
+ * level in the cascade.
+ */
 public abstract class DecayingHistory
     implements Constants
 {
     
-    // Callback with a pair of snapshots need to be processed.
-    // The period is the Averaging Period for this pair
+    /**
+     * Callback with a pair of snapshots that need to be processed.
+     * The KeyMap holds the key string the averaging period for this
+     * pair.
+     */
     public abstract void newAddition(KeyMap keys,
 				     SnapShot now, 
 				     SnapShot last);
 
-    // Snapshots which are stored in history
-    // Extend this class to store the accumulators values
+    /**
+     * These are snapshots as stored in history.  The abstract class
+     * only stores timestamps.  Extend this class to store the
+     * accumulators values
+     */
     public static class SnapShot {
 	public long timestamp;
 
@@ -62,9 +77,11 @@ public abstract class DecayingHistory
     }
 
 
-    // Keeps a map of interned strings Each 1xxxSecAvg will have thier
-    // own map The customer of Decaying history will supply the key
-    // prefix and full key will be stored in map
+    /**
+     * Keeps a map of interned strings Each 1xxxSecAvg will have its
+     * own map. The customer of DecayingHistory will supply the key
+     * prefix and full key will be stored in map.
+     */
     public class KeyMap {
 	private String suffix;
 	HashMap map = new HashMap();

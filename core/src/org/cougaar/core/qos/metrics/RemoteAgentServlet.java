@@ -38,6 +38,10 @@ import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.wp.AddressEntry;
 
+/**
+ * This Servlet displays a summary of all interactions between any
+ * Agent on this Node and the Agents they talk to (remote or loca).
+ */
 public class RemoteAgentServlet
     extends MetricsServlet
     implements Constants

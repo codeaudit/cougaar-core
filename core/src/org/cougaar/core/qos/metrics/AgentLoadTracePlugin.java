@@ -40,6 +40,11 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.mts.AgentStatusService;
 
+
+/**
+ * The test Plugin will dump the time history of an Agent's resource
+ * load into the logging system.  
+ */
 public class AgentLoadTracePlugin 
     extends ComponentPlugin
     implements Constants

@@ -37,6 +37,15 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 
+/**
+ * This Plugin converts the AgentStatusService records into
+ * Metrics. It snapshots the service periodically, and converts the
+ * deltas into rates. This Plugin is laaded as part of the standard
+ * metrics service rules and is responsible for publishing the message
+ * traffic metrics for Agents and Nodes into the MetricsUpdateService.
+ *
+ * @see AgentStatusService
+ */
 public class AgentStatusRatePlugin 
     extends ComponentPlugin
     implements Runnable, Constants
