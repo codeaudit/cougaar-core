@@ -49,8 +49,8 @@ public class LsNS {
 
       Communications c = Communications.getInstance();
       c.put("address","localhost");
-      MessageTransport mt = c.startMessageTransport("Test");
-      NameServer ns = mt.getNameServer();
+      MessageTransportServer mt = c.startMessageTransport("Test");
+      NameServer ns = c.getDefaultNameServer();
 
       ls(ns, "/");
       System.exit(0);

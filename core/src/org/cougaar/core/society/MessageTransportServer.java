@@ -10,16 +10,16 @@
 
 package org.cougaar.core.society;
 
-import java.io.*;
-
 import org.cougaar.core.cluster.ClusterContext;
+import org.cougaar.core.component.Service;
 
 /**
  * Abstract MessageTransport layer for Society interaction.
  *
  **/
 
-public interface MessageTransportServer {
+public interface MessageTransportServer extends Service
+{
 
   /** Ask MessageTransport to deliver a message (asynchronously).
    * message.getTarget() names the destination.

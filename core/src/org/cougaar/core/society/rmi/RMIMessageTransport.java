@@ -81,7 +81,9 @@ import org.cougaar.util.ReusableThread;
  * 
  **/
 
-public class RMIMessageTransport extends MessageTransport implements MessageStatistics
+public class RMIMessageTransport 
+    extends MessageTransportClassic
+    implements MessageStatistics
 {
 
   public String CLUSTERDIR = "/clusters/";
@@ -204,7 +206,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   }
 
   public RMIMessageTransport(String id) {
-    super(id);
+    super();
     synchronized (getClass()) {
       if (keepStatistics) {
         try {
@@ -275,24 +277,8 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     }
   }
 
-  /** override base class to do super-short-circuit handling
-   **/
-  public void sendMessage(Message m) {
-    if (attemptLocalDelivery(m, m.getTarget())) {
-      watchingOutgoing(m);
-      return;
-    }
-
-    // else fallthrough
-    super.sendMessage(m);
-  }
 
 
-  /** override default to deal with secureMessages **/
-  public void receiveMessage(Message m) {
-    Message um = unsecure(m);
-    if (um != null) super.receiveMessage(um);
-  }
 
   /** send a single message to its destination without blocking */
   protected void sendMessageToSociety(Message m) {
@@ -308,27 +294,10 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     }
   }
 
-  private final boolean attemptLocalDelivery(Message m, MessageAddress addr) {
-    if (useLocalDelivery) {
-      MessageTransportClient c = findLocalClient(addr);
-      if (c != null) {
-        // could check the matching destination queue to see if it 
-        // has pending messages - if so, we shouldn't direct-deliver
-        // or we could get out-of-sequence message delivery.
-        receiveMessage(m);    // don't bother to secure locals
-        return true;
-      }
-    }
-    return false;
-  }
 
   /** send a single message to its destination without blocking */
   private void sendMessageToTarget(Message m, MessageAddress addr) {
-    // if we're using local delivery, don't bother to spend a thread
-    // in situations where we can deliver immediately.
-    if (attemptLocalDelivery(m, addr)) {
-      return;
-    }
+      System.out.print('>');
     queueForDelivery(secure(m), addr);
   }
 
@@ -339,7 +308,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   }
 
   // must be started
-  protected final void registerClientWithSociety(MessageTransportClient client) {
+  public final void registerClient(MessageTransportClient client) {
     try {
       // always register the Node MT
       registerMTWithSociety();
@@ -352,7 +321,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
         proxy = myAddress;
       } else {
         // register the cluster as shim object
-        proxy = generateServerSideProxy(client);
+        proxy = generateServerSideProxy(addr);
       }
       _registerWithSociety(p, proxy);
     } catch (Exception e) {
@@ -360,6 +329,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
       e.printStackTrace();
     }
   }
+
 
   private final void _registerWithSociety(String path, Object proxy) 
     throws RemoteException
@@ -376,7 +346,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   private static MT myServerProxy = null;
 
   /** Override or wrap to generate a different proxy for a client object **/
-  protected Object generateServerSideProxy(MessageTransportClient client) 
+  protected Object generateServerSideProxy(MessageAddress clientAddress) 
     throws RemoteException
   {
     if (useServerProxies) {
@@ -387,7 +357,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
         return myServerProxy;
       }
     } else {
-      return new MTImpl(this, client.getMessageAddress());
+      return new MTImpl(this, clientAddress);
     }
   }
 
@@ -404,19 +374,9 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
       if (myMT == null) {
         // make a real shim so that overriders of generateServerSideProxy
         // can override usefully.
-        MessageTransportClient mtc = new MessageTransportClient() {
-            public void receiveMessage(Message m) {
-              RMIMessageTransport.this.receiveMessage(m);
-            }
-            public MessageAddress getMessageAddress() {
-              return RMIMessageTransport.this.myAddress;
-            }
-          };
+	  myMT = new MTImpl(this,myAddress);
 
-        
-        myMT = new MTImpl(this,myAddress);
-
-        Object proxy = generateServerSideProxy(mtc);
+        Object proxy =   generateServerSideProxy(myAddress);
         // register both as an MT and as a Cluster (so that lookup Works)
         _registerWithSociety(MTDIR+myAddress.getAddress(), proxy);
         _registerWithSociety(CLUSTERDIR+myAddress.getAddress(), proxy);
@@ -454,8 +414,8 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     }
     MT getMT() { return mt; }
 
-    public void receiveMessage(Message m) throws RemoteException {
-      mt.receiveMessage(m);
+    public void rerouteMessage(Message m) throws RemoteException {
+      mt.rerouteMessage(m);
     }
     public MessageAddress getMessageAddress() throws RemoteException {
       return key;
@@ -572,9 +532,6 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     super.log(key,info);
   }
 
-  protected MessageTransportClient findLocalClient(MessageAddress id) {
-    return super.findLocalClient(id);
-  }
 
   // nameserver target pinger
   private static class TargetPinger implements Runnable {
@@ -652,9 +609,6 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
 
     /** if we're redirecting, this will be the redirection address **/
     MessageAddress redirection = null;
-
-    /** if non-null, a local client has shown up **/
-    MessageTransportClient localClient = null;
 
     /** signals that the next use of remote will be the first use of remote **/
     boolean firstUse;
@@ -820,12 +774,8 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
 
     /** lookup the target - return true on success. **/
     boolean lookupTarget() {
-      if (localClient==null && remote == null) {   // need to look it up?
+      if (remote == null) {   // need to look it up?
         // might as well check to see if a local client has shown up...
-        if (useLocalDelivery) {
-          localClient = findLocalClient(dest);
-          if (localClient!=null) return true;
-        }
 
         // no local client (yet, at any rate), so try the lookup...
         try {
@@ -887,12 +837,10 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
           }
         }
         
-        if (localClient != null) {
-          receiveMessage(m);    // send locally
-        } else {
+
           try {
             if (isLogging) log("dQ0", m.toString()+" ("+size()+")");
-            remote.receiveMessage(m);
+            remote.rerouteMessage(m);
             //System.err.print((remote.isRedirect())?"X":"O");
             if (isLogging) log("dQ-", m.toString()+" ("+size()+")");
             firstUse = false;     // Clear on first successful transmission
@@ -956,7 +904,6 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
               }
             }
           }
-        }
       }
     }
   }

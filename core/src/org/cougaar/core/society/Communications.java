@@ -15,6 +15,7 @@ import java.lang.reflect.*;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.ConfigFileFinder;
+import org.cougaar.core.component.ServiceProvider;
 import java.util.*;
 import java.net.*;
 
@@ -239,37 +240,51 @@ public class Communications {
 
   /** creates a MessageTransport acting for the entity specified by id.
    **/
-  public MessageTransport startMessageTransport(String id) {
-    String mtcn = defaultTransportClass;
-    try {
-      Class mtc = Class.forName(mtcn);
-      Class[] pattern = new Class[1];
-      pattern[0] = String.class;
-      Constructor cons = mtc.getConstructor(pattern);
-      Object[] args = new Object[1];
-      args[0] = id;
-      return (MessageTransport) cons.newInstance(args);
-    } catch (Exception e) {
-      System.err.println("Could not create MessageTransport ("+mtcn+") for "+id);
-      e.printStackTrace();
-      throw new Error("Node error: "+e);
-    }
+  public MessageTransportServer startMessageTransport(String id) {
+//      String mtcn = defaultTransportClass;
+//      try {
+//        Class mtc = Class.forName(mtcn);
+//        Class[] pattern = new Class[1];
+//        pattern[0] = String.class;
+//        Constructor cons = mtc.getConstructor(pattern);
+//        Object[] args = new Object[1];
+//        args[0] = id;
+//        return (MessageTransport) cons.newInstance(args);
+//      } catch (Exception e) {
+//        System.err.println("Could not create MessageTransport ("+mtcn+") for "+id);
+//        e.printStackTrace();
+//        throw new Error("Node error: "+e);
+//      }
+
+      // Later this impl will be instantiated by Node as a component
+      MessageTransportServerImpl impl = 
+	  new MessageTransportServerImpl(id);
+      // Later this provide will be registered with the Node by the
+      // impl.
+      MessageTransportServerServiceFactory provider = impl.getProvider();
+      
+      
+      defaultNameServer = provider.getDefaultNameServer();
+
+      // For now we make a single proxy, for all clients
+      Object server =
+	  provider.getService(null, this, MessageTransportServer.class);
+      return (MessageTransportServer) server;
   }
 
   private static Object defaultLock = new Object();
-  private static MessageTransport defaultMessageTransport = null;
+  private static MessageTransportServer defaultMessageTransport = null;
   private static NameServer defaultNameServer = null;
 
-  public static void setDefaultMessageTransport(MessageTransport mt) {
+  public static void setDefaultMessageTransport(MessageTransportServer mt) {
     synchronized (defaultLock) {
       if (defaultMessageTransport!=null) 
         throw new RuntimeException("Default MessageTransport already set.");
       defaultMessageTransport = mt;
-      defaultNameServer = mt.getNameServer();
     }
   }
 
-  public static MessageTransport getDefaultMessageTransport() {
+  public static MessageTransportServer getDefaultMessageTransport() {
     return defaultMessageTransport;
   }
   public static NameServer getDefaultNameServer() {

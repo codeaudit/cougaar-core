@@ -31,9 +31,9 @@ public class PingNameServer {
 
   public static void main(String[] arg) {
     Communications c = Communications.getInstance();
-    MessageTransport mt = c.startMessageTransport("TestNS");
+    MessageTransportServer mt = c.startMessageTransport("TestNS");
     c.setDefaultMessageTransport(mt);
-    NameServer ns = mt.getNameServer();
+    NameServer ns = c.getDefaultNameServer();
 
     if (arg.length >0) {
       while (true) {

@@ -10,11 +10,6 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageTransportServer;
-import org.cougaar.core.society.MessageTransportClient;
-import org.cougaar.core.society.MessageTransportException;
-
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.society.ClusterManagementServesCluster;
 
@@ -479,14 +474,15 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
   }
 
   /** Refernece containing the Messenger **/
-  private transient MessageTransport theMessenger = null;
+  private transient MessageTransportServer theMessenger = null;
 
   /**
    *   Accessor method for theMessenger
    *   <p>
    *   @return Messenger The threaded messenger component of the node as referenced by theMessenger
    **/
-  protected MessageTransport getMessenger() { 
+  protected MessageTransportServer getMessenger() { 
+      // Nb:  One proxy for all requestors!
     return theMessenger; 
   }
 
@@ -573,16 +569,20 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
 
+
+    // **** QUO *****
+    // Change this to create (or find?) a MessageTransportManager as the
+    // value of theMessenger.
   private void initTransport() {
     String name = getIdentifier();
-    if (alwaysSerialize) {
-      theMessenger = new PipedMessageTransport(name);
-    } else {
-      theMessenger = Communications.getInstance().startMessageTransport(name);
-    }
+//      if (alwaysSerialize) {
+//        theMessenger = new PipedMessageTransport(name);
+//      } else {
+//        theMessenger = Communications.getInstance().startMessageTransport(name);
+//      }
+    theMessenger = Communications.getInstance().startMessageTransport(name);
     Communications.setDefaultMessageTransport(theMessenger);
-    theMessenger.setDisableRetransmission(disableRetransmission);
-    theMessenger.start();
+    // theMessenger.setDisableRetransmission(disableRetransmission);
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
   }

@@ -32,15 +32,16 @@ public class MTImpl extends UnicastRemoteObject implements MT {
 
   //public MTImpl() throws RemoteException {} // not used
 
-  public MTImpl(MessageTransport mt, MessageAddress addr) throws RemoteException {
+  public MTImpl(MessageTransport mt, MessageAddress addr) 
+      throws RemoteException {
     super();
     transport = mt;
     address = addr;
   }
 
-  public void receiveMessage(Message m) {
+  public void rerouteMessage(Message m) {
     try {
-      transport.receiveMessage(m);
+      transport.rerouteMessage(m);
     } catch (Exception e) {
       System.err.println("\n\nCaught exception in shim: "+e);
       e.printStackTrace();

@@ -22,7 +22,7 @@ import org.cougaar.core.society.MessageAddress;
 
 public interface MT extends Remote {
   /** receive a message **/
-  void receiveMessage(Message m) throws RemoteException;
+  void rerouteMessage(Message m) throws RemoteException;
 
   /** @return the message address of this client **/
   MessageAddress getMessageAddress() throws RemoteException;
