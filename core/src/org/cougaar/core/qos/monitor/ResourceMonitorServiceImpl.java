@@ -21,7 +21,7 @@
 
 package org.cougaar.core.qos.monitor;
 
-import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.society.MessageAddress;
 
@@ -33,13 +33,17 @@ import java.util.Observable;
 public class ResourceMonitorServiceImpl implements ResourceMonitorService
 {
     protected NameSupport nameSupport;
+    protected ServiceBroker sb;
 
-    protected ResourceMonitorServiceImpl(NameSupport nameSupport) {
+    protected ResourceMonitorServiceImpl(NameSupport nameSupport,
+					 ServiceBroker sb) 
+    {
 	this.nameSupport = nameSupport;
+	this.sb = sb;
     }
 
     public double getJipsForAgent(MessageAddress agentAddress) {
-	return 10.0;
+	return 11.0;
     }
 
     public Observable getJipsForAgentObservable(MessageAddress agentAddress) {

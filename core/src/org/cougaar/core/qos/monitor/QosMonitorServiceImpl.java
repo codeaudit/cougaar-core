@@ -21,6 +21,8 @@
 
 package org.cougaar.core.qos.monitor;
 
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.society.MessageAddress;
 
@@ -31,12 +33,18 @@ import javax.naming.directory.BasicAttributes;
 public class QosMonitorServiceImpl implements QosMonitorService
 {
     private NameSupport nameSupport;
+    private ServiceBroker sb;
+    private AgentStatusService statusService;
+    private static final int STALE_TIME = 10000; // 10 seconds
 
-    QosMonitorServiceImpl(NameSupport nameSupport) {
+    QosMonitorServiceImpl(NameSupport nameSupport, ServiceBroker sb) {
 	this.nameSupport = nameSupport;
+	this.sb = sb;
     }
 
     public int lookupAgentStatus(MessageAddress agentAddress) {
+	System.out.println(">>>>> Looking up status of " + agentAddress);
+
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
 	String attr = NameSupport.STATUS_ATTR;
@@ -67,7 +75,25 @@ public class QosMonitorServiceImpl implements QosMonitorService
     }
 
     public int getAgentStatus(MessageAddress agentAddress) {
-	return lookupAgentStatus(agentAddress);
+	if (statusService == null) {
+	    Object svc = 
+		sb.getService(this, AgentStatusService.class, null);
+	    if (svc == null) {
+		System.err.println("### Can't find AgentStatusService");
+	    } else {
+		statusService = (AgentStatusService) svc;
+		System.out.println("%%% Got AgentStatusService!");
+	    }
+	}
+	AgentStatusService.AgentState state = 
+	    statusService.getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+
+	if (state.status == AgentStatusService.ACTIVE && since <= STALE_TIME) 
+	    return ACTIVE;
+	else
+	    return lookupAgentStatus(agentAddress);
     }
     
 

@@ -56,26 +56,27 @@ public class QosMonitorServiceProvider
         super.initialize();
     }
 
-    private synchronized QosMonitorService findOrMakeQMS() {
-	if (qms == null) qms = new QosMonitorServiceImpl(nameSupport);
+    private synchronized QosMonitorService findOrMakeQMS(ServiceBroker sb) {
+	if (qms == null) qms = new QosMonitorServiceImpl(nameSupport, sb);
 	return qms;
     }
 
-    private synchronized ResourceMonitorService findOrMakeRMS() {
+    private synchronized ResourceMonitorService findOrMakeRMS(ServiceBroker sb)
+    {
 	if (rms != null) {
 	    return rms;
 	} else {
 	    try {
 		Class rss_class = Class.forName("org.cougaar.core.qos.quo.RSSLink");
-		Class[] types = { NameSupport.class };
-		Object[] args = { nameSupport };
+		Class[] types = { NameSupport.class, ServiceBroker.class };
+		Object[] args = { nameSupport, sb };
 		Constructor cons = rss_class.getConstructor(types);
 		rms = (ResourceMonitorService) cons.newInstance(args);
 		System.out.println("!!!!! Made RSSLink !!!");
 	    } catch (Exception ex) {
 		// RSS not loaded
-		System.err.println("### No RSS, using default ResourceMonitorService");
-		rms = new ResourceMonitorServiceImpl(nameSupport);
+		System.err.println("### No RSS, using default ResourceMonitorService: " + ex);
+		rms = new ResourceMonitorServiceImpl(nameSupport, sb);
 	    }
 	    return rms;
 	}
@@ -86,9 +87,9 @@ public class QosMonitorServiceProvider
 			     Class serviceClass) 
     {
 	if (serviceClass == QosMonitorService.class) {
-	    return findOrMakeQMS();
+	    return findOrMakeQMS(sb);
 	} else if (serviceClass == ResourceMonitorService.class) {
-	    return findOrMakeRMS();
+	    return findOrMakeRMS(sb);
 	} else {
 	    return null;
 	}
