@@ -203,10 +203,11 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             substitutions.put(":component_id:", componentId);
             String query2 = dbp.getQuery("queryComponentParams",  substitutions);
             ResultSet rs2 = executeQuery(stmt2, query2);
-            Vector vParams = new Vector();
+            Vector vParams = null; // no parameters == NO PARAMETERS! (bug 1372)
             while (rs2.next()) {
               String param = getNonNullString(rs2, 1, query2);
               if (!param.startsWith("PROP$")) { // CSMART private arg
+                if (vParams == null) vParams = new Vector(); // lazy create
                 vParams.addElement(param);
               }
             }

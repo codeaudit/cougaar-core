@@ -209,7 +209,8 @@ readDescriptions:
           vParams = StringUtility.parseCSV(value, (p1+1), p2);
         } else {
           classname = value;
-          vParams = getEmptyVector();
+          //vParams = getEmptyVector();
+          vParams = null;       // no parameters == NO PARAMETERS! (bug 1372)
         }
 
         // fix the insertion point for backwards compatibility
