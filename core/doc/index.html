@@ -2,7 +2,7 @@
 <html>
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <meta name="GENERATOR" content="Mozilla/4.76 [en] (WinNT; U) [Netscape]">
    <meta name="Template" content="C:\Program Files\Microsoft Office\Office\html.dot">
    <title>Release Notes</title>
 </head>
@@ -61,6 +61,15 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
+Build 8.2.1 is another point release along COUGAAR 8.0. Notable additions
+for this release include:
+<ul>
+<li>
+An expanded test configuration: configs/small-135</li>
+
+<li>
+Bug fixes</li>
+</ul>
 Build 8.2 is a point release along COUGAAR 8.0. Notable additions for this
 release include:
 <blockquote>
@@ -209,10 +218,10 @@ alpine/demo/OPLAN_EDIT.PSP</li>
 <a NAME="example"></a>MiniTestConfig Example Implementations</h2>
 ALPINE maintains only the node configurations that we are currently using
 for testing purposes and for the COUGAAR demonstrations. These node configurations
-are available in subdirectories under "configs" in the release.
-To execute the COUGAAR society, these nodes can be combined to form a society
-that can be executed on a single computer or distributed across multiple
-computers. Note that only <b><a href="MiniTestConfig.html">minitestconfig</a></b>
+are available in subdirectories under "configs" in the release. To execute
+the COUGAAR society, these nodes can be combined to form a society that
+can be executed on a single computer or distributed across multiple computers.
+Note that only <b><a href="MiniTestConfig.html">minitestconfig</a></b>
 will work "out of the box". We intend to expand this test society in subsequent
 MiniBuild releases in size and complexity. PlugIn developers are encouraged
 to use <b>minitestconfig</b> as a starting point for bringing PlugIn compliance
@@ -220,11 +229,11 @@ up to the latest infrastructure release. In addition, the subdirectory
 "flag-config" contains the configuration files used for the Flag Demonstration
 society. This society requires the use of PlugIns from various COUGAAR
 participants.&nbsp;
-<p>
-There is an additional, much larger, configuration in
-<b>configs/small-135</b>.  See the README.txt file in the
-configuration directory for more information.
-<br>&nbsp;
+<p>There is an additional, much larger, configuration in
+<b>configs/small-135</b>.
+Support for running a relatively small but interesting two node society
+that runs on two machines.&nbsp; See the small-135.readme.html file in
+the configuration directory for more information.&nbsp;
 <h2>
 <a NAME="delivering"></a>Delivering Software Products&nbsp;</h2>
 Please see the Integration Information Area that can be found on the <a href="http://www.ultralog.net">UltraLog</a>
