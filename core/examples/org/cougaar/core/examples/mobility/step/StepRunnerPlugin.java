@@ -20,6 +20,7 @@
  */
 package org.cougaar.core.examples.mobility.step;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -46,8 +47,9 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.wp.Application;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
@@ -62,6 +64,9 @@ public class StepRunnerPlugin
 extends ComponentPlugin 
 {
 
+  private static final Application TOPOLOGY = 
+    Application.getApplication("topology");
+
   private MessageAddress todd;
   private MessageAddress agentId;
   private MessageAddress nodeId;
@@ -71,7 +76,7 @@ extends ComponentPlugin
 
   private LoggingService log;
   private DomainService domain;
-  private TopologyReaderService topologyReader;
+  private WhitePagesService wps;
 
   private MobilityFactory mobilityFactory;
 
@@ -152,15 +157,15 @@ extends ComponentPlugin
           "Mobility factory (and domain) not enabled");
     }
 
-    // get the topology reader
-    this.topologyReader = (TopologyReaderService)
+    // get the white pages service
+    this.wps = (WhitePagesService)
       getServiceBroker().getService(
           this,
-          TopologyReaderService.class,
+          WhitePagesService.class,
           null);
-    if (topologyReader == null) {
+    if (wps == null) {
       throw new RuntimeException(
-          "Unable to obtain topology-reader service");
+          "Unable to obtain white pages service");
     }
 
     if (log.isDebugEnabled()) {
@@ -169,10 +174,10 @@ extends ComponentPlugin
   }
 
   public void unload() {
-    if (topologyReader != null) {
+    if (wps != null) {
       getServiceBroker().releaseService(
-          this, TopologyReaderService.class, topologyReader);
-      topologyReader = null;
+          this, WhitePagesService.class, wps);
+      wps = null;
     }
     if (domain != null) {
       getServiceBroker().releaseService(
@@ -360,21 +365,22 @@ extends ComponentPlugin
       mobileAgent = agentId;
     }
 
-    // check topology.  Okay if agent is not listed.
-    TopologyEntry topE = 
-      topologyReader.getEntryForAgent(
-          mobileAgent.getAddress());
+    // check white pages.  Okay if agent is not listed.
+    WPInfo origWPI = 
+      lookupInWP(
+          mobileAgent,
+          30000); // max wait
     if (log.isDebugEnabled()) {
       log.debug(todd+
           "Step "+step.getUID()+
-          " added, topology entry for agent "+
-          mobileAgent+" is "+
-          topE);
+          " added, wp entry for agent "+
+          mobileAgent+" is "+origWPI);
     }
 
     // create new Entry for this ticket
     // add step to table
-    Entry entry = new Entry(ticket, topE, step);
+    Entry entry = 
+      new Entry(ticket, origWPI, step);
     idToEntry.put(id, entry);
 
     if ((pauseTime > 0) &&
@@ -695,53 +701,51 @@ extends ComponentPlugin
             mstat.getCodeAsString());
       }
     } else {
-      // check topology.  The "entry.topE" may be null, but
-      // the current topE should not be null.
+      // check wp.  The "entry.wpi" may be null, but
+      // the current wpi should not be null.
       MessageAddress mobileAgent = ticket.getMobileAgent();
       if (mobileAgent == null) {
         mobileAgent = agentId;
       }
       MessageAddress destNode = ticket.getDestinationNode();
-      TopologyEntry etopE = entry.topE;
+      WPInfo origWPI = entry.wpi;
 
-      // the topology update may take several seconds, so we
+      // the wp update may take several seconds, so we
       // do a limited backoff-n-retry in case the entry looks stale.
       //
       // FIXME: ideally we would release the plugin execute thread
       // and set an alarm, but for now we'll simply sleep.
-      TopologyEntry topE;
+      WPInfo newWPI;
       for (int i = 0, maxi = 5; ; i++) {
-        topE = 
-          topologyReader.getEntryForAgent(
-              mobileAgent.getAddress());
-        if (topE == null) {
-          // not listed in topology?
+        newWPI = lookupInWP(mobileAgent, 30000);
+        if (newWPI == null) {
+          // not listed in wp?
           if (i == 0) {
             if (log.isInfoEnabled()) {
               log.info(
                   "Will re-examine "+mobileAgent+
-                  "'s null topology entry (step: "+
+                  "'s null wp entry (step: "+
                   step.getUID()+")");
             }
           } else if (i >= maxi) {
             if (log.isErrorEnabled()) {
               log.error(
                   "Step "+step.getUID()+
-                  " failed due to null topology"+
+                  " failed due to null wp"+
                   " entry for agent "+mobileAgent);
             }
             break;
           }
         } else if (
             (destNode != null) &&
-            (!(destNode.getAddress().equals(topE.getNode())))) {
+            (!(destNode.getAddress().equals(newWPI.node)))) {
           // at the wrong node!
           if (i == 0) {
             if (log.isInfoEnabled()) {
               log.info(
                   "Will re-examine "+mobileAgent+
-                  "'s topology entry, which indicates that"+
-                  " the agent is at node "+topE.getNode()+
+                  "'s wp entry, which indicates that"+
+                  " the agent is at node "+newWPI.node+
                   " instead of the move destination node "+
                   destNode+" (step: "+step.getUID()+")");
             }
@@ -749,15 +753,15 @@ extends ComponentPlugin
             if (log.isErrorEnabled()) {
               log.error(
                   "Step "+step.getUID()+
-                  " failed due to topology listing of agent "+
+                  " failed due to wp listing of agent "+
                   mobileAgent+
                   " at node "+
-                  topE.getNode()+
+                  newWPI.node+
                   " instead of ticket's destination node "+
                   destNode+
-                  ", topology entry is "+topE);
+                  ", wp entry is "+newWPI);
             }
-            topE = null;
+            newWPI = null;
             break;
           }
         } else {
@@ -773,11 +777,11 @@ extends ComponentPlugin
         }
       }
 
-      if (topE == null) {
+      if (newWPI == null) {
         // already logged our error above
       } else if (
           (destNode == null) &&
-          (!(etopE.getNode().equals(topE.getNode())))) {
+          (!(origWPI.node.equals(newWPI.node)))) {
         // didn't restart in place!
         if (log.isErrorEnabled()) {
           log.error(
@@ -785,42 +789,20 @@ extends ComponentPlugin
               " finished restart-in-place of agent "+
               mobileAgent+
               " started at node "+
-              etopE.getNode()+
+              origWPI.node+
               " and ended up at a different node "+
-              topE.getNode()+
-              ", topology entry is "+topE);
+              newWPI.node+
+              ", wp entry is "+newWPI);
         }
-      } else if (topE.getStatus() != TopologyEntry.ACTIVE) {
-        // not active!
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Step "+step.getUID()+
-              " finished with non-ACTIVE topology entry "+
-              topE);
-        }
-      } else if (
-          (etopE != null) &&
-          (topE.getType() != etopE.getType())) {
-        // changed type?
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Step "+step.getUID()+
-              " finished with topology type "+
-              topE.getType()+
-              " that doesn't match the prior type "+
-              etopE.getType());
-        }
-      } else if (
-          (etopE != null) &&
-          (topE.getIncarnation() != etopE.getIncarnation())) {
+      } else if (newWPI.inc != origWPI.inc) {
         // incarnation number is wrong!  maybe crashed during move.
         if (log.isErrorEnabled()) {
           log.error(
               "Step "+step.getUID()+
               " finished with incarnation number "+
-              topE.getIncarnation()+
+              newWPI.inc+
               " that doesn't match the prior incarnation number "+
-              etopE.getIncarnation());
+              origWPI.inc);
         }
       } else {
         // success!
@@ -902,6 +884,57 @@ extends ComponentPlugin
     return l;
   }
 
+  private WPInfo lookupInWP(
+      MessageAddress agent,
+      long timeout) {
+    try {
+      // get "node://host/node"
+      AddressEntry nodeAE = wps.get(
+          agent.getAddress(),
+          TOPOLOGY,
+          "node",
+          timeout);
+      if (nodeAE == null) {
+        if (log.isInfoEnabled()) {
+          log.info("Missing \"node://\" WP entry for "+agent);
+        }
+        return null;
+      }
+      URI nodeURI = nodeAE.getAddress();
+      String host = nodeURI.getHost();
+      String node = nodeURI.getPath().substring(1);
+      // get "version:///incarnation/moveId"
+      AddressEntry versionAE = wps.get(
+          agent.getAddress(),
+          TOPOLOGY,
+          "version",
+          timeout);
+      if (versionAE == null) {
+        if (log.isInfoEnabled()) {
+          log.info("Missing \"version://\" WP entry for "+agent);
+        }
+        return null;
+      }
+      URI versionURI = versionAE.getAddress();
+      String tmp = versionURI.getPath();
+      int sep = tmp.indexOf('/', 1);
+      long inc = Long.parseLong(tmp.substring(1, sep));
+      long moveId = Long.parseLong(tmp.substring(sep+1));
+      return new WPInfo(
+          agent.getAddress(),
+          node,
+          host,
+          inc,
+          moveId);
+    } catch (Exception e) {
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Failed WP lookup("+agent+")", e);
+      }
+      return null;
+    }
+  }
+
   // find MoveAgent with matching ticket-id
   private MoveAgent findMove(Object id) {
     Collection c = moveSub.getCollection();
@@ -976,6 +1009,32 @@ extends ComponentPlugin
     return null;
   }
 
+  private static class WPInfo {
+    public final String agent;
+    public final String node;
+    public final String host;
+    public final long inc;
+    public final long moveId;
+    public WPInfo(
+        String agent, String node, String host,
+        long inc, long moveId) {
+      this.agent = agent;
+      this.node = node;
+      this.host = host;
+      this.inc = inc;
+      this.moveId = moveId;
+    }
+    public String toString() { 
+      return 
+        "(agent="+agent+
+        ", node="+node+
+        ", host="+host+
+        ", inc="+inc+
+        ", moveId="+moveId+
+        ")";
+    }
+  }
+
   private class MyAlarm implements Alarm, Comparable {
     private final long expirationTime;
     private boolean expired = false;
@@ -1038,17 +1097,17 @@ extends ComponentPlugin
 
   private static class Entry {
     public final Ticket ticket;
-    public final TopologyEntry topE;
+    public final WPInfo wpi;
     public final Step step;
     public MyAlarm alarm;
     public MoveAgent moveAgent;
 
     public Entry(
         Ticket ticket, 
-        TopologyEntry topE,
+        WPInfo wpi,
         Step step) {
       this.ticket = ticket;
-      this.topE = topE;
+      this.wpi = wpi;
       this.step = step;
       if ((ticket == null) ||
           (step == null)) {
@@ -1061,7 +1120,7 @@ extends ComponentPlugin
       return 
         "Entry {"+
         "\n ticket:    "+ticket+
-        "\n topE:      "+topE+
+        "\n wp info:   "+wpi+
         "\n step:      "+step+
         "\n alarm:     "+alarm+
         "\n moveAgent: "+moveAgent+

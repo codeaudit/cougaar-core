@@ -22,6 +22,7 @@
 package org.cougaar.core.mobility.service;
 
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,8 +51,9 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.wp.Application;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.GenericStateModel;
@@ -191,23 +193,31 @@ extends AbstractMobilityPlugin
         // check remote destination node
         //
         // For now we do a quick check to see if the node 
-        // is registered in the topology.
+        // is registered in the WP.
         //
         // See bug 1218 for details.
-        TopologyEntry te =
-          topologyReaderService.getEntryForAgent(
-              destNode.getAddress());
-        String s;
-        if (te == null) {
-          s = "It's unknown (not listed in the topology)";
-        } else if (
-            te.getType() != TopologyReaderService.NODE_AGENT_TYPE) {
-          s = "It's not a node agent ("+te.getTypeAsString()+")";
-        } else if (
-            te.getStatus() != TopologyEntry.ACTIVE) {
-          s = "It's not active ("+te.getStatusAsString()+")";
+        String s = null;
+        AddressEntry ae = null;
+        try {
+          ae = whitePagesService.get(
+              destNode.getAddress(),
+              Application.getApplication("topology"),
+              "node",
+              (30000)); // 30 seconds
+        } catch (Exception e) {
+          s = e.toString();
+        }
+        if (ae == null) {
+          if (s == null) {
+            s = "It's not listed in the white pages";
+          }
         } else {
-          s = null;
+          URI uri = ae.getAddress();
+          String path = uri.getPath();
+          String node = (path == null ? null : path.substring(1));
+          if (!destNode.getAddress().equals(node)) {
+            s = "It's not a node agent "+ae;
+          }
         }
         if (s != null) {
           // destination node is invalid!

@@ -52,7 +52,7 @@ import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
@@ -97,7 +97,7 @@ public abstract class AbstractMobilityPlugin
 
   protected NodeControlService nodeControlService;
   protected ThreadService threadService;
-  protected TopologyReaderService topologyReaderService;
+  protected WhitePagesService whitePagesService;
 
   private ServiceBroker nodeSB;
   protected AgentContainer agentContainer;
@@ -212,15 +212,15 @@ public abstract class AbstractMobilityPlugin
             "Unable to obtain node-level thread service");
       }
 
-      // get the topology service
-      topologyReaderService = (TopologyReaderService)
+      // get the white pages service
+      whitePagesService = (WhitePagesService)
         getServiceBroker().getService(
             this,
-            TopologyReaderService.class,
+            WhitePagesService.class,
             null);
-      if (topologyReaderService == null) {
+      if (whitePagesService == null) {
         throw new RuntimeException(
-            "Unable to obtain the topology-reader service");
+            "Unable to obtain the white pages service");
       }
     }
   }
@@ -252,10 +252,10 @@ public abstract class AbstractMobilityPlugin
         nodeSB.revokeService(MobileAgentService.class, mobileAgentSP);
         mobileAgentSP = null;
       }
-      if (topologyReaderService != null) {
+      if (whitePagesService != null) {
         getServiceBroker().releaseService(
-            this, TopologyReaderService.class, topologyReaderService);
-        topologyReaderService = null;
+            this, WhitePagesService.class, whitePagesService);
+        whitePagesService = null;
       }
       if (nodeControlService != null) {
         getServiceBroker().releaseService(
