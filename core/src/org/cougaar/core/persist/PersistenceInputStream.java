@@ -138,7 +138,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       pAssoc.setActive(active);
       pAssoc.setClientId(clientId);
     }
-    if (logger.isDebugEnabled()) logger.debug("read association " + pAssoc);
+    if (logger.isDetailEnabled()) logger.detail("read association " + pAssoc);
     return pAssoc;
   }
 
@@ -212,23 +212,23 @@ public class PersistenceInputStream extends ObjectInputStream {
 	if (pAssoc == null) {
 	  Object object = callNewInstanceFromDesc(this, desc);
 	  pAssoc = identityTable.create(object, reference);
-	  if (logger.isDebugEnabled()) logger.debug("Allocating " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(object) + " @ " + reference);
+	  if (logger.isDetailEnabled()) logger.detail("Allocating " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(object) + " @ " + reference);
 	  return object;
 	}
 	Object result = pAssoc.getObject();
 	if (result == null) throw new InstantiationException("no object @ " + reference);
 	if (result.getClass() != clazz) throw new InstantiationException("wrong object @ " + reference);
-	if (logger.isDebugEnabled()) logger.debug("Overwriting " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(result) + " @ " + reference);
+	if (logger.isDetailEnabled()) logger.detail("Overwriting " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
         Object result = callNewInstanceFromDesc(this, desc);
-        if (logger.isDebugEnabled()) logger.debug("Allocating " + (nextReadIndex-1) + " " +
+        if (logger.isDetailEnabled()) logger.detail("Allocating " + (nextReadIndex-1) + " " +
               BasePersistence.getObjectName(result));
         return result;
       }
     }
     Object result = callNewInstanceFromDesc(this, desc);
-    if (logger.isDebugEnabled()) logger.debug("Allocating " + BasePersistence.getObjectName(result));
+    if (logger.isDetailEnabled()) logger.detail("Allocating " + BasePersistence.getObjectName(result));
     return result;
   }
 
@@ -252,10 +252,10 @@ public class PersistenceInputStream extends ObjectInputStream {
 //  	return null;
       }
       Object result = pAssoc.getObject();
-      if (logger.isDebugEnabled()) logger.debug("Resolving " + BasePersistence.getObjectName(result) + " @ " + pRef);
+      if (logger.isDetailEnabled()) logger.detail("Resolving " + BasePersistence.getObjectName(result) + " @ " + pRef);
       return result;
     } else {
-      if (logger.isDebugEnabled()) logger.debug("Passing " + BasePersistence.getObjectName(o));
+      if (logger.isDetailEnabled()) logger.detail("Passing " + BasePersistence.getObjectName(o));
       return o;
     }
   }

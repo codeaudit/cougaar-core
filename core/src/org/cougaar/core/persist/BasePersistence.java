@@ -590,41 +590,41 @@ public class BasePersistence
               }
             }
             clearMarks(identityTable.iterator());
-            if (logger.isDebugEnabled()) {
+            if (logger.isDetailEnabled()) {
               printIdentityTable("");
-              logger.debug("OldObjects");
+              logger.detail("OldObjects");
               logEnvelopeContents(oldObjects);
               if (result.undistributedEnvelopes == null) {
-                logger.debug("Undistributed Envelopes is null");
+                logger.detail("Undistributed Envelopes is null");
               } else {
-                logger.debug("Undistributed Envelopes");
+                logger.detail("Undistributed Envelopes");
                 for (Iterator ii = result.undistributedEnvelopes.iterator();
                      ii.hasNext(); ) {
                   Envelope env = (Envelope) ii.next();
                   logEnvelopeContents(env);
                 }
               }
-              logger.debug(rehydrationSubscriberStates.size() + " Subscriber States");
+              logger.detail(rehydrationSubscriberStates.size() + " Subscriber States");
               for (Iterator si = rehydrationSubscriberStates.iterator(); si.hasNext(); ) {
                 PersistenceSubscriberState ss = (PersistenceSubscriberState) si.next();
                 if (ss.pendingEnvelopes == null) {
-                  logger.debug("Subscriber not persisted " + ss.getKey());
+                  logger.detail("Subscriber not persisted " + ss.getKey());
                 } else {
-                  logger.debug("Pending envelopes of " + ss.getKey());
+                  logger.detail("Pending envelopes of " + ss.getKey());
                   for (int i = 0, n = ss.pendingEnvelopes.size(); i < n; i++) {
                     logEnvelopeContents((Envelope) ss.pendingEnvelopes.get(i));
                   }
-                  logger.debug("Transaction envelopes of " + ss.getKey());
+                  logger.detail("Transaction envelopes of " + ss.getKey());
                   if (ss.transactionEnvelopes != null) {
                     for (int i = 0, n = ss.transactionEnvelopes.size(); i < n; i++) {
                       logEnvelopeContents((Envelope) ss.transactionEnvelopes.get(i));
                     }
                   } else {
-                    logger.debug("None");
+                    logger.detail("None");
                   }
                 }
               }
-              logger.debug(rehydrationSubscriberStates.size() + " subscribers");
+              logger.detail(rehydrationSubscriberStates.size() + " subscribers");
             }
 
             if (uidServiceState != null) {
@@ -694,7 +694,7 @@ public class BasePersistence
       case Envelope.CHANGE: action = "CHANGE"; break;
       case Envelope.BULK: action = "BULK"; break;
       }
-      logger.debug(action + " " + t.getObject());
+      logger.detail(action + " " + t.getObject());
     }
   }
 
@@ -763,7 +763,7 @@ public class BasePersistence
 //        byte[] bytes = (byte[]) currentInput.readObject();
 //        PersistenceInputStream stream = new PersistenceInputStream(bytes);
       PersistenceInputStream stream = new PersistenceInputStream(currentInput, logger);
-      if (logger.isDebugEnabled()) {
+      if (logger.isDetailEnabled()) {
         writeHistoryHeader();
       }
       stream.setIdentityTable(identityTable);
@@ -1099,7 +1099,7 @@ public class BasePersistence
             PersistenceOutputStream stream = new PersistenceOutputStream(logger);
             PersistenceReference[][] referenceArrays;
             PersistMetadata meta = new PersistMetadata();
-            if (logger.isDebugEnabled()) {
+            if (logger.isDetailEnabled()) {
               writeHistoryHeader();
             }
             stream.setIdentityTable(identityTable);
@@ -1117,22 +1117,22 @@ public class BasePersistence
                 for (int i = 0; i < nObjects; i++) {
                   PersistenceAssociation pAssoc =
                     (PersistenceAssociation) objectsToPersist.get(i);
-                  if (logger.isDebugEnabled()) {
-                    logger.debug("Persisting " + pAssoc);
+                  if (logger.isDetailEnabled()) {
+                    logger.detail("Persisting " + pAssoc);
                   }
                   referenceArrays[i] = stream.writeAssociation(pAssoc);
                 }
                 stream.writeObject(undistributedEnvelopes);
-                if (logger.isDebugEnabled()) {
-                  logger.debug("Writing " + subscriberStates.size() + " subscriber states");
+                if (logger.isDetailEnabled()) {
+                  logger.detail("Writing " + subscriberStates.size() + " subscriber states");
                 }
                 stream.writeInt(subscriberStates.size());
                 for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
                   PersistenceSubscriberState ss = (PersistenceSubscriberState) iter.next();
                   ss.pendingEnvelopes = copyAndRemoveNotPersistable(ss.pendingEnvelopes);
                   ss.transactionEnvelopes = copyAndRemoveNotPersistable(ss.transactionEnvelopes);
-                  if (logger.isDebugEnabled()) {
-                    logger.debug("Writing " + ss);
+                  if (logger.isDetailEnabled()) {
+                    logger.detail("Writing " + ss);
                   }
                   stream.writeObject(ss);
                 }
@@ -1248,19 +1248,19 @@ public class BasePersistence
   }
 
   private void writeHistoryHeader() {
-    if (logger.isDebugEnabled()) {
-      logger.debug(logTimeFormat.format(new Date(System.currentTimeMillis())));
+    if (logger.isDetailEnabled()) {
+      logger.detail(logTimeFormat.format(new Date(System.currentTimeMillis())));
     }
   }
 
   void printIdentityTable(String id) {
-    logger.debug("IdentityTable begins");
+    logger.detail("IdentityTable begins");
     for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
       PersistenceAssociation pAssoc =
         (PersistenceAssociation) iter.next();
-      logger.debug(id + pAssoc);
+      logger.detail(id + pAssoc);
     }
-    logger.debug("IdentityTable ends");
+    logger.detail("IdentityTable ends");
   }
 
   public Logger getLogger() {

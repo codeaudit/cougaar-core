@@ -1,5 +1,16 @@
 2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* BasePersistence.java
+	* BasePersistence.java:
+	* FilePersistenceBase.java
+	* IdentityTable.java
+	* PersistenceInputStream.java
+	* PersistenceOutputStream.java
+	* PersistenceServiceComponent.java
+	Use new DETAIL logging level for the lowest level details such as
+	information about every object being written to a persistence
+	snapshot.
+
 	* PersistenceMetricsServlet.java:
 	Add "Persist Now" button to initiate persistence and facilitate
 	persistence debugging.

@@ -37,7 +37,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   private static final int DEFAULT_INITIAL_SIZE = 10000;
 
   private Logger logger;
-  private boolean debug;
+  private boolean detail;
 
   public MessageAddress getOriginator() { return null; }
   public MessageAddress getTarget() { return null; }
@@ -69,7 +69,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
     byteStream = stream;
     enableReplaceObject(true);
     this.logger = logger;
-    this.debug = logger.isDebugEnabled();
+    this.detail = logger.isDetailEnabled();
   }
 
 //    /**
@@ -140,20 +140,20 @@ public class PersistenceOutputStream extends ObjectOutputStream {
    */
   protected Object replaceObject(Object o) {
     if (o instanceof PersistenceReference) {
-      if (debug) print("Writing Ref ", o);
+      if (detail) print("Writing Ref ", o);
       return o;
     }
     if (o.getClass().isArray()) {
-      if (debug) print("Writing array " + java.lang.reflect.Array.getLength(o));
+      if (detail) print("Writing array " + java.lang.reflect.Array.getLength(o));
       return o;
     }
     if (o instanceof String) {
-      if (debug) print("Writing String ", o);
+      if (detail) print("Writing String ", o);
       return o;
     }
     PersistenceAssociation pAssoc = identityTable.find(o);
     String ix = null;
-    if (debug) {
+    if (detail) {
       if (writeIndex != null) {
         ix = writeIndex.size() + " ";
       } else {
@@ -164,13 +164,13 @@ public class PersistenceOutputStream extends ObjectOutputStream {
       // This is (probably) _not_ something we care about
       if ((o instanceof ActivePersistenceObject) &&
           ((ActivePersistenceObject) o).skipUnpublishedPersist(logger)) {
-        if (debug) print("Skipping " + ix + getShortClassName(o) + " " + o);
+        if (detail) print("Skipping " + ix + getShortClassName(o) + " " + o);
 	return null;            // Not published yet
       }
       if (writeIndex != null) {
 	writeIndex.add(null);   // No identityTable fixup needed
       }
-      if (debug) print("Writing " + ix + getShortClassName(o) + " " + o);
+      if (detail) print("Writing " + ix + getShortClassName(o) + " " + o);
       return o;
     }
     if (pAssoc.isMarked()) {
@@ -178,10 +178,10 @@ public class PersistenceOutputStream extends ObjectOutputStream {
         // Remember that we wrote it here
 	writeIndex.add(pAssoc.getReferenceId());
       }
-      if (debug) print("Writing " + ix, pAssoc, " as ", o);
+      if (detail) print("Writing " + ix, pAssoc, " as ", o);
       return o;
     }
-    if (debug) print("Subst ", pAssoc, " for ", o);
+    if (detail) print("Subst ", pAssoc, " for ", o);
     return pAssoc.getReferenceId();
   }
 
@@ -202,7 +202,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   }
 
   private void print(String message) {
-    logger.debug(message);
+    logger.detail(message);
   }
 
   /**

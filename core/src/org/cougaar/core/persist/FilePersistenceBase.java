@@ -109,10 +109,6 @@ public abstract class FilePersistenceBase
         persistenceRoot = new File(value);
         continue;
       }
-      if ((value = parseParamValue(param, ARCHIVE_COUNT_PARAM)) != null) {
-        archiveCount = Integer.parseInt(value);
-        continue;
-      }
       if (pps.getLogger().isWarnEnabled()) {
         pps.getLogger().warn(name + ": Unrecognized parameter " + param);
       }

@@ -87,7 +87,7 @@ class IdentityTable {
   private void processQueue() {
     PersistenceAssociation pAssoc;
     while ((pAssoc = (PersistenceAssociation) referenceQueue.poll()) != null) {
-      if (logger.isDebugEnabled()) logger.debug("processQueue removing " + pAssoc);
+      if (logger.isDetailEnabled()) logger.detail("processQueue removing " + pAssoc);
       int hashIndex = (pAssoc.hash & 0x7fffffff) % table.length;
       for (PersistenceAssociation x = table[hashIndex], prev = null; x != null; prev = x, x = x.next) {
         if (x == pAssoc) {

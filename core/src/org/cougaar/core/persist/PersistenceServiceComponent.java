@@ -92,7 +92,6 @@ import org.cougaar.core.component.BindingSite;
  * made to this latest copy and all others should be ignored.  This is
  * handled by overwriting the value of the earlier objects with newer
  * values from later versions of the objects.  
- * @property org.cougaar.core.persistence.debug Enable persistence debugging.
  * @property org.cougaar.core.persistence.class Specify the
  * persistence classes to be used. The value consists of one or more
  * elements separated by commas. Each element specifies one
@@ -611,16 +610,16 @@ import org.cougaar.core.component.BindingSite;
               Object obj = pAssoc.getObject();
               PersistenceIdentity clientId = pAssoc.getClientId();
               if (pAssoc.isActive()) {
-                if (logger.isDebugEnabled()) logger.debug(clientId + ": addAssociation " + pAssoc);
+                if (logger.isDetailEnabled()) logger.detail(clientId + ": addAssociation " + pAssoc);
                 getClientStuff(clientId).addAssociation(pAssoc);
               } else {
-                if (logger.isDebugEnabled()) logger.debug(clientId + ": inactive " + pAssoc);
+                if (logger.isDetailEnabled()) logger.detail(clientId + ": inactive " + pAssoc);
               }
               if (obj instanceof ActivePersistenceObject) {
                 ((ActivePersistenceObject) obj).postRehydration(logger);
               }
             }
-            if (logger.isDebugEnabled()) {
+            if (logger.isDetailEnabled()) {
               printIdentityTable("");
             }
             for (Iterator i = clientData.entrySet().iterator(); i.hasNext(); ) {
@@ -629,10 +628,10 @@ import org.cougaar.core.component.BindingSite;
               List clientObjects = (List) entry.getValue();
               ClientStuff clientStuff = getClientStuff(clientId);
               clientStuff.setObjects(clientObjects);
-              if (logger.isDebugEnabled()) {
-                logger.debug("PersistenceEnvelope of " + clientId);
+              if (logger.isDetailEnabled()) {
+                logger.detail("PersistenceEnvelope of " + clientId);
                 logEnvelopeContents(clientStuff.getPersistenceEnvelope());
-                logger.debug("Other objects of " + clientId + ": " + clientStuff.getObjects());
+                logger.detail("Other objects of " + clientId + ": " + clientStuff.getObjects());
               }
             }
             clearMarks(identityTable.iterator());
@@ -686,7 +685,7 @@ import org.cougaar.core.component.BindingSite;
       case Envelope.CHANGE: action = "CHANGE"; break;
       case Envelope.BULK: action = "BULK"; break;
       }
-      logger.debug(action + " " + t.getObject());
+      logger.detail(action + " " + t.getObject());
     }
   }
 
@@ -747,7 +746,7 @@ import org.cougaar.core.component.BindingSite;
 //        byte[] bytes = (byte[]) currentInput.readObject();
 //        PersistenceInputStream stream = new PersistenceInputStream(bytes);
       PersistenceInputStream stream = new PersistenceInputStream(currentInput, logger);
-      if (logger.isDebugEnabled()) {
+      if (logger.isDetailEnabled()) {
         writeHistoryHeader();
       }
       stream.setIdentityTable(identityTable);
@@ -819,7 +818,7 @@ import org.cougaar.core.component.BindingSite;
   private void addEnvelope(Envelope e, PersistenceIdentity clientId)
     throws PersistenceException
   {
-    if (logger.isDebugEnabled()) logger.debug(clientId + ": addEnvelope " + e);
+    if (logger.isDetailEnabled()) logger.detail(clientId + ": addEnvelope " + e);
     for (Iterator envelope = e.getAllTuples(); envelope.hasNext(); ) {
       addEnvelopeTuple((EnvelopeTuple) envelope.next(), clientId);
     }
@@ -828,7 +827,7 @@ import org.cougaar.core.component.BindingSite;
   private void addEnvelopeTuple(EnvelopeTuple tuple, PersistenceIdentity clientId)
     throws PersistenceException
   {
-    if (logger.isDebugEnabled()) logger.debug(clientId + ": addEnvelopeTuple " + tuple);
+    if (logger.isDetailEnabled()) logger.detail(clientId + ": addEnvelopeTuple " + tuple);
     switch (tuple.getAction()) {
     case Envelope.BULK:
       Collection collection = ((BulkEnvelopeTuple) tuple).getCollection();
@@ -857,8 +856,8 @@ import org.cougaar.core.component.BindingSite;
     } else if (!oldClientId.equals(clientId)) {
       throw new PersistenceException(clientId + " not owner");
     }
-    if (logger.isDebugEnabled())
-      logger.debug(clientId + ": addObjectToPersist " + object + ", " + newActive);
+    if (logger.isDetailEnabled())
+      logger.detail(clientId + ": addObjectToPersist " + object + ", " + newActive);
     if (newActive) {
       pAssoc.setActive();
     } else {
@@ -944,8 +943,8 @@ import org.cougaar.core.component.BindingSite;
       try {
         List clientData = client.getPersistenceData();
         List clientObjects = new ArrayList();
-        if (logger.isDebugEnabled())
-          logger.debug(clientId + " clientData: " + clientData);
+        if (logger.isDetailEnabled())
+          logger.detail(clientId + " clientData: " + clientData);
         data.put(clientId, clientObjects);
         for (int j = 0, m = clientData.size(); j < m; j++) {
           Object o = clientData.get(j);
@@ -1049,7 +1048,7 @@ import org.cougaar.core.component.BindingSite;
           } else {
             PersistenceOutputStream stream = new PersistenceOutputStream(logger);
             PersistenceReference[][] referenceArrays;
-            if (logger.isDebugEnabled()) {
+            if (logger.isDetailEnabled()) {
               writeHistoryHeader();
             }
             stream.setIdentityTable(identityTable);
@@ -1067,8 +1066,8 @@ import org.cougaar.core.component.BindingSite;
                 for (int i = 0; i < nObjects; i++) {
                   PersistenceAssociation pAssoc =
                     (PersistenceAssociation) associationsToPersist.get(i);
-                  if (logger.isDebugEnabled()) {
-                    logger.debug("Persisting " + pAssoc);
+                  if (logger.isDetailEnabled()) {
+                    logger.detail("Persisting " + pAssoc);
                   }
                   referenceArrays[i] = stream.writeAssociation(pAssoc);
                 }
@@ -1181,19 +1180,19 @@ import org.cougaar.core.component.BindingSite;
   }
 
   private void writeHistoryHeader() {
-    if (logger.isDebugEnabled()) {
-      logger.debug(logTimeFormat.format(new Date(System.currentTimeMillis())));
+    if (logger.isDetailEnabled()) {
+      logger.detail(logTimeFormat.format(new Date(System.currentTimeMillis())));
     }
   }
 
   void printIdentityTable(String id) {
-    logger.debug("IdentityTable begins");
+    logger.detail("IdentityTable begins");
     for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
       PersistenceAssociation pAssoc =
         (PersistenceAssociation) iter.next();
-      logger.debug(id + pAssoc);
+      logger.detail(id + pAssoc);
     }
-    logger.debug("IdentityTable ends");
+    logger.detail("IdentityTable ends");
   }
 
   public Logger getLogger() {
