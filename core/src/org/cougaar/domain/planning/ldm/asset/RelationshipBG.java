@@ -48,8 +48,13 @@ public class RelationshipBG implements PGDelegate {
     }
 
     NewRelationshipPG relationshipPG = (NewRelationshipPG ) pg;
-    return new RelationshipBG(relationshipPG, 
-                              relationshipPG.getRelationshipSchedule().getHasRelationships());
+
+    if (relationshipPG.getRelationshipSchedule() != null) {
+      return new RelationshipBG(relationshipPG, 
+                                relationshipPG.getRelationshipSchedule().getHasRelationships());
+    } else {
+      return new RelationshipBG(relationshipPG, null);
+    }
   }
 
   public void readObject(ObjectInputStream in) {
@@ -93,6 +98,15 @@ public class RelationshipBG implements PGDelegate {
   public void init(HasRelationships hasRelationships) {
     myPG.setRelationshipSchedule(new RelationshipScheduleImpl(hasRelationships));
   }
+
+  public boolean isSelf() {
+    return isLocal();
+  }
+
+  public boolean isLocal() {
+    return myPG.getLocal();
+  }
 }
+
 
 

@@ -16,6 +16,12 @@
 
 [AbstractAsset Asset]
 
+[Entity Asset]
+slots=ClusterPG, \
+        EntityPG, \
+        CommunityPG, \
+        RelationshipPG
+
 ;; AggregateAssetAdapter is hand-generated
 [AggregateAsset AggregateAssetAdapter]
 ; schedule is in aggregateAssetAdapter
@@ -36,4 +42,11 @@ import=java.util.Vector
 slots=Vector Assets
 Assets.init= new Vector()
 Assets.exact=true
+
+        
+
+
+
+
+
 

@@ -14,6 +14,7 @@ Identification of a unique, actual Asset, e.g. by VIN, SSN, etc.
     String AlternateItemIdentification;	// Not to be used as ClusterId.  Use ClusterPG.getClusterIdentifier() instead.
 * RelationshipPG
     org.cougaar.domain.planning.ldm.plan.RelationshipSchedule RelationshipSchedule;	//a schedule of relationships for this asset.
+    boolean Local;
 * TypeIdentificationPG
 Identification of a type of Asset, e.g. by NSN, part number, etc.
     String TypeIdentification;	//A String of the form "<type>/<id>", e.g. "NSN/0913801298439"
@@ -31,6 +32,8 @@ Identification of a type of Asset, e.g. by NSN, part number, etc.
     CommunityPG
 * ItemIdentification
     ItemIdentificationPG
+* Local
+    RelationshipPG
 * Nomenclature
     ItemIdentificationPG
     TypeIdentificationPG

@@ -57,13 +57,16 @@ predictor.doc=Predictor (if any) for the Cluster
 [RelationshipPG]
 local=true
 hasrelationships=true
-slots=org.cougaar.domain.planning.ldm.plan.RelationshipSchedule relationshipSchedule
+slots=org.cougaar.domain.planning.ldm.plan.RelationshipSchedule relationshipSchedule, \
+        boolean local
 relationshipSchedule.doc=a schedule of relationships for this asset.
 delegates=RelationshipBG relationshipBG
 relationshipBG.delegate=PGDelegate copy(PropertyGroup pg);\
         void readObject(java.io.ObjectInputStream in);\
         void writeObject(java.io.ObjectOutputStream out);\
-        void init(org.cougaar.domain.planning.ldm.plan.HasRelationships hasRelationships); 
+        void init(org.cougaar.domain.planning.ldm.plan.HasRelationships hasRelationships);\
+        boolean isLocal();\
+        boolean isSelf();
 
 [EntityPG]
 slots=Collection<Role> roles

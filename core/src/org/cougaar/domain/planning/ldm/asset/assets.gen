@@ -1,5 +1,6 @@
 assets.gen
 AbstractAsset.java
+Entity.java
 AggregateAsset.java
 AssetGroup.java
 AssetFactory.java
