@@ -89,8 +89,12 @@ public final class DomainManager
       String key = (String) names.nextElement();
       if (key.startsWith(PREFIX)) {
         String name = key.substring(PREFIXLENGTH);
-        String value = props.getProperty(key);
-        setup(name, value);
+        // domain names have no extra "." characters, so we can 
+        // use -D arguments to control domain-related facilities.
+        if (name.indexOf('.')<0) {
+          String value = props.getProperty(key);
+          setup(name, value);
+        }
       }
     }
   }
