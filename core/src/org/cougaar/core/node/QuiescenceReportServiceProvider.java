@@ -427,11 +427,13 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
           eventService = (EventService) sb.getService(QuiescenceReportServiceProvider.this, EventService.class, null);
           if (eventService == null) {
             logger.error("No EventService available for " + EOL + msg);
-            return;
           }
         }
       }
-      eventService.event(msg);
+      if (eventService != null)
+	eventService.event(msg);
+      else if (logger.isInfoEnabled())
+	logger.info(msg);
     }
 
     public synchronized void run() {
