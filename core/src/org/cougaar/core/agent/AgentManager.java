@@ -174,37 +174,26 @@ public class AgentManager
       throw new RuntimeException(
           "Agent "+agentId+" returned \"false\"");
     }
+
+    // the agent has started and is now ACTIVE
   }
 
-  // NOTE: assumes that "agent.unload()" has been called.
   public void removeAgent(MessageAddress agentId) {
-    // FIXME cleanup this code
-    //
-    // find the agent in the set of children
-    synchronized (boundComponents) {
-      Iterator iter = super.boundComponents.iterator();
-      while (iter.hasNext()) {
-        Object oi = iter.next();
-        if (!(oi instanceof BoundComponent)) {
-          continue;
-        }
-        BoundComponent bc = (BoundComponent)oi;
-        Binder b = bc.getBinder();
-        if (!(b instanceof AgentBinder)) {
-          continue;
-        }
-        MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
-        if (agentId.equals(id)) {
-          // remove the agent
-          iter.remove();
-          return;
-        }
-      }
+    // find the agent's component description
+    ComponentDescription desc = getAgentDescription(agentId);
+    if (desc == null) {
+      // no such agent, or not loaded with a desc
+      throw new RuntimeException(
+          "Agent "+agentId+" is not loaded");
     }
 
-    // no such agent
-    throw new RuntimeException(
-        "Agent "+agentId+" is not loaded");
+    if (! remove(desc)) {
+      throw new RuntimeException(
+          "Unable to remove agent "+agentId+
+          ", \"remove()\" returned false");
+    }
+
+    // the agent has been UNLOADED and removed
   }
 
   public ComponentDescription getAgentDescription(MessageAddress agentId) {

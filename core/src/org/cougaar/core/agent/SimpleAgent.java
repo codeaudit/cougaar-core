@@ -427,35 +427,6 @@ public class SimpleAgent
             null,
             ComponentDescription.PRIORITY_LOW));
 
-      /*
-      // agent-level mobility
-      ComponentDescription redirectMoveDesc = 
-        new ComponentDescription(
-            getMessageAddress()+"Mobility",
-            "Node.AgentManager.Agent.PluginManager.Plugin",
-            "org.cougaar.core.mobility.service.RedirectMovePlugin",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null, //policy
-            ComponentDescription.PRIORITY_LOW);
-      l.add(redirectMoveDesc);
-      // node-level mobility
-      ComponentDescription rootMobilityDesc = 
-        new ComponentDescription(
-            getMessageAddress()+"Mobility",
-            "Node.AgentManager.Agent.PluginManager.Plugin",
-            "org.cougaar.core.mobility.service.RootMobilityPlugin",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null, //policy
-            ComponentDescription.PRIORITY_LOW);
-      l.add(rootMobilityDesc);
-      */
-
       return new ComponentDescriptions(l);
     } catch (Exception e) {
       log.error("Unable to add "+cname+"'s child Components", e);
@@ -848,21 +819,28 @@ public class SimpleAgent
 
     stopRestartChecker();
 
-    // notify the topology that this agent is moving
-    if (log.isInfoEnabled()) {
-      log.info("Updating topology entry to \"moving\"");
+    // update the topology 
+    if (moveTargetNode != null) {
+      if (log.isInfoEnabled()) {
+        log.info("Updating topology entry to \"moving\"");
+      }
+      int topologyType = 
+        ((getMessageAddress().equals(localNode)) ?
+         (TopologyEntry.NODE_AGENT_TYPE) :
+         (TopologyEntry.AGENT_TYPE));
+      myTopologyWriterService.updateAgent(
+          getIdentifier(),
+          topologyType,
+          incarnation,
+          moveId,
+          TopologyEntry.MOVING,
+          moveId);
+    } else {
+      if (log.isInfoEnabled()) {
+        log.info("Removing topology entry");
+      }
+      myTopologyWriterService.removeAgent(getIdentifier());
     }
-    int topologyType = 
-      ((getMessageAddress().equals(localNode)) ?
-       (TopologyEntry.NODE_AGENT_TYPE) :
-       (TopologyEntry.AGENT_TYPE));
-    myTopologyWriterService.updateAgent(
-        getIdentifier(),
-        topologyType,
-        incarnation,
-        moveId,
-        TopologyEntry.MOVING,
-        moveId);
 
     // shutdown the MTS
     if (log.isInfoEnabled()) {
