@@ -77,22 +77,10 @@ class MessageTransportServerImpl
 	}
     }
 
-    private NameSupport createNameSupport(String id) {
-        String nameSupportClassName =
-            System.getProperty("org.cougaar.message.transport.NameSupport.class");
-        try {
-            Class cls = Class.forName(nameSupportClassName);
-            return (NameSupport) cls.getConstructor(new Class[] {String.class}).newInstance(new String[] {id});
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return new OldNameSupport(id);
-    }
-
     public MessageTransportServerImpl(String id) {
 	readAspects();
 
-        nameSupport = createNameSupport(id);
+	nameSupport = new NameSupport(id);
 	registry = new MessageTransportRegistry(id, this);
 
 	//Watcher Aspect is special because the MTServicer interace
@@ -197,9 +185,9 @@ class MessageTransportServerImpl
 	// This is an odd place to put this method.  It will stay here
 	// for now because Communications expects to find it here and
 	// we don't want to edit that class.
-//  	public NameServer getDefaultNameServer() {
-//  	    return nameSupport.getNameServer();
-//  	}
+	public NameServer getDefaultNameServer() {
+	    return nameSupport.getNameServer();
+	}
 
     }
 

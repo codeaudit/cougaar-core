@@ -19,6 +19,6 @@ public interface MessageTransportServerServiceFactory
     extends ServiceProvider
 {
 
-//      public NameServer getDefaultNameServer();
+    public NameServer getDefaultNameServer();
 }
 

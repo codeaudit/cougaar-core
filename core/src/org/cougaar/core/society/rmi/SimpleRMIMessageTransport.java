@@ -89,7 +89,7 @@ public class SimpleRMIMessageTransport
 	    if (myAddress == null) {
 		myAddress = nameSupport.getNodeMessageAddress();
 		MTImpl impl = new MTImpl(this, myAddress, recvQ);
-		Object proxy = getServerSideProxy(impl);
+		MT proxy = getServerSideProxy(impl);
 		nameSupport.registerNodeInNameServer(proxy,TRANSPORT_TYPE);
 	    }
 	}
@@ -146,10 +146,10 @@ public class SimpleRMIMessageTransport
     // For now this can return an object of any arbitrary type!  The
     // corresponding client proxy code has the responsibility for
     // extracting a usable MT out of the object.
-    private Object getServerSideProxy(Object object) 
+    private MT getServerSideProxy(Object object) 
 	throws RemoteException
     {
-	return attachAspects(object, RemoteImpl);
+	return (MT) attachAspects(object, RemoteImpl);
     }
 
 

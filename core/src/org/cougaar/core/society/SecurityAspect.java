@@ -16,10 +16,8 @@ import java.beans.Beans;
 
 /**
  * First attempt at a security aspect.  The message is secured by a
- * RemoteProxy aspect delegate.  It should probably be unsecured by a
- * RemoteImpl aspect delegate, but this turns out to be tricky, since
- * the class of that object is (for now) unknown. Instead, unsecure as
- * it's about to added to the ReceiveQueue.
+ * RemoteProxy aspect delegate and unsecued by a RemoteImpl aspect
+ * delegate.
  * */
 public class SecurityAspect implements MessageTransportAspect
 {
@@ -95,8 +93,8 @@ public class SecurityAspect implements MessageTransportAspect
 	case RemoteProxy:
 	    return new SecureProxy((MT) delegate);
 
-	case ReceiveQueue:
-	    return new SecureReceiver((ReceiveQueue) delegate);
+	case RemoteImpl:
+	    return new SecureReceiver((MT) delegate);
 
 	default:
 	    return null;
@@ -128,20 +126,25 @@ public class SecurityAspect implements MessageTransportAspect
 
 
 
-    private class SecureReceiver implements ReceiveQueue {
-	private ReceiveQueue queue;
+    private class SecureReceiver implements MT {
+	private MT impl;
 
-	private SecureReceiver(ReceiveQueue queue) {
-	    this.queue = queue;
+	private SecureReceiver(MT impl) {
+	    this.impl = impl;
 	}
 
-	public void deliverMessage(Message message) {
-	    queue.deliverMessage(unsecure(message));
+	public void rerouteMessage(Message m) 
+	    throws java.rmi.RemoteException
+	{
+	    impl.rerouteMessage(unsecure(m));
 	}
 
-	public boolean matches (String name) {
-	    return queue.matches(name);
+	public MessageAddress getMessageAddress() 
+	    throws java.rmi.RemoteException
+	{
+	    return impl.getMessageAddress();
 	}
+
     }
 
 

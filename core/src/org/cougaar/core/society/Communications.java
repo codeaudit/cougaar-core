@@ -16,7 +16,6 @@ import java.lang.reflect.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.ConfigFileFinder;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.society.rmi.RMINameServer;
 import java.util.*;
 import java.net.*;
 
@@ -265,7 +264,7 @@ public class Communications {
       MessageTransportServerServiceFactory provider = impl.getProvider();
       
       
-      defaultNameServer = new RMINameServer();
+      defaultNameServer = provider.getDefaultNameServer();
 
       // For now we make a single proxy, for all clients
       Object server =
