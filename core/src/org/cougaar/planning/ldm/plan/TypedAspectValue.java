@@ -21,27 +21,17 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.planning.ldm.asset.Asset;
-
-/** An AspectValue that deals with Asset-Quantity relationships
- * @note The Asset should always be a prototype.
- *
+/** An AspectValue with a variable data member specifying type.
  */
- 
-public class TypedQuantityAspectValue extends FloatAspectValue {
-  private Asset theasset;
-  
-  /** Simple Constructor that takes the asset and the quantity.
-   * @param anAsset  The Asset - probably a prototype
-   * @param aQuantity  The quantity of the referenced asset type.
-   */
-  public TypedQuantityAspectValue(Asset anAsset, double aQuantity) {
-    super(AspectType.TYPED_QUANTITY, (float)aQuantity);
-    this.theasset = anAsset;
+
+public abstract class TypedAspectValue extends AspectValue {
+  protected int type;
+
+  protected TypedAspectValue(int type) {
+    this.type = type;
   }
-   
-  /** @return The Asset represented by this aspect */
-  public Asset getAsset() {
-    return theasset;
+
+  public final int getType() {
+    return type;
   }
 }

@@ -37,13 +37,14 @@ public class AspectScorePoint implements Serializable, Cloneable {
     this.score = score;
   }
 
+  /** @deprecated Use AspectScorePoint(AspectValue,double) instead **/
   public AspectScorePoint(double value, double score, int type) {
-    this.value = new AspectValue(type,value);
+    this.value = AspectValue.newAspectValue(type,value);
     this.score = score;
   }
 
   public Object clone() {
-    return new AspectScorePoint((AspectValue) value.clone(), score);
+    return new AspectScorePoint(value, score);
   }
 
   /* @return double The 'score'.

@@ -23,41 +23,189 @@ package org.cougaar.planning.ldm.plan;
 
 import java.io.Serializable;
 import org.cougaar.util.MoreMath;
+import org.cougaar.planning.ldm.measure.Rate;
 
 /** AspectValue is the essential "value" abstraction with respect to
  * evaluation of the goodness or correctness of a particular solution.
+ * AspectValues are no longer mutable and no longer implement AspectType.
  * @see AllocationResult
  */
  
-public class AspectValue implements AspectType, Serializable, Cloneable {
-  protected int type;
-  protected double value;
+public abstract class AspectValue implements Serializable {
+  //
+  // Factories
+  // 
 
-  public AspectValue(int type, double value) {
-    if (Double.isNaN(value))
-      throw new IllegalArgumentException("The value of an AspectValue may not be NaN");
-    this.type = type;
-    this.value = value;
+  // MIK - we might want to optimize the "standard" cases to avoid
+  // boxing the primatives.
+  
+  public static final AspectValue newAspectValue(int type, long value) {
+    return newAspectValue(type, new Long(value));
+  }
+  public static final AspectValue newAspectValue(int type, double value) {
+    return newAspectValue(type, new Double(value));
+  }
+  public static final AspectValue newAspectValue(int type, float value) {
+    return newAspectValue(type, new Float(value));
+  }
+  public static final AspectValue newAspectValue(int type, int value) {
+    return newAspectValue(type, new Integer(value));
+  }
+  public static final AspectValue newAspectValue(int type, Object o) {
+    AspectType.Factory f = AspectType.registry.get(type);
+    if (f == null) {
+      throw new IllegalArgumentException("Type "+type+" is not a known Aspect type");
+    } else {
+      return f.newAspectValue(o);
+    }
+  }
+  public static final AspectValue newAspectValue(AspectType.Factory type, Object o) {
+    return type.newAspectValue(o);
+  }
+  public static final AspectValue newAspectValue(AspectType.Factory type, long value) {
+    return newAspectValue(type, new Long(value));
+  }
+  public static final AspectValue newAspectValue(AspectType.Factory type, double value) {
+    return newAspectValue(type, new Double(value));
+  }
+  public static final AspectValue newAspectValue(AspectType.Factory type, float value) {
+    return newAspectValue(type, new Float(value));
+  }
+  public static final AspectValue newAspectValue(AspectType.Factory type, int value) {
+    return newAspectValue(type, new Integer(value));
+  }
+    
+  //
+  // pseudo-factories
+  //
+
+  /** factory for possibly creating a new AspectValue with the same type 
+   * but a different value.
+   **/
+  public AspectValue dupAspectValue(double newvalue) {
+    return (doubleValue() == newvalue)?this:newAspectValue(getType(), newvalue);
+  }
+  public AspectValue dupAspectValue(float newvalue) {
+    return (floatValue() == newvalue)?this:newAspectValue(getType(), newvalue);
+  }
+  public AspectValue dupAspectValue(long newvalue) {
+    return (longValue() == newvalue)?this:newAspectValue(getType(), newvalue);
+  }
+  public AspectValue dupAspectValue(int newvalue) {
+    return (intValue() == newvalue)?this:newAspectValue(getType(), newvalue);
+  }
+
+  //
+  // accessors
+  //
+
+  /** Non-preferred alias for #getType()
+   * @note may be deprecated in the future - use getType instead.
+   */
+  public int getAspectType() { return getType();}
+
+  /** @return int The Aspect Type.
+   * @see org.cougaar.planning.ldm.plan.AspectType
+   */
+  public abstract int getType();
+  
+  /** Non-preferred alias for #doubleValue().
+   * @note may be deprecated in the future - use doubleValue instead.
+   */
+  public double getValue() { return doubleValue(); }
+
+  /** The value of the aspect as a double. */
+  public abstract double doubleValue();
+  /** The value of the aspect as a float **/
+  public abstract float floatValue();
+  /** The value of the aspect as a long **/
+  public abstract long longValue();
+  /** The value of the aspect as an int **/
+  public abstract int intValue();
+
+  //
+  // comparisons
+  //
+
+  public boolean nearlyEquals(Object o) {
+    if (o instanceof AspectValue) {
+      AspectValue that = (AspectValue) o;
+      if (this.getAspectType() == that.getAspectType()) {
+        return MoreMath.nearlyEquals(this.getValue(), that.getValue());
+      }
+    }
+    return false;
+  }
+  
+  public boolean isLessThan(AspectValue v) {
+    return (getValue() < v.getValue());
+  }
+  public boolean isGreaterThan(AspectValue v) {
+    return (getValue() > v.getValue());
+  }
+
+  public double minus(AspectValue v) {
+    return getValue() - v.getValue();
+  }
+
+  public boolean isBetween(AspectValue low, AspectValue hi) {
+    return (! ( isLessThan(low) ||
+                isGreaterThan(hi) ));
+  } 
+
+  // 
+  // basic object methods
+
+  // //Too difficult to maintain
+  // public boolean equals(AspectValue v) {
+  //    return (v.getType() == getType() &&
+  //            v.getValue() == getValue());
+  //  }
+  
+
+  public boolean equals(Object v) {
+    if (v instanceof AspectValue) {
+      return (getType() == ((AspectValue)v).getType() &&
+              getValue() == ((AspectValue)v).getValue());
+    } else {
+      return false;
+    }
+  }
+
+  public int hashCode() {
+    return getType()+(((int)getValue())<<2);
   }
 
   public String toString() {
-    return ""+value+"["+type+"]";
+    return Double.toString(getValue())+"["+getType()+"]";
   }
 
-  public Object clone() {
-    return new AspectValue(type, value);
+  /////// statics
+
+  /**
+   * This should be in AspectType, but that's an interface and can't
+   * have methods. This is the closest place that makes any sense and
+   * avoids creating a new class just to convert aspect types into
+   * strings.
+   **/
+  public static String aspectTypeToString(int aspectType) {
+    if (aspectType >=0 && aspectType < AspectType.ASPECT_STRINGS.length) {
+      return AspectType.ASPECT_STRINGS[aspectType];
+    } else {
+      return String.valueOf(aspectType);
+    }
   }
 
   /**
-   * Clone an array of AspectValue. Clones the elements as well as the
-   * array.
+   * Clone an array of AspectValue.  Does not, of course, clone the elements
+   * since they are immutable.
    * @param avs an array of AspectValue
    * @return a copy of the array with copies of array element values.
    **/
   public static AspectValue[] clone(AspectValue[] avs) {
     AspectValue[] result = new AspectValue[avs.length];
     for (int i = 0; i < avs.length; i++) {
-      result[i] = (AspectValue) avs[i].clone();
+      result[i] = avs[i];
     }
     return result;
   }
@@ -114,82 +262,4 @@ public class AspectValue implements AspectType, Serializable, Cloneable {
     return true;                // Found a match for every aspect
   }
 
-  /** @return int The Aspect Type.
-   * @see org.cougaar.planning.ldm.plan.AspectType
-   */
-  public int getAspectType() { return type;}
-  
-  /** Reset the value after creation.  Useful for AllocationResultAggregators
-    * that sum AspectValues.
-    * @param newvalue
-    */
-  public void setValue(double newvalue) {
-    this.value = newvalue;
-  }
-   
-  /** @return double The value of the aspect.
-    */
-  public double getValue() { return value;}
-   
-  public long longValue() {
-    return Math.round(value);
-  }
-
-  public boolean nearlyEquals(Object o) {
-    if (o instanceof AspectValue) {
-      AspectValue that = (AspectValue) o;
-      if (this.getAspectType() == that.getAspectType()) {
-        return MoreMath.nearlyEquals(this.getValue(), that.getValue());
-      }
-    }
-    return false;
-  }
-
-  public boolean equals(AspectValue v) {
-    return (v.value == value &&
-            v.type == type);
-  }
-  
-  public boolean equals(Object v) {
-    if (v instanceof AspectValue) {
-      return (value == ((AspectValue)v).value &&
-              type == ((AspectValue)v).type);
-    } else {
-      return false;
-    }
-  }
-
-  public boolean isLessThan(AspectValue v) {
-    return (value < v.value);
-  }
-  public boolean isGreaterThan(AspectValue v) {
-    return (value > v.value);
-  }
-
-  public double minus(AspectValue v) {
-    return value - v.value;
-  }
-
-  public boolean isBetween(AspectValue low, AspectValue hi) {
-    return (! ( isLessThan(low) ||
-                isGreaterThan(hi) ));
-  } 
-
-  public int hashCode() {
-    return type+((int)value*10);
-  }
-
-  /**
-   * This should be in AspectType, but that's an interface and can't
-   * have methods. This is the closest place that makes any sense and
-   * avoids creating a new class just to convert aspect types into
-   * strings.
-   **/
-  public static String aspectTypeToString(int aspectType) {
-    if (aspectType >=0 && aspectType < AspectType.ASPECT_STRINGS.length) {
-      return AspectType.ASPECT_STRINGS[aspectType];
-    } else {
-      return String.valueOf(aspectType);
-    }
-  }
 }

@@ -141,11 +141,11 @@ public class TestPlugin extends SimplePlugin {
       Preference pref;
       ScoringFunction sf;
       AspectValue av;
-      av = new AspectValue(AspectType.START_TIME, demoNow);
+      av = AspectValue.newAspectValue(AspectType.START_TIME, demoNow);
       sf = new ScoringFunction.StepScoringFunction(av, 0.00, 0.99);
       pref = getFactory().newPreference(AspectType.START_TIME, sf, 1.0);
       prefs.addElement(pref);
-      av = new AspectValue(AspectType.END_TIME, demoNow);
+      av = AspectValue.newAspectValue(AspectType.END_TIME, demoNow);
       sf = new ScoringFunction.StepScoringFunction(av, 0.00, 0.99);
       pref = getFactory().newPreference(AspectType.END_TIME, sf, 1.0);
       prefs.addElement(pref);
@@ -162,7 +162,7 @@ public class TestPlugin extends SimplePlugin {
       }
       if (rateValue <= 0.0) continue;
       double theQuantity = rateValue * ONE_DAY;
-      av = new AspectValue(AspectType.QUANTITY, theQuantity);
+      av = AspectValue.newAspectValue(AspectType.QUANTITY, theQuantity);
       sf = new ScoringFunction.StrictValueScoringFunction(av);
       pref = getFactory().newPreference(AspectType.QUANTITY, sf, 1.0);
       prefs.addElement(pref);

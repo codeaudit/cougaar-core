@@ -62,6 +62,7 @@ import org.cougaar.planning.ldm.measure.Latitude;
 import org.cougaar.planning.ldm.measure.Longitude;
 
 import org.cougaar.planning.ldm.plan.AspectType;
+import org.cougaar.planning.ldm.plan.AspectValue;
 import org.cougaar.planning.ldm.plan.HasRelationships;
 import org.cougaar.planning.ldm.plan.LocationScheduleElement;
 import org.cougaar.planning.ldm.plan.LocationScheduleElementImpl;
@@ -259,15 +260,15 @@ public class AssetDataPlugin extends SimplePlugin {
     reportTask.setPlan(getFactory().getRealityPlan());
     reportTask.setSource(getClusterIdentifier());
 
-    TimeAspectValue startTAV = 
-      new TimeAspectValue(AspectType.START_TIME, startTime);
+    AspectValue startTAV = 
+      TimeAspectValue.create(AspectType.START_TIME, startTime);
     ScoringFunction startScoreFunc = 
       ScoringFunction.createStrictlyAtValue(startTAV);
     Preference startPreference = 
       getFactory().newPreference(AspectType.START_TIME, startScoreFunc);
 
-    TimeAspectValue endTAV = 
-      new TimeAspectValue(AspectType.END_TIME, endTime);
+    AspectValue endTAV = 
+      TimeAspectValue.create(AspectType.END_TIME, endTime);
     ScoringFunction endScoreFunc = 
       ScoringFunction.createStrictlyAtValue(endTAV);    
     Preference endPreference = 

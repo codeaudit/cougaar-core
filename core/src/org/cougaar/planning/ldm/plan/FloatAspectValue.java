@@ -21,65 +21,62 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import java.io.Serializable;
-
-/**
- * An AspectValue with a location instead of a value.
- *
+/** An AspectValue implementation which stores a float.
  */
  
-public class AspectLocation extends TypedAspectValue {
-  protected Location loc_value;
+public class FloatAspectValue extends TypedAspectValue {
+  protected float value;
 
-  protected AspectLocation(int type, Location new_loc_value) {
+  protected FloatAspectValue(int type, float value) {
     super(type);
-    this.loc_value = new_loc_value;
+    if (Float.isNaN(value) || Float.isInfinite(value))
+      throw new IllegalArgumentException("The value of a FloatAspectValue must be a finite, non-NaN");
+    this.value = value;
   }
 
   public static AspectValue create(int type, Object o) {
-    if (o instanceof Location) {
-      return new AspectLocation(type, (Location) o);
+    float value;
+    if (o instanceof Number) {
+      value = ((Number)o).floatValue();
+    } else if (o instanceof AspectValue) {
+      value = ((AspectValue)o).floatValue();
     } else {
-      throw new IllegalArgumentException("Cannot construct an AspectLocation from "+o);
+      throw new IllegalArgumentException("Cannot construct a FloatAspectValue from "+o);
     }
+    return new FloatAspectValue(type,value);
   }
 
   public final double doubleValue() {
-    throw new IllegalArgumentException("AspectLocations do not have numeric values");
+    return (double) value;
   }
   public final long longValue() {
-    throw new IllegalArgumentException("AspectLocations do not have numeric values");
+    return Math.round(value);
   }
   public final float floatValue() {
-    throw new IllegalArgumentException("AspectLocations do not have numeric values");
+    return value;
   }
   public final int intValue() {
-    throw new IllegalArgumentException("AspectLocations do not have numeric values");
+    return (int) Math.round(value);
   }
 
-  /** The location associated with the AspectValue.
-   * @note locationValue is the preferred method.
-    */
-  public final Location getLocationValue() { return loc_value;}
-
-  /** The location associated with the AspectValue. */
-  public final Location locationValue() { return loc_value;}
+  public boolean equals(Object v) {
+    if (v instanceof FloatAspectValue) {
+      return (getType() == ((AspectValue)v).getType() &&
+              floatValue() == ((AspectValue)v).floatValue());
+    } else {
+      return false;
+    }
+  }
 
   public int hashCode() {
-    return getType()+loc_value.hashCode();
+    return getType()+((int)(floatValue()*128));
   }
 
   public String toString() {
     return Float.toString(floatValue())+"["+getType()+"]";
   }
 
-  public boolean equals(AspectValue v) {
-    if (v instanceof AspectLocation) {
-      AspectLocation loc_v = (AspectLocation)v;
-      return (loc_v.getAspectType() == getType() &&
-              loc_v.getLocationValue() == getLocationValue());
-    } else {
-      return false;
-    }
-  }
+
 }
+
+

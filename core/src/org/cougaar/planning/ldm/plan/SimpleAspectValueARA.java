@@ -107,24 +107,24 @@ import org.cougaar.planning.ldm.asset.Asset;
           }
           // if we still don't have a matching sum AspectValue, make a new one for this aspect
           if (sumav == null) {
-            sumav = (AspectValue) srav.clone(); // First time, just clone the value
+            sumav = srav; // First time, just clone the value
             aggregAR.add(sumav);
           } else {
             switch (thisat) {
             case START_TIME:
               double nst = Math.min(sumav.getValue(), srav.getValue());
-              sumav.setValue(nst);
+              sumav = sumav.dupAspectValue(nst);
               break;
             case END_TIME:
             case DANGER:
             case RISK:
               double newmaxv = Math.max(sumav.getValue(), srav.getValue());
-              sumav.setValue(newmaxv);
+              sumav = sumav.dupAspectValue(newmaxv);
               break;
             default:
               // if its anything else its a simple summation, even for TYPED_QUANTITY
               double newsumv = sumav.getValue() + srav.getValue();
-              sumav.setValue(newsumv);
+              sumav = sumav.dupAspectValue(newsumv);
             }
           }
         } // end of for loop for allocationresult aspecttypes
@@ -170,12 +170,12 @@ import org.cougaar.planning.ldm.asset.Asset;
           if ( DURATION == durav.getAspectType() ) {
             theduration = durav;
             // reset the value
-            durav.setValue(overallend - overallstart);
+            durav = durav.dupAspectValue(overallend - overallstart);
           }
         }
         // if we didn't find a duration av, create one
         if (theduration == null) {
-          AspectValue duration = new AspectValue (DURATION, overallend - overallstart);
+          AspectValue duration = AspectValue.newAspectValue(AspectType.Duration, overallend - overallstart);
           aggregAR.add(duration);
         }
       }
@@ -184,7 +184,7 @@ import org.cougaar.planning.ldm.asset.Asset;
       for (ListIterator litcs = aggregAR.listIterator(); litcs.hasNext(); ) {
         AspectValue csav = (AspectValue) litcs.next();
         if (CUSTOMER_SATISFACTION == csav.getAspectType() ) {
-          csav.setValue(csav.getValue() / count);
+          csav = csav.dupAspectValue(csav.getValue() / count);
         }
       }
 

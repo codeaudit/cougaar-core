@@ -34,9 +34,7 @@ import java.io.Serializable;
  * HIGH_THRESHOLD (1.0) is "bad" (as bad as it gets).  ScoringFunction domains
  * should be infinite and Range should be 0.0 to 1.0 inclusive.
  * 
- * Instances are immutable.
- *
- * @author  ALPINE <alpine-software@bbn.com>
+ * @note Instances are immutable.
  **/
 public abstract class ScoringFunction implements Serializable, Cloneable {
    
@@ -44,7 +42,6 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
   public static final double LOW_THRESHOLD = 0.0;
   /** Maximum valid value **/
   public static final double HIGH_THRESHOLD = 1.0;
-   
   /** "Best" Score **/
   public final static double BEST = LOW_THRESHOLD;
   /** "Worst" Score **/
@@ -650,7 +647,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new StrictValueScoringFunction((AspectValue) point.clone());
+      return new StrictValueScoringFunction(point);
     }
   
     public AspectScorePoint getBest() {
@@ -720,7 +717,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new PreferredValueScoringFunction((AspectValue) point.clone(), slope);
+      return new PreferredValueScoringFunction(point, slope);
     }
   
     public AspectScorePoint getBest() {
@@ -731,8 +728,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       double v = point.getValue();
       int t = point.getAspectType();
       double delta = (slope==0.0)?(0.0):(1/slope);
-      AspectValue v0 = new AspectValue(t, v-delta);
-      AspectValue v1 = new AspectValue(t, v+delta);
+      AspectValue v0 = AspectValue.newAspectValue(t, v-delta);
+      AspectValue v1 = AspectValue.newAspectValue(t, v+delta);
       AspectScorePoint p0 = new AspectScorePoint(v0, WORST);
       AspectScorePoint p1 = new AspectScorePoint(v1, WORST);
       return new SingleElementEnumeration(new AspectScoreRange(p0,p1));
@@ -819,10 +816,10 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       return false;
     }
 
-    public Object clone() {
-      return new VScoringFunction((AspectValue) point1.clone(),
-                                  (AspectValue) best.clone(),
-                                  (AspectValue) point2.clone(),
+    public Object clone() {     // clone is probably useless, since it is immutable
+      return new VScoringFunction(point1,
+                                  best,
+                                  point2,
                                   ok);
     }
 
@@ -920,8 +917,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new StrictBetweenScoringFunction((AspectValue) point1.clone(),
-                                              (AspectValue) point2.clone());
+      return new StrictBetweenScoringFunction(point1,
+                                              point2);
     }
   
     //arbitrarily take the low value as best for now
@@ -971,7 +968,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       if (point1.isBetween(lowerbound, upperbound) &&
 	  point2.isBetween(lowerbound, upperbound)) 
 	// return a point halfway between point1 and point2
-	return new AspectScorePoint(new AspectValue(lowerbound.getAspectType(),
+	return new AspectScorePoint(AspectValue.newAspectValue(lowerbound.getAspectType(),
 						    (point1.getValue() 
 						     + point2.getValue()) / 2),
 				    BEST);
@@ -993,9 +990,9 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new StrictBetweenWithBest((AspectValue) point1.clone(),
-                                       (AspectValue) best.clone(),
-                                       (AspectValue) point2.clone());
+      return new StrictBetweenWithBest(point1,
+                                       best,
+                                       point2);
     }
 
     // take the specified best as best
@@ -1032,8 +1029,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new PreferredBetweenScoringFunction((AspectValue) point1.clone(),
-                                                 (AspectValue) point2.clone(),
+      return new PreferredBetweenScoringFunction(point1,
+                                                 point2,
                                                  slope);
     }
   
@@ -1045,8 +1042,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public Enumeration getValidRanges(AspectValue lowerbound, AspectValue upperbound){
       int t = point1.getAspectType();
       double delta = (slope==0.0)?(0.0):(1/slope);
-      AspectValue v0 = new AspectValue(t, point1.getValue()-delta);
-      AspectValue v1 = new AspectValue(t, point1.getValue()+delta);
+      AspectValue v0 = AspectValue.newAspectValue(t, point1.getValue()-delta);
+      AspectValue v1 = AspectValue.newAspectValue(t, point1.getValue()+delta);
       AspectScorePoint p0 = new AspectScorePoint(v0, WORST);
       AspectScorePoint p1 = new AspectScorePoint(v1, WORST);
       return new SingleElementEnumeration(new AspectScoreRange(p0,p1));
@@ -1066,7 +1063,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       if (point1.isBetween(lowerbound, upperbound) &&
 	  point2.isBetween(lowerbound, upperbound)){
 	// pick halfway point in basin
-	AspectValue halfpoint = new AspectValue(lowerbound.getAspectType(),
+	AspectValue halfpoint = AspectValue.newAspectValue(lowerbound.getAspectType(),
 						(point1.getValue()
 						+ point2.getValue()) / 2);
 	return new AspectScorePoint(halfpoint, getScore(halfpoint));
@@ -1120,7 +1117,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new AboveScoringFunction((AspectValue) point.clone(), slope);
+      return new AboveScoringFunction(point, slope);
     }
   
     public AspectScorePoint getBest() {
@@ -1194,7 +1191,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 	p1 = new AspectScorePoint(upperbound, ubScore);
       else {
         double delta = (slope==0.0)?(0.0):(1/slope);
-	AspectValue v1 = new AspectValue(point.getAspectType(), 
+	AspectValue v1 = AspectValue.newAspectValue(point.getAspectType(), 
 					 point.getValue()+delta);
 	p1 = new AspectScorePoint(v1, WORST);
       }
@@ -1221,7 +1218,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new BelowScoringFunction((AspectValue) point.clone(), slope);
+      return new BelowScoringFunction(point, slope);
     }
   
     public AspectScorePoint getBest() {
@@ -1287,7 +1284,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
 	p0 = new AspectScorePoint(lowerbound, lbScore);
       } else {
         double delta = (slope==0.0)?(0.0):(1/slope);
-	AspectValue v0 = new AspectValue(point.getAspectType(), 
+	AspectValue v0 = AspectValue.newAspectValue(point.getAspectType(), 
 					 point.getValue()-delta);
 	p0 = new AspectScorePoint(v0, WORST);
       }
@@ -1326,7 +1323,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public Object clone() {
-      return new StepScoringFunction((AspectValue) point.clone(), v0, v1);
+      return new StepScoringFunction(point, v0, v1);
     }
 
     public double getScore(AspectValue value){
@@ -1387,7 +1384,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       while (pointValue - away <= 0)
 	away = away * 0.1;
       
-      return new AspectScorePoint(new AspectValue(point.getAspectType(),
+      return new AspectScorePoint(AspectValue.newAspectValue(point.getAspectType(),
 						  pointValue - away),
 				  lowscore);
       
@@ -1455,7 +1452,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public Object clone() {
       AspectScorePoint[] newPoints = new AspectScorePoint[my_points.length];
       for (int i = 0; i < newPoints.length; i++) {
-        newPoints[i] = (AspectScorePoint) my_points[i].clone();
+        newPoints[i] = my_points[i];
       }
       return new EnumeratedScoringFunction(newPoints);
     }

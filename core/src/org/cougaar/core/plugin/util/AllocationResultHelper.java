@@ -124,7 +124,7 @@ public class AllocationResultHelper {
             for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ) {
                 Preference pref = (Preference) e.nextElement();
                 AspectValue best = pref.getScoringFunction().getBest().getAspectValue();
-                avs.add(best.clone());
+                avs.add(best);
             }
         }
         return (AspectValue[]) avs.toArray(new AspectValue[avs.size()]);
@@ -226,13 +226,12 @@ public class AllocationResultHelper {
     }
 
     /**
-     * Set a vailed value over a period of time. New phased results
+     * Set a failed value over a period of time. New phased results
      * are edited into the results as needed.
      **/
     public void setFailed(int type, long startTime, long endTime) {
         int ix = getTypeIndex(type);
-        AspectValue av = (AspectValue) perfectResult[ix].clone();
-        av.setValue(0.0);
+        AspectValue av = perfectResult[ix].dupAspectValue(0.0);
         set(ix, av, startTime, endTime);
     }
 
@@ -301,12 +300,12 @@ public class AllocationResultHelper {
                     if (startTime < thisEnd && endTime > thisStart) { // Overlaps
                         if (startTime > thisStart) { // Initial portion exists
                             newResult = AspectValue.clone(oneResult);
-                            newResult[endix] = new TimeAspectValue(AspectType.END_TIME, startTime);
+                            newResult[endix] = TimeAspectValue.create(AspectType.END_TIME, startTime);
                             newResults.add(newResult);
                         }
                         if (endTime < thisEnd) { // Final portion exists
                             newResult = AspectValue.clone(oneResult);
-                            newResult[startix] = new TimeAspectValue(AspectType.START_TIME, endTime);
+                            newResult[startix] = TimeAspectValue.create(AspectType.START_TIME, endTime);
                             newResults.add(newResult);
                         }
                         thisChanged = true;
@@ -327,8 +326,8 @@ public class AllocationResultHelper {
         }
         if (!covered) {
             newResult = AspectValue.clone(perfectResult);
-            newResult[startix] = new TimeAspectValue(AspectType.START_TIME, startTime);
-            newResult[endix]   = new TimeAspectValue(AspectType.END_TIME, endTime);
+            newResult[startix] = TimeAspectValue.create(AspectType.START_TIME, startTime);
+            newResult[endix]   = TimeAspectValue.create(AspectType.END_TIME, endTime);
             newResult[valueix] = av;
             newResults.add(newResult);
             thisChanged = true;
@@ -377,7 +376,7 @@ public class AllocationResultHelper {
         }
         AspectValue[] ru = AspectValue.clone(perfectResult);
         for (int i = 0; i < ru.length; i++) {
-            ru[i].setValue(sums[i] / divisor[i]);
+          ru[i] = ru[i].dupAspectValue(sums[i] / divisor[i]);
         }
         return ru;
     }

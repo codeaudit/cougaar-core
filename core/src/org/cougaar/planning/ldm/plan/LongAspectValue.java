@@ -21,54 +21,59 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import java.util.Date;
-import java.text.SimpleDateFormat;
-
-/** An AspectValue implementation which stores a time.
+/** An AspectValue implementation which stores a long.
  */
  
-public class TimeAspectValue extends LongAspectValue {
-  protected TimeAspectValue(int type, long value) {
-    super(type,value);
+public class LongAspectValue extends TypedAspectValue {
+  protected long value;
+
+  protected LongAspectValue(int type, long value) {
+    super(type);
+    this.value = value;
   }
 
   public static AspectValue create(int type, Object o) {
-    long l;
-    if (o instanceof Date) {
-      l = ((Date)o).getTime();
-    } else if (o instanceof Number) {
-      l = ((Number)o).longValue();
+    long value;
+    if (o instanceof Number) {
+      value = ((Number)o).longValue();
+    } else if (o instanceof AspectValue) {
+      value = ((AspectValue)o).longValue();
     } else {
-      throw new IllegalArgumentException("Cannot create a TimeAspectValue from "+o);
+      throw new IllegalArgumentException("Cannot construct a LongAspectValue from "+o);
     }
-    return new TimeAspectValue(type,l);
-  }
-   
-  public static AspectValue create(int type, long o) {
-    return new TimeAspectValue(type,o);
+    return new LongAspectValue(type,value);
   }
 
-
-  /** @return The Date representation of the value of the aspect. */
-  public Date dateValue() {
-    return new Date(longValue());
+  public final double doubleValue() {
+    return (double) value;
+  }
+  public final long longValue() {
+    return value;
+  }
+  public final float floatValue() {
+    return (float) value;
+  }
+  public final int intValue() {
+    return (int) value;
   }
 
-  /** Alias for longValue() **/
-  public long timeValue() {
-    return longValue();
+  public boolean equals(Object v) {
+    if (v instanceof LongAspectValue) {
+      return (getType() == ((AspectValue)v).getType() &&
+              longValue() == ((AspectValue)v).longValue());
+    } else {
+      return false;
+    }
   }
-  
 
-  // not thrilled with this...
-  private static SimpleDateFormat dateTimeFormat =
-    new SimpleDateFormat("MM/dd/yy HH:mm:ss.SSS z");
-  private static Date formatDate = new Date();
+  public int hashCode() {
+    return getType()+((int)(longValue()*128));
+  }
 
   public String toString() {
-    synchronized (formatDate) {
-      formatDate.setTime((long) value);
-      return dateTimeFormat.format(formatDate) + "[" + type + "]";
-    }
+    return Long.toString(longValue())+"["+getType()+"]";
   }
+
 }
+
+

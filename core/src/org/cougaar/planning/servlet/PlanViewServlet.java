@@ -2295,8 +2295,8 @@ extends HttpServlet
     private static Enumeration getValidEndDateRanges(ScoringFunction sf) {
       Enumeration validRanges = 
         sf.getValidRanges(
-            new TimeAspectValue(AspectType.END_TIME, 0l),
-            new TimeAspectValue(AspectType.END_TIME, endOfRange));
+            TimeAspectValue.create(AspectType.END_TIME, 0l),
+            TimeAspectValue.create(AspectType.END_TIME, endOfRange));
       return validRanges;
     }
 

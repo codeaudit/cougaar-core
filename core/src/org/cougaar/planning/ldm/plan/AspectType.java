@@ -21,6 +21,8 @@
 
 package org.cougaar.planning.ldm.plan;
 
+import java.util.HashMap;
+
 /** Constant names for different 'score' dimensions in which to report
  * allocation consequences.
  **/
@@ -115,4 +117,193 @@ public interface AspectType {
     "POD",
     "POD_DATE",
   };
+
+  interface Factory {
+    /** the key of the AspectType **/
+    int getKey();
+    /** The name of the AspectType **/
+    String getName();
+    /** The factory to use for creating AspectValues of the AspectType. **/
+    AspectValue newAspectValue(Object o);
+  }
+ 
+  /** Undefined - Illegal to use **/
+  Factory Undefined = new Factory () { 
+      public int getKey() { return -1; }
+      public String getName() { return "Undefined"; }
+      public AspectValue newAspectValue(Object o) { throw new IllegalArgumentException("Cannot make Undefined AspectValues"); }
+    };
+
+  /** Start time of given Task **/
+  Factory StartTime = new Factory () { 
+      public int getKey() { return START_TIME; }
+      public String getName() { return "START_TIME"; }
+      public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(START_TIME,o); }
+    };
+  /** End time of given Task **/
+  Factory EndTime = new Factory () { 
+      public int getKey() { return END_TIME; }
+      public String getName() { return "END_TIME"; }
+      public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(END_TIME,o); }
+    };
+  /** (requested) Duration of a task **/
+  Factory Duration = new Factory () { 
+      public int getKey() { return DURATION; }
+      public String getName() { return "DURATION"; }
+      public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(DURATION,o); }
+    };
+  /** Cost (in $) of allocating given Task **/
+  Factory Cost = new Factory () { 
+      public int getKey() { return COST; }
+      public String getName() { return "COST"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(COST,o); }
+    };
+  /** Probability of loss of assets associated with allocation **/
+  Factory Danger = new Factory () { 
+      public int getKey() { return DANGER; }
+      public String getName() { return "DANGER"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(DANGER,o); }
+    };
+  /** Probability of failure of the Mission **/
+  Factory Risk = new Factory () { 
+      public int getKey() { return RISK; }
+      public String getName() { return "RISK"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(RISK,o); }
+    };
+  /** Quantities associated with allocation (number of elements sourced, e.g.) **/
+  Factory Quantity = new Factory () { 
+      public int getKey() { return QUANTITY; }
+      public String getName() { return "QUANTITY"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(QUANTITY,o); }
+    };
+  /** For repetitive tasks - specify the amount of time(milliseconds) 
+   * in between deliveries 
+   **/
+  Factory Interval = new Factory () { 
+      public int getKey() { return INTERVAL; }
+      public String getName() { return "INTERVAL"; }
+      public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(INTERVAL,o); }
+    };
+  /**For repetitive tasks the total sum quantity of item for the time span **/
+  Factory TotalQuantity = new Factory () { 
+      public int getKey() { return TOTAL_QUANTITY; }
+      public String getName() { return "TOTAL_QUANTITY"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TOTAL_QUANTITY,o); }
+    };
+  /** For repetitive tasks the total number of shipments requested across 
+   * the time span.
+   * This should be used in association with the interval aspect.
+   **/
+  Factory TotalShipments = new Factory () { 
+      public int getKey() { return TOTAL_SHIPMENTS; }
+      public String getName() { return "TOTAL_SHIPMENTS"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TOTAL_SHIPMENTS,o); }
+    };
+  /**   **/
+  Factory CustomerSatisfaction = new Factory () { 
+      public int getKey() { return CUSTOMER_SATISFACTION; }
+      public String getName() { return "CUSTOMER_SATISFACTION"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(CUSTOMER_SATISFACTION,o); }
+    };
+  /** Used to represent an Asset/Quantity relationship
+   * @see org.cougaar.planning.ldm.plan.TypedQuantityAspectValue
+   **/
+  Factory TypedQuantity = new Factory () { 
+      public int getKey() { return TYPED_QUANTITY; }
+      public String getName() { return "TYPED_QUANTITY"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(TYPED_QUANTITY,o); }
+    };
+  /** The extent to which a task has been satisfactorily completed **/
+  Factory Readiness = new Factory () { 
+      public int getKey() { return READINESS; }
+      public String getName() { return "READINESS"; }
+      public AspectValue newAspectValue(Object o) { return FloatAspectValue.create(READINESS,o); }
+    };
+    
+  /** The point of debarkation of a task **/
+  Factory Pod = new Factory () { 
+      public int getKey() { return POD; }
+      public String getName() { return "POD"; }
+      public AspectValue newAspectValue(Object o) { return AspectLocation.create(POD,o); }
+    };
+  /** The time at which a task should arrive at the POD **/
+  Factory PodDate = new Factory () { 
+      public int getKey() { return POD_DATE; }
+      public String getName() { return "POD_DATE"; }
+      public AspectValue newAspectValue(Object o) { return TimeAspectValue.create(POD_DATE,o); }
+    };
+  
+  /** Array of the "standard" AspectValue Factories.  This should match the other
+   * arrays in this class.
+   **/
+  Factory[] AspectFactories = {StartTime,
+                               EndTime,
+                               Duration,
+                               Cost,
+                               Danger,
+                               Risk,
+                               Quantity,
+                               Interval,
+                               TotalQuantity,
+                               TotalShipments,
+                               CustomerSatisfaction,
+                               TypedQuantity,
+                               Readiness,
+                               Pod,
+                               PodDate};
+
+
+  /** Simple class for registering AspectValue Factories **/
+  class Registry {
+    private HashMap table = new HashMap(64);
+
+    public Registry(Factory[] fs) {
+      for (int i=0; i<fs.length; i++) {
+        Factory f = fs[i];
+        assert (f.getKey() == i);
+        registerFactory(f);
+      }
+    }
+
+    public void registerFactory(Factory f) {
+      String s = f.getName();
+      Integer i = new Integer(f.getKey());
+      synchronized (table) {
+        if (table.get(s) != null ||
+            table.get(i) != null) {
+          throw new IllegalArgumentException("Cannot register AspectType "+f+" as "+s+"("+i+")");
+        }
+        table.put(s,f);
+        table.put(i,f);
+      }
+    }
+
+    public Factory get(String name) {
+      synchronized (table) {
+        return (Factory) table.get(name);
+      }
+    }
+    public Factory get(Integer key) {
+      {
+        int i = key.intValue();
+        if (i >= 0 && i < AspectFactories.length) {
+          return AspectFactories[i];
+        }
+      }
+      synchronized (table) {
+        return (Factory) table.get(key);
+      }
+    }
+    public Factory get(int key) {
+      if (key >= 0 && key < AspectFactories.length) {
+        return AspectFactories[key];
+      }
+      synchronized (table) {
+        return (Factory) table.get(new Integer(key));
+      }
+    }
+  }
+
+  /** Registry of AspectValue factories **/
+  Registry registry = new Registry(AspectFactories);
 }

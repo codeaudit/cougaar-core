@@ -107,13 +107,13 @@ public abstract class TaskConstraintEvent implements SettableConstraintEvent
     ScoringFunction sf;
     switch (constraintOrder) {
     case Constraint.BEFORE: // Same as LESSTHAN
-      sf = ScoringFunction.createNearOrBelow(new AspectValue(event, value), slope);
+      sf = ScoringFunction.createNearOrBelow(AspectValue.newAspectValue(event, value), slope);
       break;
     case Constraint.AFTER: // Same as GREATERTHAN
-      sf = ScoringFunction.createNearOrAbove(new AspectValue(event, value), slope);
+      sf = ScoringFunction.createNearOrAbove(AspectValue.newAspectValue(event, value), slope);
       break;
     case Constraint.COINCIDENT: // Same as EQUALTO
-      sf = ScoringFunction.createStrictlyAtValue(new AspectValue(event, value));
+      sf = ScoringFunction.createStrictlyAtValue(AspectValue.newAspectValue(event, value));
       break;
     default:
       return;

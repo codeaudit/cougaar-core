@@ -30,89 +30,85 @@ import org.cougaar.planning.ldm.measure.Rate;
 import org.cougaar.planning.ldm.measure.Speed;
 import org.cougaar.planning.ldm.measure.TimeRate;
 
-/*
- * @author  ALPINE <alpine-software@bbn.com>
- *
+/**
+ * An AspectValue represented by a rate measure
  */
  
-public class AspectRate extends AspectValue {
+public class AspectRate extends TypedAspectValue {
   protected Rate rate_value;
 
-  public AspectRate(int type, Rate new_rate_value) {
-    super(type, 0.0);
-    setValue(new_rate_value);
+  protected AspectRate(int type, Rate new_rate_value) {
+    super(type);
+    rate_value = new_rate_value;
   }
 
-  public Object clone() {
-    return new AspectRate(type, rate_value);
-  }
-
-  /** Reset the value after creation.  Useful for AllocationResultAggregators
-    * that sum AspectValues.
-    * @param newvalue
-    */
-  public void setValue(Rate newvalue) {
-    this.rate_value = newvalue;
-    super.setValue(getValue());
-  }
-
-  /**
-   * Change the value of the Rate of this AspectRate. Construct a new
-   * Rate based on the actual class of rate_value. This should cover
-   * all the implementations of Rate in the measure package.
-   **/
-  public void setValue(double newValue) {
-    Class rateClass = rate_value.getClass();
-    int units = rate_value.getCommonUnit();
-    if (rateClass == CountRate.class) {
-      setValue(new CountRate(newValue, units));
-    } else if (rateClass == FlowRate.class) {
-      setValue(new FlowRate(newValue, units));
-    } else if (rateClass == CostRate.class) {
-      setValue(new CostRate(newValue, units));
-    } else if (rateClass == MassTransferRate.class) {
-      setValue(new MassTransferRate(newValue, units));
-    } else if (rateClass == Speed.class) {
-      setValue(new Speed(newValue, units));
-    } else if (rateClass == TimeRate.class) {
-      setValue(new TimeRate(newValue, units));
+  public static AspectValue create(int type, Object o) {
+    long l;
+    if (o instanceof Rate) {
+      return new AspectRate(type, (Rate) o);
     } else {
-      throw new IllegalArgumentException("Unknown rate class: " + rateClass);
+      throw new IllegalArgumentException("Cannot create an AspectRate from "+o);
     }
-    super.setValue(newValue);
   }
    
-  /** 
-    * @return Rate The value of the aspect.
-    */
-  public Rate getRateValue() {
+  public static AspectValue create(int type, Rate r) {
+    return new AspectRate(type,r);
+  }
+
+  /** Non-preferred alias for #create(int, Rate).
+   **/
+  public static final AspectValue newAspectRate(int type, Rate r) {
+    return new AspectRate(type, r);
+  }
+   
+  /** The rate value of the aspect.
+   * @note the preferred accessor is #rateValue()
+   */
+  public final Rate getRateValue() {
     return rate_value;
   }
 
-  /** 
-    * @return double
-    */
-  public double getValue() {
-    return rate_value.getValue(rate_value.getCommonUnit());
+  public final Rate rateValue() {
+    return rate_value;
   }
-   
-/* Accessors for longitude + latitude?
-   public long longValue() {
-    return Math.round(value);
-  }
-*/
 
+  /** return the common-unit value of the rate.
+   * @note A better solution is to use rateValue and specify the unit of measure.
+   **/
+  public final double doubleValue() {
+    return (double) rateValue().getValue(rateValue().getCommonUnit());
+  }
+  /** return the common-unit value of the rate.
+   * @note A better solution is to use rateValue and specify the unit of measure.
+   **/
+  public final long longValue() {
+    return (long) doubleValue();
+  }
+  /** return the common-unit value of the rate.
+   * @note A better solution is to use rateValue and specify the unit of measure.
+   **/
+  public final float floatValue() {
+    return (float) doubleValue();
+  }
+  /** return the common-unit value of the rate.
+   * @note A better solution is to use rateValue and specify the unit of measure.
+   **/
+  public final int intValue() {
+    return (int) doubleValue();
+  }
+
+   
   public boolean equals(Object v) {
     if (!(v instanceof AspectRate)) {
       return false;
     } 
     AspectRate rate_v = (AspectRate) v;
 
-    return (rate_v.getAspectType() == getAspectType()
-            && rate_v.getRateValue().equals(getRateValue()));
+    return (rate_v.getAspectType() == getAspectType() &&
+            rate_v.rateValue().equals(rateValue()));
   }
 
   public String toString() {
-    return "Rate-" + super.toString();
+    return rate_value.toString()+"["+getType()+"]";
   }
 }
