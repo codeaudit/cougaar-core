@@ -21,7 +21,7 @@ public abstract class ContainerSupport
   protected final ComponentFactory componentFactory = specifyComponentFactory();
   /** this is the prefix that all subcomponents must have as a prefix **/
   protected final String containmentPrefix = specifyContainmentPoint()+".";
-  protected final ServiceBroker childServiceBroker = specifyChildServiceBroker();
+  protected ServiceBroker childServiceBroker = null;
   protected final Class childBindingSite = specifyChildBindingSite();
 
   /** The actual set of child BoundComponent loaded. 
@@ -37,6 +37,12 @@ public abstract class ContainerSupport
   protected final TreeSet binderFactories = new TreeSet(BinderFactory.comparator);
 
   protected ContainerSupport() {
+    ServiceBroker sb = specifyChildServiceBroker();
+    if (sb != null) setChildServiceBroker(sb);
+  }
+
+  public void setBindingSite(BindingSite bs) {
+    //System.err.println("setBindingSite of "+this+" to "+bs);
   }
 
   /** override to specify a different component factory class. 
@@ -56,17 +62,36 @@ public abstract class ContainerSupport
    * this is called once during initialization.
    * Note that this value might be only part of the process for 
    * actually finding the services for children and/or peers.
+   * <p>
+   * Either this method must be overridden to return a non-null value,
+   * or the subclass must call setChildServiceBroker exactly once with 
+   * a non-null value.
    **/
-  protected abstract ServiceBroker specifyChildServiceBroker();
+  protected ServiceBroker specifyChildServiceBroker() {
+    return null;
+  }
   
-  /** Define to specify the BindingSite used to bind child components.
-   **/
-  protected abstract Class specifyChildBindingSite();
+  protected final void setChildServiceBroker(ServiceBroker sb) {
+    if (sb == null) {
+      throw new IllegalArgumentException("Specified ServiceBroker must not be null");
+    }
+    if (childServiceBroker != null) {
+      throw new IllegalArgumentException("ServiceBroker already set");
+    }
+    System.err.println("Setting ServiceBroker of "+this+" to "+sb);
+    childServiceBroker = sb;
+  }
 
   /** satisfy ContainerAPI extends BindingSite and provides access to the (local) ServiceBroker **/
   public ServiceBroker getServiceBroker() {
     return childServiceBroker;
   }
+
+  /** Define to specify the BindingSite used to bind child components.
+   **/
+  protected abstract Class specifyChildBindingSite();
+
+
 
   //
   // implement collection
@@ -252,8 +277,10 @@ public abstract class ContainerSupport
       }
 
       if (b != null) {
+        //System.err.println("setting Binder for "+c);
         BindingUtility.setBindingSite(b, getContainerProxy());
         BindingUtility.setServices(b, getServiceBroker());
+        //System.err.println("Initializing Binder for "+c);
         BindingUtility.initialize(b);
         // done
         return b;

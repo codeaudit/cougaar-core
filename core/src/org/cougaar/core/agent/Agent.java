@@ -45,6 +45,11 @@ public abstract class Agent
   
   }
 
+  public void setBindingSite(BindingSite bs) {
+    super.setBindingSite(bs);
+    setChildServiceBroker(new AgentServiceBroker(bs));
+  }
+
   // Do we need state model stuff here???
   //protected void initialize() {}
 
@@ -54,13 +59,7 @@ public abstract class Agent
   protected String specifyContainmentPoint() {
     return "Node.AgentManager.Agent";
   }
-  protected ServiceBroker specifyChildContext() {
-    return new AgentServiceBroker();
-  }
 
-  protected ServiceBroker specifyChildServiceBroker() {
-    return new AgentServiceBroker();
-  }
   protected Class specifyChildBindingSite() {
     return PluginManagerBindingSite.class;
   }
@@ -86,8 +85,10 @@ public abstract class Agent
   // support classes
   //
 
-  private static class AgentServiceBroker extends ServiceBrokerSupport { }
-
-
+  private static class AgentServiceBroker extends PropagatingServiceBroker {
+    public AgentServiceBroker(BindingSite bs) {
+      super(bs);
+    }
+  }
 }
 

@@ -18,6 +18,10 @@ import java.util.*;
 public class PropagatingServiceBroker
   extends ServiceBrokerSupport
 {
+  public PropagatingServiceBroker(BindingSite bs) {
+    this(bs.getServiceBroker());
+  }
+
   public PropagatingServiceBroker(ServiceBroker delegate) {
     if (delegate == null) {
       throw new IllegalArgumentException("Delegate must be non-null");

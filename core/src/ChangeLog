@@ -1,5 +1,9 @@
 2001-07-26  Michael Thome  <mthome@bbn.com> (For Beth DePass <bdepass@bbn.com)
 
+	* Node, AgentManager, Agent, PluginManager, etc
+	Implemented ServiceBroker transitivity: e.g. plugins can request
+	and receive Node-level services.
+
 	* Agent, AgentBinder, AgentBindingSite, ClusterImpl
 	Agent (ClusterImpl) is now a Container.
 

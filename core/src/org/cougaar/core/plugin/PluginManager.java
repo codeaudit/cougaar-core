@@ -48,14 +48,16 @@ public class PluginManager
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
     
-    /*
-    if (! attachBinderFactory(new PluginServiceFilter())) {
-      throw new RuntimeException("Failed to load the PluginServiceFilter");
-    }
-    */
+  }
+  
+  public void setBindingSite(BindingSite bs) {
+    super.setBindingSite(bs);
+    setChildServiceBroker(new PluginManagerServiceBroker(bs));
+  }
 
-    ServiceBroker sb = childServiceBroker;
-    //ServiceBroker sb = testsb; // test
+  public void initialize() {
+    super.initialize();
+    ServiceBroker sb = getServiceBroker();
     // add some services for the plugins.
     sb.addService(MetricsService.class, new MetricsServiceProvider(agent));
     sb.addService(AlarmService.class, new AlarmServiceProvider(agent));
@@ -77,16 +79,6 @@ public class PluginManager
   }
   protected String specifyContainmentPoint() {
     return "Node.AgentManager.Agent.PluginManager";
-  }
-
-  //private ServiceBroker testsb;
-  protected ServiceBroker specifyChildServiceBroker() {
-    //testsb=new PluginManagerServiceBroker();
-    //return new DelegatingServiceBroker(new PropagatingServiceBroker(testsb));
-
-    // We should really be doing something like:
-    //    return new PropagatingServiceBroker(getBindingSite().getServiceBroker());
-    return new PluginManagerServiceBroker();
   }
 
   protected Class specifyChildBindingSite() {
@@ -122,7 +114,13 @@ public class PluginManager
   // support classes
   //
 
-  private static class PluginManagerServiceBroker extends ServiceBrokerSupport {}
+  private static class PluginManagerServiceBroker 
+    extends PropagatingServiceBroker 
+  {
+    public PluginManagerServiceBroker(BindingSite bs) {
+      super(bs);
+    }
+  }
   
   //
   // support for direct loading of old-style plugins

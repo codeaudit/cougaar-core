@@ -162,6 +162,7 @@ public class ClusterImpl extends Agent
   private static int trafficPeriod = 80;
   private static boolean usePlugInLoader = false;
   private static boolean showTraffic = true;
+
   static {
     Properties props = System.getProperties();
     isHeartbeatOn=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.heartbeat", "true"))). booleanValue();
@@ -184,11 +185,12 @@ public class ClusterImpl extends Agent
   private AgentBindingSite bindingSite = null;
 
   public final void setBindingSite(BindingSite bs) {
+    super.setBindingSite(bs);
     //System.err.println("ClusterImpl.setBindingSite("+bs+")");
     if (bs instanceof AgentBindingSite) {
       bindingSite = (AgentBindingSite) bs;
     } else {
-      throw new RuntimeException("Tried to laod "+this+"into "+bs);
+      throw new RuntimeException("Tried to load "+this+"into "+bs);
     }
   }
 
@@ -402,12 +404,15 @@ public class ClusterImpl extends Agent
       }
     }
 
+    // transit the state.
+    super.load();
+
     // start up the pluginManager component - should really itself be loaded
     // as an agent subcomponent.
     pluginManager = new PluginManager(this);
+    //System.err.println("Added PluginManager to "+this);
+    add(pluginManager);
 
-    // transit the state.
-    super.load();
     //System.err.println("Cluster.load() completed");
   }
 

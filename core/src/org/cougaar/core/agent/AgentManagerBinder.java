@@ -22,7 +22,8 @@ import org.cougaar.core.society.MessageTransportServer;
 
 /** The standard Binder for AgentManagers and possibly others attaching to a Node.
  **/
-public class AgentManagerBinder extends BinderSupport implements AgentManagerBindingSite
+public class AgentManagerBinder extends BinderSupport 
+  implements AgentManagerBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
   public AgentManagerBinder(BinderFactory parentInterface, Object child) {

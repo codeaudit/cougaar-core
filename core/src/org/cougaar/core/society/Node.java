@@ -418,6 +418,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     return new NodeServiceBroker();
   }
   protected ServiceBroker specifyChildServiceBroker() {
+    // Nobody above us so we have a plain old ServiceBroker
     return new NodeServiceBroker();
   }
   protected Class specifyChildBindingSite() {
@@ -722,7 +723,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     }
     public boolean remove(Object o) {return true;}
     // BindingSite
-    public ServiceBroker getServiceBroker() {return specifyChildServiceBroker(); }
+    public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }
     public void requestStop() {}
     // extra pieces
     public void registerCluster(ClusterServesClusterManagement cluster) {

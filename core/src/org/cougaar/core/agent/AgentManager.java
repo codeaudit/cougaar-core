@@ -40,21 +40,25 @@ public class AgentManager
     if (!attachBinderFactory(new AgentBinderFactory())) {
       throw new RuntimeException("Failed to load the AgentBinderFactory");
     }
-
-    // add some services for the agents (clusters).
-    // maybe this can be hooked in from Node soon.
-    //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    //childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
   }
 
  private AgentManagerBindingSite bindingSite = null;
 
   public final void setBindingSite(BindingSite bs) {
+    super.setBindingSite(bs);
     if (bs instanceof AgentManagerBindingSite) {
       bindingSite = (AgentManagerBindingSite) bs;
+      setChildServiceBroker(new AgentManagerServiceBroker(bindingSite));
     } else {
       throw new RuntimeException("Tried to laod "+this+"into "+bs);
     }
+
+    // We cannot start adding services until after the serviceBroker has been created.
+    // add some services for the agents (clusters).
+    // maybe this can be hooked in from Node soon.
+    //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
+    //childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+
   }
 
   protected final AgentManagerBindingSite getBindingSite() {
@@ -67,9 +71,6 @@ public class AgentManager
   }
   protected String specifyContainmentPoint() {
     return "Node.AgentManager";
-  }
-  protected ServiceBroker specifyChildServiceBroker() {
-    return new AgentManagerServiceBroker();
   }
 
   protected Class specifyChildBindingSite() {
@@ -86,7 +87,7 @@ public class AgentManager
   * Add a cluster
   */
   public boolean add(Object obj) {
-    System.err.print("AgentManager adding Cluster");
+    //System.err.print("AgentManager adding Cluster");
     ClusterServesClusterManagement cluster = null;
     if (obj instanceof ComponentDescription) {
      ComponentDescription desc = (ComponentDescription) obj;
@@ -96,7 +97,7 @@ public class AgentManager
           // fix to support non-agent components
           throw new IllegalArgumentException("Currently only agent ADD is supported, not "+ insertionPoint);
         }
-        cluster = createCluster(desc);
+        cluster = createCluster(desc); // calls super.add(cluster);
       } catch (Exception e) {
       System.err.println("\nUnable to load cluster["+desc+"]: "+e);
       e.printStackTrace();
@@ -114,8 +115,8 @@ public class AgentManager
   private boolean hookupCluster(ClusterServesClusterManagement cluster) {
     ClusterIdentifier cid = cluster.getClusterIdentifier();
     String cname = cid.toString();
-    System.err.print("\n\t"+cname);
-    System.err.print("\nLoading Plugins:");
+    //System.err.print("\n\t"+cname);
+    //System.err.print("\nLoading Plugins:");
     try {
       // parse the cluster properties
       // currently assume ".ini" files
@@ -147,7 +148,7 @@ public class AgentManager
       e.printStackTrace();
     }
 
-    System.err.println("\nPlugins Loaded.");
+    //System.err.println("\nPlugins Loaded.");
     // register cluster with Node's ExternalNodeActionListener
     getBindingSite().registerCluster(cluster);
     //ExternalNodeActionListener eListener = getBindingSite().getExternalNodeActionListener();
@@ -168,8 +169,8 @@ public class AgentManager
   /**
    * Create a Cluster from a ComponentDescription.
    */
-  private ClusterServesClusterManagement createCluster(
-      ComponentDescription desc) {
+  private ClusterServesClusterManagement createCluster( ComponentDescription desc) 
+  {
 
     // check the cluster classname
     String clusterClassname = desc.getClassname();
@@ -236,7 +237,13 @@ public class AgentManager
   // support classes
   //
 
-  private static class AgentManagerServiceBroker extends ServiceBrokerSupport {}
+  private static class AgentManagerServiceBroker 
+    extends PropagatingServiceBroker
+  {
+    public AgentManagerServiceBroker(BindingSite bs) {
+      super(bs);
+    }
+  }
  
 
   private class AgentManagerProxy implements AgentManagerForBinder, 
@@ -252,7 +259,7 @@ public class AgentManager
     
     // BindingSite
     public ServiceBroker getServiceBroker() {
-      return AgentManager.this.specifyChildServiceBroker();
+      return AgentManager.this.getServiceBroker();
     }
     public void requestStop() {}
     public boolean remove(Object o) {return true; }
