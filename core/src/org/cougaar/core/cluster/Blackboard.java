@@ -109,8 +109,8 @@ public class Blackboard extends Subscriber
     }
   };
 
-  public Blackboard(ClusterServesLogicProvider cluster) {
-    myDistributor = createDistributor(cluster);
+  public Blackboard(ClusterServesLogicProvider cluster, Object state) {
+    myDistributor = createDistributor(cluster, state);
     setClientDistributor((BlackboardClient)this, myDistributor);
     myCluster = cluster;
   }
@@ -551,12 +551,13 @@ public class Blackboard extends Subscriber
   //
   // Distributor
   //
-  private Distributor createDistributor(ClusterServesLogicProvider cluster) {
+  private Distributor createDistributor(
+      ClusterServesLogicProvider cluster,
+      Object state) {
     Distributor d = new Distributor(this, cluster.getClusterIdentifier().getAddress());
     Persistence persistence = createPersistence(cluster);
     boolean lazyPersistence = System.getProperty("org.cougaar.core.cluster.persistence.lazy", "true").equals("true");
     d.setPersistence(persistence, lazyPersistence);
-    Object state = null;
     d.start(cluster, state);       // cluster, state
 
     return d;

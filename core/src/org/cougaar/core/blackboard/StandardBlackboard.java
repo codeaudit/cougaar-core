@@ -44,8 +44,10 @@ import org.cougaar.core.cluster.persist.PersistenceException;
  **/
 public class StandardBlackboard
   extends ContainerSupport
+  implements StateObject
 {
   private AgentChildBindingSite bindingSite = null;
+  private Object loadState = null;
   private Blackboard bb = null;
   private Distributor d = null;
   
@@ -53,17 +55,34 @@ public class StandardBlackboard
     super.setBindingSite(bs);
     if (bs instanceof AgentChildBindingSite) {
       bindingSite = (AgentChildBindingSite) bs;
-      bb = new Blackboard(bindingSite.getCluster());
-      d = bb.getDistributor();
     } else {
       throw new RuntimeException("Tried to load "+this+"into " + bs);
+    }
+  }
+
+  public void setState(Object loadState) {
+    this.loadState = loadState;
+  }
+
+  public Object getState() {
+    try {
+      return bb.getState();
+    } catch (Exception e) {
+      System.err.println("Unable to capture Blackboard state: "+e.getMessage());
+      return null;
     }
   }
 
   public void load() {
     super.load();
 
+    // create blackboard with optional prior-state
+    bb = new Blackboard(bindingSite.getCluster(), loadState);
+    loadState = null;
+
     bb.init();
+    d = bb.getDistributor();
+
     ServiceBroker sb = bindingSite.getServiceBroker();
 
     // offer hooks back to the Agent
