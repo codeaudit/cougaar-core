@@ -123,6 +123,15 @@ public abstract class PlugInAdapter
     return demoControlService;
   }
 
+  // shared threading service
+  private SharedThreadingService sharedThreadingService = null;
+  public final void setSharedThreadingService(SharedThreadingService sts) {
+    sharedThreadingService = sts;
+  }
+  protected final SharedThreadingService getSharedThreadingService() {
+    return sharedThreadingService;
+  }
+
   //
   // Implement (some of) BlackboardClient
   //

@@ -49,7 +49,6 @@ import org.cougaar.core.plugin.RemovePlugInMessage;
 // new LDM plugins
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.plugin.LDMPlugInServesLDM;
-import org.cougaar.core.plugin.ScheduleablePlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.core.plugin.PrototypeProvider;
 import org.cougaar.core.plugin.PropertyProvider;
@@ -808,20 +807,6 @@ public class ClusterImpl
     return this;
   }
 
-  public void schedulePlugIn(ScheduleablePlugIn plugin) {
-    getSharedPlugInManager().registerPlugIn(plugin);
-  }
-
-  private SharedPlugInManager _sharedPlugInManager = null;
-  private SharedPlugInManager getSharedPlugInManager() {
-    synchronized (this) {
-      if (_sharedPlugInManager == null) {
-        _sharedPlugInManager = new SharedPlugInManager(getClusterIdentifier());
-      }
-      return _sharedPlugInManager;
-    }
-  }
-
   public MetricsSnapshot getMetricsSnapshot() {
     MetricsSnapshot ms = new MetricsSnapshot();
     ms.clusterName = getClusterIdentifier().cleanToString();
@@ -843,7 +828,9 @@ public class ClusterImpl
 
     // cluster metrics
     ms.pluginCount = pluginManager.size();
-    ms.thinPluginCount = getSharedPlugInManager().size();
+    //no longer works from cluster as the sharedpluginmanager
+    //is now a service
+    //ms.thinPluginCount = getSharedPlugInManager().size();
     ms.prototypeProviderCount = prototypeProviders.size();
     ms.propertyProviderCount = propertyProviders.size();
     ms.cachedPrototypeCount = getRegistry().size();

@@ -49,6 +49,7 @@ public class PluginManager
     childContext.addService(AlarmService.class, new AlarmServiceProvider(agent));
     childContext.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
     childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    childContext.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
     // hack service for demo control
     childContext.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
   }
@@ -190,10 +191,6 @@ public class PluginManager
   // other services
   //
   
-  public void schedulePlugIn(ScheduleablePlugIn thing) {
-    agent.schedulePlugIn(thing);
-  }
-
   public ClusterIdentifier getClusterIdentifier() {
     return agent.getClusterIdentifier();
   }

@@ -43,7 +43,7 @@ import java.io.*;
  * thread per vm, so it isn't too expensive.
  * <p>
  **/
-class SharedPlugInManager {
+class SharedPlugInManager implements SharedThreadingService {
   
   /** Should we keep statistics on plugin runtimes? **/
   static boolean keepingStatistics = false;

@@ -232,7 +232,7 @@ public class PluginAdapterBinder extends PluginBinder
   protected class SharedThreading extends Threading implements ScheduleablePlugIn {
     public SharedThreading() {}
     public void start() {
-      getPluginManager().schedulePlugIn(this);
+      getPlugInAdapter().getSharedThreadingService().registerPlugIn(this);
       plugin_prerun();
     }
 

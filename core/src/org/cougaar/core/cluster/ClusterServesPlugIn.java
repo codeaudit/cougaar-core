@@ -15,7 +15,6 @@ import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
-import org.cougaar.core.plugin.ScheduleablePlugIn;
 import org.cougaar.util.ConfigFinder;
 
 /**
@@ -47,13 +46,6 @@ public interface ClusterServesPlugIn
    * the LDM instance.
    **/
   LDMServesPlugIn getLDM();
-
-  /** called by SharedThreading PlugIn implementations to request that
-   * they be scheduled by the cluster.
-   * This should never be called explicitly by any non-infrastructure
-   * code.
-   **/
-  public void schedulePlugIn(ScheduleablePlugIn plugin);
 
   /**
    * This method sets the COUGAAR scenario time to a specific time
