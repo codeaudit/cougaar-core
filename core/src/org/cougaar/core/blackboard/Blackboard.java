@@ -25,7 +25,7 @@ import org.cougaar.core.agent.*;
 import java.util.*;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.blackboard.*;
-
+import org.cougaar.core.component.ServiceBroker;
 // Persistence
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.BasePersistence;
@@ -58,6 +58,8 @@ public class Blackboard extends Subscriber
   protected CollectionSubscription everything;
   protected ClusterServesLogicProvider myCluster;
   private Distributor myDistributor;
+  protected ServiceBroker myServiceBroker;
+
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
@@ -122,9 +124,10 @@ public class Blackboard extends Subscriber
     }
   };
 
-  public Blackboard(ClusterServesLogicProvider cluster, Object state) {
+  public Blackboard(ClusterServesLogicProvider cluster, ServiceBroker sb, Object state) {
+    myServiceBroker = sb;
     myDistributor = createDistributor(cluster, state);
-    setClientDistributor((BlackboardClient)this, myDistributor);
+    setClientDistributor((BlackboardClient) this, myDistributor);
     myCluster = cluster;
   }
 
@@ -582,10 +585,10 @@ public class Blackboard extends Subscriber
   }
 
   protected Persistence createPersistence(ClusterServesLogicProvider cluster) {
-    if (System.getProperty("org.cougaar.core.persistence.enable", "false").equals("false"))
+    if (System.getProperty("org.cougaar.core.persistence.enable", "true").equals("false"))
       return null;		// Disable persistence for now
     try {
-      Persistence result = BasePersistence.find(cluster);
+      Persistence result = BasePersistence.find(cluster, myServiceBroker);
       if (System.getProperty("org.cougaar.core.persistence.disableWrite", "false").equals("true")) {
         String sequence =
           System.getProperty("org.cougaar.core.persistence.sequence", "");

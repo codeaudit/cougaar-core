@@ -83,15 +83,15 @@ public class StandardBlackboard
 
   public void load() {
     super.load();
+    ServiceBroker sb = bindingSite.getServiceBroker();
 
     // create blackboard with optional prior-state
-    bb = new Blackboard(bindingSite.getCluster(), loadState);
+    bb = new Blackboard(bindingSite.getCluster(), sb, loadState);
     loadState = null;
 
     bb.init();
     d = bb.getDistributor();
 
-    ServiceBroker sb = bindingSite.getServiceBroker();
 
     // offer hooks back to the Agent
     bbAgentSP = new BlackboardForAgentServiceProvider(bb);
