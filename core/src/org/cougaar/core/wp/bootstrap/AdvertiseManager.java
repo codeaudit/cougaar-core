@@ -142,26 +142,20 @@ implements Component
     synchronized (lock) {
       // update bundles
       Bundle b = (Bundle) bundles.get(name);
-      boolean is_server = Util.isServer(bundle);
       boolean put = false;
       boolean remove = false;
-      // filter by isServer
       if (b == null) {
-        if (add && is_server) {
+        if (add) {
           put = true;
         } else {
           return;
         }
       } else {
         if (add) {
-          if (is_server) {
-            if (bundle.equals(b)) {
-              return;
-            }
-            put = true;
-          } else {
-            remove = true;
+          if (bundle.equals(b)) {
+            return;
           }
+          put = true;
         } else {
           remove = true;
         }

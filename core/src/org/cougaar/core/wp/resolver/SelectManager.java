@@ -26,7 +26,9 @@
 
 package org.cougaar.core.wp.resolver;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -186,6 +188,11 @@ implements Component
           SelectManager.this.foundService(s);
         }
       };
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "findLater("+
+          "PingService, BootstrapService, ServersService)");
+    }
     ServiceFinder.findServiceLater(
         sb, PingService.class, pingClient, sfc);
     ServiceFinder.findServiceLater(
@@ -200,6 +207,9 @@ implements Component
 
   private void foundService(Service s) {
     synchronized (lock) {
+      if (logger.isDetailEnabled()) {
+        logger.detail("foundService("+s+"), searching="+searching);
+      }
       if (s instanceof PingService) {
         pingService = (PingService) s;
         if (searching) {
@@ -208,6 +218,9 @@ implements Component
       } else if (s instanceof BootstrapService) {
         bootstrapService = (BootstrapService) s;
         if (searching) {
+          if (logger.isDetailEnabled()) {
+            logger.detail("bs.startSearching");
+          }
           bootstrapService.startSearching();
         }
       } else if (s instanceof ServersService) {
@@ -252,6 +265,11 @@ implements Component
   // timer fired, see if we've found our servers
   private void checkPings() {
     synchronized (lock) {
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "checkPings(), searching="+searching+
+            ", selectAddr="+selectAddr+", foundAny="+foundAny);
+      }
       if (!searching) {
         return;
       }
@@ -266,6 +284,13 @@ implements Component
   }
 
   private void startSearching() {
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "startSearching(), searching="+searching+
+          ", bootstrapService="+bootstrapService+
+          ", pingService="+pingService+
+          ", serversService="+serversService);
+    }
     if (searching) {
       return;
     }
@@ -283,14 +308,27 @@ implements Component
   }
 
   private void stopSearching() {
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "stopSearching(), searching="+searching+
+          ", bootstrapService="+bootstrapService+
+          ", pingService="+pingService+
+          ", serversService="+serversService);
+    }
     if (!searching) {
       return;
     }
     searching = false;
     if (logger.isInfoEnabled()) {
+      Set found = getServers(true);
+      Set unacked = getServers(false);
       logger.info(
           "Stopping bootstrap search, found servers["+
-          entries.size()+"]="+entries.keySet());
+          found.size()+"]="+found+
+          (unacked.isEmpty() ?
+           "" :
+           (", pings failed for servers["+
+            unacked.size()+"]="+unacked)));
     }
     pingDeadline = -1;
     foundAny = false;
@@ -300,32 +338,29 @@ implements Component
   }
 
   private void sendPings() {
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "sendPings(), pingService="+pingService+
+          ", entries["+entries.size()+"]="+entries);
+    }
     long now = System.currentTimeMillis();
     pingDeadline = now + config.pingTimeout;
     if (pingService == null) {
       return;
     }
     checkPingsThread.schedule(config.pingTimeout);
-    long dropTime =
-      (config.dropAge >= 0 ?
-       (now - config.dropAge) :
-       0);
-    for (Iterator iter = entries.entrySet().iterator();
-        iter.hasNext();
-        ) {
+    int n = entries.size();
+    if (n <= 0) {
+      return;
+    }
+    Iterator iter = entries.entrySet().iterator();
+    for (int i = 0; i < n; i++) {
       Map.Entry me = (Map.Entry) iter.next();
       String name = (String) me.getKey();
       Entry e = (Entry) me.getValue();
-      if (e.getUpdateTime() < dropTime) {
-        if (logger.isInfoEnabled()) {
-          logger.info("Dropping unused server: "+e.toString(now));
-        }
-        iter.remove();
-        continue;
-      }
       MessageAddress addr = e.getMessageAddress();
       if (logger.isDebugEnabled()) {
-        logger.debug("Sending ping["+entries.size()+"] to "+addr);
+        logger.debug("Sending ping["+i+" / "+n+"] to "+addr);
       }
       pingService.ping(addr, pingDeadline);
     }
@@ -343,6 +378,11 @@ implements Component
       Entry e = (Entry) entries.get(s);
       if (e == null) {
         return;
+      }
+      if (e.getUpdateTime() <= 0 && logger.isInfoEnabled()) {
+        logger.info(
+            "Added white pages server "+addr+" (rtt="+rtt+
+            ") to servers["+entries.size()+"]="+entries.keySet());
       }
       long now = System.currentTimeMillis();
       e.reset((int) rtt, now);
@@ -368,27 +408,33 @@ implements Component
   // if we're searching, send a ping to it.
   // wait for a ping-ack before stopSearching or makeSelection
   private void addServer(MessageAddress addr) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Adding server "+addr);
-    }
     synchronized (lock) {
       String s = addr.getAddress();
       Entry e = (Entry) entries.get(s);
       if (e != null) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("already have server["+addr+"]="+e);
+        }
         return;
       }
       e = new Entry(addr);
-      long now = System.currentTimeMillis();
-      e.reset((int) config.lousyScore, now);
       entries.put(s, e);
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "Added new server "+addr+", "+
+            (searching ?
+             ("sending ping " +
+              (pingService == null ? "later" : "now")) :
+             ("not sending ping since we're not searching")));
+      }
       if (searching && pingService != null) {
+        if (logger.isDebugEnabled()) {
+          int n = entries.size();
+          logger.debug("Sending ping["+(n-1)+" / "+n+"] to "+addr);
+        }
         pingService.ping(addr, pingDeadline);
       }
-      if (logger.isInfoEnabled()) {
-        logger.info(
-            "Added white pages server "+addr+" to servers["+
-            entries.size()+"]="+entries.keySet());
-      }
+      // log info "Added" when we get a ping-ack!
     }
   }
 
@@ -516,7 +562,10 @@ implements Component
    */
   private double computeScore(Entry e, long now) {
     // assert (Thread.holdsLock(lock));
-    double ret = (double) e.getAverage();
+    double ret =
+      (e.getUpdateTime() > 0 ?
+       ((double) e.getAverage()) :
+       config.defaultScore);
     // favor primary server by adjusting its score
     boolean isPrimary =
       (config.primaryAddress != null &&
@@ -593,6 +642,26 @@ implements Component
         update(e, rtt, timeout, now);
       }
     }
+  }
+
+  private Set getServers(boolean acked) {
+    // assert (Thread.holdsLock(lock));
+    Set ret = Collections.EMPTY_SET; 
+    for (Iterator iter = entries.entrySet().iterator();
+        iter.hasNext();
+        ) {
+      Map.Entry me = (Map.Entry) iter.next();
+      String name = (String) me.getKey();
+      Entry e = (Entry) me.getValue();
+      if (acked != e.getUpdateTime() > 0) {
+        continue;
+      }
+      if (ret.isEmpty()) {
+        ret = new HashSet();
+      }
+      ret.add(name);
+    }
+    return ret;
   }
 
   private String my_toString() {
@@ -741,7 +810,6 @@ implements Component
   /** config options */
   private static class SelectManagerConfig {
     public final long period;
-    public final long dropAge;
     public final long deadlineMod;
     public final int minTimeout;
     public final int defaultTimeout;
@@ -749,18 +817,17 @@ implements Component
     public final String primaryAddress;
     public final double primaryWeight;
     public final long pingTimeout;
+    public final double defaultScore;
     public final double lousyScore;
 
     public SelectManagerConfig(Object o) {
       Parameters p =
         new Parameters(o, "org.cougaar.core.wp.resolver.select.");
       period = p.getLong("period", 30000);
-      dropAge = p.getLong("dropAge", 300000);
-      double defaultScore = p.getDouble("defaultScore", 750.0);
       deadlineMod = p.getLong("deadlineMod", 25);
       minTimeout = p.getInt("minTimeout", 3000);
       defaultTimeout = p.getInt("defaultTimeout", 20000);
-      maxTimeout = p.getInt("maxTimeout", 90000);
+      maxTimeout = p.getInt("maxTimeout", 120000);
       String s = p.getString("primary");
       // in form "alias(:addr)?", extract "addr" suffix
       int idx = (s == null ? -1 : s.indexOf(':'));
@@ -774,8 +841,9 @@ implements Component
       }
       primaryWeight = d;
       pingTimeout = p.getLong("pingTimeout", 30000);
-      d = p.getDouble("lousyScore", 3000);
-      d = Math.min(d, 4*defaultScore);
+      defaultScore = p.getDouble("defaultScore", 750.0);
+      d = p.getDouble("lousyScore", 3000.0);
+      d = Math.max(d, 4*defaultScore);
       lousyScore = d;
     }
   }

@@ -60,13 +60,6 @@ public final class Record implements Serializable {
     this.uid = uid;
     this.ttd = ttd;
     this.data = data;
-    // validate
-    String s =
-      ((uid == null) ? "null uid" :
-       null);
-    if (s != null) {
-      throw new IllegalArgumentException(s);
-    }
   }
 
   /**
@@ -152,7 +145,9 @@ public final class Record implements Serializable {
     }
     Record r = (Record) o;
     return 
-      uid.equals(r.uid) &&
+      (uid == null ?
+       r.uid == null :
+       uid.equals(r.uid)) &&
       ttd == r.ttd &&
       (data == null ?
        r.data == null :
@@ -160,7 +155,7 @@ public final class Record implements Serializable {
   }
 
   public int hashCode() {
-    return uid.hashCode();
+    return (uid == null ? 0 : uid.hashCode());
   }
 
   public String toString() {

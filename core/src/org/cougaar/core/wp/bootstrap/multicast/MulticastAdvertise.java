@@ -422,7 +422,7 @@ extends AdvertiseBase
           buf.append(s).append("\n");
         }
       }
-      buf.append(")");
+      buf.append("#)");
       String msg = buf.toString();
       return msg;
     }

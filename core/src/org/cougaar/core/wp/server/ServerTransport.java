@@ -26,6 +26,7 @@
 
 package org.cougaar.core.wp.server;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,6 +50,9 @@ import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Callback;
+import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.wp.MessageTimeoutUtils;
@@ -265,6 +269,9 @@ implements Component
       debugThread.start();
     }
 
+    // tell the WP that we're a server
+    bindServerFlag(true); 
+
     // register our message switch (now or later)
     if (sb.hasService(MessageSwitchService.class)) {
       registerMessageSwitch();
@@ -323,6 +330,8 @@ implements Component
       messageSwitchService = null;
     }
 
+    bindServerFlag(false); 
+
     if (peersService != null) {
       sb.releaseService(
           peersClient,
@@ -347,6 +356,32 @@ implements Component
     }
 
     super.unload();
+  }
+
+  private void bindServerFlag(boolean bind) {
+    AddressEntry entry = 
+      AddressEntry.getAddressEntry(
+          agentId.getAddress(),
+          "server",
+          URI.create("server:///true"));
+    // should really pay attention
+    final LoggingService ls = logger;
+    Callback callback = new Callback() {
+      public void execute(Response res) {
+        if (res.isSuccess()) {
+          if (ls.isInfoEnabled()) {
+            ls.info("WP Response: "+res);
+          }
+        } else {
+          ls.error("WP Error: "+res);
+        }
+      }
+    };
+    if (bind) {
+      wps.rebind(entry, callback);
+    } else {
+      wps.unbind(entry, callback);
+    }
   }
 
   private void addPeer(MessageAddress addr) {

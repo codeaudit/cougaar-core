@@ -634,11 +634,11 @@ extends TransportBase
         String name = (String) me.getKey();
         Entry e = (Entry) me.getValue();
         MessageAddress target = e.getTarget();
-        if (target == null) {
+        if (target == null && sendNow && config.nagleMillis > 0) {
           // waiting for releaseThread
           continue;
         }
-        if (target != NULL_ADDR) {
+        if (target != null && target != NULL_ADDR) {
           if (selectService.contains(target)) {
             long deadline = e.getDeadline();
             if (deadline <= 0 || deadline > now) {
@@ -758,7 +758,8 @@ extends TransportBase
           if (logger.isDetailEnabled()) {
             logger.detail(
                 "queuing message until WP servers are available: "+
-                (xlookup ? "lookup" : "modify")+" "+e.toString(now));
+                (xlookup ? "lookup" : "modify")+" "+name+"="+
+                e.toString(now));
           }
           continue;
         }

@@ -26,6 +26,8 @@
 
 package org.cougaar.core.wp.bootstrap;
 
+import java.io.InputStream;
+import java.io.BufferedReader;
 import java.io.Serializable;
 import java.util.Map;
 import org.cougaar.core.util.UID;
@@ -116,5 +118,11 @@ public final class Bundle implements Serializable {
   }
   public static Bundle decode(String s) {
     return BundleDecoder.decodeBundle(s);
+  }
+  public static Map decodeAll(InputStream is) throws Exception {
+    return BundleDecoder.decodeBundles(is);
+  }
+  public static Map decodeAll(BufferedReader br) throws Exception {
+    return BundleDecoder.decodeBundles(br);
   }
 }

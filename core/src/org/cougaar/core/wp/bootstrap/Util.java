@@ -46,52 +46,28 @@ public final class Util {
 
   private Util() {}
 
-  public static final boolean isServer(Bundle bundle) {
-    return true;
-    /*
-    // look for (name="*" type="wp" uri="*")
-    if (bundle == null) {
-      return false;
-    } 
-    Map m = bundle.getEntries(); 
-    if (m == null) {
-      return false;
-    }
-    Object o = m.get("wp");
-    return (o instanceof AddressEntry);
-    */
-  }
-
   public static final MessageAddress parseServer(Bundle b) {
+    // either (name=X .. server=..)
+    // or (name=WP-123 .. alias=name://X)
+    String agent = null;
     if (b != null) {
       Map entries = b.getEntries();
       if (entries != null) {
-        Object o = entries.get("alias");
-        if (o instanceof AddressEntry) {
-          return parseServer((AddressEntry) o);
+        if (entries.containsKey("server")) {
+          agent = b.getName();
+        } else {
+          Object o = entries.get("alias");
+          if (o instanceof AddressEntry) {
+            String name = b.getName();
+            if (name != null && name.matches("WP(-\\d+)?")) {
+              AddressEntry ae = (AddressEntry) o;
+              agent = ae.getURI().getPath().substring(1);
+            }
+          }
         }
       }
     }
-    return null;
-  }
-  public static final MessageAddress parseServer(AddressEntry ae) {
-    // look for (name="WP*" type="alias" uri="*/addr")
-    if (ae == null) {
-      return null;
-    }
-    String name = ae.getName();
-    if (name == null || !name.matches("WP(-\\d+)?")) {
-      return null;
-    }
-    if (!"alias".equals(ae.getType())) {
-      return null;
-    }
-    String agent = ae.getURI().getPath().substring(1);
-    if (agent == null || agent.equals("*")) {
-      Logger logger = Logging.getLogger(Util.class.getName());
-      if (logger.isWarnEnabled()) {
-        logger.warn("Ignoring entry with wildcard server agent: "+ae);
-      }
+    if (agent == null) {
       return null;
     }
     return MessageAddress.getMessageAddress(agent);

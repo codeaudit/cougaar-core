@@ -54,6 +54,13 @@ extends GenericStateModelAdapter
 implements Component
 {
 
+  private static final String ADD = "add";
+  private static final String CHANGE = "change";
+  private static final String REMOVE = "remove";
+  private static final String SAME = "same";
+  private static final String[] ACTIONS = new String[] {
+    ADD, CHANGE, REMOVE, SAME };
+
   private ServiceBroker sb;
 
   private LoggingService log;
@@ -122,6 +129,12 @@ implements Component
 
   private void register(DiscoveryService.Client dsc) {
     synchronized (lock) {
+      if (log.isDetailEnabled()) {
+        log.detail(
+            "register("+dsc+"), count="+count+
+            ", discoverers["+discoverers.size()+"]="+
+            discoverers);
+      }
       discoverers.add(dsc);
 
       if (count <= 0) {
@@ -133,6 +146,11 @@ implements Component
 
   private void unregister(DiscoveryService.Client dsc) {
     synchronized (lock) {
+      if (log.isDetailEnabled()) {
+        log.detail(
+            "unregister("+dsc+"), count="+count+
+            ", discoverers["+discoverers.size()+"]="+discoverers);
+      }
       if (count > 0) {
         dsc.stopSearching();
       }
@@ -144,6 +162,11 @@ implements Component
 
   private void startSearching() {
     synchronized (lock) {
+      if (log.isDetailEnabled()) {
+        log.detail(
+            "startSearching(), count="+count+
+            ", discoverers["+discoverers.size()+"]="+discoverers);
+      }
       if (++count > 1) {
         return;
       }
@@ -158,7 +181,12 @@ implements Component
 
   private void stopSearching() {
     synchronized (lock) {
-      if (--count > 1) {
+      if (log.isDetailEnabled()) {
+        log.detail(
+            "stopSearching(), count="+count+
+            ", discoverers["+discoverers.size()+"]="+discoverers);
+      }
+      if (--count > 0) {
         return;
       }
       int n = discoverers.size();
@@ -171,20 +199,30 @@ implements Component
   }
 
   private void register(ServersService.Client client) {
+    if (log.isDetailEnabled()) {
+      log.detail(
+          "register("+client+"), server_listeners["+
+          server_listeners.size()+"]="+server_listeners);
+    }
     server_listeners.add(client);
   }
   private void unregister(ServersService.Client client) {
+    if (log.isDetailEnabled()) {
+      log.detail(
+          "unregister("+client+"), server_listeners["+
+          server_listeners.size()+"]="+server_listeners);
+    }
     server_listeners.remove(client);
   }
 
   private void add(String name, Bundle bundle) {
-    update(true, name, bundle);
+    update(ADD, name, bundle);
   }
   private void change(String name, Bundle bundle) {
-    update(true, name, bundle);
+    update(CHANGE, name, bundle);
   }
   private void remove(String name, Bundle bundle) {
-    update(false, name, bundle);
+    update(REMOVE, name, bundle);
   }
 
   private void update(Map oldMap, Map newMap) {
@@ -201,15 +239,113 @@ implements Component
     // bundles are useful they'll stop the search well before
     // they expire. 
 
-    if (newMap.equals(oldMap)) {
-      // no change
+    Map diff = computeDiff(oldMap, newMap);
+
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "update("+
+          "\n  oldMap="+oldMap+
+          "\n  newMap="+newMap+
+          "\n) diff is {\n"+
+          diff+
+          "\n}");
+    }
+
+    for (int i = 0; i < ACTIONS.length; i++) {
+      String action = ACTIONS[i];
+      Map m = (Map) diff.get(action);
+      if (m == null || m.isEmpty()) {
+        continue;
+      }
+      for (Iterator iter = m.entrySet().iterator();
+          iter.hasNext();
+          ) {
+        Map.Entry me = (Map.Entry) iter.next();
+        String name = (String) me.getKey();
+        Bundle bundle = (Bundle) me.getValue();
+        update(action, name, bundle);
+      }
+    }
+  }
+
+  private void update(String action, String name, Bundle bundle) {
+    if (log.isDetailEnabled()) {
+      log.detail(
+          "update("+action+", "+name+", "+bundle+")");
+    }
+
+    // treat ADD/CHANGE/SAME as add
+    // we use SAME to keep the cache alive
+    boolean add = (action != REMOVE);
+
+    // update cache
+    if (add) {
+      hintService.add(name, bundle);
+    } else { 
+      hintService.remove(name, bundle);
+    }
+
+    // update servers list
+    MessageAddress addr = Util.parseServer(bundle); 
+    if (log.isDetailEnabled()) {
+      log.detail("parseServer("+bundle+")="+addr);
+    }
+    if (addr == null) {
       return;
+    }
+    // assert addr == addr.getPrimary();
+    synchronized (lock) {
+      if (add == servers.contains(addr)) {
+        // no change
+        if (log.isDetailEnabled()) {
+          log.detail("add("+add+") == servers.contains("+addr+")");
+        }
+        return;
+      }
+      // copy-on-write
+      Set ns = new HashSet(servers);
+      if (add) {
+        ns.add(addr);
+      } else {
+        ns.remove(addr);
+      }
+      servers = Collections.unmodifiableSet(ns);
+      if (log.isDetailEnabled()) {
+        log.detail("servers["+servers.size()+"]="+servers);
+      }
+    }
+    // tell clients
+    List l = server_listeners.getUnmodifiableList();
+    if (log.isDetailEnabled()) {
+      log.detail("tell server_listeners["+server_listeners.size()+"]");
+    }
+    for (int i = 0, ln = l.size(); i < ln; i++) {
+      ServersService.Client c =
+        (ServersService.Client) l.get(i);
+      if (log.isDetailEnabled()) {
+        log.detail(
+            "  client["+i+"]=("+c+")."+
+            (add?"add":"remove")+"("+addr+")");
+      }
+      if (add) {
+        c.add(addr);
+      } else {
+        c.remove(addr);
+      }
+    }
+  }
+  
+  private static Map computeDiff(Map oldMap, Map newMap) {
+    if (newMap.equals(oldMap)) {
+      // same
+      return Collections.singletonMap(SAME, oldMap); 
     } 
 
     // calculate diff
-    Map added = Collections.EMPTY_MAP;
-    Map changed = Collections.EMPTY_MAP;
-    Map removed;
+    Map added = null; 
+    Map changed = null; 
+    Map removed = null; 
+    Map same = null; 
     for (Iterator iter = newMap.entrySet().iterator();
         iter.hasNext();
         ) {
@@ -222,18 +358,22 @@ implements Component
       }
       Bundle oldBundle = (Bundle) oldMap.get(name);
       if (oldBundle == null) {
-        if (added.isEmpty()) {
+        if (added == null) {
           added = new HashMap();
         }
         // added
         added.put(name, newBundle);
       } else if (oldBundle.equals(newBundle)) {
+        if (same == null) {
+          same = new HashMap();
+        } 
         // same
+        same.put(name, newBundle);
       } else {
-        // changed
-        if (changed.isEmpty()) {
+        if (changed == null) {
           changed = new HashMap();
         } 
+        // changed
         changed.put(name, newBundle);
       }
     }
@@ -245,78 +385,12 @@ implements Component
       removed.keySet().removeAll(newMap.keySet());
     }
 
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "update("+
-          "\n  oldMap="+oldMap+
-          "\n  newMap="+newMap+
-          "\n) diff is {"+
-          "\n  added="+added+
-          "\n  changed="+changed+
-          "\n  removed="+removed+
-          "\n}");
-    }
-
-    // call add/change/remove
-    for (Iterator iter = added.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
-      Bundle bundle = (Bundle) me.getValue();
-      add(name, bundle);
-    }
-    for (Iterator iter = changed.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
-      Bundle bundle = (Bundle) me.getValue();
-      change(name, bundle);
-    }
-    for (Iterator iter = removed.entrySet().iterator(); iter.hasNext(); ) {
-      Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
-      Bundle bundle = (Bundle) me.getValue();
-      remove(name, bundle);
-    }
-  }
-
-  private void update(boolean add, String name, Bundle bundle) {
-    // update cache
-    if (add) {
-      hintService.add(name, bundle);
-    } else { 
-      hintService.remove(name, bundle);
-    }
-
-    // update servers list
-    if (!Util.isServer(bundle)) {
-      return;
-    }
-    MessageAddress addr = MessageAddress.getMessageAddress(name);
-    // assert addr == addr.getPrimary();
-    synchronized (lock) {
-      if (add == servers.contains(addr)) {
-        // no change
-        return;
-      }
-      // copy-on-write
-      Set ns = new HashSet(servers);
-      if (add) {
-        ns.add(addr);
-      } else {
-        ns.remove(addr);
-      }
-      servers = Collections.unmodifiableSet(ns);
-    }
-    // tell clients
-    List l = server_listeners.getUnmodifiableList();
-    for (int i = 0, ln = l.size(); i < ln; i++) {
-      ServersService.Client c =
-        (ServersService.Client) l.get(i);
-      if (add) {
-        c.add(addr);
-      } else {
-        c.remove(addr);
-      }
-    }
+    Map ret = new HashMap(4);
+    ret.put(ADD, added);
+    ret.put(CHANGE, changed);
+    ret.put(REMOVE, removed);
+    ret.put(SAME, same);
+    return ret;
   }
 
   private Set getServers() {
@@ -324,7 +398,7 @@ implements Component
       return servers;
     }
   }
-
+  
   private class BootstrapSP implements ServiceProvider {
     public Object getService(
         ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -347,6 +421,9 @@ implements Component
       private boolean running;
       public void startSearching() {
         synchronized (lock) {
+          if (log.isDetailEnabled()) {
+            log.detail("bsi.startSearching(), running="+running);
+          }
           if (running) {
             return;
           }
@@ -356,6 +433,9 @@ implements Component
       }
       public void stopSearching() {
         synchronized (lock) {
+          if (log.isDetailEnabled()) {
+            log.detail("bsi.stopSearching(), running="+running);
+          }
           if (!running) {
             return;
           }
@@ -440,6 +520,10 @@ implements Component
       public void update(Map nm) {
         Map newM = (nm == null ? Collections.EMPTY_MAP : nm);
         synchronized (m) {
+          if (log.isDetailEnabled()) {
+            log.detail(
+                "dsi("+client+").update("+newM+") from ("+m+")");
+          }
           DiscoveryManager.this.update(m, newM);
           m.clear();
           m.putAll(newM);
@@ -447,18 +531,33 @@ implements Component
       }
       public void add(String name, Bundle bundle) {
         synchronized (m) {
+          if (log.isDetailEnabled()) {
+            log.detail(
+                "dsi("+client+").add("+name+", "+bundle+
+                ") to ("+m+")");
+          }
           DiscoveryManager.this.add(name, bundle);
           m.put(name, bundle);
         }
       }
       public void change(String name, Bundle bundle) {
         synchronized (m) {
+          if (log.isDetailEnabled()) {
+            log.detail(
+                "dsi("+client+").change("+name+", "+bundle+
+                ") to ("+m+")");
+          }
           DiscoveryManager.this.change(name, bundle);
           m.put(name, bundle);
         }
       }
       public void remove(String name, Bundle bundle) {
         synchronized (m) {
+          if (log.isDetailEnabled()) {
+            log.detail(
+                "dsi("+client+").remove("+name+", "+bundle+
+                ") from ("+m+")");
+          }
           DiscoveryManager.this.remove(name, bundle);
           m.remove(name);
         }

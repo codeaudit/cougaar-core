@@ -26,13 +26,18 @@
 
 package org.cougaar.core.wp.bootstrap;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import java.io.ObjectInputStream;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -51,15 +56,9 @@ public final class BundleDecoder {
 
   private static final String S1 =
     "^\\s*"+
-    "name=(\\S+)"+
-    "\\s+"+
-    "("+
-    "uid=(\\S+)"+
-    "\\s+"+
-    ")?"+
-    "ttd=(\\d+)"+
-    "\\s+"+
-    "entries=(.*)"+
+    "(\\S+)"+
+    "="+
+    "(.*)"+
     "\\s*$";
   private static final String S2 =
     "^\\s*"+
@@ -80,6 +79,65 @@ public final class BundleDecoder {
 
   private BundleDecoder() {}
 
+  public static Map decodeBundles(InputStream is) throws Exception {
+    Map ret = null;
+    BufferedReader br = null;
+    try {
+      br = new BufferedReader(new InputStreamReader(is));
+      ret = decodeBundles(br);
+    } finally {
+      if (br != null) {
+        br.close();
+      }
+    }
+    return ret;
+  }
+
+  public static Map decodeBundles(BufferedReader br) throws Exception {
+    Map ret = null;
+    try {
+      String s = null;
+      while (true) {
+        String line = br.readLine();
+        if (line == null) {
+          break;
+        }
+        if (line.startsWith("#")) {
+          continue;
+        }
+        boolean more = line.endsWith("\\");
+        if (more) {
+          line = line.substring(0, line.length() - 1);
+        }
+        if (s == null) {
+          s = line;
+        } else {
+          s += line;
+        }
+        if (more) {
+          continue;
+        }
+        Bundle b = Bundle.decode(s);
+        s = null;
+        if (b == null) {
+          continue;
+        }
+        if (ret == null) {
+          ret = new HashMap();
+        }
+        ret.put(b.getName(), b);
+      }
+    } finally {
+      if (br != null) {
+        br.close();
+      }
+    }
+    if (ret == null) {
+      ret = Collections.EMPTY_MAP;
+    }
+    return ret;
+  }
+
   public static Bundle decodeBundle(String s) {
     Matcher m1 = P1.matcher(s);
     if (!m1.matches()) {
@@ -87,14 +145,9 @@ public final class BundleDecoder {
           "String \""+s+"\" doesn't match pattern \""+S1+"\"");
     }
     String name = m1.group(1);
-    String suid = m1.group(3);
-    UID uid = 
-      (suid == null || "null".equals(suid) ?
-       (null) :
-       UID.toUID(suid));
-    String sttd = m1.group(4);
-    long ttd = Long.parseLong(sttd);
-    String sentries = m1.group(5);
+    String suid = null;
+    String sttd = null;
+    String sentries = m1.group(2);
     Map entries;
     if (sentries == null || "null".equals(sentries)) {
       entries = null;
@@ -117,28 +170,42 @@ public final class BundleDecoder {
         }
         String type = m2.group(1);
         String suri = m2.group(3);
-        URI uri = URI.create(suri);
-        String scert = m2.group(5);
-        Cert cert;
-        if (scert == null) {
-          cert = Cert.NULL;
-        } else if (m2.group(2) != null) {
-          cert = decodeCert(scert);
+        if ("uid".equals(type)) {
+          suid = suri;
+        } else if ("ttd".equals(type)) {
+          sttd = suri;
         } else {
-          throw new RuntimeException(
-              "Cert string \""+scert+"\" not in \"cert=\""+
-              " of entries string \""+sentries+"\"");
-        }
-        AddressEntry ae = AddressEntry.getAddressEntry(
-            name, type, uri, cert);
-        entries.put(type, ae);
-        String tail = m2.group(7);
-        if (tail == null) {
-          break;
+          URI uri = URI.create(suri);
+          String scert = m2.group(5);
+          Cert cert;
+          if (scert == null) {
+            cert = Cert.NULL;
+          } else if (m2.group(2) != null) {
+            cert = decodeCert(scert);
+          } else {
+            throw new RuntimeException(
+                "Cert string \""+scert+"\" not in \"cert=\""+
+                " of entries string \""+sentries+"\"");
+          }
+          AddressEntry ae = AddressEntry.getAddressEntry(
+              name, type, uri, cert);
+          entries.put(type, ae);
+          String tail = m2.group(7);
+          if (tail == null) {
+            break;
+          }
         }
         i += 1 + m2.start(7);
       }
     }
+    UID uid = 
+      (suid == null || "null".equals(suid) ?
+       (null) :
+       UID.toUID(suid));
+    long ttd = 
+      (sttd == null || "null".equals(sttd) ?
+       (0) :
+       Long.parseLong(sttd));
     Bundle b = new Bundle(name, uid, ttd, entries);
     return b;
   }
@@ -187,5 +254,14 @@ public final class BundleDecoder {
       throw new RuntimeException(
           "Unable to decodeCert("+scert+")", e);
     }
+  }
+
+  public static void main(String[] args) throws Exception {
+    if (args.length != 1) {
+      System.err.println("Usage: BundleDecoder FILENAME");
+      return;
+    }
+    Map m = decodeBundles(new FileInputStream(args[0]));
+    System.out.println(args[0]+": ["+m.size()+"]="+m);
   }
 }

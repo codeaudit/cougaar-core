@@ -30,6 +30,7 @@ import java.util.Map;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.wp.bootstrap.ConfigService;
 import org.cougaar.core.wp.bootstrap.DiscoveryService;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -46,12 +47,18 @@ implements Component, DiscoveryService.Client
 {
   private ServiceBroker sb;
 
+  private LoggingService log;
+
   private DiscoveryService discoveryService;
 
   private ConfigService configService;
 
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
+  }
+
+  public void setLoggingService(LoggingService log) {
+    this.log = log;
   }
 
   public void load() {
@@ -85,9 +92,15 @@ implements Component, DiscoveryService.Client
 
   public void startSearching() {
     Map m = configService.getBundles();
+    if (log.isDetailEnabled()) {
+      log.detail("startSearching, ds.update("+m+")");
+    }
     discoveryService.update(m);
   }
 
   public void stopSearching() {
+    if (log.isDetailEnabled()) {
+      log.detail("stopSearching");
+    }
   }
 }

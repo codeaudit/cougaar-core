@@ -196,41 +196,7 @@ extends DiscoveryBase
         }
         String ct = uc.getContentType();
         InputStream is = uc.getInputStream();
-        newFound = null;
-        BufferedReader br = 
-          new BufferedReader(new InputStreamReader(is));
-        String s = null;
-        while (true) {
-          String line = br.readLine();
-          if (line == null) {
-            break;
-          }
-          if (line.startsWith("#")) {
-            continue;
-          }
-          boolean more = line.endsWith("\\");
-          if (more) {
-            line = line.substring(0, line.length() - 1);
-          }
-          if (s == null) {
-            s = line;
-          } else {
-            s += line;
-          }
-          if (more) {
-            continue;
-          }
-          Bundle b = Bundle.decode(s);
-          s = null;
-          if (b == null) {
-            continue;
-          }
-          if (newFound == null) {
-            newFound = new HashMap();
-          }
-          newFound.put(b.getName(), b);
-        }
-        br.close();
+        newFound = Bundle.decodeAll(is);
       } catch (Exception e) {
         if (log.isInfoEnabled()) {
           log.info("Lookup "+u+" failed", e);

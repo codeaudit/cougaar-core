@@ -215,9 +215,6 @@ implements Component
      *   (WP, -RMI_REG, rmi://foo.com:123/AgentX)
      * </pre>
      * where the name is "WP" and the id is "AgentX"
-     * <p>
-     * If the id and name don't match then an alias entry
-     * will be created when the lookup completes.
      */
     protected final Object bootObj;
 

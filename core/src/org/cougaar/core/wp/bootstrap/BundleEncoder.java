@@ -27,10 +27,13 @@
 package org.cougaar.core.wp.bootstrap;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.security.cert.Certificate;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -46,45 +49,83 @@ import sun.misc.BASE64Encoder;
  */
 public final class BundleEncoder {
 
+  private static final String BEGIN_CERT =
+    "-----BEGIN CERTIFICATE-----\\\n";
+  private static final String END_CERT =
+    "\\\n-----END CERTIFICATE-----";
+
   private BundleEncoder() {}
 
   public static String encodeBundle(Bundle b) {
+    return encodeBundle(b, true);
+  }
+
+  public static String encodeBundle(Bundle b, boolean indent) {
     StringBuffer buf = new StringBuffer();
-    buf.append("name=").append(b.getName());
-    buf.append(" uid=").append(b.getUID());
-    buf.append(" ttd=").append(b.getTTD());
-    buf.append(" entries=");
     Map entries = b.getEntries();
     if (entries == null) {
-      buf.append("null");
-    } else {
-      buf.append("{");
-      int n = entries.size();
-      if (n > 0) {
-        Iterator iter = entries.entrySet().iterator();
-        for (int i = 0; i < n; i++) {
-          Map.Entry me = (Map.Entry) iter.next();
-          String type = (String) me.getKey();
-          AddressEntry ae = (AddressEntry) me.getValue();
-          buf.append(type).append("=");
-          Cert cert = ae.getCert();
-          boolean null_cert = Cert.NULL.equals(cert);
-          if (!null_cert) {
-            buf.append("(uri=");
-          }
-          buf.append(ae.getURI());
-          if (!null_cert) {
-            buf.append(" cert=");
-            buf.append(encodeCert(cert));
-            buf.append(")");
-          }
-          if ((i+1) < n) {
-            buf.append(", ");
-          }
+      entries = Collections.EMPTY_MAP;
+    }
+    buf.append(b.getName()).append("={");
+    UID uid = b.getUID();
+    long ttd = b.getTTD();
+    boolean needsComma = false;
+    int n = entries.size();
+    Iterator iter = entries.entrySet().iterator();
+    for (int i = -2; i < n; i++) {
+      String type;
+      AddressEntry ae = null;
+      if (i == -2) {
+        if (uid == null) {
+          continue;
+        }
+        type = "uid";
+      } else if (i == -1) {
+        if (ttd < 0) {
+          continue;
+        }
+        type = "ttd";
+      } else {
+        Map.Entry me = (Map.Entry) iter.next();
+        type = (String) me.getKey();
+        ae = (AddressEntry) me.getValue();
+      }
+
+      if (needsComma) {
+        buf.append(",");
+        if (!indent) {
+          buf.append(" ");
         }
       }
-      buf.append("}");
+      if (indent) {
+        buf.append("\\\n  ");
+      }
+      buf.append(type).append("=");
+
+      if (i == -2) {
+        buf.append(uid);
+      } else if (i == -1) {
+        buf.append(ttd);
+      } else {
+        Cert cert = ae.getCert();
+        boolean null_cert =
+          (cert == null || Cert.NULL.equals(cert));
+        if (!null_cert) {
+          buf.append("(uri=");
+        }
+        buf.append(ae.getURI());
+        if (!null_cert) {
+          buf.append(" cert=");
+          String scert = encodeCert(cert);
+          buf.append(scert);
+          buf.append(")");
+        }
+      }
+
+      needsComma = true;
     }
+    if (indent) { buf.append("\\\n"); }
+    buf.append("}");
     return buf.toString();
   }
 
@@ -104,8 +145,14 @@ public final class BundleEncoder {
       if (cert instanceof Cert.Direct) {
         Certificate c = ((Cert.Direct) cert).getCertificate();
         byte[] ba = c.getEncoded();
-        String v = (new BASE64Encoder()).encode(ba);
-        return "Direct:"+v;
+        String v = (new UUEncoder()).encode(ba);
+        if (v.startsWith(BEGIN_CERT)) {
+          v = v.substring(BEGIN_CERT.length());
+        }
+        if (v.endsWith(END_CERT)) {
+          v = v.substring(0, v.length() - END_CERT.length());
+        }
+        return "Direct:\\\n"+v;
       }
       // a custom cert type -- serialize it!
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -113,11 +160,18 @@ public final class BundleEncoder {
       oos.writeObject(cert);
       oos.flush();
       byte[] ba = baos.toByteArray();
-      String v = (new BASE64Encoder()).encode(ba);
-      return "Object:"+v;
+      String v = (new UUEncoder()).encode(ba);
+      return "Object:\\\n"+v;
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to encodeCert("+cert+")", e);
+    }
+  }
+
+  private static class UUEncoder extends BASE64Encoder {
+    protected void encodeLineSuffix(
+        OutputStream aStream) throws IOException {
+      pStream.println("\\");
     }
   }
 }

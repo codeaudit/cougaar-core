@@ -342,7 +342,7 @@ implements Component
         hasResult = false;
         uid = null;
         result = null;
-        e = newEntry(now, res);
+        e = newEntry(now, (cacheOnly ? null : res));
         cache.put(name, e);
         mustSend = true;
       } else if (!e.hasExpired(now)) {
@@ -363,7 +363,7 @@ implements Component
         hasResult = false;
         uid = (e.hasData() ? e.getUID() : null);
         result = null;
-        mustSend = e.noteExpired(now, res);
+        mustSend = e.noteExpired(now, (cacheOnly ? null : res));
       }
 
       if (logger.isDetailEnabled()) {
@@ -801,7 +801,21 @@ implements Component
           e = newEntry(now, null);
           cache.put(name, e);
         }
-        if (!e.wasSent()) {
+        if (e.wasSent()) {
+          if (uid != null &&
+              e.hasData() &&
+              e.getUID() != null &&
+              !uid.equals(e.getUID())) {
+            if (logger.isInfoEnabled()) {
+              logger.info(
+                  "Avoiding \"UID mismatch\""+
+                  ", already sent "+name+"="+e.toString(now)+
+                  ", bootstrap "+name+"=(uid="+uid+
+                  ", data="+data+"), overriding uid to null");
+            }
+            uid = null;
+          }
+        } else {
           e.setSendTime(now);
         }
       }

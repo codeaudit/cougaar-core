@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -256,7 +257,7 @@ public class ConfigReader {
    *   Foo=Bar@qux://a:1/b 
    * </pre> 
    * is parsed as two AddressEntries:<pre> 
-   *   (name=Foo type=alias uri=name:///Foo) 
+   *   (name=Foo type=alias uri=name:///Bar) 
    *   (name=Foo type=-QUX_REG uri=qux://a:1/b) 
    * </pre> 
    * <p>
@@ -285,35 +286,18 @@ public class ConfigReader {
     // we could save these patterns, but we'd only use them
     // at startup, so it's not worth the trouble.
     String s1 =
-        "^\\s*"+
-        "name="+
-        ".*$";
-    Pattern p1 = Pattern.compile(s1);
-    Matcher m1 = p1.matcher(line);
-    if (m1.matches()) {
-      return Bundle.decode(line);
-    }
-    String s2 =
       "^\\s*"+
       "([^\\s=@:,/]+)="+
       "\\{"+
       "(.*)"+
       "\\}"+
       "\\s*$";
-    Pattern p2 = Pattern.compile(s2);
-    Matcher m2 = p2.matcher(line);
-    if (m2.matches()) {
-      String name = m2.group(1);
-      String sentries = m2.group(2);
-      String s = 
-        "name="+name+
-        " ttd="+DEFAULT_TTD+
-        " entries={"+
-        sentries+
-        "}";
-      return Bundle.decode(s);
+    Pattern p1 = Pattern.compile(s1);
+    Matcher m1 = p1.matcher(line);
+    if (m1.matches()) {
+      return Bundle.decode(line);
     }
-    String s3 =
+    String s2 =
         "^\\s*"+
         "([^\\s=@:,/]+)="+
         "(([^\\s=@:,/]+)@)?"+
@@ -323,16 +307,16 @@ public class ConfigReader {
         ")?"+
         "([^\\s]+)"+
         "\\s*$";
-    Pattern p3 = Pattern.compile(s3);
-    Matcher m3 = p3.matcher(line);
-    if (!m3.matches()) {
+    Pattern p2 = Pattern.compile(s2);
+    Matcher m2 = p2.matcher(line);
+    if (!m2.matches()) {
       return null;
     }
-    String name = m3.group(1);
-    String agent = m3.group(3);
-    String type = m3.group(6);
-    String scheme = m3.group(7);
-    String suri = m3.group(8);
+    String name = m2.group(1);
+    String agent = m2.group(3);
+    String type = m2.group(6);
+    String scheme = m2.group(7);
+    String suri = m2.group(8);
     if (agent == null &&
         type == null &&
         scheme == null &&

@@ -171,6 +171,7 @@ implements Component
     synchronized (sendLock) {
       messageSwitchService = mss;
     }
+    foundMessageTransport();
   }
 
   protected void foundMessageTransport() {
