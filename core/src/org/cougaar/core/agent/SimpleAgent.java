@@ -528,6 +528,10 @@ MobilityListener, StateObject
       sb.getService(this, TopologyWriterService.class, null);
 
     // register in the topology
+    int topologyType = 
+      ((getMessageAddress().equals(localNode)) ?
+       (TopologyEntry.NODE_AGENT_TYPE) :
+       (TopologyEntry.AGENT_TYPE));
     moveId = System.currentTimeMillis();
     if (agentState != null) {
       // resume the prior incarnation number
@@ -535,6 +539,7 @@ MobilityListener, StateObject
       long priorMoveId = agentState.moveId;
       myTopologyWriterService.updateAgent(
           getIdentifier(),
+          topologyType,
           incarnation,
           moveId,
           TopologyEntry.ACTIVE,
@@ -544,6 +549,7 @@ MobilityListener, StateObject
       incarnation = System.currentTimeMillis();
       myTopologyWriterService.createAgent(
           getIdentifier(),
+          topologyType,
           incarnation,
           moveId,
           TopologyEntry.ACTIVE);
@@ -751,8 +757,13 @@ MobilityListener, StateObject
     stopRestartChecker();
 
     // notify the topology that this agent is moving
+    int topologyType = 
+      ((getMessageAddress().equals(localNode)) ?
+       (TopologyEntry.NODE_AGENT_TYPE) :
+       (TopologyEntry.AGENT_TYPE));
     myTopologyWriterService.updateAgent(
         getIdentifier(),
+        topologyType,
         incarnation,
         moveId,
         TopologyEntry.MOVING,
@@ -828,10 +839,15 @@ MobilityListener, StateObject
       }
 
       // move failed, re-aquire the topology entry
+      int topologyType = 
+        ((getMessageAddress().equals(localNode)) ?
+         (TopologyEntry.NODE_AGENT_TYPE) :
+         (TopologyEntry.AGENT_TYPE));
       long priorMoveId = moveId;
       ++moveId;
       myTopologyWriterService.updateAgent(
           getIdentifier(),
+          topologyType,
           incarnation,
           moveId,
           TopologyEntry.ACTIVE,

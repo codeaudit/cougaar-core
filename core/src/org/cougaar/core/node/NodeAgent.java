@@ -68,8 +68,6 @@ import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.service.MessageWatcherService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.NodeMetricsService;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyWriterService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 
 /**
@@ -203,11 +201,6 @@ public class NodeAgent
           null,  //lease
           null); //policy
     super.add(topologyReaderSCDesc);
-
-    TopologyWriterService tws = (TopologyWriterService)
-      rootsb.getService(this, TopologyWriterService.class, null);
-    long incarnation = System.currentTimeMillis();
-    tws.createAgent(getIdentifier(), incarnation, 0L, TopologyEntry.ACTIVE);
 
     MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, nodeIdentifier);
     rootsb.addService(MetricsService.class, msp);

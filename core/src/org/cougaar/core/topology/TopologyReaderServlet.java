@@ -697,7 +697,7 @@ extends BaseServletComponent
             "<td><font color=mediumblue><b>Enclave</b></font></td>\n"+
             "<td><font color=mediumblue><b>Incarnation</b></font></td>\n"+
             "<td><font color=mediumblue><b>MoveId</b></font></td>\n"+
-            "<td><font color=mediumblue><b>IsNode</b></font></td>\n"+
+            "<td><font color=mediumblue><b>Type</b></font></td>\n"+
             "<td><font color=mediumblue><b>Status</b></font></td>\n"+
             "</tr>\n");
       }
@@ -718,7 +718,7 @@ extends BaseServletComponent
         out.print("</td><td>");
         out.print(te.getMoveId());
         out.print("</td><td>");
-        out.print(te.isNode());
+        out.print(te.getTypeAsString());
         out.print("</td><td>");
         out.print(te.getStatusAsString());
         out.print("</td></tr>\n");
@@ -743,7 +743,7 @@ extends BaseServletComponent
         out.print(", ");
         out.print(te.getMoveId());
         out.print(", ");
-        out.print(te.isNode());
+        out.print(te.getTypeAsString());
         out.print(", ");
         out.print(te.getStatusAsString());
         out.print("\n");
@@ -765,7 +765,7 @@ extends BaseServletComponent
           ", "+
           te.getMoveId()+
           ", "+
-          te.isNode()+
+          te.getTypeAsString()+
           ", "+
           te.getStatusAsString()+
           "\n";

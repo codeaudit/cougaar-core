@@ -34,6 +34,11 @@ public final class TopologyEntry implements java.io.Serializable {
   public static final int MOVING  = 2;
   // others TBA (unavailable, dead, etc)
 
+  // type constants
+  public static final int AGENT_TYPE = 0;
+  public static final int NODE_AGENT_TYPE = 1;
+  public static final int SYSTEM_TYPE = 2;
+
   private final String enclave;
   private final String site;
   private final String host;
@@ -41,7 +46,7 @@ public final class TopologyEntry implements java.io.Serializable {
   private final String agent;
   private final long incarnation;
   private final long moveId;
-  private final boolean isNode;
+  private final int type;
   private final int status;
 
   public TopologyEntry(
@@ -52,7 +57,7 @@ public final class TopologyEntry implements java.io.Serializable {
       String enclave,
       long incarnation,
       long moveId,
-      boolean isNode,
+      int type,
       int status) {
     this.agent = agent;
     this.node = node;
@@ -61,7 +66,7 @@ public final class TopologyEntry implements java.io.Serializable {
     this.enclave = enclave;
     this.incarnation = incarnation;
     this.moveId = moveId;
-    this.isNode = isNode;
+    this.type = type;
     this.status = status;
   }
 
@@ -72,8 +77,27 @@ public final class TopologyEntry implements java.io.Serializable {
   public String getEnclave() { return enclave; }
   public long getIncarnation() { return incarnation; }
   public long getMoveId() { return moveId; }
-  public boolean isNode() { return isNode; }
+
+  /**
+   * @return an int matching the "AGENT_TYPE", "NODE_AGENT_TYPE", 
+   *    or "SYSTEM_TYPE" constants listed above.
+   */
+  public int getType() { return type; }
+
+  /**
+   * @return an int matching the "UNKNOWN", "ACTIVE", 
+   *    or "MOVING" constants listed above.
+   */
   public int getStatus() { return status; }
+
+  public String getTypeAsString() {
+    switch (type) {
+      case AGENT_TYPE: return "agent";
+      case NODE_AGENT_TYPE: return "node";
+      case SYSTEM_TYPE: return "system";
+      default: return "invalid("+type+")";
+    }
+  }
 
   public String getStatusAsString() {
     switch (status) {
@@ -97,7 +121,7 @@ public final class TopologyEntry implements java.io.Serializable {
        host.equals(te.host) &&
        site.equals(te.site) &&
        enclave.equals(te.enclave) &&
-       (isNode == te.isNode));
+       (type == te.type));
   }
 
   public int hashCode() {
@@ -116,7 +140,7 @@ public final class TopologyEntry implements java.io.Serializable {
       "\n  enclave:  "+enclave+
       "\n  incarnation: "+incarnation+
       "\n  move id: "+moveId+
-      "\n  is node: "+isNode+
+      "\n  type: "+getTypeAsString()+
       "\n  status: "+getStatusAsString()+
       "\n}";
   }

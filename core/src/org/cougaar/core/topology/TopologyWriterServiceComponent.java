@@ -31,6 +31,7 @@ import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
+import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyWriterService;
 
 import org.cougaar.util.GenericStateModelAdapter;
@@ -190,6 +191,7 @@ implements Component
 
       public void createAgent(
           String agent,
+          int type,
           long newIncarnation,
           long newMoveId,
           int newStatus) {
@@ -198,9 +200,16 @@ implements Component
           throw new IllegalArgumentException(
               "Null agent name");
         }
+        if ((localnode.equals(agent)) !=
+            (type == TopologyEntry.NODE_AGENT_TYPE)) {
+          throw new IllegalArgumentException(
+              "Incorrect type ("+type+") for agent "+
+              agent+" on node "+localnode);
+        }
         Attributes ats = 
           createAttributes(
               agent,
+              type,
               newIncarnation,
               newMoveId,
               newStatus);
@@ -214,6 +223,7 @@ implements Component
 
       public void updateAgent(
           String agent, 
+          int assertType,
           long assertIncarnation, 
           long newMoveId,
           int newStatus,
@@ -221,6 +231,7 @@ implements Component
         // FIXME add verification
         createAgent(
             agent,
+            assertType,
             assertIncarnation,
             newMoveId,
             newStatus);
@@ -238,11 +249,10 @@ implements Component
 
       private Attributes createAttributes(
           String agent,
+          int type,
           long incarnation,
           long moveId,
           int status) {
-
-        boolean isNode = localnode.equals(agent);
 
         Attributes ats = new BasicAttributes();
         ats.put(
@@ -267,8 +277,8 @@ implements Component
             TopologyNamingConstants.MOVE_ID_ATTR, 
             (new Long(moveId)));
         ats.put(
-            TopologyNamingConstants.IS_NODE_ATTR, 
-            Boolean.valueOf(isNode));
+            TopologyNamingConstants.TYPE_ATTR, 
+            (new Integer(type)));
         ats.put(
             TopologyNamingConstants.STATUS_ATTR, 
             (new Integer(status)));

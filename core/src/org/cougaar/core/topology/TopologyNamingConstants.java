@@ -42,7 +42,7 @@ final class TopologyNamingConstants {
   public static final String AGENT_ATTR = "Agent";
   public static final String INCARNATION_ATTR = "Incarnation";
   public static final String MOVE_ID_ATTR = "MoveId";
-  public static final String IS_NODE_ATTR = "IsNode";
+  public static final String TYPE_ATTR = "Type";
   public static final String STATUS_ATTR = "Status";
 
   // matches TopologyReaderService types

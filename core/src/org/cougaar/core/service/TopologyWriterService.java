@@ -35,9 +35,14 @@ public interface TopologyWriterService extends Service {
    * This verifies that the topology doesn't already contain 
    * an entry for the agent, or that the prior entry is
    * marked as "dead" and can be overwritten.
+   *
+   * @param type a TopologyEntry "*_TYPE" constant
+   * @param newStatus a TopologyEntry status constant, such
+   *    as "ACTIVE".
    */
   void createAgent(
       String agent, 
+      int type,
       long newIncarnation, 
       long newMoveId,
       int newStatus);
@@ -52,6 +57,7 @@ public interface TopologyWriterService extends Service {
    */
   void updateAgent(
       String agent, 
+      int assertType,
       long assertIncarnation, 
       long newMoveId,
       int newStatus,

@@ -351,8 +351,8 @@ implements Component
             TopologyNamingConstants.INCARNATION_ATTR);
         Long lmoveId = (Long) getAttribute(ats,
             TopologyNamingConstants.MOVE_ID_ATTR);
-        Boolean bisNode = (Boolean) getAttribute(ats,
-            TopologyNamingConstants.IS_NODE_ATTR);
+        Integer itype = (Integer) getAttribute(ats,
+            TopologyNamingConstants.TYPE_ATTR);
         Integer istatus  = (Integer) getAttribute(ats,
             TopologyNamingConstants.STATUS_ATTR);
 
@@ -364,7 +364,7 @@ implements Component
             enclave,
             linc.longValue(), 
             lmoveId.longValue(), 
-            bisNode.booleanValue(), 
+            itype.intValue(),
             istatus.intValue());
       }
 
