@@ -103,13 +103,24 @@ public class RootFactory
         //Class pc = Class.forName(fullname);
         Class pc = loadClass(fullname);
         String name = trimPackage(fullname);
-        Method fm = pfc.getMethod(properties[i][1], null);
 
-        Object old = propertyNames.put(name.intern(),fm);
-        if (old != null) {
-          System.err.println("Warning: PropertyGroupFactory "+pf+" overlaps with another propertyFactory at "+name);
+        /*
+         * Don't support explicitly creating PropertyGroupSchedules through createPropertyGroup.
+         * Can create TimePhasedPropertyGroup through createPropertyGroup.
+         * 
+         * Schedules created implicitly by creating a TimePhasedPropertyGroup and then adding to
+         * the Asset. Schedules created explicitly by using PropertyGroupFactory methods.
+         */
+        if (!name.equals("PropertyGroupSchedule")) {
+          
+          Method fm = pfc.getMethod(properties[i][1], null);
+          
+          Object old = propertyNames.put(name.intern(),fm);
+          if (old != null) {
+            System.err.println("Warning: PropertyGroupFactory "+pf+" overlaps with another propertyFactory at "+name);
+          }
+          propertyNames.put(fullname.intern(),fm);
         }
-        propertyNames.put(fullname.intern(),fm);
       }
     } catch (Exception e) {
       System.err.println("addPropertyGroupFactory of non-PropertyGroupFactory:");
