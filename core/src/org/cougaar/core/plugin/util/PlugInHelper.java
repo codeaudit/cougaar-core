@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.Set;
 
 
 public class PlugInHelper {
@@ -80,7 +81,7 @@ public class PlugInHelper {
 	    // If they are NOT equal, re-set the estimated result, return true.
 	    AllocationResult estar = pe.getEstimatedResult();
 	    //eventually change second comparison from == to isEqual ?
-	    if (! (repar == estar) ) {
+	    if (!repar.isEqual(estar)) {
 	      	pe.setEstimatedResult(repar);
 		return true;
 	    }
@@ -96,11 +97,24 @@ public class PlugInHelper {
     public static void updateAllocationResult( IncrementalSubscription sub) {
         Enumeration changedPEs = sub.getChangedList();
         while ( changedPEs.hasMoreElements() ) {
-            PlanElement pe = (PlanElement)changedPEs.nextElement();
-            if( updatePlanElement(pe) ) {
-                sub.getSubscriber().publishChange( pe );
+            PlanElement pe = (PlanElement) changedPEs.nextElement();
+            if (checkChangeReports(sub.getChangeReports(pe), PlanElement.ReportedResultChangeReport.class)) {
+                if (updatePlanElement(pe)) {
+                    sub.getSubscriber().publishChange(pe);
+                }
             }
         }
+    }
+
+    /**
+     * Check if a List of ChangeReports has an instance of a given class
+     **/
+    public static boolean checkChangeReports(Set reports, Class cls) {
+        if (reports == null) return false;
+        for (Iterator i = reports.iterator(); i.hasNext(); ) {
+            if (cls.isInstance(i.next())) return true;
+        }
+        return false;
     }
 
     //4 different wireExpansion methods

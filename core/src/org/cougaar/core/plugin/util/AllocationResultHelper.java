@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import org.cougaar.domain.planning.ldm.plan.AllocationResult;
 import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.plan.AspectValue;
@@ -31,7 +32,7 @@ import org.cougaar.domain.planning.ldm.measure.*;
  **/
 public class AllocationResultHelper {
     public class Phase {
-        AspectValue[] result;
+        public AspectValue[] result;
         private Phase(int ix) {
             result = (AspectValue[]) phasedResults.get(ix);
         }
@@ -68,42 +69,87 @@ public class AllocationResultHelper {
     /** The index into the arrays of the QUANTITY aspect **/
     private int qtyix = -1;
 
-    /** The new rollupResult **/
-    private AspectValue[] rollupResult;
+    /** The new perfectResult **/
+    private AspectValue[] perfectResult;
 
     /** The new phased results **/
     private List phasedResults = new ArrayList();
 
     /** The AspectType map **/
-    private int[] types;
+    private int[] typeMap;
 
     /** Has this allocation result been changed **/
     private boolean isChanged = false;
 
+    private AllocationResult ar;
+
     public AllocationResultHelper(Task task, PlanElement pe) {
+        AspectValue[] taskAVS = getAspectValuesOfTask(task);
         this.task = task;
-        AllocationResult ar = null;
+        ar = null;
         if (pe != null) {
             ar = pe.getEstimatedResult();
         }
         if (ar != null) {
-            setAllocationResult(ar);
+            if (ar.isPhased()) {
+                phasedResults = ar.getPhasedAspectValueResults();
+            } else {
+                phasedResults = new ArrayList(1);
+                phasedResults.add(ar.getAspectValueResults());
+            }
+            setTypeIndexes((AspectValue[]) phasedResults.get(0));
+//              checkPhases(phasedResults);
         } else {
-            setPerfectResult();
+            phasedResults = new ArrayList(1);
+            phasedResults.add(taskAVS);
+            setTypeIndexes(taskAVS);
         }
+        perfectResult = getPerfectResult(taskAVS);
+    }
+
+    private AspectValue[] getAspectValuesOfTask(Task task) {
+        List avs = new ArrayList();
+        for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ) {
+            Preference pref = (Preference) e.nextElement();
+            AspectValue best = pref.getScoringFunction().getBest().getAspectValue();
+            avs.add(best.clone());
+        }
+        return (AspectValue[]) avs.toArray(new AspectValue[avs.size()]);
+    }
+
+    private AspectValue[] getPerfectResult(AspectValue[] avs) {
+        AspectValue[] result = new AspectValue[avs.length];
+        result = AspectValue.clone((AspectValue[]) phasedResults.get(0));
+        for (int i = 0; i < avs.length; i++) {
+            result[getTypeIndex(avs[i].getAspectType())] = avs[i];
+        }
+        return result;
     }
 
     public AllocationResult getAllocationResult() {
-        return getAllocationResult(1.0, getScore() <= 0.0);
+        return getAllocationResult(1.0);
     }
+
+    public AllocationResult getAllocationResult(double confrating) {
+        AspectValue[] ru = computeRollup();
+        return getAllocationResult(confrating, getScore(ru) <= 0.0, ru);
+    }
+
     public AllocationResult getAllocationResult(double confrating,
                                                 boolean isSuccess)
     {
-        return new AllocationResult(confrating, isSuccess,
-                                    rollupResult, phasedResults);
+        return getAllocationResult(confrating, isSuccess, computeRollup());
     }
 
-    private double getScore() {
+    private AllocationResult getAllocationResult(double confrating,
+                                                 boolean isSuccess,
+                                                 AspectValue[] ru)
+    {
+        return new AllocationResult(confrating, isSuccess,
+                                    ru, phasedResults);
+    }
+
+    private double getScore(AspectValue[] ru) {
         double totalWeight = 0.0;
         double totalScore = 0.0;
         int ix = 0;
@@ -111,7 +157,7 @@ public class AllocationResultHelper {
             Preference pref = (Preference) e.nextElement();
             ScoringFunction sf = pref.getScoringFunction();
             double thisWeight = pref.getWeight();
-            AspectValue av = rollupResult[ix];
+            AspectValue av = ru[ix];
             double thisScore = sf.getScore(av);
             totalScore += thisScore * thisWeight;
             totalWeight += thisWeight;
@@ -120,51 +166,38 @@ public class AllocationResultHelper {
         return score;
     }
 
-    /**
-     * Set from an existing AllocationResult. The information is
-     * copied out into variable for convenience during subsequent
-     * operations.
-     **/
-    private void setAllocationResult(AllocationResult ar) {
-        rollupResult = ar.getAspectValueResults();
-        if (ar.isPhased()) {
-            phasedResults = ar.getPhasedAspectValueResults();
-        } else {
-            phasedResults = new ArrayList(1);
-            phasedResults.add(rollupResult);
-        }
-        setTypeIndexes();
-    }
-
-    /**
-     * Make the results perfectly conform to the task's preferences.
-     * The results variables are set to perfectly match the best
-     * values of all the preferences.
-     **/
-    public void setTask(Task task) {
-        this.task = task;
-        setPerfectResult();
-    }
-
-    private void setPerfectResult() {
-        List avs = new ArrayList();
-        for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ) {
-            Preference pref = (Preference) e.nextElement();
-            AspectValue best = pref.getScoringFunction().getBest().getAspectValue();
-            avs.add(best.clone());
-        }
-        rollupResult = (AspectValue[]) avs.toArray(new AspectValue[avs.size()]);
-        setTypeIndexes();
-        phasedResults.clear();
-        phasedResults.add(rollupResult);
-        isChanged = true;
-    }
-
     public boolean isChanged() {
         return isChanged;
     }
 
+    private void checkPhases(List phasedResults) {
+        if (startix < 0 || endix < 0) return;
+        for (int i = 0, n = phasedResults.size(); i < n; i++) {
+            AspectValue[] pi = (AspectValue[]) phasedResults.get(i);
+            long si = getStartTime(pi);
+            long ei = getEndTime(pi);
+            for (int j = i + 1; j < n; j++) {
+                AspectValue[] pj = (AspectValue[]) phasedResults.get(j);
+                long sj = getStartTime(pj);
+                long ej = getEndTime(pj);
+                if (sj >= ei || si >= ej) continue;
+                System.err.println("Bad phases " + ar);
+                int p = 0;
+                for (Iterator it = phasedResults.iterator(); it.hasNext(); ) {
+                    System.err.println("Phase " + p);
+                    AspectValue[] phase = (AspectValue[]) it.next();
+                    for (int q = 0; q < phase.length; q++) {
+                        System.err.println("   " + phase[q]);
+                    }
+                }
+                Thread.dumpStack();
+                System.exit(1);
+            }
+        }
+    }
+
     public int getPhaseCount() {
+//          checkPhases(phasedResults);
         return phasedResults.size();
     }
 
@@ -188,21 +221,16 @@ public class AllocationResultHelper {
      **/
     public void setFailed(int type, long startTime, long endTime) {
         int ix = getTypeIndex(type);
-        AspectValue av = (AspectValue) rollupResult[ix].clone();
+        AspectValue av = (AspectValue) perfectResult[ix].clone();
         av.setValue(0.0);
         set(ix, av, startTime, endTime);
     }
 
     private int getTypeIndex(int type) {
-        switch (type) {
-            case AspectType.QUANTITY:   return qtyix  ;
-            case AspectType.START_TIME: return startix;
-            case AspectType.END_TIME:   return endix  ;
+        if (type < 0 || typeMap == null || type >= typeMap.length) {
+            throw new IllegalArgumentException("Type " + type + " not found");
         }
-        for (int i = 0; i < rollupResult.length; i++) {
-            if (rollupResult[i].getAspectType() == type) return i;
-        }
-        throw new IllegalArgumentException("Type " + type + " not found");
+        return typeMap[type];
     }
 
     /**
@@ -221,16 +249,20 @@ public class AllocationResultHelper {
      * @param endTime the time when the value no longer applies.
      * @return true if a change was made.
      **/
-    private void set(int valueix, AspectValue av, long startTime, long endTime) {
-        List newResults = new ArrayList(phasedResults.size() + 2); // At most two new results
+    List newResults = null;
+    private void set(int valueix, AspectValue av, long s, long e) {
+        long startTime = s;
+        long endTime = e;
+        if (newResults == null)
+            newResults = new ArrayList(phasedResults.size() + 2); // At most two new results
         boolean covered = false;
         boolean thisChanged = false;
         AspectValue[] newResult;
-        long minTime = getStartTime(rollupResult);
-        long maxTime = getEndTime(rollupResult);
+        long minTime = getStartTime(perfectResult);
+        long maxTime = getEndTime(perfectResult);
         if (minTime < maxTime) {
             /* Only process if there is overlap between the arguments and
-               the start/end time aspects of the rollupResult **/
+               the start/end time aspects of the perfectResult **/
             if (startTime >= maxTime) {
                 return; // Does not apply
             }
@@ -246,7 +278,7 @@ public class AllocationResultHelper {
                 long thisEnd   = getEndTime(oneResult);
                 AspectValue thisValue = oneResult[valueix];
                 if (thisValue.equals(av)) { // Maybe combine these
-                    newResult = (AspectValue[]) oneResult.clone();
+                    newResult = AspectValue.clone(oneResult);
                     if (startTime <= thisEnd && endTime >= thisStart) { // Overlaps
                         if (thisStart < startTime) startTime = thisStart;
                         if (thisEnd > endTime) endTime = thisEnd;
@@ -258,33 +290,33 @@ public class AllocationResultHelper {
                 } else {
                     if (startTime < thisEnd && endTime > thisStart) { // Overlaps
                         if (startTime > thisStart) { // Initial portion exists
-                            newResult = (AspectValue[]) oneResult.clone();
+                            newResult = AspectValue.clone(oneResult);
                             newResult[endix] = new TimeAspectValue(AspectType.END_TIME, startTime);
                             newResults.add(newResult);
                         }
                         if (endTime < thisEnd) { // Final portion exists
-                            newResult = (AspectValue[]) oneResult.clone();
+                            newResult = AspectValue.clone(oneResult);
                             newResult[startix] = new TimeAspectValue(AspectType.START_TIME, endTime);
                             newResults.add(newResult);
                         }
                         thisChanged = true;
                     } else {
-                        newResult = (AspectValue[]) oneResult.clone();
+                        newResult = AspectValue.clone(oneResult);
                         newResults.add(newResult);
                     }
                 }
             }
         } else {
             if (startTime > minTime || endTime <= minTime) return;
-            if (rollupResult[valueix].equals(av)) return;
-            newResult = (AspectValue[]) rollupResult.clone();
+            if (perfectResult[valueix].equals(av)) return;
+            newResult = AspectValue.clone(perfectResult);
             newResult[valueix] = av;
             newResults.add(newResult);
             thisChanged = true;
             covered = true;
         }
         if (!covered) {
-            newResult = (AspectValue[]) rollupResult.clone();
+            newResult = AspectValue.clone(perfectResult);
             newResult[startix] = new TimeAspectValue(AspectType.START_TIME, startTime);
             newResult[endix]   = new TimeAspectValue(AspectType.END_TIME, endTime);
             newResult[valueix] = av;
@@ -295,25 +327,31 @@ public class AllocationResultHelper {
             return; // No changes were made
         }
         isChanged = true;
-        phasedResults = newResults;
+//          checkPhases(newResults);
+        phasedResults.clear();
+        phasedResults.addAll(newResults);
+        newResults.clear();
+    }
 
-        double[] sums = new double[rollupResult.length];
-        double[] divisor = new double[rollupResult.length];
+    private AspectValue[] computeRollup() {
+        double[] sums = new double[perfectResult.length];
+        double[] divisor = new double[perfectResult.length];
         boolean first = true;
         Arrays.fill(sums, 0.0);
         Arrays.fill(divisor, 1.0);
         for (Iterator iter = phasedResults.iterator(); iter.hasNext(); ) {
             AspectValue[] oneResult = (AspectValue[]) iter.next();
             for (int i = 0; i < oneResult.length; i++) {
-                double v = oneResult[i].getValue();
+                AspectValue av = oneResult[i];
+                double v = av.getValue();
+                int type = av.getAspectType();
+                boolean doAverage = (av instanceof AspectRate || type > AspectType._LAST_ASPECT);
                 if (first) {
                     sums[i] = v;
                 } else {
-                    switch (oneResult[i].getAspectType()) {
+                    switch (type) {
                     default:
-                        if (av instanceof AspectRate) {
-                            divisor[i] += 1.0;
-                        }
+                        if (doAverage) divisor[i] += 1.0;
                         sums[i] += v;
                         break;
                     case AspectType.START_TIME:
@@ -324,12 +362,14 @@ public class AllocationResultHelper {
                         break;
                     }
                 }
-                first = false;
             }
+            first = false;
         }
-        for (int i = 0; i < rollupResult.length; i++) {
-            rollupResult[i].setValue(sums[i] / divisor[i]);
+        AspectValue[] ru = AspectValue.clone(perfectResult);
+        for (int i = 0; i < ru.length; i++) {
+            ru[i].setValue(sums[i] / divisor[i]);
         }
+        return ru;
     }
 
     private long getStartTime(AspectValue[] avs) {
@@ -340,14 +380,19 @@ public class AllocationResultHelper {
         return (long) avs[(endix >= 0) ? endix : startix].getValue();
     }
 
-    private void setTypeIndexes() {
-        for (int i = 0; i < rollupResult.length; i++) {
-            switch (rollupResult[i].getAspectType()) {
-            case AspectType.QUANTITY:         qtyix   = i; break;
-            case AspectType.START_TIME:       startix = i; break;
-            case AspectType.END_TIME:         endix   = i; break;
-            default: break;
-            }
+    private void setTypeIndexes(AspectValue[] avs) {
+        int maxIndex = AspectType._ASPECT_COUNT;
+        for (int i = 0; i < avs.length; i++) {
+            maxIndex = Math.max(maxIndex, avs[i].getAspectType());
         }
+        typeMap = new int[maxIndex + 1];
+        Arrays.fill(typeMap, -1);
+        for (int i = 0; i < avs.length; i++) {
+            int type = avs[i].getAspectType();
+            typeMap[type] = i;
+        }
+        startix = getTypeIndex(AspectType.START_TIME);
+        endix = getTypeIndex(AspectType.END_TIME);
+        qtyix = getTypeIndex(AspectType.QUANTITY);
     }
 }
