@@ -1,3 +1,48 @@
+2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/NodeAgent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Persist the list of agents of the node (if not disabled) and use
+	the list to recreate agents after rehydration.
+
+	* org/cougaar/core/node/Node.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add org.cougaar.core.node.ignoreRehydratedAgentList property to
+	allow this feature to be disabled.
+
+2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/StandardBlackboard.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Pass the getPersistenceObject through to the Distributor. Remove
+	persistence initialization. Persistence is now implemented by a
+	component and is directly instantiated by the agent.
+
+	* org/cougaar/core/blackboard/Publishable.java:
+	Now extends the Persistable interface.
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Minor changes to work with new persistence. Most changes are in
+	BlackboardPersistence.
+
+	* org/cougaar/core/blackboard/DirectiveMessage.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Trying to capture the state of the unsent messages when persisting
+	should be be done in a MessageContext. Use the message context
+	only when the stream is not a persistence stream.
+
+	* org/cougaar/core/blackboard/BlackboardForAgent.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add getPersistenceState so an agent can get its serialized state
+	for mobility.
+
+	* org/cougaar/core/blackboard/Blackboard.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Rename getState method to getPersistenceState. The getState method
+	should not return anything if the component saves its state with
+	persistence.
+
 2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/wp/ListAllAgents.java:
