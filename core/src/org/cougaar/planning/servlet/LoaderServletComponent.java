@@ -38,10 +38,9 @@ import javax.servlet.http.HttpServletResponse;
 //import org.cougaar.core.agent.AgentIdentificationService;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.node.ComponentMessage;
+
+import org.cougaar.core.service.AgentContainmentService;
+
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeIdentifier;
 import org.cougaar.core.service.MessageTransportService;
@@ -49,13 +48,35 @@ import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.StringUtility;
 
 /**
- * Servlet that allows the client to add Components into the
- * servlet's agent (eg plugin) or node (eg agent).
+ * Servlet that allows the client to add, remove, and check for
+ * the existence of Components at both the servlet's agent 
+ * (eg plugin) or node (eg agent).
  * <p>
- * The path of the servlet is "/load".
+ * The path of the servlet is "/load".  This is a bit of a 
+ * misnomer, since in addition to "add" this servlet also
+ * supports "remove" and "contains".
  * <p>
- * The URL parameters are:
+ * The URL parameters to this servlet are:
  * <ul><p>
+ *   <li><tt>action=STRING</tt><br>
+ *       Required action for container operation; this should 
+ *       be either "add", "remove", or "contains", where the 
+ *       default is "add".
+ *       <p>
+ *       <b>Important Note:</b>
+ *       <p>
+ *       "add" acts as an "ensure-is-loaded"; if the component 
+ *       is already loaded then the action is ignored (success).  
+ *       <p>
+ *       "remove" similarily acts as an "ensure-is-not-loaded", 
+ *       where a remove of a non-loaded component is ignored 
+ *       (success).
+ *       <p>
+ *       "contains" will only return with a success status code 
+ *       if the component is loaded ("assert-is-loaded").  If
+ *       the component is not loaded then an error response
+ *       is returned.
+ *       </li><p>
  *   <li><tt>into=STRING</tt><br>
  *       Optional name of where to add this component;
  *       this should be either "agent" or "node", where the
@@ -86,8 +107,15 @@ extends BaseServletComponent
   protected ClusterIdentifier agentId;
   protected NodeIdentifier nodeId;
 
-  protected MessageTransportService mts;
+  protected AgentContainmentService agentContainer;
+
   protected NodeIdentificationService nodeIdService;
+
+  private static final String[] VALID_ACTIONS = {
+    "add",
+    "remove",
+    "contains",
+  };
 
   protected String getPath() {
     return "/load";
@@ -123,29 +151,20 @@ extends BaseServletComponent
           getPath()+"\" servlet");
     }
 
-    // create a dummy message transport client
-    MessageTransportClient mtc =
-      new MessageTransportClient() {
-        public void receiveMessage(Message message) {
-          // never
-        }
-        public MessageAddress getMessageAddress() {
-          return agentId;
-        }
-      };
-
-    // get the message transport
-    this.mts = (MessageTransportService)
+    // get the agent containment service
+    this.agentContainer = (AgentContainmentService)
       serviceBroker.getService(
-          mtc,
-          MessageTransportService.class,
+          this,
+          AgentContainmentService.class,
           null);
-    if (mts == null) {
+    if (agentContainer == null) {
       throw new RuntimeException(
-          "Unable to obtain MessageTransportService for \""+
+          "Unable to obtain AgentContainmentService for \""+
           getPath()+
           "\" servlet");
     }
+
+    // FIXME get node containment service
 
     super.load();
   }
@@ -153,10 +172,10 @@ extends BaseServletComponent
   // release services:
   public void unload() {
     super.unload();
-    if (mts != null) {
+    if (agentContainer != null) {
       serviceBroker.releaseService(
-          this, MessageTransportService.class, mts);
-      mts = null;
+          this, MessageTransportService.class, agentContainer);
+      agentContainer = null;
     }
     if (nodeIdService != null) {
       serviceBroker.releaseService(
@@ -166,27 +185,30 @@ extends BaseServletComponent
     // release agentIdService
   }
 
-  // helper method:
-  private void loadComponent(
-      String addTarget,
+  private boolean performAction(
+      String action,
+      String target,
       ComponentDescription desc) {
-    // select destination
-    MessageAddress destAddr;
-    if ("node".equalsIgnoreCase(addTarget)) {
-      destAddr = nodeId;
-    } else {
-      destAddr = agentId;
+    // add security-check here
+    if (!("agent".equalsIgnoreCase(target))) {
+      throw new UnsupportedOperationException(
+          "Only \"agent\" target is supported, not \""+
+          target+"\" (see bug 1112)");
     }
-    // create an ADD ComponentMessage
-    ComponentMessage addMsg =
-      new ComponentMessage(
-          agentId,  // from
-          destAddr, // to
-          ComponentMessage.ADD,
-          desc,
-          null);    // state
-    // send message
-    mts.sendMessage(addMsg);
+    if ("add".equalsIgnoreCase(action)) {
+      return agentContainer.add(desc);
+    } else if ("remove".equalsIgnoreCase(action)) {
+      return agentContainer.remove(desc);
+    } else if ("contains".equalsIgnoreCase(action)) {
+      if (!(agentContainer.contains(desc))) {
+        throw new RuntimeException(
+            target+" doesn't contain the component.");
+      }
+      return true;
+    } else {
+      throw new UnsupportedOperationException(
+          "Unknown action: \""+action+"\"");
+    }
   }
 
   /**
@@ -210,10 +232,14 @@ extends BaseServletComponent
       // from the URL-params:
       //    (see the class-level javadocs for details)
 
-      public static final String ADD_TARGET_PARAM = "into";
-      public String addTarget;
+      public static final String ACTION_PARAM = "op";
+      public String action;
 
-      public static final String INSERTION_POINT_PARAM = "insertionPoint";
+      public static final String TARGET_PARAM = "into";
+      public String target;
+
+      public static final String INSERTION_POINT_PARAM = 
+        "insertionPoint";
       public String insertionPoint;
 
       public static final String CLASSNAME_PARAM = "classname";
@@ -241,7 +267,8 @@ extends BaseServletComponent
 
       private void parseParams() throws IOException {
         // set defaults
-        addTarget = "agent";
+        action = "add";
+        target = "agent";
         insertionPoint =
           "Node.AgentManager.Agent.PluginManager.Plugin";
         // get "name=value" parameters
@@ -263,11 +290,13 @@ extends BaseServletComponent
               (value.length() <= 0)) {
             continue;
           }
-          value = URLDecoder.decode(value);
+          value = URLDecoder.decode(value, "UTF-8");
 
           // save parameters
-          if (name.equals(ADD_TARGET_PARAM)) {
-            addTarget = value;
+          if (name.equals(ACTION_PARAM)) {
+            action = value;
+          } else if (name.equals(TARGET_PARAM)) {
+            target = value;
           } else if (name.equals(INSERTION_POINT_PARAM)) {
             insertionPoint = value;
           } else if (name.equals(CLASSNAME_PARAM)) {
@@ -286,14 +315,14 @@ extends BaseServletComponent
         if (classname != null) {
           ComponentDescription desc =
             createComponentDescription();
+          boolean ret;
           try {
-            // add security-check here
-            loadComponent(addTarget, desc);
+            ret = performAction(action, target, desc);
           } catch (Exception e) {
             writeFailure(e);
             return;
           }
-          writeSuccess();
+          writeSuccess(ret);
         } else {
           writeUsage();
         }
@@ -316,16 +345,20 @@ extends BaseServletComponent
       }
 
       private void writeFailure(Exception e) throws IOException {
+        // select response message
+        String msg = "Unable to "+action;
         response.setContentType("text/html");
-        // send error code
+        // build up response
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(baos);
+        out.print("<html><head><title>");
+        out.print(msg);
         out.print(
-            "<html><head><title>"+
-            "Unable to load component"+
             "</title></head>"+
             "<body>\n"+
-            "<h2>Unable to send \"AddComponent\" message:</h2>"+
+            "<center><h1>");
+        out.print(msg);
+        out.print("</h1></center>"+
             "<p><pre>\n");
         e.printStackTrace(out);
         out.print(
@@ -335,25 +368,51 @@ extends BaseServletComponent
         out.print(
             "</body></html>\n");
         out.close();
+        // send error code
         response.sendError(
             HttpServletResponse.SC_BAD_REQUEST,
             new String(baos.toByteArray()));
       }
 
-      private void writeSuccess() throws IOException {
+      private void writeSuccess(boolean ret) throws IOException {
+        // select response message
+        String msg;
+        if ("add".equalsIgnoreCase(action)) {
+          if (ret) {
+            msg = "New component added";
+          } else {
+            msg = "Component already exists";
+          }
+        } else if ("remove".equalsIgnoreCase(action)) {
+          if (ret) {
+            msg = "Removed existing component";
+          } else {
+            msg = "No such component exists";
+          }
+        } else if ("contains".equalsIgnoreCase(action)) {
+          if (ret) {
+            msg = "Component exists";
+          } else {
+            // never - exception thrown when !contains
+            msg = "Internal error";
+          }
+        } else {
+          // never - exception thrown when action is unknown
+          msg = "Internal error";
+        }
+        // write response
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
+        out.print("<html><head><title>");
+        out.print(msg);
         out.print(
-            "<html><head><title>"+
-            "Component Loaded"+
             "</title></head>"+
             "<body>\n"+
-            "<h2>Sent \"AddComponent\" message:</h2>\n");
+            "<center><h1>");
+        out.print(msg);
+        out.print("</h1></center><p>\n");
         writeParameters(out);
-        out.print(
-            "Check standard-error to verify that the"+
-            " component was loaded...\n"+
-            "</body></html>\n");
+        out.print("</body></html>\n");
         out.close();
       }
 
@@ -366,13 +425,35 @@ extends BaseServletComponent
             "\">\n"+
             "<table>\n"+
             "<tr><td>"+
-            "Insert into"+
+            "Action"+
             "</td><td>\n"+
             "<select name=\""+
-            ADD_TARGET_PARAM+
+            ACTION_PARAM+
+            "\">");
+        for (int i = 0; i < VALID_ACTIONS.length; i++) {
+          String ai = VALID_ACTIONS[i];
+          out.print(
+              "<option value=\"");
+          out.print(ai);
+          out.print("\"");
+          if (ai.equalsIgnoreCase(action)) {
+            out.print(" selected");
+          }
+          out.print(">");
+          out.print(ai);
+          out.print("</option>");
+        }
+        out.print(
+            "</select>\n"+
+            "</td></tr>\n"+
+            "<tr><td>"+
+            "Target"+
+            "</td><td>\n"+
+            "<select name=\""+
+            TARGET_PARAM+
             "\">"+
             "<option value=\"agent\"");
-        if ("agent".equalsIgnoreCase(addTarget)) {
+        if ("agent".equalsIgnoreCase(target)) {
           out.print(" selected");
         }
         out.print(
@@ -381,7 +462,7 @@ extends BaseServletComponent
         out.print(
             "</option>"+
             "<option value=\"node\"");
-        if ("node".equalsIgnoreCase(addTarget)) {
+        if ("node".equalsIgnoreCase(target)) {
           out.print(" selected");
         }
         out.print(
@@ -454,7 +535,7 @@ extends BaseServletComponent
             " size=70>  <i>(optional; see bug 1029)</i>"+
             "</td></tr>\n"+
             "<tr><td colwidth=2>"+
-            "<input type=\"submit\" value=\"Add Component\">"+
+            "<input type=\"submit\" value=\"Submit\">"+
             "</td></tr>\n"+
             "</table>\n"+
             "</form>\n");
