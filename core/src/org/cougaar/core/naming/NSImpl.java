@@ -92,6 +92,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
           subDirectory = new NSDirectory(fullName(directory, subDirName));
           o = new NSObject(subDirectory, null);
           dirMap.put(subDirName, o);
+          
           putDirMap(subDirectory, new NSDirMap(attributes));
         }
       }

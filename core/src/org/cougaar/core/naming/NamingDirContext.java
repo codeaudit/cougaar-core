@@ -62,7 +62,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
         attributes = new ArrayList();
       }
 
-      return matchingAttributes(attributes, attrIds);
+      return deepClone(matchingAttributes(attributes, attrIds));
     }
     
     // Extract components that belong to this namespace
@@ -86,7 +86,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
       if (attributes == null) {
         return new BasicAttributes();
       } else {
-        return matchingAttributes(attributes, attrIds);
+        return deepClone(matchingAttributes(attributes, attrIds));
       }
     } else {
       // Intermediate name: Consume name in this context and continue
@@ -114,7 +114,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     NamingEnumeration attrEnum = attrs.getAll();
     ModificationItem[] mods = new ModificationItem[attrs.size()];
     for (int i = 0; i < mods.length && attrEnum.hasMoreElements(); i++) {
-      mods[i] = new ModificationItem(mod_op, (Attribute)attrEnum.next());
+      mods[i] = new ModificationItem(mod_op, (Attribute)(attrEnum.next()));
     }
     
     modifyAttributes(name, mods);
@@ -130,8 +130,14 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (name.isEmpty()) {
       // Updating attributes of this context.
       try {
-        Collection attributes = getNS().getAttributes(getDirectory(), "");
-        getNS().putAttributes(getDirectory(), "", doMods(attributes, mods));
+        //Clone Attributes and ModificationItems so that parameters aren't 
+        // modified by processing
+        Collection cloneAttrs = 
+          deepClone(getNS().getAttributes(getDirectory(), ""));
+        ModificationItem[] cloneMods = deepClone(mods);
+
+        getNS().putAttributes(getDirectory(), "", 
+                              doMods(cloneAttrs, cloneMods));
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -148,10 +154,16 @@ public class NamingDirContext extends NamingContext implements DirContext {
         throw new NameNotFoundException(name + " not found");
       }
       
-      Collection attributes = null;
+
       try {
-        attributes = getNS().getAttributes(getDirectory(), atom);
-        getNS().putAttributes(getDirectory(), atom, doMods(attributes, mods));
+        //Clone Attributes and ModificationItems so that parameters aren't 
+        // modified by processing
+        Collection cloneAttrs = 
+          deepClone(getNS().getAttributes(getDirectory(), atom));
+        ModificationItem[] cloneMods = deepClone(mods);
+
+        getNS().putAttributes(getDirectory(), atom, 
+                              doMods(cloneAttrs, cloneMods));
       } catch (RemoteException re) {
         re.printStackTrace();
       }
@@ -561,6 +573,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Fill in expression
     String filter = format(filterExpr, filterArgs);
     
+    System.out.println("filter string: " + filter);
     return search(name, filter, cons);
   }
   
@@ -734,7 +747,31 @@ public class NamingDirContext extends NamingContext implements DirContext {
     
     return copy;
   }
-  
+
+  // Presumes orig is a collection of Attributes
+  private Collection deepClone(Collection orig) throws NamingException {
+    try {
+      Collection clone = (Collection) orig.getClass().newInstance();
+
+      if (orig.size() == 0) {
+        return clone;
+      }
+      
+      for (Iterator iterator = orig.iterator(); iterator.hasNext();) {
+        Attribute attribute = (Attribute) iterator.next();
+        clone.add(attribute.clone());
+      }
+      
+      return clone;
+    } catch (InstantiationException ie) {
+      ie.printStackTrace();
+      return null;
+    } catch (IllegalAccessException iae) {
+      iae.printStackTrace();
+      return null;
+    }
+  }
+
   private Hashtable deepClone(Hashtable orig) throws NamingException {
     if (orig.size() == 0) {
       return (Hashtable)orig.clone();
@@ -751,6 +788,19 @@ public class NamingDirContext extends NamingContext implements DirContext {
     }
     
     return copy;
+  }
+
+  private ModificationItem[] deepClone(ModificationItem []orig) throws NamingException {
+
+    ModificationItem []clone = new ModificationItem[orig.length];
+
+    for (int index = 0; index < orig.length; index++) {
+      clone[index] = 
+        new ModificationItem(orig[index].getModificationOp(),
+                             (Attribute) orig[index].getAttribute().clone());
+    }
+
+    return clone;
   }
 
   protected Attributes matchingAttributes(Collection attributes, String []attrIds) {
@@ -780,10 +830,10 @@ public class NamingDirContext extends NamingContext implements DirContext {
 
   
   /**
-   * Apply modifications to attrs in place.
+   * Apply modifications to attrs in place. 
    * NOTE: Simplified implementation:
    *       - Modifications NOT performed atomically
-   * 	     - Attribute names case-sensitive 
+   * 	   - Attribute names case-sensitive 
    *       - All attributes can be multivalued
    */
   private Collection doMods(Collection attrs, ModificationItem[] mods) 
@@ -883,47 +933,135 @@ public class NamingDirContext extends NamingContext implements DirContext {
       NS ns = new NSImpl();
       DirContext ctx = new NamingDirContext(ns, NSImpl.ROOT, new Hashtable());
       Attributes attributes = new BasicAttributes("fact", "the letter A");
+      Attribute chocolateAttribute = new BasicAttribute("chocolate", "Merckens");
 
-      DirContext a = ctx.createSubcontext("a", new BasicAttributes("fact", "the letter A"));
-      attributes.get("fact").add("the letter b");
+      DirContext a = ctx.createSubcontext("a", attributes);
+      attributes.get("fact").add("the letter B");
+      attributes.put(chocolateAttribute);
+      attributes.get("fact").remove("the letter A");
       DirContext b = ctx.createSubcontext("b", attributes);
-      attributes.put("chocolate", "merckens");
-      Context c = b.createSubcontext("c", attributes);
+      attributes.get("chocolate").add("ScharffenBerger");
+      attributes.get("fact").add("the letter C");
+      DirContext c = b.createSubcontext("c", attributes);
 
       System.out.println("c's full name: " + c.getNameInNamespace());
-      System.out.println("attributes of a: " + ctx.getAttributes("a"));
-      System.out.println("attributes of a: " + a.getAttributes(""));
       
       System.out.println("list: " );
       NamingEnumeration enum = ctx.list("");
       while (enum.hasMore()) {
         System.out.println("\t" + enum.next());
       }
+
+      BasicAttributes searchAttributes = new BasicAttributes();
       
-      System.out.println("search1: " );
-      enum = ctx.search("", new BasicAttributes("fact", "the letter A"));
+      Attribute searchAttribute = new BasicAttribute("fact", "the letter B");
+      searchAttributes.put(searchAttribute);
+      System.out.println("search initial context for: " + searchAttribute);
+      enum = ctx.search("", searchAttributes);
       while (enum.hasMore()) {
         System.out.println(enum.next());
       }
 
-      System.out.println("search2: " );
-      enum = ctx.search("", new BasicAttributes("fact", "the letter B"));
+      String  []returnAttrIDs = {"chocolate", "fact"};
+      System.out.println("search b's context for: " + searchAttribute + 
+                         " return attributes: " + returnAttrIDs[0] + " " +
+                         returnAttrIDs[1]);
+      enum = b.search("", searchAttributes, returnAttrIDs);
       while (enum.hasMore()) {
         System.out.println(enum.next());
       }
 
-    ctx.bind("b/c/foo", "text");
+      
+    c.bind("foo", "tex", new BasicAttributes("fact", "fooAttr"));
+    c.bind("boo", "hex", new BasicAttributes("fact", "booAttr"));
 
-    NamingEnumeration bindings = ctx.listBindings("b/c");
+    System.out.println("Contents of c");
+    NamingEnumeration bindings = c.listBindings("");
     while (bindings.hasMore()) {
       Binding binding = (Binding) bindings.next();
+
+      System.out.println("\t" + binding.getName() + " " + binding.getObject());
+
+      enum = c.getAttributes(binding.getName()).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t\t attribute:" + enum.next());
+      }
+    } 
+
+    c.rebind("foo", "mex", new BasicAttributes("fact", "fiction"));
+    System.out.println("Contents of c after rebinding foo");
+    bindings = c.listBindings("");
+    while (bindings.hasMore()) {
+      Binding binding = (Binding) bindings.next();
+
+      System.out.println("\t" + binding.getName() + " " + binding.getObject());
+
+      enum = c.getAttributes(binding.getName()).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t\t attribute:" + enum.next());
+      }
+    } 
+    System.out.println("");
+
+    c.modifyAttributes("foo", ADD_ATTRIBUTE, attributes);
+    System.out.println("After modifying foo's attributes");
+    enum = c.getAttributes("foo").getAll();
+    while (enum.hasMore()) {
+      System.out.println("\t\t attribute:" + enum.next());
+    } 
+    System.out.println("");
+
+    ModificationItem mods[] = new ModificationItem[3];
+    mods[0] = new ModificationItem(ADD_ATTRIBUTE, 
+                                   new BasicAttribute("addAttribute", 
+                                                      "tigger"));
+    Attribute replaceAttribute = attributes.get("fact");
+    replaceAttribute.add("the letter FOO");
+    mods[1] = new ModificationItem(REPLACE_ATTRIBUTE, 
+                                   replaceAttribute);
+
+    /*
+    mods[2] = new ModificationItem(REMOVE_ATTRIBUTE, 
+                                   new BasicAttribute("chocolate"));
+    */
+    mods[2] = new ModificationItem(REMOVE_ATTRIBUTE, 
+                                   attributes.get("chocolate"));
+    
+    c.modifyAttributes("foo", mods);
+    System.out.println("After modifying foo's attributes");
+    enum = c.getAttributes("foo").getAll();
+    while (enum.hasMore()) {
+      System.out.println("\t\t attribute:" + enum.next());
+    } 
+    System.out.println("");
+
+
+    c.unbind("foo");
+    System.out.println("Contents of c after unbinding foo");
+    bindings = c.listBindings("");
+    while (bindings.hasMore()) {
+      Binding binding = (Binding) bindings.next();
+
+      System.out.println("\t" + binding.getName() + " " + binding.getObject());
+
+      enum = c.getAttributes(binding.getName()).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t\t attribute:" + enum.next());
+      }
+    } 
+    System.out.println("");
+
+    System.out.println("Contents of initial context with associated 'fact' attribute");
+    bindings = ctx.listBindings("");
+    while (bindings.hasMore()) {
+      Binding binding = (Binding) bindings.next();
+
       System.out.println(binding.getName() + " " + binding.getObject());
-      if (binding.getObject() instanceof Context) {
-        NamingEnumeration subBindings = ((Context) binding.getObject()).listBindings("");
-        while (subBindings.hasMore()) {
-          binding = (Binding) subBindings.next();
-          System.out.println("\t" + binding.getName() + " " + binding.getObject());
-        }
+      returnAttrIDs = new String[1];
+      returnAttrIDs[0] = "fact";
+      enum = ctx.getAttributes(binding.getName(), returnAttrIDs).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t attribute:" + enum.next());
       }
     } 
 
