@@ -72,9 +72,6 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.service.TopologyEntry; // inlined
-import org.cougaar.core.service.TopologyReaderService;
-import org.cougaar.core.service.TopologyWriterService;
 import org.cougaar.core.service.identity.AgentIdentityClient;
 import org.cougaar.core.service.identity.AgentIdentityService;
 import org.cougaar.core.service.identity.CrlReason;
@@ -162,9 +159,6 @@ public class SimpleAgent
   private AgentIdentityService myAgentIdService;
 
   private WhitePagesService whitePagesService;
-
-  private TopologyReaderService myTopologyReaderService;
-  private TopologyWriterService myTopologyWriterService;
 
   private MessageTransportService messenger;
   /** stub for keeping the MTS client at a distance **/
@@ -579,8 +573,6 @@ public class SimpleAgent
 
     loadRestartChecker();
 
-    loadTopology();
-
     // add our address to our VM's cluster table
     if (log.isDebugEnabled()) {
       log.debug("Adding to the cluster context table");
@@ -725,8 +717,6 @@ public class SimpleAgent
 
     suspendRestartChecker();
 
-    suspendTopology();
-
     // shutdown the MTS
     if (log.isInfoEnabled()) {
       log.info("Shutting down message transport");
@@ -830,7 +820,7 @@ public class SimpleAgent
       }
       acquiredIdentity = true;
 
-      // FIXME for now, re-register MTS prior to topology
+      // re-register MTS
       if (messenger == null) {
         if (log.isInfoEnabled()) {
           log.info(
@@ -847,8 +837,6 @@ public class SimpleAgent
         
         messenger.registerClient(mtsClientAdapter);
       }
-
-      restartTopology();
 
       if (log.isInfoEnabled()) {
         log.info("Resuming message transport");
@@ -986,8 +974,6 @@ public class SimpleAgent
       log.debug("Removing from the cluster context table");
     }
     ClusterContextTable.removeContext(getMessageAddress());
-
-    unloadTopology();
 
     unloadRestartChecker();
 
@@ -1308,103 +1294,6 @@ public class SimpleAgent
     } catch (Exception e) {
       log.error("Uncaught Exception while handling Queued Messages", e);
     }
-  }
-
-  //-----------------------------------------------------------------
-  // topology
-  //-----------------------------------------------------------------
-
-  private final void loadTopology() {
-    ServiceBroker sb = getServiceBroker();
-
-    myTopologyReaderService = (TopologyReaderService) 
-      sb.getService(this, TopologyReaderService.class, null);
-    myTopologyWriterService = (TopologyWriterService) 
-      sb.getService(this, TopologyWriterService.class, null);
-
-    // register in the topology
-    if (log.isInfoEnabled()) {
-      log.info("Updating topology entry to \"active\"");
-    }
-    int topologyType = 
-      ((getMessageAddress().equals(localNode)) ?
-       (TopologyEntry.NODE_AGENT_TYPE) :
-       (TopologyEntry.AGENT_TYPE));
-    if (agentState != null) {
-      // resume the prior incarnation number
-      long priorMoveId = agentState.restartState.moveId;
-      myTopologyWriterService.updateAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.ACTIVE,
-          priorMoveId);
-    } else {
-      // create a new or restarted agent entry
-      myTopologyWriterService.createAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.ACTIVE);
-    }
-  }
-
-  private final void suspendTopology() {
-    // update the topology 
-    if (moveTargetNode != null) {
-      if (log.isInfoEnabled()) {
-        log.info("Updating topology entry to \"moving\"");
-      }
-      int topologyType = 
-        ((getMessageAddress().equals(localNode)) ?
-         (TopologyEntry.NODE_AGENT_TYPE) :
-         (TopologyEntry.AGENT_TYPE));
-      myTopologyWriterService.updateAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.MOVING,
-          moveId);
-    } else {
-      if (log.isInfoEnabled()) {
-        log.info("Removing topology entry");
-      }
-      myTopologyWriterService.removeAgent(getIdentifier());
-    }
-  }
-
-  private final void restartTopology() {
-    // move failed, re-aquire the topology entry
-    if (log.isInfoEnabled()) {
-      log.info("Updating topology entry to \"active\"");
-    }
-    int topologyType = 
-      ((getMessageAddress().equals(localNode)) ?
-       (TopologyEntry.NODE_AGENT_TYPE) :
-       (TopologyEntry.AGENT_TYPE));
-    long priorMoveId = moveId;
-    ++moveId;
-    myTopologyWriterService.updateAgent(
-        getIdentifier(),
-        topologyType,
-        incarnation,
-        moveId,
-        TopologyEntry.ACTIVE,
-        priorMoveId);
-  }
-
-  private final void unloadTopology() {
-    // FIXME topology entry set to MOVING in "suspend()", need to
-    // safely clear the entry without overwriting if the move was
-    // successful.
-    ServiceBroker sb = getServiceBroker();
-    sb.releaseService(
-        this, TopologyWriterService.class, myTopologyWriterService);
-    sb.releaseService(
-        this, TopologyReaderService.class, myTopologyReaderService);
   }
 
   //-----------------------------------------------------------------

@@ -68,7 +68,7 @@ import org.cougaar.util.log.Logging;
  * <ul>
  * <li> <em>HIGH</em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
  * </li>
- * <li> <em>INTERNAL</em>: ThreadService, NamingService, TopologyWriterServiceComponent, TopologyReaderServiceComponent,
+ * <li> <em>INTERNAL</em>: ThreadService, NamingService,
  * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport,
  * RootServletComponent, external INTERNAL components.
  * </li>
@@ -247,26 +247,6 @@ public class NodeAgent
             null,  //lease
             null)); //policy
     }
-
-    add(new ComponentDescription(
-          (getIdentifier()+"TopologyWriter"),
-          Agent.INSERTION_POINT + ".Topology",
-          "org.cougaar.core.topology.TopologyWriterServiceComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null)); //policy
-
-    add(new ComponentDescription(
-          (getIdentifier()+"TopologyReader"),
-          Agent.INSERTION_POINT + ".Topology",
-          "org.cougaar.core.topology.TopologyReaderServiceComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null)); //policy
 
     add(new ComponentDescription(
           (getIdentifier()+"MetricsServices"),

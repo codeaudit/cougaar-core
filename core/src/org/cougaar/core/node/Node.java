@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import javax.naming.NamingException;
 import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
