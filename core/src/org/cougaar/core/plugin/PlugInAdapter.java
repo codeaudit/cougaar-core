@@ -321,6 +321,7 @@ public abstract class PlugInAdapter
 
   /** */
   public void start() throws StateModelException {
+    super.start();
     startThreadingModel();
   }
 
