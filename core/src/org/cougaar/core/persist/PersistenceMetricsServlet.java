@@ -92,13 +92,14 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
 
   public void setupSubscriptions() {
     agentName = getAgentIdentifier().toString();
-    if (haveServices()) {
-    }
+
+    // haveServices will acquire the services if not done yet. Returns (ignored) boolean
+    haveServices();
   }
 
   public void execute() {
-    if (haveServices()) {
-    }
+    // haveServices will acquire the services if not done yet. Returns (ignored) boolean
+    haveServices();
   }
 
   private static String getMedia(PersistenceMetricsService.Metric metric) {
