@@ -269,6 +269,15 @@ public class BlackboardPersistence implements Persistence {
     meta.quiescenceMonitorState = quiescenceMonitorState;
     clientData = new ArrayList(2);
     clientData.addAll(copyAndRemoveNotPersistable(epochEnvelopes));
+    for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
+      PersistenceSubscriberState ss = (PersistenceSubscriberState) iter.next();
+      if (ss.pendingEnvelopes != null) {
+        clientData.addAll(ss.pendingEnvelopes);
+      }
+      if (ss.transactionEnvelopes != null) {
+        clientData.addAll(ss.transactionEnvelopes);
+      }
+    }
     clientData.add(meta);
     epochEnvelopes.clear();     // Allow gc
     PersistenceObject result = persistenceService.persist(returnBytes, full);
