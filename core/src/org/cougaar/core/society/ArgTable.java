@@ -60,6 +60,14 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
   }
 
   /**
+   * Convert a List of Strings to a <code>String[]</code> and call the
+   * <tt>ArgTable(String[])</tt> constructor.
+   */
+  public ArgTable(java.util.List l) {
+    this((String[])l.toArray(new String[l.size()]));
+  }
+
+  /**
    *    This method takes inthe String[] and parses out the values and stores them into the 
    *    Hashtable.
    *    <p>
