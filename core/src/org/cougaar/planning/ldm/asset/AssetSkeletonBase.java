@@ -396,6 +396,8 @@ public abstract class AssetSkeletonBase
     }
   }
 
+  /** Set the apropriate slot in the asset to the specified pgSchedule
+   **/
   protected synchronized void setLocalPGSchedule(PropertyGroupSchedule pgSchedule) {
     if (hasOtherTimePhasedProperties) {
       int index = findLocalPGScheduleIndex(pgSchedule.getPGClass());
