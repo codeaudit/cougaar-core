@@ -140,6 +140,7 @@ extends HttpServlet
       try {
         refreshSeconds = Integer.parseInt(refresh);
       } catch (Exception e) {
+	// If no good time specified, use default of 0
       }
     }
 
@@ -226,6 +227,7 @@ extends HttpServlet
       try {
         refreshSeconds = Integer.parseInt(refresh);
       } catch (Exception e) {
+	// If not good time specified, use the default of 0
       }
       if (refreshSeconds > 0 ) {
         out.print("<META HTTP-EQUIV=\"refresh\" content=\"");

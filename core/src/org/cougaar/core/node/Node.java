@@ -317,9 +317,15 @@ extends ContainerSupport
             }
           }
         }
-      }
+      } // if cip not null
     } catch (Exception e) {
+      // failed to open input stream
+      // or canonicalizeElement had a MalformedURLException
+      // or...
+
+      // Failed to loadSystemProperties
       //e.printStackTrace();
+      //      System.err.println("Failed to loadSystemProperties from " + u, e);
     }
   }
 
@@ -373,7 +379,9 @@ extends ContainerSupport
       repositoryTag = (String) tf.get(null);
       repositoryModified = rmf.getBoolean(null);
       repositoryTime = rtf.getLong(null);
-    } catch (Exception e) {}
+    } catch (Exception e) {
+      // Failed to get version info, reflection problem
+    }
 
     Logger logger = Logging.getLogger(Node.class);
     if (logger.isInfoEnabled()) {
