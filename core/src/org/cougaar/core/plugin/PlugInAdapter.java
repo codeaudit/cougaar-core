@@ -347,11 +347,14 @@ public abstract class PlugInAdapter
       public double getExecutionRate() { return getDemoControlService().getExecutionRate(); }
 
       // alarm service
-      public long currentTimeMillis() { throw new RuntimeException("Should not be called"); }
-      public void addAlarm(Alarm alarm) {throw new RuntimeException("Should not be called");}
-      public void addRealTimeAlarm(Alarm a) {throw new RuntimeException("Should not be called");}
+      public long currentTimeMillis() { return getAlarmService().currentTimeMillis(); }
+      public void addAlarm(Alarm alarm) {getAlarmService().addAlarm(alarm);}
+      public void addRealTimeAlarm(Alarm a) {getAlarmService().addRealTimeAlarm(a);}
 
-      public MetricsSnapshot getMetricsSnapshot() { throw new RuntimeException("Should not be called");  }
+      // metrics service
+      public MetricsSnapshot getMetricsSnapshot() { return getMetricsService().getMetricsSnapshot(); }
+
+      // ??
       public java.sql.Connection getDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
       public void releaseDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
     };
