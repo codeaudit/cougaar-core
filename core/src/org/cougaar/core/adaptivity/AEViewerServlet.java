@@ -163,16 +163,25 @@ public class AEViewerServlet extends HttpServlet {
     OperatingMode bbOM = (OperatingMode)blackboardCollection.iterator().next();
 
     String newValue = request.getParameter(VALUE);
-    Double numValue = null;
+    Integer intValue = null;
+    Double dubValue = null;
+    
     try {
-      numValue = new Double(newValue);
+      intValue = new Integer(newValue);
+    } catch (NumberFormatException nfe) { 
+      /* no-op */ 
+    }
+    try {
+      dubValue = new Double(newValue);
     } catch (NumberFormatException nfe) { 
       /* no-op */ 
     }
     
     try {
-      if (numValue != null) {
-	bbOM.setValue(numValue) ;
+      if (intValue != null) {
+	bbOM.setValue(intValue);
+      } else if (dubValue != null) {
+	bbOM.setValue(dubValue) ;
       } else {
 	bbOM.setValue(newValue);
       }
