@@ -23,6 +23,7 @@ package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.node.NodeIdentifier;
 
 public final class MetricsServiceProvider implements ServiceProvider
 {
@@ -38,11 +39,11 @@ public final class MetricsServiceProvider implements ServiceProvider
     private MetricsService retriever;
     private MetricsUpdateService updater;
 
-    public MetricsServiceProvider(ServiceBroker sb) {
+    public MetricsServiceProvider(ServiceBroker sb, NodeIdentifier id) {
+	Class[] parameters = { ServiceBroker.class, NodeIdentifier.class };
+	Object[] args = { sb, id };
 	try {
 	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
-	    Class[] parameters = { ServiceBroker.class };
-	    Object[] args = { sb };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
 	    retriever = (MetricsService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
@@ -55,8 +56,6 @@ public final class MetricsServiceProvider implements ServiceProvider
 
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
-	    Class[] parameters = { ServiceBroker.class };
-	    Object[] args = { sb };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
 	    updater = (MetricsUpdateService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {

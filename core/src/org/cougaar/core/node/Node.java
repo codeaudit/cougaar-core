@@ -640,7 +640,8 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
 		  loggingServiceProvider);
     
 
-    MetricsServiceProvider msp = new MetricsServiceProvider(sb);
+    NodeIdentifier id = getNodeIdentifier();
+    MetricsServiceProvider msp = new MetricsServiceProvider(sb, id);
     sb.addService(MetricsService.class, msp);
     sb.addService(MetricsUpdateService.class, msp);
 
