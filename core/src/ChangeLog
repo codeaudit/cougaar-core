@@ -1,4 +1,7 @@
-2001-02-13  Ray Tomlinson  <rtomlinson@bbn.com>
+2001-02-13  Michael Thome  <mthome@bbn.com>
+
+	* org.cougaar.util.JDBCConnectionManager
+	New JDBC connection pool utility.  Experimental at this point.
 
 	* AssetTransferLP and ReceiveAssetTransferLP
 	New relationship schedules are only sent if changes show the
