@@ -46,6 +46,13 @@ public class SharedThreadingServiceProvider implements ServiceProvider {
     }
   }
 
+  public void suspend() {
+    _sharedPlugInManager.suspend();
+  }
+
+  public void resume() {
+    _sharedPlugInManager.resume();
+  }
 }
 
 

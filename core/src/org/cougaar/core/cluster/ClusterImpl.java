@@ -124,6 +124,7 @@ import org.cougaar.core.cluster.persist.BasePersistence;
 import org.cougaar.core.cluster.persist.DatabasePersistence;
 import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceException;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 
 import java.beans.Beans;
 
@@ -160,8 +161,9 @@ public class ClusterImpl extends Agent
   private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
   private MessageTransportService messenger = null;
-    private MessageStatisticsService statisticsService;
-    private MessageWatcherService watcherService;
+  private MessageStatisticsService statisticsService;
+  private MessageWatcherService watcherService;
+  private SharedThreadingServiceProvider sharedThreadingServiceProvider;
 
   private static boolean isHeartbeatOn = true;
   private static boolean isMetricsHeartbeatOn = false;
@@ -306,6 +308,9 @@ public class ClusterImpl extends Agent
               System.exit(0);
             }
           }.start();
+        } else if (loadState instanceof AgentState) {
+          AgentState agentState = (AgentState) loadState;
+          state = agentState.bbState;
         }
         myDistributor.start(this, state);
       }
@@ -433,7 +438,9 @@ public class ClusterImpl extends Agent
     // add alarm service
     sb.addService(AlarmService.class, new AlarmServiceProvider(this));
     // add older plugin style shared threading
-    sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(getClusterIdentifier()));
+    sharedThreadingServiceProvider =
+      new SharedThreadingServiceProvider(getClusterIdentifier());
+    sb.addService(SharedThreadingService.class, sharedThreadingServiceProvider);
     // hack service for demo control
     sb.addService(DemoControlService.class, new DemoControlServiceProvider(this));
 
@@ -506,14 +513,14 @@ public class ClusterImpl extends Agent
     // transit the state.
     super.load();
 
-    if (loadState instanceof StateTuple[]) {
+    if (loadState instanceof AgentState) {
       // use the existing state
-      StateTuple[] children = (StateTuple[])loadState;
+      AgentState agentState = (AgentState) loadState;
       this.loadState = null;
       // load the child Components (Plugins, etc)
-      int n = ((children != null) ? children.length : 0);
+      int n = ((agentState.children != null) ? agentState.children.length : 0);
       for (int i = 0; i < n; i++) {
-        add(children[i]);
+        add(agentState.children[i]);
       }
     } else {
       // start up the pluginManager component - should really itself be loaded
@@ -577,10 +584,11 @@ public class ClusterImpl extends Agent
 
     // suspend the alarms
 
-    // suspend the plugin scheduling
+    System.out.println("suspend shared threading");
+    sharedThreadingServiceProvider.suspend(); // suspend the plugin scheduling
 
-    // unregister the MessageTransport -- this could
-    //   be moved later...
+    System.out.println("unregisterClient");
+    messenger.unregisterClient(ClusterImpl.this);
   }
 
   public void resume() {
@@ -588,7 +596,7 @@ public class ClusterImpl extends Agent
 
     // re-register for MessageTransport
 
-    // resume the plugin scheduling
+    sharedThreadingServiceProvider.resume(); // resume the plugin scheduling
 
     // resume the alarms 
 
@@ -644,11 +652,11 @@ public class ClusterImpl extends Agent
    * "boundComponents" access.
    */
   public Object getState() {
+    AgentState result = new AgentState();
     // get the child components
-    StateTuple[] tuples;
     synchronized (boundComponents) {
       int n = boundComponents.size();
-      tuples = new StateTuple[n];
+      result.children = new StateTuple[n];
       for (int i = 0; i < n; i++) {
         org.cougaar.core.component.BoundComponent bc = 
           (org.cougaar.core.component.BoundComponent)
@@ -658,19 +666,26 @@ public class ClusterImpl extends Agent
           ComponentDescription cd = (ComponentDescription)comp;
           Binder b = bc.getBinder();
           Object state = b.getState();
-          tuples[i] = new StateTuple(cd, state);
+          result.children[i] = new StateTuple(cd, state);
         } else {
           // error?
         }
       }
     }
 
-    // get the blackboard state
+    System.out.println("gettingState");
+    try {
+      result.bbState = myBlackboard.getState();
+    } catch (PersistenceNotEnabledException pnee) {
+      pnee.printStackTrace();
+      throw new RuntimeException(pnee.toString());
+    }
 
-    // wrap in interface
+    // Do this here because we might not get another opportunity
+    System.out.println("flushMessages");
+    messenger.flushMessages();
     
-    // for now, just return the child tuples
-    return tuples;
+    return result;
   }
 
   private Object loadState;
@@ -1385,6 +1400,9 @@ public class ClusterImpl extends Agent
       dbp.releaseDatabaseConnection(locker);
     }
   }
+
+  private static class AgentState {
+    Object bbState;
+    StateTuple[] children;
+  }
 }
-
-

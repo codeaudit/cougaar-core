@@ -67,6 +67,7 @@ class SharedPlugInManager implements SharedThreadingService {
   }
 
   protected ClusterIdentifier cid;
+  private boolean suspendRequest = false;
 
   public SharedPlugInManager(ClusterIdentifier cid) {
     this.cid = cid;
@@ -137,7 +138,26 @@ class SharedPlugInManager implements SharedThreadingService {
       activitySignaled = false;
     }
   }
-    
+
+  public void suspend() {
+    synchronized (this) {
+      if (scheduler == null) return; // Already suspended
+      suspendRequest = true;    // Cause the thread to exit
+      signalActivity();         // Wake the thread up
+      try {
+        wait(60000);
+      } catch (InterruptedException ie) {
+      }
+      if (suspendRequest)
+        throw new RuntimeException("Could not suspend SharedPlugInManager");
+      scheduler = null;
+    }
+  }
+
+  public void resume() {
+    assureStarted();
+  }
+
   /** delegate health checks to the scheduler **/
   synchronized void checkHealth() {
     if (scheduler != null)
@@ -169,7 +189,7 @@ class SharedPlugInManager implements SharedThreadingService {
 
   protected class ThinScheduler implements Runnable {
     public void run() {
-      while (true) {
+      while (!suspendRequest) {
         waitForActivity();
 
         // lock on the hashtable
@@ -224,6 +244,10 @@ class SharedPlugInManager implements SharedThreadingService {
 
           //System.err.println("\t"+(SharedPlugInManager.this)+" counted "+c);
         }
+      }
+      synchronized (SharedPlugInManager.this) {
+        suspendRequest = false;
+        SharedPlugInManager.this.notifyAll();
       }
     }
 
