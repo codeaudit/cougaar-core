@@ -145,9 +145,9 @@ extends BaseServletComponent
         ((o != null) ? o.getClass().getName() : "null"));
     }
     List l = (List)o;
-    if (l.size() != 2) {
+    if (l.size() < 2) {
       throw new IllegalArgumentException(
-          "Expecting a List with two elements,"+
+          "Expecting a List with at least two elements,"+
           " \"classname\" and \"path\", not "+l.size());
     }
     Object o1 = l.get(0);

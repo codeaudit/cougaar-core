@@ -33,7 +33,16 @@ public interface CommunityResponse {
   public static final int SUCCESS    = 2;
   public static final int TIMEOUT    = 3;
 
+  /**
+   * Status code identifying request result.
+   * @return  Status code
+   */
   public int getStatus();
+
+  /**
+   * Request result as a string.
+   * @return String representation of result code.
+   */
   public String getStatusAsString();
 
   /**

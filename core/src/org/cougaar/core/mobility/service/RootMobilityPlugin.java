@@ -86,6 +86,7 @@ extends AbstractMobilityPlugin
 
       AddTicket addTicket = (AddTicket) abstractTicket;
       MessageAddress id = addTicket.getMobileAgent();
+      StateTuple tuple = addTicket.getStateTuple();
       MessageAddress destNode = addTicket.getDestinationNode();
 
       // check if this node is the destination node
@@ -97,19 +98,6 @@ extends AbstractMobilityPlugin
 
       // FIXME consider locking in registry, to prevent multiple
       //   simultaneous add/removes
-
-      // create the component-desc that we'll add
-      ComponentDescription desc = new ComponentDescription(
-          "org.cougaar.core.agent.ClusterImpl",
-          "Node.AgentManager.Agent",
-          "org.cougaar.core.agent.ClusterImpl",
-          null,
-          id,
-          null, null, null,
-          ComponentDescription.PRIORITY_COMPONENT);
-
-      Object state = null;  // no prior state
-      StateTuple tuple = new StateTuple(desc, state);
 
       // run outside this transaction, to 
       //   a) prevent blocking, and

@@ -50,11 +50,31 @@ public interface Ping extends UniqueObject {
   MessageAddress getTarget();
 
   /**
+   * Get the minimum time in milliseconds to pause
+   * between ping iterations (eg 5000 milliseconds).
+   */
+  long getDelayMillis();
+
+  /**
    * Get the maximum time in milliseconds after the 
    * sent-time for the reply to be set, otherwise
-   * a timeout should occur.
+   * a timeout should occur (eg 50000 milliseconds).
    */
   long getTimeoutMillis();
+
+  /**
+   * Get the minimum time in milliseconds between
+   * cougaar events that record statistics on this
+   * ping (eg "every 10000 milliseconds").
+   */
+  long getEventMillis();
+
+  /**
+   * Get the number of counts between cougaar events
+   * that record statistics on this ping
+   * (eg "every 100 pings").
+   */
+  int getEventCount();
 
   /**
    * True if the Ping should ignore decrement of
@@ -76,10 +96,20 @@ public interface Ping extends UniqueObject {
   int getSendFillerSize();
 
   /**
+   * Is the send filler random data or all zeros?
+   */
+  boolean isSendFillerRandomized();
+
+  /**
    * Get the number of extra bytes that will be sent
    * with each target-side echo-counter update.
    */
   int getEchoFillerSize();
+
+  /**
+   * Is the echo filler random data or all zeros?
+   */
+  boolean isEchoFillerRandomized();
 
   //
   // The rest is dynamic:
@@ -123,14 +153,69 @@ public interface Ping extends UniqueObject {
   String getError();
 
   /**
+   * Sender-side modifier, to set an error message.
+   */
+  void setError(String error);
+
+  /**
    * Sender-side modifier, which resets the send-time,
    * reply-time, and increments the send counter.
    */
   void recycle();
 
-  /**
-   * Sender-side modifier, to set an error message.
-   */
-  void setError(String error);
+  //
+  // reset the most recent event time
+  //
 
+  /**
+   * If eventMillis is greater than zero, this is the
+   * time of the most recent event.
+   */
+  long getEventTime();
+
+  /**
+   * Set the most recent event time.
+   */
+  void setEventTime(long now);
+
+  //
+  // statistics within the current round
+  //
+
+  /**
+   * Sender-side modifier, which resets the statistics
+   * counters for a new round of statistics.
+   */
+  void resetStats();
+
+  /**
+   * Source-side send count.
+   */
+  int getStatCount();
+
+  /**
+   * Source-side minimum round-trip-time.
+   */
+  long getStatMinRTT();
+
+  /**
+   * Source-side maximum round-trip-time.
+   */
+  long getStatMaxRTT();
+
+  /**
+   * Get the mean round-trip-time.
+   */
+  double getStatMeanRTT();
+
+  /**
+   * Get the whole-population standard deviation for the
+   * round-trip-time.
+   */
+  double getStatStdDevRTT();
+
+  /**
+   * Get the sum of the sqares of RTT
+   */
+  double getStatSumSqrRTT();
 }

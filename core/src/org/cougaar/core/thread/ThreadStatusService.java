@@ -44,6 +44,8 @@ public interface ThreadStatusService extends Service
 	public String scheduler;
 	public String consumer;
 	public String schedulable;
+	public int blocking_type;
+	public String blocking_excuse;
 	public long elapsed;
 
 	abstract public String getState();

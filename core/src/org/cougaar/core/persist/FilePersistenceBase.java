@@ -328,7 +328,7 @@ public abstract class FilePersistenceBase
     tempFile.renameTo(deltaFile);
     writeSequenceNumbers(retainNumbers, "");
     if (full) writeSequenceNumbers(retainNumbers,
-                                   BasePersistence.formatDeltaNumber(retainNumbers.first));
+                                   PersistenceServiceComponent.formatDeltaNumber(retainNumbers.first));
   }
 
   public void abortOutputStream(SequenceNumbers retainNumbers)
@@ -385,16 +385,16 @@ public abstract class FilePersistenceBase
 
   private File getTempFile(int sequence) {
     return new File(persistenceDirectory,
-                    instanceId + "_" + BasePersistence.formatDeltaNumber(sequence));
+                    instanceId + "_" + PersistenceServiceComponent.formatDeltaNumber(sequence));
   }
 
   private File getDeltaFile(int sequence) {
     return new File(persistenceDirectory,
-                    "delta" + BasePersistence.formatDeltaNumber(sequence));
+                    "delta" + PersistenceServiceComponent.formatDeltaNumber(sequence));
   }
 
   private File getEncryptedKeyFile(int sequence) {
     return new File(persistenceDirectory,
-                    "key" + BasePersistence.formatDeltaNumber(sequence));
+                    "key" + PersistenceServiceComponent.formatDeltaNumber(sequence));
   }
 }

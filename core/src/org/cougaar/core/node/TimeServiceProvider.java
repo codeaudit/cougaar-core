@@ -98,13 +98,17 @@ class TimeServiceProvider
 
   private abstract class TSPI {
     private Object requestor;
+    private final String name;
     protected TSPI(Object requestor) {
       this.requestor = requestor;
+      name = (this.getClass().getName())+" for "+(requestor.toString());
     }
     /** @return the client **/
     private Object getRequestor() {
       return requestor;
     }
+
+    public String toString() { return name; }
 
     protected abstract Timer getTimer();
 
@@ -174,6 +178,10 @@ class TimeServiceProvider
       public boolean cancel() {
         forget(alarm);
         return alarm.cancel();
+      }
+      
+      public String toString() {
+        return "AlarmWrapper("+alarm+") of "+(TSPI.this.toString());
       }
     }
   }

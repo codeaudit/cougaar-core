@@ -27,6 +27,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -34,18 +35,28 @@ import org.cougaar.util.log.Logging;
  * after a specific time.  The base class operated on System time, but 
  * subclasses may operate on different scales.
  *
- * Visible feedback may be controlled by the system property
- * "org.cougaar.timer"  Valid values are:
- *   "quiet"	no feedback.
- *   "visible"	an asterix is printed to err on each timer expiration.
- *   "verbose"  a line with the timer and the alarm is printed on each expiration.
- * The default is "org.cougaar.timer=quiet".
+ * Visible feedback may be controlled by standard logging for class:
+ * org.cougaar.core.agent.service.alarm.Timer:
+ * 
+ * WARN also enables logging of when (real-time only) alarms are more than Epsilon millis late 
+ * INFO also enables logging of when alarms take more than Epsilon millis to ring
+ * DEBUG also enables reports of every alarm ringing.
+ *
  * Subclasses may override the feedback printed.
- * @property org.cougaar.timer Controls visibility of timer expirations.  See class description for 
- * more information.
+ * @property org.cougaar.core.agent.service.alarm.Timer.epsilon=10000 milliseconds
+ * considered a relatively long time for alarm delivery.
+ *
  **/
 
 public abstract class Timer implements Runnable {
+  protected final static Logger log = Logging.getLogger(Timer.class);
+
+  protected static long epsilon = 10*1000L;
+
+  static {
+    epsilon = PropertyParser.getLong("org.cougaar.core.agent.service.alarm.Timer.epsilon", epsilon);
+  }
+
   /** all alarms **/
   private ArrayList alarms = new ArrayList();
   /** Pending Periodic Alarms.  
@@ -63,30 +74,16 @@ public abstract class Timer implements Runnable {
   // only modified in the run loop thread
   private ArrayList pas = new ArrayList();
 
-  protected static boolean isVisible = false;
-  protected static boolean isLoud = false;
-  static {
-    String verbosity = System.getProperty("org.cougaar.timer", "quiet");
-    if (verbosity.equals("quiet")) {
-      isVisible=false;
-      isLoud=false;
-    } else if (verbosity.equals("visible")) {
-      isVisible=true;
-      isLoud=false;
-    } else if (verbosity.equals("verbose")) {
-      isVisible=true;
-      isLoud=true;
-    } else {
-      System.err.println("Unknown value for org.cougaar.timer ("+verbosity+")");
-    }
-  }
 
-  private static final Comparator comparator = new Comparator(){
+  private static final Comparator comparator = new Comparator() {
       public int compare(Object a, Object b) {
-        return (int) (((Alarm)a).getExpirationTime()-
-                      ((Alarm)b).getExpirationTime());
+        long ta = ((Alarm)a).getExpirationTime();
+        long tb = ((Alarm)b).getExpirationTime();
+        if (ta>tb) return 1;
+        if (ta==tb) return 0;
+        return -1;
       }};
-  
+
   protected Object sem = new Object();
 
   /** must be called only within a sync(sem) **/
@@ -238,24 +235,31 @@ public abstract class Timer implements Runnable {
 
   private void ring(Alarm alarm) {
     if (!alarm.hasExpired()) {  // only ring if it wasn't cancelled already
-      if (isVisible) report(alarm);
+      report(alarm);
+      long dt = 0L;
       try {
+        dt = System.currentTimeMillis(); // real start time
         alarm.expire();
+        dt = System.currentTimeMillis() - dt; // real delta time
+        //
+        if (dt > epsilon) {
+          if (log.isWarnEnabled()) {
+            log.warn("Alarm "+alarm+" blocked for "+dt+"ms while ringing");
+          }
+        }
       } finally {
         // see if the alarm has been evil and as has opened a transaction
         // but neglected to close it
         if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
-          Logging.getLogger(Timer.class).warn("Alarm"+alarm+" expiration failed to close it's transaction");
+          log.error("Alarm "+alarm+" failed to close it's transaction");
         }
       }
     }
   }
 
   protected void report(Alarm alarm) {
-    if (isLoud) {
-      System.err.println(this.toString()+" ringing "+alarm);
-    } else {
-      //System.err.print("*");
+    if (log.isDebugEnabled()) {
+      log.debug("Ringing "+alarm);
     }
   }
 

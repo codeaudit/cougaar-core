@@ -24,6 +24,7 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
 
 final class TreeNode
 {
@@ -32,6 +33,7 @@ final class TreeNode
     private Scheduler scheduler;
     private ThreadGroup group;
     private ThreadPool pool;
+    private Timer timer;
 
     TreeNode(Scheduler scheduler, ThreadServiceProxy parentService) 
     {
@@ -50,6 +52,13 @@ final class TreeNode
 	
 	pool = ThreadPool.getPool(group);
     }
+
+
+    synchronized Timer timer() {
+	if (timer == null) timer = new Timer(true);
+	return timer;
+    }
+
 
 
     void setParent(TreeNode parent) {

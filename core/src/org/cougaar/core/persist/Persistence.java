@@ -29,7 +29,10 @@ import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.component.ServiceBroker;
 
 /**
- * The public interface for persistence
+ * The public interface for persistence. This is the old interface to
+ * persistence and is still used for blackboard persistence.
+ * The implementation recasts these methods into the new
+ * PersistenceService interface.
  */
 public interface Persistence {
   /**
@@ -43,7 +46,8 @@ public interface Persistence {
                               List subscriberStates,
                               boolean returnBytes,
                               boolean full,
-                              MessageManager messageManager);
+                              MessageManager messageManager,
+                              Object quiescenceMonitorState);
 
     /**
      * Get the rehydration envelope from the most recent persisted state.

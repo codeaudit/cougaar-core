@@ -54,6 +54,8 @@ class RoundRobinSelector implements RightsSelector
 	    if (child_node == null) return null;
 
 	    Scheduler child = child_node.getScheduler();
+	    if (!scheduler.allowRightFor(child)) return null;
+
 	    handoff = child.getNextPending();
 	    // We're the parent of the Scheduler to which the handoff
 	    // is given.  Increase the local count.

@@ -51,7 +51,7 @@ public final class AddressEntry implements Serializable {
 
   public static AddressEntry getAddressEntry(
       String name, String type, URI uri) {
-    return new AddressEntry(name, type, uri, Cert.NULL);
+    return getAddressEntry(name, type, uri, Cert.NULL);
   }
 
   public static AddressEntry getAddressEntry(
@@ -108,7 +108,7 @@ public final class AddressEntry implements Serializable {
   }
 
   private Object readResolve() {
-    return getAddressEntry(name, type, uri);
+    return getAddressEntry(name, type, uri, cert);
   }
 
   //

@@ -100,6 +100,7 @@ class IdentityTable {
         }
       }
       persistentObjects.set(pAssoc.getReferenceId().intValue(), null);
+      count--;
     }
   }
 
@@ -179,6 +180,7 @@ class IdentityTable {
 					 pAssoc);
     }
     persistentObjects.set(ix, pAssoc);
+    count++;
     return pAssoc;
   }
 

@@ -21,6 +21,7 @@
 
 package org.cougaar.core.wp;
 
+
 /**
  * Utility class to format longs as:<pre>
  *    TIME{[+-]RELATIVE_TO_NOW}

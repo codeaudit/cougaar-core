@@ -24,7 +24,7 @@ package org.cougaar.core.qos.metrics;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TimerTask;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.AgentStatusService;
@@ -32,19 +32,22 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 
 public class AgentStatusRatePlugin 
     extends ComponentPlugin
-    implements Constants
+    implements Runnable, Constants
 {
     private static final int LOCAL = 0;
     private static final int REMOTE = 1;
+    private static final int BASE_PERIOD = 10; //10SecAVG
 
     private AgentStatusService agentStatusService;
     private MetricsUpdateService metricsUpdate;
     private HashMap agentLocalHistories;
     private HashMap agentRemoteHistories;
     private MessageAddress nodeID;
+    private Schedulable schedulable;
 
     public AgentStatusRatePlugin() {
 	super();
@@ -66,69 +69,84 @@ public class AgentStatusRatePlugin
 	MessageAddress agent;
 
 	AgentHistory(MessageAddress address, HashMap store) {
-	    super(10, 3);
+	    super(10, 3, BASE_PERIOD);
 	    this.agent = address;
 	    store.put(address, this);
 	}
 
-
-	public void newAddition(String period, 
-				DecayingHistory.SnapShot now,
-				DecayingHistory.SnapShot last) 
-	{
-	    handleNewAddition(agent, period, 
-			      (AgentSnapShot) now,
-			      (AgentSnapShot) last);
-	}
-
-	
-	abstract void handleNewAddition(MessageAddress agent,
-					String period,
-					AgentSnapShot now, 
-					AgentSnapShot last);
     }
 
     private class AgentLocalHistory extends AgentHistory {
+	String msgInKey;
+	String msgOutKey;
+	String bytesInKey;
+	String bytesOutKey;
 
 	AgentLocalHistory(MessageAddress address) {
 	    super(address, agentLocalHistories);
+	    String agentKey ="Agent" +KEY_SEPR+ agent  +KEY_SEPR ;
+	    msgInKey = (agentKey + MSG_IN).intern();
+	    addKey( msgInKey);
+	    msgOutKey = (agentKey + MSG_OUT).intern();
+	    addKey( msgOutKey);
+	    bytesInKey = (agentKey + BYTES_IN).intern();
+	    addKey( bytesInKey);
+	    bytesOutKey = (agentKey + BYTES_OUT).intern();
+	    addKey( bytesOutKey);
 	}
 
-	void handleNewAddition(MessageAddress agent,
-			       String period,
-			       AgentSnapShot now, 
-			       AgentSnapShot last) 
+	public void newAddition(KeyMap keys,
+			 DecayingHistory.SnapShot rawNow, 
+			 DecayingHistory.SnapShot rawLast) 
 	{
-	    updateAgentMetric(agent,"MsgIn",period, msgInRate(now,last),
-			      "msg/sec");
-	    updateAgentMetric(agent,"MsgOut",period, msgOutRate(now,last),
-			      "msg/sec");
-	    updateAgentMetric(agent,"BytesIn",period, bytesInRate(now,last),
-			      "bytes/sec");
-	    updateAgentMetric(agent,"BytesOut",period, bytesOutRate(now,last),
-			      "bytes/sec");
-
+	    AgentSnapShot now = (AgentSnapShot) rawNow;
+	    AgentSnapShot last = (AgentSnapShot) rawLast;
+	    updateMetric(keys.getKey(msgInKey),
+			 msgInRate(now,last), "msg/sec");
+	    updateMetric(keys.getKey(msgOutKey),
+			 msgOutRate(now,last), "msg/sec");
+	    updateMetric(keys.getKey(bytesInKey),
+			 bytesInRate(now,last),"bytes/sec");
+	    updateMetric(keys.getKey(bytesOutKey),
+			 bytesOutRate(now,last), "bytes/sec");
 	}
     }
 
     private class AgentRemoteHistory extends AgentHistory {
+	String msgFromKey;
+	String msgToKey;
+	String bytesFromKey;
+	String bytesToKey;
+
 	AgentRemoteHistory(MessageAddress address) {
 	    super(address, agentRemoteHistories);
+	    String agentKey = "Node" +KEY_SEPR+ nodeID
+		+KEY_SEPR+ "Destination" +KEY_SEPR+
+		agent  +KEY_SEPR;
+	    msgFromKey = (agentKey + MSG_FROM).intern();
+	    addKey( msgFromKey);
+	    msgToKey = (agentKey + MSG_TO).intern();
+	    addKey( msgToKey);
+	    bytesFromKey = (agentKey + BYTES_FROM).intern();
+	    addKey( bytesFromKey);
+	    bytesToKey = (agentKey + BYTES_TO).intern();
+	    addKey( bytesToKey);
 	}
 
-	void handleNewAddition(MessageAddress agent,
-			       String period,
-			       AgentSnapShot now, 
-			       AgentSnapShot last) 
+	public void newAddition(KeyMap keys,
+			  DecayingHistory.SnapShot rawNow, 
+			  DecayingHistory.SnapShot rawLast) 
 	{
-	    updateFlowMetric(agent,"MsgFrom",period, msgInRate(now,last),
-			     "msg/sec");
-	    updateFlowMetric(agent,"MsgTo",period, msgOutRate(now,last),
-			     "msg/sec");
-	    updateFlowMetric(agent,"BytesFrom",period, bytesInRate(now,last),
-			     "bytes/sec");
-	    updateFlowMetric(agent,"BytesTo",period, bytesOutRate(now,last),
-			     "bytes/sec");
+	    AgentSnapShot now = (AgentSnapShot) rawNow;
+	    AgentSnapShot last = (AgentSnapShot) rawLast;
+	    updateMetric(keys.getKey(msgFromKey),
+			 msgInRate(now,last),"msg/sec");
+	    updateMetric(keys.getKey(msgToKey),
+			 msgOutRate(now,last),"msg/sec");
+	    updateMetric(keys.getKey(bytesFromKey),
+			 bytesInRate(now,last),"bytes/sec");
+	    updateMetric(keys.getKey(bytesToKey),
+			 bytesOutRate(now,last),"bytes/sec");
 	    // JAZ ADD QUEUE Metric
 	}
 
@@ -151,40 +169,16 @@ public class AgentStatusRatePlugin
 
 
 
-    private void updateAgentMetric(MessageAddress agent,
-				   String label,
-				   String period,
+    private void updateMetric(String key,
 				   double value, 
 				   String units)
     {
-	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR +label + period;
 	Metric metric = new MetricImpl(value,
 				       SECOND_MEAS_CREDIBILITY,
 				       units,
 				       "AgentStatusRatePlugin");
 	metricsUpdate.updateValue(key, metric);
     }
-
-  
-    
-    private void updateFlowMetric(MessageAddress agent,
-				  String label,
-				  String period,
-				  double value, 
-				  String units)
-    {
-	String key = "Node" +KEY_SEPR+ nodeID
-	    +KEY_SEPR+ "Destination" +KEY_SEPR+
-	    agent  +KEY_SEPR +label + period;
-	
-	Metric metric = new MetricImpl(value,
-				       SECOND_MEAS_CREDIBILITY,
-				       units,
-				       "AgentStatusRatePlugin");
-	metricsUpdate.updateValue(key, metric);
-
-    }
-
 
 
     private double deltaSec(AgentSnapShot now, AgentSnapShot last) 
@@ -249,17 +243,16 @@ public class AgentStatusRatePlugin
 
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {
-	    TimerTask poller = new TimerTask() { 
-		    public void run() { 
-			poll(); 
-		    } };
-	    ThreadService threadService = (ThreadService)
+	    ThreadService tsvc = (ThreadService)
 		sb.getService(this, ThreadService.class, null);
-	    threadService.schedule(poller, 0, 1000);
+	    schedulable = tsvc.getThread(this, this, "AgentStatus");
+	    schedulable.schedule(0, BASE_PERIOD*1000);
+	    sb.releaseService(this, ThreadService.class, tsvc);
 	}
     }
 
-    private void poll() {
+    // The body of the Schedulable
+    public void run() {
 	Iterator itr = agentStatusService.getLocalAgents().iterator();
 	while (itr.hasNext()) {
 	    MessageAddress addr = (MessageAddress) itr.next();

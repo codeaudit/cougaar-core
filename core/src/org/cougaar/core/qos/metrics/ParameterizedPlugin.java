@@ -66,6 +66,27 @@ public abstract class ParameterizedPlugin extends ComponentPlugin
      
     }
 
+    public long getParameter(String key, long defaultValue) {
+	String spec = getParameter(key);
+	if (spec != null) {
+	    try { return Long.parseLong(spec); }
+	    catch (NumberFormatException ex) { return defaultValue; }
+	} else {
+	    return defaultValue;
+	}
+    }
+
+    public double getParameter(String key, double defaultValue) {
+	String spec = getParameter(key);
+	if (spec != null) {
+	    try { return Double.parseDouble(spec); }
+	    catch (NumberFormatException ex) { return defaultValue; }
+	} else {
+	    return defaultValue;
+	}
+    }
+
+
     public void setParameter(Object param) {
 	if (param instanceof List) {
 	    Iterator itr = ((List) param).iterator();

@@ -68,7 +68,7 @@ public abstract class BlackboardClientComponent
   private SchedulerService scheduler;
   protected BlackboardService blackboard;
   protected AlarmService alarmService;
-
+  protected AgentIdentificationService agentIdentificationService;
   protected String blackboardClientName;
 
   private BindingSite bindingSite;
@@ -87,6 +87,7 @@ public abstract class BlackboardClientComponent
    **/
   public void setParameter(Object param) {
     parameter = param;
+    setBlackboardClientName(computeBlackboardClientName(param));
   }
   
   /**
@@ -151,6 +152,7 @@ public abstract class BlackboardClientComponent
     alarmService = s;
   }
   public final void setAgentIdentificationService(AgentIdentificationService ais) {
+    agentIdentificationService = ais;
     MessageAddress an;
     if ((ais != null) &&
         ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
@@ -181,10 +183,6 @@ public abstract class BlackboardClientComponent
   //
   // implement GenericStateModel:
   //
-
-  public void initialize() {
-    super.initialize();
-  }
 
   public void load() {
     super.load();
@@ -238,6 +236,10 @@ public abstract class BlackboardClientComponent
     blackboard.registerInterest(watcher);
 
     // activate the trigger model
+    //
+    // note that this jumps the gun a bit, since we'll request our
+    // precycle before starting, but that's the behavior the plugins
+    // currently expect.
     tm.initialize();
     tm.load();
   }
@@ -365,23 +367,33 @@ public abstract class BlackboardClientComponent
   protected final boolean wasAwakened() { return awakened; }
 
   // for BlackboardClient use
-  public synchronized String getBlackboardClientName() {
+  // DO NOT SYNCHRONIZE THIS METHOD; a deadlock will result.
+  // It doesn't matter if two threads compute the name.
+  public String getBlackboardClientName() {
     if (blackboardClientName == null) {
-      StringBuffer buf = new StringBuffer();
-      buf.append(getClass().getName());
-      if (parameter instanceof Collection) {
-        buf.append("[");
-        String sep = "";
-        for (Iterator params = ((Collection)parameter).iterator(); params.hasNext(); ) {
-          buf.append(sep);
-          buf.append(params.next().toString());
-          sep = ",";
-        }
-        buf.append("]");
-      }
-      blackboardClientName = buf.substring(0);
+      setBlackboardClientName(computeBlackboardClientName(parameter));
     }
     return blackboardClientName;
+  }
+
+  private void setBlackboardClientName(String newName) {
+    blackboardClientName = newName;
+  }
+
+  private String computeBlackboardClientName(Object parameter) {
+    StringBuffer buf = new StringBuffer();
+    buf.append(getClass().getName());
+    if (parameter instanceof Collection) {
+      buf.append("[");
+      String sep = "";
+      for (Iterator params = ((Collection) parameter).iterator(); params.hasNext(); ) {
+        buf.append(sep);
+        buf.append(params.next().toString());
+        sep = ",";
+      }
+      buf.append("]");
+    }
+    return buf.substring(0);
   }
   
   public long currentTimeMillis() {

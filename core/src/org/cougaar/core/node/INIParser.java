@@ -104,7 +104,7 @@ public final class INIParser {
    * loaded as a low priority plugin (e.g. after most other plugins and internal components).
    * <p>
    * Also "cluster=name" and is converted into<pre>
-   *   "Node.AgentManager.Agent=org.cougaar.core.agent.ClusterImpl(name)"
+   *   "Node.AgentManager.Agent=org.cougaar.core.agent.SimpleAgent(name)"
    * </pre> as a default classname.
    * <p>
    * These old "cluster" values are <u>ignored</u>:<ul>

@@ -1,3 +1,30 @@
+2003-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* service/alarm/ExecutionTimer.java:
+	Bug #3265 -- first AlarmService.currentTimeMillis gets old time after a step
+	The getTime method has a crucial side-effect of stepping the
+	parameters to their new values if their switch time has been
+	passed. This side effect must occur before the "current"
+	parameters are fetched else the old parameters will used
+	erroneously.
+
+2003-07-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimpleAgent.java:
+	Bug #3199 -- NodeAgent uses null logger for SimpleAgent logging
+	Create and use a static logger if a LoggingService cannot be obtained.
+	Bug #2966 -- persistence/security rehydration ordering issue
+	Bug #3038 -- Rehydration started before SecurityComponent
+	Bug #3141 -- Persistence component rehydration started before AgentIde...
+	Revise ordering to rehydrate persistence component before loading
+	high priority components only if rehydrating from a state object
+	and not from files. Then use the rehydrated component list for
+	loading all components. If rehydration must be done from files,
+	postpone the rehydration until highpriority components and the
+	AgentIdentityService have been loaded and the agent identity
+	acquired. In this case, use the rehydrated component list only for
+	internal and lower priority components.
+
 2003-04-29  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleAgent.java:

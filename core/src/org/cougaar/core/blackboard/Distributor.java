@@ -21,6 +21,7 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.service.QuiescenceReportService;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -30,18 +31,24 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.cougaar.core.agent.service.MessageSwitchService;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeBusyService;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-import org.cougaar.core.logging.LoggingServiceWithPrefix;
 
 /**
  * The Distributor coordinates blackboard transactions, subscriber
@@ -78,8 +85,9 @@ final class Distributor {
    * can occur at a time, and it can't occur at the same time as a
    * persist.  Only one persist can occur at a time, and there must
    * be no active transactions (to guard against object
-   * modifications during serialization).  When a persist is not
-   * taking place it's okay for transactions to start/finish while
+   * modifications during serialization), but we can be suspended.
+   * Transactions are allowed when we're not persisting or
+   * suspended.  It's okay for transactions to start/finish while
    * a distribute is taking place, to provide parallelism.
    *
    * Persistence runs in either a lazy or non-lazy mode, where the
@@ -121,6 +129,11 @@ final class Distributor {
   private static final long PERSISTENCE_RESERVATION_TIMEOUT =
     Long.getLong(PERSISTENCE_RESERVATION_TIMEOUT_PROP, 120000L).longValue();
 
+  private static final String PERSIST_AT_STARTUP_PROP =
+    "org.cougaar.core.blackboard.persistAtStartup";
+  private static final boolean PERSIST_AT_STARTUP =
+    Boolean.getBoolean(PERSIST_AT_STARTUP_PROP);
+
   //
   // these are set in the constructor and are final:
   //
@@ -133,6 +146,9 @@ final class Distributor {
 
   /** the name of this distributor */
   private final String name;
+
+  /** NodeBusyService so we can indicate when we are busy persisting **/
+  private NodeBusyService nodeBusyService;
 
   // blackboard, noted below.
 
@@ -161,8 +177,11 @@ final class Distributor {
   private final Object transactionLock = new Object();
 
   // the following are locked under the transactionLock:
-  private boolean persistPending = false;
-  private boolean persistActive = false;
+
+  private static final int PERSIST_ACTIVE  = (1<<0);
+  private static final int PERSIST_PENDING = (1<<1);
+  private static final int SUSPENDED       = (1<<2);
+  private int persistFlags = 0;
   private int transactionCount = 0;
 
   // temporary list for use within "doPersist":
@@ -189,8 +208,9 @@ final class Distributor {
   /** The message manager for this cluster **/
   private MessageManager myMessageManager = null;
 
-  /** Timer thread for periodic lazy-persistence. **/
+  /** Periodic persistence timer */
   private Timer distributorTimer = null;
+  private TimerTask timerTask;
 
   private final Subscribers subscribers = new Subscribers();
 
@@ -200,6 +220,16 @@ final class Distributor {
 
   // temporary list, for use within "receiveMessages()":
   private final List directiveMessages = new ArrayList();
+
+  //
+  // periodic (lazy) persistence timer
+  //
+
+  private final Object timerLock = new Object();
+
+  // the following are locked under the timerLock:
+
+  private boolean timerActive;
 
   //
   // These are partially locked, and may cause bugs in
@@ -219,9 +249,13 @@ final class Distributor {
    * been persisted **/
   private boolean needToPersist = false;
 
+  private QuiescenceMonitor quiescenceMonitor;
+
+  private ServiceBroker sb;
+  private QuiescenceReportService quiescenceReportService;
 
   /** Isolated constructor **/
-  public Distributor(Blackboard blackboard, String name) {
+  public Distributor(Blackboard blackboard, ServiceBroker sb, String name) {
     this.blackboard = blackboard;
     this.name = (name != null ? name : "Anonymous");
     Logger l = Logging.getLogger(getClass());
@@ -229,6 +263,16 @@ final class Distributor {
     if (logger.isInfoEnabled()) {
       logger.info("Distributor started");
     }
+    this.sb = sb;
+    nodeBusyService = (NodeBusyService)
+      sb.getService(this, NodeBusyService.class, null);
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    nodeBusyService.setAgentIdentificationService(ais);
+    quiescenceReportService = (QuiescenceReportService)
+      sb.getService(this, QuiescenceReportService.class, null);
+    quiescenceReportService.setAgentIdentificationService(ais);
+    quiescenceMonitor = new QuiescenceMonitor(quiescenceReportService, logger);
   }
 
   /**
@@ -332,6 +376,9 @@ final class Distributor {
       rehydrationEnvelope = new PersistenceEnvelope();
       RehydrationResult rr =
         persistence.rehydrate(rehydrationEnvelope, state);
+      if (rr.quiescenceMonitorState != null) {
+        quiescenceMonitor.setState(rr.quiescenceMonitorState);
+      }
       if (lazyPersistence) {    // Ignore any rehydrated message manager
         myMessageManager = new MessageManagerImpl(false);
       } else {
@@ -405,20 +452,127 @@ final class Distributor {
     synchronized (distributorLock) {
       rehydrate(state);
       getMessageManager().start(msgSwitch, didRehydrate);
+      needToPersist = true;
+    }
+    // persist now, to claim the persistence ownership
+    // and save our component hierarchy
+    if (PERSIST_AT_STARTUP) {
+      persist(false, false);
+    }
+    createTimer();
+    enableTimer();
+  }
 
+  private void createTimer() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // disable the timer if it already exists
+    disableTimer();
+    // start a disabled periodic timer
+    synchronized (distributorLock) {
       if (lazyPersistence && distributorTimer == null) {
         distributorTimer = new Timer();
-        TimerTask tt =
+        timerTask =
           new TimerTask() {
             public void run() {
-              timerPersist();
+              synchronized (timerLock) {
+                if (timerActive) {
+                  timerPersist();
+                }
+              }
             }
           };
         distributorTimer.schedule(
-            tt,
+            timerTask,
             TIMER_PERSIST_INTERVAL,
             TIMER_PERSIST_INTERVAL);
       }
+    }
+  }
+
+  private void enableTimer() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (timerLock) {
+      timerActive = true;
+    }
+  }
+
+  private void disableTimer() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // if the timer is running then this will block
+    synchronized (timerLock) {
+      timerActive = false;
+    }
+  }
+
+  private void stopTimer() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // disable the timer if it's running
+    disableTimer();
+    // stop the timer thread.  This isn't necessary unless we're
+    // really "stop()"ing the distributor, but it's useful to
+    // hide this thread when the timer is disabled.
+    synchronized (distributorLock) {
+      if (lazyPersistence) {
+        if (distributorTimer != null) {
+          distributorTimer.cancel();
+          distributorTimer = null;
+        }
+      }
+    }
+  }
+
+  /**
+   * Complete any active persists, lockout transactions and
+   * timer-based persists, and only allow external state
+   * captures via "persistNow()" and "getPersistenceObject()".
+   */
+  public void suspend() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (logger.isInfoEnabled()) {
+      logger.info("Suspending");
+    }
+    // stop our timer
+    disableTimer();
+    // pretend that we're getting ready to persist to lockout
+    // all transactions.  Then set the SUSPENDED flag, which
+    // acts as another block for "startTransaction".
+    // Then we release our active persistence lock to allow
+    // externally-signaled persistence while still preventing
+    // transaction-based persistence.
+    synchronized (transactionLock) {
+      // wait for persistence to complete
+      lockoutPersistence();
+      // block transactions
+      lockoutTransactions();
+      // keep the transactions blocked
+      setSuspended(true);
+      // allow persistence
+      resumePersistence();
+      resumeTransactions();
+    }
+    if (logger.isInfoEnabled()) {
+      logger.info("Suspended");
+    }
+  }
+
+  public void resume() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // see suspend for comments
+    if (logger.isInfoEnabled()) {
+      logger.info("Resuming");
+    }
+    synchronized (transactionLock) {
+      setSuspended(false);
+    }
+    enableTimer();
+    if (logger.isInfoEnabled()) {
+      logger.info("Resumed");
     }
   }
 
@@ -428,13 +582,10 @@ final class Distributor {
   public void stop() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
+    sb.releaseService(this, QuiescenceReportService.class, quiescenceReportService);
+    stopTimer();
     synchronized (distributorLock) {
       getMessageManager().stop();
-
-      if (lazyPersistence && distributorTimer != null) {
-        distributorTimer.cancel();
-        distributorTimer = null;
-      }
     }
   }
 
@@ -512,7 +663,11 @@ final class Distributor {
         Subscriber s = subscription.getSubscriber();
         List l = new ArrayList(1);
         l.add(new InitializeSubscriptionEnvelope(subscription));
-        s.receiveEnvelopes(l);    // queue in the right spot
+        s.receiveEnvelopes(l, true);    // queue in the right spot.
+                                        // Assume at least one of the
+                                        // sources of the objects that
+                                        // filled the subscription
+                                        // requires quiescence.
       }
     }
   }
@@ -530,7 +685,7 @@ final class Distributor {
    * of an outbox envelope to everybody.
    *
    * If needToPersist is true and it is time to persist, we set the
-   * persistPending flag to prevent any further openTransactions from
+   * PERSIST_PENDING flag to prevent any further openTransactions from
    * happening. Then we distribute the outbox and consequent
    * envelopes. If anything is distributed, we set the needToPersist
    * flag. Any messages generated by the Blackboard are gathered and
@@ -538,10 +693,14 @@ final class Distributor {
    * the generation of a persistence delta is considered.
    **/
   private void distribute(Envelope outbox, BlackboardClient client) {
+    distribute(outbox, client, quiescenceMonitor.isQuiescenceRequired(client));
+  }
+
+  private void distribute(Envelope outbox, BlackboardClient client, boolean clientQuiescenceRequired) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     if (outbox != null &&
-        logger.isDebugEnabled() &&
+        logger.isDetailEnabled() &&
         client != null) {
       logEnvelope(outbox, client);
     }
@@ -579,29 +738,53 @@ final class Distributor {
      * still happening or are about to happen in this agent.
      **/
     boolean busy = haveSomethingToDistribute;
+    boolean newSubscribersAreQuiescent = true; // Until proven otherwise
     if (persistence != null) {
       if (!needToPersist && haveSomethingToDistribute) {
         needToPersist = true;
       }
     }
+    if (logger.isDebugEnabled()) {
+      if (haveSomethingToDistribute) {
+        logger.debug("quiescence"
+                     + (clientQuiescenceRequired ? "" : " not")
+                     + " required for outbox of "
+                     + client.getBlackboardClientName());
+      }
+    }
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
       if (subscriber == blackboard) continue;
+      boolean subscriberBusy = false;
       if (haveSomethingToDistribute) {
-        subscriber.receiveEnvelopes(outboxes);
-      } else if (!busy && subscriber.isBusy()) {
+        subscriber.receiveEnvelopes(outboxes, clientQuiescenceRequired);
+        subscriberBusy = true;
+      } else if (subscriber.isBusy()) {
+        subscriberBusy = true;
+      }
+      if (subscriberBusy) {
         busy = true;
+      }
+      if (newSubscribersAreQuiescent && !subscriber.isQuiescent()) {
+        BlackboardClient inboxClient = subscriber.getClient();
+        if (quiescenceMonitor.isQuiescenceRequired(inboxClient)) {
+          if (logger.isDebugEnabled()) {
+            logger.debug(inboxClient.getBlackboardClientName() + " prevents quiescence");
+          }
+          newSubscribersAreQuiescent = false;
+        }
       }
     }
     // Fill messagesToSend
     blackboard.appendMessagesToSend(messagesToSend);
     if (messagesToSend.size() > 0) {
-      if (logger.isDebugEnabled()) {
-        for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
-          DirectiveMessage msg = (DirectiveMessage) i.next();
+      for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
+        DirectiveMessage msg = (DirectiveMessage) i.next();
+        if (clientQuiescenceRequired) quiescenceMonitor.numberOutgoingMessage(msg);
+        if (logger.isDetailEnabled()) {
           Directive[] dirs = msg.getDirectives();
           for (int j = 0; j < dirs.length; j++) {
-            logger.debug("SEND   " + dirs[j]);
+            logger.detail("SEND   " + dirs[j]);
           }
         }
       }
@@ -616,7 +799,10 @@ final class Distributor {
       if (!needToPersist && getMessageManager().needAdvanceEpoch()) {
         needToPersist = true;
       }
-      if (!busy && transactionCount > 0) busy = true;
+      if (!busy && transactionCount > 1) {
+        // This is not the last transaction, still busy
+        busy = true;
+      }
       if (needToPersist) {
         if (!busy) {
           maybeSetPersistPending();  // Lock out new transactions
@@ -624,6 +810,7 @@ final class Distributor {
       }
     }
     outboxes.clear();
+    quiescenceMonitor.setSubscribersAreQuiescent(newSubscribersAreQuiescent);
   }
 
   public void restartAgent(MessageAddress cid) {
@@ -637,7 +824,7 @@ final class Distributor {
           blackboard.restart(cid);
           Envelope envelope =
             blackboard.receiveMessages(Collections.EMPTY_LIST);
-          distribute(envelope, blackboard.getClient());
+          distribute(envelope, blackboard.getClient(), true);
         } finally {
           blackboard.stopTransaction();
         }
@@ -658,6 +845,7 @@ final class Distributor {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     try {
+      boolean messagesRequireQuiescence = false;
       startTransaction(); // Blocks if persistence active
 
       synchronized (distributorLock) {
@@ -675,13 +863,15 @@ final class Distributor {
               }
             }
             if ((code & MessageManager.IGNORE) == 0) {
-              if (logger.isDebugEnabled()) {
+              if (logger.isDetailEnabled()) {
                 Directive[] dirs = msg.getDirectives();
                 for (int i = 0; i < dirs.length; i++) {
-                  logger.debug("RECV   " + dirs[i]);
+                  logger.detail("RECV   " + dirs[i]);
                 }
               }
               directiveMessages.add(msg);
+              messagesRequireQuiescence |=
+                quiescenceMonitor.numberIncomingMessage(msg);
             }
           } else if (m instanceof AckDirectiveMessage) {
             AckDirectiveMessage msg = (AckDirectiveMessage) m;
@@ -702,7 +892,7 @@ final class Distributor {
           blackboard.startTransaction();
           Envelope envelope = blackboard.receiveMessages(
               directiveMessages);
-          distribute(envelope, blackboard.getClient());
+          distribute(envelope, blackboard.getClient(), messagesRequireQuiescence);
         } finally {
           blackboard.stopTransaction();
         }
@@ -730,7 +920,7 @@ final class Distributor {
   /**
    * Generate a persistence delta if possible and necessary. It is
    * possible if the transaction count is zero and necessary if either
-   * persistPending is true or needToPersist is true and we are not
+   * PERSIST_PENDING is true or needToPersist is true and we are not
    * busy. This second clause is needed so we don't end up being idle
    * with needToPersist being true.
    **/
@@ -739,6 +929,7 @@ final class Distributor {
     assert !Thread.holdsLock(distributorLock);
     assert  Thread.holdsLock(transactionLock);
     assert transactionCount == 1 : transactionCount;
+    nodeBusyService.setAgentBusy(true);
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
       if (subscriber.isReadyToPersist()) {
@@ -755,13 +946,15 @@ final class Distributor {
           subscriberStates,
           persistedStateNeeded,
           full,
-          lazyPersistence ? null : getMessageManager());
+          lazyPersistence ? null : getMessageManager(),
+          quiescenceMonitor.getState());
     }
     epochEnvelopes.clear();
     subscriberStates.clear();
     setPersistPending(false);
     needToPersist = false;
     lastPersist = System.currentTimeMillis();
+    nodeBusyService.setAgentBusy(false);
     return result;
   }
 
@@ -786,19 +979,21 @@ final class Distributor {
   /**
    * Transaction control
    **/
-
+  private static final String START_EXCUSE = "Waiting to Start Transaction";
   public void startTransaction() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     synchronized (transactionLock) {
-      while (persistPending || persistActive) {
+      while (persistFlags != 0) {
         try {
-          transactionLock.wait();
-        }
-        catch (InterruptedException ie) {
-        }
+	    SchedulableStatus.beginWait(START_EXCUSE);
+	    transactionLock.wait();
+        } catch (InterruptedException ie) {
+        } finally {
+	    SchedulableStatus.endBlocking();
+	}
       }
-      ++transactionCount;
+      transactionCount++;
     }
   }
 
@@ -816,13 +1011,13 @@ final class Distributor {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     synchronized (transactionLock) {
-      if (persistPending) {
+      if ((persistFlags & PERSIST_PENDING) != 0) {
         if (transactionCount == 1) {
-          // transactionCount == 1 implies persistActive == false
+          // transactionCount == 1 implies ((persistFlags & PERSIST_ACTIVE) == 0)
           if (logger.isInfoEnabled()) {
             logger.info("Persist started (finish transaction)");
           }
-          assert !persistActive;
+          assert ((persistFlags & PERSIST_ACTIVE) == 0);
           doPersistence(false, false);
           if (logger.isInfoEnabled()) {
             logger.info("Persist completed (finish transaction)");
@@ -837,7 +1032,7 @@ final class Distributor {
           }
         }
       }
-      --transactionCount;
+      transactionCount--;
       assert transactionCount >= 0 : transactionCount;
       transactionLock.notifyAll();
     }
@@ -867,7 +1062,7 @@ final class Distributor {
    *   distribute() is not called
    *   we wait for all transactions to close
    * </pre><p>
-   * A "persistActive" flag is used to guarantee that only
+   * A "PERSIST_ACTIVE" flag is used to guarantee that only
    * one persist occurs at a time.
    *
    * @param isStateWanted true if the data of a full persistence
@@ -883,40 +1078,15 @@ final class Distributor {
       while (true) {            // Loop until we succeed and return a result
         synchronized (transactionLock) {
           // First we must wait for any other persistence activity to cease
-          if (persistActive) {
-            if (logger.isInfoEnabled()) {
-              logger.info("Waiting for active persist to complete");
-            }
-            do {
-              try {
-                transactionLock.wait();
-              } catch (InterruptedException ie) {
-              }
-            } while (persistActive);
-          }
+          lockoutPersistence();
           // The we have to wait for our reservation to become ripe
           if (logger.isInfoEnabled()) {
             logger.info("reservation waitfor");
           }
           persistenceReservationManager.waitFor(persistence, logger);
           // Now we try to persist
-          persistActive = true;
-          if (logger.isInfoEnabled()) {
-            logger.info("Waiting for " + transactionCount +
-                        " transactions to close");
-          }
-          transactionCount++;
-          assert transactionCount >= 1 : transactionCount;
+          lockoutTransactions();
           try {
-            while (transactionCount > 1) {
-              try {
-                transactionLock.wait();
-              } catch (InterruptedException ie) {
-              }
-            }
-            assert transactionCount == 1 : transactionCount;
-            // persistPending == don't care, transactionCount == 1
-            // We are the only one left in the pool
             // We commit to doing persistence, but we may have lost our reservation
             if (persistenceReservationManager.commit(persistence)) {
               if (logger.isInfoEnabled()) {
@@ -936,14 +1106,79 @@ final class Distributor {
               }
             }
           } finally {
-            persistActive = false;
-            --transactionCount;
-            assert transactionCount == 0 : transactionCount;
-            transactionLock.notifyAll();
+            resumePersistence();
+            resumeTransactions();
           }
         }
       }
     }
+
+  private static final String LOCKOUT_EXCUSE = "Waiting for active persist to complete";
+  private void lockoutPersistence() {
+    assert !Thread.holdsLock(distributorLock);
+    assert Thread.holdsLock(transactionLock);
+    if ((persistFlags & PERSIST_ACTIVE) != 0) {
+      if (logger.isInfoEnabled()) {
+        logger.info(LOCKOUT_EXCUSE);
+      }
+      do {
+        try {
+	    SchedulableStatus.beginWait(LOCKOUT_EXCUSE);
+	    transactionLock.wait();
+        } catch (InterruptedException ie) {
+        } finally {
+	    SchedulableStatus.endBlocking();
+	}
+       } while ((persistFlags & PERSIST_ACTIVE) != 0);
+    }
+    persistFlags |= PERSIST_ACTIVE;
+    // don't care about PERSIST_PENDING or SUSPENDED.
+    //
+    // To persist we still need to lockout transactions
+  }
+
+  private void resumePersistence() {
+    assert !Thread.holdsLock(distributorLock);
+    assert Thread.holdsLock(transactionLock);
+    assert ((persistFlags & PERSIST_ACTIVE) != 0);
+    persistFlags &= ~PERSIST_ACTIVE;
+    // we need to notify the transaction lock.  
+    //
+    // This is always called just before resuming transactions,
+    // which will notify the lock, so we'll let that method
+    // do the notification.
+  }
+  private static final String TRANSACTION_EXCUSE = "Waiting for transaction to close";
+  private void lockoutTransactions() {
+    assert !Thread.holdsLock(distributorLock);
+    assert Thread.holdsLock(transactionLock);
+    if (logger.isInfoEnabled()) {
+      logger.info("Waiting for " + transactionCount +
+                  " transactions to close");
+    }
+    transactionCount++;
+    assert transactionCount >= 1 : transactionCount;
+    while (transactionCount > 1) {
+      try {
+	  SchedulableStatus.beginWait(TRANSACTION_EXCUSE);
+	  transactionLock.wait();
+      } catch (InterruptedException ie) {
+      } finally {
+	  SchedulableStatus.endBlocking();
+      }
+     }
+    assert transactionCount == 1 : transactionCount;
+    // if we've locked out persistence then it's now save to persist
+  }
+
+  private void resumeTransactions() {
+    assert !Thread.holdsLock(distributorLock);
+    assert Thread.holdsLock(transactionLock);
+    assert transactionCount >= 1 : transactionCount;
+    transactionCount--;
+    assert transactionCount == 0 : transactionCount;
+    transactionLock.notifyAll();
+  }
 
   private void maybeSetPersistPending() {
     assert  Thread.holdsLock(distributorLock);
@@ -952,7 +1187,7 @@ final class Distributor {
       if (persistenceReservationManager.request(persistence)) {
         if (logger.isInfoEnabled()) logger.info("reservation request succeeded");
         setPersistPending(true);
-      } else if (persistPending) {
+      } else if ((persistFlags & PERSIST_PENDING) != 0) {
         // Whoops. We lost our reservation
         if (logger.isInfoEnabled()) logger.info("reservation request failed");
         setPersistPending(false); // Need to start all over
@@ -965,12 +1200,23 @@ final class Distributor {
     // caller may already hold the transactionLock
     synchronized (transactionLock) {
       // FIXME holds both locks!
-      if (persistPending != on) {
-        persistPending = on;
-        if (!persistPending) {
-          transactionLock.notifyAll();
-        }
+      if (on) {
+        persistFlags |= PERSIST_PENDING;
+      } else if ((persistFlags & PERSIST_PENDING) != 0) {
+        persistFlags &= ~PERSIST_PENDING;
+        transactionLock.notifyAll();
       }
+    }
+  }
+
+  private void setSuspended(boolean on) {
+    assert !Thread.holdsLock(distributorLock);
+    assert Thread.holdsLock(transactionLock);
+    if (on) {
+      persistFlags |= SUSPENDED;
+    } else if ((persistFlags & SUSPENDED) != 0) {
+      persistFlags &= ~SUSPENDED;
+      transactionLock.notifyAll();
     }
   }
 
@@ -985,11 +1231,11 @@ final class Distributor {
   }
 
   private void logEnvelope(Envelope envelope, BlackboardClient client) {
-    if (!logger.isDebugEnabled()) return;
+    if (!logger.isDetailEnabled()) return;
     boolean first = true;
     for (Iterator tuples = envelope.getAllTuples(); tuples.hasNext(); ) {
       if (first) {
-        logger.debug(
+        logger.detail(
             "Outbox of " + client.getBlackboardClientName());
         first = false;
       }
@@ -998,7 +1244,7 @@ final class Distributor {
         for (Iterator objects =
             ((BulkEnvelopeTuple) tuple).getCollection().iterator();
             objects.hasNext(); ) {
-          logger.debug("BULK   " + objects.next());
+          logger.detail("BULK   " + objects.next());
         }
       } else {
         String kind = "";
@@ -1009,7 +1255,7 @@ final class Distributor {
         } else {
           kind = "REMOVE ";
         }
-        logger.debug(kind + tuple.getObject());
+        logger.detail(kind + tuple.getObject());
       }
     }
   }
@@ -1017,7 +1263,7 @@ final class Distributor {
   public String getName() { return name; } // agent name
 
   public String toString() {
-    return "<Distributor " + name + ">";
+    return "<Distributor " + getName() + ">";
   }
 
   /**

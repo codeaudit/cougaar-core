@@ -22,9 +22,9 @@
 package org.cougaar.core.wp.resolver.rmi;
 
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
+import java.rmi.server.UnicastRemoteObject;
 import org.cougaar.core.service.wp.AddressEntry;
 
 /**

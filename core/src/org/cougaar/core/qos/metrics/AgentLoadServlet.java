@@ -26,14 +26,20 @@ import java.util.Iterator;
 import javax.servlet.http.HttpServletRequest;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 
 public class AgentLoadServlet 
     extends MetricsServlet
     implements Constants
 {
+    private AgentStatusService agentStatusService; 
+
     public AgentLoadServlet(ServiceBroker sb) {
 	super(sb);
+
+	agentStatusService = (AgentStatusService)
+	    sb.getService(this, AgentStatusService.class, null);
     }
 
     public String getPath() {
@@ -46,7 +52,7 @@ public class AgentLoadServlet
 
     public void printPage(HttpServletRequest request, PrintWriter out) {
 	// Get list of All Agents On this Node
-	java.util.Set localAgents = getLocalAgents();
+	java.util.Set localAgents = agentStatusService.getLocalAgents();
 	if (localAgents == null) return;
 
 	//Header Row
@@ -54,7 +60,7 @@ public class AgentLoadServlet
 	out.print("<tr><b>");
 	out.print("<td><b>AGENT</b></td>");
 	out.print("<td><b>CPUloadAvg</b></td>");
-	out.print("<td><b>CPUloadJIPS</b></td>");
+	out.print("<td><b>CPUloadMJIPS</b></td>");
 	out.print("<td><b>MsgIn</b></td>");
 	out.print("<td><b>MsgOut</b></td>");
 	out.print("<td><b>BytesIn</b></td>");
@@ -75,7 +81,7 @@ public class AgentLoadServlet
 
 	    Metric cpuLoadJips = 
 		metricsService.getValue(agentPath
-					+ CPU_LOAD_JIPS_10_SEC_AVG);
+					+ CPU_LOAD_MJIPS_10_SEC_AVG);
 	    Metric msgIn = metricsService.getValue(agentPath+
 						   MSG_IN_10_SEC_AVG);
 	    Metric msgOut = metricsService.getValue(agentPath+
@@ -112,19 +118,29 @@ public class AgentLoadServlet
 	out.print("<tr>");
 	out.print("<th>AGENT</th>");
 	out.print("<th>CPUloadAvg</th>");
+	out.print("<th>CPUloadMJIPS</th>");
 	out.print("</tr>");
 
 	out.print("<tr><td><b>MTS</b></td>");
-	String mtsPath = "Service(MTS)" +PATH_SEPR+ CPU_LOAD_AVG_10_SEC_AVG;
-	Metric mtsCpuLoad = metricsService.getValue(mtsPath);
+	String mtsLoadPath = "Service(MTS)" +PATH_SEPR+ CPU_LOAD_AVG_10_SEC_AVG;
+	Metric mtsCpuLoad = metricsService.getValue(mtsLoadPath);
 	ServletUtilities.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2, out);
+	String mtsMJIPSPath = "Service(MTS)" +PATH_SEPR+ 
+	    CPU_LOAD_MJIPS_10_SEC_AVG;
+	Metric mtsCpuMJIPS = metricsService.getValue(mtsMJIPSPath);
+	ServletUtilities.valueTable(mtsCpuMJIPS, 0.0, 500.0,true, f6_3, out);
 	out.print("</tr>\n");
 
 	out.print("<tr><td><b>Metrics</b></td>");
-	String metricPath = "Service(Metrics)" +PATH_SEPR+ 
+	String metricLoadPath = "Service(Metrics)" +PATH_SEPR+ 
 	    CPU_LOAD_AVG_10_SEC_AVG;
-	Metric metricCpuLoad = metricsService.getValue(metricPath);
+	Metric metricCpuLoad = metricsService.getValue(metricLoadPath);
 	ServletUtilities.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2, out);
+	String metricMJIPSPath = "Service(Metrics)" +PATH_SEPR+ 
+	    CPU_LOAD_MJIPS_10_SEC_AVG;
+	Metric metricCpuMJIPS = metricsService.getValue(metricMJIPSPath);
+	ServletUtilities.valueTable(metricCpuMJIPS, 0.0, 500.0,true, f6_3, out);
+
 	out.print("</tr>\n");
 
 	out.print("</table>");

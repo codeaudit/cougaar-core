@@ -27,6 +27,7 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.EventService;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -62,6 +63,23 @@ implements Component
 
   public void load() {
     super.load();
+
+    // if we're in the node-agent then advertise at the root
+    // level, to allow use by all node-level components
+    //
+    // note that the other agengs will override this node-level
+    // service to make the prefix match their agent's id, as
+    // opposed to the node's id.
+    NodeControlService nodeControlService = (NodeControlService)
+      sb.getService(
+          this, NodeControlService.class, null);
+    if (nodeControlService != null) {
+      ServiceBroker rootsb =
+        nodeControlService.getRootServiceBroker();
+      sb.releaseService(
+          this, NodeControlService.class, nodeControlService);
+      sb = rootsb;
+    }
 
     // create and advertise our service
     if (sp == null) {

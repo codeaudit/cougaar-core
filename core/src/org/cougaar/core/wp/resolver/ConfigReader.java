@@ -26,143 +26,247 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.LoggingService;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerFactory;
 
 /**
- * This component reads the bootstrap config and fills
- * the TableService.
+ * This utility class reads the bootstrap configuration for later
+ * use in the client's cache and server.
+ * <p>
+ * This class reads the lines in the file "alpreg.ini", the system
+ * property "-Dorg.cougaar.name.server=<i>VALUE</i>" which is
+ * parsed as the line "WP=<i>VALUE</i>", and all system properties
+ * that match "-Dorg.cougaar.name.server.<i>NAME</i>=<i>VALUE</i>
+ * which are parsed as lines "<i>NAME</i>=<i>VALUE</i>.  Lines
+ * starting with "#", "[", or "//" are ignored.
+ * <p>
+ * Typically either the "alpreg.ini" file or system properties
+ * will specify a single "host:port" of a node that's running the
+ * white pages server, e.g.:<pre>
+ *   -Dorg.cougaar.name.server=foo.com:1234
+ * </pre>  This will create a local white pages cache hint for the
+ * "WP" entry and activates the local RMI bootstrap resolver:<pre>
+ *   {@link org.cougaar.core.wp.resolver.rmi.RMIBootstrapLookup}
+ * </pre> to contact the RMI registry on "foo.com:1324" and find
+ * the RMI stub.  If this is the local host then the RMI bootstrap
+ * resolver watches for local MTS binds and advertises the local
+ * node as the white pages server.  An alias named "WP" will be added
+ * to the local white pages cache, which tells the local white pages
+ * client resolver where to find the white pages.
+ * <p>
+ * Another useful line format is:<pre>
+ *   <i>NAME</i>=<i>AGENT</i>@<i>HOST</i>:<i>PORT</i>
+ * </pre> which tells the RMI bootstrap resolver to look for a
+ * specific agent on the host instead of finding the first that
+ * raced to bind in the RMI registry.
+ * <p>
+ * The name "WP" and names starting with "WP-" have special meaning
+ * to the ClientTransport, since these identify white pages servers.
+ * See {@link ClintTransport} for additional details.
+ * 
+ * @see #parse detailed parsing notes
  */
-public class ConfigReader
-extends GenericStateModelAdapter
-implements Component
-{
-  private static final String FILENAME =
-    "alpreg.ini";
-  private static final String SERVER_PROP =
-    "org.cougaar.name.server";
-  private static final String PORT_PROP =
-    "org.cougaar.name.server.port";
+public class ConfigReader {
 
-  private ServiceBroker sb;
-  private LoggingService logger;
-  private AgentIdentificationService agentIdService;
-  private WhitePagesService wps;
+  private static final String FILENAME = "alpreg.ini";
+  private static final String SERVER_PROP = "org.cougaar.name.server";
+  private static final String PROP_PREFIX = SERVER_PROP+".";
+  private static final String PORT_PROP = PROP_PREFIX+"port";
 
-  private String agentName;
+  private static final Object lock = new Object();
 
-  private String host;
-  private int port;
+  private static List entries;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
-  }
+  // these are only used if "entries" is null
+  private static Logger logger; 
+  private static String host;
+  private static int port;
 
-  public void load() {
-    super.load();
-
-    logger = (LoggingService) sb.getService(
-        this, LoggingService.class, null);
-    agentIdService = (AgentIdentificationService) sb.getService(
-        this, AgentIdentificationService.class, null);
-    wps = (WhitePagesService) sb.getService(
-        this, WhitePagesService.class, null);
-
-    agentName = agentIdService.getMessageAddress().getAddress();
-
-    // do all our work
-    readConfig();
-
-    if (wps != null) {
-      sb.releaseService(this, WhitePagesService.class, wps);
-      wps = null;
-    }
-    if (agentIdService != null) {
-      sb.releaseService(
-          this, AgentIdentificationService.class, agentIdService);
-      agentIdService = null;
-    }
-    if (logger != LoggingService.NULL) {
-      sb.releaseService(this, LoggingService.class, logger);
-      logger = null;
-    }
-    sb = null;
-  }
-
-  private void readConfig() {
-    read_file(FILENAME);
-    read_props();
-    if (host != null && port > 0) {
-      // backwards compatibility!
-      parse("WP=-RMI_REG,rmi://"+host+":"+port+"/*");
+  public static List listEntries() {
+    synchronized (lock) {
+      ensureLoad();
+      return entries;
     }
   }
-  
-  private void add(AddressEntry ae) {
-    if (logger.isInfoEnabled()) {
-      logger.info("Add bootstrap entry: "+ae);
+
+  private static void ensureLoad() {
+    if (entries == null) {
+      entries = new ArrayList();
+      readConfig();
+      entries = 
+        (entries.isEmpty() ?
+         Collections.EMPTY_LIST :
+         Collections.unmodifiableList(entries));
     }
+  }
+
+  private static void readConfig() {
+    logger = LoggerFactory.getInstance().createLogger(
+        ConfigReader.class);
     try {
-      wps.hint(ae);
+      read_file(FILENAME);
+      read_props();
     } catch (Exception e) {
       if (logger.isErrorEnabled()) {
-        logger.error(
-            "Unable to add bootstrap hint: "+ae, e);
+        logger.error("Failed readConfig", e);
       }
     }
+    if (logger.isInfoEnabled()) {
+      logger.info("Read config: "+entries);
+    }
+    logger = null;
   }
 
-  private void parse(String line) {
+  private static void add(String line) {
+    AddressEntry ae = parse(line);
+    if (ae == null) {
+      return;
+    }
+    // find matching entry (if any)
+    int overwrite = -1;
+    String name = ae.getName();
+    String type = ae.getType();
+    for (int i = 0, n = entries.size(); i < n; i++) {
+      AddressEntry ai = (AddressEntry) entries.get(i);
+      if (name.equals(ai.getName()) &&
+          type.equals(ai.getType())) {
+        overwrite = i;
+        break;
+      }
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Adding "+ae+
+          (0 <= overwrite ?
+           ", which overwrites "+entries.get(overwrite) :
+           ""));
+    }
+    if (0 <= overwrite) {
+      entries.remove(overwrite);
+    }
+    entries.add(ae);
+  }
+
+  /**
+   * Parse a line of input into an AddressEntry.
+   * <p>
+   * Lines starting with "#", "[", or "//" are ignored.
+   * <p>
+   * The standard line formats are:<pre>
+   *   1) <i>NAME</i>=<i>HOST</i>:<i>PORT</i>
+   *   2) <i>NAME</i>=<i>AGENT</i>@<i>HOST</i>:<i>PORT</i>
+   * </pre> which turn into these white pages hints:<pre>
+   *   1&gt; (name=<i>NAME</i> type=-RMI_REG uri=rmi://<i>HOST</i>:<i>PORT</i>/*)
+   *   2&gt; (name=<i>NAME</i> type=-RMI_REG uri=rmi://<i>HOST</i>:<i>PORT</i>/<i>AGENT</i>)
+   * </pre> plus these backwards-compatible lines:<pre>
+   *   3) address=<i>HOST</i>
+   *   4) port=<i>PORT</i>
+   * </pre> which are combined to form the equivalent of:<pre>
+   *   3+4) WP=<i>HOST</i>:<i>PORT</i>
+   * </pre><p>
+   * An additional line format is:<pre>
+   *   5) <i>NAME</i>=<i>AGENT</i>@
+   * </pre> which is parsed as:<pre>
+   *   5&gt; (name=<i>NAME</i> type=alias uri=name:///<i>AGENT</i>)
+   * </pre>.
+   * <p>
+   * Lastly, this format is supported:<pre>
+   *   6) <i>NAME</i>=<i>TYPE</i>[:,]<i>SCHEME</i>://<i>URI_INFO</i>
+   * </pre> which is parsed as:<pre>
+   *   6&gt; (name=<i>NAME</i> type=<i>TYPE</i> uri=<i>SCHEME</i>://<i>URI_INFO</i>)
+   * </pre>.  This allows the user to specify a full AddressEntry.
+   * <p>
+   * For backwards compatibility, the following names are
+   * reserved:<pre>
+   *    address, port, hostname, alias, lpsport</pre>
+   * Also, if the line ends in ":5555", then this is trimmed off,
+   * since this is the old PSP server port.
+   */
+  private static AddressEntry parse(String line) {
     if (line.startsWith("#") ||
         line.startsWith("[") ||
         line.startsWith("//")) {
-      return;
+      return null;
     }
     int index = line.indexOf('=');
     if (index <= 0) {
-      return;
+      return null;
     }
     String name = line.substring(0, index).trim();
     String value = line.substring(index + 1).trim();
     if ("address".equals(name) ||
         "hostname".equals(name)) {
+      // save for later
       host = value;
-    } else if ("port".equals(name)) {
+      return null;
+    }
+    if ("port".equals(name)) {
+      // save for later
       port = Integer.parseInt(value);
-    } else if (
-        "alias".equals(name) ||
+      return null;
+    } 
+    if ("alias".equals(name) ||
         "lpsport".equals(name)) {
       // ignore
-    } else {
-      int sep = value.indexOf(',');
-      if (sep >= 0) {
-        String type = value.substring(0, sep).trim();
-        String suri = value.substring(sep+1).trim();
-        URI uri;
-        try {
-          uri = URI.create(suri);
-        } catch (Exception e) {
-          throw new RuntimeException("Invalid line: "+line, e);
-        }
-        AddressEntry ae = AddressEntry.getAddressEntry(
-            name, type, uri);
-        add(ae);
-      }
+      return null;
     }
+    // trim off the old psp server port
+    if (value.endsWith(":5555")) {
+      value = value.substring(0, value.length()-5); 
+    }
+    // parse
+    int atIdx = value.indexOf('@');
+    int comIdx = value.indexOf(',');
+    int colIdx = value.indexOf(':');
+    int col2Idx;
+    if (0 <= comIdx && comIdx < colIdx) {
+      col2Idx = colIdx;
+      colIdx = comIdx;
+    } else {
+      col2Idx =
+        (colIdx < 0 ?
+         -1 :
+         value.indexOf(':', colIdx+1));
+    }
+    String type;
+    String suri;
+    if (0 < col2Idx) {
+      type = value.substring(0, colIdx);
+      suri = value.substring(colIdx+1);
+    } else if (
+        0 < atIdx &&
+        atIdx == value.length()-1) {
+      type = "alias";
+      suri = "name:///"+value.substring(0, atIdx);
+    } else {
+      type = "-RMI_REG";
+      String agent;
+      String hostport;
+      if (atIdx < 0) {
+        agent = "*";
+        hostport = value;
+      } else {
+        agent = value.substring(0, atIdx);
+        hostport = value.substring(atIdx+1);
+      }
+      suri = "rmi://"+hostport+"/"+agent;
+    }
+    URI uri = URI.create(suri);
+    AddressEntry ae = AddressEntry.getAddressEntry(
+        name, type, uri);
+    return ae;
   }
 
-  private void read_file(String filename) {
+  private static void read_file(String filename) {
     try {
       InputStream fs = ConfigFinder.getInstance().open(filename);
       if (fs != null) {
@@ -170,9 +274,15 @@ implements Component
           new BufferedReader(new InputStreamReader(fs));
         String line = null;
         while ((line = in.readLine()) != null) {
-          parse(line);
+          add(line);
         }
         in.close();
+        if (host != null && 0 < port) {
+          // backwards compatibility!
+          add("WP="+host+":"+port);
+        }
+        host = null;
+        port = -1;
       }
     } catch (FileNotFoundException fnfe) {
     } catch(Exception e) {
@@ -182,41 +292,30 @@ implements Component
     }
   }
 
-  private void read_props() {
+  private static void read_props() {
     String server = System.getProperty(SERVER_PROP);
     if (server != null) {
-      int sep1 = server.indexOf(':');
-      String rawHost = 
-        (sep1 >= 0 ?
-         server.substring(0, sep1) :
-         server);
-      try {
-        InetAddress addr = InetAddress.getByName(rawHost);
-        host = addr.getHostAddress();
-      } catch (UnknownHostException uhe) {
-        logger.error(SERVER_PROP+" specifies unknown host: " + server);
-      }
-      if (sep1 >= 0) {
-        int sep2 = server.indexOf(':', sep1+1);
-        if (sep2 < 0) {
-          sep2 = server.length();
-        }
-        String sport = server.substring(sep1+1, sep2);
-        try {
-          port = Integer.parseInt(sport);
-        } catch (NumberFormatException nfe) {
-          logger.error(
-              SERVER_PROP+" port is not an integer: "+server);
-        }
-      }
+      add("WP="+server);
     }
-    String serverPort = System.getProperty(PORT_PROP);
-    if (serverPort != null) {
-      try {
-        port = Integer.parseInt(serverPort);
-      } catch (NumberFormatException nfe) {
-        logger.error(PORT_PROP+" is not an integer: " + serverPort);
-      }
+
+    Properties props =
+      SystemProperties.getSystemPropertiesWithPrefix(
+          PROP_PREFIX);
+    for (Enumeration en = props.propertyNames();
+        en.hasMoreElements();
+        ) {
+      String key = (String) en.nextElement();
+      String name = key.substring(PROP_PREFIX.length());
+      String value = props.getProperty(key);
+      String line = name+"="+value;
+      add(line);
     }
+
+    if (host != null && 0 < port) {
+      // backwards compatibility!
+      add("WP="+host+":"+port);
+    }
+    host = null;
+    port = -1;
   }
 }

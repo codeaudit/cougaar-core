@@ -143,6 +143,6 @@ public class PersistenceAssociation extends WeakReference {
     case ACTIVE:   activity = " +"; break;
     case INACTIVE: activity = " -"; break;
     }
-    return BasePersistence.hc(getObject()) + activity + " @ " + referenceId;
+    return PersistenceServiceComponent.hc(getObject()) + activity + " @ " + referenceId;
   }
 }

@@ -24,6 +24,7 @@ package org.cougaar.core.qos.metrics;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
 
 
 public class StandardVariableEvaluator implements VariableEvaluator
@@ -42,7 +43,10 @@ public class StandardVariableEvaluator implements VariableEvaluator
 	try {
 	    host = java.net.InetAddress.getLocalHost().getHostAddress();
 	} catch (Exception ex) {
-	    ex.printStackTrace();
+	    LoggingService lsvc = (LoggingService)
+		sb.getService(this, LoggingService.class, null);
+	    if (lsvc.isErrorEnabled())
+		lsvc.error("Failed to get local address: " + ex);
 	    host = "10.0.0.0"; // nice
 	}
     }

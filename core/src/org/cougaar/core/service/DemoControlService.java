@@ -46,5 +46,6 @@ public interface DemoControlService extends Service {
    * to the whole society (ie the old way)
    */
   void advanceNodeTime(long period, double rate);
+  void setNodeTime(long time, double rate);
   double getExecutionRate();
 }

@@ -1,3 +1,175 @@
+2003-09-04  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Blackboard.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Remove superfluous import of removed BasePersistence
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Add removedAgent method so the NodeAgent can tell us when an agent
+	has been removed. Generates a new quiescence event if necessary to
+	reflect the fact that the agent is no longer in this node.
+
+	* org/cougaar/core/node/NodeAgent.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Tell the QuiescenceReportServiceProvider when agents are removed
+	so it can announce a new quiescence state reflecting the fact that
+	the agent is no long in this node.
+
+	* org/cougaar/core/blackboard/QuiescenceMonitor.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Add setState and getState to enable saving and restoring of
+	messaage numbers.
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #3296 -- No quiescence after agent moves
+	Include message numbers in persistence data.
+	Set message numbers from rehydration data.
+	Release QuiescenceReportService when stopping so the service
+	provider knows that an agent may have left the building and new
+	quiescence state can be logged.
+
+2003-07-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java:
+	Bug #3185 -- Quiescence reporting incorrect
+	Improve logging of quiescence reason counting. No bug fix yet.
+
+2003-07-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java:
+	Bug #3185 -- Quiescence reporting incorrect
+	Fix race in manipulating the quiescence state of an agent. Two
+	service instance trying to count the quiescence state up or down
+	simultaneously could have counted incorrectly. The code was
+	synchronizing on the wrong variable.
+
+2003-07-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/QuiescenceMonitor.java: 
+	Bug #3185 -- Quiescence reporting incorrect
+	Improve logging of quiescence report updated due to messages
+	received from or sent to other agents by identifying that last
+	such agent. Also incorporate a few changes in message number
+	generation from B10_4_2 that had not been checked in.
+
+	* org/cougaar/core/blackboard/Distributor.java: 
+	Bug #3185 -- Quiescence reporting incorrect
+	The distribution of outboxes from Subscribers that are excluded
+	from quiescence calculation must not make other subscribers not
+	quiescent. Indicate this when adding envelopes to the other
+	subscribers. Also do those for envelopes resulting from messages
+	received from other agents when the messages are all unnumbered.
+
+	* org/cougaar/core/blackboard/Blackboard.java: 
+	Bug #3185 -- Quiescence reporting incorrect
+	Pass a flag to receiveEnvelopes method indicating that the
+	blackboard's inbox is never considered to have items from sources
+	requiring quiescence. The blackboard is never asked if it is
+	quiescent, so the actual value is immaterial, but the method
+	signature must match.
+
+	* org/cougaar/core/blackboard/Subscriber.java:
+	Bug #3185 -- Quiescence reporting incorrect
+	Maintain a flag indicating that the inbox (pendingEnvelopes)
+	contains no items from a source for which quiescence is required.
+	A second flag indicates that, when a transaction is open, the
+	transaction items (transactionEnvelopes) also contain no items
+	from a source for which quiescence is required. Both flags must be
+	true for the Subscriber to be quiescent.
+
+2003-07-18  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java:
+	Bug #3168 -- deadlock between quiesence and community plugin
+	Not community plugin specific; the community plugin is simply
+	guilty of waking up a lot. The announcer thread is using a method
+	in the outer class to invoke the event service. This method does a
+	test and set of the event service instance and needs to be
+	synchronized, but not on the outer class instance since it is used
+	to synchronize access to the provider. Use a separate lock object.
+
+2003-07-08  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/QuiescenceReportService.java:
+	Quiescence Reporting Changes
+	Revise interface to eliminate redundancy between quiescence
+	override and ordinary quiescence reporting.
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java:
+	Quiescence Reporting Changes
+	Quiescence override was synonymous with regular quiescence plus
+	message number recording. Factor quiescence into message number
+	reporting and simple quiesence and eliminate the now redundant
+	quiescence override.
+
+	* org/cougaar/core/node/NodeAgent.java:
+	Quiescence Reporting Changes
+	Use the QuiescenceReportService to suppress quiescence while
+	agents are being created. These premature indications of
+	quiescence are annoying.
+
+	* org/cougaar/core/blackboard/QuiescenceMonitor.java:
+	Quiescence Reporting Changes
+	Adapt to streamlined QuiescenceReportService. Improve logging to
+	assist in identifying causes of non-quiescence.
+
+2003-07-07  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/QuiescenceReportService.java: 
+	Quiescence Reporting Changes
+	Defines the service API.
+
+	* org/cougaar/core/node/QuiescenceReportServiceProvider.java: 
+	Quiescence Reporting Changes
+	The class name says it all. Provides QuiesenceReportService to
+	agents allowing them to report their quiescence and if quiescence
+	the state of their directive message traffic w.r.t. other agents.
+
+	* org/cougaar/core/node/NodeAgent.java: 
+	Quiescence Reporting Changes
+	Create and register QuiescenceReportServiceProvider.
+
+	* org/cougaar/core/blackboard/Subscriber.java: 
+	Quiescence Reporting Changes
+	Add method to check if a Subscriber isquiescent.
+
+	* org/cougaar/core/blackboard/QuiescenceMonitor.java: 
+	Quiescence Reporting Changes
+	Implements much of the Quiescence reporting logic.
+
+	* org/cougaar/core/blackboard/Distributor.java: 
+	Quiescence Reporting Changes
+	Check for agent quiescence and report changes to
+	QuiescenceReportService.
+
+	* org/cougaar/core/blackboard/BlackboardClientComponent.java:
+	Quiescence Reporting Changes
+	Compute client name in a way that does not require synchronizing
+	to avoid deadlocking.
+
+2003-06-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/NodeAgent.java:
+	Bug #3033 -- Completion Event recieved yet servlet HTML view shows agents incomplete
+	Implement NodeBusyServiceProvider.
+
+	* org/cougaar/core/node/NodeBusyService.java: 
+	Bug #3033 -- Completion Event recieved yet servlet HTML view shows agents incomplete
+	New service allows agents to state that they are busy (e.g. doing
+	persistence). The Completion plugins are expected to use this
+	information to help determine that agents are complete.
+
+	* org/cougaar/core/blackboard/Distributor.java: 
+	Bug #3033 -- Completion Event recieved yet servlet HTML view shows agents incomplete
+	Use NodeBusyService to record start and end of persistence
+	episodes so that the agent won't be erroneously reported to be complete.
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #3033 -- Completion Event recieved yet servlet HTML view shows agents incomplete
+	Give the Distributor the ServiceBroker so it can obtain services
+	(e.g. NodeBusyService).
+
 2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Distributor.java:

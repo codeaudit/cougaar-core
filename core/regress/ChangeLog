@@ -1,3 +1,9 @@
+2001-09-10  Todd Wright  <twright@bbn.com>
+
+	* Regress.java:
+	Remove JNDI-based naming tests.  Left the empty
+        Regress class to support future tests.
+
 2001-09-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Regress.java:

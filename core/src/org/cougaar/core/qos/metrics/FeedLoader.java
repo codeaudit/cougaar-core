@@ -22,6 +22,7 @@
 package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.LoggingService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -78,7 +79,8 @@ public class FeedLoader extends QosComponent
 	}
     }
 
-    public void start() {
+    public void load() {
+        super.load();
 	ServiceBroker sb = getServiceBroker();
 	DataFeedRegistrationService svc = (DataFeedRegistrationService)
 	    sb.getService(this, DataFeedRegistrationService.class, null);
@@ -97,7 +99,10 @@ public class FeedLoader extends QosComponent
 		    svc.populateSites(getURL());
 		}
 	    } catch (Exception ex) {
-		ex.printStackTrace();
+		LoggingService lsvc = (LoggingService)
+		    sb.getService(this, LoggingService.class, null);
+		if (lsvc.isErrorEnabled())
+		    lsvc.error("Error creating DataFeed: " + ex);
 	    }
 
 	}

@@ -55,42 +55,124 @@ public abstract class WhitePagesService implements Service {
   //
   // no-timeout variations:
   //
+  // these methods have all been deprecated (bug 2875).  Blocking
+  // calls tie up the threads in the Cougaar thread pool.
+  //
+  // Clients should either use the non-blocking cache-only methods:
+  //   get(name, type, -1)
+  //   getAll(name, -1)
+  //   list(suffix, -1)
+  //   flush(name, minAge, ae, uncache, prefetch, -1)
+  // or the asynchronous callback-based methods:
+  //   get(name, type, callback)
+  //   getAll(name, callback)
+  //   list(suffix, callback)
+  //   flush(name, minAge, ae, uncache, prefetch, callback)
+  //   bind(ae, callback)
+  //   rebind(ae, callback)
+  //   hint(ae, callback)
+  //   unbind(ae, callback)
+  //   unhint(ae, callback)
+  //
+  // If the answer is already in the cache then the callback will
+  // be invoked immediately.  Flush can use an asynchronous callback,
+  // even though it's guaranteed not to block.
+  //
+  // In Cougaar 10.4.1 the cache-only methods will initiate a
+  // background fetch for the data, which will eventually be entered
+  // into the cache.  However, the cache has a fixed LRU size and
+  // will expire entries, so if the result is required then a
+  // callback should be used.
+  //
+  // If the client must block until the result is known, which is
+  // discouraged, it can write a callback like:
+  //   Response[] answer = new Response[1];
+  //   Callback callback = new Callback() {
+  //     public void execute(Response res) {
+  //       synchronized (answer) {
+  //         answer[0] = res;
+  //         answer.notifyAll();
+  //       }
+  //     }
+  //   };
+  //   whitePagesService.getAll("testme", callback);
+  //   Response res;
+  //   synchronized (answer) {
+  //     while (answer[0] == null) {
+  //       answer.wait();
+  //     }
+  //     res = answer[0];
+  //   }
+  //
+  // In Cougaar 10.4.2+ the following blocking methods will be
+  // removed and the method signatures will be *reused* for the
+  // cache-only APIs (i.e. the calls with a -1 as the last
+  // parameter).
+  //
 
-  /** @see Request.Get */
+  /**
+   * @see Request.Get
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final AddressEntry get(
       String name, String type) throws Exception {
     return get(name, type, 0);
   }
-  /** @see Request.GetAll */
+  /**
+   * @see Request.GetAll
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final Map getAll(String name) throws Exception {
     return getAll(name, 0);
   }
-  /** @see Request.List */
+  /** 
+   * @see Request.List 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final Set list(String suffix) throws Exception {
     return list(suffix, 0);
   }
-  /** @see Request.Get */
-  public final AddressEntry refresh(
-      String name, String type) throws Exception {
-    return refresh(name, type, 0);
+  /** 
+   * @see Request.Flush 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
+  public final boolean flush(
+      String name, long minAge, AddressEntry ae,
+      boolean uncache, boolean prefetch) throws Exception {
+    return flush(name, minAge, ae, uncache, prefetch, 0);
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final void bind(AddressEntry ae) throws Exception {
     bind(ae, 0);
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final void rebind(AddressEntry ae) throws Exception {
     rebind(ae, 0);
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final void hint(AddressEntry ae) throws Exception {
     hint(ae, 0);
   }
-  /** @see Request.Unbind */
+  /** 
+   * @see Request.Unbind 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final void unbind(AddressEntry ae) throws Exception {
     unbind(ae, 0);
   }
-  /** @see Request.Unbind */
+  /** 
+   * @see Request.Unbind 
+   * @deprecated use a non-blocking cache-only lookup or callback
+   */
   public final void unhint(AddressEntry ae) throws Exception {
     unhint(ae, 0);
   }
@@ -112,10 +194,14 @@ public abstract class WhitePagesService implements Service {
   public final void list(String suffix, Callback callback) {
     submit(new Request.List(Request.NONE, suffix), callback);
   }
-  /** @see Request.Get */
-  public final void refresh(
-      String name, String type, Callback callback) {
-    submit(new Request.Get(Request.BYPASS_CACHE, name, type), callback);
+  /** @see Request.Flush */
+  public final void flush(
+      String name, long minAge, AddressEntry ae,
+      boolean uncache, boolean prefetch, Callback callback) throws Exception {
+    submit(
+        new Request.Flush(
+          Request.CACHE_ONLY, name, minAge, ae, uncache, prefetch),
+        callback);
   }
   /** @see Request.Bind */
   public final void bind(AddressEntry ae, Callback callback) {
@@ -141,6 +227,10 @@ public abstract class WhitePagesService implements Service {
   //
   // timeout variations:
   //
+  // any timeout duration that's greater than or equal to zero
+  // is deprecated.  Only negative timeouts (cache-only) are
+  // not deprecated.
+  //
 
   public static final class TimeoutException 
     extends InterruptedException {
@@ -156,7 +246,10 @@ public abstract class WhitePagesService implements Service {
       public boolean isRequestTimeout() { return b; }
     }
 
-  /** @see Request.Get */
+  /** 
+   * @see Request.Get
+   * @param timeout non-negative values are deprecated
+   */
   public final AddressEntry get(
       String name, String type,
       long timeout) throws Exception {
@@ -169,7 +262,10 @@ public abstract class WhitePagesService implements Service {
     Response.Get res = (Response.Get) assertSubmit(req, timeout);
     return res.getAddressEntry();
   }
-  /** @see Request.GetAll */
+  /** 
+   * @see Request.GetAll
+   * @param timeout non-negative values are deprecated
+   */
   public final Map getAll(String name, long timeout) throws Exception {
     int options = Request.NONE;
     if (timeout < 0) {
@@ -180,7 +276,10 @@ public abstract class WhitePagesService implements Service {
     Response.GetAll res = (Response.GetAll) assertSubmit(req, timeout);
     return res.getAddressEntries();
   }
-  /** @see Request.List */
+  /** 
+   * @see Request.List
+   * @param timeout non-negative values are deprecated
+   */
   public final Set list(String suffix, long timeout) throws Exception {
     int options = Request.NONE;
     if (timeout < 0) {
@@ -191,20 +290,28 @@ public abstract class WhitePagesService implements Service {
     Response.List res = (Response.List) assertSubmit(req, timeout);
     return res.getNames();
   }
-  /** @see Request.Get */
-  public final AddressEntry refresh(
-      String name, String type,
+  /** 
+   * @see Request.Fetch
+   * @param timeout non-negative values are deprecated
+   */
+  public final boolean flush(
+      String name, long minAge, AddressEntry ae,
+      boolean uncache, boolean prefetch,
       long timeout) throws Exception {
-    int options = Request.BYPASS_CACHE;
+    int options = Request.NONE;
     if (timeout < 0) {
       options |= Request.CACHE_ONLY;
       timeout = 0;
     }
-    Request.Get req = new Request.Get(options, name, type);
-    Response.Get res = (Response.Get) assertSubmit(req, timeout);
-    return res.getAddressEntry();
+    Request.Flush req = new Request.Flush(
+        options, name, minAge, ae, uncache, prefetch);
+    Response.Flush res = (Response.Flush) assertSubmit(req, timeout);
+    return res.modifiedCache();
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind
+   * @param timeout non-negative values are deprecated
+   */
   public final void bind(AddressEntry ae, long timeout) throws Exception {
     if (timeout < 0) {
       throw new IllegalArgumentException("Negative bind timeout");
@@ -215,7 +322,10 @@ public abstract class WhitePagesService implements Service {
       throw new RuntimeException("Bind failed: "+res);
     }
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind
+   * @param timeout non-negative values are deprecated
+   */
   public final void rebind(AddressEntry ae, long timeout) throws Exception {
     if (timeout < 0) {
       throw new IllegalArgumentException("Negative rebind timeout");
@@ -226,7 +336,10 @@ public abstract class WhitePagesService implements Service {
       throw new RuntimeException("Rebind failed: "+res);
     }
   }
-  /** @see Request.Bind */
+  /** 
+   * @see Request.Bind
+   * @param timeout non-negative values are deprecated
+   */
   public final void hint(AddressEntry ae, long timeout) throws Exception {
     if (timeout < 0) {
       timeout = 0; // timeout doesn't really apply here...
@@ -237,7 +350,10 @@ public abstract class WhitePagesService implements Service {
       throw new RuntimeException("Hint failed: "+res);
     }
   }
-  /** @see Request.Unbind */
+  /** 
+   * @see Request.Unbind
+   * @param timeout non-negative values are deprecated
+   */
   public final void unbind(AddressEntry ae, long timeout) throws Exception {
     if (timeout < 0) {
       throw new IllegalArgumentException("Negative unbind timeout");
@@ -245,7 +361,10 @@ public abstract class WhitePagesService implements Service {
     Request.Unbind req = new Request.Unbind(Request.NONE, ae);
     Response.Unbind res = (Response.Unbind) assertSubmit(req, timeout);
   }
-  /** @see Request.Unbind */
+  /** 
+   * @see Request.Unbind
+   * @param timeout non-negative values are deprecated
+   */
   public final void unhint(AddressEntry ae, long timeout) throws Exception {
     if (timeout < 0) {
       timeout = 0; // timeout doesn't really apply here...
@@ -293,29 +412,16 @@ public abstract class WhitePagesService implements Service {
   /**
    * Submit a request, get back a "future reply" response.
    * <p>
-   * Example blocking usage is illustrated in the above
-   * utility methods, such as:<pre>
+   * An example cache-only non-blocking usage:<pre>
    *   try {
-   *     Map m = wps.getAll("foo");
-   *     System.out.println("got all entries for foo: "+m);
+   *     Map m = wps.getAll("foo", -1);
+   *     System.out.println("cached entries for foo: "+m);
    *   } catch (Exception e) {
    *     System.out.println("failed: "+e);
    *   }
    * </pre>
    * <p>
-   * An example timed block:<pre>
-   *   try {
-   *     // wait at most 5 seconds
-   *     Map m = wps.getAll("foo", 5000);
-   *     System.out.println("got all entries for foo: "+m);
-   *   } catch (WhitePagesService.TimeoutException te) {
-   *     System.out.println("timeout"); // waited over 5 seconds
-   *   } catch (Exception e) {
-   *     System.out.println("failed: "+e);
-   *   }
-   * </pre>
-   * <p>
-   * An example "callback" usage:<pre>
+   * An example asynchronous "callback" usage:<pre>
    *    Request req = new Request.GetAll(Request.NONE, "foo");
    *    Response r = wps.submit(req);
    *    Callback callback = new Callback() {
@@ -332,24 +438,7 @@ public abstract class WhitePagesService implements Service {
    *    // add callback, will execute immediately if 
    *    // there is already an answer
    *    r.addCallback(callback);
-   *    // keep going, or optionally wait for the callback
-   * </pre>
-   * <p>
-   * An example blocking "poll" usage is:<pre>
-   *    Request req = new Request.GetAll(Request.NONE, "foo");
-   *    Response res = wps.submit(req);
-   *    // wait at most 5 seconds
-   *    if (res.waitForIsAvailable(5000)) {
-   *      // got an answer in under 5 seconds
-   *      if (res.isSuccess()) {
-   *        Map m = ((Response.GetAll) res).getAddressEntries();
-   *        System.out.println("got all entries for foo: "+m);
-   *      } else {
-   *        System.out.println("failed: "+res);
-   *      }
-   *    } else {
-   *      // can wait some more, attach a callback, or give up
-   *    }
+   *    // keep going
    * </pre>
    *
    * @param request the non-null request
@@ -369,10 +458,6 @@ public abstract class WhitePagesService implements Service {
   public final AddressEntry get(
       String name, Application app, String scheme) throws Exception {
     return get(name, app, scheme, 0);
-  }
-  /** @deprecated use "refresh(name,type)" */
-  public final AddressEntry refresh(AddressEntry ae) throws Exception {
-    return refresh(ae, 0);
   }
   /** @deprecated use "Map getAll(name,timeout)" */
   public final AddressEntry[] get(String name, long timeout) throws Exception {
@@ -428,10 +513,5 @@ public abstract class WhitePagesService implements Service {
           null, e);
     }
     return ae;
-  }
-  /** @deprecated use "refresh(name,type,timeout)" */
-  public final AddressEntry refresh(
-      AddressEntry ae, long timeout) throws Exception {
-    return refresh(ae.getName(), ae.getType(), timeout);
   }
 }

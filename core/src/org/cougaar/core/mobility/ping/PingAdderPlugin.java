@@ -24,9 +24,11 @@ package org.cougaar.core.mobility.ping;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.component.ServiceBroker;
@@ -42,12 +44,61 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Plugin that creates Pings to remote agents,
- * repeats the pings up to a specified limit.
+ * This plugin that creates Pings to remote agents.
+ * <p>
+ * The PingTimerPlugin manages these pings and their timeouts.
+ * <p>
+ * Minimally the "target" plugin parameter should be specified,
+ * e.g.:<pre>
+ *   plugin=<i>this_class</i>(target=AgentX)
+ * </pre>
+ * otherwise this plugin does nothing.
+ * <p>
+ * The additional (optional) parameters are:
+ * <table border=1>
+ * <tr><th align=left>parameter</th>
+ *     <th align=left>meaning</th>
+ *     <th align=left>default</th></tr>
+ * <tr><td>startTime=[+]millis</td>
+ *     <td>when to add the ping(s)</td>
+ *     <td>+0</td></tr>
+ * <tr><td>delayMillis=millis</td>
+ *     <td>minimum time between pings</td>
+ *     <td>2000</td></tr>
+ * <tr><td>timeoutMillis=millis</td>
+ *     <td>maximum ping time, or negative for none</td>
+ *     <td>-1</td></tr>
+ * <tr><td>eventMillis=millis</td>
+ *     <td>millis between cougaar events, or negative for none</td>
+ *     <td>-1</td></tr>
+ * <tr><td>eventCount=millis</td>
+ *     <td>pings between cougaar events, or negative for none</td>
+ *     <td>-1</td></tr>
+ * <tr><td>limit=int</td>
+ *     <td>number of pings, or negative for no limit</td>
+ *     <td>-1</td></tr>
+ * <tr><td>ignoreRollback=boolean</td>
+ *     <td>ignore counter rollbacks upon agent restarts</td>
+ *     <td>false</td></tr>
+ * <tr><td>sendFillerSize=int</td>
+ *     <td>pad outgoing ping byte size, or negative for none</td>
+ *     <td>-1</td></tr>
+ * <tr><td>echoFillerSize=int</td>
+ *     <td>pad reply ping byte size, or negative for none</td>
+ *     <td>-1</td></tr>
+ * <tr><td>target=agent</td>
+ *     <td>ping target address, which can't be the local agent</td>
+ *     <td><i>none</i></td></tr>
+ * <tr><td>target<i>N</i>=agent</td>
+ *     <td>additional targets (N &gt;= 2)</td>
+ *     <td><i>none</i></td></tr>
+ * </table>
  */
 public class PingAdderPlugin
 extends ComponentPlugin 
 {
+  private static final String PROP_START_MILLIS = "startMillis";
+  private static final long DEFAULT_START_MILLIS = 0;
 
   private static final UnaryPredicate STATE_PRED =
     new UnaryPredicate() {
@@ -57,11 +108,7 @@ extends ComponentPlugin
     };
 
   private long startTime;
-  private long timeoutMillis;
-  private int limit;
-  private boolean ignoreRollback;
-  private int sendFillerSize;
-  private int echoFillerSize;
+  private Map props;
   private Set /*<MessageAddress>*/ targetIds;
 
   private MessageAddress agentId;
@@ -110,77 +157,71 @@ extends ComponentPlugin
           "Unable to obtain agent-id service");
     }
 
-    // parse parameters
-    long nowTime = System.currentTimeMillis();
+    // get parameters
     List params = (List) getParameters();
-    int targetsIdx;
-    try {
-      String s = (String) params.get(0);
-      boolean b = s.startsWith("+");
+    props = new HashMap();
+    for (int i = 0; i < params.size(); i++) {
+      String s = (String) params.get(i);
+      String name;
+      String value;
+      int sep = s.indexOf('=');
+      if (sep >= 0) {
+        name = s.substring(0, sep);
+        value = s.substring(sep+1);
+      } else {
+        // backwards-compatibility
+        switch (i) {
+          case 0: name = PROP_START_MILLIS; break;
+          case 1: name = PingImpl.PROP_TIMEOUT_MILLIS; break;
+          case 2: name = PingImpl.PROP_LIMIT; break;
+          case 3: name = "target"; break;
+          default: name = "target"+(i-2); break;
+        }
+        value = s;
+      }
+      props.put(name, value);
+    }
+
+    String s = (String) props.get(PROP_START_MILLIS);
+    boolean b;
+    if (s == null) {
+      b = true;
+      startTime = DEFAULT_START_MILLIS;
+    } else {
+      b = s.startsWith("+");
       if (b) {
         s = s.substring(1);
       }
       startTime = Long.parseLong(s);
-      if (b) {
-        startTime += nowTime;
-      }
-      if (startTime < nowTime) {
-        startTime = nowTime;
-      }
-      timeoutMillis = Long.parseLong((String) params.get(1));
-      String s2 = (String) params.get(2);
-      ignoreRollback = "true".equals(s2);
-      if (ignoreRollback || "false".equals(s2)) {
-        // new style usage
-        limit = Integer.parseInt((String) params.get(3));
-        sendFillerSize = Integer.parseInt((String) params.get(4));
-        echoFillerSize = Integer.parseInt((String) params.get(5));
-        targetsIdx = 6;
-      } else {
-        // old style usage
-        ignoreRollback = false;
-        limit = Integer.parseInt(s2);
-        sendFillerSize = -1;
-        echoFillerSize = -1;
-        targetsIdx = 3;
-      }
-    } catch (Exception e) {
-      throw new IllegalArgumentException(
-          "Expected parameters:\n"+
-          " [+]startMillis,\n"+
-          " timeoutMillis,\n"+
-          " (repeatLimit |\n"+
-          "    ignoreRollback,\n"+
-          "    repeatLimit,\n"+
-          "    sendFillerSize,\n"+
-          "    echoFillerSize),\n"+
-          " [,target0, .. targetN]),\n"+
-          " not "+params);
+    }
+    long nowTime = System.currentTimeMillis();
+    if (b) {
+      startTime += nowTime;
+    }
+    if (startTime < nowTime) {
+      startTime = nowTime;
     }
 
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Start time is "+startTime+
-          ", now is "+System.currentTimeMillis());
-    }
-
-    // parse optional set of targets
-    for (int i = targetsIdx, n = params.size(); i < n; i++) {
-      String si = (String) params.get(i);
-      MessageAddress ai = MessageAddress.getMessageAddress(si);
-      if (agentId.equals(ai)) {
+    s = (String) props.get("target");
+    int i = 1;
+    while (s != null) {
+      MessageAddress a = MessageAddress.getMessageAddress(s);
+      if (agentId.equals(a)) {
         throw new IllegalArgumentException(
-            "Agent "+agentId+" matches target["+i+"] "+ai);
+            "Agent "+agentId+" matches target["+i+"] "+a);
       }
-      // add to targets
-      if (n == targetsIdx) { 
-        targetIds = Collections.singleton(ai);
+      if (targetIds == null) {
+        targetIds = Collections.singleton(a);
       } else {
-        if (targetIds == null) {
-          targetIds = new HashSet(n - targetsIdx);
+        if (targetIds.size() == 1) {
+          Set tmp = new HashSet();
+          tmp.addAll(targetIds);
+          targetIds = tmp;
         }
-        targetIds.add(ai);
+        targetIds.add(a);
       }
+      ++i;
+      s = (String) props.get("target"+i);
     }
   }
 
@@ -240,17 +281,11 @@ extends ComponentPlugin
       for (int i = 0, n = targetIds.size(); i < n; i++) {
         MessageAddress ai = (MessageAddress) targetIter.next();
         UID uid = uidService.nextUID();
-        Ping ping = new PingImpl(
-            uid, agentId, ai, timeoutMillis, 
-            ignoreRollback, limit,
-            sendFillerSize, echoFillerSize);
+        Ping ping = new PingImpl(uid, agentId, ai, props);
         blackboard.publishAdd(ping);
 
         if (log.isDebugEnabled()) {
-          log.debug(
-              "Created ping "+i+" of "+n+
-              ", from "+agentId+" to "+ping.getTarget()+
-              ", uid "+uid);
+          log.debug("Created ping "+i+" of "+n+":\n"+ping);
         }
       }
     }

@@ -118,9 +118,9 @@ import org.cougaar.core.component.BindingSite;
  * @property org.cougaar.core.persistence.DataProtectionServiceStubEnabled set to true to enable 
  * a debugging implementation of DataProtectionService if no real one is found.
  */
- public class PersistenceServiceComponent
+public class PersistenceServiceComponent
   extends GenericStateModelAdapter
-   implements Component, PersistencePluginSupport, PersistenceNames
+  implements Component, PersistencePluginSupport, PersistenceNames
 {
   private static final long MIN_PERSISTENCE_INTERVAL = 5000L;
   private static final long MAX_PERSISTENCE_INTERVAL = 1200000L; // 20 minutes max
@@ -351,10 +351,6 @@ import org.cougaar.core.component.BindingSite;
       }
       throw new IllegalArgumentException(mediaName + " has no control named: " + controlName);
     }
-  }
-
-  interface PersistenceCreator {
-    BasePersistence create() throws PersistenceException;
   }
 
   static {
@@ -826,8 +822,8 @@ import org.cougaar.core.component.BindingSite;
       for (int i = 0; i < length; i++) {
 	referenceArrays[i] = (PersistenceReference []) currentInput.readObject();
       }
-//        byte[] bytes = (byte[]) currentInput.readObject();
-//        PersistenceInputStream stream = new PersistenceInputStream(bytes);
+      //        byte[] bytes = (byte[]) currentInput.readObject();
+      //        PersistenceInputStream stream = new PersistenceInputStream(bytes);
       PersistenceInputStream stream = new PersistenceInputStream(currentInput, logger);
       if (logger.isDetailEnabled()) {
         writeHistoryHeader();
@@ -952,6 +948,7 @@ import org.cougaar.core.component.BindingSite;
   private void addAssociationToPersist(PersistenceAssociation pAssoc) {
     if (pAssoc.isMarked()) return; // Already scheduled to be written
     pAssoc.setMarked(true);
+    objectsThatMightGoAway.add(pAssoc.getObject());
     associationsToPersist.add(pAssoc);
   }
 
@@ -1106,164 +1103,164 @@ import org.cougaar.core.component.BindingSite;
     PersistenceObject result = null; // Return value if wanted
     synchronized (identityTable) {
       try {
-        associationsToPersist.clear();
-        anyMarks(identityTable.iterator());
-        if (sequenceNumbers == null) {
-          initSequenceNumbers();
-        }
-        if (previousPersistFailed) {
-          full = true;          // Don't trust the deltas, (try to) do a full
-          previousPersistFailed = false;
-        }
-        // The following fixes an edge condition. The very first delta
-        // (seqno = 0) is always a full delta whether we want it to be
-        // or not because there are no previous ones. Setting full =
-        // true removes any ambiguity about its fullness.
-        if (sequenceNumbers.current == 0) full = true;
-        // Every so often generate a full delta to consolidate and
-        // prevent the number of deltas from increasing without bound.
-        if (!full && currentPersistPluginInfo != null) {
-          // Check if its time to consolidate this plugin's snapshots
-          int consolidationPeriod = currentPersistPluginInfo.ppi.getConsolidationPeriod();
-          // nSnapshots is the number already generated
-          int nSnapshots = sequenceNumbers.current - sequenceNumbers.first;
-          if (nSnapshots + 1 >= consolidationPeriod) {
-            // The next snapshot needs to be full
-            full = true;        // Time for a full snapshot
-          }
-        }
-        if (full || currentPersistPluginInfo == null) {
-          if (currentPersistPluginInfo != null) {
-            // Cleanup the existing since the full replaces them.
-            // N.B., if there are multiple plugins, the cleanup will
-            // not actually occur until the next time this plugin is
-            // selected as the best and creates a full snapshot. This
-            // is because we will select a new plugin below.
-            currentPersistPluginInfo.cleanupSequenceNumbers =
-              new SequenceNumbers(sequenceNumbers.first + 1,
-                                  sequenceNumbers.current,
-                                  sequenceNumbers.timestamp);
-          }
-          sequenceNumbers.first = sequenceNumbers.current;
-          selectNextPlugin();
-        }
-        if (!currentPersistPluginInfo.ppi.checkOwnership()) {
-          return null;          // We are dead. Don't persist
-        }
-        if (sequenceNumbers.current == sequenceNumbers.first) full = true;
-        currentPersistPluginInfo.deltaCount++;
-        this.full = full;    // Global full flag for duration of persist
-        // Now gather everything to persist from our clients. Side
-        // effect updates identityTable and if !full, associationsToPersist.
-        Map clientData = getClientData();
-        if (full) {
-          // If full dump, garbage collect unreferenced objects
-          System.gc();
-          for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
-            PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
-            if (!pAssoc.isMarked()) {
-              Object object = pAssoc.getObject();
-              // it is just barely possible that another gc might have
-              // collected some additional objects so do a final check
-              if (object != null) {
-                // Prevent additional gc from scavenging the objects
-                // we are committed to persisting
-                objectsThatMightGoAway.add(object);
-                addAssociationToPersist(pAssoc);
-              }
-            }
-          }
-        }
-        deltaNumber = beginTransaction();
-        try {
-          if (currentOutput == null && !returnBytes) {
-            // Only doing dummy persistence
-          } else {
-            PersistenceOutputStream stream = new PersistenceOutputStream(logger);
-            PersistenceReference[][] referenceArrays;
-            if (logger.isDetailEnabled()) {
-              writeHistoryHeader();
-            }
-            stream.setIdentityTable(identityTable);
-            // One agent at a time to avoid inter-agent deadlock due to shared objects
-            try {
-              if (logger.isInfoEnabled()) {
-                logger.info("Obtaining JVM persist lock");
-              }
-              synchronized (vmPersistLock) {
-                if (logger.isInfoEnabled()) {
-                  logger.info("Obtained JVM persist lock, serializing");
-                }
-                int nObjects = associationsToPersist.size();
-                referenceArrays = new PersistenceReference[nObjects][];
-                for (int i = 0; i < nObjects; i++) {
-                  PersistenceAssociation pAssoc =
-                    (PersistenceAssociation) associationsToPersist.get(i);
-                  if (logger.isDetailEnabled()) {
-                    logger.detail("Persisting " + pAssoc);
-                  }
-                  referenceArrays[i] = stream.writeAssociation(pAssoc);
-                }
-                stream.writeObject(clientData);
-                bytesSerialized = stream.size();
-                if (logger.isInfoEnabled()) {
-                  logger.info(
-                      "Serialized "+bytesSerialized+
-                      " bytes to buffer, releasing lock");
-                }
-              } // Ok to let other agents persist while we write out our data
-            } finally {
-              stream.close();
-            } // End of stream protection try-catch
-            if (returnBytes) {
-              int estimatedSize = (int)(1.2 * bytesSerialized);
-              LinkedByteOutputStream returnByteStream = new LinkedByteOutputStream(estimatedSize);
-              ObjectOutputStream returnOutput = new ObjectOutputStream(returnByteStream);
-              writeFinalOutput(returnOutput, referenceArrays, stream);
-              returnOutput.close();
-              result = new PersistenceObject("Persistence state "
-                                             + sequenceNumbers.current,
-                                             returnByteStream.toByteArray());
-              if (logger.isInfoEnabled()) {
-                logger.info(
-                    "Copied persistence snapshot to memory buffer"+
-                    " for return to state-capture caller");
-              }
-            }
-            if (currentOutput != null) {
-              writeFinalOutput(currentOutput, referenceArrays, stream);
-              currentOutput.close();
-              if (logger.isInfoEnabled()) {
-                logger.info(
-                    "Wrote persistence snapshot to output stream");
-              }
-            }
-          } // End of non-dummy persistence
-          clearMarks(associationsToPersist.iterator());
-          commitTransaction();
-          logger.printDot("P");
-          // Cleanup old deltas and archived snapshots. N.B. The
-          // cleanup is happening to the plugin that was just used.
-          // When there are several plugins, this is usually different
-          // from the plugin whose cleanupSequenceNumbers were set
-          // above. This cleanup has been pending while the various
-          // other plugins have been in use. This is _ok_! The
-          // snapshot we just took is invariably a full snapshot.
-          if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
-            logger.info("Consolidated deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
-            currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
-            currentPersistPluginInfo.ppi.cleanupArchive();
-            currentPersistPluginInfo.cleanupSequenceNumbers = null;
-          }
-        } catch (Exception e) { // Transaction protection
-          rollbackTransaction();
-          if (logger.isErrorEnabled()) {
-            logger.error("Persist failed", e);
-          }
-          logger.printDot("X");
-          throw e;
-        }
-        objectsThatMightGoAway.clear();
+	associationsToPersist.clear();
+	objectsThatMightGoAway.clear();
+	anyMarks(identityTable.iterator());
+	if (sequenceNumbers == null) {
+	  initSequenceNumbers();
+	}
+	if (previousPersistFailed) {
+	  full = true;          // Don't trust the deltas, (try to) do a full
+	  previousPersistFailed = false;
+	}
+	// The following fixes an edge condition. The very first delta
+	// (seqno = 0) is always a full delta whether we want it to be
+	// or not because there are no previous ones. Setting full =
+	// true removes any ambiguity about its fullness.
+	if (sequenceNumbers.current == 0) full = true;
+	// Every so often generate a full delta to consolidate and
+	// prevent the number of deltas from increasing without bound.
+	if (!full && currentPersistPluginInfo != null) {
+	  // Check if its time to consolidate this plugin's snapshots
+	  int consolidationPeriod = currentPersistPluginInfo.ppi.getConsolidationPeriod();
+	  // nSnapshots is the number already generated
+	  int nSnapshots = sequenceNumbers.current - sequenceNumbers.first;
+	  if (nSnapshots + 1 >= consolidationPeriod) {
+	    // The next snapshot needs to be full
+	    full = true;        // Time for a full snapshot
+	  }
+	}
+	if (full || currentPersistPluginInfo == null) {
+	  if (currentPersistPluginInfo != null) {
+	    // Cleanup the existing since the full replaces them.
+	    // N.B., if there are multiple plugins, the cleanup will
+	    // not actually occur until the next time this plugin is
+	    // selected as the best and creates a full snapshot. This
+	    // is because we will select a new plugin below.
+	    currentPersistPluginInfo.cleanupSequenceNumbers =
+	      new SequenceNumbers(sequenceNumbers.first + 1,
+				  sequenceNumbers.current,
+				  sequenceNumbers.timestamp);
+	  }
+	  sequenceNumbers.first = sequenceNumbers.current;
+	  selectNextPlugin();
+	}
+	if (!currentPersistPluginInfo.ppi.checkOwnership()) {
+	  return null;          // We are dead. Don't persist
+	}
+	if (sequenceNumbers.current == sequenceNumbers.first) full = true;
+	currentPersistPluginInfo.deltaCount++;
+	this.full = full;    // Global full flag for duration of persist
+	// Now gather everything to persist from our clients. Side
+	// effect updates identityTable and if !full, associationsToPersist.
+	Map clientData = getClientData();
+	if (full) {
+	  // If full dump, garbage collect unreferenced objects
+	  System.gc();
+	  for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
+	    PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
+	    if (!pAssoc.isMarked()) {
+	      Object object = pAssoc.getObject();
+	      // it is just barely possible that another gc might have
+	      // collected some additional objects so do a final check
+	      if (object != null) {
+		// Prevent additional gc from scavenging the objects
+		// we are committed to persisting
+		addAssociationToPersist(pAssoc);
+	      }
+	    }
+	  }
+	}
+	deltaNumber = beginTransaction();
+	try {
+	  if (currentOutput == null && !returnBytes) {
+	    // Only doing dummy persistence
+	  } else {
+	    PersistenceOutputStream stream = new PersistenceOutputStream(logger);
+	    PersistenceReference[][] referenceArrays;
+	    if (logger.isDetailEnabled()) {
+	      writeHistoryHeader();
+	    }
+	    stream.setIdentityTable(identityTable);
+	    // One agent at a time to avoid inter-agent deadlock due to shared objects
+	    try {
+	      if (logger.isInfoEnabled()) {
+		logger.info("Obtaining JVM persist lock");
+	      }
+	      synchronized (vmPersistLock) {
+		if (logger.isInfoEnabled()) {
+		  logger.info("Obtained JVM persist lock, serializing");
+		}
+		int nObjects = associationsToPersist.size();
+		referenceArrays = new PersistenceReference[nObjects][];
+		for (int i = 0; i < nObjects; i++) {
+		  PersistenceAssociation pAssoc =
+		    (PersistenceAssociation) associationsToPersist.get(i);
+		  if (logger.isDetailEnabled()) {
+		    logger.detail("Persisting " + pAssoc);
+		  }
+		  referenceArrays[i] = stream.writeAssociation(pAssoc);
+		}
+		stream.writeObject(clientData);
+		bytesSerialized = stream.size();
+		if (logger.isInfoEnabled()) {
+		  logger.info(
+			      "Serialized "+bytesSerialized+
+			      " bytes to buffer, releasing lock");
+		}
+	      } // Ok to let other agents persist while we write out our data
+	    } finally {
+	      stream.close();
+	    } // End of stream protection try-catch
+	    if (returnBytes) {
+	      int estimatedSize = (int)(1.2 * bytesSerialized);
+	      LinkedByteOutputStream returnByteStream = new LinkedByteOutputStream(estimatedSize);
+	      ObjectOutputStream returnOutput = new ObjectOutputStream(returnByteStream);
+	      writeFinalOutput(returnOutput, referenceArrays, stream);
+	      returnOutput.close();
+	      result = new PersistenceObject("Persistence state "
+					     + sequenceNumbers.current,
+					     returnByteStream.toByteArray());
+	      if (logger.isInfoEnabled()) {
+		logger.info(
+			    "Copied persistence snapshot to memory buffer"+
+			    " for return to state-capture caller");
+	      }
+	    }
+	    if (currentOutput != null) {
+	      writeFinalOutput(currentOutput, referenceArrays, stream);
+	      currentOutput.close();
+	      if (logger.isInfoEnabled()) {
+		logger.info(
+			    "Wrote persistence snapshot to output stream");
+	      }
+	    }
+	  } // End of non-dummy persistence
+	  clearMarks(associationsToPersist.iterator());
+	  commitTransaction();
+	  logger.printDot("P");
+	  // Cleanup old deltas and archived snapshots. N.B. The
+	  // cleanup is happening to the plugin that was just used.
+	  // When there are several plugins, this is usually different
+	  // from the plugin whose cleanupSequenceNumbers were set
+	  // above. This cleanup has been pending while the various
+	  // other plugins have been in use. This is _ok_! The
+	  // snapshot we just took is invariably a full snapshot.
+	  if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
+	    logger.info("Consolidated deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
+	    currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
+	    currentPersistPluginInfo.ppi.cleanupArchive();
+	    currentPersistPluginInfo.cleanupSequenceNumbers = null;
+	  }
+	} catch (Exception e) { // Transaction protection
+	  rollbackTransaction();
+	  if (logger.isErrorEnabled()) {
+	    logger.error("Persist failed", e);
+	  }
+	  logger.printDot("X");
+	  throw e;
+	}
+	objectsThatMightGoAway.clear();
       }
       catch (Exception e) {
         logger.error("Error writing persistence snapshot", e);

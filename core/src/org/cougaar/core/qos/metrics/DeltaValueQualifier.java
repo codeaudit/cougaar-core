@@ -23,7 +23,8 @@ package org.cougaar.core.qos.metrics;
 
 
 
-public class DeltaValueQualifier implements MetricNotificationQualifier
+public class DeltaValueQualifier 
+    implements MetricNotificationQualifier, Constants
 {
     private double min_delta;
     private Metric last_qualified;
@@ -33,6 +34,9 @@ public class DeltaValueQualifier implements MetricNotificationQualifier
     }
 
     public boolean shouldNotify(Metric metric) {
+	if (metric.getCredibility() <= SYS_DEFAULT_CREDIBILITY)
+	    return false;
+
 	if (last_qualified == null) {
 	    last_qualified = metric;
 	    return true;

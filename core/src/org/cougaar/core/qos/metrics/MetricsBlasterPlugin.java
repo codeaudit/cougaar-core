@@ -20,16 +20,15 @@
 
 package org.cougaar.core.qos.metrics;
 
-
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-
 import java.io.PrintStream;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Timer;
-import java.util.TimerTask;
 
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
+import org.cougaar.core.thread.Schedulable;
 
 public class MetricsBlasterPlugin
     extends ParameterizedPlugin
@@ -38,7 +37,8 @@ public class MetricsBlasterPlugin
     
     private MetricsUpdateService update;
     private MetricsService svc;
-    
+    private ThreadService tsvc;
+
     private String key,path;
 	
     private long callbackCount =0;
@@ -46,9 +46,9 @@ public class MetricsBlasterPlugin
     private long lastCallbackDelay=0;
     private long lastPrintTime=0;
 
-    private Timer timer = new Timer();
     private int restCount = 0;
-    private TimerTask restTask;
+    private Schedulable blastTask;
+    private Schedulable restTask;
 	
 
     private void dumpCounters(long now) {
@@ -75,6 +75,8 @@ public class MetricsBlasterPlugin
 	    sb.getService(this, MetricsUpdateService.class, null);
 	svc = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
+	tsvc = (ThreadService)
+	    sb.getService(this, ThreadService.class, null);
 
 	path = getParameter("path");
 	if (path != null) {
@@ -85,7 +87,9 @@ public class MetricsBlasterPlugin
 	    key = getParameter("key");
 	    if (key !=null) {
 		System.out.println("Blasting to " +key);
-		timer.schedule(new Blast(), 10000);
+		Blast blast = new Blast();
+		blastTask = tsvc.getThread(this, blast, "Blaster");
+		blastTask.schedule(10000);
 	    }
 
 	}
@@ -99,7 +103,7 @@ public class MetricsBlasterPlugin
 	lastCallbackDelay = now - value;
     }
 
-    private class Blast extends TimerTask {
+    private class Blast implements Runnable {
 	public void run() {
 	    System.out.println("Starting Blaster");
 	    long startTime =  System.currentTimeMillis();
@@ -131,17 +135,18 @@ public class MetricsBlasterPlugin
 			       " Callback % =" + callbackPercent);
 
 	    restCount = 0;
-	    restTask = new Rest();
-	    timer.schedule(restTask, 0, 1000);
+	    Rest rest = new Rest();
+	    restTask = tsvc.getThread(this, rest, "Rest");
+	    restTask.schedule(0, 1000);
 	}
     }
 
-    private class Rest extends TimerTask {
+    private class Rest implements Runnable {
 	public void run() {
 	    dumpCounters(System.currentTimeMillis());
 	    if (restCount++ == 10) {
-		timer.schedule(new Blast(), 0);
-		restTask.cancel();
+		restTask.cancelTimer();
+		blastTask.start();
 	    }
 	}
     }

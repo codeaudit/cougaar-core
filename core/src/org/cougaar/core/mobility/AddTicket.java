@@ -22,28 +22,79 @@
 package org.cougaar.core.mobility;
 
 import java.io.Serializable;
+import java.util.List;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.StateTuple;
 
 /**
  * A ticket to add an agent.
  */
 public final class AddTicket extends AbstractTicket implements java.io.Serializable {
 
+  private static final String DEFAULT_AGENT_CLASSNAME =
+    "org.cougaar.core.agent.SimpleAgent";
+
   private final Object id;
   private final MessageAddress mobileAgent;
+  private final StateTuple state;
   private final MessageAddress destNode;
 
   // FIXME maybe add "timeout" here
   // FIXME maybe add "clone" here + clone name
   // FIXME maybe add security tags here
 
+  /**
+   * Add an agent with address <code>mobileAgent</code> and optional
+   * state <code>state</code> to node <code>destNode</code>.
+   * <p>
+   * If the state is null, then no state and class "SimpleAgent"
+   * is assumed.
+   * <p>
+   * The <code>id</code> should be obtained from the MobilityFactory
+   * "createTicketIdentifier()".
+   */
   public AddTicket(
       Object id,
       MessageAddress mobileAgent,
+      StateTuple state,
       MessageAddress destNode) {
     this.id = id;
     this.mobileAgent = mobileAgent;
     this.destNode = destNode;
+    if (mobileAgent == null) {
+      throw new IllegalArgumentException(
+          "Must specify an agent to add");
+    }
+    if (state == null) {
+      ComponentDescription desc =
+        new ComponentDescription(
+            DEFAULT_AGENT_CLASSNAME,
+            Agent.INSERTION_POINT,
+            DEFAULT_AGENT_CLASSNAME,
+            null,  // codebase
+            mobileAgent,
+            null,  // certificate
+            null,  // lease
+            null,  // policy
+            ComponentDescription.PRIORITY_COMPONENT);
+      state = new StateTuple(desc, null);
+    } else {
+      // validate the component description
+      assertIsValid(
+          mobileAgent,
+          state.getComponentDescription());
+    }
+    this.state = state;
+  }
+
+  /** Equivalent to "AddTicket(id, mobileAgent, null, destNode)" */
+  public AddTicket(
+      Object id,
+      MessageAddress mobileAgent,
+      MessageAddress destNode) {
+    this(id, mobileAgent, null, destNode);
   }
 
   /**
@@ -72,6 +123,13 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
   }
 
   /**
+   * Get the new agent's ComponentDescription and initial state.
+   */
+  public StateTuple getStateTuple() {
+    return state;
+  }
+
+  /**
    * Destination node for the mobile agent.
    * <p>
    * If the destination node is null then the AgentControl status  
@@ -81,10 +139,52 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
     return destNode;
   }
 
+  private static void assertIsValid(
+      MessageAddress mobileAgent,
+      ComponentDescription desc) {
+    // check the insertion point
+    String ip = desc.getInsertionPoint();
+    if (!ip.equals(Agent.INSERTION_POINT)) {
+      throw new IllegalArgumentException(
+          "Insertion point must be \""+
+          Agent.INSERTION_POINT+"\", not "+ip);
+    }
+    // check the agent id:
+    Object o = desc.getParameter();
+    MessageAddress cid = null;
+    if (o instanceof MessageAddress) {
+      cid = (MessageAddress) o;
+    } else if (o instanceof String) {
+      cid = MessageAddress.getMessageAddress((String) o);
+    } else if (o instanceof List) {
+      List parameters = (List) o;
+      if (parameters.size() > 0) {
+        Object o1 = parameters.get(0);
+        if (o1 instanceof MessageAddress) {
+          cid = (MessageAddress) o1;
+        } else if (o1 instanceof String) {
+          cid = MessageAddress.getMessageAddress((String) o1);
+        }
+      }
+    }
+    if (cid == null) {
+      throw new IllegalArgumentException(
+          "The ComponentDescription must specify the agent"+
+          " name as the first parameter (see SimpleAgent)");
+    }
+    if (!mobileAgent.equals(cid)) {
+      throw new IllegalArgumentException(
+          "New agent address "+mobileAgent+
+          " must match the ComponentDescription's address "+cid);
+    }
+    // let the remote node check the class type, since it
+    // may be a class that we don't have in our local jars.
+  }
+
   public int hashCode() {
     return 
-      (((id != null) ? id.hashCode() : 17) ^
-       ((mobileAgent != null) ? mobileAgent.hashCode() : 53));
+      (((id == null) ? 17 : id.hashCode()) ^
+       mobileAgent.hashCode());
   }
 
   public boolean equals(Object o) {
@@ -101,6 +201,9 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
 	((mobileAgent == null) ? 
 	 (t.mobileAgent == null) :
 	 (mobileAgent.equals(t.mobileAgent))) &&
+	((state == null) ? 
+	 (t.state == null) :
+	 (state.equals(t.state))) &&
 	((destNode == null) ? 
 	 (t.destNode == null) :
 	 (destNode.equals(t.destNode)));
@@ -111,16 +214,16 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
     // cache?
     return 
       "Add "+
-      ((id != null) ? 
-       (id) :
-       (" unidentified "))+
+      (id == null ? 
+       " unidentified ":
+       id)+
       " of "+
-      ((mobileAgent != null) ? 
-       "agent \""+mobileAgent+"\"" :
-       "this agent")+
-      " to "+
-      ((destNode != null) ? 
-       "node \""+destNode+"\"" :
-       "this node");
+      (mobileAgent == null ? 
+       "this agent":
+       "agent \""+mobileAgent+"\"")+
+      " with "+state+" to "+
+      (destNode == null ? 
+       "this node":
+       "node \""+destNode+"\"");
   }
 }

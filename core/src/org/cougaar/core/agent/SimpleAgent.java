@@ -85,6 +85,7 @@ import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.Logger;
 
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 
@@ -147,23 +148,19 @@ implements AgentIdentityClient
       }
     };
         
-  // state for this agent if it is arriving from a move.
-  // The PersistenceObject if doing agent transfer
-  private PersistenceObject persistenceObject;
+  // state for this agent if it is moving or arriving from a move.
+  private MobilityObject mobilityObject;
 
   // state for this agent as retrieved from the PersistenceService
   // this is set and used within "load()"
   private PersistenceData persistenceData;
 
-  // state from "suspend()", used within "getState()"
+  // state from "suspend()", which is copied into the mobility state
   private List unsentMessages;
   private org.cougaar.core.mts.AgentState mtsState;
 
-  // mobility destination node address
-  private MessageAddress moveTargetNode;
-
-  // mobility transferable identity
-  private TransferableIdentity mobileIdentity;
+  // suspend flag that's used when moving
+  private boolean suspended;
 
   // dummy mobility identity, in case the agent-id-service
   // passes back a null transfer identity
@@ -282,15 +279,19 @@ implements AgentIdentityClient
       parameters = Collections.singletonList(cid);
     } else if (o instanceof List) {
       parameters = (List) o;
-      if (parameters.size() > 0) {
+      if (!parameters.isEmpty()) {
         Object o1 = parameters.get(0);
         if (o1 instanceof MessageAddress) {
           cid = (MessageAddress) o1;
         } else if (o1 instanceof String) {
           cid = MessageAddress.getMessageAddress((String) o1);
+          parameters.set(0, cid);
         }
       }
-      parameters.set(0, cid);
+    }
+    if (parameters == null || cid == null) {
+      throw new IllegalArgumentException(
+          "Invalid agent paramter: "+o);
     }
     this.myMessageAddress_ = cid;
   }
@@ -307,8 +308,7 @@ implements AgentIdentityClient
    **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
     if (persistenceData != null) {
-
-      // get descriptions from mobile state
+      // get descriptions from persisted state
       ComponentDescriptions descs = persistenceData.descs;
       if (log.isInfoEnabled()) {
         log.info("Restoring components from persistenceData");
@@ -341,10 +341,10 @@ implements AgentIdentityClient
         }
       }
       return descs;
-    } else {
-      if (log.isInfoEnabled()) {
-        log.info("No persistenceData");
-      }
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info("No persistenceData");
     }
 
     String cname = getIdentifier();
@@ -394,6 +394,18 @@ implements AgentIdentityClient
             null,
             ComponentDescription.PRIORITY_HIGH));
 
+      // set up the UIDServer and UIDService
+      l.add(new ComponentDescription(
+            getMessageAddress()+"UID",
+            Agent.INSERTION_POINT + ".UID",
+            "org.cougaar.core.agent.service.uid.UIDServiceComponent",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_HIGH));
+
       // event service (wrapper for logging)
       l.add(new ComponentDescription(
             getMessageAddress()+"Event",
@@ -406,7 +418,6 @@ implements AgentIdentityClient
             null,
             ComponentDescription.PRIORITY_HIGH));
 
-
       // add the containment service
       l.add(new ComponentDescription(
             getMessageAddress()+"Contain",
@@ -414,18 +425,6 @@ implements AgentIdentityClient
             "org.cougaar.core.agent.service.containment.AgentContainmentServiceComponent",
             null,
             (new AgentContainmentAdapter(this)), // access into *this* container
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-
-      // set up the UIDServer and UIDService
-      l.add(new ComponentDescription(
-            getMessageAddress()+"UID",
-            Agent.INSERTION_POINT + ".UID",
-            "org.cougaar.core.agent.service.uid.UIDServiceComponent",
-            null,
-            null,
             null,
             null,
             null,
@@ -573,14 +572,18 @@ implements AgentIdentityClient
   }
 
   public void load() {
-
     // get our log
-    LoggingService newLog = (LoggingService) 
+    Logger newLog = (Logger) 
       getServiceBroker().getService(
           this, LoggingService.class, null);
+    if (newLog == null) {
+      // No logging service available yet. Use a static logger. I
+      // wonder why be bother with a service.
+      newLog = Logging.getLogger(getClass());
+    }
     if (newLog != null) {
-      String prefix = getMessageAddress()+": ";
-      log = LoggingServiceWithPrefix.add(newLog, prefix);
+      String prefix = getMessageAddress() + ": ";
+      log = new LoggingServiceWithPrefix(newLog, prefix);
     }
 
     if (log.isInfoEnabled()) {
@@ -597,7 +600,7 @@ implements AgentIdentityClient
           null,
           null,
           null,
-          ComponentDescription.PRIORITY_INTERNAL);
+          ComponentDescription.PRIORITY_HIGH);
     super.add(persistenceComponentDescription);
 
     // add our address to our VM's cluster table
@@ -609,49 +612,85 @@ implements AgentIdentityClient
     persistenceService = (PersistenceServiceForAgent)
       getChildServiceBroker().getService(
           getPersistenceClient(), PersistenceServiceForAgent.class, null);
-    persistenceService.rehydrate(persistenceObject);
-    List rehydrationList = getRehydrationList(persistenceService);
-    persistenceData = null;     // Until proven otherwise
-    if (rehydrationList == null) {
-      if (log.isInfoEnabled()) {
-        log.info("No rehydrationList");
+
+    // If we have a mobilityObject, it means we are an agent that
+    // has been moved from another node and our component descriptions
+    // are in the mobilityObject's persistenceObject. Furthermore,
+    // there are no security components needed to decrypt the data so
+    // we can rehydrate the persistence service component now.
+    // Otherwise we will rehydrate after loading the high priority
+    // components.
+    if (mobilityObject != null) {
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "Rehydrating before loading high priority components"+
+            " because mobilityObject exists");
       }
-    } else if (rehydrationList.size() == 0) {
-      if (log.isInfoEnabled()) {
-        log.info("Empty rehydrationList");
-      }
-    } else {
-      PersistenceData pd = (PersistenceData) rehydrationList.get(0);
-      // validate the state
-      // verify state's agent id
-      if (pd.parameters.size() < 1) {
-        log.error("Load state has no agent address, ignoring state");
-      } else {
-        MessageAddress agentId = (MessageAddress) pd.parameters.get(0);
-        if ((getMessageAddress().equals(agentId))) {
-          persistenceData = pd; // Looks good
-          if (log.isInfoEnabled()) {
-            log.info("persistenceData found");
-          }
-        } else {
-          log.error("Load state has incorrect agent address "
-                    + agentId
-                    + ", ignoring state");
-        }
-      }
+      rehydrate();
     }
 
     // do the standard thing.
     super.load();
 
-    // get event service
-    eventService = (EventService)
-      getChildServiceBroker().getService(
-          this, EventService.class, null);
+    // done with the initial persistence data
+    persistenceData = null;
+    mobilityObject = null;
 
+   
+    unpendMessages();
     if (log.isInfoEnabled()) {
       log.info("Loaded");
     }
+  }
+
+  private void rehydrate() {
+    PersistenceObject persistenceObject = 
+      (mobilityObject == null ?
+       (null) :
+       mobilityObject.persistenceObject);
+    persistenceService.rehydrate(persistenceObject);
+    List rehydrationList = getRehydrationList(persistenceService);
+    int rehydrationSize = 0;
+    PersistenceData pd = null;
+    MessageAddress agentId = null;
+    if (rehydrationList != null) {
+      rehydrationSize = rehydrationList.size();
+      if (rehydrationSize > 0) {
+        pd = (PersistenceData) rehydrationList.get(0);
+        if (pd != null) {
+          agentId = pd.agentId;
+          if (!(getMessageAddress().equals(agentId))) {
+            pd = null;
+          }
+        }
+      }
+    }
+    if (pd == null) {
+      // missing or invalid persistence data
+      if (rehydrationSize == 0) {
+        if (log.isInfoEnabled()) {
+          log.info(
+              (rehydrationList == null ? "No" : "Empty")+
+              " rehydrationList");
+        }
+      } else {
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Ignoring rehydration state for "+getMessageAddress()+
+              " that specifies the incorrect agent address "+
+              agentId);
+        }
+      }
+    } else {
+      // Looks good
+      if (log.isInfoEnabled()) {
+        log.info("Persistence data found");
+        if (log.isDetailEnabled()) {
+          log.detail("persistenceData is "+pd);
+        }
+      }
+    }
+    this.persistenceData = pd;
   }
 
   protected void loadHighPriorityComponents() {
@@ -671,13 +710,6 @@ implements AgentIdentityClient
     sb.releaseService(
         this, NodeIdentificationService.class, nodeIdService);
 
-    super.loadHighPriorityComponents();
-  }
-
-  protected void loadInternalPriorityComponents() {
-    ServiceBroker sb = getServiceBroker();
-    ServiceBroker csb = getChildServiceBroker();
-
     // lookup localhost, for WP and event use
     try {
       InetAddress localAddr = InetAddress.getLocalHost();
@@ -686,20 +718,40 @@ implements AgentIdentityClient
       localHost = "?";
     }
 
-    // acquire our identity
+    super.loadHighPriorityComponents();
+    
+    // get event service
+    eventService = (EventService)
+	getChildServiceBroker().getService(
+	 this, EventService.class, null);
+    
+    if (eventService != null &&
+        eventService.isEventEnabled()) {
+	eventService.event(
+	  "AgentLifecycle("+"Starting"+
+          ") Agent("+getIdentifier()+
+          ") Node("+localNode+
+          ") Host("+localHost+
+          ")");
+    }
+  }
+
+  // acquire our identity
+  protected void acquireIdentity() {
+    ServiceBroker csb = getChildServiceBroker();
     TransferableIdentity priorIdentity = 
-      ((persistenceData != null) ?
-       persistenceData.identity :
-       null);
+      (mobilityObject == null ?
+       (null) :
+       mobilityObject.identity);
     if (priorIdentity == NULL_MOBILE_IDENTITY) {
       priorIdentity = null;
     }
     if (log.isInfoEnabled()) {
       log.info(
           "Acquiring "+
-          ((priorIdentity != null) ?
-           ("transfered identity: "+priorIdentity) :
-           ("new identity")));
+          ((priorIdentity == null) ?
+           ("new identity") :
+           ("transfered identity: "+priorIdentity)));
     }
     myAgentIdService = (AgentIdentityService) 
       csb.getService(this, AgentIdentityService.class, null);
@@ -720,10 +772,56 @@ implements AgentIdentityClient
             (""))),
           e);
     }
+  }
 
+  protected void loadInternalPriorityComponents() {
+    ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
+
+    // Acquire our identity now in case we need it below. The needed
+    // services should be in place to do this now.
+    acquireIdentity();
+    // See comment in load() above. If mobilityObject is null, it
+    // means we are rehydrating from persisted data, not from mobile
+    // agent data so we have not yet rehydrated the persistence
+    // service. Now that we have loaded the high priority components
+    // including the security components, we are able to decrypt the
+    // persistence data and can now rehydrate.
+    if (mobilityObject == null) {
+      if (log.isDebugEnabled()) {
+        log.debug("Rehydrating after loading high priority components");
+      }
+      rehydrate();
+      // Replace the external component descriptions with rehydrated
+      // values. Note that all HIGH priority components in the
+      // rehydrated list will be ignored since they have already been
+      // loaded.
+      setExternalComponentDescriptions(findExternalComponentDescriptions());
+    } else {
+      // Allow garbage collection
+      mobilityObject.persistenceObject = null;
+    }
+    // Now done with this, too. Allow garbage collection.
+    persistenceData = null;
     // fill in prior restart incarnation details
-    if (persistenceData != null) {
-      setRestartState(persistenceData.restartState);
+    if (mobilityObject != null) {
+      setRestartState(mobilityObject.restartState);
+    }
+
+    // load the white pages proxy, which passes our agent's name to
+    // all WP requests.  We don't need to load this if we're the
+    // node-agent.
+    if (!getMessageAddress().equals(localNode)) {
+      add(new ComponentDescription(
+          getMessageAddress()+"WPProxy",
+          Agent.INSERTION_POINT + ".WPProxy",
+          "org.cougaar.core.wp.resolver.ResolverProxy",
+          null,
+          null,
+          null,
+          null,
+          null,
+          ComponentDescription.PRIORITY_INTERNAL));
     }
 
     loadRestartChecker();
@@ -732,22 +830,22 @@ implements AgentIdentityClient
     if (log.isInfoEnabled()) {
       log.info("Registering with the message transport");
     }
-    
+
     mtsClientAdapter = new MessageTransportClientAdapter();
 
     messenger = (MessageTransportService) 
       sb.getService(mtsClientAdapter, MessageTransportService.class, null);
 
-    if (persistenceData != null) {
-        org.cougaar.core.mts.AgentState t = persistenceData.mtsState;
+    if (mobilityObject != null) {
+        org.cougaar.core.mts.AgentState t = mobilityObject.mtsState;
         if (t != null) messenger.getAgentState().mergeAttributes(t);
     }
 
     messenger.registerClient(mtsClientAdapter);
 
-    if (persistenceData != null) {
+    if (mobilityObject != null) {
       // send all unsent messages
-      List l = persistenceData.unsentMessages;
+      List l = mobilityObject.unsentMessages;
       if (l != null) {
         for (int i = 0, n = l.size(); i < n; i++) {
           Message cmi = (Message) l.get(i);
@@ -802,10 +900,14 @@ implements AgentIdentityClient
 
   /** override hook to set up message handlers **/
   public void initialize() throws StateModelException {
+    if (getMessageAddress() == null) {
+      throw new RuntimeException(
+          "The agent's message address is null, which is likely due"+
+          " to a null ComponentDescription parameter");
+    }
     super.initialize();
     setupMessageHandlers();
   }
-
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.
@@ -883,6 +985,8 @@ implements AgentIdentityClient
 
     stopQueueHandler();
 
+    myBlackboardService.suspend();
+
     if (messenger != null) {
       // flush outgoing messages, block further input.
       // get a list of unsent messages.
@@ -897,34 +1001,41 @@ implements AgentIdentityClient
       messenger = null;
     }
 
-    if (moveTargetNode != null) {
-      // moving, delay identity transfer until after getState()
-      if (log.isInfoEnabled()) {
-        log.info(
-            "Postponing identity transfer to node "+
-            moveTargetNode);
-      }
-    } else {
+    if (mobilityObject == null) {
       // non-moving suspend?
       if (log.isInfoEnabled()) {
         log.info("Releasing identity");
       }
       myAgentIdService.release();
+    } else {
+      // moving, delay identity transfer until after getState()
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Postponing identity transfer to node "+
+            mobilityObject.targetNode);
+      }
     }
 
     if (log.isInfoEnabled()) {
       log.info("Suspended");
     }
+    suspended = true;
 
     if (persistenceService != null) {
-      persistenceObject = myBlackboardService.getPersistenceObject();
+      if (mobilityObject != null) {
+        // this calls our "getPersistenceData()" method, which
+        // captures the component hierarchy
+        mobilityObject.persistenceObject = 
+          myBlackboardService.getPersistenceObject();
+      }
       persistenceService.suspend();
     }
 
-    if (moveTargetNode != null) {
+    if (mobilityObject != null) {
       // record event
       if (eventService != null &&
           eventService.isEventEnabled()) {
+        MessageAddress moveTargetNode = mobilityObject.targetNode;
         String moveTargetHost = "?";
         try {
           AddressEntry nodeEntry = 
@@ -964,38 +1075,7 @@ implements AgentIdentityClient
     try {
 
       // re-establish our identity
-      if (moveTargetNode != null) {
-        // failed move, restart
-        if (mobileIdentity != null) {
-          // take and clear the saved identity
-          TransferableIdentity tmp = 
-            ((mobileIdentity != NULL_MOBILE_IDENTITY) ? 
-             (mobileIdentity) : 
-             null);
-          mobileIdentity = null;
-          if (log.isInfoEnabled()) {
-            log.info(
-                "Acquiring agent identify from"+
-                " failed move to "+moveTargetNode+
-                " and transfer-identity "+tmp);
-          }
-          try {
-            myAgentIdService.acquire(tmp);
-          } catch (Exception e) {
-            throw new RuntimeException(
-                "Unable to restart agent "+getIdentifier()+
-                " after failed move to "+moveTargetNode+
-                " and transfer-identity "+tmp, e);
-          }
-        } else {
-          // never transfered identity (state capture failed?)
-          if (log.isInfoEnabled()) {
-            log.info(
-                "Identity was never transfered to "+
-                moveTargetNode);
-          }
-        }
-      } else {
+      if (mobilityObject == null) {
         // resume after non-move suspend
         if (log.isInfoEnabled()) {
           log.info(
@@ -1007,6 +1087,37 @@ implements AgentIdentityClient
           throw new RuntimeException(
               "Unable to resume agent "+getIdentifier()+
               " after non-move suspend", e);
+        }
+      } else {
+        // failed move, restart
+        if (mobilityObject.identity != null) {
+          // take and clear the saved identity
+          TransferableIdentity tmp = 
+            ((mobilityObject.identity != NULL_MOBILE_IDENTITY) ? 
+             (mobilityObject.identity) : 
+             null);
+          mobilityObject.identity = null;
+          if (log.isInfoEnabled()) {
+            log.info(
+                "Acquiring agent identify from"+
+                " failed move to "+mobilityObject.targetNode+
+                " and transfer-identity "+tmp);
+          }
+          try {
+            myAgentIdService.acquire(tmp);
+          } catch (Exception e) {
+            throw new RuntimeException(
+                "Unable to restart agent "+getIdentifier()+
+                " after failed move to "+mobilityObject.targetNode+
+                " and transfer-identity "+tmp, e);
+          }
+        } else {
+          // never transfered identity (state capture failed?)
+          if (log.isInfoEnabled()) {
+            log.info(
+                "Identity was never transfered to "+
+                mobilityObject.targetNode);
+          }
         }
       }
       acquiredIdentity = true;
@@ -1032,6 +1143,8 @@ implements AgentIdentityClient
       if (log.isInfoEnabled()) {
         log.info("Resuming message transport");
       }
+
+      myBlackboardService.resume();
 
       startQueueHandler();
 
@@ -1067,7 +1180,7 @@ implements AgentIdentityClient
       log.info("Resumed");
     }
 
-    if (moveTargetNode != null) {
+    if (mobilityObject != null) {
       if (eventService != null &&
           eventService.isEventEnabled()) {
         eventService.event(
@@ -1075,10 +1188,11 @@ implements AgentIdentityClient
             ") Agent("+getIdentifier()+
             ") Node("+localNode+
             ") Host("+localHost+
-            ") ToNode("+moveTargetNode+
+            ") ToNode("+mobilityObject.targetNode+
             ")");
       }
-      moveTargetNode = null;
+      mobilityObject = null;
+      suspended = false;
     }
   }
 
@@ -1112,7 +1226,7 @@ implements AgentIdentityClient
 
     if (eventService != null &&
         eventService.isEventEnabled()) {
-      if (moveTargetNode == null) {
+      if (mobilityObject == null) {
         eventService.event(
             "AgentLifecycle("+"Stopped"+
             ") Agent("+getIdentifier()+
@@ -1125,7 +1239,7 @@ implements AgentIdentityClient
             ") Agent("+getIdentifier()+
             ") Node("+localNode+
             ") Host("+localHost+
-            ") ToNode("+moveTargetNode+
+            ") ToNode("+mobilityObject.targetNode+
             ")");
       }
     }
@@ -1150,6 +1264,11 @@ implements AgentIdentityClient
 
     csb.releaseService(
         this, AgentIdentityService.class, myAgentIdService);
+
+    // this should be run after the Timer release, but it requires
+    // the child service broker.  In the future it'll be moved into
+    // unload().
+    unloadRestartChecker();
 
     csb = null;
 
@@ -1182,8 +1301,6 @@ implements AgentIdentityClient
     }
     ClusterContextTable.removeContext(getMessageAddress());
 
-    unloadRestartChecker();
-
     if (log.isInfoEnabled()) {
       log.info("Unloaded");
     }
@@ -1208,49 +1325,98 @@ implements AgentIdentityClient
   }
 
   /**
-   * Get the state of this agent, which should be suspended.
+   * Get the mobility state of this (suspended) agent.
    */
   public Object getState() {
-    return persistenceObject;
+    if (mobilityObject == null || !suspended) {
+      if (log.isWarnEnabled()) {
+        log.warn(
+            "Called \"getState()\" when we're "+
+            (suspended ? "" : "not")+
+            "suspended and "+
+            (mobilityObject == null ? "" : "not")+
+            "moving: "+mobilityObject);
+      }
+      return null;
+    }
+    // save the state we captured during suspend
+    mobilityObject.unsentMessages = unsentMessages;
+    mobilityObject.mtsState = mtsState;
+    // save our reconciliation map
+    mobilityObject.restartState = getRestartState();
+    // transfer our identity
+    //
+    // we can't do this within "gePersistenceData()" because
+    // we need our identity to save the persist snapshot.
+    if (log.isInfoEnabled()) {
+      log.info("Transfering identity from node "+
+               localNode+" to node "+mobilityObject.targetNode);
+    }
+    mobilityObject.identity =
+      myAgentIdService.transferTo(mobilityObject.targetNode);
+    if (mobilityObject.identity == null) {
+      mobilityObject.identity = NULL_MOBILE_IDENTITY;
+    }
+    // the mobilityObject already contains our persistenceObject
+    if (log.isDetailEnabled()) {
+      log.detail("mobilityObject is "+mobilityObject);
+    }
+    return mobilityObject;
   }
 
   private List getPersistenceData() {
-    PersistenceData persistenceData = new PersistenceData();
+    int modelState = getModelState();
+
+    if (log.isDetailEnabled()) {
+      log.detail("capturing persistence data");
+    }
 
     // get the child components
-    persistenceData.descs = super.captureState();
-
-    if (moveTargetNode != null) {
-      // Moving state capture
-      // get unsent messages
-      persistenceData.unsentMessages = unsentMessages;
-
-      // get remote incarnations
-      persistenceData.restartState = getRestartState();
-
-      // get transferrable identity
+    //
+    // Ideally we'd simply use "captureState()", but special handling
+    // is required if this method is called during "load()":
+    //
+    // Loading the blackboard immediatly persists the component
+    // descriptions, to avoid reading the INI/XML files when the
+    // agent is rehydrated.  This persist must be done before loading
+    // the blackboard clients, since they may be active for quite
+    // some time and would block the node-level loading thread.
+    // However, the initial components are added to the hierarchy as
+    // they are loaded, so the component hierarchy at this point
+    // lacks the sub-blackboard components.  Here we preserve the
+    // initial component descriptions instead of recursing the
+    // partially-loaded component hierarchy.
+    ComponentDescriptions descs;
+    if (modelState == LOADED) {
       if (log.isInfoEnabled()) {
-        log.info("Transfering identity from node "+
-                 localNode+" to node "+moveTargetNode);
+        log.info(
+           "Persisting while loading, saving the initial"+
+           " component hierarchy");
       }
-      persistenceData.identity =
-        myAgentIdService.transferTo(moveTargetNode);
-      if (persistenceData.identity == null) {
-        persistenceData.identity = NULL_MOBILE_IDENTITY;
-      }
+      descs = findExternalComponentDescriptions();
     } else {
-      // non-moving state capture
-      persistenceData.identity = null;
+      // active (started) or idle (suspended)
+      if (log.isInfoEnabled()) {
+        log.info(
+           "Persisting while active, capturing the current"+
+           " component hierarchy");
+      }
+      descs = super.captureState();
     }
-    persistenceData.parameters = parameters; // Includes MessageAddress
-    persistenceData.mtsState = mtsState;
+
+    PersistenceData pd = new PersistenceData(
+        getMessageAddress(),
+        descs);
     List d = new ArrayList(1);
-    d.add(persistenceData);
+    d.add(pd);
+    if (log.isDetailEnabled()) {
+      log.detail("captured persistence data: "+d);
+    }
     return d;
   }
 
   public void setState(Object loadState) {
-    this.persistenceObject = (PersistenceObject) loadState;
+    this.mobilityObject = (MobilityObject) loadState;
   }
 
   public String getIdentifier() {
@@ -1266,9 +1432,7 @@ implements AgentIdentityClient
   }
 
   public void identityRevoked(CrlReason reason) {
-    if (log.isWarnEnabled()) {
-      log.warn("Identity has been revoked: "+reason);
-    }
+    log.warn("Identity has been revoked: "+reason);
     // ignore for now, re-acquire or die TBA
   }
 
@@ -1287,7 +1451,10 @@ implements AgentIdentityClient
           " to node "+destinationNode);
     }
     // save target node for later "suspend()" and "getState()" use
-    moveTargetNode = destinationNode;
+    mobilityObject = new MobilityObject(
+        getMessageAddress(),
+        localNode,
+        destinationNode); 
   }
 
   // 
@@ -1309,6 +1476,8 @@ implements AgentIdentityClient
   protected class MessageSwitch implements MessageHandler {
     /** List of MessageHandler instances **/
     private final List handlers = new ArrayList(11);
+    /** list of pending (unhandled) messages - protected by lock on handlers. **/
+    private List pendingMessages = new ArrayList(11);
 
     public boolean handleMessage(Message m) {
       synchronized (handlers) {
@@ -1316,6 +1485,7 @@ implements AgentIdentityClient
           MessageHandler h = (MessageHandler) handlers.get(i);
           if (h.handleMessage(m)) return true;
         }
+        pendMessage(m);
       }
       return false;
     }
@@ -1323,6 +1493,7 @@ implements AgentIdentityClient
     public void addMessageHandler(MessageHandler mh) {
       synchronized (handlers) {
         handlers.add(mh);
+        resubmitPendingMessages(mh);
       }
     }
     public void removeMessageHandler(MessageHandler mh) {
@@ -1330,18 +1501,81 @@ implements AgentIdentityClient
         handlers.remove(mh);
       }
     }
+    
+    // must be called within synchronized(handlers), e.g. only from addMessageHandler
+    private void resubmitPendingMessages(MessageHandler mh) {
+      if (pendingMessages != null) {
+        for (Iterator it = pendingMessages.iterator(); it.hasNext(); ) {
+          Message m = (Message) it.next();
+          try {
+            boolean handled = mh.handleMessage(m);
+            if (handled) {
+              if (log.isInfoEnabled()) {
+                log.info("Handled previously unhandled Message ("+m.getClass()+"): "+m);
+              }
+              it.remove();
+            } else {
+              // probably not worth the effort...
+              if (log.isDebugEnabled()) {
+                log.debug("Still not handling pending message "+m+" with handler "+mh);
+              }
+            }                
+          } catch (Exception e) {
+            log.error("Uncaught Exception while resubmitting pending Message ("+m.getClass()+"): "+m, e);
+          }
+        }
+      }
+    }
+
+    // must be called within synchronized(handlers)
+    private void pendMessage(Message m) {
+      if (pendingMessages != null) {
+        if (log.isInfoEnabled()) {
+          log.info("Delaying unhandled Message ("+m.getClass()+"): "+m);
+        }
+        pendingMessages.add(m);
+      } else {
+        logUnhandledMessage(m);
+      }
+    }
+
+    private void logUnhandledMessage(Message m) {
+      log.error("Dropping unhandled Message ("+m.getClass()+"): "+m);
+    }
+
+    protected void unpendMessages() {
+      List ms;
+      synchronized (handlers) {
+        assert pendingMessages != null;
+        ms = pendingMessages;
+        pendingMessages = null;
+      }
+
+      for (Iterator it = ms.iterator(); it.hasNext(); ) {
+        Message m = (Message) it.next();
+        logUnhandledMessage(m);
+      }
+    }
   }
 
-  private MessageHandler rawMessageHandler;
-
-  /** Called during initialize() to set up message handlers **/
-  private void setupMessageHandlers() {
-    rawMessageHandler = setupRawMessageHandler();
+  /** Set up the messagehandlers **/
+  protected void setupMessageHandlers() {
+    rawMessageSwitch = setupRawMessageHandler();
   }
 
   private MessageSwitch rawMessageSwitch = null;
+
   /** return a reference to the low-level message switch. **/
-  protected MessageSwitch getMessageSwitch() { return rawMessageSwitch; }
+  protected final MessageSwitch getMessageSwitch() { return rawMessageSwitch; }
+
+  /** return a reference to the message handler. **/  
+  protected final MessageHandler getMessageHandler() { return rawMessageSwitch; }
+
+  private void unpendMessages() {
+    MessageSwitch ms = getMessageSwitch();
+    assert ms != null;
+    ms.unpendMessages();
+  }
 
   /** Called to initialize the primary MessageHandler which is used to 
    * process incoming messages prior to adding to the agent's messagequeue.
@@ -1355,9 +1589,9 @@ implements AgentIdentityClient
    * should make sure to call this method (e.g. with super.setupRawMessageHandler) and
    * make sure the the returned value is used appropriately.
    **/
-  protected MessageHandler setupRawMessageHandler() {
-    rawMessageSwitch = new MessageSwitch();
-    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+  private MessageSwitch setupRawMessageHandler() {
+    MessageSwitch ms = new MessageSwitch();
+    ms.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof ClusterMessage) {
             MessageAddress orig = message.getOriginator();
@@ -1366,8 +1600,9 @@ implements AgentIdentityClient
           return false;         // don't ever consume it
         }
       });
+
     if (showTraffic) {
-      rawMessageSwitch.addMessageHandler(new MessageHandler() {
+      ms.addMessageHandler(new MessageHandler() {
           public boolean handleMessage(Message message) {
             if (message instanceof WhitePagesMessage) {
               if (showWhitePagesTraffic) {
@@ -1380,7 +1615,8 @@ implements AgentIdentityClient
           }
         });
     }
-    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+
+    ms.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof AdvanceClockMessage) {
             handleAdvanceClockMessage((AdvanceClockMessage)message);
@@ -1390,8 +1626,9 @@ implements AgentIdentityClient
           }
         }
       });
+
     // this one should go away
-    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+    ms.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof ComponentMessage) {
             handleComponentMessage((ComponentMessage)message);
@@ -1401,7 +1638,8 @@ implements AgentIdentityClient
           }
         }
       });
-    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+
+    ms.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof ClusterMessage) {
             // internal message queue
@@ -1413,11 +1651,13 @@ implements AgentIdentityClient
         }
       });
 
-    return rawMessageSwitch;
+    return ms;
   }
 
   /** handle a ComponentMessage.  Probably a bad idea nowadays. **/
   private void handleComponentMessage(ComponentMessage cm) {
+    log.warn("Received ComponentMessage "+cm);
+
     ComponentDescription desc = cm.getComponentDescription();
     int operation = cm.getOperation();
     switch (operation) {
@@ -1442,11 +1682,8 @@ implements AgentIdentityClient
    **/
   public void receiveMessage(Message message) {
     try {
-      boolean handled = rawMessageHandler.handleMessage(message);
-      if (!handled) {
-        log.warn("Received unhandled Message ("+
-                  message.getClass()+"): "+message);
-      }
+      // messageHandler will now pend and warn about unhandled messages
+      getMessageHandler().handleMessage(message);
     } catch (Exception e) {
       log.error("Uncaught Exception while handling Message ("+message.getClass()+"): "+message, e);
     }
@@ -1475,10 +1712,10 @@ implements AgentIdentityClient
   }
 
   private void loadRestartChecker() {
-    ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
 
     whitePagesService = (WhitePagesService) 
-      sb.getService(this, WhitePagesService.class, null);
+      csb.getService(this, WhitePagesService.class, null);
 
     try {
       bindRestart();
@@ -1506,8 +1743,8 @@ implements AgentIdentityClient
   }
 
   private void unloadRestartChecker() {
-    ServiceBroker sb = getServiceBroker();
-    sb.releaseService(
+    ServiceBroker csb = getChildServiceBroker();
+    csb.releaseService(
         this, WhitePagesService.class, whitePagesService);
   }
 
@@ -1747,7 +1984,9 @@ implements AgentIdentityClient
    * both cases, it is ok to store the special "unknown incarnation" marker
    * because we do not want to detect any restart.
    **/
-  private void recordAddress(MessageAddress agentId) {
+  private void recordAddress(MessageAddress addr) {
+    // remove the message attributes when hashing
+    MessageAddress agentId = addr.getPrimary();
     // only include agent addresses in restart checking
     synchronized (incarnationMap) {
       if (incarnationMap.get(agentId) == null) {
@@ -2009,9 +2248,10 @@ implements AgentIdentityClient
       public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
       public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
       public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
-      public double getExecutionRate() { die(); return -1; }
       public void advanceNodeTime(long timePeriod, double newRate) {die();}
+      public void setNodeTime(long time, double newRate) {die();}
 
+      public double getExecutionRate() { die(); return -1; }
     }
 
   // alarm clock view of this agent
@@ -2060,6 +2300,26 @@ implements AgentIdentityClient
           sendAdvanceClockMessage(params[i]);
         }
       }
+      public void advanceNodeTime(long timePeriod, double newRate) {
+        ExecutionTimer.Parameters newParameters =
+          getAgent().xTimer.createParameters(
+                                             timePeriod,
+                                             false, // millisIsAbsolute,
+                                             newRate,
+                                             false, // forceRunning,
+                                             NaturalTimeService.DEFAULT_CHANGE_DELAY);
+        getAgent().xTimer.setParameters(newParameters);
+      }
+      public void setNodeTime(long time, double newRate) {
+        ExecutionTimer.Parameters newParameters =
+          getAgent().xTimer.createParameters(
+                                             time,
+                                             true, // millisIsAbsolute,
+                                             newRate,
+                                             false, // forceRunning,
+                                             NaturalTimeService.DEFAULT_CHANGE_DELAY);
+        getAgent().xTimer.setParameters(newParameters);
+      }
       public double getExecutionRate() {
         return getAgent().xTimer.getRate();
       }
@@ -2086,18 +2346,6 @@ implements AgentIdentityClient
         // use MessageSwitchService?
         getAgent().sendMessage(acm);
       }
-      public void advanceNodeTime(long timePeriod, double newRate) {
-        ExecutionTimer.Parameters newParameters =
-          getAgent().xTimer.createParameters(
-            timePeriod,
-            false, // millisIsAbsolute,
-            newRate,
-            false, // forceRunning,
-            NaturalTimeService.DEFAULT_CHANGE_DELAY);
-            
-        getAgent().xTimer.setParameters(newParameters);
-      }
-
     }
 
   /**
@@ -2152,36 +2400,67 @@ implements AgentIdentityClient
   }
 
   //-----------------------------------------------------------------
-  // state object
+  // persistence state object
   //-----------------------------------------------------------------
 
   private static class PersistenceData implements java.io.Serializable {
 
-    private List parameters;    // Parameters including agentId
+    private final MessageAddress agentId;
+    private final ComponentDescriptions descs;
+
+    public PersistenceData(
+        MessageAddress agentId,
+        ComponentDescriptions descs) {
+      this.agentId = agentId;
+      this.descs = descs;
+    }
+
+    public String toString() {
+      return "Agent "+agentId+" descs "+descs;
+    }
+
+    private static final long serialVersionUID = 1891827367281982373L;
+  }
+
+  //-----------------------------------------------------------------
+  // mobility state object
+  //-----------------------------------------------------------------
+
+  private static class MobilityObject implements java.io.Serializable {
+
+    private final MessageAddress agentId;
+    private final MessageAddress sourceNode;
+    private final MessageAddress targetNode;
+
     private TransferableIdentity identity;
-    private ComponentDescriptions descs;
     private org.cougaar.core.mts.AgentState mtsState;
     private List unsentMessages; // List<ClusterMessage>
     private RestartState restartState;
 
-    public String toString() {
-      return 
-        "Agent "
-        + parameters.get(0)
-        + " state, identity "
-        + identity
-        + ", descs "
-        + descs
-        + ", mtsState "
-        + (mtsState != null)
-        + ", unsentMessages["
-        + (unsentMessages == null ?
-            "none" :
-            String.valueOf(unsentMessages.size()))
-        + "]";
+    private PersistenceObject persistenceObject;
+
+    public MobilityObject(
+        MessageAddress agentId,
+        MessageAddress sourceNode,
+        MessageAddress targetNode) { 
+      this.agentId = agentId;
+      this.sourceNode = sourceNode;
+      this.targetNode = targetNode;
     }
 
-    private static final long serialVersionUID = 3109298128098682092L;
+    public String toString() {
+      return 
+        "Agent "+agentId+" moving from "+sourceNode+" to "+
+        targetNode+" with identity "+ identity+", mtsState "+
+        (mtsState != null)+", unsentMessages["+
+        (unsentMessages == null ?
+         "none" :
+         String.valueOf(unsentMessages.size()))+
+        "], restartState "+restartState+
+        ", persistenceObject "+persistenceObject;
+    }
+
+    private static final long serialVersionUID = 7819283769182370871L;
   }
 
   //-----------------------------------------------------------------

@@ -25,8 +25,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -43,17 +45,16 @@ import org.cougaar.util.UnaryPredicate;
 
 /**
  * Simple viewer of Pings created by the local agent.
+ * <p>
+ * To load:<pre>
+ *   plugin=org.cougaar.core.mobility.ping.PingServlet(/ping)
+ * </pre>
+ * The above "/ping" parameter is the servlet path.
  */
 public class PingServlet 
 extends BaseServletComponent 
 implements BlackboardClient 
 {
-
-  public static final boolean DEFAULT_IGNORE_ROLLBACK = false;
-  public static final int DEFAULT_LIMIT = 10;
-  public static final int DEFAULT_SEND_FILLER_SIZE = -1;
-  public static final int DEFAULT_ECHO_FILLER_SIZE = -1;
-  public static final long DEFAULT_TIMEOUT = 30000L;
 
   public static final UnaryPredicate PING_PRED = 
     new UnaryPredicate() {
@@ -176,11 +177,6 @@ implements BlackboardClient
     private static final String REFRESH_VALUE = "Refresh";
 
     private static final String TARGET_PARAM = "target";
-    private static final String TIMEOUT_PARAM = "timeout";
-    private static final String IGNORE_ROLLBACK_PARAM = "fail";
-    private static final String LIMIT_PARAM = "limit";
-    private static final String SEND_FILLER_SIZE_PARAM = "sendFiller";
-    private static final String ECHO_FILLER_SIZE_PARAM = "echoFiller";
 
     private static final String REMOVE_UID_PARAM = "removeUID";
 
@@ -188,16 +184,21 @@ implements BlackboardClient
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
 
-      boolean isAdd = false;
-      boolean isRemove = false;
+      boolean isAdd;
+      boolean isRemove;
+      String sremoveUID;
 
-      String target = null;
-      long timeout = DEFAULT_TIMEOUT;
-      boolean ignoreRollback = DEFAULT_IGNORE_ROLLBACK;
-      int limit = DEFAULT_LIMIT;
-      int sendFillerSize = DEFAULT_SEND_FILLER_SIZE;
-      int echoFillerSize = DEFAULT_ECHO_FILLER_SIZE;
-      String sremoveUID = null;
+      String target;
+      long delayMillis;
+      long timeoutMillis;
+      long eventMillis;
+      int eventCount;
+      boolean ignoreRollback;
+      int limit;
+      int sendFillerSize;
+      boolean sendFillerRand;
+      int echoFillerSize;
+      boolean echoFillerRand;
         
       // parse URL parameters
       {
@@ -205,34 +206,64 @@ implements BlackboardClient
         isAdd = ADD_VALUE.equals(action);
         isRemove = REMOVE_VALUE.equals(action);
 
-        target = req.getParameter(TARGET_PARAM);
-        if ((target != null) && (target.length() == 0)) {
-          target = null;
+        String s;
+
+        s = req.getParameter(REMOVE_UID_PARAM);
+        if ((s != null) && (s.length() == 0)) {
+          s = null;
         }
-        String stimeout = req.getParameter(TIMEOUT_PARAM);
-        if (stimeout != null) {
-          timeout = Long.parseLong(stimeout);
+        sremoveUID = s;
+
+        s = req.getParameter(TARGET_PARAM);
+        if ((s != null) && (s.length() == 0)) {
+          s = null;
         }
-        String signoreRollback = req.getParameter(IGNORE_ROLLBACK_PARAM);
+        target = s;
+
+        s = req.getParameter(PingImpl.PROP_DELAY_MILLIS);
+        delayMillis = (s == null ? PingImpl.DEFAULT_DELAY_MILLIS : Long.parseLong(s));
+
+        s = req.getParameter(PingImpl.PROP_TIMEOUT_MILLIS);
+        timeoutMillis = (s == null ? PingImpl.DEFAULT_TIMEOUT_MILLIS : Long.parseLong(s));
+
+        s = req.getParameter(PingImpl.PROP_EVENT_MILLIS);
+        eventMillis = 
+          (s == null ? PingImpl.DEFAULT_EVENT_MILLIS : Long.parseLong(s));
+
+        s = req.getParameter(PingImpl.PROP_EVENT_COUNT);
+        eventCount = 
+          (s == null ? PingImpl.DEFAULT_EVENT_COUNT : Integer.parseInt(s));
+
+        s = req.getParameter(PingImpl.PROP_IGNORE_ROLLBACK);
         ignoreRollback = 
-          "on".equals(signoreRollback) || 
-          "true".equals(signoreRollback);
-        String slimit = req.getParameter(LIMIT_PARAM);
-        if (slimit != null) {
-          limit = Integer.parseInt(slimit);
-        }
-        String ssendFillerSize = req.getParameter(SEND_FILLER_SIZE_PARAM);
-        if (ssendFillerSize != null) {
-          sendFillerSize = Integer.parseInt(ssendFillerSize);
-        }
-        String sechoFillerSize = req.getParameter(ECHO_FILLER_SIZE_PARAM);
-        if (sechoFillerSize != null) {
-          echoFillerSize = Integer.parseInt(sechoFillerSize);
-        }
-        sremoveUID = req.getParameter("removeUID");
-        if ((sremoveUID != null) && (sremoveUID.length() == 0)) {
-          sremoveUID = null;
-        }
+          (s == null ?
+           PingImpl.DEFAULT_IGNORE_ROLLBACK :
+           ("on".equals(s) || "true".equals(s)));
+
+        s = req.getParameter(PingImpl.PROP_LIMIT);
+        limit = (s == null ? PingImpl.DEFAULT_LIMIT : Integer.parseInt(s));
+
+        s = req.getParameter(PingImpl.PROP_SEND_FILLER_SIZE);
+        sendFillerSize = 
+          (s == null ? PingImpl.DEFAULT_SEND_FILLER_SIZE : 
+           Integer.parseInt(s));
+
+        s = req.getParameter(PingImpl.PROP_SEND_FILLER_RAND);
+        sendFillerRand =
+          (s == null ?
+           PingImpl.DEFAULT_SEND_FILLER_RAND :
+           ("on".equals(s) || "true".equals(s)));
+
+        s = req.getParameter(PingImpl.PROP_ECHO_FILLER_SIZE);
+        echoFillerSize = 
+          (s == null ? PingImpl.DEFAULT_ECHO_FILLER_SIZE : 
+           Integer.parseInt(s));
+
+        s = req.getParameter(PingImpl.PROP_ECHO_FILLER_RAND);
+        echoFillerRand =
+          (s == null ?
+           PingImpl.DEFAULT_ECHO_FILLER_RAND :
+           ("on".equals(s) || "true".equals(s)));
       }
 
       res.setContentType("text/html");
@@ -303,10 +334,20 @@ implements BlackboardClient
           return;
         }
 
+        Map props = new HashMap();
+        props.put(PingImpl.PROP_DELAY_MILLIS, Long.toString(delayMillis));
+        props.put(PingImpl.PROP_TIMEOUT_MILLIS, Long.toString(timeoutMillis));
+        props.put(PingImpl.PROP_EVENT_MILLIS, Long.toString(eventMillis));
+        props.put(PingImpl.PROP_EVENT_COUNT, Integer.toString(eventCount));
+        props.put(PingImpl.PROP_IGNORE_ROLLBACK, ignoreRollback ? "true" : "false");
+        props.put(PingImpl.PROP_LIMIT, Integer.toString(limit));
+        props.put(PingImpl.PROP_SEND_FILLER_SIZE, Integer.toString(sendFillerSize));
+        props.put(PingImpl.PROP_SEND_FILLER_RAND, sendFillerRand ? "true" : "false");
+        props.put(PingImpl.PROP_ECHO_FILLER_SIZE, Integer.toString(echoFillerSize));
+        props.put(PingImpl.PROP_ECHO_FILLER_RAND, echoFillerRand ? "true" : "false");
+
         UID uid = uidService.nextUID();
-        Ping ping = new PingImpl(
-            uid, agentId, targetId, timeout,
-            ignoreRollback, limit, sendFillerSize, echoFillerSize);
+        Ping ping = new PingImpl(uid, agentId, targetId, props);
         addPing(ping);
 
         out.print(
@@ -346,15 +387,24 @@ implements BlackboardClient
           "</th><th rowspan=2>Status"+
           "</th><th rowspan=2>Time"+
           "</th><th rowspan=2>Count"+
-          "</th><th colspan=7>Configuration"+
+          "</th><th colspan=10>Configuration"+
+          "</th><th colspan=5>RTT Stats"+
           "</th></tr>\n"+
           "<tr><th>Source"+
           "</th><th>Target"+
+          "</th><th>Delay"+
           "</th><th>Timeout"+
           "</th><th>IgnoreRollback"+
           "</th><th>Limit"+
           "</th><th>SendFillerSize"+
+          "</th><th>SendFillerRand"+
           "</th><th>EchoFillerSize"+
+          "</th><th>EchoFillerRand"+
+          "</th><th>Count"+
+          "</th><th>Min"+
+          "</th><th>Max"+
+          "</th><th>Mean"+
+          "</th><th>StdDev"+
           "</th></tr>\n");
 
       Collection c = queryAllPings();
@@ -412,6 +462,8 @@ implements BlackboardClient
               "</td><td>"+
               ping.getTarget()+
               "</td><td>"+
+              ping.getDelayMillis()+
+              "</td><td>"+
               ping.getTimeoutMillis()+
               "</td><td>"+
               ping.isIgnoreRollback()+
@@ -420,7 +472,21 @@ implements BlackboardClient
               "</td><td>"+
               ping.getSendFillerSize()+
               "</td><td>"+
+              ping.isSendFillerRandomized()+
+              "</td><td>"+
               ping.getEchoFillerSize()+
+              "</td><td>"+
+              ping.isEchoFillerRandomized()+
+              "</td><td>"+
+              ping.getStatCount()+
+              "</td><td>"+
+              ping.getStatMinRTT()+
+              "</td><td>"+
+              ping.getStatMaxRTT()+
+              "</td><td>"+
+              (long) ping.getStatMeanRTT()+
+              "</td><td>"+
+              (long) ping.getStatStdDevRTT()+
               "</td>"+
               "</tr>\n");
         }
@@ -476,47 +542,108 @@ implements BlackboardClient
           "></td><td><i>Destination agent, which can't be "+
           agentId+
           "</i></td></tr>\n"+
-          "<tr><td>Timeout Millis</td><td><input name=\""+
-          TIMEOUT_PARAM+
+          "<tr><td>Delay Millis</td><td><input name=\""+
+          PingImpl.PROP_DELAY_MILLIS+
           "\" type=\"text\" size=30 value=\""+
-          timeout+
+          delayMillis+
+          "\"></td><td><i>Milliseconds between pings, or -1 "+
+          "if no delay, default is "+
+          PingImpl.DEFAULT_DELAY_MILLIS+
+          "</i></td></tr>\n"+
+          "<tr><td>Timeout Millis</td><td><input name=\""+
+          PingImpl.PROP_TIMEOUT_MILLIS+
+          "\" type=\"text\" size=30 value=\""+
+          timeoutMillis+
           "\"></td><td><i>Milliseconds until timeout, or -1 "+
           "if no timeout, default is "+
-          DEFAULT_TIMEOUT+
+          PingImpl.DEFAULT_TIMEOUT_MILLIS+
           "</i></td></tr>\n"+
-          "<tr><td>Ignore Rollback</td><td><input name=\""+
-          IGNORE_ROLLBACK_PARAM+
-          "\" type=\"checkbox\""+
-          (ignoreRollback ? " checked" : "")+
-          "></td><td><i>Ignore ping counter failures, perhaps due to agent restarts"+
-          ", default is "+
-          DEFAULT_IGNORE_ROLLBACK+
+          "<tr><td>Event Millis</td><td><input name=\""+
+          PingImpl.PROP_EVENT_MILLIS+
+          "\" type=\"text\" size=30 value=\""+
+          eventMillis+
+          "\"></td><td><i>Milliseconds until event, or -1 "+
+          "if no time-based events, default is "+
+          PingImpl.DEFAULT_EVENT_MILLIS+
+          "</i></td></tr>\n"+
+          "<tr><td>Event Count</td><td><input name=\""+
+          PingImpl.PROP_EVENT_COUNT+
+          "\" type=\"text\" size=30 value=\""+
+          eventCount+
+          "\"></td><td><i>Count until event, or -1 "+
+          "if no count-based events, default is "+
+          PingImpl.DEFAULT_EVENT_COUNT+
+          "</i></td></tr>\n"+
+          "<tr><td>Ignore Rollback</td><td>"+
+          "<select name=\""+
+          PingImpl.PROP_IGNORE_ROLLBACK+
+          "\">"+
+          "<option value=\"true\""+
+          (ignoreRollback ? " selected" : "")+
+          ">true</option>"+
+          "<option value=\"false\""+
+          (ignoreRollback ? "" : " selected")+
+          ">false</option>"+
+          "</select>"+
+          "</td><td><i>Ignore ping counter failures, perhaps due"+
+          "  to agent restarts, default is "+
+          PingImpl.DEFAULT_IGNORE_ROLLBACK+
           "</i></td></tr>\n"+
           "<tr><td>Repeat Limit</td><td><input name=\""+
-          LIMIT_PARAM+
+          PingImpl.PROP_LIMIT+
           "\" type=\"text\" size=30 value=\""+
           limit+
           "\"></td><td><i>Number of pings to send, or -1 for"+
           " infinite, default is "+
-          DEFAULT_LIMIT+
+          PingImpl.DEFAULT_LIMIT+
           "</i></td></tr>\n"+
           "<tr><td>Send Filler Size</td><td><input name=\""+
-          SEND_FILLER_SIZE_PARAM+
+          PingImpl.PROP_SEND_FILLER_SIZE+
           "\" type=\"text\" size=30 value=\""+
           sendFillerSize+
           "\"></td><td><i>Extra \"filler\" bytes to make send-side"+
           " ping messages larger, or -1 for"+
           " no send-size filler, default is "+
-          DEFAULT_SEND_FILLER_SIZE+
+          PingImpl.DEFAULT_SEND_FILLER_SIZE+
+          "</i></td></tr>\n"+
+          "<tr><td>Send Filler Rand</td><td>"+
+          "<select name=\""+
+          PingImpl.PROP_SEND_FILLER_RAND+
+          "\">"+
+          "<option value=\"true\""+
+          (sendFillerRand ? " selected" : "")+
+          ">true</option>"+
+          "<option value=\"false\""+
+          (sendFillerRand ? "" : " selected")+
+          ">false</option>"+
+          "</select>"+
+          "</td><td><i>Use random data in the send-side filler"+
+          ", default is "+
+          PingImpl.DEFAULT_SEND_FILLER_RAND+
           "</i></td></tr>\n"+
           "<tr><td>Echo Filler Size</td><td><input name=\""+
-          ECHO_FILLER_SIZE_PARAM+
+          PingImpl.PROP_ECHO_FILLER_SIZE+
           "\" type=\"text\" size=30 value=\""+
           echoFillerSize+
           "\"></td><td><i>Extra \"filler\" bytes to make target-size"+
           " ping messages larger, or -1 for"+
           " no target-side filler, default is "+
-          DEFAULT_ECHO_FILLER_SIZE+
+          PingImpl.DEFAULT_ECHO_FILLER_SIZE+
+          "</i></td></tr>\n"+
+          "<tr><td>Echo Filler Rand</td><td>"+
+          "<select name=\""+
+          PingImpl.PROP_ECHO_FILLER_RAND+
+          "\">"+
+          "<option value=\"true\""+
+          (echoFillerRand ? " selected" : "")+
+          ">true</option>"+
+          "<option value=\"false\""+
+          (echoFillerRand ? "" : " selected")+
+          ">false</option>"+
+          "</select>"+
+          "</td><td><i>Use random data in the target-side filler"+
+          ", default is "+
+          PingImpl.DEFAULT_ECHO_FILLER_RAND+
           "</i></td></tr>\n"+
           "</table>\n"+
           "<input type=\"submit\" name=\""+

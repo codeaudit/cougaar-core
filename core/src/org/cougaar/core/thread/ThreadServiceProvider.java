@@ -25,13 +25,15 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
@@ -60,18 +62,6 @@ public final class ThreadServiceProvider
     private ThreadStatusService statusProxy;
     private String name;
 
-    /**
-     * Create a new set of thread services. Deduce the parent by
-     * asking the ServiceBroker.
-     */
-//     public ThreadServiceProvider(ServiceBroker sb, String name) {
-// 	this.name = name;
-// 	ThreadService parent = (ThreadService) 
-// 	    sb.getService(this, ThreadService.class, null);
-// 	makeProxies(parent);
-//     }
-
-
     public ThreadServiceProvider() {
     }
 
@@ -79,11 +69,32 @@ public final class ThreadServiceProvider
 	super.load();
 
 	ServiceBroker sb = my_sb;
+	// check if this component was added with parameters
+        if (name == null) {
+	    // Make default values from position in containment hierarcy
+	    AgentIdentificationService ais = (AgentIdentificationService)
+		sb.getService(this, AgentIdentificationService.class, null);
+	    MessageAddress agentAddr = ais.getMessageAddress();
+	    sb.releaseService(this, AgentIdentificationService.class, ais);
+	    
+	    NodeIdentificationService nis = (NodeIdentificationService)
+		sb.getService(this, NodeIdentificationService.class, null);
+	    MessageAddress nodeAddr = nis.getMessageAddress();
+	    sb.releaseService(this, NodeIdentificationService.class, nis);
+
+	    isRoot = !sb.hasService(ThreadService.class);
+	    name = 
+		isRoot ?
+		"Node "+nodeAddr :
+		"Agent_"+agentAddr;
+        }
+
 	if (isRoot) {
 	    // use the root service broker
 	    NodeControlService ncs = (NodeControlService)
 		my_sb.getService(this, NodeControlService.class, null);
 	    sb = ncs.getRootServiceBroker();
+
 	}
 	
 	ThreadService parent = (ThreadService) 

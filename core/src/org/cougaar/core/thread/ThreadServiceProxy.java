@@ -21,8 +21,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import org.cougaar.core.service.ThreadService;
 
 /**
@@ -30,19 +28,12 @@ import org.cougaar.core.service.ThreadService;
  */
 final class ThreadServiceProxy 	implements ThreadService
 {
-    private Timer timer;
     private TreeNode treeNode;
 
     ThreadServiceProxy(TreeNode treeNode) 
     {
 	this.treeNode = treeNode;
     }
-
-    private synchronized Timer timer() {
-	if (timer == null) timer = new Timer(true);
-	return timer;
-    }
-
 
     TreeNode getTreeNode() {
 	return treeNode;
@@ -63,24 +54,21 @@ final class ThreadServiceProxy 	implements ThreadService
     }
 
 
-
-
-    public void schedule(TimerTask task, long delay) {
-	timer().schedule(task, delay);
+    public void schedule(java.util.TimerTask task, long delay) {
+	treeNode.timer().schedule(task, delay);
     }
 
 
-    public void schedule(TimerTask task, long delay, long interval) {
-	timer().schedule(task, delay, interval);
+    public void schedule(java.util.TimerTask task, long delay, long interval) {
+	treeNode.timer().schedule(task, delay, interval);
     }
 
-    public void scheduleAtFixedRate(TimerTask task, 
+    public void scheduleAtFixedRate(java.util.TimerTask task, 
 				    long delay, 
 				    long interval)
     {
-	timer().scheduleAtFixedRate(task, delay, interval);
+	treeNode.timer().scheduleAtFixedRate(task, delay, interval);
     }
-
 
 
 }

@@ -4,14 +4,18 @@
  * Usage: java -cp . ExampleMetricQueryClient "http://localhost:8800/\$3-69-ARBN/metrics/query?format=java&paths=Agent(3-69-ARBN):SpokeTime|IpFlow(blatz,stout):CapacityMax"
  * Must specify 'format=java' as the default is a string of xml printed out to browser
  */
+package org.cougaar.core.examples.metrics;
 
 import java.net.URL;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
+// This example requires quoSumo.jar, qos.jar and core.jar
 public class ExampleMetricQueryClient
 {
   // One arg here - the query string "http://host..." see usage above
@@ -29,9 +33,19 @@ public class ExampleMetricQueryClient
 	ObjectInputStream ois = new ObjectInputStream(in);
 	
 	// read in java object - this a java client only
-	ArrayList propertylist = (ArrayList)ois.readObject();
+	HashMap propertylist = (HashMap)ois.readObject();
+	ois.close();
+
+	if (propertylist == null) {
+	    System.out.println("Null Property List returned");
+	    return;
+	}
 	// can do anything with it here, we just print it out for now
-	System.out.println(propertylist);
+	Iterator itr = propertylist.entrySet().iterator();
+	while (itr.hasNext()) {
+	    Map.Entry entry = (Map.Entry) itr.next();
+	    System.out.println(entry.getKey() +"->"+ entry.getValue());
+	}
       } catch (Exception e) {
 	System.out.println("Error reading input stream for url " + url + " Make sure the stream is open. " + e);
 	e.printStackTrace();

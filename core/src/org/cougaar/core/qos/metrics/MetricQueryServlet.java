@@ -25,7 +25,7 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.ArrayList;
+import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServlet;
@@ -90,7 +90,7 @@ public class MetricQueryServlet
   public void printPage(HttpServletRequest request, OutputStream out) {
     
     String metrics = null;
-    ArrayList propertylist = null;
+    HashMap propertylist = null;
     
     try {
       // parses params
@@ -136,6 +136,12 @@ public class MetricQueryServlet
   
   public String build_string(String paths) 
   {
+      if (paths == null) return
+	  "<?xml version='1.0'?>\n"+
+	  "<!-- Null Metrics Query -->\n"+
+	  "<!-- Usage: /metrics/query/?paths=Host(Foo):Jips|Host(Foo):LoadAverage -->\n"+
+	  "<paths></paths>\n";
+
     StringTokenizer st = new StringTokenizer(paths, "|");
     
     /* If xml, then parse into xml string and return 
@@ -171,7 +177,7 @@ public class MetricQueryServlet
 	// here we call XMLString(Metric), which is an xml toString() for Metric
 	metrics = metrics+ServletUtilities.XMLString(pathMetric);
       } catch(Exception e) {
-	System.out.println("\n Incorrect path format: " + path);
+	  metrics=metrics+ServletUtilities.XMLString(null);
       }
       metrics = metrics+"</path>";
     }
@@ -180,27 +186,29 @@ public class MetricQueryServlet
   }
   
   /*
-   * Build a java ArrayList, instead of xml
+   * Build a java HashMap, instead of xml
    * Each element in the list will have the form: 'path|metric'
    */
-  public ArrayList build_propertylist(String paths) 
+  public HashMap build_propertylist(String paths) 
   {
+      if (paths == null) return null;
+
     StringTokenizer st = new StringTokenizer(paths, "|");
     
     // build propertylist 
     // element has the form: 'Query|Metric' 
-    ArrayList propertylist = new ArrayList(20);
+    HashMap propertylist = new HashMap();
     
     // build property list
     while (st.hasMoreTokens()) {
       String path = st.nextToken();
-      
+      Metric pathMetric=null;
       try {
-	Metric pathMetric = metricsService.getValue(path);
-	propertylist.add(path+"|"+pathMetric);
+	  pathMetric = metricsService.getValue(path);
       } catch(Exception e) {
-	System.out.println("\n Incorrect path format: " + path);
+	  // Bad path spec Leave pathMetric as null or "Undefined"
       }
+      propertylist.put(path, pathMetric);
     }
     return propertylist; 
   }

@@ -24,9 +24,14 @@ package org.cougaar.core.agent.service.alarm;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
+
+import org.cougaar.util.log.*;
 
 /**
  * Control the advancement of Execution time. Execution time is a
@@ -82,6 +87,8 @@ import java.util.GregorianCalendar;
  *
  **/
 public class ExecutionTimer extends Timer {
+  private static final Logger logger = Logging.getLogger("org.cougaar.core.agent.service.alarm.ExecutionTimer");
+
   public static final long DEFAULT_CHANGE_DELAY = 10000L;
 
   public static class Parameters implements Comparable, java.io.Serializable {
@@ -271,7 +278,8 @@ public class ExecutionTimer extends Timer {
    **/
   public long currentTimeMillis() {
     synchronized (sem) {
-      long newTime = theParameters[0].computeTime(getNow());
+      long now = getNow();
+      long newTime = theParameters[0].computeTime(now);
       if (newTime > theCurrentExecutionTime) {
         theCurrentExecutionTime = newTime; // Only advance time, never decreases
       }
@@ -321,27 +329,109 @@ public class ExecutionTimer extends Timer {
    * system time. Computing that offset consistently across all
    * clusters means that we have to compute a time (in the past) at
    * which the parameters became effective and then compute the offset
-   * relative to that. There is no way for all clusters to reliably
-   * compute the same value for this time. The best we can do is
-   * select a boundary that is unlikely to be near the actual starting
-   * time and compute relative to that.
+   * relative to that. <p>
+   * If org.cougaar.core.society.startTime is provided, we can 
+   * synchronize from a common baseline point to reasonable accuracy.
+   * Otherwise, there is no way for all agents to reliably
+   * compute the same value, so we'll assume simultaneous starts.
    *
    * @property org.cougaar.core.agent.startTime The date to use as the
-   * start of execution for demonstration purposes.
+   * start of execution for demonstration purposes.  Accepts date/time
+   * in the form of <em>MM/dd/yyy H:mm:ss</em> where the time sequence
+   * is optional.  If the time is not given, then it defaults to noon.
+   * agentStartTime must be in GMT.  Note that if society.startTime is
+   * not provided, the resulting date will be as specified, but the time
+   * will match the current real (GMT) time.
+   *
+   * @property org.cougaar.core.society.startTime The real date-time stamp
+   * when the society was started.  If supplied, can be used to synchronize
+   * the execution times of nodes which were started at different real times.
+   * society.startTime must be in GMT and ought to be generally
+   * slightly in the past.  Format example: "09/12/2003 13:00:00"
+   *
+   * @property org.cougaar.core.society.timeOffset Specify an offset (in milliseconds)
+   * from real time to use as execution time.  This is an alternative to
+   * using agent.startTime and society.startTime (if timeOffset is specified, then
+   * these other properties are ignored).  Typical usage would be to specify
+   * the execution-time offset when (re)starting a node to match the other nodes
+   * in the society.
+   *
    **/
   public ExecutionTimer() {
-    String startTime = System.getProperty("org.cougaar.core.agent.startTime");
-    if (startTime != null) {
-      try {
-        GregorianCalendar calendar = new GregorianCalendar();
-        calendar.set(Calendar.HOUR_OF_DAY, 0); // Midnight today
-        long offset = (new SimpleDateFormat("MM/dd/yyy")).parse(startTime).getTime() - calendar.getTime().getTime();
-        theParameters[0] = new Parameters(1.0, offset, 0L);
-      } catch (Exception e) {
-        System.err.println("Bad org.cougaar.core.agent.startTime: " + e);
+    long offset = org.cougaar.util.PropertyParser.getLong("org.cougaar.core.society.timeOffset",
+                                                          0L);
+    if (offset == 0L) {
+      String startTime = System.getProperty("org.cougaar.core.agent.startTime");
+      if (startTime != null) {
+        long now = System.currentTimeMillis();
+
+        long baseline = 0L;
+        String baseProp = System.getProperty("org.cougaar.core.society.startTime");
+        if (baseProp != null) {
+          try {
+            DateFormat f = (new SimpleDateFormat("MM/dd/yyy H:mm:ss"));
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            baseline = f.parse(baseProp).getTime();
+          } catch (ParseException e) {
+            logger.error("Unparsable org.cougaar.core.society.startTime: "+baseProp, e);
+          }
+        }
+
+        long target=0L;
+        try {
+          DateFormat f = (new SimpleDateFormat("MM/dd/yyy H:mm:ss"));
+          f.setTimeZone(TimeZone.getTimeZone("GMT"));
+          target = f.parse(startTime).getTime();
+        } catch (ParseException e) {
+          try {
+            DateFormat f = (new SimpleDateFormat("MM/dd/yyy"));
+            f.setTimeZone(TimeZone.getTimeZone("GMT"));
+            target = f.parse(startTime).getTime();
+            target = target+ (12*60*60*1000L); // noon on day
+          } catch (ParseException ex) {
+            logger.error("Bad org.cougaar.core.agent.startTime: " + startTime, e);
+          }
+        }
+
+        if (target != 0L) {
+          if (baseline != 0L) {   // we got both parameters - good news!
+            offset = target - baseline;
+          } else {
+            // dang - we could live with the skew by doing:
+            // offset = target - now;
+            // or rebaseline at a recent midnight
+
+            {
+              long targetMD = midnightOf(target);
+              long todayMD = midnightOf(now);
+              long delta = now-todayMD;
+              if (delta<0L) delta = -delta;
+              if (delta<(10*60*1000L)) { // check for likely problems
+                logger.warn("DANGER - starting across midnight boundaries without specifying society.startTime can result in execution time skew!");
+              }
+              offset = targetMD-todayMD; // sync midnights - this matches the intent of the old solution:
+              //long offset = (new SimpleDateFormat("MM/dd/yyy")).parse(startTime).getTime() - calendar.getTime().getTime();
+            }
+          }
+        }
       }
     }
+    if (offset != 0L) {
+      logger.warn("Starting Time set to "+new Date(System.currentTimeMillis()+offset)+" offset="+offset);
+      theParameters[0] = new Parameters(1.0, offset, 0L);
+    }
   }
+
+  protected long midnightOf(long time) {
+    GregorianCalendar calendar = new GregorianCalendar(); 
+    calendar.setTimeInMillis(time);
+    calendar.set(Calendar.HOUR_OF_DAY, 0); // Midnight today
+    calendar.set(Calendar.MINUTE, 0);
+    calendar.set(Calendar.SECOND, 0);
+    calendar.set(Calendar.MILLISECOND, 0);
+    return calendar.getTime().getTime();
+  }
+    
 
   protected String getName() {
     return "ExecutionTimer";

@@ -23,18 +23,14 @@ package org.cougaar.core.thread;
 
 
 /** 
- * This interface takes the place of 'thread' in COUGAAR.  Aside from
- * a few special internal cases, all 'threads' in COUGAAR should come
- * from the ThreadService in the form of Schedulables.  Like a true
- * java Thread, a Schedulable encapsulates a Runnable whose body runs
- * in logical thread.  The ThreadService is the only source of
- * usable Schedulables. 
+ * This interface takes the place of Thread and TimerTask in COUGAAR.
+ * Aside from a few special internal cases, all Threads and Tasks in
+ * COUGAAR should come from the ThreadService in the form of
+ * Schedulables.  To treat a Schedulable like a Thread, use the start
+ * method.  To treat a Schedulable like a TimerTask, use the schedule
+ * methods.  The ThreadService is the only source of usable
+ * Schedulables.
  * 
- * Under most circumstances, the only interesting method here is
- * start, which either starts a corresponding Thread immediately, if
- * thread resources are available. or queues the Schedulable if
- * not. See below for more details on start and cancel.  The other
- * two methods, getState and getConsumer, are purely informational.
  */
 public interface Schedulable
 {
@@ -68,4 +64,18 @@ public interface Schedulable
      * Schedulable.
     */
     Object getConsumer();
+
+
+    /**
+     * The following methods behave more or less as they on
+     * TimerTasks, except that the schedule methods can be called more
+     * than once.  In that case, later calls effectively reschedule
+     * the Schedulable.  Since 'cancel' was already in use, a new
+     * method had to be introduced to cancel a scheduled task.  Thus
+     * 'cancelTimer'.
+    */
+    void schedule(long delay);
+    void schedule(long delay, long interval);
+    void scheduleAtFixedRate(long delay, long interval);
+    void cancelTimer();
 }

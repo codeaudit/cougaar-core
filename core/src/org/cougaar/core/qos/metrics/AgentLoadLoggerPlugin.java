@@ -29,7 +29,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TimerTask;
+
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
@@ -39,6 +39,7 @@ import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 
 public class AgentLoadLoggerPlugin 
     extends ComponentPlugin
@@ -54,7 +55,7 @@ public class AgentLoadLoggerPlugin
     private ArrayList agents;
     private long start;
 
-    private class Poller extends TimerTask {
+    private class Poller implements Runnable {
 	public void run() {
 	    if (first_time) 
 		collectNames();
@@ -127,7 +128,7 @@ public class AgentLoadLoggerPlugin
  	node = nis.getMessageAddress().toString();
 
 
-	ThreadService threadService = (ThreadService)
+	ThreadService tsvc = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
 
 	filename = node+"-"+filename;
@@ -140,8 +141,12 @@ public class AgentLoadLoggerPlugin
 	    return;
 	}
 
-
-	threadService.schedule(new Poller(), 60000, 500);
+	Poller poller = new Poller();
+	Schedulable sched = tsvc.getThread(this, 
+							   poller,
+							   "LoadPoller");
+	sched.schedule(60000, 500);
+	sb.releaseService(this, ThreadService.class, tsvc);
 	
     }
 

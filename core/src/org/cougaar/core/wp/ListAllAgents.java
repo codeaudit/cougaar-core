@@ -84,8 +84,6 @@ public class ListAllAgents {
       if (s == null) {
       } else if (s.length() > 0 && s.charAt(0) == '.') {
         recurse(toSet, wps, s, timeout);
-      } else if (s.equals("MTS") || s.endsWith("(MTS)")) {
-        // hide the MTS hacks!
       } else {
         toSet.add(s);
       }

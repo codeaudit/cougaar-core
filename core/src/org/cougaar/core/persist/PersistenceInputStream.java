@@ -127,6 +127,13 @@ public class PersistenceInputStream extends ObjectInputStream {
     int active = readInt();
     PersistenceIdentity clientId = (PersistenceIdentity) readObject();
     Object object = readObject();
+    if (object == null) {
+      String msg =
+        "Rehydrated object is null. nextReadIndex is "
+        + nextReadIndex + "/" + references.length;
+      logger.error(msg);
+      return null;
+    }
     if (object instanceof ActivePersistenceObject) {
       ((ActivePersistenceObject) object).checkRehydration(logger);
     }
@@ -212,23 +219,23 @@ public class PersistenceInputStream extends ObjectInputStream {
 	if (pAssoc == null) {
 	  Object object = callNewInstanceFromDesc(this, desc);
 	  pAssoc = identityTable.create(object, reference);
-	  if (logger.isDetailEnabled()) logger.detail("Allocating " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(object) + " @ " + reference);
+	  if (logger.isDetailEnabled()) logger.detail("Allocating " + (nextReadIndex-1) + " " + PersistenceServiceComponent.getObjectName(object) + " @ " + reference);
 	  return object;
 	}
 	Object result = pAssoc.getObject();
 	if (result == null) throw new InstantiationException("no object @ " + reference);
 	if (result.getClass() != clazz) throw new InstantiationException("wrong object @ " + reference);
-	if (logger.isDetailEnabled()) logger.detail("Overwriting " + (nextReadIndex-1) + " " + BasePersistence.getObjectName(result) + " @ " + reference);
+	if (logger.isDetailEnabled()) logger.detail("Overwriting " + (nextReadIndex-1) + " " + PersistenceServiceComponent.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
         Object result = callNewInstanceFromDesc(this, desc);
         if (logger.isDetailEnabled()) logger.detail("Allocating " + (nextReadIndex-1) + " " +
-              BasePersistence.getObjectName(result));
+              PersistenceServiceComponent.getObjectName(result));
         return result;
       }
     }
     Object result = callNewInstanceFromDesc(this, desc);
-    if (logger.isDetailEnabled()) logger.detail("Allocating " + BasePersistence.getObjectName(result));
+    if (logger.isDetailEnabled()) logger.detail("Allocating " + PersistenceServiceComponent.getObjectName(result));
     return result;
   }
 
@@ -252,10 +259,10 @@ public class PersistenceInputStream extends ObjectInputStream {
 //  	return null;
       }
       Object result = pAssoc.getObject();
-      if (logger.isDetailEnabled()) logger.detail("Resolving " + BasePersistence.getObjectName(result) + " @ " + pRef);
+      if (logger.isDetailEnabled()) logger.detail("Resolving " + PersistenceServiceComponent.getObjectName(result) + " @ " + pRef);
       return result;
     } else {
-      if (logger.isDetailEnabled()) logger.detail("Passing " + BasePersistence.getObjectName(o));
+      if (logger.isDetailEnabled()) logger.detail("Passing " + PersistenceServiceComponent.getObjectName(o));
       return o;
     }
   }

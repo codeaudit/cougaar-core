@@ -350,10 +350,21 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   }
 
   private void receiveResponse(RelayDirective.Response dir, Collection changes) {
-    Relay.Source rs = (Relay.Source) rootplan.findUniqueObject(dir.getUID());
+    UniqueObject uo = rootplan.findUniqueObject(dir.getUID());
     MessageAddress target = dir.getSource();
+    if (! (uo instanceof Relay.Source) && uo != null) {
+      // This is not legitimate. We'll get a ClassCastException below
+      // if we're not careful
+      logger.error(self + ": receiveResponse got non Relay.Source (Bug 3202?). Got: " + uo + " from the Response[" + dir.getUID() + "] with source " + target + " and dest " + dir.getDestination() + ", response " + dir.getResponse(), new Throwable()); 
+      return;
+    }
+    Relay.Source rs = (Relay.Source) uo;
+    //    Relay.Source rs = (Relay.Source) rootplan.findUniqueObject(dir.getUID());
     if (rs == null) {
       // No longer part of our blackboard. Rescind it.
+      if (logger.isInfoEnabled())
+	logger.info(self + ": receiveResponse got NULL Relay.Source from the Response[" + dir.getUID() + "] with source " + target + " and dest " + dir.getDestination() + ", response " + dir.getResponse()); 
+      
       sendRemove(dir.getUID(), target);
     } else {
       Object resp = dir.getResponse();

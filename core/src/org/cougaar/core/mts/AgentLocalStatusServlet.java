@@ -32,17 +32,25 @@ public class AgentLocalStatusServlet extends AgentStatusServlet
     }
 
     public String getPath() {
-	return "/message/local/agent/status";
+	return "/message/between-Any-agent-and-Local-Agent";
     }
 
+    public String getDescription(MessageAddress agent) {
+	return "Message Transport statistics between local agent "+
+	    agent + " and any other agent";
+    }
 
-    protected String getAdjective() {
-	return "Local";
+    public String getTitle() {
+	return "Message Transport statistics for agents on node "+ 
+	    getNodeID();
+    }
+
+    protected boolean isRemote() {
+	return(false);
     }
 
    protected AgentStatusService.AgentState getState(MessageAddress agent){
        	AgentStatusService.AgentState state = null;
-	    System.out.print("Local Agent Getstate");
 	
 	if (agentStatusService!=null) {
 	    state = agentStatusService.getLocalAgentState(agent);

@@ -25,19 +25,21 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Request;
-import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
-import org.cougaar.core.wp.SchedulableWrapper;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.wp.Timestamp;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component is a base class for bootstrap components
@@ -55,8 +57,17 @@ import org.cougaar.core.wp.Timestamp;
  * </ul>
  */
 public abstract class BootstrapLookupBase
-extends HandlerBase
+extends GenericStateModelAdapter
+implements Component
 {
+  protected ServiceBroker sb;
+
+  protected LoggingService logger;
+  protected MessageAddress agentId;
+  protected ThreadService threadService;
+
+  private BindObserverService bindObserverService;
+
   protected WhitePagesService wps;
 
   protected String agentName;
@@ -64,18 +75,68 @@ extends HandlerBase
   // Map<String, LookupTimer>
   protected final Map table = new HashMap();
 
+  private final BindObserverService.Client myClient = 
+    new BindObserverService.Client() {
+      public void submit(Request req) {
+        BootstrapLookupBase.this.mySubmit(req);
+      }
+    };
+
+  public void setBindingSite(BindingSite bs) {
+    this.sb = bs.getServiceBroker();
+  }
+
+  public void setLoggingService(LoggingService logger) {
+    this.logger = logger;
+  }
+
+  public void setThreadService(ThreadService threadService) {
+    this.threadService = threadService;
+  }
+
   public void setWhitePagesService(WhitePagesService wps) {
     this.wps = wps;
   }
 
   public void load() {
+    super.load();
+
+    // which agent are we in?
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    agentId = ais.getMessageAddress();
+    sb.releaseService(this, AgentIdentificationService.class, ais);
     agentName = agentId.getAddress();
 
-    super.load();
+    // register our bind-observer
+    bindObserverService = (BindObserverService)
+      sb.getService(
+          myClient, BindObserverService.class, null);
+    if (bindObserverService == null) {
+      throw new RuntimeException(
+          "Unable to obtain BindObserverService");
+    }
   }
 
   public void unload() {
     super.unload();
+
+    if (bindObserverService != null) {
+      sb.releaseService(
+          myClient, BindObserverService.class, bindObserverService);
+      bindObserverService = null;
+    }
+
+    if (threadService != null) {
+      // halt our threads?
+      sb.releaseService(this, ThreadService.class, threadService);
+      threadService = null;
+    }
+    if (logger != null) {
+      sb.releaseService(
+          this, LoggingService.class, logger);
+      logger = null;
+    }
 
     if (wps != null) {
       sb.releaseService(this, WhitePagesService.class, wps);
@@ -110,26 +171,20 @@ extends HandlerBase
       AddressEntry bootEntry);
 
   /**
-   * Get the delay between LookupTimer lookups.
-   * <p>
-   * E.g. 30000  <i>milliseconds</i>.
+   * Get the delay for the initial lookup, where subsequent failed
+   * lookups double the delay until it reaches the
+   * {@link getMaxLookupDelay}.
    */
-  protected abstract long getDelayForLookup();
+  protected abstract long getMinLookupDelay();
+  protected abstract long getMaxLookupDelay();
 
   /**
-   * Get the delay between LookupTimer alias retry, which is
-   * only used if `allowAliasChange()` is false.
-   * <p>
-   * E.g. 120000  <i>milliseconds</i>.
-   */
-  protected abstract long getDelayForRetryAlias();
-
-  /**
-   * Get the delay between LookupTimer verification.
-   * <p>
-   * E.g. 120000  <i>milliseconds</i>.
-   */
-  protected abstract long getDelayForVerify();
+   * Get the delay for the initial verify, where subsequent
+   * successful verifications double the delay until it
+   * reaches the {@link getMaxLookupDelay}.
+   */ 
+  protected abstract long getMinVerifyDelay();
+  protected abstract long getMaxVerifyDelay();
 
   /**
    * Return true if an alias is allowed to change.
@@ -144,8 +199,8 @@ extends HandlerBase
    */
   protected abstract boolean allowAliasChange();
 
-  protected Response mySubmit(Response res) {
-    Request req = res.getRequest();
+  protected void mySubmit(Request req) {
+    // watch bind/unbind activity
     if (req instanceof Request.Bind) {
       Request.Bind rb = (Request.Bind) req;
       AddressEntry ae = rb.getAddressEntry();
@@ -171,12 +226,6 @@ extends HandlerBase
     } else {
       // ignore
     }
-    return res;
-  }
-
-  protected void myExecute(
-      Request req, Object result, long ttl) {
-    // ignore (?)
   }
 
   protected void hint(AddressEntry bootEntry) {
@@ -249,7 +298,8 @@ extends HandlerBase
   protected static boolean isLocalHost(String addr) {
     // quick test for localhost...
     if (addr.equals("localhost") ||
-        addr.equals("localHost")        // bogus
+        addr.equals("127.0.0.1") ||
+        addr.equals("localHost") // bogus
        ) {
       return true;
     }
@@ -257,10 +307,57 @@ extends HandlerBase
       InetAddress de = InetAddress.getByName(addr);
       InetAddress me = InetAddress.getLocalHost();
       return de.equals(me);
-    } catch (java.net.UnknownHostException e) {
+    } catch (UnknownHostException e) {
       e.printStackTrace();
     }
     return false;
+  }
+
+  /**
+   * Utility method to replace the host name in an AddressEntry with
+   * the IP address of that host.
+   * <p>
+   * This is useful for protocols that are picky about partial or
+   * aliased host names.  For example, if the specified entry is:<pre>
+   *   (WP, -RMI_REG, rmi://foo.com:123/AgentX)
+   * <pre> then this method will return:<pre>
+   *   (WP, -RMI_REG, rmi://123.45.67.89:123/AgentX)
+   * </pre>  This can be used in <code>createLookupTimer</code> to
+   * override the bootstrap entry.
+   */
+  protected static AddressEntry resolveHostAddress(
+      AddressEntry entry) throws UnknownHostException {
+    URI uri = entry.getURI();
+    String host = uri.getHost();
+    if (host == null) {
+      // host not specified?
+      return entry;
+    }
+    InetAddress ia = InetAddress.getByName(host);
+    String ip = ia.getHostAddress();
+    if (host.equals(ip)) {
+      // already an IP address
+      return entry;
+    }
+    String scheme = uri.getScheme();
+    int port = uri.getPort();
+    String path = uri.getPath();
+    String query = uri.getQuery();
+    String fragment = uri.getFragment();
+    String suri = 
+      (scheme == null ? "" : scheme+":")+
+      "//"+ip+
+      (port < 0 ? "" : ":"+port)+
+      (path == null ? "" : path)+
+      (query == null ? "" : "?"+query)+
+      (fragment == null ? "" : "#"+fragment);
+    URI newURI = URI.create(suri);
+    AddressEntry ret =
+      AddressEntry.getAddressEntry(
+          entry.getName(),
+          entry.getType(),
+          newURI);
+    return ret;
   }
 
   /**
@@ -293,7 +390,7 @@ extends HandlerBase
       protected final String id;
 
       /** our thread */
-      protected final SchedulableWrapper thread;
+      protected final Schedulable thread;
 
       //
       // external interaction (outside the "run()" method)
@@ -316,6 +413,8 @@ extends HandlerBase
       //
 
       protected int state;
+
+      protected long delay;
 
       protected long wakeTime;
 
@@ -399,11 +498,11 @@ extends HandlerBase
           id = agentName;
         }
         this.id = id;
-        String host = uri.getHost();
+        this.delay = getMinLookupDelay();
         this.state = LOOKUP;
 
-        this.thread = SchedulableWrapper.getThread(
-            threadService, 
+        this.thread = threadService.getThread(
+            BootstrapLookupBase.this, 
             this, 
             "White pages bootstrap "+bootEntry);
 
@@ -483,22 +582,39 @@ extends HandlerBase
           bindEntry = qEntry;
         }
 
-        long t;
-        switch (state) {
-          case LOOKUP:
-            t = lookup();
-            break;
-          case VERIFY:
-            t = verify();
-            break;
-          case CANCEL:
-          default:
-            t = -1;
-            break;
+        // maybe transition state
+        int oldState = state;
+        if (state == LOOKUP) {
+          lookup();
+        } else if (state == VERIFY) {
+          verify();
         }
-        if (t >= 0) {
-          wakeTime = System.currentTimeMillis()+t;
-          thread.schedule(t);
+
+        // set our next wake time
+        if (state == oldState) {
+          delay <<= 1;
+          long max =
+            (state == LOOKUP ?
+             getMaxLookupDelay() :
+             getMaxVerifyDelay());
+          if (max < delay) {
+            delay = max;
+          }
+        } else {
+          long min =
+            (state == LOOKUP ?
+             getMinLookupDelay() :
+             getMinVerifyDelay());
+          delay = min;
+        }
+
+        if (state == CANCEL) {
+          delay = 0;
+        }
+
+        if (0 <= delay) {
+          wakeTime = System.currentTimeMillis() + delay;
+          thread.schedule(delay);
         }
 
         if (logger.isDetailEnabled()) {
@@ -522,17 +638,14 @@ extends HandlerBase
        */
       protected abstract AddressEntry doLookup();
 
-      protected long lookup() {
+      protected void lookup() {
         String name = bootEntry.getName();
         URI uri = bootEntry.getURI();
 
         AddressEntry newFound = doLookup();
         if (newFound == null) {
           // lookup failed, try again later
-          long delay = getDelayForLookup();
-          // enhancement idea: should we back off by doubling this
-          // delay up to some max?
-          return delay;
+          return;
         }
 
         // compare our id with the found id
@@ -542,19 +655,15 @@ extends HandlerBase
           // okay, we can create our alias
         } else {
           // we're not allowed to change the alias
-          long delay = getDelayForRetryAlias();
           if (logger.isInfoEnabled()) {
-            long now = System.currentTimeMillis();
-            long lookupTime = now+delay;
             logger.info(
                 "Ignoring lookup in "+uri+
                 " under name ("+name+") where the foundId ("+
                 foundId+") doesn't match the prior aliasId ("+
-                aliasId+"), will attempt another lookup at "+
-                Timestamp.toString(lookupTime,now));
+                aliasId+"), will attempt another lookup later");
           }
           // discard what we found, lookup again later
-          return delay;
+          return;
         }
 
         // create our alias (name => foundId)
@@ -601,7 +710,7 @@ extends HandlerBase
 
         if (logger.isInfoEnabled()) {
           long now = System.currentTimeMillis();
-          long verifyTime=now+getDelayForVerify();
+          long verifyTime = now + getMinVerifyDelay();
           logger.info(
               (foundEntry.equals(bindEntry) ?
                "Bound" : // well, now they're ==
@@ -621,7 +730,6 @@ extends HandlerBase
               ", will verify at "+
               Timestamp.toString(verifyTime,now));
         }
-        return getDelayForVerify();
       }
 
       /**
@@ -629,7 +737,7 @@ extends HandlerBase
        */
       protected abstract AddressEntry doVerify();
 
-      protected long verify() {
+      protected void verify() {
         // get the current entry in the registry
         AddressEntry currEntry = doVerify();
 
@@ -637,19 +745,20 @@ extends HandlerBase
         if (currEntry != null &&
             currEntry.equals(foundEntry)) {
           // okay, still valid
-          long delay = getDelayForVerify();
-          // enhancement idea: should be back off on a series
-          // of successes?
           if (logger.isDebugEnabled()) {
             long now = System.currentTimeMillis();
-            long verifyTime=now+delay;
+            long t = (delay << 1);
+            if (getMaxVerifyDelay() < t) {
+              t = getMaxVerifyDelay();
+            }
+            long verifyTime = now + t;
             logger.debug(
                 "Verified that the bootstrap "+
                 bootEntry+" still matches the found "+
                 foundEntry+", will verify again at "+
                 Timestamp.toString(verifyTime,now));
           }
-          return delay;
+          return;
         }
 
         // lookup again
@@ -688,9 +797,6 @@ extends HandlerBase
           aliasEntry = null;
         }
         state = LOOKUP;
-
-        // go right to lookup:
-        return lookup();
       }
 
       protected AddressEntry createAlias(String id, String name) {
@@ -711,7 +817,8 @@ extends HandlerBase
           ", state="+state+
           ", found="+foundEntry+
           ", alias="+aliasEntry+
-          ", aliasId="+aliasId;
+          ", aliasId="+aliasId+
+          ", delay="+delay;
       }
     }
 }

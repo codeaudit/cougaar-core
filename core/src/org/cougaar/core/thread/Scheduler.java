@@ -53,11 +53,12 @@ public class Scheduler
 	"org.cougaar.thread.running.max";
     
     // -1 means unlimited
-    static final int MaxRunningCountDefault = 30;
+    static final int MaxRunningCountDefault = 100;
 
     private DynamicSortedQueue pendingThreads;
     private ArrayList disqualified = new ArrayList();
     private UnaryPredicate qualifier;
+    private UnaryPredicate childQualifier;
     private ThreadListenerProxy listenerProxy;
     private String name;
     private String printName;
@@ -66,6 +67,8 @@ public class Scheduler
     private int runningThreadCount = 0;
     protected Logger logger;
     protected int rightsRequestCount = 0;
+
+  private static Logger _logger = Logging.getLogger(Scheduler.class);
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -92,11 +95,18 @@ public class Scheduler
 	ConfiguredMaxRunningThreads = 
 	    PropertyParser.getInt(MaxRunningCountProp, 
 				  MaxRunningCountDefault);
+        if (_logger.isInfoEnabled()) {
+          _logger.info("ConfiguredMaxRunningThreads set to "+ConfiguredMaxRunningThreads);
+        }
     };
 
     public Scheduler(ThreadListenerProxy listenerProxy, String  name) {
 	pendingThreads = new DynamicSortedQueue(timeComparator);
 	maxRunningThreads = ConfiguredMaxRunningThreads;
+        if (_logger.isInfoEnabled()) {
+          _logger.info("Initialized maxRunningThreads to "+maxRunningThreads);
+        }
+
 	this.listenerProxy = listenerProxy;
 	this.name = name;
 	printName = "<Scheduler " +name+ ">";
@@ -119,6 +129,8 @@ public class Scheduler
 			record.scheduler = name;
 			record.schedulable = sched.getName();
 			long timestamp = sched.getTimestamp();
+			record.blocking_excuse = sched.getBlockingExcuse();
+			record.blocking_type = sched.getBlockingType();
 			record.elapsed = System.currentTimeMillis()-timestamp;
 			records.add(record);
 		    } catch (Throwable t) {
@@ -187,6 +199,34 @@ public class Scheduler
 
 
 
+
+    public boolean setChildQualifier(UnaryPredicate predicate) {
+	if (predicate == null) {
+	    childQualifier = null;
+	    return true;
+	} else if (childQualifier == null) {
+	    childQualifier = predicate;
+	    return true;
+	} else {
+	    // log an error
+	    Logger logger = getLogger();
+	    if (logger.isErrorEnabled())
+		logger.error("ChildQualifier is already set");
+	    return false;
+	}
+    }
+
+
+    boolean allowRightFor(Scheduler child) {
+	if (child == this || childQualifier == null) {
+	    // Don't run this on yourself, leave it to the parent.
+	    return true;
+	} else {
+	    return childQualifier.execute(child);
+	}
+	
+
+    }
 
 
 
@@ -302,8 +342,8 @@ public class Scheduler
 
     public void setMaxRunningThreadCount(int requested_max) {
 	int count = requested_max;
+        Logger logger = getLogger();
 	if (requested_max > ConfiguredMaxRunningThreads) {
-	    Logger logger = getLogger();
 	    if (logger.isErrorEnabled())
 		logger.error("Attempt to set maxRunningThreadCount to "
 			     +requested_max+
@@ -313,7 +353,12 @@ public class Scheduler
 			     +ConfiguredMaxRunningThreads+
 			     ")");
 	    count = ConfiguredMaxRunningThreads;
-	}
+	} else {
+          if (_logger.isInfoEnabled()) {
+            _logger.info("Setting maxRunningThreadCount to "+requested_max+" from "+maxRunningThreads,
+                        new Throwable());
+          }
+        }
 	int additionalThreads = count - maxRunningThreads;
 	maxRunningThreads = count;
  	TreeNode parent_node = getTreeNode().getParent();

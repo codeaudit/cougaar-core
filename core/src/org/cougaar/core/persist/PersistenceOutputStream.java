@@ -111,19 +111,32 @@ public class PersistenceOutputStream extends ObjectOutputStream {
    * reference, etc.).
    */
   public PersistenceReference[] writeAssociation(PersistenceAssociation pAssoc)
-    throws IOException {
+    throws IOException
+  {
+    Object obj = pAssoc.getObject();
+    if (obj == null) {
+      logger.error("pAssoc has null object: " + pAssoc);
+    }
     writeIndex = new ArrayList();
     writeInt(pAssoc.getActive());
     writeObject(pAssoc.getClientId());
     try {
-      writeObject(pAssoc.getObject());
-    }
-    catch (java.io.NotSerializableException e) {
-      logger.error(e + " for: " + pAssoc.getObject().getClass().getName()
-                   + ": " + pAssoc.getObject());
-    }
-    catch (IllegalArgumentException e) {
-      logger.error(e + " for: " + pAssoc.getObject().getClass().getName());
+      writeObject(obj);
+    } catch (java.io.NotSerializableException e) {
+      logger.error(e + " for: " + obj.getClass().getName()
+                   + ": " + obj);
+    } catch (IllegalArgumentException e) {
+      logger.error(e + " for: " + obj.getClass().getName());
+    } catch (Exception e) {
+      logger.error(e + " for: " + obj.getClass().getName()
+                   + ": " + obj);
+      if (e.getClass().getName().equals(java.io.NotSerializableException.class.getName())) {
+        logger.error("Catch failed", e);
+      } else {
+        IOException ioe = new IOException();
+        ioe.initCause(e);
+        throw ioe;
+      }
     }
     PersistenceReference[] result = new PersistenceReference[writeIndex.size()];
     result = (PersistenceReference[]) writeIndex.toArray(result);

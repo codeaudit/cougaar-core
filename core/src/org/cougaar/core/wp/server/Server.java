@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
@@ -34,7 +35,6 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.wp.WhitePages; // inlined
 
 /**
  * This is the server-side white pages server, which includes
@@ -51,21 +51,13 @@ public class Server
 extends ContainerSupport
 {
   public static final String INSERTION_POINT = 
-    WhitePages.INSERTION_POINT + ".Server";
+    Agent.INSERTION_POINT + ".WPServer";
 
   private LoggingService logger;
   private MessageAddress agentId;
-  private AgentIdentificationService agentIdService;
 
   public void setLoggingService(LoggingService logger) {
     this.logger = logger;
-  }
-
-  public void setAgentIdentificationService(AgentIdentificationService ais) {
-    this.agentIdService = ais;
-    if (ais != null) {
-      this.agentId = ais.getMessageAddress();
-    }
   }
 
   protected String specifyContainmentPoint() {
@@ -76,6 +68,16 @@ extends ContainerSupport
     List l = new ArrayList();
 
     // add defaults
+    l.add(new ComponentDescription(
+            "ServerTransport",
+            INSERTION_POINT+".ServerTransport",
+            "org.cougaar.core.wp.server.ServerTransport",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
     l.add(new ComponentDescription(
             "RootAuth",
             INSERTION_POINT+".RootAuth",
@@ -116,6 +118,14 @@ extends ContainerSupport
       logger.debug("Loading server");
     }
 
+    ServiceBroker sb = getServiceBroker();
+
+    // which agent are we in?
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    agentId = ais.getMessageAddress();
+    sb.releaseService(this, AgentIdentificationService.class, ais);
+
     super.load();
   }
 
@@ -124,11 +134,6 @@ extends ContainerSupport
 
     // release services
     ServiceBroker sb = getServiceBroker();
-    if (agentIdService != null) {
-      sb.releaseService(
-          this, AgentIdentificationService.class, agentIdService);
-      agentIdService = null;
-    }
     if (logger != null) {
       sb.releaseService(
           this, LoggingService.class, logger);

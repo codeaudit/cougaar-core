@@ -94,8 +94,8 @@ public class RemoteAgentServlet
 	out.print("<th>MsgTo</th>");
 	out.print("<th>MsgFrom</th>");
 	out.print("<th>eMJIPS</th>");
-	out.print("<th>mMbps</th>");
-	out.print("<th>eMbps</th>");
+	out.print("<th>mKbps</th>");
+	out.print("<th>eKbps</th>");
 	out.print("</tr>");
 
 	long now = System.currentTimeMillis();
@@ -104,14 +104,6 @@ public class RemoteAgentServlet
 	while (itr.hasNext()) {
 	    MessageAddress agent = (MessageAddress) itr.next();
 	    String name = agent.getAddress();
-
-	    // Hack!  Skip the MTS internal pseudo Agent.
-	    if (name.endsWith("(MTS)")) continue;
-
-
-	    // Warning: Agents or Nodes whose names include parens or
-	    // commas will confuse the RSS parser. Fix this in RSS.
-		
 
 	    AgentStatusService.AgentState state = 
 		agentStatusService.getRemoteAgentState(agent);

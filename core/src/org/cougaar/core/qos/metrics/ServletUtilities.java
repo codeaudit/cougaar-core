@@ -24,6 +24,7 @@ package org.cougaar.core.qos.metrics;
 import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.FieldPosition;
 import java.util.Date;
 
 /* Colors picks a color for displaying a Metric. The both metric value
@@ -109,27 +110,39 @@ public class ServletUtilities implements Constants
     }				  
 
 
-    public static String mouseDoc(Metric data) {
+    private static final FieldPosition FP = 
+	new FieldPosition(DecimalFormat.INTEGER_FIELD);
+
+    public static String mouseDoc(Metric data,
+				  double threshold,
+				  boolean increasing,
+				  DecimalFormat formatter) 
+    {
 	StringBuffer buf = new StringBuffer();
 	Date timestamp = new Date(data.getTimestamp());
-	Object value = data.getRawValue();
 	String units =  data.getUnits();
 	double credibility = data.getCredibility();
 	String provenance = data.getProvenance();
 	long halflife = data.getHalflife();
-	buf.append(value);
+	formatter.format(data.getRawValue(), buf, FP);
 	if (units != null) {
 	    buf.append(' ');
 	    buf.append(units);
 	}
 	buf.append(" with credibility ");
 	buf.append(credibility);
+
+        buf.append(" threshold ");
+	if (increasing) buf.append(">"); else buf.append("<");
+	buf.append(threshold);
+
 	if (provenance != null) {
 	    buf.append(" from ");
 	    buf.append(provenance);
 	}
+
 	buf.append(" at ");
-	buf.append(dateFormatter.format(timestamp));
+	dateFormatter.format(timestamp, buf, FP);
 	if (halflife > 0) {
 	    buf.append(" [halflife=");
 	    buf.append(halflife);
@@ -140,15 +153,52 @@ public class ServletUtilities implements Constants
 
 
     public static String XMLString(Metric data) {
-	return "<metric>" +
-	    // how is the type of the value encoded?
-	    "<value>" +data.getRawValue() +  "</value>" +
-	    "<units>" +data.getUnits()+ "</units>" +
-	    "<credibility>" + data.getCredibility() + "</credibility>" +
-	    "<provenance>" + data.getProvenance() + "</provenance>" +
-	    "<timestamp>" + data.getTimestamp() + "</timestamp>" +
-	    "<halflife>" + data.getHalflife()+ "</halflife>" +
-	    "</metric>";
+	Metric metric = data;
+	Object value = null;
+	if (metric != null) value=metric.getRawValue();
+	StringBuffer buf = new StringBuffer();
+
+	buf.append("<metric>");
+	if (value == null) {
+	    buf.append("<type>Undefined</type>" );
+	} else {
+	    buf.append("<type>");
+	    if (value instanceof Float || value instanceof Double)  
+		buf.append("Double");
+	    else if (value instanceof Number)
+		buf.append("Long");
+	    else if (value instanceof Boolean)  
+		buf.append("Boolean");
+	    else if (value instanceof String)  
+		buf.append("String");
+	    else if (value instanceof Character)
+		buf.append("Character");
+	    buf.append("</type>");
+	    buf.append("<value>");
+	    buf.append(value.toString());
+	    buf.append("</value>");
+	    buf.append("<credibility>");
+	    buf.append(metric.getCredibility());
+	    buf.append("</credibility>");
+	    if (metric.getUnits() != null) {
+		buf.append("<units>");
+		buf.append(metric.getUnits());
+		buf.append("</units>");
+	    }
+	    if (metric.getProvenance() != null) {
+		buf.append("<provenance>");
+		buf.append(metric.getProvenance());
+		buf.append("</provenance>");
+	    }
+	    buf.append("<timestamp>");
+	    buf.append(metric.getTimestamp());
+	    buf.append("</timestamp>");
+	    buf.append("<halflife>");
+	    buf.append(metric.getHalflife());
+	    buf.append("</halflife>");
+	}
+	buf.append("</metric>");
+	return buf.toString();
     }
 
     public static void valueTable(Metric metric, 
@@ -158,9 +208,13 @@ public class ServletUtilities implements Constants
 				  DecimalFormat formatter,
 				  PrintWriter out) 
     {
+	if (metric == null) {
+	    out.print("<td>&lt;no value&gt;</td>");
+	    return;
+	}
 	String brightness = brightness(metric);
 	String bgcolor = bgcolor(metric, uninteresting_value, threshold, increasing);
-	String mouse_doc = mouseDoc(metric);
+	String mouse_doc = mouseDoc(metric,threshold,increasing, formatter);
 	String value_text = formatter.format(metric.doubleValue());
 
 	out.print("<td");

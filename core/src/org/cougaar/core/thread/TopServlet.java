@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 class TopServlet extends ServletFrameset
 {
 
+    private static final long THRESHOLD = 1000;
     private ThreadStatusService statusService;
     private ThreadControlService controlService;
 
@@ -87,6 +88,7 @@ class TopServlet extends ServletFrameset
     {
 	out.print("<tr>");
 	out.print("<th align=left><b>State</b></th>");
+	out.print("<th align=left><b>Blocking</b></th>");
 	out.print("<th align=left><b>Time(ms)</b></th>");
 	out.print("<th align=left><b>Level</b></th>");
 	out.print("<th align=left><b>Thread</b></th>");
@@ -94,30 +96,42 @@ class TopServlet extends ServletFrameset
 	out.print("</tr>");
     }
 
-    private void printCell(String data, boolean italics, PrintWriter out) 
+    private void printCell(String data, boolean queued, PrintWriter out) 
     {
 	out.print("<td>");
-	if (italics) out.print("<i>");
+	if (queued) out.print("<i>");
 	out.print(data);
-	if (italics) out.print("</i>");
+	if (queued) out.print("</i>");
 	out.print("</td>");
     }
 
-    private void printCell(long data, boolean italics, PrintWriter out) 
+    private void printCell(long data, boolean queued, PrintWriter out) 
     {
 	out.print("<td align=right>");
-	if (italics) out.print("<i>");
+	if (queued) out.print("<i>");
 	out.print(data);
-	if (italics) out.print("</i>");
+	if (queued) out.print("</i>");
 	out.print("</td>");
     }
+
 
     private void printRecord(ThreadStatusService.Record record,
 			     PrintWriter out) 
     {
 	boolean is_queued = record.getState() == ThreadStatusService.QUEUED;
-	out.print("<tr>");
+	if (record.elapsed > THRESHOLD) {
+	    out.print("<tr bgcolor=\"#ffeeee\">"); // pale-pink background
+	} else {
+	    out.print("<tr>");
+	}
 	printCell(record.getState(), is_queued, out);
+
+	String b_string = 
+	    SchedulableStatus.statusString(record.blocking_type,
+					   record.blocking_excuse);
+
+	printCell(b_string, is_queued, out);
+
 	printCell(record.elapsed, is_queued, out);
 	printCell(record.scheduler, is_queued, out);
 	printCell(record.schedulable, is_queued, out);

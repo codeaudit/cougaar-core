@@ -1,3 +1,46 @@
+2003-09-04  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceServiceComponent.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Removed unused code still referencing BasePersistence.
+
+	* RehydrationResult.java: 
+	* Persistence.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Add quiescenceMonitorState.
+
+	* PersistenceInputStream.java: 
+	* PersistenceAssociation.java: 
+	* FilePersistenceBase.java: 
+	* BasePersistence.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Removed BasePersistence to avoid replicating changes to
+	BlackboardPersistence in this obsolete class. Used the
+	utilities in PersistenceServiceComponent instead of
+	BasePersistence.
+
+	* BlackboardPersistence.java: 
+	Bug #3296 -- No quiescence after agent moves
+	Include quiescenceMonitorState in persisted data.
+
+2003-08-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* IdentityTable.java:
+	But #3277 -- Persist takes too long
+	The count of items in the IdentityTable was never being
+	incremented (or decremented) giving the misleading appearance that
+	the hash table was empty and did not need to be expanded. As more
+	objects were persisted, the search time to find matches increased
+	quadratically with the number of objects. Increment and decrement
+	the count when adding and removing entries in the table.
+
+2003-07-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceOutputStream.java: 
+	* PersistenceInputStream.java:
+	Bug #3094 -- NPE in PersistenceInputStream.readAssociation
+	These changes never got checked into B10_4
+
 2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceServiceComponent.java: 

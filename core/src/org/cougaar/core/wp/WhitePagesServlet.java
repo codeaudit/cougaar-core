@@ -89,6 +89,8 @@ public class WhitePagesServlet extends ComponentServlet {
     private PrintWriter out;
 
     private String action;
+    private String s_minAge;
+    private long minAge;
     private String s_timeout;
     private long timeout;
     private boolean async;
@@ -97,7 +99,7 @@ public class WhitePagesServlet extends ComponentServlet {
     private String type;
     private String s_uri;
     private String s_cert;
-    private boolean useCache;
+    private boolean cacheOnly;
 
     public MyHandler(
         String localAgent,
@@ -124,6 +126,10 @@ public class WhitePagesServlet extends ComponentServlet {
 
     private void parseParams() {
       action = param("action");
+      s_minAge = param("minAge");
+      if (s_minAge != null) {
+        minAge = Long.parseLong(s_minAge);
+      }
       s_timeout = param("timeout");
       if (s_timeout != null) {
         timeout = Long.parseLong(s_timeout);
@@ -134,7 +140,7 @@ public class WhitePagesServlet extends ComponentServlet {
       type = param("type");
       s_uri = param("uri");
       s_cert = param("cert");
-      useCache = !"false".equals(param("useCache"));
+      cacheOnly = "true".equals(param("cacheOnly"));
     }
 
     private void printHeader() {
@@ -148,24 +154,33 @@ public class WhitePagesServlet extends ComponentServlet {
           "function selectOp() {\n"+
           "  var i = document.f.action.selectedIndex;\n"+
           "  var s = document.f.action.options[i].text;\n"+
-          "  var noLimit = (s != \"recursive_dump\");\n"+
-          "  var noType  = \n"+
-          "     (s == \"recursive_dump\" ||\n"+
-          "      s == \"getAll\" ||\n"+
-          "      s == \"list\");\n"+
-          "  var noURI =\n"+
-          "     (s != \"bind\" &&\n"+
-          "      s != \"rebind\" &&\n"+
-          "      s != \"unbind\");\n"+
-          "  var noCert = noURI;\n"+
-          "  disable(noLimit, document.f.limit)\n"+
-          "  disable(noType,  document.f.type)\n"+
-          "  disable(noURI,   document.f.uri)\n"+
-          "  disable(noCert,  document.f.cert)\n"+
+          "  var showLimit = (s == \"recursive_dump\");\n"+
+          "  var showMinAge =\n"+
+          "     (s == \"uncache\" ||\n"+
+          "      s == \"prefetch\");\n"+
+          "  var showType  = \n"+
+          "     (s == \"get\" ||\n"+
+          "      s == \"uncache\" ||\n"+
+          "      s == \"prefetch\" ||\n"+
+          "      s == \"bind\" ||\n"+
+          "      s == \"rebind\" ||\n"+
+          "      s == \"unbind\");\n"+
+          "  var showURI =\n"+
+          "     (s == \"uncache\" ||\n"+
+          "      s == \"prefetch\" ||\n"+
+          "      s == \"bind\" ||\n"+
+          "      s == \"rebind\" ||\n"+
+          "      s == \"unbind\");\n"+
+          "  var showCert = showURI;\n"+
+          "  enable(showLimit,  document.f.limit)\n"+
+          "  enable(showMinAge, document.f.minAge)\n"+
+          "  enable(showType,   document.f.type)\n"+
+          "  enable(showURI,    document.f.uri)\n"+
+          "  enable(showCert,   document.f.cert)\n"+
           "}\n"+
-        "function disable(b, txt) {\n"+
-        "  txt.disabled=b;\n"+
-        "  txt.style.background=(b?\"grey\":\"white\");\n"+
+        "function enable(b, txt) {\n"+
+        "  txt.disabled=!b;\n"+
+        "  txt.style.background=(b?\"white\":\"grey\");\n"+
         "}\n"+
         "// -->\n"+
         "</script>\n"+
@@ -192,20 +207,25 @@ public class WhitePagesServlet extends ComponentServlet {
         option("get", action)+
         option("getAll", action)+
         option("list", action)+
+        option("uncache", action)+
+        option("prefetch", action)+
         option("bind", action)+
         option("rebind", action)+
         option("unbind", action)+
         "</select>\n"+
         "</td><tr>\n"+
-        "<tr><td>Cache</td><td>"+
-        "<select name=\"useCache\">"+
-        "<option value=\"true\""+
-        (useCache ? " selected" : "") +
-        ">Use the cache</option>\n"+
+        "<tr><td>Cache-only</td><td>"+
+        "<select name=\"cacheOnly\">"+
         "<option value=\"false\""+
-        (useCache ? "" : " selected") +
-        ">Bypass the cache</option>\n"+
+        (cacheOnly ? "" : " selected") +
+        ">false</option>\n"+
+        "<option value=\"true\""+
+        (cacheOnly ? " selected" : "") +
+        ">true</option>\n"+
         "</select>\n"+
+        "</td></tr>\n"+
+        "<tr><td>Min. Age</td><td>"+
+        input("minAge", s_minAge)+
         "</td></tr>\n"+
         "<tr><td>Timeout</td><td>"+
         input("timeout", s_timeout)+
@@ -251,9 +271,9 @@ public class WhitePagesServlet extends ComponentServlet {
       try {
         Request req = null;
         int options = 
-          (useCache ?
-           Request.NONE :
-           Request.BYPASS_CACHE);
+          (cacheOnly ?
+           Request.CACHE_ONLY :
+           Request.NONE);
         if ("recursive_dump".equals(action)) {
           String suffix = (name == null ? "." : name);
           if (suffix.startsWith(".")) {
@@ -292,6 +312,23 @@ public class WhitePagesServlet extends ComponentServlet {
             out.println(
                 "<font color=\"red\">List suffix must start"+
                 " with \".\", not \""+tmp+"\"</font>");
+          }
+        } else if (
+            "uncache".equals(action) ||
+            "prefetch".equals(action)) {
+          boolean uncache = "uncache".equals(action);
+          boolean prefetch = "prefetch".equals(action);
+          AddressEntry ae = 
+            ((type==null || s_uri==null) ?
+             (null) :
+             parseEntry());
+          if (name == null) {
+            out.println(
+              "<font color=\"red\">Please specify name</font>");
+          } else {
+            req = new Request.Flush(
+                Request.CACHE_ONLY, name, minAge, ae,
+                uncache, prefetch);
           }
         } else if (
             "bind".equals(action) ||
@@ -398,7 +435,7 @@ public class WhitePagesServlet extends ComponentServlet {
             "<td colspan=4><a href=\""+
             sreq.getRequestURI()+
             "?action=recursive_dump"+
-            "&useCache="+useCache+
+            "&cacheOnly="+cacheOnly+
             "&name="+suffix+
             (type == null ? "" : ("&type="+type))+
             (s_uri == null ? "" : ("&uri="+s_uri))+

@@ -31,8 +31,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.TimerTask;
 import java.util.TreeSet;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.ThreadListenerService;
@@ -92,7 +92,7 @@ public class PercentageLoadSelector
 	}
     }
 
-    private class SnapShotter extends TimerTask {
+    private class SnapShotter implements Runnable {
 	public void run() {
 	    synchronized (records) {
 		Iterator itr = records.values().iterator();
@@ -161,9 +161,13 @@ public class PercentageLoadSelector
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
 	tls.addListener(this);
-	ThreadService ts = (ThreadService)
+
+	ThreadService tsvc = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
-	ts.schedule(new SnapShotter(), 5000, 1000);
+	Runnable body = new SnapShotter();
+	Schedulable sched = tsvc.getThread(this, body);
+	sched.schedule(5000, 1000);
+	sb.releaseService(this, ThreadService.class, tsvc);
     }
 
     ConsumerRecord findRecord(String name) {

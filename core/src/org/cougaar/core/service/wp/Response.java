@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.core.thread.SchedulableStatus;
 
 /**
  * Response from the white pages service.
@@ -40,7 +41,6 @@ public abstract class Response implements Callback, Serializable {
   private final Object lock = new Object();
   private transient Set callbacks;
   private Object result;
-  private long ttl;
 
   /**
    * Responses are created by asking a Request to
@@ -83,7 +83,12 @@ public abstract class Response implements Callback, Serializable {
       if (result != null) {
         return true;
       }
-      lock.wait(timeout);
+      try {
+	SchedulableStatus.beginWait("WP lookup");
+        lock.wait(timeout);
+      } finally {
+	SchedulableStatus.endBlocking();
+      }
       return (result != null);
     }
   }
@@ -151,13 +156,7 @@ public abstract class Response implements Callback, Serializable {
     }
   }
 
-  public final long getTTL() {
-    synchronized (lock) {
-      return ttl;
-    }
-  }
-
-  public final boolean setResult(Object r, long ttl) {
+  public final boolean setResult(Object r) {
     if (r == null) {
       r = getDefaultResult();
     }
@@ -171,7 +170,6 @@ public abstract class Response implements Callback, Serializable {
         return false;
       }
       this.result = r;
-      this.ttl = ttl;
       lock.notifyAll();
       if (callbacks == null) {
         return true;
@@ -198,20 +196,19 @@ public abstract class Response implements Callback, Serializable {
       throw new IllegalArgumentException(
           "Invalid callbach result: "+res);
     }
-    setResult(res.getResult(), res.getTTL());
+    setResult(res.getResult());
   }
 
   // equals is ==
 
   public String toString() {
     Object r = getResult();
-    long t = getTTL();
     return
       "(response oid="+
       System.identityHashCode(this)+
       " req="+request+
       (r == null ? "" : " result="+r)+
-      " ttl="+t+")";
+      ")";
   }
 
   public boolean isSuccess() {
@@ -317,6 +314,27 @@ public abstract class Response implements Callback, Serializable {
     }
     protected Object getDefaultResult() {
       return Collections.EMPTY_SET;
+    }
+  }
+
+  /** @see Request.Flush */
+  public static class Flush extends Response {
+    public Flush(Request q) {
+      this((Request.Flush) q);
+    }
+    public Flush(Request.Flush q) {
+      super(q);
+    }
+    /** Did the flush modify the local cache or force a lookup? */
+    public boolean modifiedCache() {
+      Object r = getResult();
+      return
+        (r instanceof Boolean) ?
+        ((Boolean) r).booleanValue() :
+        false;
+    }
+    protected Object getDefaultResult() {
+      return Boolean.FALSE;
     }
   }
 

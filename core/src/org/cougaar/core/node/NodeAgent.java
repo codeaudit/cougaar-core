@@ -23,17 +23,18 @@ package org.cougaar.core.node;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import javax.naming.NamingException;
+import java.util.Set;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.AgentContainer;
+import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
@@ -47,7 +48,6 @@ import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.persist.PersistenceClient;
@@ -55,9 +55,11 @@ import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceServiceForAgent;
 import org.cougaar.core.persist.RehydrationData;
 import org.cougaar.core.plugin.PluginManager;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.NodeMetricsService;
+import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.util.CircularQueue;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
@@ -70,7 +72,7 @@ import org.cougaar.util.log.Logging;
  * <ul>
  * <li> <em>HIGH</em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
  * </li>
- * <li> <em>INTERNAL</em>: ThreadService, NamingService,
+ * <li> <em>INTERNAL</em>: ThreadService, WhitePagesService,
  * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport,
  * RootServletComponent, external INTERNAL components.
  * </li>
@@ -86,13 +88,19 @@ import org.cougaar.util.log.Logging;
  *   a '.' every few seconds when nothing else much is going on.
  *   This is a one-per-vm function.  Default <em>true</em>.
  *
- * @property org.cougaar.core.load.ns
- *   If set to "true", the node will load the old NamingService
- *   component.  See bug 2522.  Default <em>false</em>
- *
  * @property org.cougaar.core.load.wp
- *   If set to "new", the node will load the new WhitePagesService
- *   component.  See bug 2522.  Default <em>new</em>
+ *   If enabled, the node will load the client-side white pages
+ *   service cache and resolver.  Default <em>true</em>
+ *
+ * @property org.cougaar.core.load.wp.server
+ *   If enabled, the node will load the server-side white pages
+ *   server component.  This is often wasteful since only the agents
+ *   specified as servers in the configuration
+ *   ({@link org.cougaar.core.wp.resolver.ConfigReader}) will be
+ *   asked to perform white pages server actions.  The preferred
+ *   approach is to explicitly load the server component in the
+ *   agents that will run servers.  For backwards compatibility this
+ *   defaults to <em>true</em>.
  *
  * @property org.cougaar.core.load.community
  *   If enabled, the node will load the CommunityService
@@ -113,6 +121,8 @@ extends SimpleAgent
   private ServiceBroker rootsb = null;
   private AgentManager agentManager = null;
   private AgentContainer agentManagerProxy = null;
+  private QuiescenceReportService quiescenceReportService;
+  private QuiescenceReportServiceProvider qrsp;
 
   private boolean ignoreRehydratedAgentDescs = false;
   private ComponentDescription[] agentDescs = null;
@@ -123,9 +133,8 @@ extends SimpleAgent
   private List components = new ArrayList();
 
   private static final boolean isHeartbeatOn;
-  private static final boolean isNSEnabled;
-  private static final boolean isOldWPEnabled;
-  private static final boolean isNewWPEnabled;
+  private static final boolean isWPEnabled;
+  private static final boolean isWPServerEnabled;
   private static final boolean isCommunityEnabled;
   private static final boolean isPlanningEnabled;
   private static final boolean isServletEnabled;
@@ -134,15 +143,11 @@ extends SimpleAgent
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
-    isNSEnabled=PropertyParser.getBoolean("org.cougaar.core.load.ns", false);
-    String wpFlag=System.getProperty("org.cougaar.core.load.wp", "new");
-    isOldWPEnabled=
-      ("true".equalsIgnoreCase(wpFlag) ||
-       "old".equals(wpFlag) ||
-       "both".equals(wpFlag));
-    isNewWPEnabled=
-      ("new".equals(wpFlag) ||
-       "both".equals(wpFlag));
+    String wpFlag=System.getProperty("org.cougaar.core.load.wp", "true");
+    isWPEnabled=("true".equals(wpFlag) || "new".equals(wpFlag));
+    isWPServerEnabled=
+      (isWPEnabled &&
+       PropertyParser.getBoolean("org.cougaar.core.load.wp.server", true));
     isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
     isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
@@ -171,10 +176,12 @@ extends SimpleAgent
     }
     public void removeAgent(MessageAddress agentId) {
       agentManager.removeAgent(agentId);
+      qrsp.agentRemoved();
       persistNow();
     }
     public boolean remove(Object o) {
       boolean result = agentManager.remove(o);
+      qrsp.agentRemoved();
       persistNow();
       return result;
     }
@@ -228,6 +235,14 @@ extends SimpleAgent
     rootsb.addService(LoggingService.class, lsp);
     rootsb.addService(LoggingControlService.class, lsp);
 
+    qrsp = new QuiescenceReportServiceProvider(nodeName, agentManagerProxy, csb);
+    rootsb.addService(QuiescenceReportService.class, qrsp);
+    // For simplicity we get an QuiescenceReportService instance
+    // directly from the provider because we do not have an
+    // AgentIdentifierService.
+    quiescenceReportService = qrsp.createQuiescenceReportService(nodeIdentifier);
+    // We remain non-quiescent until loading is finished.
+    quiescenceReportService.clearQuiescentState();
     super.loadHighPriorityComponents();
 
     // add the default agent-identity provider, which does
@@ -244,6 +259,9 @@ extends SimpleAgent
   }
 
   protected void loadInternalPriorityComponents() {
+    NodeBusyServiceProvider nbsp = 
+      new NodeBusyServiceProvider();
+    rootsb.addService(NodeBusyService.class, nbsp);
     List threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
@@ -257,32 +275,25 @@ extends SimpleAgent
           null,  //lease
           null)); //policy
 
-    if (isNSEnabled) {
-      try {
-        rootsb.addService(NamingService.class,
-            new NamingServiceProvider(
-              SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
-      } catch (NamingException ne) {
-        throw new Error("Couldn't initialize NamingService ", ne);
-      }
-    }
-
-    if (isOldWPEnabled) {
+    if (isWPEnabled) {
       add(new ComponentDescription(
-            (getIdentifier()+"OldWhitePages"),
-            Agent.INSERTION_POINT + ".WP",
-            "org.cougaar.core.naming.JNDIWhitePagesServiceComponent",
+            (getIdentifier()+"WPClient"),
+            Agent.INSERTION_POINT + ".WPClient",
+            "org.cougaar.core.wp.resolver.Resolver",
             null,  //codebase
             null,  //parameters
             null,  //certificate
             null,  //lease
             null)); //policy
     }
-    if (isNewWPEnabled) {
+
+    if (isWPServerEnabled) {
+      // this can be loaded much later in the load process,
+      // but we might as well load it here...
       add(new ComponentDescription(
-            (getIdentifier()+"WhitePages"),
-            Agent.INSERTION_POINT + ".WP",
-            "org.cougaar.core.wp.WhitePages",
+            (getIdentifier()+"WPServer"),
+            Agent.INSERTION_POINT + ".WPServer",
+            "org.cougaar.core.wp.server.Server",
             null,  //codebase
             null,  //parameters
             null,  //certificate
@@ -479,6 +490,9 @@ extends SimpleAgent
 
     // load the agents
     addAgents(agentDescs);
+    quiescenceReportService.setQuiescentState();
+    rootsb.releaseService(this, QuiescenceReportService.class, quiescenceReportService);
+    quiescenceReportService = null;
   }
 
   /**
@@ -617,37 +631,81 @@ extends SimpleAgent
     heartbeat.start();
   }
 
-  private static class NodeControlServiceProvider
+  private class NodeControlServiceProvider
     implements ServiceProvider {
 
-      private final Service myService;
+    private final Service myService;
 
-      public NodeControlServiceProvider(
+    public NodeControlServiceProvider(
           final ServiceBroker rootsb,
           final AgentContainer rootac) {
-        myService = 
-          new NodeControlService() {
-            public ServiceBroker getRootServiceBroker() {
-              return rootsb;
-            }
-            public AgentContainer getRootContainer() {
-              return rootac;
-            }
-          };
-      }
+      myService = 
+        new NodeControlService() {
+          public ServiceBroker getRootServiceBroker() {
+            return rootsb;
+          }
+          public AgentContainer getRootContainer() {
+            return rootac;
+          }
+        };
+    }
 
-      public Object getService(
+    public Object getService(
           ServiceBroker xsb, Object requestor, Class serviceClass) {
-        if (serviceClass == NodeControlService.class) {
-          return myService;
-        } else {
-          throw new IllegalArgumentException(
+      if (serviceClass == NodeControlService.class) {
+        return myService;
+      } else {
+        throw new IllegalArgumentException(
               "Can only provide NodeControlService!");
-        }
-      }
-      public void releaseService(
-          ServiceBroker xsb, Object requestor,
-          Class serviceClass, Object service) {
       }
     }
+    public void releaseService(
+          ServiceBroker xsb, Object requestor,
+          Class serviceClass, Object service) {
+    }
+  }
+
+  private class NodeBusyServiceProvider implements ServiceProvider {
+    private final Set busyAgents = new HashSet();
+
+    public Object getService(ServiceBroker xsb,
+                             Object requestor,
+                             Class serviceClass)
+    {
+      if (serviceClass != NodeBusyService.class) {
+        throw new IllegalArgumentException(
+              "Can only provide NodeBusyService!");
+      }
+      return new NodeBusyService() {
+          MessageAddress me = null;
+          public void setAgentIdentificationService(AgentIdentificationService ais) {
+            me = ais.getMessageAddress();
+          }
+          public void setAgentBusy(boolean busy) {
+            if (me == null) {
+              throw new RuntimeException("AgentIdentificationService has not been set");
+            }
+            if (logger.isDebugEnabled()) {
+              logger.debug("setAgentBusy(" + me + ", " + busy + ")");
+            }
+            if (busy) {
+              busyAgents.add(me);
+            } else {
+              busyAgents.remove(me);
+            }
+          }
+          public boolean isAgentBusy(MessageAddress agent) {
+            return busyAgents.contains(agent);
+          }
+          public Set getBusyAgents() {
+            return Collections.unmodifiableSet(busyAgents);
+          }
+        };
+    }
+
+    public void releaseService(
+          ServiceBroker xsb, Object requestor,
+          Class serviceClass, Object service) {
+    }
+  }
 }

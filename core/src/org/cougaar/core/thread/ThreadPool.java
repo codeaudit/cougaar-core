@@ -96,7 +96,7 @@ class ThreadPool
 			try {
 			    runnable.run();
 			} catch (Throwable any_ex) {
-			    pool.logger.error("Uncaught exception in pooled thread", any_ex);
+			    pool.logger.error("Uncaught exception in pooled thread ("+runnable+")", any_ex);
 			}
 		    }
 
@@ -284,6 +284,8 @@ class ThreadPool
 		    record.schedulable = sched.getName();
 		    long startTime=thread.start_time;
 		    record.elapsed = System.currentTimeMillis()-startTime;
+		    record.blocking_excuse = sched.getBlockingExcuse();
+		    record.blocking_type = sched.getBlockingType();
 		    records.add(record);
 		} catch (Throwable t) {
 		}

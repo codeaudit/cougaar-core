@@ -41,7 +41,6 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
-import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.BlackboardPersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceObject;
@@ -192,7 +191,6 @@ public class Blackboard extends Subscriber
   }
 
   public void stop() {
-    stopDistributor(myDistributor);
     myDistributor = null;
   }
 
@@ -421,7 +419,7 @@ public class Blackboard extends Subscriber
    **/
   public final Envelope receiveEnvelope(Envelope envelope) {
     oneEnvelope.add(envelope);
-    super.receiveEnvelopes(oneEnvelope); // Move to our inbox
+    super.receiveEnvelopes(oneEnvelope, false); // Move to our inbox
     oneEnvelope.clear();
 
     if (! (envelope instanceof PlanEnvelope)) {
@@ -608,7 +606,7 @@ public class Blackboard extends Subscriber
   private Distributor createDistributor(
       MessageSwitchService msgSwitch,
       Object state) {
-    Distributor d = new Distributor(this, self.getAddress());
+    Distributor d = new Distributor(this, myServiceBroker, self.getAddress());
     Persistence persistence = createPersistence();
     boolean lazyPersistence = 
       System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
@@ -618,19 +616,12 @@ public class Blackboard extends Subscriber
     return d;
   }
 
-  private void stopDistributor(Distributor d) {
-    if (d != null) {
-      d.stop();
-    }
-  }
-
   public Distributor getDistributor() {
     return myDistributor;
   }
 
   protected Persistence createPersistence() {
     try {
-//       Persistence result = BasePersistence.find(myServiceBroker);
       return BlackboardPersistence.find(myServiceBroker);
     }
     catch (PersistenceException e) {

@@ -37,21 +37,6 @@ public abstract class Request implements Serializable {
   public static final int NONE = 0;
 
   /**
-   * Flag to bypass the cache for "get", "getAll", and "list"
-   * requests.
-   * <p>
-   * This should only be enabled if the client has detected a
-   * <b>strong</b> out-of-band hint that the entry is stale, such
-   * as a lost network connection to a URI returned by a prior
-   * "get" request.
-   * <p>
-   * The cache is free to ignore this request if it has just fetched
-   * the value -- the minimum entry TTL for a bypass is a cache
-   * configuration option.
-   */
-  public static final int BYPASS_CACHE = (1<<0);
-
-  /**
    * Flag to limit the operation to the local cache.
    * <p>
    * For "get", "getAll", and "list", a CACHE_ONLY flag limits the
@@ -87,9 +72,65 @@ public abstract class Request implements Serializable {
   public String toString() {
     return 
       " oid="+System.identityHashCode(this)+
-      " bypassCache="+hasOption(BYPASS_CACHE)+
       " cacheOnly="+hasOption(CACHE_ONLY)+
       ")";
+  }
+
+  /**
+   * Test to see if the specified name string is valid
+   * for use in Get, GetAll, Bind, and Unbind requests.
+   * <p>
+   * Clients should follow the Internet host name format
+   * (RFC 2396).
+   */
+  public static final boolean isValidName(String name) {
+    if (name == null ||
+        name.length() == 0 ||
+        !Character.isLetterOrDigit(name.charAt(0))) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Test to see if the specified suffix string is valid
+   * for use in List requests.
+   * <p>
+   * The suffix must start with '.'.  For names other than '.',
+   * trailing '.'s will be ignored (e.g. ".x." is the same as
+   * ".x").
+   * <p>
+   * The name space is separated by using the "." character, just
+   * like internet host names (RFC 952).  All children of a name
+   * must have a matching suffix, and only the direct (first-level)
+   * children will be listed.
+   * <p>
+   * For example, given:<pre>
+   *    list(".foo.com")
+   * </pre>the result may look like be:<pre>
+   *    { "www.foo.com", ".bar.foo.com" }
+   * </pre>where "www.foo.com" is an entry, and ".bar.foo.com" is a
+   * suffix for one or more child entries.  If there were entries
+   * for both "www.foo.com" and subchild "test.www.foo.com", then both
+   * would be listed:<pre>
+   *    { "www.foo.com", ".www.foo.com", ".bar.foo.com" }
+   * </pre>Note that listing ".foo.com" will not list the second
+   * level children, such as "test.www.foo.com".  The client must
+   * do the <i>(non-scalable)</i> depth traversal itself.
+   * <p>
+   * The precise regex pattern is:<pre>
+   *     new java.util.regex.Pattern(
+   *       "^\.?[^\.]+" +
+   *       suffix +
+   *       "$");</pre>
+   */
+  public static final boolean isValidSuffix(String suffix) {
+    if (suffix == null ||
+        suffix.length() == 0 ||
+        suffix.charAt(0) != '.') {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -108,8 +149,11 @@ public abstract class Request implements Serializable {
       super(options);
       this.name = name;
       this.type = type;
-      if (name==null || type==null) {
-        throw new IllegalArgumentException("Null parameter");
+      if (!isValidName(name)) {
+        throw new IllegalArgumentException("Invalid name: "+name);
+      }
+      if (type == null) {
+        throw new IllegalArgumentException("Null type");
       }
     }
     public String getName() { return name; }
@@ -140,9 +184,7 @@ public abstract class Request implements Serializable {
     }
     public String toString() {
       return 
-        "("+
-        (hasOption(BYPASS_CACHE) ? "refresh" : "get")+
-        " name="+getName()+
+        "(get name="+getName()+
         " type="+getType()+
         super.toString();
     }
@@ -160,8 +202,8 @@ public abstract class Request implements Serializable {
         String name) {
       super(options);
       this.name = name;
-      if (name == null) {
-        throw new IllegalArgumentException("null name");
+      if (!isValidName(name)) {
+        throw new IllegalArgumentException("Invalid name: "+name);
       }
     }
     public String getName() { 
@@ -184,43 +226,13 @@ public abstract class Request implements Serializable {
     }
     public String toString() {
       return 
-        "("+
-        (hasOption(BYPASS_CACHE) ? "refreshAll" : "getAll")+
-        " name="+getName()+
+        "(getAll name="+getName()+
         super.toString();
     }
   }
 
   /**
    * List the name of all direct children with the given suffix.
-   * <p>
-   * The suffix must start with '.'.  For names other than '.',
-   * trailing '.'s will be ignored (e.g. ".x." is the same as
-   * ".x").
-   * <p>
-   * The name space is separated by using the "." character, just
-   * like internet host names (RFC 952).  All children of a name
-   * must have a matching suffix, and only the direct (first-level)
-   * children will be listed.
-   * <p>
-   * For example, given:<pre>
-   *    list(".foo.com")
-   * </pre>the result may look like be:<pre>
-   *    { "www.foo.com", ".bar.foo.com" }
-   * </pre>where "www.foo.com" is an entry, and ".bar.foo.com" is a
-   * suffix for one or more child entries.  If there were entries
-   * for both "www.foo.com" and subchild "test.www.foo.com", then both
-   * would be listed:<pre>
-   *    { "www.foo.com", ".www.foo.com", ".bar.foo.com" }
-   * </pre>Note that listing ".foo.com" will not list the second
-   * level children, such as "test.www.foo.com".  The client must
-   * do the <i>(non-scalable)</i> depth traversal itself.
-   * <p>
-   * The precise regex pattern is:<pre>
-   *     new java.util.regex.Pattern(
-   *       "^\.?[^\.]+" +
-   *       suffix +
-   *       "$");</pre>
    * <p>
    * This is similar to a DNS zone transfer (AXFR) limited to depth=1.
    */
@@ -230,14 +242,12 @@ public abstract class Request implements Serializable {
         int options,
         String suffix) {
       super(options);
-      String suf = suffix;
-      // must start with '.'
-      int len = (suf == null ? 0 : suf.length());
-      if (len == 0 || suf.charAt(0) != '.') {
-        throw new IllegalArgumentException(
-            "Suffix must start with '.': "+suf);
+      if (!isValidSuffix(suffix)) {
+        throw new IllegalArgumentException("Invalid suffix: "+suffix);
       }
       // trim tail '.'s
+      String suf = suffix;
+      int len = (suf == null ? 0 : suf.length());
       while (--len > 0 && suf.charAt(len) == '.') {
         suf = suf.substring(0, len);
       }
@@ -263,9 +273,143 @@ public abstract class Request implements Serializable {
     }
     public String toString() {
       return
+        "(list suffix="+getSuffix()+
+        super.toString();
+    }
+  }
+
+  /**
+   * Modifies the local white pages cache to remove or refetch
+   * cached "getAll" or "list" data.
+   * <p>
+   * This is always CACHE_ONLY, since it can only modify the
+   * local white pages cache.
+   * <p>
+   * The client must specify the name of the "getAll" entry (or
+   * equivalent "list" name suffix).  One or more of the
+   * following optional assertions can also be specified:<ul>
+   *   <li>The minimal age for the cached data in milliseconds,
+   *       to avoid flushing new data.</li>
+   *   <li>An AddressEntry that must be listed in the current
+   *       cached "getAll" map of entries, to assert that the
+   *       cache hasn't been update while the flush is in
+   *       progress.</li>
+   * </ul>
+   * <p>
+   * If the above assertions are satisfied, one or more of these
+   * specified actions can be performed:<ul>
+   *   <li>To <i>uncache</i> all entries associated with the name.
+   *       This should only be done if the locally cached entry
+   *       is certainly stale (e.g. due to information received
+   *       from a third party)</li>
+   *   <li>To <i>prefetch</i> in a background thread for updated
+   *       cache data, without uncaching the maybe-stale cached
+   *       entries.  This should be used if the locally cached entry
+   *       is usable for now but suspected to be stale (e.g. a
+   *       message address used to work but is now unreachable).</li>
+   * </ul>
+   * Clients that use flush requests should carefully weigh the
+   * performance costs of local cache validity verses increased
+   * white pages message traffic.
+   */
+  public static final class Flush extends Request {
+
+    private final String name;
+    private final long minAge;
+    private final AddressEntry ae;
+    private final boolean uncache;
+    private final boolean prefetch;
+
+    public Flush(
+        int options,
+        String name,
+        long minAge,
+        AddressEntry ae,
+        boolean uncache,
+        boolean prefetch) {
+      super(options);
+      this.name = name;
+      this.minAge = minAge;
+      this.ae = ae;
+      this.uncache = uncache;
+      this.prefetch = prefetch;
+      if (!hasOption(CACHE_ONLY)) {
+        throw new IllegalArgumentException(
+            "Flush must be \"CACHE_ONLY\"");
+      }
+      if (name == null || name.length() <= 0) {
+        throw new IllegalArgumentException("Invalid name: "+name);
+      }
+      if (ae != null && !name.equals(ae.getName())) {
+        throw new IllegalArgumentException(
+            "Asserted AddressEntry name "+ae.getName()+
+            " doesn't match the specified flush name: "+name+
+            " "+ae);
+      }
+      if (name.charAt(0) == '.' && ae != null) {
+        throw new IllegalArgumentException(
+            "List suffix "+name+" can't specify an AddressEntry"+
+            " assertion "+ae);
+      }
+      if (!uncache && !prefetch) {
+        throw new IllegalArgumentException(
+            "Must specify either \"uncache\" and/or \"prefetch\"");
+      }
+    }
+    public String getName() {
+      return name;
+    }
+    public long getMinimumAge() {
+      return minAge;
+    }
+    public AddressEntry getAddressEntry() {
+      return ae;
+    }
+    public boolean isUncache() {
+      return uncache;
+    }
+    public boolean isPrefetch() {
+      return prefetch;
+    }
+    public Response createResponse() {
+      return new Response.Flush(this);
+    }
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof Flush)) {
+        return false;
+      } else {
+        Flush f = (Flush) o;
+        return 
+          (name.equals(f.name) &&
+           minAge == f.minAge &&
+           (ae == null ? f.ae == null : ae.equals(f.ae)) &&
+           (uncache == f.uncache) &&
+           (prefetch == f.prefetch));
+      }
+    }
+    public int hashCode() {
+      return 
+        (name.hashCode() +
+         (uncache ? 1 : 2) +
+         (prefetch ? 3 : 4));
+    }
+    public String toString() {
+      return 
         "("+
-        (hasOption(BYPASS_CACHE) ? "relist" : "list")+
-        " suffix="+getSuffix()+
+        (isUncache() ?
+         ("uncache"+(isPrefetch() ? "+" : "")) :
+         "")+
+        (isPrefetch() ? "prefetch" : "")+
+        " "+
+        getName()+
+        (0 < getMinimumAge() ?
+         (" minAge="+getMinimumAge()) :
+         "")+
+        (getAddressEntry() == null ?
+         "" :
+         (" entry="+getAddressEntry()))+
         super.toString();
     }
   }
@@ -295,12 +439,13 @@ public abstract class Request implements Serializable {
       this.ae = ae;
       this.overWrite = overWrite;
       this.renewal = renewal;
-      if (hasOption(BYPASS_CACHE)) {
-        throw new IllegalArgumentException(
-            "Bind can't \"BYPASS_CACHE\"");
-      }
       if (ae == null) {
         throw new IllegalArgumentException("Null entry");
+      }
+      if (!isValidName(ae.getName())) {
+        // this could be moved into AddressEntry itself...
+        throw new IllegalArgumentException(
+            "Invalid name: "+ae.getName());
       }
       if (renewal && (overWrite || hasOption(CACHE_ONLY))) {
         throw new IllegalArgumentException(
@@ -362,12 +507,13 @@ public abstract class Request implements Serializable {
         AddressEntry ae) {
       super(options);
       this.ae = ae;
-      if (hasOption(BYPASS_CACHE)) {
-        throw new IllegalArgumentException(
-            "Unbind can't \"BYPASS_CACHE\"");
-      }
       if (ae == null) {
         throw new IllegalArgumentException("Null entry");
+      }
+      if (!isValidName(ae.getName())) {
+        // this could be moved into AddressEntry itself...
+        throw new IllegalArgumentException(
+            "Invalid name: "+ae.getName());
       }
     }
     public AddressEntry getAddressEntry() {

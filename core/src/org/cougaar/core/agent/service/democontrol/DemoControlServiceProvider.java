@@ -57,9 +57,11 @@ public class DemoControlServiceProvider implements ServiceProvider {
     public void advanceSocietyTime(long period, double rate) {agentClock.advanceSocietyTime(period,rate); }
     public void advanceSocietyTime(ExecutionTimer.Change[] changes) {agentClock.advanceSocietyTime(changes); }
     public double getExecutionRate() { return agentClock.getExecutionRate(); }
-
     public void advanceNodeTime(long period, double rate) {
       agentClock.advanceNodeTime(period, rate);
+    }
+    public void setNodeTime(long time, double rate) {
+      agentClock.setNodeTime(time, rate);
     }
 
   }

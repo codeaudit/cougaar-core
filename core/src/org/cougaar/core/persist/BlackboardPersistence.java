@@ -84,6 +84,7 @@ public class BlackboardPersistence implements Persistence {
     List undistributedEnvelopes;
     List subscriberStates;
     MessageManager messageManager;
+    Object quiescenceMonitorState;
   }
 
   public static Persistence find(ServiceBroker sb)
@@ -142,6 +143,7 @@ public class BlackboardPersistence implements Persistence {
       MyMetaData meta = (MyMetaData) list.get(0);
       result.messageManager = meta.messageManager;
       result.undistributedEnvelopes= meta.undistributedEnvelopes;
+      result.quiescenceMonitorState = meta.quiescenceMonitorState;
       rehydrationSubscriberStates = meta.subscriberStates;
     }
     return result;
@@ -240,7 +242,8 @@ public class BlackboardPersistence implements Persistence {
                                    List subscriberStates,
                                    boolean returnBytes,
                                    boolean full,
-                                   MessageManager messageManager)
+                                   MessageManager messageManager,
+                                   Object quiescenceMonitorState)
   {
     MyMetaData meta = new MyMetaData();
     meta.undistributedEnvelopes = copyAndRemoveNotPersistable(undistributedEnvelopes);
@@ -251,6 +254,7 @@ public class BlackboardPersistence implements Persistence {
     }
     meta.subscriberStates= subscriberStates;
     meta.messageManager = messageManager;
+    meta.quiescenceMonitorState = quiescenceMonitorState;
     clientData = new ArrayList(2);
     clientData.addAll(copyAndRemoveNotPersistable(epochEnvelopes));
     clientData.add(meta);

@@ -21,17 +21,33 @@
 
 package org.cougaar.core.service;
 
-import java.util.TimerTask;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.Schedulable;
 
+/**
+ * The ThreadService provides Schedulables for use by a COUGAAR
+ * objects (known as the 'consumer') The body of code to be run is
+ * passed in as a Runnable.  An optional name can be passed in as
+ * well, and should be passed in if at all possible.
+ */
 public interface ThreadService extends Service
 {
     Schedulable getThread(Object consumer, Runnable runnable);
     Schedulable getThread(Object consumer, Runnable runnable, String name);
 
-    void schedule(TimerTask task, long delay);
-    void schedule(TimerTask task, long delay, long interval);
-    void scheduleAtFixedRate(TimerTask task, long delay, long interval);
+    /**
+     * @deprecated Use the schedule methods on Schedulable.
+     */
+    void schedule(java.util.TimerTask task, long delay);
+
+    /**
+     * @deprecated Use the schedule methods on Schedulable.
+     */
+    void schedule(java.util.TimerTask task, long delay, long interval);
+
+    /**
+     * @deprecated Use the schedule methods on Schedulable.
+     */
+    void scheduleAtFixedRate(java.util.TimerTask task, long delay, long interval);
 
 }

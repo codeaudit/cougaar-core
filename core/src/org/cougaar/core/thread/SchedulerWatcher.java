@@ -24,7 +24,7 @@ package org.cougaar.core.thread;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.TimerTask;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.qos.metrics.Constants;
@@ -150,7 +150,7 @@ public class SchedulerWatcher
 	}
     }
 
-    private class SnapShotter extends TimerTask {
+    private class SnapShotter implements Runnable {
 	public void run() {
 	    synchronized (records) {
 		Iterator itr = records.values().iterator();
@@ -174,9 +174,13 @@ public class SchedulerWatcher
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
 	tls.addListener(this);
-	ThreadService ts = (ThreadService)
+
+	ThreadService tsvc = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
-	ts.schedule(new SnapShotter(), 5000, 1000);
+	Runnable body = new SnapShotter();
+	Schedulable sched = tsvc.getThread(this, body);
+	sched.schedule(5000, 1000);
+	sb.releaseService(this, ThreadService.class, tsvc);
     }
 
     ConsumerRecord findRecord(Object consumer) {

@@ -64,7 +64,7 @@ public interface MessageProtectionService extends Service
    * @throws GeneralSecurityException
    * @throws IOException
    */
-  byte[] protectHeader(byte[] rawData, 
+  byte[] protectHeader(MessageAttributes attributes, 
 		       MessageAddress source,
 		       MessageAddress destination) 
     throws GeneralSecurityException, IOException;
@@ -79,9 +79,9 @@ public interface MessageProtectionService extends Service
    * @throws GeneralSecurityException
    * @throws IOException
    */
-  byte[] unprotectHeader(byte[] rawData, 
-			 MessageAddress source,
-			 MessageAddress destination) 
+  MessageAttributes unprotectHeader(byte[] rawData, 
+				    MessageAddress source,
+				    MessageAddress destination) 
     throws GeneralSecurityException, IOException;
 
   /** 

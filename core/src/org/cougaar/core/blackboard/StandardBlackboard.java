@@ -108,7 +108,7 @@ implements Component
     sb.revokeService(BlackboardService.class, bbSP);
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
 //     d.getPersistence().unregisterServices(sb);
-
+    d.stop();
     bb.stop();
     if (msgSwitch != null) {
       sb.releaseService(
@@ -165,6 +165,14 @@ implements Component
 
     public void restartAgent(MessageAddress cid) {
       blackboard.getDistributor().restartAgent(cid);
+    }
+
+    public void suspend() {
+      blackboard.getDistributor().suspend();
+    }
+
+    public void resume() {
+      blackboard.getDistributor().resume();
     }
 
     public PersistenceObject getPersistenceObject() {

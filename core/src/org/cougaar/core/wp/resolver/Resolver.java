@@ -24,16 +24,14 @@ package org.cougaar.core.wp.resolver;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
@@ -42,7 +40,7 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
-import org.cougaar.core.wp.WhitePages; // inlined
+import org.cougaar.core.wp.RarelyModifiedList;
 
 /**
  * This is the client-side white pages resolver, which includes
@@ -61,35 +59,28 @@ public class Resolver
 extends ContainerSupport
 {
   public static final String INSERTION_POINT = 
-    WhitePages.INSERTION_POINT + ".Resolver";
+    Agent.INSERTION_POINT + ".WPClient";
 
   private ServiceBroker rootsb;
   private LoggingService logger;
   private MessageAddress agentId;
-  private AgentIdentificationService agentIdService;
 
-  private ServiceProvider wpsProxySP;
+  private CacheService cacheService;
+  private LeaseService leaseService;
+  private ServiceProvider whitePagesSP;
 
-  private ServiceProvider handlerRegistrySP;
+  private BindObserverSP bindObserverSP;
 
-  // QuickSet<Handler>
-  private final QuickSet handlers = new QuickSet();
+  private RarelyModifiedList bindObservers = 
+    new RarelyModifiedList();
+
 
   public void setNodeControlService(NodeControlService ncs) {
-    if (ncs != null) {
-      this.rootsb = ncs.getRootServiceBroker();
-    }
+    rootsb = (ncs == null ? null : ncs.getRootServiceBroker());
   }
 
   public void setLoggingService(LoggingService logger) {
     this.logger = logger;
-  }
-
-  public void setAgentIdentificationService(AgentIdentificationService ais) {
-    this.agentIdService = ais;
-    if (ais != null) {
-      this.agentId = ais.getMessageAddress();
-    }
   }
 
   protected String specifyContainmentPoint() {
@@ -101,25 +92,45 @@ extends ContainerSupport
 
     // add defaults -- order is very important!
     l.add(new ComponentDescription(
-            "CacheEntries",
-            INSERTION_POINT+".CacheEntries",
-            "org.cougaar.core.wp.resolver.CacheEntriesHandler",
+            "ServerPool",
+            INSERTION_POINT+".ServerPool",
+            "org.cougaar.core.wp.resolver.SelectManager",
             null,
             "",
             null,
             null,
             null,
-            ComponentDescription.PRIORITY_COMPONENT));
+            ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
-            "CacheLists",
-            INSERTION_POINT+".CacheLists",
-            "org.cougaar.core.wp.resolver.CacheListsHandler",
+            "ClientTransport",
+            INSERTION_POINT+".ClientTransport",
+            "org.cougaar.core.wp.resolver.ClientTransport",
             null,
             "",
             null,
             null,
             null,
-            ComponentDescription.PRIORITY_COMPONENT));
+            ComponentDescription.PRIORITY_INTERNAL));
+    l.add(new ComponentDescription(
+            "Lease",
+            INSERTION_POINT+".Lease",
+            "org.cougaar.core.wp.resolver.LeaseManager",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_INTERNAL));
+    l.add(new ComponentDescription(
+            "Cache",
+            INSERTION_POINT+".Cache",
+            "org.cougaar.core.wp.resolver.CacheManager",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
             "RMIBoot",
             INSERTION_POINT+".RMIBoot",
@@ -131,36 +142,15 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_COMPONENT));
     l.add(new ComponentDescription(
-            "Lease",
-            INSERTION_POINT+".Lease",
-            "org.cougaar.core.wp.resolver.LeaseHandler",
-            null,
-            "",
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-    l.add(new ComponentDescription(
             "Config",
             INSERTION_POINT+".Config",
-            "org.cougaar.core.wp.resolver.ConfigReader",
+            "org.cougaar.core.wp.resolver.ConfigLoader",
             null,
             null,
             null,
             null,
             null,
             ComponentDescription.PRIORITY_COMPONENT));
-    l.add(new ComponentDescription(
-            "Remote",
-            INSERTION_POINT+".Remote",
-            "org.cougaar.core.wp.resolver.RemoteHandler",
-            null,
-            "",
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-
 
     // read config
     ServiceBroker sb = getServiceBroker();
@@ -191,233 +181,200 @@ extends ContainerSupport
       logger.debug("Loading resolver");
     }
 
-    handlerRegistrySP = new HandlerRegistrySP();
-    getChildServiceBroker().addService(
-        HandlerRegistryService.class, handlerRegistrySP);
+    ServiceBroker sb = getServiceBroker();
 
-    // advertise the white pages service
-    wpsProxySP = new WPSProxySP();
-    if (!rootsb.addService(WhitePagesService.class, wpsProxySP)) {
-      if (logger.isErrorEnabled()) {
-        logger.error("Failed WPS replace");
-      }
-    }
+    // which agent are we in?
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    agentId = ais.getMessageAddress();
+    sb.releaseService(this, AgentIdentificationService.class, ais);
+
+    ServiceBroker csb = getChildServiceBroker();
+
+    // advertize our bind-observer service
+    bindObserverSP = new BindObserverSP();
+    csb.addService(BindObserverService.class, bindObserverSP);
 
     super.load();
+
+    // now we can advertise to the node, since our bootstrappers
+    // are now in place.
+    rootsb.addService(WhitePagesService.class, whitePagesSP);
 
     if (logger.isInfoEnabled()) {
       logger.info("Loaded white pages resolver");
     }
   }
 
+  protected void loadInternalPriorityComponents() {
+    super.loadInternalPriorityComponents();
+
+    ServiceBroker csb = getChildServiceBroker();
+
+    // get the key services that should be created by our
+    // subcomponents.
+    cacheService = (CacheService)
+      csb.getService(this, CacheService.class, null);
+    if (cacheService == null) {
+      throw new RuntimeException(
+          "Unable to obtain CacheService");
+    }
+    leaseService = (LeaseService)
+      csb.getService(this, LeaseService.class, null);
+    if (leaseService == null) {
+      throw new RuntimeException(
+          "Unable to obtain LeaseService");
+    }
+
+    // we can advertize our white pages to our subcomponents,
+    // to allow bootstrapping
+    //
+    // we shouldn't advertize this to the root service broker
+    // yet, since we haven't finished loading ('though it'd
+    // probably work).
+    whitePagesSP = new WhitePagesSP();
+    csb.addService(WhitePagesService.class, whitePagesSP);
+  }
+
   public void unload() {
     super.unload();
 
     // release services
+    ServiceBroker csb = getChildServiceBroker();
+
+    // revoke white pages service
+    if (whitePagesSP != null) {
+      rootsb.revokeService(WhitePagesService.class, whitePagesSP);
+      whitePagesSP = null;
+    }
+
+    if (leaseService != null) {
+      csb.releaseService(
+          this, LeaseService.class, leaseService);
+      leaseService = null;
+    }
+    if (cacheService != null) {
+      csb.releaseService(
+          this, CacheService.class, cacheService);
+      cacheService = null;
+    }
+
+    // revoke bind observers
+    if (bindObserverSP != null) {
+      csb.revokeService(BindObserverService.class, bindObserverSP);
+      bindObserverSP = null;
+    }
+
     ServiceBroker sb = getServiceBroker();
 
-    if (agentIdService != null) {
-      sb.releaseService(
-          this, AgentIdentificationService.class, agentIdService);
-      agentIdService = null;
-    }
     if (logger != null) {
       sb.releaseService(
           this, LoggingService.class, logger);
       logger = null;
     }
-
-    if (handlerRegistrySP != null) {
-      getChildServiceBroker().revokeService(
-          HandlerRegistryService.class, handlerRegistrySP);
-      handlerRegistrySP = null;
-    }
-
-    // revoke WPS override
-    //
-    // note: does this restore the root's WPS?  For now
-    // we don't care
-    if (wpsProxySP != null) {
-      rootsb.revokeService(WhitePagesService.class, wpsProxySP);
-      wpsProxySP = null;
-    }
   }
 
-  private void addHandler(Handler h) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Add handler: "+h);
-    }
-    handlers.add(h);
-  }
-
-  private void removeHandler(Handler h) {
-    handlers.remove(h);
-  }
-
-  private Response mySubmit(Request req) {
+  private Response submit(Request req, String agent) {
     if (logger.isDetailEnabled()) {
       logger.detail("Resolver intercept wp request: "+req);
     }
-    Response origRes = req.createResponse();
-    Response res = origRes;
-    for (Iterator iter = handlers.iterator();
-        iter.hasNext();
-        ) {
-      Handler h = (Handler) iter.next();
-      res = h.submit(res);
-      if (res == null || res.isAvailable()) {
+    Response res = req.createResponse();
+
+    cacheService.submit(res);
+
+    boolean bind = 
+      (req instanceof Request.Bind ||
+       req instanceof Request.Unbind);
+    if (bind || req instanceof Request.Flush) {
+      tellObservers(req);
+    }
+
+    if (bind) {
+      leaseService.submit(res, agent);
+    }
+    return res;
+  }
+
+  private void register(BindObserverService.Client bosc) {
+    bindObservers.add(bosc);
+  }
+  private void unregister(BindObserverService.Client bosc) {
+    bindObservers.remove(bosc);
+  }
+  private void tellObservers(Request req) {
+    List l = bindObservers.getList();
+    for (int i = 0, n = l.size(); i < n; i++) {
+      BindObserverService.Client bosc =
+        (BindObserverService.Client) l.get(i);
+      bosc.submit(req);
+    }
+  }
+
+  private class WhitePagesSP 
+    implements ServiceProvider {
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (!WhitePagesService.class.isAssignableFrom(serviceClass)) {
+          return null;
+        }
+        String s;
+        if (requestor instanceof ResolverClient) {
+          s = ((ResolverClient) requestor).getAgent();
+        } else {
+          s = null; // assume it's our node-agent
+        }
+        final String agent = s;
         if (logger.isDetailEnabled()) {
-          // get class name
-          String id = h.getClass().getName();
-          int idx = id.lastIndexOf('.');
-          if (idx > 0) {
-            id = id.substring(idx+1);
-          }
-          logger.detail(id+" handled "+res);
+          logger.detail(
+              "giving root WP (agent="+agent+") to "+requestor);
         }
-        return origRes;
-      }
-    }
-    if (logger.isErrorEnabled()) {
-      logger.error("Unhandled request: "+req);
-    }
-    return origRes;
-  }
-
-  private void myExecute(Request req, Object result, long ttl) {
-    // validate
-    if (req instanceof Request.Get) {
-      if (logger.isErrorEnabled()) {
-        logger.error(
-            "Invalid response message!"+
-            "  All outgoing \"get\" requests"+
-            " are upgraded to \"getAll\": "+req);
-      }
-      return;
-    }
-    for (Iterator iter = handlers.iterator();
-        iter.hasNext();
-        ) {
-      Handler h = (Handler) iter.next();
-      h.execute(req, result, ttl);
-    }
-  }
-
-  private class HandlerRegistrySP 
-    implements ServiceProvider {
-      private final HandlerRegistryService hrs =
-        new HandlerRegistryService() {
-          public void register(Handler h) {
-            Resolver.this.addHandler(h);
-          }
-          public void unregister(Handler h) {
-            Resolver.this.removeHandler(h);
-          }
-          public void execute(
-              Request req, Object result, long ttl) {
-            Resolver.this.myExecute(req, result, ttl);
-          }
-        };
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (HandlerRegistryService.class.isAssignableFrom(
-              serviceClass)) {
-          return hrs;
-        } else {
-          return null;
-        }
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-      }
-    }
-
-  private class WPSProxySP 
-    implements ServiceProvider {
-      private final WhitePagesService proxy = 
-        new WhitePagesService() {
+        return new WhitePagesService() {
           public Response submit(Request req) {
-            return Resolver.this.mySubmit(req);
-          }
-          public String toString() {
-            return "proxy wps";
+            return Resolver.this.submit(req, agent);
           }
         };
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (WhitePagesService.class.isAssignableFrom(serviceClass)) {
-          return proxy;
-        } else {
-          return null;
-        }
       }
       public void releaseService(
           ServiceBroker sb, Object requestor,
           Class serviceClass, Object service) {
       }
-      public String toString() {
-        return "WPS proxy ("+System.identityHashCode(proxy)+")";
-      }
     }
 
-  /**
-   * A set that's cheap for thread-safe iterators.
-   * <p>
-   * I'm not sure if this is a good idea or not...
-   */
-  private class QuickSet {
-    private final Object lock = new Object();
-    private List l = Collections.EMPTY_LIST;
-    public Iterator iterator() {
-      synchronized (lock) {
-        return l.iterator();
+  private class BindObserverSP 
+    implements ServiceProvider {
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (!BindObserverService.class.isAssignableFrom(serviceClass)) {
+          return null;
+        }
+        if (!(requestor instanceof BindObserverService.Client)) {
+          throw new IllegalArgumentException(
+              "BindObserverService"+
+              " requestor must implement "+
+              "BindObserverService.Client");
+        }
+        BindObserverService.Client client = (BindObserverService.Client) requestor;
+        BindObserverServiceImpl usi = new BindObserverServiceImpl(client);
+        Resolver.this.register(client);
+        return usi;
       }
-    }
-    public boolean add(Object o) {
-      synchronized (lock) {
-        int n = l.size();
-        for (int i = 0; i < n; i++) {
-          Object oi = l.get(i);
-          if (o == null ?
-              oi == null :
-              o.equals(oi)) {
-            return false;
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+        if (!(service instanceof BindObserverServiceImpl)) {
+          return;
+        }
+        BindObserverServiceImpl usi = (BindObserverServiceImpl) service;
+        BindObserverService.Client client = usi.client;
+        Resolver.this.unregister(client);
+      }
+      private class BindObserverServiceImpl 
+        implements BindObserverService {
+          private final Client client;
+          public BindObserverServiceImpl(Client client) {
+            this.client = client;
           }
         }
-        List t = new ArrayList(n+1);
-        t.addAll(l);
-        t.add(o);
-        l = t; 
-        return true;
-      }
     }
-    public boolean remove(Object o) {
-      synchronized (lock) {
-        int n = l.size();
-        int i = -1;
-        while (true) {
-          if (++i >= n) {
-            return false;
-          }
-          Object oi = l.get(i);
-          if (o == null ?
-              oi == null :
-              o.equals(oi)) {
-            break;
-          }
-        }
-        List t = new ArrayList(n-1);
-        for (int j = 0; j < n; j++) {
-          if (j != i) {
-            t.add(l.get(j));
-          }
-        }
-        l = t; 
-        return true;
-      }
-    }
-    // etc Set methods if we cared...
-  }
-
+ 
 }

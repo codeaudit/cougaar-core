@@ -21,6 +21,8 @@
 
 package org.cougaar.core.thread;
 
+import java.util.Timer;
+import java.util.TimerTask;
 
 final class SchedulableObject implements Schedulable
 {
@@ -35,6 +37,9 @@ final class SchedulableObject implements Schedulable
     private boolean cancelled;
     private boolean queued;
     private boolean disqualified;
+    private TimerTask task;
+    private int blocking_type = SchedulableStatus.NOT_BLOCKING;
+    private String blocking_excuse;
 
     SchedulableObject(TreeNode treeNode, 
                       Runnable runnable, 
@@ -53,6 +58,25 @@ final class SchedulableObject implements Schedulable
     }
 
 
+    String getBlockingExcuse () {
+	return blocking_excuse;
+    }
+
+    int getBlockingType() {
+	return blocking_type;
+    }
+
+
+    void setBlocking(int type, String excuse) {
+	blocking_type = type;
+	blocking_excuse = excuse;
+    }
+
+    void clearBlocking() {
+	blocking_excuse = null;
+	blocking_type = SchedulableStatus.NOT_BLOCKING;
+    }
+
     String getName() {
         return name;
     }
@@ -62,7 +86,9 @@ final class SchedulableObject implements Schedulable
     }
 
     public String toString() {
-        return "<Schedulable " +name+ " for " +consumer+ ">";
+        return "<Schedulable " 
+	    +(name == null ? "anonymous" : name)+ 
+	    " for " +consumer+ ">";
     }
 
     long getTimestamp() {
@@ -148,11 +174,41 @@ final class SchedulableObject implements Schedulable
         Starter.push(this);
     }
 
+    
+    private TimerTask task() {
+	cancelTimer();
+	task = new TimerTask() {
+		public void run() {
+		    start();
+		}
+	    };
+	return task;
+    }
+
+    public synchronized void schedule(long delay) {
+	Timer timer = scheduler.getTreeNode().timer();
+	timer.schedule(task(), delay);
+    }
 
 
+    public synchronized void schedule(long delay, long interval) 
+    {
+	Timer timer = scheduler.getTreeNode().timer();
+	timer.schedule(task(), delay, interval);
+    }
+
+    public synchronized void scheduleAtFixedRate(long delay, long interval)
+    {
+	Timer timer = scheduler.getTreeNode().timer();
+	timer.scheduleAtFixedRate(task(), delay, interval);
+    }
 
 
-
+    public synchronized void cancelTimer() 
+    {
+	if (task != null) task.cancel();
+	task = null;
+    }
 
     public synchronized int getState() {
         // Later add a 'disqualified' state
@@ -166,6 +222,7 @@ final class SchedulableObject implements Schedulable
 
     public boolean cancel() {
         synchronized (this) {
+	    cancelTimer();
             cancelled = true;
 	    start_count = 0;
             if (thread != null) {

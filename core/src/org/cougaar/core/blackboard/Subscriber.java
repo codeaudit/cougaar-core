@@ -148,6 +148,7 @@ public class Subscriber {
   protected boolean privateUpdateSubscriptions() {
     boolean changedp = false;
     synchronized (subscriptions) {
+      transactionAllowsQuiescence = inboxAllowsQuiescence;
       transactionEnvelopes = flushInbox();
       try {
         for (int i = 0, n = subscriptions.size(); i < n; i++) {
@@ -213,6 +214,7 @@ public class Subscriber {
     if (transactionEnvelopes != null) {
       recycleInbox(transactionEnvelopes);
       transactionEnvelopes = null;
+      transactionAllowsQuiescence = true;
     } else {
       recycleInbox(flushInbox());
     }
@@ -406,6 +408,8 @@ public class Subscriber {
   private List transactionEnvelopes = null;            // Envelopes of current transaction
   private List idleEnvelopes = new ArrayList();        // Alternate list
   private Object inboxLock = new Object();             // For synchronized access to inboxes
+  private boolean inboxAllowsQuiescence = true;        // True if inbox allows quiescence
+  private boolean transactionAllowsQuiescence = true;  // True if inbox being processed allowed quiescence.
 
   /**
    * Called by non-client methods to add an envelope to our inboxes.
@@ -423,12 +427,13 @@ public class Subscriber {
    * the transaction is closed where the inbox is emptied if there are
    * no subscriptions.
    **/
-  public void receiveEnvelopes(List envelopes) {
+  public void receiveEnvelopes(List envelopes, boolean envelopeQuiescenceRequired) {
     boolean signalActivity = false;
     synchronized (inboxLock) {
       boolean notBusy = transactionLock.tryGetBusyFlag();
       if (getSubscriptionCount() > 0 || !notBusy) {
         pendingEnvelopes.addAll(envelopes);
+        if (envelopeQuiescenceRequired) inboxAllowsQuiescence = false;
         signalActivity = true;
       }
       if (notBusy) transactionLock.freeBusyFlag();
@@ -442,11 +447,18 @@ public class Subscriber {
     }
   }
 
+  public boolean isQuiescent() {
+    synchronized (inboxLock) {
+      return (inboxAllowsQuiescence && transactionAllowsQuiescence);
+    }
+  }
+
   private List flushInbox() {
     synchronized (inboxLock) {
       List result = pendingEnvelopes;
       pendingEnvelopes = idleEnvelopes;
       idleEnvelopes = null;
+      inboxAllowsQuiescence = true;
       return result;
     }
   }

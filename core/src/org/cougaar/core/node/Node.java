@@ -132,6 +132,8 @@ extends ContainerSupport
     "org.cougaar.core.node.InitializationComponent";
   public static final String IGNORE_REHYDRATED_AGENT_LIST_PROP =
     "org.cougaar.core.node.ignoreRehydratedAgentList";
+  public static final String NODE_AGENT_CLASSNAME_PROPERTY =
+    "org.cougaar.core.node.classname";
 
   private MessageAddress myNodeIdentity_ = null;
 
@@ -404,11 +406,14 @@ extends ContainerSupport
     naParams.add(
         Boolean.valueOf(
           System.getProperty(IGNORE_REHYDRATED_AGENT_LIST_PROP)));
+    String naClass = System.getProperty(
+        NODE_AGENT_CLASSNAME_PROPERTY,
+        NodeAgent.class.getName());
     ComponentDescription naDesc = 
       new ComponentDescription(
           name,
           Agent.INSERTION_POINT,
-          NodeAgent.class.getName(),
+          naClass,
           null,  //codebase
           naParams,
           null,  //certificate

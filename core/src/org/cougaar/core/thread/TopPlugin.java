@@ -21,8 +21,12 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.ThreadService;
+
+import java.util.Timer;
 
 /**
  * This class creates a servlet which displays the state of COUGAAR
@@ -31,8 +35,19 @@ import org.cougaar.core.plugin.ComponentPlugin;
  * 
  * This is designed to be a Node-level plugin.
  */
-public class TopPlugin extends ComponentPlugin
+public class TopPlugin extends ParameterizedComponent // not a Plugin
 {
+    private static final long DEFAULT_SAMPLE_PERIOD = 5000;
+    private static final String WARN_TIME_VALUE="100";
+    private static final String WARN_TIME_PARAM= 
+	"warn-time";
+    private static final String INFO_TIME_VALUE="10";
+    private static final String INFO_TIME_PARAM= 
+	"info-time";
+
+    private RogueThreadDetector rtd;
+    private ServiceBroker sb;
+
     public TopPlugin() {
 	super();
     }
@@ -42,15 +57,74 @@ public class TopPlugin extends ComponentPlugin
     public void load() {
 	super.load();
 
+	String run_servlet = getParameter("servlet", "true");
+	String run_timer = getParameter("detector", "true");
+	long sample_period = getParameter("period", DEFAULT_SAMPLE_PERIOD);
+	String test = getParameter("test", "false");
 	ServiceBroker sb = getServiceBroker();
-	TopServlet servlet = new TopServlet(sb);
+	if (run_servlet.equalsIgnoreCase("true")) {
+	    TopServlet servlet = new TopServlet(sb);
+	}
+	if (run_timer.equalsIgnoreCase("true")) {
+	    rtd = new RogueThreadDetector(sb, sample_period);
+	    
+	    // initialize param subscriptions
+// 	    initializeParameter(WARN_TIME_PARAM,WARN_TIME_VALUE);
+// 	    initializeParameter(INFO_TIME_PARAM,INFO_TIME_VALUE);
+	    dynamicParameterChanged(WARN_TIME_PARAM,
+				    getParameter(WARN_TIME_PARAM,
+						 WARN_TIME_VALUE));
+	    dynamicParameterChanged(INFO_TIME_PARAM,
+				    getParameter(INFO_TIME_PARAM,
+						 INFO_TIME_VALUE));
+
+	    // We can't use the ThreadService for the poller because it
+	    // may run out of pooled threads, which is what we are trying
+	    // to detect. 
+	    Timer timer = new Timer();
+	    timer.schedule(rtd, 0, sample_period);
+	}
+	if(test.equalsIgnoreCase("true")) {
+	    runTest();
+	}
     }
 
-    protected void setupSubscriptions() {
+    protected void dynamicParameterChanged(String name, String value)
+    {
+	if (name.equals(WARN_TIME_PARAM)) {
+	    int warnTime = Integer.parseInt(value) *1000; //millisecond
+	    rtd.setWarnTime(warnTime);
+	} else if (name.equals(INFO_TIME_PARAM)) {
+	    int infoTime = Integer.parseInt(value) *1000; //millisecond
+	    rtd.setInfoTime(infoTime);
+	}
     }
-  
-    protected void execute() {
-	//System.out.println("Uninteresting");
+
+    void runTest() {
+	Runnable test = new Runnable() {
+		public void run () {
+		    int type = SchedulableStatus.OTHER;
+		    String excuse = "Calls to sleep() are evil";
+		    SchedulableStatus.beginBlocking(type, excuse);
+		    try { Thread.sleep(100000); }
+		    catch (InterruptedException ex) {}
+		    SchedulableStatus.endBlocking();
+		}
+	    };
+	ServiceBroker sb = getServiceBroker();
+	ThreadService tsvc = (ThreadService) sb.getService(this, ThreadService.class, null);
+	org.cougaar.core.thread.Schedulable sched = tsvc.getThread(this, test, "Sleep test");
+	sb.releaseService(this, ThreadService.class, tsvc);
+	sched.schedule(0, 10);
+    }
+
+    public final void setBindingSite(BindingSite bs) {
+	sb = bs.getServiceBroker();
+    }
+
+
+    public ServiceBroker getServiceBroker() {
+	return sb;
     }
 
 }

@@ -221,13 +221,8 @@ public abstract class AbstractMobilityPlugin
         throw new RuntimeException(
             "Unable to obtain the white pages service");
       }
-    }
-  }
 
-  public void start() {
-    super.start();
-
-    if (isNode) {
+      // advertise our mobility service
       if (mobileAgentSP == null) {
         this.mobileAgentSP = new MobileAgentServiceProviderImpl();
         nodeSB.addService(MobileAgentService.class, mobileAgentSP);

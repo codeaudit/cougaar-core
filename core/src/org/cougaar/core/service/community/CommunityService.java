@@ -29,7 +29,13 @@ import org.cougaar.core.mts.MessageAddress;
 
 /** A CommunityService is an API which may be supplied by a
  * ServiceProvider registered in a ServiceBroker that provides
- * access to community management capabilities.
+ * access to community capabilities.  Most operations are performed
+ * asynchronously in which case a callback is used to return status and
+ * results.  In addition to the asynchronous callback, the getCommunity and
+ * searchCommunity methods may also return results immediately if the operation
+ * can be completed using locally cached data.  In these cases the callback is
+ * not invoked.  When required, callbacks are always invoked from within a
+ * blackboard transaction.
  */
 public interface CommunityService extends Service {
 
@@ -60,8 +66,7 @@ public interface CommunityService extends Service {
    * @param entityName       New member name
    * @param entityType       Type of member entity to create (AGENT or COMMUNITY)
    * @param entityAttrs      Attributes for new member
-   * @param createIfNotFound Create community if it doesn't exist, otherwise
-   *                         wait
+   * @param createIfNotFound Create community if it doesn't exist
    * @param communityAttrs   Attributes for created community (used if
    *                         createIfNotFound set to true, otherwise ignored)
    * @param crl              Listener to receive response
@@ -85,17 +90,21 @@ public interface CommunityService extends Service {
                       CommunityResponseListener crl);
 
   /**
-   * Request to add named community to local cache and register for update
-   * notifications.
-   * @param communityName  Community of interest, if null listener will receive
-   *                       notification of changes in all communities
-   * @param timeout        Time (in milliseconds) to wait for operation to
-   *                       complete before returning response (-1 = wait forever)
-   * @param crl            Listener to receive response
+   * Request to get a Community instance from local cache.  If community is
+   * found in cache a reference is returned by method call.  If the community
+   * is not found in the cache a null value is returned and the Community
+   * reference is requested from the community manager.  After the Community
+   * instance has been obtained from the community manager the supplied
+   * CommunityResponseListener callback is invoked to notify the requester.
+   * Note that the supplied callback is not invoked if a non-null value is
+   * returned.
+   * @param communityName  Community of interest
+   * @param crl            Listener to receive response after remote fetch
+   * @return               Community instance if found in cache or null if not
+   *                       found
    */
-  void getCommunity(String                    communityName,
-                    long                      timeout,
-                    CommunityResponseListener crl);
+  Community getCommunity(String                    communityName,
+                         CommunityResponseListener crl);
 
   /**
    * Request to modify an Entity's attributes.
@@ -105,13 +114,21 @@ public interface CommunityService extends Service {
    * @param mods             Attribute modifications
    * @param crl              Listener to receive response
    */
-  public void modifyAttributes(String                    communityName,
-                               String                    entityName,
-                               ModificationItem[]        mods,
-                               CommunityResponseListener crl);
+  void modifyAttributes(String                    communityName,
+                        String                    entityName,
+                        ModificationItem[]        mods,
+                        CommunityResponseListener crl);
+
   /**
-   * Initiates a community search operation. The results are provided via a
-   * call back to a specified CommunitySearchListener.
+   * Initiates a community search operation.  The results of the search are
+   * immediately returned as part of the method call if the search can be
+   * resolved using locally cached data.  However, if the search requires
+   * interaction with a remote community manager a null value is returned by
+   * the method call and the search results are returned via the
+   * CommunityResponseListener callback after the remote operation has been
+   * completed.  In the case where the search can be satisified using local
+   * data (i.e., the method returns a non-null value) the
+   * CommunityResponseListener is not invoked.
    * @param communityName   Name of community to search
    * @param searchFilter    JNDI compliant search filter
    * @param recursiveSearch True for recursive search into nested communities
@@ -119,24 +136,34 @@ public interface CommunityService extends Service {
    * @param resultQualifier Type of entities to return in result [ALL_ENTITIES,
    *                        AGENTS_ONLY, or COMMUNITIES_ONLY]
    * @param crl             Callback object to receive search results
+   * @return                Collection of Entity objects matching search
+   *                        criteria if available in local cache.  A null value
+   *                        is returned if cache doesn't contained named
+   *                        community.
    */
-  void searchCommunity(String                    communityName,
-                       String                    searchFilter,
-                       boolean                   recursiveSearch,
-                       int                       resultQualifier,
-                       CommunityResponseListener crl);
+  public Collection searchCommunity(String              communityName,
+                              String                    searchFilter,
+                              boolean                   recursiveSearch,
+                              int                       resultQualifier,
+                              CommunityResponseListener crl);
+
 
   /**
-   * Returns a list of all communities of which caller is a member.
-   * @param allLevels Set to false if the list should contain only those
-   *                  communities in which the caller is explicitly
-   *                  referenced.  If true the list will also include those
-   *                  communities in which the caller is implicitly a member
-   *                  as a result of community nesting.
-   * @param crl       Callback object to receive search results
+   * Requests a collection of community names identifying the communities that
+   * contain the specified member.  If the member name is null the immediate
+   * parent communities for calling agent are returned.  If member is
+   * the name of a nested community the names of all immediate parent communities
+   * is returned.  The results are returned directly if the member name is
+   * null or if a copy of the specified community is available in local cache.
+   * Otherwise, the results will be returned in the CommunityResponseListener
+   * callback in which case the method returns a null value.
+   * @param name   Member name
+   * @param crl    Listner to receive results if remote lookup is required
+   * @return A collection of community names if operation can be resolved using
+   *         data from local cache, otherwise null
    */
-  void getParentCommunities(boolean                   allLevels,
-                            CommunityResponseListener crl);
+  Collection listParentCommunities(String                    member,
+                                   CommunityResponseListener crl);
 
   /**
    * Add listener for CommunityChangeEvents.
@@ -155,6 +182,19 @@ public interface CommunityService extends Service {
   /////////////////////////////////////////////////////////////////////////////
 
     String COMMUNITIES_CONTEXT_NAME = "Communities";
+
+    /**
+     * Returns an array of community names of all communities of which caller is
+     * a member.
+     * @param allLevels Set to false if the list should contain only those
+     *                  communities in which the caller is explicitly
+     *                  referenced.  If true the list will also include those
+     *                  communities in which the caller is implicitly a member
+     *                  as a result of community nesting.
+     * @return          Array of community names
+         * @deprecated      use listParentCommunities(String, CommunityResponseListener)
+     */
+    String[] getParentCommunities(boolean allLevels);
 
   /**
    * Creates a new community in Name Server.
@@ -341,7 +381,6 @@ public interface CommunityService extends Service {
    * @deprecated
    */
   Collection listParentCommunities(String member);
-
 
   /**
    * Requests a collection of community names identifying the communities that

@@ -47,6 +47,7 @@ public class PropagatingScheduler extends Scheduler
     }
 
     boolean requestRights(Scheduler requestor) {
+	if (!allowRightFor(requestor)) return false;
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root

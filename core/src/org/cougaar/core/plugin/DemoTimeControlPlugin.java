@@ -187,7 +187,20 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
       }
     }
 
-    demoControlService.advanceNodeTime(l_advance, d_rate);
+    long newTime = alarmService.currentTimeMillis() + l_advance;
+    long quantization = 1L;
+    if (l_advance >= 86400000L) {
+      // Quantize to nearest day if step is a multiple of one day
+      if ((l_advance % 86400000L) == 0L) {
+        quantization = 86400000L;
+      }
+    } else if ((l_advance % 3600000L) == 0L) {
+      // Quantize to nearest hour if step is a multiple of one hour
+      quantization = 3600000;
+    }
+    newTime = (newTime / quantization) * quantization;
+
+    demoControlService.setNodeTime(newTime, d_rate);
   }
 
   protected void doit(HttpServletRequest req, HttpServletResponse res)
@@ -200,7 +213,7 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
     PrintWriter out = res.getWriter();
     out.println("<html><head></head><body>");
 
-    out.println("<FORM METHOD=\"GET\" ACTION=\"time\">");
+    out.println("<FORM METHOD=\"GET\" ACTION=\"timeControl\">");
     out.println("<table>");
     out.println(
       "<tr><td>Scenario Time</td><td>"

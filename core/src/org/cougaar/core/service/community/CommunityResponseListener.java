@@ -26,6 +26,13 @@ package org.cougaar.core.service.community;
  */
 public interface CommunityResponseListener {
 
+  /**
+   * Callback method invoked when a reply to a previously invoked request is
+   * available.  The callback method will always be invoked from within a
+   * blackboard transaction.
+   * @param response  Response containing status code and reference to request
+   *                  specific content
+   */
   public void getResponse(CommunityResponse response);
 
 }

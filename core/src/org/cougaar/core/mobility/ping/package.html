@@ -25,8 +25,23 @@ The interface for the ping data structure.
 <dt>
 <b>PingImpl</b>
 <dd>
-The Relay-based implementation of the "Ping".  Any plugin can 
-create a PingImpl and publish it to the local blackboard.
+The Relay-based implementation of the "Ping".  This implementation
+is package private.
+<p>
+
+<dt>
+<b>PingAdderPlugin</b>
+<dd>
+An optional plugin that can be used to create pings at agent
+startup.  Multiple PingAdderPlugins can be used in the same
+agent to create complex message traffic patterns.  Each 
+PingAdderPlugin instance is parameterized to define the ping.
+<p> 
+An example is:<pre>
+  plugin = org.cougaar.core.mobility.ping.PingAdderPlugin(target=AgentX)
+</pre>
+which will send a ping every 2 seconds to AgentX.  See the
+javadocs for additional comma-separated parameters.
 <p>
 
 <dt>
@@ -34,10 +49,10 @@ create a PingImpl and publish it to the local blackboard.
 <dd>
 Required plugin for the ping iterations and timeouts to work.  It
 must be loaded into all agents that will create pings:<pre>
-  plugin = org.cougaar.core.mobility.ping.PingTimerPlugin(3000)
+  plugin = org.cougaar.core.mobility.ping.PingTimerPlugin(wakeMillis=3000)
 </pre>
-where the "3000" is the time in milliseconds between ping checks.
-The minimum allowed value is 500 milliseconds.
+where "wakeMillis" tells the plugin how often to check for ping
+timeouts.  The minimum allowed value is 500 milliseconds.
 <p>
 
 <dt>
@@ -51,57 +66,6 @@ existing pings, or add new pings.  The servlet is loaded with:
 A single plugin parameter can optionally be used to override
 the default "/ping" servlet path.
 <p>
-
-<dt>
-<b>PingAdderPlugin</b>
-<dd>
-An optional plugin that can be used to create pings at agent
-startup, which can be used in combination with the above "/ping"
-servlet.  <u>Multiple</u> PingAdderPlugins can be used in the same 
-agent to create complex message traffic patterns.  Each 
-PingAdderPlugin instance requires four plugin parameters:
-<dl>
-<dt><i>[+]startTime</i>
-<dd>The wait time after plugin creation to create the ping, 
-where:<br>
-a) 0 or negative indicates no wait<br>
-b) A system time in milliseconds, where a value less than the plugin 
-creation system time is turned into the current system time<br>
-c) "+time", meaning that many milliseconds after the plugin creation 
-time (e.g. +5000 for 5 seconds after startup)<br>
-<dt><i>timeoutMillis</i>
-<dd>The timeout limit for a ping, where:<br>
-a) 0 or negative means no time limit<br>
-b) A positive integer means milliseconds after each ping iteration 
-has started (e.g. 30000 for a maximum of 30 seconds per ping)<br>
-<dt><i>iterationLimit</i>
-<dd>The number of ping iterations, where:<br>
-a) 0 or negative for no limit<br>
-b) A positive integer for a specified number of iterations (e.g.
-10 for 10 iterations numbered 0 - 9).<br>
-<dt><i>target0 [, .. targetN]</i>
-<dd>
-At least one target agent must be specified, and it can't match the 
-local agent.  If multiple targets are specified, it acts as a Set.
-</dl>
-<p>
-<dl>
-Examples:
-<dt>
-<pre>
-  plugin = org.cougaar.core.mobility.ping.PingAdderPlugin(0, 0, 0, X)
-</pre>
-<dd>Create an infinite series of pings to agent X at startup, 
-with no timeout.
-<dt>
-<pre>
-  plugin = org.cougaar.core.mobility.ping.PingAdderPlugin(+20000, 30000, 5, X)
-</pre>
-<dd>Create a series of 5 pings to agent X at 20 seconds after 
-startup, and to wait at most 30 seconds for any ping to complete.
-</dl>
-<p>
-
 </dl>
 
 <p>
@@ -120,6 +84,20 @@ Here are some suggested tests:
 Create an endless stream of pings between agent "AgentA" on node 
 "NodeA" to agent "AgentB" on node "NodeB".  Examine the MTS metrics
 for message-counters and bandwidth consumption.
+</li><p>
+<li>
+Modify the PingAdderPlugin parameters to reduce the delay between
+pings from the default 2 seconds down to zero seconds:<pre>
+  delayMillis=0
+</pre>
+</li><p>
+<li>
+Enable the "eventMillis=5000" option in the PingAdderPlugin and
+enable cougaar events in the log4j configuration:<pre>
+  log4j.category.EVENT.org.cougaar.core.mobility.ping=DEBUG
+</pre>
+Watch the periodic cougaar events for ping round-trip-time
+statistics (min/max/mean/stddev).
 </li><p>
 <li>
 Run the above test again.  Use the "/move" servlet to move AgentA 

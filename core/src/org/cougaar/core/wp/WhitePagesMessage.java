@@ -25,7 +25,8 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Base class for white pages internal messages.
+ * A message between white pages caches and servers, or between
+ * servers.
  */
 public abstract class WhitePagesMessage
 extends Message {
@@ -33,5 +34,13 @@ extends Message {
       MessageAddress source,
       MessageAddress target) {
     super(source, target);
+    // validate
+    String s =
+      ((source == null) ? "null source" :
+       (target == null) ? "null target" :
+       null);
+    if (s != null) {
+      throw new IllegalArgumentException(s);
+    }
   }
 }

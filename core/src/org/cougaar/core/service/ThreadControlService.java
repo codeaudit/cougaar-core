@@ -33,6 +33,7 @@ public interface ThreadControlService extends Service
     void setQueueComparator(Comparator comparator);
     void setRightsSelector(RightsSelector selector);
     boolean setQualifier(UnaryPredicate predicate);
+    boolean setChildQualifier(UnaryPredicate predicate);
 
     // Status
     int runningThreadCount();

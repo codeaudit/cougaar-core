@@ -40,9 +40,8 @@ public class Regress extends TestSuite {
 
   public static Test suite() {
     TestSuite coreTests = new TestSuite();
-    coreTests.addTest(new TestSuite(org.cougaar.core.naming.SearchStringParserTest.class));
-    coreTests.addTest(new TestSuite(org.cougaar.core.naming.NamingDirContextTest.class));
-    coreTests.addTest(new TestSuite(org.cougaar.core.naming.GlobTest.class));
+    // add tests here!
+    //coreTests.addTest(new TestSuite(YourTestCase.class));
     return coreTests;
   }
 }

@@ -27,7 +27,8 @@ package org.cougaar.core.service.community;
 public interface CommunityChangeListener {
 
   /**
-   * Method invoked when a change occurs
+   * Method invoked when a change occurs.  Multiple changes in the community
+   * of interest may be associated with a single change event.
    **/
   void communityChanged(CommunityChangeEvent event);
 

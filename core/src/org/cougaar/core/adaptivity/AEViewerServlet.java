@@ -397,7 +397,9 @@ implements BlackboardClient
       out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
       out.print(getEncodedAgentName());
       out.print(getPath());
-      out.println("\">");
+      out.println(
+          "\"><input type=hidden name=\""+FRAME+
+          "\" value=\""+AE_FRAME+"\">\n");
       
       OperatingMode om = (OperatingMode) it.next();
 

@@ -21,30 +21,65 @@
 
 package org.cougaar.core.thread;
 
-import java.io.PrintStream;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.UnaryPredicate;
 
 public class RootControlPlugin extends ComponentPlugin
 {
+    private static final int MAX_THREADS=2;
+
     public RootControlPlugin() {
 	super();
     }
+
+
+    private static class ExampleChildQualifier implements UnaryPredicate {
+	private LoggingService lsvc;
+
+	ExampleChildQualifier(LoggingService lsvc) {
+	    this.lsvc = lsvc;
+	}
+
+	public boolean execute(Object x) {
+	    if (! (x instanceof Scheduler)) return false;
+
+	    Scheduler child = (Scheduler) x;
+	    Scheduler parent = child.getTreeNode().getParent().getScheduler();
+	    float count = child.runningThreadCount();
+	    float max = parent.maxRunningThreadCount();
+	    // Random test - don't let any one child use more than half
+	    // the slots
+	    if (count/max <= .5) {
+		return true;
+	    } else {
+		if (lsvc.isWarnEnabled()) 
+		    lsvc.warn("Attempted to use too many rights Child="+child);
+		return false;
+	    }
+	}
+    }
+
 
     public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
+	LoggingService lsvc = (LoggingService)
+	    sb.getService(this, LoggingService.class, null);
 	NodeControlService ncs = (NodeControlService)
 	    sb.getService(this, NodeControlService.class, null);
 	sb = ncs.getRootServiceBroker();
- 	RightsSelector selector = new PercentageLoadSelector(sb);
  	ThreadControlService tcs = (ThreadControlService)
  	    sb.getService(this, ThreadControlService.class, null);
- 	tcs.setRightsSelector(selector);
+//  	RightsSelector selector = new PercentageLoadSelector(sb);
+ 	//tcs.setRightsSelector(selector);
+ 	tcs.setMaxRunningThreadCount(MAX_THREADS);
+ 	tcs.setChildQualifier(new ExampleChildQualifier(lsvc));
+	
     }
 
     protected void setupSubscriptions() {
