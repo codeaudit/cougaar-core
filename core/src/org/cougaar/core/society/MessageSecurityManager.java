@@ -11,7 +11,6 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.mts.MessageTransport;
 
 public interface MessageSecurityManager {
   /** Returns a message which has been cryptologically secured.
@@ -29,11 +28,5 @@ public interface MessageSecurityManager {
    **/
   Message unsecureMessage(SecureMessage m);
 
-  /** set the MessageTransport instance to be used 
-   * if the MessageSecurityManager needs to negotiate connections.
-   * It will be called exactly once immediately after instantiation
-   * of the MSM instance.
-   **/
-   void setMessageTransport(MessageTransport mts);
 
 }

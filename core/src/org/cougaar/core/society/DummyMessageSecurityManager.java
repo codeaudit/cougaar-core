@@ -10,7 +10,6 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.mts.MessageTransport;
 
 
 import java.io.*;
@@ -40,9 +39,7 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
 	}
     }
 
-    public void setMessageTransport(MessageTransport mts) {}
-
-
+ 
     private static class DummySecureMessage 
 	extends Message implements SecureMessage 
     {

@@ -10,7 +10,6 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.mts.MessageTransport;
 
 import org.cougaar.util.ConfigFileFinder;
 
@@ -45,7 +44,6 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
   }
 
 
-    public void setMessageTransport(MessageTransport mts) {}
 
   private static class SignedSecureMessage extends Message implements SecureMessage {
     private SignedObject secret;
