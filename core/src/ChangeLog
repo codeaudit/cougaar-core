@@ -1,3 +1,20 @@
+2001-07-19  Todd Wright <twright@bbn.com>
+
+        * INIParser, ClusterINIParser, NodeINIParser
+        New ".ini" file parser that creates ComponentDescriptions, which
+        replaces the old ClusterINIParser and NodeINIParser.
+        The new format is "insertionPoint = classname(Vector of Strings)",
+        with backwards compatibility for "cluster = " and "plugin = ".
+
+        * Node
+        Modified to use the new INIParser and ComponentDescriptions for 
+        loading Components.  Currently only supports Clusters and children
+        of PluginManager.
+
+        * ExternalNodeController, AddClustersMessage
+        Removed AddClustersMessage for future replacement with 
+        ComponentMessage.
+
 2001-07-19  Michael Thome  <mthome@bbn.com>
 
 	* ServiceEvent, etc
