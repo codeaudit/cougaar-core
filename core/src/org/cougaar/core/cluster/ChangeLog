@@ -1,3 +1,36 @@
+2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Subscriber.java:
+	Add persistNow() method permitting a plugin to insure that
+	persistence has been performed prior to taking action. Used by the
+	DeletionPlugIn to archive information that is about to be deleted.
+
+	* MessageManagerImpl.java:
+	Disable the advanceEpoch method when the message manager is not
+	being used. This allows the method to be called without regard to
+	whether the message manager is actually in use.
+
+	* Distributor.java:
+	Add "lazy persistence" that creates persistence deltas at a low
+	rate or upon request. This persistence information is not
+	synchronized with blackboards in other agents and so may require
+	reconciliation after restarts occur. Correct operation of these
+	feature awaits the availability of restart information from the
+	message transport services.
+	A method has been added to perform persistence on demand. This
+	feature is accessed through the BlackboardService.
+	A method has been added to perform persistence and return the
+	bytes of the persisted state as part of an object suitable for
+	return from getState().
+
+	* ClusterImpl.java:
+	Initialize persistence with a lazyPersistence flag. The checked in
+	code contains a debugging kludge that is innocuous if not used.
+
+	* Blackboard.java:
+	Add getState() method to support dynamic components. the state
+	object now consistes only of a PersistenceObject.
+
 2001-05-17  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* Blackboard.java:

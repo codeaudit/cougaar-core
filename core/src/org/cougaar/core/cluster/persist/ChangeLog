@@ -1,3 +1,35 @@
+2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* org/cougaar/core/cluster/persist/RehydrationResult.java:
+	Used to pass back the MessageManager after rehydration in addition
+	to the old return result. The MessageManager is not managed by the
+	persistence module any more. See BasePersistence.
+
+	* org/cougaar/core/cluster/persist/PersistenceOutputStream.java:
+	Add accessor to get the bytes of the output stream. Used to
+	provide the object needed to implement getState().
+
+	* org/cougaar/core/cluster/persist/PersistenceObject.java:
+	A wrapper around a byte array of serialized persistence
+	information. Used to implement the component getState methods.
+
+	* org/cougaar/core/cluster/persist/PersistenceNotEnabledException.java:
+	An exception to throw when an operation requires persistence to
+	be enabled and it isn't.	
+
+	* org/cougaar/core/cluster/persist/Persistence.java:
+	Change interface to pass additional information in and out when
+	performing persistence. See BasePersistence for details.
+
+	* org/cougaar/core/cluster/persist/BasePersistence.java:
+	Move management of MessageManager out of this class. It is now
+	only a special object needing persistence (if present at all). Add
+	rehydration from a PersistenceObject object containing a byte
+	array of serialized persistence info. Intended for use with
+	dynamic agents to rehydrate an agent at a new location. Also, on
+	the other side, return said PersistenceObject when creating a
+	persistence delta, if requested.
+
 1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* ChangeLog -- created
