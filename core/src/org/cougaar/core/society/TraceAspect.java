@@ -1,5 +1,21 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
+/**
+ * This is a very simple aspect which is mostly for demonstration
+ * purposes.  It attaches aspect delegates to each interface, and each
+ * such delegate prints a message to System.err.  This provides a
+ * trivial trace of a message as it passes through the various stages
+ * of the message transport subsystem.  */
 public class TraceAspect 
     implements MessageTransportAspect
 {

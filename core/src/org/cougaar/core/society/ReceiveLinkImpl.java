@@ -1,6 +1,20 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
-// Gives a hook to hang per Client Receive message processing
+/**
+ * The only current implementation of ReceiveLink.  The implementation
+ * of <strong>deliverMessage</strong> invokes
+ * <strong>receiveMessage</strong> on the corresponding
+ * MessageTransportClient.  */
 public class ReceiveLinkImpl implements ReceiveLink
 {
     MessageTransportClient client;

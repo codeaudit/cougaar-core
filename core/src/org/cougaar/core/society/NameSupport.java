@@ -1,9 +1,22 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
 import org.cougaar.core.society.rmi.RMINameServer;
 
 import java.rmi.RemoteException;
 
+/**
+ * This is utility class which hides the grimy details of dealing with
+ * NameServers from the rest of the message transport subsystem.  */
 public class NameSupport
 {
     public static final boolean DEBUG = 

@@ -11,6 +11,16 @@
 package org.cougaar.core.society;
 
 
+/**
+ * The parent class of all MessageTransports.  Instantiable subclasses
+ * are required to do two things: they must be able to say whether or
+ * not they can deal with any particular addresss (addressKnown), and
+ * they must be able to supply a DestinationLink instance for any
+ * address they can deal with (getDestinationLin).  They will also be
+ * given the opportunity to "register" clients, if they have any
+ * interest in doing so (for instance, an RMI transport might use this
+ * as an opportunity to publish an MTImpl for the client on a
+ * nameserver). */
 public abstract class MessageTransport 
 {
     protected ReceiveQueue recvQ;

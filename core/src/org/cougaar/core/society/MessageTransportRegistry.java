@@ -1,9 +1,23 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+/**
+ * The MessageTransportRegistry singleton is a utility instance that
+ * helps certain pieces of the message transport subsystem to find one
+ * another. */
 class MessageTransportRegistry
 {
     private String name;

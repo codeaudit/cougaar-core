@@ -10,7 +10,11 @@
 
 package org.cougaar.core.society;
 
-
+/**
+ * Currently the only implementation of MessageTransportServer.  It
+ * does almost nothing by itself - its work is accomplished by
+ * redirecting calls to the MessageTransportRegistry and the
+ * SendQueue.  */
 public class MessageTransportServerProxy implements MessageTransportServer
 {
     private MessageTransportRegistry registry;
@@ -23,6 +27,8 @@ public class MessageTransportServerProxy implements MessageTransportServer
 	this.registry = registry;
     }
 
+    /**
+     * Any non-null target passes this check. */
     private boolean checkMessage(Message message) {
 	MessageAddress target = message.getTarget();
 	// message is ok as long as the target is not empty or null
@@ -32,6 +38,8 @@ public class MessageTransportServerProxy implements MessageTransportServer
 
 
 
+    /**
+     * Redirects the sendMessage to the SendQueue. */
     public void sendMessage(Message m) {
 	if (checkMessage(m)) {
 	    sendQ.sendMessage(m);
@@ -42,6 +50,8 @@ public class MessageTransportServerProxy implements MessageTransportServer
 	}
     }
 
+    /**
+     * Redirects the request to the MessageTransportRegistry. */
     public void registerClient(MessageTransportClient client) {
 	registry.registerClient(client);
     }
@@ -55,10 +65,14 @@ public class MessageTransportServerProxy implements MessageTransportServer
 	    System.err.println("Call to addMessageTransportWatcher but no WatcherManager exists");
     }
    
+    /**
+     * Redirects the request to the MessageTransportRegistry. */
     public String getIdentifier() {
 	return registry.getIdentifier();
     }
 
+    /**
+     * Redirects the request to the MessageTransportRegistry. */
     public boolean addressKnown(MessageAddress a) {
 	return registry.addressKnown(a);
     }

@@ -1,7 +1,22 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
 import org.cougaar.util.CircularQueue;
 
+/**
+ * An abstract class which manages a circular queue of messages, and
+ * runs its own thread to pop messages off that queue.  The method
+ * <strong>dispatch</strong>, provided by instantiable subclasses, is
+ * invoked on each message as it's popped off. */
 abstract class MessageQueue extends Thread
 {
     private CircularQueue queue;
@@ -32,6 +47,8 @@ abstract class MessageQueue extends Thread
 	}
     }
 
+    /** 
+     * Enqueue a message. */
     void add(Message m) {
 	synchronized (queue) {
 	    queue.add(m);
@@ -40,7 +57,8 @@ abstract class MessageQueue extends Thread
     }
 
 
-
+    /**
+     * Process a dequeued message. */
     abstract void dispatch(Message m);
 
 }

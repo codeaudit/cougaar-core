@@ -1,3 +1,13 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
 import java.util.ArrayList;
@@ -7,6 +17,17 @@ import java.lang.reflect.Constructor;
 import org.cougaar.core.society.rmi.SimpleRMIMessageTransport;
 import org.cougaar.core.society.rmi.RMIMessageTransport;
 
+/**
+ * A factory which instantiates all MessageTransports.  It will always
+ * make at leats two transports: one for local message
+ * (LoopbackMessageTransport) and one for remote messages (either an
+ * RMIMessageTransport or a SimpleRMIMessageTransport, depending on
+ * the value of the property org.cougaar.core.society.UseSimpleRMI.
+ * It may also make other transports, one per class, as listed in the
+ * property org.cougaar.message.transportClasses.
+ *
+ * If the property org.cougaar.message.transportClass is set, the
+ * transport of that class will always be preferred over any others.  */
 public final class MessageTransportFactory 
 {
     private ArrayList transports;

@@ -1,3 +1,13 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society.rmi;
 
 import org.cougaar.core.society.DestinationLink;
@@ -11,6 +21,16 @@ import org.cougaar.core.society.NameSupport;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
+/**
+ * This is a minimal rmi message transport which does nothing other
+ * than rmi-specific functionality.  The hope is that we can pull out
+ * a number of other aspects from the big RMIMessageTransport, leaving
+ * this simple and maintainable body of code to deal with the actual
+ * rmi functionality per se.  
+ *
+ * The cost function of the DestinationLink inner subclass is
+ * currently hardwired to an arbitrary value of 1000.  This should be
+ * made smarter eventually. */
 public class SimpleRMIMessageTransport 
     extends MessageTransport
 {
@@ -109,6 +129,11 @@ public class SimpleRMIMessageTransport
 
 
 
+    /**
+     * The DestinationLink class for this transport.  Forwarding a
+     * message with this link means looking up the MT proxy for a
+     * remote MTImpl, and calling rerouteMessage on it.  The cost is
+     * currently hardwired at an arbitrary value of 1000. */
     class Link implements DestinationLink {
 	
 	private MessageAddress target;

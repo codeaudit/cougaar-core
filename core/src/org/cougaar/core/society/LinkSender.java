@@ -1,3 +1,13 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.society;
 
 import java.util.ArrayList;
@@ -5,6 +15,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A LinkSender is essentially just a thread whose job is to pop
+ * messages off a DestinationQueue and forward them on to the
+ * "cheapest" transport.  There's one LinkSender per DestinationQueue,
+ * and they're created by a LinkSenderFactory.  */
 public class LinkSender implements Runnable
 {
     private MessageAddress destination;
@@ -34,6 +49,10 @@ public class LinkSender implements Runnable
     }
 
 
+    /**
+     * Here we ask each transport for DestinationLink.  The links will
+     * be used later to find the cheapest transport for any given
+     * message. */
     private void getDestinationLinks() 
     {
 	Iterator itr = transportFactory.getTransports().iterator();
@@ -46,6 +65,10 @@ public class LinkSender implements Runnable
 	}
     }
 
+    /**
+     *  Asks each DestinationLink for the cost of sending a given
+     *  message via the associated transport.  The DestinationLink
+     *  with the lowest cost is returned. */
     protected DestinationLink findCheapestLink(Message message) {
 	int min_cost = -1;
 	DestinationLink cheapest = null;
@@ -61,6 +84,10 @@ public class LinkSender implements Runnable
 	return cheapest;
     }
 
+    /**
+     * The thread body pops messages off the corresponding
+     * DestinationQueue, finds the cheapest DestinationLink for that
+     * message, and forwards the message to that link.  */
     public void run() {
 	Message message = null;
 	while (true) {
