@@ -40,12 +40,8 @@ public class PercentageLatencyPolicy
 	int count;
 
 	double distance(double grandTotal) {
-	    double d = (targetPercentage-totalTime/grandTotal)/targetPercentage;
-// 	    System.out.println(child+ 
-// 			       " total=" +totalTime+
-// 			       " grandTotal=" +grandTotal+
-// 			       " targetPercentage=" +targetPercentage);
-	    return d;
+	    return
+		(targetPercentage-totalTime/grandTotal)/targetPercentage;
 	}
 
     }
@@ -133,7 +129,8 @@ public class PercentageLatencyPolicy
     private synchronized UsageRecord getUsageRecord(TimeSliceConsumer child) {
 	UsageRecord record = (UsageRecord) records.get(child);
 	if (record == null) {
-	    // System.out.println("Creating new UsageRecord for " +child);
+	    if (Scheduler.DebugThreads)
+		System.out.println("Creating new UsageRecord for " +child);
 	    record = new UsageRecord();
 	    records.put(child, record);
 	    record.child = child;
@@ -163,12 +160,19 @@ public class PercentageLatencyPolicy
 	
 	TimeSlice slice = null;
 
+	if (Scheduler.DebugThreads)
+	    System.out.println(this+ " getting slice for " +consumer);
+
 	if (isRoot())
 	    slice = getLocalSlice(this);
 	else
 	    slice = treeNode.getParentPolicy().getSlice(this);
 
-	if (slice == null) return null;
+	if (slice == null) {
+	    if(Scheduler.DebugThreads)
+		System.out.println("No slice available");
+	    return null;
+	}
 
 	SubSlice piece = new SubSlice(slice, DICE_SIZE);
 	piece.in_use = true;
@@ -178,18 +182,23 @@ public class PercentageLatencyPolicy
 	while (itr.hasNext()) {
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
 	    if (kid == consumer) {
-		// System.out.println("Giving slice to preferred consumer " + kid);
+		if (Scheduler.DebugThreads)
+		    System.out.println("Giving slice to preferred consumer " +
+				       kid);
 		piece.consumer = consumer;
 		return piece;
 	    } else if (kid.offerSlice(piece)) {
-		// System.out.println("Giving slice to " + kid);
+		if (Scheduler.DebugThreads)
+		    System.out.println("Giving slice to " + kid);
 		piece.consumer = kid;
 		return null;
 	    } else {
-		// System.out.println("Not giving slice to " + kid);
+		if (Scheduler.DebugThreads)
+		    System.out.println("Not giving slice to " + kid);
 	    }
 	}
-	// No one wants it
+
+	System.err.println("getSlice() found no takers");
 	return null;
     }
 
@@ -208,20 +217,24 @@ public class PercentageLatencyPolicy
 	UsageRecord record = getUsageRecord(piece.consumer);
 
 
-	// System.out.println("Releasing slice from " +consumer+ " (" +piece.consumer+ ")");
+	if (Scheduler.DebugThreads)
+	    System.out.println("Releasing slice from " +consumer+
+			       " (" +piece.consumer+ ")");
 
 
 	record.totalTime += elapsed;
 	++record.count;
 	totalTime += elapsed;
 
-	if (whole.isExpired()) {
+	// If the slice is now expired, or if no one wants it right
+	// now, give it back.  This must always operate on the full
+	// slice, as given by our parent, not on the locally created
+	// SubSlice.
+	if (whole.isExpired() || !offerSlice(whole)) {
 	    if (isRoot())
-		releaseLocalSlice(this, slice);
+		releaseLocalSlice(this, whole);
 	    else
 		treeNode.getParentPolicy().releaseSlice(this, whole);
-	} else {
-	    offerSlice(whole);
 	}
     }
 
@@ -235,12 +248,14 @@ public class PercentageLatencyPolicy
 	while (itr.hasNext()) {	
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
 	    if (kid.offerSlice(piece)) {
-		// System.out.println("Slice accepted by " + kid);
+		if (Scheduler.DebugThreads)
+		    System.out.println("Slice accepted by " + kid);
 		piece.consumer = kid;
 		piece.start = System.currentTimeMillis();
 		return true;
 	    } else {
-		// System.out.println("Slice refused by " + kid);
+		if (Scheduler.DebugThreads)
+		    System.out.println("Slice refused by " + kid);
 	    }
 	}
 	return false;

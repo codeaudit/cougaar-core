@@ -34,6 +34,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     int outstandingChildSliceCount;
     TimeSlice[] timeSlices;
     PolicyTreeNode treeNode;
+    String printString;
 
     DefaultTimeSlicePolicy() {
 	outstandingChildSliceCount = 0;
@@ -43,7 +44,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
 
     public String toString() {
-	return getName();
+	return printString;
     }
 
     public String getName() {
@@ -52,6 +53,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     public void setTreeNode(PolicyTreeNode treeNode) {
 	this.treeNode = treeNode;
+	printString = "<" + getClass().getName() + " " + getName() + ">";
 	PolicyTreeNode parent = treeNode.getParent();
 
 	if (parent == null) {
@@ -88,8 +90,10 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     public synchronized TimeSlice getSlice(TimeSliceConsumer consumer) {
 	TimeSlicePolicy parent = treeNode.getParentPolicy();
 
+
 	if (parent != null) {
-	    return parent.getSlice(this);
+	    TimeSlice result =  parent.getSlice(this);
+	    return result;
 	} else {
 	    return getLocalSlice(consumer);
 	}
@@ -129,6 +133,9 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 				   " made a slice for " +consumer+
 				   "; " +outstandingChildSliceCount+
 				   " now outstanding");
+	} else {
+	    if (Scheduler.DebugThreads)
+		System.out.println("use_count < running count but no slice available!");
 	}
 	
 	return slice;
@@ -194,9 +201,20 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     public synchronized boolean offerSlice(TimeSlice slice) {
 	int lastIndex = currentIndex;
 	while (true) {
-	    if (getNextConsumer().offerSlice(slice)) return true;
+	    TimeSliceConsumer consumer = getNextConsumer();
+	    if (consumer.offerSlice(slice)) {
+		if (Scheduler.DebugThreads)
+		    System.out.println(consumer + " accepted offer");
+		return true;
+	    } else {
+		if (Scheduler.DebugThreads)
+		    System.out.println(consumer + " refused offer");
+	    }
 	    if (lastIndex == currentIndex) break;
 	}
+
+	if (Scheduler.DebugThreads)
+	    System.out.println("Marking " +slice+ " as available");
 
 	slice.in_use = false;
 	return false;

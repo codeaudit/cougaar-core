@@ -184,6 +184,7 @@ final class TimeSliceScheduler extends Scheduler
 	    slice = getSlice();
 	    thread.slice(slice);
 	}
+
 	if (slice != null) {
 	    thread.thread_start();
 	} else {

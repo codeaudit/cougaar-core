@@ -134,6 +134,7 @@ final class ControllableThread extends ReusableThread
     protected void reclaim() {
 	// thread is done
 	pool.scheduler().threadReclaimed(this);
+	setName( "Reclaimed " + getName());
 	super.reclaim();
     }
 
