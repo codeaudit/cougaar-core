@@ -39,6 +39,12 @@ public abstract class Timer implements Runnable {
   // only modified in the run loop
   private ArrayList ppas = new ArrayList();
 
+  /** Pending Alarms.  
+   * alarms which need to be rung, but we haven't gotten around to yet.
+   **/
+  // only modified in the run loop thread
+  private ArrayList pas = new ArrayList();
+
   protected static boolean isVisible = false;
   protected static boolean isLoud = false;
   static {
@@ -134,8 +140,9 @@ public abstract class Timer implements Runnable {
   }
 
   public void run() {
-    synchronized (sem) {
-      while (true) {
+    while (true) {
+      long time;
+      synchronized (sem) {
         Alarm top = peekAlarm();
           
         // wait block
@@ -163,26 +170,40 @@ public abstract class Timer implements Runnable {
 
         // fire some alarms
         top = peekAlarm();
-        long time = currentTimeMillis();
+        time = currentTimeMillis();
         while ( top != null && 
                 time >= top.getExpirationTime() ) {
+          pas.add(top);
+          top = nextAlarm();
+        }
+
+      } // sync(sem)
+      
+      // now ring any outstanding alarms: outside the sync
+      // just in case an alarm ringer tries setting another alarm!
+      {
+        int l = pas.size();
+        for (int i = 0; i<l; i++) {
+          Alarm top = (Alarm) pas.get(i);
           try {
             ring(top);
-          } catch (Exception e) {
+          } catch (Throwable e) {
             System.err.println("Alarm "+top+" generated Exception: "+e);
             e.printStackTrace();
             // cancel error generating alarms to be certain.
             top.cancel();
           }
-
+          
           // handle periodic alarms
           if (top instanceof PeriodicAlarm) {
             ppas.add(top);      // consider adding it back later
           }
-
-          top = nextAlarm();
         }
+        pas.clear();
+      }
 
+      // back in sync, reset any periodic alarms
+      synchronized (sem) {
         // reset periodic alarms
         int l = ppas.size();
         for (int i=0; i<l; i++) {
@@ -193,8 +214,8 @@ public abstract class Timer implements Runnable {
           }
         }
         ppas.clear();
-      } // infinite loop
-    } // sync(sem)
+      } // sync(sem)
+    } // infinite loop
   }
 
   private void ring(Alarm alarm) {
