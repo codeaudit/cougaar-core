@@ -82,9 +82,6 @@ and logging control services provide a front-end to popular log4j third-party
 logging package.</li>
 
 <li>
-readiness plugin bullet here</li>
-
-<li>
 Archiving architecture which allows old tasks to be deleted while a Cougaar
 society is running. Views can still be obtained based on data that existed
 in the past, but has been deleted from the running society.&nbsp; For more
@@ -456,11 +453,13 @@ includes core.jar.</li>
 <li>
 The Inventory Manager does not handle blanket failed allocations very well.
 If a universal allocator at a leaf unit fails all refills to an InventoryManager
-immediately below that supply point, there are failed refills, but the level below
-that there is no shortfall and no failed refills.   This is related to a bug where confidence levels 0.5 or below should not be counted as success and aggregating failed allocations back to their expansion is not working properly.  This should be fixed in a future release. Until this is fixed large shortfalls of supply do not reflect very well in the result.
-</li>
-
-
+immediately below that supply point, there are failed refills, but the
+level below that there is no shortfall and no failed refills. This is related
+to a bug where confidence levels 0.5 or below should not be counted as
+success and aggregating failed allocations back to their expansion is not
+working properly. This should be fixed in a future release. Until this
+is fixed large shortfalls of supply do not reflect very well in the result.</li>
+</ul>
 </td>
 </tr>
 </table>
