@@ -116,6 +116,8 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
         put(WAIT_KEY, args[x++] );
       else if (check.equals("-s"))
         put(SIGNED_PLUGIN_JARS, args[x++] );
+      else if (check.equals("-X"))
+        put(EXPERIMENT_ID_KEY, args[x++] );
       else if( check.indexOf("-") == 0 ){
         System.out.println("Bad argument encountered in parsing command line.");
         printHelp();

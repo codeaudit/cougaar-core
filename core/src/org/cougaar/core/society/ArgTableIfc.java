@@ -40,7 +40,7 @@ public interface ArgTableIfc {
   /** Publish the -c keys so we do not hard code all over the place. **/
   String CLEAR_KEY = "clear";
   /** Publish the -d keys so we do not hard code all over the place. **/
-  String DBNAME_KEY = "dnname";
+  String DBNAME_KEY = "dbname";
   /** Publish the -f keys so we do not hard code all over the place. **/
   String FILE_KEY = "file";
   /** Publish the -n keys so we do not hard code all over the place. **/
@@ -54,9 +54,9 @@ public interface ArgTableIfc {
   String TEST_KEY = "test";
   /** Publish the -w keys so we do not hard code all over the place. **/
   String WAIT_KEY = "wait";
-
-
   /** Publish the -s keys so we do not hard code all over the place. **/
   String SIGNED_PLUGIN_JARS = "plugin_jars";
+  /** Publish the -X keys so we do not hard code all over the place. **/
+  String EXPERIMENT_ID_KEY = "experiment_id";
 }
                         
