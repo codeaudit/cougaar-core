@@ -80,7 +80,7 @@ public interface AspectType {
   static final int POD = 13;         
 
   /** The time at which a task should arrive at the POD **/
-  static final int POD_DATE = 15;
+  static final int POD_DATE = 14;
 
   public static final String[] ASPECT_STRINGS = {
     "START_TIME",
