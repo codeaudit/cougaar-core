@@ -93,6 +93,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void localAdd(Relay.Source rs) {
     Set targets = rs.getTargets();
+    if (targets == null) return;
     if (targets.isEmpty()) return; // No targets
     Object content = rs.getContent();
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
@@ -111,6 +112,7 @@ public class RelayLP extends LogPlanLogicProvider
    **/
   private void localChange(Relay.Source rs, Collection changes) {
     Set targets = rs.getTargets();
+    if (targets == null) return; // Not really a source, apparently
     if (targets.isEmpty()) return; // No targets
 
     // FIXME check for targets-change-report:
@@ -131,6 +133,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void localRemove(Relay.Source rs) {
     Set targets = rs.getTargets();
+    if (targets == null) return;
     if (targets.isEmpty()) return; // No targets
     UID uid =  rs.getUID();
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
@@ -338,6 +341,7 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void resend(Relay.Source rs, MessageAddress t) {
     Set targets = rs.getTargets();
+    if (targets == null) return; // Not really a source
     if (targets.isEmpty()) return;
     Object content = rs.getContent();
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
