@@ -3,6 +3,8 @@
 	* PersistenceServiceComponent.java:
 	Bug #3438 -- Persist exception fails to clearMarks()
 	Moved clearMarks call to finally clause of try block.
+	Undo the above. The marks should remain. This requires a little
+	more thought and probably the checkMarks should be removed.
 
 2003-09-04  Ray Tomlinson  <RTomlinson@bbn.com>
 

@@ -1227,6 +1227,7 @@ public class PersistenceServiceComponent
 	      }
 	    }
 	  } // End of non-dummy persistence
+	  clearMarks(associationsToPersist.iterator());
 	  commitTransaction();
 	  logger.printDot("P");
 	  // Cleanup old deltas and archived snapshots. N.B. The
@@ -1249,8 +1250,6 @@ public class PersistenceServiceComponent
 	  }
 	  logger.printDot("X");
 	  throw e;
-	} finally {
-	  clearMarks(associationsToPersist.iterator());
         }
 	objectsThatMightGoAway.clear();
       }
