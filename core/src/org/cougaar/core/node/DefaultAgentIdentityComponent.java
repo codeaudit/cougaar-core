@@ -56,7 +56,11 @@ implements Component
   }
 
   public void setNodeControlService(NodeControlService ncs) {
-    this.sb = ncs.getRootServiceBroker();
+    if (ncs == null) {
+      // Revocation
+    } else {
+      this.sb = ncs.getRootServiceBroker();
+    }
   }
 
   public void setParameter(Object o) {
