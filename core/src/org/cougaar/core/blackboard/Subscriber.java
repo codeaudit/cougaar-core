@@ -306,6 +306,11 @@ public class Subscriber {
   /**
    * Subscribe to a collection service with isMember, default inner
    * collection and supporting incremental change queries.
+   * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
+   * and tends to create as many problems as it solves.  When in pedantic mode,
+   * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public Subscription subscribe(UnaryPredicate isMember) {
     return subscribe(isMember, null, true);
@@ -314,6 +319,11 @@ public class Subscriber {
   /**
    * Subscribe to a collection service with isMember, default inner
    * collection and specifying if you want incremental change query support.
+   * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
+   * and tends to create as many problems as it solves.  When in pedantic mode,
+   * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
     return subscribe(isMember, null, isIncremental);
@@ -322,6 +332,11 @@ public class Subscriber {
   /**
    * Subscribe to a collection service with isMember, specifying inner
    * collection and supporting incremental change queries.
+   * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
+   * and tends to create as many problems as it solves.  When in pedantic mode,
+   * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public Subscription subscribe(UnaryPredicate isMember, Collection realCollection){
     return subscribe(isMember, realCollection, true);
@@ -338,6 +353,11 @@ public class Subscriber {
    * lists.
    * @return The resulting Subscription
    * @see IncrementalSubscription
+   * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
+   * and tends to create as many problems as it solves.  When in pedantic mode,
+   * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental){
     Subscription sn;
@@ -382,8 +402,8 @@ public class Subscriber {
   final void checkTransactionOK(String methodname, Object arg) {
     if (this instanceof Blackboard) return;               // No check for Blackboard
 
-    if (arg instanceof Collection) {
-      logger.warn("Suspicious "+methodname+" of Collection in "+theClient, new Throwable());  // cbug 3674
+    if (Blackboard.PEDANTIC && arg instanceof Collection) {
+      logger.warn("PEDANTIC: A Collection published by "+theClient, new Throwable());
     }
 
     if (!isMyTransaction()) {
@@ -553,6 +573,10 @@ public class Subscriber {
   
   /** Add an object to the Plan.
    * Behavior is not defined if the object was already a member of the plan.
+   * @note Although strictly allowed, it takes special care to properly publish a
+   * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
 
   public final void publishAdd(Object o) {
@@ -578,6 +602,10 @@ public class Subscriber {
   
   /** Remove an object from the Plan.
    * Behavior is not defined if the object was not already a member of the plan.
+   * @note Although strictly allowed, it takes special care to properly publish a
+   * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public final void publishRemove(Object o) {
     checkTransactionOK("remove", o);
@@ -604,6 +632,10 @@ public class Subscriber {
   }
 
   /** Convenience function for publishChange(o, null).
+   * @note Although strictly allowed, it takes special care to properly publish a
+   * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public final void publishChange(Object o) {
     publishChange(o, null);
@@ -619,6 +651,10 @@ public class Subscriber {
    * types of changes are tracked).  Any additional changes are
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
+   * @note Although strictly allowed, it takes special care to properly publish a
+   * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
    **/
   public final void publishChange(Object o, Collection changes) {
     checkTransactionOK("change", o);    

@@ -57,6 +57,7 @@ import org.cougaar.core.service.community.CommunityChangeEvent;
 import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -96,6 +97,15 @@ public class Blackboard extends Subscriber
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
     System.getProperty("org.cougaar.core.agent.enablePublishException", "false").equals("true");
+
+  /** 
+   * @property org.cougaar.core.blackboard.pedantic When true (the default) enables a variety
+   * of extra checks for suspicious blackboard activity.  None of these checks are especially
+   * expensive, so it is generally recommended that pedantic be left enabled.
+   *
+   */
+  public static final boolean PEDANTIC = 
+    PropertyParser.getBoolean("org.cougaar.core.blackboard.pedantic", true);
 
 
   /** the queue of messages to send **/

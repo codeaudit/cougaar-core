@@ -104,8 +104,15 @@ public abstract class Subscription {
   /** The predicate that represents this subscription **/
   protected final UnaryPredicate predicate;
 
+  /**
+   * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
+   * and tends to create as many problems as it solves.  When in pedantic mode,
+   * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
+   * such warnings if you are sure you want to do this.
+   * @see Blackboard#PEDANTIC
+   */
   public Subscription(UnaryPredicate p) {
-    if (p instanceof org.cougaar.util.DynamicUnaryPredicate) { // cbug 3674
+    if (Blackboard.PEDANTIC && p instanceof org.cougaar.util.DynamicUnaryPredicate) {
       _logger.warn("Performance hit: use of DynamicUnaryPredicate "+p, new Throwable()); 
     }
     if (p == null) throw new IllegalArgumentException("Predicate must be non-null");
