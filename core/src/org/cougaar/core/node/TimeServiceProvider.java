@@ -119,7 +119,7 @@ class TimeServiceProvider
     /** clear out any saved state, e.g. remove outstanding alarms **/
     private void clear() {
       synchronized (alarms) {
-        for (Iterator it = alarms.keySet().iterator(); it.hasNext(); ) {
+        for (Iterator it = alarms.values().iterator(); it.hasNext(); ) {
           Alarm w = (Alarm) it.next();
           // should the Alarms themselves be cancelled?  I'm guessing not
           getTimer().cancelAlarm(w);
