@@ -23,6 +23,7 @@ package org.cougaar.core.adaptivity;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Collection;
 import java.util.Set;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.component.Component;
@@ -156,8 +157,11 @@ public class OperatingModeServiceProvider
    * Standard setupSubscriptions subscribes to all OperatingModes.
    **/
   public void setupSubscriptions() {
-    operatingModes = (IncrementalSubscription)
-      getBlackboardService().subscribe(operatingModePredicate);
+    synchronized (omSet) {
+      operatingModes = (IncrementalSubscription)
+        getBlackboardService().subscribe(operatingModePredicate);
+      omSet.addAll(operatingModes);
+    }
   }
 
   /**

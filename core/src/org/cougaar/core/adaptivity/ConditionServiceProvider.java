@@ -76,11 +76,15 @@ public class ConditionServiceProvider
    **/
   private class ConditionServiceImpl implements ConditionService {
     public Condition getConditionByName(String knobName) {
-      return smSet.getCondition(knobName);
+      synchronized (smSet) {
+        return smSet.getCondition(knobName);
+      }
     }
 
     public Set getAllConditionNames() {
-      return new ReadOnlySet(smSet.keySet());
+      synchronized (smSet) {
+        return new ReadOnlySet(smSet.keySet());
+      }
     }
 
     public void addListener(Listener l) {
@@ -129,8 +133,11 @@ public class ConditionServiceProvider
    * Standard setupSubscriptions subscribes to all Conditions.
    **/
   public void setupSubscriptions() {
-    conditions = (IncrementalSubscription)
-      getBlackboardService().subscribe(ConditionPredicate, smSet);
+    synchronized (smSet) {
+      conditions = (IncrementalSubscription)
+        getBlackboardService().subscribe(ConditionPredicate);
+      smSet.addAll(conditions);
+    }
   }
 
   /**
@@ -139,7 +146,13 @@ public class ConditionServiceProvider
    * where it is referenced directly by the service API.
    **/
   public void execute() {
-    if (conditions.hasChanged()) fireListeners();
+    if (conditions.hasChanged()) {
+      synchronized (smSet) {
+        smSet.addAll(conditions.getAddedCollection());
+        smSet.removeAll(conditions.getRemovedCollection());
+      }
+      fireListeners();
+    }
   }
 
   private void fireListeners() {
