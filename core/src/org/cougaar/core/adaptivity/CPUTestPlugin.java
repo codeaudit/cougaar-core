@@ -42,7 +42,30 @@ public class CPUTestPlugin extends ServiceUserPlugin {
   private ConditionService conditionService;
 
   private static final Double[] cpuValues = {
+    new Double(0.0),
+    new Double(0.1),
+    new Double(0.2),
+    new Double(0.3),
     new Double(0.4),
+    new Double(0.5),
+    new Double(0.6),
+    new Double(0.7),
+    new Double(0.8),
+    new Double(0.9),
+    new Double(0.8),
+    new Double(0.7),
+    new Double(0.6),
+    new Double(0.7),
+    new Double(0.8),
+    new Double(0.9),
+    new Double(0.8),
+    new Double(0.7),
+    new Double(0.6),
+    new Double(0.5),
+    new Double(0.4),
+    new Double(0.3),
+    new Double(0.2),
+    new Double(0.1),
   };
 
   private int cpuStep = 0;
@@ -107,6 +130,6 @@ public class CPUTestPlugin extends ServiceUserPlugin {
       cpuStep++;
       if (cpuStep == cpuValues.length) cpuStep = 0;
     }
-    startTimer(60000);
+    startTimer(5000);
   }
 }
