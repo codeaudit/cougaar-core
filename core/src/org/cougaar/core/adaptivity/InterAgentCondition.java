@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.relay.Relay;
 
 /**
@@ -35,7 +36,7 @@ import org.cougaar.core.relay.Relay;
  **/
 public class InterAgentCondition
   extends OMCBase
-  implements Relay.Target, Condition
+  implements Relay.Target, Condition, UniqueObject
 {
   private UID uid;
   private MessageAddress source;

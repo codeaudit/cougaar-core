@@ -89,7 +89,10 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
                                       CPU_VALUES, cpuValues[0]);
     cpu.setTarget(new ClusterIdentifier("Provider"));
     getBlackboardService().publishAdd(cpu);
-    if (haveServices()) setCPUCondition();
+    if (haveServices()) {
+      uidService.registerUniqueObject(cpu);
+      setCPUCondition();
+    }
   }
 
   private boolean haveServices() {

@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
 
 /**
  * A remotely-controlled Condition. Allows an adaptivity engine in one
@@ -36,7 +37,7 @@ import org.cougaar.core.util.UID;
  **/
 public class InterAgentOperatingMode
   extends OperatingModeImpl
-  implements Relay.Source
+  implements Relay.Source, UniqueObject
 {
   // FIXME this shouldn't be transient!
   private transient Set targets = Collections.EMPTY_SET;
