@@ -93,7 +93,8 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
       ldmf.cloneInstance(assetT) :
       assetL;  
 
-    boolean updateRelationships = (related(assetT) && related(assignee));
+    boolean updateRelationships =
+      aa.getSchedule() != null && related(assetT) && related(assignee);
 
     //Only munge relationships pertinent to the transfer - requires that 
     //both receiving and transferring assets have relationship schedules

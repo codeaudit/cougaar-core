@@ -75,10 +75,21 @@ public class AssetTransferLP
       AssetAssignment assetassign;
     
       // create an AssetAssignment task
+      boolean sendRelationships = o.isAdd();
+      if (!sendRelationships && changes != null) {
+        for (Iterator i = changes.iterator(); i.hasNext(); ) {
+          ChangeReport changeReport = (ChangeReport) i.next();
+          if (changeReport instanceof RelationshipSchedule.RelationshipScheduleChangeReport) {
+            sendRelationships = true;
+            break;
+          }
+        }
+      }
       assetassign =
         createAssetAssignment(at, 
                               (o.isChange()) ? 
-                              AssetAssignment.UPDATE : AssetAssignment.NEW);
+                              AssetAssignment.UPDATE : AssetAssignment.NEW,
+                              sendRelationships);
       if (assetassign != null) {
         // Give the AssetAssignment to the logplan for transmission
         logplan.sendDirective(assetassign);
@@ -110,7 +121,7 @@ public class AssetTransferLP
     while (enum.hasMoreElements()) {
       AssetTransfer at = (AssetTransfer) enum.nextElement();
       System.out.println("Resending " + at);
-      logplan.sendDirective(createAssetAssignment(at, AssetAssignment.REPEAT));
+      logplan.sendDirective(createAssetAssignment(at, AssetAssignment.REPEAT, true));
     }
     pred = new UnaryPredicate() {
       public boolean execute(Object o) {
@@ -180,7 +191,9 @@ public class AssetTransferLP
     return (a instanceof HasRelationships); 
   }
 
-  private AssetAssignment createAssetAssignment(AssetTransfer at, byte kind) {
+  private AssetAssignment createAssetAssignment(AssetTransfer at, byte kind,
+                                                boolean sendRelationships)
+  {
     NewAssetAssignment naa = ldmf.newAssetAssignment();
 
     /* copy the asset so we don't share roleschedule across
@@ -197,7 +210,7 @@ public class AssetTransferLP
 
     naa.setKind(kind);
 
-    Schedule s;
+    Schedule s = null;          // Null if relationships not being sent
 
     Asset asset = naa.getAsset();
     Asset assignee = naa.getAssignee();
@@ -205,10 +218,11 @@ public class AssetTransferLP
     // Only fuss with relationship schedules if both Asset & Assignee implement
     // HasRelationships
     if (related(asset) & related(assignee)) {
-      s = makeAARelationshipSchedule(naa, at);
-
-      if (!updateLocalAssets(at, kind)) {
-        return null;
+      if (sendRelationships) {
+        s = makeAARelationshipSchedule(naa, at);
+        if (!updateLocalAssets(at, kind)) {
+          return null;
+        }
       }
     } else {
       s = ldmf.newSchedule(at.getSchedule().getAllScheduleElements());
