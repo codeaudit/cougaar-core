@@ -254,9 +254,11 @@ public class ComponentPlugin
     return ((PluginBindingSite) getBindingSite()).getConfigFinder();
   }
   
-  
+  /** @deprecated Use the self Organization or plugin parameters instead.  This method with
+   * be removed for cougaar 9.0.
+   **/
   protected ClusterIdentifier getClusterIdentifier() { 
-    return ComponentPlugin.this.getClusterIdentifier();
+    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }
   
   
