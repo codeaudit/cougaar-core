@@ -156,33 +156,43 @@ final class SchedulableObject implements Schedulable
 
 
 
+    // This method runs after each pass through the body. Cf
+    // reclaimNotify, which only runs when this Schedulable is the
+    // last continuation for a given pooled thread.
     SchedulableObject reclaim(boolean reuse) {
-        // Notify listeners
-	boolean restart = false;
-        synchronized (this) { 
-            thread = null;
-	    restart = --start_count > 0;
-        }
-
-	// If start_count > 1, start() was called while the
-	// Schedulable was running.  Now that it's finished,  start it
-	// again. 
-        if (restart) Starter.push(this);
-        return scheduler.threadReclaimed(this, reuse);
+	// NB:  The Schedulable itself can never be the continuation
+	// of its own thread!
+	SchedulableObject continuation = scheduler.threadReclaimed(this, reuse);
+	if (continuation != null) {
+	    // thread is being continued, so handle restarts now
+	    boolean restart = false;
+	    synchronized (this) { 
+		thread = null;
+		if (reuse) restart = --start_count > 0;
+	    }
+	    // If start_count > 1, start() was called while the
+	    // Schedulable was running.  Now that it's finished,  start it
+	    // again. 
+	    if (restart) Starter.push(this);
+	}
+        return continuation;
     }
 
-    // Callback from the Reclaimer.
+    // Callback from the Reclaimer.  This only runs when this
+    // Schedulable is the last continuation for a given pooled
+    // thread.  Cf reclaim, which runs after each pass through the
+    // body.
     void reclaimNotify() {
         scheduler.releaseRights(scheduler);
 
-// 	// If start_count > 1, start() was called while the
-// 	// Schedulable was running.  Now that it's finished,  start it
-// 	// again. 
-// 	boolean restart = false;
-// 	synchronized (this) {
-// 	    restart = --start_count > 0;
-// 	}
-//         if (restart) Starter.push(this);
+	// The restart mechanism shouldn't be relevant unless the
+	// no continuation was found in the corresponding reclaim
+	// call. 
+	boolean restart = false;
+	synchronized (this) {
+	    restart = --start_count > 0;
+	}
+        if (restart) Starter.push(this);
     }
 
     void thread_start() {
