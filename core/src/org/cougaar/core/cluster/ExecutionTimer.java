@@ -317,7 +317,7 @@ public class ExecutionTimer extends Timer {
       try {
         GregorianCalendar calendar = new GregorianCalendar();
         calendar.set(Calendar.HOUR_OF_DAY, 0); // Midnight today
-        long offset = (new SimpleDateFormat()).parse(startTime).getTime() - calendar.getTime().getTime();
+        long offset = (new ShortDateFormat()).parse(startTime).getTime() - calendar.getTime().getTime();
         theParameters[0] = new Parameters(1.0, offset, 0L);
       } catch (Exception e) {
         System.err.println("Bad org.cougaar.core.cluster.startTime: " + e);
