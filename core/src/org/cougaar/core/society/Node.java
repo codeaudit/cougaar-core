@@ -812,6 +812,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
         agentManager.moveAgent(
             mam.getAgentIdentifier(),
             mam.getNodeIdentifier());
+      } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
+        // we don't do anything with these. ignore it.
       } else {
         throw new UnsupportedOperationException(
             "Unsupported Message: "+
