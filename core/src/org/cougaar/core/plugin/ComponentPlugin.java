@@ -22,6 +22,10 @@ import org.cougaar.core.cluster.AlarmService;
 import org.cougaar.core.cluster.SchedulerService;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 
+import org.cougaar.core.cluster.ClusterServesPlugIn;
+import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.util.ConfigFinder;
+
 import java.util.Vector;
 import java.util.Collection;
 import java.util.Iterator;
@@ -49,9 +53,10 @@ public class ComponentPlugin
   private PluginBindingSite pluginBindingSite = null;
   private ServiceBroker serviceBroker = null;
   private ThinWatcher watcher = null;
-  private Collection parameters = null;
-
-  public ComponentPlugin() { }
+	//private Collection parameters = null;
+	private Vector parameters = null;
+		
+		public ComponentPlugin() { }   
 
   /**
    * BlackboardClient implementation 
@@ -186,7 +191,7 @@ public class ComponentPlugin
    **/
     public void setParameter(Object param) {
 	if (param != null) {
-	    parameters = (Collection) param;
+	    parameters = (Vector) param; //(Collection) param;
 	} else {
 	    parameters = new Vector(0);
 	}
@@ -196,11 +201,26 @@ public class ComponentPlugin
    * If they haven't been set, will return null.
    * Should be set between plugin construction and initialization.
    **/
-  public Collection getParameters() {
+		/* public Collection getParameters() {        
     return parameters;
   }
+		*/
 
+		public Vector getParameters() {
+				return parameters;
+		}
 
+ /** let subclasses get ahold of the cluster without having to catch it at
+   * load time.  May throw a runtime exception if the plugin hasn't been 
+   * loaded yet.
+   * @deprecated This method no longer allows direct access to the Cluster (Agent): instead
+   * it will always return null.
+   **/
+
+  protected ConfigFinder getConfigFinder() {
+    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
+  }
+	
   /**
    * This is the scheduler's hook into me
    **/
