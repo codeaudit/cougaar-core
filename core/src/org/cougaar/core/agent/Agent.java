@@ -38,6 +38,8 @@ public abstract class Agent
   implements ContainerAPI 
 {
 
+  private ServiceBroker childServiceBroker;
+
   public Agent() {
     BinderFactory pmbf = new AgentChildBinderFactory();
     if (!attachBinderFactory(pmbf)) {
@@ -59,12 +61,29 @@ public abstract class Agent
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    setChildServiceBroker(specifyAgentServiceBroker(bs));
+    childServiceBroker = specifyAgentServiceBroker(bs);
+    setChildServiceBroker(childServiceBroker);
+  }
+
+  public void unload() {
+    if (childServiceBroker != null) {
+      destroyAgentServiceBroker(childServiceBroker);
+      childServiceBroker = null;
+    }
+
+    super.unload();
   }
 
   protected ServiceBroker specifyAgentServiceBroker(BindingSite bs) {
     return new AgentServiceBroker(bs);
   }
+
+  protected void destroyAgentServiceBroker(ServiceBroker sb) {
+    if (sb instanceof AgentServiceBroker) {
+      ((AgentServiceBroker) sb).myDestroy();
+    }
+  }
+
   // Do we need state model stuff here???
   //protected void initialize() {}
 
@@ -98,6 +117,9 @@ public abstract class Agent
   private static class AgentServiceBroker extends PropagatingServiceBroker {
     public AgentServiceBroker(BindingSite bs) {
       super(bs);
+    }
+    private void myDestroy() {
+      super.destroy();
     }
   }
 }
