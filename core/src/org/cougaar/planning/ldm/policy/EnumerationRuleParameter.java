@@ -88,7 +88,7 @@ public class EnumerationRuleParameter implements RuleParameter, SelfPrinter, jav
 
   /**
    * Get parameter value (String)
-   * @returns Object parameter value (String). Note : could be null.
+   * @return Object parameter value (String). Note : could be null.
    */
   public Object getValue()
   {

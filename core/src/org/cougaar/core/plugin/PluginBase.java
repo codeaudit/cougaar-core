@@ -24,11 +24,11 @@ package org.cougaar.core.plugin;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.BindingSite;
 
-  /** 
-   * Inteface that describes the minimum expected capabilities of
-   * all Plugins.
-   @see org.cougaar.core.component.BinderSupport#initializeChild()
-   **/
+/** 
+ * Inteface that describes the minimum expected capabilities of
+ * all Plugins.
+ * @see org.cougaar.core.component.BinderSupport#initialize()
+ **/
 
 public interface PluginBase
   extends Component

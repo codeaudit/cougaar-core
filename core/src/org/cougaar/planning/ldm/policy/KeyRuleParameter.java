@@ -93,7 +93,7 @@ public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Ser
 
   /**
    * Get parameter value (String)
-   * @returns Object parameter value (String). Note : could be null.
+   * @return Object parameter value (String). Note : could be null.
    */
   public Object getValue()
   {
@@ -104,7 +104,7 @@ public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Ser
    * Get parameter value (String) keyed by int
    * If key equals one of the defined keys, return associated
    * value, otherwise return default value (String).
-   * @returns Object parameter value (String). Note : could be null.
+   * @return Object parameter value (String). Note : could be null.
    */
   public Object getValue(String key)
   {

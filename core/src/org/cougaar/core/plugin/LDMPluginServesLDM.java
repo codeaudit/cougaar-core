@@ -29,7 +29,7 @@ import java.util.Enumeration;
  * this marker class.  In addition, they may (also) implement
  * PrototypeProvider and/or PropertyProvider.
  *
- * @see org.cougaar.component.LDMServesPlugin
+ * @see org.cougaar.core.domain.LDMServesPlugin
  * @author  ALPINE <alpine-software@bbn.com>
  **/
 

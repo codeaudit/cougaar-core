@@ -160,7 +160,7 @@ public abstract class Subscription {
 
   /** Called by Subscriber's transaction system to update the
    * changes (and delta lists, if applicable) tracking.
-   * @see hasChanged()
+   * @see #hasChanged()
    **/
   protected void resetChanges() { setChanged(false); }
 

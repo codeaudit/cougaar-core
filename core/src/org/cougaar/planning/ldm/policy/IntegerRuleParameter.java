@@ -115,7 +115,7 @@ public class IntegerRuleParameter implements RuleParameter, SelfPrinter, java.io
 
   /**
    * Get parameter value (Integer)
-   * @returns Object parameter value (Integer). Note : could be null.
+   * @return Object parameter value (Integer). Note : could be null.
    */
   public Object getValue()
   {

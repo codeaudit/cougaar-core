@@ -68,7 +68,7 @@ public class PredicateRuleParameter implements RuleParameter, java.io.Serializab
 
   /**
    * Get parameter value (UnaryPredicate)
-   * @returns Object parameter value (UnaryPredicate). Note : could be null.
+   * @return Object parameter value (UnaryPredicate). Note : could be null.
    */
   public Object getValue() {
     return thePredicate;
@@ -83,7 +83,7 @@ public class PredicateRuleParameter implements RuleParameter, java.io.Serializab
 
   /**
    * Set parameter value
-   * @param Object new_value : must be Integer
+   * @param newPredicate must be a UnaryPredicate
    * @throws RuleParameterIllegalValueException
    */
   public void setValue(Object newPredicate) 

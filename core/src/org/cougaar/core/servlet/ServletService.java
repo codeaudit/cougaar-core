@@ -62,7 +62,7 @@ public interface ServletService extends Service
    * if the path has already been registered by another ServletService
    * instance..
    * 
-   * @see #unregister
+   * @see #unregister(String)
    */
   void register(
       String path,
@@ -74,8 +74,8 @@ public interface ServletService extends Service
    * This method can only be used to unregister Servlets that have 
    * been registered with <b>this</b> service instance.
    *
-   * @see #registerServlet
-   * @see #unregisterAll
+   * @see #register(String,Servlet)
+   * @see #unregisterAll()
    */
   void unregister(
       String path);
@@ -86,7 +86,7 @@ public interface ServletService extends Service
    * <p>
    * This can be used as a one-stop cleanup utility.
    *
-   * @see #unregister
+   * @see #unregister(String)
    */
   void unregisterAll();
 

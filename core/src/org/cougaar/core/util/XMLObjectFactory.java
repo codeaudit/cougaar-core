@@ -97,7 +97,7 @@ import org.cougaar.core.mts.Message;
  * <p>
  * As I first explained, it's best understood by example!
  * <p>
- * @see main() for sample usage
+ * @see #main(String[]) for sample usage
  */
 public class XMLObjectFactory {
 

@@ -114,7 +114,7 @@ public class LongRuleParameter implements RuleParameter, java.io.Serializable {
 
   /**
    * Get parameter value (Long)
-   * @returns Object parameter value (Long). Note : could be null.
+   * @return Object parameter value (Long). Note : could be null.
    */
   public Object getValue()
   {
@@ -127,7 +127,7 @@ public class LongRuleParameter implements RuleParameter, java.io.Serializable {
 
   /**
    * Set parameter value
-   * @param Object new_value : must be Long
+   * @param new_value must be Long
    * @throws RuleParameterIllegalValueException
    */
   public void setValue(Object new_value) 

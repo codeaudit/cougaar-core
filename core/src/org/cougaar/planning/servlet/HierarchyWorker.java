@@ -128,8 +128,8 @@ public class HierarchyWorker
    * number and sets the format and recurse fields.
    * <p>
    * Uses the ServletUtil to parse the parameters.
-   * @see org.cougaar.core.servlet.ServletUtil#parseParams;
-   * @see #getHierarchyData
+   * @see org.cougaar.core.servlet.ServletUtil#parseParams()
+   * @see #getHierarchyData()
    */
   public void execute(HttpServletRequest request, 
 		      HttpServletResponse response,

@@ -80,7 +80,7 @@ public class ServletWorker {
    * number and sets the format and recurse fields.
    * <p>
    * Uses the ServletUtil to parse the parameters.
-   * @see org.cougaar.core.servlet.ServletUtil#parseParams;
+   * @see org.cougaar.core.servlet.ServletUtil#parseParams
    */
   public void execute(HttpServletRequest request, 
 		      HttpServletResponse response,

@@ -77,7 +77,7 @@ public class BooleanRuleParameter implements RuleParameter, SelfPrinter, java.io
 
   /**
    * Get parameter value (Boolean)
-   * @returns Object parameter value (Boolean). Note : could be null.
+   * @return Object parameter value (Boolean). Note : could be null.
    */
   public Object getValue()
   {

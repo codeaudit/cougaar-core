@@ -42,7 +42,7 @@ public interface PrepositionalPhrase
    * @see org.cougaar.planning.ldm.plan.Location
    * @see org.cougaar.planning.ldm.plan.Schedule
    * @see org.cougaar.planning.ldm.plan.Requisition
-   * @see org.cougaar.planning.ldm.OPlan;
+   * @see org.cougaar.planning.ldm.OPlan
    */
   Object getIndirectObject();
 	

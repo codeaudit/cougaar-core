@@ -208,7 +208,7 @@ public abstract class AssetSkeletonBase
   }
 
   /** return the PropertyGroupSchedule associated with the specified class.
-   * @param
+   * @param c Class of the PropertyGroup to look for
    **/
   public synchronized PropertyGroupSchedule searchForPropertyGroupSchedule(Class c) {
     if (!hasOtherTimePhasedProperties) {

@@ -91,7 +91,7 @@ public class ClassRuleParameter implements RuleParameter, java.io.Serializable {
 
   /**
    * Get parameter value (Class)
-   * @returns Object parameter value (Class). Note : could be null.
+   * @return Object parameter value (Class). Note : could be null.
    */
   public Object getValue()
   {

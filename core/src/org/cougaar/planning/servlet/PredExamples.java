@@ -49,14 +49,14 @@ public class PredExamples {
     return (o instanceof Task);
   }
 
-  /** @see examplePredicateA(Object) */
+  /** @see #examplePredicateA(Object) */
   public static boolean examplePredicateB(
       Task t, 
       String verbStr) {
     return t.getVerb().equals(verbStr);
   }
 
-  /** @see examplePredicateA(Object) */
+  /** @see #examplePredicateA(Object) */
   public static boolean examplePredicateC(
       Object o, 
       String verbStr, 

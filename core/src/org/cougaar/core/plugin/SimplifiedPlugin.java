@@ -80,7 +80,7 @@ public abstract class SimplifiedPlugin extends ThinPlugin
   /** Call execute in the right context.  
    * Note that this transaction boundary does NOT reset
    * any subscription changes.
-   * @See execute() documentation for details 
+   * @see #execute() documentation for details 
    **/
   protected final void cycle() {
     try {

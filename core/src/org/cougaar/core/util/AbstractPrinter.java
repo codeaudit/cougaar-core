@@ -50,12 +50,10 @@ import java.util.Iterator;
  * field, but there would introduce useless "myPrintStream.print(val)" 
  * hand-off calls everywhere.  Almost wish Java had multiple inheritance...
  * <p>
- * @see AbstractPrinter#main() for sample usage
+ * @see #testMain(String) for sample usage
  */
 
 public abstract class AbstractPrinter extends PrintStream {
-
-  /** public static **/
 
   public static final boolean isValidFormat(String format) {
     return ("data".equalsIgnoreCase(format) ||

@@ -107,7 +107,7 @@ public class DoubleRuleParameter implements RuleParameter, SelfPrinter, java.io.
 
   /**
    * Get parameter value (Double)
-   * @returns Object parameter value (Double). Note : could be null.
+   * @return Object parameter value (Double). Note : could be null.
    */
   public Object getValue()
   {

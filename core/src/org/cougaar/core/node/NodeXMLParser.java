@@ -156,7 +156,7 @@ public final class NodeXMLParser {
    *
    * @throws ClassCastException if the PropertyTree contains illegal elements.
    *
-   * @see parse(InputStream) for output XML format
+   * @see #parse(InputStream) for output XML format
    */
   public static void write(PrintStream out, PropertyTree pt) {
     out.print(

@@ -43,7 +43,7 @@ import java.util.*;
  * methods of a Plugin.  Essentially all the of the protected Plan 
  * API methods of PluginAdapter can be accessed via these public
  * methods.
- * @see org.cougaar.core.plugin.PluginAdapter.getDelegate()
+ * @see PluginAdapter#getDelegate()
  **/
 
 public interface PluginDelegate {

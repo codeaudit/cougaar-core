@@ -93,7 +93,7 @@ public interface Logger {
    * @param level the required logging level (DEBUG, WARN, etc)
    * @param message the string to log
    *
-   * @see #isEnabledFor(level)
+   * @see #isEnabledFor(int)
    */
   void log(int level, String message);
 
@@ -109,7 +109,7 @@ public interface Logger {
    * @param t the throwable (e.g. RuntimeException) that is 
    *          related to the message
    *
-   * @see #isEnabledFor(level)
+   * @see #isEnabledFor(int)
    */
   void log(int level, String message, Throwable t);
 
