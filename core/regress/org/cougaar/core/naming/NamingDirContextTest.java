@@ -248,7 +248,7 @@ public class NamingDirContextTest extends TestCase {
       fail("create already existing subcontext failed to throw NamingException");
     } catch (NamingException ne) {
     }
-    // No be sure the a/b subcontext can be lookup'ed in the a subcontext
+    // Now be sure the a/b subcontext can be lookup'ed in the a subcontext
     assertNotNull("b in a is null", a.lookup("b"));
     // Attempt to unbind the subcontext. Should fail because destroySubcontext must be used
     try {
@@ -256,6 +256,18 @@ public class NamingDirContextTest extends TestCase {
       fail("unbind of context failed to throw NamingException");
     } catch (NamingException ne) {
     }
+    
+    // Check that we won't destroy a non empty context
+    a.bind("b/c", "c");
+    try {
+      a.destroySubcontext("b");
+      fail("destroySubcontext of non empty Context failed to throw NamingException");
+    } catch (NamingException ne) {
+    }
+
+    // remove b/c so we can destroy b
+    a.unbind("b/c");
+
     // Now destroy "b" the proper way
     a.destroySubcontext("b");
     // Be sure it is gone.
