@@ -1,5 +1,11 @@
 2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* TestFullSnapshot.java:
+	Test plugin creates full snapshots after publishAdding a lot of
+	objects and then again after publishRemoving those objects. Used
+	to test that the removed objects are not included in the the full
+	persistence snapshot.
+
 	* Persistable.java:
 	Interface for potentially persistable objects. The isPersistable()
 	method from the Publishable interface has been moved here and
