@@ -21,12 +21,11 @@
 
 package org.cougaar.core.service;
 
+import java.util.Set;
 import org.cougaar.core.agent.ClusterIdentifier;
-
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-
 import org.cougaar.core.component.Service;
 
 public interface DomainForBlackboardService extends DomainService {
@@ -44,9 +43,7 @@ public interface DomainForBlackboardService extends DomainService {
 
   /** invoke RestartLogicProviders across all currently loaded domains **/
   void invokeRestartLogicProviders(ClusterIdentifier cid);
+
+  /** invoke ABAChangeLogicProviders across all currently loaded domains **/
+  void invokeABAChangeLogicProviders(Set communities);
 }  
-
-
-
-
-
