@@ -55,11 +55,38 @@ public class PersistenceInputStream extends ObjectInputStream {
   private int nextReadIndex;
 
   /**
+   * InputStream implementation that extracts a segment of bytes from
+   * an ObjectInputStream. This is the input counterpart of the
+   * PersistenceOutputStream.writeBytes
+   **/
+  private static class Substream extends FilterInputStream {
+    private int bytes;
+    public Substream(ObjectInputStream ois) throws IOException {
+      super(ois);
+      bytes = ois.readInt();
+    }
+    public int read(byte[] buf) throws IOException {
+      return read(buf, 0, buf.length);
+    }
+    public int read() throws IOException {
+      if (bytes == 0) return -1;
+      bytes--;
+      return super.read();
+    }
+    public int read(byte[] buf, int offset, int nb) throws IOException {
+      if (nb > bytes) nb = bytes;
+      nb = super.read(buf, offset, nb);
+      if (nb >= 0) bytes -= nb;
+      return nb;
+    }
+  }
+
+  /**
    * Construct from the array of bytes containing the encoded objects.
    * @param bytes the bytes containing the encoded objects.
    */
-  public PersistenceInputStream(byte[] bytes) throws IOException {
-    super(new ByteArrayInputStream(bytes));
+  public PersistenceInputStream(ObjectInputStream ois) throws IOException {
+    super(new Substream(ois));
     enableResolveObject(true);
   }
 

@@ -400,8 +400,9 @@ public abstract class BasePersistence implements Persistence {
       for (int i = 0; i < length; i++) {
 	referenceArrays[i] = (PersistenceReference []) currentInput.readObject();
       }
-      byte[] bytes = (byte[]) currentInput.readObject();
-      PersistenceInputStream stream = new PersistenceInputStream(bytes);
+//        byte[] bytes = (byte[]) currentInput.readObject();
+//        PersistenceInputStream stream = new PersistenceInputStream(bytes);
+      PersistenceInputStream stream = new PersistenceInputStream(currentInput);
       if (debug) {
         history = getHistoryWriter(deltaNumber, "restore_");
         writeHistoryHeader(history);
@@ -684,7 +685,8 @@ public abstract class BasePersistence implements Persistence {
                 for (int i = 0; i < referenceArrays.length; i++) {
                   currentOutput.writeObject(referenceArrays[i]);
                 }
-                currentOutput.writeObject(stream.getBytes());
+                stream.writeBytes(currentOutput);
+//                  currentOutput.writeObject(stream.getBytes());
               }
               finally {
                 stream.close();

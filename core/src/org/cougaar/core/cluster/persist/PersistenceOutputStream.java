@@ -59,19 +59,27 @@ public class PersistenceOutputStream extends ObjectOutputStream {
     enableReplaceObject(true);
   }
 
-  /**
-   * Get the array of bytes encoding everything we stored.
-   * @return the array of bytes encoding everything we stored.
-   */
-  public byte[] getBytes() throws IOException {
-    flush();
-    if (history != null) {
-      history.close();
-      history = null;
-    }
-    return byteStream.toByteArray();
-  }
+//    /**
+//     * Get the array of bytes encoding everything we stored.
+//     * @return the array of bytes encoding everything we stored.
+//     */
+//    public byte[] getBytes() throws IOException {
+//      flush();
+//      if (history != null) {
+//        history.close();
+//        history = null;
+//      }
+//      return byteStream.toByteArray();
+//    }
 
+  /**
+   * Write the bytes encoding everything we stored preceded by the
+   * byte count.
+   **/
+  public void writeBytes(ObjectOutputStream oos) throws IOException {
+    oos.writeInt(byteStream.size());
+    byteStream.writeTo(oos);
+  }
 
   /**
    * Write a plan object from a PersistenceAssociation.

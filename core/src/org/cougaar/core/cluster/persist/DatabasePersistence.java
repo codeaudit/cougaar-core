@@ -38,11 +38,13 @@ import java.sql.Clob;
 import java.sql.Blob;
 import java.sql.Ref;
 import java.sql.Time;
+import java.sql.Types;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Array;
 import java.sql.CallableStatement;
 import java.util.HashMap;
+import java.util.Enumeration;
 import java.util.Vector;
 import java.util.Map;
 import java.util.Calendar;
@@ -67,8 +69,12 @@ public class DatabasePersistence
     System.getProperty("org.cougaar.core.cluster.persistence.database.user");
   String databasePassword =
     System.getProperty("org.cougaar.core.cluster.persistence.database.password");
+  String databaseDriver =
+    System.getProperty("org.cougaar.core.cluster.persistence.database.driver");
 
   private Connection theConnection;
+
+  private DatabaseMetaData theMetaData;
 
   private File persistenceDirectory;
 
@@ -103,12 +109,24 @@ public class DatabasePersistence
 	throw new PersistenceException("Not a directory: " + persistenceDirectory);
       }
     }
+    if (databaseDriver != null) {
+      try {
+        Class.forName(databaseDriver);
+      } catch (Exception e) {
+        fatalException(e);
+      }
+    }
     try {
       theConnection =
         DriverManager.getConnection(databaseURL,
                                     databaseUser,
                                     databasePassword);
-      theConnection.setAutoCommit(false);
+      theMetaData = theConnection.getMetaData();
+      if (theMetaData.supportsTransactions()) {
+        theConnection.setAutoCommit(false);
+      } else {
+        System.err.println("Warning!!!! Persistence Database does not support transactions");
+      }
       System.out.println("Database transaction isolation is " +
                          theConnection.getTransactionIsolation());
       getSequenceNumbers = theConnection.prepareStatement
@@ -135,16 +153,32 @@ public class DatabasePersistence
       }
     }
     catch (SQLException e) {
+      System.err.println("Persistence connection error");
+      System.err.println("     URL: " + databaseURL);
+      System.err.println("    User: " + databaseUser);
+      System.err.println("Password: " + databasePassword);
+      System.err.println(" Drivers:");
+      for (Enumeration drivers = DriverManager.getDrivers(); drivers.hasMoreElements(); ) {
+        System.err.println("     " + drivers.nextElement().getClass().getName());
+      }
       fatalException(e);
     }
   }
 
   private void createTable(String tableName) throws SQLException {
-    System.out.println("Creating table " + tableName);
+    String intDef = "NUMBER";
+    String longBinaryDef = "LONG RAW";
+    String qry = "create table " + tableName
+      + "(seqno "
+      + intDef
+      + " primary key,"
+      + " active char(1),"
+      + " data "
+      + longBinaryDef
+      + ")";
+    System.out.println("Creating table: " + qry);
     Statement stmt = theConnection.createStatement();
-    stmt.executeUpdate
-      ("create table " + tableName +
-       "(seqno number primary key, active char(1), data long raw)");
+    stmt.executeUpdate(qry);
   }
 
   protected SequenceNumbers readSequenceNumbers() {
@@ -194,11 +228,11 @@ public class DatabasePersistence
     }
   }
 
-  private void writeDelta(int seqno, final byte[] bytes) {
+  private void writeDelta(int seqno, InputStream is, int length) {
     try {
       storeDelta.setInt(1, seqno);
       storeDelta.setString(2, "t");
-      storeDelta.setBytes(3, bytes);
+      storeDelta.setBinaryStream(3, is, length);
       storeDelta.executeUpdate();
     }
     catch (SQLException e) {
@@ -216,7 +250,24 @@ public class DatabasePersistence
     }
     
     public void close() throws IOException {
-      writeDelta(deltaNumber, toByteArray());
+      InputStream is = new InputStream() {
+        int n = 0;
+        public int read() {
+          if (n >= count) return -1;
+          return buf[n++];
+        }
+        public int read(byte[] rbuf) {
+          return read(rbuf, 0, rbuf.length);
+        }
+        public int read(byte[] rbuf, int offset, int len) {
+          len= Math.min(len, count - n);
+          if (len == 0) return -1;
+          System.arraycopy(buf, n, rbuf, offset, len);
+          n += len;
+          return len;
+        }
+      };
+      writeDelta(deltaNumber, is, count);
       super.close();
       try {
         theConnection.commit();
