@@ -563,12 +563,17 @@ public class TaskImpl extends DirectiveImpl
   public String toString() {
     if (cachedTS != null) return cachedTS;
 
+    Object o;
     StringBuffer buf = new StringBuffer();
-    buf.append("<Task ");
-    buf.append(getUID().toString());
-    buf.append(" ");
-    buf.append(verb.toString());
-    buf.append(" ");
+    buf.append("<Task src=");
+    buf.append((o=getSource())==null?"null":o.toString());
+    buf.append(" uid=");
+    buf.append((o=getUID())==null?"null":o.toString());
+    buf.append(" pUid=");
+    buf.append((o=getParentTaskUID())==null?"null":o.toString());
+    buf.append(" verb=");
+    buf.append((o=getVerb())==null?"null":o.toString());
+    buf.append(" dObj=");
     buf.append(directObject==null?"null":directObject.toString());
 
     if (phrases!=null && phrases.size()>0) {

@@ -41,6 +41,7 @@ import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.*;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Enumeration;
@@ -56,6 +57,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
 {
         
   private final ClusterIdentifier self;
+  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
 
   public RemoteClusterAllocationLP(LogPlanServesLogicProvider logplan,
                                    ClusterServesLogicProvider cluster) {
@@ -109,6 +111,11 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
    * case they have been lost or are out of date.
    **/
   public void restart(final ClusterIdentifier cid) {
+    if (logger.isInfoEnabled()) {
+      logger.info(
+        self+": Reconcile with "+
+        (cid==null?"all agents":cid.toString()));
+    }
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof Allocation) {
@@ -128,7 +135,20 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     while (enum.hasMoreElements()) {
       AllocationforCollections alloc = (AllocationforCollections) enum.nextElement();
       Task remoteTask = alloc.getAllocationTask();
-      if (remoteTask != null) logplan.sendDirective(remoteTask);
+      if (remoteTask != null) {
+        if (logger.isInfoEnabled()) {
+          Task localTask = alloc.getTask();
+          logger.info(
+              self+": Resend"+(cid==null?"*":"")+
+              " task to "+remoteTask.getDestination()+
+              " with remoteUID="+remoteTask.getUID()+
+              " "+localTask);
+        }
+        logplan.sendDirective(remoteTask);
+      }
+    }
+    if (logger.isInfoEnabled()) {
+      logger.info(self+": Reconciled");
     }
   }
 

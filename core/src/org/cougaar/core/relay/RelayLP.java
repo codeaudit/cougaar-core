@@ -373,6 +373,11 @@ public class RelayLP extends LogPlanLogicProvider
    * send verification directives for all our Relay.Targets.
    **/
   public void restart(final ClusterIdentifier cid) {
+    if (logger.isInfoEnabled()) {
+      logger.info(
+        self+": Reconcile with "+
+        (cid==null?"all agents":cid.toString()));
+    }
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         return o instanceof Relay;
@@ -389,6 +394,9 @@ public class RelayLP extends LogPlanLogicProvider
         Relay.Target rt = (Relay.Target) r;
         verify(rt, cid);
       }
+    }
+    if (logger.isInfoEnabled()) {
+      logger.info(self+": Reconciled");
     }
   }
 
@@ -411,6 +419,11 @@ public class RelayLP extends LogPlanLogicProvider
           gotContent = true;
           content = rs.getContent();
         }
+	if (logger.isInfoEnabled()) {
+          logger.info(
+            self+": Resend"+(t==null?"*":"")+
+            " to "+target+": "+rs.getUID());
+        }
         sendAdd(rs, target, content);
       }
     }
@@ -423,6 +436,11 @@ public class RelayLP extends LogPlanLogicProvider
       // Don't send to ourself.  Likely an error.
     } else {
       if (s == null || source.equals(s)) {
+	if (logger.isInfoEnabled()) {
+          logger.info(
+            self+": Verify"+(s==null?"*":"")+
+            " to "+source+": "+rt.getUID());
+        }
         sendVerification(rt, source);
       }
     }
@@ -437,7 +455,7 @@ public class RelayLP extends LogPlanLogicProvider
     };
 
   public void abaChange(Set communities) {
-    if (logger.isDebugEnabled()) logger.debug("RelayLP: abaChange");
+    if (logger.isDebugEnabled()) logger.debug(self+": abaChange");
     Enumeration en = logplan.searchBlackboard(relaySourcePred);
     while (en.hasMoreElements()) {
       Relay.Source rs = (Relay.Source) en.nextElement();
