@@ -45,6 +45,9 @@ import org.w3c.dom.Document;
  * value. The URLs in org.cougaar.config.path are interpreted relative to
  * $INSTALL. URLs may be absolute in which case some or all of the
  * base URL may be ignored.
+ *
+ * Set org.cougaar.core.util.ConfigFinder.verbose=true to enable 
+ * additional debugging logs.
  **/
 public final class ConfigFinder {
   /** this is the default string used if org.cougaar.config.path is not defined.
@@ -68,6 +71,9 @@ public final class ConfigFinder {
   }
 
   public ConfigFinder(String s, Map props) {
+    if ("true".equals(System.getProperty("org.cougaar.core.util.ConfigFinder.verbose", "false")))
+      setVerbose(true);
+
     properties = props;
     if (s == null) {
       s = defaultConfigPath;
