@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.PropertyParser;
 
 /**
  * Identifies all objects that have been (or are about to be written
@@ -42,13 +43,13 @@ import org.cougaar.util.log.Logger;
  * objects. This is similar to the wire handle of the Java
  * serialization process (ObjectOutputStream), but applies across
  * persistence snapshots whereas the wire handle applies within a
- * single snapshot.
+ * single snapshot. <p>
  *
  * This class is essentially a hash table implementation. It differs
  * from the java.util versions of hash tables in that the values are
  * WeakReferences so that values to which there are no longer any
  * references get removed from the table. WeakHashMap has weak keys,
- * not weak values.
+ * not weak values. <p>
  */
 class IdentityTable {
   static class MyArrayList extends ArrayList {
@@ -112,8 +113,35 @@ class IdentityTable {
   public void setRehydrationCollection(Collection list) {
     rehydrationCollection = list;
     if (list == null) {
-      System.gc();
+      maybeGC();
     }
+  }
+
+
+  /** lock for GC timer **/
+  private final Object gcLock = new Object();
+  /** when did we last do a GC, guarded by gcLock **/
+  private long gcTime = 0;
+
+  private static final long minGCInterval = 
+    PropertyParser.getLong("org.cougaar.core.persistence.IdentityTable.minGCInterval", 3000000L);
+
+  /** Maybe invoke System.gc, if it has been minGCInterval since
+   * the last time we did so.
+   *
+   * @property org.cougaar.core.persistence.IdentityTable.minGCInterval
+   * Minimum number of milliseconds between IdentityTable-directed gcs.
+   * Defaults to 3000000 (5 minutes).  Other GCs do not count.
+   **/
+  protected final void maybeGC() {
+    synchronized (gcLock) {
+      long now = System.currentTimeMillis();
+      if (gcTime > (now - minGCInterval)) {
+        return;
+      } 
+      gcTime = now;
+    }
+    System.gc();
   }
 
   public int getNextId() {
