@@ -22,7 +22,6 @@ public abstract class ContainerSupport
   /** this is the prefix that all subcomponents must have as a prefix **/
   protected final String containmentPrefix = specifyContainmentPoint()+".";
   protected ServiceBroker childServiceBroker = null;
-  protected final Class childBindingSite = specifyChildBindingSite();
 
   /** The actual set of child BoundComponent loaded. 
    * @see BoundComponent
@@ -86,11 +85,6 @@ public abstract class ContainerSupport
   public ServiceBroker getServiceBroker() {
     return childServiceBroker;
   }
-
-  /** Define to specify the BindingSite used to bind child components.
-   **/
-  protected abstract Class specifyChildBindingSite();
-
 
 
   //
@@ -255,7 +249,7 @@ public abstract class ContainerSupport
           if (wrappers==null) wrappers=new ArrayList(1);
           wrappers.add(bf);
         } else {
-          b = bf.getBinder(childBindingSite, c);
+          b = bf.getBinder(c);
           if (b != null) {
             //System.err.println("Bound by: "+b);
             break;
@@ -268,7 +262,7 @@ public abstract class ContainerSupport
         int l = wrappers.size();
         for (int i=l-1; i>=0; i--) { // last ones innermost
           BinderFactoryWrapper bf = (BinderFactoryWrapper) wrappers.get(i);
-          Binder w = bf.getBinder(childBindingSite, (b==null)?c:b);
+          Binder w = bf.getBinder((b==null)?c:b);
           if (w!= null) {
             //System.err.println("Wrapped by: "+w);
             b = w;

@@ -60,10 +60,6 @@ public abstract class Agent
     return "Node.AgentManager.Agent";
   }
 
-  protected Class specifyChildBindingSite() {
-    return PluginManagerBindingSite.class;
-  }
-
   protected Object getBinderFactoryProxy() {
     return this;
   }

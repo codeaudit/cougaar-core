@@ -81,10 +81,6 @@ public class PluginManager
     return "Node.AgentManager.Agent.PluginManager";
   }
 
-  protected Class specifyChildBindingSite() {
-    return PluginBindingSite.class;
-  }
-
   private PluginManagerForBinder containerProxy = 
     new PluginManagerForBinder() {
         public ServiceBroker getServiceBroker() {

@@ -73,10 +73,6 @@ public class AgentManager
     return "Node.AgentManager";
   }
 
-  protected Class specifyChildBindingSite() {
-    return AgentBindingSite.class;
-  }
-
   protected ContainerAPI getContainerProxy() {
     return new AgentManagerProxy();
   }

@@ -29,15 +29,4 @@ public class ServiceFilter
   }
 
   public int getPriority() { return NORM_PRIORITY; }
-
-  /** standard getBinder implementation essentially calls getBinderClass and
-   * then bindChild.
-   **/
-  public Binder getBinder(Class bindingSite, Object child) {
-    // figure out which binder to use.
-    Class bc = getBinderClass(child);
-    if (bc == null) return null;
-
-    return bindChild(bc, child);
-  }
 }

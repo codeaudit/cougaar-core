@@ -51,16 +51,15 @@ public interface BinderFactory extends Component
    **/
   int getPriority();
 
-  /** Get or Construct a binder for a child component which conforms to a
-   * specific BindingSite class.  The returned value will be a Binder
-   * (e.g. an instance of a class which implements the bindingSite)
+  /** Get or Construct a binder for a child component.
+   * The returned value will be a Binder
    * customized for use by the child Component.  The
    * Factory may impose any restrictions deemed neccessary on
    * the client object.  Most commonly, the child will often
    * be required to implement a client-side interface of a
    * service protocol.
    **/
-  Binder getBinder(Class bindingSite, Object child);
+  Binder getBinder(Object child);
 
   public final static class BFComparator implements Comparator {
     public int compare(Object o1, Object o2) {

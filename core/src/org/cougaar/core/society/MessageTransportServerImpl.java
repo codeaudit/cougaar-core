@@ -29,7 +29,7 @@ import org.cougaar.core.component.ServiceBroker;
  * and a method to create the aspects from the
  * org.cougaar.message.transport.aspects property. */
 
-class MessageTransportServerImpl 
+public class MessageTransportServerImpl 
   extends ContainerSupport
   implements ContainerAPI
 {
@@ -223,10 +223,6 @@ class MessageTransportServerImpl
 	return null;
     }
     public void requestStop() {}
-
-    protected Class specifyChildBindingSite() {
-	return null;
-    }
 
 
     public ContainerAPI getContainerProxy() {

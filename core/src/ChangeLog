@@ -1,3 +1,18 @@
+2001-08-02  Michael Thome  <mthome@bbn.com>
+
+	* MessageTransportServerImpl
+	Made class public so that introspective constructor and
+	initialization will work.
+
+	* BinderFactory, BinderFactorySupport, ServiceFilter, ContainerSupport
+	getBinder now takes only one argument - the BindingSite class
+	argument was dropped, as the binder is always the one to need to
+	make the decision anyway.
+	
+	* ContainerSupport, PluginManager, Agent, AgentManager, MessageTransportServerImpl, Node
+	Dropped specifyChildBindingSite() method and data member, as the
+	values were always ignored. 
+
 2001-07-26  Michael Thome  <mthome@bbn.com> (For Beth DePass <bdepass@bbn.com)
 
 	* Node, AgentManager, Agent, PluginManager, etc

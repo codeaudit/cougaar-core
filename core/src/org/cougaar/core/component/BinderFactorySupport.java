@@ -75,7 +75,7 @@ public abstract class BinderFactorySupport
   /** standard getBinder implementation essentially calls getBinderClass and
    * then bindChild.
    **/
-  public Binder getBinder(Class bindingSite, Object child) {
+  public Binder getBinder(Object child) {
     // figure out which binder to use.
     Class bc = getBinderClass(child);
     if (bc == null) return null;

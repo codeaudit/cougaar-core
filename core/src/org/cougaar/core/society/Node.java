@@ -421,9 +421,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     // Nobody above us so we have a plain old ServiceBroker
     return new NodeServiceBroker();
   }
-  protected Class specifyChildBindingSite() {
-    return AgentManagerBindingSite.class;
-  }
   protected ContainerAPI getContainerProxy() {
     return new NodeProxy();
   }
