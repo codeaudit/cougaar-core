@@ -1,3 +1,10 @@
+2001-10-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Add query time logging. The time for every query is written to a
+	file. Disabled by default. Log file creation must be uncommented
+	to use.
+
 2001-10-19  Todd Wright  <twright@bbn.com>
 
 	* org/cougaar/core/society/Node.java, ExternalNodeControl*
