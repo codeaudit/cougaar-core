@@ -27,7 +27,7 @@ public class Blackboard extends Subscriber
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.cluster.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
-    System.getProperty("org.cougaar.core.cluster.enablePublishException", "true").equals("true");
+    System.getProperty("org.cougaar.core.cluster.enablePublishException", "false").equals("true");
 
   /** The list of XPlans **/
   private Collection xPlans = new ArrayList();
