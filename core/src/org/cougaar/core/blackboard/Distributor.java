@@ -104,11 +104,22 @@ final class Distributor {
    * must be generated. A persistence delta must also be generated if
    * there are no open transactions and nothing has been distributed
    * to any subscriber.
+   * @property org.cougaar.core.blackboard.persistenceReservationTimeout
+   * specifies the maximum delay allowed before using a persistence
+   * reservation. An agent exceeding this delay will have to request a
+   * new reservation. Default value is 120000 milliseconds. A value of
+   * zero disables the reservation mechanism.
    */
 
   /** The maximum interval between persistence deltas. **/
   private static final long MAX_PERSIST_INTERVAL = 37000L;
   private static final long TIMER_PERSIST_INTERVAL = 33000L;
+
+  /** The maximum delay allowed before using a persistence reservation **/
+  private static final String PERSISTENCE_RESERVATION_TIMEOUT_PROP =
+    "org.cougaar.core.blackboard.persistenceReservationTimeout";
+  private static final long PERSISTENCE_RESERVATION_TIMEOUT =
+    Long.getLong(PERSISTENCE_RESERVATION_TIMEOUT_PROP, 120000L).longValue();
 
   //
   // these are set in the constructor and are final:
@@ -138,6 +149,10 @@ final class Distributor {
 
   /** The object we use to persist ourselves. */
   private Persistence persistence = null;
+
+  /** The reservation manager for persistence **/
+  private static ReservationManager persistenceReservationManager =
+      new ReservationManager(PERSISTENCE_RESERVATION_TIMEOUT);
 
   //
   // lock for open/close transaction and persistence:
@@ -719,10 +734,6 @@ final class Distributor {
    * busy. This second clause is needed so we don't end up being idle
    * with needToPersist being true.
    **/
-  private void doPersistence() {
-    doPersistence(false, false);
-  }
-
   private Object doPersistence(
       boolean persistedStateNeeded, boolean full) {
     assert !Thread.holdsLock(distributorLock);
@@ -812,7 +823,7 @@ final class Distributor {
             logger.info("Persist started (finish transaction)");
           }
           assert !persistActive;
-          doPersistence();
+          doPersistence(false, false);
           if (logger.isInfoEnabled()) {
             logger.info("Persist completed (finish transaction)");
           }
@@ -874,51 +885,67 @@ final class Distributor {
       assert !Thread.holdsLock(transactionLock);
       if (persistence == null)
         throw new PersistenceNotEnabledException();
-      if (logger.isInfoEnabled()) {
-        logger.info("Persist requested (persist)");
-      }
-      synchronized (transactionLock) {
-        if (persistActive) {
-          if (logger.isInfoEnabled()) {
-            logger.info("Waiting for active persist to complete");
-          }
-          do {
-            try {
-              transactionLock.wait();
-            } catch (InterruptedException ie) {
+      while (true) {            // Loop until we succeed and return a result
+        synchronized (transactionLock) {
+          // First we must wait for any other persistence activity to cease
+          if (persistActive) {
+            if (logger.isInfoEnabled()) {
+              logger.info("Waiting for active persist to complete");
             }
-          } while (persistActive);
-        }
-        persistActive = true;
-        if (logger.isInfoEnabled()) {
-          logger.info(
-              "Waiting for "+transactionCount+
-              " transactions to close");
-        }
-        transactionCount++;
-        assert transactionCount >= 1 : transactionCount;
-        try {
-          while (transactionCount > 1) {
-            try {
-              transactionLock.wait();
-            } catch (InterruptedException ie) {
+            do {
+              try {
+                transactionLock.wait();
+              } catch (InterruptedException ie) {
+              }
+            } while (persistActive);
+          }
+          // The we have to wait for our reservation to become ripe
+          if (logger.isInfoEnabled()) {
+            logger.info("reservation waitfor");
+          }
+          persistenceReservationManager.waitFor(persistence);
+          // Now we try to persist
+          persistActive = true;
+          if (logger.isInfoEnabled()) {
+            logger.info("Waiting for " + transactionCount +
+                        " transactions to close");
+          }
+          transactionCount++;
+          assert transactionCount >= 1 : transactionCount;
+          try {
+            while (transactionCount > 1) {
+              try {
+                transactionLock.wait();
+              } catch (InterruptedException ie) {
+              }
             }
+            assert transactionCount == 1 : transactionCount;
+            // persistPending == don't care, transactionCount == 1
+            // We are the only one left in the pool
+            // We commit to doing persistence, but we may have lost our reservation
+            if (persistenceReservationManager.commit(persistence)) {
+              if (logger.isInfoEnabled()) {
+                logger.info("Persist started (persist)");
+              }
+              Object result = doPersistence(isStateWanted, full);
+              if (logger.isInfoEnabled()) logger.info("reservation release");
+              persistenceReservationManager.release(persistence);
+              if (logger.isInfoEnabled()) {
+                logger.info("Persist completed (persist)");
+              }
+              return result;
+            } else {
+              // Lost our reservation. Back out of transaction counting and start over
+              if (logger.isInfoEnabled()) {
+                logger.info("Reservation lost, starting over");
+              }
+            }
+          } finally {
+            persistActive = false;
+            --transactionCount;
+            assert transactionCount == 0 : transactionCount;
+            transactionLock.notifyAll();
           }
-          if (logger.isInfoEnabled()) {
-            logger.info("Persist started (persist)");
-          }
-          assert transactionCount == 1 : transactionCount;
-          // persistPending == don't care, transactionCount == 1
-          // We are the only one left in the pool
-          return doPersistence(isStateWanted, full);
-        } finally {
-          if (logger.isInfoEnabled()) {
-            logger.info("Persist completed (persist)");
-          }
-          persistActive = false;
-          --transactionCount;
-          assert transactionCount == 0 : transactionCount;
-          transactionLock.notifyAll();
         }
       }
     }
@@ -927,7 +954,14 @@ final class Distributor {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     if (!lazyPersistence || timeToLazilyPersist()) {
-      setPersistPending(true);
+      if (persistenceReservationManager.request(persistence)) {
+        if (logger.isInfoEnabled()) logger.info("reservation request succeeded");
+        setPersistPending(true);
+      } else if (persistPending) {
+        // Whoops. We lost our reservation
+        if (logger.isInfoEnabled()) logger.info("reservation request failed");
+        setPersistPending(false); // Need to start all over
+      }
     }
   }
 
@@ -936,9 +970,11 @@ final class Distributor {
     // caller may already hold the transactionLock
     synchronized (transactionLock) {
       // FIXME holds both locks!
-      persistPending = on;
-      if (!persistPending) {
-        transactionLock.notifyAll();
+      if (persistPending != on) {
+        persistPending = on;
+        if (!persistPending) {
+          transactionLock.notifyAll();
+        }
       }
     }
   }
