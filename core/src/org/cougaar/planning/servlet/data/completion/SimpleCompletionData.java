@@ -129,6 +129,7 @@ public class SimpleCompletionData extends CompletionData{
   public void toXML(XMLWriter w) throws IOException {
     w.optagln(NAME_TAG);
     w.tagln(TIME_MILLIS_ATTR, getTimeMillis());
+    w.tagln(RATIO_ATTR, getRatio());
     w.tagln(NUMBER_OF_TASKS_ATTR, getNumberOfTasks());
     w.tagln(NUMBER_OF_UNPLANNED_TASKS_ATTR, getNumberOfUnplannedTasks());
     w.tagln(NUMBER_OF_UNESTIMATED_TASKS_ATTR, getNumberOfUnestimatedTasks());
@@ -155,6 +156,8 @@ public class SimpleCompletionData extends CompletionData{
       if (name.equals(NAME_TAG)) {
       } else if (name.equals(TIME_MILLIS_ATTR)) {
 	timeMillis = Long.parseLong(data);
+      } else if (name.equals(RATIO_ATTR)) {
+	ratio = Double.parseDouble(data);
       } else if (name.equals(NUMBER_OF_TASKS_ATTR)) {
 	numTasks = Integer.parseInt(data);
       } else if (name.equals(NUMBER_OF_UNPLANNED_TASKS_ATTR)) {

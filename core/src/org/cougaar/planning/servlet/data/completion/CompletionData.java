@@ -45,10 +45,13 @@ public abstract class CompletionData implements XMLable, DeXMLable, Serializable
 
   public static final String TIME_MILLIS_ATTR = 
     "TimeMillis";
+  public static final String RATIO_ATTR = 
+    "Ratio";
   public static final String NUMBER_OF_TASKS_ATTR = 
     "NumTasks";
 
   protected long timeMillis;
+  protected double ratio;
   protected int numTasks;
 
   //Constructors:
@@ -64,6 +67,11 @@ public abstract class CompletionData implements XMLable, DeXMLable, Serializable
     this.timeMillis = timeMillis;
   }
 
+  public void setRatio(double ratio) {
+    // assert (0.0 <= ratio && ratio <= 1.0);
+    this.ratio = ratio;
+  }
+
   public void setNumberOfTasks(int numTasks) {
     this.numTasks = numTasks;
   }
@@ -73,6 +81,11 @@ public abstract class CompletionData implements XMLable, DeXMLable, Serializable
 
   public long getTimeMillis() {
     return timeMillis;
+  }
+
+  /** number between 0.0 and 1.0, inclusive. */
+  public double getRatio() {
+    return ratio;
   }
 
   public int getNumberOfTasks() {

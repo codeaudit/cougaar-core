@@ -123,6 +123,7 @@ public class FullCompletionData extends CompletionData{
   public void toXML(XMLWriter w) throws IOException {
     w.optagln(NAME_TAG);
     w.tagln(TIME_MILLIS_ATTR, getTimeMillis());
+    w.tagln(RATIO_ATTR, getRatio());
     w.tagln(NUMBER_OF_TASKS_ATTR, getNumberOfTasks());
     for (int i = 0; i < getNumberOfUnplannedTasks(); i++) {
       getUnplannedTaskAt(i).toXML(w);
@@ -157,6 +158,8 @@ public class FullCompletionData extends CompletionData{
       if (name.equals(NAME_TAG)) {
       } else if (name.equals(TIME_MILLIS_ATTR)) {
 	timeMillis = Long.parseLong(data);
+      } else if (name.equals(RATIO_ATTR)) {
+	ratio = Double.parseDouble(data);
       } else if (name.equals(NUMBER_OF_TASKS_ATTR)) {
 	numTasks = Integer.parseInt(data);
       } else {
