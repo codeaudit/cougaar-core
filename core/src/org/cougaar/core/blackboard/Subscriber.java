@@ -161,10 +161,10 @@ public class Subscriber {
               synchronized (System.err) {
                 System.err.println(pe.getMessage());
                 BlackboardClient currentClient = null;
-                if (envelope instanceof OutboxEnvelope) {
-                  OutboxEnvelope e = (OutboxEnvelope) envelope;
-                  currentClient = e.theClient;
-                }
+//                 if (envelope instanceof OutboxEnvelope) {
+//                   OutboxEnvelope e = (OutboxEnvelope) envelope;
+//                   currentClient = e.theClient;
+//                 }
                 if (currentClient == null) {
                   currentClient = BlackboardClient.current.getClient();
                 }
@@ -468,12 +468,13 @@ public class Subscriber {
     return result;
   }
 
-  public static class OutboxEnvelope extends Envelope {
-    public OutboxEnvelope(BlackboardClient client) {
-      theClient = client;
-    }
-    public BlackboardClient theClient;
-  }
+// This won't work with persistence turned on. Don't _ever_ use operationally (ray)
+//   public static class OutboxEnvelope extends Envelope {
+//     public OutboxEnvelope(BlackboardClient client) {
+//       theClient = client;
+//     }
+//     public BlackboardClient theClient;
+//   }
 
   /** factory method for creating Envelopes of the correct type **/
   protected Envelope createEnvelope() {
