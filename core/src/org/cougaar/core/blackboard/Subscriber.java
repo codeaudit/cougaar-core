@@ -428,7 +428,8 @@ public class Subscriber {
     if (this instanceof Blackboard) return;               // No check for Blackboard
 
     if (Blackboard.PEDANTIC && arg instanceof Collection && pTracker.isNew()) {
-      logger.warn("PEDANTIC: A Collection published by "+theClient, new Throwable());
+      if (logger.isWarnEnabled())
+	logger.warn("PEDANTIC: A Collection published by "+theClient, new Throwable());
     }
 
     if (!isMyTransaction()) {
@@ -664,7 +665,8 @@ public class Subscriber {
       List crs = Transaction.getCurrentTransaction().getChangeReports(o);
       if (warnUnpublishChanges) {
         if (crs != null && crs.size()>0) {
-          logger.warn("Warning: publishRemove("+o+") is dropping outstanding changes:\n\t"+crs);
+	  if (logger.isWarnEnabled())
+	    logger.warn("Warning: publishRemove("+o+") is dropping outstanding changes:\n\t"+crs);
         }
       }
     }
@@ -723,7 +725,7 @@ public class Subscriber {
       if (isZeroChanges(crs)) {
         crs = AnonymousChangeReport.LIST;
       } else {
-        // use crs as-is
+	// use crs as-is
       }
     } else {
       if (isZeroChanges(crs)) {
@@ -970,7 +972,10 @@ public class Subscriber {
           stopTransaction();
         }
       } else {
-        //System.err.println("Closed nested transaction.");
+	// Nested transaction (more than 1 busy)?
+	//System.err.println("Closed nested transaction.");
+	if (logger.isDebugEnabled())
+	  logger.debug("Closed nested transaction.");
       }        
       // If no subscriptions we will never process the inbox. Empty
       // it to conserve memory instead of waiting for
@@ -999,12 +1004,13 @@ public class Subscriber {
     Map map = Transaction.getCurrentTransaction().getChangeMap();
     if (warnUnpublishChanges) {
       if (map == null || map.size()==0) return;
-      
-      logger.warn("Ignoring outstanding unpublished changes:");
+      if (logger.isWarnEnabled())
+	logger.warn("Ignoring outstanding unpublished changes:");
       for (Iterator ki = map.keySet().iterator(); ki.hasNext(); ) {
         Object o = ki.next();
         List l = (List)map.get(o);
-        logger.warn("\t"+o+" ("+l.size()+")");
+	if (logger.isWarnEnabled())
+	  logger.warn("\t"+o+" ("+l.size()+")");
         // we could just publish them with something like:
         //handleActiveSubscriptionObjects()
         //clientChangedObject(o, l);
