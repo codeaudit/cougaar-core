@@ -31,7 +31,7 @@ final class SchedulableObject implements Schedulable
     private ThreadPool.PooledThread thread;
     private Runnable runnable;
     private String name;
-    private boolean restart;
+    private int start_count;
     private boolean cancelled;
     private boolean queued;
     private boolean disqualified;
@@ -49,6 +49,7 @@ final class SchedulableObject implements Schedulable
         else
             this.name = name;
         this.consumer = consumer;
+	this.start_count = 0;
     }
 
 
@@ -114,42 +115,36 @@ final class SchedulableObject implements Schedulable
     // Callback from the Reclaimer.
     void reclaimNotify() {
         scheduler.releaseRights(scheduler, this);
-        if (restart) {
-            // The restart flag indicates that the start() was called
-            // on the Schedulable while it was running.  In this case
-            // just restart it here.
-            Starter.push(this);
-        }
+
+	// If start_count > 1, start() was called while the
+	// Schedulable was running.  Now that it's finished,  start it
+	// again. 
+	boolean restart = false;
+	synchronized (this) {
+	    restart = --start_count > 0;
+	}
+        if (restart) Starter.push(this);
     }
 
     void thread_start() {
         synchronized (this) {
-            restart = false;
+            start_count = 1; // forget any extra intervening start() calls
             queued = false;
-            restart = false;
             thread = pool.getThread(runnable, name);
             thread.start(this);
         }
     }
 
     public void start() {
-
         synchronized (this) {
+	    // If the Schedulable has been cancelled, or has already
+	    // been asked to start, there's nothing further to do.
             if (cancelled) return;
-            if (restart) {
-                // If the Schedulable has already been tagged to
-                // restart, there's nothing further to do.
-                return;
-            }
-            if (thread != null) {
-                // Schedulable is currently running. Set the
-                // restart flag and exit.
-                restart = true;
-                return;
-            }
-
+            if (++start_count > 1) return;
         }
 
+	// We only get here if the Schedulable has not been
+	// cancelled  and if start_count has gone from 0 to 1.
         Starter.push(this);
     }
 
@@ -172,7 +167,7 @@ final class SchedulableObject implements Schedulable
     public boolean cancel() {
         synchronized (this) {
             cancelled = true;
-            restart = false;
+	    start_count = 0;
             if (thread != null) {
                 // Currently running. 
                 return false;
