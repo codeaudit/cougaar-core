@@ -1,3 +1,24 @@
+2001-02-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PublishHistory
+	New facility to assist in debugging publishing errors.
+
+	PublishHistory keeps a stack dump for the most recent add, change,
+	and publish events for an object. The stack dumps are flushed
+	after a minute of inactivity for the object. The stack dumps for
+	any particular object may be dumped as needed.
+	
+	A PublishHistory object may be instantiated in the Distributor and
+	accessed from the Subscriber (for saving publishing events) and
+	from the ALPPlan. The interfaces for the ALPPlan and LogPlan have
+	been augmented to allow the history object to be retrieved.
+	
+	The ComplainingLP has been modified to use to dump the recent
+	stack traces for objects about which it complains.
+
+	The history object is only instantiated if
+	-Dorg.cougaar.core.cluster.publishHistory=true
+
 2001-02-26  Michael Thome  <mthome@bbn.com>
 
 	* SharedPlugInManager
