@@ -547,10 +547,10 @@ public class Distributor {
    * with needToPersist being true.
    **/
   private void doPersistence() {
-    doPersistence(false);
+    doPersistence(false, false);
   }
 
-  private Object doPersistence(boolean persistedStateNeeded) {
+  private Object doPersistence(boolean persistedStateNeeded, boolean full) {
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
       if (subscriber.isReadyToPersist()) {
@@ -561,7 +561,7 @@ public class Distributor {
     synchronized (getMessageManager()) {
       getMessageManager().advanceEpoch();
       result = persistence.persist(epochEnvelopes, emptyList, subscriberStates,
-                                   persistedStateNeeded,
+                                   persistedStateNeeded, full,
                                    lazyPersistence ? null : getMessageManager());
     }
     epochEnvelopes.clear();
@@ -617,16 +617,18 @@ public class Distributor {
    * Force a persistence delta to be generated.
    **/
   public void persistNow() throws PersistenceNotEnabledException {
-    persist(false);
+    persist(false, false);
+    System.gc();
+    persist(false, true);
   }
 
   /**
    * Force a (full) persistence delta to be generated and return result
    **/
   public Object getState() throws PersistenceNotEnabledException {
-    persist(false);
+    persist(false, false);
     System.gc();
-    return persist(true);
+    return persist(true, true);
   }
 
   /**
@@ -639,7 +641,7 @@ public class Distributor {
    * persistence delta if isStateWanted is true, null if isStateWanted
    * is false.
    **/
-  private Object persist(boolean isStateWanted)
+  private Object persist(boolean isStateWanted, boolean full)
     throws PersistenceNotEnabledException
   {
     if (persistence == null)
@@ -656,7 +658,7 @@ public class Distributor {
           }
         }
         // We are the only one left in the pool
-        return doPersistence(isStateWanted);
+        return doPersistence(isStateWanted, full);
       } finally {
         --transactionCount;
       }
