@@ -59,7 +59,7 @@ public class MutableTimeSpan implements NewTimeSpan {
    * setTimeSpan - sets the start and end time of the time span
    * Expected to enforce that startTime < endTime
    * 
-   * @throw IllegalArgumentException if startTime >= endTime
+   * @throws IllegalArgumentException if startTime >= endTime
    */
   public void setTimeSpan(long startTime, long endTime) {
     if ((startTime >= MIN_VALUE) &&

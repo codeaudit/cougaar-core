@@ -176,7 +176,7 @@ public class SynchronizedTimeSpanSet extends TimeSpanSet {
    * unsafeUpdate - not synchronized. As a protected method it assumes that
    * caller already has the synch lock.
    * Should only be used if c has already been validated.
-   * @returns boolean - true if any elements added else false.
+   * @return boolean - true if any elements added else false.
    */
   protected boolean unsafeUpdate(Collection c) {
     synchronized (c) {

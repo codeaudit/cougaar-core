@@ -78,7 +78,7 @@ public class ThemeFactory {
    * MetalLookAndFeel as the UIManager default.
    *
    * @see javax.swing.plaf.metal.MetalLookAndFeel
-   * @see javax.swing.UIManager.setLookAndFeel
+   * @see javax.swing.UIManager#setLookAndFeel
    */
   static public void establishMetalTheme() {
     try {

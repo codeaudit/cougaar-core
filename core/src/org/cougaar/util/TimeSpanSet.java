@@ -343,7 +343,7 @@ public class TimeSpanSet
   /** 
    * unsafeUpdate - replaces all elements with specified Collection
    * Should only be used if c has already been validated.
-   * @returns boolean - true if any elements added else false.
+   * @return boolean - true if any elements added else false.
    */
   protected boolean unsafeUpdate(Collection c) {
     clear();
