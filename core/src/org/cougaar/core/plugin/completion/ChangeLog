@@ -1,3 +1,13 @@
+2002-09-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* HowTo.txt:
+	Add documentation of all plugin parameters.
+
+	* CompletionSourcePlugin.java:
+	Add TASK_COMPLETION_THRESHOLD=<long milliseconds> parameter.
+	Determine the fraction of tasks that must be completed for the
+	agent to have completed. Defaults to 0.99 (99%). 
+
 2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* CompletionTargetPlugin.java:
