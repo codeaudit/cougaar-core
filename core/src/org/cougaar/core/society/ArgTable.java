@@ -101,10 +101,6 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
         put(CS_KEY, args[x++]);
       else if (check.equals("-ns"))
         put(NS_KEY, args[x++]);
-      else if (check.equals("-control"))
-        put(CONTROL_KEY, args[x++]);
-      else if (check.equals("-controlPort"))
-        put(CONTROL_PORT_KEY, args[x++]);
       else if (check.equals("-d"))
         put(DBNAME_KEY, args[x++] );
       else if (check.equals("-f"))

@@ -116,13 +116,6 @@ import java.beans.Beans;
  * @property org.cougaar.security.certificate
  *   The path of the <em>org.cougaar.install.path</em> for finding the 
  *   <em>org.cougaar.validate.jars</em> certificates.
- * @property org.cougaar.control.host
- *   The host address for the optional external (RMI) controller of this 
- *   Node; requires <em>org.cougaar.control.port</em>.  Defaults to no 
- *   external control.
- * @property org.cougaar.control.port
- *   The port address for the <em>org.cougaar.control.host</em>; requires 
- *   <em>org.cougaar.control.host</em>.  Defaults to no external control.
  *
  * @property org.cougaar.config
  *   Only used by Node to transfer a command-line "-config X" to
@@ -311,18 +304,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     if (experimentId != null) {
       props.put("org.cougaar.experiment.id", experimentId);
       System.err.println("Using experiment ID "+experimentId);
-    }
-
-    String controlHost = (String) myArgs.get(ArgTableIfc.CONTROL_KEY);
-    if (controlHost != null) {
-      props.put("org.cougaar.control.host", controlHost);
-      System.err.println("Using control host "+controlHost);
-    }
-
-    String controlPort = (String) myArgs.get(ArgTableIfc.CONTROL_PORT_KEY);
-    if (controlPort != null) {
-      props.put("org.cougaar.control.port", controlPort);
-      System.err.println("Using control port "+controlPort);
     }
   }
 
@@ -576,6 +557,13 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
           "Only one allowed.");
     }
 
+    /* BEGIN_TWRIGHT */
+    System.out.println("\n\nDEBUGGING NODE!!!");
+    System.out.println("  Node name: \""+name+"\"");
+    System.out.println("  File name: \""+filename+"\"");
+    System.out.println("  Experiment Id: \""+experimentId+"\"\n\n");
+    /* END___TWRIGHT */
+
     // set the node name
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
@@ -611,7 +599,7 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     ServiceProvider sp;
     if (filename != null)
       sp = new FileInitializerServiceProvider();
-    else
+    else 
       sp = new DBInitializerServiceProvider(experimentId);
     sb.addService(InitializerService.class, sp);
     InitializerService is = (InitializerService) sb.getService(
@@ -627,7 +615,8 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     initTransport();  
     initQos();
 
-    registerExternalNodeController();
+    // register for external control by the AppServer
+    //   -- disabled for now --
 
     // load the clusters
     //
@@ -669,91 +658,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
   }
 
 
-  // external controller for this node
-  private ExternalNodeController eController;
-
-  /**
-   * Create an <code>ExternalNodeController</code> for this Node and 
-   * register it for external use.
-   * <p>
-   * Currently uses RMI, but could be modified to use another protocol
-   * (e.g. HTTP server).
-   */
-  private void registerExternalNodeController() {
-    // get the RMI registry host and port address
-    String rmiHost = System.getProperty("org.cougaar.control.host");
-    if (rmiHost == null) {
-      // default to localhost
-      try {
-        rmiHost = findHostName();
-      } catch (UnknownHostException e) {
-      }
-    } else if (rmiHost.length() <= 0) {
-      rmiHost = null;
-    }
-    int rmiPort = -1;
-    String srmiPort = System.getProperty("org.cougaar.control.port");
-    if ((srmiPort != null) &&
-        (srmiPort.length() > 0)) {
-      try {
-        rmiPort = Integer.parseInt(srmiPort);
-      } catch (NumberFormatException e) {
-      }
-    }
-
-    if ((rmiHost == null) ||
-        (rmiPort <= 0)) {
-      // don't register this Node
-      System.err.println("Not registered for external RMI control");
-      return;
-    }
-
-    try {
-      //
-      // add an RMI stub for this Node in the RMI space
-      //
-      // a better implementation is to lookup the external controller
-      //   and register this node for external control, since it leaves
-      //   the RMI space clean...
-      //
-
-      /*
-      // create the local hook
-      ExternalNodeController localENC = new ExternalNodeControllerImpl(this);
-      
-      // export to a remote hook
-      ExternalNodeController remoteENC = 
-        (ExternalNodeController)UnicastRemoteObject.exportObject(localENC);
-        */
-      ExternalNodeController remoteENC = new ExternalNodeControllerImpl(this);
-      
-      // use the NodeIdentifier's address as the binding name
-      //  - this might need to be modified to incorporate the host name...
-      String bindName = getIdentifier();
-
-      // get the RMI registry
-      Registry reg = LocateRegistry.getRegistry(rmiHost, rmiPort);      
-
-      // make available
-      reg.rebind(bindName, remoteENC);
-      
-      System.err.println(
-          "Registered for external control as \""+bindName+"\""+
-          " in RMI registry \""+rmiHost+":"+rmiPort+"\"");
-
-      eController = remoteENC;
-
-      // never unbind!  this leaves a mess...
-      //reg.unbind(getIdentifier());
-      //UnicastRemoteObject.unexportObject(remoteENC, true);
-    } catch (Exception e) {
-      System.err.println("Unable to register for external control:");
-      e.printStackTrace();
-    }
-  }
-  
- 
-
   // Need this so that when the AgentManager creates a cluster, the cluster
   // gets properly hooked up with the externalnodeactionlistener and
   // gets put into the Node's running list of clusters.
@@ -761,32 +665,8 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
   // should probably be cleanup up further.
 
   private void registerCluster(ClusterServesClusterManagement cluster) {
-    // get the (optional) external listener
-    ExternalNodeActionListener eListener;
-    try {
-      eListener =
-        ((eController != null) ? 
-         eController.getExternalNodeActionListener() :
-         null);
-    } catch (Exception e) {
-      eListener = null;
-    }
-    
-    // notify the listener
-    if (eListener != null) {
-      if (cluster != null) {
-        try {
-          eListener.handleClusterAdd(eController, cluster.getClusterIdentifier());
-        } catch (Exception e) {
-          // lost listener?  should we kill this Node?
-          System.err.println("Lost connection to external listener? "+e.getMessage());
-          try {
-            eController.setExternalNodeActionListener(null);
-          } catch (Exception e2) {
-          }
-        }
-      }
-    }
+    // notify the remote AppServer controller
+    //  -- disabled for now --
   }
 
 
