@@ -49,7 +49,6 @@ final class SchedulableObject implements Schedulable
     private int blocking_type = SchedulableStatus.NOT_BLOCKING;
     private String blocking_excuse;
     private int lane;
-    private String toString;
 
     SchedulableObject(TreeNode treeNode, 
                       Runnable runnable, 
@@ -70,9 +69,6 @@ final class SchedulableObject implements Schedulable
             this.name =  pool.generateName();
         else
             this.name = name;
-	toString = "<Schedulable " 
-	    +(name == null ? "anonymous" : name)+
-	    /* " for " +consumer+ */">";
         this.consumer = consumer;
 	this.start_count = 0;
     }
@@ -116,7 +112,9 @@ final class SchedulableObject implements Schedulable
     }
 
     public String toString() {
-        return toString;
+        return 	"<Schedulable " 
+	    +(name == null ? "anonymous" : name)+
+	    ">";
     }
 
     public long getTimestamp() {

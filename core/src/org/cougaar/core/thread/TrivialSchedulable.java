@@ -40,7 +40,6 @@ class TrivialSchedulable implements Schedulable
     private TimerTask task;
     private long start_time;
     private int state;
-    private String toString;
 
     TrivialSchedulable(Runnable runnable, 
 		       String name,
@@ -51,9 +50,6 @@ class TrivialSchedulable implements Schedulable
             this.name =  TrivialThreadPool.pool().generateName();
         else
             this.name = name;
-	toString = "<Schedulable " 
-	    +(name == null ? "anonymous" : name)+
-	    /* " for " +consumer+ */">";
         this.consumer = consumer;
 	this.start_count = 0;
     }
@@ -96,7 +92,9 @@ class TrivialSchedulable implements Schedulable
 
     public String toString() 
     {
-        return toString;
+        return 	"<Schedulable " 
+	    +(name == null ? "anonymous" : name)+
+	    ">";
     }
 
     public Object getConsumer() 
