@@ -106,8 +106,18 @@ public class PluginManager
   }
 
   public boolean add(Object o) {
+    Logger l = getLogger();
     try {
-      return super.add(o);
+      if (l.isInfoEnabled()) {
+        MessageAddress cid = getBindingSite().getAgentIdentifier();
+        l.info("Agent "+cid+" adding plugin "+o);
+      }
+      boolean result = super.add(o);
+      if (l.isInfoEnabled()) {
+        MessageAddress cid = getBindingSite().getAgentIdentifier();
+        l.info("Agent "+cid+" added plugin "+o);
+      }
+      return result;
     } catch (RuntimeException re) {
       getLogger().error("Failed to add "+o+" to "+this, re);
       throw re;
