@@ -1,5 +1,16 @@
 2002-04-25  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug 1212
+	Accomodate method name changes to fix bug 1212. This code itself
+	still needs work to correctly implement attribute-based address
+	resolution
+
+	* org/cougaar/multicast/AttributeBasedAddress.java: 
+	Bug 1212
+	Change "role" to "attribute". These are attribute-based addressed,
+	not role-based addresses.
+
 	* org/cougaar/core/adaptivity/PlayHelper.java:
 	Improve documentation of updateOperatingModes to include the case
 	of attribute-based remote operating modes. Also fix the parser of
