@@ -22,6 +22,7 @@
 package org.cougaar.core.naming;
 
 import org.cougaar.core.service.*;
+import org.cougaar.util.log.*;
 
 import java.rmi.RemoteException;
 
@@ -29,6 +30,7 @@ import javax.naming.*;
 import javax.naming.directory.*;
 import javax.naming.spi.*;
 import java.util.*;
+
 
 /**
  * Implementation of javax.naming.directory.DirContext for 
@@ -39,7 +41,8 @@ public class NamingDirContext extends NamingContext implements DirContext {
   protected final static NameParser myParser = new NamingParser();
   protected final static SearchStringParser filterParser = new SearchStringParser();
   protected final static SearchControls defaultSearchControls = new SearchControls();
-  
+  protected static Logger log = Logging.getLogger(NamingDirContext.class.getName());
+
   protected NamingDirContext(NS ns, NSKey nsKey, Hashtable inEnv) {
     super(ns, nsKey, inEnv);
 
@@ -222,6 +225,8 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (attrs == null || attrs.size() == 0) {
       throw new IllegalArgumentException("Cannot modify without an attribute");
     }
+    
+    checkAttributes(attrs);
     
     // Turn it into a modification list and pass it on
     NamingEnumeration attrEnum = attrs.getAll();
@@ -1702,4 +1707,28 @@ public class NamingDirContext extends NamingContext implements DirContext {
       super(entries);
     }
   }  
+
+  //  Make sure all attribute values are String or byte[].
+  //  Maintains compatiblity with LDAP.
+  private static void checkAttributes(Attributes attribs) {
+      try {
+          NamingEnumeration enum = attribs.getAll();
+          while (enum.hasMoreElements()) {
+              Attribute a = (Attribute)enum.nextElement();
+              NamingEnumeration vals = a.getAll();
+              while (vals.hasMoreElements()) {
+                  Object val = vals.nextElement();
+                  if ((val instanceof String) || (val instanceof byte[]))
+                      continue;
+                  else {
+                      if (log.isWarnEnabled()) log.warn("Attribute "+a.getID()+" has a value that is neither String nor byte[]: "+val.getClass().getName());
+                      if (log.isDebugEnabled()) log.debug("Bad attribute type", new Exception("Stack Trace"));
+                  }
+              }
+          }
+      }
+      catch (NamingException ex) {
+          if (log.isWarnEnabled()) log.warn("Exception checking attributes");
+      }
+  }
 }
