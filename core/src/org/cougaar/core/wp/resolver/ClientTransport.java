@@ -50,7 +50,7 @@ import org.cougaar.core.service.wp.WhitePagesProtectionService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.core.wp.RarelyModifiedList;
+import org.cougaar.util.RarelyModifiedList;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.GenericStateModelAdapter;
 
@@ -867,13 +867,13 @@ implements Component
 
     // tell our clients
     if (lookup) {
-      List l = lookupClients.getList();
+      List l = lookupClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         LookupService.Client c = (LookupService.Client) l.get(i);
         c.lookupAnswer(baseTime, m);
       }
     } else {
-      List l = modifyClients.getList();
+      List l = modifyClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         ModifyService.Client c = (ModifyService.Client) l.get(i);
         c.modifyAnswer(baseTime, m);

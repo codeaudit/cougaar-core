@@ -45,7 +45,7 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
-import org.cougaar.core.wp.RarelyModifiedList;
+import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This is the client-side white pages resolver, which includes
@@ -286,7 +286,7 @@ extends ContainerSupport
     bindObservers.remove(bosc);
   }
   private void tellObservers(Request req) {
-    List l = bindObservers.getList();
+    List l = bindObservers.getUnmodifiableList();
     for (int i = 0, n = l.size(); i < n; i++) {
       BindObserverService.Client bosc =
         (BindObserverService.Client) l.get(i);

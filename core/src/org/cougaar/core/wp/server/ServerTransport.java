@@ -49,7 +49,7 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.core.wp.RarelyModifiedList;
+import org.cougaar.util.RarelyModifiedList;
 import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.core.wp.resolver.ConfigReader;
 import org.cougaar.core.wp.resolver.WPAnswer;
@@ -648,25 +648,25 @@ implements Component
 
     // tell our clients (refactor me?)
     if (action == WPQuery.LOOKUP) {
-      List l = lookupAckClients.getList();
+      List l = lookupAckClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         LookupAckService.Client c = (LookupAckService.Client) l.get(i);
         c.lookup(clientAddr, clientTime, m);
       }
     } else if (action == WPQuery.MODIFY) {
-      List l = modifyAckClients.getList();
+      List l = modifyAckClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         ModifyAckService.Client c = (ModifyAckService.Client) l.get(i);
         c.modify(clientAddr, clientTime, m);
       }
     } else if (action == WPQuery.FORWARD) {
-      List l = forwardAckClients.getList();
+      List l = forwardAckClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         ForwardAckService.Client c = (ForwardAckService.Client) l.get(i);
         c.forward(clientAddr, clientTime, m);
       }
     } else if (action == FORWARD_ANSWER) {
-      List l = forwardClients.getList();
+      List l = forwardClients.getUnmodifiableList();
       for (int i = 0, ln = l.size(); i < ln; i++) {
         ForwardService.Client c = (ForwardService.Client) l.get(i);
         c.forwardAnswer(clientAddr, clientTime, m);

@@ -42,7 +42,7 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.core.wp.RarelyModifiedList;
+import org.cougaar.util.RarelyModifiedList;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.GenericStateModelAdapter;
 
@@ -385,7 +385,7 @@ implements Component
     clients.remove(c);
   }
   private void tellClients() {
-    List cl = clients.getList();
+    List cl = clients.getUnmodifiableList();
     for (int i = 0, ln = cl.size(); i < ln; i++) {
       SelectService.Client c = (SelectService.Client) cl.get(i);
       c.onChange();
