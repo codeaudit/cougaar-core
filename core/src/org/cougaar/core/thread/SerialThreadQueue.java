@@ -21,36 +21,31 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
+import org.cougaar.util.CircularQueue;
 
-final class SerialThreadRunner
+final class SerialThreadQueue
 {
-    private Thread thread;
-    private TrivialSchedulable current;
-    private SerialThreadQueue queue;
+	
+    private CircularQueue schedulables;
+    private Object lock;
 
-    SerialThreadRunner(SerialThreadQueue queue) 
+    SerialThreadQueue()
     {
-	this.queue = queue;
-	thread = new Thread(new Body(), "Serial Thread Runner");
-	thread.setDaemon(true);
-	thread.start();
+	schedulables = new CircularQueue();
+	lock = new Object();
     }
 
-
-    Thread getThread()
-    {
-	return thread;
-    }
-
-    void listThreads(ArrayList records)
+    void listThreads(java.util.ArrayList records)
     {
 	Object[] objects;
 	TrivialSchedulable sched;
 	ThreadStatusService.Record record;
-	sched = current;
-	if (sched != null) {
-	    record = new ThreadStatusService.RunningRecord();
+	synchronized (lock) {
+	    objects = schedulables.toArray();
+	}
+	for (int i=0; i<objects.length; i++) {
+	    sched = (TrivialSchedulable) objects[i];
+	    record = new ThreadStatusService.QueuedRecord();
 	    try {
 		Object consumer = sched.getConsumer();
 		record.scheduler = "root";
@@ -68,39 +63,38 @@ final class SerialThreadRunner
 	}
     }
 
-
-    private void dequeue() 
+    Object getLock()
     {
-	while (true) {
-	    synchronized (queue.getLock()) {
-		current = queue.next();
-	    }
-	    if (current == null) return;
-	    
-	    current.getRunnable().run();
-	    current.thread_stop();
-	    current = null;
-	}
+	return lock;
     }
 
-    private class Body implements Runnable 
+    void enqueue(TrivialSchedulable sched) 
     {
-	public void run() 
-	{
-	    Object lock = queue.getLock();
-	    while (true) {
-		dequeue();
-		synchronized (lock) {
-		    while (queue.isEmpty()) {
-			try { 
-			    lock.wait();
-			    break;
-			} catch (InterruptedException ex) {
-			}
-		    }
-		}
+	synchronized (lock) {
+	    if (!schedulables.contains(sched)) {
+		schedulables.add(sched);
+		lock.notify();
 	    }
 	}
     }
+
+    // caller synchronizes
+    boolean isEmpty()
+    {
+	return schedulables.isEmpty();
+    }
+
+    // caller synchronizes
+    TrivialSchedulable next() 
+    {
+	if (schedulables.isEmpty())
+	    return null;
+	else
+	    return (TrivialSchedulable) schedulables.next();
+    }
+
 
 }
+
+
+

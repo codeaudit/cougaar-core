@@ -23,21 +23,21 @@ package org.cougaar.core.thread;
 
 class SerialSchedulable extends TrivialSchedulable
 {
-    private SerialThreadRunner runner;
+    private SerialThreadQueue queue;
 
     SerialSchedulable(Runnable runnable, 
 		      String name,
 		      Object consumer,
-		      SerialThreadRunner runner) 
+		      SerialThreadQueue queue) 
     {
 	super(runnable, name, consumer);
-	this.runner = runner;
+	this.queue = queue;
     }
 
     Thread runThread()
     {
-	runner.enqueue(this);
-	return runner.getThread();
+	queue.enqueue(this);
+	return Thread.currentThread(); // dummy return, must be non-null
     }
    
 }

@@ -30,30 +30,35 @@ import java.util.ArrayList;
 final class SingleThreadServiceProxy
     extends TrivialThreadServiceProxy
 {
+    private static final int NUMBER_OF_RUNNERS = 1;
 
-    private static SerialThreadRunner runner;
+    private static SerialThreadQueue queue;
+    private static SerialThreadRunner[] runners;
     
     static {
-	runner = new SerialThreadRunner();
+	queue = new SerialThreadQueue();
+	runners = new SerialThreadRunner[NUMBER_OF_RUNNERS];
+	for (int i=0; i<runners.length; i++)
+	    runners[i] = new SerialThreadRunner(queue);
     }
 	
+
     SingleThreadServiceProxy()
     {
 	super();
-	// runner = new SerializedThreadRunner();
     }
 
     public Schedulable getThread(Object consumer, 
 				 Runnable runnable, 
 				 String name) 
     {
-	return new SerialSchedulable(runnable, name, consumer,
-				     runner);
+	return new SerialSchedulable(runnable, name, consumer, queue);
     }
 
     void listThreads(ArrayList list)
     {
-	runner.listThreads(list);
+	for (int i=0; i<runners.length; i++) runners[i].listThreads(list);
+	queue.listThreads(list);
     }
 
 }

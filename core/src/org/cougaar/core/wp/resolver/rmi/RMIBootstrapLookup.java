@@ -195,6 +195,20 @@ extends BootstrapLookupBase
        "rmi".equals(scheme));
   }
 
+  protected boolean shouldReplace(
+      AddressEntry oldEntry,
+      AddressEntry newEntry) {
+    String oldType = (oldEntry == null ? null : oldEntry.getType());
+    String newType = (newEntry == null ? null : newEntry.getType());
+    // prefer SSLRMI over RMI
+    //
+    // FIXME this can get confused upon unbind, since a null is
+    // passed instead of the unbound entry.  For now this is fine,
+    // since we only unbind these entries on agent unload.
+    return
+      (!("-SSLRMI".equals(oldType) && "-RMI".equals(newType)));
+  }
+
   protected LookupTimer createLookupTimer(AddressEntry bootEntry) {
     AddressEntry ae = bootEntry;
     if (RESOLVE_HOSTS) {

@@ -98,7 +98,8 @@ public final class ThreadServiceProvider
 		new TrivialThreadServiceProvider().makeServices(sb);
 	    return;
 	} else if (type.equals("single")) {
-	    new SingleThreadServiceProvider().makeServices(sb);
+	    if (isRoot)
+		new SingleThreadServiceProvider().makeServices(sb);
 	    return;
 	}
 
