@@ -86,9 +86,13 @@ import org.cougaar.util.log.Logging;
  *   a '.' every few seconds when nothing else much is going on.
  *   This is a one-per-vm function.  Default <em>true</em>.
  *
+ * @property org.cougaar.core.load.ns
+ *   If set to "true", the node will load the old NamingService
+ *   component.  See bug 2522.  Default <em>false</em>
+ *
  * @property org.cougaar.core.load.wp
- *   If enabled, the node will load the WhitePagesService
- *   component.  See bug 2522.  Default <em>true</em>
+ *   If set to "new", the node will load the new WhitePagesService
+ *   component.  See bug 2522.  Default <em>new</em>
  *
  * @property org.cougaar.core.load.community
  *   If enabled, the node will load the CommunityService
@@ -130,8 +134,8 @@ extends SimpleAgent
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
-    isNSEnabled=PropertyParser.getBoolean("org.cougaar.core.load.ns", true);
-    String wpFlag=System.getProperty("org.cougaar.core.load.wp", "true");
+    isNSEnabled=PropertyParser.getBoolean("org.cougaar.core.load.ns", false);
+    String wpFlag=System.getProperty("org.cougaar.core.load.wp", "new");
     isOldWPEnabled=
       ("true".equalsIgnoreCase(wpFlag) ||
        "old".equals(wpFlag) ||
