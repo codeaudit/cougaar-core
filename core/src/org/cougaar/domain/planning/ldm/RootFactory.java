@@ -87,10 +87,12 @@ public class RootFactory
         pfc = pf.getClass();
       }
 
-      if (propertyFactories.contains(pf)) {
-        return;
-      } else {
-        propertyFactories.add(pf);
+      synchronized (propertyFactories) {
+        if (propertyFactories.contains(pf)) {
+          return;
+        } else {
+          propertyFactories.add(pf);
+        }
       }
 
       Field f = pfc.getField("properties");
@@ -140,10 +142,12 @@ public class RootFactory
   public final void addAssetFactory(EssentialAssetFactory af) {
     try {
       // check for redundant add
-      if (assetFactories.contains(af)) {
-        return;
-      } else {
-        assetFactories.add(af);
+      synchronized (assetFactories) {
+        if (assetFactories.contains(af)) {
+          return;
+        } else {
+          assetFactories.add(af);
+        }
       }
 
       Class afc = af.getClass();
