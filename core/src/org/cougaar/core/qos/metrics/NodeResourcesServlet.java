@@ -81,17 +81,22 @@ public class NodeResourcesServlet
 		     0.0, 4.0, true, f4_2);
 	outputMetric(out,nodePath,"Count",
 		     1.0, 5.0, true, f2_0);
+	outputMetric(out,nodePath,"Jips",
+		     1.0, 400000000.0, false, f7_0);
+	outputMetric(out,nodePath,"BogoMips",
+		     1.0, 800.0, false, f7_0);
+	outputMetric(out,nodePath,"Cache",
+		     1.0, 256, false, f7_0);
 	outputMetric(out,nodePath,"TcpInUse",
-		     0.0, 20.0, true, f3_0);
+		     0.0, 50.0, true, f3_0);
 	outputMetric(out,nodePath,"UdpInUse",
-		     0.0, 20.0, true, f3_0);
+		     0.0, 50.0, true, f3_0);
 	outputMetric(out,nodePath,"TotalMemory",
 		     0.0, 256000.0, false, f7_0);
 	outputMetric(out,nodePath,"FreeMemory",
 		     0.0, 32000, false, f7_0);
-	outputMetric(out,nodePath,"Cache",
-		     0.0, 20.0, true, f7_0);
-
+	outputMetric(out,nodePath,"MeanTimeBetweenFailure",
+		     1.0, 1000.0, false, f7_0);
 
 	out.print("</table>");
     }
