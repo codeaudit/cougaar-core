@@ -127,8 +127,10 @@ class TimeServiceProvider
       }
     }
 
+    /** map of <Alarm,AlarmWrapper> **/
     private final Map alarms = new HashMap(11);
 
+    /** create an AlarmWrapper around an Alarm, and remember it **/
     protected Alarm wrap(Alarm a) {
       Alarm w = new AlarmWrapper(a);
       synchronized (alarms) {
@@ -137,12 +139,14 @@ class TimeServiceProvider
       return w;
     }
 
+    /** drop an Alarm (not an AlarmWrapper) from the remembered alarms **/
     protected void forget(Alarm a) {
       synchronized (alarms) {
         alarms.remove(a);
       }
     }
 
+    /** Find the remembered AlarmWrapper matching a given Alarm **/
     protected AlarmWrapper find(Alarm a) {
       synchronized (alarms) {
         return (AlarmWrapper) alarms.get(a);
