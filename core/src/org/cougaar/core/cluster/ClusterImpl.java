@@ -241,9 +241,6 @@ public class ClusterImpl extends Agent
    **/
   private ClusterIdentifier myClusterIdentity_;
     
-  /** Container which manages the plugins **/
-  private PluginManager pluginManager;
-
   protected Persistence createPersistence() {
     if (System.getProperty("org.cougaar.core.cluster.persistence.enable", "false").equals("false"))
       return null;		// Disable persistence for now
@@ -429,9 +426,24 @@ public class ClusterImpl extends Agent
 
     // start up the pluginManager component - should really itself be loaded
     // as an agent subcomponent.
-    pluginManager = new PluginManager();
-    //System.err.println("Added PluginManager to "+this);
-    add(pluginManager);
+    //pluginManager = new PluginManager();
+    //create a component description for pluginmanager instead of an instance
+    String pimname = new String(getClusterIdentifier()+"PluginManager");
+    ComponentDescription pimdesc = new ComponentDescription(pimname,
+                                                            "Node.AgentManager.Agent.PluginManager",
+                                                            "org.cougaar.core.plugin.PluginManager",
+                                                            null, //codebase
+                                                            null, //parameters
+                                                            null, //certificate
+                                                            null, //lease
+                                                            null, //policy
+                                                            null  // state
+                                                            );
+                                                            
+    //add(pluginManager);
+    boolean pimwasadded = add(pimdesc);
+    //System.err.println("Added "+pimwasadded+" PluginManager: "+pimdesc+" to "+this);
+    
 
     //System.err.println("Cluster.load() completed");
   }
@@ -504,10 +516,10 @@ public class ClusterImpl extends Agent
         int operation = cm.getOperation();
         switch (operation) {
           case ComponentMessage.ADD:     
-            pluginManager.add(desc);     
+            //pluginManager.add(desc);     
             break;
           case ComponentMessage.REMOVE:  
-            pluginManager.remove(desc);  
+            //pluginManager.remove(desc);  
             break;
           case ComponentMessage.SUSPEND:
           case ComponentMessage.RESUME:
@@ -688,7 +700,9 @@ public class ClusterImpl extends Agent
     }
 
     // cluster metrics
-    ms.pluginCount = pluginManager.size();
+    //must now get this through its child components - until its hooked up return 1
+    //ms.pluginCount = pluginManager.size();
+    ms.pluginCount = 1;
     //no longer works from cluster as the sharedpluginmanager
     //is now a service
     //ms.thinPluginCount = getSharedPlugInManager().size();
