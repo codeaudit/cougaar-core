@@ -65,6 +65,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   private long ADVANCE_TIME_ADVANCE_DELAY = DEFAULT_ADVANCE_TIME_ADVANCE_DELAY;
   private long TIME_STEP = DEFAULT_TIME_STEP;
   private int advancementSteps = 0;
+  private int refreshInterval = 0;
   private boolean persistenceNeeded = false;
   private static final Class[] requiredServices = {
     ServletService.class
@@ -119,14 +120,18 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
     return topologyReaderService.getAll(TopologyReaderService.NODE);
   }
 
+  private void insureCompletionActions() {
+    if (completionActions == null) {
+      completionActions = getCompletionActions();
+    }
+  }
+
   protected void handleNewLaggard(Laggard worstLaggard) {
     boolean haveLaggard = worstLaggard != null && worstLaggard.isLaggard();
     if (logger.isInfoEnabled() && filter.filter(worstLaggard)) {
       logger.info(getClusterIdentifier() + ": new worst " + worstLaggard);
     }
-    if (completionActions == null) {
-      completionActions = getCompletionActions();
-    }
+    insureCompletionActions();
     if (nextCompletionAction < completionActions.length) {
       try {
         if (completionActions[nextCompletionAction].checkCompletion(haveLaggard)) {
@@ -212,11 +217,19 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
     protected void doPostOrGet(HttpServletRequest request, HttpServletResponse response, boolean doUpdate)
       throws IOException
     {
-      PrintWriter out = response.getWriter();
       if (!"Submit".equals(request.getParameter("submit"))) {
         doUpdate = false;
       }
+      try {
+        refreshInterval = Integer.parseInt(request.getParameter("refreshInterval"));
+      } catch (Exception e) {
+      }
       response.setContentType("text/html");
+      if (refreshInterval > 0) {
+        response.setHeader("Refresh", String.valueOf(refreshInterval));
+      }
+      PrintWriter out = response.getWriter();
+      insureCompletionActions();
       out.println("<html>\n  <head>\n    <title>Completion Control</title>\n  </head>");
       out.println("  <body>\n    <h1>Completion Control Servlet</h1>"
                   + "    <form action=\"completionControl\" method=\"post\">");
@@ -254,6 +267,15 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
                     "Specifies how many steps of advancement should be performed",
                     new Integer(advancementSteps),
                     request, out, doUpdate).intValue();
+      for (int i = 0; i < completionActions.length; i++) {
+        out.println("        <tr><td>" + completionActions[i].toString() + "</td><td>"
+                    + ((i < nextCompletionAction) ? "Completed" : "Pending")
+                    + "</td></tr>");
+      }
+      handleField("refreshInterval", "Automatic Refresh Interval (seconds)",
+                  "Specifies interval between automatic refresh of this screen",
+                  new Integer(refreshInterval),
+                  request, out, false);
       out.println("      </table>");
       out.println("<input type=\"submit\" name=\"submit\" value=\"Submit\">");
       out.println("<input type=\"submit\" name=\"submit\" value=\"Refresh\">");
