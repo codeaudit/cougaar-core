@@ -30,7 +30,7 @@ import org.cougaar.core.blackboard.DirectiveImpl;
  * Relay.Source.
  **/
 class RelayDirective extends DirectiveImpl {
-  private UID uid;
+  protected UID uid;
 
   protected RelayDirective(UID uid) {
     this.uid = uid;
@@ -55,6 +55,9 @@ class RelayDirective extends DirectiveImpl {
     public Relay.TargetFactory getTargetFactory() {
       return tf;
     }
+    public String toString() {
+      return "(add uid="+uid+" content="+content+")";
+    }
   }
 
   static class Change extends RelayDirective {
@@ -72,11 +75,17 @@ class RelayDirective extends DirectiveImpl {
     public Relay.TargetFactory getTargetFactory() {
       return tf;
     }
+    public String toString() {
+      return "(change uid="+uid+" content="+content+")";
+    }
   }
 
   static class Remove extends RelayDirective {
     public Remove(UID uid) {
       super(uid);
+    }
+    public String toString() {
+      return "(remove uid="+uid+")";
     }
   }
 
@@ -88,6 +97,9 @@ class RelayDirective extends DirectiveImpl {
     }
     public Object getResponse() {
       return response;
+    }
+    public String toString() {
+      return "(response uid="+uid+" response="+response+")";
     }
   }
 }
