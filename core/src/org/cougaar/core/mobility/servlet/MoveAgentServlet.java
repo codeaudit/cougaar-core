@@ -38,17 +38,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//import org.cougaar.core.agent.AgentIdentificationService;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.BlackboardClient;
 
-import org.cougaar.core.mobility.Ticket;
-import org.cougaar.core.mobility.ldm.MoveAgent;
+import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.AddTicket;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.RemoveTicket;
+import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.servlet.BaseServletComponent;
@@ -56,7 +59,7 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Servlet that allows the client to add a "MoveAgent"
+ * Servlet that allows the client to add a "AgentControl"
  * object to the blackboard.
  * <p>
  * The path of the servlet is "/move".
@@ -66,14 +69,19 @@ import org.cougaar.util.UnaryPredicate;
  *   <li><tt>action=STRING</tt><br>
  *       Option action selection, where the default is "Refresh".
  *       <p>
- *       "Refresh" displays the current Scripts.
+ *       "Refresh" displays the current status.
  *       <p>
- *       "Remove" removes the Script with the UID specified by
- *       the required "removeUID" parameter.
+ *       "Add" creates a new AgentControl request.  Most of the
+ *       parameters below are used to support this action.
  *       <p>
- *       "Add" creates a new Script.  Most of the parameters
- *       below are used to support "Add".
+ *       "Remove" removes the AgentControl with the UID specified
+ *       by the required "removeUID" parameter.
+ *       <p>
  *       </li><p>
+ *   <li><tt>op=String</tt><br>
+ *       Required operation, which may be "Move", "Add", or 
+ *       "Remove".  If none is specified then "Move" is assumed
+ *       (for backwards compatibility).
  *   <li><tt>removeUID=String</tt><br>
  *       If the action is "Remove", this is the UID of the script
  *       to be removed.  Any running processes are killed.
@@ -106,19 +114,20 @@ public class MoveAgentServlet
 extends BaseServletComponent
 implements BlackboardClient
 {
-  protected ClusterIdentifier agentId;
-  protected NodeIdentifier nodeId;
+  protected MessageAddress localAgent;
+  protected NodeIdentifier localNode;
 
   protected DomainService domain;
+  protected AgentIdentificationService agentIdService;
   protected NodeIdentificationService nodeIdService;
   protected BlackboardService blackboard;
 
   protected MobilityFactory mobilityFactory;
 
-  protected static final UnaryPredicate MOVE_AGENT_PRED =
+  protected static final UnaryPredicate AGENT_CONTROL_PRED =
     new UnaryPredicate() {
       public boolean execute(Object o) {
-        return (o instanceof MoveAgent);
+        return (o instanceof AgentControl);
       }
     };
 
@@ -132,9 +141,16 @@ implements BlackboardClient
     return new MyServlet();
   }
 
-  public void setNodeIdentificationService(NodeIdentificationService nodeIdService) {
+  public void setAgentIdentificationService(
+      AgentIdentificationService agentIdService) {
+    this.agentIdService = agentIdService;
+    this.localAgent = agentIdService.getMessageAddress();
+  }
+
+  public void setNodeIdentificationService(
+      NodeIdentificationService nodeIdService) {
     this.nodeIdService = nodeIdService;
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.localNode = nodeIdService.getNodeIdentifier();
   }
 
   public void setBlackboardService(BlackboardService blackboard) {
@@ -145,16 +161,6 @@ implements BlackboardClient
     this.domain = domain;
     mobilityFactory = 
       (MobilityFactory) domain.getFactory("mobility");
-  }
-
-  // aquire services:
-  public void load() {
-    // FIXME need AgentIdentificationService
-    org.cougaar.core.plugin.PluginBindingSite pbs =
-      (org.cougaar.core.plugin.PluginBindingSite) bindingSite;
-    this.agentId = pbs.getAgentIdentifier();
-
-    super.load();
   }
 
   // release services:
@@ -175,37 +181,41 @@ implements BlackboardClient
           this, NodeIdentificationService.class, nodeIdService);
       nodeIdService = null;
     }
-    // release agentIdService
+    if (agentIdService != null) {
+      serviceBroker.releaseService(
+          this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
   }
 
-  protected Collection queryMoveAgents() {
+  protected Collection queryAgentControls() {
     Collection ret = null;
     try {
       blackboard.openTransaction();
-      ret = blackboard.query(MOVE_AGENT_PRED);
+      ret = blackboard.query(AGENT_CONTROL_PRED);
     } finally {
       blackboard.closeTransactionDontReset();
     }
     return ret;
   }
 
-  protected MoveAgent queryMoveAgent(final UID uid) {
+  protected AgentControl queryAgentControl(final UID uid) {
     if (uid == null) {
       throw new IllegalArgumentException("null uid");
     }
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         return 
-          ((o instanceof MoveAgent) &&
-           (uid.equals(((MoveAgent) o).getUID())));
+          ((o instanceof AgentControl) &&
+           (uid.equals(((AgentControl) o).getUID())));
       }
     };
-    MoveAgent ret = null;
+    AgentControl ret = null;
     try {
       blackboard.openTransaction();
       Collection c = blackboard.query(pred);
       if ((c != null) && (c.size() >= 1)) {
-        ret = (MoveAgent) c.iterator().next();
+        ret = (AgentControl) c.iterator().next();
       }
     } finally {
       blackboard.closeTransactionDontReset();
@@ -213,50 +223,33 @@ implements BlackboardClient
     return ret;
   }
 
-
-  protected void addMoveAgent(
-      String mobileAgent,
-      String originNode,
-      String destNode,
-      boolean isForceRestart) {
+  protected AgentControl createAgentControl(
+      UID ownerUID, 
+      MessageAddress target, 
+      AbstractTicket ticket) {
     if (mobilityFactory == null) {
       throw new RuntimeException(
           "Mobility factory (and domain) not enabled");
     }
-    MessageAddress mobileAgentAddr = null;
-    MessageAddress originNodeAddr = null;
-    MessageAddress destNodeAddr = null;
-    if (mobileAgent != null) {
-      mobileAgentAddr = new ClusterIdentifier(mobileAgent);
-    }
-    if (originNode != null) {
-      originNodeAddr = new MessageAddress(originNode);
-    }
-    if (destNode != null) {
-      destNodeAddr = new MessageAddress(destNode);
-    }
-    Object ticketId =
-      mobilityFactory.createTicketIdentifier();
-    Ticket ticket = 
-      new Ticket(
-		 ticketId,
-		 mobileAgentAddr,
-		 originNodeAddr,
-		 destNodeAddr,
-		 isForceRestart);
-    MoveAgent ma = mobilityFactory.createMoveAgent(ticket);
+    AgentControl ac = 
+      mobilityFactory.createAgentControl(
+          ownerUID, target, ticket);
+    return ac;
+  }
+
+  protected void addAgentControl(AgentControl ac) {
     try {
       blackboard.openTransaction();
-      blackboard.publishAdd(ma);
+      blackboard.publishAdd(ac);
     } finally {
       blackboard.closeTransactionDontReset();
     }
   }
 
-  protected void removeMoveAgent(MoveAgent ma) {
+  protected void removeAgentControl(AgentControl ac) {
     try {
       blackboard.openTransaction();
-      blackboard.publishRemove(ma);
+      blackboard.publishRemove(ac);
     } finally {
       blackboard.closeTransaction();
     }
@@ -281,29 +274,30 @@ implements BlackboardClient
       private HttpServletResponse response;
 
       // action:
-
       public static final String ACTION_PARAM = "action";
       public static final String ADD_VALUE = "Add";
       public static final String REMOVE_VALUE = "Remove";
       public static final String REFRESH_VALUE = "Refresh";
       public String action;
 
+      // operation:
+      public static final String OP_PARAM = "op";
+      public static final String ADD_OP_VALUE = "Add";
+      public static final String MOVE_OP_VALUE = "Move";
+      public static final String REMOVE_OP_VALUE = "Remove";
+      public String op;
+
       // remove uid:
-      
       public static final String REMOVE_UID_PARAM = "removeUID";
       public String removeUID;
 
       // ticket options:
-
       public static final String MOBILE_AGENT_PARAM = "mobileAgent";
       public String mobileAgent;
-
       public static final String ORIGIN_NODE_PARAM = "originNode";
       public String originNode;
-
       public static final String DEST_NODE_PARAM = "destNode";
       public String destNode;
-
       public static final String IS_FORCE_RESTART_PARAM = "isForceRestart";
       public boolean isForceRestart;
       
@@ -325,6 +319,12 @@ implements BlackboardClient
 
         // action:
         action = request.getParameter(ACTION_PARAM);
+
+        // operation:
+        op = request.getParameter(OP_PARAM);
+        if ((op != null) && (op.length() == 0)) {
+          op = null;
+        }
 
         // remove param:
         removeUID = request.getParameter(REMOVE_UID_PARAM);
@@ -353,14 +353,73 @@ implements BlackboardClient
             request.getParameter(IS_FORCE_RESTART_PARAM));
       }
 
+      private AgentControl createAgentControl() {
+        MessageAddress mobileAgentAddr =
+          (mobileAgent != null ?
+           ClusterIdentifier.getClusterIdentifier(mobileAgent) :
+           localAgent);
+        MessageAddress destNodeAddr = 
+          (destNode != null ?
+           (new MessageAddress(destNode)) :
+           null);
+        MessageAddress target;
+        AbstractTicket ticket;
+        if (op == null ||
+            op.equalsIgnoreCase(MOVE_OP_VALUE)) {
+          MessageAddress originNodeAddr =
+            (originNode != null ?
+             (new MessageAddress(originNode)) :
+             null);
+          target = 
+            (originNodeAddr != null ?
+             (originNodeAddr) : 
+             mobileAgentAddr);
+          if (destNodeAddr == null &&
+              originNodeAddr != null) {
+            destNodeAddr = originNodeAddr;
+          }
+          ticket =
+            new MoveTicket(
+                null,
+                mobileAgentAddr,
+                originNodeAddr,
+                destNodeAddr,
+                isForceRestart);
+        } else {
+          if (op.equalsIgnoreCase(ADD_OP_VALUE)) {
+            if (destNodeAddr == null) {
+              destNodeAddr = localNode;
+            }
+            target = destNodeAddr;
+            ticket = 
+              new AddTicket(
+                  null,
+                  mobileAgentAddr,
+                  destNodeAddr);
+          } else if (op.equalsIgnoreCase(REMOVE_OP_VALUE)) {
+            target = 
+              (destNodeAddr != null ? destNodeAddr : mobileAgentAddr);
+            ticket = 
+              new RemoveTicket(
+                  null,
+                  mobileAgentAddr,
+                  destNodeAddr);
+          } else {
+            throw new IllegalArgumentException(
+                "Invalid url-parameter: \""+OP_PARAM+"\"="+op);
+          }
+        }
+        AgentControl ac = 
+          MoveAgentServlet.this.createAgentControl(
+              null, target, ticket);
+        return ac;
+      }
+
       private void writeResponse() throws IOException {
         if (ADD_VALUE.equals(action)) {
           try {
-            addMoveAgent(
-                mobileAgent,
-                originNode,
-                destNode,
-                isForceRestart);
+            AgentControl ac = createAgentControl();
+            addAgentControl(ac);
           } catch (Exception e) {
             writeFailure(e);
             return;
@@ -369,9 +428,9 @@ implements BlackboardClient
         } else if (REMOVE_VALUE.equals(action)) {
           try {
             UID uid = UID.toUID(removeUID);
-            MoveAgent ma = queryMoveAgent(uid);
-            if (ma != null) {
-              removeMoveAgent(ma);
+            AgentControl ac = queryAgentControl(uid);
+            if (ac != null) {
+              removeAgentControl(ac);
             }
           } catch (Exception e) {
             writeFailure(e);
@@ -384,17 +443,13 @@ implements BlackboardClient
       }
 
       private void writeUsage() throws IOException {
-        String msg = agentId+" move-agent";
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
-        out.print("<html><head><title>");
-        out.print(msg);
+        writeHeader(out);
         out.print(
-            "</title></head>"+
-            "<body>\n"+
-            "<h2>");
-        out.print(msg);
-        out.print("</h2>\n");
+            "<center>"+
+            "<h2>Agent Control (usage)</h2>"+
+            "</center>\n");
         writeForm(out);
         out.print(
             "</body></html>\n");
@@ -403,24 +458,20 @@ implements BlackboardClient
 
       private void writeFailure(Exception e) throws IOException {
         // select response message
-        String msg = "Failed "+agentId+" move-agent";
         response.setContentType("text/html");
         // build up response
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(baos);
-        out.print("<html><head><title>");
-        out.print(msg);
+        writeHeader(out);
         out.print(
-            "</title></head>"+
-            "<body>\n"+
-            "<center><h1>");
-        out.print(msg);
-        out.print("</h1></center>"+
+            "<center>"+
+            "<h2>Agent Control (failed)</h2>"+
+            "</center>"+
             "<p><pre>\n");
         e.printStackTrace(out);
         out.print(
             "\n</pre><p>"+
-            "<h2>Please double-check these parameters:</h2>\n");
+            "<h3>Please double-check these parameters:</h3>\n");
         writeForm(out);
         out.print(
             "</body></html>\n");
@@ -432,38 +483,69 @@ implements BlackboardClient
       }
 
       private void writeSuccess() throws IOException {
-        String msg = agentId+" move-agent";
         // write response
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
-        out.print("<html><head><title>");
-        out.print(msg);
+        writeHeader(out);
         out.print(
-            "</title></head>"+
-            "<body>\n"+
-            "<center><h1>");
-        out.print(msg);
-        out.print("</h1></center><p>\n");
+            "<center><h2>"+
+            "Agent control (success)"+
+            "</h2></center><p>\n");
         writeForm(out);
         out.print("</body></html>\n");
         out.close();
       }
 
+      private void writeHeader(
+          PrintWriter out) throws IOException {
+        out.print("<html><head><title>");
+        out.print(localAgent);
+        out.print(
+            " agent control</title>\n"+
+            "<script language=\"JavaScript\">\n"+
+            "<!--\n"+
+            "function selectOp() {\n"+
+            "  var iop = document.f.op.selectedIndex;\n"+
+            "  var sop = document.f.op.options[iop].text;\n"+
+            "  enableOp(sop != \""+MOVE_OP_VALUE+"\");\n"+
+            "}\n"+
+            "function enableOp(b) {\n"+
+            "  document.f.originNode.value=(b?'N/A':'');\n"+
+            "  document.f.originNode.disabled=b;\n"+
+            "  document.f.isForceRestart.disabled=b;\n"+
+            "}\n"+
+            "// -->\n"+
+            "</script>\n"+
+            "</head>"+
+            "<body onLoad=\"selectOp();\">\n");
+      }
+
       private void writeForm(
           PrintWriter out) throws IOException {
         // begin form
-        out.print("<form method=\"GET\" action=\"");
+        out.print("<form name=\"f\" method=\"GET\" action=\"");
         out.print(request.getRequestURI());
-        out.print("\">\n");
-        // show the current time
-        out.print("<i>Time: ");
-        out.print(new Date());
-        out.print("</i><p>");
         out.print(
-            "<h2>"+
-            "Local MoveAgent Objects:</h2><p>");
-        // show current MoveAgent objects
-        Collection c = queryMoveAgents();
+            "\">\n"+
+            "<i>Agent:</i> ");
+        out.print(localAgent);
+        out.print(
+            "<br>"+
+            "<i>Node:</i> ");
+        out.print(localNode);
+        out.print(
+            "<br>"+
+            "<i>Time:</i> ");
+        Date d = new Date();
+        out.print(d);
+        out.print(" (");
+        out.print(d.getTime());
+        out.print(
+            ")"+
+            "<p>"+
+            "<h3>Local requests:</h3><p>");
+        // show current AgentControl objects
+        Collection c = queryAgentControls();
         int n = ((c != null) ? c.size() : 0);
         if (n == 0) {
           out.print("<i>none</i>");
@@ -485,23 +567,23 @@ implements BlackboardClient
               "</tr>\n");
           Iterator iter = c.iterator();
           for (int i = 0; i < n; i++) {
-            MoveAgent ma = (MoveAgent) iter.next();
+            AgentControl ac = (AgentControl) iter.next();
             out.print("<tr><td>");
-            out.print(ma.getUID());
+            out.print(ac.getUID());
             out.print("</td><td>");
-            out.print(ma.getTicket());
+            out.print(ac.getAbstractTicket());
             out.print("</td><td bgcolor=\"");
-            MoveAgent.Status status = ma.getStatus();
-            if (status == null) {
+            int status = ac.getStatusCode();
+            if (status == AgentControl.NONE) {
               out.print(
                   "#FFFFBB\">"+ // yellow
                   "In progress");
             } else {
               out.print(
-                  (status.getCode() == MoveAgent.Status.OKAY) ?
+                  (status != AgentControl.FAILURE) ?
                   "#BBFFBB\">" : // green
                   "#FFBBBB\">"); // red
-              out.print(status);
+              out.print(ac.getStatusCodeAsString());
             }
             out.print("</td></tr>\n");
           }
@@ -514,10 +596,10 @@ implements BlackboardClient
             REFRESH_VALUE+
             "\">\n");
 
-        // allow user to remove an existing MoveAgent
+        // allow user to remove an existing AgentControl
         out.print(
-            "<p><hr><p>"+
-            "<h2>Remove an existing move request:</h2>\n");
+            "<p>"+
+            "<h3>Remove an existing request:</h3>\n");
         if (n > 0) {
           out.print(
               "<select name=\""+
@@ -525,8 +607,8 @@ implements BlackboardClient
               "\">");
           Iterator iter = c.iterator();
           for (int i = 0; i < n; i++) {
-            MoveAgent ma = (MoveAgent) iter.next();
-            UID uid = ma.getUID();
+            AgentControl ac = (AgentControl) iter.next();
+            UID uid = ac.getUID();
             out.print("<option value=\"");
             out.print(uid);
             out.print("\">");
@@ -544,18 +626,45 @@ implements BlackboardClient
           out.print("<i>none</i>");
         }
 
-        // allow user to submit a new MoveAgent request
+        // allow user to submit a new AgentControl request
         out.print(
             "<p>"+
-            "<h2>Create a new agent-movement request:</h2>\n");
+            "<h3>Create a new request:</h3>\n");
         out.print(
             "<table>\n"+
+            "<tr><td>"+
+            "Operation"+
+            "</td><td>\n"+
+            "<select name=\""+
+            OP_PARAM+
+            "\" onChange=\"selectOp();\">\n"+
+            "<option");
+        if (ADD_OP_VALUE.equalsIgnoreCase(op)) {
+          out.print(" selected");
+        }
+        out.print(
+            ">"+ADD_OP_VALUE+"</option>\n"+
+            "<option");
+        if (op == null ||
+            MOVE_OP_VALUE.equalsIgnoreCase(op)) {
+          out.print(" selected");
+        }
+        out.print(
+            ">"+MOVE_OP_VALUE+"</option>\n"+
+            "<option");
+        if (REMOVE_OP_VALUE.equalsIgnoreCase(op)) {
+          out.print(" selected");
+        }
+        out.print(
+            ">"+REMOVE_OP_VALUE+"</option>\n"+
+            "</select>\n"+
+            "</td></tr>\n"+
             "<tr><td>"+
             "Mobile Agent"+
             "</td><td>\n"+
             "<input type=\"text\" name=\""+
             MOBILE_AGENT_PARAM+
-            "\" size=70");
+            "\" size=\"30\"");
         if (mobileAgent != null) {
           out.print(" value=\"");
           out.print(mobileAgent);
@@ -569,7 +678,7 @@ implements BlackboardClient
             "</td><td>"+
             "<input type=\"text\" name=\""+
             ORIGIN_NODE_PARAM+
-            "\" size=70");
+            "\" size=\"30\"");
         if (originNode != null) {
           out.print(" value=\"");
           out.print(originNode);
@@ -583,7 +692,7 @@ implements BlackboardClient
             "</td><td>"+
             "<input type=\"text\" name=\""+
             DEST_NODE_PARAM+
-            "\" size=70");
+            "\" size=\"30\"");
         if (destNode != null) {
           out.print(" value=\"");
           out.print(destNode);
