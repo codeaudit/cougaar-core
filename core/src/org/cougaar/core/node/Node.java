@@ -216,12 +216,11 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
             "Usage: java [JVM_OPTIONS] [-D..] "+
             Node.class.getName()+" [-D..] [ARGS]\n"+
             "A Node manages and executes Cougaar agents.\n\n"+
-            "  -D.. \t NAME=VALUE configuration properties.\n"+
-            "  -help, --help, -? \t display this help and exit.\n"+
-            "  -version, --version \t output version information and exit.\n\n"+
-            "  -info, --info \t output terse version information and exit.\n\n"+
-            "See <http://www.cougaar.org> for further details.\n\n"+
-            "Report bugs to <cougaar@cougaar.org>.\n");
+            "  -Dname=value        set configuration property.\n"+
+            "  -help, --help, -?   display this help and exit.\n"+
+            "  -version, --version output version information and exit.\n"+
+            "  -info, --info       output terse version information and exit.\n\n"+
+            "See <http://www.cougaar.org> for further help and bug reports.\n");
         return;
       }
     }
