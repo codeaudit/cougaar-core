@@ -278,16 +278,16 @@ implements Component
             localenclave);
         ats.put(
             TopologyNamingConstants.INCARNATION_ATTR, 
-            (new Long(incarnation)));
+            (new Long(incarnation)).toString());
         ats.put(
             TopologyNamingConstants.MOVE_ID_ATTR, 
-            (new Long(moveId)));
+            (new Long(moveId)).toString());
         ats.put(
             TopologyNamingConstants.TYPE_ATTR, 
-            (new Integer(type)));
+            (new Integer(type)).toString());
         ats.put(
             TopologyNamingConstants.STATUS_ATTR, 
-            (new Integer(status)));
+            (new Integer(status)).toString());
 
         return ats;
       }
