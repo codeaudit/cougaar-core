@@ -88,7 +88,7 @@ import java.lang.reflect.Modifier;
  * handled by overwriting the value of the earlier objects with newer
  * values from later versions of the objects.  */
 public abstract class BasePersistence implements Persistence {
-  private static List clusters = new ArrayList();
+//    private static List clusters = new ArrayList();
 
   private static boolean debug = Boolean.getBoolean("org.cougaar.core.cluster.persistence.debug");
 
@@ -169,15 +169,15 @@ public abstract class BasePersistence implements Persistence {
   public static Persistence findOrCreate(ClusterContext clusterContext,
 					 PersistenceCreator creator)
     throws PersistenceException {
-    synchronized (clusters) {
-      for (Iterator iter = clusters.iterator(); iter.hasNext(); ) {
-	BasePersistence p = (BasePersistence) iter.next();
-	if (p.clusterContext.equals(clusterContext)) return p;
-      }
+//      synchronized (clusters) {
+//        for (Iterator iter = clusters.iterator(); iter.hasNext(); ) {
+//  	BasePersistence p = (BasePersistence) iter.next();
+//  	if (p.clusterContext.equals(clusterContext)) return p;
+//        }
       BasePersistence p = creator.create();
-      clusters.add(p);
+//        clusters.add(p);
       return p;
-    }
+//      }
   }
 
   /**
