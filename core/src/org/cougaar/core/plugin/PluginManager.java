@@ -86,7 +86,7 @@ public class PluginManager
       InitializerService is = (InitializerService)
         sb.getService(this, InitializerService.class, null);
       try {
-        children = is.getPluginDescriptions(cname);
+        children = is.getComponentDescriptions(cname, "Node.AgentManager.Agent.PluginManager.Plugin");
       } catch (Exception e) {
         System.err.println(
             "\nUnable to add "+cname+"'s child Components: "+e);
