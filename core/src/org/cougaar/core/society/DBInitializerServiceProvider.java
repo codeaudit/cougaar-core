@@ -50,13 +50,9 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String NODE_COMPONENT_TYPE = "NODE";
   public static final String AGENT_COMPONENT_TYPE = "AGENT";
   public static final String QUERY_EXPERIMENT = "queryExperiment";
-  public static final String QUERY_AGENT_NAMES = "queryAgentNames";
   public static final String QUERY_COMPONENTS = "queryComponents";
-  public static final String QUERY_ROOT_COMPONENTS = "queryRootComponents";
   public static final String QUERY_COMPONENT_PARAMS = "queryComponentParams";
   public static final String QUERY_AGENT_PROTOTYPE = "queryAgentPrototype";
-  public static final String QUERY_PLUGIN_NAMES = "queryPluginNames";
-  public static final String QUERY_PLUGIN_PARAMS = "queryPluginParams";
   public static final String QUERY_AGENT_PG_NAMES = "queryAgentPGNames";
   public static final String QUERY_LIB_PROPERTIES = "queryLibProperties";
   public static final String QUERY_AGENT_PROPERTIES = "queryAgentProperties";
@@ -85,7 +81,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     throws SQLException, IOException
   {
     dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
-//      dbp.setDebug(true);
+    //    dbp.setDebug(true);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
