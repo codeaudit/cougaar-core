@@ -40,14 +40,16 @@ public abstract class ComponentFactory
       if (o instanceof Component) {
         Object p = desc.getParameter();
         if (p != null) {
-          try {
-            Method m = cc.getMethod("setParameter", VO);
-            m.invoke(o, new Object[]{p});
-          } catch (Exception e) {
-            e.printStackTrace();
-            throw new ComponentFactoryException("Failed while setting parameter", desc, e);
-          }
-        }
+	  if (!((Collection)p).isEmpty()) {
+	    try {
+	      Method m = cc.getMethod("setParameter", VO);
+	      m.invoke(o, new Object[]{p});
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      throw new ComponentFactoryException("Failed while setting parameter", desc, e);
+	    }
+	  }
+	}
         return (Component) o;
       } else {
         throw new ComponentFactoryException("ComponentDescription does not name a Component", desc);
