@@ -55,6 +55,11 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     new UnaryPredicate() {
 	public boolean execute(Object o) {
 	  if (o instanceof OperatingModePolicy) {
+            if (o instanceof InterAgentOperatingModePolicy) {
+              InterAgentOperatingModePolicy iaomp =
+                (InterAgentOperatingModePolicy) o;
+              if (iaomp.getSource() == null) return false;
+            }
 	    return true;
 	  }
 	  return false;
@@ -103,7 +108,7 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
   public void setupSubscriptions() {
   }
 
-  private void realySetupSubscriptions() {
+  private void reallySetupSubscriptions() {
 
     policySubscription = (IncrementalSubscription) blackboard.subscribe(policyPredicate);
 
@@ -119,7 +124,7 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
         sb.getService(this, PlaybookConstrainService.class, null);
       operatingModeService = (OperatingModeService)
         getServiceBroker().getService(this, OperatingModeService.class, null);
-      realySetupSubscriptions();
+      reallySetupSubscriptions();
       return true;
     }
     return false;

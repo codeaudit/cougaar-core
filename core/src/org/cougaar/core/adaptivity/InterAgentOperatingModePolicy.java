@@ -59,9 +59,9 @@ public class InterAgentOperatingModePolicy
     super(name, ifClause, omConstraints, authority);
   }
 
-  protected InterAgentOperatingModePolicy( InterAgentOperatingModePolicy other,
-					   MessageAddress src, 
-					   Relay.Token owner) {
+  protected InterAgentOperatingModePolicy(InterAgentOperatingModePolicy other,
+                                          MessageAddress src, 
+                                          Relay.Token owner) {
     this(other.getName(),
 	 other.getIfClause(), 
 	 other.getOperatingModeConstraints(),
