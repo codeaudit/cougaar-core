@@ -173,6 +173,17 @@ extends AdvertiseBase
 
       URI uri = bootEntry.getURI();
       String s = uri.getPath();
+      if (s != null && s.startsWith("/$")) {
+        // remove "/$name" prefix
+        if (s.startsWith("/$"+agentName+"/")) {
+          s = s.substring(2 + agentName.length());
+        } else if (s.startsWith("/$~/")) {
+          s = s.substring(3);
+        }
+        if (s.equals("/")) {
+          s = null;
+        }
+      }
       if (s == null || s.length() == 0) {
         s = defaultPath;
       }

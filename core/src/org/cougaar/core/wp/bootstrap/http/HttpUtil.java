@@ -79,18 +79,6 @@ public final class HttpUtil {
       AddressEntry bootEntry,
       MessageAddress agentId,
       LoggingService log) {
-    if (bootEntry != null) {
-      URI uri = bootEntry.getURI();
-      if (uri != null) {
-        String path = uri.getPath();
-        if (path != null && path.length() > 0) {
-          String s = path.substring(1);
-          if (!"*".equals(s)) {
-            return s;
-          }
-        }
-      }
-    }
     return (agentId == null ? null : agentId.getAddress());
   }
 

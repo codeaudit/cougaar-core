@@ -245,6 +245,10 @@ public class ConfigReader {
    * The FILTER is the AGENT if specified, else "*".<br> 
    * If the SCHEME is "rmi" and the TYPE is "-RMI_REG", then
    * a ("/"+FILTER) is appended to the URI.<br>
+   * If the SCHEME is "http" or "https" and the TYPE is "-HTTP"
+   * or "-HTTPS" (respectively), and the URI lacks a path, then
+   * the "/$"+FILTER+"/wp_bootstrap" is appended to the URI, where
+   * the default FILTER is "~".
    * The line is then parsed to:<pre>
    *   (name=NAME type=TYPE uri=SCHEME://URI)
    * </pre>
@@ -379,6 +383,12 @@ public class ConfigReader {
       suri += "/" + (agent == null ? "*" : agent);
     }
     URI uri = URI.create(scheme+"://"+suri);
+    if (((scheme.equals("http") && type.equals("-HTTP_REG")) ||
+         (scheme.equals("https") && type.equals("-HTTPS_REG"))) &&
+        (uri.getPath() == null || uri.getPath().length() == 0)) {
+      suri = suri += "/$"+(agent == null ? "~" : agent)+"/wp_bootstrap";
+      uri = URI.create(scheme+"://"+suri);
+    }   
     AddressEntry ae = AddressEntry.getAddressEntry(
         name, type, uri);
     if (agent == null) {
