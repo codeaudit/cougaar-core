@@ -23,40 +23,57 @@
  *  
  * </copyright>
  */
+
 package org.cougaar.core.examples.servlet;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Enumeration;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import java.util.Locale;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 /**
- * Another Cougaar-independent Servlet that calls all the 
- * various HttpServletRequest methods and prints the results 
- * back to the client -- load this and learn the Servlet API 
- * by example.
+ * A Cougaar-independent Servlet that calls all the various
+ * HttpServletRequest methods and prints the results back to the
+ * client, which is ideal for learning the Servlet API by example.
  * <p>
- * See the "HelloServlet" javadocs for loading details.
+ * Unlike the <code>HelloServlet</code>, which extends
+ * "ComponentServlet", this class extends the more basic
+ * non-component "HttpServlet" class.  A "wrapping" component
+ * must be used to load this servlet and register it with the
+ * agent's ServletService:
+ * <pre> 
+ *    &lt;component
+ *      class="org.cougaar.core.servlet.SimpleServletComponent"&gt;
+ *      &lt;argument&gt;org.cougaar.core.examples.servlet.SnoopServlet&lt;/argument&gt;
+ *      &lt;argument&gt;/snoop&lt;/argument&gt;
+ *    &lt;/component&gt;
+ * </pre> 
  * <p>
- * Note: This Servlet lists all sorts of HttpServletRequest 
- * properties (sessions, cookies, etc) that are rarely 
- * needed by most Cougaar Servlets.  Simply skim the
- * results and find what you need...
+ * This Servlet lists all sorts of HttpServletRequest properties
+ * (sessions, cookies, etc) that are rarely needed by most Cougaar
+ * Servlets.  Simply skim the results and find what you need...
  * <p>
- * Based upon the "SnoopServlet" provided
- * in Tomcat 3.3:<pre>
+ * Based upon the "SnoopServlet" provided in Tomcat 3.3:<pre>
  *  ($TOMCAT_HOME/webapps/examples/WEB-INF/classes/SnoopServlet.java)
- * </pre> See "http://jakarta.apache.org/tomcat/" for the 
- * original (nearly-identical) source.
+ * </pre> See "http://jakarta.apache.org/tomcat/" for the original
+ * (nearly-identical) source.
  */
 public class SnoopServlet extends HttpServlet {
 
   public void doPut(
       HttpServletRequest request, 
       HttpServletResponse response) throws ServletException, IOException {
-      doGet(request, response);
-    }
+    doGet(request, response);
+  }
 
   public void doPost(
       HttpServletRequest request, 

@@ -23,47 +23,37 @@
  *  
  * </copyright>
  */
+
 package org.cougaar.core.examples.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.servlet.ComponentServlet;
 
 /**
- * This is a very simple "stand-alone" Servlet, with no Cougaar 
- * dependencies, that just prints "Hello world!" to the client.
+ * A servlet that listens on path "/hello" and prints "hello world!"
+ * back to the client.
  * <p>
- * This is just like the "tutorial" Servlets you would find
- * online, such as:<pre>
- *   <a href="http://java.sun.com/docs/books/tutorial/servlets">
- *   http://java.sun.com/docs/books/tutorial/servlets</a>
+ * To load this servlet, add the following to any agent's XML
+ * configuration:<pre> 
+ *    &lt;component
+ *      class="org.cougaar.core.examples.servlet.HelloServlet"&gt;
+ *      &lt;argument&gt;/hello&lt;/argument&gt;
+ *    &lt;/component&gt;
  * </pre>
- * This Servlet is unable to ask about Cougaar internals, such
- * as a query into the Blackboard.  Other classes in this package
- * will provide such Cougaar-internal examples.
- * <p>
- * This Servlet can be loaded with the Cougaar "servlet-loader" plugin
- * by adding this line to the ".INI" file of any agent:<pre>
- *    plugin = org.cougaar.core.servlet.SimpleServletComponent(org.cougaar.core.examples.servlet.HelloServlet, /hello)
- * </pre>
- * The above line tells the loader to associate the path "/hello" 
- * with this class.  If this line was added to agent X's ".INI", 
- * then this Servlet will be invoked when a browser requests:<pre>
+ * For example, if this component was added to agent "X", the browser
+ * URL to invoke this servlet would be:<pre>
  *    <a href="http://localhost:8800/$X/hello">
  *    http://localhost:8800/$X/hello</a>
- * </pre>
+ * </pre> 
  * <p>
- * The above "localhost:8800" assumes that machine "localhost" 
- * is running a node (any node in the society, not just agent X's 
- * node), and that the node is configured to run the webserver on
- * port 8800.  See the "webserver/doc/install.html" for details.
- * <p>
- * The output to the browser should look like:<pre>
- *   Hello world!
- * </pre>
+ * Although not illustrated below, this servlet's subclassing of
+ * "ComponentServlet" allows it to access the agent's ServiceBroker
+ * just like a regular Cougaar plugin.
  */
-public class HelloServlet extends HttpServlet {
+public class HelloServlet extends ComponentServlet {
   public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {

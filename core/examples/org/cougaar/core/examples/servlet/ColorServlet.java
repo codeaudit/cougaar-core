@@ -23,19 +23,28 @@
  *  
  * </copyright>
  */
+
 package org.cougaar.core.examples.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Enumeration;
-import javax.servlet.*;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.servlet.ComponentServlet;
 
 /**
- * This simple servlet illustrates an HTML form and URL-parameters
- * passing.
+ * This servlet illustrates an HTML form and URL-parameters passing.
+ * <p> 
+ * To load this servlet, add the following to any agent's XML
+ * configuration:<pre> 
+ *    &lt;component
+ *      class="org.cougaar.core.examples.servlet.ColorServlet"&gt;
+ *      &lt;argument&gt;/color&lt;/argument&gt;
+ *    &lt;/component&gt;
+ * </pre>
  */
-public class ColorServlet extends HttpServlet {
+public class ColorServlet extends ComponentServlet {
 
   public void doGet(
       HttpServletRequest request,
@@ -87,29 +96,22 @@ public class ColorServlet extends HttpServlet {
     }
 
     private void parseParams() throws IOException {
-      // set default values
-      firstColor = "black";
-      secondColor = COLORS[0];
-      // get "name=value" parameters
-      for (Enumeration en = request.getParameterNames();
-           en.hasMoreElements();
-          ) {
-        String name = (String) en.nextElement();
-        String values[] = request.getParameterValues(name);
-        int nvalues = ((values != null) ? values.length : 0);
-        if (nvalues > 0) {
-          // use last value:
-          String value = values[nvalues - 1];
-          // save param
-          if (name.equals(FIRST_COLOR_PARAM)) {
-            firstColor = value;
-          } else if (name.equals(SECOND_COLOR_PARAM)) {
-            secondColor = value;
-          } else {
-            // ignore unknown param
-          }
+      firstColor = getParameter(FIRST_COLOR_PARAM, "black");
+      secondColor = getParameter(SECOND_COLOR_PARAM, COLORS[0]);
+    }
+
+    private String getParameter(String name, String defaultValue) {
+      String value = request.getParameter(name);
+      if (value != null) {
+        value = value.trim();
+        if (value.length() == 0) {
+          value = null;
         }
       }
+      if (value == null) {
+        value = defaultValue;
+      }
+      return value;
     }
 
     private void writeResponse() throws IOException {
