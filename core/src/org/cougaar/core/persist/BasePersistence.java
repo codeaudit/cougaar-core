@@ -85,6 +85,7 @@ import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
+import org.cougaar.util.log.LoggingServiceWithPrefix;
 
 /**
  * This persistence class is the base for several persistence
@@ -451,6 +452,7 @@ public class BasePersistence
   {
     this.clusterContext = clusterContext;
     logger = (LoggingService) sb.getService(this, LoggingService.class, null);
+    logger = LoggingServiceWithPrefix.add(logger, getAgentName() + ": ");
     dataProtectionService = (DataProtectionService)
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
@@ -965,7 +967,7 @@ public class BasePersistence
           copy.addTuple(tuple);
         } else {
           if (logger.isDebugEnabled()) {
-            logger.debug(getAgentName() + ": Removing not persistable " + o);
+            logger.debug("Removing not persistable " + o);
           }
         }
       }
