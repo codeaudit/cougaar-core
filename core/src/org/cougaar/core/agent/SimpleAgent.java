@@ -201,7 +201,7 @@ public class SimpleAgent
   private DemoControlServiceProvider myDemoControlServiceProvider;
   private ServiceProvider myMessageSwitchSP;
 
-  private BlackboardForAgent myBlackboardService;
+  protected BlackboardForAgent myBlackboardService;
 
   // map of agent name to most recently observed incarnation, used
   // to detect the restart of remote agents, which requires a
