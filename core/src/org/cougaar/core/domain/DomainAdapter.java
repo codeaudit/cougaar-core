@@ -74,6 +74,16 @@ public abstract class DomainAdapter
     return myBindingSite;
   }
 
+  protected XPlan getXPlanForDomain(String domainName) {
+    DomainBindingSite domainBS = (DomainBindingSite) getBindingSite();
+    return domainBS.getXPlanForDomain(domainName);
+  }
+
+  protected XPlan getXPlanForDomain(Class domainClass) {
+    DomainBindingSite domainBS = (DomainBindingSite) getBindingSite();
+    return domainBS.getXPlanForDomain(domainClass);
+  }
+
   /** returns the LoggingService **/
   public LoggingService getLoggingService() {
     return myLoggingService;

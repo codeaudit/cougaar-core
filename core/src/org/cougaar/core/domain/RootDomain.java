@@ -60,32 +60,7 @@ public class RootDomain extends DomainAdapter {
   }
 
   protected void loadXPlan() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException(
-          "Binding site for the domain has not be set.\n" +
-          "Unable to initialize domain XPlan without a binding site.");
-    } 
-
-    // ensure that the RootPlan has been loaded
-    Collection xplans = bindingSite.getXPlans();
-    RootPlan rootPlan = null;
-    Iterator iterator = xplans.iterator();
-    while (true) {
-      if (!iterator.hasNext()) {
-        // typical case:
-        rootPlan = new RootPlanImpl();
-        break;
-      }
-      XPlan xplan = (XPlan) iterator.next();
-      if (xplan instanceof RootPlan) {
-        // already loaded?
-        rootPlan = (RootPlan) xplan;
-        break;
-      }
-    }
-    
+    RootPlan rootPlan = new RootPlanImpl();
     setXPlan(rootPlan);
   }
 
