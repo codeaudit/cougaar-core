@@ -79,10 +79,6 @@ public class AgentLoadLoggerPlugin
 	for (Iterator itr = localAgents.iterator(); itr.hasNext(); ) {
             MessageAddress addr = (MessageAddress) itr.next();
 	    String name = addr.getAddress();
-            if (name.equals(node) || name.equals(node+"(MTS)")) {
-                // ignore node-agent and MTS
-                continue;
-            }
 	    out.print('\t');
 	    out.print(name);
 	    agents.add(name);

@@ -66,10 +66,6 @@ public class AgentLoadServlet
 	    // Get Agent
 	    MessageAddress addr = (MessageAddress) itr.next();
 	    String name = addr.getAddress();
-            if (name.equals(nodeID) || name.equals(nodeID+"(MTS)")) {
-                // ignore node-agent and MTS
-                continue;
-            }
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
 
 	    // Get Metrics
