@@ -26,11 +26,24 @@ import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import org.cougaar.util.log.Logger;
 
 /**
- *All objects that have been persisted are in this Hashtable until
- *deleted. References to objects in this table are replaced with
- *reference objects.
+ * Identifies all objects that have been (or are about to be written
+ * to persistence media). This purpose of this table is to remember
+ * objects that have persisted in previous persistence snapshots so
+ * that references to such objects in subsequent persistence deltas
+ * can be replaced with references to the previously persisted
+ * objects. This is similar to the wire handle of the Java
+ * serialization process (ObjectOutputStream), but applies across
+ * persistence snapshots whereas the wire handle applies within a
+ * single snapshot.
+ *
+ * This class is essentially a hash table implementation. It differs
+ * from the java.util versions of hash tables in that the values are
+ * WeakReferences so that values to which there are no longer any
+ * references get removed from the table. WeakHashMap has weak keys,
+ * not weak values.
  */
 class IdentityTable {
   static class MyArrayList extends ArrayList {
@@ -58,9 +71,23 @@ class IdentityTable {
 
   private Collection rehydrationCollection = null;
 
+  private Logger logger;
+
+  /**
+   * This list keeps all the PersistenceAssociation objects indexed
+   * by their refId. Only the first encountered (last written) version
+   * is kept.
+   */
+  private MyArrayList persistentObjects = new MyArrayList();
+
+  IdentityTable(Logger logger) {
+    this.logger = logger;
+  }
+
   private void processQueue() {
     PersistenceAssociation pAssoc;
     while ((pAssoc = (PersistenceAssociation) referenceQueue.poll()) != null) {
+      if (logger.isDebugEnabled()) logger.debug("processQueue removing " + pAssoc);
       int hashIndex = (pAssoc.hash & 0x7fffffff) % table.length;
       for (PersistenceAssociation x = table[hashIndex], prev = null; x != null; prev = x, x = x.next) {
         if (x == pAssoc) {
@@ -136,10 +163,10 @@ class IdentityTable {
     if (count > table.length * 3 / 4) {
       rehash();
     }
+    PersistenceAssociation pAssoc = new PersistenceAssociation(o, ref, referenceQueue);
     if (rehydrationCollection != null) {
       rehydrationCollection.add(o);	// Make sure there is a reference to the object
     }
-    PersistenceAssociation pAssoc = new PersistenceAssociation(o, ref, referenceQueue);
     int hashIndex = (pAssoc.hash & 0x7fffffff) % table.length;
     pAssoc.next = table[hashIndex];
     table[hashIndex] = pAssoc;
@@ -151,7 +178,6 @@ class IdentityTable {
 					 "<-" +
 					 pAssoc);
     }
-//      System.out.println("Putting " + pAssoc);
     persistentObjects.set(ix, pAssoc);
     return pAssoc;
   }
@@ -225,11 +251,4 @@ class IdentityTable {
       }
     };
   }
-
-  /**
-   * This list keeps all the PersistenceAssociation objects indexed
-   * by their refId. Only the first encountered (last written) version
-   * is kept.
-   */
-  private MyArrayList persistentObjects = new MyArrayList();
 }

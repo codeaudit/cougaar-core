@@ -38,6 +38,6 @@ public class PersistenceReference implements Serializable {
     return id;
   }
   public String toString() {
-    return "" + id;
+    return String.valueOf(id);
   }
 }

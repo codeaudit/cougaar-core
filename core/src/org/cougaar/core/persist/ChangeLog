@@ -1,3 +1,76 @@
+2003-03-13  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceObject.java:
+	Fix comment to accurately describe what this class is for.
+
+	* PersistenceOutputStream.java: 
+	* PersistenceInputStream.java: 
+	* PersistenceAssociation.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add PersistenceIdentity field to keep track of which client owns
+	the object.
+
+	* PersistencePluginAdapter.java: 
+	* FilePersistenceBase.java: 
+	* PersistencePlugin.java: 
+	Bug #2572 -- Persistence snapshots grow without bound
+	Add cleanupArchives method.
+
+	* DatabasePersistence.java: 
+	Use Logger instead of LoggingService.
+	Generalize so that MySQL can be used as well as Oracle.
+
+	* BufferedFileSystem.java: 
+	* BufferedFilePersistence.java:
+	Use Logger instead of LoggingService.
+
+	* DummyPersistence.java: 
+	Bug #2572 -- Persistence snapshots grow without bound
+	Add cleanupArchive method
+
+	* BasePersistence.java:
+	Bug #2572 -- Persistence snapshots grow without bound
+	Add org.cougaar.core.persistence.archiveCount property specifying
+	how many archive snapshots to keep. Defaults to Integer.MAX_VALUE.
+
+	* PersistenceIdentity.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Used to identify persistence clients to match up rehydration data
+	with the proper client. Must be invariant between restarts.
+
+	* PersistenceClient.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Defines the interface that clients of the PersistenceService must
+	implement.
+
+	* RehydrationData.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Define the rehydration data returned from persistence service.
+
+	* PersistenceServiceForBlackboard.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Blackboard-specific interface to persistence. Used to retain the
+	mirrored persistence services to plugins and other blackboard
+	clients.
+
+	* PersistenceServiceForAgent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Agent-specific interface to persistence. Used to initiate rehydration.
+
+	* PersistenceServiceComponent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Factor persistence into blackboard-specific and generic parts.
+	This is the generic part.
+
+	* PersistenceService.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Define Service interface to persistence.
+
+	* BlackboardPersistence.java:
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Factor persistence into blackboard-specific and generic parts.
+	This is the blackboard specific part.
+
 2003-02-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceMetricsServlet.java:

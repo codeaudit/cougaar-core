@@ -7,10 +7,15 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Random;
+import java.util.Iterator;
 
 public class Exercise extends ServiceUserPlugin {
   private Item[] objects = new Item[1000];
   private Random random = new Random();
+  private int executionMinDelay;
+  private int executionMaxDelay;
+  private int serializationTime;
+  private int maxPublishCount;
 
   private static class Item implements Serializable {
     int serializationTime;
@@ -48,9 +53,30 @@ public class Exercise extends ServiceUserPlugin {
     super(new Class[0]);
   }
 
+  private int parseParameter(String prefix, int dflt) {
+    for (Iterator i = getParameters().iterator(); i.hasNext(); ) {
+      String param = (String) i.next();
+      if (param.startsWith(prefix)) {
+        try {
+          return Integer.parseInt(param.substring(prefix.length()));
+        } catch (Exception e) {
+          logger.error("parseParameter error: " + param);
+          return dflt;
+        }
+      }
+    }
+    return dflt;
+  }
+
   public void setupSubscriptions() {
+    int nItems = parseParameter("nItems=", 1000);
+    executionMinDelay = parseParameter("executionMinDelay=", 5000);
+    executionMaxDelay = parseParameter("executionMaxDelay=", 50000);
+    serializationTime = parseParameter("serializationTime=", 1000);
+    maxPublishCount = parseParameter("maxPublishCount=", 400);
+    objects = new Item[nItems];
     logger.warn("Running " + blackboardClientName);
-    startTimer(5000 + random.nextInt(45000));
+    startTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
   }
 
   private void wasteTime(Item item, int factor) {
@@ -63,21 +89,21 @@ public class Exercise extends ServiceUserPlugin {
     if (timerExpired()) {
       long st = System.currentTimeMillis();
       cancelTimer();
-      int n = random.nextInt(400);
+      int n = random.nextInt(maxPublishCount);
       for (int i = 0; i < n; i++) {
         int x = random.nextInt(objects.length);
-        if (objects[i] == null) {
-          objects[i] = new Item(random.nextInt(1000));
-          //          wasteTime(objects[i], 1);
-          blackboard.publishAdd(objects[i]);
+        if (objects[x] == null) {
+          objects[x] = new Item(random.nextInt(serializationTime));
+          //          wasteTime(objects[x], 1);
+          blackboard.publishAdd(objects[x]);
         } else {
 //           wasteTime(objects[i], 1);
-          blackboard.publishChange(objects[i]);
+          blackboard.publishChange(objects[x]);
         }
       }
       long et = System.currentTimeMillis();
       logger.warn("execute for " + (et - st) + " millis");
-      startTimer(5000 + random.nextInt(45000));
+      startTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
     }
   }
 }

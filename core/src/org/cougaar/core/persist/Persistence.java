@@ -38,12 +38,12 @@ public interface Persistence {
    * @param epochEnvelopes All envelopes from this epoch
    * @param subscriberStates The subscriber states to record
    **/
-    Object persist(List undistributedEnvelopes,
-                   List allEpochEnvelopes,
-                   List subscriberStates,
-                   boolean returnBytes,
-                   boolean full,
-                   MessageManager messageManager);
+    PersistenceObject persist(List undistributedEnvelopes,
+                              List allEpochEnvelopes,
+                              List subscriberStates,
+                              boolean returnBytes,
+                              boolean full,
+                              MessageManager messageManager);
 
     /**
      * Get the rehydration envelope from the most recent persisted state.
@@ -56,7 +56,5 @@ public interface Persistence {
     void disableWrite(String sequenceNumberSuffix);
     java.sql.Connection getDatabaseConnection(Object locker);
     void releaseDatabaseConnection(Object locker);
-    void registerServices(ServiceBroker sb);
-    void unregisterServices(ServiceBroker sb);
     long getPersistenceTime();
 }
