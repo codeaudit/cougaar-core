@@ -639,8 +639,6 @@ public class ClusterImpl extends Agent
   public void unload() {
     super.unload();
 
-    // unload all services
-
     // unload children
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();
@@ -649,6 +647,15 @@ public class ClusterImpl extends Agent
       b.unload();
     }
     boundComponents.clear();
+
+    // unload all services
+    ServiceBroker sb = getServiceBroker();
+    sb.releaseService(this, DomainService.class, myDomainService);
+    sb.releaseService(this, PrototypeRegistryService.class, myPrototypeService);
+    sb.releaseService(this, UIDService.class, myUIDService);
+    sb.releaseService(this, MessageWatcherService.class, watcherService);
+    sb.releaseService(this, MessageStatisticsService.class, statisticsService);
+    sb.releaseService(this, MessageTransportService.class, messenger);
   }
 
   /**
