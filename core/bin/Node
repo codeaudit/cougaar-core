@@ -43,9 +43,9 @@ if (! $?COUGAAR3RDPARTY) then
 endif
 
 set LIBPATHS=$COUGAAR_INSTALL_PATH/lib/core.jar
-if ($?COUGAAR_DEV_PATH) then
-    set LIBPATHS = "${COUGAAR_DEV_PATH}:$LIBPATHS"
-endif
+#if ($?COUGAAR_DEV_PATH) then
+#    set LIBPATHS = "${COUGAAR_DEV_PATH}:$LIBPATHS"
+#endif
 
 # domains are now usually defined by the config file LDMDomains.ini.
 # But you may still use properties if you wish.
@@ -53,6 +53,13 @@ endif
 set MYDOMAINS=""
 if (! $?COUGAAR_JAVA_ARGS) set COUGAAR_JAVA_ARGS=""
 set MYPROPERTIES="$MYDOMAINS $COUGAAR_JAVA_ARGS -Dorg.cougaar.system.path=$COUGAAR3RDPARTY -Dorg.cougaar.install.path=$COUGAAR_INSTALL_PATH -Duser.timezone=GMT"
+
+if ($?COUGAAR_DEV_PATH) then
+    set MYPROPERTIES = "$MYPROPERTIES -Dorg.cougaar.class.path=${COUGAAR_DEV_PATH}"
+endif
+
+
+
 set MYMEMORY=""
 
 set node = $argv[1]
