@@ -160,12 +160,19 @@ public interface BlackboardService extends Service {
    **/
   boolean tryOpenTransaction();
 
+  /** Close a transaction opened by openTransaction() or a 
+   * successful tryOpenTransaction(), flushing the change
+   * tracking (delta) lists of any open subscriptions.
+   * @exception SubscriberException IFF we did not own the transaction
+   * lock.
+   **/
   void closeTransaction() throws SubscriberException;
     
   /**
    * Close a transaction opened by openTransaction() or a successful
    * tryOpenTransaction(), but don't reset subscription changes or
-   * clear delta lists.
+   * clear delta lists.  In effect, defers changes tracked until next
+   * transaction.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
    **/
