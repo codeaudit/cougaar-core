@@ -1,3 +1,77 @@
+2002-03-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/ThreatconTestPlugin.java:
+	Change SensorMeasurement to SensorMeasurementImpl
+
+	* org/cougaar/core/adaptivity/TaskRateSensorPlugin.java:
+	Plugin measures the rate of arrival/change/departure of tasks
+	providing a SensorMeasurement for the AdaptivityEngine.
+
+	* org/cougaar/core/adaptivity/SensorMeasurementImpl.java:
+	The normal implementation of SensorMeasurement.
+
+	* org/cougaar/core/adaptivity/SensorMeasurement.java:
+	This is now an interface so that multple implementations are
+	possible. Allows the OperatingModeSensorMeasurement class to be
+	both an OperatingMode and a SensorMeasurement.
+
+	* org/cougaar/core/adaptivity/Playbook.java:
+	Change test code to work with new ConstrainingPhrase.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	The play interpreter engine from AdaptivityEngine so it can be
+	used by the PolicyManager as well.
+
+	* org/cougaar/core/adaptivity/Parser.java:
+	Add arithmetic grammar so that SensorMeasurements can be combined
+	arithmetically.
+
+	* org/cougaar/core/adaptivity/OperatingModeSensorMeasurement.java:
+	New class implements both SensorMeasurement and OperatingMode
+	interfaces. Intended for use with two-phase policy iterpretation.
+	Acts as an OperatingMode to be set by policy and a
+	SensorMeasurement to be interpreted by the AdaptivityEngine. The
+	value feeds through.
+
+	* org/cougaar/core/adaptivity/OperatingModeImpl.java:
+	Implementation of OperatingMode (which see).
+
+	* org/cougaar/core/adaptivity/OperatingMode.java: This is now an
+	interface so that multiple implementations are possible. However,
+	only the OperatingModeImpl should be necessary.
+
+	* org/cougaar/core/adaptivity/ConstraintPhrase.java:
+	Now extends ConstraintOpValue and contains only the
+	SensorMeasurement part.
+
+	* org/cougaar/core/adaptivity/ConstraintOpValue.java:
+	New class captures the operator and value part of a
+	ConstraintPhrase to use in if clause where there is not
+	necessarily a single SensorMeasurement, but rather, a computed
+	value.
+
+	* org/cougaar/core/adaptivity/ConstrainingClause.java:
+	Allow more kinds of objects to be pushed into the clause including
+	String and Number.
+
+	* org/cougaar/core/adaptivity/ComparableHelper.java:
+	Add support for doing arithmetic with Comparable objects.
+
+	* org/cougaar/core/adaptivity/CPUTestPlugin.java:
+	Remove variation to simplify demo.
+
+	* org/cougaar/core/adaptivity/Operator.java:
+	* org/cougaar/core/adaptivity/ConstraintOperator.java:
+	* org/cougaar/core/adaptivity/BooleanOperator.java:
+	Add precedence and operand count
+
+	* org/cougaar/core/adaptivity/ArithmeticOperator.java:
+	New class defines arithmetic operators
+
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Add arbitrary arithmetic expressions for if clauses
+	Move the play interpretation engine to a separate helper class
+
 2002-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/service/SensorMeasurementService.java:
