@@ -774,11 +774,11 @@ extends BaseServletComponent
       private void writeForms(
           PrintWriter out) throws IOException {
         out.print("<p><hr><p>");
+        writeEntriesForm(out);
         writeAllForm(out);
         writeRelationForm(out, true);
         writeRelationForm(out, false);
         writeEntryForm(out);
-        writeEntriesForm(out);
       }
 
       private void writeAllForm(
@@ -857,7 +857,7 @@ extends BaseServletComponent
             "<input type=\"hidden\" name=\""+
             METHOD_PARAM+
             "\" value=\"entry\">"+
-            "Get entry for agent "+
+            "Find the entry for agent "+
             "<input type=\"text\" name=\""+
             NAME_PARAM+
             "\">"+
@@ -877,7 +877,13 @@ extends BaseServletComponent
             "<input type=\"hidden\" name=\""+
             METHOD_PARAM+
             "\" value=\"entries\">"+
-            "Get all agent matching these parameters:<p>\n"+
+            "<tr><td colspan=");
+        out.print(VALID_TYPES.length);
+        out.print(
+            ">"+
+            "List all agent entries that match these optional parameters,"+
+            "where the default is to list <i><b>all</b></i> agent entries:<p>\n"+
+            "</td></tr>"+
             "<tr>");
         for (int i = 0; i < VALID_TYPES.length; i++) {
           out.print("<td><font color=mediumblue>");
