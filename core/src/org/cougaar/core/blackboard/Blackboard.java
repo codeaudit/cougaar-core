@@ -32,6 +32,7 @@ import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 import org.cougaar.util.log.*;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 
 import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.core.service.DomainForBlackboardService;
@@ -51,6 +52,13 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.DirContext;
+import javax.naming.event.EventContext;
+// import javax.naming.event.NamespaceChangeListener;
+// import javax.naming.event.NamingEvent;
+// import javax.naming.event.NamingExceptionEvent;
+// import javax.naming.event.NamingListener;
+// import javax.naming.event.ObjectChangeListener;
+import org.cougaar.core.service.community.*;
 
 /** The Blackboard
  *
@@ -75,6 +83,7 @@ public class Blackboard extends Subscriber
   private Distributor myDistributor;
   protected ServiceBroker myServiceBroker;
   protected DomainForBlackboardService myDomainService;
+  protected LoggingService logger;
 
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
@@ -160,7 +169,9 @@ public class Blackboard extends Subscriber
     setClientDistributor((BlackboardClient) this, myDistributor);
     setName("<blackboard>");
     myCluster = cluster;
-    
+    logger = (LoggingService)
+      sb.getService(this, LoggingService.class, null);
+    logger = LoggingServiceWithPrefix.add(logger, myCluster.getClusterIdentifier().toString() + ": ");
     myDomainService = 
       (DomainForBlackboardService) sb.getService(this, 
                                                  DomainForBlackboardService.class, 
@@ -448,11 +459,11 @@ public class Blackboard extends Subscriber
       if(dest instanceof AttributeBasedAddress) {
         //System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
         MessageAttributes qosAttributes = dest.getQosAttributes();
-	List agents = getAllAddresses((AttributeBasedAddress)dest);   // List of CIs
+	Collection agents = getABAAddresses((AttributeBasedAddress) dest);   // List of CIs
 	// for all destinations, add a new directive array and insert a new directive, or add to 
 	// an existing array in the destinations hashmap
-	for (int i=0; i < agents.size(); i++) {
-          ClusterIdentifier agentAddress = (ClusterIdentifier) agents.get(i);
+	for (Iterator i = agents.iterator(); i.hasNext(); ) {
+          ClusterIdentifier agentAddress = (ClusterIdentifier) i.next();
           if (qosAttributes != null) {
             agentAddress = new ClusterIdentifier(qosAttributes, agentAddress.getAddress());
           }
@@ -582,66 +593,137 @@ public class Blackboard extends Subscriber
   
   // -------- Methods for ABA Handling Below --------  needs work //
   
-  // (String)role to (List)agentnames cache
-  private static java.util.HashMap cache = new java.util.HashMap(89);
+  // AttributeBasedAddress to ABATranslation cache
+  private Map cache = new HashMap(89);
+
+  private CommunityService communityService;
+  private boolean haveCommunityService = false;
+//   private NamingService namingService;
+  private CommunityChangeListener communityChangeListener;
+  private EventContext communityContext;
+  private CacheClearer cacheClearer = new CacheClearer();
+  private Object cacheClearerLock = new Object();
+
+  private static class ABATranslationImpl implements ABATranslation {
+    Collection old, current;
+    ABATranslationImpl(Collection current) {
+      this.current = current;
+    }
+    public Collection getOldTranslation() {
+      return old;
+    }
+    public Collection getCurrentTranslation() {
+      return current;
+    }
+    void setCurrentTranslation(Collection newCurrentTranslation) {
+      current = newCurrentTranslation;
+    }
+    void setOldTranslation(Collection newOldTranslation) {
+      old = newOldTranslation;
+    }
+    boolean isEmpty() {
+      return old == null && current == null;
+    }
+  }
+
+//   private class MyNamingListener implements NamespaceChangeListener, ObjectChangeListener {
+//     public void objectAdded(NamingEvent evt) {
+//       try {
+//         String name = evt.getNewBinding().getName();
+//         getCommunityContext().addNamingListener(name, EventContext.OBJECT_SCOPE, namingListener);
+//         if (logger.isDebugEnabled()) logger.debug("Blackboard installing NamingListener to added " + name);
+//       } catch (NamingException ne) {
+//         logger.error("Error installing naming listener", ne);
+//       }
+//       clearCache();
+//     }
+//     public void objectRemoved(NamingEvent evt) {
+//       clearCache();
+//     }
+//     public void objectRenamed(NamingEvent evt) {
+//       clearCache();
+//     }
+//     public void objectChanged(NamingEvent evt) {
+//       clearCache();
+//     }
+//     public void namingExceptionThrown(NamingExceptionEvent evt) {
+//     }
+//   }
   
+  private class MyCommunityChangeListener extends CommunityChangeAdapter {
+    public void communityChanged(CommunityChangeEvent e) {
+      if (logger.isDebugEnabled()) logger.debug(e.toString());
+      clearCache(e.getCommunityName());
+    }
+  }
+
   /*
    * Loops through the cache of ABAs and returns ClusterIdentifiers, 
    * else it querries the nameserver for all agents with the ABA's role attribute, 
-   * and builds the cache. 
+   * and builds the cache.
+   * @return list (copy) of the addresses of the agents matching the ABA
    */
-  public List getAllAddresses(AttributeBasedAddress dest) {
-    
-    ArrayList l = null; // clusterids to be returned
-    
+  public Collection getABAAddresses(AttributeBasedAddress aba) {
     // first look in cache
-
-    // return a List of agent_names for the matching roleValue in HashMap 
+    Collection matches = null;
     synchronized (cache) {
-      String keyval = dest.getAttributeValue();
-      if(cache.containsKey(keyval)) {
-	List values = (ArrayList) cache.get(keyval);
-	if(values != null) {
-	  l = new ArrayList();
-	  for (Iterator iter = values.iterator(); iter.hasNext(); ) {
-	    l.add(iter.next());
-	  }
-	}
+      ABATranslation abaTranslation = (ABATranslation) cache.get(aba);
+      if (abaTranslation != null){
+        matches = abaTranslation.getCurrentTranslation();
       }
     }
-    
-    // else query NameServer
-    if(l != null){
-      //System.out.println("Returning from cache");
-      return l;
+    if (matches == null) {
+      // Not in cache. Get it the hard way from community service
+      matches = lookupABA(aba);
+      if (logger.isDebugEnabled()) {
+        logger.debug("lookupABA: " + aba + "->" + matches);
+      }
+      synchronized (cache) {
+        ABATranslationImpl abaTranslation = (ABATranslationImpl) cache.get(aba);
+        if (abaTranslation == null) {
+          abaTranslation = new ABATranslationImpl(matches);
+          cache.put(aba, abaTranslation);
+        } else {
+          abaTranslation.setCurrentTranslation(matches);
+        }
+      }
     }
-    else {
-      l = lookupABAinNameServer(dest);
-      //System.out.println("Returning from NameServer");
-      return l;
-    }
+    return new ArrayList(matches); // Return a copy to preserve cache integrity
   }
-  
-  /*
-   * Associated a list of ClusterIDs with a role in the aba cache. 
-   */
-  public static void cacheByRole(String roleValue, List agent_names) {
-    synchronized (cache) {
-      cache.put(roleValue, agent_names);
-    }
-  } 
+
+//   private EventContext getCommunityContext() throws NamingException {
+//     synchronized (cache) {
+//       if (communityContext == null) {
+//         try {
+//           DirContext rootContext = (DirContext) namingService.getRootContext();
+//           communityContext = (EventContext)
+//             rootContext.lookup(CommunityService.COMMUNITIES_CONTEXT_NAME);
+//         } catch (NamingException ne) {
+//           throw ne;
+//         } catch (Exception e) {
+//           NamingException x = 
+//             new NamingException("Unable to access name-server");
+//           x.setRootCause(e);
+//           throw x;
+//         }
+//       }
+//       return communityContext;
+//     }
+//   } 
     
   // get the CommunityService when possible 
   private CommunityService _myCommunityService = null;
-  public void setCommunityService(CommunityService ns) {
-    _myCommunityService = ns;
-  }
+
   private CommunityService getCommunityService() {
     if (_myCommunityService != null) {
       return _myCommunityService;
     } else {
-      getLogger().warn("Warning: Blackboard had no CommunityService - will fall back to dynamic service lookup.  Risk of Deadlock!", new Throwable());
-      _myCommunityService = (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
+      _myCommunityService = (CommunityService)
+        myServiceBroker.getService(this, CommunityService.class, null);
+      if (_myCommunityService == null) {
+        getLogger().warn("Warning: Blackboard had no CommunityService - will fall back to dynamic service lookup.  Risk of Deadlock!", new Throwable());
+      }
+      _myCommunityService.addListener(new MyCommunityChangeListener());
       return _myCommunityService;
     }
   }
@@ -651,38 +733,110 @@ public class Blackboard extends Subscriber
   }
 
   /*
-   * Querries NameServer and returns a list of all agentnames matching the aba's
-   * String role value. Adds new list to the aba cache. 
+   * Queries NameServer and gets a collection ClusterIdentifiers of
+   * all agents having the attribute type and value specified by the
+   * ABA and stores the collection in the ABA cache. Returns a List
+   * (copy) of the addresses found.
+   * @return list (copy) of the addresses of the agents matching the ABA
    */
-  public ArrayList lookupABAinNameServer(AttributeBasedAddress aba) {
-    
-    ArrayList cis = new ArrayList();
+  private Collection lookupABA(AttributeBasedAddress aba) {
+    CommunityService cs = getCommunityService();
+    String communitySpec = getCommunitySpec(aba);
     String roleValue = aba.getAttributeValue();
     String roleName = aba.getAttributeType();
-    //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
-
-    CommunityService cs = getCommunityService();
+    String filter = "(" + roleName + "=" + roleValue + ")";
     
     if (cs == null) {
-      getLogger().error("Couldn't get CommunityService: " + aba + " unresolved.");
-      return cis;
+      return Collections.EMPTY_SET;
     }
-    
-    String communitySpec = getCommunitySpec(aba);
-    String filter = "(" + roleName + "=" + roleValue + ")";
     Collection matches = cs.search(communitySpec, filter);
-    for (Iterator it = matches.iterator(); it.hasNext();) {
-      cis.add((ClusterIdentifier)it.next());
+    List cis = new ArrayList(matches.size());
+    for (Iterator i = matches.iterator(); i.hasNext(); ) {
+      ClusterIdentifier cid = (ClusterIdentifier) i.next();
+      cis.add(cid);
     }
-
-    cacheByRole(roleValue, cis);
-    
     return cis;
   }
-  
-  
+
+  private void clearCache(String communityName) {
+    synchronized (cacheClearerLock) {
+      if (cacheClearer == null) {
+        cacheClearer = new CacheClearer();
+      }
+    }
+    cacheClearer.add(communityName);
+  }
+
+  private class CacheClearer implements Runnable {
+    private Set changedCommunities = new HashSet();
+    private Thread thread;
+    
+    public synchronized void add(String communityName) {
+      changedCommunities.add(communityName);
+      if (thread == null) {
+        thread = new Thread(this, "ABA Cache Clearer");
+        thread.start();
+      } else {
+        notify();
+      }
+    }
+
+    public void run() {
+      Set changes = new HashSet();
+      while (true) {
+        synchronized (this) {
+          if (changedCommunities.size() == 0) {
+            try {
+              wait(10000L);
+            } catch (InterruptedException ie) {
+            }
+          }
+          if (changedCommunities.size() == 0) {
+            thread = null;
+            return;
+          }
+          try {
+            Thread.sleep(1000L);
+          } catch (InterruptedException ie) {
+          }
+          changes.addAll(changedCommunities);
+          changedCommunities.clear();
+        }
+        myDistributor.invokeABAChangeLPs(changes);
+        changes.clear();
+      }
+    }
+  }
+
+  public void invokeABAChangeLPs(Set communities) {
+    synchronized (cache) {
+      for (Iterator i = cache.values().iterator(); i.hasNext(); ) {
+        ABATranslationImpl at = (ABATranslationImpl) i.next();
+        at.setOldTranslation(at.getCurrentTranslation());
+        at.setCurrentTranslation(null); // Filled in when needed
+      }
+      myDomainService.invokeABAChangeLogicProviders(communities);
+      for (Iterator i = cache.values().iterator(); i.hasNext(); ) {
+        ABATranslationImpl at = (ABATranslationImpl) i.next();
+        at.setOldTranslation(null);
+        if (at.isEmpty()) i.remove();
+      }
+    }
+  }
+
+  public ABATranslation getABATranslation(AttributeBasedAddress aba) {
+    synchronized (cache) {
+      ABATranslationImpl ret = (ABATranslationImpl) cache.get(aba);
+      if (ret.getOldTranslation() == null) return null;
+      if (ret.getCurrentTranslation() == null) {
+        ret.setCurrentTranslation(lookupABA(aba));
+      }
+      return ret;
+    }
+  }
+
   // Stub - should be replaced when we figure out semantics for
-  // community name spec in the aba.
+  // community name spec in the aba.d
   protected String getCommunitySpec(AttributeBasedAddress aba) {
     String abaComm = aba.getCommunityName();
 
@@ -694,35 +848,4 @@ public class Blackboard extends Subscriber
       return abaComm;
     }
   }
-  
- /*
-   * FIXME - this should be called fist to fill cache initially instead 
-   * of building it, as it is now implemented. 
-   *
-   * Fills up cache of roleValue (ie 'Manager') to a set of ClusterIdentifiers 
-   * by queries to the NameServer. 
-   
-  public void fillCache() {
-    // for all roles
-    // set agents = search by role type
-    // cacheByRole(role, agents);
-    
-    DirContext dirContext = getNameServer();
-    
-    // get all object names, then search attributes on them
-    try {
-      //NamingEnumeration enum = dirContext.list("MNRTest");
-      //while (enum.hasMore()) {
-      //SearchResult result = (SearchResult) enum.next();
-      //System.out.println("Object Name = " + result.getName());
-      //}
-      if(dirContext==null)
-	System.out.println("dirContext is NULL!!");
-    }catch (Exception e) {
-      e.printStackTrace();
-    }
-    
-    }
- */
-  
 }

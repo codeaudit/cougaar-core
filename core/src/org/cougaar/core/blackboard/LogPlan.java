@@ -33,7 +33,7 @@ import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.asset.Asset;
-
+import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 
@@ -302,5 +302,7 @@ public class LogPlan
     }
   }
 
-
+  public ABATranslation getABATranslation(AttributeBasedAddress aba) {
+    return blackboard.getABATranslation(aba);
+  }
 }

@@ -39,6 +39,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -646,6 +647,15 @@ public class Distributor {
     }
 
     directiveMessages.clear();
+  }
+
+  public synchronized void invokeABAChangeLPs(Set communities) {
+    try {
+      blackboard.startTransaction();
+      blackboard.invokeABAChangeLPs(communities);
+    } finally {
+      blackboard.stopTransaction();
+    }
   }
 
   /**

@@ -29,6 +29,7 @@ import java.util.Enumeration;
 import java.util.Collection;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.core.util.UID;
+import org.cougaar.multicast.AttributeBasedAddress;
 
 public interface BlackboardServesLogicProvider
 {
@@ -65,5 +66,11 @@ public interface BlackboardServesLogicProvider
 
   PublishHistory getHistory();
 
+  /**
+   * Get ABA translation status.
+   * @return an ABATranslation giving translations of an ABA.
+   * Returns null if the translations are unchanged.
+   * @param aba the ABA to translate
+   **/
+  ABATranslation getABATranslation(AttributeBasedAddress aba);
 }
-
