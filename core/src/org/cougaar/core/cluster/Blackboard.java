@@ -205,7 +205,9 @@ public class Blackboard extends Subscriber
    * the allPlanObjects won't change.
    **/
   public void fillSubscription(Subscription subscription) {
-    if (subscription.getSubscriber() == this) return; // Don't fill ourselves
+    if (subscription == everything) {
+      return; // Don't fill ourselves
+    }
     Envelope envelope = new Envelope();
     envelope.bulkAddObject(everything.getCollection());
     subscription.fill(envelope);

@@ -34,6 +34,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.persist.Persistence;
@@ -77,7 +79,7 @@ public class Distributor {
   private Persistence persistence = null;
 
   /** The time that we last persisted **/
-  private long lastPersist = System.currentTimeMillis();
+  protected long lastPersist = System.currentTimeMillis();
 
   /** Do we need to persist sometime; changed state has not been persisted **/
   private boolean needToPersist = false;
@@ -343,6 +345,13 @@ public class Distributor {
   public synchronized void start(ClusterServesLogicProvider theCluster, Object state) {
     rehydrate(state);
     getMessageManager().start(theCluster, didRehydrate);
+
+    if (lazyPersistence) {
+      Timer persistTimer = new Timer();
+      persistTimer.schedule(new DistributorTimerTask(), 
+                            LAZY_PERSIST_INTERVAL, 
+                            LAZY_PERSIST_INTERVAL);
+    }
   }
 
   //
@@ -586,7 +595,7 @@ public class Distributor {
     long overdue = System.currentTimeMillis() - (lastPersist + LAZY_PERSIST_INTERVAL);
     if (overdue > 0L) {
       System.out.println("Lazy persistence overdue by " + overdue);
-    }
+    } 
     return overdue > 0L;
   }
 
@@ -693,5 +702,36 @@ public class Distributor {
         transactionLock.notifyAll();
       }
     }
+  }
+
+  protected void timerPersist() {
+    if (needToPersist) {
+      
+      try {
+        persistNow();
+      } catch (PersistenceNotEnabledException pnee) {
+        pnee.printStackTrace();
+      }
+    }
+  }
+
+  private class DistributorTimerTask extends TimerTask {
+    
+    public DistributorTimerTask() {
+      super();
+    }
+
+    public void run() {
+      timerPersist();
+    }
+
+    public boolean cancel() {
+      return true;
+    }
+
+    public long scheduledExecutionTime() {
+      return lastPersist;
+    }
+      
   }
 }
