@@ -17,7 +17,7 @@
 <b><font size=+2>Release Notes</font></b></h2>
 
 <h2>
-<b><font size=+2>COUGAAR 8.4.2</font></b></h2>
+<b><font size=+2>COUGAAR 8.6.0</font></b></h2>
 </td>
 
 <td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 ></a></td>
@@ -64,24 +64,25 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
-Build 8.6 is a point release along COUGAAR 8.0 and will be the final release
-under the ALP project.&nbsp; Future Cougaar releases will be under the
-Ultra*Log project. Notable additions for this release include:
+Build 8.6.0 is a point release along COUGAAR 8.0 and will be the final
+release under the ALP project.&nbsp; Future Cougaar releases will be under
+the Ultra*Log project. Notable additions for this release include:
 <ul>
+<li>
+Changes to plugin parameters defined in the cougaar.rc file.&nbsp; Please
+see <a href="details/DataAccess.html">DataAccess.html</a> for the current
+list of parameters needed to run a small-135 society.</li>
+
 <li>
 db stuff here</li>
 
 <li>
-Generic <a href="details/Logging.html">logging facility</a>.  Both logging and logging control services provide a front-end to popular log4j third-party logging package.</li>
-
-<li>
-traceback of failures bullet here</li>
+Generic <a href="details/Logging.html">logging facility</a>. Both logging
+and logging control services provide a front-end to popular log4j third-party
+logging package.</li>
 
 <li>
 readiness plugin bullet here</li>
-
-<li>
-repackage info here</li>
 
 <li>
 others?</li>
@@ -93,8 +94,7 @@ better ability to defined task parameters, ability to specify more than
 2 levels of expansion, and the ability to expand levels fully or expand
 them into a single flat workflow. For details please see glm/doc/UniversalExpanderPlugIn.html</li>
 </ul>
-
-<p>Build 8.4.2 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
+Build 8.4.2 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
 for this release include:
 <ul>
 <li>
@@ -232,10 +232,10 @@ docs</li>
 api/index.html if the cougaar-api.zip archive has been installed).</li>
 
 <li>
-Cougaar Developers Guide, v8.4 (dated 31-August-2001)</li>
+Cougaar Developers Guide, v8.6 (dated 1-November-2001)</li>
 
 <li>
-Cougaar Architecture Document, v8.4 (dated 31-August-2001)</li>
+Cougaar Architecture Document, v8.6 (dated 1-November-2001)</li>
 
 <li>
 core/src/Changelog</li>
@@ -317,7 +317,10 @@ on
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unzip -o /tmp/cougaar-support.zip
 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; setenv COUGAAR_INSTALL_PATH
 `pwd`
-<br>&nbsp;
+<p>Note that $COUGAAR_INSTALL_PATH/bin/Node and setarguments.bat set the
+Cougaar start time with the following Node argument:
+<br>-Dorg.cougaar.core.cluster.startTime=08/010/2005
+<br>This start time is optimal for the Oplan used with the small-135 society.&nbsp;
 <h2>
 <a NAME="utilities"></a>Utilities in a Release&nbsp;</h2>
 The following PSPs (in the GLM module) and LPS services are tested with
@@ -435,6 +438,11 @@ website.&nbsp;
 <a NAME="bugs"></a>Known bugs and other issues</h2>
 
 <ul>
+<li>
+OutOfMemory error/thread problem when running a 2 node small-135 society
+on one Linux machine.&nbsp; Its best to use 2 machines if running a multi-node
+small-135 society.</li>
+
 <li>
 The NodeServer module (server.jar) does not currently work as an executable
 jar file because of an unresolved dependency on core.jar. Until this is
