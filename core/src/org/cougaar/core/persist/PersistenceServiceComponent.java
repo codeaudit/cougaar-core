@@ -67,7 +67,7 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-import org.cougaar.util.StringUtility;
+import org.cougaar.util.CSVUtility;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.BindingSite;
@@ -120,25 +120,54 @@ import org.cougaar.core.component.BindingSite;
  */
  public class PersistenceServiceComponent
   extends GenericStateModelAdapter
-  implements Component, PersistencePluginSupport
+   implements Component, PersistencePluginSupport, PersistenceNames
 {
-  private static final String PERSISTENCE_INTERVAL_CONTROL_NAME = "interval";
-  private static final String PERSISTENCE_ENCRYPTION_CONTROL_NAME = "encryption";
-  private static final String PERSISTENCE_SIGNING_CONTROL_NAME = "signing";
-  private static final String PERSISTENCE_CONSOLIDATION_PERIOD_NAME = "consolidationPeriod";
   private static final long MIN_PERSISTENCE_INTERVAL = 5000L;
   private static final long MAX_PERSISTENCE_INTERVAL = 1200000L; // 20 minutes max
-  private static final String DEFAULT_PERSISTENCE_ENCRYPTION = "OFF";
-  private static final String DEFAULT_PERSISTENCE_SIGNING = "OFF";
   private static final String DUMMY_MEDIA_NAME = "dummy";
-  private static final String FILE_MEDIA_NAME = "file";
-  private static final String PROP_LAZY_PERSIST_INTERVAL = "org.cougaar.core.persistence.lazyInterval";
-  private static final long DEFAULT_LAZY_PERSIST_INTERVAL = 300000L;
-  private static final long LAZY_PERSIST_INTERVAL =
-    Long.getLong(PROP_LAZY_PERSIST_INTERVAL, DEFAULT_LAZY_PERSIST_INTERVAL).longValue();
-  private static final int CONSOLIDATION_PERIOD =
-    Integer.getInteger("org.cougaar.core.persistence.consolidationPeriod", 10).intValue();
+  private static final String FILE_MEDIA_NAME = "P";
   private static final char PARAM_SEP = ';';
+
+  private static final long PERSISTENCE_INTERVAL_DFLT = 300000L;
+  private static final boolean WRITE_DISABLED_DFLT =
+    Boolean.getBoolean(PERSISTENCE_DISABLE_WRITE_PROP);
+
+  private static final String PERSISTENCE_CONSOLIDATION_PERIOD_PROP =
+    PERSISTENCE_PROP_PREFIX + PERSISTENCE_CONSOLIDATION_PERIOD_NAME;
+  private static final int PERSISTENCE_CONSOLIDATION_PERIOD_DFLT = 10;
+
+  private static final String[] PERSISTENCE_CLASSES_DFLT = getPersistenceClassesDflt();
+
+  private static String[] getPersistenceClassesDflt() {
+    String prop = System.getProperty(PERSISTENCE_CLASS_PROP);
+    if (prop != null) {
+      try {
+        return CSVUtility.parse(prop);
+      } catch (Exception e) {
+        Logging.getLogger(PersistenceServiceComponent.class).error("Failed to parse " + prop, e);
+      }
+    }
+    boolean disabled =
+      System.getProperty(PERSISTENCE_ENABLE_PROP, "false").equals("false");
+    if (disabled) return new String[0];
+    return new String[] {
+      FilePersistence.class.getName() + PARAM_SEP + FILE_MEDIA_NAME
+    };
+  }
+
+  private static String getDummyPersistenceClass() {
+    return DummyPersistence.class.getName()
+      + PARAM_SEP + DUMMY_MEDIA_NAME
+      + PARAM_SEP + PERSISTENCE_INTERVAL_PREFIX + MAX_PERSISTENCE_INTERVAL;
+  }
+
+  private long PERSISTENCE_INTERVAL =
+    Long.getLong(PERSISTENCE_INTERVAL_PROP,
+                 PERSISTENCE_INTERVAL_DFLT).longValue();
+  private int PERSISTENCE_CONSOLIDATION_PERIOD =
+    Integer.getInteger(PERSISTENCE_CONSOLIDATION_PERIOD_PROP,
+                       PERSISTENCE_CONSOLIDATION_PERIOD_DFLT).intValue();
+  private String[] pluginClasses = PERSISTENCE_CLASSES_DFLT;
 
   private static class RehydrationSet {
     PersistencePlugin ppi;
@@ -160,17 +189,20 @@ import org.cougaar.core.component.BindingSite;
 
   private class PersistencePluginInfo {
     PersistencePlugin ppi;
-    long persistenceInterval = LAZY_PERSIST_INTERVAL;
-    long nextPersistenceTime = LAZY_PERSIST_INTERVAL + System.currentTimeMillis();
-    int consolidationPeriod = CONSOLIDATION_PERIOD;
+    long nextPersistenceTime;
     int deltaCount = 0;
-    boolean encryption = false;
-    boolean signing = false;
     SequenceNumbers cleanupSequenceNumbers = null;
 
     PersistencePluginInfo(PersistencePlugin ppi) {
       this.ppi = ppi;
+      if (ppi.getPersistenceInterval() <= 0L) {
+        setInterval(PERSISTENCE_INTERVAL);
+      }
+      if (ppi.getConsolidationPeriod() <= 0) {
+        setConsolidationPeriod(PERSISTENCE_CONSOLIDATION_PERIOD);
+      }
     }
+
     long getBehind(long now) {
       return now - nextPersistenceTime;
     }
@@ -185,31 +217,25 @@ import org.cougaar.core.component.BindingSite;
      **/
     void setInterval(long newInterval) {
       long now = System.currentTimeMillis();
-      long behind = getBehind(now);
-      long newBehind = behind * newInterval / persistenceInterval;
-      nextPersistenceTime = now - newBehind;
-      persistenceInterval = newInterval;
+      long persistenceInterval = ppi.getPersistenceInterval();
+      if (persistenceInterval == 0L) {
+        nextPersistenceTime = newInterval + now;
+      } else {
+        long behind = getBehind(now);
+        long newBehind = behind * newInterval / persistenceInterval;
+        nextPersistenceTime = now - newBehind;
+      }
+      ppi.setPersistenceInterval(newInterval);
       if (logger.isDebugEnabled()) {
-        logger.debug(ppi.getName() + " persistenceInterval = " + persistenceInterval);
-        logger.debug(ppi.getName() + " nextPersistenceTime = " + persistenceInterval);
+        logger.debug(ppi.getName() + " persistenceInterval = " + newInterval);
+        logger.debug(ppi.getName() + " nextPersistenceTime = " + nextPersistenceTime);
       }
     }
+
     void setConsolidationPeriod(int newPeriod) {
-      consolidationPeriod = newPeriod;
+      ppi.setConsolidationPeriod(newPeriod);
       if (logger.isDebugEnabled()) {
-        logger.debug(ppi.getName() + " consolidationPeriod = " + consolidationPeriod);
-      }
-    }
-    void setEncryption(boolean newEncryption) {
-      encryption = newEncryption;
-      if (logger.isDebugEnabled()) {
-        logger.debug(ppi.getName() + " encryption = " + encryption);
-      }
-    }
-    void setSigning(boolean newSigning) {
-      signing = newSigning;
-      if (logger.isDebugEnabled()) {
-        logger.debug(ppi.getName() + " signing = " + signing);
+        logger.debug(ppi.getName() + " consolidationPeriod = " + newPeriod);
       }
     }
   }
@@ -269,16 +295,6 @@ import org.cougaar.core.component.BindingSite;
     return getMessageAddress().toString();
   }
 
-  /**
-   * Disable all plugins (by setting their interval to max
-   **/
-  private void disablePlugins() {
-    for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
-      PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
-      ppio.setInterval(MAX_PERSISTENCE_INTERVAL);
-    }
-  }
-
   public class PersistenceControlServiceImpl
     implements PersistenceControlService
   {
@@ -301,28 +317,20 @@ import org.cougaar.core.component.BindingSite;
     public String[] getMediaControlNames(String mediaName) {
       PersistencePluginInfo ppio = getPluginInfo(mediaName); // Test existence
       return new String[] {
-        PERSISTENCE_INTERVAL_CONTROL_NAME,
+        PERSISTENCE_INTERVAL_NAME,
         PERSISTENCE_CONSOLIDATION_PERIOD_NAME,
-        PERSISTENCE_ENCRYPTION_CONTROL_NAME,
-        PERSISTENCE_SIGNING_CONTROL_NAME,
       };
     }
 
     public OMCRangeList getMediaControlValues(String mediaName, String controlName) {
       PersistencePluginInfo ppio = getPluginInfo(mediaName);
-      if (controlName.equals(PERSISTENCE_INTERVAL_CONTROL_NAME)) {
+      if (controlName.equals(PERSISTENCE_INTERVAL_NAME)) {
         return new OMCRangeList(new Long(MIN_PERSISTENCE_INTERVAL),
                                 new Long(MAX_PERSISTENCE_INTERVAL));
       }
       if (controlName.equals(PERSISTENCE_CONSOLIDATION_PERIOD_NAME)) {
         return new OMCRangeList(new Integer(1),
                                 new Integer(20));
-      }
-      if (controlName.equals(PERSISTENCE_ENCRYPTION_CONTROL_NAME)) {
-        return new OMCRangeList(new Comparable[] {"OFF", "ON"});
-      }
-      if (controlName.equals(PERSISTENCE_SIGNING_CONTROL_NAME)) {
-        return new OMCRangeList(new Comparable[] {"OFF", "ON"});
       }
       throw new IllegalArgumentException(mediaName + " has no control named: " + controlName);
     }
@@ -332,21 +340,13 @@ import org.cougaar.core.component.BindingSite;
                                      Comparable newValue)
     {
       PersistencePluginInfo ppio = getPluginInfo(mediaName);
-      if (controlName.equals(PERSISTENCE_INTERVAL_CONTROL_NAME)) {
+      if (controlName.equals(PERSISTENCE_INTERVAL_NAME)) {
         ppio.setInterval(((Number) newValue).longValue());
         recomputeNextPersistenceTime = true;
         return;
       }
       if (controlName.equals(PERSISTENCE_CONSOLIDATION_PERIOD_NAME)) {
         ppio.setConsolidationPeriod(((Number) newValue).intValue());
-        return;
-      }
-      if (controlName.equals(PERSISTENCE_ENCRYPTION_CONTROL_NAME)) {
-        ppio.setEncryption(newValue.equals("ON"));
-        return;
-      }
-      if (controlName.equals(PERSISTENCE_SIGNING_CONTROL_NAME)) {
-        ppio.setSigning(newValue.equals("ON"));
         return;
       }
       throw new IllegalArgumentException(mediaName + " has no control named: " + controlName);
@@ -367,8 +367,81 @@ import org.cougaar.core.component.BindingSite;
     this.sb = bs.getServiceBroker();
   }
 
+  /**
+   * Ideally, our agent would give us our parameters, but limitations
+   * in ACME or CSMART may preclude this possibility. So, this method
+   * is an alternate using system properties. The property named
+   * org.cougaar.core.persistence.<agent> may have a value that is a
+   * comma separated list of values of parameters. Each item of the
+   * list is of the form <name>=<value> where <name> is the simple
+   * name for the parameter (without the org.cougaar.persistence.
+   * prefix). Many of the values in this list will contain commas and
+   * this must be quoted with backslash or quotes.
+   **/
+  private void getParametersFromProperties(String agentName, List params) {
+    String pname = PERSISTENCE_PARAMETERS_PROP + "." + agentName;
+    String pvalue = System.getProperty(pname);
+    if (pvalue != null) {
+      String[] ps = CSVUtility.parse(pvalue);
+      for (int i = 0; i < ps.length; i++) {
+        params.add(PERSISTENCE_PROP_PREFIX + ps[i]);
+      }
+    }
+  }
+
   public void setParameter(Object o) {
-    agentId = (MessageAddress) o;
+    List params;
+    if (o instanceof MessageAddress) {
+      params = new ArrayList();
+      params.add(o);
+    } else if (!(o instanceof List)) {
+      throw new IllegalArgumentException("Illegal parameter " + o);
+    } else {
+      params = (List) o;
+    }
+    agentId = (MessageAddress) params.get(0);
+    getParametersFromProperties(agentId.toString(), params);
+    // Set agent-wide persistence defaults
+    List plugins = new ArrayList();
+    for (int i = 1, n = params.size(); i < n; i++) {
+      String fullParam = (String) params.get(i);
+      if (!fullParam.startsWith(PERSISTENCE_PROP_PREFIX)) continue; // Not mine
+      String param = fullParam.substring(PERSISTENCE_PROP_PREFIX.length());
+      try {
+        if (param.startsWith(PERSISTENCE_INTERVAL_PREFIX)) {
+          PERSISTENCE_INTERVAL =
+            Long.parseLong(param.substring(PERSISTENCE_INTERVAL_PREFIX.length()));
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_CONSOLIDATION_PERIOD_PREFIX)) {
+          PERSISTENCE_CONSOLIDATION_PERIOD =
+            Integer.parseInt(param.substring(PERSISTENCE_CONSOLIDATION_PERIOD_PREFIX.length()));
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_DISABLE_WRITE_PREFIX)) {
+          writeDisabled = "true".equals(param.substring(PERSISTENCE_DISABLE_WRITE_PREFIX.length()));
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_ARCHIVE_NUMBER_PREFIX)) {
+          archiveNumber = param.substring(PERSISTENCE_ARCHIVE_NUMBER_PREFIX.length());
+          writeDisabled = true; // Setting the archive number only makes sense if not writing
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_CLASS_PREFIX)) {
+          String plugin = param.substring(PERSISTENCE_CLASS_PREFIX.length());
+          plugins.add(plugin);
+          continue;
+        }
+      } catch (Exception e) {
+        // No logger yet.
+        Logging.getLogger(getClass()).error("Error parsing parameter: " + fullParam);
+      }
+    }
+    if (plugins.size() > 0) {
+      // Replace default with specific classes
+      pluginClasses = new String[plugins.size()];
+      pluginClasses = (String[]) plugins.toArray(pluginClasses);
+    }
   }
 
   /**
@@ -381,42 +454,49 @@ import org.cougaar.core.component.BindingSite;
     identityTable = new IdentityTable(logger);
     registerServices(sb);
     try {
-      String defaultPlugin;
-      boolean disabled = System.getProperty("org.cougaar.core.persistence.enable", "false").equals("false");
-      String persistenceClasses =
-        System.getProperty("org.cougaar.core.persistence.class");
-      if (persistenceClasses == null) {
-        if (disabled) {
-          persistenceClasses = DummyPersistence.class.getName() + PARAM_SEP + DUMMY_MEDIA_NAME;
-        } else {
-          persistenceClasses = FilePersistence.class.getName() + PARAM_SEP + FILE_MEDIA_NAME;
+      for (int i = 0; i < pluginClasses.length; i++) {
+        addPlugin(pluginClasses[i]);
+      }
+      // There must be at least one writable plugin
+      boolean haveWritablePlugin = false;
+      for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+        PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+        if (ppio.ppi.isWritable()) {
+          haveWritablePlugin = true;
+          break;
         }
       }
-      Vector pluginTokens =
-        StringUtility.parseCSV(persistenceClasses, 0, persistenceClasses.length(), ',');
-      for (Iterator i = pluginTokens.iterator(); i.hasNext(); ) {
-        String pluginSpec = (String) i.next();
-        Vector paramTokens = StringUtility.parseCSV(pluginSpec, 0, pluginSpec.length(), PARAM_SEP);
-        if (paramTokens.size() < 1) {
-          throw new PersistenceException("No plugin class specified: " + pluginSpec);
-        }
-        if (paramTokens.size() < 2) {
-          throw new PersistenceException("No plugin name: " + pluginSpec);
-        }
-        Class pluginClass = Class.forName((String) paramTokens.get(0));
-        String pluginName = (String) paramTokens.get(1);
-        String[] pluginParams = new String[paramTokens.size() - 2];
-        for (int j = 0; j < pluginParams.length; j++) {
-          pluginParams[j] = (String) paramTokens.get(j + 2);
-        }
-        PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
-        addPlugin(ppi, pluginName, pluginParams);
-      }
-      if (disabled) {
-        disablePlugins();
+      if (!haveWritablePlugin) {
+        // Add a dummy persistence plugin
+        addPlugin(getDummyPersistenceClass());
       }
     } catch (Exception e) {
       throw new RuntimeException("Exception in load()", e);
+    }
+  }
+
+  private void addPlugin(String pluginSpec) throws PersistenceException {
+    String[] paramTokens = CSVUtility.parse(pluginSpec, PARAM_SEP);
+    if (paramTokens.length < 1) {
+      throw new PersistenceException("No plugin class specified: " + pluginSpec);
+    }
+    if (paramTokens.length < 2) {
+      throw new PersistenceException("No plugin name: " + pluginSpec);
+    }
+    try {
+      Class pluginClass = Class.forName((String) paramTokens[0]);
+      String pluginName = (String) paramTokens[1];
+      String[] pluginParams = new String[paramTokens.length - 2];
+      System.arraycopy(paramTokens, 2, pluginParams, 0, pluginParams.length);
+      PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
+      if (writeDisabled) ppi.setWritable(false); // Force write off
+      addPlugin(ppi, pluginName, pluginParams);
+    } catch (ClassNotFoundException cnfe) {
+      throw new PersistenceException("Bad plugin class", cnfe);
+    } catch (InstantiationException ie) {
+      throw new PersistenceException("Plugin instantiation failed", ie);
+    } catch (IllegalAccessException iae) {
+      throw new PersistenceException("Plugin constructor inaccessible", iae);
     }
   }
 
@@ -454,10 +534,11 @@ import org.cougaar.core.component.BindingSite;
   private ObjectOutputStream currentOutput;
   private MessageAddress agentId;
   private List associationsToPersist = new ArrayList();
+  private boolean previousPersistFailed = false;
   private Logger logger;
   private DataProtectionService dataProtectionService;
-  private boolean writeDisabled = false;
-  private String sequenceNumberSuffix = "";
+  private boolean writeDisabled = WRITE_DISABLED_DFLT;
+  private String archiveNumber = "";
   private Map plugins = new HashMap();
   private Map rehydrationResult = null;
   private Map clients = new HashMap();
@@ -500,7 +581,7 @@ import org.cougaar.core.component.BindingSite;
    * Gets the system time when persistence should be performed. We do
    * persistence periodically with a period such that all the plugins
    * will, on the average create persistence deltas with their
-   * individual periods. The average frequence of persistence is the
+   * individual periods. The average frequency of persistence is the
    * sum of the individual media frequencies. Frequency is the
    * reciprocal of period. The computation is:<p>
    *
@@ -513,7 +594,9 @@ import org.cougaar.core.component.BindingSite;
       double sum = 0.0;
       for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
         PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
-        sum += 1.0 / ppio.persistenceInterval;
+        if (ppio.ppi.isWritable()) {
+          sum += 1.0 / ppio.ppi.getPersistenceInterval();
+        }
       }
       long interval = (long) (1.0 / sum);
       nextPersistenceTime = previousPersistenceTime + interval;
@@ -549,7 +632,7 @@ import org.cougaar.core.component.BindingSite;
       final List rehydrationCollection = new ArrayList();
       identityTable.setRehydrationCollection(rehydrationCollection);
       try {
-        final RehydrationSet[] rehydrationSets = getRehydrationSets(sequenceNumberSuffix);
+        final RehydrationSet[] rehydrationSets = getRehydrationSets(archiveNumber);
         if (pObject != null || rehydrationSets.length > 0) { // Deltas exist
           try {
             final Map[] resultPtr = new Map[1];
@@ -898,7 +981,49 @@ import org.cougaar.core.component.BindingSite;
    * nextPersistenceTime of the selected plugin differs significantly
    * from now, the nextPersistenceTimes of all plugins are adjusted to
    * eliminate that difference.
+   *
+   * Persistence snapshots are taken with a frequency that is the
+   * average of frequencies of all the plugins. This means that any
+   * particular plugin will persistence with a frequency greater that
+   * its specified frequency for a while, but then will be inactive
+   * for a period while other plugins are used for an interval such
+   * that its average frequency is close to its spcified frequency.
+   *
+   * As an example, consider two plugins A and B with periods of 10
+   * and 40 respectively. The consolidation period for both is 10. The
+   * average frequency is 1/10 + 1/40 or 5/40. This means the
+   * inter-snapshot interval will be 8 and the faster plugin (A) will
+   * go first since it "nextPersistenceTime will be 10 compared to 40.
+   * So we have:
+   * next(A) = 10
+   * next(B) = 40
+   * A: 8, 16, 24, ..., 80
+   * next(A) = 10 + 10 * 10 = 110
+   * next(B) = 40 (B goes next)
+   * B: 88, 96, ..., 160
+   * next(A) = 110 (A goes next)
+   * next(B) 40 + 400 = 440
+   * A: 168, 176, ..., 240
+   * next(A) = 110 + 10 * 10 = 210 (A continues)
+   * next(B) = 440
+   * A: 248, 256, ..., 320
+   * next(A) = 210 + 10 * 10 = 310 (A continues)
+   * next(B) = 440
+   * A: 328, 336, ..., 400
+   * next(A) = 310 + 10 * 10 = 410 (A continues)
+   * next(B) = 440
+   * A: 408, 416, ..., 480
+   * next(A) = 410 + 10 * 10 = 510
+   * next(B) = 440 (B goes next)
+   *
+   * This patterm will continue with A running 4 times as much as B.
+   * We observe that this leads to fairly long gaps between uses of
+   * the lower-rate plugin since it uses up its share of the snapshots
+   * fairly quickly and then waits a long time for its turn to come up
+   * again. This suggests that it might be wise to reduce the
+   * consolidation period of infrequent plugins.
    **/
+
   private void selectNextPlugin() {
     PersistencePluginInfo best = null;
     for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
@@ -978,7 +1103,6 @@ import org.cougaar.core.component.BindingSite;
     int bytesSerialized = 0;
     full |= returnBytes;        // Must be a full snapshot to return bytes
     recomputeNextPersistenceTime = true;
-    if (writeDisabled) return null;
     PersistenceObject result = null; // Return value if wanted
     synchronized (identityTable) {
       try {
@@ -987,6 +1111,10 @@ import org.cougaar.core.component.BindingSite;
         if (sequenceNumbers == null) {
           initSequenceNumbers();
         }
+        if (previousPersistFailed) {
+          full = true;          // Don't trust the deltas, (try to) do a full
+          previousPersistFailed = false;
+        }
         // The following fixes an edge condition. The very first delta
         // (seqno = 0) is always a full delta whether we want it to be
         // or not because there are no previous ones. Setting full =
@@ -994,16 +1122,23 @@ import org.cougaar.core.component.BindingSite;
         if (sequenceNumbers.current == 0) full = true;
         // Every so often generate a full delta to consolidate and
         // prevent the number of deltas from increasing without bound.
-        if (!full &&
-            currentPersistPluginInfo != null &&
-            currentPersistPluginInfo.deltaCount >= currentPersistPluginInfo.consolidationPeriod &&
-            currentPersistPluginInfo.deltaCount % currentPersistPluginInfo.consolidationPeriod == 0)
-          {
-            full = true;
+        if (!full && currentPersistPluginInfo != null) {
+          // Check if its time to consolidate this plugin's snapshots
+          int consolidationPeriod = currentPersistPluginInfo.ppi.getConsolidationPeriod();
+          // nSnapshots is the number already generated
+          int nSnapshots = sequenceNumbers.current - sequenceNumbers.first;
+          if (nSnapshots + 1 >= consolidationPeriod) {
+            // The next snapshot needs to be full
+            full = true;        // Time for a full snapshot
           }
+        }
         if (full || currentPersistPluginInfo == null) {
           if (currentPersistPluginInfo != null) {
-            // Cleanup the existing since the full replaces them
+            // Cleanup the existing since the full replaces them.
+            // N.B., if there are multiple plugins, the cleanup will
+            // not actually occur until the next time this plugin is
+            // selected as the best and creates a full snapshot. This
+            // is because we will select a new plugin below.
             currentPersistPluginInfo.cleanupSequenceNumbers =
               new SequenceNumbers(sequenceNumbers.first + 1,
                                   sequenceNumbers.current,
@@ -1022,8 +1157,6 @@ import org.cougaar.core.component.BindingSite;
         // effect updates identityTable and if !full, associationsToPersist.
         Map clientData = getClientData();
         if (full) {
-          associationsToPersist.clear(); // Just for luck. Should
-                                         // already be clear.
           // If full dump, garbage collect unreferenced objects
           System.gc();
           for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
@@ -1137,9 +1270,12 @@ import org.cougaar.core.component.BindingSite;
       }
       // set persist time to persist completion + epsilon
       previousPersistenceTime = System.currentTimeMillis();
-      currentPersistPluginInfo.nextPersistenceTime =
-        previousPersistenceTime +
-        currentPersistPluginInfo.persistenceInterval;
+      // Note currentPersistPluginInfo.nextPersistenceTime is _not_
+      // relative to the current time; it is relative to the other
+      // persistence plugins and is occasionally adjusted when it
+      // drifts too far from real time.
+      currentPersistPluginInfo.nextPersistenceTime +=
+        currentPersistPluginInfo.ppi.getPersistenceInterval();
     }
     //long finishCPU = CpuClock.cpuTimeMillis();
     long finishCPU = 0l;
@@ -1201,15 +1337,6 @@ import org.cougaar.core.component.BindingSite;
 
   static String getObjectName(Object o) {
     return o.getClass().getName() + "@" + System.identityHashCode(o);
-  }
-
-  public void disableWrite(String sequenceNumberSuffix) {
-    this.sequenceNumberSuffix = sequenceNumberSuffix;
-    writeDisabled = true;
-  }
-
-  public boolean isWriteDisabled() {
-    return writeDisabled;
   }
 
   private int beginTransaction() throws IOException {
@@ -1293,9 +1420,6 @@ import org.cougaar.core.component.BindingSite;
     }
     public void releaseDatabaseConnection(Object locker) {
       PersistenceServiceComponent.this.releaseDatabaseConnection(locker);
-    }
-    public void disableWrite(String sequenceNumberSuffix) {
-      PersistenceServiceComponent.this.disableWrite(sequenceNumberSuffix);
     }
     public long getPersistenceTime() {
       return PersistenceServiceComponent.this.getPersistenceTime();
