@@ -113,7 +113,7 @@ class ThreadPool
 	    synchronized (runLock) {
 		if (isRunning) 
 		    throw new IllegalThreadStateException("PooledThread already started: "+
-							  this);
+							  schedulable);
 		this.schedulable = schedulable;
 		isRunning = true;
 
@@ -135,31 +135,10 @@ class ThreadPool
     
 
 
-    /** initial number of PooledThreads in the pool **/
-    private static int defaultInitialPoolSize;
-
-    /** maximum number of unused PooledThreads to keep in the pool **/
-    private static int defaultMaximumPoolSize;
-
-    /** initialize initialPoolSize and maximumPoolSize from system,
-     * properties and create the default ThreadPool from these
-     * values.
-     */
     private static final String InitialPoolSizeProp =
 	"org.cougaar.thread.poolsize.initial";
     private static final int InitialPoolSizeDefault = 10;
-    private static final String MaxPoolSizeProp =
-	"org.cougaar.thread.poolsize.max";
-    private static final int MaxPoolSizeDefault = 64;
 
-    static {
-	defaultInitialPoolSize = 
-	    PropertyParser.getInt(InitialPoolSizeProp, 
-				  InitialPoolSizeDefault);
-	defaultMaximumPoolSize = 
-	    PropertyParser.getInt(MaxPoolSizeProp, MaxPoolSizeDefault);
-
-    }
 
     /** The ThreadGroup of the pool - all threads in the pool must be
      * members of the same threadgroup.
@@ -168,34 +147,33 @@ class ThreadPool
     /** The maximum number of unused threads to keep around in the pool.
      * anything beyond this may be destroyed or GCed.
      **/
-    private int maximumSize;
 
     /** the actual pool **/
     private PooledThread pool[];
-    private ArrayList extra;
+    private ArrayList list_pool;
     private Logger logger;
     private int index = 0;
 
     ThreadPool() {
-	this(defaultInitialPoolSize, defaultMaximumPoolSize);
-    }
-
-    ThreadPool(ThreadGroup group) {
-	this(group, defaultInitialPoolSize, defaultMaximumPoolSize);
-    }
-
-    ThreadPool(int initial, int maximum) {
-	this(Thread.currentThread().getThreadGroup(), initial, maximum);
-    }
-
-    ThreadPool(ThreadGroup group, int initial, int maximum) {
-	this.group = group;
+	int initialSize = PropertyParser.getInt(InitialPoolSizeProp, 
+						InitialPoolSizeDefault);
+	int maximumSize = PropertyParser.getInt(Scheduler.MaxRunningCountProp, 
+					    Scheduler.MaxRunningCountDefault);
+	group = Thread.currentThread().getThreadGroup();
 	logger = Logging.getLogger(getClass().getName());
-	if (initial > maximum) initial = maximum;
-	maximumSize = maximum;
-	pool = new PooledThread[maximum];
-	for (int i = 0 ; i < initial; i++) pool[i] = constructReusableThread();
-	extra = new ArrayList(maximum);
+	if (maximumSize < 0) {
+	    // Unlimited.  Make an array of a somewhat arbitrary size
+	    // (100 or initialSize, whichever is larger), and also
+	    // make an ArrayList which will be used if the array runs
+	    // out.
+	    pool = new PooledThread[Math.max(initialSize, 100)];
+	    list_pool = new ArrayList(100);
+	} else {
+	    if (initialSize > maximumSize) initialSize = maximumSize;
+	    pool = new PooledThread[maximumSize];
+	}
+	for (int i = 0 ; i < initialSize; i++)
+	    pool[i] = constructReusableThread();
     }
 
 
@@ -209,46 +187,45 @@ class ThreadPool
 
     PooledThread getThread(Runnable runnable, String name) {
 	PooledThread thread = null;
+	PooledThread candidate = null;
 
 	synchronized (this) {
-	    // Check fast fixed-size list first
-	    for (int i=0; i<maximumSize; i++) {
-		PooledThread candidate = pool[i];
+	    for (int i=0; i<pool.length; i++) {
+		candidate = pool[i];
 		if (candidate == null) {
-		    // System.err.println("New thread " + i);
 		    thread = constructReusableThread();
 		    pool[i] = thread;
 		    thread.in_use = true;
 		    break;
 		} else if (!candidate.in_use) {
-		    // System.err.println("Using thread " + i);
 		    thread = candidate;
 		    thread.in_use = true;
 		    break;
 		}
 	    }
 
-	    if (thread == null) {
-		// No luck. check slow dynamic list
-		Iterator i = extra.iterator();
-		while (i.hasNext()) {
-		    PooledThread candidate = (PooledThread) i.next();
+	    if (thread == null && list_pool != null) {
+		// Use the slow ArrayList.  This is only enabled if
+		// there's no thread limit.
+		Iterator itr  = list_pool.iterator();
+		while (itr.hasNext()) {
+		    candidate = (PooledThread) itr.next();
 		    if (!candidate.in_use) {
 			thread = candidate;
 			thread.in_use = true;
 			break;
 		    }
-
 		}
-	    }
-
-	    if (thread == null) {
-		// None available.  Make one that we'll never actually
-		// reuse.  We need some cleanup here when this finishes.
+		// None in the list either. Make one and add it,
 		thread = constructReusableThread();
-		extra.add(thread);
-	    
+		thread.in_use = true;
+		list_pool.add(thread);
 	    }
+	}
+
+	if (thread == null) {
+	    // None available.  This is unrecoverable.
+	    throw new RuntimeException("Exceeded ThreadPool max");
 	}
 
 	thread.setRunnable(runnable);

@@ -57,11 +57,11 @@ import org.cougaar.util.log.Logging;
 public class Scheduler 
     implements ThreadControlService
 {
-    private static final String MaxRunningCountProp =
+    static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
     
-    // O means unlimited
-    private static final int MaxRunningCountDefault = 30;
+    // -1 means unlimited
+    static final int MaxRunningCountDefault = 30;
 
     private DynamicSortedQueue pendingThreads;
     private ArrayList disqualified = new ArrayList();
