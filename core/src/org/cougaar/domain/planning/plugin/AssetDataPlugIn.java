@@ -159,7 +159,6 @@ public class AssetDataPlugIn extends SimplePlugIn {
       String cId = getClusterIdentifier().getAddress();
       ParsePrototypeFile(cId);
 
-
       // Put the assets for this cluster into array
       for (Iterator iterator = myRelationships.iterator(); 
              iterator.hasNext();) {
@@ -389,8 +388,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
               String ss = (String) sp.nextElement();
 
               int eq = ss.indexOf('=');
-              String slotname = ss.substring(0, eq);
-              String vspec = ss.substring(eq+1);
+              String slotname = ss.substring(0, eq).trim();
+              String vspec = ss.substring(eq+1).trim();
               try {
                 long time  = myDateFormat.parse(vspec).getTime();
                 if (slotname.equals("startTime")) {
@@ -566,11 +565,9 @@ public class AssetDataPlugIn extends SimplePlugIn {
     String propertyName = prop.substring(1, prop.length()-1);
     if (asset != null) {
       NewPropertyGroup property = null;
-      boolean timePhased = false;
       try {
 	property = 
           (NewPropertyGroup)getFactory().createPropertyGroup(propertyName);
-        timePhased = (property instanceof TimePhasedPropertyGroup);
       } catch (Exception e) {
 	System.err.println("AssetDataPlugIn: Unrecognized keyword for a prototype-ini file: [" + propertyName + "]");
       }
