@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.util;
+package org.cougaar.planning.servlet;
 
 import java.beans.BeanInfo;
 import java.beans.Beans;
@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+import org.cougaar.core.util.*;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.AssetIntrospection;
 import org.cougaar.planning.ldm.asset.LockedPG;

@@ -61,8 +61,7 @@ import org.w3c.dom.Element;
  *   <li> Search for an item by UID</li>
  *   <li> Illustrates the use of URLs to allow the user to 
  *        seamlessly jump between views of separate blackboards</li>
- *   <li> Provide XML views of data (using 
- *        org.cougaar.core.util.XMLize)</li>
+ *   <li> Provide XML views of data (using XMLize)</li>
  * </ol>.
  * <p>
  * This is a very large Servlet and is overly-complex to be
