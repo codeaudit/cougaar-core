@@ -13,12 +13,12 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.society.ClusterManagementServesCluster;
 import org.cougaar.core.society.Node;
 import org.cougaar.core.society.NodeForBinder;
 import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportService;
 
 /** The standard Binder for AgentManagers and possibly others attaching to a Node.
  **/

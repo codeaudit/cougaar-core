@@ -13,6 +13,8 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
 
 /** This is the interface presented to an AgentManagerBinder from the Node.
  **/

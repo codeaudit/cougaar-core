@@ -10,9 +10,8 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportService;
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
 
 /** 
  * Services provided to Clusters by ClusterManagement.

@@ -14,7 +14,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.*;
-import org.cougaar.core.society.MessageTransportService;
+import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import java.beans.*;
 import java.lang.reflect.*;

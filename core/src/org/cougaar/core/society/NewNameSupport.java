@@ -10,6 +10,7 @@
 
 package org.cougaar.core.society;
 
+import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.naming.NamingService;
 import javax.naming.NamingException;
 import javax.naming.Name;

@@ -12,11 +12,11 @@ package org.cougaar.core.cluster;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
 
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.MessageTransportWatcher;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageTransportService;
-import org.cougaar.core.society.MessageTransportClient;
-import org.cougaar.core.society.MessageTransportWatcher;
 
 /**
  * A MessageTransportServiceProvider is a provider class that PluginManager calls

@@ -101,11 +101,11 @@ import java.io.*;
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactoryImpl;
 
 // alternate messenger service
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportWatcher;
+import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageStatistics;
-import org.cougaar.core.society.MessageTransportClient;
-import org.cougaar.core.society.MessageTransportService;
-import org.cougaar.core.society.MessageTransportWatcher;
 
 // Scenario time support
 import org.cougaar.core.cluster.Alarm;

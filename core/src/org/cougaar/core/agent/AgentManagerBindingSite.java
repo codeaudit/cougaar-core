@@ -13,9 +13,9 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportService;
 
 /** An agentmanager's view of its parent component (Container).
  *

@@ -17,6 +17,10 @@ import org.cougaar.core.cluster.*;
 import org.cougaar.core.society.*;
 
 
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
+
+
 import java.beans.*;
 import java.lang.reflect.*;
 

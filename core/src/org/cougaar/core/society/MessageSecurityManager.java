@@ -11,6 +11,8 @@
 
 package org.cougaar.core.society;
 
+import org.cougaar.core.mts.MessageTransport;
+
 public interface MessageSecurityManager {
   /** Returns a message which has been cryptologically secured.
    * Implementations may destructively modify the original message

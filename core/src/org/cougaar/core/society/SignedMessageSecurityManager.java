@@ -10,10 +10,7 @@
 
 package org.cougaar.core.society;
 
-import org.cougaar.core.society.MessageSecurityManager;
-import org.cougaar.core.society.SecureMessage;
-import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageAddress;
+import org.cougaar.core.mts.MessageTransport;
 
 import org.cougaar.util.ConfigFileFinder;
 

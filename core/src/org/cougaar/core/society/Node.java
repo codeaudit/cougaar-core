@@ -10,8 +10,12 @@
 
 package org.cougaar.core.society;
 
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportException;
+import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.mts.MessageTransportServiceProvider;
+
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
-import org.cougaar.core.society.ClusterManagementServesCluster;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.naming.NamingService;
 
