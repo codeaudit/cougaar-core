@@ -77,11 +77,15 @@ import org.cougaar.util.StringUtility;
  *       the component is not loaded then an error response
  *       is returned.
  *       </li><p>
- *   <li><tt>into=STRING</tt><br>
- *       Optional name of where to add this component;
+ *   <li><tt>target=STRING</tt><br>
+ *       Optional target of where to add this component;
  *       this should be either "agent" or "node", where the
  *       default is "agent".  This must agree with the
  *       "insertionPoint".</li><p>
+ *   <li><tt>name=STRING</tt><br>
+ *       Optional name of the component; defaults to the 
+ *       classname.
+ *       </li><p>
  *   <li><tt>insertionPoint=STRING</tt><br>
  *       Insertion point for the component; the default is:<br>
  *       <tt>Node.AgentManager.Agent.PluginManager.Plugin</tt>.
@@ -235,8 +239,13 @@ extends BaseServletComponent
       public static final String ACTION_PARAM = "op";
       public String action;
 
-      public static final String TARGET_PARAM = "into";
+      public static final String TARGET_PARAM = "target";
+      public static final String OLD_TARGET_PARAM = "into";
       public String target;
+
+      public static final String COMPONENT_NAME_PARAM = 
+        "name";
+      public String compName;
 
       public static final String INSERTION_POINT_PARAM = 
         "insertionPoint";
@@ -251,6 +260,8 @@ extends BaseServletComponent
       public static final String CODEBASE_PARAM = "codebase";
       public String codebase;
 
+      // add "lease", "certificate", "policy"???
+      
       // worker constructor:
       public MyWorker(
           HttpServletRequest request,
@@ -266,7 +277,7 @@ extends BaseServletComponent
       }
 
       private void parseParams() throws IOException {
-        // set defaults
+        // set defaults, postpone compName default
         action = "add";
         target = "agent";
         insertionPoint =
@@ -295,8 +306,11 @@ extends BaseServletComponent
           // save parameters
           if (name.equals(ACTION_PARAM)) {
             action = value;
-          } else if (name.equals(TARGET_PARAM)) {
+          } else if (name.equals(TARGET_PARAM) ||
+                     name.equals(OLD_TARGET_PARAM)) {
             target = value;
+          } else if (name.equals(COMPONENT_NAME_PARAM)) {
+            compName = value;
           } else if (name.equals(INSERTION_POINT_PARAM)) {
             insertionPoint = value;
           } else if (name.equals(CLASSNAME_PARAM)) {
@@ -308,6 +322,10 @@ extends BaseServletComponent
             codebase = value;
           } else {
           }
+        }
+        // set default compName
+        if (compName == null) {
+          compName = classname;
         }
       }
 
@@ -346,7 +364,7 @@ extends BaseServletComponent
 
       private void writeFailure(Exception e) throws IOException {
         // select response message
-        String msg = "Unable to "+action;
+        String msg = action+" failed";
         response.setContentType("text/html");
         // build up response
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -521,6 +539,20 @@ extends BaseServletComponent
             "> <i>(optional comma-separated list)</i>"+
             "</td></tr>\n"+
             "<tr><td>"+
+            "Component name"+
+            "</td><td>"+
+            "<input type=\"text\" name=\""+
+            COMPONENT_NAME_PARAM+
+            "\" size=70");
+        if (compName != null) {
+          out.print(" value=\"");
+          out.print(compName);
+          out.print("\"");
+        }
+        out.print(
+            "> <i>(defaults to the classname)</i>"+
+            "</td></tr>\n"+
+            "<tr><td>"+
             "Codebase URL"+
             "</td><td>"+
             "<input type=\"text\" name=\""+
@@ -558,7 +590,7 @@ extends BaseServletComponent
         // create a new ComponentDescription
         ComponentDescription desc =
           new ComponentDescription(
-              classname, // name
+              compName,
               insertionPoint,
               classname,
               codebaseURL,
