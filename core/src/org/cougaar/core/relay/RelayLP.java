@@ -61,16 +61,24 @@ public class RelayLP extends LogPlanLogicProvider
 
   // EnvelopeLogicProvider implementation
   /**
-   * Sends the Content of the Relay to the targets of the Relay.
-   * @param o an Envelopetuple where the tuple.object is
+   * Sends the Content of Relay sources to the their targets and sends
+   * target responses back to the source.
+   * @param o an EnvelopeTuple where the tuple.object is
    *    a Relay.Source or Relay.Target
    **/
   public void execute(EnvelopeTuple o, Collection changes) {
     Object obj = o.getObject();
-    if (obj instanceof Relay) {
-      MessageAddress source = ((Relay) obj).getSource();
-      if ((source == null) ||
-          (self.equals(source))) {
+    if (obj instanceof Relay) { // Quick test for Target or Source
+      if (changes != null && changes.contains(MarkerReport.INSTANCE)) {
+        return;                 // Ignore changes containing our MarkerReport
+      }
+      if (obj instanceof Relay.Target) {
+        Relay.Target rt = (Relay.Target) obj;
+        if (o.isChange()) {
+          localResponse(rt, changes); // Only changes are significant at a Target
+        }
+      }
+      if (obj instanceof Relay.Source) {
         Relay.Source rs = (Relay.Source) obj;
         if (o.isAdd()) {
           localAdd(rs);
@@ -78,13 +86,6 @@ public class RelayLP extends LogPlanLogicProvider
           localChange(rs, changes);
         } else if (o.isRemove()) {
           localRemove(rs);
-        }
-      } else {
-        Relay.Target rt = (Relay.Target) obj;
-        if (o.isChange()) {
-          localResponse(rt, source, changes);
-        } else {
-          // Ignore our own add & remove
         }
       }
     }
@@ -104,30 +105,19 @@ public class RelayLP extends LogPlanLogicProvider
     }
   }
 
+  /**
+   * Handle a change to this source. We need to send the new content
+   * to the targets.
+   **/
   private void localChange(Relay.Source rs, Collection changes) {
     Set targets = rs.getTargets();
     if (targets.isEmpty()) return; // No targets
-    // cancel if (changes == ResponseReport.LIST)
-    if ((changes == ResponseReport.LIST) ||
-        ((changes != AnonymousChangeReport.LIST) &&
-         (changes.contains(ResponseReport.INSTANCE)))) {
-      return;
-    }
+
     // FIXME check for targets-change-report:
     //   calculate set differences
     //   for added targets: sendAdd
     //   for removed targets: sendRemove
     // add ContentReport to changes
-    Collection c;
-    if ((changes == ContentReport.LIST) ||
-        (changes == AnonymousChangeReport.LIST) ||
-        (changes == null)) {
-      c = ContentReport.LIST;
-    } else {
-      c = new ArrayList(changes.size() + 1);
-      c.addAll(changes);
-      c.add(ContentReport.INSTANCE);
-    }
     Object content = rs.getContent();
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
@@ -135,7 +125,7 @@ public class RelayLP extends LogPlanLogicProvider
         // Never send to self.  Likely an error.
         continue; 
       }
-      sendChange(rs, target, content, c);
+      sendChange(rs, target, content, changes);
     }
   }
 
@@ -153,29 +143,20 @@ public class RelayLP extends LogPlanLogicProvider
     }
   }
 
-  private void localResponse(Relay.Target rt, MessageAddress source, Collection changes) {
-    // cancel if (changes == ContentReport.LIST)
-    if ((changes == ContentReport.LIST) ||
-        ((changes != AnonymousChangeReport.LIST) &&
-         (changes.contains(ContentReport.INSTANCE)))) {
-      return;
-    }
+  /**
+   * Handle a change to this target. We need to send the new response
+   * to the source
+   **/
+  private void localResponse(Relay.Target rt, Collection changes) {
+    MessageAddress source = rt.getSource();
+    if (source == null) return; // No source
+    if (self.equals(source)) return; // BOGUS source must be elsewhere. Ignore.
+
     Object resp = rt.getResponse();
     // cancel if response is null
-    if (resp == null) {
-      return;
-    }
-    Collection c;
-    if ((changes == ResponseReport.LIST) ||
-        (changes == AnonymousChangeReport.LIST) ||
-        (changes == null)) {
-      c = ResponseReport.LIST;
-    } else {
-      c = new ArrayList(changes.size() + 1);
-      c.addAll(changes);
-      c.add(ResponseReport.INSTANCE);
-    }
-    sendResponse(rt, source, resp, c);
+    if (resp == null) return;
+
+    sendResponse(rt, source, resp, changes);
   }
 
   private void sendAdd(Relay.Source rs, MessageAddress target, Object content) {
@@ -188,8 +169,6 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void sendChange(
       Relay.Source rs, MessageAddress target, Object content, Collection c) {
-    // assert (c.contains(ContentReport.INSTANCE))
-    // assert (!(c.contains(ResponseReport.INSTANCE)))
     RelayDirective.Change dir =
       new RelayDirective.Change(rs.getUID(), content, rs.getTargetFactory());
     dir.setSource((ClusterIdentifier) self);
@@ -206,8 +185,6 @@ public class RelayLP extends LogPlanLogicProvider
 
   private void sendResponse(
       Relay.Target rt, MessageAddress source, Object resp, Collection c) {
-    // assert (c.contains(ResponseReport.INSTANCE))
-    // assert (!(c.contains(ContentReport.INSTANCE)))
     RelayDirective.Response dir = new RelayDirective.Response(rt.getUID(), resp);
     dir.setSource((ClusterIdentifier) self);
     dir.setDestination((ClusterIdentifier) source);
@@ -217,7 +194,7 @@ public class RelayLP extends LogPlanLogicProvider
   private void sendVerification(Relay.Target rt, MessageAddress source) {
     Object resp = rt.getResponse();
     // Send even if null response
-    sendResponse(rt, source, resp, ResponseReport.LIST);
+    sendResponse(rt, source, resp, Collections.EMPTY_SET);
   }
 
   // MessageLogicProvider implementation
@@ -243,48 +220,54 @@ public class RelayLP extends LogPlanLogicProvider
     }
   }
 
+  private void addTarget(Relay.TargetFactory tf, Object cont, RelayDirective dir) {
+    Relay.Target rt;
+    if (tf != null) {
+      rt = tf.create(dir.getUID(), dir.getSource(), cont, token);
+    } else if (cont instanceof Relay.Target) {
+      rt = (Relay.Target) cont;
+    } else {
+      // ERROR cannot create target
+      return;
+    }
+    logplan.add(rt);
+    // Check for immediate response due to arrival
+    Object resp = rt.getResponse();
+    if (resp != null) {
+      sendResponse(rt, dir.getSource(), resp, Collections.EMPTY_SET);
+    }
+  }
+
+  private void changeTarget(Relay.Target rt, Object cont, RelayDirective dir, Collection changes) {
+    int flags = rt.updateContent(cont, token);
+    if ((flags & Relay.CONTENT_CHANGE) != 0) {
+      Collection c = new ArrayList(changes);
+      c.add(MarkerReport.INSTANCE);
+      logplan.change(rt, c);
+      if (rt instanceof Relay.Source) localChange((Relay.Source) rt, changes);
+    }
+    if ((flags & Relay.RESPONSE_CHANGE) != 0) {
+      localResponse(rt, Collections.EMPTY_SET);
+    }
+  }
+
   private void receiveAdd(RelayDirective.Add dir) {
     Relay.Target rt = (Relay.Target) logplan.findUniqueObject(dir.getUID());
     if (rt == null) {
-      Object cont = dir.getContent();
-      Relay.TargetFactory tf = dir.getTargetFactory();
-      if (tf == null) {
-        rt = (Relay.Target) cont;
-      } else {
-        rt = tf.create(dir.getUID(), dir.getSource(), cont, token);
-      }
-      logplan.add(rt);
-      // Check for immediate response due to arrival
-      Object resp = rt.getResponse();
-      if (resp != null) {
-        sendResponse(rt, dir.getSource(), resp, ResponseReport.LIST);
-      }
+      addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
       // Unusual. Treat as change
-      if (rt.updateContent(dir.getContent(), token)) {
-        logplan.change(rt, ResponseReport.LIST);
-      }
+      changeTarget(rt, dir.getContent(), dir, Collections.EMPTY_SET);
     }
   }
 
   private void receiveChange(RelayDirective.Change dir, Collection changes) {
-    // assert (changes.contains(ContentReport.INSTANCE))
-    // assert (!(changes.contains(ResponseReport.INSTANCE)))
     Relay.Target rt = (Relay.Target) logplan.findUniqueObject(dir.getUID());
     if (rt == null) {
       // Unusual. Treat as add.
-      Object cont = dir.getContent();
-      Relay.TargetFactory tf =  dir.getTargetFactory();
-      if (tf == null) {
-        rt = (Relay.Target) cont;
-      } else {
-        rt = tf.create(dir.getUID(), dir.getSource(), cont, token);
-      }
-      logplan.add(rt);
+      addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
-      if (rt.updateContent(dir.getContent(), token)) {
-        logplan.change(rt, changes);
-      }
+      changeTarget(rt, dir.getContent(), dir, changes);
     }
   }
 
@@ -298,8 +281,6 @@ public class RelayLP extends LogPlanLogicProvider
   }
 
   private void receiveResponse(RelayDirective.Response dir, Collection changes) {
-    // assert (changes.contains(ResponseReport.INSTANCE))
-    // assert (!(changes.contains(ContentReport.INSTANCE)))
     Relay.Source rs = (Relay.Source) logplan.findUniqueObject(dir.getUID());
     MessageAddress target = dir.getSource();
     if (rs == null) {
@@ -308,8 +289,15 @@ public class RelayLP extends LogPlanLogicProvider
     } else {
       Object resp = dir.getResponse();
       if (resp != null) {
-        if (rs.updateResponse(target, resp)) {
-          logplan.change(rs, changes);
+        int flags = rs.updateResponse(target, resp);
+        if ((flags & Relay.RESPONSE_CHANGE) != 0) {
+          Collection c = new ArrayList(changes);
+          c.add(MarkerReport.INSTANCE);
+          logplan.change(rs, c);
+          if (rs instanceof Relay.Target) localResponse((Relay.Target) rs, changes);
+        }
+        if ((flags & Relay.CONTENT_CHANGE) != 0) {
+          localChange(rs, Collections.EMPTY_SET);
         }
       }
     }
@@ -330,14 +318,11 @@ public class RelayLP extends LogPlanLogicProvider
     Enumeration en = logplan.searchBlackboard(pred);
     while (en.hasMoreElements()) {
       Relay r = (Relay) en.nextElement();
-      MessageAddress source = r.getSource();
-      if ((source == null) ||
-          (self.equals(source))) {
+      if (r instanceof Relay.Source) {
         Relay.Source rs = (Relay.Source) r;
         resend(rs, cid);
-      } else if (source == null) {
-        // No source?
-      } else {
+      }
+      if (r instanceof Relay.Target) {
         Relay.Target rt = (Relay.Target) r;
         verify(rt, cid);
       }
@@ -373,55 +358,13 @@ public class RelayLP extends LogPlanLogicProvider
 
 
   /** 
-   * ChangeReport for this LP to identify it's own content changes.
+   * ChangeReport for this LP to identify it's own changes.
    */
-  private static final class ContentReport implements ChangeReport {
-    public static final ContentReport INSTANCE = new ContentReport();
-    public static final List LIST = new ContentReportList();
-    private ContentReport() { }
+  private static final class MarkerReport implements ChangeReport {
+    public static final MarkerReport INSTANCE = new MarkerReport();
+    private MarkerReport() { }
     private Object readResolve() { return INSTANCE; }
-    public String toString() { return "relay-content-report"; }
+    public String toString() { return "relay-marker-report"; }
     static final long serialVersionUID = 9091843781928322223L;
-    // singleton LIST with singleton-friendly "readResolve()":
-    private static final class ContentReportList extends AbstractList
-      implements RandomAccess, Serializable {
-        private ContentReportList() { }
-        public int size() {return 1;}
-        public boolean contains(Object obj) {return (obj == INSTANCE);}
-        public Object get(int index) {
-          if (index != 0)
-            throw new IndexOutOfBoundsException("Index: "+index+", Size: 1");
-          return INSTANCE;
-        }
-        private Object readResolve() { return LIST; }
-        static final long serialVersionUID = 4912831092837819234L;
-      }
   }
-
-  /** 
-   * ChangeReport for this LP to identify it's own response changes.
-   */
-  private static final class ResponseReport implements ChangeReport {
-    public static final ResponseReport INSTANCE = new ResponseReport();
-    public static final List LIST = new ResponseReportList();
-    private ResponseReport() { }
-    private Object readResolve() { return INSTANCE; }
-    public String toString() { return "relay-response-report"; }
-    static final long serialVersionUID = 890230981268902124L;
-    // singleton LIST with singleton-friendly "readResolve()":
-    private static final class ResponseReportList extends AbstractList
-      implements RandomAccess, Serializable {
-        private ResponseReportList() { }
-        public int size() {return 1;}
-        public boolean contains(Object obj) {return (obj == INSTANCE);}
-        public Object get(int index) {
-          if (index != 0)
-            throw new IndexOutOfBoundsException("Index: "+index+", Size: 1");
-          return INSTANCE;
-        }
-        private Object readResolve() { return LIST; }
-        static final long serialVersionUID = 1029836829182738922L;
-      }
-  }
-
 }
