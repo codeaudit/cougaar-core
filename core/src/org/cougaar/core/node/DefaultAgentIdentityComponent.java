@@ -194,7 +194,6 @@ implements Component
                     "Transfered identity name "+dtid.getName()+
                     " doesn't match client name "+name);
               }
-              MessageAddress idTarget = dtid.getTargetNode();
               if (thisNode.equals(dtid.getTargetNode())) {
                 // okay transfer
               } else if (thisNode.equals(dtid.getSourceNode())) {

@@ -346,7 +346,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     if (cs instanceof ClusterContextTable.MessageContext) {
       ClusterContextTable.MessageContext c = (ClusterContextTable.MessageContext)cs;
       MessageAddress dest = c.getToAddress();
-      boolean protoSentP = (myPrototype==null)?false:(myPrototype.wasSentTo(dest));
+      //boolean protoSentP = (myPrototype==null)?false:(myPrototype.wasSentTo(dest));
 
       out.defaultWriteObject();
 
@@ -399,7 +399,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
       myTypeIdentificationPG = (TypeIdentificationPG) in.readObject();
       myItemIdentificationPG = (ItemIdentificationPG) in.readObject();
 
-      MessageAddress dest = c.getToAddress();
+      //MessageAddress dest = c.getToAddress();
 
       Object proto = in.readObject();
 

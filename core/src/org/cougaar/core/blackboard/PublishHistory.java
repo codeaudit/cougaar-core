@@ -125,7 +125,6 @@ public class PublishHistory {
         deleteItem.lastTime = now - 60000L;
         int removeCount = 0;
         for (Iterator i = items.headSet(deleteItem).iterator(); i.hasNext(); ) {
-            Item item = (Item) i.next();
             i.remove();
             removeCount++;
         }

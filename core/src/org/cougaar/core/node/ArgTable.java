@@ -78,7 +78,6 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
   public void mapArgs(  String[] args ){
     int argc = args.length;
     String check = null;
-    String next = null;
     boolean sawname = false;
     for( int x = 0; x < argc;){
       check = args[x++];

@@ -532,7 +532,8 @@ public class Subscriber {
     }
 
     if (o instanceof Publishable) {
-      List crs = Transaction.getCurrentTransaction().getChangeReports(o);
+      //List crs =  // var unused
+      Transaction.getCurrentTransaction().getChangeReports(o); // side effects
     }
 
     // if we made it this far publish the object and return true.

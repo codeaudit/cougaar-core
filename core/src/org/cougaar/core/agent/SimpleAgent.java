@@ -1655,8 +1655,6 @@ public class SimpleAgent
       cluster = null;
     }
     public void run() {
-      ClusterMessage m;
-      int size;
       while (running) {
         synchronized (queue) {
           while (running && queue.isEmpty()) {

@@ -329,7 +329,6 @@ public class StringObjectFactory {
   protected static String getType(String type) {
     int i;
     if ((i = type.indexOf("<")) > -1) { // deal with collections 
-      int j = type.lastIndexOf(">");
       return getType(type.substring(0,i)); // deal with measures
     } else if ((i= type.indexOf("/")) > -1) {
       return getType(type.substring(0,i));

@@ -150,9 +150,7 @@ public class NodeAgent
   /// 
 
   protected void loadHighPriorityComponents() {
-    ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
-    AgentManager am = agentManager;
 
     // set up the NodeControlService
     { 
@@ -204,9 +202,7 @@ public class NodeAgent
   }
 
   protected void loadInternalPriorityComponents() {
-    ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
-    AgentManager am = agentManager;
 
     {
       ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
@@ -342,9 +338,7 @@ public class NodeAgent
 
   public void load() 
   {
-    ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
-    AgentManager am = agentManager;
 
     try {
       NodeIdentificationService nis = (NodeIdentificationService) 

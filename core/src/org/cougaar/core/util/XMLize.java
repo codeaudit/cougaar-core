@@ -206,8 +206,6 @@ public class XMLize {
           pv.add(new PropertyNameValue(name, value));
         }
       } else {
-	  Class c = childObject.getClass();
-
 	  if (isPrimitive(childObject.getClass()))
 	      childObject = String.valueOf(childObject);
 

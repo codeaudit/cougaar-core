@@ -722,7 +722,6 @@ public class MessageManagerImpl implements MessageManager, Serializable {
       info.advance();
     }
     needAdvanceEpoch = false;
-    long now = System.currentTimeMillis();
     for (Iterator iter = stuffToSend.iterator(); iter.hasNext(); ) {
       TimestampedMessage tsm = (TimestampedMessage) iter.next();
       getClusterInfo(tsm.getDestination()).addOutstandingMessage(tsm);
