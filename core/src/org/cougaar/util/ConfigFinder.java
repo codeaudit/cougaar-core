@@ -151,7 +151,8 @@ public final class ConfigFinder {
           File result = new File(fileURL.getFile());
           if (verbose) { System.err.print("Looking for "+result+": "); }
           if (result.exists()) {
-            if (verbose) { System.err.println("Found it"); }
+            if (verbose) { System.err.println("Found it. File " + aFilename + 
+                               " is " + fileURL); }
             return result;
           } else {
             if (verbose) { System.err.println(); }
@@ -178,7 +179,7 @@ public final class ConfigFinder {
         if (verbose) { System.err.print("Trying "+url+": "); }
         InputStream is = url.openStream();
         if (is == null) continue; // Don't return null
-        if (verbose) { System.err.println("Found it"); }
+        if (verbose) { System.err.println("Found it. File " + aURL + " is " + url); }
         return is;
       }
       catch (MalformedURLException mue) {
@@ -241,13 +242,24 @@ public final class ConfigFinder {
   public Document parseXMLConfigFile(String xmlfile) throws IOException {
     DOMParser parser = new DOMParser();
     parser.setEntityResolver(new ConfigResolver());
+
+    InputStream istream = null;
+    InputSource is = null;
     try {
-      parser.parse(new InputSource(open(xmlfile)));
+      istream = open(xmlfile);
+      if (istream == null) {
+         throw new RuntimeException("Got null InputStream opening file " + xmlfile);
+      }
+      is = new InputSource(istream);
+      if (is == null) {
+         throw new RuntimeException("Got null InputSource from input stream for file " + xmlfile);
+      }
+      parser.parse(is);
     } catch (SAXException e) {
       System.out.println("Error parsing file: " + xmlfile);
       e.printStackTrace();
-    }
-    
+    }    
+
     return parser.getDocument();
   }
 
@@ -294,20 +306,25 @@ public final class ConfigFinder {
 
       String filename = url.getFile();
 
-      // Because the filename is a URL file name, all separators are a
-      // '/'.  (See RFC 2396)  Because of this, the File.separatorChar
-      // cannot be used, it will fail on Windows platforms.
-      filename = filename.substring(filename.lastIndexOf("/")+1, filename.length());
+      // Convert any '\'s to '/'s.
+      filename = filename.replace('\\', '/');
+
+      filename = filename.substring(filename.lastIndexOf("/") + 1, filename.length());
 
       InputSource is = null;
       try {
-	is = new InputSource(open(filename));
+	InputStream istream = open(filename);
+        if (istream == null) {
+	  throw new RuntimeException("Got null input stream opening file " + filename);
+        }
+        is = new InputSource(istream);
       } catch(IOException e) {
-	e.printStackTrace();
-      }
+        System.err.println("Error getting input source for file " + filename);
+        e.printStackTrace();
+       }
       
       if(is == null) {
-	throw new RuntimeException();
+        throw new RuntimeException("Null InputSource for file " + filename);
       }
 
       return is;
