@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
@@ -224,7 +225,11 @@ class QuiescenceMonitor {
     src = src.getPrimary(); // Strip any attributes
     int messageNumber = msg.getContentsId();
     if (messageNumber == 0) return false; // Message from plugin not required for quiescence
-    incomingMessageNumbers.put(src, new Integer(messageNumber));
+    Integer last = (Integer) incomingMessageNumbers.put(src, new Integer(messageNumber));
+    if (logger.isDebugEnabled()) {
+      MessageAttributes ma = msg.getSource().getMessageAttributes();
+      logger.debug("Numbered incoming message from " + src + ": " + msg + " with number " + messageNumber + ", previous messageNumber was " + last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
+    }
     messageNumbersChangedFor = src.toString();
     return true;
   }
@@ -234,7 +239,11 @@ class QuiescenceMonitor {
     dst = dst.getPrimary(); // Strip any attributes
     int messageNumber = nextMessageNumber();
     msg.setContentsId(messageNumber);
-    outgoingMessageNumbers.put(dst, new Integer(messageNumber));
+    Integer last = (Integer)outgoingMessageNumbers.put(dst, new Integer(messageNumber));
+    if (logger.isDebugEnabled()) {
+      MessageAttributes ma = msg.getDestination().getMessageAttributes();
+      logger.debug("Numbered outgoing message to " + dst + ": " + msg + " with number " + messageNumber + ", previous messageNumber was " + last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
+    }
     messageNumbersChangedFor = dst.toString();
   }
 
