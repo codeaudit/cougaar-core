@@ -165,7 +165,8 @@ implements ContainerAPI, ServiceRevokedListener
   // @deprecated
   static public void main(String[] args){
     if (PropertyParser.getBoolean("org.cougaar.useBootstrapper", true)) {
-      Logging.getLogger(Node.class).warn("-Dorg.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
+      Logging.getLogger(Node.class).warn(
+          "-Dorg.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
       Bootstrapper.launch(Node.class.getName(), args);
     } else {
       launch(args);
@@ -179,39 +180,13 @@ implements ContainerAPI, ServiceRevokedListener
    * @see org.cougaar.bootstrap.Bootstrapper
    **/
   static public void launch(String[] args) {
-    // check for "-version" and "-help"
-    for (int i = 0; i < args.length; i++) {
-      String argi = args[i];
-      if (argi.equals("-version") ||
-          argi.equals("--version")) {
-        printVersion(true);
-        return;
-      }
-      if (argi.equals("-info") ||
-          argi.equals("--info")) {
-        printVersion(false);
-        return;
-      }
-      if (argi.equals("-help") ||
-          argi.equals("--help")) {
-        System.out.print(
-            "Usage: java [JVM_OPTIONS] [-D..] "+
-            Node.class.getName()+" [-D..] [ARGS]\n"+
-            "A Node manages and executes Cougaar agents.\n\n"+
-            "  -Dname=value        set configuration property.\n"+
-            "  -help, --help, -?   display this help and exit.\n"+
-            "  -version, --version output version information and exit.\n"+
-            "  -info, --info       output terse version information and exit.\n\n"+
-            "See <http://www.cougaar.org> for further help and bug reports.\n");
-        return;
-      }
+    // convert any command-line args to System Properties
+    if (!setSystemProperties(args)) {
+      return; // must be "--help"
     }
 
     // display the version info
     printVersion(true);
-
-    // convert any command-line args to System Properties
-    setSystemProperties(args);
 
     // check for valid plugin jars
     boolean validateJars = PropertyParser.getBoolean("org.cougaar.validate.jars", false);
@@ -246,6 +221,15 @@ implements ContainerAPI, ServiceRevokedListener
    * System properties are preferred, since it simplifies the
    * configuration to just a non-ordered Set of "-D" properties.  
    * <p>
+   * The only non "-D" command line arguments are:<pre>
+   *   -n ARG         equivalent to "-Dorg.cougaar.node.name=ARG"
+   *   -c             ignored, ancient "clear database" switch
+   *   --?version     display version information and exit
+   *   --?info        display terse version information and exit
+   *   --?help        display usage help and exit
+   *   <i>other</i>   display error message and exit
+   * </pre>
+   * <p>
    * Also supported are post-classname "-D" command-line properties:
    *    "java .. classname -Darg .." 
    * which will override the usual "java -Darg .. classname .."
@@ -253,85 +237,57 @@ implements ContainerAPI, ServiceRevokedListener
    * equivalent to "java -Dx=z classname".  This can be useful when 
    * writing scripts that simply append properties to a command-line.
    * <p>
-   * Long-term all non-"-D" arguments (<code>ArgTable</code>, "-n name", 
-   * etc) will likely become deprecated, except maybe "-help".
-   *
-   * @see ArgTable
+   * @return false if node should exit
    */
-  private static void setSystemProperties(String[] args) {
-    List revisedArgs = new ArrayList();
-
+  private static boolean setSystemProperties(String[] args) {
     // separate the args into "-D" properties and normal arguments
     for (int i = 0; i < args.length; i++) {
       String argi = args[i];
       if (argi.startsWith("-D")) {
-        // transfer a "late" system property
+        // add a "late" system property
         int sepIdx = argi.indexOf('=');
         if (sepIdx < 0) {
           System.setProperty(argi.substring(2), "");
         } else {
           System.setProperty(argi.substring(2, sepIdx), argi.substring(sepIdx+1));
         }
+      } else if (argi.equals("-n")) {
+        // old "-n node" pattern
+        String name = args[++i];
+        System.setProperty("org.cougaar.node.name", name);
+        Logging.getLogger(Node.class).info(
+            "Set node name to "+name+
+            "\nThe command line format \"-n "+name+"\" has been deprecated"+
+            "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
+      } else if (argi.equals("-c")) {
+        // ignore
+        Logging.getLogger(Node.class).info(
+            "Ignoring unused command-line argument \"-c\"");
       } else {
-        // keep a non "-D" argument
-        revisedArgs.add(argi);
+        // some form of exit
+        if (argi.equals("-version") || argi.equals("--version")) {
+          printVersion(true);
+        } else if (argi.equals("-info") || argi.equals("--info")) {
+          printVersion(false);
+        } else if (argi.equals("-help") || argi.equals("--help")) {
+          System.out.print(
+              "Usage: java [JVM_OPTIONS] [-D..] "+
+              Node.class.getName()+" [-D..] [ARGS]"+
+              "\nA Node manages and executes Cougaar agents.\n"+
+              "\n  -Dname=value        set configuration property."+
+              "\n  -version, --version output version information and exit."+
+              "\n  -info, --info       output terse version information and exit."+
+              "\n  -help, --help       display this help and exit.\n"+
+              "\nSee <http://www.cougaar.org> for further help and bug reports.\n");
+        } else {
+          System.err.println(
+              "Node: unrecognized option `"+argi+"'"+
+              "\nTry `Node --help' for more information.");
+        }
+        return false;
       }
     }
-
-    // parse the remaining command line arguments
-    ArgTable myArgs = new ArgTable(revisedArgs);
-
-    // transfer the command-line arguments to system properties
-
-    String validateJars = 
-      (String) myArgs.get(ArgTableIfc.SIGNED_PLUGIN_JARS);
-    if (validateJars != null) {
-      System.setProperty("org.cougaar.validate.jars", validateJars);
-      Logging.getLogger(Node.class).info("Set validateJars to "+validateJars);
-    }
-
-    String name = (String) myArgs.get(ArgTableIfc.NAME_KEY);
-    if (name != null) {
-      System.setProperty("org.cougaar.node.name", name);
-      Logging.getLogger(Node.class).info("Set node name to "+name);
-    }
-
-    String config = (String) myArgs.get(ArgTableIfc.CONFIG_KEY);
-    if (config != null) {
-      System.setProperty("org.cougaar.config", config);
-      Logging.getLogger(Node.class).info("Set node config to "+config);
-    }
-
-    String cs = (String) myArgs.get(ArgTableIfc.CS_KEY);
-    if (cs != null && cs.length()>0) {
-      System.setProperty("org.cougaar.config.server", cs);
-      Logging.getLogger(Node.class).info("Set node config server to "+cs);
-    }
-
-    String ns = (String) myArgs.get(ArgTableIfc.NS_KEY);
-    if (ns != null && ns.length()>0) {
-      System.setProperty("org.cougaar.name.server", ns);
-      Logging.getLogger(Node.class).info("Set node name server to "+ns);
-    }
-
-    String port = (String) myArgs.get(ArgTableIfc.PORT_KEY);
-    if (port != null && port.length()>0) {
-      System.setProperty("org.cougaar.name.server.port", port);
-      Logging.getLogger(Node.class).info("Set node name server port to "+port);
-    }
-
-    String filename = (String) myArgs.get(ArgTableIfc.FILE_KEY);
-    if (filename != null) {
-      System.setProperty(InitializerServiceProvider.FILENAME_PROP, filename);
-      Logging.getLogger(Node.class).info("Set node filename to "+filename);
-    }
-
-    String experimentId = 
-      (String) myArgs.get(ArgTableIfc.EXPERIMENT_ID_KEY);
-    if (experimentId != null) {
-      System.setProperty(InitializerServiceProvider.EXPTID_PROP, experimentId);
-      Logging.getLogger(Node.class).info("Set node experiment ID to "+experimentId);
-    }
+    return true;
   }
 
 
