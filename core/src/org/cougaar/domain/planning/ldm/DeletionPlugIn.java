@@ -29,6 +29,7 @@ import org.cougaar.core.cluster.PlanElementSet;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.cluster.CollectionSubscription;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.core.plugin.SimplePlugIn;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.Asset;
@@ -61,6 +62,60 @@ import org.cougaar.core.society.UID;
  **/
 
 public class DeletionPlugIn extends SimplePlugIn {
+    /**
+     * Inner class specifies the policy for when deletions should
+     * occur. This consists of a periodic element plus ad hoc
+     * elements. The policy may be modified to add or remove ad hoc
+     * times as well as altering the periodic schedule. Don't forget
+     * to publishChange the policy after making modifications.
+     **/
+    public static class DeletionSchedulePolicy extends Policy {
+        private long deletionPeriod = DEFAULT_DELETION_PERIOD;
+        private long deletionPhase = DEFAULT_DELETION_PHASE;
+        private SortedSet deletionTimes = new TreeSet();
+
+        public synchronized void setPeriodicSchedule(long period, long phase) {
+            deletionPeriod = period;
+            deletionPhase = phase;
+        }
+
+        public long getDeletionPhase() {
+            return deletionPhase;
+        }
+
+        public long getDeletionPeriod() {
+            return deletionPeriod;
+        }
+
+        public synchronized void addDeletionTime(long time) {
+            deletionTimes.add(new Long(time));
+        }
+
+        public synchronized void removeDeletionTime(long time) {
+            deletionTimes.remove(new Long(time));
+        }
+
+        public Collection getDeletionTimes() {
+            return new ArrayList(deletionTimes);
+        }
+
+        synchronized long getNextDeletionTime(long now) {
+            long ivn = (now - deletionPhase) / deletionPeriod;
+            long nextAlarm = (ivn + 1) * deletionPeriod + deletionPhase;
+            SortedSet oldTimes = deletionTimes.headSet(new Long(now));
+            deletionTimes.removeAll(oldTimes);
+            if (!deletionTimes.isEmpty()) {
+                Long first = (Long) deletionTimes.first();
+                long adHoc = first.longValue();
+                if (adHoc < nextAlarm) {
+                    nextAlarm = adHoc;
+                    deletionTimes.remove(first);
+                }
+            }
+            return nextAlarm;
+        }
+    }
+
     /**
        Inner class for specifying deletion policy. A deletion policy
        has one IntegerRuleParameter call "deletionDays" specifying the
@@ -97,6 +152,16 @@ public class DeletionPlugIn extends SimplePlugIn {
         public void init(String aName, UnaryPredicate aPredicate, long deletionDelay) {
             init(aName, aPredicate, deletionDelay, 0);
         }
+        /**
+         * Initialize this policy.
+         * @param aName a name for this policy used in printouts and for debugging
+         * @param aPredicate A predicate for selecting Tasks for which this
+         * policy applies
+         * @param deletionDelay The age the tasks must reach before
+         * being deleted
+         * @param priority When multiple policies apply to a task, the
+         * highest priority policy wins and the rest are ignored.
+         **/
         public void init(String aName, UnaryPredicate aPredicate,
                          long deletionDelay, int priority)
         {
@@ -167,21 +232,32 @@ public class DeletionPlugIn extends SimplePlugIn {
 
     private static final int DELETION_DELAY_PARAM  = 0;
     private static final int DELETION_PERIOD_PARAM = 1;
+    private static final int DELETION_PHASE_PARAM = 2;
 
-    // Default times are to check every week and delete tasks older than 15 days
-    private static final long DEFAULT_DELETION_PERIOD =  1 * 86400000L;
-    private static final long DEFAULT_DELETION_DELAY  =  2 * 86400000L;
+    // Default times are to check every week and delete tasks older
+    // than 15 days. The checks occur at times that are zero modulo
+    // the check interval
+    
+    private static final long DEFAULT_DELETION_PERIOD =  7 * 86400000L;
+    private static final long DEFAULT_DELETION_DELAY  =  15 * 86400000L;
+    private static final long DEFAULT_DELETION_PHASE = 0L;
 
     private static final long subscriptionExpirationTime = 10L * 60L * 1000L;
 
-    private long deletionPeriod = DEFAULT_DELETION_PERIOD;
+    private boolean archivingEnabled = true;
     private Alarm alarm;
     private int wakeCount = 0;
     private long now;           // The current execution time
+    private DeletionSchedulePolicy theDeletionSchedulePolicy;
     private UnaryPredicate deletablePlanElementsPredicate;
     private UnaryPredicate deletionPolicyPredicate = new UnaryPredicate() {
         public boolean execute(Object o) {
             return o instanceof DeletionPolicy;
+        }
+    };
+    private UnaryPredicate deletionSchedulePolicyPredicate = new UnaryPredicate() {
+        public boolean execute(Object o) {
+            return o instanceof DeletionSchedulePolicy;
         }
     };
     SortedSet deletionPolicySet = new TreeSet(new Comparator() {
@@ -203,6 +279,7 @@ public class DeletionPlugIn extends SimplePlugIn {
     });
 
     private CollectionSubscription deletionPolicies;
+    private CollectionSubscription deletionSchedulePolicies;
 
     private static java.io.PrintWriter logFile = null;
     private static final boolean DEBUG = false;
@@ -263,18 +340,26 @@ public class DeletionPlugIn extends SimplePlugIn {
      **/
     protected void setupSubscriptions() {
         long deletionDelay = DEFAULT_DELETION_DELAY;
+        long deletionPeriod = DEFAULT_DELETION_PERIOD;
+        long deletionPhase = DEFAULT_DELETION_PHASE;
         List params = getParameters();
         switch (params.size()) {
         default:
+        case 3:
+            deletionPhase = parseInterval((String) params.get(DELETION_PHASE_PARAM));
         case 2:
             deletionPeriod = parseInterval((String) params.get(DELETION_PERIOD_PARAM));
         case 1:
             deletionDelay = parseInterval((String) params.get(DELETION_DELAY_PARAM));
         case 0:
         }
-        deletionPolicies = (CollectionSubscription) subscribe(deletionPolicyPredicate, false);
+        deletionPolicies =
+            (CollectionSubscription) subscribe(deletionPolicyPredicate, false);
         checkDeletionPolicies(deletionDelay);
-        alarm = wakeAfter(deletionPeriod);
+        deletionSchedulePolicies =
+            (CollectionSubscription) subscribe(deletionSchedulePolicyPredicate, false);
+        checkDeletionSchedulePolicies(deletionPeriod, deletionPhase);
+        setAlarm();
         getBlackboardService().setShouldBePersisted(false); // All subscriptions are created as needed
         deletablePlanElementsPredicate = new DeletablePlanElementsPredicate();
     }
@@ -342,8 +427,17 @@ public class DeletionPlugIn extends SimplePlugIn {
     public void execute() {
         now = currentTimeMillis();
         if (alarm.hasExpired()) { // Time to make the donuts
+            if (archivingEnabled) {
+                try {
+                    getBlackboardService().persistNow(); // Record our state
+                } catch (PersistenceNotEnabledException pnee) {
+                    pnee.printStackTrace();
+                    System.err.println("Archiving disabled");
+                    archivingEnabled = false;
+                }
+            }
             checkDeletablePlanElements();
-            alarm = wakeAfter(deletionPeriod);
+            setAlarm();
             if (DEBUG) {
                 if (++wakeCount > 4) {
                     wakeCount = 0;
@@ -352,6 +446,17 @@ public class DeletionPlugIn extends SimplePlugIn {
             }
         }
         peSet.checkAlarm();
+    }
+
+    /**
+     * Set the alarm so that it expires when the time is next
+     * congruent to the deletionPhase modulo the deletionPeriod
+     **/
+    private void setAlarm() {
+        long now = currentTimeMillis();
+        long nextAlarm = theDeletionSchedulePolicy.getNextDeletionTime(now);
+        long delay = nextAlarm - now;
+        alarm = wakeAfter(delay);
     }
 
     /**
@@ -374,6 +479,31 @@ public class DeletionPlugIn extends SimplePlugIn {
             (DefaultDeletionPolicy) theLDMF.newPolicy(DefaultDeletionPolicy.class.getName());
         policy.setDeletionDelay(deletionDelay);
         publishAdd(policy);
+    }
+
+    /**
+       Check to see if the default schedule policy is present. If a
+       DeletionSchedulePolicy is found then its periodic deletion
+       parameters are set. If no DeletionSchedulePolicy is found, a
+       new one created and added. If multiple schedule policies are
+       found, all but one is deleted.
+     **/
+    private void checkDeletionSchedulePolicies(long deletionPeriod, long deletionPhase) {
+        for (Iterator i = deletionSchedulePolicies.iterator(); i.hasNext(); ) {
+            DeletionSchedulePolicy policy = (DeletionSchedulePolicy) i.next();
+            if (theDeletionSchedulePolicy == null) {
+                policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+                theDeletionSchedulePolicy = policy;
+            } else {
+                publishRemove(policy);
+            }
+        }
+        if (theDeletionSchedulePolicy == null) {
+            DeletionSchedulePolicy policy = (DeletionSchedulePolicy)
+                theLDMF.newPolicy(DeletionSchedulePolicy.class.getName());
+            policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+            publishAdd(policy);
+        }
     }
 
     /**
