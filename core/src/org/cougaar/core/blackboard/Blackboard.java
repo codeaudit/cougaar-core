@@ -631,33 +631,22 @@ public class Blackboard extends Subscriber
     
     ArrayList cis = new ArrayList();
     String roleValue = aba.getAttributeValue();
-    String roleName = aba.getAttributeName();
+    String roleName = aba.getAttributeType();
     //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
-    
-    DirContext dirContext = getNameServer();
-    if (dirContext==null)
-      System.err.println("dirContext in lookupABAinNameServer is null!!");
-    
+
     try {
-      SearchControls boundValueSearchControls = new SearchControls();
-      boundValueSearchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
-      boundValueSearchControls.setReturningObjFlag(true);
+      CommunityService cs =
+        (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
       String communitySpec = getCommunitySpec(aba);
-      NamingEnumeration enum = dirContext.search(communitySpec, 
-                                                 "(" + roleName + 
-                                                 "=" + roleValue + ")",
-                                                 boundValueSearchControls);
-      while (enum.hasMore()) {
-        SearchResult result = (SearchResult) enum.next();
-	cis.add(result.getObject());
-        /*
-        System.out.println("Name: " + result.getName() + 
-                           " object: " + result.getObject() + 
-                           " objectClass: " + result.getClassName()); */
-			   } 
+      String filter = "(" + roleName + "=" + roleValue + ")";
+      Collection matches = cs.search(communitySpec, filter);
+      for (Iterator it = matches.iterator(); it.hasNext();) {
+        cis.add((ClusterIdentifier)it.next());
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }
+
     cacheByRole(roleValue, cis);
     
     return cis;
@@ -678,31 +667,6 @@ public class Blackboard extends Subscriber
     }
   }
   
-
-  /*
-   * Return a reference to the NameServer. 
-   */
-  public DirContext getNameServer() {
-    
-    NamingService myNamingService;
-    //String MNR_CONTEXT_NAME = "MNRTest";
-    //String COMMUNITIES_CONTEXT_NAME = "Communities";
-    String ROLE_ATTRIBUTE_NAME = "Role";
-    
-    myNamingService = (NamingService)myServiceBroker.getService(this, NamingService.class, null);
-
-    DirContext dirContext = null;
-   
-    try {
-      dirContext = 
-        (DirContext) myNamingService.getRootContext().lookup(CommunityService.COMMUNITIES_CONTEXT_NAME);
-    } catch (NamingException ne) {
-      // Ignore for now - if it hasn't been created, we obviously can't send the abas. 
-    }
-    
-    return dirContext;
-  }
-
  /*
    * FIXME - this should be called fist to fill cache initially instead 
    * of building it, as it is now implemented. 
