@@ -585,19 +585,9 @@ public class AssetDataPlugIn extends SimplePlugIn {
 	    String dataType = tokens.sval;
 	    newVal = tokens.nextToken();
 	    // Call appropriate setters for the slots of the property
-            Object arg = parseExpr(dataType, tokens.sval);
-
-            // Support specific to TimePhasedPropertyGroups
-            if ((timePhased) &&
-                (member.equals("TimeSpan"))) {
-              TimeSpan timeSpan = (TimeSpan) arg;
-              ((NewTimePhasedPropertyGroup) property).setTimeSpan(timeSpan.getStartTime(),
-                                                   timeSpan.getEndTime());
-            } else {
-              Object [] args = new Object[] {arg};
-              createAndCallSetter(property, propName, "set" + member, 
-                                  getType(dataType), args);
-            }
+            Object [] args = new Object[] {parseExpr(dataType, tokens.sval)};
+            createAndCallSetter(property, propName, "set" + member, 
+                                getType(dataType), args);
 	    newVal = tokens.nextToken();
 	    member = tokens.sval;
 	  } else {
@@ -607,15 +597,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
 	} //while
 
 	// Add the property to the asset
-        /*
-	try {
-        */
 	asset.addOtherPropertyGroup(property);
-        /*
-	} catch (Exception e) {
-          
-	  e.printStackTrace();
-          } */
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException("AssetDataPlugIn: unable to parse " + 
@@ -653,40 +635,45 @@ public class AssetDataPlugIn extends SimplePlugIn {
             
             switch (i) {
             case 0:
-              roleName= tokens.sval;
+              roleName = tokens.sval.trim();
               break;
 
             case 1:
-              itemID = tokens.sval;
+              itemID = tokens.sval.trim();
               break;
 
             case 2:
-              typeID = tokens.sval;
+              typeID = tokens.sval.trim();
               break;
 
             case 3:
-              clusterID = tokens.sval;
+              clusterID = tokens.sval.trim();
               break;
 
             case 4:
-              try {
-                start = myDateFormat.parse(tokens.sval).getTime();
-              } catch (java.text.ParseException pe) {
-                System.out.println("Unable to parse: " + tokens.sval + 
-                                   ". Start time defaulting to " + 
-                                   getDefaultStartTime());
+              if (!tokens.sval.equals("")) {
+                try {
+                  start = myDateFormat.parse(tokens.sval).getTime();
+                } catch (java.text.ParseException pe) {
+                  System.out.println("Unable to parse: " + tokens.sval + 
+                                     ". Start time defaulting to " + 
+                                     getDefaultStartTime());
+                }
               }
+              break;
 
             case 5:
-              try {
-                end = myDateFormat.parse(tokens.sval).getTime();
-              } catch (java.text.ParseException pe) {
-                System.out.println("Unable to parse: " + tokens.sval + 
-                                   ". End time defaulting to " + 
-                                   getDefaultEndTime());
+              if (!tokens.sval.equals("")) {
+                try {
+                  end = myDateFormat.parse(tokens.sval).getTime();
+                } catch (java.text.ParseException pe) {
+                  System.out.println("Unable to parse: " + tokens.sval + 
+                                     ". End time defaulting to " + 
+                                     getDefaultEndTime());
+                }
               }
-
               break;
+
             }
 
             newVal = tokens.nextToken();
