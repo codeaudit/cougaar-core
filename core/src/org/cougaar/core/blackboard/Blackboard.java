@@ -71,6 +71,11 @@ import org.cougaar.core.service.community.*;
  * @property org.cougaar.core.persistence.enable When set to <em>true</em> will enable blackboard persistence.
  * @property org.cougaar.core.persistence.disableWrite See documentation on Blackboard persistence.
  * @property org.cougaar.core.persistence.sequence See documentation on Blackboard persistence.
+ * @property org.cougaar.core.blackboard waitForSomeCommChanges Time in milliseconds to wait 
+ * for some communitye changes before killing the Thread that does so. Default is 10,000.
+ * @property org.cougaar.core.blackboard.waitForNewCommChangeNotifications Time in 
+ * milliseconds to wait for more community changes before asking the community 
+ * service for them. Default is 1,000.
  **/
 public class Blackboard extends Subscriber
   implements
