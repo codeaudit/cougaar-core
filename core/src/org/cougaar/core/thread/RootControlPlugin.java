@@ -77,8 +77,10 @@ public class RootControlPlugin extends ComponentPlugin
  	    sb.getService(this, ThreadControlService.class, null);
 //  	RightsSelector selector = new PercentageLoadSelector(sb);
  	//tcs.setRightsSelector(selector);
- 	tcs.setMaxRunningThreadCount(MAX_THREADS);
- 	tcs.setChildQualifier(new ExampleChildQualifier(lsvc));
+	if (tcs != null) {
+	    tcs.setMaxRunningThreadCount(MAX_THREADS);
+	    tcs.setChildQualifier(new ExampleChildQualifier(lsvc));
+	}
 	
     }
 

@@ -178,8 +178,10 @@ public class AgentLoadSensorPlugin
 
 	    ThreadListenerService tls = (ThreadListenerService)
 		rootsb.getService(this, ThreadListenerService.class, null);
-	    tls.addListener(this);
-	    rootsb.releaseService(this, ThreadListenerService.class, tls);
+	    if (tls != null) {
+		tls.addListener(this);
+		rootsb.releaseService(this, ThreadListenerService.class, tls);
+	    }
 	} else {
 	    throw new RuntimeException("AgentLoadSensor can only be used in NodeAgents");
 	}

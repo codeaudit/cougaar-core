@@ -168,7 +168,7 @@ public class SchedulerWatcher
 	    sb.getService(this, MetricsUpdateService.class, null);
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
-	tls.addListener(this);
+	if (tls != null) tls.addListener(this);
 
 	ThreadService tsvc = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);

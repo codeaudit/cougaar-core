@@ -84,7 +84,7 @@ class RogueThreadDetector
 	    rootsb.getService(this, ThreadStatusService.class, null);
 	controlService = (ThreadControlService)
 	    rootsb.getService(this, ThreadControlService.class, null);
-	if (statusService == null || controlService == null) {
+	if (statusService == null) {
 	    throw new RuntimeException("Unable to obtain service");
 	}
     }
@@ -127,7 +127,6 @@ class RogueThreadDetector
 
     private void detectRogue(List status) 
     {
-	int max = controlService.maxRunningThreadCount();
 	int running = 0;
 	int queued = 0;
 	
@@ -150,11 +149,14 @@ class RogueThreadDetector
 		queued++;
 	    }
 	}
-	if (loggingService.isInfoEnabled() && (running >= max || queued >= 1)) {
-	    // running can be > max because the construction of
-	    // the status list isn't synchronized.
-	    loggingService.info("ThreadService is using all the pooled threads: running="
-				+running+ " queued=" +queued);
+	if (controlService != null && loggingService.isInfoEnabled()) {
+	    int max = controlService.maxRunningThreadCount();
+	    if (running >= max || queued >= 1) {
+		// running can be > max because the construction of
+		// the status list isn't synchronized.
+		loggingService.info("ThreadService is using all the pooled threads: running="
+				    +running+ " queued=" +queued);
+	    }
 	}
     }
 

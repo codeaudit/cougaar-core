@@ -155,7 +155,7 @@ public class PercentageLoadSelector
 
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
-	tls.addListener(this);
+	if (tls != null) tls.addListener(this);
 
 	ThreadService tsvc = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);

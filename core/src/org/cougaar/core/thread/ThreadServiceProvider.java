@@ -54,6 +54,9 @@ public final class ThreadServiceProvider
     private static final String SCHEDULER_CLASS_PROPERTY = 
 	"org.cougaar.thread.scheduler";
 
+    private static final String TRIVIAL_PROPERTY = 
+	"org.cougaar.thread.trivial";
+
     private ServiceBroker my_sb;
     private boolean isRoot;
     private ThreadListenerProxy listenerProxy;
@@ -69,6 +72,13 @@ public final class ThreadServiceProvider
 	super.load();
 
 	ServiceBroker sb = my_sb;
+	isRoot = !sb.hasService(ThreadService.class);
+
+	if (Boolean.getBoolean(TRIVIAL_PROPERTY)) {
+	    if (isRoot)	new TrivialThreadServiceProvider().makeServices(sb);
+	    return;
+	}
+
 	// check if this component was added with parameters
         if (name == null) {
 	    // Make default values from position in containment hierarcy
@@ -82,7 +92,6 @@ public final class ThreadServiceProvider
 	    MessageAddress nodeAddr = nis.getMessageAddress();
 	    sb.releaseService(this, NodeIdentificationService.class, nis);
 
-	    isRoot = !sb.hasService(ThreadService.class);
 	    name = 
 		isRoot ?
 		"Node "+nodeAddr :
@@ -162,7 +171,7 @@ public final class ThreadServiceProvider
 	proxy = new ThreadServiceProxy(node);
     }
 
-    public void provideServices(ServiceBroker sb) {
+    private void provideServices(ServiceBroker sb) {
 	sb.addService(ThreadService.class, this);
 	sb.addService(ThreadControlService.class, this);
 	sb.addService(ThreadListenerService.class, this);

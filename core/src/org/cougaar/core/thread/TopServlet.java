@@ -79,7 +79,7 @@ class TopServlet extends ServletFrameset
 	controlService = (ThreadControlService)
 	    rootsb.getService(this, ThreadControlService.class, null);
 
-	if (statusService == null || controlService == null) {
+	if (statusService == null) {
 	    throw new RuntimeException("Unable to obtain service");
 	}
     }
@@ -142,11 +142,10 @@ class TopServlet extends ServletFrameset
 
     private void printSummary(List status, PrintWriter out) 
     {
-	int max = controlService.maxRunningThreadCount();
 	int running = 0;
 	int queued = 0;
 	int total = status.size();
-	
+
 	Iterator itr = status.iterator();
 	while (itr.hasNext()) {
 	    ThreadStatusService.Record record = (ThreadStatusService.Record)
@@ -165,9 +164,12 @@ class TopServlet extends ServletFrameset
 	out.print(queued);
 	out.print(" queued, ");
 	out.print(running);
-	out.print(" running, ");
-	out.print(max);
-	out.print(" max running");
+	out.print(" running");
+	if (controlService != null) {
+	    out.print(", ");
+	    out.print(controlService.maxRunningThreadCount());
+	    out.print(" max running");
+	}
 	out.print("</b>");
     }
 
