@@ -63,7 +63,9 @@ final class TreeNode
 
 
     void addChild(TreeNode child) {
-	children.add(child);
+	synchronized (children) {
+	    children.add(child);
+	}
     }
 
     ArrayList getChildren() {
@@ -77,11 +79,13 @@ final class TreeNode
     void listQueuedThreads(List records) {
 	scheduler.listQueuedThreads(records);
 	if (children != null) {
-	    Iterator itr = children.iterator();
-	    TreeNode child = null;
-	    while (itr.hasNext()) {
-		child = (TreeNode) itr.next();
-		child.listQueuedThreads(records);
+	    synchronized (children) {
+		Iterator itr = children.iterator();
+		TreeNode child = null;
+		while (itr.hasNext()) {
+		    child = (TreeNode) itr.next();
+		    child.listQueuedThreads(records);
+		}
 	    }
 	}
     }

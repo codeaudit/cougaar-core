@@ -36,6 +36,13 @@ class RoundRobinSelector implements RightsSelector
 
     private SchedulableObject checkNextPending(ArrayList children) 
     {
+	// Conceptually this should be synchronized on 'children'.
+	// Unfortunately the nature of what it's doing makes that
+	// impossible.  The result is that this code will in some
+	// circumstances run while an 'add' call is in progress on the
+	// list.  This will show up as a null in the list.  Just
+	// ignore it and hope for the best...In theory all it means
+	// is that the newly added child will miss its first turn.
 	SchedulableObject handoff = null;
 	int child_count = children.size();
 	if (currentIndex == -1) {
@@ -44,6 +51,8 @@ class RoundRobinSelector implements RightsSelector
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
 	    if (currentIndex == child_count) currentIndex = -1;
+	    if (child_node == null) return null;
+
 	    Scheduler child = child_node.getScheduler();
 	    handoff = child.getNextPending();
 	    // We're the parent of the Scheduler to which the handoff
