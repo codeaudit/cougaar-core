@@ -45,10 +45,11 @@ import org.cougaar.util.TriggerModel;
 import org.cougaar.core.service.SuicideService;
 
 /**
- * Standard base-class for Components that watch the Blackboard for 
- * activity and use the shared thread-scheduler.<br>
- * Plugins are the most common example of such components.  
- * <code>ComponentPlugin</code> will become an extension of this class in a future release.
+ * This component is a standard base class for {@link Component}s
+ * that use the {@link BlackboardService}.
+ * <p>
+ * Plugins are the most common example of such components.<br>
+ * <code>ComponentPlugin</code> is an extension of this class.
  * <p>
  * Create a derived class by implementing 
  * <tt>setupSubscriptions()</tt> and <tt>execute()</tt>.
@@ -59,6 +60,7 @@ import org.cougaar.core.service.SuicideService;
  * BlackboardClientComponent might load first but be precycled last!).  In 
  * general a Component should <b>not</b> make assumptions about the 
  * load or schedule ordering.
+ *
  * @see org.cougaar.core.plugin.ComponentPlugin
  */
 public abstract class BlackboardClientComponent 
@@ -72,6 +74,7 @@ public abstract class BlackboardClientComponent
   protected BlackboardService blackboard;
   protected AlarmService alarmService;
   protected AgentIdentificationService agentIdentificationService;
+  private SuicideService ss;
   protected String blackboardClientName;
 
   private BindingSite bindingSite;
@@ -87,7 +90,7 @@ public abstract class BlackboardClientComponent
    * Called just after construction (via introspection) by the 
    * loader if a non-null parameter Object was specified by
    * the ComponentDescription.
-   **/
+   */
   public void setParameter(Object param) {
     parameter = param;
     setBlackboardClientName(computeBlackboardClientName(param));
@@ -95,7 +98,7 @@ public abstract class BlackboardClientComponent
   
   /**
    * @return the parameter set by {@link #setParameter}
-   **/
+   */
   public Object getParameter() {
     return parameter;
   }
@@ -151,8 +154,8 @@ public abstract class BlackboardClientComponent
     return sb;
   }
 
-  // rely upon load-time introspection to set these services - 
-  //   don't worry about revokation.
+  // rely upon load-time introspection ("public void setX(X)") to
+  // set these services.  don't worry about revokation.
   public final void setSchedulerService(SchedulerService ss) {
     scheduler = ss;
   }
@@ -172,6 +175,9 @@ public abstract class BlackboardClientComponent
       // FIXME: Log something?
     }
   }
+  public void setSuicideService(SuicideService ss) {
+    this.ss = ss;
+  }
 
   /**
    * Get the blackboard service, for subclass use.
@@ -190,9 +196,6 @@ public abstract class BlackboardClientComponent
   protected final void requestCycle() {
     tm.trigger();
   }
-
-  private SuicideService ss;
-  public void setSuicideService(SuicideService ss) { this.ss = ss; }
 
   //
   // implement GenericStateModel:
@@ -359,7 +362,7 @@ public abstract class BlackboardClientComponent
   }
 
   /**
-   * Called once after initialization, as a "pre-execute()".
+   * Called once after initialization, as a pre-{@link #execute}.
    */
   protected abstract void setupSubscriptions();
   
@@ -368,15 +371,19 @@ public abstract class BlackboardClientComponent
    */
   protected abstract void execute();
   
-  /** storage for wasAwakened - only valid during cycle().
-   **/
+  /** storage for wasAwakened - only valid during cycle(). */
   private boolean awakened = false;
 
-  /** true IFF were we awakened explicitly (i.e. we were asked to run
+  /**
+   * True IFF were we awakened explicitly (i.e. we were asked to run
    * even if no subscription activity has happened).
    * The value is valid only within the scope of the cycle() method.
    */
   protected final boolean wasAwakened() { return awakened; }
+
+  //
+  // oddball methods required by BlackboardClient:
+  //
 
   // for BlackboardClient use
   // DO NOT SYNCHRONIZE THIS METHOD; a deadlock will result.

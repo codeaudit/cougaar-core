@@ -30,6 +30,11 @@ import java.util.Iterator;
 
 import org.cougaar.core.agent.service.MessageSwitchService;
 
+/**
+ * A message acknowledgement manager used by the {@link
+ * org.cougaar.core.blackboard.Distributor}'s non-lazy persistence
+ * mode to ensure that unacknowledged messages are persisted.
+ */
 public interface MessageManager {
   int OK      = 0;
   int RESTART = 4;
@@ -41,43 +46,43 @@ public interface MessageManager {
   /**
    * Start the message manager running. The message manager should be
    * inactive until this method is called because it does know know
-   * the identity of the cluster it is in.
-   **/
+   * the identity of the agent it is in.
+   */
   void start(MessageSwitchService msgSwitch, boolean didRehydrate);
   /**
    * Stop the message manager, halting any internal activity.
-   **/
+   */
   void stop();
   /**
    * Add a set of messages to the queue of messages waiting to be
    * transmitted. When persistence is enabled, the messages are held
    * until the end of the epoch.
-   **/
+   */
   void sendMessages(Iterator messages);
   /**
    * Incorporate a directive message into the message manager's state.
    * @return Normally, the message is returned, but duplicate and from
    * the future messages are ignored by returning null.
-   **/
+   */
   int receiveMessage(DirectiveMessage aMessage);
   /**
    * Incorporate a directive acknowledgement into the message
    * manager's state. The acknowledged messages are removed from the
    * retransmission queues.
-   **/
+   */
   int receiveAck(AckDirectiveMessage theAck);
   /**
    * Prepare to acknowledge a list of directive messages. The
    * acknowledgements are not actually sent until the end of the
    * epoch.
-   **/
+   */
   void acknowledgeMessages(Iterator messagesToAck);
 
   /**
    * Advance epoch.  Bring the current epoch to an end in preparation
    * for a persistence delta.
    * @return true if the message manager actually requires the epoch to advance
-   **/
+   */
   void advanceEpoch();
 
   boolean needAdvanceEpoch();

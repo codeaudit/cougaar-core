@@ -33,13 +33,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/** Abstraction of a Transaction object.
- * Required Transaction functionality tracks the Subscriber
- * and maintains the ChangeReport set.
- *
+/**
+ * Required transaction support to record a thread's active
+ * {@link Subscriber} and maintain attached ChangeReports.
+ * <p>
  * May be extended to add additional functionality to a Subscriber.
  * @see org.cougaar.core.blackboard.Subscriber#newTransaction()
- **/
+ */
 public class Transaction {
   // instantiable stuff
   protected Subscriber subscriber;
@@ -48,8 +48,7 @@ public class Transaction {
     subscriber = s;
   }
 
-  /** a map of object to List (of outstanding changes)
-   **/
+  /** a map of object to List (of outstanding changes) */
   private Map _map = null;
   private final Map map() {
     if (_map == null) {
@@ -58,9 +57,14 @@ public class Transaction {
     return _map;
   }
 
-  /** Note a ChangeReport.  May be called by anyone (inside a Transaction) 
-   * wishing to publish a detailed ChangeReport on an object.
-   **/
+  /**
+   * Note a ChangeReport for the next {@link #getChangeReports}.
+   * <p> 
+   * May be called by anyone (inside a Transaction) wishing to
+   * publish a detailed ChangeReport on an object.
+   *
+   * @see ActiveSubscriptionObject#changingInBlackboard 
+   */
   public final static void noteChangeReport(Object o, ChangeReport cr) {
     Transaction t = getCurrentTransaction();
     if (t != null) {
@@ -72,10 +76,15 @@ public class Transaction {
     }
   }
 
-  /** Note a Collection of ChangeReports on a single object.
+  /**
+   * Note a Collection of ChangeReports for the next {@link
+   * #getChangeReports}.
+   * <p> 
    * May be called by anyone (inside a Transaction) wishing to publish a 
    * detailed set of ChangeReports on an object.
-   **/
+   *
+   * @see ActiveSubscriptionObject#changingInBlackboard 
+   */
   public final static void noteChangeReport(Object o, Collection c) {
     Transaction t = getCurrentTransaction();
     if (t != null) {
@@ -97,9 +106,7 @@ public class Transaction {
     changes.add(r);
   }
 
-  /** Bulk version of noteChangeReport.
-   **/
-  
+  /** Bulk version of noteChangeReport */
   private final synchronized void private_noteChangeReport(Object o, Collection r) {
     Map m = map();
     List changes = (List)m.get(o);
@@ -111,24 +118,26 @@ public class Transaction {
   }
 
   /**
-   * Publishable objects may collect descriptions of changes made
-   * to them and make it available to the infrastructure via this slot. <p>
-   *
+   * Used by {@link Subscriber} to take {@link ChangeReport}s noted
+   * by {@link #noteChangeReport(Object,ChangeReport)} and merge them
+   * with the optional change reports specified in the plugin's {@link
+   * org.cougaar.core.service.BlackboardService#publishChange}.
+   * <p>
    * Calling this method should atomically return the List and
    * clear the stored value.  Implementations may also want to 
    * keep track of the changing thread to avoid changing the object
    * simultaneously in different transactions. <p>
-   *
-   * Plugins must <em>never</em> call this or changes will not be propagated. <p>
-   *
+   * <p>
+   * Plugins must <em>never</em> call this or changes will not be propagated.
+   * <p>
    * The List returned (if any) may not be reused, as the infrastructure
-   * can and will modify it for its purposes. <p>
+   * can and will modify it for its purposes.
    *
    * @return A List of ChangeReport instances or null.  Implementations
    * are encouraged to return null if no trackable changes were made, rather
    * than an empty List.
    * @see ChangeReport
-   **/
+   */
   public synchronized final List getChangeReports(Object o) {
     // be careful not to create map unless we need to...
     if (_map== null) return null;
@@ -139,9 +148,10 @@ public class Transaction {
     return l;
   }
 
-  /** Called by subscriber to check for changes made to objects which hadn't 
-   * actually been publishChanged.
-   **/
+  /**
+   * Called by {@link Subscriber} to check for changes made to objects
+   * which hadn't actually been publishChanged.
+   */
   synchronized final Map getChangeMap() {
     Map m = _map;
     _map = null;
@@ -151,7 +161,7 @@ public class Transaction {
   // Thread-binding to a Transaction instance
   private static final HashMap transactionTable = new HashMap(89);
 
-  /** Register a transaction as open **/
+  /** Register a transaction as open */
   public final static void open(Transaction t) {
     synchronized (transactionTable) {
       Thread me = Thread.currentThread();
@@ -165,7 +175,7 @@ public class Transaction {
     }
   }
 
-  /** Register a transaction as closed **/
+  /** Register a transaction as closed */
   public final static void close(Transaction t) {
     synchronized (transactionTable) {
       Thread me = Thread.currentThread();
@@ -183,7 +193,7 @@ public class Transaction {
     }
   }
 
-  /** get the current Transaction.  **/
+  /** get the current Transaction.  */
   public final static Transaction getCurrentTransaction() {
     synchronized (transactionTable) {
       return (Transaction) transactionTable.get(Thread.currentThread());
@@ -209,7 +219,9 @@ public class Transaction {
                 }
                 /*
                 if (c>0) {
-                  System.err.println("TransactionTable GC reclaimed "+c+"/"+a+" Transaction entries");
+                  System.err.println(
+                      "TransactionTable GC reclaimed "+c+"/"+a+
+                      " Transaction entries");
                 }
                 */
               }

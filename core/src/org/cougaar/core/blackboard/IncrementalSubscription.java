@@ -38,10 +38,10 @@ import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;
 import org.cougaar.util.UnaryPredicate;
 
-/** Add tracking of incremental changes to the container.
- *
- **/
-
+/**
+ * A {@link CollectionSubscription} that records add/change/remove
+ * deltas.
+ */
 public class IncrementalSubscription extends CollectionSubscription {
 
   public IncrementalSubscription(UnaryPredicate p, Collection c) {
@@ -59,9 +59,10 @@ public class IncrementalSubscription extends CollectionSubscription {
       myRemovedList.clear();
   }
 
-
-  /** @return an list of the objects of the collection that have been added.
-   **/
+  /**
+   * @return an enumeration of the objects that have been added
+   * since the last transaction.
+   */
   public Enumeration getAddedList() {
     checkTransactionOK("getAddedList()");
     if (myAddedSet == null || myAddedSet.isEmpty()) 
@@ -69,16 +70,18 @@ public class IncrementalSubscription extends CollectionSubscription {
     return new Enumerator(myAddedSet);
   }
 
-  /** @return a possibly empty collection of objects added since 
-   * the last transaction. Will not return null.
-   **/
+  /**
+   * @return a possibly empty collection of objects that have been
+   * added since the last transaction. Will not return null.
+   */
   public Collection getAddedCollection() {
     return (myAddedSet!=null)?myAddedSet:Collections.EMPTY_SET;
   }
 
-  /** @return an list of the objects of the collection that have been removed.
-   **/
-
+  /**
+   * @return a enumeration of the objects that have been removed
+   * since the last transaction.
+   */
   public Enumeration getRemovedList() {
     checkTransactionOK("getRemovedList()");
     if (myRemovedList == null || myRemovedList.isEmpty())
@@ -86,41 +89,44 @@ public class IncrementalSubscription extends CollectionSubscription {
     return new Enumerator(myRemovedList);
   }
 
-  /** @return a possibly empty collection of objects removed 
-   * since the last transaction.  Will not return null.
-   **/
+  /**
+   * @return a possibly empty collection of objects that have been
+   * removed since the last transaction.  Will not return null.
+   */
   public Collection getRemovedCollection() {
     return (myRemovedList!=null)?myRemovedList:Collections.EMPTY_LIST;
   }
 
-  /** @return an list of the objects of the collection that have 
-   * been marked as changed.
-   **/
+  /**
+   * @return an enumeration of the objects that have been changed
+   * since the last transaction.
+   * @see #getChangeReports(Object)
+   */
   public Enumeration getChangedList() {
     checkTransactionOK("getChangedList()");
     return super.privateGetChangedList();
   }
 
-  /** @return a possibly empty collection of objects marked as changed
-   * since the last transaction. Will not return null.
-   **/
+  /**
+   * @return a possibly empty collection of objects that have been
+   * changed since the last transaction. Will not return null.
+   * @see #getChangeReports(Object) 
+   */
   public Collection getChangedCollection() {
     return super.privateGetChangedCollection();
   }
 
-  /**
-   * Override this for sorted sets
-   **/
+  /** override this for sorted sets */
   protected Set createAddedSet() {
     return new HashSet(5);
   }
 
-  /** called by privateAdd **/
+  /** called by privateAdd */
   private void addToAddedList( Object o ) {
     if (myAddedSet == null) myAddedSet = createAddedSet();
     myAddedSet.add(o);
   }
-  /** called by privateRemove **/
+  /** called by privateRemove */
   private void addToRemovedList( Object o ) {
     if (myRemovedList == null) myRemovedList = new ArrayList(3);
     myRemovedList.add( o );

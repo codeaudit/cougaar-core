@@ -33,39 +33,40 @@ import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * See "root" domain plan.
+ * A {@link org.cougaar.core.domain.Domain}s view of the blackboard.
  */
 public interface BlackboardServesDomain
 {
-  /** Apply predicate against the entire "Blackboard".
-   * User provided predicate
-   **/
+  /** Apply predicate against the entire blackboard. */
   Enumeration searchBlackboard(UnaryPredicate predicate);
 
-  /** Add Object to the Blackboard Collection
+  /**
+   * Add Object to the Blackboard Collection
    * (All subscribers will be notified)
-   **/
+   */
   void add(Object o);
 
-  /** Removed Object to the Blackboard Collection
+  /**
+   * Removed Object to the Blackboard Collection
    * (All subscribers will be notified)
-   **/
+   */
   void remove(Object o);
 
-  /** Change Object to the Blackboard Collection
+  /**
+   * Change Object to the Blackboard Collection
    * (All subscribers will be notified)
-   **/
+   */
   void change(Object o, Collection changes);
 
   /**
    * Alias for sendDirective(dir, null);
-   **/
+   */
   void sendDirective(Directive dir);
 
   /**
    * Reliably send a directive. Take pains to retransmit this message
-   * until it is acknowledged even if clusters crash.
-   **/
+   * until it is acknowledged even if agents crash.
+   */
   void sendDirective(Directive dir, Collection changeReports);
 
   PublishHistory getHistory();
@@ -75,6 +76,6 @@ public interface BlackboardServesDomain
    * @return an ABATranslation giving translations of an ABA.
    * Returns null if the translations are unchanged.
    * @param aba the ABA to translate
-   **/
+   */
   ABATranslation getABATranslation(AttributeBasedAddress aba);
 }

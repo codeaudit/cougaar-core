@@ -34,8 +34,7 @@ import java.io.Serializable;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A DirectiveImpl  provides a basic implementation of
- *  Directive for extension purposes only.
+ * A standard base class for {@link Directive}s.
  */
 public abstract class DirectiveImpl 
 extends ClaimableImpl
@@ -51,37 +50,18 @@ implements Directive, NewDirective, Serializable
     super();
   }
    
-  //Directive interface method implementations
-		
-  /**
-   * @return MessageAddress Identifies the originator of this message
-   */
   public MessageAddress getSource() {
     return source;
   }
-
-  /*
-   *@return MessageAddress Identifies the receiver of the message
-   */
-  public MessageAddress getDestination() {
-    return destination;
-  }
-  
-  /*
-   *	Depricated because it is inherited from the base interface Message
-   * @param asource - Set the MessageAddress of the originator of this message
-   */
   public void setSource(MessageAddress asource) {
     source = asource;
   }
-  
-  /*
-   * @param adestination - Set the MessageAddress of the receiver of this message
-   */
+  public MessageAddress getDestination() {
+    return destination;
+  }
   public void setDestination(MessageAddress adestination) {
     destination = adestination;
   }
-
 
   //
   // implement read/write object here to provide top-level object stack implementations

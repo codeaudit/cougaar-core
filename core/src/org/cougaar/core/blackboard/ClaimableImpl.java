@@ -33,22 +33,26 @@ import java.io.ObjectInputStream;
 import org.cougaar.util.PropertyParser;
 
 /** 
- * Keep track of who is Disposing of me. <p>
+ * Implementation of the {@link Claimable} API.
+ * <p> 
  * Extends PublishableAdapter so that subclasses may
  * implicitly collect changes.
- * @property org.cougaar.core.blackboard.Claimable.debug If set to true, will
- * keep additional information for debugging claim conflicts, that is, multiple plugins
- * attempting to operate directly on the same blackboard objects.  This information
- * adds significant additional memory load.
- **/
-
+ *
+ * @property org.cougaar.core.blackboard.Claimable.debug
+ * If set to true, every Claimable instance will keep additional
+ * information for debugging claim conflicts, that is, multiple
+ * plugins attempting to operate directly on the same blackboard
+ * objects.  This information adds significant additional memory
+ * load.
+ */
 public class ClaimableImpl 
   extends PublishableAdapter    // sigh.
   implements Claimable 
 {
   private static boolean isDebugging = false;
   static {
-    isDebugging = PropertyParser.getBoolean("org.cougaar.core.blackboard.Claimable.debug", isDebugging);
+    isDebugging = PropertyParser.getBoolean(
+        "org.cougaar.core.blackboard.Claimable.debug", isDebugging);
   }
 
   private transient Object claimer = null;
@@ -116,9 +120,10 @@ public class ClaimableImpl
   }
     
 
-  /** true when we've complained once and told the user how to enable loud mode. 
+  /**
+   * true when we've complained once and told the user how to enable loud mode. 
    * Only used when in non-loud mode.
-   **/
+   */
   private static boolean hasComplained = false;
 
   private void complain(String complaint) {
@@ -134,7 +139,10 @@ public class ClaimableImpl
           System.err.println("(Never been claimed)");
       } else {
         if (! hasComplained) {
-          System.err.println("(Set system property org.cougaar.core.blackboard.Claimable.debug=true for details)");
+          System.err.println(
+              "(Set system property"+
+              " org.cougaar.core.blackboard.Claimable.debug=true"+
+              " for details)");
           hasComplained=true;
         }
       }
@@ -146,6 +154,4 @@ public class ClaimableImpl
     is.defaultReadObject();
     claimer = postRehydrationClaimer;
   }
-
-
 }

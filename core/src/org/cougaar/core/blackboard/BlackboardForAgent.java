@@ -33,8 +33,8 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceObject;
 
 /**
- * The service which the Blackboard serves back to the Agent.
- **/
+ * This service is used by agent components to manage the blackboard.
+ */
 public interface BlackboardForAgent
   extends Service
 {

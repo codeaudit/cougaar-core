@@ -28,44 +28,48 @@ package org.cougaar.core.blackboard;
 
 
 /**
- * An extension of IllegalArgumentException for capturing additional
- * information about an apparently erroneous publish operation. It
- * records certain facts to assist the Blackboard in providing a more
- * detailed explanation of the error including the stack of a previous
- * operation with which the current publish operation seems to be in
- * conflict.
- **/
+ * An {@link IllegalArgumentException} for invalid or failed publish
+ * operations. 
+ * <p> 
+ * This class records additional information to assist the Blackboard
+ * in providing a more detailed explanation of the error, including
+ * the stack of a previous operation with which the current publish
+ * operation seems to be in conflict.
+ */
 public class PublishException extends IllegalArgumentException {
-    public PublishStack priorStack;
-    public boolean priorStackUnavailable;
-    private String specialMessage = null;
-    public PublishException(String msg) {
-        super(msg);
-        this.priorStack = null;
-    }
-    public PublishException(String msg, PublishStack priorStack, boolean priorStackUnavailable) {
-        super(msg);
-        this.priorStack = priorStack;
-        this.priorStackUnavailable = priorStackUnavailable;
-    }
-    public String toString() {
-        if (specialMessage != null) return specialMessage;
-        return super.toString();
-    }
-    public synchronized void printStackTrace(String message) {
-        specialMessage = message;
-        super.printStackTrace();
-        specialMessage = null;
-    }
-    public synchronized void printStackTrace() { 
-        super.printStackTrace();
-    }
+  public PublishStack priorStack;
+  public boolean priorStackUnavailable;
+  private String specialMessage = null;
+  public PublishException(String msg) {
+    super(msg);
+    this.priorStack = null;
+  }
+  public PublishException(
+      String msg,
+      PublishStack priorStack,
+      boolean priorStackUnavailable) {
+    super(msg);
+    this.priorStack = priorStack;
+    this.priorStackUnavailable = priorStackUnavailable;
+  }
+  public String toString() {
+    if (specialMessage != null) return specialMessage;
+    return super.toString();
+  }
+  public synchronized void printStackTrace(String message) {
+    specialMessage = message;
+    super.printStackTrace();
+    specialMessage = null;
+  }
+  public synchronized void printStackTrace() { 
+    super.printStackTrace();
+  }
 
-    public synchronized void printStackTrace(java.io.PrintStream s) { 
-        super.printStackTrace(s);
-    }
+  public synchronized void printStackTrace(java.io.PrintStream s) { 
+    super.printStackTrace(s);
+  }
 
-    public synchronized void printStackTrace(java.io.PrintWriter s) { 
-        super.printStackTrace(s);
-    }
+  public synchronized void printStackTrace(java.io.PrintWriter s) { 
+    super.printStackTrace(s);
+  }
 }

@@ -26,10 +26,10 @@
 package org.cougaar.core.blackboard;
 
 
-/** A unchecked Exception thrown when there is a problem detected by
- * Blackboard interactions.
- **/
-
+/**
+ * An unchecked exception thrown when there is a problem detected by
+ * blackboard interactions.
+ */
 public class BlackboardException extends RuntimeException {
   public BlackboardException(String s) { super(s); }
   public BlackboardException(String s, Throwable t) { super(s, t); }

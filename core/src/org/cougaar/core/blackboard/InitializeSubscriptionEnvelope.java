@@ -27,13 +27,15 @@
 package org.cougaar.core.blackboard;
 
 
-/** InitializeSubscriptionEnvelope is a special envelope which is
- * sent <em>in band</em> during subscription initialization.
+/**
+ * A special blackboard-internal {@link Envelope} used to initialize
+ * a {@link Subscription}.
+ * <p>
  * Any transaction envelopes received by the client for a newly
  * created subscription prior to this envelope are ignored.  This
  * allows the new subscription contents to be kept transactionally
  * in-sync with the rest of the world.
- **/
+ */
 public final class InitializeSubscriptionEnvelope extends Envelope {
   private transient Subscription subscription;
   InitializeSubscriptionEnvelope(Subscription subscription) {

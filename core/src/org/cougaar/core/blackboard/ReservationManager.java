@@ -32,6 +32,12 @@ import java.util.LinkedList;
 import org.cougaar.util.log.Logger;
 
 /**
+ * The ReservationManager coordinates {@link
+ * org.cougaar.core.blackboard.Distributor} persistence to ensure
+ * that only one agent can persist at a time, and that an agent
+ * preparing to persist will not block other agents from
+ * persisting.
+ * <p> 
  * Persistence reservations indicate that a persistence instance
  * wishes to take a snapshot of its agent. The reservations are held
  * in a queue (FIFO). When a persistence instance reaches the head of
@@ -40,19 +46,18 @@ import org.cougaar.util.log.Logger;
  * exercised or re-confirmed within that interval, it is cancelled.
  * During this interval, the agent should be getting itself into a
  * well-defined state so the persistence snapshot will be valid.
- *
+ * <p>
  * If at any time after reaching the head of the queue (and trying to
  * reach a well-defined state), an agent discovers that its
  * reservation has been cancelled, it should abandon its attempt to
  * reach a well-defined state, continue execution, and try again
  * later.
- *
+ * <p>
  * If a ReservationManager is created with a timeout of 0, the manager
  * is effectively disabled. This means that all requests and commits
  * are satisfied unconditionally, and waitFor and release return
  * immediately and do nothing. Also no storage is allocated.
- **/
-
+ */
 public class ReservationManager {
   private LinkedList queue = null;
   private long timeout;

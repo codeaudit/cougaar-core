@@ -27,23 +27,35 @@
 package org.cougaar.core.blackboard;
 
 
-/** Anyone component requesting BlackboardService must implement
- * BlackboardClient in order to support blackboard callbacks
- **/
+/**
+ * Required service requestor API for the {@link
+ * org.cougaar.core.service.BlackboardService}. 
+ */
 public interface BlackboardClient {
   /**
-   * Return a name for this BlackboardClient. All clients in a
-   * cluster should have distinct names.
+   * Return a name for this BlackboardClient. All clients in an
+   * agent should have distinct names.
    */
   String getBlackboardClientName();
 
-  long currentTimeMillis( );
+  /**
+   * Get the current execution time (bug 2515).
+   */
+  long currentTimeMillis();
 
+  /**
+   * ThreadLocal for static utilities to find the BlackboardClient
+   * context.
+   */
+  Local current = new Local();
+
+  /**
+   * ThreadLocal for static utilities to find the BlackboardClient
+   * context.
+   */
   class Local extends ThreadLocal {
     public BlackboardClient getClient() {
       return (BlackboardClient) get();
     }
   }
-
-  Local current = new Local();
 }

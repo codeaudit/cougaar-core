@@ -30,9 +30,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-/** An EnvelopeTuple indicating that a set of objects have been added to the Plan.
- **/
-
+/**
+ * An {@link EnvelopeTuple} indicating that a collection of objects
+ * have been added to the blackboard.
+ */
 public final class BulkEnvelopeTuple extends EnvelopeTuple {
   private final Collection bulk;
   public Object getObject() { return bulk; }

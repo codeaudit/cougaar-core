@@ -28,20 +28,19 @@ package org.cougaar.core.blackboard;
 
 
 /**
- * Plugins and internal subscription clients which implement 
- * PrivilegedClaimant are allowed to manipulate blackboard objects 
- * freely, effectively ignoring claims (without warnings, etc).
- * 
+ * A marker interface for {@link Subscriber}s that are allowed
+ * to modify {@link Claimable} blackboard objects even if they
+ * are not the owner (typically just the {@link Blackboard}).
+ * <p>
  * Note that Claim warnings are currently just warnings, 
  * regardless of how scary looking they are.  This is a change
  * from some previous implementations which enforced claims.
- *
+ * <p>
  * Note also that use of this class circumvents an entire class of 
  * error checks which usually catch problems, so make sure that you
  * really need this before using it.
  *
  * @see org.cougaar.core.blackboard.Claimable
- **/
-
+ */
 public interface PrivilegedClaimant {
 }

@@ -32,33 +32,36 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 /**
- * A bit set for keeping track of sequence numbers. This is similar to
- * a BitSet, but has a shifting base index. The position of the first
- * zero bit in the set can be queried and the representation shifted
- * so that the one bits prior to that first zero don't require storage.
- **/
+ * A bit set for keeping track of sequence numbers, used by
+ * the {@link MessageManager}.
+ * <p> 
+ * This is similar to a BitSet, but has a shifting base index. The
+ * position of the first zero bit in the set can be queried and the
+ * representation shifted so that the one bits prior to that first
+ * zero don't require storage.
+ */
 class AckSet implements Serializable {
-  /** The sequence number of the first zero bit.**/
+  /** The sequence number of the first zero bit. */
   private int minSequence = 0;
 
-  /** The sequence number corresponding to bit 0 of the bits array **/
+  /** The sequence number corresponding to bit 0 of the bits array */
   private int baseSequence = 0;
 
-  /** The index of the last word with bits **/
+  /** The index of the last word with bits */
   private transient int maxIndex = 0;
 
-  /** The values of the bits **/
+  /** The values of the bits */
   private transient long[] bits = new long[4];
 
-  /** Computed index in bits of a given sequence number **/
+  /** Computed index in bits of a given sequence number */
   private transient int index;
 
-  /** Computed bit of a given sequence number **/
+  /** Computed bit of a given sequence number */
   private transient long bit;
 
   /**
    * Construct with sequence numbers starting at zero.
-   **/
+   */
   public AckSet() {
   }
 
@@ -66,7 +69,7 @@ class AckSet implements Serializable {
    * Construct with sequence numbers starting at a specified position.
    * @param initialSequenceNumber the position of the first zero in
    * the bit set. 
-   **/
+   */
   public AckSet(int initialSequenceNumber) {
     computeIndexInfo(initialSequenceNumber);
     baseSequence = index * 64;
@@ -78,7 +81,7 @@ class AckSet implements Serializable {
    * Compute the index into the bits array and the bit corresponding
    * to a given sequence number.
    * @param sequenceNumber
-   **/
+   */
   private void computeIndexInfo(int sequenceNumber) {
     sequenceNumber -= baseSequence;
     index = (int) (sequenceNumber / 64);
@@ -90,7 +93,7 @@ class AckSet implements Serializable {
    * Find the first zero in the bitset, advance minSequence to that
    * position, and return that sequence number.
    * @return the position of the first bit that has not be set.
-   **/
+   */
   public synchronized int advance() {
     try {
       computeIndexInfo(minSequence);
@@ -127,7 +130,7 @@ class AckSet implements Serializable {
    * last value returned from advance.
    * @return the position of first zero in the set as of the last call
    * to advance.
-   **/
+   */
   public int getMinSequence() {
     return minSequence;
   }
@@ -137,7 +140,7 @@ class AckSet implements Serializable {
    * word containing the bit falls beyond the end of the array, first
    * discard the words before the word containing minSequence. Then
    * expand the array if necessary.
-   **/
+   */
   public synchronized void set(int sequenceNumber) {
     computeIndexInfo(sequenceNumber);
     if (index < 0) return;              // These bits are already set.
@@ -170,7 +173,7 @@ class AckSet implements Serializable {
    * Test if a particular bit is set.
    * @param sequenceNumber the bit to test.
    * @return true if the specified bit has been set.
-   **/
+   */
   public boolean isSet(int sequenceNumber) {
     if (sequenceNumber < minSequence) {
       return true;                      // No need to test these
@@ -185,7 +188,7 @@ class AckSet implements Serializable {
   /**
    * Write this object. We only write the active portion of the bits
    * array
-   **/
+   */
   private synchronized void writeObject(ObjectOutputStream os) throws IOException {
     os.defaultWriteObject();
     os.writeInt(maxIndex);
@@ -196,7 +199,7 @@ class AckSet implements Serializable {
 
   /**
    * Read this object. The bits array is restored.
-   **/
+   */
   private void readObject(ObjectInputStream is) throws IOException, ClassNotFoundException {
     is.defaultReadObject();
     maxIndex = is.readInt();

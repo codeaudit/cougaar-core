@@ -28,17 +28,17 @@ package org.cougaar.core.blackboard;
 
 import org.cougaar.core.persist.Persistable;
 
-/** Objects marked as Publishable may be published directly to the Plan.
- * Provides hooks for additional Plan-related functionality.
- *
+/**
+ * An optional marker interface for objects that can be published to
+ * the blackboard.
+ * <p>
  * NOTE: at some point, <em>only</em> Publishable objects will be
  * admitted to the blackboard.  Initially, however, this requirement will
  * not be enforced: Publishing other objects will work, but Publishable
- * services will not be available.
+ * services will not be available.<br>
  * NOTE 2: the isPersistable method has been moved to the Persistable
  * interface.
- **/
-
+ */
 public interface Publishable extends Persistable
 {
   boolean isPersistable();

@@ -29,7 +29,7 @@ package org.cougaar.core.blackboard;
 
 /**
  * The creation time and most recent modification time for a
- * UniqueObject in the local blackboard.
+ * {@link org.cougaar.core.util.UniqueObject} on the blackboard.
  * <p>
  * This class is immutable.
  * 

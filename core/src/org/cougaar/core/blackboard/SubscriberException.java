@@ -27,9 +27,9 @@
 package org.cougaar.core.blackboard;
 
 
-/** An Exception related to Subscriber functionality.
- **/
-
+/**
+ * An exception thrown by a {@link Subscriber}.
+ */
 public class SubscriberException extends RuntimeException {
   public SubscriberException() { super(); }
   public SubscriberException(String s) { super(s); }

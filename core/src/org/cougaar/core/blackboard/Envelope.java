@@ -32,26 +32,32 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
-/** Envelope is an encapsulation of an atomic update
- * of a set data structure.  E.g. A representation of Container-level transaction.
- * Envelope does no synchronization -
- * it must never be accessed simultaneously by multiple readers/writers.
- * There are several types of transaction elements (EnvelopeTuple) supported:
- *   ADD	add an object to the set.
+/**
+ * A container for blackboard add/change/remove {@link
+ * EnvelopeTuple}s of a single transaction.
+ * <p>
+ * An envelope is not synchronized; it is privately held by a
+ * subscriber and passes through the distributor in a thread-safe
+ * manner.
+ * <p> 
+ * Several types of transaction operations are supported:
+ * <pre> 
+ *   ADD        add an object to the set.
  *   REMOVE     remove an object from the set.
  *   CHANGE     mark the object as changed in the set.
- *   BULK       like ADD of a set of Objects, with the slightly different
- *                functional semantics.  In particular, since these are
- *                only emitted Blackboard on
- *                initialization of subscriptions, and by PersistenceSubscribers
- *                on Blackboard rehydration, LogicProviders function differently
- *                on BULKs than ADDs, for instance, business rules which
- *                fire on new Blackboard elements and produce other Blackboard
- *                elements will not fire on BULKs because the BULK delta
- *                should already include *those* products.
- *   EVENT	An indication of an Event distributed in-band with respect
- *		  to transactions.
- **/
+ *   BULK       like ADD of a set of Objects, with the
+ *                slightly different functional semantics.
+ *                In particular, since these are only emitted
+ *                Blackboard on initialization of subscriptions,
+ *                and by PersistenceSubscribers on Blackboard
+ *                rehydration, LogicProviders function differently
+ *                on BULKs than ADDs, for instance, business rules
+ *                which fire on new Blackboard elements and produce
+ *                other Blackboard elements will not fire on BULKs
+ *                because the BULK delta should already include
+ *                *those* products.
+ * </pre>
+ */
 public class Envelope implements java.io.Serializable {
   public Envelope() {
   }
@@ -59,9 +65,10 @@ public class Envelope implements java.io.Serializable {
   /** a set of changes to make to a subscriber's data structures */
   private final List deltas = new ArrayList(5);
 
-  /** direct access to the internal structure to allow for more efficient
+  /**
+   * direct access to the internal structure to allow for more efficient
    * traversal of deltas.
-   **/
+   */
   final List getRawDeltas() { return deltas; }
 
   public static final int ADD = 0;
@@ -72,7 +79,7 @@ public class Envelope implements java.io.Serializable {
    * Additionally, BULK tuples are generally handled differently than 
    * ADDs by LogicProviders (See documentation on individual LPs to see
    * how they process BULK transactions.
-   **/
+   */
   public static final int BULK = 3;
 
   public static final int EVENT = 4;
@@ -109,14 +116,15 @@ public class Envelope implements java.io.Serializable {
     return deltas.iterator();
   }
 
-  /** equivalent to adding a homogeneous Collection of objects
+  /**
+   * Equivalent to adding a homogeneous Collection of objects
    * as separate adds.  Distributor-level predicate tests will
    * assume that all objects in the Collection apply to the same
    * degree to a given predicate instance.
    * The container must be be immutable, as there is no guarantee
    * that it will be unpacked at any specific time.  If this is
    * a problem, the Enumeration form should be used.
-   **/
+   */
   public final EnvelopeTuple bulkAddObject(Collection c) {
     if (c == null) throw new IllegalArgumentException("Null Collection");
     EnvelopeTuple t = new BulkEnvelopeTuple(c);
@@ -124,11 +132,12 @@ public class Envelope implements java.io.Serializable {
     return t;
   }
 
-  /** safer form of bulkAddObject does the equivalent
+  /**
+   * Safer form of bulkAddObject does the equivalent
    * of calling bulkAddObject on a container
    * constructed by iterating over the elements of 
    * the Enumeration argument.
-   **/
+   */
   public final EnvelopeTuple bulkAddObject(Enumeration en) {
     List v = new ArrayList();
     while (en.hasMoreElements()) {
@@ -140,11 +149,12 @@ public class Envelope implements java.io.Serializable {
     return t;
   }
 
-  /** safer form of bulkAddObject does the equivalent
+  /**
+   * Safer form of bulkAddObject does the equivalent
    * of calling bulkAddObject on a container
    * constructed by iterating over the elements of 
    * the argument.
-   **/
+   */
   public final EnvelopeTuple bulkAddObject(Iterator i) {
     List v = new ArrayList();
     while (i.hasNext()) {
@@ -156,14 +166,15 @@ public class Envelope implements java.io.Serializable {
     return t;
   }
 
-  /** boolean used to decide on visibility of subscription modifications
+  /**
+   * Boolean used to decide on visibility of subscription modifications
    * in applyToSubscription. Overridden by PersistenceEnvelope.
-   **/
+   */
   protected boolean isVisible() { return true; }
 
   /**
    * Apply all object deltas in this envelope to the subscription.
-   **/
+   */
   public final boolean applyToSubscription(Subscription subscription) {
     boolean vp = isVisible();     // in case we've got *lots* of tuples.
     boolean somethingFired = false;

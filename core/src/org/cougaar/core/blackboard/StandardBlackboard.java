@@ -39,10 +39,10 @@ import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.util.GenericStateModelAdapter;
 
-/** The standard Blackboard Component implementation.
- * For now it just looks like a container but doesn't
- * actually contain anything - at least not any subcomponents.
- **/
+/**
+ * This component advertises the {@link BlackboardService}
+ * and manages the {@link Blackboard}.
+ */
 public class StandardBlackboard
 extends GenericStateModelAdapter
 implements Component
@@ -138,7 +138,8 @@ implements Component
       return null;
     }
 
-    public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
+    public void releaseService(
+        ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
       if (service instanceof BlackboardForAgentImpl) {
         ((BlackboardForAgentImpl)service).release(blackboard);
       }

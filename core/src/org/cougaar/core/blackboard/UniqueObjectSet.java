@@ -31,10 +31,10 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.KeyedSet;
 
 /**
- * UniqueObjectSet is a custom container which maintains a hashtable-like
- * association between UniqueObject.getUID() and object.
- **/
-
+ * A custom {@link java.util.Set} that maintains a {@link
+ * java.util.Map}-like associations from {@link 
+ * UID}s to {@link UniqueObject}s.
+ */
 public class UniqueObjectSet 
   extends KeyedSet
 {

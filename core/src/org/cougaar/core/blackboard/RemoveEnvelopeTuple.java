@@ -27,9 +27,10 @@
 package org.cougaar.core.blackboard;
 
 
-/** An EnvelopeTuple indicating that an object has been removed from the Plan.
- **/
-
+/**
+ * An {@link EnvelopeTuple} indicating that an object has been
+ * removed from the blackboard.
+ */
 final class RemoveEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
   public Object getObject() { return object; }

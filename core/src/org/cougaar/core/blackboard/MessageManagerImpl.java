@@ -45,6 +45,11 @@ import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.StringUtility;
 
+/**
+ * A message acknowledgement manager used by the {@link Distributor}'s
+ * non-lazy persistence mode to ensure that unacknowledged messages
+ * are persisted.
+ */
 class MessageManagerImpl implements MessageManager, Serializable {
 
   public static final long serialVersionUID = -8662117243114391926L;
@@ -56,44 +61,44 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
   private boolean USE_MESSAGE_MANAGER = false;
 
-  /** The agent's mts **/
+  /** The agent's mts */
   private transient MessageAddress self;
   private transient MessageSwitchService msgSwitch;
 
-  private transient String clusterNameForLog;
+  private transient String agentNameForLog;
 
-  /** Messages we need to send at the end of this epoch. **/
+  /** Messages we need to send at the end of this epoch. */
   private transient ArrayList stuffToSend = new ArrayList();
 
-  /** Tracks the sequence numbers of other clusters **/
-  private HashMap clusterInfo = new HashMap(13);
+  /** Tracks the sequence numbers of other agents */
+  private HashMap agentInfo = new HashMap(13);
 
-  /** Something has happened during this epoch. **/
+  /** Something has happened during this epoch. */
   private transient boolean needAdvanceEpoch = false;
 
-  /** The retransmitter thread **/
+  /** The retransmitter thread */
   private transient Retransmitter retransmitter;
 
-  /** The acknowledgement sender thread **/
+  /** The acknowledgement sender thread */
   private transient AcknowledgementSender ackSender;
 
-  /** The keep alive sender thread **/
+  /** The keep alive sender thread */
   private transient KeepAliveSender keepAliveSender;
 
-  /** Debug logging **/
+  /** Debug logging */
   private transient PrintWriter logWriter = null;
 
-  /** The format of timestamps in the log **/
+  /** The format of timestamps in the log */
   private static DateFormat logTimeFormat =
     new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 
   /**
    * Inner static class to track the state of communication with
-   * another cluster.
-   **/
-  private class ClusterInfo implements java.io.Serializable {
-    /** The MessageAddress of the remote cluster **/
-    private MessageAddress clusterIdentifier;
+   * another agent.
+   */
+  private class AgentInfo implements java.io.Serializable {
+    /** The MessageAddress of the remote agent */
+    private MessageAddress agentIdentifier;
 
     private long remoteIncarnationNumber = 0L;
 
@@ -101,24 +106,24 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
     private transient boolean restarted = false;
 
-    public ClusterInfo(MessageAddress cid) {
-      clusterIdentifier = cid;
+    public AgentInfo(MessageAddress cid) {
+      agentIdentifier = cid;
     }
 
     public MessageAddress getMessageAddress() {
-      return clusterIdentifier;
+      return agentIdentifier;
     }
 
     /**
-     * The last sequence number we transmited to the cluster described
-     * by this ClusterInfo
-     **/
+     * The last sequence number we transmited to the agent described
+     * by this AgentInfo
+     */
     private int currentTransmitSequenceNumber = 0;
 
     /**
-     * The next sequence number we expect to receive from the cluster
-     * described by this ClusterInfo
-     **/
+     * The next sequence number we expect to receive from the agent
+     * described by this AgentInfo
+     */
     private int currentReceiveSequenceNumber = 0;
 
     /**
@@ -126,7 +131,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
     /**
      * The queue of messages that are outstanding.
-     **/
+     */
     private TreeSet outstandingMessages = new TreeSet();
 
     public void addOutstandingMessage(TimestampedMessage tsm) {
@@ -135,7 +140,9 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     public TimestampedMessage[] getOutstandingMessages() {
-      return (TimestampedMessage[]) outstandingMessages.toArray(new TimestampedMessage[outstandingMessages.size()]);
+      return (TimestampedMessage[])
+        outstandingMessages.toArray(
+            new TimestampedMessage[outstandingMessages.size()]);
     }
 
     public synchronized TimestampedMessage getFirstOutstandingMessage() {
@@ -143,7 +150,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       return (TimestampedMessage) outstandingMessages.first();
     }
 
-    /** Which messages have we actually processed (need acks) **/
+    /** Which messages have we actually processed (need acks) */
     private AckSet ackSet = new AckSet(1);
 
     private boolean needSendAcknowledgement = false;
@@ -191,7 +198,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     /**
      * Create an acknowledgement for the current min sequence of the
      * ackset.
-     **/
+     */
     public AckDirectiveMessage getAcknowledgement() {
       int firstZero = ackSet.getMinSequence();
       AckDirectiveMessage ack = new AckDirectiveMessage(getMessageAddress(),
@@ -221,7 +228,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
      * Check that the given message has the right sequence number.
      * @return a code indicating whether the message is old, current,
      * or future.
-     **/
+     */
     public int checkReceiveSequenceNumber(DirectiveMessage aMessage) {
       int seq = aMessage.getContentsId();
       if (remoteIncarnationNumber == 0L) return FUTURE;
@@ -255,17 +262,17 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     /**
-     * Update the current receive sequence number of this other cluster.
+     * Update the current receive sequence number of this other agent.
      * @param seqno the new current sequence number of this other
-     * cluster.
-     **/
+     * agent.
+     */
     public void updateReceiveSequenceNumber(int seqno) {
       currentReceiveSequenceNumber = seqno;
       needAdvanceEpoch = true;  // Our state changed need to persist
     }
 
     public String toString() {
-      return "ClusterInfo " + clusterIdentifier + " " +
+      return "AgentInfo " + agentIdentifier + " " +
         incarnationToString(localIncarnationNumber) + "->" +
         incarnationToString(remoteIncarnationNumber);
     }
@@ -274,7 +281,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
   /**
    * Tag a message on a retransmit queue with the time at which it
    * should next be sent.
-   **/
+   */
   private class TimestampedMessage implements Comparable, java.io.Serializable {
     private transient long timestamp = System.currentTimeMillis();
     private transient int nTries = 0;
@@ -285,9 +292,9 @@ class MessageManagerImpl implements MessageManager, Serializable {
     private int theSequenceNumber;
     private long theIncarnationNumber;
     private Directive[] theDirectives;
-    private ClusterInfo info;
+    private AgentInfo info;
 
-    TimestampedMessage(ClusterInfo info, DirectiveMessage aMsg) {
+    TimestampedMessage(AgentInfo info, DirectiveMessage aMsg) {
       this.info = info;
       theMessage = aMsg;
       theDestination = aMsg.getDestination();
@@ -307,7 +314,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
      * Get the DirectiveMessage. If theMessage is null, create a new
      * one. theMessage will be null only after rehydration of the
      * message manager.
-     **/
+     */
     public DirectiveMessage getMessage() {
       if (theMessage == null) {
         theMessage = new DirectiveMessage(getSource(),
@@ -372,12 +379,14 @@ class MessageManagerImpl implements MessageManager, Serializable {
   public void start(MessageSwitchService msgSwitch, boolean didRehydrate) {
     self = msgSwitch.getMessageAddress();
     this.msgSwitch = msgSwitch;
-    String clusterName = self.getAddress();
-    clusterNameForLog = "               ".substring(Math.min(14, clusterName.length())) + clusterName + " ";
+    String agentName = self.getAddress();
+    agentNameForLog =
+      "               ".substring(Math.min(14, agentName.length())) +
+      agentName + " ";
     if (debug) {
       try {
         logWriter = new PrintWriter(new FileWriter("MessageManager_" +
-                                                   clusterName +
+                                                   agentName +
                                                    ".log",
                                                    true || didRehydrate));
         printLog("MessageManager Started");
@@ -388,11 +397,11 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     if (USE_MESSAGE_MANAGER) {
-      retransmitter = new Retransmitter(clusterName);
+      retransmitter = new Retransmitter(agentName);
       retransmitter.start();
-      ackSender = new AcknowledgementSender(clusterName);
+      ackSender = new AcknowledgementSender(agentName);
       ackSender.start();
-      keepAliveSender = new KeepAliveSender(clusterName);
+      keepAliveSender = new KeepAliveSender(agentName);
       keepAliveSender.start();
     }
   }
@@ -407,11 +416,11 @@ class MessageManagerImpl implements MessageManager, Serializable {
   }
 
   private synchronized void sendKeepAlive() {
-    ArrayList messages = new ArrayList(clusterInfo.size());
+    ArrayList messages = new ArrayList(agentInfo.size());
     Directive[] directives = new Directive[0];
     long now = System.currentTimeMillis();
-    for (Iterator clusters = clusterInfo.values().iterator(); clusters.hasNext(); ) {
-      ClusterInfo info = (ClusterInfo) clusters.next();
+    for (Iterator agents = agentInfo.values().iterator(); agents.hasNext(); ) {
+      AgentInfo info = (AgentInfo) agents.next();
       if (info.getFirstOutstandingMessage() == null) {
         if (now > info.getTransmissionTime() + KEEP_ALIVE_INTERVAL) {
           DirectiveMessage ndm =
@@ -468,7 +477,10 @@ class MessageManagerImpl implements MessageManager, Serializable {
                             String from, String to, String contents)
   {
     tDate.setTime(incarnationNumber);
-    String msg = prefix + " " + sequence + " " + from + "->" + to + " (" + incarnationFormat.format(tDate) + "): " + contents;
+    String msg =
+      prefix + " " + sequence + " " + from + "->" +
+      to + " (" + incarnationFormat.format(tDate) + "): " +
+      contents;
 //      System.out.println(msg);
     if (logWriter != null) {
       printLog(msg);
@@ -477,22 +489,22 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
   private void printLog(String msg) {
     logWriter.print(logTimeFormat.format(new Date(System.currentTimeMillis())));
-    logWriter.print(clusterNameForLog);
+    logWriter.print(agentNameForLog);
     logWriter.println(msg);
     logWriter.flush();
   }
 
   /**
-   * Submit a DirectiveMessage for transmission from this cluster. The
+   * Submit a DirectiveMessage for transmission from this agent. The
    * message is added to the set of message to be transmitted at the
    * end of the current epoch.
-   **/
+   */
   public void sendMessages(Iterator messages) {
     if (USE_MESSAGE_MANAGER) {
       synchronized (this) {
         while (messages.hasNext()) {
           DirectiveMessage aMessage = (DirectiveMessage) messages.next();
-          ClusterInfo info = getClusterInfo(aMessage.getDestination());
+          AgentInfo info = getAgentInfo(aMessage.getDestination());
           if (info == null) {
             if (debug) printLog("sendMessage createNewConnection");
             info = createNewConnection(aMessage.getDestination(), 0L);
@@ -513,7 +525,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
   private Directive[] emptyDirectives = new Directive[0];
 
-  private void sendInitializeMessage(ClusterInfo info) {
+  private void sendInitializeMessage(AgentInfo info) {
     DirectiveMessage msg = new DirectiveMessage(self,
                                                 info.getMessageAddress(),
                                                 info.getLocalIncarnationNumber(),
@@ -524,13 +536,13 @@ class MessageManagerImpl implements MessageManager, Serializable {
     needAdvanceEpoch = true;
   }
 
-  private ClusterInfo getClusterInfo(MessageAddress clusterIdentifier) {
-    return (ClusterInfo) clusterInfo.get(clusterIdentifier);
+  private AgentInfo getAgentInfo(MessageAddress agentIdentifier) {
+    return (AgentInfo) agentInfo.get(agentIdentifier);
   }
 
-  private ClusterInfo createClusterInfo(MessageAddress clusterIdentifier) {
-    ClusterInfo info = new ClusterInfo(clusterIdentifier);
-    clusterInfo.put(clusterIdentifier, info);
+  private AgentInfo createAgentInfo(MessageAddress agentIdentifier) {
+    AgentInfo info = new AgentInfo(agentIdentifier);
+    agentInfo.put(agentIdentifier, info);
     return info;
   }
 
@@ -538,13 +550,13 @@ class MessageManagerImpl implements MessageManager, Serializable {
    * Check a received DirectiveMessage for being a duplicate.
    * @param aMessage The received DirectiveMessage
    * @return DUPLICATE, FUTURE, RESTART, IGNORE, or OK
-   **/
+   */
   public int receiveMessage(DirectiveMessage directiveMessage) {
     if (!USE_MESSAGE_MANAGER) return OK;
     synchronized (this) {
       boolean restarted = false;
       MessageAddress sourceIdentifier = directiveMessage.getSource();
-      ClusterInfo info = getClusterInfo(sourceIdentifier);
+      AgentInfo info = getAgentInfo(sourceIdentifier);
       boolean isFirst = directiveMessage.getContentsId() == 1;
       if (info != null) {
         if (info.getRestarted()) {
@@ -565,17 +577,20 @@ class MessageManagerImpl implements MessageManager, Serializable {
           } else if (messageIncarnation < infoIncarnation) {
             if (debug) printMessage("Prev", directiveMessage);
             info.setNeedSendAcknowledgment();
-            return restarted ? (IGNORE | RESTART) : IGNORE; // Message from previous incarnation of remote cluster
+            // Message from previous incarnation of remote agent
+            return restarted ? (IGNORE | RESTART) : IGNORE;
           } else if (messageIncarnation > infoIncarnation) {
                                 // Message from new incarnation
             if (isFirst) {      // Synchronize to new incarnation
               if (debug) printLog("receiveMessage messageIncarnation > infoIncarnation");
-              info = createNewConnection(sourceIdentifier, directiveMessage.getIncarnationNumber());
+              info = createNewConnection(
+                  sourceIdentifier, directiveMessage.getIncarnationNumber());
               restarted = true;
             } else {
               if (debug) printMessage("Nnz2", directiveMessage);
               info.setNeedSendAcknowledgment();
-              return restarted ? (IGNORE | RESTART) : IGNORE; // Apparently new incarnation, but not sequence 0
+              // Apparently new incarnation, but not sequence 0
+              return restarted ? (IGNORE | RESTART) : IGNORE;
             }
           }
         }
@@ -613,8 +628,9 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
   }
 
-  private ClusterInfo createNewConnection(MessageAddress sourceIdentifier, long remoteIncarnationNumber) {
-    ClusterInfo info = createClusterInfo(sourceIdentifier); // New connection
+  private AgentInfo createNewConnection(
+      MessageAddress sourceIdentifier, long remoteIncarnationNumber) {
+    AgentInfo info = createAgentInfo(sourceIdentifier); // New connection
     info.setRemoteIncarnationNumber(remoteIncarnationNumber);
     if (debug) printLog("New Connection: " + info.toString());
     sendInitializeMessage(info);
@@ -627,7 +643,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       while (messages.hasNext()) {
         DirectiveMessage aMessage = (DirectiveMessage) messages.next();
         if (aMessage.getContentsId() == 0) return; // Not reliably sent
-        ClusterInfo info = getClusterInfo(aMessage.getSource());
+        AgentInfo info = getAgentInfo(aMessage.getSource());
         info.acknowledgeMessage(aMessage);
         needAdvanceEpoch = true;
         if (debug) printMessage("QAck", aMessage);
@@ -638,13 +654,13 @@ class MessageManagerImpl implements MessageManager, Serializable {
   /**
    * Process a directive acknowledgement. The acknowledged messages
    * are removed from the retransmission queues. If the ack is marked
-   * as having been sent during a cluster restart, we speed up the
+   * as having been sent during a agent restart, we speed up the
    * retransmission process to hasten the recovery process.
-   **/
+   */
   public int receiveAck(AckDirectiveMessage theAck) {
     synchronized (this) {
       if (debug) printMessage("RAck", theAck);
-      ClusterInfo info = getClusterInfo(theAck.getSource());
+      AgentInfo info = getAgentInfo(theAck.getSource());
       if (info != null) {
         boolean restarted = false;;
         if (info.getRestarted()) {
@@ -683,7 +699,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
   /**
    * Determine if anything has happened during this epoch.
    * @return true if anything has changed.
-   **/
+   */
   public boolean needAdvanceEpoch() {
     return needAdvanceEpoch;
   }
@@ -697,18 +713,18 @@ class MessageManagerImpl implements MessageManager, Serializable {
    * synchronized. We purposely omit the "synchronized" here because
    * proper operation is precluded unless the synchronization is
    * performed externally.
-   **/
+   */
   public void advanceEpoch() {
     if (!USE_MESSAGE_MANAGER) return;
-    // Advance the information about every other cluster
-    for (Iterator clusters = clusterInfo.values().iterator(); clusters.hasNext(); ) {
-      ClusterInfo info = (ClusterInfo) clusters.next();
+    // Advance the information about every other agent
+    for (Iterator agents = agentInfo.values().iterator(); agents.hasNext(); ) {
+      AgentInfo info = (AgentInfo) agents.next();
       info.advance();
     }
     needAdvanceEpoch = false;
     for (Iterator iter = stuffToSend.iterator(); iter.hasNext(); ) {
       TimestampedMessage tsm = (TimestampedMessage) iter.next();
-      getClusterInfo(tsm.getDestination()).addOutstandingMessage(tsm);
+      getAgentInfo(tsm.getDestination()).addOutstandingMessage(tsm);
       retransmitter.poke();
     }
     stuffToSend.clear();
@@ -718,8 +734,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
   }
 
   private class KeepAliveSender extends Thread {
-    public KeepAliveSender(String clusterName) {
-      super("Keep Alive Sender/" + clusterName);
+    public KeepAliveSender(String agentName) {
+      super("Keep Alive Sender/" + agentName);
     }
     public void run() {
       while (true) {
@@ -737,8 +753,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
     private boolean poked = false;
     ArrayList acksToSend = new ArrayList();
 
-    public AcknowledgementSender(String clusterName) {
-      super("Ack Sender/" + clusterName);
+    public AcknowledgementSender(String agentName) {
+      super("Ack Sender/" + agentName);
     }
 
     public synchronized void poke() {
@@ -759,8 +775,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
           poked = false;
         }
         synchronized (MessageManagerImpl.this) {
-          for (Iterator clusters = clusterInfo.values().iterator(); clusters.hasNext(); ) {
-            ClusterInfo info = (ClusterInfo) clusters.next();
+          for (Iterator agents = agentInfo.values().iterator(); agents.hasNext(); ) {
+            AgentInfo info = (AgentInfo) agents.next();
             if (info.needSendAcknowledgement()) {
               acksToSend.add(info.getAcknowledgement());
             }
@@ -780,8 +796,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
     private boolean poked = false;
     private ArrayList messagesToRetransmit = new ArrayList();
 
-    public Retransmitter(String clusterName) {
-      super(clusterName + "/Message Manager");
+    public Retransmitter(String agentName) {
+      super(agentName + "/Message Manager");
     }
 
     public synchronized void poke() {
@@ -791,24 +807,24 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
     /**
      * Retransmit messages that have not been acknowledged. Iterate
-     * through all the clusters for which we have ClusterInfo and
+     * through all the agents for which we have AgentInfo and
      * interate through all the outstandmessage that have been sent to
-     * that cluster. Check the time to retransmit of the message and if
+     * that agent. Check the time to retransmit of the message and if
      * the current time has passed that time, then retransmit the
      * message. Keep the earliest time of any message that is not ready
      * to be retransmitted and sleep long enough so that there could be
      * at least one message to retransmit when we awaken.
-     **/
+     */
     public void run() {
       while (true) {
         try {
           long now = System.currentTimeMillis();
           long earliestTime = now + retransmitSchedule[0];
           synchronized (MessageManagerImpl.this) {
-            for (Iterator clusters = clusterInfo.values().iterator();
-                 clusters.hasNext(); )
+            for (Iterator agents = agentInfo.values().iterator();
+                 agents.hasNext(); )
               {
-                ClusterInfo info = (ClusterInfo) clusters.next();
+                AgentInfo info = (AgentInfo) agents.next();
                 TimestampedMessage tsm = info.getFirstOutstandingMessage();
                 if (tsm == null) continue;
                 if (tsm.timestamp <= now) {
@@ -847,7 +863,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
   }
 
-  /** Serialize ourselves. Used for persistence. **/
+  /** Serialize ourselves. Used for persistence. */
   private void writeObject(ObjectOutputStream os) throws IOException {
     synchronized (this) {
       if (stuffToSend.size() > 0) {
@@ -863,8 +879,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
     is.defaultReadObject();
     stuffToSend = new ArrayList();
     needAdvanceEpoch = false;
-//      for (Iterator clusters = clusterInfo.values().iterator(); clusters.hasNext(); ) {
-//        ClusterInfo info = (ClusterInfo) clusters.next();
+//      for (Iterator agents = agentInfo.values().iterator(); agents.hasNext(); ) {
+//        AgentInfo info = (AgentInfo) agents.next();
 //        info.setRestarted(true);
 //      }
   }

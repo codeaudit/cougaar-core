@@ -63,19 +63,6 @@ import EDU.oswego.cs.dl.util.concurrent.Mutex;
 /**
  * The Distributor coordinates blackboard transactions, subscriber
  * updates, and persistence.
- * <p>
- * An agent has one blackboard, one distributor, and zero or more
- * subscribers.  Each subscriber has a set of subscriptions that
- * are known only to that subscriber.  A subscriber registers with
- * the distributor to receive blackboard add/change/remove
- * notification.  When a subscriber wishes to modify the
- * blackboard contents, it must start a distributor transaction,
- * fill an envelope with add/change/remove tuples, and finish
- * the distributor transaction.  The blackboard is a special
- * subscriber that maintains a view of all blackboard objects and
- * manages the logic providers.  The distributor also coordinates
- * periodic persistence and ensures that blackboard updates are
- * thread-safe.
  *
  * @property org.cougaar.core.agent.keepPublishHistory
  *   if set to <em>true</em>, enables tracking of
@@ -83,7 +70,7 @@ import EDU.oswego.cs.dl.util.concurrent.Mutex;
  * @property org.cougaar.core.agent.singleTransactionModel
  *   Enables a blackboard/agent run model where only one
  *   transaction may be open at a given time.
- **/
+ */
 final class Distributor {
 
   /*
@@ -132,11 +119,11 @@ final class Distributor {
    * zero disables the reservation mechanism.
    */
 
-  /** The maximum interval between persistence deltas. **/
+  /** The maximum interval between persistence deltas. */
   private static final long MAX_PERSIST_INTERVAL = 37000L;
   private static final long TIMER_PERSIST_INTERVAL = 33000L;
 
-  /** The maximum delay allowed before using a persistence reservation **/
+  /** The maximum delay allowed before using a persistence reservation */
   private static final String PERSISTENCE_RESERVATION_TIMEOUT_PROP =
     "org.cougaar.core.blackboard.persistenceReservationTimeout";
   private static final long PERSISTENCE_RESERVATION_TIMEOUT =
@@ -156,7 +143,7 @@ final class Distributor {
 
   private static final String SINGLE_TRANSACTION_PROP = 
     "org.cougaar.core.agent.singleTransactionModel";
-  /** The default setting for single transaction model **/
+  /** The default setting for single transaction model */
   public static final boolean DEFAULT_SINGLE_TRANSACTION = false;
   private static final boolean SINGLE_TRANSACTION = 
     PropertyParser.getBoolean(SINGLE_TRANSACTION_PROP, DEFAULT_SINGLE_TRANSACTION);
@@ -174,7 +161,7 @@ final class Distributor {
   /** the name of this distributor */
   private final String name;
 
-  /** NodeBusyService so we can indicate when we are busy persisting **/
+  /** NodeBusyService so we can indicate when we are busy persisting */
   private NodeBusyService nodeBusyService;
 
   // blackboard, noted below.
@@ -187,7 +174,7 @@ final class Distributor {
   // are effectively final:
   //
 
-  /** True if using lazy persistence **/
+  /** True if using lazy persistence */
   private boolean lazyPersistence = true;
 
   /** The object we use to persist ourselves. */
@@ -196,7 +183,7 @@ final class Distributor {
   /** If persistence is non-null, is it a dummy? */
   private boolean dummyPersistence;
 
-  /** The reservation manager for persistence **/
+  /** The reservation manager for persistence */
   private static final ReservationManager persistenceReservationManager =
       new ReservationManager(PERSISTENCE_RESERVATION_TIMEOUT);
 
@@ -206,13 +193,15 @@ final class Distributor {
 
   private final Object transactionLock = new Object();
 
-  /** when singleTransactionModel is enabled, transactionMutex is
+  /**
+   * when singleTransactionModel is enabled, transactionMutex is
    * locked for the duration of the transaction.  
-   **/
+   */
   private final Mutex transactionMutex = new Mutex();
 
-  /** Acquire the transaction mutex.  No-op if not running in SINGLE_TRANSACTION mode.
-   **/
+  /**
+   * Acquire the transaction mutex.  No-op if not running in SINGLE_TRANSACTION mode.
+   */
   protected final void acquireTransactionMutex() {
     if (SINGLE_TRANSACTION) {
       try {
@@ -223,8 +212,9 @@ final class Distributor {
     }
   }
 
-  /** Release the transaction mutex. No-op if not running in SINGLE_TRANSACTION mode.
-   **/
+  /**
+   * Release the transaction mutex. No-op if not running in SINGLE_TRANSACTION mode.
+   */
   protected final void releaseTransactionMutex() {
     if (SINGLE_TRANSACTION) {
       transactionMutex.release();
@@ -253,13 +243,13 @@ final class Distributor {
   /** our blackboard */
   private final Blackboard blackboard;
 
-  /** True if rehydration occurred at startup **/
+  /** True if rehydration occurred at startup */
   private boolean didRehydrate = false;
 
   /** Tuples that have been distributed during a persistence ecoch */
   private Map epochTuples;
 
-  /** The message manager for this cluster **/
+  /** The message manager for this agent */
   private MessageManager myMessageManager = null;
 
   /** Periodic persistence timer */
@@ -267,11 +257,13 @@ final class Distributor {
 
   private final Subscribers subscribers = new Subscribers();
 
-  /** The time that we last persisted **/
+  /** The time that we last persisted */
   private long lastPersist = System.currentTimeMillis();
 
-  /** Do we need to persist sometime; changed state has not
-   * been persisted **/
+  /**
+   * Do we need to persist sometime; changed state has not
+   * been persisted
+   */
   private boolean needToPersist = false;
 
   // temporary lists, for use within "distribute()":
@@ -296,10 +288,10 @@ final class Distributor {
   // the future.  In practice they seem to be fine:
   //
 
-  /** Envelopes distributed since the last rehydrated delta **/
+  /** Envelopes distributed since the last rehydrated delta */
   private List postRehydrationEnvelopes = null;
 
-  /** All objects published prior to the last rehydrated delta **/
+  /** All objects published prior to the last rehydrated delta */
   private PersistenceEnvelope rehydrationEnvelope = null;
 
   private QuiescenceMonitor quiescenceMonitor;
@@ -313,7 +305,7 @@ final class Distributor {
   // which quiescence is required
   private Set subscribersToRehydrate = Collections.EMPTY_SET;
 
-  /** Isolated constructor **/
+  /** Isolated constructor */
   public Distributor(Blackboard blackboard, ServiceBroker sb, String name) {
     this.blackboard = blackboard;
     this.name = (name != null ? name : "Anonymous");
@@ -411,7 +403,7 @@ final class Distributor {
    * counts.
    * Used by BlackboardMetricsService
    * @param cl The class type
-   **/
+   */
   public int getBlackboardCount(Class cl) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -427,7 +419,7 @@ final class Distributor {
    * @param predicate The objects to count in the blackboard
    * @return int The count of objects that match the predicate
    *   currently in the blackboard
-   **/
+   */
   public int getBlackboardCount(UnaryPredicate predicate) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -439,7 +431,7 @@ final class Distributor {
   /**
    * Pass thru to blackboard to safely return the size of the
    * blackboard collection.
-   **/
+   */
   public int getBlackboardSize() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -460,7 +452,7 @@ final class Distributor {
    * undistributed envelopes might be null signifying that there was
    * no persistence deltas in existence. This is reflected in the
    * value of the didRehydrate flag.
-   **/
+   */
   private void rehydrate(Object state) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -537,7 +529,7 @@ final class Distributor {
    * these. Finally, all envelopes in postRehydrationEnvelopes are fed
    * to the subscription. The subscriber will be notified of these as
    * well.
-   **/
+   */
   private void rehydrateNewSubscription(
       Subscription s,
       List persistedTransactionEnvelopes,
@@ -563,11 +555,12 @@ final class Distributor {
     }
   }
 
-  /** provide a hook to start the distribution thread.
+  /**
+   * Start the distribution thread.
    * Note that although Distributor is Runnable, it does not
    * extend Thread, rather, it maintains its own thread state
    * privately.
-   **/
+   */
   public void start(
       MessageSwitchService msgSwitch, Object state) {
     assert !Thread.holdsLock(distributorLock);
@@ -703,9 +696,10 @@ final class Distributor {
     }
   }
 
-  /** provide a hook to stop the distribution thread.
+  /**
+   * Stop the distribution thread.
    * @see #start
-   **/
+   */
   public void stop() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -724,7 +718,7 @@ final class Distributor {
   /**
    * Register a Subscriber with the Distributor.  Future envelopes are
    * distributed to all registered subscribers.
-   **/
+   */
   public void registerSubscriber(Subscriber subscriber) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -736,7 +730,7 @@ final class Distributor {
   /**
    * Unregister subscriber with the Distributor. Future envelopes are
    * not distributed to unregistered subscribers.
-   **/
+   */
   public void unregisterSubscriber(Subscriber subscriber) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -750,7 +744,7 @@ final class Distributor {
    * subscriber of the subscription was persisted, we fill from the
    * persisted information (see rehydrateNewSubscription) otherwise
    * we fill from the Blackboard (blackboard.fillSubscription).
-   **/
+   */
   public void fillSubscription(Subscription subscription) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -821,12 +815,13 @@ final class Distributor {
    * given to the message manager for eventual transmission. Finally,
    * the generation of a persistence delta is considered.
    * @return true if a persistance snapshot should be taken
-   **/
+   */
   private boolean distribute(Envelope outbox, BlackboardClient client) {
     return distribute(outbox, client, quiescenceMonitor.isQuiescenceRequired(client));
   }
 
-  private boolean distribute(Envelope outbox, BlackboardClient client, boolean clientQuiescenceRequired) {
+  private boolean distribute(
+      Envelope outbox, BlackboardClient client, boolean clientQuiescenceRequired) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     boolean result = false;
@@ -868,7 +863,7 @@ final class Distributor {
     /**
      * busy indicates that we have found evidence that things are
      * still happening or are about to happen in this agent.
-     **/
+     */
     boolean busy = haveSomethingToDistribute;
     boolean newSubscribersAreQuiescent = true; // Until proven otherwise
     if (persistence != null) {
@@ -905,7 +900,9 @@ final class Distributor {
 	if (quiescenceMonitor.isQuiescenceRequired(inboxClient)) {
 	  if (newSubscribersAreQuiescent && !subscriber.isQuiescent()) {
 	    if (logger.isDebugEnabled()) {
-	      logger.debug("There is at least one q-relevant subscriber, so this distribute prevents quiescence.");
+	      logger.debug(
+                  "There is at least one q-relevant subscriber,"+
+                 " so this distribute prevents quiescence.");
 	    }
 	    if (logger.isDetailEnabled())
 	      logger.detail("       First such subscriber: " + inboxClient.getBlackboardClientName());
@@ -978,7 +975,9 @@ final class Distributor {
         quiescenceReportEnabled = true;
       } else if (logger.isDebugEnabled()) {
 	if (nLeft == 1) 
-	  logger.debug(".distribute: sole remaining q-relevant subscriber left to rehydrate: " + subscribersToRehydrate);
+	  logger.debug(
+              ".distribute: sole remaining q-relevant subscriber"+
+              " left to rehydrate: " + subscribersToRehydrate);
 	else
 	  logger.debug(".distribute: " + nLeft + " q-relevant subscribers left to rehydrate");
       }
@@ -1146,12 +1145,12 @@ final class Distributor {
   }
 
   /**
-   * Process directive and ack messages from other clusters. Acks
+   * Process directive and ack messages from other agents. Acks
    * are given to the message manager. Directive messages are passed
    * through the message manager for validation and then given to
    * the Blackboard for processing. Envelopes resulting from that
    * processing are distributed.
-   **/
+   */
   public void receiveMessages(List messages) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
@@ -1190,7 +1189,7 @@ final class Distributor {
             AckDirectiveMessage msg = (AckDirectiveMessage) m;
             int code = getMessageManager().receiveAck(msg);
             if ((code & MessageManager.RESTART) != 0) {
-              // Remote cluster has restarted
+              // Remote agent has restarted
               blackboard.restart(msg.getSource());
             }
           }
@@ -1246,7 +1245,7 @@ final class Distributor {
    * PERSIST_PENDING is true or needToPersist is true and we are not
    * busy. This second clause is needed so we don't end up being idle
    * with needToPersist being true.
-   **/
+   */
   private PersistenceObject doPersistence(
       boolean persistedStateNeeded, boolean full) {
     assert !Thread.holdsLock(distributorLock);
@@ -1312,7 +1311,7 @@ final class Distributor {
 
   /**
    * Transaction control
-   **/
+   */
   private static final String START_EXCUSE = "Waiting to Start Transaction";
   public void startTransaction() {
     assert !Thread.holdsLock(distributorLock);
@@ -1388,7 +1387,7 @@ final class Distributor {
 
   /**
    * Force a persistence delta to be generated.
-   **/
+   */
   public void persistNow() {
     persist(false, true);
   }
@@ -1396,7 +1395,7 @@ final class Distributor {
   /**
    * Force a (full) persistence delta to be generated and
    * return result
-   **/
+   */
   public PersistenceObject getPersistenceObject() {
     return persist(true, true);
   }
@@ -1418,7 +1417,7 @@ final class Distributor {
    * @return a state Object including all the data from a full
    * persistence delta if isStateWanted is true, null if
    *   isStateWanted is false.
-   **/
+   */
   private PersistenceObject persist(boolean isStateWanted, boolean full) {
       assert !Thread.holdsLock(distributorLock);
       assert !Thread.holdsLock(transactionLock);
@@ -1673,9 +1672,10 @@ final class Distributor {
           advance();
         }
 
-        /** advance to the next non-null element, dropping
+        /**
+         * Advance to the next non-null element, dropping
          * nulls along the way
-         **/
+         */
         private void advance() {
           while (iter.hasNext()) {
             WeakReference ref = (WeakReference) iter.next();

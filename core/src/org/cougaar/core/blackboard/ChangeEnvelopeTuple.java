@@ -29,9 +29,10 @@ package org.cougaar.core.blackboard;
 import java.util.Collection;
 import java.util.List;
 
-/** An EnvelopeTuple indicating that an object in the Plan has been modified.
- **/
-
+/**
+ * An {@link EnvelopeTuple} indicating that an object on the
+ * blackboard has been modified.
+ */
 public final class ChangeEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
   public Object getObject() { return object; }

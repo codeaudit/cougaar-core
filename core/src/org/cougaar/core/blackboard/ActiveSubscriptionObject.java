@@ -27,41 +27,64 @@
 package org.cougaar.core.blackboard;
 import org.cougaar.util.PropertyParser;
 
-/** Blackboard objects which implement this interface
- * will have the appropriate methods invoked when
- * publishAdd(), publishChange() or publishRemove().
+/**
+ * Marker interface for blackboard objects that react to
+ * a {@link org.cougaar.core.service.BlackboardService}
+ * {@link org.cougaar.core.service.BlackboardService#publishAdd},
+ * {@link org.cougaar.core.service.BlackboardService#publishChange},
+ * or 
+ * {@link org.cougaar.core.service.BlackboardService#publishRemove}
+ * calls.
+ * <p> 
  * Typically, these methods are used to maintain
- * some object state, check for well-formedness and/or
- * emit warnings about various problems.
- **/
+ * some object state, attach {@link ChangeReport}s, check for
+ * well-formedness and/or emit warnings about various problems.
+ */
 public interface ActiveSubscriptionObject {
-  /** default value for property deferCommit **/
+
+  /** Default value for {@link #deferCommit} */
   boolean DEFAULT_DEFER_COMMIT = false;
 
-  /** Property for controlling deferred commit of ActiveSubscriptionObject methods **/
+  /** Property for controlling {@link #deferCommit} */
   String DEFER_COMMIT_PROPERTY = ActiveSubscriptionObject.class.getName()+".deferCommit";
 
-  /** When deferCommit is true, ActiveSubscriptionObject methods will be invoked with commit=false at 
-   * publish time, and commit=true at LP time.  When deferCommit is false, both invocations
-   * will happen at publishTime and certain checks will be disabled (as uninteresting).
-   * The default value is defined by #DEFAULT_DEFER_COMMIT
+  /**
+   * Whether or not to invoke ActiveSubscriptionObject methods when
+   * the publisher invokes add/change/remove, or delay these method
+   * calls until the distributor sees the closed transaction.
+   * <p> 
+   * When deferCommit is true, ActiveSubscriptionObject methods will
+   * be invoked with commit=false at publish time, and commit=true
+   * at LP time.  When deferCommit is false, both invocations
+   * will happen at publishTime and certain checks will be disabled
+   * (as uninteresting).
+   * <p> 
+   * The default value is defined by {@link #DEFAULT_DEFER_COMMIT}
+   *
    * @property org.cougaar.core.blackboard.ActiveSubscriptionObject.deferCommit 
    * When set to true, causes ActiveSubscriptionObject side effects to occur
    * at LP invocation time rather than immediately during publishAdd
    * @note deferCommit implies that the ActiveSubscriptionObject cannot veto publishes!
-   **/
-  boolean deferCommit = PropertyParser.getBoolean(DEFER_COMMIT_PROPERTY, DEFAULT_DEFER_COMMIT);
+   */
+  boolean deferCommit = PropertyParser.getBoolean(
+      DEFER_COMMIT_PROPERTY, DEFAULT_DEFER_COMMIT);
 
-  /** called by Subscriber.publishAdd().  
+  /**
+   * Called by {@link Subscriber#publishAdd}.
    * @throws BlackboardException if the object cannot be committed.
-   **/
+   */
   void addingToBlackboard(Subscriber subscriber, boolean commit);
-  /** called by Subscriber.publishChange().  
+
+  /**
+   * Called by {@link Subscriber#publishChange}.
    * @throws BlackboardException if the object cannot be committed.
-   **/
+   * @see Transaction#noteChangeReport(Object,ChangeReport) 
+   */
   void changingInBlackboard(Subscriber subscriber, boolean commit);
-  /** called by Subscriber.publishRemove().  
+
+  /**
+   * Called by {@link Subscriber#publishRemove}.
    * @throws BlackboardException if the object cannot be committed.
-   **/
+   */
   void removingFromBlackboard(Subscriber subscriber, boolean commit);
 }

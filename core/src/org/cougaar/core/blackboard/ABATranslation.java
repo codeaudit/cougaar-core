@@ -28,6 +28,12 @@ package org.cougaar.core.blackboard;
 
 import java.util.Collection;
 
+/**
+ * A community membership change description for an {@link
+ * org.cougaar.multicast.AttributeBasedAddress}, used by
+ * {@link org.cougaar.core.domain.Domain} {@link
+ * org.cougaar.core.domain.ABAChangeLogicProvider}s.
+ */
 public interface ABATranslation {
   Collection getOldTranslation();
   Collection getCurrentTranslation();

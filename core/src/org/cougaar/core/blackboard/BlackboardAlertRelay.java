@@ -35,7 +35,8 @@ import org.cougaar.core.relay.*;
 import org.cougaar.core.util.UID;
 
 /**
- * Implementation of a relay class that contains a BlackboardAlert object as its content..
+ * Implementation of a relay class that contains a BlackboardAlert
+ * object as its content.
  * <p>
  * Components must compare their local agent's address to the
  * "getSource()" and "getTarget()" addresses to decide whether they

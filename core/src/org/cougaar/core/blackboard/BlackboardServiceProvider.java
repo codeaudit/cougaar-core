@@ -35,9 +35,14 @@ import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.util.UnaryPredicate;
 
-/** A BlackboardServiceProvider is a provider class that PluginManager calls
- * when a client requests a BlackboardService.
- **/
+/**
+ * The service provider for the {@link BlackboardService},
+ * {@link BlackboardQueryService}, and {@link
+ * BlackboardMetricsService}.
+ * <p>
+ * All operations are backed by the
+ * {@link org.cougaar.core.blackboard.Distributor}. 
+ */
 public class BlackboardServiceProvider implements ServiceProvider {
   
   private Distributor distributor;
@@ -59,12 +64,14 @@ public class BlackboardServiceProvider implements ServiceProvider {
     } else if (serviceClass == BlackboardQueryService.class) {
       return new BlackboardQueryServiceImpl(requestor);
     } else {
-      throw new IllegalArgumentException("BlackboardServiceProvider does not provide a service for: "+
+      throw new IllegalArgumentException(
+          "BlackboardServiceProvider does not provide a service for: "+
                                          serviceClass);
     }
   }
 
-  public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
+  public void releaseService(
+      ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
     // ?? each client will get its own subscriber - how can we clean them up??
   }
 
@@ -87,7 +94,7 @@ public class BlackboardServiceProvider implements ServiceProvider {
     }
   }
 
-  /** The implementation of BlackboardMetricsService **/
+  /** The implementation of BlackboardMetricsService */
   private final class BlackboardMetricsServiceImpl
     implements BlackboardMetricsService
   {
@@ -102,7 +109,7 @@ public class BlackboardServiceProvider implements ServiceProvider {
     }
   }
 
-  /** The implementation of BlackboardQueryService **/
+  /** The implementation of BlackboardQueryService */
   private final class BlackboardQueryServiceImpl 
     implements BlackboardQueryService 
   {

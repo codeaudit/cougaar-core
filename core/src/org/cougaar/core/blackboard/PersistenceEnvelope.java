@@ -27,11 +27,14 @@
 package org.cougaar.core.blackboard;
 
 
-/** An envelope sent by a PersistencePlugin as the result of rehydration of a saved Blackboard.
- * The essential difference from a standard Envelope is that PersistenceEnvelope does
- * not update the delta lists of any subscription.
- **/
-
+/**
+ * An {@link Envelope} sent by persistence to restore a rehydrated
+ * blackboard.
+ * <p> 
+ * The essential difference from a standard Envelope is that a
+ * PersistenceEnvelope does not update the delta lists of any
+ * subscription.
+ */
 public class PersistenceEnvelope extends Envelope {
   protected boolean isVisible() { return false; }
 }

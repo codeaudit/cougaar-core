@@ -31,14 +31,13 @@ import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
 
 /**
-   Override the default property descriptors.
-   A property descriptor contains:
-   attribute name, bean class, read method name, write method name
-   All other beaninfo is defaulted.
-   This defines appropriate properties from the Claimable INTERFACE,
-   but is actually used to introspect on the Claimable IMPLEMENTATION.
-*/
-
+ * A BeanInfo property description for {@link ClaimableImpl}.
+ * <p> 
+ * A property descriptor contains:<pre>
+ * attribute name, bean class, read method name, write method name
+ * </pre> 
+ * All other beaninfo is defaulted.
+ */
 public class ClaimableImplBeanInfo extends SimpleBeanInfo {
 
   // return appropriate properties from Task.java interface

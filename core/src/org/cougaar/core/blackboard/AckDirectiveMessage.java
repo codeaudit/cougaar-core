@@ -31,15 +31,12 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.NotPersistable;
 
 /**
- * A AckDirectiveMessage  provides a basic implementation of 
- *  AckDirectiveMessage
+ * A {@link MessageManager} delivery acknowledgement if non-lazy
+ * persistence is enabled.
  */
-
 class AckDirectiveMessage extends ClusterMessage
   implements NotPersistable
 {
-  /** 
-   */
   public AckDirectiveMessage(MessageAddress theDirectiveSource,
                              MessageAddress theDirectiveDestination,
                              int theSequenceNumber,

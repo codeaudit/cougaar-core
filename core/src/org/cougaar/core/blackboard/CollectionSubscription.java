@@ -41,21 +41,20 @@ import org.cougaar.util.Enumerator;
 import org.cougaar.util.UnaryPredicate;
 
 /** 
- * Adds a real delegate Collection to the Subscription, accessible 
- * via getCollection().
- **/
-
-
+ * A subclass of {@link Subscription} that maintains a {@link
+ * Collection} of blackboard objects matching the filter
+ * predicate, plus {@link ChangeReport}s for the objects changed
+ * since the last transaction. 
+ */
 public class CollectionSubscription 
   extends Subscription 
   implements Collection
 {
 
-  /** The actual (delegate) Container **/
+  /** The actual (delegate) Container */
   protected Collection real;
   private boolean hasDynamicPredicate;
-
-  public Collection getCollection() { return real; }
+  private HashMap changeMap = new HashMap(13);
 
   public CollectionSubscription(UnaryPredicate p, Collection c) {
     super(p);
@@ -69,23 +68,108 @@ public class CollectionSubscription
     hasDynamicPredicate = (p instanceof DynamicUnaryPredicate);
   }
 
+  /**
+   * @return the subscription's collection -- use <code>this</code>
+   * instead.
+   */
+  public Collection getCollection() { return real; }
+
+  /**
+   * Return the set of {@link ChangeReport}s for publishChanges made
+   * to the specified object since the last transaction.
+   * <p>
+   * If an object is changed without specifying a ChangeReport
+   * then the "AnonymousChangeReport" is used.  Thus the set
+   * is always non-null and contains one or more entries.
+   * <p>
+   * If an object is not changed during the transaction then
+   * this method returns null.
+   * <p>
+   * Illegal to call outside of transaction boundaries.
+   *
+   * @return if the object was changed: a non-null Set of one or 
+   *    more ChangeReport instances, possibly containing the 
+   *    AnonymousChangeReport; otherwise null.
+   */
+  public Set getChangeReports(Object o) {
+    checkTransactionOK("hasChanged()");
+    return (Set) changeMap.get(o);
+  }
+
   //
   // implement Collection
   //
 
-  public String toString() { return "Subscription of "+real; }
-  public boolean equals(Object o) { return (this == o); }
+  /** @return the subscription size */
   public int size() { return real.size(); }
+  /** @return {@link #size} == 0 */
   public boolean isEmpty() { return real.isEmpty(); }
+  /** @return an Iterator of the subscription contents */
+  public Iterator iterator() { return real.iterator(); }
+  /** @return true of the subscription contains the object */
+  public boolean contains(Object o) { return real.contains(o); }
+  /** @return true of the subscription contains all the objects */
+  public boolean containsAll(Collection c) {
+    return real.containsAll(c);
+  }
+  /** @return an array of the subscription contents */
+  public Object[] toArray() { return real.toArray(); }
+  /** @return an array of the subscription contents */
+  public Object[] toArray(Object[] a) { return real.toArray(a); }
+
+  // semi-bogus collection methods:
+
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
+   * Add an object to the backing collection, <i>not</i> the blackboard. 
+   */
+  public boolean add(Object o) { return real.add(o); }
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
+   * Add objects to the backing collection, <i>not</i> the blackboard. 
+   */
+  public boolean addAll(Collection c) { return real.addAll(c); }
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
+   * Clear the backing collection, <i>not</i> the blackboard. 
+   */
+  public void clear() { real.clear(); }
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
+   * Remove an object from the backing collection, <i>not</i> the blackboard. 
+   */
+  public boolean remove(Object o) { return real.remove(o); }
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
+   * Remove objects from the backing collection, <i>not</i> the blackboard. 
+   */ 
+  public boolean removeAll(Collection c) { return real.removeAll(c); }
+  /**
+   * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
+   * Retain objects in the backing collection, <i>not</i> the blackboard. 
+   */
+  public boolean retainAll(Collection c) { return real.retainAll(c); }
+
+  public boolean equals(Object o) { return (this == o); }
+
+  public String toString() { return "Subscription of "+real; }
+
+  /** @return an enumeration of the subscription objects */
   public Enumeration elements() { 
     return new Enumerator(real);
   }
+  
+  /** @return the first object in the collection. */
   public Object first() {
     Iterator i = real.iterator();
     return (i.hasNext())?(i.next()):null;
   }
 
-  /** overrides Subscription.conditionalChange **/
+  //
+  // subscriber methods:
+  //
+
+  /** overrides Subscription.conditionalChange */
   boolean conditionalChange(Object o, List changes, boolean isVisible) {
     if (hasDynamicPredicate) {
       // this logic could be written more tersely, but I think this
@@ -119,13 +203,17 @@ public class CollectionSubscription
     }
   }
 
+  /** {@link Subscriber} method to add an object */
   protected void privateAdd(Object o, boolean isVisible) { 
     real.add(o); 
   }
+
+  /** {@link Subscriber} method to remove an object */
   protected void privateRemove(Object o, boolean isVisible) {
     real.remove(o);
   }
 
+  /** {@link Subscriber} method to change an object */
   protected void privateChange(Object o, List changes, boolean isVisible) {
     if (isVisible) {
       Set set = (Set) changeMap.get(o);
@@ -155,88 +243,21 @@ public class CollectionSubscription
     }
   }
 
+  /** {@link IncrementalSubscription} method to get the changed enumeration */
   protected Enumeration privateGetChangedList() {
     if (changeMap.isEmpty()) return Empty.enumeration;
     return new Enumerator(changeMap.keySet());
   }
 
+  /** {@link IncrementalSubscription} method to get the changed collection */
   protected Collection privateGetChangedCollection() {
     if (changeMap.isEmpty()) return Collections.EMPTY_SET;
     return changeMap.keySet();
   }
 
-  private HashMap changeMap = new HashMap(13);
-
-  // override to reset the changereport hash
+  /** {@link Subscriber} method to reset the ChangeReports map */
   protected void resetChanges() {
     super.resetChanges();       // propagate reset
     changeMap.clear();
   }
-
-  /** Return a Set which contains the set of ChangeReports which
-   * apply to the specified object in the current transaction.
-   * <p>
-   * If an object is changed without specifying a ChangeReport
-   * then the "AnonymousChangeReport" is used.  Thus the set
-   * is always non-null and contains one or more entries.
-   * <p>
-   * If an object is not changed during the transaction then
-   * this method returns null.
-   * <p>
-   * Illegal to call outside of transaction boundaries.
-   *
-   * @return if the object was changed: a non-null Set of one or 
-   *    more ChangeReport instances, possibly containing the 
-   *    AnonymousChangeReport; otherwise null.
-   **/
-  public Set getChangeReports(Object o) {
-    checkTransactionOK("hasChanged()");
-    return (Set) changeMap.get(o);
-  }
-
-  // finish implementing Collection
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean add(Object o) {
-    return real.add(o);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean addAll(Collection c) {
-    return real.addAll(c);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public void clear() {
-    real.clear();
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean contains(Object o) {
-    return real.contains(o);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean containsAll(Collection c) {
-    return real.containsAll(c);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public Iterator iterator() {
-    return real.iterator();
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean remove(Object o) {
-    return real.remove(o);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean removeAll(Collection c) {
-    return real.removeAll(c);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public boolean retainAll(Collection c) {
-    return real.retainAll(c);
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public Object[] toArray() {
-    return real.toArray();
-  }
-  /** implements Collection, but only effects the internal Collection object **/
-  public Object[] toArray(Object[] a) {
-    return real.toArray(a);
-  }
-} 
+}

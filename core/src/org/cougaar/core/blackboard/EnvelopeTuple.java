@@ -27,10 +27,10 @@
 package org.cougaar.core.blackboard;
 
 
-/** EnvelopeTuple is a semi-private datastructure used as
- * the atomic member of an envelope.
- **/
-
+/**
+ * A container for a tranaction's add/change/remove of a single
+ * object.
+ */
 public abstract class EnvelopeTuple implements java.io.Serializable {
   public abstract int getAction();
   abstract public Object getObject();

@@ -36,9 +36,8 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * A TimestampSubscription is an Subscription that tracks
- * UniqueObject creation (ADD) and most recent modification
- * (CHANGE) timestamps.
+ * A {@link Subscription} that tracks {@link UniqueObject} publishAdd
+ * and most recent publishChange timestamps.
  * <p>
  * These timestamps are not persisted, and upon rehydration the
  * creation time of the objects will be the agent restart time.
@@ -73,9 +72,7 @@ extends Subscription
   private long time;
 
   /**
-   * Equivalent to<pre>
-   *   new TimestampSubscription(p, true)
-   * </pre>
+   * Equivalent to<code>new TimestampSubscription(p, true)</code>.
    */
   public TimestampSubscription(UnaryPredicate p) {
     this(p, true);

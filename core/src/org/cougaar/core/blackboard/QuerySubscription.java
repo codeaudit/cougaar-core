@@ -32,11 +32,9 @@ import java.util.Collection;
 import org.cougaar.util.UnaryPredicate;
 
 /** 
- * Adds a real delegate Collection to the Subscription, accessible 
- * via getCollection().
- **/
-
-
+ * A lightweight {@link CollectionSubscription} used to take a
+ * single "query" snapshot of the blackboard. 
+ */
 public class QuerySubscription 
   extends CollectionSubscription
 {

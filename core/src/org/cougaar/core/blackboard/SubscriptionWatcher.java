@@ -26,9 +26,26 @@
 
 package org.cougaar.core.blackboard;
 
-
+/**
+ * A callback for {@link
+ * org.cougaar.core.service.BlackboardService#registerInterest}
+ * subscription or alarm activity.
+ * <p>
+ * On the {@link #signalNotify} callback, the watcher should schedule
+ * itself to run in a separate thread, e.g. by using the {@link
+ * org.cougaar.core.service.ThreadService}.
+ * <p>
+ * Most of this could likely be removed and replaced with a simple
+ * {@link org.cougaar.core.thread.Schedulable#start}, since most
+ * clients don't check the {@link #signalNotify} "event" and the
+ * {@link Subscriber} has a {@link Subscriber#wasClientActivity}
+ * method that's equivalent to {@link #clearSignal}.
+ */
 public class SubscriptionWatcher {
-  // we use this as the wait/notify semaphore
+
+  // this class supports a wait/notify semaphore, but clients
+  // are encouraged to rely on the "signalNotify" callback instead
+  // of blocking.
 
   public final static int EXTERNAL = 1;
   public final static int INTERNAL = 2;
@@ -39,6 +56,11 @@ public class SubscriptionWatcher {
   protected boolean internalFlag = false;
   protected boolean clientFlag = false;
   
+  /**
+   * Some blackboard activity has occured, so the watcher should
+   * schedule a separate thread, open a transaction, check if its
+   * subscriptions have changed, and finish the transaction. 
+   */
   public synchronized void signalNotify(int event) {
     switch (event) {
     case EXTERNAL: externalFlag = true; break;
@@ -49,10 +71,10 @@ public class SubscriptionWatcher {
     notifyAll();
   }      
 
-  /** Wait for a signal to continue.  
+  /**
+   * Wait for a signal to continue.  
    * @return true iff the wake signal is unconditional.
-   **/
-
+   */
   public synchronized boolean waitForSignal() {
     while (! test() ) {
       try {
@@ -72,18 +94,14 @@ public class SubscriptionWatcher {
     return retval;
   }
 
-  /** @return true IFF it is time to wake up.
+  /**
+   * @return true IFF it is time to wake up.
    * by default, this will return true when any of 
    * externalFlag, internalFlag and clientFlag are true.
-   **/
+   */
   protected boolean test() {
     return (externalFlag || internalFlag || clientFlag);
     //return (externalFlag || clientFlag);
   }
 
 }
-
-
-    
-    
-  

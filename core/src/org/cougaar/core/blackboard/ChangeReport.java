@@ -28,22 +28,26 @@ package org.cougaar.core.blackboard;
 
 import java.io.Serializable;
 
-/** A marker class describing a single change to an object (usually, but
- * not required to be
- * a Publishable object).  Subclasses describe specific types of changes. <p>
- *
- * hashCode and equals methods should compute their return values based
- * on the type and not any specific (old) value which may be stored in the
- * object.  This allows use of set operations on ChangeReport instances to
- * filter out redundant reports. <p>
- *
- * Implementations should
- * be as compact as possible and must be Serializable so that they are
- * transferrable between distributed clusters and persistable. <p>
- *
- * @see Publishable
- **/
-
+/**
+ * A marker interface for describing a change to an object on the
+ * blackboard.
+ * <p>
+ * ChangeReports are published by using {@link
+ * org.cougaar.core.service.BlackboardService#publishChange(Object,Collection)}
+ * and are viewed by using {@link
+ * CollectionSubscription#getChangeReports(Object)}.
+ * <p>
+ * Subclasses describe specific types of changes.
+ * <p>
+ * The hashCode and equals methods should compute their return values
+ * based on the type and not any specific (old) value which may be
+ * stored in the object.  This allows use of set operations on
+ * ChangeReport instances to filter out redundant reports.
+ * <p>
+ * Implementations should be as compact as possible and must be
+ * Serializable so that they can be sent between agents and
+ * persisted.
+ */
 public interface ChangeReport 
   extends Serializable
 {

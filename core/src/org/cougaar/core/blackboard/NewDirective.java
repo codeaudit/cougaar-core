@@ -29,24 +29,12 @@ package org.cougaar.core.blackboard;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Directive interface
- * Directive is the highest-level message which is directly relevant to
- * real operations.  There are no direct implementations of Directive,
- * but there are several subclasses with implementations.
- *
- *
- **/
-
+ * Modifiable interface for a {@link Directive}. 
+ */
 public interface NewDirective extends Directive {
-  /*
-  	*	Depricated because it is inherited from the base interface Message
-   * @param asource - Set the MessageAddress of the originator of this message
-   */
+  /** Set the source */
   void setSource(MessageAddress asource);
   
-  /*
-   * @param adestination - Set the MessageAddress of the receiver of this message
-   */
+  /** Set the target */
   void setDestination(MessageAddress adestination);
-  
- }
+}

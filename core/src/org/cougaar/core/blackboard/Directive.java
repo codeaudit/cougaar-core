@@ -31,8 +31,8 @@ import java.io.Serializable;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A Directive is a blackboard object that directly corresponds
- * with an inter-agent Message.
+ * A blackboard object that directly corresponds to an inter-agent
+ * Message.
  */
 public interface Directive
 extends Serializable

@@ -26,21 +26,24 @@
 
 package org.cougaar.core.blackboard;
 
-
+/**
+ * A stacktrace holder for {@link Blackboard} "savePriorPublisher"
+ * tracking of blackboard objects and their publishers.
+ */
 public class PublishStack extends Throwable {
-    public BlackboardClient theClient = BlackboardClient.current.getClient();
-    private static String getClientName() {
-        BlackboardClient aClient = BlackboardClient.current.getClient();
-        if (aClient != null) {
-            return aClient.getBlackboardClientName();
-        } else {
-            return "Unknown Client";
-        }
+  public BlackboardClient theClient = BlackboardClient.current.getClient();
+  private static String getClientName() {
+    BlackboardClient aClient = BlackboardClient.current.getClient();
+    if (aClient != null) {
+      return aClient.getBlackboardClientName();
+    } else {
+      return "Unknown Client";
     }
-    public PublishStack(String message) {
-        super(message + getClientName());
-    }
-    public String toString() {
-        return getMessage();
-    }
+  }
+  public PublishStack(String message) {
+    super(message + getClientName());
+  }
+  public String toString() {
+    return getMessage();
+  }
 }

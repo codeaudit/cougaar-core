@@ -34,62 +34,59 @@ import org.cougaar.util.log.Logging;
 import org.cougaar.util.CallerTracker;
 
 /** 
- * Represent a view of a Plan with in three parts, (1) a description
- * of the view (predicate, etc), (2) a collection that
- * represents the slice of the plan and (3) an api to be used to
- * mutate the plan.
+ * A filtered view of the blackboard that is updated between
+ * {@link org.cougaar.core.service.BlackboardService} transactions.
+ * <p>
+ * The view is defined by the {@link UnaryPredicate} filter's
+ * "execute" method.
  *
- * The Subscription is described by the getPredicate() and getSubscriber()
- * methods.
- *
- * The mutation API allows consumers to add, remove and mark objects as changed
- * in the Plan.  The referenced objects might or might not be members of
- * this subscription.
- **/
-
+ * @see CollectionSubscription 
+ * @see IncrementalSubscription 
+ */
 public abstract class Subscription {
 
   private static final Logger _logger = Logging.getLogger(Subscription.class);
 
-  /** Have we recieved our InitializeSubscriptionEnvelope yet?
+  /**
+   * Have we recieved our InitializeSubscriptionEnvelope yet?
    * @see #apply(Envelope)
-   **/
+   */
   private boolean isInitialized = false;
 
-  /** our Subscriber and interface to the plan **/
+  /** our Subscriber and interface to the blackboard */
   protected Subscriber subscriber = null;
 
   /**
    * set the Subscriber instance for the subscription.  Should only be
    * done by Subscriber.subscribe(), and will throw a RuntimeException
    * if called more than once.
-   **/
+   */
   final void setSubscriber(Subscriber s) {
     if (subscriber != null) {
-      throw new RuntimeException("Attempt to reset the Subscriber of " +
-                                 this +
-                                 " to " +
-                                 s +
-                                 " from " +
-                                 subscriber);
+      throw new RuntimeException(
+          "Attempt to reset the Subscriber of " + this +
+          " to " + s + " from " + subscriber);
     }
     subscriber = s;
 
 
     // blackboard needs no delayed fill
     if (subscriber instanceof Blackboard) {
-	//_logger.error("Preset InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+	//_logger.error("Preset InitializeSubscriptionEnvelope for "+
+        //this.predicate+" "+this.hashCode(), new Throwable());
       setIsInitialized();
     }
   }
 
-  /** @return the Subscriber instance which is the interface to the plugin.
-   **/
+  /**
+   * @return the Subscriber instance which is the interface to the plugin.
+   */
   public final Subscriber getSubscriber() { return subscriber; }
 
-  /** Check to see if we're in a transaction for the named purpose if we
+  /**
+   * Check to see if we're in a transaction for the named purpose if we
    * have a subscription which supports transactions.
-   **/
+   */
   protected final void checkTransactionOK(String s) {
     if (subscriber != null) {
       subscriber.checkTransactionOK("hasChanged()");
@@ -102,10 +99,10 @@ public abstract class Subscription {
     }
   }
 
-  /** The predicate that represents this subscription **/
+  /** The predicate that represents this subscription */
   protected final UnaryPredicate predicate;
 
-  /** stack tracker which selects the first frame that isn't core/lib stuff **/
+  /** stack tracker which selects the first frame that isn't core/lib stuff */
   private static final CallerTracker pTracker = 
     CallerTracker.getPredicateTracker(new UnaryPredicate() {
         public boolean execute(Object x) {
@@ -146,7 +143,7 @@ public abstract class Subscription {
    * @param isVisible If FALSE will make the change quietly, e.g. after
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
-   **/
+   */
   boolean conditionalAdd(Object o, boolean isVisible) { 
     if (predicate.execute(o)) {
       privateAdd(o, isVisible);
@@ -164,7 +161,7 @@ public abstract class Subscription {
    * @param isVisible If FALSE will make the change quietly, e.g. after
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
-   **/
+   */
   boolean conditionalRemove(Object o, boolean isVisible) {
     if (predicate.execute(o)) {
       privateRemove(o, isVisible);
@@ -184,7 +181,7 @@ public abstract class Subscription {
    * @param isVisible If FALSE will make the change quietly, e.g. after
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
-   **/
+   */
   boolean conditionalChange(Object o, List changes, boolean isVisible) {
     if (predicate.execute(o)) {
       privateChange(o, changes, isVisible);
@@ -207,11 +204,14 @@ public abstract class Subscription {
   protected boolean myHasChanged = false;
 
   /**
-   * Has the Subscription changed?  To be precise, this indicates
-   * if there were any visible changes to the subscription contents
-   * in the interval between the current and the previous calls to
+   * Check to see if this subscription has changed since the
+   * last transaction.
+   * <p> 
+   * To be precise, this indicates if there were any visible changes
+   * to the subscription contents (add/change/remove) in the interval
+   * between the current and the previous calls to
    * Subscriber.openTransaction()
-   **/
+   */
   public final boolean hasChanged() { 
     checkTransactionOK("hasChanged()");
     return myHasChanged; 
@@ -222,18 +222,20 @@ public abstract class Subscription {
     myHasChanged = changed; 
   }
 
-  /** Called by Subscriber's transaction system to update the
+  /**
+   * Called by Subscriber's transaction system to update the
    * changes (and delta lists, if applicable) tracking.
    * @see #hasChanged()
-   **/
+   */
   protected void resetChanges() { setChanged(false); }
 
-  /** Apply a set of transactional changes to our subscription.
+  /**
+   * Apply a set of transactional changes to our subscription.
    * Envelopes are ignored until a matching InitializeSubscriptionEnvelope 
    * has been received.
    * @note The real work of applying the envelope to the subscription is accomplished
    * by calling {@link #privateApply(Envelope)}.
-   **/
+   */
   public boolean apply(Envelope envelope) {
     // if this is an ISE, check to see if it is ours!
     if (envelope instanceof InitializeSubscriptionEnvelope) {
@@ -265,7 +267,7 @@ public abstract class Subscription {
     isInitialized = true;
   }
 
-  /** Fill the subscription with the initial contents. **/
+  /** Fill the subscription with the initial contents. */
   public void fill(Envelope envelope) {
     // logically, just call apply(envelope), but we need to avoid the isInitialized checks.
     if (privateApply(envelope)) {

@@ -43,14 +43,16 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
 
 /**
- * The QuiescenceMonitor is used by the Distributor to determine
- * if an agent is quiescent. The QM tracks which blackboard clients
- * we care about quiescence for, and numbers incoming and outgoing
- * messsages for those we care about. The QM uses a ConfigFinder
- * accessed text file to identify which BlackboardClients to count
- * in the quiescence calculation. Typically this excludes all infrastructure
- * components, and includes only application-internal components.
- **/
+ * The QuiescenceMonitor is used by the {@link Distributor} to
+ * determine if an agent is quiescent.
+ * <p>
+ * The QM tracks which blackboard clients we care about quiescence
+ * for, and numbers incoming and outgoing messsages for those we care
+ * about. The QM uses a ConfigFinder accessed text file to identify
+ * which BlackboardClients to count in the quiescence calculation.
+ * Typically this excludes all infrastructure components, and includes
+ * only application-internal components.
+ */
 class QuiescenceMonitor {
   private static final String CONFIG_FILE = "quiescencemonitor.dat";
   private static final String[] defaultExcludedClients = {
@@ -85,7 +87,9 @@ class QuiescenceMonitor {
     initMessageNumberCounter();
     try {
       BufferedReader is =
-        new BufferedReader(new InputStreamReader(ConfigFinder.getInstance().open(CONFIG_FILE)));
+        new BufferedReader(
+            new InputStreamReader(
+              ConfigFinder.getInstance().open(CONFIG_FILE)));
       try {
         String line;
         while ((line = is.readLine()) != null) {
@@ -103,7 +107,9 @@ class QuiescenceMonitor {
         is.close();
       }
     } catch (FileNotFoundException e) {
-      if (logger.isWarnEnabled()) logger.warn("File not found: " + e.getMessage() + ". Using defaults");
+      if (logger.isWarnEnabled()) {
+        logger.warn("File not found: " + e.getMessage() + ". Using defaults");
+      }
       installDefaultExclusions();
     } catch (Exception e) {
       logger.error("Error parsing " + CONFIG_FILE + ". Using defaults", e);
@@ -208,7 +214,9 @@ class QuiescenceMonitor {
         isQuiescent = false;
         if (messageNumbersChangedFor != null) {
           if (logger.isDebugEnabled()) {
-            logger.debug("clearQuiescentState: messageNumbersChangedFor " + messageNumbersChangedFor);
+            logger.debug(
+                "clearQuiescentState: messageNumbersChangedFor " +
+                messageNumbersChangedFor);
           }
         } else {
           if (logger.isDebugEnabled()) {
@@ -228,7 +236,10 @@ class QuiescenceMonitor {
     Integer last = (Integer) incomingMessageNumbers.put(src, new Integer(messageNumber));
     if (logger.isDebugEnabled()) {
       MessageAttributes ma = msg.getSource().getMessageAttributes();
-      logger.debug("Numbered incoming message from " + src + ": " + msg + " with number " + messageNumber + ", previous messageNumber was " + last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
+      logger.debug(
+          "Numbered incoming message from " + src + ": " + msg +
+          " with number " + messageNumber + ", previous messageNumber was " +
+          last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
     }
     messageNumbersChangedFor = src.toString();
     return true;
@@ -242,7 +253,10 @@ class QuiescenceMonitor {
     Integer last = (Integer)outgoingMessageNumbers.put(dst, new Integer(messageNumber));
     if (logger.isDebugEnabled()) {
       MessageAttributes ma = msg.getDestination().getMessageAttributes();
-      logger.debug("Numbered outgoing message to " + dst + ": " + msg + " with number " + messageNumber + ", previous messageNumber was " + last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
+      logger.debug(
+          "Numbered outgoing message to " + dst + ": " + msg +
+          " with number " + messageNumber + ", previous messageNumber was " +
+          last + (ma != null ? (", attributes: " + ma.getAttributesAsString()) : ""));
     }
     messageNumbersChangedFor = dst.toString();
   }

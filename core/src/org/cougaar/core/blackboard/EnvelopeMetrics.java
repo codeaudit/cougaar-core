@@ -28,7 +28,7 @@ package org.cougaar.core.blackboard;
 
 
 /**
- * Metrics on the open and close times of transactions.
+ * Contains metrics on transaction open and close timestamps.
  * <p>
  * @see EnvelopeMetricsSubscription
  */

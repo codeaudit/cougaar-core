@@ -28,9 +28,8 @@ package org.cougaar.core.blackboard;
 
 
 /**
- * An envelope that additionally notes the subscriber name,
- * time of the "openTransaction()", and time of the 
- * "closeTransaction()".
+ * An envelope that records the subscriber name, time of
+ * "openTransaction()", and time of "closeTransaction()".
  * 
  * @see Subscriber option system property that must be enabled
  *    for these Envelopes to be used.

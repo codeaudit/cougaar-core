@@ -43,10 +43,8 @@ import org.cougaar.util.StringUtility;
 import org.cougaar.util.log.Logging;
 
 /**
- * A org.cougaar.core.blackboard.DirectiveMessage  provides a basic implementation of 
- *  DirectiveMessage
+ * A {@link org.cougaar.core.mts.Message} containing {@link Directive}s.
  */
-
 public class DirectiveMessage extends ClusterMessage
   implements Externalizable
 {
@@ -55,27 +53,23 @@ public class DirectiveMessage extends ClusterMessage
   /**
    * This signals that all messages prior to this have been acked.
    * Used in keep alive messages to detect out-of-sync condition.
-   **/
+   */
   private boolean allMessagesAcknowledged = false;
    
-  /** 
-   *	no-arg Constructor.
-   */
   public DirectiveMessage() {
     super();
   }
     
-  /** constructor that takes multiple directives
+  /**
+   * constructor that takes multiple directives
    * @param someDirectives to send
    */
   public DirectiveMessage(Directive[] someDirectives) {
     directives = someDirectives;
   }
     
-  /** constructor that takes source, destination and some directives
-   * @param source
-   * @param destination
-   * @param someDirectives
+  /**
+   * constructor that takes source, destination and some directives
    */
   public DirectiveMessage(MessageAddress source, MessageAddress destination,
                           long incarnationNumber,
@@ -85,19 +79,16 @@ public class DirectiveMessage extends ClusterMessage
     directives = someDirectives;
   }
     
-  /** getDirectives method
-   * Returns an array of the directives in this message.  
-   * @return Directive[]
-   **/
+  /**
+   * @return the directives in the message
+   */
   public Directive[] getDirectives() {
     return directives;
   }
     
-  /** setDirective method
-   * Sets an object that represents the directives
-   * that this message is in reference to.
-   * @param someDirectives
-   **/
+  /**
+   * Sets the directives in this message.
+   */
   public void setDirectives(Directive[] someDirectives) {
     directives = someDirectives;
   }
@@ -134,7 +125,8 @@ public class DirectiveMessage extends ClusterMessage
       } else if (t instanceof IOException) {
         throw (IOException) t;
       } else {
-        Logging.getLogger(DirectiveMessage.class).error("Serialization of "+this+" caught exception", t);
+        Logging.getLogger(DirectiveMessage.class).error(
+            "Serialization of "+this+" caught exception", t);
         throw new IOException("Serialization exception: "+t);
       }
     }
@@ -142,7 +134,7 @@ public class DirectiveMessage extends ClusterMessage
   
 
   /**
-   **/
+   */
   private void writeObject(final ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
     Runnable thunk =
@@ -165,11 +157,12 @@ public class DirectiveMessage extends ClusterMessage
     }
   }
 
-  /** when we deserialize, note the message context with the 
+  /**
+   * when we deserialize, note the message context with the 
    * ClusterContextTable so that lower-level objects can
-   * reattach to the Cluster mechanism
+   * reattach to the agent.
    * @see ClusterContextTable
-   **/
+   */
   private void readObject(final ObjectInputStream stream) 
     throws IOException, ClassNotFoundException
   {
@@ -197,7 +190,7 @@ public class DirectiveMessage extends ClusterMessage
 
   // Externalizable support
   /*
-  **/
+  */
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);   // Message
 
@@ -223,11 +216,12 @@ public class DirectiveMessage extends ClusterMessage
     }
   }
 
-  /** when we deserialize, note the message context with the 
+  /**
+   * when we deserialize, note the message context with the 
    * ClusterContextTable so that lower-level objects can
-   * reattach to the Cluster mechanism
+   * reattach to the agent.
    * @see ClusterContextTable
-   **/
+   */
   public void readExternal(final ObjectInput in) 
     throws IOException, ClassNotFoundException
   {
@@ -255,9 +249,9 @@ public class DirectiveMessage extends ClusterMessage
     }
   }
 
-  /** Wrapper for a Directive so that we can propagate ChangeReports with
-   * the actual directive in-band.
-   **/
+  /**
+   * A {@link Directive} with associated {@link ChangeReport}s. 
+   */
   public static final class DirectiveWithChangeReports implements Directive {
     private final Directive real;
     private final Collection changes;

@@ -29,10 +29,10 @@ package org.cougaar.core.blackboard;
 import java.io.Serializable;
 import org.cougaar.core.mts.MessageAddress;
 
-/** A generic blackboard alert object used to notify another agent or plugin
- *   about anomalous data on an agent's blackboard.
- **/
-
+/**
+ * A generic blackboard alert object used to notify agent or plugin
+ * about anomalous data on an agent's blackboard.
+ */
 public class BlackboardAlert implements Serializable {
   
   private String sensorName, description;
@@ -40,13 +40,14 @@ public class BlackboardAlert implements Serializable {
   private MessageAddress victimAgent;
   private MessageAddress attackerAgent = null;
   
-  /** Basic Constructor
+  /**
+   * Basic Constructor
    * @param sensor sensor type, descriptive name or component name
    * @param time time of compromise if known - usually specified in terms of society time
    * @param victim the compromised agent address
    * @param attacker the attacking agent if known
    * @param desc description of problem, attack, classification or other information
-   **/
+   */
   public BlackboardAlert(String sensor, long time, MessageAddress victim, 
                          MessageAddress attacker, String desc) {
     sensorName = sensor;
@@ -59,10 +60,11 @@ public class BlackboardAlert implements Serializable {
     this.description = description;
   }
 
-  /** Minimal Constructor
+  /**
+   * Minimal Constructor
    * @param sensor sensor type, descriptive name or component name
    * @param victim the compromised agent address
-   **/
+   */
   public BlackboardAlert(String sensor, MessageAddress victim) {
     sensorName = sensor;
     if (victim == null) {

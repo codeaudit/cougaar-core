@@ -61,21 +61,31 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
-/** The Blackboard
+/**
+ * A {@link Subscriber} created by the {@link StandardBlackboard}
+ * that maintains a view of all published objects, invokes
+ * {@link org.cougaar.core.domain.Domain} {@link
+ * org.cougaar.core.domain.LogicProvider}s, and monitors
+ * community membership changes.
  *
- * @property org.cougaar.core.agent.savePriorPublisher When set to <em>true</em>, will collect extra 
- * information on each publish to detect problems with multiple adds, deletes, etc by complaining
+ * @property org.cougaar.core.agent.savePriorPublisher
+ * When set to <em>true</em>, will collect extra 
+ * information on each publish to detect problems with multiple adds,
+ * deletes, etc by complaining
  * about unexpected state changes.  This adds significant runtime overhead.
- * @property org.cougaar.core.agent.enablePublishException When set to <em>true</em>, collects stack frames
- * for each published object in order to pinpoint both sides of publish conflicts.  This is <em>extremely</em> 
+ * @property org.cougaar.core.agent.enablePublishException
+ * When set to <em>true</em>, collects stack frames
+ * for each published object in order to pinpoint both sides of
+ * publish conflicts.  This is <em>extremely</em> 
  * expensive.
- * @property org.cougaar.core.persistence.enable When set to <em>true</em> will enable blackboard persistence.
+ * @property org.cougaar.core.persistence.enable
+ * When set to <em>true</em> will enable blackboard persistence.
  * @property org.cougaar.core.blackboard waitForSomeCommChanges Time in milliseconds to wait 
  * for some communitye changes before killing the Thread that does so. Default is 10,000.
  * @property org.cougaar.core.blackboard.waitForNewCommChangeNotifications Time in 
  * milliseconds to wait for more community changes before asking the community 
  * service for them. Default is 1,000.
- **/
+ */
 public class Blackboard extends Subscriber
   implements
   BlackboardServesDomain,
@@ -108,7 +118,7 @@ public class Blackboard extends Subscriber
     PropertyParser.getBoolean("org.cougaar.core.blackboard.pedantic", true);
 
 
-  /** the queue of messages to send **/
+  /** the queue of messages to send */
   private List sendQueue = new ArrayList();
 
   // mark the envelopes which we emit so that we can detect them later.
@@ -120,12 +130,13 @@ public class Blackboard extends Subscriber
     }
   }
 
-  /** Marked Envelope <i>interface</i> so that we can detect envelopes which we've
+  /**
+   * Marked Envelope <i>interface</i> so that we can detect envelopes which we've
    * emitted.
    *
    * This isn't an Envelope, since Envelope is a class, but this interface
    * will only be applied to the two Envelope subclasses listed below.
-   **/
+   */
   interface PlanEnvelope {
   }
 
@@ -138,28 +149,28 @@ public class Blackboard extends Subscriber
       public boolean isBlackboard() { return true; }
     }
 
-  /** override to immediately publish deltas rather than delay until transaction close **/
+  /** override to immediately publish deltas rather than delay until transaction close */
   protected EnvelopeTuple clientAddedObject(Object o) {
     EnvelopeTuple tup = super.clientAddedObject(o);
     consumeTuple(tup);
     return tup;
   }
 
-  /** override to immediately publish deltas rather than delay until transaction close **/
+  /** override to immediately publish deltas rather than delay until transaction close */
   protected EnvelopeTuple clientRemovedObject(Object o) {
     EnvelopeTuple tup = super.clientRemovedObject(o);
     consumeTuple(tup);
     return tup;
   }
 
-  /** override to immediately publish deltas rather than delay until transaction close **/
+  /** override to immediately publish deltas rather than delay until transaction close */
   protected EnvelopeTuple clientChangedObject(Object o, List changes) {
     EnvelopeTuple tup = super.clientChangedObject(o, changes);
     consumeTuple(tup);
     return tup;
   }
 
-  /** invoked via client*Object while executing an LP **/
+  /** invoked via client*Object while executing an LP */
   private final boolean consumeTuple(EnvelopeTuple tup) {
     boolean somethingFired = false;
     synchronized (subscriptions) {
@@ -173,7 +184,7 @@ public class Blackboard extends Subscriber
     return somethingFired;
   }
 
-  /** is the object non-null? **/
+  /** is the object non-null? */
   private static final UnaryPredicate anythingP = new UnaryPredicate() {
     public boolean execute(Object o) {
       return (o != null);
@@ -228,8 +239,11 @@ public class Blackboard extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("Blackboard.everything.add object already published: " + o.toString(),
-                                   priorStack, stacks != null);
+        throw new PublishException(
+            "Blackboard.everything.add object already published: " +
+            o.toString(),
+            priorStack,
+            stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior publisher: "));
       }
@@ -242,7 +256,8 @@ public class Blackboard extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("Blackboard.everything.remove object not published: " + o.toString(),
+        throw new PublishException(
+            "Blackboard.everything.remove object not published: " + o.toString(),
                                    priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior remover: "));
@@ -270,7 +285,7 @@ public class Blackboard extends Subscriber
    * Provide a new subscription with its initial fill. Called under
    * the protection of the distributor lock so we are guaranteed that
    * the allPlanObjects won't change.
-   **/
+   */
   public void fillSubscription(Subscription subscription) {
     if (subscription == everything) {
       return; // Don't fill ourselves
@@ -303,8 +318,7 @@ public class Blackboard extends Subscriber
     }
   }
 
-  /** Alias for sendDirective(aDirective, null);
-   **/
+  /** Alias for sendDirective(aDirective, null); */
   public void sendDirective(Directive aDirective) {
     if (aDirective == null) {
       throw new IllegalArgumentException("directive must not be null.");
@@ -313,15 +327,17 @@ public class Blackboard extends Subscriber
     }
   }
 
-  /** Submit a directive with attached ChangeReports for transmission 
+  /**
+   * Submit a directive with attached ChangeReports for transmission 
    * from this agent. We fill in the ContentsId with the next available number.
-   **/
+   */
   public void sendDirective(Directive aDirective, Collection c) {
     if (aDirective == null) {
       throw new IllegalArgumentException("directive must not be null.");
     } else {
       if (c != null && ((Collection) c).size()>0) {
-        DirectiveMessage.DirectiveWithChangeReports dd = new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
+        DirectiveMessage.DirectiveWithChangeReports dd =
+          new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
         aDirective = dd;
       }
       sendQueue.add(aDirective);
@@ -334,19 +350,17 @@ public class Blackboard extends Subscriber
 
   /**
    * Add Object to the Blackboard Collection
-   **/
+   */
   public void add(Object o) {
     publishAdd(o);
   }
 
-  /** Removed Object to the Blackboard Collection
-   **/
+  /** Removed Object to the Blackboard Collection */
   public void remove(Object o) {
     publishRemove(o);
   }
 
-  /** Change Object to the Blackboard Collection
-   **/
+  /** Change Object to the Blackboard Collection */
   public void change(Object o) {
     publishChange(o,null);
   }
@@ -398,7 +412,7 @@ public class Blackboard extends Subscriber
    * blessed by the message manager. The messages are implicitly
    * acknowledged by this method. The envelope of published events
    * resulting from handling the messages is returned.
-   **/
+   */
   public final Envelope receiveMessages(List msgs) {
     //try {
     //  startTransaction();
@@ -427,10 +441,11 @@ public class Blackboard extends Subscriber
     setTransactionOpenTime();
   }
 
-  /** called by transaction close within the thread of Plugins.  
+  /** 
+   * Called by transaction close within the thread of Plugins.  
    * Also called at the end of an LP pseudo-transaction, but
    * most of the logic here is disabled in that case.
-   **/
+   */
   public final Envelope receiveEnvelope(Envelope envelope) {
     oneEnvelope.add(envelope);
     super.receiveEnvelopes(oneEnvelope, false); // Move to our inbox
@@ -532,7 +547,9 @@ public class Blackboard extends Subscriber
 	for (Iterator i = agents.iterator(); i.hasNext(); ) {
           MessageAddress agentAddress = (MessageAddress) i.next();
           if (qosAttributes != null) {
-            agentAddress = MessageAddress.getMessageAddress((MessageAddress)agentAddress, qosAttributes);
+            agentAddress =
+              MessageAddress.getMessageAddress(
+                  (MessageAddress)agentAddress, qosAttributes);
           }
           Object key = getDirectiveKeyOfDestination(agentAddress);
 	  dirs = (ArrayList)directivesByDestination.get(key);
@@ -586,9 +603,10 @@ public class Blackboard extends Subscriber
     myDomainService.invokeMessageLogicProviders(m);
   }
 
-  /** called by receiveEnvelope (on behalf of a plugin) and consumeTuple (on behalf of
-   * an LP).
-   **/
+  /**
+   * called by receiveEnvelope (on behalf of a plugin) and
+   * consumeTuple (on behalf of an LP).
+   */
   private void callLogicProviders(EnvelopeTuple obj, boolean isPersistenceEnvelope) {
     if (!isPersistenceEnvelope) {
       handleActiveSubscriptionObjects(obj);
@@ -610,16 +628,18 @@ public class Blackboard extends Subscriber
             aso.removingFromBlackboard(this, true);
           } // else ignore: bulk and event are uneffected by ASOs
         } catch (BlackboardException be) {
-          logger.error("Deferred ActiveSubscriptionObject action could not be vetoed", be);
+          logger.error(
+              "Deferred ActiveSubscriptionObject action could"+
+             " not be vetoed", be);
         }
       }
     }
   }
   
+  // object tracker for distributor use
   private final static ObjectTracker tracker = new ObjectTracker();
-  public final static ObjectTracker getTracker() { return tracker; }
-
-  public static class ObjectTracker {
+  static final ObjectTracker getTracker() { return tracker; }
+  static class ObjectTracker {
     private final static Logger log = Logging.getLogger(ObjectTracker.class);
     private static final Set globalSet = new HashSet(11);
     private final ThreadLocal localSet = new ThreadLocal() {
@@ -631,7 +651,8 @@ public class Blackboard extends Subscriber
     }
 
     public void checkpoint(boolean commit, Object ob, Object a) {
-      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+      if (ActiveSubscriptionObject.deferCommit) {
+        // short circuit if we aren't actually tracking ASO gaps
         if (commit) {
           resolve(ob, a);
         } else {
@@ -658,18 +679,22 @@ public class Blackboard extends Subscriber
     }
 
     public void clearLocalSet() {
-      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+      if (ActiveSubscriptionObject.deferCommit) {
+        // short circuit if we aren't actually tracking ASO gaps
         getLocalSet().clear();
       }
     }
 
     public void checkAccess(Object ob, Object a) {
-      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+      if (ActiveSubscriptionObject.deferCommit) {
+        // short circuit if we aren't actually tracking ASO gaps
         Object o = new Traversal(ob,a);
         if (log.isDebugEnabled()) log.debug("Checking "+o);
         boolean locP = getLocalSet().contains(o);
         if (locP) {
-          log.warn("Local access of uncommitted ActiveSubscriptionObject data "+o, new Throwable());
+          log.warn(
+              "Local access of uncommitted ActiveSubscriptionObject"+
+             " data "+o, new Throwable());
         } else {
           if (log.isDebugEnabled()) {
             boolean gloP;
@@ -677,7 +702,9 @@ public class Blackboard extends Subscriber
               gloP = globalSet.contains(o);
             }
             if (gloP) {
-              log.debug("Global access of uncommitted ActiveSubscriptionObject data "+o, new Throwable());
+              log.debug(
+                  "Global access of uncommitted ActiveSubscriptionObject"+
+                 " data "+o, new Throwable());
             }
           }
         }
@@ -685,7 +712,7 @@ public class Blackboard extends Subscriber
     }
   }
 
-  public static class Traversal {
+  private static class Traversal {
     private final Object o;
     private final Object a;
     public Traversal(Object o, Object a) { this.o=o; this.a=a;}
@@ -713,8 +740,7 @@ public class Blackboard extends Subscriber
     return myDistributor.getPersistenceObject();
   }
 
-  /** Ensure that all the domains know that this is THE blackboard
-   **/
+  /** Ensure that all the domains know that this is THE blackboard */
   protected void connectDomains() {
     myDomainService.setBlackboard(this);
     setReadyToPersist();
@@ -833,7 +859,10 @@ public class Blackboard extends Subscriber
       _myCommunityService = (CommunityService)
         myServiceBroker.getService(this, CommunityService.class, null);
       if (_myCommunityService == null) {
-        getLogger().warn("Warning: Blackboard had no CommunityService - will fall back to dynamic service lookup.  Risk of Deadlock!", new Throwable());
+        getLogger().warn(
+            "Warning: Blackboard had no CommunityService -"+
+            " will fall back to dynamic service lookup."+
+            "  Risk of Deadlock!", new Throwable());
       }
       _myCommunityService.addListener(new MyCommunityChangeListener());
       return _myCommunityService;
@@ -892,13 +921,19 @@ public class Blackboard extends Subscriber
     // and time for the local Comm Service to update
     // its cache from the NameService
     // This is in milliseconds
-    private long waitForNewCommChangeNotifications = Long.getLong("org.cougaar.core.blackboard.waitForNewCommChangeNotifications", 1000L).longValue();
+    private long waitForNewCommChangeNotifications =
+      Long.getLong(
+          "org.cougaar.core.blackboard.waitForNewCommChangeNotifications",
+          1000L).longValue();
     
     // If have no changed communities, time to wait for some to appear
     // before giving up and killing this thread.
     // Larger number means less allocating / releasing the thread
     // This is in milliseconds
-    private long waitForSomeCommChanges = Long.getLong("org.cougaar.core.blackboard.waitForSomeCommChanges", 10000L).longValue();
+    private long waitForSomeCommChanges =
+      Long.getLong(
+          "org.cougaar.core.blackboard.waitForSomeCommChanges",
+          10000L).longValue();
 
     public synchronized void add(String communityName) {
       changedCommunities.add(communityName);
@@ -940,7 +975,9 @@ public class Blackboard extends Subscriber
 	if (myDistributor == null) {
 	  // Blackboard was stopped?
 	  if (logger != null && logger.isInfoEnabled())
-	    logger.info("ABA Cache clearer dropping received changes cause Distributor is null -- assuming Blackboard is stopping");
+	    logger.info(
+                "ABA Cache clearer dropping received changes cause"+
+               " Distributor is null -- assuming Blackboard is stopping");
 	  thread = null;
 	  return;
 	}
@@ -955,7 +992,7 @@ public class Blackboard extends Subscriber
   /**
    * Tell all the ABA interested LPs about the new 
    * community memberships, using the local cache of ABA translations.
-   **/
+   */
   public void invokeABAChangeLPs(Set communities) {
     synchronized (cache) {
       for (Iterator i = cache.values().iterator(); i.hasNext(); ) {

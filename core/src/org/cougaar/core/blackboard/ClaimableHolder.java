@@ -28,14 +28,12 @@ package org.cougaar.core.blackboard;
 
 
 /**
- * An indirect holder of a "claimable" object.
+ * An indirect holder of a {@link Claimable}.
  * <p>
- * Claiming of objects is done by the infrastruture *only* - plugins should
- * *never* call "getClaimable().claim()".
- **/
+ * Claiming of objects is done by the infrastruture *only* - plugins
+ * should *never* call "getClaimable().claim()".
+ */
 public interface ClaimableHolder {
-  /**
-   *@return the held claimable, or null if there is none.
-   **/
+  /** @return the held claimable, or null if there is none. */
   Claimable getClaimable();
 }

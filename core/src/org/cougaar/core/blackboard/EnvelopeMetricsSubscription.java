@@ -35,10 +35,9 @@ import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;
 
 /**
- * A subscription which collects EnvelopeMetrics.
+ * A {@link Subscription} that collects {@link EnvelopeMetrics}.
  *
- * @see Subscriber required system property that must be enabled
- * @see EnvelopeMetrics
+ * @see Subscriber the "timestamp" system property must be enabled
  */
 public class EnvelopeMetricsSubscription extends Subscription {
 
@@ -72,7 +71,7 @@ public class EnvelopeMetricsSubscription extends Subscription {
   /** 
    * @return a possibly empty collection of EnvelopeMetrics that have
    * been added since the last transaction. Will not return null.
-   **/
+   */
   public Collection getAddedCollection() {
     return myList;
   }

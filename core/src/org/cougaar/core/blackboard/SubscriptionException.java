@@ -27,10 +27,10 @@
 package org.cougaar.core.blackboard;
 
 
-/** An unchecked Exception thrown when there is a problem detected by
+/**
+ * An unchecked exception thrown when a problem is detected by
  * subscription mechanisms.
- **/
-
+ */
 public class SubscriptionException extends BlackboardException {
   public SubscriptionException(String s) { super(s); }
   public SubscriptionException(String s, Throwable t) { super(s, t); }

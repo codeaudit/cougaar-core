@@ -42,24 +42,37 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 import org.cougaar.util.CallerTracker;
 
-/** Subscriber is the most common implementation of BlackboardService
+/**
+ * The standard implementation of the {@link
+ * org.cougaar.core.service.BlackboardService}.
  *
- * @property org.cougaar.core.blackboard.enforceTransactions Set to <em>false</em> to disable checking for clients
- * of BlackboardService publishing changes to the blackboard outside of a transaction.
- * @property org.cougaar.core.blackboard.debug Set to true to additional checking on blackboard transactions.  
- * For instance, it will attempt to look for changes to blackboard objects which have not been published
- * at transaction close time.
- * @note Although Subscriber directly implements all the methods of BlackboardService,
- * it declines to implement the interface to avoid the Subscriber class itself 
- * <em>and all extending classes</em> from being Services.
- * @property org.cougaar.core.blackboard.timestamp Set to true to enable EnvelopeMetrics
- *    and TimestampSubscriptions (defaults to false).
- **/
+ * @property org.cougaar.core.blackboard.enforceTransactions
+ * Set to <em>false</em> to disable checking for clients
+ * of BlackboardService publishing changes to the blackboard outside
+ * of a transaction.
+ *
+ * @property org.cougaar.core.blackboard.debug
+ * Set to true to additional checking on blackboard transactions.  
+ * For instance, it will attempt to look for changes to blackboard
+ * objects which have not been published at transaction close time.
+ *
+ * @note Although Subscriber directly implements all the methods of
+ * BlackboardService, it declines to implement the interface to avoid
+ * the Subscriber class itself <em>and all extending classes</em> from
+ * being Services.
+ *
+ * @property org.cougaar.core.blackboard.timestamp
+ * Set to true to enable EnvelopeMetrics and TimestampSubscriptions
+ * (defaults to false).
+ */
 public class Subscriber {
   private static final Logger logger = Logging.getLogger(Subscriber.class);
 
   private static final boolean isEnforcing =
-    (Boolean.valueOf(System.getProperty("org.cougaar.core.blackboard.enforceTransactions", "true"))).booleanValue();
+    Boolean.valueOf(
+        System.getProperty(
+          "org.cougaar.core.blackboard.enforceTransactions",
+          "true")).booleanValue();
 
   private static final boolean warnUnpublishChanges = 
     "true".equals(System.getProperty("org.cougaar.core.blackboard.debug","false"));
@@ -75,10 +88,11 @@ public class Subscriber {
 
   protected Subscriber(){} 
 
-  /** Create a subscriber that provides subscription services 
+  /**
+   * Create a subscriber that provides subscription services 
    * to a client and send outgoing messages to a Distributor.
    * Plugin clients will use this API.
-   **/
+   */
   public Subscriber(BlackboardClient client, Distributor distributor) {
     this(
         client, 
@@ -148,7 +162,7 @@ public class Subscriber {
 
   /**
    * Move inboxes into subscriptions.
-   **/
+   */
   protected boolean privateUpdateSubscriptions() {
     boolean changedp = false;
     synchronized (subscriptions) {
@@ -209,7 +223,9 @@ public class Subscriber {
               if (currentClient != null) {
                 thisPublisher = currentClient.getBlackboardClientName();
               }
-              logger.error("Exception while applying envelopes in "+currentClient+"/"+thisPublisher, ire);
+              logger.error(
+                  "Exception while applying envelopes in "+
+                  currentClient+"/"+thisPublisher, ire);
             }
           }
         }
@@ -223,7 +239,7 @@ public class Subscriber {
   /**
    * Report changes that the plugin published.
    * These changes are represented by the outbox.
-   **/
+   */
   protected Envelope privateGetPublishedChanges() {
     Envelope box = flushOutbox();
     if (transactionEnvelopes != null) {
@@ -245,7 +261,7 @@ public class Subscriber {
 
   /**
    * Accessors to persist our inbox state
-   **/
+   */
   public List getTransactionEnvelopes() {
     return transactionEnvelopes;
   }
@@ -316,7 +332,7 @@ public class Subscriber {
    * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public Subscription subscribe(UnaryPredicate isMember) {
     return subscribe(isMember, null, true);
   }
@@ -329,7 +345,7 @@ public class Subscriber {
    * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
     return subscribe(isMember, null, isIncremental);
   }
@@ -342,7 +358,7 @@ public class Subscriber {
    * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public Subscription subscribe(UnaryPredicate isMember, Collection realCollection){
     return subscribe(isMember, realCollection, true);
   }
@@ -363,8 +379,11 @@ public class Subscriber {
    * warning are emitted when DynamicUnaryPredicate is used. Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
-  public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental){
+   */
+  public Subscription subscribe(
+      UnaryPredicate isMember,
+      Collection realCollection,
+      boolean isIncremental) {
     Subscription sn;
 
     if (realCollection == null) 
@@ -378,8 +397,7 @@ public class Subscriber {
     return subscribe(sn);
   }
 
-  /** Primary subscribe method.  Register a new subscription.
-   **/
+  /** Primary subscribe method.  Register a new subscription. */
   public final Subscription subscribe(Subscription subscription) {
     // Strictly speaking, subscribe can be done outside a transaction, but the 
     // state of filled subscription w/rt the rest of the subscriptions
@@ -395,7 +413,7 @@ public class Subscriber {
     return subscription;
   }
     
-  /** lightweight query of Blackboard **/
+  /** lightweight query of Blackboard */
   public final Collection query(UnaryPredicate isMember) {
     checkTransactionOK("query(UnaryPredicate)");
     QuerySubscription s = new QuerySubscription(isMember);
@@ -429,7 +447,7 @@ public class Subscriber {
    * Subscription must have been returned from a previous call to
    * subscribe.
    * @param subscription the Subscription that is to be cancelled.
-   **/
+   */
   public void unsubscribe(Subscription subscription) {
     // strictly speaking, this doesn't have to be done inside a transaction, but
     // we'll check anyway to be symmetric with subscribe.
@@ -473,7 +491,7 @@ public class Subscriber {
    * there will not be any subscriptions), but this is handled when
    * the transaction is closed where the inbox is emptied if there are
    * no subscriptions.
-   **/
+   */
   public void receiveEnvelopes(List envelopes, boolean envelopeQuiescenceRequired) {
     boolean signalActivity = false;
     synchronized (inboxLock) {
@@ -489,7 +507,9 @@ public class Subscriber {
         signalActivity = true;
       } else {
         if (logger.isInfoEnabled() && !hasSubscriptions && !notBusy && !hasWatchers) {
-          logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
+          logger.info(
+              this + ".receiveEnvs: Fix for bug 3328 means"+
+              " we're not distributing the outbox here cause no watchers.");
         }
       }
       if (notBusy) transactionLock.freeBusyFlag();
@@ -524,9 +544,10 @@ public class Subscriber {
     idleEnvelopes = old;
   }
 
-  /** outbox data structure - an Envelope used to encapsulate 
+  /**
+   * outbox data structure - an Envelope used to encapsulate 
    * outgoing changes to collections.
-   **/
+   */
   private Envelope outbox = createEnvelope();
 
   protected Envelope flushOutbox() {
@@ -544,7 +565,7 @@ public class Subscriber {
 //     public BlackboardClient theClient;
 //   }
 
-  /** factory method for creating Envelopes of the correct type **/
+  /** factory method for creating Envelopes of the correct type */
   protected Envelope createEnvelope() {
     if (enableTimestamps) {
       return new TimestampedEnvelope();
@@ -555,10 +576,11 @@ public class Subscriber {
   }
 
   // might want to make the syncs finer-grained
-  /** called whenever the client adds an object to a collection
+  /**
+   * called whenever the client adds an object to a collection
    * to notify the rest of the world of the change.
    * Actual Changes to the collection only happen via this api.
-   **/
+   */
   protected EnvelopeTuple clientAddedObject(Object o) {
     // attempt to claim the object
     claimObject(o);
@@ -566,10 +588,11 @@ public class Subscriber {
     return outbox.addObject(o);
   }
 
-  /** called whenever the client removes an object from a collection
+  /**
+   * called whenever the client removes an object from a collection
    * to notify the rest of the world of the change.
    * Actual Changes to the collection only happen via this api.
-   **/
+   */
   protected EnvelopeTuple clientRemovedObject(Object o) {
     // attempt to unclaim the object
     unclaimObject(o);
@@ -577,22 +600,24 @@ public class Subscriber {
     return outbox.removeObject(o);
   }
 
-  /** called whenever the client changes an object in a collection
+  /**
+   * called whenever the client changes an object in a collection
    * to notify the rest of the world of the change.
    * Actual Changes to the collection only happen via this api.
-   **/
+   */
   protected EnvelopeTuple clientChangedObject(Object o, List changes) {
     return outbox.changeObject(o, changes);
   }
   
-  /** Add an object to the Plan.
-   * Behavior is not defined if the object was already a member of the plan.
+  /**
+   * Add an object to the blackboard.
+   * <p> 
+   * Behavior is not defined if the object was already on the blackboard.
    * @note Although strictly allowed, it takes special care to properly publish a
    * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
-
+   */
   public final void publishAdd(Object o) {
     checkTransactionOK("add", o);
 
@@ -614,13 +639,16 @@ public class Subscriber {
     publishAddedCount++;
   }
   
-  /** Remove an object from the Plan.
-   * Behavior is not defined if the object was not already a member of the plan.
+  /**
+   * Remove an object from the blackboard.
+   * <p> 
+   * Behavior is not defined if the object was not already on the blackboard.
+   *
    * @note Although strictly allowed, it takes special care to properly publish a
    * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public final void publishRemove(Object o) {
     checkTransactionOK("remove", o);
 
@@ -645,18 +673,22 @@ public class Subscriber {
     publishRemovedCount++;
   }
 
-  /** Convenience function for publishChange(o, null).
+  /**
+   * Convenience function for publishChange(o, null).
    * @note Although strictly allowed, it takes special care to properly publish a
    * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public final void publishChange(Object o) {
     publishChange(o, null);
   }
 
-  /** mark an element of the Plan as changed.
-   * Behavior is not defined if the object is not a member of the plan.
+  /**
+   * Mark an object on the blackboard as changed.
+   * <p> 
+   * Behavior is not defined if the object is not on the blackboard.
+   * <p> 
    * There is no need to call this if the object was added or removed,
    * only if the contents of the object itself has been changed.
    * The changes parameter describes a set of changes made to the
@@ -669,7 +701,7 @@ public class Subscriber {
    * raw Collection object to the Blackboard.  Disable Blackboard.PEDANTIC to quiet
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
-   **/
+   */
   public final void publishChange(Object o, Collection changes) {
     checkTransactionOK("change", o);    
 
@@ -715,14 +747,15 @@ public class Subscriber {
   }
 
 
-  /** A extension subscriber may call this method to execute bulkAdd transactions.
+  /**
+   * A extension subscriber may call this method to execute bulkAdd transactions.
    * This is protected because it is of very limited to other than persistance plugins.
    *  Note that Blackboard does something like
    * this by hand constructing an entire special-purpose envelope.  This, however, is
    * for use in-band, in-transaction.  
    *  The Collection passed MUST be immutable, since there may be many consumers,
    * each running at different times.
-   **/
+   */
   protected EnvelopeTuple bulkAddObject(Collection c) {
     checkTransactionOK("bulkAdd", c);    
 
@@ -732,10 +765,11 @@ public class Subscriber {
     return t;
   }
 
-  /** Safer version of bulkAddObject(Collection).
+  /**
+   * Safer version of bulkAddObject(Collection).
    * Creates a Collection from the Enumeration and passes it into
    * the envelope.
-   **/
+   */
   protected EnvelopeTuple bulkAddObject(Enumeration en) {
     checkTransactionOK("bulkAdd", en);    
 
@@ -769,20 +803,22 @@ public class Subscriber {
    * have an open transaction at one time.  We could support multiple
    * simultaneously open transactions with multiple subscribers, but
    * this is a feature for another day.
-   **/
+   */
   private LockFlag transactionLock = new LockFlag();
   
-  /** The current in-force transaction instance.
+  /**
+   * The current in-force transaction instance.
    * The is only kept around as a check to pass to Transaction.close()
    * in order to make sure we're closing the right one.
    * In particular, we cannot use this in the publishWhatever methods 
    * because the Blackboard methods are executing in the wrong thread.
-   **/
+   */
   private Transaction theTransaction = null;
 
-  /** overridable by extending classes to specify more featureful
+  /**
+   * Overridable by extending classes to specify more featureful
    * Transaction semantics.
-   **/
+   */
   protected Transaction newTransaction() {
     return new Transaction(this);
   }
@@ -791,7 +827,7 @@ public class Subscriber {
    * Open a transaction by grabbing the transaction lock and updating
    * the subscriptions.  This method blocks waiting for the
    * transaction lock.
-   **/
+   */
   public final void openTransaction() {
     transactionLock.getBusyFlag();
     finishOpenTransaction();
@@ -814,7 +850,7 @@ public class Subscriber {
   /**
    * Common routine for both openTransaction and tryOpenTransaction
    * does everything except getting the transactionLock busy flag.
-   **/
+   */
   private void finishOpenTransaction() {
     int count = transactionLock.getBusyCount();
     if (count > 1) {
@@ -849,24 +885,25 @@ public class Subscriber {
   private void setHaveNewSubscriptions() { _haveNewSubscriptions = true; }
   private void resetHaveNewSubscriptions() { _haveNewSubscriptions = false; }
 
-  /** keep track of whether or not the collections have changed 
+  /**
+   * Keep track of whether or not the collections have changed 
    * since the previous openTransaction.
-   **/
+   */
   private boolean _haveCollectionsChangedSinceLastTransaction = false;
 
-  /** set haveCollectionsChanged() **/
+  /** set haveCollectionsChanged() */
   private void setHaveCollectionsChanged() {
     _haveCollectionsChangedSinceLastTransaction = true;
   }
 
-  /** set haveCollectionsChanged() **/
+  /** set haveCollectionsChanged() */
   private void resetHaveCollectionsChanged() {
     _haveCollectionsChangedSinceLastTransaction = false;
   }
 
   /** can be called by anyone who can open a transaction to decide what to do.
    * returned value is only valid/useful inside an open transaction.
-   **/
+   */
   public boolean haveCollectionsChanged() {
     return _haveCollectionsChangedSinceLastTransaction;
   }
@@ -879,7 +916,7 @@ public class Subscriber {
    * in PluginWrapper.
    *
    * @return true IFF a transaction was opened.
-   **/
+   */
   public final boolean tryOpenTransaction() {
     if (transactionLock.tryGetBusyFlag()) {
       finishOpenTransaction();
@@ -894,13 +931,13 @@ public class Subscriber {
    * clear delta lists.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
-   **/
+   */
   public final void closeTransactionDontReset() {
     closeTransaction(false);
   }
 
   /** check to see if we've already got an open transaction
-   **/
+   */
   public final boolean isTransactionOpen() {
     return (transactionLock.getBusyFlagOwner() == Thread.currentThread());
   }
@@ -913,7 +950,7 @@ public class Subscriber {
    * lock.
    * @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
    * This method becomes private after deprecation period expires.
-   **/
+   */
   public final void closeTransaction(boolean resetSubscriptions)
     throws SubscriberException {
     if (transactionLock.getBusyFlagOwner() == Thread.currentThread()) {
@@ -981,12 +1018,12 @@ public class Subscriber {
    * To avoid this, use closeTransactionDontReset() instead.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
-   **/
+   */
   public final void closeTransaction() {
     closeTransaction(true);
   }
 
-  /** Does someone have an open transaction? **/
+  /** Does someone have an open transaction? */
   public final boolean isInTransaction() {
     return (transactionLock.getBusyFlagOwner() != null);
   }
@@ -994,7 +1031,7 @@ public class Subscriber {
   /** Do I have an open transaction?
    * This really translates to "Is is safe to make changes to my
    * collections?"
-   **/
+   */
   public final boolean isMyTransaction() {
     return (transactionLock.getBusyFlagOwner() == Thread.currentThread());
   }
@@ -1007,7 +1044,7 @@ public class Subscriber {
 
   /** list of SubscriptionWatchers to be notified when something
    * interesting happens.  Access must be synchronized on watchers.
-   **/
+   */
   private final List watchers = new ArrayList(1);
 
   public final SubscriptionWatcher registerInterest(SubscriptionWatcher w) {
@@ -1028,7 +1065,7 @@ public class Subscriber {
    * The level of support here is like the old wake and interestSemaphore
    * code.  The client of a subscriber need not register explicitly, as
    * it is done at initialization time.
-   **/
+   */
   public final SubscriptionWatcher registerInterest() {
     return registerInterest(new SubscriptionWatcher());
   }
@@ -1036,11 +1073,12 @@ public class Subscriber {
   /** Allow a thread to unregister an interest registered by
    * registerInterest.  Should be done if a subordinate (watching)
    * thread exits, or a plugin unloads.
-   **/
+   */
   public final void unregisterInterest(SubscriptionWatcher w) throws SubscriberException {
     synchronized (watchers) {
       if (! watchers.remove(w) ) {
-        throw new SubscriberException("Attempt to unregisterInterest of unknown SubscriptionWatcher");
+        throw new SubscriberException(
+            "Attempt to unregisterInterest of unknown SubscriptionWatcher");
       }
     }
   }
@@ -1061,7 +1099,7 @@ public class Subscriber {
   /** called when external activity changes the subscriber's collections.
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
-   **/
+   */
   public void signalExternalActivity() {
     _externalActivity = true;
     wakeSubscriptionWatchers(SubscriptionWatcher.EXTERNAL);
@@ -1070,7 +1108,7 @@ public class Subscriber {
    * collections. 
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
-   **/
+   */
   public void signalInternalActivity() {
     _internalActivity = true;
     wakeSubscriptionWatchers(SubscriptionWatcher.INTERNAL);
@@ -1078,7 +1116,7 @@ public class Subscriber {
   /** called when the client (Plugin) requests that it be waked again.
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
-   **/
+   */
   public void signalClientActivity() {
     _clientActivity = true;
     wakeSubscriptionWatchers(SubscriptionWatcher.CLIENT);
@@ -1086,7 +1124,7 @@ public class Subscriber {
   
     
   /** called to notify all SubscriptionWatchers.
-   **/
+   */
   private final void wakeSubscriptionWatchers(int event) {
     synchronized (watchers) {
       int l = watchers.size();
@@ -1109,7 +1147,7 @@ public class Subscriber {
       theDistributor+">";
   }
 
-  /** utility to claim an object as ours **/
+  /** utility to claim an object as ours */
   protected void claimObject(Object o) {
     if (o instanceof ClaimableHolder) {
       Claimable c = ((ClaimableHolder) o).getClaimable();
@@ -1120,7 +1158,7 @@ public class Subscriber {
     }
   }
 
-  /** utility to release a claim on an object **/
+  /** utility to release a claim on an object */
   protected void unclaimObject(Object o) {
     if (o instanceof ClaimableHolder) {
       Claimable c = ((ClaimableHolder) o).getClaimable();
@@ -1134,7 +1172,7 @@ public class Subscriber {
   /** return the client of the the subscriber.
    * May be overridden by subclasses in case they are really
    * delegating to some other object.
-   **/
+   */
   public BlackboardClient getClient() {
     return theClient;
   }
@@ -1154,9 +1192,11 @@ public class Subscriber {
   }
   private static void noteCloseTransaction(Subscriber s) {
     if (s != _openTransaction.get()) {
-      Logging.getLogger(Subscriber.class).error("Attempt to close a transaction from a different thread than the one which opened it:\n\t"+s+
-                                          "\t"+_openTransaction.get(),
-                                          new Throwable());
+      Logging.getLogger(Subscriber.class).error(
+          "Attempt to close a transaction from a different thread"+
+         " than the one which opened it:\n\t"+s+
+         "\t"+_openTransaction.get(),
+         new Throwable());
     }
     _openTransaction.set(null);
   }
