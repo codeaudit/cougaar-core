@@ -1143,9 +1143,9 @@ public abstract class PluginAdapter
 
     public void load() {
       sw = new ThinWatcher();
-      getBlackboardService().registerInterest(sw);
       Trigger piTrig = new PluginTrigger();
       tm = new SyncTriggerModelImpl(getSchedulerService(), piTrig);
+      getBlackboardService().registerInterest(sw);
     }
 
     public void start() {
