@@ -1,3 +1,18 @@
+2002-04-05  Todd Wright  <twright@bbn.com>
+
+	* org/cougaar/core/blackboard/AnonymousChangeReport.java:
+	New class which represents an unspecified change report, due
+	to a "publishChange(o)" or "publishChange(o, null)" or
+	"publishChange(o, empty-collection)".  Contains singleton
+	instance and SET/LIST singletons.
+
+	* Subscriber, Blackboard:
+        * CollectionSubscription, IncrementalSubscription:
+	Modified to use the AnonymousChangeReport singletons.
+	IncrementalSubscription now uses a Set for its changes,
+        instead of a List -- it shares the CollectionSubscription's
+        "changeMap".  This might require performance tuning.
+
 2002-04-02  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/Playbook.java:
