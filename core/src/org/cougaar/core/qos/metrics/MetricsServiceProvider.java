@@ -33,6 +33,8 @@ public final class MetricsServiceProvider implements ServiceProvider
     private static final String UPDATER_IMPL_CLASS =
 	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
 
+    private static final String USE_STEC = "org.cougaar.metrics.stec";
+
     private MetricsService retriever;
     private MetricsUpdateService updater;
 
@@ -48,6 +50,9 @@ public final class MetricsServiceProvider implements ServiceProvider
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 	}
+
+	if (!Boolean.getBoolean(USE_STEC)) return;
+
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
 	    Class[] parameters = { ServiceBroker.class };
