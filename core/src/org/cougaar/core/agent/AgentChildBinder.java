@@ -18,11 +18,31 @@ import org.cougaar.core.plugin.PluginManager;
 
 /** The standard Binder for PluginManagers and others children of agent.
  **/
-public class AgentChildBinder extends BinderSupport implements AgentChildBindingSite
+public class AgentChildBinder 
+extends BinderSupport 
+implements AgentChildBindingSite, ContainerBinder
 {
   /** All subclasses must implement a matching constructor. **/
   public AgentChildBinder(BinderFactory bf, Object child) {
     super(bf, child);
+  }
+
+  public boolean add(Object o) {
+    Object c = getComponent();
+    if (c instanceof Container) {
+      return ((Container)c).add(o);
+    } else {
+      return false;
+    }
+  }
+
+  public boolean remove(Object o) {
+    Object c = getComponent();
+    if (c instanceof Container) {
+      return ((Container)c).remove(o);
+    } else {
+      return false;
+    }
   }
 
   protected final Agent getAgent() {
