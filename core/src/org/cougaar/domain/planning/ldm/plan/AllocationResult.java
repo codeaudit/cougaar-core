@@ -521,7 +521,7 @@ public class AllocationResult
    * @return an array of an array of doubles
    **/
   public double[][] getPhasedResultsAsArray() {
-    int len = phasedavrs.size();
+    int len = (isPhased() ? phasedavrs.size() : 0);
     double[][] d = new double[len][];
     for (int i = 0; i < len; i++) {
       AspectValue[] avs = (AspectValue[]) phasedavrs.get(i);
