@@ -1,3 +1,12 @@
+2002-04-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* FilePersistence.java:
+	Add documentation of initialization parameters.
+
+	* BasePersistence.java:
+	Fix documentation of org.cougaar.core.persistence.class to
+	correspond to use for multiple plugins.
+
 2002-04-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

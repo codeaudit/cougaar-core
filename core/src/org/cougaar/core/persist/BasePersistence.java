@@ -102,7 +102,14 @@ import java.lang.reflect.Modifier;
  * handled by overwriting the value of the earlier objects with newer
  * values from later versions of the objects.  
  * @property org.cougaar.core.persistence.debug Enable persistence debugging.
- * @property org.cougaar.core.persistence.class Specify the persistence class to be used.
+ * @property org.cougaar.core.persistence.class Specify the
+ * persistence classes to be used. The value consists of one or more
+ * elements separated by commas. Each element specifies one
+ * persistence plugin and consists of the name of the class of the
+ * plugin, its name, and zero or more parameters all separated by
+ * colons. The interpretation of the parameters depends on the plugin
+ * so see the documentation of the individual plugin classes for
+ * details.
  * @property org.cougaar.core.persistence.archivingDisabled Set true to discard archival deltas
  * @property org.cougaar.core.persistence.clear Set true to discard all deltas on startup
  * @property org.cougaar.core.persistence.consolidationPeriod

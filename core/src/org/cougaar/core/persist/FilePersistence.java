@@ -45,16 +45,22 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 /**
- * This persistence class saves plan objects in files. It saves and
- * restores persistence deltas in files.
+ * This persistence plugin saves and restores plan objects in
+ * files. There is one optional parameter naming the persistence
+ * root directory. If the parameter is omitted, the persistence root
+ * is specified by system properties.
  * @property org.cougaar.install.path Used by FilePersistence as the
  * parent directory for persistence snapshots when there is no
  * directory specified in configuration parameters and
- * org.cougaar.core.persistence.path is a relative pathname.
+ * org.cougaar.core.persistence.path is a relative pathname. This
+ * property is not used if the plugin is configured with a specific
+ * parameter specifying the location of the persistence root.
  * @property org.cougaar.core.persistence.path Specifies the directory
  * in which persistence snapshots should be saved. If this is a
  * relative path, it the base will be the value or
- * org.cougaar.install.path.
+ * org.cougaar.install.path. This property is not used if the plugin
+ * is configured with a specific parameter specifying the location of
+ * the persistence root.
  **/
 public class FilePersistence
   extends PersistencePluginAdapter
