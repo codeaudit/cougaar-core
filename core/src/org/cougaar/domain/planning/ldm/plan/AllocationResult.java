@@ -10,33 +10,29 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.Vector;
-import java.io.Serializable;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 /**
  * The "result" of allocating a task.
  **/
 
-public class AllocationResult implements AspectType, AuxiliaryQueryType, Serializable {
+public class AllocationResult
+  implements AspectType, AuxiliaryQueryType, Serializable, Cloneable
+{
                                     
-  private boolean isSuccess, isPhased;
+  private boolean isSuccess;
   private float confrating;
-  private int[] aspects = null;
-  private Vector results = new Vector(); // vector of double[]
-  private double[] rollupresults = null;
-  private AspectValue[] aspectvalueresults = null;
-  private List phasedavrs;
+  private AspectValue[] avResults = null;
+  private ArrayList phasedavrs = null;      // A List of AspectValue[], null if not phased
   private String[] auxqueries = null;
   
-  /** Simple Constructor for a NON-PHASED result
+  /** Simple Constructor for a NON-PHASED result of ordinary AspectValues
    * @param rating The confidence rating of this result.
    * @param success  Whether the allocationresult violated any preferences.
    * @param aspecttypes  The AspectTypes (and order) of the results.
@@ -45,31 +41,28 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    */
   public AllocationResult(double rating, boolean success, int[] aspecttypes, double[] result) {
     isSuccess = success;
-    aspects = (int[])aspecttypes.clone();
-    rollupresults = (double[])result.clone();
+    setRollup(aspecttypes, result);
     confrating = (float) rating;
-    isPhased = false;
   }
-  
   
   /** Simple Constructor for a PHASED result
    * @param rating The confidence rating of this result.
    * @param success  Whether the allocationresult violated any preferences.
    * @param aspecttypes  The AspectTypes (and order) of the results.
    * @param rollup  The summary values for each aspect.
-   * @param allresults  An Enumeration of Vectors representing
-   * each phased Collection of results.
+   * @param allresults  An Enumeration representing
+   * each phased List of results.
    * For Example a phased answer may look like
    * [ [10, 100.00, c0], [5, 50.00, c3], [5, 50.00, c6] ]
    * @return AllocationResult
    */
-  public AllocationResult(double rating, boolean success, int[] aspecttypes, double[] rollup, Enumeration allresults) {
+  public AllocationResult(double rating, boolean success, int[] aspecttypes,
+                          double[] rollup, Enumeration allresults)
+  {
     isSuccess = success;
-    aspects = (int[])aspecttypes.clone();
-    rollupresults = (double[])rollup.clone();
-    this.setPhasedResults(allresults);
+    setRollup(aspecttypes, rollup);
+    setPhasedResults(allresults);
     confrating = (float) rating;
-    isPhased = true;
   }
   
   /** Constructor that takes a PHASED result in the form of AspectValues.
@@ -83,10 +76,9 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    */
   public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, List phasedresults) {
     isSuccess = success;
-    this.setAspectValueResults(rollupavs);
-    this.setPhasedAspectValueResults(phasedresults);
-    confrating=(float)rating;
-    isPhased = true;
+    setAspectValueResults((AspectValue[]) rollupavs.clone());
+    setPhasedAspectValueResults(phasedresults);
+    confrating = (float) rating;
   }
   
   /** Constructor that takes a result in the form of AspectValues (NON-PHASED).
@@ -97,10 +89,9 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    * @return AllocationResult
    */
   public AllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
-    isSuccess=success;
-    this.setAspectValueResults(aspectvalues);
-    confrating=(float) rating;
-    isPhased = false;
+    isSuccess = success;
+    setAspectValueResults((AspectValue[]) aspectvalues.clone());
+    confrating = (float) rating;
   }
 
   /**
@@ -110,30 +101,24 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    * is never phased.
    **/
   public AllocationResult(AllocationResult ar1, AllocationResult ar2) {
-    isSuccess = ar1.isSuccess() || ar2.isSuccess();
-    int[] mergedAspectTypes = new int[ar1.aspects.length + ar2.aspects.length];
-    double[] mergedAspectValues = new double[ar1.aspects.length + ar2.aspects.length];
-    int nAspects = ar1.aspects.length;
+    int len1 = ar1.avResults.length;
+    int len2 = ar2.avResults.length;
+    int nAspects = len1;
     float sumConfRating = ar1.confrating * nAspects;
-    System.arraycopy(ar1.aspects, 0, mergedAspectTypes, 0, nAspects);
-    System.arraycopy(ar1.rollupresults, 0, mergedAspectValues, 0, nAspects);
+    System.arraycopy(ar1.avResults, 0, avResults, 0, nAspects);
+    avResults = new AspectValue[len1 + len2];
   outer:
-    for (int i = 0; i < ar2.aspects.length; i++) {
-      int aspectType = ar2.aspects[i];
+    for (int i = 0; i < len2; i++) {
+      int aspectType = ar2.avResults[i].getAspectType();
       for (int j = 0; j < nAspects; j++) {
-        if (aspectType == mergedAspectTypes[j]) continue outer;
+        if (aspectType == avResults[j].getAspectType()) {
+          continue outer;       // Already have this AspectType
+        }
       }
       // New aspectType. Append to arrays
-      mergedAspectTypes[nAspects] = aspectType;
-      mergedAspectValues[nAspects] = ar2.rollupresults[i];
+      avResults[nAspects++] = ar2.avResults[i];
       sumConfRating += ar2.confrating;
-      nAspects++;
     }
-    aspects = new int[nAspects];
-    System.arraycopy(mergedAspectTypes, 0, aspects, 0, nAspects);
-    rollupresults = new double[nAspects];
-    System.arraycopy(mergedAspectValues, 0, rollupresults, 0, nAspects);
-    isPhased = false;
     confrating = sumConfRating / nAspects;
 
     if (ar1.auxqueries != null) {
@@ -145,17 +130,51 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
         if (mergedQueries[i] == null) mergedQueries[i] = ar2.auxqueries[i];
       }
     }
+    isSuccess = ar1.isSuccess() || ar2.isSuccess();
   }
-  
-  // memoize lookup of values
-  private int _lasttype=-1;
-  private int _lastindex=-1;
+
+  public Object clone() {
+    return new AllocationResult(this);
+  }
+
+  private AllocationResult(AllocationResult ar) {
+    confrating = ar.confrating;
+    isSuccess = ar.isSuccess;
+    avResults = (AspectValue[]) ar.avResults.clone();
+    if (ar.phasedavrs != null) {
+      phasedavrs = new ArrayList(ar.phasedavrs.size());
+      for (Iterator i = ar.phasedavrs.iterator(); i.hasNext(); ) {
+        AspectValue[] av = (AspectValue[]) i.next();
+        phasedavrs.add(av.clone());
+      }
+    }
+    if (ar.auxqueries != null) auxqueries = (String[]) ar.auxqueries.clone();
+  }
+
+  private void setRollup(int[] aspects, double[] result) {
+    AspectValue[] avs = new AspectValue[aspects.length];
+    for (int i = 0; i < avs.length; i++) {
+      if (aspects[i] == 14) throw new IllegalArgumentException("Creating AspectValue for DEMANDRATE");
+      avs[i] = new AspectValue(aspects[i], result[i]);
+    }
+    setAspectValueResults(avs);
+  }
+
+  private int getIndexOfType(int aspectType) {
+    if (aspectType == _lasttype) return _lastindex; // Use memoized value
+    for (int i = 0 ; i < avResults.length; i++) {
+      if (avResults[i].getAspectType() == aspectType) return i;
+    }
+    return -1;
+  }
 
   //AllocationResult interface implementation.
 
-  /** Give the result with respect to a given AspectType. 
+  /** Get the result with respect to a given AspectType. 
    * If the AllocationResult is phased, this method will return
    * the summary value of the given AspectType.
+   * <P> Warning!!! Not all AspectValues can be simply represented as
+   * a double. Use of this method with such AspectValues is undefined.
    * @param aspectType
    * @return double The result of a given dimension. For example, 
    * getValue(AspectType.START_TIME) returns the Task start time.
@@ -166,19 +185,19 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    * @see org.cougaar.domain.planning.ldm.plan.AspectType
    */
   public double getValue(int aspectType) {
-    synchronized (rollupresults) {
-      if (_lasttype==aspectType) 
-        return rollupresults[_lastindex]; // memoize
-      for (int i = 0 ; i < aspects.length; i++) {
-        if (aspects[i] == aspectType)
-          return rollupresults[i];
-      }
-      // didn't find it.
-      throw new IllegalArgumentException("AllocationResult.getValue(int "+aspectType+
-                                         ") - The AspectType is not defined by this Result.");
+    synchronized (avResults) {
+      if (_lasttype == aspectType) 
+        return avResults[_lastindex].getValue(); // return memoized value
+      int i = getIndexOfType(aspectType);
+      if (i >= 0)
+        return avResults[i].getValue();
     }
+    // didn't find it.
+    throw new IllegalArgumentException("AllocationResult.getValue(int "
+                                       + aspectType
+                                       + ") - The AspectType is not defined by this Result.");
   }
-  
+
   /** Quick check to see if one aspect is defined as opposed to
     * looking through the AspectType array.
     * @param aspectType  The aspect you are checking
@@ -186,14 +205,12 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
     * @see org.cougaar.domain.planning.ldm.plan.AspectType
     */
   public boolean isDefined(int aspectType) {
-    int[] definedaspects = aspects; // was cloning it! e.g. this.getAspectTypes();
-    for (int i = 0; i < definedaspects.length; i++) {
-      if (definedaspects[i] == aspectType) {
-        _lasttype=aspectType; _lastindex=i; // memoize lookup
-        return true;
-      }
+    int i = getIndexOfType(aspectType);
+    if (i >= 0) {
+      _lasttype = aspectType;
+      _lastindex = i; // memoize lookup
+      return true;
     }
-    // if we made it this far its not defined
     return false;
   }
     
@@ -213,12 +230,20 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    * result is phased.
    */
   public boolean isPhased() {
-    return isPhased;
+    return phasedavrs != null;
   }
 
-  private transient int[] _ats = null;
-  private synchronized void clear_ats() {
-    _ats=null;
+  // Memoized variables
+  private transient int[] _ats = null;// Array of aspect types
+  private transient int _lasttype=-1; // Type of last type to index conversion
+  private transient int _lastindex=-1; // Index of last type to index conversion
+  private transient double[] _rs = null;
+
+  private synchronized void clearMemos() {
+    _ats = null;
+    _lasttype=-1;
+    _lastindex=-1;
+    _rs = null;
   }
 
   /** A Collection of AspectTypes representative of the type and
@@ -227,29 +252,33 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    * @see org.cougaar.domain.planning.ldm.plan.AspectType   
    */
   public synchronized int[] getAspectTypes() {
-    if (_ats != null) return _ats;
-    _ats = (int[])aspects.clone();
-    return _ats;
-  }
-  
-  private transient double[] _rs = null;
-  private void clear_rs() {
-    synchronized (rollupresults) {
-      _rs = null;
+    synchronized (avResults) {
+      if (_ats != null) return _ats;
+      _ats = new int[avResults.length];
+      for (int i = 0; i < avResults.length; i++) {
+        _ats[i] = avResults[i].getAspectType();
+      }
+      return _ats;
     }
   }
-
+  
   /** A collection of doubles that represent the result for each
    * AspectType.  If the result is phased, the results are 
    * summarized.
+   * <P> Warning!!! Not all AspectValues can be simply represented as
+   * a double. Use of this method with such AspectValues is undefined.
    * @return double[]
    */
   public double[] getResult() {
-    synchronized (rollupresults) {
-      if (_rs != null) return _rs;
-      _rs = (double[])rollupresults.clone();
-      return _rs;
+    return convertToDouble(avResults);
+  }
+
+  private double[] convertToDouble(AspectValue[] avs) {
+    double[] result = new double[avs.length];
+    for (int i = 0; i < avs.length; i++) {
+      result[i] = avs[i].getValue();
     }
+    return result;
   }
   
   /** A collection of AspectValues that represent the result for each
@@ -262,45 +291,34 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
    **/
   public AspectValue[] getAspectValueResults() {
     // go ahead and return it if its defined, otherwise create it
-    int avrlength = 0;
-    if (aspectvalueresults != null) {
-      synchronized (aspectvalueresults) {
-        avrlength = aspectvalueresults.length;
-        if (avrlength > 0) {
-          return (AspectValue[]) aspectvalueresults.clone();
-        }
-      }
-    }
-
-    AspectValue[] newavrs;
-    synchronized (rollupresults) {
-      double[] res = rollupresults; //getResult();
-      int[] ats = aspects;  // getAspectTypes();
-      newavrs = new AspectValue[ats.length];
-      for (int x = 0; x < ats.length; x++) {
-        AspectValue newav = new AspectValue(ats[x], res[x]);
-        newavrs[x] = newav;
-      }
-    }
-    // set the newly created aspectvalue array for the next time
-    aspectvalueresults = newavrs;
-
-    return (AspectValue[])newavrs.clone();
+    return (AspectValue[]) avResults.clone();
   }
         
   /** A collection of arrays that represents each phased result.
    * If the result is not phased, use AllocationResult.getResult()
+   * <P> Warning!!! Not all AspectValues can be simply represented as
+   * a double. Use of this method with such AspectValues is undefined.
    * @return Enumeration{double[]}  The collection of double[]'s.
    */  
   public Enumeration getPhasedResults() {
-    return results.elements();
+    if (!isPhased()) throw new IllegalArgumentException("Not phased");
+    return new Enumeration() {
+      Iterator iter = phasedavrs.iterator();
+      public boolean hasMoreElements() {
+        return iter.hasNext();
+      }
+      public Object nextElement() {
+        AspectValue[] avs = (AspectValue[]) iter.next();
+        return convertToDouble(avs);
+      }
+    };
   }
   
   /** A List of Lists that represent each phased result in the form
    * of AspectValues.
    * If the result is not phased, use getAspectValueResults()
    * @return List  A List of Lists.  Each internal List represents
-   * a phased restult.
+   * a phased result.
    */
   public List getPhasedAspectValueResults() {
     return new ArrayList(phasedavrs);
@@ -359,59 +377,33 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
   private  void setSuccess(boolean success) {
     isSuccess = success;
   }
-
-  /** A Collection of AspectTypes representative of the type and
-   * order of the aspects in each the result.
-   * @param aspectTypes
-   */
-  private void setAspectTypes(int[] aspectTypes) {
-    _lasttype=-1;
-    aspects = (int[])aspectTypes.clone();
-    clear_ats();
-  }
-  
-  /** Set a single result for each aspect.  If the results are phased,
-   * provide the rollup results for each aspect.
-   * The order of the aspect results should appear in the
-   * same order as specified by setAspectTypes(Enum e).
-   * @param result  The doubles representing the result of each aspect.
-   */
-  private void setResult(double[] result) {
-    rollupresults = (double[])result.clone();
-    clear_rs();
-  }
   
   /** Set the aspectvalues results and also split apart the array to set
    * the aspecttype and result array.
    * @param aspectvalues  The AscpectValues representing the result of each aspect.
    */
   private void setAspectValueResults(AspectValue[] avresult) {
-    aspectvalueresults = (AspectValue[])avresult.clone();
-    // set up the AspectType array
-    int[] astypes = new int[avresult.length];
-    for (int avat = 0; avat < avresult.length; avat++ ) {
-      astypes[avat] = avresult[avat].getAspectType();
+    avResults = avresult;
+    for (int i = 0; i < avResults.length; i++) {
+      if (avResults[i].getAspectType() == 14) {
+        if (!(avResults[i] instanceof AspectRate)) {
+          throw new IllegalArgumentException("Aspect 14 is not AspectRate");
+        }
+      }
     }
-    setAspectTypes(astypes);
-
-    // set up the result array
-    double[] dresults = new double[avresult.length];
-    for ( int avr = 0; avr < avresult.length; avr++ ) {
-      dresults[avr] = avresult[avr].getValue();
-    }
-    setResult(dresults);
+    clearMemos();
   }
         
   /** A collection of arrays (double[]) that represents each phased result.
    * @param theresults  
    */
-  private void setPhasedResults(Enumeration theresults) {
-    results.removeAllElements();
-    while(theresults.hasMoreElements()) {
-      double[] phase = (double[]) theresults.nextElement();
-      results.addElement(phase);
+  private void setPhasedResults(Enumeration theResults) {
+    phasedavrs = new ArrayList();
+    while (theResults.hasMoreElements()) {
+      AspectValue[] phase = (AspectValue[]) theResults.nextElement();
+      phasedavrs.add(phase);
     }
-    isPhased = true;
+    phasedavrs.trimToSize();
   }
   
   /** A List of Lists that represent phased results in the form of
@@ -433,70 +425,37 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
      * @param anAllocationResult
      * @return boolean
      */
-  public boolean isEqual(AllocationResult testresult) {
-    if (this==testresult) return true; // quick success
-
-    if (! (this.isSuccess() == testresult.isSuccess() &&
-           this.isPhased() == testresult.isPhased() &&
-           this.getConfidenceRating() == testresult.getConfidenceRating() )) {
+  public boolean isEqual(AllocationResult that) {
+    if (this == that) return true; // quick success
+    if (that == null) return false; // quick fail
+    if (!(this.isSuccess() == that.isSuccess() &&
+          this.isPhased() == that.isPhased() &&
+          this.getConfidenceRating() == that.getConfidenceRating())) {
       return false;
     }
        
     //check the real stuff now!
     //check the aspect types
-    int[] traspects = testresult.aspects;
-    if (aspects.length != traspects.length) return false;
-    for ( int i = 0; i < aspects.length; i++ ) 
-      if ( aspects[i] != traspects[i] ) return false;
-         
     //check the summary results
-    synchronized (rollupresults) {
-      double[] testresults = testresult.rollupresults;
-      if (rollupresults.length == testresults.length) {
-        for (int j = 0; j < rollupresults.length; j++) {
-          if ( rollupresults[j] != testresults[j] ) return false;
+    synchronized (avResults) {
+      if (!Arrays.equals(this.avResults, that.avResults)) return false;
+      // check the phased results
+      if (isPhased()) {
+        Iterator i1 = that.phasedavrs.iterator();
+        Iterator i2 = this.phasedavrs.iterator();
+        while (i1.hasNext()) {
+          if (!i2.hasNext()) return false;
+          if (!Arrays.equals((AspectValue[]) i1.next(), (AspectValue[]) i2.next())) return false;
         }
-            
-        // check the phased results
-        if (isPhased()) {
-          Enumeration e = testresult.getPhasedResults();
-          Vector testpr = new Vector();
-          while (e.hasMoreElements()) {
-            double[] testarr = (double[]) e.nextElement();
-            testpr.addElement(testarr);
-          }
-          if (results.size() == testpr.size()) {
-            for (int k = 0; k < results.size(); k++) {
-              double[] thisarray = (double[]) results.elementAt(k);
-              double[] testarray = (double[]) testpr.elementAt(k);
-              if ( thisarray.length == testarray.length ) {
-                for (int m = 0; m < thisarray.length; m++) {
-                  if( thisarray[m] != testarray[m] ) return false;
-                }
-              }
-            }
-          }
-        }
+        if (i2.hasNext()) return false;
       }
     }
 
     // check the aux queries
     
-    String[] taux = testresult.auxqueries;
+    String[] taux = that.auxqueries;
     if (auxqueries != taux) {
-      if (taux == null || auxqueries == null) return false;
-      int l = auxqueries.length;
-      int tl = taux.length;
-      if (l != tl) return false;
-      for (int i = 0; i<l; i++) {
-        String s = auxqueries[i];
-        String ts = taux[i];
-        if (s==null) {
-          if (ts != null) return false;
-        } else {
-          if (! s.equals(ts)) return false;
-        }
-      }
+      if (!Arrays.equals(taux, auxqueries)) return false;
     }
 
     // must be equals...
@@ -506,70 +465,72 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
   // added to support AllocationResultBeanInfo
 
   public String[] getAspectTypesAsArray() {
-    int[] aspectTypes = aspects;
-    String[] aspectStrings = new String[aspectTypes.length];
-    for (int i = 0; i < aspectTypes.length; i++)
-      aspectStrings[i] =  AspectValue.aspectTypeToString(aspectTypes[i]);
+    String[] aspectStrings = new String[avResults.length];
+    for (int i = 0; i < aspectStrings.length; i++)
+      aspectStrings[i] =  AspectValue.aspectTypeToString(avResults[i].getAspectType());
     return aspectStrings;
   }
 
   public String getAspectTypeFromArray(int i) {
-    int[] aspectTypes = aspects;
-    if (i < aspectTypes.length)
-      return AspectValue.aspectTypeToString(aspectTypes[i]);
-    else
-      throw new IllegalArgumentException("AllocationResult.getAspectType(int " + i + " not defined.");
+    synchronized (avResults) {
+      if (i < 0 || i >= avResults.length)
+        throw new IllegalArgumentException("AllocationResult.getAspectType(int " + i + " not defined.");
+      return AspectValue.aspectTypeToString(avResults[i].getAspectType());
+    }
   }
 
   public String[] getResultsAsArray() {
-    synchronized (rollupresults) {
-      double[] rresults = rollupresults; //getResult();
-      int[] aspectTypes = aspects;
-      String[] resultStrings = new String[rresults.length];
-      for (int i = 0; i < aspectTypes.length; i++)
-      if (aspectTypes[i] == AspectType.START_TIME || 
-	  aspectTypes[i] == AspectType.END_TIME) {
-	Date d = new Date((long)rresults[i]);
-	resultStrings[i] = d.toString();
-      } else {
-        resultStrings[i] = String.valueOf(rresults[i]);
+    synchronized (avResults) {
+      String[] resultStrings = new String[avResults.length];
+      for (int i = 0; i < resultStrings.length; i++) {
+        resultStrings[i] = getResultFromArray(i);
       }
       return resultStrings;
     }
   }
 
   public String getResultFromArray(int i) {
-    synchronized (rollupresults) {
-      double[] rresults = rollupresults; //getResult();
-      int[] aspectTypes = aspects;
-      if (i < rresults.length) {
-        if (aspectTypes[i] == AspectType.START_TIME || 
-            aspectTypes[i] == AspectType.END_TIME) {
-          Date d = new Date((long)rresults[i]);
-          return d.toString();
-        } else {
-          return String.valueOf(rresults[i]);
-        }
+    synchronized (avResults) {
+      if (i < 0 || i >= avResults.length)
+        throw new IllegalArgumentException("AllocationResult.getAspectType(int " + i + " not defined.");
+      int type = avResults[i].getAspectType();
+      double value = avResults[i].getValue();
+      if (type == AspectType.START_TIME || 
+	  type == AspectType.END_TIME) {
+	Date d = new Date((long) value);
+	return d.toString();
       } else {
-        throw new IllegalArgumentException("AllocationResult.getResultFromArray(int " + i + " not defined.");
+        return String.valueOf(value);
       }
     }
   }
 
-  // returns an array of an array of doubles
+  /**
+   * Return phased results.
+   * <P> Warning!!! Not all AspectValues can be simply represented as
+   * a double. Use of this method with such AspectValues is undefined.
+   * @return an array of an array of doubles
+   **/
   public double[][] getPhasedResultsAsArray() {
-    double[][] d = new double[results.size()][];
-    for (int i = 0; i < results.size(); i++)
-      d[i] = (double[])results.elementAt(i);
+    int len = phasedavrs.size();
+    double[][] d = new double[len][];
+    for (int i = 0; i < len; i++) {
+      AspectValue[] avs = (AspectValue[]) phasedavrs.get(i);
+      d[i] = convertToDouble(avs);
+    }
     return d;
   }
 
+  /**
+   * Return a particular phase of a phased result as an array of doubles.
+   * <P> Warning!!! Not all AspectValues can be simply represented as
+   * a double. Use of this method with such AspectValues is undefined.
+   * @return the i-th phase as double[]
+   **/
   public double[] getPhasedResultsFromArray(int i) {
-    if (i < results.size()) {
-      return (double[])results.elementAt(i);
-    } else {
-      return null;
-    }
+    if (!isPhased()) return null;
+    if (i < 0 || i >= phasedavrs.size()) return null;
+    return convertToDouble((AspectValue[]) phasedavrs.get(i));
   }
     
   private String[] assureAuxqueries() {
@@ -579,6 +540,33 @@ public class AllocationResult implements AspectType, AuxiliaryQueryType, Seriali
     return auxqueries;
   }
 
+  private void appendAVS(StringBuffer buf, AspectValue[] avs) {
+    buf.append('[');
+    for (int i = 0; i < avs.length; i++) {
+      if (i > 0) buf.append(",");
+      buf.append(avs[i]);
+    }
+    buf.append(']');
+  }
+
+  public String toString() {
+    StringBuffer buf = new StringBuffer();
+    buf.append("AllocationResult[isSuccess=");
+    buf.append(isSuccess);
+    buf.append(", confrating=");
+    buf.append(confrating);
+    appendAVS(buf, avResults);
+    if (isPhased()) {
+      for (int i = 0, n = phasedavrs.size(); i < n; i++) {
+        buf.append("Phase ");
+        buf.append(i);
+        buf.append("=");
+        appendAVS(buf, (AspectValue[]) phasedavrs.get(i));
+      }
+    }
+    buf.append("]");
+    return buf.toString();
+  }
 
     // for unit testing only
     /*public static void main(String args[]) {
