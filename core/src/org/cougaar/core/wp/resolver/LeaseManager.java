@@ -55,7 +55,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 
 /**
- * This class watches for bind/unbind requests and maintains
+ * This component watches for bind/unbind requests and maintains
  * the leases in the server.
  */
 public class LeaseManager 

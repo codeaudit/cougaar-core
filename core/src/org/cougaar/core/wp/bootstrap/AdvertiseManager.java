@@ -40,8 +40,10 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.IdentityHashSet;
 
 /**
- * This component coordinates the advertisers and forwards local
- * binding changes (from the LeaseManager) to the clients.
+ * This component runs in white pages servers to advertise
+ * locally-bound {@link Bundle}s from the {@link
+ * org.cougaar.core.wp.resolver.LeaseManager} through the
+ * advertisers (rmi, http, multicast, etc).
  */
 public class AdvertiseManager
 extends GenericStateModelAdapter

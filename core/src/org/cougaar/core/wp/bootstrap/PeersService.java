@@ -33,13 +33,14 @@ import org.cougaar.core.mts.MessageAddress;
 /**
  * This service is used by servers to locate theirs peers, which is
  * required for replication.
+ * <p> 
+ * The service requestor can implement the Client API.
  */
 public interface PeersService extends Service {
 
   /** Get the current server addresses. */
   Set getServers();
 
-  /** The service requestor can implement this API */
   interface Client {
     void add(MessageAddress addr);
     void addAll(Set s);

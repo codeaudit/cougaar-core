@@ -31,7 +31,7 @@ import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.SimpleMessageAttributes;
 
 /**
- * Utility code to attach an MTS timeout attribute to a message
+ * A utility class to attach an MTS timeout attribute to a message
  * address.
  */
 public final class MessageTimeoutUtils {

@@ -57,8 +57,10 @@ import org.cougaar.core.wp.resolver.RecordIsValid;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is the single-point white pages server, which is the
- * authority for all naming zones.
+ * This component is the white pages server implementation.
+ * <p>
+ * This implementation supports replication but not naming
+ * hierarchies.
  * <p>
  * Refactor me!
  */

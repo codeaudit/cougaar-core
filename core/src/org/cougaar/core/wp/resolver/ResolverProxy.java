@@ -38,8 +38,8 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is an optional proxy to the WhitePagesService resolver
- * that obtains the local agent's name and tags all requests
+ * This component an optional proxy to the {@link WhitePagesService}
+ * resolver that obtains the local agent's name and tags all requests
  * with that name.
  * <p>
  * This should be loaded into all agents.  All WhitePagesService

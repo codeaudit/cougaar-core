@@ -30,7 +30,8 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.service.wp.Response;
 
 /**
- * Cache interface for the Resolver. 
+ * This service is the {@link CacheManager}'s interface for the 
+ * {@link Resolver} for cache lookups.
  */
 public interface CacheService extends Service {
 

@@ -32,6 +32,8 @@ import org.cougaar.core.component.Service;
 /**
  * This service is used by discovery pollers to listen for 
  * start/stop requests and pass their findings to the cache. 
+ * <p> 
+ * The service requestor must implement the Client API.
  */
 public interface DiscoveryService extends Service {
 
@@ -47,7 +49,6 @@ public interface DiscoveryService extends Service {
   void change(String name, Bundle bundle);
   void remove(String name, Bundle bundle);
 
-  /** The service requestor must implement this API */
   interface Client {
     /** Start searching */
     void startSearching();

@@ -28,17 +28,15 @@ package org.cougaar.core.wp;
 
 
 /**
- * Utility class to format longs as:<pre>
- *    TIME{[+-]RELATIVE_TO_NOW}
+ * A utility class to format longs as:<pre>
+ *    TIMESTAMP{[+-]RELATIVE_TO_NOW}
  * </pre>.
  * <p>
  * For example, if t=123 and now=300, then <tt>toString(t,now)</tt>
  * will return:<pre>
  *    123{-177}
  * </pre>
- * <p>
- * One exception is when t=0, in which case the method will
- * return:<pre>
+ * but if t=0 the method will return:<pre>
  *    0
  * </pre>
  */

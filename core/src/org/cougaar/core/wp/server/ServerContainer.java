@@ -38,7 +38,8 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * An empty container for the white pages server components.
+ * This component is an empty container for the white pages server
+ * components.
  */
 public class ServerContainer
 extends ContainerSupport

@@ -30,8 +30,8 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the ping transport layer of the white pages client,
- * which is used by the white pages server selector.
+ * This service is advertised by the {@link ClientTransport} for the
+ * {@link SelectManager} to send "ping" messages to white pages servers.
  * <p>
  * This API hides the MTS and messaging details.  Also, it
  * ensures that the client's return address is sent to the
@@ -46,7 +46,6 @@ public interface PingService extends Service {
    */
   void ping(MessageAddress addr, long deadline);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Receive the answer to a modify request.

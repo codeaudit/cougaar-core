@@ -39,11 +39,12 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is the client-side white pages resolver, which advertises
- * the WhitePagesService.
+ * This component is the front-end for the client-side white pages
+ * resolver, which advertises the {@link WhitePagesService}.
  * <p>
- * This is really just a front-end to the CacheManager's
- * LookupService and the LeaseManager's ModifyService.
+ * This is really just a front-end to the {@link CacheManager}'s
+ * {@link LookupService} and the {@link LeaseManager}'s {@link
+ * ModifyService}.
  */
 public class Resolver
 extends GenericStateModelAdapter

@@ -44,7 +44,8 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * Base class for a MessageSwitchService client.
+ * This component is a base class that handles {@link
+ * MessageSwitchService} details for the {@link ClientTransport}.
  * <p>
  * This is nearly generic; with a bit more work it could be a
  * useful generic base class. 

@@ -42,10 +42,9 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This component is an optional base class for (server) bootstrap
- * discoverers.
+ * This component is a base class for (client) bootstrap discoverers.
  * <p>
- * Per-protocol subclasses call {@link addPoller} to create
+ * Per-protocol subclasses call {@link #addPoller} to create
  * an inner Poller class per bootstrap location (e.g. a
  * poller for URL http://foo.com:123 and http://bar.com:456).
  * These pollers are told to start/stop according to the
@@ -153,7 +152,7 @@ implements Component
   /**
    * Get the delay for the initial lookup, where subsequent failed
    * lookups double the delay until it reaches the
-   * {@link #getMaxLookupDelay}.
+   * {@link #getMaxDelay}.
    */
   protected long getMinDelay() {
     return MIN_DELAY;

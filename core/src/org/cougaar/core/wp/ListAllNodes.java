@@ -34,7 +34,8 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 
 /**
- * Utility class to recursively find all nodes in the WP.
+ * A <i>non-scalable</i> utility class to recursively find all nodes
+ * in the white pages.
  * <p>
  * Not scalable, so the methods of this class are deprecated.
  */

@@ -53,7 +53,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * This is the white pages client-side cache.
+ * This component is the white pages client-side cache.
  * <p>
  * Features:
  * <ul>

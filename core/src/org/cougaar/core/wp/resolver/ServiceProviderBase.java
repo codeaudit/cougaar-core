@@ -31,7 +31,7 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 
 /**
- * Base class for a ServiceProvider with registered clients.
+ * A base class for a ServiceProvider with registered clients.
  * <p> 
  * This could be moved into org.cougaar.core.component.
  */

@@ -28,10 +28,7 @@ package org.cougaar.core.wp.resolver;
 
 
 /**
- * This is a service requestor interface that is used by the
- * ResolverProxy to identify the agent requesting WhitePagesService.
- * <p>
- * Only the ResolverProxy should use this class.
+ * Optional client interface used by the {@link ResolverProxy}.
  */
 public interface ResolverClient {
 

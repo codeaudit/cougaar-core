@@ -49,15 +49,17 @@ import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.servlet.ComponentServlet;
 
 /**
- * An option servlet for viewing and altering the white pages.
+ * This component loads the optional "/wp" servlet for viewing and
+ * altering the white pages.
  * <p>
  * Load into any agent:<pre>
- *   plugin = org.cougaar.core.wp.WhitePagesServlet(/wp)
+ *   &lt;component class="org.cougaar.core.wp.WhitePagesServlet"&gt;
+ *     &lt;argument&gt;/wp&lt;/argument&gt;
+ *   &lt;/component&gt;
  * </pre>
  * <p>
- * FIXME: document URL parameters!
- *   For starters, just click on "submit" to do a recursive
- *   white pages dump.
+ * For starters, just click on "submit" to do a recursive
+ * white pages dump.
  */
 public class WhitePagesServlet extends ComponentServlet {
 

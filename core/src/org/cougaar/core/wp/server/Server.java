@@ -30,8 +30,13 @@ import org.cougaar.core.component.Component;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is a dummy class that tells the XSL template parser to
- * load the standard white pages server components. 
+ * This component is a dummy class that tells the XSL template parser
+ * to load the standard white pages server components (server and
+ * bootstrap advertisers).
+ * <p>
+ * The "$CIP/configs/common/SimpleAgent.xsl" transforms this component
+ * into the list of standard white pages server components.  It acts
+ * as short-hand for specifying this component list in the XML.
  */
 public class Server
 extends GenericStateModelAdapter

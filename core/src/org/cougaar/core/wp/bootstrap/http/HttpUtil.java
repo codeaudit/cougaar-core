@@ -35,7 +35,7 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.Bundle;
 
 /**
- * Utility methods. 
+ * HTTP utility methods. 
  */
 public final class HttpUtil {
 

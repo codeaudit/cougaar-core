@@ -31,13 +31,14 @@ import org.cougaar.core.component.Service;
 
 /**
  * This service provides the initial {@link Bundle} configuration. 
+ * <p> 
+ * The service requestor can implement the Client API.
  */
 public interface ConfigService extends Service {
 
   /** Get the current config bundles. */
   Map getBundles();
 
-  /** The service requestor can implement this API */
   interface Client {
     // blackboard-like tracking
     void add(Bundle bundle);

@@ -42,7 +42,20 @@ import org.cougaar.core.wp.bootstrap.ConfigService;
 import org.cougaar.core.wp.bootstrap.Util;
 
 /**
- * This component advertises bundles through an RMI registry.
+ * This component advertises bundles through an RMI registry stub.
+ * <p>
+ * It looks in the {@link ConfigService} for config entries of type
+ * "-RMI_REG" and scheme "rmi", e.g.<pre>
+ *   X={-RMI_REG=rmi://test.com:8888/Y}
+ * </pre>
+ * and if the localhost is "test.com" and the local agent is "Y"
+ * (or this path is "*") then this component attempts to create
+ * the RMI registry and bind "COUGAAR_NAMING/X" in it.  The bound
+ * {@link RMIAccess} stub responds to "getBundles()" with the bundles
+ * tracked by the {@link
+ * org.cougaar.core.wp.bootstrap.AdvertiseService} (i.e. locally bound
+ * leases).  These bundles are filtered for just agent "Y" (or no
+ * filtering if this path is "*").
  */
 public class RMIAdvertise
 extends AdvertiseBase

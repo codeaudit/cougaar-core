@@ -41,7 +41,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component provides the {@link PeersService}, to tell the
- * server about its peer servers.
+ * server about their peer servers.
  * <p>
  * This is a very simple implementation that is based on the
  * ConfigService.  This could be enhanced to discover peers.

@@ -48,7 +48,7 @@ import org.cougaar.core.util.UID;
 import sun.misc.BASE64Decoder;
 
 /**
- * Decode Bundles and Certs from encoded Strings.
+ * Decode {@link Bundle}s and {@link Cert}s from encoded text.
  *
  * @see BundleEncoder 
  */

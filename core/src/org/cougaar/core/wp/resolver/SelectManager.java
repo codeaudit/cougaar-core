@@ -51,12 +51,13 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 
 /**
- * This class advertises the SelectService, which controls the
- * ClientTransport's server selection.
+ * This component advertises the {@link SelectService}, which controls the
+ * {@link ClientTransport}'s server selection and uses the {@link
+ * BootstrapService} to initialize the cache.
  * <p>
- * This implementation uses the BootstrapService to discover
- * servers and the PingService to send ping messages to the found
- * servers, measuring the round-trip-time (RTT).  Once we have a
+ * This implementation uses the {@link BootstrapService} to discover
+ * servers and the {@link PingService} to send ping messages to the
+ * found servers, measuring the round-trip-time (RTT).  Once we have a
  * server, we stop the discovery and use the found servers, selecting
  * between them based upon the RTT.  If the best RTT becomes
  * unacceptably low, we rediscover and re-ping new servers.

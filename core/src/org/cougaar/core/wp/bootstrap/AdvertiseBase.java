@@ -44,9 +44,9 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This component is a base class for (client) bootstrap advertisers.
+ * This component is a base class for (server) bootstrap advertisers.
  * <p>
- * Per-protocol subclasses call {@link addAdvertiser} to create
+ * Per-protocol subclasses call {@link #addAdvertiser} to create
  * an inner Advertiser class per bootstrap location (e.g. an
  * advertiser for URL http://foo.com:123 and http://bar.com:456).
  * These advertisers are told to start/stop according to the

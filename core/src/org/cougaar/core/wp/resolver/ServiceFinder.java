@@ -34,7 +34,7 @@ import org.cougaar.core.component.ServiceListener;
 import org.cougaar.core.component.ServiceRevokedListener;
 
 /**
- * Utility class to hide late-binding service lookups.
+ * A utility class to hide late-binding {@link Service} lookups.
  * <p> 
  * This could be moved into org.cougaar.core.component.
  */

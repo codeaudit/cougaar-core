@@ -32,7 +32,8 @@ import org.cougaar.core.wp.resolver.Lease;
 import org.cougaar.core.wp.resolver.Record;
 
 /**
- * Data forwarded between servers.
+ * Data ({@link Record}s) replicated between servers through
+ * "forward"ing.
  */
 public final class Forward implements Serializable {
 
@@ -65,7 +66,7 @@ public final class Forward implements Serializable {
 
   /**
    * The record, which may be null.
-   *
+   * <p>
    * If the record is null then the lease was renewed based upon
    * the UID.  If the recipient doesn't know the matching record
    * then it should send back a LeaseNotKnown response.

@@ -30,9 +30,10 @@ import java.io.Serializable;
 import org.cougaar.core.util.UID;
 
 /**
- * An "unknown lease uid" response from the ModifyService,
- * indicating that an attempt to renew a lease failed because
- * the server doesn't know a lease with the specified UID.
+ * An "unknown lease uid" response from the {@link ClientTransport}'s
+ * {@link ModifyService}, indicating to the {@link LeaseManager} that
+ * an attempt to renew a lease failed because the server doesn't know
+ * a lease with the specified UID.
  * <p>
  * If a client attempts to renew a Lease by passing the UID, and
  * the server doesn't know the UID, then this response is

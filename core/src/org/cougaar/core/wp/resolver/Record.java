@@ -31,8 +31,8 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
 /**
- * A data response from a successful LookupService lookup, or a
- * request parameter to an ModifyService lease renewal.
+ * A data response from a successful {@link LookupService} lookup,
+ * or a request parameter to a {@link ModifyService} lease renewal.
  * <p>
  * The UID is specific to this view of the data.  If the server
  * changes the data then the server-side UID for the record will

@@ -31,8 +31,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the forwarding (replicate) transport layer of the white
- * pages server, which is used to broadcast client modifications.
+ * This service sends "forward"s to replicate leases between servers.
  * <p>
  * This API hides the MTS and messaging details.  In particular,
  * the transport selects which WP server(s) the lookups should
@@ -80,7 +79,6 @@ public interface ForwardService extends Service {
    */
   void forward(MessageAddress target, Map m, long ttd);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /** Receive the answer to a forward request. */
     void forwardAnswer(MessageAddress addr, long baseTime, Map m);

@@ -52,8 +52,21 @@ import org.cougaar.core.wp.bootstrap.Util;
  * This component advertises bundles through HTTP by using the
  * {@link ServletService}.
  * <p>
+ * It looks in the {@link ConfigService} for config entries of type
+ * "-HTTP_REG" and scheme "http", or "-HTTPS_REG" and "https",
+ * e.g.<pre>
+ *   X={-HTTP_REG=http://test.com:8800}
+ * </pre>
+ * and if the localhost is "test.com" and the local {@link
+ * ServletService} port is "8800" then this component registers in
+ * the {@link ServletService} as "/wp_bootstrap".  The bound
+ * {@link Servlet} responds to "doGet" request with text-encoded
+ * bundles tracked by the {@link
+ * org.cougaar.core.wp.bootstrap.AdvertiseService} (i.e. locally bound
+ * leases).
+ * <p> 
  * Another possibility is to push bundles to a remote server, using
- * a URLConnection.
+ * a {@link java.net.URLConnection}.
  */
 public class HttpAdvertise
 extends AdvertiseBase

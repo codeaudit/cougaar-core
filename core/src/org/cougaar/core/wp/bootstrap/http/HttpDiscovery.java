@@ -49,6 +49,17 @@ import org.cougaar.core.wp.bootstrap.DiscoveryBase;
 /**
  * This component discovers bundles through HTTP by using a {@link
  * URLConnection}.
+ * <p> 
+ * It looks in the {@link ConfigService} for config entries of type
+ * "-HTTP_REG" and scheme "http", or "-HTTPS_REG" and "https",
+ * e.g.<pre>
+ *   X={-HTTP_REG=http://test.com:8800}
+ * </pre>
+ * and then polls the HTTP server on that host:port for a page
+ * that lists {@link Bundle}s encoded as text.  If the URL lacks
+ * a path then a default path of "/$~/wp_bootstrap" is assumed.
+ * These bundles are then copied into the {@link 
+ * org.cougaar.core.wp.bootstrap.DiscoveryService}.
  */
 public class HttpDiscovery
 extends DiscoveryBase

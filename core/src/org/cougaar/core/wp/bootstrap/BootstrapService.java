@@ -31,6 +31,8 @@ import org.cougaar.core.component.Service;
 /**
  * This service is used by the client's server selection to
  * start/stop the discovery components. 
+ *
+ * @see org.cougaar.core.wp.resolver.SelectManager 
  */
 public interface BootstrapService extends Service {
 

@@ -30,7 +30,10 @@ import java.util.Map;
 import org.cougaar.core.component.Service;
 
 /**
- * This service provides {@link Bundle}s for local agents. 
+ * This service provides {@link Bundle}s for local agents bound
+ * in the {@link org.cougaar.core.wp.resolver.LeaseManager}.
+ * <p> 
+ * The service requestor can implement the Client API.
  */
 public interface BundleService extends Service {
 
@@ -43,7 +46,6 @@ public interface BundleService extends Service {
    */
   Map getAllBundles();
 
-  /** The service requestor can implement this API */
   interface Client {
     // blackboard-like tracking
     void add(String name, Bundle bundle);

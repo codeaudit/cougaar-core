@@ -30,8 +30,10 @@ import java.util.Map;
 import org.cougaar.core.component.Service;
 
 /**
- * This service is used by advertises to listen for local agent
- * bind/unbind changes. 
+ * This service is used by advertisers to listen for local agent
+ * bind/unbind changes.
+ * <P> 
+ * The service requestor can implement the Client API.
  */
 public interface AdvertiseService extends Service {
 
@@ -44,7 +46,6 @@ public interface AdvertiseService extends Service {
    */
   Map getAllBundles();
 
-  /** The service requestor can implement this API */
   interface Client {
     // blackboard-like tracking
     void add(String name, Bundle bundle);

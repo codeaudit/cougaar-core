@@ -51,13 +51,10 @@ import org.cougaar.util.RarelyModifiedList;
 /**
  * This component sends and receives messages for the resolver.
  * <p>
- * This is the last stop for the resolver -- the request wasn't
- * in the cache and can't be batched with other already-pending
+ * This is the last outgoing stop for the resolver -- the request
+ * wasn't in the cache and can't be batched with other already-pending
  * requests.
  * <p>
- * This component is responsible for the resolver-side hierarchy
- * traversal and replication.
- *
  * All of these properties are also component parameters by
  * removing the "org.cougaar.core.wp.resolver.transport."
  * prefix: 

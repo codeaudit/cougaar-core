@@ -32,7 +32,7 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.Bundle;
 
 /**
- * Utility methods. 
+ * Multicast utility methods. 
  */
 public final class MulticastUtil {
 

@@ -30,8 +30,8 @@ import java.util.Map;
 import org.cougaar.core.component.Service;
 
 /**
- * This is the modify transport layer of the white pages client,
- * which is used by the white pages lease manager.
+ * This service is the {@link ClientTransport}'s interface for the
+ * {@link LeaseManager} for sending bind/unbind messages.
  * <p>
  * This API hides the MTS and messaging details.  In particular,
  * the transport selects which WP server(s) the modifications should
@@ -70,7 +70,6 @@ public interface ModifyService extends Service {
    */
   void modify(Map m);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Receive the answer to a modify request.

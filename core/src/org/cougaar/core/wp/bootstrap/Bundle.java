@@ -33,14 +33,16 @@ import java.util.Map;
 import org.cougaar.core.util.UID;
 
 /**
- * Bootstrap data for a single agent, including its AddressEntries.
+ * Bootstrap data for a single agent, including its {@link 
+ * org.cougaar.core.service.wp.AddressEntry}s.
  * <p>
- * The UID is an optional tag to track version changes.  If the
- * server changes the data then the server-side UID for the bundle
+ * The {@link UID} is an optional tag to track version changes.  If
+ * the server changes the data then the server-side UID for the bundle
  * will also change.
  * <p>
- * This class mirrors the resolver's Record class, but is kept
- * separate to allow greater flexability.
+ * This class mirrors the resolver's {@link
+ * org.cougaar.core.wp.resolver.Record} class, but is kept separate
+ * to allow greater flexability.
  */
 public final class Bundle implements Serializable {
 

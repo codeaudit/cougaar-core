@@ -38,7 +38,8 @@ import java.util.Set;
 import org.cougaar.core.service.wp.WhitePagesService;
 
 /**
- * Utility class to recursively find all agents in the WP.
+ * A <i>non-scalable</i> utility class to recursively find all agents
+ * in the white pages.
  * <p>
  * Not scalable, so the methods of this class are deprecated.
  */

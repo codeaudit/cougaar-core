@@ -31,9 +31,10 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
 /**
- * A data response from a successful LookupService lookup, which
- * validates the client's cached Record and extends the TTL for
- * the cached data.
+ * A data response from a successful {@link ClientTransport} {@link
+ * LookupService} lookup to the {@link CacheManager}, which
+ * validates the client's cached {@link Record} and extends the TTL
+ * for the cached data.
  * <p>
  * This is only used if the client passed a non-null UID in the
  * lookup.

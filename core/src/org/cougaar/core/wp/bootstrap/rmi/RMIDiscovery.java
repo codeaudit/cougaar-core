@@ -41,7 +41,16 @@ import org.cougaar.core.wp.bootstrap.ConfigService;
 import org.cougaar.core.wp.bootstrap.DiscoveryBase;
 
 /**
- * This component discovers bundles through RMI registry lookups.
+ * This component discovers bundles through RMI registry polling.
+ * <p>
+ * It looks in the {@link ConfigService} for config entries of type
+ * "-RMI_REG" and scheme "rmi", e.g.<pre>
+ *   X={-RMI_REG=rmi://test.com:8888/Y}
+ * </pre>
+ * and then polls the RMI registry on that host:port for an RMI
+ * stub with name "COUGAAR_NAMING/X" for agent "Y"'s bundles.
+ * These bundles are then copied into the {@link 
+ * org.cougaar.core.wp.bootstrap.DiscoveryService}.
  */
 public class RMIDiscovery
 extends DiscoveryBase

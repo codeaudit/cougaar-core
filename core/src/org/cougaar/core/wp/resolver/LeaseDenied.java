@@ -30,7 +30,8 @@ import java.io.Serializable;
 import org.cougaar.core.util.UID;
 
 /**
- * A "lease denied" response from the ModifyService, indicating
+ * A "lease denied" response from the {@link ClientTransport}'s
+ * {@link ModifyService}, indicating to the {@link LeaseManager}
  * a failed bind or lease renewal.
  * <p>
  * The UID will match the UID of the Record that has been denied.

@@ -30,8 +30,8 @@ import java.util.Map;
 import org.cougaar.core.component.Service;
 
 /**
- * This is the lookup transport layer of the white pages client,
- * which is used by the white pages cache.
+ * This service is the {@link ClientTransport}'s interface to the
+ * {@link CacheManager} for lookup messaging.
  * <p>
  * This API hides the MTS and messaging details.  In particular,
  * the transport selects which WP server(s) the lookups should
@@ -57,7 +57,6 @@ public interface LookupService extends Service {
    */
   void lookup(Map m);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Respond to a lookup request.

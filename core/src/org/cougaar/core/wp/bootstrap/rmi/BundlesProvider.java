@@ -29,7 +29,8 @@ package org.cougaar.core.wp.bootstrap.rmi;
 import java.util.Map;
 
 /**
- * Local interface for providing Bundles.
+ * Local interface for providing {@link
+ * org.cougaar.core.wp.bootstrap.Bundle}s.
  */
 public interface BundlesProvider {
   // Map<String, Bundle>

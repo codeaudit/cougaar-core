@@ -31,18 +31,20 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This service is used by the {@link ClientTransport} to select
- * the client-side's server. 
+ * This service is used by the {@link
+ * org.cougaar.core.wp.resolver.SelectManager} to list potental
+ * servers.
  * <p>
  * Currently these servers are found through the bootstrap, but
  * this could be enhanced to allow server-side control. 
+ * <p> 
+ * The service requestor can implement the Client API.
  */
 public interface ServersService extends Service {
 
   /** Get the current server addresses. */
   Set getServers();
 
-  /** The service requestor can implement this API */
   interface Client {
     void add(MessageAddress addr);
     void addAll(Set s);

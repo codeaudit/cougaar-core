@@ -33,8 +33,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Map;
 
 /**
- * Implementation of {@link RMIAccess}, which forwards requests to
- * a {@link BundlesProvider}.
+ * An implementation of {@link RMIAccess}, which simply forwards
+ * method calls to the {@link BundlesProvider}.
  */
 public class RMIAccessImpl 
 extends UnicastRemoteObject

@@ -31,7 +31,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the "ping" transport layer of the white pages server.
+ * This service receives "ping"s from clients.
  * <p> 
  * The service requestor must implement the Client API.
  */
@@ -41,7 +41,6 @@ public interface PingAckService extends Service {
   void pingAnswer(
       MessageAddress clientAddr, long clientTime, Map m);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /** Handle a "ping" request. */
     void ping(

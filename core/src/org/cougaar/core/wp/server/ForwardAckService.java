@@ -31,7 +31,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the "forward" transport layer of the white pages server.
+ * This service sends "forward-ack"s.
  * <p>
  * This API mirrors the client's ForwardService, and is similar
  * to the ModifyAckService.
@@ -46,7 +46,6 @@ public interface ForwardAckService extends Service {
   void forwardAnswer(
       MessageAddress clientAddr, long clientTime, Map m);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /** Handle a "forward" request. */
     void forward(

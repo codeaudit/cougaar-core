@@ -56,6 +56,26 @@ import org.cougaar.core.wp.bootstrap.ConfigService;
 /**
  * This component advertises bundles by listening for UDP multicast
  * requests and replying by UDP. 
+ * <p> 
+ * It looks in the {@link ConfigService} for config entries of type
+ * "-MULTICAST_REG" and scheme "multicast", or "-MCAST_REG" and
+ * "mcast", e.g.<pre>
+ *   X={-MULTICAST_REG=multicast://224.22.165.34:7777}
+ * </pre>
+ * and creates a UDP multicast listener for that group:port and
+ * replies to<pre>
+ *   (Cougaar-ARP reply-to=HOST:PORT)
+ * </pre>
+ * requests with  text-encoded bundles tracked by the {@link
+ * org.cougaar.core.wp.bootstrap.AdvertiseService} (i.e. locally bound
+ * leases), e.g.<pre>
+ *   (Cougaar-RARP from=test.com:9876 bundles:\
+ *     A={-RMI=rmi://host:port/objId,\
+ *   }\
+ *   #)
+ * </pre>
+ * <p>
+ * Note that there's currently no filtering of the local leases.
  */
 public class MulticastAdvertise
 extends AdvertiseBase

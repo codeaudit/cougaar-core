@@ -43,7 +43,7 @@ import org.cougaar.core.util.UID;
 import sun.misc.BASE64Encoder;
 
 /**
- * Encode Bundles and Certs to Strings.
+ * Encode {@link Bundle}s and {@link Cert}s to encoded text.
  *
  * @see BundleDecoder
  */

@@ -30,8 +30,9 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the "server selection service" that the client uses to
- * select a white pages server.
+ * This service is the "server selection service" advertised by
+ * the {@link SelectManager} that the {@link ClientTransport} uses
+ * to select a white pages server.
  * <p>
  * The primary job of this service is to locate servers and select
  * the best one.  The {@link #update} feedback can be used to
@@ -67,7 +68,6 @@ public interface SelectService extends Service {
    */
   boolean contains(MessageAddress addr);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /**
      * The set of servers has changed, either with added or removed

@@ -52,13 +52,9 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerFactory;
 
 /**
- * This utility class reads the bootstrap configuration for use
- * in the ConfigService.
- * <p>
- * This class reads the "alpreg.ini" and all system properties
- * that start with "-Dorg.cougaar.name.server" (where this system
- * property prefix is removed).  The data is parsed into bootstrap
- * Bundles.
+ * This utility class reads "-Dorg.cougaar.name.server" system
+ * properties and the "alpreg.ini" for bootstrap {@link Bundle}s
+ * provided by the {@link ConfigService}.
  * 
  * @see #parse(String) detailed parsing notes
  */
@@ -241,7 +237,7 @@ public class ConfigReader {
    * the line:<br>
    * If TYPE and SCHEME are missing, and URI is "multicast",
    * then TYPE is left as null, SCHEME is set to "multicast",
-   * and the URI is set to the {@link #DEFAULT_MULTICAST_URI}.<br>
+   * and the URI is set to the DEFAULT_MULTICAST_URI.<br>
    * The default SCHEME is "rmi".</br>
    * The default TYPE is:<pre> 
    *   "-" + String.toUpperCase(SCHEME) + "_REG" 

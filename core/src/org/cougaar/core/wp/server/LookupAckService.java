@@ -31,7 +31,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is the "lookup" transport layer of the white pages server.
+ * This service sends "lookup-ack"s.
  * <p>
  * This API mirrors the client's LookupService.
  * <p>
@@ -57,7 +57,6 @@ public interface LookupAckService extends Service {
   void lookupAnswer(
       MessageAddress clientAddr, long clientTime, Map m);
 
-  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Handle a client's modify request.

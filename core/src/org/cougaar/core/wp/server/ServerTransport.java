@@ -66,7 +66,8 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 
 /**
- * This component sends and receives messages for the server.
+ * This component sends and receives messages for the {@link
+ * RootAuthority}.
  * <p>
  * This component is responsible for the server-side hierarchy
  * traversal and replication.

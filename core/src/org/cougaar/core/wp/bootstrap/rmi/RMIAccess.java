@@ -31,7 +31,7 @@ import java.rmi.RemoteException;
 import java.util.Map;
 
 /**
- * Remote interface for WP AddressEntry bootstrap.
+ * The RMI {@link Remote} interface for {@link RMIAdvertise}r.
  */
 public interface RMIAccess
 extends Remote 

@@ -30,8 +30,8 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.service.wp.Response;
 
 /**
- * This class watches for bind/unbind requests and maintains
- * the leases in the server.
+ * This service is the {@link LeaseManager}'s interface for the {@link
+ * Resolver} for bind/unbind requests.
  */
 public interface LeaseService extends Service {
 

@@ -40,7 +40,7 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * Utility methods.
+ * Bootstrap utility methods.
  */
 public final class Util {
 

@@ -31,9 +31,10 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
 /**
- * An "successful lease" response from the ModifyService,
- * indicating that either a new Record was successfully bound
- * or an existing Lease was extended.
+ * A "successful lease" response from the {@link ClientTransport}'s
+ * {@link ModifyService}, indicating to the {@link LeaseManager}
+ * that either a new {@link Record} was successfully bound or an
+ * existing {@link Lease} was extended.
  * <p>
  * The LeaseManager client must renew this lease before it expires,
  * otherwise the server(s) will automatically remove it.

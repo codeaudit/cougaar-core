@@ -45,9 +45,10 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 
 /**
- * This component coordinates the discovery pollers, copies
- * found Bundles to the CacheManager's {@link HintService}, and
- * forwards BootstrapService start/stop commands to the clients.
+ * This component advertises the {@link BootstrapService}, which
+ * starts/stops the discovery pollers to find bootstrap {@link
+ * Bundle}s and copy them into the {@link
+ * org.cougaar.core.wp.resolver.CacheManager}'s {@link HintService}.
  */
 public class DiscoveryManager
 extends GenericStateModelAdapter

@@ -29,8 +29,7 @@ package org.cougaar.core.wp.resolver;
 import java.io.Serializable;
 
 /**
- * This is a simple wrapper around an object that adds a String
- * name.
+ * A simple wrapper around an object that adds a String name.
  * <p>
  * This is used to tag a request (e.g. a Record-based modify)
  * with the name of the agent requesting the action.  Most

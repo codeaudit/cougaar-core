@@ -34,7 +34,7 @@ import org.cougaar.core.component.Service;
  * <p>
  * Unlike the usual discovery mechanism, which is stopped once
  * it finds a suitable server, a node containing a server must
- * discover its peers for replication to work.  This service
+ * discover all its peers for replication to work.  This service
  * ensures that the peer addresses are discovered, either by
  * a resolver lookup or continued discovery.
  */
