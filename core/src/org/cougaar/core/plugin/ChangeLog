@@ -1,3 +1,9 @@
+2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ServiceUserPlugin.java:
+	Fix javadoc @link items -- they cannot be folder across multiple
+	lines.
+
 2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ServiceUserPlugin.java: Base class for plugins using services

@@ -1,3 +1,25 @@
+2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceControlPlugin.java:
+	Plugin to control persistence. Interrogates the persistence
+	service for all controls and creates OperatingModes for those
+	controls. Then monitors the OperatingModes and adjusts the
+	controls accordingly.
+
+	* PersistencePluginAdapter.java:
+	Adapter for PersistencePlugin implementations defining default
+	implementations of several methods that seldom need to be tailored
+	by the plugin. This methods include the new methods for specifying
+	media-specific controls.
+
+	* PersistencePlugin.java:
+	Add methods for media-specific controls (OperatingModes)
+
+	* FilePersistence.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java:
+	Used PersistencePluginAdapter for common functions.
+
 2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SequenceNumbers.java: 

@@ -1,3 +1,70 @@
+2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Use "instanceof" for distinguishing source and target objects. The
+	allows implementations where the same object serves as both a
+	target and a source. By giving the source a set of targets, we get
+	automatic forwarding through multiple levels of agents.
+	Avoid reverberation by the LP responding to its own changes by
+	marking such changes with a special ChangeReport marker. Such
+	changes are completely ignored by the LP. Instead, responses that
+	are required and handle directly at the point of the change.
+
+	* org/cougaar/core/relay/Relay.java:
+	Move getSource method out of the Relay base interface. It is only
+	needed in the Relay.Target interface.
+	Define bit flags constants for marking return values from
+	updateContent and updateResponse methods.
+
+	* org/cougaar/core/adaptivity/PolicyManager.java:
+	Declare this interface public. Extensions of public interfaces
+	must be public.
+
+	* org/cougaar/core/adaptivity/Playbook.java:
+	Put the plays resulting from OperatingModePolicy first in the
+	constrained plays list. This insures that they will dominate any
+	other plays and also insures that any OperatingModeConditions they
+	set will be valid when used in ordinary plays.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Look for missing Conditions as values of operating modes set by
+	earlier plays.
+
+	* org/cougaar/core/adaptivity/MetricsTestPlugin.java:
+	Test plugin that is a sensor translating some values from the
+	metrics service into Conditions.
+
+	* org/cougaar/core/adaptivity/InterAgentOperatingModePolicy.java: 
+	* org/cougaar/core/adaptivity/InterAgentOperatingMode.java: 
+	* org/cougaar/core/adaptivity/InterAgentCondition.java:
+	Accomodate change in return value from
+	updateContent/updateResponse. These are now ints having two flags
+	instead of booleans.
+
+	* org/cougaar/core/adaptivity/Condition.java:
+	Fix @link constructs in javadoc. They are not allowed to be split
+	across line boundaries.
+
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Remove missing condition checks. Instead, plays referencing
+	missing conditions are identified as they are encountered. This is
+	necessitated by the possibility of Conditions that are set by
+	plays.
+
+	* org/cougaar/core/adaptivity/Parser.java:
+	Improve error reporting. Parse error messages now say more
+	precisely what is wrong, show the line number on which the error
+	occurred and show the offending token. Also, attempts to resync
+	and continue parsing plays after an error.
+
+	* org/cougaar/core/adaptivity/PolicyTestPlugin.java: 
+	* org/cougaar/core/adaptivity/PolicyRemoteTestPlugin.java: 
+	* org/cougaar/core/adaptivity/PolicyInjectorPlugin.java: 
+	* org/cougaar/core/adaptivity/PlaybookManager.java: 
+	* org/cougaar/core/adaptivity/AEViewerServlet.java:
+	Pass LoggingService and the reader to parser instead of a
+	StreamTokenizer.
+
 2002-04-17  Michael Thome  <mthome@bbn.com>
 
 	* StandardSecurityComponent, NodeTrustComponent
