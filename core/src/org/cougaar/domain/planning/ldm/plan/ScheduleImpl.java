@@ -335,23 +335,29 @@ public class ScheduleImpl
 
 
   public static void main(String []args) {
+    LocationScheduleElementImpl lsei = new LocationScheduleElementImpl();
+    lsei.setEndTime(TimeSpan.MAX_VALUE - 100000);
+
     Vector vector = new Vector();
     vector.add(new LocationScheduleElementImpl());
+    vector.add(lsei);
 
     ScheduleImpl lsSchedule = new ScheduleImpl();
     lsSchedule.setScheduleElementType(ScheduleElementType.LOCATION);
     lsSchedule.add(new LocationScheduleElementImpl());
     lsSchedule.setScheduleElementType(ScheduleElementType.SIMPLE);
 
-    ScheduleImpl schedule = new ScheduleImpl(vector);
-    System.out.println(schedule);
+    ScheduleImpl schedule1 = new ScheduleImpl(vector);
+    System.out.println(schedule1);
 
-    //Schedule schedule = new ScheduleImpl(lsSchedule);
-    schedule = new ScheduleImpl(lsSchedule);
-    System.out.println(schedule);
+    ScheduleImpl schedule2 = new ScheduleImpl(lsSchedule);
+    System.out.println(schedule2);
 
-    schedule.setScheduleElements(vector);
-    schedule.addAll(1, vector);
+    schedule2.addAll(schedule1);
+    System.out.println(schedule1);
+
+    schedule2.setScheduleElements(vector);
+    schedule2.addAll(1, vector);
   }
 }
 
