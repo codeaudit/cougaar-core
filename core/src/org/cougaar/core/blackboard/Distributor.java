@@ -419,6 +419,21 @@ public class Distributor {
     } else {
       blackboard.fillSubscription(subscription);
     }
+
+    // distribute the initialize envelope
+    /*
+    {
+      // option 1
+      distribute(new InitializeSubscriptionEnvelope(subscription), null);
+    }
+    */
+    {
+      // option 2
+      Subscriber s = subscription.getSubscriber();
+      List l = new ArrayList(1);
+      l.add(new InitializeSubscriptionEnvelope(subscription));
+      s.receiveEnvelopes(l);    // queue in the right spot
+    }
   }
 
   public synchronized void fillQuery(Subscription subscription) {
@@ -445,7 +460,8 @@ public class Distributor {
    * the generation of a persistence delta is considered.
    **/
   private void distribute(Envelope outbox, BlackboardClient client) {
-    if (outbox != null && logWriter != null) {
+    if (outbox != null && logWriter != null && 
+        client != null) {
       printEnvelope(outbox, client);
     }
     if (persistence != null) {

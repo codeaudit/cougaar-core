@@ -24,6 +24,7 @@ package org.cougaar.core.blackboard;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.*;
 import java.util.*;
 
 /** 
@@ -41,6 +42,11 @@ import java.util.*;
  **/
 
 public abstract class Subscription {
+
+  /** Have we recieved our InitializeSubscriptionEnvelope yet?
+   * @see #apply(Envelope)
+   **/
+  private boolean isInitialized = false;
 
   /** our Subscriber and interface to the plan **/
   protected Subscriber subscriber = null;
@@ -60,6 +66,12 @@ public abstract class Subscription {
                                  subscriber);
     }
     subscriber = s;
+
+    /*
+    // blackboard needs no delayed fill
+    if (subscriber instanceof Blackboard)
+      setIsInitialized();
+    */
   }
 
   /** @return the Subscriber instance which is the interface to the plugin.
@@ -178,14 +190,48 @@ public abstract class Subscription {
    **/
   protected void resetChanges() { setChanged(false); }
 
+  /** Apply a set of transactional changes to our subscription.
+   * Envelopes are ignored until a matching InitializeSubscriptionEnvelope 
+   * has been received.
+   * @note The real work of applying the envelope to the subscription is accomplished
+   * by calling {@link #privateApply(Envelope)}.
+   **/
   public boolean apply(Envelope envelope) {
-    return envelope.applyToSubscription(this);
+    // if this is an ISE, check to see if it is ours!
+    if (envelope instanceof InitializeSubscriptionEnvelope) {
+      InitializeSubscriptionEnvelope ise = (InitializeSubscriptionEnvelope) envelope;
+      if (ise.getSubscription() == this) {
+        if (isInitialized) {
+          Logger logger = Logging.getLogger(Subscription.class);
+          logger.error("Received redundant InitializeSubscriptionEnvelope");
+        }
+        setIsInitialized();
+      }
+      return false;             // doesn't actually change the subscription in any case
+    } else {
+      if (isInitialized) {
+        return privateApply(envelope);
+      } else {
+        return false;
+      }
+    }
   }
   
+  final void setIsInitialized() {
+    isInitialized = true;
+  }
+
+  /** Fill the subscription with the initial contents. **/
   public void fill(Envelope envelope) {
-    if (apply(envelope)) {
+    // logically, just call apply(envelope), but we need to avoid the isInitialized checks.
+    if (privateApply(envelope)) {
       setChanged(true);
       subscriberSignalExternalActivity();
     }
   }
+
+  protected final boolean privateApply(Envelope envelope) {
+    return envelope.applyToSubscription(this);
+  }
+
 }

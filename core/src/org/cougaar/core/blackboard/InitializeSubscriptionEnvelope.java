@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2002 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -21,34 +21,27 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.agent.*;
+import org.cougaar.util.log.*;
 
-
-import java.util.*;
-import org.cougaar.core.util.*;
-import org.cougaar.util.*;
-
-/** 
- * Adds a real delegate Collection to the Subscription, accessible 
- * via getCollection().
+/** InitializeSubscriptionEnvelope is a special envelope which is
+ * sent <em>in band</em> during subscription initialization.
+ * Any transaction envelopes received by the client for a newly
+ * created subscription prior to this envelope are ignored.  This
+ * allows the new subscription contents to be kept transactionally
+ * in-sync with the rest of the world.
  **/
-
-
-public class QuerySubscription 
-  extends CollectionSubscription
-{
-
-  public QuerySubscription(UnaryPredicate p, Collection c) {
-    super(p,c);
+public final class InitializeSubscriptionEnvelope extends Envelope {
+  private transient Subscription subscription;
+  InitializeSubscriptionEnvelope(Subscription subscription) {
+    this.subscription = subscription;
   }
 
-  public QuerySubscription(UnaryPredicate p) {
-    super(p, new ArrayList(5));
+  Subscription getSubscription() {
+    return subscription;
   }
 
-  // override Subscription.fill to avoid kicking the subscriber due to
-  // query activity.
-  public void fill(Envelope envelope) {
-    privateApply(envelope);
+  public String toString() {
+    return "InitializeSubscriptionEnvelope for "+subscription;
   }
 }
+

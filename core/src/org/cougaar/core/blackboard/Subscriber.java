@@ -32,6 +32,7 @@ import org.cougaar.util.LockFlag;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.util.EmptyIterator;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.*;
 import java.util.*;
 
 // pollution of subscriber purity for completion checking
@@ -51,6 +52,8 @@ import org.cougaar.planning.ldm.plan.*;
  *    and TimestampSubscriptions (defaults to false).
  **/
 public class Subscriber {
+  private static Logger logger = Logging.getLogger(Subscriber.class);
+
   private static boolean isEnforcing =
     (Boolean.valueOf(System.getProperty("org.cougaar.core.blackboard.enforceTransactions", "true"))).booleanValue();
 
@@ -361,11 +364,8 @@ public class Subscriber {
   final void checkTransactionOK(String methodname, Object arg) {
     if (this instanceof Blackboard) return;               // No check for Blackboard
     if (!isMyTransaction()) {
-      synchronized (System.err) {
-        if (arg != null) { methodname = methodname+"("+arg+")"; }
-        System.err.println(toString()+"."+methodname+" called outside of transaction:");
-        Thread.dumpStack();
-      }
+      if (arg != null) { methodname = methodname+"("+arg+")"; }
+      logger.error(toString()+"."+methodname+" called outside of transaction", new Throwable());
       //throw new RuntimeException(methodname+" called outside of transaction boundaries");
     }
   }
@@ -554,7 +554,7 @@ public class Subscriber {
       List crs = Transaction.getCurrentTransaction().getChangeReports(o);
       if (warnUnpublishChanges) {
         if (crs != null && crs.size()>0) {
-          System.err.println("Warning: publishRemove("+o+") is dropping outstanding changes:\n\t"+crs);
+          logger.warn("Warning: publishRemove("+o+") is dropping outstanding changes:\n\t"+crs);
         }
       }
     }
@@ -729,8 +729,7 @@ public class Subscriber {
     int count = transactionLock.getBusyCount();
     if (count > 1) {
       if (isEnforcing) {
-        System.err.println("Opened nested transaction (level="+count+")");
-        Thread.dumpStack();
+        logger.error("Opened nested transaction (level="+count+")", new Throwable());
       }
       return;
     }
@@ -866,11 +865,11 @@ public class Subscriber {
     if (warnUnpublishChanges) {
       if (map == null || map.size()==0) return;
       
-      System.err.println("\nWarning! ignoring outstanding unpublished changes: ");
+      logger.warn("Ignoring outstanding unpublished changes:");
       for (Iterator ki = map.keySet().iterator(); ki.hasNext(); ) {
         Object o = ki.next();
         List l = (List)map.get(o);
-        System.err.println("\t"+o+" ("+l.size()+")");
+        logger.warn("\t"+o+" ("+l.size()+")");
         // we could just publish them with something like:
         //handleActiveSubscriptionObjects()
         //clientChangedObject(o, l);
@@ -1019,10 +1018,9 @@ public class Subscriber {
           if (obj instanceof Expansion) {
             Workflow w = ((Expansion) obj).getWorkflow();
             if (! checkFor(w, Envelope.ADD, outbox)) {
-              System.err.println("Add of PE Expansion without WF:\n"+
+              logger.warn("Add of PE Expansion without WF:\n"+
                                  "\tPE = "+obj+"\n"+
-                                 "\tWF = "+w);
-              Thread.dumpStack();
+                          "\tWF = "+w, new Throwable());
             }
           }
         } else if (obj instanceof Workflow) {
@@ -1030,10 +1028,9 @@ public class Subscriber {
           while (tasks.hasMoreElements()) {
             Task t = (Task) tasks.nextElement();
             if (! checkFor(t, Envelope.ADD, outbox)) {
-              System.err.println("Add of Workflow without SUBTASK:\n"+
+              logger.warn("Add of Workflow without SUBTASK:\n"+
                                  "\tWF = "+obj+"\n"+
-                                 "\tSubTask = "+t);
-              Thread.dumpStack();
+                          "\tSubTask = "+t, new Throwable());
             }
           }
         }

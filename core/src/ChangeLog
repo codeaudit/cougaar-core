@@ -1,3 +1,10 @@
+2002-06-12  Michael Thome  <mthome@bbn.com>
+
+	* Distributor, Subscriber, InitializeSubscriptionEnvelope, Subscription
+	Fix ancient bug where initial fill of a subscription could be
+	transactionally out of sync with the subscriber. Fixes bug 1381.
+	Also updated a bunch of printlns to use Logging.
+
 2002-06-06  Todd Wright <twright@bbn.com>
 
 	* AgentBinder, AgentManager, agent subclasses
