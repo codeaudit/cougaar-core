@@ -216,7 +216,6 @@ public class RMINameServer implements InitialContextFactory {
       try {
         r = LocateRegistry.createRegistry(port, csf, ssf);
       } catch (RemoteException re) {
-        re.printStackTrace();
         if (! tryHard) return;  //  bail
         if (verbosity>0) {
           re.printStackTrace();
