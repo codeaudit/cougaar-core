@@ -19,7 +19,7 @@
  * </copyright>
  */
  
-package org.cougaar.util;
+package org.cougaar.core.examples;
 
 import java.awt.*;
 import java.awt.event.*;

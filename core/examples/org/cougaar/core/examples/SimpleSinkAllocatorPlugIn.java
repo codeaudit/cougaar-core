@@ -1,4 +1,4 @@
-package org.cougaar.util;
+package org.cougaar.core.examples;
 
 /*
  * <copyright>

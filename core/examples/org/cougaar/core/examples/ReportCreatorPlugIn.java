@@ -19,7 +19,7 @@
  * </copyright>
  */
  
-package org.cougaar.util;
+package org.cougaar.core.examples;
 
 import org.cougaar.domain.planning.ldm.plan.*;
 import org.cougaar.domain.planning.ldm.asset.*;
