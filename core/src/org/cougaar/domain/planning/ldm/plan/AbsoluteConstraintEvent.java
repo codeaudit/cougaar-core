@@ -11,7 +11,7 @@ public class AbsoluteConstraintEvent implements ConstraintEvent
   /* define an absolute constraint value on some aspect   */
   private int event; /* constraint aspect      */
   private double eventValue; /* aspect value */
-	
+
   public AbsoluteConstraintEvent(int aspect, double value) {
     event = aspect;
     eventValue = value;
@@ -25,6 +25,10 @@ public class AbsoluteConstraintEvent implements ConstraintEvent
     return eventValue;
   }
 
+  public double getResultValue() {
+    return getValue();
+  }
+
   public int getAspectType() {
     return event;
   }
@@ -33,4 +37,4 @@ public class AbsoluteConstraintEvent implements ConstraintEvent
     return true;
   }
 }
-    
+
