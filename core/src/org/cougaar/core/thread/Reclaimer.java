@@ -33,7 +33,7 @@ final class Reclaimer extends Thread
 
     private static Reclaimer singleton;
 
-    static {
+    static void startThread() {
 	singleton = new Reclaimer();
 	singleton.start();
     }

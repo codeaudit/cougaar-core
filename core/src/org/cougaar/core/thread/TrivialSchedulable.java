@@ -29,7 +29,7 @@ package org.cougaar.core.thread;
 import java.util.Timer;
 import java.util.TimerTask;
 
-final class TrivialSchedulable implements Schedulable
+class TrivialSchedulable implements Schedulable
 {
     private static final Timer timer = new Timer();
 
@@ -55,31 +55,47 @@ final class TrivialSchedulable implements Schedulable
     }
 
 
-    public int getLane() {
+    Runnable getRunnable()
+    {
+	return runnable;
+    }
+
+    public int getLane() 
+    {
 	return -1;
     }
 
-    String getName() {
+    String getName() 
+    {
 	return name;
     }
 
-    public String toString() {
+    public String toString() 
+    {
         return "<TrivialSchedulable " 
 	    +(name == null ? "anonymous" : name)+ 
 	    " for " +consumer+ ">";
     }
 
-    public Object getConsumer() {
+    public Object getConsumer() 
+    {
         return consumer;
     }
 
     // caller synchronizes
-    private void thread_start() {
+    private void thread_start() 
+    {
 	start_count = 1; // forget any extra intervening start() calls
-	thread = TrivialThreadPool.pool().getThread(this, runnable, name);
+	thread = runThread();
     }
 
-    void thread_stop() {
+    Thread runThread()
+    {
+	return TrivialThreadPool.pool().getThread(this, runnable, name);
+    }
+
+    void thread_stop() 
+    {
 	// If start_count > 1, start() was called while the
 	// Schedulable was running.  Now that it's finished,  start it
 	// again. 
@@ -91,7 +107,8 @@ final class TrivialSchedulable implements Schedulable
 	}
     }
 
-    public void start() {
+    public void start() 
+    {
         synchronized (this) {
 	    // If the Schedulable has been cancelled, or has already
 	    // been asked to start, there's nothing further to do.
@@ -102,7 +119,8 @@ final class TrivialSchedulable implements Schedulable
     }
 
     
-    private TimerTask task() {
+    private TimerTask task() 
+    {
 	cancelTimer();
 	task = new TimerTask() {
 		public void run() {
@@ -112,7 +130,8 @@ final class TrivialSchedulable implements Schedulable
 	return task;
     }
 
-    public synchronized void schedule(long delay) {
+    public synchronized void schedule(long delay) 
+    {
 	timer.schedule(task(), delay);
     }
 
@@ -134,14 +153,16 @@ final class TrivialSchedulable implements Schedulable
 	task = null;
     }
 
-    public synchronized int getState() {
+    public synchronized int getState() 
+    {
         if (thread != null)
             return CougaarThread.THREAD_RUNNING;
         else
             return CougaarThread.THREAD_DORMANT;
     }
 
-    public boolean cancel() {
+    public boolean cancel() 
+    {
         synchronized (this) {
 	    cancelTimer();
             cancelled = true;

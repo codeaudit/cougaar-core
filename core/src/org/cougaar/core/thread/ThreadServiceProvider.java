@@ -47,21 +47,14 @@ import org.cougaar.util.GenericStateModelAdapter;
 /**
  * The ServiceProvider for ThreadService and ThreadControlService.
  *
- * @property org.cougaar.thread.scheduler specifies the class of
- * scheduler to use.  The default is PropagatingScheduler.  The only
- * other reasonable choice at the moment would be
- * 'org.cougaa.core.thread.Scheduler'
  */
 public final class ThreadServiceProvider 
     extends GenericStateModelAdapter
     implements ServiceProvider, Component
 {
 
-    private static final String SCHEDULER_CLASS_PROPERTY = 
-	"org.cougaar.thread.scheduler";
-
-    private static final String TRIVIAL_PROPERTY = 
-	"org.cougaar.thread.trivial";
+    private static final String SERVICE_TYPE_PROPERTY = 
+	"org.cougaar.thread.service.type";
 
     private static ThreadPool[] Pools;
     private static int[] Lane_Sizes = new int[ThreadService.LANE_COUNT];
@@ -94,15 +87,24 @@ public final class ThreadServiceProvider
     {
 	super.load();
 	
-	makePools();
 
 	ServiceBroker sb = my_sb;
 	isRoot = !sb.hasService(ThreadService.class);
 
-	if (Boolean.getBoolean(TRIVIAL_PROPERTY)) {
-	    if (isRoot)	new TrivialThreadServiceProvider().makeServices(sb);
+	String type = System.getProperty(SERVICE_TYPE_PROPERTY, 
+					 "hierarchical");
+	if (type.equals("trivial")) {
+	    if (isRoot)	
+		new TrivialThreadServiceProvider().makeServices(sb);
+	    return;
+	} else if (type.equals("single")) {
+	    new SingleThreadServiceProvider().makeServices(sb);
 	    return;
 	}
+
+	// Hierarchical service
+
+	makePools();
 
 	// check if this component was added with parameters
         if (name == null) {
@@ -124,6 +126,8 @@ public final class ThreadServiceProvider
         }
 
 	if (isRoot) {
+	    Starter.startThread();
+	    Reclaimer.startThread();
 	    // use the root service broker
 	    NodeControlService ncs = (NodeControlService)
 		my_sb.getService(this, NodeControlService.class, null);
@@ -191,22 +195,11 @@ public final class ThreadServiceProvider
 	}
     }
 
-    private Scheduler makeScheduler(Constructor constructor, 
-				    Object[] args,
+    private Scheduler makeScheduler(Object[] args,
 				    int lane)
 				   
     {
-	Scheduler scheduler = null;
-	if (constructor != null) {
-	    try {
-		return (Scheduler) constructor.newInstance(args);
-	    } catch (Exception ex) {
-		ex.printStackTrace();
-	    }
-	}
-	
-	if (scheduler == null)
-	    scheduler = new PropagatingScheduler(listenerProxy);
+	Scheduler scheduler =  new PropagatingScheduler(listenerProxy);
 
 	scheduler.setLane(lane);
 	scheduler.setAbsoluteMax(Lane_Sizes[lane]);
@@ -219,19 +212,9 @@ public final class ThreadServiceProvider
 
 	Class[] formals = { ThreadListenerProxy.class};
 	Object[] actuals = { listenerProxy };
-	String classname = System.getProperty(SCHEDULER_CLASS_PROPERTY);
-	Constructor constructor = null;
-	if (classname != null) {
-	    try {
-		Class s_class = Class.forName(classname);
-		constructor = s_class.getConstructor(formals);
-	    } catch (Exception ex) {
-		ex.printStackTrace();
-	    }
-	}
 	Scheduler[] schedulers = new Scheduler[laneCount];
 	for (int i=0; i<schedulers.length; i++) {
-	    schedulers[i] = makeScheduler(constructor, actuals, i);
+	    schedulers[i] = makeScheduler(actuals, i);
 	}
 	
 

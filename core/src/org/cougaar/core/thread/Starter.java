@@ -33,7 +33,7 @@ final class Starter extends Thread
 
     private static Starter singleton;
 
-    static {
+    static void startThread()  {
 	singleton = new Starter();
 	singleton.start();
     }

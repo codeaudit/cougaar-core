@@ -41,12 +41,12 @@ import org.cougaar.util.GenericStateModelAdapter;
  * The ServiceProvider for the trivial ThreadService
  *
  */
-public final class TrivialThreadServiceProvider 
+public class TrivialThreadServiceProvider 
     extends GenericStateModelAdapter
     implements ServiceProvider, Component
 {
     private ServiceBroker my_sb;
-    private TrivialThreadServiceProxy proxy;
+    private ThreadService proxy;
     private ThreadStatusService statusProxy;
 
     public TrivialThreadServiceProvider() 
@@ -56,27 +56,46 @@ public final class TrivialThreadServiceProvider
     public void load() 
     {
 	super.load();
-	if (!my_sb.hasService(ThreadService.class)) makeServices(my_sb);
+	/* if (!my_sb.hasService(ThreadService.class)) */ makeServices(my_sb);
     }
 
-    void makeServices(ServiceBroker sb)
+
+    ThreadService makeThreadServiceProxy()
     {
-	proxy = new TrivialThreadServiceProxy();
-	statusProxy = new ThreadStatusService() {
+	return new TrivialThreadServiceProxy();
+    }
+
+    ThreadStatusService makeThreadStatusService()
+    {
+	return new ThreadStatusService() {
 		public List getStatus() {
 		    List result = new ArrayList();
 		    TrivialThreadPool.pool().listRunningThreads(result);
 		    return result;
 		}
 	    };
+    }
+
+    void makeServices(ServiceBroker sb)
+    {
+	proxy = makeThreadServiceProxy();
+	statusProxy = makeThreadStatusService();
 
 	NodeControlService ncs = (NodeControlService)
 	    sb.getService(this, NodeControlService.class, null);
-	ServiceBroker rootsb = ncs.getRootServiceBroker();
-	sb.releaseService(this, NodeControlService.class, ncs);
+	ServiceBroker rootsb = null;
+	if (ncs != null) {
+	    rootsb = ncs.getRootServiceBroker();
+	    sb.releaseService(this, NodeControlService.class, ncs);
+	}
 
-	rootsb.addService(ThreadService.class, this);
-	rootsb.addService(ThreadStatusService.class, this);
+	if (rootsb != null) {
+	    rootsb.addService(ThreadService.class, this);
+	    rootsb.addService(ThreadStatusService.class, this);
+	} else {
+	    sb.addService(ThreadService.class, this);
+	    sb.addService(ThreadStatusService.class, this);
+	}
     }
 
 

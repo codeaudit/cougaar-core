@@ -33,15 +33,16 @@ import org.cougaar.core.service.ThreadService;
 /**
  * The trivial implementation of Thread Service.
  */
-final class TrivialThreadServiceProxy 	implements ThreadService
+class TrivialThreadServiceProxy
+    implements ThreadService
 {
-    TrivialThreadServiceProxy() 
+    TrivialThreadServiceProxy()
     {
     }
 
     public Schedulable getThread(Object consumer, Runnable runnable) 
     {
-	return new TrivialSchedulable(runnable, null, consumer);
+	return getThread(consumer, runnable, null);
     }
 
     public Schedulable getThread(Object consumer, 
@@ -56,7 +57,7 @@ final class TrivialThreadServiceProxy 	implements ThreadService
 				 String name,
 				 int lane) 
     {
-	return new TrivialSchedulable(runnable, name, consumer);
+	return getThread(consumer, runnable, name);
     }
 
 
