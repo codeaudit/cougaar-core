@@ -1,0 +1,119 @@
+The Cougaar Open Source License Agreement
+
+Copyright (c) 1999-2001 The Cougaar Group. All rights reserved.
+
+This Agreement sets forth the terms and conditions under which the
+software known as ("Cougaar" Software) sponsored by the Defense
+Advanced Research Agency, will be licensed by BBN Technologies LLC
+("BBN") called ("Licensor") to you ("Licensee"), and by which
+Derivative Works (as hereinafter defined) of Cougaar Software will be
+licensed by you to Licensor.
+
+Definitions:
+
+"Derivative Work(s)" shall mean any revision, enhancement,
+modification, translation, abridgement, condensation or expansion
+created by Licensee that is based upon the Software or a portion
+thereof.
+
+"Cougaar Software" shall mean the programs in source and binary form
+as originally created by Licensor, and any Derivative Works thereof as
+created by Licensee, but shall include only those Derivative Works the
+Licensor has approved for inclusion into the Software.
+
+"Standard Version" shall mean the Cougaar Software, as originally
+created by Licensor and placed on the Cougaar Server.
+
+"Licensee" is you, only if you agree to be bound by the terms and
+conditions set forth in this Agreement.
+
+"Freely Available" means that no fee is charged for the item itself,
+though there may be fees involved in handling the item. It also means
+that recipients of the item may redistribute it under the same terms
+and conditions that they received it.
+
+Terms:
+
+1. Licensor maintains all rights, title and interest in and to the
+Standard Version, including, without limitation, all applicable
+copyrights, trade secrets, patents and other intellectual rights
+therein.
+
+2. Licensor hereby grants to Licensee a royalty free, worldwide right
+and license to use, copy, distribute and make Derivative Works of the
+Cougaar Software, and sublicensing rights of any of the foregoing in
+accordance with the terms and conditions of this Agreement, provided
+that Licensee duplicates all of the original copyright notices and
+associated disclaimers.
+
+3. Licensee hereby grants to Licensor a royalty free, worldwide right
+and license to use, copy, distribute and make derivative works of
+Derivative Works created by Licensee and sublicensing rights of any of
+the foregoing. Licensee understands and agrees that it shall place any
+and all Derivative Works in the Public Domain or otherwise make them
+Freely Available for a Reasonable Copying Fee as requested.
+
+4. Licensee understands and agrees that its right to create Derivative
+Works in the Cougaar Software is subject to the requirement that it
+shall insert a prominent notice in each changed file stating how and
+when Licensee modified that file or made such Derivative
+Work(s). Licensee further understands and agrees that it shall place
+any and all Derivative Work(s) in the Cougaar Software created by
+Licensee on the Cougaar Server.
+
+5. The data and images supplied as input to or produced as output from
+the Cougaar Software do not automatically fall under the copyright of
+the Cougaar Software, but belong to whomever generated them, and may
+be sold commercially, and may be aggregated with the Cougaar Software.
+
+6. Licensor makes no representation about the suitability of Cougaar
+Software for any purposes.  Licensor shall have no duty or requirement
+to include any Derivative Works into the Cougaar Software.
+
+7. Each party hereto represents and warrants that they have the full
+unrestricted right to grant all rights and licenses granted to the
+other party herein.
+
+8. THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
+PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
+IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT ANY
+WARRANTIES AS TO NON-INFRINGEMENT.
+
+9. IN NO EVENT SHALL COPYRIGHT HOLDER BE LIABLE FOR ANY DIRECT,
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE OF DATA OR PROFITS, TORTIOUS CONDUCT, ARISING OUT OF OR IN
+CONNECTION WITH THE USE OR PERFORMANCE OF THE Cougaar SOFTWARE.
+
+10. Licensee hereby understands and agrees to defend, indemnify, and
+hold harmless Licensor, its trustees, officers, employees, and agents
+from all claims or demands made against Licensor (and any related
+losses, expenses, or attorney's fees) arising out of, or relating to
+any Licensee's and/or any sublicensee's, of Licensee, negligent use or
+willful misuse of or negligent conduct or willful misconduct regarding
+Licensor intellectual property, facilities, or other rights or
+assistance granted by Licensor under this Agreement, including, but
+not limited to, any claims of product liability, personal injury,
+death, damage to property, or violation of any laws or regulations.
+
+11. Without limitation of the foregoing, Licensee agrees to commit no
+act which directly or indirectly, would violate any U. S. law,
+regulation, or treaty, or any other international treaty or agreement
+to which the United States adheres or with which the United States
+complies, relating to the export or re-export of any commodities,
+software, or technical data.
+
+12. This Agreement constitutes the entire agreement between the
+parties with respect to the subject matter herein and supersedes all
+communications between the parties relating thereto.
+
+13. This Agreement shall be construed and interpreted in accordance
+with the laws of the Commonwealth of Virginia, United States of
+America, without giving effect to its internal principals of conflict
+of laws.
+
+14. If any provision of this Agreement is held invalid, such
+invalidity shall not affect other provisions or application of the
+Agreement which can be given effect without the invalid provision or
+application, and to this end of the provisions of this Agreement are
+declared to be severable.
