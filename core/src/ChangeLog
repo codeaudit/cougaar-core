@@ -1,3 +1,14 @@
+2001-06-15 Beth DePass <bdepass@bbn.com>
+	* ClusterImpl, SharedPlugInManager, SharedThreadingService,
+	PlugInAdaper, etc
+	Move PlugIn shared threading to a service.  SharedPlugInManager
+	now implements SharedThreadingService.
+	SharedThreadingServiceProvider
+	is responsible for creating a SharedPlugInManager for each
+	cluster. There are no hooks to Shared Threading in Cluster or
+	PlugInManager now.
+
+
 2001-05-04  Michael Thome  <mthome@bbn.com>
 
 	* RMIMessageTransport
