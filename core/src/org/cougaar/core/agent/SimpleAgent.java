@@ -58,6 +58,7 @@ import org.cougaar.core.mts.Attributes;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.ComponentMessage;
 import org.cougaar.core.node.NodeIdentificationService;
@@ -99,7 +100,6 @@ public class SimpleAgent
   extends Agent
   implements 
   AgentIdentityClient,
-  MessageTransportClient,
   StateObject
 {
   // this node's address
@@ -147,6 +147,8 @@ public class SimpleAgent
   private TopologyWriterService myTopologyWriterService;
 
   private MessageTransportService messenger;
+  /** stub for keeping the MTS client at a distance **/
+  private MessageTransportClient mtsClientAdapter;
 
   private MobileAgentService myMobileAgentService;
 
@@ -611,15 +613,18 @@ public class SimpleAgent
     if (log.isInfoEnabled()) {
       log.info("Registering with the message transport");
     }
+    
+    mtsClientAdapter = new MessageTransportClientAdapter();
+
     messenger = (MessageTransportService) 
-      sb.getService(this, MessageTransportService.class, null);
+      sb.getService(mtsClientAdapter, MessageTransportService.class, null);
 
     if (agentState != null) {
         org.cougaar.core.mts.AgentState t = agentState.mtsState;
 	messenger.getAgentState().mergeAttributes(t);
     }
 
-    messenger.registerClient(this);
+    messenger.registerClient(mtsClientAdapter);
 
     if (agentState != null) {
       // send all unsent messages
@@ -675,6 +680,13 @@ public class SimpleAgent
       throw new RuntimeException("Couldn't get NamingService!");
     }
   }
+
+  /** override hook to set up message handlers **/
+  public void initialize() throws StateModelException {
+    super.initialize();
+    setupMessageHandlers();
+  }
+
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.
@@ -771,7 +783,7 @@ public class SimpleAgent
     }
 
     if (messenger != null) {
-      messenger.unregisterClient(this);
+      messenger.unregisterClient(mtsClientAdapter);
     }
 
     stopQueueHandler();
@@ -786,7 +798,7 @@ public class SimpleAgent
 
       // release messenger, remove agent name-server entry.
       getServiceBroker().releaseService(
-          this, MessageTransportService.class, messenger);
+          mtsClientAdapter, MessageTransportService.class, messenger);
       messenger = null;
     }
 
@@ -876,14 +888,14 @@ public class SimpleAgent
         }
         messenger = (MessageTransportService) 
           getServiceBroker().getService(
-              this, MessageTransportService.class, null);
+              mtsClientAdapter, MessageTransportService.class, null);
 
 	if (mtsState != null) {
 	  messenger.getAgentState().mergeAttributes(mtsState);
           mtsState = null;
         }
         
-        messenger.registerClient(this);
+        messenger.registerClient(mtsClientAdapter);
       }
 
       // move failed, re-aquire the topology entry
@@ -1216,55 +1228,148 @@ public class SimpleAgent
     return myMessageAddress_;
   }
 
-  public void receiveMessage(Message message) {
-    if (message instanceof ClusterMessage) {
-      checkClusterInfo((MessageAddress) ((ClusterMessage) message).getSource());
-    }
-    if (showTraffic) showProgress("-");
+  /** MessageSwitch is a MessageHandler which calls an ordered 
+   * list of other MessageHandler instances in order until 
+   * one returns a true value from handle.
+   **/
+  protected class MessageSwitch implements MessageHandler {
+    /** List of MessageHandler instances **/
+    private final List handlers = new ArrayList(11);
 
-    try {
-      if (message instanceof AdvanceClockMessage) {
-        handleAdvanceClockMessage((AdvanceClockMessage)message);
-      } else if (message instanceof ComponentMessage) {
-        ComponentMessage cm = (ComponentMessage)message;
-        ComponentDescription desc = cm.getComponentDescription();
-        int operation = cm.getOperation();
-        switch (operation) {
-          case ComponentMessage.ADD:
-            super.add(desc);     
-            break;
-          case ComponentMessage.REMOVE:  
-            super.remove(desc);  
-            break;
-          case ComponentMessage.SUSPEND:
-          case ComponentMessage.RESUME:
-          case ComponentMessage.RELOAD:
-            // not implemented yet -- requires modifications to Container
-          default:
-            throw new UnsupportedOperationException(
-                "Unsupported ComponentMessage: "+message);
-        }
-      } else if (message instanceof ClusterMessage) {
-        // internal message queue
-        getQueueHandler().addMessage((ClusterMessage)message);
-      } else {
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Received unhandled Message ("+
-              message.getClass()+"): "+message);
+    public boolean handleMessage(Message m) {
+      synchronized (handlers) {
+        for (int i=0, l=handlers.size(); i<l; i++) {
+          MessageHandler h = (MessageHandler) handlers.get(i);
+          if (h.handleMessage(m)) return true;
         }
       }
-    } catch (Exception e) {
-      if (log.isErrorEnabled()) {
-        log.error("Unhandled Exception: ", e);
+      return false;
+    }
+
+    public void addMessageHandler(MessageHandler mh) {
+      synchronized (handlers) {
+        handlers.add(mh);
+      }
+    }
+    public void removeMessageHandler(MessageHandler mh) {
+      synchronized (handlers) {
+        handlers.remove(mh);
       }
     }
   }
 
-  /** Receiver for in-band messages (queued by QueueHandler)
-   */
-  private void receiveQueuedMessages(List messages) {
-    myBlackboardService.receiveMessages(messages);
+  private MessageHandler rawMessageHandler;
+
+  /** Called during initialize() to set up message handlers **/
+  private void setupMessageHandlers() {
+    rawMessageHandler = setupRawMessageHandler();
+  }
+
+  private MessageSwitch rawMessageSwitch = null;
+  /** return a reference to the low-level message switch. **/
+  protected MessageSwitch getMessageSwitch() { return rawMessageSwitch; }
+
+  /** Called to initialize the primary MessageHandler which is used to 
+   * process incoming messages prior to adding to the agent's messagequeue.
+   * MessageHandlers here will be run in the MTS's thread of execution, <em>not</em>
+   * the agent's thread.
+   * <br>
+   * The default method constructs and initializes the rawMessageSwitch (see getMessageSwitch())
+   * adding handlers to deal with ClusterMessages as well as a number of infrastructure
+   * messages.
+   * @note To allow subcomponents access to raw messages, extending methods
+   * should make sure to call this method (e.g. with super.setupRawMessageHandler) and
+   * make sure the the returned value is used appropriately.
+   **/
+  protected MessageHandler setupRawMessageHandler() {
+    rawMessageSwitch = new MessageSwitch();
+    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+        public boolean handleMessage(Message message) {
+          if (message instanceof ClusterMessage) {
+            checkClusterInfo((MessageAddress) ((ClusterMessage) message).getSource());
+          }
+
+          if (showTraffic) showProgress("-");
+          return false;         // don't ever consume it
+        }
+      });
+    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+        public boolean handleMessage(Message message) {
+          if (message instanceof AdvanceClockMessage) {
+            handleAdvanceClockMessage((AdvanceClockMessage)message);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      });
+    // this one should go away
+    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+        public boolean handleMessage(Message message) {
+          if (message instanceof ComponentMessage) {
+            handleComponentMessage((ComponentMessage)message);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      });
+    rawMessageSwitch.addMessageHandler(new MessageHandler() {
+        public boolean handleMessage(Message message) {
+          if (message instanceof ClusterMessage) {
+            // internal message queue
+            getQueueHandler().addMessage((ClusterMessage)message);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      });
+
+    return rawMessageSwitch;
+  }
+
+  /** handle a ComponentMessage.  Probably a bad idea nowadays. **/
+  private void handleComponentMessage(ComponentMessage cm) {
+    ComponentDescription desc = cm.getComponentDescription();
+    int operation = cm.getOperation();
+    switch (operation) {
+    case ComponentMessage.ADD:
+      super.add(desc);     
+      break;
+    case ComponentMessage.REMOVE:  
+      super.remove(desc);  
+      break;
+    case ComponentMessage.SUSPEND:
+    case ComponentMessage.RESUME:
+    case ComponentMessage.RELOAD:
+      // not implemented yet -- requires modifications to Container
+    default:
+      throw new UnsupportedOperationException( "Unsupported ComponentMessage: "+cm);
+    }
+  }
+
+  /** Deal with a message received directly from the MTS.
+   * Just calls the rawMessageHandler
+   **/
+  public void receiveMessage(Message message) {
+    try {
+      boolean handled = rawMessageHandler.handleMessage(message);
+      if (!handled) {
+        log.warn("Received unhandled Message ("+
+                  message.getClass()+"): "+message);
+      }
+    } catch (Exception e) {
+      log.error("Uncaught Exception while handling Message ("+message.getClass()+"): "+message, e);
+    }
+  }
+
+  private final void receiveQueuedMessages(List messages) {
+    try {
+      myBlackboardService.receiveMessages(messages);
+    } catch (Exception e) {
+      log.error("Uncaught Exception while handling Queued Messages", e);
+    }
   }
 
   /**
@@ -1847,4 +1952,15 @@ public class SimpleAgent
 
     private static final long serialVersionUID = 3109298128098682091L;
   }
+
+  private class MessageTransportClientAdapter implements MessageTransportClient {
+    public void receiveMessage(Message message) {
+      SimpleAgent.this.receiveMessage(message);
+    }
+
+    public MessageAddress getMessageAddress() {
+      return SimpleAgent.this.getMessageAddress();
+    }
+  }
+
 }

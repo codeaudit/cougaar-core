@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2001 BBNT Solutions, LLC
+ *  Copyright 2002 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,19 +19,16 @@
  * </copyright>
  */
 
-package org.cougaar.core.blackboard;
+package org.cougaar.core.mts;
 
-import java.util.List;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.component.Service;
-
-/**
- * The service which the Blackboard serves back to the Agent.
+/** Abstract consumer of Messages API. 
  **/
-public interface BlackboardForAgent
-  extends Service
-{
-  void receiveMessages(List messages);
-
-  void restartAgent(MessageAddress cid);
+public interface MessageHandler {
+  /** Called to handle a specific message.  Will return true
+   * if and only if the message was actually handled and further processing of the
+   * message is not required.
+   *
+   * @return true IFF the Message was consumed.
+   **/
+  boolean handleMessage(Message m);
 }
