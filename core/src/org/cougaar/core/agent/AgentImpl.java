@@ -104,7 +104,6 @@ public class AgentImpl extends Agent {
     return null;
   }
   public void setState(Object o) {
-    return;
   }
 
   public void load() {
