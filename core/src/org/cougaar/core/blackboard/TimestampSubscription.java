@@ -167,6 +167,8 @@ extends Subscription
         this.time = closeTime;
         return super.apply(envelope);
       }
+    } else if (envelope instanceof InitializeSubscriptionEnvelope) {
+      super.apply(envelope);
     }
     // FIXME should we still "apply(..)" with the current time?
     return false;
