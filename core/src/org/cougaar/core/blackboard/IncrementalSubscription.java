@@ -52,7 +52,7 @@ public class IncrementalSubscription extends CollectionSubscription {
   /** @return an list of the objects of the collection that have been added.
    **/
   public Enumeration getAddedList() {
-    subscriber.checkTransactionOK("getAddedList()");
+    checkTransactionOK("getAddedList()");
     if (myAddedSet == null || myAddedSet.isEmpty()) 
       return Empty.enumeration;
     return new Enumerator(myAddedSet);
@@ -69,7 +69,7 @@ public class IncrementalSubscription extends CollectionSubscription {
    **/
 
   public Enumeration getRemovedList() {
-    subscriber.checkTransactionOK("getRemovedList()");
+    checkTransactionOK("getRemovedList()");
     if (myRemovedList == null || myRemovedList.isEmpty())
       return Empty.enumeration;
     return new Enumerator(myRemovedList);
@@ -86,7 +86,7 @@ public class IncrementalSubscription extends CollectionSubscription {
    * been marked as changed.
    **/
   public Enumeration getChangedList() {
-    subscriber.checkTransactionOK("getChangedList()");
+    checkTransactionOK("getChangedList()");
     return super.privateGetChangedList();
   }
 

@@ -178,7 +178,7 @@ public class CollectionSubscription
    *    AnonymousChangeReport; otherwise null.
    **/
   public Set getChangeReports(Object o) {
-    subscriber.checkTransactionOK("hasChanged()");
+    checkTransactionOK("hasChanged()");
     return (Set) changeMap.get(o);
   }
 

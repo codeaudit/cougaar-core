@@ -1,3 +1,9 @@
+2002-05-17  Michael Thome  <mthome@bbn.com>
+
+	* org/cougaar/core/service/BlackboardQueryService, etc
+	Simpler blackboard access for clients which need only point
+	queries. Closes bug 1140.
+
 2002-05-16  Todd Wright  <twright@bbn.com>
 
 	* mts, topology, SimpleAgent, NodeAgent:

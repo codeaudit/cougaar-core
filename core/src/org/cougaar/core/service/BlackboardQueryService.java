@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,41 +19,24 @@
  * </copyright>
  */
 
-package org.cougaar.core.blackboard;
+package org.cougaar.core.service;
 
-import org.cougaar.core.agent.*;
-
+import org.cougaar.core.component.Service;
 import org.cougaar.util.UnaryPredicate;
+
 import java.util.*;
 
-/** 
- * A pseudo-subscription which catches Events distributed by the 
- * plan.  EventSubscriptions need never be pre-filled as they catch
- * object which do not stay in the plan.
+/** A Service which offers a lightweight query-only
+ * version of BlackboardService.  There are no transactions,
+ * no publish access and no subscriptions via this interface.
+ * @see BlackboardService#query(UnaryPredicate)
  **/
 
-public class EventSubscription extends Subscription {
-
-  public EventSubscription(UnaryPredicate p) {
-    super(p);
-  }
-
-  // dummy methods - will not be usefully called
-  protected void privateAdd(Object o, boolean isVisible) {}
-  protected void privateRemove(Object o, boolean isVisible) {}
-  protected void privateChange(Object o, List changes, boolean isVisible) {}
-  public void fill(Envelope envelope) {}
-
-  boolean conditionalTrigger(Object o, boolean isVisible) {
-    if (predicate.execute(o)) {
-      if (subscriber != null) {
-        return subscriber.triggerEvent(o);
-      } else {
-        return false;
-      }
-    } else {
-      return false;
-    }
-  }
-
+public interface BlackboardQueryService extends Service {
+  /** Issue a query against the Blackboard.  Similar in function to
+   * opening a new subscription, getting the results and immediately
+   * closing the subscription, but can be implemented much more efficiently.
+   * Note: the initial implementation actually does exactly this.
+   **/
+  Collection query(UnaryPredicate isMember);
 }

@@ -101,6 +101,7 @@ public class StandardBlackboard
     bbSP = new BlackboardServiceProvider(bb.getDistributor());
     sb.addService(BlackboardService.class, bbSP);
     sb.addService(BlackboardMetricsService.class, bbSP);
+    sb.addService(BlackboardQueryService.class, bbSP);
 
     bb.connectDomains();
 

@@ -29,6 +29,9 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.Distributor;
 
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.core.blackboard.QuerySubscription;
+
 import java.util.*;
 
 /** A BlackboardServiceProvider is a provider class that PluginManager calls
@@ -52,6 +55,8 @@ public class BlackboardServiceProvider implements ServiceProvider {
       return new Subscriber( (BlackboardClient)requestor, distributor );
     } else if (serviceClass == BlackboardMetricsService.class) {
       return getBlackboardMetricsService();
+    } else if (serviceClass == BlackboardQueryService.class) {
+      return new BlackboardQueryServiceImpl(requestor);
     } else {
       throw new IllegalArgumentException("BlackboardServiceProvider does not provide a service for: "+
                                          serviceClass);
@@ -76,6 +81,24 @@ public class BlackboardServiceProvider implements ServiceProvider {
     }
   }
   
+  /** The implementation of BlackboardQueryService
+   **/
+  private final class BlackboardQueryServiceImpl 
+    implements BlackboardQueryService 
+  {
+    // keep the requestor around just in case...
+    private Object requestor;  
+    private BlackboardQueryServiceImpl(Object requestor) {
+      this.requestor = requestor;
+    }
+
+    public final Collection query(UnaryPredicate isMember) {
+      QuerySubscription qs = new QuerySubscription(isMember);
+      //qs.setSubscriber(null);  // ignored
+      distributor.fillQuery(qs);
+      return qs.getCollection();
+    }
+  }
 }
 
 

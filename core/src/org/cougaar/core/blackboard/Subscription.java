@@ -66,6 +66,20 @@ public abstract class Subscription {
    **/
   public final Subscriber getSubscriber() { return subscriber; }
 
+  /** Check to see if we're in a transaction for the named purpose if we
+   * have a subscription which supports transactions.
+   **/
+  protected final void checkTransactionOK(String s) {
+    if (subscriber != null) {
+      subscriber.checkTransactionOK("hasChanged()");
+    }
+  }
+
+  protected final void subscriberSignalExternalActivity() {
+    if (subscriber != null) {
+      subscriber.signalExternalActivity();
+    }
+  }
 
   /** The predicate that represents this subscription **/
   protected final UnaryPredicate predicate;
@@ -149,7 +163,7 @@ public abstract class Subscription {
    * Subscriber.openTransaction()
    **/
   public final boolean hasChanged() { 
-    subscriber.checkTransactionOK("hasChanged()");
+    checkTransactionOK("hasChanged()");
     return myHasChanged; 
   }
 
@@ -167,11 +181,11 @@ public abstract class Subscription {
   public boolean apply(Envelope envelope) {
     return envelope.applyToSubscription(this);
   }
-
+  
   public void fill(Envelope envelope) {
     if (apply(envelope)) {
       setChanged(true);
-      getSubscriber().signalExternalActivity();
+      subscriberSignalExternalActivity();
     }
   }
 }

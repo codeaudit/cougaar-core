@@ -56,7 +56,7 @@ public class EnvelopeMetricsSubscription extends Subscription {
    * since the last transaction.
    */
   public Enumeration getAddedList() {
-    subscriber.checkTransactionOK("getAddedList()");
+    checkTransactionOK("getAddedList()");
     if (myList.isEmpty()) return Empty.enumeration;
     return new Enumerator(myList);
   }
