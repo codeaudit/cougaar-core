@@ -14,7 +14,7 @@ package org.cougaar.domain.planning.ldm.plan;
  * extra information within an AllocationResult that are not necessarily
  * related to a preference
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AuxiliaryQueryType.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: AuxiliaryQueryType.java,v 1.2 2001-02-09 22:53:49 rwu Exp $
  */
 public interface AuxiliaryQueryType {
   
@@ -32,9 +32,12 @@ public interface AuxiliaryQueryType {
   
   static final int OVERTIME = 6;
   
+  static final int PLANES_AVAILABLE = 7;
   
-  static final int LAST_AQTYPE = 6;
+
+  static final int LAST_AQTYPE = 7;
   static final int AQTYPE_COUNT = LAST_AQTYPE+1;
   
   static final int UNDEFINED = -1;
 }
+
