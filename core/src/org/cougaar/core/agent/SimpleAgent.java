@@ -65,6 +65,7 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ServiceProvider;
 
 import org.cougaar.core.service.NamingService;
 
@@ -121,6 +122,9 @@ import org.cougaar.planning.ldm.plan.ClusterObjectFactoryImpl;
 // Scenario time support
 import org.cougaar.core.agent.AdvanceClockMessage;
 import org.cougaar.core.agent.service.alarm.Alarm;
+
+// agentid
+import org.cougaar.core.service.AgentIdentificationService;
 
 // Persistence
 //  import org.cougaar.core.persist.DatabasePersistence;
@@ -384,6 +388,24 @@ public class SimpleAgent
     // scheduler for new plugins
     mySchedulerServiceProvider = new SchedulerServiceProvider(this.toString());
     sb.addService(SchedulerService.class, mySchedulerServiceProvider);
+
+    {
+      final AgentIdentificationService ais = new AgentIdentificationService() {
+          public MessageAddress getMessageAddress() { return SimpleAgent.this.getMessageAddress(); }
+          public String getName() { return SimpleAgent.this.getIdentifier(); }
+        };
+      ServiceProvider aissp = new ServiceProvider() {
+          public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
+            if (serviceClass == AgentIdentificationService.class) {
+              return ais;
+            } else {
+              throw new IllegalArgumentException("AgentIdentificationServiceProvider cannot provide "+serviceClass);
+            }
+          }
+          public void releaseService(ServiceBroker xsb, Object r, Class sC, Object s) {}
+        };
+      sb.addService(AgentIdentificationService.class, aissp);
+    }
 
     // placeholder for LDM Services should go away and be replaced by the
     // above domainservice and prototyperegistry service
