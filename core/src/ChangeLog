@@ -1,3 +1,10 @@
+2001-02-26  Michael Thome  <mthome@bbn.com>
+
+	* DBConnectionPool
+	Retry getConnection and createStatement on known possibly
+	continuable exceptions.  Also reap idle connections after
+	only 10 seconds.
+
 2001-02-21  Michael Thome  <mthome@bbn.com>
 
 	* DBConnectionPool

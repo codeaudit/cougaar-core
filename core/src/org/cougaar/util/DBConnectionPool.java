@@ -26,9 +26,9 @@ import java.util.*;
  * System properties:
  * org.cougaar.util.DBConnectionPool.maxConnections=10  number of simulataneous 
  * connections allowed per pool.
- * org.cougaar.util.DBConnectionPool.timeoutCheckInterval=60000 milliseconds between
+ * org.cougaar.util.DBConnectionPool.timeoutCheckInterval=5000 milliseconds between
  * checks to see if any old connections should be collected.
- * org.cougaar.util.DBConnectionPool.timeout=120000 milliseconds that a connection
+ * org.cougaar.util.DBConnectionPool.timeout=10000 milliseconds that a connection
  * must be idle in order to be collected by the reaper.
  * org.cougaar.util.DBConnectionPool.verbosity=0 should verbose debugging
  * messages be turned on? 1=progress, 2=warnings, 3=loud progress
@@ -48,7 +48,7 @@ public class DBConnectionPool {
   private static final String SEP = "#";
 
   /** How often to run the timeout out checker, in milliseconds. */
-  private static long TIMEOUT_CHECK_INTERVAL = 60*1000L;
+  private static long TIMEOUT_CHECK_INTERVAL = 5*1000L;
 
   /**
    * How long to keep old connections before closing and releasing
@@ -57,7 +57,7 @@ public class DBConnectionPool {
    * The default value may be controlled with the
    * System Property org.cougaar.util.DBConnectionPool.maxConnections
    */
-  private static long TIMEOUT = 120*1000L;
+  private static long TIMEOUT = 10*1000L;
 
   /**
    * The number of cursors created after which we always release the
@@ -197,26 +197,47 @@ public class DBConnectionPool {
       public Statement createStatement() throws SQLException {
         if (closed) throw new SQLException("Connection is closed");
 	Statement statement = null;
-        try{
-          statement = new PoolStatement(c.createStatement());
- 	  statements.add(statement);
-        } catch (SQLException sqle) {
-          destroyPool();
-          throw sqle;
+        int rc = 0;             // retry count
+        while (true) {
+          try {
+            statement = new PoolStatement(c.createStatement());
+            statements.add(statement);
+            return statement;
+          } catch (SQLException sqle) {
+            if (isRetryable(sqle) && rc < maxRetries) {
+              rc++;
+              try {
+                Thread.sleep(retryTimeout);
+              } catch (InterruptedException ie) {}
+            } else {
+              destroyPool();
+              throw sqle;
+            }
+          }
         }
-	return statement;
       }
       public Statement createStatement(int a, int b) throws SQLException {
         if (closed) throw new SQLException("Connection is closed");
 	Statement statement = null;
-        try {
-          statement = new PoolStatement(c.createStatement(a, b));
-	  statements.add(statement);
-        } catch (SQLException sqle) {
-          destroyPool();
-          throw sqle;
+
+        int rc = 0;             // retry count
+        while (true) {
+          try {
+            statement = new PoolStatement(c.createStatement(a, b));
+            statements.add(statement);
+            return statement;
+          } catch (SQLException sqle) {
+            if (isRetryable(sqle) && rc < maxRetries) {
+              rc++;
+              try {
+                Thread.sleep(retryTimeout);
+              } catch (InterruptedException ie) {}
+            } else {
+              destroyPool();
+              throw sqle;
+            }
+          }
         }
-	return statement;
       }
       public PreparedStatement prepareStatement(String sql) throws SQLException {
         if (closed) throw new SQLException("Connection is closed");
@@ -1346,19 +1367,24 @@ public class DBConnectionPool {
             catch (InterruptedException e) { } // Pro forma catch
             DBConnectionPool[] pools;
             synchronized (dbConnectionPools) {
-              pools = new DBConnectionPool[dbConnectionPools.size()];
-              int i = 0;
-              for (Iterator e = dbConnectionPools.values().iterator(); e.hasNext(); ) {
-                pools[i++] = (DBConnectionPool) e.next();
-              }
-            }
-            long now = System.currentTimeMillis();
-            for (int i = 0; i < pools.length; i++) {
-              try {
-                pools[i].checkTimeout(now);
-              }
-              catch (Exception e) {
-                e.printStackTrace();
+              int l = dbConnectionPools.size();
+              if (l != 0) {
+                pools = new DBConnectionPool[l];
+                {
+                  int i = 0;
+                  for (Iterator e = dbConnectionPools.values().iterator(); e.hasNext(); ) {
+                    pools[i++] = (DBConnectionPool) e.next();
+                  }
+                }
+                long now = System.currentTimeMillis();
+                for (int i = 0; i < pools.length; i++) {
+                  try {
+                    pools[i].checkTimeout(now);
+                  }
+                  catch (Exception e) {
+                    e.printStackTrace();
+                  }
+                }
               }
             }
           }
@@ -1388,6 +1414,12 @@ public class DBConnectionPool {
    */
   private int maxConnections = -1;
 
+  /** How many times to retry a getConnection when failed due to a recoverable exception **/
+  private int maxRetries = 30;  // retry for a whole minute.
+  
+  /** How frequently should recoverable getConnections be retried? **/
+  private long retryTimeout = 5*1000L; // 5 seconds
+
   /**
    *
    */
@@ -1408,20 +1440,42 @@ public class DBConnectionPool {
     }
   }
 
+  /** Encapsulate logic to decide if a given exception is likely to be 
+   * transitory and so the connection attempt worthwhile retrying.
+   **/
+  private static boolean isRetryable(SQLException e) {
+    while (e != null) {
+      String m = e.getMessage();
+      if (m.startsWith("ORA-00604")) { // recursive error
+        e = e.getNextException();
+      } else if (m.startsWith("ORA-00020") || // maximum number of processes (100) exceeded  [too many connections]
+                 m.startsWith("ORA-00018") || // maximum number of sessions exceeded [?]
+                 m.startsWith("ORA-01000")    // maximum open cursors exceeded  [too many open statements]
+                 ) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+    return false;
+  }
+
   private synchronized Connection findConnection(String dbURL, String user, String passwd)
     throws SQLException 
   {
+    int retries = 0;            // how many retries have we done?
     boolean waitingP = false;
-    try {
-      while (true) {
-        for (Iterator e = entries.iterator(); e.hasNext(); ) {
-          DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
-          if (!entry.inUse) {
-            entry.inUse = true;
-            return entry.getPoolConnection();
-          }
+    while (true) {
+      for (Iterator e = entries.iterator(); e.hasNext(); ) {
+        DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
+        if (!entry.inUse) {
+          entry.inUse = true;
+          return entry.getPoolConnection();
         }
-        if (maxConnections < 0 || entries.size() < maxConnections) {
+      }
+    
+      if (maxConnections < 0 || entries.size() < maxConnections) {
+        try {
           Connection conn = DriverManager.getConnection(dbURL, user, passwd);
           if (maxConnections < 0) {
             maxConnections = conn.getMetaData().getMaxConnections();
@@ -1441,26 +1495,42 @@ public class DBConnectionPool {
               }
             }
           }
-        } else {
-          try {
-            if (!waitingP) {
-              waitingP = true;
-              waitingCounter++;
-              if (VERBOSITY>=1) {
-                if (VERBOSITY>=3) {
-                  System.err.println("DBConnectionPool waiting for "+key+" ("+waitingCounter+")");
-                } else {
-                  System.err.print("w");
-                }
+        } catch (SQLException sqle) {
+          if (VERBOSITY>=2) System.err.println("DBConnectionPool "+key+" saw: "+sqle);
+          if (isRetryable(sqle) && retries<maxRetries) {
+            retries++;
+            waitingP = true;
+            waitingCounter++;
+            if (VERBOSITY>=1) {
+              if (VERBOSITY>=3) {
+                System.err.println("DBConnectionPool waiting to retry for "+key+" ("+waitingCounter+")");
+              } else {
+                System.err.print("w");
               }
             }
-            wait();
-          } catch (InterruptedException e) { }
+            try {
+              wait(retryTimeout);
+            } catch (InterruptedException e) {}
+          } else {
+            throw sqle;
+          }
         }
+      } else {
+        try {
+          if (!waitingP) {
+            waitingP = true;
+            waitingCounter++;
+            if (VERBOSITY>=1) {
+              if (VERBOSITY>=3) {
+                System.err.println("DBConnectionPool waiting for "+key+" ("+waitingCounter+")");
+              } else {
+                System.err.print("w");
+              }
+            }
+          }
+          wait();
+        } catch (InterruptedException e) { }
       }
-    } catch (SQLException sqle) {
-      if (VERBOSITY>=2) System.err.println("DBConnectionPool "+key+" saw: "+sqle);
-      throw sqle;
     }
   }
 
@@ -1476,21 +1546,22 @@ public class DBConnectionPool {
   }
 
   private synchronized void checkTimeout(long now) {
-    ArrayList entriesToDelete = new ArrayList();
-    for (Iterator e = entries.iterator(); e.hasNext(); ) {
-      DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
-      if (!entry.inUse) {
-	if (entry.lastUsed < (now - TIMEOUT)) {
-	  entriesToDelete.add(entry);
-	}
+    if (entries.size() > 0) {
+      ArrayList entriesToDelete = new ArrayList();
+      for (Iterator e = entries.iterator(); e.hasNext(); ) {
+        DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
+        if (!entry.inUse) {
+          if (entry.lastUsed < (now - TIMEOUT)) {
+            entriesToDelete.add(entry);
+          }
+        }
+      }
+      if (VERBOSITY>=3) System.err.println("DBConnectionPool "+key+" dropping "+entriesToDelete.size()+" entries");
+      for (Iterator e = entriesToDelete.iterator(); e.hasNext(); ) {
+        DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
+        delete(entry);
       }
     }
-    if (VERBOSITY>=3) System.err.println("DBConnectionPool "+key+" dropping "+entriesToDelete.size()+" entries");
-    for (Iterator e = entriesToDelete.iterator(); e.hasNext(); ) {
-      DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
-      delete(entry);
-    }
-    
   }
 
   //
