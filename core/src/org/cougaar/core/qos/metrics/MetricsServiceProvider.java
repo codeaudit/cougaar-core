@@ -21,11 +21,19 @@
 
 package org.cougaar.core.qos.metrics;
 
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.StateObject;
 import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.thread.ThreadServiceProvider;
 
-public final class MetricsServiceProvider implements ServiceProvider
+public final class MetricsServiceProvider
+    extends ContainerSupport
+    implements ContainerAPI, ServiceProvider, StateObject
 {
     
     private static final String RETRIEVER_IMPL_CLASS =
@@ -47,12 +55,25 @@ public final class MetricsServiceProvider implements ServiceProvider
     private MetricsUpdateService updater;
     private boolean syscondFactoryStarted = false;
 
-    public MetricsServiceProvider(ServiceBroker sb, NodeIdentifier id) {
+    public MetricsServiceProvider() {
+    }
+
+    public void load() {
+
+	super.load();
+
+	ServiceBroker sb = getServiceBroker();
+	
+	// Make thread services for this layer
+	ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Metrics");
+	tsp.provideServices(sb);
+
+	// Later these two instances will be out child components
 	Start = System.currentTimeMillis();
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
-	    Class[] parameters = { ServiceBroker.class, NodeIdentifier.class };
-	    Object[] args = { sb, id };
+	    Class[] parameters = { ServiceBroker.class };
+	    Object[] args = { sb };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
 	    updater = (MetricsUpdateService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
@@ -61,14 +82,13 @@ public final class MetricsServiceProvider implements ServiceProvider
 	    ex.printStackTrace();
 	}
 
+
 	try {
 	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
 	    Class[] parameters = 
-	    { ServiceBroker.class,
-	      NodeIdentifier.class,
-	      MetricsUpdateService.class
+		{ ServiceBroker.class, MetricsUpdateService.class
 	    };
-	    Object[] args = { sb, id, updater };
+	    Object[] args = { sb, updater };
 	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
 	    retriever = (MetricsService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
@@ -104,7 +124,7 @@ public final class MetricsServiceProvider implements ServiceProvider
 	synchronized (this) {
 	    if (!syscondFactoryStarted) {
 		syscondFactoryStarted = true;
-		startSyscondFactory(sb);
+		startSyscondFactory(getServiceBroker());
 	    }
 	}
 	if (serviceClass == MetricsService.class) {
@@ -123,6 +143,41 @@ public final class MetricsServiceProvider implements ServiceProvider
     {
     }
 
+
+
+    // Container
+
+
+    // We're not using this yet but leave it in anyway.
+    protected String specifyContainmentPoint() {
+	return "Node.MetricsService";
+    }
+
+    public void requestStop() {}
+
+    public final void setBindingSite(BindingSite bs) {
+        super.setBindingSite(bs);
+        setChildServiceBroker(new PropagatingServiceBroker(bs));
+    }
+
+
+    public ContainerAPI getContainerProxy() {
+	return this;
+    }
+
+
+    // StateModel
+
+    // Return a (serializable) snapshot that can be used to
+    // reconstitute the state later.
+    public Object getState() {
+	// TBD
+	return null;
+    }
+
+    // Reconstitute from the previously returned snapshot.
+    public void setState(Object state) {
+    }
 
 }
 

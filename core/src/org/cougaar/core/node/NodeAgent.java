@@ -252,7 +252,8 @@ public class NodeAgent
           null); //policy
     add(topologyReaderSCDesc);
 
-    MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, nodeIdentifier);
+    MetricsServiceProvider msp = new MetricsServiceProvider();
+    add(msp);
     rootsb.addService(MetricsService.class, msp);
     rootsb.addService(MetricsUpdateService.class, msp);
 
