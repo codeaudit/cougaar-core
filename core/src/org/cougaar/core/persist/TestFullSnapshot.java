@@ -28,6 +28,7 @@ package org.cougaar.core.persist;
 import java.io.Serializable;
 
 import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -35,38 +36,55 @@ import org.cougaar.util.UnaryPredicate;
  * org.cougaar.core.service.BlackboardService#persistNow()}
  */
 public class TestFullSnapshot extends ComponentPlugin {
+  private LoggingService logger;
+
   private static class Item implements Serializable {
     byte[] bytes = new byte[10000];
   }
 
   public void setupSubscriptions() {
+    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
   }
 
   public void execute() {
-    System.out.println("Running TestFullSnapShot");
+    if (logger.isShoutEnabled())
+      logger.shout("Running TestFullSnapShot");
+
     Item[] items = new Item[1000];
+    // Publish a bunch
     for (int i = 0; i < items.length; i++) {
       items[i] = new Item();
       blackboard.publishAdd(items[i]);
     }
+
+    // Force a persist
     try {
       blackboard.persistNow();
     } catch (PersistenceNotEnabledException pnee) {
+      logger.error("Persistence not enabled", pnee);
     }
+
     printBBSize();
+
+    // publishRemove a bunch
     for (int i = 0; i < items.length; i++) {
       blackboard.publishRemove(items[i]);
       items[i] = null;
     }
     blackboard.closeTransaction();
+
     try {
       Thread.sleep(5000);
     } catch (InterruptedException ie) {
     }
+
     blackboard.openTransaction();
+
+    // Now force another persist
     try {
       blackboard.persistNow();
     } catch (PersistenceNotEnabledException pnee) {
+      logger.error("Persistence not enabled", pnee);
     }
     printBBSize();
   }
@@ -74,7 +92,8 @@ public class TestFullSnapshot extends ComponentPlugin {
   private void printBBSize() {
     Runtime rt = Runtime.getRuntime();
     long heap = rt.totalMemory() - rt.freeMemory();
-    System.out.println(blackboard.query(new UnaryPredicate() {
+    if (logger.isShoutEnabled())
+      logger.shout(blackboard.query(new UnaryPredicate() {
         public boolean execute(Object o) {
           return true;
         }
