@@ -2,6 +2,13 @@ Versions and download locations for standard third-party jar files
 
 Jar files should not be added or updated without updating this file.
 
+bbn-postgresql7.1.3.jar version 7.1.3
+Modified postgresql jdbc driver; added case types.OTHER to getObject() in 
+org.postgresql.jdbc2.ResultSet.java.  This prevents sql string constants and 
+identifiers/names from throwing an unknown object exception. The source for 
+this driver came from src/interfaces in version of 7.1.3 of the PostgreSQL 
+database server. http://www.postgreSQL.org/
+
 NetComponents.jar	version ?
 http://www.savarese.org/oro/software/NetComponents.html
 
