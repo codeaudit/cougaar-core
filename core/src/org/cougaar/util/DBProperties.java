@@ -47,6 +47,7 @@ public class DBProperties extends java.util.Properties {
     private String dbtype;
     private String dbspec;
     private boolean debug = false;
+    private String qfile;       // For debugging only
 
     /**
      * Read and parse a .q file relative to a particular database. The
@@ -59,6 +60,7 @@ public class DBProperties extends java.util.Properties {
         InputStream i = new BufferedInputStream(ConfigFinder.getInstance().open(qfile));
         try {
             DBProperties result = new DBProperties(dbspec);
+            result.qfile = qfile;
             result.load(i);
             return result;
         } finally {
@@ -120,6 +122,8 @@ public class DBProperties extends java.util.Properties {
     public String getQuery(String queryName, Map substitutions) {
         String result = getQuery1(queryName + "." + dbtype, substitutions);
         if (result == null) result = getQuery1(queryName, substitutions);
+        if (result == null)
+            throw new IllegalArgumentException("No query named " + queryName + " in " + qfile);
         return result;
     }
 
