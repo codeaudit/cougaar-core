@@ -188,6 +188,11 @@ implements Component
 
       public TopologyWriterServiceImpl() {
         // cache "ensureTopologyContext()" ?
+	  try {
+	      ensureTopologyContext();
+	  } catch (javax.naming.NamingException name_ex) {
+	      throw new RuntimeException(name_ex);
+	  }
       }
 
       public void createAgent(
