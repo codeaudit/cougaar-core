@@ -55,6 +55,7 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
     //private java.security.cert.Certificate cert;
 
     SignedSecureMessage(Message m) {
+      super(m.getOriginator(), m.getTarget());
       secret = SignedMessageSecurityManager.sign(m);
       //cert = SignedMessageSecurityManager.getCert(origin.getAddress());
     }
@@ -63,6 +64,12 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
       try {
         java.security.cert.Certificate cert = 
           KeyRing.getCert(getOriginator().getAddress());
+        if (cert == null) {
+          System.err.println("\nWarning: Dropping message, No public certificate for Origin \""+
+                             getOriginator().getAddress()+"\": "+secret.getObject()+
+                             );
+          return (Message) secret.getObject();
+        }
         if (verify(secret, cert)) {
           return (Message) secret.getObject();
         } else {
@@ -80,6 +87,11 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
     try {
       String origin = m.getOriginator().getAddress();
       PrivateKey pk = KeyRing.getPrivateKey(origin);
+      if (pk == null) {
+        System.err.println("\nWarning: Dropping message, Could not find private key for Origin \""+
+                           origin+"\": "+m);
+        return null;
+      }
       Signature se = Signature.getInstance(pk.getAlgorithm());
       return new SignedObject(m, pk, se);
     } catch (Exception e) {
@@ -89,6 +101,8 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
   }
 
   static boolean verify(SignedObject so, java.security.cert.Certificate cert) {
+    // check for bogus conditions.
+    if (so == null || cert == null) return false;
     try {
       PublicKey pk = cert.getPublicKey();
       Signature ve = Signature.getInstance(so.getAlgorithm());
