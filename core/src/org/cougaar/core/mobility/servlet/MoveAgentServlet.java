@@ -29,6 +29,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -216,6 +217,12 @@ implements BlackboardClient
       // from the URL-params:
       //    (see the class-level javadocs for details)
 
+      public static final String REFRESH_PARAM = "Refresh";
+      public boolean isRefresh;
+
+      public static final String MOVE_PARAM = "Move";
+      public boolean isMove;
+
       public static final String MOBILE_AGENT_PARAM = "mobileAgent";
       public String mobileAgent;
 
@@ -265,7 +272,11 @@ implements BlackboardClient
           value = URLDecoder.decode(value, "UTF-8");
 
           // save parameters
-          if (name.equals(MOBILE_AGENT_PARAM)) {
+          if (name.equals(MOVE_PARAM)) {
+            isMove = "true".equalsIgnoreCase(value);
+          } else if (name.equals(REFRESH_PARAM)) {
+            isRefresh = "true".equalsIgnoreCase(value);
+          } else if (name.equals(MOBILE_AGENT_PARAM)) {
             mobileAgent = value;
           } else if (name.equals(DEST_NODE_PARAM)) {
             destNode = value;
@@ -283,7 +294,7 @@ implements BlackboardClient
       }
 
       private void writeResponse() throws IOException {
-        if (mobileAgent != null) {
+        if (isMove) {
           try {
             addMoveAgent(
                 mobileAgent,
@@ -301,17 +312,17 @@ implements BlackboardClient
       }
 
       private void writeUsage() throws IOException {
+        String msg = agentId+" move-agent";
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
+        out.print("<html><head><title>");
+        out.print(msg);
         out.print(
-            "<html><head><title>"+
-            "Move Agent"+
             "</title></head>"+
             "<body>\n"+
-            "<h2>Move Agent Servlet</h2>\n");
-        writeBlackboard(out);
-        out.print(
-            "<h2>Please fill in these parameters:</h2>\n");
+            "<h2>");
+        out.print(msg);
+        out.print("</h2>\n");
         writeForm(out);
         out.print(
             "</body></html>\n");
@@ -320,7 +331,7 @@ implements BlackboardClient
 
       private void writeFailure(Exception e) throws IOException {
         // select response message
-        String msg = "move-agent failed";
+        String msg = "Failed "+agentId+" move-agent";
         response.setContentType("text/html");
         // build up response
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -349,8 +360,7 @@ implements BlackboardClient
       }
 
       private void writeSuccess() throws IOException {
-        String msg =
-          "Agent Move Initiated";
+        String msg = agentId+" move-agent";
         // write response
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
@@ -362,15 +372,25 @@ implements BlackboardClient
             "<center><h1>");
         out.print(msg);
         out.print("</h1></center><p>\n");
-        writeBlackboard(out);
         writeForm(out);
         out.print("</body></html>\n");
         out.close();
       }
 
-      private void writeBlackboard(PrintWriter out) throws IOException {
-        out.print("<p><h2>Local "+agentId+" MoveAgent Objects</h2><p>");
-        // query blackboard
+      private void writeForm(
+          PrintWriter out) throws IOException {
+        // begin form
+        out.print("<form method=\"GET\" action=\"");
+        out.print(request.getRequestURI());
+        out.print("\">\n");
+        // show the current time
+        out.print("<i>Time: ");
+        out.print(new Date());
+        out.print("</i><p>");
+        out.print(
+            "<h2>"+
+            "Local MoveAgent Objects:</h2><p>");
+        // show current MoveAgent objects
         Collection c = queryMoveAgents();
         int n = ((c != null) ? c.size() : 0);
         if (n == 0) {
@@ -390,21 +410,55 @@ implements BlackboardClient
           }
           out.print("</table>\n");
         }
-        out.print("<p><form method=\"GET\" action=\"");
-        out.print(request.getRequestURI());
+        if (mobileAgent != null) {
+          out.print(
+            "<input type=\"hidden\" name=\""+
+            MOBILE_AGENT_PARAM+
+            "\" value=\"");
+          out.print(mobileAgent);
+          out.print("\">");
+        }
+        if (originNode != null) {
+          out.print(
+              "<input type=\"hidden\" name=\""+
+              ORIGIN_NODE_PARAM+
+              "\" value=\"");
+          out.print(originNode);
+          out.print("\">");
+        }
+        if (destNode != null) {
+          out.print(
+            "<input type=\"hidden\" name=\""+
+            DEST_NODE_PARAM+
+            "\" value=\"");
+          out.print(destNode);
+          out.print("\">");
+        }
         out.print(
-            "\">\n"+
-            "<input type=\"submit\" value=\"Refresh\">"+
-            "</form><p>");
-      }
+            "<input type=\"hidden\" name=\""+
+            IS_FORCE_RESTART_PARAM+
+            "\" value=\"");
+        out.print(isForceRestart);
+        out.print("\">\n");
+        out.print(
+            "<p><input type=\"hidden\" name=\""+
+            REFRESH_PARAM+
+            "\" value=\"true\">");
+        out.print(
+            "<p><input type=\"submit\" value=\""+
+            REFRESH_PARAM+
+            "\">"+
+            "</form>\n");
 
-      private void writeForm(
-          PrintWriter out) throws IOException {
-        out.print(
-            "<form method=\"GET\" action=\"");
+        // begin form
+        out.print("<form method=\"GET\" action=\"");
         out.print(request.getRequestURI());
+        out.print("\">\n");
+        // allow user to submit a new MoveAgent request
         out.print(
-            "\">\n"+
+            "<p>"+
+            "<h2>Create a new agent-movement request:</h2>\n");
+        out.print(
             "<table>\n"+
             "<tr><td>"+
             "Mobile Agent"+
@@ -469,7 +523,12 @@ implements BlackboardClient
             "</select>\n"+
             "</td></tr>\n"+
             "<tr><td colwidth=2>"+
-            "<input type=\"submit\" value=\"Submit\">"+
+            "<input type=\"hidden\" name=\""+
+            MOVE_PARAM+
+            "\" value=\"true\">"+
+            "<input type=\"submit\" value=\""+
+            MOVE_PARAM+
+            "\">"+
             "</td></tr>\n"+
             "</table>\n"+
             "</form>\n");
