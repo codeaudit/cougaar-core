@@ -262,7 +262,7 @@ public class ScheduleImpl
     if (index<0 || index>size)
       throw new IndexOutOfBoundsException("Index: "+index+", Size: "+size);
 
-    System.out.println("ScheduleImpl.ListIterator()");
+//      System.out.println("ScheduleImpl.ListIterator()");
     return new ListItr(index);
   }
 
