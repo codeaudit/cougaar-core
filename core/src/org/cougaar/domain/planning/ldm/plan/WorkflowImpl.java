@@ -242,6 +242,14 @@ public class WorkflowImpl
       throw new IllegalArgumentException("Workflow.addTask(arg): arg must be a non-null Task");
     }
     subtasks.addElement(newTask);
+    // If the context of the new task is not set, set it to be the context of the parent task
+    if (newTask.getContext() == null) {
+      if (basetask != null) {
+	if (newTask instanceof NewTask) {
+	  ((NewTask)newTask).setContext(basetask.getContext());
+	}
+      }
+    }
     clearTST();
   }
 
