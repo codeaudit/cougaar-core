@@ -1,3 +1,9 @@
+2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PluginManager.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
 2002-08-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* util/AllocationResultHelper.java:

@@ -1,3 +1,9 @@
+2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* service/event/EventServiceComponent.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
 2002-11-07  Todd Wright  <twright@bbn.com>
 
 	* all

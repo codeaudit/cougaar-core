@@ -1,3 +1,27 @@
+2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/JNDIWhitePagesServiceComponent.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
+	* org/cougaar/core/servlet/ComponentServlet.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
+	* org/cougaar/core/mobility/servlet/MoveAgentServlet.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
+	* org/cougaar/core/node/DefaultAgentIdentityComponent.java: 
+	* org/cougaar/core/node/DefaultAgentIdentityComponent.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
+	* org/cougaar/core/domain/RootDomain.java: 
+	* org/cougaar/core/domain/DomainManager.java: 
+	Bug #2658 -- Components incompatible with automatic service revocation feature
+	Test for null service before trying to use it.
+
 2003-03-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/Parser.java:
