@@ -125,13 +125,20 @@ implements SimpleServletSupport
       while (en.hasMoreElements()) {
         javax.naming.Binding binding =  
           (javax.naming.Binding) en.nextElement();
+        //
+        // This strangeness keeps us from having a dependency on 
+        // the "webserver" package, which is compiled after core.jar
+        //
+        Object o = binding.getObject();
+        java.lang.reflect.Method m = o.getClass().getMethod("getName", new Class[0]);
+        toList.add(m.invoke(o, new Object[0]));
 	/*
+        // This is what the code above should be....
         org.cougaar.lib.web.arch.root.GlobalEntry entry = 
           (org.cougaar.lib.web.arch.root.GlobalEntry)binding.getObject();
         toList.add(entry.getName());
 	*/
         
-        toList.add(binding.getName());
       }
       Collections.sort(toList);
     } catch (Exception e) {
