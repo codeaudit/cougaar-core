@@ -73,7 +73,7 @@ public class PluginManager
     // display the agent id
     ClusterIdentifier cid = getBindingSite().getAgentIdentifier();
     String cname = cid.toString();
-    System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
+    // System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
     
     // get an array of child Components
     Object[] children;
