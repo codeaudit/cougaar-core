@@ -33,9 +33,9 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * This class creates a servlet which displays the state of COUGAAR
- * ThreadService threads (Schedulables) in a way that's vaguely
- * remniscent of the unix 'top' command.
+ * This component creates the "/threads/top" servlet which displays
+ * the state of COUGAAR ThreadService threads (Schedulables) in a way
+ * that's vaguely remniscent of the unix 'top' command.
  * 
  * This is designed to be a Node-level plugin.
  */

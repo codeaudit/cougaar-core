@@ -30,6 +30,24 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
+/**
+ * An optional utility class for use by {@link java.lang.Runnable}s
+ * running in a pooled {@link org.cougaar.core.service.ThreadService}
+ * thread to tell the {@link ThreadService} why they are running
+ * so long (for example, due to a blocking I/O call). 
+ * <p>
+ * For example:<pre> 
+ *    try {
+ *      SchedulableStatus.beginNetIO("download url");
+ *      // open a URLConnection, read from socket, etc.
+ *    } finally {
+ *      SchedulableStatus.endBlocking();
+ *    }
+ * </pre> 
+ * <p>
+ * This information is shown in the {@link TopPlugin}'s "/threads/top"
+ * servlet.
+ */
 public final class SchedulableStatus
 {
     public static final int NOT_BLOCKING = -1;
