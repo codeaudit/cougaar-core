@@ -31,7 +31,6 @@ import java.util.*;
  * access to community management capabilities.
  */
 public interface CommunityService extends Service {
-
   String COMMUNITIES_CONTEXT_NAME = "Communities";
 
 
@@ -254,4 +253,7 @@ public interface CommunityService extends Service {
    */
   boolean removeRole(String communityName, String entityName, String roleName);
 
+  void addListener(CommunityChangeListener l);
+
+  void removeListener(CommunityChangeListener l);
 }
