@@ -41,21 +41,18 @@ import org.cougaar.core.mts.MessageAddress;
 public interface IncarnationService extends Service {
 
   /**
-   * @return the agent incarnation, or throw an
-   * {@link IncarnationNotKnownException} if the
-   * agent or its incarnation is not known.
-   * @throws IncarnationNotKnownException
+   * @return the agent incarnation, or -1 if the agent or its
+   * incarnation is not known.
    */
-  long getIncarnation(MessageAddress addr)
-    throws IncarnationNotKnownException;
+  long getIncarnation(MessageAddress addr);
 
   /**
-   * @return the agent incarnation for a callback's view,
-   * which is the {@link #getIncarnation(MessageAddress)}
-   * unless the {@link #subscribe(MessageAddress,Callback,long)}
-   * specified a greater incarnation number. 
+   * Update an agent's incarnation.
+   * @return 0 if unchanged, -1 if the incarnation is old,
+   * or 1 if the incarnation is new (which will invoke the
+   * callbacks in the caller's thread)
    */
-  long getIncarnation(MessageAddress addr, Callback cb);
+  int updateIncarnation(MessageAddress addr, long inc);
 
   /**
    * Subscribe to incarnation change callbacks.
@@ -69,9 +66,8 @@ public interface IncarnationService extends Service {
    * minimal incarnation value filter.
    * <p>
    * The incarnation is used to restore a subscription after
-   * capturing it from {@link
-   * getIncarnation(MessageAddress,Callback)}, specifically
-   * for mobile agents.
+   * capturing it from {@link #getIncarnation(MessageAddress)},
+   * specifically for mobile agents.
    *
    * @return true if the callback was not already subscribed 
    */
@@ -103,11 +99,5 @@ public interface IncarnationService extends Service {
      * to the new <code>inc</code> value.
      */
     void incarnationChanged(MessageAddress addr, long inc);
-  }
-
-  /**
-   * An exception thrown if {@link #getIncarnation} fails.
-   */
-  class IncarnationNotKnownException extends Exception {
   }
 }

@@ -80,7 +80,7 @@ implements Component
 
   private IncarnationSP isp;
 
-  private Schedulable updateThread;
+  private Schedulable pollThread;
 
   // map of agent name to an entry with the most recently observed
   // incarnation and listener callbacks
@@ -120,18 +120,18 @@ implements Component
     // get thread
     ThreadService threadService = (ThreadService)
       sb.getService(this, ThreadService.class, null);
-    Runnable updateRunner = 
+    Runnable pollRunner = 
       new Runnable() {
         public void run() {
-          updateIncarnations();
+          pollWhitePages();
         }
       };
-    updateThread = threadService.getThread(
-        this, updateRunner, "Incarnation");
+    pollThread = threadService.getThread(
+        this, pollRunner, "Incarnation");
     sb.releaseService(this, ThreadService.class, threadService);
 
     // assume we're running
-    updateThread.schedule(
+    pollThread.schedule(
         RESTART_CHECK_INTERVAL,
         RESTART_CHECK_INTERVAL);
 
@@ -141,9 +141,9 @@ implements Component
   }
 
   public void unload() {
-    if (updateThread != null) {
-      updateThread.cancelTimer();
-      updateThread = null;
+    if (pollThread != null) {
+      pollThread.cancelTimer();
+      pollThread = null;
     }
     if (isp != null) {
       sb.revokeService(IncarnationService.class, isp);
@@ -157,19 +157,68 @@ implements Component
     super.unload();
   }
 
-  private long getIncarnation(
-      MessageAddress agentId,
-      IncarnationService.Callback cb) {
+  private long getIncarnation(MessageAddress agentId) {
     synchronized (incarnationMap) {
       Entry e = (Entry) incarnationMap.get(agentId);
       if (e == null) {
         return 0;
       }
-      return e.getIncarnation(cb);
+      return e.getIncarnation();
     }
   }
 
-  public boolean subscribe(
+  private int updateIncarnation(MessageAddress agentId, long inc) {
+    if (inc <= 0) {
+      // invalid incarnation (wp cache miss?)
+      return 0;
+    }
+    List callbacks;
+    synchronized (incarnationMap) {
+      Entry e = (Entry) incarnationMap.get(agentId);
+      if (e == null) {
+        // no subscribers for this information!
+        return 0;
+      }
+      long cachedInc = e.getIncarnation();
+      if (inc == cachedInc) {
+        // no change
+        return 0;
+      }
+      if (inc < cachedInc) {
+        // stale incarnation
+        return -1; 
+      }
+      // increase
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Update agent "+agentId+
+            " from "+cachedInc+
+            " to "+inc);
+      }
+      e.setIncarnation(inc);
+      if (cachedInc == 0) {
+        // first time, don't invoke callbacks
+        return 0;
+      }
+      // get callbacks
+      callbacks = e.getCallbacks();
+    }
+    // invoke callbacks in the caller's thread
+    int n = (callbacks == null ? 0 : callbacks.size());
+    for (int i = 0; i < n; i++) {
+      IncarnationService.Callback cb = (IncarnationService.Callback)
+        callbacks.get(i);
+      if (log.isDebugEnabled()) {
+        log.debug(
+            "Invoking callback("+agentId+", "+inc+")["+
+            i+" / "+n+"]: "+cb);
+      }
+      cb.incarnationChanged(agentId, inc);
+    }
+    return 1;
+  }
+
+  private boolean subscribe(
       MessageAddress agentId,
       IncarnationService.Callback cb,
       long initialInc) {
@@ -177,27 +226,45 @@ implements Component
       throw new IllegalArgumentException(
           "null "+(agentId == null ? "addr" : "cb"));
     }
-    synchronized (incarnationMap) {
-      Entry e = (Entry) incarnationMap.get(agentId);
-      if (e == null) {
-        if (log.isInfoEnabled()) {
-          log.info("Adding "+agentId);
+    long inc = initialInc;
+    while (true) {
+      long cachedInc;
+      synchronized (incarnationMap) {
+        Entry e = (Entry) incarnationMap.get(agentId);
+        if (e == null) {
+          if (log.isInfoEnabled()) {
+            log.info("Adding "+agentId);
+          }
+          e = new Entry();
+          incarnationMap.put(agentId, e);
         }
-        e = new Entry();
-        incarnationMap.put(agentId, e);
+        cachedInc = e.getIncarnation();
+        if (inc <= 0 || inc == cachedInc) {
+          // okay to add now
+          boolean ret = e.addCallback(cb);
+          if (log.isDetailEnabled()) {
+            log.detail(
+                "addCallback("+
+                agentId+", "+cb+", "+inc+")="+ret);
+          }
+          return ret;
+        }
       }
-      boolean ret = e.addCallback(cb, initialInc);
-      if (log.isDetailEnabled()) {
-        log.detail(
-            "addCallback("+agentId+", "+cb+", "+initialInc+")="+ret);
+      // inc != cachedInc, so we must bring them into sync,
+      // but don't invoke callbacks while holding the lock!
+      if (inc >= cachedInc) {
+        updateIncarnation(agentId, inc);
+        continue;
       }
-      // if initialInc != e.inc, we'll update it on our
-      // next updateIncarnations()
-      return ret;
+      if (log.isDebugEnabled()) {
+        log.debug("Invoking callback("+agentId+", "+inc+"):"+ cb);
+      }
+      cb.incarnationChanged(agentId, cachedInc);
+      inc = cachedInc;
     }
   }
 
-  public boolean unsubscribe(
+  private boolean unsubscribe(
       MessageAddress agentId,
       IncarnationService.Callback cb) {
     if (agentId == null || cb == null) {
@@ -226,9 +293,9 @@ implements Component
    * Periodically called to poll for remote agent incarnation
    * changes.
    */
-  private void updateIncarnations() {
+  private void pollWhitePages() {
     if (log.isDebugEnabled()) {
-      log.debug("updateIncarnations");
+      log.debug("pollWhitePages");
     }
     // snapshot the agent names
     Set agentIds;
@@ -248,46 +315,6 @@ implements Component
     }
   }
 
-  private void updateIncarnation(
-      MessageAddress agentId,
-      long currentInc) {
-    if (currentInc <= 0) {
-      // wp cache miss or unknown
-      return;
-    }
-    List callbacks = null;
-    synchronized (incarnationMap) {
-      Entry e = (Entry) incarnationMap.get(agentId);
-      if (e == null) {
-        // unsubscribed?
-        return;
-      }
-      long cachedInc = e.getIncarnation(null);
-      if (cachedInc < currentInc) {
-        // increase
-        if (log.isInfoEnabled()) {
-          log.info(
-              "Update agent "+agentId+
-              " from "+cachedInc+
-              " to "+currentInc);
-        }
-      }
-      callbacks = e.updateIncarnation(currentInc);
-    }
-    // invoke callbacks in our thread
-    int n = (callbacks == null ? 0 : callbacks.size());
-    for (int i = 0; i < n; i++) {
-      IncarnationService.Callback cb = (IncarnationService.Callback)
-        callbacks.get(i);
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "Invoking callback("+agentId+", "+currentInc+")["+
-            i+" / "+n+"]: "+cb);
-      }
-      cb.incarnationChanged(agentId, currentInc);
-    }
-  }
-
   /**
    * White pages lookup to get the latest incarnation number for
    * the specified agent.
@@ -298,7 +325,7 @@ implements Component
   private long lookupIncarnation(MessageAddress agentId) {
     AddressEntry entry;
 
-    // runs in the updateThread, so no locking required
+    // runs in the pollThread, so no locking required
     BlockingWPCallback callback = (BlockingWPCallback)
       pendingMap.get(agentId);
     if (callback == null) {
@@ -338,9 +365,6 @@ implements Component
   /** an incarnationMap entry */
   private static final class Entry {
 
-    // marker for an incarnation of zero
-    private static final Long ZERO = new Long(0);
-
     // comparator that puts non-comparables first
     private static final Comparator CALLBACK_COMP =
       new Comparator() {
@@ -359,155 +383,46 @@ implements Component
         }
       };
 
-    // map from Callback to Long incarnation, which is
-    // typically ZERO to match our shared "inc"
-    private Map callbacks;
-
     // cached incarnation.
-    //
-    // all callbacks with ZERO values are treated as if
-    // they have our "inc".  If all our callbacks are ZERO
-    // then we set "allZero" for a little optimization`
     private long inc;
 
-    // true iff all "callbacks.values()" are ZERO
-    private boolean allZero = true;
+    // our callbacks
+    private Set callbacks;
 
-    public long getIncarnation(IncarnationService.Callback cb) {
-      if (cb == null) {
-        return inc;
-      }
-      Long l = (Long) callbacks.get(cb);
-      if (l == null || l == ZERO) {
-        return inc;
-      }
-      return l.longValue();
+    public long getIncarnation() {
+      return inc;
+    }
+
+    public void setIncarnation(long currentInc) {
+      inc = currentInc;
     }
 
     public boolean hasCallbacks() {
       return (callbacks != null && !callbacks.isEmpty());
     }
 
-    public boolean addCallback(
-        IncarnationService.Callback cb,
-        long cbInc) {
+    public boolean addCallback(IncarnationService.Callback cb) {
       if (callbacks == null) {
-        // use a regular HashMap and sort on "update", instead of
-        // using a more expensive TreeMap.
-        callbacks = new HashMap();
-      } else if (callbacks.containsKey(cb)) {
-        return false;
+        // use a regular IdentityHashSet and sort on "update",
+        // instead of using a more expensive TreeSet.
+        callbacks = new IdentityHashSet();
       }
-      Long l;
-      if (cbInc == 0) {
-        // client doesn't have an initial incarnation setting
-        l = ZERO; 
-      } else if (cbInc == inc) {
-        // same as us
-        l = ZERO; 
-      } else {
-        // ahead or behind us?
-        l = new Long(cbInc);
-        allZero = false;
-      }
-      callbacks.put(cb, l);
-      return true;
+      return callbacks.add(cb);
     }
 
     public boolean removeCallback(IncarnationService.Callback cb) {
       if (callbacks == null) {
         return false;
       }
-      Long l = (Long) callbacks.remove(cb);
-      if (l == null) {
-        return false;
-      }
-      if (l != ZERO) {
-        if (!allZero) {
-          // recalculate allZero
-          allZero = true;
-          for (Iterator iter = callbacks.values().iterator();
-              iter.hasNext();
-              ) {
-            Long l2 = (Long) iter.next();
-            long cbInc = (l2 == null ? 0 : l2.longValue());
-            if (cbInc != 0 && cbInc != inc) {
-              allZero = false;
-              break;
-            }
-          }
-        }
-      }
-      return true;
+      return callbacks.remove(cb);
     }
 
-    /**
-     * update callbacks with the new incarnation, return
-     * a sorted list of callbacks to notify.
-     */
-    public List updateIncarnation(long currentInc) {
-      boolean updated = false;
-      if (inc == 0) {
-        // first time
-        inc = currentInc;
-      } else if (inc == currentInc) {
-        // no change
-      } else if (inc < currentInc) {
-        // increase
-        updated = true;
-        inc = currentInc;
-      } else {
-        // huh?  ignore stale wp entry
-      }
-      List ret = null;
+    public List getCallbacks() {
       if (callbacks.isEmpty()) {
-        // no callbacks?
-      } else if (allZero) {
-        // all callback.inc's are zero
-        if (updated) {
-          // update all callbacks
-          ret = new ArrayList(callbacks.keySet());
-        } else {
-          // no change
-        }
-      } else {
-        // must scan entry for callback incarnation overrides
-        allZero = true;
-        for (Iterator iter = callbacks.entrySet().iterator();
-            iter.hasNext();
-            ) {
-          Map.Entry me = (Map.Entry) iter.next();
-          Object cb = me.getKey();
-          Long l = (Long) me.getValue();
-          long cbInc = (l == null ? 0 : l.longValue());
-          boolean add = false;
-          if (cbInc == 0) {
-            // same as allZero case
-            add = updated;
-          } else if (cbInc < currentInc) {
-            // update this callback, then it's in sync
-            callbacks.put(cb, ZERO); 
-            add = true;
-          } else if (cbInc == currentInc) {
-            // already saw this change, but now in sync
-            callbacks.put(cb, ZERO); 
-          } else if (cbInc > currentInc) {
-            // in the future?
-            allZero = false;
-          }
-          if (!add) {
-            continue;
-          }
-          if (ret == null) {
-            ret = new ArrayList();
-          }
-          ret.add(cb);
-        }
+        return null;
       }
-      // sort callbacks
-      if (ret != null) {
-        Collections.sort(ret, CALLBACK_COMP);
-      }
+      List ret = new ArrayList(callbacks);
+      Collections.sort(ret, CALLBACK_COMP);
       return ret;
     }
 
@@ -542,23 +457,14 @@ implements Component
         // map from agentId to callbacks
         private final Map subs = new HashMap();
 
-        public long getIncarnation(
-            MessageAddress addr) throws IncarnationNotKnownException {
+        public long getIncarnation(MessageAddress addr) {
           MessageAddress agentId = addr.getPrimary();
-          long ret = Incarnation.this.getIncarnation(agentId, null);
-          if (ret <= 0) {
-            throw new IncarnationNotKnownException();
-          }
-          return ret;
+          return Incarnation.this.getIncarnation(agentId);
         }
 
-        public long getIncarnation(
-            MessageAddress addr,
-            Callback cb) {
+        public int updateIncarnation(MessageAddress addr, long inc) {
           MessageAddress agentId = addr.getPrimary();
-          // verify that our subs contains this callback?
-          long ret = Incarnation.this.getIncarnation(agentId, cb);
-          return ret;
+          return Incarnation.this.updateIncarnation(agentId, inc);
         }
 
         public Map getSubscriptions() {

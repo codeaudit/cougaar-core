@@ -201,8 +201,8 @@ implements Component
 
   private Object captureState() {
     if (getModelState() == ACTIVE) {
-      if (log.isDebugEnabled()) {
-        log.debug("Ignoring persist while active");
+      if (log.isDetailEnabled()) {
+        log.detail("ignoring persist while active");
       }
       return null;
     }
@@ -232,7 +232,7 @@ implements Component
           iter.hasNext();
           ) {
         MessageAddress agentId = (MessageAddress) iter.next();
-        long inc = incarnationService.getIncarnation(agentId, cb);
+        long inc = incarnationService.getIncarnation(agentId);
         ret.put(agentId, new Long(inc));
       }
     }
@@ -323,7 +323,7 @@ implements Component
       boolean b = incarnationService.subscribe(agentId, cb, inc);
       if (b) {
         if (log.isDebugEnabled()) {
-          log.debug("rehydarte-recordAddress("+agentId+", "+inc+")");
+          log.debug("rehydrate-recordAddress("+agentId+", "+inc+")");
         }
       } else {
         if (log.isWarnEnabled()) {
