@@ -1,3 +1,38 @@
+2001-01-05  Noelle Givler <ngivler@bbn.com>
+	* org.cougaar.domain.planning.ldm.plan.Schedule
+
+	Changes to the 7.0 tree designed to make access to 
+	org.cougaar.domain.planning.ldm.plan.Schedule and extenders thread 
+	safe. The changes should be transparent with one exception - 
+	Schedule.iterator() now returns an Iterator over a copy of the 
+	schedule. Calls to Iterator.remove() will not affect the schedule and
+	changes to the schedule while the Iterator is being used will not be
+	visible. This change was introduced to prevent the 
+	ComodificationExceptions we were seeing last year. 
+
+	Calls to Schedule.iterator() also print a stack trace to System.err. 
+	To avoid stack trace (and to make the code more explicit), you can 
+	copy the schedule to an ArrayList before iterating. The following code
+	returns a copy of the entire schedule.
+	
+	  ArrayList copy = new ArrayList(schedule);
+
+	
+	If you are iterating over the schedule and screening at each step, 
+	you can create an UnaryPredicate which performs the screen and then
+	call Schedule.filter(UnaryPredicate). The following code example uses
+	a UnaryPredicate to find all AssignedAvailabilityElements and then
+	calls Schedule.removeAll to remove the elements from the schedule.
+	
+	  Collection remove = availSchedule.filter(new UnaryPredicate()  {
+            public boolean execute(Object o) {
+              return (o instanceof AssignedAvailabilityElement)
+	    }
+	  });
+	  availSchedule.removeAll(remove);
+
+
+	
 2000-11-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* alp.util.OptionPane
