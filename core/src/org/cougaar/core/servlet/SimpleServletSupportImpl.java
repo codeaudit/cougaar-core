@@ -147,7 +147,12 @@ implements SimpleServletSupport
   // maybe add a "getAllAgentIdentifiers()"
 
   public String encodeAgentName(String name) {
-    return URLEncoder.encode(name);
+    try {
+      return URLEncoder.encode(name, "UTF-8");
+    } catch (java.io.UnsupportedEncodingException e) {
+      // should never happen
+      throw new RuntimeException("Unable to encode to UTF-8?");
+    }
   }
 
   // etc to match "SimpleServletSupport"
