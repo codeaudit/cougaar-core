@@ -141,8 +141,8 @@ public class DeletionPlugin extends ComponentPlugin {
     scenarioNow = currentTimeMillis();
     systemNow = System.currentTimeMillis();
     if (alarm.hasExpired()) { // Time to make the donuts
-      if (logger.isInfoEnabled())
-        logger.info("Time to make the donuts");
+      if (logger.isDebugEnabled())
+        logger.debug("Time to make the donuts");
       if (archivingEnabled) {
         try {
           getBlackboardService().persistNow(); // Record our state
