@@ -746,15 +746,37 @@ public abstract class PlugInAdapter
     return threadingModel;
   }
   
+  public final static int UNSPECIFID_THREAD = -1;
   public final static int NO_THREAD = 0;
   public final static int SHARED_THREAD = 1;
   public final static int SINGLE_THREAD = 2;
   public final static int ONESHOT_THREAD = 3;
 
-  private int threadingChoice = SHARED_THREAD;
+  private int threadingChoice = UNSPECIFID_THREAD;
 
-  protected void chooseThreadingModel(int m) {
+  /** Set the current choice of threading model.  Will have no effect if
+   * the threading model has already been acted on.
+   **/
+  protected final void setThreadingChoice(int m) {
+    if (threadingModel != null) 
+      throw new IllegalArgumentException("Too late to select threading model.");
     threadingChoice = m;
+  }
+
+  /** @deprecated use setThreadingChoice instead. **/
+  protected final void chooseThreadingModel(int m) {
+    setThreadingChoice(m);
+  }
+
+  /** @return the current choice of threading model.  **/
+  protected final int getThreadingChoice() {
+    return threadingChoice;
+  }
+
+  /** return the default threading model for this class.
+   **/
+  protected final int getDefaultThreadingChoice() {
+    return SHARED_THREAD;
   }
 
   /** create a Threading model object as specified by the plugin.
@@ -778,6 +800,9 @@ public abstract class PlugInAdapter
    **/
   protected Threading createThreadingModel() {
     Threading t;
+    int choice = getThreadingChoice();
+    if (choice == UNSPECIFID_THREAD) 
+      choice = getDefaultThreadingChoice();
     switch (threadingChoice) {
     case NO_THREAD:
       t = new NoThreading();

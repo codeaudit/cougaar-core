@@ -25,8 +25,8 @@ import org.cougaar.domain.planning.ldm.plan.Expansion;
 
 /** SimplePlugIn is a replacement for SimplifiedPlugIn and
  * SimplifiedFatPlugin.
- * Call chooseThreadingModel(SINGLE_THREAD) from constructor to
- * get the equivalent of SimplifiedFatPlugin.
+ * Call setThreadingChoice(SINGLE_THREAD) in constructor or before this
+ * load is invoked to get the equivalent of SimplifiedFatPlugin.
  **/
 
 public abstract class SimplePlugIn extends PlugInAdapter {
@@ -37,7 +37,9 @@ public abstract class SimplePlugIn extends PlugInAdapter {
   private Alarm maxTimer = null;
 
   public final void load(Object object) throws StateModelException {
-    chooseThreadingModel(SHARED_THREAD);
+    if (getThreadingChoice() == UNSPECIFID_THREAD)
+      setThreadingChoice(SHARED_THREAD);
+
     super.load(object);
   }
 
