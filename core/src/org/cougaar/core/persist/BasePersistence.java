@@ -70,6 +70,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.StringUtility;
+import org.cougaar.util.log.Logger;
 
 /**
  * This persistence class is the base for several persistence
@@ -100,7 +101,14 @@ import org.cougaar.util.StringUtility;
  * colons. The interpretation of the parameters depends on the plugin
  * so see the documentation of the individual plugin classes for
  * details.
- * @property org.cougaar.core.persistence.archivingDisabled Set true to discard archival deltas
+ * @property org.cougaar.core.persistence.archivingDisabled Set true
+ * to discard archival deltas. Overridden by
+ * org.cougaar.core.persistence.archiveCount.
+ * @property org.cougaar.core.persistence.archiveCount An integer
+ * specifying how may persistence archive snapshots to keep. In the
+ * absence of a value for this property, the archivingDisabled
+ * property is used to set this value to 0 for disabled and
+ * Integer.MAX_VALUE for enabled.
  * @property org.cougaar.core.persistence.clear Set true to discard all deltas on startup
  * @property org.cougaar.core.persistence.consolidationPeriod
  * The number of incremental deltas between full deltas (default = 10)
@@ -130,6 +138,7 @@ public class BasePersistence
     Long.getLong(PROP_LAZY_PERSIST_INTERVAL, DEFAULT_LAZY_PERSIST_INTERVAL).longValue();
   private static final int CONSOLIDATION_PERIOD =
     Integer.getInteger("org.cougaar.core.persistence.consolidationPeriod", 10).intValue();
+  private static final char PARAM_SEP = ';';
 
   private static class RehydrationSet {
     PersistencePlugin ppi;
@@ -361,16 +370,16 @@ public class BasePersistence
         System.getProperty("org.cougaar.core.persistence.class");
       if (persistenceClasses == null) {
         if (disabled) {
-          persistenceClasses = DummyPersistence.class.getName() + ":" + DUMMY_MEDIA_NAME;
+          persistenceClasses = DummyPersistence.class.getName() + PARAM_SEP + DUMMY_MEDIA_NAME;
         } else {
-          persistenceClasses = FilePersistence.class.getName() + ":" + FILE_MEDIA_NAME;
+          persistenceClasses = FilePersistence.class.getName() + PARAM_SEP + FILE_MEDIA_NAME;
         }
       }
       Vector pluginTokens =
         StringUtility.parseCSV(persistenceClasses, 0, persistenceClasses.length(), ',');
       for (Iterator i = pluginTokens.iterator(); i.hasNext(); ) {
         String pluginSpec = (String) i.next();
-        Vector paramTokens = StringUtility.parseCSV(pluginSpec, 0, pluginSpec.length(), ':');
+        Vector paramTokens = StringUtility.parseCSV(pluginSpec, 0, pluginSpec.length(), PARAM_SEP);
         if (paramTokens.size() < 1) {
           throw new PersistenceException("No plugin class specified: " + pluginSpec);
         }
@@ -402,11 +411,9 @@ public class BasePersistence
   /**
    * Keeps all associations of objects that have been persisted.
    **/
-  private IdentityTable identityTable = new IdentityTable();
+  private IdentityTable identityTable;
 
   private SequenceNumbers sequenceNumbers = null;
-  protected boolean archivingEnabled =
-    !Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled");
   private ObjectOutputStream currentOutput;
   private MessageAddress agentId;
   private UIDService uidService;
@@ -447,6 +454,7 @@ public class BasePersistence
     uidService = (UIDService) sb.getService(this, UIDService.class, null);
     logger = (LoggingService) sb.getService(this, LoggingService.class, null);
     logger = LoggingServiceWithPrefix.add(logger, getAgentName() + ": ");
+    identityTable = new IdentityTable(logger);
     dataProtectionService = (DataProtectionService)
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
@@ -477,10 +485,6 @@ public class BasePersistence
 
   protected UIDService getUIDService() {
     return uidService;
-  }
-
-  public boolean archivingEnabled() {
-    return archivingEnabled;
   }
 
   /**
@@ -709,7 +713,7 @@ public class BasePersistence
    * rehydrationSubscriberStates is also nullified
    **/
   private void resetRehydration() {
-    identityTable = new IdentityTable();
+    identityTable = new IdentityTable(logger);
     uidServiceState = null;
     rehydrationSubscriberStates = null;
   }
@@ -1017,12 +1021,12 @@ public class BasePersistence
    * @param undistributedEnvelopes Envelopes that have not yet been distributed
    * @param subscriberStates The subscriber states to record
    **/
-  public Object persist(List epochEnvelopes,
-                        List undistributedEnvelopes,
-                        List subscriberStates,
-                        boolean returnBytes,
-                        boolean full,
-                        MessageManager messageManager)
+  public PersistenceObject persist(List epochEnvelopes,
+                                   List undistributedEnvelopes,
+                                   List subscriberStates,
+                                   boolean returnBytes,
+                                   boolean full,
+                                   MessageManager messageManager)
   {
     int deltaNumber = -1;
     long startCPU = 0L;
@@ -1060,13 +1064,9 @@ public class BasePersistence
         if (full || currentPersistPluginInfo == null) {
           if (currentPersistPluginInfo != null) {
             currentPersistPluginInfo.cleanupSequenceNumbers = // Cleanup the existing since the full replaces them
-              new SequenceNumbers(sequenceNumbers);
-            logger.info("Consolidating deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
-            if (archivingEnabled) {
-              currentPersistPluginInfo.cleanupSequenceNumbers.first++; // Don't clean up the base delta
-              if (currentPersistPluginInfo.cleanupSequenceNumbers.first == currentPersistPluginInfo.cleanupSequenceNumbers.current)
-                currentPersistPluginInfo.cleanupSequenceNumbers = null; // Nothing to cleanup
-            }
+              new SequenceNumbers(sequenceNumbers.first + 1,
+                                  sequenceNumbers.current,
+                                  sequenceNumbers.timestamp);
           }
           sequenceNumbers.first = sequenceNumbers.current;
           selectNextPlugin();
@@ -1175,8 +1175,17 @@ public class BasePersistence
           clearMarks(objectsToPersist.iterator());
           commitTransaction(full);
           System.err.print("P");
+          // Cleanup old deltas and archived snapshots. N.B. The
+          // cleanup is happening to the plugin that was just used.
+          // When there are several plugins, this is usually different
+          // from the plugin whose cleanupSequenceNumbers were set
+          // above. This cleanup has been pending while the various
+          // other plugins have been in use. This is _ok_! The
+          // snapshot we just took is invariably a full snapshot.
           if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
+            logger.info("Consolidated deltas " + currentPersistPluginInfo.cleanupSequenceNumbers);
             currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
+            currentPersistPluginInfo.ppi.cleanupArchive();
             currentPersistPluginInfo.cleanupSequenceNumbers = null;
           }
         } catch (Exception e) { // Transaction protection
@@ -1254,7 +1263,7 @@ public class BasePersistence
     logger.debug("IdentityTable ends");
   }
 
-  public LoggingService getLoggingService() {
+  public Logger getLogger() {
     return logger;
   }
 

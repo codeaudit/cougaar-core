@@ -36,12 +36,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.DataProtectionKey;
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
 
 /**
  * This persistence plugin abstract base class saves and restores plan
@@ -73,6 +74,8 @@ public abstract class FilePersistenceBase
   private static final String MUTEX = "mutex";
   private static final String OWNER = "owner";
   private static final long MUTEX_TIMEOUT = 60000L;
+  private static final String PERSISTENCE_ROOT_PARAM =
+    "persistenceRoot=";
 
   private static File getDefaultPersistenceRoot() {
     String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
@@ -93,15 +96,30 @@ public abstract class FilePersistenceBase
   {
     init(pps, name, params);
     File persistenceRoot;
-    if (params.length < 1) {
-      persistenceRoot = getDefaultPersistenceRoot();
-    } else {
+    if (params.length == 1 && params[0].indexOf('=') < 0) {
       String path = params[0];
       persistenceRoot = new File(path);
+    } else {
+      persistenceRoot = getDefaultPersistenceRoot();
+    }
+    for (int i = 0; i < params.length; i++) {
+      String param = params[i];
+      String value;
+      if ((value = parseParamValue(param, PERSISTENCE_ROOT_PARAM)) != null) {
+        persistenceRoot = new File(value);
+        continue;
+      }
+      if ((value = parseParamValue(param, ARCHIVE_COUNT_PARAM)) != null) {
+        archiveCount = Integer.parseInt(value);
+        continue;
+      }
+      if (pps.getLogger().isWarnEnabled()) {
+        pps.getLogger().warn(name + ": Unrecognized parameter " + param);
+      }
     }
     persistenceRoot.mkdirs();
     if (!persistenceRoot.isDirectory()) {
-      pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
+      pps.getLogger().fatal("Not a directory: " + persistenceRoot);
       throw new PersistenceException("Persistence root unavailable");
     }
     String clusterName = pps.getMessageAddress().getAddress();
@@ -109,7 +127,7 @@ public abstract class FilePersistenceBase
     if (!persistenceDirectory.isDirectory()) {
       if (!persistenceDirectory.mkdirs()) {
         String msg = "FilePersistence(" + name + ") not a directory: " + persistenceDirectory;
-	pps.getLoggingService().fatal(msg);
+	pps.getLogger().fatal(msg);
 	throw new PersistenceException(msg);
       }
     }
@@ -124,7 +142,7 @@ public abstract class FilePersistenceBase
       o.writeUTF(instanceId);
       o.close();
     } catch (IOException ioe) {
-      pps.getLoggingService().fatal("assertOwnership exception", ioe);
+      pps.getLogger().fatal("assertOwnership exception", ioe);
       throw new PersistenceException("assertOwnership exception", ioe);
     } finally {    
       unlockOwnership();
@@ -137,7 +155,7 @@ public abstract class FilePersistenceBase
       DataInputStream i = new DataInputStream(new FileInputStream(ownerFile));
       return i.readUTF().equals(instanceId);
     } catch (IOException ioe) {
-      pps.getLoggingService().fatal("checkOwnership exception", ioe);
+      pps.getLogger().fatal("checkOwnership exception", ioe);
       return false;
     } finally {
       unlockOwnership();
@@ -148,7 +166,7 @@ public abstract class FilePersistenceBase
     try {
       mutex.lock();
     } catch (IOException ioe) {
-      pps.getLoggingService().fatal("lockOwnership exception", ioe);
+      pps.getLogger().fatal("lockOwnership exception", ioe);
     }
   }
 
@@ -156,7 +174,7 @@ public abstract class FilePersistenceBase
     try {
       mutex.unlock();
     } catch (IOException ioe) {
-      pps.getLoggingService().fatal("unlockOwnership exception", ioe);
+      pps.getLogger().fatal("unlockOwnership exception", ioe);
     }
   }
 
@@ -174,8 +192,24 @@ public abstract class FilePersistenceBase
     return new File(persistenceDirectory, NEWSEQUENCE + suffix);
   }
 
+  private SequenceNumbers readSequenceFile(File sequenceFile) throws IOException {
+    Logger ls = pps.getLogger();
+    if (ls.isInfoEnabled()) {
+      ls.info("Reading " + sequenceFile);
+    }
+    DataInputStream sequenceStream = new DataInputStream(openFileInputStream(sequenceFile));
+    try {
+      int first = sequenceStream.readInt();
+      int last = sequenceStream.readInt();
+      long timestamp = sequenceFile.lastModified();
+      return new SequenceNumbers(first, last, timestamp);
+    }
+    finally {
+      sequenceStream.close();
+    }
+  }
+
   public SequenceNumbers[] readSequenceNumbers(final String suffix) {
-    LoggingService ls = pps.getLoggingService();
     FilenameFilter filter;
     if (suffix.equals("")) {
       filter = new FilenameFilter() {
@@ -203,23 +237,10 @@ public abstract class FilePersistenceBase
       } else {
         sequenceFile = new File(persistenceDirectory, names[i]);
       }
-      if (ls.isDebugEnabled()) {
-        ls.debug("Reading " + sequenceFile);
-      }
       try {
-	DataInputStream sequenceStream = new DataInputStream(openFileInputStream(sequenceFile));
-	try {
-	  int first = sequenceStream.readInt();
-	  int last = sequenceStream.readInt();
-          long timestamp = sequenceFile.lastModified();
-	  result.add(new SequenceNumbers(first, last, timestamp));
-	}
-	finally {
-	  sequenceStream.close();
-	}
-      }
-      catch (IOException e) {
-	ls.error("Error reading " + sequenceFile, e);
+        result.add(readSequenceFile(sequenceFile));
+      } catch (IOException e) {
+	pps.getLogger().error("Error reading " + sequenceFile, e);
       }
     }
     return (SequenceNumbers[]) result.toArray(new SequenceNumbers[result.size()]);
@@ -239,30 +260,64 @@ public abstract class FilePersistenceBase
         sequenceStream.close();
 	sequenceFile.delete();
 	if (!rename(newSequenceFile, sequenceFile)) {
-	  pps.getLoggingService().error("Failed to rename " + newSequenceFile + " to " + sequenceFile);
+	  pps.getLogger().error("Failed to rename " + newSequenceFile + " to " + sequenceFile);
 	}
       }
     }
     catch (Exception e) {
-      pps.getLoggingService().error("Exception writing sequenceFile", e);
+      pps.getLogger().error("Exception writing sequenceFile", e);
     }
   }
 
   public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
+    Logger ls = pps.getLogger();
     for (int deltaNumber = cleanupNumbers.first; deltaNumber < cleanupNumbers.current; deltaNumber++) {
       File deltaFile = getDeltaFile(deltaNumber);
-      if (!deltaFile.delete()) {
-	pps.getLoggingService().error("Failed to delete " + deltaFile);
+      if (deltaFile.delete()) {
+        if (ls.isInfoEnabled()) ls.info("Deleted " + deltaFile);
+      } else {
+	ls.error("Failed to delete " + deltaFile);
+      }
+    }
+  }
+
+  public void cleanupArchive() {
+    Logger ls = pps.getLogger();
+    if (archiveCount < Integer.MAX_VALUE) {
+      FilenameFilter filter =
+        new FilenameFilter() {
+          public boolean accept(File dir, String path) {
+            return path.startsWith(SEQUENCE) && !path.equals(SEQUENCE);
+          }
+        };
+      String[] names = persistenceDirectory.list(filter);
+      int excess = names.length - archiveCount;
+      if (ls.isInfoEnabled()) {
+        ls.info(excess + " excess archives to delete");
+      }
+      if (excess > 0) {
+        Arrays.sort(names);
+        for (int i = 0; i < excess; i++) {
+          File sequenceFile = new File(persistenceDirectory, names[i]);
+          if (ls.isInfoEnabled()) ls.info("Deleting " + sequenceFile);
+          try {
+            SequenceNumbers sn = readSequenceFile(sequenceFile);
+            cleanupOldDeltas(sn);
+            sequenceFile.delete();
+          } catch (IOException ioe) {
+            ls.error("cleanupArchive", ioe);
+          }
+        }
       }
     }
   }
 
   public OutputStream openOutputStream(int deltaNumber, boolean full) throws IOException {
     File tempFile = getTempFile(deltaNumber);
-    LoggingService ls = pps.getLoggingService();
+    Logger ls = pps.getLogger();
     this.deltaNumber = deltaNumber;
-    if (ls.isDebugEnabled()) {
-      ls.debug("Persist to " + tempFile);
+    if (ls.isInfoEnabled()) {
+      ls.info("Persist to " + tempFile);
     }
     return openFileOutputStream(tempFile);
   }
@@ -285,9 +340,9 @@ public abstract class FilePersistenceBase
 
   public InputStream openInputStream(int deltaNumber) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
-    LoggingService ls = pps.getLoggingService();
-    if (ls.isDebugEnabled()) {
-      ls.debug("rehydrate " + deltaFile);
+    Logger ls = pps.getLogger();
+    if (ls.isInfoEnabled()) {
+      ls.info("rehydrate " + deltaFile);
     }
     return openFileInputStream(deltaFile);
   }

@@ -22,7 +22,7 @@
 package org.cougaar.core.persist;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
 
 public interface PersistencePluginSupport {
     /**
@@ -32,13 +32,7 @@ public interface PersistencePluginSupport {
     MessageAddress getMessageAddress();
 
     /**
-     * Get the current Logger (LoggingService) instance.
+     * Get the current Logger instance.
      **/
-    LoggingService getLoggingService();
-
-    /**
-     * Get the archiving enabled setting. If archiving is enabled, old
-     * deltas should not be deleted. (This will probably change.)
-     **/
-    boolean archivingEnabled();
+    Logger getLogger();
 }

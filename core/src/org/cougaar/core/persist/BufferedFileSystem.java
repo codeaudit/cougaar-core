@@ -31,8 +31,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.CircularQueue;
+import org.cougaar.util.log.Logger;
 
 /**
  * A package to support buffered and otherwise queued access to the
@@ -85,7 +85,7 @@ public class BufferedFileSystem implements Runnable {
     }
   }
 
-  private LoggingService logger;
+  private Logger logger;
 
   private Thread thread;
 
@@ -181,7 +181,7 @@ public class BufferedFileSystem implements Runnable {
     }
   }
 
-  public BufferedFileSystem(LoggingService ls) {
+  public BufferedFileSystem(Logger ls) {
     logger = ls;
   }
 

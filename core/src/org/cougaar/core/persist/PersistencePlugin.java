@@ -38,6 +38,8 @@ import org.cougaar.core.service.DataProtectionKey;
  **/
 public interface PersistencePlugin {
 
+    static final String ARCHIVE_COUNT_PARAM = "archiveCount=";
+
     /**
      * Initialize the plugin with PersistencePluginSupport and
      * parameters. After initialization, the plugin should be ready to
@@ -122,6 +124,12 @@ public interface PersistencePlugin {
      * @param cleanupNumbers the numbers to be discarded (or archived).
      **/
     void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
+
+    /**
+     * Delete old archives
+     * @param archiveCount the number of archives to keep
+     **/
+    void cleanupArchive();
 
     /**
      * Open an OutputStream onto which a persistence delta can be

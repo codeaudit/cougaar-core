@@ -30,20 +30,53 @@ import org.cougaar.core.adaptivity.OMCRangeList;
  * Implements several methods in the PersistencePlugin API that often
  * need not be specialized in individual implementaions.
  **/
-public class PersistencePluginAdapter
-{
+public class PersistencePluginAdapter {
   protected static final String[] emptyStringArray = new String[0];
   protected static final OMCRangeList emptyOMCRangeList =
     new OMCRangeList(new OMCRange[0]);
+  protected static final String ARCHIVE_COUNT =
+    PersistencePlugin.ARCHIVE_COUNT_PARAM.substring(0, PersistencePlugin.ARCHIVE_COUNT_PARAM.length() - 1);
+  protected static String[] controlNames = {
+    ARCHIVE_COUNT
+  };
   protected PersistencePluginSupport pps;
 
   protected String name;
   protected String[] params;
+  protected int archiveCount;     // The number of archives to keep
 
   protected void init(PersistencePluginSupport pps, String name, String[] params) {
     this.pps = pps;
     this.name = name;
     this.params = params;
+    try {
+      archiveCount = Integer.parseInt(System.getProperty("org.cougaar.core.persistence.archiveCount"));
+    } catch (Exception e) {
+      if (Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled")) {
+        archiveCount = 0;
+      } else {
+        archiveCount = Integer.MAX_VALUE;
+      }
+    }
+    for (int i = 0; i < params.length; i++) {
+      String param = params[i];
+      if (param.startsWith(PersistencePlugin.ARCHIVE_COUNT_PARAM)) {
+        try {
+          archiveCount = Integer.parseInt(param.substring(PersistencePlugin.ARCHIVE_COUNT_PARAM.length()));
+          break;
+        } catch (Exception e) {
+          pps.getLogger().error("Parse error " + param);
+        }
+      }
+    }
+    pps.getLogger().shout("archiveCount=" + archiveCount);
+  }
+
+  protected String parseParamValue(String param, String key) {
+    if (param.startsWith(key)) {
+      return param.substring(key.length());
+    }
+    return null;
   }
 
   public String getName() {
@@ -59,14 +92,20 @@ public class PersistencePluginAdapter
   }
 
   public String[] getControlNames() {
-    return emptyStringArray;
+    return controlNames;
   }
 
   public OMCRangeList getControlValues(String controlName) {
+    if (ARCHIVE_COUNT.equals(controlName)) {
+      return new OMCRangeList(new Integer(0), new Integer(Integer.MAX_VALUE));
+    }
     return emptyOMCRangeList;   // Should never be called
   }
-
+  
   public void setControl(String controlName, Comparable newValue) {
+    if (ARCHIVE_COUNT.equals(controlName)) {
+      archiveCount = ((Integer) newValue).intValue();
+    }
   }
 
   public java.sql.Connection getDatabaseConnection(Object locker) {

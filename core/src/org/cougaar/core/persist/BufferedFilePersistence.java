@@ -55,7 +55,7 @@ public class BufferedFilePersistence
     throws PersistenceException
   {
     super.init(pps, name, params, deleteOldPersistence);
-    bfs = new BufferedFileSystem(pps.getLoggingService());
+    bfs = new BufferedFileSystem(pps.getLogger());
   }
 
   protected OutputStream openFileOutputStream(File file) throws FileNotFoundException {

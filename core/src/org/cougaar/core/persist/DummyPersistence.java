@@ -53,6 +53,9 @@ public class DummyPersistence
   public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
   }
 
+  public void cleanupArchive() {
+  }
+
   public OutputStream openOutputStream(int deltaNumber, boolean full)
     throws IOException
   {

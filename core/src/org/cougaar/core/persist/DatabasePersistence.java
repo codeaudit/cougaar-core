@@ -50,6 +50,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -57,7 +58,7 @@ import java.util.Map;
 import java.util.Vector;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.DataProtectionKey;
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
 
 /**
  * This persistence class saves plan objects in a database. It saves and
@@ -97,6 +98,9 @@ public class DatabasePersistence
     System.getProperty("org.cougaar.core.persistence.database.password");
   String databaseDriver =
     System.getProperty("org.cougaar.core.persistence.database.driver");
+  String intDef = "NUMBER";
+  String longBinaryDef = "LONG RAW";
+  String timestampDef = "BIGINT";
 
   private Connection theConnection;
   private DatabaseMetaData theMetaData;
@@ -110,13 +114,35 @@ public class DatabasePersistence
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
+  private String parseParam(String prefix, String dflt) {
+    for (int i = 0; i < params.length; i++) {
+      String param = params[i];
+      if (param.startsWith(prefix)) return param.substring(prefix.length());
+    }
+    return dflt;
+  }
+
   public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
     init(pps, name, params);
     String clusterName = pps.getMessageAddress().getAddress().replace('-', '_');
-    LoggingService ls = pps.getLoggingService();
+    Logger ls = pps.getLogger();
+    if (true || ls.isInfoEnabled()) {
+      StringBuffer buf = new StringBuffer();
+      buf.append("DatabasePersistence;").append(name);
+      for (int i = 0; i < params.length; i++) {
+        buf.append(";").append(params[i]);
+      }
+      ls.shout(buf.toString());
+    }
     deltaTable = "delta_" + clusterName;
+    databaseDriver = parseParam("driver=", databaseDriver);
+    databaseURL = parseParam("url=", databaseURL);
+    databaseUser = parseParam("user=", databaseUser);
+    databasePassword = parseParam("password=", databasePassword);
+    intDef = parseParam("intDef=", intDef);
+    longBinaryDef = parseParam("longBinaryDef=", longBinaryDef);
     if (databaseDriver != null) {
       try {
         Class.forName(databaseDriver);
@@ -160,11 +186,7 @@ public class DatabasePersistence
          " where seqno = ? and (active = " + FULL + ") or (active = " + ARCHIVE + ")");
       cleanDeltas = theConnection.prepareStatement
         ("delete from " + deltaTable +
-         " where "
-         + (pps.archivingEnabled()
-            ? ("active = " + INACTIVE)
-            : ("active in (" + INACTIVE + "," + ARCHIVE + ")"))
-         + " and seqno >= ? and seqno < ?");
+         " where seqno >= ? and seqno < ?");
       try {
         ResultSet rs = getSequenceNumbers.executeQuery();
         rs.close();
@@ -188,17 +210,17 @@ public class DatabasePersistence
   }
 
   private void createTable(String tableName) throws SQLException {
-    String intDef = "NUMBER";
-    String longBinaryDef = "LONG RAW";
     String qry = "create table " + tableName
       + "(seqno "
       + intDef
-      + " primary key,"
-      + " active char(1),"
-      + " data "
+      + " primary key"
+      + ", active char(1)"
+      + ", timestamp "
+      + timestampDef
+      + ", data "
       + longBinaryDef
       + ")";
-    pps.getLoggingService().info("Creating table: " + qry);
+    pps.getLogger().info("Creating table: " + qry);
     Statement stmt = theConnection.createStatement();
     stmt.executeUpdate(qry);
   }
@@ -223,7 +245,7 @@ public class DatabasePersistence
       try {
         if (rs.next()) {
           int count = rs.getInt(1);
-          if (count >= 0) {
+          if (count > 0) {
             int first = rs.getInt(2);
             int last = rs.getInt(3);
             long timestamp = rs.getLong(4);
@@ -273,6 +295,39 @@ public class DatabasePersistence
     }
     catch (SQLException e) {
       fatalException(e);
+    }
+  }
+
+  public void cleanupArchive() {
+    Logger ls = pps.getLogger();
+    if (archiveCount < Integer.MAX_VALUE) {
+      List sns = new ArrayList();
+      try {
+        ResultSet rs = getArchiveSequenceNumbers.executeQuery();
+        try {
+          while (rs.next()) {
+            int seqno = rs.getInt(1);
+            long timestamp = rs.getLong(2);
+            sns.add(new SequenceNumbers(seqno, seqno + 1, timestamp));
+          }
+        } finally {
+          rs.close();
+        }
+      } catch (SQLException sqle) {
+        fatalException(sqle);
+      }
+      int excess = sns.size() - archiveCount;
+      ls.info(excess + " excess archives to delete");
+      if (excess > 0) {
+        Collections.sort(sns);
+        for (int i = 0; i < excess; i++) {
+          SequenceNumbers sn = (SequenceNumbers) sns.get(i);
+          if (ls.isInfoEnabled()) ls.info("Deleting " + sn);
+          cleanupOldDeltas(sn);
+        }
+      }
+    } else {
+      ls.info("Keeping all archives");
     }
   }
 
@@ -404,7 +459,7 @@ public class DatabasePersistence
   }
 
   private void fatalException(Exception e) {
-    pps.getLoggingService().fatal("Fatal database persistence exception", e);
+    pps.getLogger().fatal("Fatal database persistence exception", e);
     System.exit(13);
   }
 
