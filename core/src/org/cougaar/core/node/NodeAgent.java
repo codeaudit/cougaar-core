@@ -97,8 +97,6 @@ import org.cougaar.core.plugin.PropertyProvider;
 //  import org.cougaar.core.persist.DatabasePersistence;
 import org.cougaar.core.persist.Persistence;
 
-
-import org.cougaar.core.security.*;
 import org.cougaar.core.service.*;
 import org.cougaar.core.mts.*;
 
@@ -239,10 +237,11 @@ public class NodeAgent
       getServiceBroker().addService(NodeControlService.class, ncsp);
     }
 
+    /*
     // security manager
     {
       String smn = System.getProperty(SecurityComponent.SMC_PROP,
-                                      "org.cougaar.core.security.StandardSecurityComponent");
+                                      "org.cougaar.core.node.StandardSecurityComponent");
       if (smn != null) {
         try {
           Class smc = Class.forName(smn);
@@ -269,6 +268,7 @@ public class NodeAgent
         }
       }
     }
+    */
 
     ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + name);
     tsp.provideServices(rootsb);
@@ -569,39 +569,5 @@ public class NodeAgent
       return this;
     }
   }
-
-  //
-  // containerness
-  //
-
-  /*
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
-
-  protected String specifyContainmentPoint() {
-    return super.specifyContainmentPoint(); // standard for now.
-  }
-
-  protected ServiceBroker specifyAgentServiceBroker(BindingSite bs) {
-    return new NodeAgentServiceBroker(bs);
-  }
-
-  protected ContainerAPI getContainerProxy() {
-    return new NodeAgentProxy();
-  }
-
-  private class NodeAgentProxy implements BindingSite, ContainerAPI {
-    public boolean remove(Object o) {return true;}
-    public ServiceBroker getServiceBroker() {return NodeAgent.this.getServiceBroker(); }
-    public void requestStop() {}
-  }
-
-  private static class NodeAgentServiceBroker extends PropagatingServiceBroker {
-    public NodeAgentServiceBroker(BindingSite bs) {
-      super(bs);
-    }
-  }
-  */
 
 }

@@ -143,7 +143,7 @@ import org.cougaar.bootstrap.Bootstrapper;
  *   security manager will be used.  A security manager must implement
  *   the interface org.cougaar.core.security.SecurityComponent.  If set and
  *   not found or not loaded properly, Node will refuse to run.  See 
- *   org.cougaar.core.security.StandardSecurityComponent for sample implementation.
+ *   org.cougaar.core.node.StandardSecurityComponent for sample implementation.
  *  
  * @property org.cougaar.core.servlet.enable
  *   Used to enable ServletService; defaults to "true".
