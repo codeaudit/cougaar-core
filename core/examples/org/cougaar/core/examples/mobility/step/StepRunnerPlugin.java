@@ -686,87 +686,7 @@ extends ComponentPlugin
     }
 
     int newState = StepStatus.FAILURE;
-
-    // check topology.  The "entry.topE" may be null, but
-    // the current topE should not be null.
-    MessageAddress mobileAgent = ticket.getMobileAgent();
-    if (mobileAgent == null) {
-      mobileAgent = agentId;
-    }
-    MessageAddress destNode = ticket.getDestinationNode();
-    TopologyEntry etopE = entry.topE;
-    TopologyEntry topE = 
-      topologyReader.getEntryForAgent(mobileAgent.getAddress());
-    if (topE == null) {
-      // not listed in topology?
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished with null topology entry");
-      }
-    } else if (
-        (destNode != null) &&
-        (!(destNode.getAddress().equals(topE.getNode())))) {
-      // at the wrong node!
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished move of agent "+
-            mobileAgent+
-            " at node "+
-            topE.getNode()+
-            " instead of ticket's destination node "+
-            destNode+
-            ", topology entry is "+topE);
-      }
-    } else if (
-        (destNode == null) &&
-        (!(etopE.getNode().equals(topE.getNode())))) {
-      // didn't restart in place!
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished restart-in-place of agent "+
-            mobileAgent+
-            " started at node "+
-            etopE.getNode()+
-            " and ended up at a different node "+
-            topE.getNode()+
-            ", topology entry is "+topE);
-      }
-    } else if (topE.getStatus() != TopologyEntry.ACTIVE) {
-      // not active!
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished with non-ACTIVE topology entry "+
-            topE);
-      }
-    } else if (
-        (etopE != null) &&
-        (topE.getType() != etopE.getType())) {
-      // changed type?
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished with topology type "+
-            topE.getType()+
-            " that doesn't match the prior type "+
-            etopE.getType());
-      }
-    } else if (
-        (etopE != null) &&
-        (topE.getIncarnation() != etopE.getIncarnation())) {
-      // incarnation number is wrong!  maybe crashed during move.
-      if (log.isErrorEnabled()) {
-        log.error(todd+
-            "Step "+step.getUID()+
-            " finished with incarnation number "+
-            topE.getIncarnation()+
-            " that doesn't match the prior incarnation number "+
-            etopE.getIncarnation());
-      }
-    } else if (mstat.getCode() != MoveAgent.Status.OKAY) {
+    if (mstat.getCode() != MoveAgent.Status.OKAY) {
       // move itself failed
       if (log.isErrorEnabled()) {
         log.error(todd+
@@ -775,8 +695,137 @@ extends ComponentPlugin
             mstat.getCodeAsString());
       }
     } else {
-      // success!
-      newState = StepStatus.SUCCESS;
+      // check topology.  The "entry.topE" may be null, but
+      // the current topE should not be null.
+      MessageAddress mobileAgent = ticket.getMobileAgent();
+      if (mobileAgent == null) {
+        mobileAgent = agentId;
+      }
+      MessageAddress destNode = ticket.getDestinationNode();
+      TopologyEntry etopE = entry.topE;
+
+      // the topology update may take several seconds, so we
+      // do a limited backoff-n-retry in case the entry looks stale.
+      //
+      // FIXME: ideally we would release the plugin execute thread
+      // and set an alarm, but for now we'll simply sleep.
+      TopologyEntry topE;
+      for (int i = 0, maxi = 5; ; i++) {
+        topE = 
+          topologyReader.getEntryForAgent(
+              mobileAgent.getAddress());
+        if (topE == null) {
+          // not listed in topology?
+          if (i == 0) {
+            if (log.isInfoEnabled()) {
+              log.info(
+                  "Will re-examine "+mobileAgent+
+                  "'s null topology entry (step: "+
+                  step.getUID()+")");
+            }
+          } else if (i >= maxi) {
+            if (log.isErrorEnabled()) {
+              log.error(
+                  "Step "+step.getUID()+
+                  " failed due to null topology"+
+                  " entry for agent "+mobileAgent);
+            }
+            break;
+          }
+        } else if (
+            (destNode != null) &&
+            (!(destNode.getAddress().equals(topE.getNode())))) {
+          // at the wrong node!
+          if (i == 0) {
+            if (log.isInfoEnabled()) {
+              log.info(
+                  "Will re-examine "+mobileAgent+
+                  "'s topology entry, which indicates that"+
+                  " the agent is at node "+topE.getNode()+
+                  " instead of the move destination node "+
+                  destNode+" (step: "+step.getUID()+")");
+            }
+          } else if (i >= maxi) {
+            if (log.isErrorEnabled()) {
+              log.error(
+                  "Step "+step.getUID()+
+                  " failed due to topology listing of agent "+
+                  mobileAgent+
+                  " at node "+
+                  topE.getNode()+
+                  " instead of ticket's destination node "+
+                  destNode+
+                  ", topology entry is "+topE);
+            }
+            topE = null;
+            break;
+          }
+        } else {
+          // seems okay
+          break;
+        }
+
+        // FIXME release thread & use alarm!!!
+        try {
+          Thread.sleep(i*2000);
+        } catch (Exception e) {
+          log.error("Cancel sleep", e);
+        }
+      }
+
+      if (topE == null) {
+        // already logged our error above
+      } else if (
+          (destNode == null) &&
+          (!(etopE.getNode().equals(topE.getNode())))) {
+        // didn't restart in place!
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Step "+step.getUID()+
+              " finished restart-in-place of agent "+
+              mobileAgent+
+              " started at node "+
+              etopE.getNode()+
+              " and ended up at a different node "+
+              topE.getNode()+
+              ", topology entry is "+topE);
+        }
+      } else if (topE.getStatus() != TopologyEntry.ACTIVE) {
+        // not active!
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Step "+step.getUID()+
+              " finished with non-ACTIVE topology entry "+
+              topE);
+        }
+      } else if (
+          (etopE != null) &&
+          (topE.getType() != etopE.getType())) {
+        // changed type?
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Step "+step.getUID()+
+              " finished with topology type "+
+              topE.getType()+
+              " that doesn't match the prior type "+
+              etopE.getType());
+        }
+      } else if (
+          (etopE != null) &&
+          (topE.getIncarnation() != etopE.getIncarnation())) {
+        // incarnation number is wrong!  maybe crashed during move.
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Step "+step.getUID()+
+              " finished with incarnation number "+
+              topE.getIncarnation()+
+              " that doesn't match the prior incarnation number "+
+              etopE.getIncarnation());
+        }
+      } else {
+        // success!
+        newState = StepStatus.SUCCESS;
+      }
     }
 
     // update step
