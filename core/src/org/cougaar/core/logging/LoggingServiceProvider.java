@@ -42,55 +42,14 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * This LoggingServiceProvider is a ServiceProvider which provides
- * two services<ol><p>
- *   <li>LoggingService<br>
- *       Used by developers to write log statements</li><p>
- *   <li>LoggingControlService<br>
- *       Used by privledged Components to alter the logging levels
- *       and add/remove logging destinations</li>
- * </ol>.
- * <p>
- * System properties that start with "org.cougaar.core.logging."
- * are used to configure the logger.  The
- * "org.cougaar.core.logging." prefix is removed before the
- * properties are passed off to the LoggerFactory.
- * <p>
- * One special property is the
- * "org.cougaar.core.logging.config.filename",
- * which is used to (optionally) load a second properties
- * file.  The properties in this file should not be prefixed
- * with the "org.cougaar.core.logging." prefix.
- * <p>
- * The javadocs for <tt>LoggerFactory.configure(Map)</tt> define
- * the valid logging configuration properties.
- *
- * @see Logger
- * @see LoggerController
- * @see org.cougaar.util.log.log4j.Log4jLoggerFactory
+ * This service provider provides the {@link LoggingService}, which
+ * is backed by the {@link LoggerFactory}.
  */
 public class LoggingServiceProvider implements ServiceProvider {
-  /**
-   * Create a LoggingServiceProvider and set the default logging
-   * levels.
-   */
-  public LoggingServiceProvider() { }
 
-  /**
-   * @param props Ignored. Retained for backwards compatability.
-   * @deprecated Use the no-argument constructor.
-   */
-  public LoggingServiceProvider(Properties props) { }
+  /** The cache for getLogger() */
+  private static Map loggerCache = new WeakHashMap(11);
 
-  /**
-   * Used to obtain either LoggingService or LoggingControlService.
-   *
-   * @param sb service broker
-   * @param requestor The object requesting the service used to mark
-   *                  the object category
-   * @param serviceClass The service requested. It will be either
-   *                     LoggingService or LoggingControlService.
-   */
   public Object getService(
       ServiceBroker sb,
       Object requestor,
@@ -105,29 +64,12 @@ public class LoggingServiceProvider implements ServiceProvider {
     }
   }
 
-  /**
-   * Used to release either LoggingService or LoggingControlService.
-   *
-   * Currently does nothing because no resources need to be released.
-   * However, users should aways call "releaseService(..)" in case
-   * this implementation is modified...
-   *
-   * @param sb The ServiceBroker controlling this service
-   * @param requestor The object requesting the service used to mark
-   *                  the object category
-   * @param serviceClass The service requested. It will be either
-   *                     LoggingService or LoggingControlService.
-   * @param service The actual service being released
-   */
   public void releaseService(
       ServiceBroker sb,
       Object requestor,
       Class serviceClass,
       Object service) {
   }
-
-  /** The cache for getLogger() **/
-  private static Map loggerCache = new WeakHashMap(11);
 
   LoggingService getLoggingService(Object requestor) {
     String key = Logging.getKey(requestor);
@@ -142,7 +84,6 @@ public class LoggingServiceProvider implements ServiceProvider {
     }
     return ls;
   }
-
 
   private static class LoggingServiceImpl
     extends LoggerProxy
@@ -159,5 +100,4 @@ public class LoggingServiceProvider implements ServiceProvider {
         super(lc);
       }
   }
-
 }

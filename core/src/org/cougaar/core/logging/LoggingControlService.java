@@ -30,8 +30,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.util.log.LoggerController;
 
 /** 
- * Marker interface for a Service that provides the
- * generic LoggerController API.
+ * This service allows clients to modify the logging level. 
  *
  * @see LoggerController
  */

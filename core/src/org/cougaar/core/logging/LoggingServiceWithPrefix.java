@@ -30,6 +30,10 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerAdapter;
 
+/**
+ * Utility class to wrap all {@link LoggingService} messages with a
+ * prefix string.
+ */
 public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingService {
   public static LoggingService add(LoggingService ls, String prefix) {
     return new LoggingServiceWithPrefix(ls, prefix);

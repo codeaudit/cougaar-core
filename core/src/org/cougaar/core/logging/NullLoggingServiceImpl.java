@@ -30,13 +30,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.log.NullLogger;
 
 /**
- * LoggingService where all "is*()" methods return
- * false, and all "log()" methods are ignored.
- * <p>
- * This is handle if<pre> 
- *   serviceBroker.getService(.., LoggingService.class, ..);
- * </pre>
- * returns null.
+ * A dummy {@link LoggingService} implementation where all "is*()"
+ * methods return false and "log()" methods are ignored.
  */
 public final class NullLoggingServiceImpl 
   extends NullLogger
@@ -45,11 +40,11 @@ public final class NullLoggingServiceImpl
   // singleton:
   private static final NullLoggingServiceImpl SINGLETON = new NullLoggingServiceImpl();
 
-  /** @deprecated old version of getLoggingService() **/
+  /** @deprecated old version of getLoggingService() */
   public static NullLoggingServiceImpl getNullLoggingServiceImpl() {
     return SINGLETON;
   }
 
-  /** @return a singleton instance of the NullLoggingService **/
+  /** @return a singleton instance of the NullLoggingService */
   public static LoggingService getLoggingService() { return SINGLETON; }
 }

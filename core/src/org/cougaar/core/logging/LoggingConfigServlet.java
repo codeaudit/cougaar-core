@@ -42,8 +42,9 @@ import org.cougaar.util.log.log4j.DetailPriority;
 import org.cougaar.util.log.log4j.ShoutPriority;
 
 /**
- * Servlet which allows the client to view and modify
- * the logging levels.
+ * This component is a {@link Servlet} that allows clients to view
+ * and modify the {@link org.cougaar.core.service.LoggingService}
+ * configuration.
  */
 public class LoggingConfigServlet extends BaseServletComponent {
 
