@@ -31,6 +31,7 @@ import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.mts.MessageStatisticsService;
 import org.cougaar.core.mts.MessageTransportServiceProvider;
 import org.cougaar.core.mts.MessageWatcherService;
+import org.cougaar.core.mts.AgentStatusService;
 
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.naming.NamingServiceProvider;
@@ -590,9 +591,12 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     MessageTransportServiceProvider mtsp = 
 	new MessageTransportServiceProvider(name);
     add(mtsp);
-    getServiceBroker().addService(MessageTransportService.class, mtsp);
-    getServiceBroker().addService(MessageStatisticsService.class, mtsp);
-    getServiceBroker().addService(MessageWatcherService.class, mtsp);
+    ServiceBroker sb = getServiceBroker();
+    sb.addService(MessageTransportService.class, mtsp);
+    sb.addService(MessageStatisticsService.class, mtsp);
+    sb.addService(MessageWatcherService.class, mtsp);
+    sb.addService(AgentStatusService.class, mtsp);
+
     theMessenger = (MessageTransportService)
       getServiceBroker().getService(this, MessageTransportService.class, null);
     System.err.println("Started "+theMessenger);

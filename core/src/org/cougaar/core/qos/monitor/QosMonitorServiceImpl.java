@@ -36,7 +36,7 @@ public class QosMonitorServiceImpl implements QosMonitorService
 	this.nameSupport = nameSupport;
     }
 
-    public int getAgentStatus(MessageAddress agentAddress) {
+    public int lookupAgentStatus(MessageAddress agentAddress) {
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
 	String attr = NameSupport.STATUS_ATTR;
@@ -65,6 +65,11 @@ public class QosMonitorServiceImpl implements QosMonitorService
 				       agentAddress);
 	}
     }
+
+    public int getAgentStatus(MessageAddress agentAddress) {
+	return lookupAgentStatus(agentAddress);
+    }
+    
 
 }
 

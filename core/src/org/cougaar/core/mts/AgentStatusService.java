@@ -19,35 +19,26 @@
  * </copyright>
  */
 
-package org.cougaar.core.qos.monitor;
+package org.cougaar.core.mts;
 
-import org.cougaar.core.component.Service;
 import org.cougaar.core.society.MessageAddress;
+import org.cougaar.core.component.Service;
 
-public interface QosMonitorService extends Service
+public interface AgentStatusService extends Service
 {
     public static final int UNKNOWN = 0;
-    public static final int NOT_CREATED = 1;
-    public static final int ACTIVE = 2;
-    public static final int MOVING = 3;
-    public static final int RESTARTED = 4;
-    public static final int MISSING = 5;
-    public static final int FAILING = 6;
-    
-    /**
-     * Uses the naming service to determine the status of an Agent
-     */
-    public int lookupAgentStatus(MessageAddress agentAddress);
+    public static final int UNREGISTERED = 1;
+    public static final int UNREACHABLE = 2;
+    public static final int ACTIVE = 3;
 
-    /**
-     * Get the cached status, or look it up if the cache is stale. 
-     **/
-    public int getAgentStatus(MessageAddress agentAddress);
 
-    // public int getAgentCommStatus(MessageAddress agentAddress);
+    public static class AgentState {
+	public long timestamp;
+	public int status;
+    }
 
-    // public double getExpectedCommLatancyToAgent(MessageAddress agentAddress);
-    
+
+    public AgentState getAgentState(MessageAddress address);
 
 }
 
