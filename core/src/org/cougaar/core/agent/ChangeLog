@@ -1,3 +1,20 @@
+2003-03-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimpleAgent.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Give myBlackboardService protected state so it can be used by
+	subclasses (e.g. NodeAgent).
+
+	* AgentManager.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add getComponents() method to retrieve a list of components
+	installed in this container.
+
+	* AgentContainer.java: 
+	Bug #1848 -- Need persistence of component hierarchy for mobile agents
+	Add Collection methods so components other than agents can be
+	added/removed using this interface.
+
 2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleAgent.java:
