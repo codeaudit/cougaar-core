@@ -292,7 +292,7 @@ public abstract class ComponentPlugin
     // do stuff
     try {
       blackboard.openTransaction();
-      if (wasAwakened() || blackboard.haveCollectionsChanged()) {
+      if (shouldExecute()) {
         execute();
       }
     } catch (Throwable t) {
@@ -303,6 +303,10 @@ public abstract class ComponentPlugin
     }
   }
   
+  protected boolean shouldExecute() {
+    return (wasAwakened() || blackboard.haveCollectionsChanged());
+  }
+
   /**
    * Called once after initialization, as a "pre-execute()".
    */
