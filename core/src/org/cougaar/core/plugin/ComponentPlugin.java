@@ -65,7 +65,6 @@ public class ComponentPlugin
   private ServiceBroker serviceBroker = null;
   private ThinWatcher watcher = null;
   private Collection parameters = null;
-  //private Vector parameters = null;
   
   public ComponentPlugin() { }   
   
@@ -80,14 +79,14 @@ public class ComponentPlugin
       StringBuffer buf = new StringBuffer();
       buf.append(getClass().getName());
       if (parameters != null) {
-	buf.append("[");
-	String sep = "";
-	for (Iterator params = parameters.iterator(); params.hasNext(); ) {
-	  buf.append(sep);
-	  buf.append(params.next().toString());
-	  sep = ",";
-	}
-	buf.append("]");
+        buf.append("[");
+        String sep = "";
+        for (Iterator params = parameters.iterator(); params.hasNext(); ) {
+          buf.append(sep);
+          buf.append(params.next().toString());
+          sep = ",";
+        }
+        buf.append("]");
       }
       blackboardClientName = buf.substring(0);
     }
@@ -115,16 +114,21 @@ public class ComponentPlugin
     } else {
       throw new RuntimeException("Tried to load "+this+" into "+bs);
     }
-    
     serviceBroker = pluginBindingSite.getServiceBroker();
+  }
+
+  public void load() {
+    super.load();
     myScheduler = (SchedulerService )
-      serviceBroker.getService(this, SchedulerService.class, 
-			       new ServiceRevokedListener() {
-				   public void serviceRevoked(ServiceRevokedEvent re) {
-				     if (SchedulerService.class.equals(re.getService()))
-				       myScheduler = null;
-				   }
-				 });
+      serviceBroker.getService(
+          this, 
+          SchedulerService.class, 
+          new ServiceRevokedListener() {
+            public void serviceRevoked(ServiceRevokedEvent re) {
+              if (SchedulerService.class.equals(re.getService()))
+                myScheduler = null;
+              }
+            });
     
     if (myScheduler != null) {
       Trigger pokeMe = new PluginCallback();
@@ -134,26 +138,30 @@ public class ComponentPlugin
     
     // proceed to get blackboard service
     blackboard = (BlackboardService)
-      serviceBroker.getService(this, BlackboardService.class,
-			       new ServiceRevokedListener() {
-				   public void serviceRevoked(ServiceRevokedEvent re) {
-				     if (BlackboardService.class.equals(re.getService())) {
-				       blackboard = null;
-				       watcher = null;
-				     }
-				   }
-				 });
+      serviceBroker.getService(
+          this, 
+          BlackboardService.class,
+          new ServiceRevokedListener() {
+            public void serviceRevoked(ServiceRevokedEvent re) {
+              if (BlackboardService.class.equals(re.getService())) {
+                blackboard = null;
+                watcher = null;
+              }
+            }
+          });
     
     // proceed to get alarm service
     alarmService = (AlarmService)
-      serviceBroker.getService(this, AlarmService.class,
-			       new ServiceRevokedListener() {
-				   public void serviceRevoked(ServiceRevokedEvent re) {
-				     if (AlarmService.class.equals(re.getService())) {
-				       alarmService = null;
-				     }
-				   }
-				 });
+      serviceBroker.getService(
+          this, 
+          AlarmService.class,
+          new ServiceRevokedListener() {
+            public void serviceRevoked(ServiceRevokedEvent re) {
+              if (AlarmService.class.equals(re.getService())) {
+                alarmService = null;
+              }
+            }
+          });
     
     
     // someone to watch over me
@@ -165,6 +173,20 @@ public class ComponentPlugin
     }
     
   }
+
+  public void unload() {
+    super.unload();
+    if (alarmService != null) {
+      serviceBroker.releaseService(this, AlarmService.class, alarmService);
+    }
+    if (blackboard != null) {
+      serviceBroker.releaseService(this, BlackboardService.class, blackboard);
+    }
+    if (myScheduler != null) {
+      serviceBroker.releaseService(this, SchedulerService.class, myScheduler);
+    }
+  }
+
   /**
    * accessor for my bindingsite - interface to by binder
    **/
@@ -202,7 +224,7 @@ public class ComponentPlugin
    **/
   public void setParameter(Object param) {
     if (param != null) {
-      parameters = (Vector) param; //(Collection) param;
+      parameters = (Vector) param;
     } else {
       parameters = new Vector(0);
     }
@@ -232,10 +254,6 @@ public class ComponentPlugin
     return ((PluginBindingSite) getBindingSite()).getConfigFinder();
   }
   
-  //public ClusterServesPlugIn getCluster() {
-  //return ComponentPlugin.this.getCluster();
-  //}
-  
   
   protected ClusterIdentifier getClusterIdentifier() { 
     return ComponentPlugin.this.getClusterIdentifier();
@@ -248,10 +266,10 @@ public class ComponentPlugin
   protected class PluginCallback implements Trigger {
     public void trigger() {
       if (!primed) {
-	precycle();
+        precycle();
       }
       if (readyToRun) { 
-	cycle();
+        cycle();
       }
     }
   }
@@ -302,8 +320,8 @@ public class ComponentPlugin
       
       // ask the scheduler to run us again.
       if (schedulerProd != null) {
-	readyToRun = true;
-	schedulerProd.trigger();
+        readyToRun = true;
+        schedulerProd.trigger();
       }
     }
   }
