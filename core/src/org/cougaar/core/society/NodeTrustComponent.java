@@ -76,7 +76,7 @@ public class NodeTrustComponent
     ServiceBroker sb = bindingSite.getServiceBroker();
 
     // create the TrustStatusService implementation
-    TrustStatusServiceImpl theTSS = new TrustStatusServiceImpl(); 
+    theTSS = new TrustStatusServiceImpl(); 
     // create the TrustStatusServiceProvider
     tssSP = new TrustStatusServiceProvider(theTSS);
     //add the service to the Node ServiceBroker

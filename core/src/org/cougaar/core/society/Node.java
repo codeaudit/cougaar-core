@@ -608,14 +608,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     // register for external control by the AppServer
     //   -- disabled for now --
 
-    // load the clusters
-    //
-    // once bulk-add ComponentMessages are implements this can
-    //   be done with "this.receiveMessage(compMsg)"
-    add(agentDescs);
-
-    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
-
     // start up the NodeTrust component
     String ntc = new String(getIdentifier()+"NodeTrust");
     ComponentDescription ntcdesc = 
@@ -629,6 +621,16 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
                                 null,  //lease
                                 null); //policy
     super.add(ntcdesc);
+
+
+    // load the clusters
+    //
+    // once bulk-add ComponentMessages are implements this can
+    //   be done with "this.receiveMessage(compMsg)"
+    add(agentDescs);
+
+    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
+
   }
 
 

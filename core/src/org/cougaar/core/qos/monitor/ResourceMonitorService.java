@@ -30,6 +30,7 @@ public interface ResourceMonitorService extends Service
 {
     double getJipsForAgent(MessageAddress agentAddress);
     Observable getJipsForAgentObservable(MessageAddress agentAddress);
+    Object getJipsForAgentSyscond(MessageAddress agentAddress);
 
 
    //  double getExpectedAvailableBandwidthToAgent(MessageAddress agentAddress);
