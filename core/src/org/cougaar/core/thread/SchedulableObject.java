@@ -37,133 +37,150 @@ final class SchedulableObject implements Schedulable
     private boolean disqualified;
 
     SchedulableObject(TreeNode treeNode, 
-		      Runnable runnable, 
-		      String name,
-		      Object consumer) 
+                      Runnable runnable, 
+                      String name,
+                      Object consumer) 
     {
-	this.pool = treeNode.getPool();
-	this.scheduler = treeNode.getScheduler();
-	this.runnable = runnable;
-	if (name == null)
-	    this.name =  pool.generateName();
-	else
-	    this.name = name;
-	this.consumer = consumer;
+        this.pool = treeNode.getPool();
+        this.scheduler = treeNode.getScheduler();
+        this.runnable = runnable;
+        if (name == null)
+            this.name =  pool.generateName();
+        else
+            this.name = name;
+        this.consumer = consumer;
     }
 
 
     String getName() {
-	return name;
+        return name;
     }
 
     Scheduler getScheduler() {
-	return scheduler;
+        return scheduler;
     }
 
     public String toString() {
-	return "<Schedulable " +name+ " for " +consumer+ ">";
+        return "<Schedulable " +name+ " for " +consumer+ ">";
     }
 
     long getTimestamp() {
-	return timestamp;
+        return timestamp;
     }
 
     void setQueued(boolean flag) {
-	queued = flag;
-	if (flag) timestamp = System.currentTimeMillis();
+        queued = flag;
+        if (flag) timestamp = System.currentTimeMillis();
     }
 
     boolean isQueued() {
-	return queued;
+        return queued;
     }
 
 
     boolean isDisqualified() {
-	return disqualified;
+        return disqualified;
     }
 
     void setDisqualified(boolean flag) {
-	disqualified = flag;
-	if (flag) queued = false;
+        disqualified = flag;
+        if (flag) queued = false;
     }
 
     public Object getConsumer() {
-	return consumer;
+        return consumer;
     }
 
 
 
     void claim() {
-	// thread has started or restarted
-	scheduler.threadClaimed(this);
+        // thread has started or restarted
+        scheduler.threadClaimed(this);
     }
+
+
 
 
 
 
     void reclaim() {
-	// Notify listeners
-	synchronized (this) { 
-	    thread = null;
-	}
-	scheduler.threadReclaimed(this);
+        // Notify listeners
+        synchronized (this) { 
+            thread = null;
+        }
+        scheduler.threadReclaimed(this);
     }
 
-    // Calback from the Reclaimer.
+    // Callback from the Reclaimer.
     void reclaimNotify() {
-	scheduler.releaseRights(scheduler, this);
-	if (restart) Starter.push(this);
+        scheduler.releaseRights(scheduler, this);
+        if (restart) {
+            // The restart flag indicates that the start() was called
+            // on the Schedulable while it was running.  In this case
+            // just restart it here.
+            Starter.push(this);
+        }
     }
 
     void thread_start() {
-	synchronized (this) {
-	    restart = false;
-	    queued = false;
-	    restart = false;
-	    thread = pool.getThread(runnable, name);
-	    thread.start(this);
-	}
+        synchronized (this) {
+            restart = false;
+            queued = false;
+            restart = false;
+            thread = pool.getThread(runnable, name);
+            thread.start(this);
+        }
     }
 
     public void start() {
 
-	synchronized (this) {
-	    if (cancelled) return;
-	    if (thread != null) {
-		// Currently running - set flag so it restarts itself
-		// when the current run finishes
-		restart = true;
-		return;
-	    }
-	    
-	}
+        synchronized (this) {
+            if (cancelled) return;
+            if (restart) {
+                // If the Schedulable has already been tagged to
+                // restart, there's nothing further to do.
+                return;
+            }
+            if (thread != null) {
+                // Schedulable is currently running. Set the
+                // restart flag and exit.
+                restart = true;
+                return;
+            }
 
-	Starter.push(this);
+        }
+
+        Starter.push(this);
     }
+
+
+
+
+
 
 
     public synchronized int getState() {
-	// Later add a 'disqualified' state
-	if (queued)
-	    return CougaarThread.THREAD_PENDING;
-	else if (thread != null)
-	    return CougaarThread.THREAD_RUNNING;
-	else
-	    return CougaarThread.THREAD_DORMANT;
+        // Later add a 'disqualified' state
+        if (queued)
+            return CougaarThread.THREAD_PENDING;
+        else if (thread != null)
+            return CougaarThread.THREAD_RUNNING;
+        else
+            return CougaarThread.THREAD_DORMANT;
     }
 
     public boolean cancel() {
-	synchronized (this) {
-	    cancelled = true;
-	    restart = false;
-	    if (thread != null) {
-		// Currently running. 
-		return false;
-	    } 
-	    if (queued) scheduler.dequeue(this);
-	    queued = false;
-	    return true;
-	}
+        synchronized (this) {
+            cancelled = true;
+            restart = false;
+            if (thread != null) {
+                // Currently running. 
+                return false;
+            } 
+            if (queued) scheduler.dequeue(this);
+            queued = false;
+            return true;
+        }
 
     }
 
