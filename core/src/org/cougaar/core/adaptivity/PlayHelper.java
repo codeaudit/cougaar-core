@@ -90,10 +90,14 @@ public class PlayHelper {
       targetName = t;
       remoteName = r;
     }
+
+    // targetName says it is of type Agent or Attribute, or we 
+    // assume the whole thing is an Agent name
     public MessageAddress getTargetAddress() {
       if (targetName.substring(0, AGENT_PREFIX.length()).equalsIgnoreCase(AGENT_PREFIX)) {
         return MessageAddress.getMessageAddress(targetName.substring(AGENT_PREFIX.length()));
       }
+
       if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
         StringTokenizer tokens = new StringTokenizer(targetName.substring(ATTRIBUTE_PREFIX.length()), ".");
         try {
@@ -102,8 +106,13 @@ public class PlayHelper {
           String value = tokens.nextToken();
           return AttributeBasedAddress.getAttributeBasedAddress(community, attribute, value);
         } catch (Exception e) {
+	  // Could throw a NoSuchElementException from the call to nextToken()
+	  // since we dont check hasNextToken. 
+	  throw new RuntimeException("Malformed ABA target address specification. Format should be 'attribute.CommunityName.AttributeName.AttributeValue': " + targetName);
         }
       }
+
+      // Default: Neither Agent or Attribute specified. Assume whole thing is agent name.
       return MessageAddress.getMessageAddress(targetName);
     }
   }
