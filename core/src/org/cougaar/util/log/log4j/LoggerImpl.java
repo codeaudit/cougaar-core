@@ -69,28 +69,6 @@ class LoggerImpl implements Logger {
     cat.log(p, message, t);
   }
 
-  public void log(
-      int level, String message, 
-      String sourceClass, String sourceMethod) {
-    log(level, message, null, sourceClass, sourceMethod);
-  }
-
-  public void log(
-      int level, String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    Priority p = Util.convertIntToPriority(level);
-    if ((level > WARN) ||
-        (cat.isEnabledFor(p))) {
-      if ((sourceClass == null) ||
-          (sourceMethod == null)) {
-        cat.log(p, message, t);
-      } else {
-        String tmp = sourceClass+"."+sourceMethod+": "+message;
-        cat.log(p, tmp, t);
-      }
-    }
-  }
-
   //
   // specific "isEnabledFor(..)" shorthand methods:
   //
@@ -124,23 +102,6 @@ class LoggerImpl implements Logger {
   public void debug(String message, Throwable t) {
     cat.debug(message, t);
   }
-  public void debug(
-      String message, 
-      String sourceClass, String sourceMethod) {
-    debug(message, null, sourceClass, sourceMethod);
-  }
-  public void debug(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    if ((sourceClass == null) ||
-        (sourceMethod == null)) {
-      cat.debug(message, t);
-    } else if (isDebugEnabled()) {
-      String tmp = sourceClass+"."+sourceMethod+": "+message;
-      cat.debug(tmp, t);
-    } else {
-    }
-  }
 
   /**
    * Equivalent to "log(INFO, ..)".
@@ -150,23 +111,6 @@ class LoggerImpl implements Logger {
   }
   public void info(String message, Throwable t) {
     cat.info(message, t);
-  }
-  public void info(
-      String message, 
-      String sourceClass, String sourceMethod) {
-    info(message, null, sourceClass, sourceMethod);
-  }
-  public void info(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    if ((sourceClass == null) ||
-        (sourceMethod == null)) {
-      cat.info(message, t);
-    } else if (isDebugEnabled()) {
-      String tmp = sourceClass+"."+sourceMethod+": "+message;
-      cat.info(tmp, t);
-    } else {
-    }
   }
 
   /**
@@ -178,23 +122,6 @@ class LoggerImpl implements Logger {
   public void warn(String message, Throwable t) {
     cat.warn(message, t);
   }
-  public void warn(
-      String message, 
-      String sourceClass, String sourceMethod) {
-    warn(message, null, sourceClass, sourceMethod);
-  }
-  public void warn(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    if ((sourceClass == null) ||
-        (sourceMethod == null)) {
-      cat.warn(message, t);
-    } else if (isDebugEnabled()) {
-      String tmp = sourceClass+"."+sourceMethod+": "+message;
-      cat.warn(tmp, t);
-    } else {
-    }
-  }
 
   /**
    * Equivalent to "log(ERROR, ..)".
@@ -205,22 +132,6 @@ class LoggerImpl implements Logger {
   public void error(String message, Throwable t) {
     cat.error(message, t);
   }
-  public void error(
-      String message, 
-      String sourceClass, String sourceMethod) {
-    error(message, null, sourceClass, sourceMethod);
-  }
-  public void error(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    if ((sourceClass == null) ||
-        (sourceMethod == null)) {
-      cat.error(message, t);
-    } else {
-      String tmp = sourceClass+"."+sourceMethod+": "+message;
-      cat.error(tmp, t);
-    }
-  }
 
   /**
    * Equivalent to "log(FATAL, ..)".
@@ -230,22 +141,6 @@ class LoggerImpl implements Logger {
   }
   public void fatal(String message, Throwable t) {
     cat.fatal(message, t);
-  }
-  public void fatal(
-      String message, 
-      String sourceClass, String sourceMethod) {
-    fatal(message, null, sourceClass, sourceMethod);
-  }
-  public void fatal(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod) {
-    if ((sourceClass == null) ||
-        (sourceMethod == null)) {
-      cat.fatal(message, t);
-    } else {
-      String tmp = sourceClass+"."+sourceMethod+": "+message;
-      cat.fatal(tmp, t);
-    }
   }
 
   public String toString() {

@@ -120,28 +120,6 @@ public interface Logger {
   // (generic) "isEnabledFor(..)" and/or "log(..)" call.
   //
 
-  /**
-   * Equivalent to:<pre>
-   *   String tmp = sourceClass + "." + sourceMethod + ": " + message;
-   *   log(level, tmp);
-   * </pre>
-   * Note that some Logger proxies may set the sourceClass and
-   * sourceMethod for the user, which would make this redundant.
-   */
-  void log(
-      int level, String message, 
-      String sourceClass, String sourceMethod);
-
-  /**
-   * Equivalent to:<pre>
-   *   String tmp = sourceClass + "." + sourceMethod + ": " + message;
-   *   log(level, tmp, t);
-   * </pre>
-   */
-  void log(
-      int level, String message, Throwable t, 
-      String sourceClass, String sourceMethod);
-
   //
   // specific "isEnabledFor(..)" shorthand methods:
   //
@@ -161,59 +139,29 @@ public interface Logger {
    */
   void debug(String message);
   void debug(String message, Throwable t);
-  void debug(
-      String message, 
-      String sourceClass, String sourceMethod);
-  void debug(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod);
 
   /**
    * Equivalent to "log(INFO, ..)".
    */
   void info(String message);
   void info(String message, Throwable t);
-  void info(
-      String message, 
-      String sourceClass, String sourceMethod);
-  void info(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod);
 
   /**
    * Equivalent to "log(WARN, ..)".
    */
   void warn(String message);
   void warn(String message, Throwable t);
-  void warn(
-      String message, 
-      String sourceClass, String sourceMethod);
-  void warn(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod);
 
   /**
    * Equivalent to "log(ERROR, ..)".
    */
   void error(String message);
   void error(String message, Throwable t);
-  void error(
-      String message, 
-      String sourceClass, String sourceMethod);
-  void error(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod);
 
   /**
    * Equivalent to "log(FATAL, ..)".
    */
   void fatal(String message);
   void fatal(String message, Throwable t);
-  void fatal(
-      String message, 
-      String sourceClass, String sourceMethod);
-  void fatal(
-      String message, Throwable t, 
-      String sourceClass, String sourceMethod);
 
 }
