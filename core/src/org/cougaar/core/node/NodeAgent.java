@@ -161,7 +161,7 @@ public class NodeAgent
     try {
       rootsb.addService(NamingService.class,
           new NamingServiceProvider(
-            SystemProperties.getSystemPropertiesWithPrefix("javax.naming.")));
+            SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
     } catch (NamingException ne) {
       throw new Error("Couldn't initialize NamingService ", ne);
     }
