@@ -13,7 +13,7 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /** HasRelationships - marker for clases which contain a relationship
   * schedule.
-  * @version      $Id: HasRelationships.java,v 1.2 2001-04-05 19:27:15 mthome Exp $
+  * @version      $Id: HasRelationships.java,v 1.3 2001-06-25 22:22:34 ngivler Exp $
   **/
 
 public interface HasRelationships {
@@ -21,4 +21,12 @@ public interface HasRelationships {
   RelationshipSchedule getRelationshipSchedule();
 
   void setRelationshipSchedule(RelationshipSchedule relationships);
+
+  /**
+   * @deprecated
+   */
+  boolean isSelf();
+  
+  boolean isLocal();
+  void setLocal(boolean local);
 }
