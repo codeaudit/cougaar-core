@@ -22,6 +22,8 @@
 package org.cougaar.core.society;
 
 import java.io.IOException;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
@@ -68,6 +70,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   private String username;
   private String password;
   private Map substitutions = new HashMap();
+  private PrintWriter log;
 
   /**
    * Constructor creates a DBProperties object from the
@@ -82,11 +85,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     throws SQLException, IOException
   {
     dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
-    dbp.setDebug(true);
+//      dbp.setDebug(true);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
     substitutions.put(":trial_id", trialId);
+//      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
     try {
       String dbtype = dbp.getDBType();
       String driverParam = "driver." + dbtype;
@@ -103,7 +107,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       try {
         Statement stmt = conn.createStatement();
         String query = dbp.getQuery(QUERY_EXPERIMENT, substitutions);
-        ResultSet rs = stmt.executeQuery(query);
+        ResultSet rs = executeQuery(stmt, query);
         boolean first = true;
         StringBuffer assemblyMatch = new StringBuffer();
         assemblyMatch.append("in (");
@@ -158,6 +162,23 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     return "'" + s + "'";
   }
 
+  private ResultSet executeQuery(Statement stmt, String query) throws SQLException {
+    try {
+      long startTime = 0L;
+      if (log != null)
+        startTime = System.currentTimeMillis();
+      ResultSet rs = stmt.executeQuery(query);
+      if (log != null) {
+        long endTime = System.currentTimeMillis();
+        log.println((endTime - startTime) + " " + query);
+      }
+      return rs;
+    } catch (SQLException sqle) {
+      System.err.println("SQLException query: " + query);
+      throw sqle;
+    }
+  }
+
   private class InitializerServiceImpl implements InitializerService {
     public ComponentDescription[]
       getComponentDescriptions(String parentName, String insertionPoint)
@@ -171,7 +192,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(QUERY_COMPONENTS, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
             String componentName = getNonNullString(rs, 1, query);
@@ -180,7 +201,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             Statement stmt2 = conn.createStatement();
             substitutions.put(":component_id", componentId);
             String query2 = dbp.getQuery(QUERY_COMPONENT_PARAMS, substitutions);
-            ResultSet rs2 = stmt2.executeQuery(query2);
+            ResultSet rs2 = executeQuery(stmt2, query2);
             Vector vParams = new Vector();
             while (rs2.next()) {
               vParams.addElement(getNonNullString(rs2, 1, query2));
@@ -242,7 +263,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(QUERY_AGENT_PROTOTYPE, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           if (rs.next()) {
             String result = getNonNullString(rs, 1, query);
             if (rs.next())
@@ -267,7 +288,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(QUERY_AGENT_PG_NAMES, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
             result.add(getNonNullString(rs, 1, query));
@@ -300,7 +321,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(QUERY_LIB_PROPERTIES, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
             String attributeName = getNonNullString(rs, 1, query);
@@ -310,7 +331,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             Statement stmt2 = conn.createStatement();
             substitutions.put(":pg_attribute_id", attributeId);
             String query2 = dbp.getQuery(QUERY_AGENT_PROPERTIES, substitutions);
-            ResultSet rs2 = stmt2.executeQuery(query2);
+            ResultSet rs2 = executeQuery(stmt2, query2);
             Object value;
             if (collection) {
               List values = new ArrayList();
@@ -358,7 +379,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(QUERY_AGENT_RELATION, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
             String[] v = {
@@ -452,7 +473,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery(type, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
+          ResultSet rs = executeQuery(stmt, query);
           Object[] result = new Object[2];
           if (rs.next()) {
             result[0] = rs.getString(1);
