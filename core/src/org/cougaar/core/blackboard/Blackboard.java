@@ -401,7 +401,7 @@ public class Blackboard extends Subscriber
       ArrayList dirs;
 
       if(dest instanceof AttributeBasedAddress) {
-        System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
+        //System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
 	List agents = getAllAddresses((AttributeBasedAddress)dest);   // List of CIs
 	// for all destinations, add a new directive array and insert a new directive, or add to 
 	// an existing array in the destinations hashmap
@@ -571,24 +571,22 @@ public class Blackboard extends Subscriber
     
     // else query NameServer
     if(l != null){
-      System.out.println("Returning from cache");
+      //System.out.println("Returning from cache");
       return l;
     }
     else {
       l = lookupABAinNameServer(dest);
-      System.out.println("Returning from NameServer");
+      //System.out.println("Returning from NameServer");
       return l;
     }
   }
   
   /*
-   * Adds new list of ClusterIDs to aba cache. 
+   * Associated a list of ClusterIDs with a role in the aba cache. 
    */
   public static void cacheByRole(String roleValue, List agent_names) {
     synchronized (cache) {
-      for(Iterator iter = agent_names.iterator(); iter.hasNext();) {
-	System.out.println("Caching " + iter.next());
-	cache.put(roleValue, agent_names);}
+      cache.put(roleValue, agent_names);
     }
   } 
     
@@ -605,7 +603,7 @@ public class Blackboard extends Subscriber
     
     DirContext dirContext = getNameServer();
     if (dirContext==null)
-      System.out.println("dirContext in lookupABAinNameServer is null!!");
+      System.err.println("dirContext in lookupABAinNameServer is null!!");
     
     try {
       SearchControls boundValueSearchControls = new SearchControls();
@@ -618,9 +616,10 @@ public class Blackboard extends Subscriber
       while (enum.hasMore()) {
         SearchResult result = (SearchResult) enum.next();
 	cis.add(result.getObject());
+        /*
         System.out.println("Name: " + result.getName() + 
                            " object: " + result.getObject() + 
-                           " objectClass: " + result.getClassName());
+                           " objectClass: " + result.getClassName()); */
 			   } 
     } catch (Exception e) {
       e.printStackTrace();
