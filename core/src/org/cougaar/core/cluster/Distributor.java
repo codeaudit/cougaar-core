@@ -456,11 +456,11 @@ public class Distributor {
     // The following must be unconditional to insure persistence
     // happens.
     try {
-      alpPlan.private_startTransaction();
+      alpPlan.startTransaction();
       Envelope envelope = alpPlan.receiveMessages(directiveMessages);
       distribute(envelope, alpPlan.getClient());
     } finally {
-      alpPlan.private_stopTransaction();
+      alpPlan.stopTransaction();
     }
 
     directiveMessages.clear();
