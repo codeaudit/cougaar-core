@@ -215,9 +215,10 @@ public class QuiescenceStateServlet extends ComponentServlet {
     // Show status / button for one agent
     private void printRowHTML(MessageAddress agent) {
       out.println(
-		  "<tr><td>" + agent + "</td><td>" + aqs.isAgentQuiescent(agent) + "</td>"+
-		  "<td>" + aqs.isAgentEnabled(agent) + "</td>"+
-		  "<td>" + ! aqs.isAgentAlive(agent) + "</td>" + 
+		  "<tr><td>" + agent + "</td>"+
+                  getColumn(aqs.isAgentQuiescent(agent), true)+
+                  getColumn(aqs.isAgentEnabled(agent), true)+
+                  getColumn(!aqs.isAgentAlive(agent), false)+
 		  "<td>" + (aqs.isAgentAlive(agent) ? getButton(agent) : "Already Dead") + "</td></tr>\n");
     }
 
@@ -227,6 +228,12 @@ public class QuiescenceStateServlet extends ComponentServlet {
 		  "  <agent name=\'" + agent + "\' quiescent=\'" + aqs.isAgentQuiescent(agent) + "\' "+
 		  "enabled=\'" + aqs.isAgentEnabled(agent) + "\' "+
 		  "dead=\'" + ! aqs.isAgentAlive(agent) + "\'/>");
+    }
+
+    // Color-coded boolean column
+    private String getColumn(boolean value, boolean greenValue) {
+      return "<td bgcolor=\"" + (value == greenValue ? "80FF80" : "FF8080") +
+          "\">" + value + "</td>";
     }
 
     // Print a button to mark an agent as dead
