@@ -183,7 +183,7 @@ public class NamingServiceFactory implements InitialContextFactory {
       }
       if (verbosity > 0) System.err.println("OK");
     }
-    return ns;
+    return new NSRetryWrapper(ns);
   }
 
   /**

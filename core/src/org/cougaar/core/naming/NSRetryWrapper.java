@@ -25,12 +25,41 @@ import java.util.Collection;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import javax.naming.*;
+import org.cougaar.util.log.*;
 
 public class NSRetryWrapper implements NS {
   public final static int MAXTRIES = 10;
   NS ns;
+  Logger log;
   public NSRetryWrapper(NS ns) {
     this.ns = ns;
+    log = LoggerFactory.getInstance().createLogger(getClass());
+  }
+
+  private void logSuccess(String methodName) {
+    log.warn("Successful retry during " + methodName);
+  }
+
+  private void handleException(RemoteException re, String methodName, int ntries)
+    throws RemoteException
+  {
+    if (!re.getMessage().startsWith("Connection refused")) throw re;
+    if (ntries >= MAXTRIES) {
+      if (log.isWarnEnabled()) {
+        log.warn("Too many retries during " + methodName);
+      }
+      throw re;
+    }
+    if (ntries == 1) {
+      if (log.isWarnEnabled()) {
+        log.warn("Connection refused during " + methodName + " retrying...");
+      }
+    }
+    try {
+      long delay = 250L << Math.min(ntries, 8);
+      Thread.sleep(delay);
+    } catch (InterruptedException ie) {
+    }
   }
 
   public NSKey createSubDirectory(NSKey nsKey, 
@@ -41,13 +70,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.createSubDirectory(nsKey, subDirName, attributes);
+        NSKey ret = ns.createSubDirectory(nsKey, subDirName, attributes);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("createSubDirectory");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "createSubDirectory", ++ntries);
       }
     }
   }
@@ -59,13 +86,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.createSubDirectory(nsKey, subDirName);
+        NSKey ret = ns.createSubDirectory(nsKey, subDirName);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("createSubDirectory");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "createSubDirectory", ++ntries);
       }
     }
   }
@@ -77,13 +102,10 @@ public class NSRetryWrapper implements NS {
     while (true) {
       try {
         destroySubDirectory(nsKey, subDirName);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("destroySubDirectory");
         return;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "destroySubDirectory", ++ntries);
       }
     }
   }
@@ -94,13 +116,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.entrySet(nsKey);
+        Collection ret = ns.entrySet(nsKey);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("entrySet");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "entrySet", ++ntries);
       }
     }
   }
@@ -111,13 +131,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return fullName(nsKey, name);
+        String ret = fullName(nsKey, name);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("fullName");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "fullName", ++ntries);
       }
     }
   }
@@ -128,13 +146,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.getKey(nsKey, name);
+        Object ret = ns.getKey(nsKey, name);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("getKey");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "getKey", ++ntries);
       }
     }
   }
@@ -145,13 +161,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.get(nsKey, name);
+        Object ret = ns.get(nsKey, name);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("get");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "get", ++ntries);
       }
     }
   }
@@ -163,13 +177,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.getAttributes(nsKey, name);
+        Collection ret = ns.getAttributes(nsKey, name);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("getAttributes");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "getAttributes", ++ntries);
       }
     }
   }
@@ -178,13 +190,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.getRoot();
+        NSKey ret = ns.getRoot();
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("getRoot");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "getRoot", ++ntries);
       }
     }
   }
@@ -195,13 +205,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.isEmpty(nsKey);
+        boolean ret = ns.isEmpty(nsKey);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("isEmpty");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "isEmpty", ++ntries);
       }
     }
   }
@@ -212,13 +220,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.put(nsKey, name, o, overwriteOkay);
+        Object ret = ns.put(nsKey, name, o, overwriteOkay);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("put");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "put", ++ntries);
       }
     }
   }
@@ -229,13 +235,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.put(nsKey, name, o, attributes, overwriteOkay);
+        Object ret = ns.put(nsKey, name, o, attributes, overwriteOkay);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("put");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "put", ++ntries);
       }
     }
   }
@@ -248,13 +252,10 @@ public class NSRetryWrapper implements NS {
     while (true) {
       try {
         ns.putAttributes(nsKey, name, attributes);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("putAttributes");
         return;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "putAttributes", ++ntries);
       }
     }
   }
@@ -266,13 +267,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.remove(nsKey, name);
+        Object ret = ns.remove(nsKey, name);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("remove");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "remove", ++ntries);
       }
     }
   }
@@ -284,13 +283,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.rename(nsKey, oldName, newName);
+        Object ret = ns.rename(nsKey, oldName, newName);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("rename");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "rename", ++ntries);
       }
     }
   }
@@ -301,13 +298,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.size(nsKey);
+        int ret = ns.size(nsKey);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("size");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "size", ++ntries);
       }
     }
   }
@@ -318,13 +313,11 @@ public class NSRetryWrapper implements NS {
     int ntries = 0;
     while (true) {
       try {
-        return ns.values(nsKey);
+        Collection ret = ns.values(nsKey);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("values");
+        return ret;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "values", ++ntries);
       }
     }
   }
@@ -336,13 +329,10 @@ public class NSRetryWrapper implements NS {
     while (true) {
       try {
         ns.registerInterest(nsKey, names, cbid);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("registerInterest");
         return;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "registerInterest", ++ntries);
       }
     }
   }
@@ -354,13 +344,10 @@ public class NSRetryWrapper implements NS {
     while (true) {
       try {
         ns.unregisterInterest(dirKey, cbid);
+        if (ntries > 0 && log.isWarnEnabled()) logSuccess("unregisterInterest");
         return;
       } catch (RemoteException re) {
-        if (!re.getMessage().startsWith("Connection refused") || ++ntries >= MAXTRIES) throw re;
-      }
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ie) {
+        handleException(re, "unregisterInterest", ++ntries);
       }
     }
   }

@@ -398,7 +398,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
    * Unregister interest in an object.
    **/
   public void unregisterInterest(NSKey dirKey, NSCallback.Id cbid)
-    throws RemoteException, NamingException
+    throws NamingException
   {
     getDirectory(dirKey).removeCallbackFromDirMap(cbid);
   }
