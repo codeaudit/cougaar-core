@@ -61,6 +61,8 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
   implements Cloneable, XMLizable, UniqueObject, Publishable {
   private transient RoleSchedule roleschedule;
   private static final String AGGREGATE_TYPE_ID = "AggregateAsset" ;
+  
+
 
   public Asset() {
     myPrototype = null;         // no prototype, by default
@@ -728,6 +730,60 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
   //
   public boolean isPersistable() { return true; }
 
+  private transient TypeItemKey myKey = null;
+
+  public Object getKey() {
+    if (myKey == null) {
+      myKey = new TypeItemKey(this);
+    }
+    
+    return myKey;
+  }
+
+  private static class TypeItemKey {
+    private String myTypeString;
+    private String myItemString;
+    private int myHashCode;
+    
+    public TypeItemKey(Asset asset) {
+      TypeIdentificationPG tipg = asset.getTypeIdentificationPG();
+      myTypeString = (tipg != null) ?
+        tipg.getTypeIdentification() : null;
+
+      ItemIdentificationPG iipg = asset.getItemIdentificationPG();
+      myItemString = (iipg != null) ?
+        iipg.getItemIdentification() : null;
+
+      if ((myTypeString == null) && (myItemString == null)) {
+        System.err.println("Unable to create unique key for asset " + asset +
+                           " - type and item idetification are null.");
+      }
+
+      myHashCode = myTypeString.hashCode() + myItemString.hashCode();
+    }
+
+    public int hashCode() {
+      return myHashCode;
+    }
+    
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      }
+
+      if (o instanceof TypeItemKey) {
+        TypeItemKey that = (TypeItemKey) o;
+        return (this.myTypeString.equals(that.myTypeString) && 
+                this.myItemString.equals(that.myItemString));
+      } 
+
+      return false;
+    }
+
+    public String toString() {
+      return "<" + myTypeString + " " + myItemString + ">";
+    }
+  }
 
   // ChangeReport tracking
   //
