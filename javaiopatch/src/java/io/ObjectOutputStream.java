@@ -294,7 +294,7 @@ public class ObjectOutputStream
     private BrokenSerializationException next;     // root cause (innermost exception) null if unknown
     private Throwable root;
     /** 
-     * @param obj is the object causing the exception
+     * @param cname is the object causing the exception
      * @param nested is the next throwable down
      */
     public BrokenSerializationException(String cname, Throwable nested) {
