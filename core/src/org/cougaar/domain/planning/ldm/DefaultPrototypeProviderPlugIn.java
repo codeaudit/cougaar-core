@@ -14,8 +14,32 @@ import org.cougaar.domain.planning.ldm.asset.NewTypeIdentificationPG;
 import org.cougaar.domain.planning.ldm.asset.TypeIdentificationPG;
 import java.util.Enumeration;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.core.plugin.SimplePlugIn;
+//import org.cougaar.core.plugin.SimplePlugIn;
+import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.plugin.PrototypeProvider;
+
+import org.cougaar.domain.planning.ldm.RootFactory;
+import org.cougaar.domain.planning.ldm.Factory;
+//import org.cougaar.core.plugin.PlugInAdapter;
+
+import org.cougaar.core.plugin.LDMService;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.ServiceRevokedEvent;
+
+import org.cougaar.domain.planning.ldm.DomainServiceProvider;
+import org.cougaar.domain.planning.ldm.DomainServiceImpl;
+import org.cougaar.domain.planning.ldm.DomainService;
+import org.cougaar.domain.planning.ldm.DomainManager;
+
+import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
+import org.cougaar.domain.planning.ldm.PrototypeRegistryServiceProvider;
+import org.cougaar.domain.planning.ldm.PrototypeRegistry;
+
+import org.cougaar.core.cluster.UIDServiceProvider;
+import org.cougaar.core.cluster.UIDServiceImpl;
+import org.cougaar.core.cluster.UIDService;
+import org.cougaar.core.cluster.UIDServer;
+import org.cougaar.core.society.UID;
 
 /** Serve some default prototypes to the system.
  * At this point, this only serves stupid prototypes for
@@ -26,19 +50,66 @@ import org.cougaar.core.plugin.PrototypeProvider;
  **/
 
 public class DefaultPrototypeProviderPlugIn 
-  extends SimplePlugIn
-  implements PrototypeProvider 
+    extends ComponentPlugin
+    implements PrototypeProvider 
 {
-  public DefaultPrototypeProviderPlugIn() {}
+    
+    RootFactory theFactory = null;  
+		//	LDMServesPlugIn theLDM = null;
+    DomainService domainService = null;
+    PrototypeRegistryService protregService = null;
+    UIDService uidService = null;
+    UID anID;
+    
+    public DefaultPrototypeProviderPlugIn() {}
+    
+    protected void setupSubscriptions() {
+	
+	
+	
+				// get the domain service  	
+				if (theFactory == null) {
+						domainService = (DomainService) getBindingSite().getServiceBroker().getService(
+				 																					 this, DomainService.class,
+																								 new ServiceRevokedListener() {
+	 										          						 public void serviceRevoked(ServiceRevokedEvent re) {
+																						 theFactory = null;
+		 			                                 }
+																			});
+	    
+				 // get the registry service  	
+						 protregService = (PrototypeRegistryService) getBindingSite().getServiceBroker().getService(
+																										this, PrototypeRegistryService.class,
+																									new ServiceRevokedListener() {
+																	 						public void serviceRevoked(ServiceRevokedEvent re) {
+																 							theFactory = null;
+											 										}
+																		});
+	  
+				// get the UIDService   	
+						 uidService = (UIDService) getBindingSite().getServiceBroker().getService(
+																										this, UIDService.class,
+																									new ServiceRevokedListener() {
+																	 						public void serviceRevoked(ServiceRevokedEvent re) {
+																 							theFactory = null;
+											 										}
+																		});
+	  
 
-  protected void setupSubscriptions() {
+
+				}
+	    //use the services
+	    theFactory = domainService.getFactory();
+      //anID = uidService.nextUID();
+			
     preloadPrototypes();
-  }
-  
+		}
+   
   // no subscriptions, so we'll never actually be run.
   protected void execute() {}
 
-  public Asset getPrototype(String typename, Class hint) {
+		
+	 public Asset getPrototype(String typename, Class hint) {
     // I was going to handle OPlan here, but OPlan isn't an Asset!
     try {
       // try some dynamic prototypes (for backward compatibility)
@@ -85,6 +156,7 @@ public class DefaultPrototypeProviderPlugIn
     }
     return null;
   }
+		
 
   private void submitAbstract(String name) {
     try {
@@ -92,18 +164,35 @@ public class DefaultPrototypeProviderPlugIn
       NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
       tip.setTypeIdentification(name);
       tip.setNomenclature(name);
-      // getLDM().cachePrototype(name, proto);
+      protregService.cachePrototype(name, proto);
+
+			// here test out UIDService 
+			anID = uidService.nextUID();
+			long num = anID.getId();
+			System.out.println("NEXT UID MADE IS: " + name + " " + num);
+			System.out.println("cluster id = " + uidService.getClusterIdentifier());
     } catch (Exception e) {
       // cannot really throw any of these exceptions.
     }
   }
 
-  private Asset makeProto(String typeid, String cl) {
-    Asset proto = getFactory().createPrototype(cl, typeid);
-    getLDM().cachePrototype(typeid, proto);
-    return proto;
-  }
 
+  /*
+   * modified makeProto to make prototypes with under the 'root' domain  and
+	 * register prototypes via the PrototypeRegistry 
+   * make a prototype and an instance asset,  then test property groups 
+	 */
+ private Asset makeProto(String typeid, String cl) {
+     
+		 // create a prototype - register with registry service
+		 Asset proto = theFactory.createPrototype(cl, typeid);
+		 
+		 protregService.cachePrototype(typeid, proto);
+    //* getLDM().cachePrototype(typeid, proto);
+     System.out.println("making prototype: " + cl);
+    return proto;
+ }
+  
   private void preloadPrototypes() {
     submitAbstract("Subordinates");
     submitAbstract("Ammunition");
