@@ -47,8 +47,11 @@ import org.cougaar.core.persist.RehydrationData;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Callback;
+import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
+import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -85,6 +88,32 @@ implements Component
   // to detect the restart of remote agents, which requires a
   // resync beteen this agent and the restarted agent.
   private final Map incarnationMap = new HashMap();
+
+    private final Map callbackMap = new HashMap();
+
+
+    private class BlockingWPCallback implements Callback {
+	AddressEntry entry;
+	boolean completed;
+	
+	BlockingWPCallback()
+	{
+	    completed = false;
+	}
+	
+	public void execute(Response response) 
+	{
+	    completed = true;
+	    if (response.isSuccess()) {
+		if (log.isInfoEnabled()) {
+		    log.info("WP Response: "+response);
+		}
+		entry = ((Response.Get) response).getAddressEntry();
+	    } else {
+		log.error("WP Error: "+response);
+	    }
+	}
+    }
 
 
   public void setBindingSite(BindingSite bs) {
@@ -276,24 +305,48 @@ implements Component
    *
    * @return -1 if the WP lacks a version entry for the agent
    */
-  private long lookupCurrentIncarnation(
-      MessageAddress agentId) throws Exception {
-    AddressEntry versionEntry = 
-      wps.get(agentId.getAddress(), "version");
-    if (versionEntry == null) {
-      return -1;
+    private long lookupCurrentIncarnation(MessageAddress agentId) 
+    {
+	AddressEntry entry;
+	BlockingWPCallback callback;
+
+	callback = (BlockingWPCallback) callbackMap.get(agentId);
+	    
+	if (callback == null) {
+	    // No pending callback yet.
+	    callback = new BlockingWPCallback();
+	    wps.get(agentId.getAddress(), "version", callback);
+	    if (callback.completed) {
+		// cache hit
+		entry = callback.entry;
+	    } else {
+		// No cache hit.  Remember the callback.
+		callbackMap.put(agentId, callback);
+		return -1;
+	    }
+	} else if (!callback.completed) {
+	    // Pending callback not completed yet
+	    return -1;
+	} else {
+	    // Pending callback completed
+	    entry = callback.entry;
+	    callbackMap.remove(agentId);
+	}
+
+	if (entry != null) {
+	    // If it gets here, the entry is available
+	    String path = entry.getURI().getPath();
+	    int end = path.indexOf('/', 1);
+	    String incn_str = path.substring(1, end);
+	    return Long.parseLong(incn_str);
+	} else {
+	    // log this?
+	    // Return error code
+	    return -1;
+	}
+
+
     }
-    URI uri = versionEntry.getURI();
-    try {
-      String p = uri.getRawPath();
-      int i = p.indexOf('/', 1);
-      String s = p.substring(1, i);
-      return Long.parseLong(s);
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Malformed incarnation uri: "+uri, e);
-    }
-  }
 
   private void startRestartTimer() {
     if (restartTimer != null) {
@@ -337,6 +390,29 @@ implements Component
     restartTimer = null;
   }
 
+    private boolean doReconcile(MessageAddress agentId,
+				long cachedInc,
+				long currentInc)
+    {
+      if (VERBOSE_RESTART && log.isDebugEnabled()) {
+        log.debug(
+            "Update agent "+agentId+
+            " incarnation from "+cachedInc+
+            " to "+currentInc);
+      }
+      if (currentInc > 0 && currentInc != cachedInc) {
+        Long l = new Long(currentInc);
+        synchronized (incarnationMap) {
+          incarnationMap.put(agentId, l);
+        }
+        if (cachedInc > 0) {
+	  return true;
+        }
+      }
+      return false;
+    }
+
+
   /**
    * Periodically called to check remote agent restarts.
    * <p>
@@ -375,39 +451,20 @@ implements Component
     for (Iterator iter = restartMap.entrySet().iterator();
         iter.hasNext();
         ) {
-      Map.Entry me = (Map.Entry) iter.next();
-      MessageAddress agentId = (MessageAddress) me.getKey();
-      long cachedInc = ((Long) me.getValue()).longValue();
-      long currentInc;
-      try {
-        currentInc = lookupCurrentIncarnation(agentId);
-      } catch (Exception e) {
-        if (log.isInfoEnabled()) {
-          log.info("Failed restart check for "+agentId, e);
-        }
-        // pretend that it hasn't changed; we'll pick it
-        // up the next time around
-        currentInc = cachedInc;
-      }
-      if (VERBOSE_RESTART && log.isDebugEnabled()) {
-        log.debug(
-            "Update agent "+agentId+
-            " incarnation from "+cachedInc+
-            " to "+currentInc);
-      }
-      if (currentInc > 0 && currentInc != cachedInc) {
-        Long l = new Long(currentInc);
-        synchronized (incarnationMap) {
-          incarnationMap.put(agentId, l);
-        }
-        if (cachedInc > 0) {
-          // must reconcile with this agent
-          if (reconcileList == null) {
-            reconcileList = new ArrayList();
-          }
-          reconcileList.add(agentId);
-        }
-      }
+	Map.Entry me = (Map.Entry) iter.next();
+	MessageAddress agentId = (MessageAddress) me.getKey();
+	long cachedInc = ((Long) me.getValue()).longValue();
+	long currentInc;
+	boolean must_reconcile;
+	currentInc = lookupCurrentIncarnation(agentId);
+	must_reconcile = doReconcile(agentId, cachedInc, currentInc);
+	if (must_reconcile) {
+	    // must reconcile with this agent
+	    if (reconcileList == null) {
+		reconcileList = new ArrayList();
+	    }
+	    reconcileList.add(agentId);
+	}
     }
     // reconcile with any agent (that we've communicated with) that
     // has a new incarnation number
