@@ -31,7 +31,8 @@
 slots=ClusterPG, \
         EntityPG, \
         CommunityPG, \
-        RelationshipPG
+        RelationshipPG, \
+        LocationSchedulePG
 
 ;; AggregateAssetAdapter is hand-generated
 [AggregateAsset AggregateAssetAdapter]

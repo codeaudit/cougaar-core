@@ -91,6 +91,14 @@ slots=Collection<String> communities
 communities.doc=Collection of community names to which the asset belongs at the specified time.
 communities.init=ArrayList
 
+[LocationSchedulePG]
+local=true
+slots=Schedule schedule
+schedule.doc=A schedule of LocationScheduleElement elements.  The \
+  semantics of location and overlapping time ranges is not defined. \
+  Consumers of the schedule should probably synchronize on the schedule \
+  object in order to prevent comodification exceptions.
+
 ;[AggregateAssetPG]
 ;import=org.cougaar.domain.planning.ldm.asset.Asset
 ;slots=long quantity, Asset asset
