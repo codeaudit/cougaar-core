@@ -57,7 +57,7 @@ public abstract class BinderSupport implements Binder
    * should throw a RuntimeException.
    * 3. call then calls child.initialize(Binder) if defined - if not defined
    * call child.initialize() (if defined).  We do not error or complain even
-   * if there was no setBinder and no initialize(Binder) methods because
+   * if there was no setBinder and no initialize(BindingSite) methods because
    * the component might get everything it needs from services (or might not
    * need anything for some reason).
    * <p>
@@ -71,10 +71,10 @@ public abstract class BinderSupport implements Binder
       Method m = childClass.getMethod("setBindingSite", new Class[]{BindingSite.class});
       if (m != null) {          // use a non-throwing variation in the future
         m.invoke(childComponent, new Object[]{this});
-      }
+      } 
     } catch (Exception e) {
       //e.printStackTrace();
-      // ignore - maybe they'll use initialize(Binder) or maybe they don't
+      // ignore - maybe they'll use initialize(BindingSite) or maybe they don't
       // care.
     }
 
@@ -120,7 +120,7 @@ public abstract class BinderSupport implements Binder
 
     // now call child.initialize, if there.
     try {
-      Method init = childClass.getMethod("initialize", new Class[]{Binder.class});
+      Method init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
       init.invoke(childComponent, new Object[] {this});
       return;                  
       // bail out!

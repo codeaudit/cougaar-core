@@ -67,7 +67,7 @@ public abstract class BinderFactorySupport implements BinderFactory
    **/
   public Binder getBinder(Class bindingSite, Object child) {
     // figure out which binder to use.
-    Class bc = getBinderClass(bindingSite);
+    Class bc = getBinderClass(child);
     if (bc == null) return null;
 
     return bindChild(bc, child);
