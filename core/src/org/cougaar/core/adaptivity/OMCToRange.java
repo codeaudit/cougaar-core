@@ -20,39 +20,37 @@
  */
 package org.cougaar.core.adaptivity;
 
-/** 
- * A phrase used to express a boolean comparison between a string
- * standing in for condition data or an operating mode and a Object
- * holding the value and a set of valid values
- */
-public class ConstraintPhrase extends ConstraintOpValue {
-  String proxyName;
-  
+/**
+ * Holds a range specification for an operating mode or condition
+ * value expressed as an half-open interval (min is included, but max
+ * is not).
+ **/
+public class OMCToRange extends OMCRange {
+  private Comparable undecrementedMax;
+
   /**
-   * Constructor 
-   * @param String name of the input source, e.g., condition name
-   * @param ConstraintOperator
-   * @param an array of OMCRange descriptions list allowed ranges.
-   */
-  public ConstraintPhrase(String name, ConstraintOperator op, OMCRangeList av) {
-    this(name);
-    setOperator(op);
-    setAllowedValues(av);
+   * Constructor from ints
+   **/
+  public OMCToRange(int min, int max) {
+    this(new Integer(min), new Integer(max));
   }
 
-  public ConstraintPhrase(String name) {
-    super();
-    proxyName = name;
+  /**
+   * Constructor from doubles
+   **/
+  public OMCToRange(double min, double max) {
+    this(new Double(min), new Double(max));
   }
-  
-  /** 
-   * @return The name of the condition or operating mode 
-   */
-  public String getProxyName() {
-    return proxyName;
+
+  /**
+   * Constructor from Comparables
+   **/
+  public OMCToRange(Comparable min, Comparable max) {
+    super(min, ComparableHelper.decrement(max));
+    undecrementedMax = max;
   }
 
   public String toString() {
-    return proxyName + " " + super.toString();
+    return min.toString() + " to " + undecrementedMax.toString();
   }
 }

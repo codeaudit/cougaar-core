@@ -21,8 +21,11 @@
 package org.cougaar.core.adaptivity;
 
 /** 
- * OperatingModePolicy applies constraints on values of Operating modes.
- */ 
+ * OperatingModePolicy specifies constraints on values of Operating
+ * modes. It consists of an if clause expressing the conditions under
+ * which the policy applies and an array of restrictions on the values
+ * of some {@link OperatingMode}s.
+ **/
 
  /* IF clause, then clause
   * If THREATCON > 3 then
@@ -33,8 +36,8 @@ public class OperatingModePolicy extends PlayBase implements Policy  {
 
   /**
    * Constructor 
-   * @param the 'if' ConstrainingClause 
-   * @param the 'then' ConstrainingClause
+   * @param ifClause the 'if' ConstrainingClause 
+   * @param omConstraints an array of constraints to apply to {@link OperatingMode}s
    */
   public OperatingModePolicy (ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints) {
@@ -42,14 +45,15 @@ public class OperatingModePolicy extends PlayBase implements Policy  {
   }
   
   /**
-   * Returns the originator or creator of the policy.
-   * @return String 
-   */
+   * Returns the originator or creator (authority) of the policy. This
+   * is part of the implementation of the Policy interface.
+   * @return the name of the authority
+   **/
   public String getAuthority() { return ""; }
   
    /**
    * Returns the sender of the policy; the agent that sent it to you.
-   * @return String 
+   * @return the (name of) the sender of the policy.
    */
   public String getSource() { return "";}
 }

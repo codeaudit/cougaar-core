@@ -25,64 +25,63 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ConditionService;
+import org.cougaar.core.service.UIDService;
+import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
-public class CPUTestPlugin extends ServiceUserPluginBase {
-  public static final String CPU_CONDITION_NAME = "CPUTestPlugin.CPU";
+/**
+ * A plugin to exercise the Relay mechanism by setting a
+ * RelayedOperatingMode that is targeted to the Provider agent. The
+ * target manifestation of the operating mode is a Sensor that is used
+ * by the adaptivity engine to select plays.
+ **/
+public class CPURemoteTestPlugin extends ServiceUserPluginBase {
+  /** The name of the OperatingMode and Condition **/
+  public static final String CPU_CONDITION_NAME = "CPURemoteTestPlugin.CPU";
 
-  private static final OMCRange[] CPU_RANGES = {
-    new OMCRange(0.0, 1.0)
-  };
+  /** A range from 0.0 thru 1.0 **/
+  private static final OMCRange[] CPU_RANGES = {new OMCRange(0.0, 1.0)};
 
+  /** A value list with just one range from 0.0 thru 1.0 **/
   private static final OMCRangeList CPU_VALUES = new OMCRangeList(CPU_RANGES);
 
-  private ConditionService conditionService;
+  private UIDService uidService;
+
+  private InterAgentOperatingMode cpu;
 
   private static final Double[] cpuValues = {
-    new Double(0.4),
+    new Double(1.0),
+    new Double(0.5),
+    new Double(0.2),
+    new Double(0.1),
   };
 
   private int cpuStep = 0;
 
-  /**
-   * Private inner class precludes use by others to set our
-   * measurement. Others can only reference the base Condition
-   * class which has no setter method.
-   **/
-  private static class CPUTestCondition extends SensorCondition implements NotPersistable {
-    public CPUTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
-      super(name, allowedValues, value);
-    }
-
-    public void setValue(Comparable newValue) {
-      super.setValue(newValue);
-    }
-  }
-
   private static final Class[] requiredServices = {
-    ConditionService.class
+    UIDService.class
   };
 
-  public CPUTestPlugin() {
+  public CPURemoteTestPlugin() {
     super(requiredServices);
   }
 
   public void setupSubscriptions() {
-    CPUTestCondition cpu =
-      new CPUTestCondition(CPU_CONDITION_NAME, CPU_VALUES, cpuValues[0]);
+    cpu = new InterAgentOperatingMode(CPU_CONDITION_NAME,
+                                      CPU_VALUES, cpuValues[0]);
+    cpu.setTarget(new ClusterIdentifier("Provider"));
     getBlackboardService().publishAdd(cpu);
     if (haveServices()) setCPUCondition();
   }
 
   private boolean haveServices() {
-    if (conditionService != null) return true;
+    if (uidService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      conditionService = (ConditionService)
-        sb.getService(this, ConditionService.class, null);
+      uidService = (UIDService)
+        sb.getService(this, UIDService.class, null);
       return true;
     }
     return false;
@@ -98,15 +97,11 @@ public class CPUTestPlugin extends ServiceUserPluginBase {
   }
 
   private void setCPUCondition() {
-    CPUTestCondition cpu = (CPUTestCondition)
-      conditionService.getConditionByName(CPU_CONDITION_NAME);
-    if (cpu != null) {
-      if (logger.isInfoEnabled()) logger.info("Setting cpu = " + cpuValues[cpuStep]);
-      cpu.setValue(cpuValues[cpuStep]);
-      getBlackboardService().publishChange(cpu);
-      cpuStep++;
-      if (cpuStep == cpuValues.length) cpuStep = 0;
-    }
-    startTimer(60000);
+    if (logger.isInfoEnabled()) logger.info("Setting cpu = " + cpuValues[cpuStep]);
+    cpu.setValue(cpuValues[cpuStep]);
+    getBlackboardService().publishChange(cpu);
+    cpuStep++;
+    if (cpuStep == cpuValues.length) cpuStep = 0;
+    startTimer(10000);
   }
 }

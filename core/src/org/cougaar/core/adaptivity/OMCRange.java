@@ -21,22 +21,31 @@
 package org.cougaar.core.adaptivity;
 
 /**
- * Holds a range specification for an operating mode value or sensor
- * measurement. Ranges are half-open intervals. The value of max
- * _must_ exceed low.
+ * Holds a range specification for an operating mode or condition
+ * value. Ranges are half-open intervals. The value of max _must_
+ * exceed low.
  **/
-public class OMSMRange {
+public class OMCRange {
   protected Comparable min, max;
 
-  protected OMSMRange(int min, int max) {
+  /**
+   * Constructor for int values
+   **/
+  protected OMCRange(int min, int max) {
     this(new Integer(min), new Integer(max));
   }
 
-  protected OMSMRange(double min, double max) {
+  /**
+   * Constructor for double values
+   **/
+  protected OMCRange(double min, double max) {
     this(new Double(min), new Double(max));
   }
 
-  protected OMSMRange(Comparable min, Comparable max) {
+  /**
+   * Constructor for Comparable values
+   **/
+  protected OMCRange(Comparable min, Comparable max) {
     if (min.getClass() != max.getClass()) {
       throw new IllegalArgumentException("Min and max have different classes");
     }
@@ -47,14 +56,26 @@ public class OMSMRange {
     this.max = max;
   }
 
+  /**
+   * Test if a value is in this range.
+   * @return true if the value is in the (closed) interval between min
+   * and max.
+   * @param v The value to compare.
+   **/
   public boolean contains(Comparable v) {
     return min.compareTo(v) <= 0 && max.compareTo(v) >= 0;
   }
 
+  /**
+   * Gets the minimum value in the range.
+   **/
   public Comparable getMin() {
     return min;
   }
 
+  /**
+   * Gets the maximum value in the range.
+   **/
   public Comparable getMax() {
     return max;
   }

@@ -38,9 +38,11 @@ import org.cougaar.planning.ldm.policy.RuleParameter;
 import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
 
 /**
- * Sets OperatingModes for components based on plays in the playbook and
- * current sensor data
- */
+ * Convenience base class for plugins that need to acquire services
+ * that may not be immediately available when first started. Records
+ * the service classes needed and attempts acquire them on request.
+ * <p>Also provides timer services.
+ **/
 public abstract class ServiceUserPluginBase extends ComponentPlugin {
   private Class[] serviceClasses;
 
@@ -50,18 +52,32 @@ public abstract class ServiceUserPluginBase extends ComponentPlugin {
 
   private Alarm timer;
 
+  /**
+   * Everybody needs a logger, so we provide it here.
+   **/
   protected LoggingService logger;
 
+  /**
+   * Constructor
+   * @param serviceClasses the service classes needed for this plugin
+   * to operate.
+   **/
   protected ServiceUserPluginBase(Class[] serviceClasses) {
     this.serviceClasses = serviceClasses;
     this.serviceAcquired = new boolean[serviceClasses.length];
   }
 
+  /**
+   * Override to get a logger on load
+   **/
   public void load() {
     super.load();
     logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
   }
 
+  /**
+   * Override to release a logger on load
+   **/
   public void unload() {
     if (logger != null) {
       getServiceBroker().releaseService(this, LoggingService.class, logger);
@@ -70,6 +86,16 @@ public abstract class ServiceUserPluginBase extends ComponentPlugin {
     super.unload();
   }
 
+  /**
+   * Test if all services specified in the constructor are available.
+   * Sub-classes should call this method from their setupSubscriptions
+   * and execute methods until it returns true. Once this method
+   * returns true, the services should be requested and normal
+   * operation started. Once all the services are available, this
+   * method simply returns true. See <code>haveServices()</code> in
+   * {@link ConditionServiceProvider#execute} for a typical
+   * usage pattern.
+   **/
   protected boolean acquireServices() {
     cancelTimer();
     if (!allServicesAcquired) {
@@ -94,12 +120,18 @@ public abstract class ServiceUserPluginBase extends ComponentPlugin {
     return allServicesAcquired;
   }
 
+  /**
+   * Test if the timer has expired.
+   * @return false if the timer is not running or has not yet expired
+   * else return true.
+   **/
   protected boolean timerExpired() {
     return timer != null && timer.hasExpired();
   }
 
   /**
    * Schedule a update wakeup after some interval of time
+   * @param delay how long to delay before the timer expires.
    **/
   protected void startTimer(final long delay) {
     if (timer != null) return;  // update already scheduled
@@ -124,6 +156,9 @@ public abstract class ServiceUserPluginBase extends ComponentPlugin {
     getAlarmService().addRealTimeAlarm(timer);
   }
 
+  /**
+   * Cancel the timer.
+   **/
   protected void cancelTimer() {
     if (timer == null) return;
     if (logger.isDebugEnabled()) logger.debug("Cancelling timer");

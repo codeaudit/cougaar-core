@@ -28,23 +28,19 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 public class PolicyTestPlugin extends ServiceUserPluginBase {
-  private PlaybookConstrainService PlaybookConstrainService;
-
-  private LoggingService logger;
+  private PlaybookConstrainService playbookConstrainService;
 
   private boolean constrained = false;
 
   private OperatingModePolicy[] policies;
 
   private static final Class[] requiredServices = {
-    LoggingService.class,
     PlaybookConstrainService.class
   };
 
@@ -69,12 +65,10 @@ public class PolicyTestPlugin extends ServiceUserPluginBase {
   }
 
   private boolean haveServices() {
-    if (logger != null) return true;
+    if (playbookConstrainService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      logger = (LoggingService)
-        sb.getService(this, LoggingService.class, null);
-      PlaybookConstrainService = (PlaybookConstrainService)
+      playbookConstrainService = (PlaybookConstrainService)
         sb.getService(this, PlaybookConstrainService.class, null);
       return true;
     }
@@ -94,13 +88,13 @@ public class PolicyTestPlugin extends ServiceUserPluginBase {
     if (constrained) {
       if (logger.isInfoEnabled()) logger.info("Adding threatcon policy");
       for (int i = 0; i < policies.length; i++) {
-        PlaybookConstrainService.constrain(policies[i]);
+        playbookConstrainService.constrain(policies[i]);
       }
       constrained = false;
     } else {
       if (logger.isInfoEnabled()) logger.info("Removing threatcon policy");
       for (int i = 0; i < policies.length; i++) {
-        PlaybookConstrainService.unconstrain(policies[i]);
+        playbookConstrainService.unconstrain(policies[i]);
       }
       constrained = true;
     }

@@ -23,46 +23,46 @@ package org.cougaar.core.adaptivity;
 import java.util.List;
 import java.util.ArrayList;
 
-public class OMSMValueList {
-  OMSMRange[] allowedValues;
+public class OMCRangeList {
+  OMCRange[] allowedValues;
 
-  public OMSMValueList(OMSMRange[] av) {
+  public OMCRangeList(OMCRange[] av) {
     allowedValues = av;
   }
 
-  public OMSMValueList(OMSMRange av) {
-    allowedValues = new OMSMRange[] {av};
+  public OMCRangeList(OMCRange av) {
+    allowedValues = new OMCRange[] {av};
   }
 
-  public OMSMValueList(double v) {
-    this(new OMSMRange[] {new OMSMPoint(v)});
+  public OMCRangeList(double v) {
+    this(new OMCRange[] {new OMCPoint(v)});
   }
 
-  public OMSMValueList(int v) {
-    this(new OMSMRange[] {new OMSMPoint(v)});
+  public OMCRangeList(int v) {
+    this(new OMCRange[] {new OMCPoint(v)});
   }
 
-  public OMSMValueList(Comparable v) {
-    this(new OMSMRange[] {new OMSMPoint(v)});
+  public OMCRangeList(Comparable v) {
+    this(new OMCRange[] {new OMCPoint(v)});
   }
 
-  public OMSMValueList(int[] vs) {
+  public OMCRangeList(int[] vs) {
     this(createRange(vs));
   }
 
-  public OMSMValueList(double[] vs) {
+  public OMCRangeList(double[] vs) {
     this(createRange(vs));
   }
 
-  public OMSMValueList(Comparable[] vs) {
+  public OMCRangeList(Comparable[] vs) {
     this(createRange(vs));
   }
 
-  public OMSMValueList(Comparable min, Comparable max) {
+  public OMCRangeList(Comparable min, Comparable max) {
     this(createRange(min, max));
   }
 
-  private static OMSMRange[] createRange(int[] vs) {
+  private static OMCRange[] createRange(int[] vs) {
     Comparable[] cs = new Comparable[vs.length];
     for (int i = 0; i < vs.length; i++) {
       cs[i] = new Integer(vs[i]);
@@ -70,7 +70,7 @@ public class OMSMValueList {
     return createRange(cs);
   }
 
-  private static OMSMRange[] createRange(double[] vs) {
+  private static OMCRange[] createRange(double[] vs) {
     Comparable[] cs = new Comparable[vs.length];
     for (int i = 0; i < vs.length; i++) {
       cs[i] = new Double(vs[i]);
@@ -78,17 +78,17 @@ public class OMSMValueList {
     return createRange(cs);
   }
 
-  private static OMSMRange[] createRange(Comparable[] vs) {
-    OMSMRange[] result = new OMSMRange[vs.length];
+  private static OMCRange[] createRange(Comparable[] vs) {
+    OMCRange[] result = new OMCRange[vs.length];
     for (int i = 0; i < vs.length; i++) {
-      result[i] = new OMSMPoint(vs[i]);
+      result[i] = new OMCPoint(vs[i]);
     }
     return result;
   }
 
-  private static OMSMRange[] createRange(Comparable min, Comparable max) {
-    OMSMRange[] result = {
-      new OMSMRange(min, max)
+  private static OMCRange[] createRange(Comparable min, Comparable max) {
+    OMCRange[] result = {
+      new OMCRange(min, max)
     };
     return result;
   }
@@ -96,7 +96,7 @@ public class OMSMValueList {
   public Comparable getMax() {
     Comparable max = allowedValues[0].getMax();
     for (int i = 1; i < allowedValues.length; i++) {
-      OMSMRange range = allowedValues[i];
+      OMCRange range = allowedValues[i];
       Comparable tmax = range.getMax();
       if (tmax.compareTo(max) > 0) max = tmax;
     }
@@ -106,7 +106,7 @@ public class OMSMValueList {
   public Comparable getMin() {
     Comparable min = allowedValues[0].getMin();
     for (int i = 1; i < allowedValues.length; i++) {
-      OMSMRange range = allowedValues[i];
+      OMCRange range = allowedValues[i];
       Comparable tmin = range.getMin();
       if (tmin.compareTo(min) < 0) min = tmin;
     }
@@ -122,28 +122,28 @@ public class OMSMValueList {
    * to be converted to a form that can be directly combined with
    * other ConstraintPhrases from other Plays.
    **/
-  public OMSMValueList applyOperator(ConstraintOperator op) {
+  public OMCRangeList applyOperator(ConstraintOperator op) {
     if (op.equals(ConstraintOperator.GREATERTHAN)) {
       Comparable max = getMax();
-      return new OMSMValueList(ComparableHelper.increment(max), ComparableHelper.getMax(max));
+      return new OMCRangeList(ComparableHelper.increment(max), ComparableHelper.getMax(max));
     }
     if (op.equals(ConstraintOperator.GREATERTHANOREQUAL)) {
       Comparable max = getMax();
-      return new OMSMValueList(max, ComparableHelper.getMax(max));
+      return new OMCRangeList(max, ComparableHelper.getMax(max));
     }
     if (op.equals(ConstraintOperator.LESSTHAN)) {
       Comparable min = getMin();
-      return new OMSMValueList(ComparableHelper.getMin(min), ComparableHelper.decrement(min));
+      return new OMCRangeList(ComparableHelper.getMin(min), ComparableHelper.decrement(min));
     }
     if (op.equals(ConstraintOperator.LESSTHANOREQUAL)) {
       Comparable min = getMin();
-      return new OMSMValueList(ComparableHelper.getMin(min), min);
+      return new OMCRangeList(ComparableHelper.getMin(min), min);
     }
     if (op.equals(ConstraintOperator.EQUAL)) return this;
     if (op.equals(ConstraintOperator.ASSIGN)) return this;
     if (op.equals(ConstraintOperator.NOTIN) ||
         op.equals(ConstraintOperator.NOTEQUAL)) {
-      OMSMValueList newValue = complementRange(allowedValues[0]);
+      OMCRangeList newValue = complementRange(allowedValues[0]);
       for (int i = 1; i < allowedValues.length; i++) {
         newValue = newValue.intersect(complementRange(allowedValues[i]));
       }
@@ -153,19 +153,19 @@ public class OMSMValueList {
     return this;
   }
 
-  private OMSMValueList complementRange(OMSMRange range) {
+  private OMCRangeList complementRange(OMCRange range) {
     Comparable min = range.getMin();
     Comparable max = range.getMax();
-    OMSMRange[] compRange = {
-      new OMSMRange(ComparableHelper.getMin(min), ComparableHelper.decrement(min)),
-      new OMSMRange(ComparableHelper.increment(max), ComparableHelper.getMax(max))
+    OMCRange[] compRange = {
+      new OMCRange(ComparableHelper.getMin(min), ComparableHelper.decrement(min)),
+      new OMCRange(ComparableHelper.increment(max), ComparableHelper.getMax(max))
     };
-    return new OMSMValueList(compRange);
+    return new OMCRangeList(compRange);
   }
 
-  public OMSMValueList intersect(OMSMValueList that) {
+  public OMCRangeList intersect(OMCRangeList that) {
     List result = new ArrayList(allowedValues.length);
-    OMSMRange[] thatAllowedValues = that.getAllowedValues();
+    OMCRange[] thatAllowedValues = that.getAllowedValues();
     for (int i = 0; i < allowedValues.length; i++) {
       Comparable thisMin = allowedValues[i].getMin();
       Comparable thisMax = allowedValues[i].getMax();
@@ -186,17 +186,17 @@ public class OMSMValueList {
         } else {
           newMax = thisMax;
         }
-        result.add(new OMSMRange(newMin, newMax));
+        result.add(new OMCRange(newMin, newMax));
       }
     }
-    return new OMSMValueList((OMSMRange[]) result.toArray(new OMSMRange[result.size()]));
+    return new OMCRangeList((OMCRange[]) result.toArray(new OMCRange[result.size()]));
   }
 
   public Comparable getEffectiveValue() {
     return allowedValues[0].getMin();
   }
 
-  public OMSMRange[] getAllowedValues() {
+  public OMCRange[] getAllowedValues() {
     return allowedValues;
   }
 
@@ -225,24 +225,24 @@ public class OMSMValueList {
     return buf.toString();
   }
 
-  static OMSMValueList[] v = {
-    new OMSMValueList(new OMSMRange[] {
-      new OMSMPoint(1.0),
-      new OMSMPoint(3.0),
-      new OMSMThruRange(3.5, 5.0)
+  static OMCRangeList[] v = {
+    new OMCRangeList(new OMCRange[] {
+      new OMCPoint(1.0),
+      new OMCPoint(3.0),
+      new OMCThruRange(3.5, 5.0)
     }),
-    new OMSMValueList(new OMSMRange[] {
-      new OMSMThruRange(2.5, 4.6)
+    new OMCRangeList(new OMCRange[] {
+      new OMCThruRange(2.5, 4.6)
     }),
-    new OMSMValueList(new OMSMRange[] {
-      new OMSMPoint(3.0),
-      new OMSMPoint(5.5),
+    new OMCRangeList(new OMCRange[] {
+      new OMCPoint(3.0),
+      new OMCPoint(5.5),
     })
   };
 
   public static void main(String[] args) {
-    OMSMValueList o = new OMSMValueList("Abc");
-    OMSMValueList x = o.applyOperator(ConstraintOperator.NOTEQUAL);
+    OMCRangeList o = new OMCRangeList("Abc");
+    OMCRangeList x = o.applyOperator(ConstraintOperator.NOTEQUAL);
     System.out.println(o + " -> " + x);
   }
 }

@@ -35,6 +35,14 @@ import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.CircularQueue;
 
+/**
+ * A container for the active Plays. The plays are initialized from a
+ * file specified as a plugin parameter. Playbook users access the
+ * plays through two services: {@link PlaybookReadService} and
+ * {@link PlaybookConstrainService}. The former returns the constrained
+ * plays. The latter constrains the original plays with
+ * {@link OperatingModePolicy}s.
+ **/
 public class Playbook
   extends ComponentPlugin
   implements ServiceProvider
@@ -46,6 +54,65 @@ public class Playbook
   private List listeners = new ArrayList(2);
   private CircularQueue todo = new CircularQueue();
 
+  private class PlaybookReadServiceImpl implements PlaybookReadService {
+    private boolean active = true;
+    /**
+     * Gets an array of the current plays
+     * @return an array of the current plays
+     **/
+    public Play[] getCurrentPlays() {
+      if (!active) throw new RuntimeException("Service has been released or revoked");
+      return constrainedPlays;
+    }
+
+    /**
+     * Add a listener to the playbook. The listener will be
+     * publishChanged if this Playbook is modified.
+     * @param l the Listener
+     **/
+    public void addListener(Listener l) {
+      if (!active) throw new RuntimeException("Service has been released or revoked");
+      listeners.add(l);
+    }
+    /**
+     * Remove a listener to the playbook. The listener will no longer
+     * be publishChanged if this Playbook is modified.
+     * @param l the Listener
+     **/
+    public void removeListener(Listener l) {
+      if (!active) throw new RuntimeException("Service has been released or revoked");
+      listeners.remove(l);
+    }
+  }
+
+  private class PlaybookConstrainServiceImpl implements PlaybookConstrainService {
+    private boolean active = true;
+    /**
+     * Add another OperatingModePolicy constraint. The plays are
+     * modified so that in all cases where the if clause of the
+     * constraint is true the OperatingMode ranges will all fall
+     * within the constraint.
+     * @param omp the constraint to add
+     **/
+    public void constrain(OperatingModePolicy omp) {
+      if (!active) throw new RuntimeException("Service has been released or revoked");
+      addConstraint(omp);
+    }
+
+    /**
+     * Remove an OperatingModePolicy constraint. The current plays are
+     * recomputed to omit the removed constraint.
+     * @param omp the constraint to remove
+     **/
+    public void unconstrain(OperatingModePolicy omp) {
+      if (!active) throw new RuntimeException("Service has been released or revoked");
+      removeConstraint(omp);
+    }
+  }
+
+  /**
+   * Override to register the services we provide.
+   **/
   public void load() {
     super.load();
     logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
@@ -53,6 +120,9 @@ public class Playbook
     getServiceBroker().addService(PlaybookConstrainService.class, this);
   }
 
+  /**
+   * Override to unregister the services we provide.
+   **/
   public void unload() {
     getServiceBroker().revokeService(PlaybookConstrainService.class, this);
     getServiceBroker().revokeService(PlaybookReadService.class, this);
@@ -60,6 +130,9 @@ public class Playbook
     super.unload();
   }
 
+  /**
+   * Read the plays from a file.
+   **/
   public void setupSubscriptions() {
     String playFileName = getParameters().iterator().next().toString();
     try {
@@ -76,6 +149,13 @@ public class Playbook
     }
   }
 
+  /**
+   * Handle requests that arrived through our services. These requests
+   * all fire listeners. The services cannot themselves do this
+   * because of the possibility of a deadlock due to attempts to open
+   * two blackboard transactions simultaneously. The requests are
+   * placed in a queue and executed here.
+   **/
   public void execute() {
     synchronized (todo) {
       while (todo.size() > 0) {
@@ -88,19 +168,17 @@ public class Playbook
     }
   }
 
+  /**
+   * Gets (creates) one of our services. Part of the implementation of
+   * the ServiceProvider API
+   * @param sb the ServiceBroker making the request
+   * @param requestor the actual requestor on whose behalf the broker is acting
+   * @param serviceClass the class of the Service desired.
+   * @return an instance of the requested Service if it one we supply.
+   **/
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (serviceClass == PlaybookReadService.class) {
-      return new PlaybookReadService() {
-        public Play[] getCurrentPlays() {
-          return constrainedPlays;
-        }
-        public void addListener(Listener l) {
-          listeners.add(l);
-        }
-        public void removeListener(Listener l) {
-          listeners.remove(l);
-        }
-      };
+      return new PlaybookReadServiceImpl();
     }
     if (serviceClass == PlaybookConstrainService.class) {
       return new PlaybookConstrainService() {
@@ -115,8 +193,21 @@ public class Playbook
     return null;
   }
 
+  /**
+   * Release one of our services. The services use no resources, so
+   * there is nothing to do.
+   **/
   public void releaseService(ServiceBroker sb, Object requestor, Class
                              serviceClass, Object service) {
+    if (service instanceof PlaybookReadServiceImpl) {
+      ((PlaybookReadServiceImpl) service).active = false;
+      return;
+    }
+    if (service instanceof PlaybookConstrainServiceImpl) {
+      ((PlaybookConstrainServiceImpl) service).active = false;
+      return;
+    }
+    throw new IllegalArgumentException("Not my service");
   }
 
   private synchronized void addConstraint(OperatingModePolicy omp) {
@@ -251,7 +342,7 @@ public class Playbook
           ConstraintPhrase cp = playConstraints[j];
           String proxyName = cp.getProxyName();
           ConstraintPhrase ompConstraint = (ConstraintPhrase) ompModes.get(proxyName);
-          OMSMValueList intersection =
+          OMCRangeList intersection =
             cp.getAllowedValues().intersect(ompConstraint.getAllowedValues());
           if (intersection.isEmpty()) {
             // Completely incompatible. This could be bad. It means

@@ -21,20 +21,29 @@
 package org.cougaar.core.adaptivity;
 
 /**
- * Holds a range specification for an operating mode value or sensor
- * measurement. Ranges are half-open intervals. The value of max
- * _must_ exceed low.
+ * Holds a range specification for an operating mode or condition
+ * value expressed as a closed interval (min and max are in the
+ * range).
  **/
-public class OMSMThruRange extends OMSMRange {
-  public OMSMThruRange(int min, int max) {
+public class OMCThruRange extends OMCRange {
+  /**
+   * Constructor from ints
+   **/
+  public OMCThruRange(int min, int max) {
     super(new Integer(min), new Integer(max));
   }
 
-  public OMSMThruRange(double min, double max) {
+  /**
+   * Constructor from doubles
+   **/
+  public OMCThruRange(double min, double max) {
     super(new Double(min), new Double(max));
   }
 
-  public OMSMThruRange(Comparable min, Comparable max) {
+  /**
+   * Constructor from Comparables
+   **/
+  public OMCThruRange(Comparable min, Comparable max) {
     super(min, max);
   }
 

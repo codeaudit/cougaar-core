@@ -21,28 +21,34 @@
 package org.cougaar.core.adaptivity;
 
 /** 
- * A phrase used to express a boolean comparison between a string
- * standing in for sensor data or an operating mode and a Object
- * holding the value and a set of valid values
- */
+ * A phrase fragment used to express a boolean comparison and a set of
+ * valid values to compare against.
+ **/
 public class ConstraintOpValue {
   ConstraintOperator operator;
-  OMSMValueList allowedValues;
+  OMCRangeList allowedValues;
   
   /**
    * Constructor 
-   * @param String name of the input source, e.g., sensor name
-   * @param ConstraintOperator
-   * @param an array of OMSMRange descriptions list allowed ranges.
-   */
+   **/
   public ConstraintOpValue() {
   }
 
+  /**
+   * Set the operator.
+   * @param op the new operator
+   **/
   public void setOperator(ConstraintOperator op) {
     operator = op;
   }
 
-  public void setAllowedValues(OMSMValueList l) {
+  /**
+   * Set the list of value ranges against which the operator can
+   * compare a condition value. The actual interpretation of the
+   * allowed values depends on the operator.
+   * @param l the list of value ranges.
+   **/
+  public void setAllowedValues(OMCRangeList l) {
     allowedValues = l;
   }
   
@@ -59,12 +65,12 @@ public class ConstraintOpValue {
    * Get the ranges of allowed values.
    * @return all allowed ranges as imposed by this constraint
    **/
-  public OMSMValueList getAllowedValues() {
+  public OMCRangeList getAllowedValues() {
     return allowedValues;
   }
   
   /** 
-   * The relationship between the sensor or operating mode and the
+   * The relationship between the condition or operating mode and the
    * value.
    * @return ConstraintOperator */
   public ConstraintOperator getOperator() {

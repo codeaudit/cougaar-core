@@ -23,17 +23,22 @@ package org.cougaar.core.adaptivity;
 import java.util.*;
 
 /** 
- * A set of ConstraintPhrases connected with boolean operators  
- */
+ * Holds a parsed expression for testing the values of Conditions. The
+ * expression is inserted in reverse Polish or postfix notation, but
+ * read out in the opposite (prefix) order.
+ **/
 
-/* needs work! */
 public class ConstrainingClause {
 
   private List list = new ArrayList();
   /** 
-   * AND or OR ConstraintOperator previous c new ConstraintOperator(lause with the new clause) 
-   * @param ConstraintPhrase 
-   */
+   * Append an operator or operand onto the list. It is assumed that
+   * the caller is constructing a well-formed expression.
+   * @param o a String, Operator, ConstraintOpValue, or
+   * ConstrainingClause. If another ConstrainingClause is pushed, its
+   * entire contents is appended, otherwise the item itself is
+   * appended.
+   **/
   public void push(Object o) {
     if (o instanceof ConstrainingClause) {
       list.addAll(((ConstrainingClause) o).list);
@@ -42,9 +47,14 @@ public class ConstrainingClause {
     }
   }
   
-  /** 
-   * @return an iterator that can walk the phrase for interpretation  
-   */
+  /**
+   * Gets an iterator over the contents in prefix order.
+   * @return an iterator that can walk the clause for evaluation. The
+   * iterator runs through the contents in the reverse order from
+   * which the information was appended. This has the effect of
+   * turning the reverse Polish (postfix) entry order into forward
+   * Polish (prefix) order.
+   **/
   public Iterator iterator() {
     return new Iterator() {
       private ListIterator iter = list.listIterator(list.size());
@@ -94,6 +104,12 @@ public class ConstrainingClause {
     return buf.toString();
   }
 
+  /**
+   * Gets the expression in infix format.
+   * @return a string representation of the expression using infix
+   * notation. Parentheses are inserted liberally to make operator
+   * precedence clear.
+   **/
   public String toString() {
     return toString(iterator());
   }

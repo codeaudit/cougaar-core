@@ -21,8 +21,7 @@
 package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.SensorMeasurementService;
+import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.persist.NotPersistable;
@@ -30,22 +29,20 @@ import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Plugin to sense incoming task rate and publish a SensorMeasurement
+ * Plugin to sense incoming task rate and publish a Condition
  **/
 public class TaskRateSensorPlugin extends ServiceUserPluginBase {
-  private static final String SENSOR_MEASUREMENT_NAME = "SensorMeasurement.TASKRATE";
+  private static final String CONDITION_NAME = "TaskRateSensorPlugin.TASKRATE";
 
-  private static final OMSMRange[] TASKRATE_RANGES = {
-    new OMSMRange(0.0, Double.MAX_VALUE)
+  private static final OMCRange[] TASKRATE_RANGES = {
+    new OMCRange(0.0, Double.MAX_VALUE)
   };
 
-  private static final OMSMValueList TASKRATE_VALUES = new OMSMValueList(TASKRATE_RANGES);
+  private static final OMCRangeList TASKRATE_VALUES = new OMCRangeList(TASKRATE_RANGES);
 
   private static final double TIME_CONSTANT = 5000.0; // Five second time constant
 
-  private SensorMeasurementService sensorMeasurementService;
-
-  private LoggingService logger;
+  private ConditionService conditionService;
 
   private double filteredTaskRate = 0.0;
   private long then = System.currentTimeMillis();
@@ -62,11 +59,11 @@ public class TaskRateSensorPlugin extends ServiceUserPluginBase {
 
   /**
    * Private inner class precludes use by others to set our
-   * measurement. Others can only reference the base SensorMeasurement
+   * measurement. Others can only reference the base Condition
    * class which has no setter method.
    **/
-  private static class TaskRateTestSensorMeasurement extends SensorMeasurementImpl implements NotPersistable {
-    public TaskRateTestSensorMeasurement(String name, OMSMValueList allowedValues, Comparable value) {
+  private static class TaskRateTestCondition extends SensorCondition implements NotPersistable {
+    public TaskRateTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }
 
@@ -76,8 +73,7 @@ public class TaskRateSensorPlugin extends ServiceUserPluginBase {
   }
 
   private static final Class[] requiredServices = {
-    LoggingService.class,
-    SensorMeasurementService.class
+    ConditionService.class
   };
 
   public TaskRateSensorPlugin() {
@@ -85,21 +81,26 @@ public class TaskRateSensorPlugin extends ServiceUserPluginBase {
   }
 
   public void setupSubscriptions() {
-    TaskRateTestSensorMeasurement taskRate =
-      new TaskRateTestSensorMeasurement(SENSOR_MEASUREMENT_NAME, TASKRATE_VALUES, new Double(0.0));
+    TaskRateTestCondition taskRate =
+      new TaskRateTestCondition(CONDITION_NAME, TASKRATE_VALUES, new Double(0.0));
     blackboard.publishAdd(taskRate);
     tasksSubscription = (IncrementalSubscription) blackboard.subscribe(tasksPredicate);
     if (haveServices()) updateTaskRateSensor(true);
   }
 
+  /**
+   * Test if all needed services have been acquired. Test the
+   * conditionService variable for null. If still null ask
+   * acquireServices to continue trying to acquire services. If true
+   * is returned, fill in the service variables and return true.
+   * Subsequent calls will return true immediately.
+   **/
   private boolean haveServices() {
-    if (logger != null) return true;
+    if (conditionService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      logger = (LoggingService)
-        sb.getService(this, LoggingService.class, null);
-      sensorMeasurementService = (SensorMeasurementService)
-        sb.getService(this, SensorMeasurementService.class, null);
+      conditionService = (ConditionService)
+        sb.getService(this, ConditionService.class, null);
       return true;
     }
     return false;
@@ -123,10 +124,10 @@ public class TaskRateSensorPlugin extends ServiceUserPluginBase {
     if (publish) {
       cancelTimer();
       if (logger.isDebugEnabled()) logger.debug("newCount=" + newCount);
-      TaskRateTestSensorMeasurement taskRate = (TaskRateTestSensorMeasurement)
-        sensorMeasurementService.getSensorMeasurementByName(SENSOR_MEASUREMENT_NAME);
+      TaskRateTestCondition taskRate = (TaskRateTestCondition)
+        conditionService.getConditionByName(CONDITION_NAME);
       if (taskRate != null) {
-        if (logger.isInfoEnabled()) logger.info("Setting " + SENSOR_MEASUREMENT_NAME + " = " + filteredTaskRate);
+        if (logger.isInfoEnabled()) logger.info("Setting " + CONDITION_NAME + " = " + filteredTaskRate);
         taskRate.setValue(new Double(filteredTaskRate));
         blackboard.publishChange(taskRate);
       }

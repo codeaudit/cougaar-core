@@ -28,20 +28,20 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.SensorMeasurementService;
+import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.BlackboardService;
 
 /**
  * Helper class for computing OperatingModes from plays and
- * SensorMeasurements
+ * Conditions
  **/
 public class PlayHelper { 
 
   private static class OMMapEntry {
-    public OMSMValueList newValue;
+    public OMCRangeList newValue;
     public List plays = new ArrayList();
-    public OMMapEntry(OMSMValueList nv, Play firstPlay) {
+    public OMMapEntry(OMCRangeList nv, Play firstPlay) {
       newValue = nv;
       plays.add(firstPlay);
     }
@@ -50,32 +50,32 @@ public class PlayHelper {
   private Map omMap = new HashMap();
   private LoggingService logger;
   private OperatingModeService operatingModeService;
-  private SensorMeasurementService sensorMeasurementService;
+  private ConditionService conditionService;
   private BlackboardService blackboard;
   private Map smMap;
 
   public PlayHelper(LoggingService ls,
                     OperatingModeService oms,
-                    SensorMeasurementService sms,
+                    ConditionService sms,
                     BlackboardService bb,
                     Map smm)
   {
     logger = ls;
     operatingModeService = oms;
-    sensorMeasurementService = sms;
+    conditionService = sms;
     blackboard = bb;
     smMap = smm;
   }
 
   /**
-   * Update all operating modes based on sensor measurements and the
-   * playbook. This is the real workhorse of this plugin and carries
-   * out playbook-based adaptivity. All the active plays from the
-   * playbook are considered. If the ifClause evaluates to true, then
-   * the operating mode values are saved in a Map under the operating
-   * mode name. When multiple plays affect the same operating mode,
-   * the values are combined by intersecting the allowed value ranges.
-   * If a play specifies a constraint that would have the effect of
+   * Update all operating modes based on conditions and the playbook.
+   * This is the real workhorse of this plugin and carries out
+   * playbook-based adaptivity. All the active plays from the playbook
+   * are considered. If the ifClause evaluates to true, then the
+   * operating mode values are saved in a Map under the operating mode
+   * name. When multiple plays affect the same operating mode, the
+   * values are combined by intersecting the allowed value ranges. If
+   * a play specifies a constraint that would have the effect of
    * eliminating all possible values for an operating mode, that
    * constraint is logged and ignored. Finally, the operating modes
    * are set to the effective value of the combined constraints.
@@ -97,13 +97,13 @@ public class PlayHelper {
           for (int j = 0; j < playConstraints.length; j++) {
             ConstraintPhrase cp = playConstraints[j];
             String operatingModeName = cp.getProxyName();
-            OMSMValueList av =
+            OMCRangeList av =
               cp.getAllowedValues().applyOperator(cp.getOperator());
             OMMapEntry omme = (OMMapEntry) omMap.get(operatingModeName);
             if (omme == null) {
               omMap.put(operatingModeName, new OMMapEntry(av, play));
             } else {
-              OMSMValueList intersection = omme.newValue.intersect(av);
+              OMCRangeList intersection = omme.newValue.intersect(av);
               if (intersection.isEmpty()) {
                 logger.error("Play conflict for play " + play + " against " + omme.plays);
               } else {
@@ -165,16 +165,16 @@ public class PlayHelper {
     if (o instanceof ConstraintOpValue) {
       ConstraintOpValue phrase = (ConstraintOpValue) o;
       Comparable paramValue = phrase.getValue();
-      OMSMValueList paramRanges = phrase.getAllowedValues();
+      OMCRangeList paramRanges = phrase.getAllowedValues();
       ConstraintOperator op = phrase.getOperator();
-      Comparable sensorValue = evalArithmetic(x);
-      if (logger.isDebugEnabled()) logger.debug("sensorValue = " + sensorValue);
+      Comparable conditionValue = evalArithmetic(x);
+      if (logger.isDebugEnabled()) logger.debug("conditionValue = " + conditionValue);
       if (op.equals(ConstraintOperator.IN) || op.equals(ConstraintOperator.NOTIN)) {
-        boolean isIn = paramRanges.isAllowed(sensorValue);
+        boolean isIn = paramRanges.isAllowed(conditionValue);
         if (op.equals(ConstraintOperator.IN)) return isIn;
         return !isIn;
       }
-      int diff = sensorValue.compareTo(paramValue);
+      int diff = conditionValue.compareTo(paramValue);
       if (op.equals(ConstraintOperator.GREATERTHAN       )) return diff >  0;
       if (op.equals(ConstraintOperator.GREATERTHANOREQUAL)) return diff >= 0;
       if (op.equals(ConstraintOperator.LESSTHAN          )) return diff <  0;
@@ -218,9 +218,9 @@ public class PlayHelper {
       throw new IllegalArgumentException("Unknown ArithmeticOperator: " + op);
     }
     if (o instanceof String) {
-      String sensorName = (String) o;
-      SensorMeasurement sensorMeasurement = (SensorMeasurement) smMap.get(sensorName);
-      return sensorMeasurement.getValue();
+      String conditionName = (String) o;
+      Condition condition = (Condition) smMap.get(conditionName);
+      return condition.getValue();
     }
     throw new IllegalArgumentException("invalid if clause " + o);
   }

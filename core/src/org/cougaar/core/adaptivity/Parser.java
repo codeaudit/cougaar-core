@@ -101,7 +101,8 @@ public class Parser {
   }
       
   /**
-   * Sensor, boolean exp, identifier, operator, value
+   * Parse an if clause and push it onto the ConstrainingClause.
+   * @param lp left left precedence of operator calling this method.
    */
   private void parse(int lp) throws IOException {
     if (debug) {
@@ -259,9 +260,9 @@ public class Parser {
       throw unexpectedTokenException(6);
     }
     if (token1 == StreamTokenizer.TT_WORD) {
-      cov.setAllowedValues(new OMSMValueList(parseRange(st.sval)));
+      cov.setAllowedValues(new OMCRangeList(parseRange(st.sval)));
     } else if (token1 == StreamTokenizer.TT_NUMBER) {
-      cov.setAllowedValues(new OMSMValueList(parseRange(new Double(st.nval))));
+      cov.setAllowedValues(new OMCRangeList(parseRange(new Double(st.nval))));
     } else if (token1 == '{') {
       cov.setAllowedValues(parseSet());
     } else {
@@ -270,7 +271,7 @@ public class Parser {
     return cov;
   }
 
-  private OMSMRange parseRange(Comparable first) throws IOException {
+  private OMCRange parseRange(Comparable first) throws IOException {
     Class elementClass = first.getClass();
     int token = nextToken();
     if (token == StreamTokenizer.TT_WORD) {
@@ -293,17 +294,17 @@ public class Parser {
           throw unexpectedTokenException(10);
         }
         if (isTo) {
-          return new OMSMToRange(first, last);
+          return new OMCToRange(first, last);
         } else {
-          return new OMSMThruRange(first, last);
+          return new OMCThruRange(first, last);
         }
       }
     }
     pushBack();
-    return new OMSMPoint(first);
+    return new OMCPoint(first);
   }
 
-  private OMSMValueList parseSet() throws IOException {
+  private OMCRangeList parseSet() throws IOException {
     Class elementClass = null;
     List values = new ArrayList();
 
@@ -331,7 +332,7 @@ public class Parser {
         throw unexpectedTokenException(11);
       }
     }
-    return new OMSMValueList((OMSMRange[]) values.toArray(new OMSMRange[values.size()]));
+    return new OMCRangeList((OMCRange[]) values.toArray(new OMCRange[values.size()]));
   }
 
   private void pushBack() {

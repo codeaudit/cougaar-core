@@ -21,8 +21,13 @@
 package org.cougaar.core.adaptivity;
 
 /** 
- * The Play determines what values to apply to a circumstance.
- */
+ * Base class for Plays and OperatingModePolicies. Most of the
+ * functionality of the subclasses resides here. A Play or
+ * OperatingModePolicy has a ConstrainingClause that can be evaluated
+ * to determine if it applies to the current Conditions and a list
+ * (array) of operating mode constraints that specify the values that
+ * the modes should be given.
+ **/
 public class PlayBase {
 
   private ConstrainingClause ifClause;
@@ -30,8 +35,8 @@ public class PlayBase {
 
   /**
    * Constructor
-   * @param ConstraingClause representing the 'if' clause
-   * @param ConstraingClause representing the 'then' clause
+   * @param ifClause the 'if' clause
+   * @param omConstraints the constraints on operating modes
    **/
   public PlayBase(ConstrainingClause ifClause, ConstraintPhrase[] omConstraints) {
     this.ifClause = ifClause;
@@ -39,23 +44,27 @@ public class PlayBase {
   }
 
   /** 
-   * A comparison based on sensor data and operating modes 
-   * @return the 'if' ConstrainingClause 
+   * Gets the if clause
+   * @return the 'if' ConstrainingClause
    */
   public ConstrainingClause getIfClause() {
     return ifClause;
   }
 
   /**
-   * Knobs with current setting and a range or enumeration of
-   * allowable settings for this play in order of desirability. 
-   * Should "then" clause be limited to && expressions?
-   * @return 'then' ConstrainingClause 
-   */ 
+   * Gets the array of ConstraintPhrases to be applied to the
+   * operating modes.
+   * @return the array of ConstraintPhrases.
+   **/
   public ConstraintPhrase[] getOperatingModeConstraints() {
     return operatingModeConstraints;
   }
 
+  /**
+   * Gets the Play or OperatingModePolicy as a String. The form of the
+   * String is approximately the same as the input to the Parser.
+   * @return The Play or OperatingModePolicy as a String.
+   **/
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append(ifClause);

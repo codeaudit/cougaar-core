@@ -20,25 +20,15 @@
  */
 package org.cougaar.core.adaptivity;
 
-/**
- * Holds a range specification for an operating mode value or sensor
- * measurement. Ranges are half-open intervals. The value of max
- * _must_ exceed low.
- **/
-public class OMSMPoint extends OMSMRange {
-  public OMSMPoint(int v) {
-    this(new Integer(v));
+public class OperatingModeCondition
+    extends OperatingModeImpl
+    implements Condition
+{
+  public OperatingModeCondition(String name, OMCRangeList allowedValues) {
+    super(name, allowedValues, allowedValues.getEffectiveValue());
   }
-
-  public OMSMPoint(double v) {
-    this(new Double(v));
+  public OperatingModeCondition(String name, OMCRangeList allowedValues, Comparable value) {
+    super(name, allowedValues, value);
   }
-
-  public OMSMPoint(Comparable v) {
-    super(v, v);
-  }
-
-  public String toString() {
-    return min.toString();
-  }
+    
 }
