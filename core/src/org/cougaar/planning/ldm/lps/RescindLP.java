@@ -48,6 +48,7 @@ import org.cougaar.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.planning.ldm.plan.RoleSchedule;
 import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Schedule;
+import org.cougaar.planning.ldm.plan.ScheduleElement;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskRescind;
 
@@ -200,6 +201,16 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     // create an AssetRescind message
     Schedule rescindSchedule;
 
+
+    //Remove info from local assets
+    Asset localAsset = logplan.findAsset(at.getAsset());
+    if (localAsset == null) {
+      System.err.println("RescindLP: rescinded transferred asset - " + 
+                         at.getAsset() + " - not found in logplan.");
+      return;
+    }
+
+
     if ((at.getAsset() instanceof HasRelationships) &&
         (at.getAssignee() instanceof HasRelationships)) {
       rescindSchedule = ldmf.newAssignedRelationshipSchedule();
@@ -211,14 +222,6 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         Relationship relationship = (Relationship)iterator.next();
         ((NewSchedule)rescindSchedule).add(ldmf.newAssignedRelationshipElement(relationship));
       }
-
-      //Remove info from local assets
-      HasRelationships localAsset = (HasRelationships)logplan.findAsset(at.getAsset());
-      if (localAsset == null) {
-        System.err.println("RescindLP: rescinded transferred asset - " + 
-                           at.getAsset() + " - not found in logplan.");
-        return;
-      }
       
       HasRelationships localAssignee = (HasRelationships)logplan.findAsset(at.getAssignee());
       if (localAssignee == null) {
@@ -228,32 +231,34 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       }
 
       // Update local relationship schedules
-      RelationshipSchedule localSchedule = localAsset.getRelationshipSchedule();
+      RelationshipSchedule localSchedule = 
+        ((HasRelationships) localAsset).getRelationshipSchedule();
       localSchedule.removeAll(transferSchedule);        
       
       localSchedule = localAssignee.getRelationshipSchedule();
       localSchedule.removeAll(transferSchedule);
       
-      // Update assignee avail
+      // Update asset avail
       // Remove all current entries denoting asset avail to assignee
-      NewSchedule assigneeAvailSchedule = 
-        (NewSchedule)((Asset)localAssignee).getRoleSchedule().getAvailableSchedule();
-      synchronized (assigneeAvailSchedule) {
-        final Asset asset = (Asset)localAsset;
-        Collection remove = assigneeAvailSchedule.filter(new UnaryPredicate() {
+      // Will add in new entry based on the current relationship schedule
+      NewSchedule assetAvailSchedule = 
+        (NewSchedule) localAsset.getRoleSchedule().getAvailableSchedule();
+      final Asset assignee = at.getAssignee();
+      synchronized (assetAvailSchedule) {
+        Collection remove = assetAvailSchedule.filter(new UnaryPredicate() {
           public boolean execute(Object o) {
             return ((o instanceof AssignedAvailabilityElement) &&
-                    (((AssignedAvailabilityElement)o).getAssignee().equals(asset)));
+                    (((AssignedAvailabilityElement)o).getAssignee().equals(assignee)));
           }  
         });
-        assigneeAvailSchedule.removeAll(remove);
+        assetAvailSchedule.removeAll(remove);
       } // end sync block
 
       // Get all relationships with asset
       RelationshipSchedule relationshipSchedule = 
         (localAssignee).getRelationshipSchedule();
       Collection collection = 
-        relationshipSchedule.getMatchingRelationships(localAsset,
+        relationshipSchedule.getMatchingRelationships((HasRelationships) localAsset,
                                                       new MutableTimeSpan());
       
       // If any relationships, add a single avail element with the 
@@ -262,10 +267,10 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
         
         // Add a new avail element
-        synchronized (assigneeAvailSchedule) {
-          assigneeAvailSchedule.add(ldmf.newAssignedAvailabilityElement((Asset)localAsset,
-                                                                        schedule.getStartTime(),
-                                                                        schedule.getEndTime()));
+        synchronized (assetAvailSchedule) {
+          assetAvailSchedule.add(ldmf.newAssignedAvailabilityElement((Asset)localAssignee,
+                                                                     schedule.getStartTime(),
+                                                                     schedule.getEndTime()));
         }
       }
 
@@ -273,8 +278,43 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       logplan.change(localAssignee, null);
     } else {
       rescindSchedule = at.getSchedule();
-    }
 
+      // Update asset avail - remove all current entries which match the rescind
+      // schedule
+      NewSchedule assetAvailSchedule = 
+        (NewSchedule)((Asset)localAsset).getRoleSchedule().getAvailableSchedule();
+      final Asset assignee = at.getAssignee();
+      synchronized (assetAvailSchedule) {
+        final Asset asset = (Asset)localAsset;
+        Collection assignedAvailSchedule = assetAvailSchedule.filter(new UnaryPredicate() {
+          public boolean execute(Object o) {
+            return ((o instanceof AssignedAvailabilityElement) &&
+                    (((AssignedAvailabilityElement)o).getAssignee().equals(assignee)));
+          }  
+        });
+        
+        //iterate over rescind schedule and remove matching avail elements
+        for (Iterator iterator = rescindSchedule.iterator();
+             iterator.hasNext();) {
+          ScheduleElement rescind = (ScheduleElement)iterator.next();
+    
+          Iterator localIterator = assignedAvailSchedule.iterator();
+      
+          boolean found = false;
+          while (localIterator.hasNext()) {
+            ScheduleElement localAvailability = 
+              (ScheduleElement)localIterator.next();
+
+            if ((rescind.getStartTime() == localAvailability.getStartTime()) &&
+                (rescind.getEndTime() == localAvailability.getEndTime())) {
+              assignedAvailSchedule.remove(localAvailability);
+              break;
+            }
+          }
+        }
+      }
+      logplan.change(localAsset, null);
+    }
    
     AssetRescind arm = ldmf.newAssetRescind(at.getAsset(), 
                                             at.getAssignee(),

@@ -34,6 +34,7 @@ import org.cougaar.planning.ldm.asset.Asset;
 
 import org.cougaar.planning.ldm.plan.AssetVerification;
 import org.cougaar.planning.ldm.plan.AssetRescind;
+import org.cougaar.planning.ldm.plan.AssignedAvailabilityElement;
 import org.cougaar.planning.ldm.plan.AssignedRelationshipElement;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.HasRelationships;
@@ -41,6 +42,7 @@ import org.cougaar.planning.ldm.plan.NewSchedule;
 import org.cougaar.planning.ldm.plan.Relationship;
 import org.cougaar.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.planning.ldm.plan.Schedule;
+import org.cougaar.planning.ldm.plan.ScheduleElement;
 
 import org.cougaar.core.util.UID;
 
@@ -69,26 +71,21 @@ public class ReceiveAssetVerificationLP
     if (dir instanceof AssetVerification) {
       AssetVerification av  = (AssetVerification) dir;
 
-      if (!(av.getAsset() instanceof HasRelationships) ||
-          !(av.getAssignee() instanceof HasRelationships)) {
-        System.err.println("ReceiveAssetVerificationLP: can't verify " + 
-                           " assignment of asset - " + av.getAsset() + 
-                           " to " + av.getAssignee() + 
-                           " without relationships");
-        return;
-      } 
-
-      // One of ourselves
-      HasRelationships localAsset = 
-        (HasRelationships) logplan.findAsset(av.getAsset());
+    // One of ourselves
+      Asset localAsset = logplan.findAsset(av.getAsset());
       Schedule rescindSchedule = null;
 
       if (localAsset == null) {
         //Rescind everything
         rescindSchedule = av.getSchedule();
       } else {
-        rescindSchedule = getUnmatched(av, localAsset);
-      }
+        if (!(av.getAsset() instanceof HasRelationships) ||
+            !(av.getAssignee() instanceof HasRelationships)) {
+          rescindSchedule = getUnmatchedAvailability(av, localAsset);
+        } else {
+          rescindSchedule = getUnmatchedRelationships(av, (HasRelationships) localAsset);
+        }
+      } 
         
       if ((rescindSchedule != null) &&
           rescindSchedule.size() > 0) {
@@ -101,15 +98,76 @@ public class ReceiveAssetVerificationLP
     } 
   }
   
-  /** getUnmatched - returns a Schedule with all AssignedRelationshipElements which
-   * are not matched by the local information
+  /** getUnmatchedAvailability - returns a Schedule with all ScheduleElements which
+   * are not matched by the local availability schedule.
+   *
+   * @param av AssetVerification which schedule is verified
+   * @param localAsset Asset local copy of the asset being verified
+   * @return Schedule of AssignedRelationshipElements which do not match local info
+   */
+  private Schedule getUnmatchedAvailability(AssetVerification av, 
+                                            Asset localAsset) {
+    NewSchedule rescindSchedule = null;
+    
+    String assetID = av.getAsset().getItemIdentificationPG().getItemIdentification();
+    String assigneeID = av.getAssignee().getItemIdentificationPG().getItemIdentification();
+
+    Schedule availSchedule = localAsset.getRoleSchedule().getAvailableSchedule();
+
+    if (availSchedule == null) {
+      // rescind everything
+      rescindSchedule = ldmf.newAssignedRelationshipSchedule();
+      rescindSchedule.addAll(av.getSchedule());
+      return rescindSchedule;
+    }    
+
+    //iterate over verification schedule and make sure it maps to local info
+    for (Iterator iterator = av.getSchedule().iterator();
+         iterator.hasNext();) {
+      ScheduleElement verify = (ScheduleElement)iterator.next();
+    
+      Iterator localIterator = availSchedule.iterator();
+      
+      boolean found = false;
+      while (localIterator.hasNext()) {
+        ScheduleElement localAvailability = 
+          (ScheduleElement)localIterator.next();
+
+        if (!(localAvailability instanceof AssignedAvailabilityElement)) {
+          continue;
+        }
+        
+        Asset assignee = ((AssignedAvailabilityElement) localAvailability).getAssignee();
+        
+        if ((assignee.equals(av.getAssignee())) &&
+            (verify.getStartTime() == localAvailability.getStartTime()) &&
+            (verify.getEndTime() == localAvailability.getEndTime())) {
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        if (rescindSchedule == null) {
+          rescindSchedule = 
+            ldmf.newAssignedRelationshipSchedule();
+        }
+        ((NewSchedule)rescindSchedule).add(verify);
+      }
+    }
+
+    return rescindSchedule;
+  }
+
+  /** getUnmatchedRelationships - returns a Schedule with all AssignedRelationshipElements which
+   * are not matched by the local relationship schedule.
    *
    * @param av AssetVerification which schedule is verified
    * @param localAsset HasRelationships local copy of the asset being verified
    * @return Schedule of AssignedRelationshipElements which do not match local info
    */
-  private Schedule getUnmatched(AssetVerification av, 
-                                HasRelationships localAsset) {
+  private Schedule getUnmatchedRelationships(AssetVerification av, 
+                                             HasRelationships localAsset) {
     NewSchedule rescindSchedule = null;
     HasRelationships asset = (HasRelationships)av.getAsset();
     HasRelationships assignee = (HasRelationships)av.getAssignee();
