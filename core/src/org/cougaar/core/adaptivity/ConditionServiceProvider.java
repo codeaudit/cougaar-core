@@ -84,11 +84,15 @@ public class ConditionServiceProvider
     }
 
     public void addListener(Listener l) {
-      listeners.add(l);
+      synchronized (listeners) {
+        listeners.add(l);
+      }
     }
 
     public void removeListener(Listener l) {
-      listeners.remove(l);
+      synchronized (listeners) {
+        listeners.remove(l);
+      }
     }
   }
 

@@ -51,13 +51,18 @@ public class AdaptivityEngine extends ServiceUserPlugin {
    * A listener that listens to itself. It responds true when it is
    * itself the object of a subscription change.
    **/
-  private static class Listener
+  private static class Listener extends OperatingModeService.ListenerAdapter
     implements ConditionService.Listener,
                PlaybookReadService.Listener,
+               OperatingModeService.Listener,
                UnaryPredicate
   {
     public boolean execute(Object o) {
       return (this == o);
+    }
+
+    public boolean wantAdds() {
+      return true;
     }
   }
 
@@ -76,6 +81,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
 
   private Subscription conditionListenerSubscription;
   private Subscription playbookListenerSubscription;
+  private Subscription operatingModeListenerSubscription;
 
   private Map smMap = new HashMap();
 
@@ -104,6 +110,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
 
   private Listener conditionListener = new Listener();
 
+  private Listener operatingModeListener = new Listener();
+
   public AdaptivityEngine() {
     super(requiredServices);
   }
@@ -129,6 +137,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
         getServiceBroker().getService(this, UIDService.class, null);
 
       conditionService.addListener(conditionListener);
+      operatingModeService.addListener(operatingModeListener);
       playbookService.addListener(playbookListener);
 
       helper = new PlayHelper(logger, operatingModeService, conditionService, blackboard, uidService, smMap);
@@ -168,6 +177,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   public void setupSubscriptions() {
     playbookListenerSubscription = blackboard.subscribe(playbookListener);
     conditionListenerSubscription = blackboard.subscribe(conditionListener);
+    operatingModeListenerSubscription = blackboard.subscribe(operatingModeListener);
     blackboard.publishAdd(conditionListener);
     blackboard.publishAdd(playbookListener);
   }
@@ -187,6 +197,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     boolean debug = logger.isDebugEnabled();
     if (debug) {
       if (conditionListenerSubscription.hasChanged()) logger.debug("Condition changed");
+      if (operatingModeListenerSubscription.hasChanged()) logger.debug("OperatingMode changed");
       if (playbookListenerSubscription.hasChanged()) logger.debug("Playbook changed");
     }
     if (haveServices()) {
@@ -198,6 +209,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
       } else if (conditionListenerSubscription.hasChanged()) {
         getConditions();
         if (debug) logger.debug("got " + smMap.size() + " conditions");
+      } else if (operatingModeListenerSubscription.hasChanged()) {
       } else {
         if (debug) logger.debug("nothing changed");
       }

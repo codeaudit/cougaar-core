@@ -20,20 +20,25 @@
  */
 package org.cougaar.core.adaptivity;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.plugin.ComponentPlugin;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.OperatingModeService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.KeyedSet;
 import org.cougaar.util.ReadOnlySet;
-import java.util.Set;
-import java.util.Collections;
+import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.Thunk;
+import org.cougaar.util.Collectors;
 
 /**
  * This Plugin serves as an OperatingModeServiceProvider. It
@@ -70,6 +75,16 @@ public class OperatingModeServiceProvider
    * information in the OperatingModeSet.
    **/
   private class OperatingModeServiceImpl implements OperatingModeService {
+    public void addListener(OperatingModeService.Listener l) {
+      synchronized (listeners) {
+        listeners.add(l);
+      }
+    }
+    public void removeListener(OperatingModeService.Listener l) {
+      synchronized (listeners) {
+        listeners.remove(l);
+      }
+    }
     public OperatingMode getOperatingModeByName(String knobName) {
       return omSet.getOperatingMode(knobName);
     }
@@ -84,8 +99,34 @@ public class OperatingModeServiceProvider
     }
   };
 
+  LoggingService logger;
   private OperatingModeSet omSet = new OperatingModeSet();
   private IncrementalSubscription operatingModes;
+  private List listeners = new ArrayList(2);
+  private Thunk listenerAddThunk =
+    new Thunk() {
+      public void apply(Object o) {
+        OperatingModeService.Listener l =
+          (OperatingModeService.Listener) o;
+        if (l.wantAdds()) blackboard.publishChange(o);
+      }
+    };
+  private Thunk listenerChangeThunk =
+    new Thunk() {
+      public void apply(Object o) {
+        OperatingModeService.Listener l =
+          (OperatingModeService.Listener) o;
+        if (l.wantChanges()) blackboard.publishChange(o);
+      }
+    };
+  private Thunk listenerRemoveThunk =
+    new Thunk() {
+      public void apply(Object o) {
+        OperatingModeService.Listener l =
+          (OperatingModeService.Listener) o;
+        if (l.wantRemoves()) blackboard.publishChange(o);
+      }
+    };
 
   /**
    * Override base class method to register our service with the
@@ -94,6 +135,8 @@ public class OperatingModeServiceProvider
   public void load() {
     super.load();
     getServiceBroker().addService(OperatingModeService.class, this);
+    logger = (LoggingService)
+      getServiceBroker().getService(this, LoggingService.class, null);
   }
 
   /**
@@ -119,7 +162,20 @@ public class OperatingModeServiceProvider
    * where it is referenced directly by the service API.
    **/
   public void execute() {
-    // Our subscription has been changed, but there is nothing more to do.
+    if (operatingModes.hasChanged()) {
+      if (operatingModes.getAddedCollection().size() > 0) {
+        if (logger.isDebugEnabled()) logger.debug("OM Added");
+        Collectors.apply(listenerAddThunk, listeners);
+      }
+      if (operatingModes.getChangedCollection().size() > 0) {
+        if (logger.isDebugEnabled()) logger.debug("OM Changed");
+        Collectors.apply(listenerChangeThunk, listeners);
+      }
+      if (operatingModes.getRemovedCollection().size() > 0) {
+        if (logger.isDebugEnabled()) logger.debug("OM Removed");
+        Collectors.apply(listenerRemoveThunk, listeners);
+      }
+    }
   }
 
   /**
