@@ -1,3 +1,18 @@
+2002-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Finish inter-agent operating mode policy implementation for
+	attribute-based addresses.
+
+2002-04-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/TaskSensorPlugin.java:
+	This plugin implements the new task rate/backlog sensor
+	conditions. Publishes three conditions for rate of creating new
+	tasks, rate of disposal of tasks, and current task backlog. Filter
+	time constant is 30 seconds. Update interval is 10 seconds. Read
+	the javadoc for more detail.
+	
 2002-04-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/Parser.java:
