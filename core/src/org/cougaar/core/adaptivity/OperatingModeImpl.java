@@ -29,7 +29,7 @@ import java.util.List;
  * components should be able to use this implementation directly.
  **/
 public class OperatingModeImpl extends OMCBase implements OperatingMode {
-  private List listeners = new ArrayList(1);
+  //  private List listeners = new ArrayList(1);
 
   
   public OperatingModeImpl(String name, OMCRangeList allowedValues) {
