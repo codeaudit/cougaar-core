@@ -59,33 +59,41 @@ public class Color  implements Constants {
      * Ignore a specific value.
      */
     public static String valueColor(Metric metric, 
-				  double ignore, 
-				  double highlight) {
+				    double ignore, 
+				    double highlight,
+				    boolean greater) {
 	double value=metric.doubleValue();
 	double cred=metric.getCredibility();
 	if (cred == 0) return unknown;
 	else if (cred <=  DEFAULT_CREDIBILITY){
 	    if(value == ignore) return ignoreDefault;
-	    if(value >=highlight) return highlightDefault;
+	    if((greater  & (value >= highlight)) | 
+	       (!greater & (value <= highlight)))
+	       return highlightDefault;
 	    return normalDefault;
 	}
 	else if (cred <=  SYS_DEFAULT_CREDIBILITY){
 	    if(value == ignore) return ignoreConfig;
-	    if(value >=highlight) return highlightConfig;
+	    if((greater  & (value >= highlight)) | 
+	       (!greater & (value <= highlight)))
+		return highlightConfig;
 	    return normalConfig;
 	}
 	else{ // measured
 	    if(value == ignore) return ignoreMeas;
-	    if(value >=highlight) return highlightMeas;
+	    if((greater  & (value >= highlight)) | 
+	       (!greater & (value <= highlight)))
+		return highlightMeas;
 	    return normalMeas;
 	}
     }
     public static String valueTable(Metric metric, 
 				    double ignore, 
 				    double highlight,
+				    boolean greater,
 				    DecimalFormat formatter) {
 	return "<td>" + 
-	    valueColor(metric,ignore,highlight) +
+	    valueColor(metric,ignore,highlight,greater) +
 	    formatter.format(metric.doubleValue()) +
 	    endColor +
 	    "</td>";
@@ -127,15 +135,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(0.00), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(0.00),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(0.00),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 	out.print("</tr>");
 
 	// row "Normal"
@@ -143,15 +151,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(0.50), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(0.50),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(0.50),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 	out.print("</tr>");
 
 	// row "highlight"
@@ -159,15 +167,15 @@ public class Color  implements Constants {
 
 	metric = new MetricImpl(new Double(1.00), DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(1.00),SYS_DEFAULT_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 
 	metric = new MetricImpl(new Double(1.00),SECOND_MEAS_CREDIBILITY,
 				"units","test");
-	out.print(valueTable(metric,0.0,1.0,f2_1));
+	out.print(valueTable(metric,0.0,1.0,true,f2_1));
 	out.print("</tr>");
 	
 	out.print("</table>");

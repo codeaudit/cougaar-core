@@ -36,16 +36,16 @@ import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.servlet.ServletService;
 
-public class MetricsServlet extends HttpServlet implements Constants
+public class RemoteAgentServlet extends HttpServlet implements Constants
 {
-    private final String myPath = "/metrics/agent/load";
+    private final String myPath = "/metrics/remote/agent";
 
     private TopologyReaderService topologyService;
     private MetricsService metricsService;
     private String nodeID;
-    private DecimalFormat f4_2;
+    private DecimalFormat f4_2,f6_3,f3_0;
 
-    public MetricsServlet(ServiceBroker sb) {
+    public RemoteAgentServlet(ServiceBroker sb) {
 	ServletService servletService = (ServletService)
 	    sb.getService(this, ServletService.class, null);
 	if (servletService == null) {
@@ -75,6 +75,8 @@ public class MetricsServlet extends HttpServlet implements Constants
 	}
 
 	f4_2 = new DecimalFormat("#0.00");
+	f6_3 = new DecimalFormat("##0.000");
+	f3_0 = new DecimalFormat("##0");
     }
 
 
@@ -82,9 +84,9 @@ public class MetricsServlet extends HttpServlet implements Constants
 	Set matches = null;
 	try {
 	    matches = topologyService.getAllEntries(null,  // Agent
-						    nodeID,// only this node
-						    null, // Host
-						    null, // Site
+						    null,  // Node
+						    null,  // Host
+						    null,  // Site
 						    null); // Enclave
 	} catch (Exception ex) {
 	    // Node hasn't finished initializing yet
@@ -94,11 +96,14 @@ public class MetricsServlet extends HttpServlet implements Constants
 
 	out.print("<table border=1>\n");
 	out.print("<tr><b>");
-	out.print("<td><b>AGENT</b></td>");
-	out.print("<td><b>CPUload</b></td>");
-	out.print("<td><b>Cred</b></td>");
-	out.print("<td><b>MsgOut</b></td>");
-	out.print("<td><b>MsgIn</b></td>");
+	out.print("<td><b>AGENTS</b></td>");
+	out.print("<td><b>Heard</b></td>");
+	out.print("<td><b>Spoke</b></td>");
+	out.print("<td><b>Queue</b></td>");
+	out.print("<td><b>MsgTo</b></td>");
+	out.print("<td><b>MsgFrom</b></td>");
+	out.print("<td><b>eMJIPS</b></td>");
+	out.print("<td><b>Mbps</b></td>");
 	out.print("</b></tr>");
 
 	Iterator itr = matches.iterator();
@@ -108,19 +113,46 @@ public class MetricsServlet extends HttpServlet implements Constants
 
 	    String name = entry.getAgent();
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
+	    Metric eMJIPS = metricsService.getValue(agentPath+
+						    "EffectiveMJips");
+	    Metric queue = metricsService.getValue(agentPath+
+						    "AvgQueueLength");
+	    if(queue ==null) 
+		queue= new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric heard = metricsService.getValue(agentPath+
+						    "HeardTime");
+	    if(heard ==null) 
+		heard = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric spoke = metricsService.getValue(agentPath+
+						    "SpokeTime");
+	    if(spoke ==null) 
+		spoke = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric msgTo = metricsService.getValue(agentPath+
+						    "MsgTo");
+	    if(msgTo ==null) 
+		msgTo = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric msgFrom=metricsService.getValue(agentPath+
+						    "MsgFrom");
+	    if(msgFrom ==null) 
+		msgFrom = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric mbps=metricsService.getValue(agentPath+
+						    "Mbps");
+	    if(mbps ==null) 
+		mbps = new MetricImpl(new Double(0.00), 0,"units","test");
 
-	    Metric cpuLoad = metricsService.getValue(agentPath
-						     +ONE_SEC_LOAD_AVG);
-	    Metric msgIn = new MetricImpl(new Double(0.00), 0,"units","test");
-	    Metric msgOut = new MetricImpl(new Double(0.00), 0,"units","test");
+	    //subtract now from spoke and heard 
+	    long now = System.currentTimeMillis();
 
 	    out.print("<tr><td><b>");
 	    out.print(name);
 	    out.print(" </b></td>");
-	    out.print(Color.valueTable(cpuLoad, 0.0, 1.0,true, f4_2));
-	    out.print(Color.credTable(cpuLoad));
-	    out.print(Color.valueTable(msgIn, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(msgOut, 0.0, 1.0, true, f4_2));
+	    out.print(Color.valueTable(spoke, 0.0, 30.0, true, f3_0));
+	    out.print(Color.valueTable(heard, 0.0, 30.0, true, f3_0));
+	    out.print(Color.valueTable(queue, 0.0, 1.0, true,  f4_2));
+	    out.print(Color.valueTable(msgTo, 0.0, 1.0, true, f4_2));
+	    out.print(Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2));
+	    out.print(Color.valueTable(eMJIPS, 10.0, 400.0, false, f3_0));
+	    out.print(Color.valueTable(mbps, 0.0, 0.10, false, f6_3));
 	    out.print("</tr>\n");
 
 	}
@@ -148,10 +180,10 @@ public class MetricsServlet extends HttpServlet implements Constants
 	    out.print(refreshSeconds);
 	    out.print("\">");
 	}
-	out.print("<TITLE> Agent Load for Node ");
+	out.print("<TITLE> Remote Agent Status for Node ");
 	out.print(nodeID);
 	out.print("</TITLE></HEAD><body>");
-	out.print("<H1> Agent Load for Node ");
+	out.print("<H1> Remote Agent Status for Node  ");
 	out.print(nodeID);
 	out.print("</H1>");
 
