@@ -29,6 +29,7 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public final class StepOptions implements Serializable {
 
+  private final Object ownerId;
   private final MessageAddress source;
   private final MessageAddress target;
   private final Ticket ticket;
@@ -36,21 +37,21 @@ public final class StepOptions implements Serializable {
   private final long timeoutTime;
 
   public StepOptions(
+      Object ownerId,
       MessageAddress source,
       MessageAddress target,
       Ticket ticket,
       long pauseTime,
       long timeoutTime) {
+    this.ownerId = ownerId;
     this.source = source;
     this.target = target;
     this.ticket = ticket;
     this.pauseTime = pauseTime;
     this.timeoutTime = timeoutTime;
-    if ((source == null) ||
-        (target == null) ||
-        (ticket == null)) {
+    if (ticket == null) {
       throw new IllegalArgumentException(
-          "null source/target/ticket");
+          "null ticket");
     }
     if ((pauseTime > 0) &&
         (timeoutTime > 0) &&
@@ -61,6 +62,9 @@ public final class StepOptions implements Serializable {
     }
   }
 
+  public Object getOwnerId() {
+    return ownerId;
+  }
   public MessageAddress getSource() {
     return source;
   }
@@ -84,20 +88,31 @@ public final class StepOptions implements Serializable {
     } else {
       StepOptions so = (StepOptions) o;
       return 
-        source.equals(so.source) &&
-        target.equals(so.target) &&
+        ((ownerId != null) ?
+         (ownerId.equals(so.ownerId)) :
+         (so.ownerId == null)) &&
+        ((source != null) ?
+         (source.equals(so.source)) :
+         (so.source == null)) &&
+        ((target != null) ? 
+         (target.equals(so.target)) :
+         (so.target == null)) &&
         ticket.equals(so.ticket) &&
         (pauseTime == so.pauseTime) &&
         (timeoutTime == so.timeoutTime);
     }
   }
   public int hashCode() {
-    return ticket.hashCode() ^ source.hashCode();
+    return 
+      ((ownerId != null) ? ownerId.hashCode() : 5) ^
+      ticket.hashCode() ^
+      ((source != null) ? source.hashCode() : 7);
   }
   
   public String toString() {
     return 
       "step {"+
+      "\n  ownerId: "+ownerId+
       "\n  source:  "+source+
       "\n  target:  "+target+
       "\n  ticket:  "+ticket+

@@ -305,7 +305,8 @@ extends ComponentPlugin
     if (((timeoutTime > 0) &&
           (timeoutTime <= nowTime)) ||
         ((pauseTime > 0) &&
-         (pauseTime <= nowTime))) {
+         (pauseTime <= nowTime) &&
+         (status.getState() != StepStatus.RUNNING))) {
 
       if (status.getState() == StepStatus.RUNNING) {
         // restart from RUNNING
@@ -313,7 +314,7 @@ extends ComponentPlugin
         // remove possible MoveAgent object
         MoveAgent ma = findMove(id);
         if (ma != null) {
-          // don't care if it succeeded!
+          // timeout, don't care if it succeeded!
           blackboard.publishRemove(ma);
         }
       }
@@ -633,7 +634,8 @@ extends ComponentPlugin
         log.error(todd+
             "Move updated, but step no longer exists: "+ma);
       }
-      blackboard.publishRemove(ma);
+      // maybe not our move!
+      //blackboard.publishRemove(ma);
       return;
     }
     // check entry
@@ -681,9 +683,6 @@ extends ComponentPlugin
       mobileAgent = agentId;
     }
     MessageAddress destNode = ticket.getDestinationNode();
-    if (destNode == null) {
-      destNode = nodeId;
-    }
     TopologyEntry etopE = entry.topE;
     TopologyEntry topE = 
       topologyReader.getEntryForAgent(mobileAgent.getAddress());
@@ -694,15 +693,35 @@ extends ComponentPlugin
             "Step "+step.getUID()+
             " finished with null topology entry");
       }
-    } else if (!(destNode.getAddress().equals(topE.getNode()))) {
-      // at wrong node!
+    } else if (
+        (destNode != null) &&
+        (!(destNode.getAddress().equals(topE.getNode())))) {
+      // at the wrong node!
       if (log.isErrorEnabled()) {
         log.error(todd+
             "Step "+step.getUID()+
-            " finished move at node "+
+            " finished move of agent "+
+            mobileAgent+
+            " at node "+
             topE.getNode()+
             " instead of ticket's destination node "+
-            destNode);
+            destNode+
+            ", topology entry is "+topE);
+      }
+    } else if (
+        (destNode == null) &&
+        (!(etopE.getNode().equals(topE.getNode())))) {
+      // didn't restart in place!
+      if (log.isErrorEnabled()) {
+        log.error(todd+
+            "Step "+step.getUID()+
+            " finished restart-in-place of agent "+
+            mobileAgent+
+            " started at node "+
+            etopE.getNode()+
+            " and ended up at a different node "+
+            topE.getNode()+
+            ", topology entry is "+topE);
       }
     } else if (topE.getStatus() != TopologyEntry.ACTIVE) {
       // not active!

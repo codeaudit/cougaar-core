@@ -40,6 +40,20 @@ class MobilityTestFactoryImpl implements MobilityTestFactory {
     uidServer = ((ClusterContext) ldm).getUIDServer();
   }
 
+  public Script createScript(String text) {
+    UID uid = uidServer.nextUID();
+    Script script = new ScriptImpl(uid, text);
+    return script;
+  }
+
+  public Proc createProc(UID scriptUID) {
+    // verify that a matching script exists
+    UID uid = uidServer.nextUID();
+    long nowTime = System.currentTimeMillis();
+    Proc proc = new ProcImpl(uid, scriptUID, nowTime);
+    return proc;
+  }
+
   public Step createStep(StepOptions options) {
     UID uid = uidServer.nextUID();
     MessageAddress actorAgent = options.getTarget();

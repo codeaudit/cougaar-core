@@ -56,7 +56,7 @@ import org.cougaar.util.UnaryPredicate;
  * Servlet that allows the client to add, remove, and view
  * mobility test "Step" objects.check for
  * <p>
- * The path of the servlet is "/movestep".
+ * The path of the servlet is "/move/step".
  * <p>
  * The URL parameters to this servlet are:
  * <ul><p>
@@ -134,7 +134,7 @@ implements BlackboardClient
   protected MobilityTestFactory mobilityTestFactory;
 
   protected String getPath() {
-    return "/movestep";
+    return "/move/step";
   }
 
   protected Servlet createServlet() {
@@ -339,6 +339,7 @@ implements BlackboardClient
        (agentId));
     StepOptions so = 
       new StepOptions(
+          null,
           agentId, // source
           actorAgentAddr,
           ticket,

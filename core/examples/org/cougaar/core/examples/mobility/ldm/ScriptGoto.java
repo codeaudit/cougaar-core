@@ -2,11 +2,11 @@
  * <copyright>
  * Copyright 2002 BBNT Solutions, LLC
  * under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
-
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the Cougaar Open Source License as published by
  * DARPA on the Cougaar Open Source Website (www.cougaar.org).
-
+ *
  * THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  * PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  * IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -20,27 +20,28 @@
  */
 package org.cougaar.core.examples.mobility.ldm;
 
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.util.UID;
+import java.io.Serializable;
 
 /**
- * Factory to create Step objects.
+ * Ugly "goto" to create simple script loops.
  */
-public interface MobilityTestFactory extends Factory {
-
-  /**
-   * Create a new script from the specified text.
-   */
-  Script createScript(String text);
-
-  /**
-   * Create a new proc based upon the specified script.
-   */
-  Proc createProc(UID scriptUID);
-
-  /**
-   * @param options step options.
-   */
-  Step createStep(StepOptions options);
-
+public class ScriptGoto 
+implements Script.Entry, Serializable 
+{
+  private String name;
+  private int idx;
+  public ScriptGoto(String name, int idx) {
+    this.name = name;
+    this.idx = idx;
+  }
+  public String getName() {
+    return name;
+  }
+  // resolved index in parsed script
+  public int getIndex() {
+    return idx;
+  }
+  public String toString() {
+    return "goto "+name;
+  }
 }
