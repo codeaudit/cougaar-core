@@ -46,6 +46,7 @@ import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.planning.ldm.asset.AbstractAsset;
 import org.cougaar.planning.ldm.asset.Asset;
 
+import org.cougaar.core.blackboard.AnonymousChangeReport;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.Subscriber;
@@ -122,7 +123,8 @@ public class PluginHelper {
      * Check if a List of ChangeReports has an instance of a given class
      **/
     public static boolean checkChangeReports(Set reports, Class cls) {
-        if (reports == null) return false;
+        if (reports == AnonymousChangeReport.SET) return false;
+        if (reports == null) return false; // null-check shouldn't be needed
         for (Iterator i = reports.iterator(); i.hasNext(); ) {
             if (cls.isInstance(i.next())) return true;
         }

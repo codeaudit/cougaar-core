@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 
+import org.cougaar.core.blackboard.AnonymousChangeReport;
 import org.cougaar.core.blackboard.ChangeReport;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.IncrementalSubscription;
@@ -275,7 +276,8 @@ public class AssetReportPlugin extends SimplePlugin
       Collection changeReports = myLocalAssets.getChangeReports(localAsset);
       boolean resendRequired = false;
 
-      if ((changeReports != null) && !changeReports.isEmpty()) {
+      if ((changeReports != AnonymousChangeReport.SET) &&
+          (changeReports != null)) {
         for (Iterator reportIterator = changeReports.iterator();
              reportIterator.hasNext();) {
           ChangeReport report = (ChangeReport) reportIterator.next();
