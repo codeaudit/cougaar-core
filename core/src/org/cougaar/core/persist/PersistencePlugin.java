@@ -25,6 +25,14 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * PersistencePlugin defines the API that media-specific persistence
+ * plugins must implement. A persistence plugin defines a medium that
+ * can be used to store a series of persistence snapshots. When an
+ * agent restarts, a set of these snapshots called a rehydration set
+ * is retrieved from the persistence medium to reconstitute or
+ * "rehydrate" the previous state of the agent.
+ **/
 public interface PersistencePlugin {
 
     /**
