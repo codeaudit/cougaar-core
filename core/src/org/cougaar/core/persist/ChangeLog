@@ -1,3 +1,23 @@
+2002-03-11  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistencePlugin.java:
+	Add class javadoc.
+
+2002-03-08  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SequenceNumbers.java:
+	* PersistencePluginSupport.java:
+	* PersistencePlugin.java: 
+	* FilePersistence.java:
+	* DummyPersistence.java: 
+	* DatabasePersistence.java:
+	* BasePersistence.java:
+	Obtain media-specific services using PersistencePlugin
+	implementations instead of sub-classing BasePersistence. Basic
+	operation has not changed only refactored.
+	Convert to using LoggingService instead of writing history and
+	other files.
+
 2002-01-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* DatabasePersistence.java:
