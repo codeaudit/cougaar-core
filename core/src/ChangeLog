@@ -1,3 +1,16 @@
+2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	Add DeletionSchedulePolicy to control the timing of deletion
+	activity. This captures the former capability and extends it to
+	control the phasing of the activity -- e.g. weekly deletion occurs
+	at a particular time on a particular day of the week. In addition,
+	specific, ad hoc, deletions can be scheduled and will be performed
+	when due. In the absence of any existing deletion schedule policy,
+	a default one is created from the parameters of the plugin. The
+	BlackboardService is requested to take a persistence snapshot
+	prior to any deletion activity.
+
 2001-08-10  Beth DePass <bdepass@bbn.com>
 	* ClusterImpl
 	Create and add the PluginManager component via a
