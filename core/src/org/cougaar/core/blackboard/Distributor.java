@@ -55,6 +55,9 @@ import org.cougaar.util.UnaryPredicate;
  * 
  * @property org.cougaar.core.agent.keepPublishHistory When set to <em>true</em>, enables tracking of 
  * all publishes.  Extremely expensive.
+ * @property org.cougaar.core.persistence.lazyInterval specifies the
+ * interval in milliseconds between the generation of persistence
+ * deltas. Default is 300000 (5 minutes).
  **/
 public class Distributor {
   /*
