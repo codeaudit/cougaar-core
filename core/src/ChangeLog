@@ -1,3 +1,10 @@
+2001-08-21  Beth DePass <bdepass@bbn.com>
+	* NodeMetricsService, NodeMetricsServiceProvider, Node
+	Create a new node level metrics service that provides
+	VM level stats such as free memory, thread counts, etc.
+	Create the service implementation and service provider
+	in Node and add the service to the Node level ServiceBroker.
+	
 2001-08-21  Michael Thome  <mthome@bbn.com>
 
 	* AgentChildBindingSite, etc
