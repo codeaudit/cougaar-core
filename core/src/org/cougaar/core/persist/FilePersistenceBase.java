@@ -48,26 +48,30 @@ import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.util.log.Logger;
 
 /**
- * This persistence plugin abstract base class saves and restores plan
- * objects in files. The actual opening of the input and output
- * streams remains abstract.
- *
- * <P>There is one optional parameter naming the persistence root
+ * This {@link PersistencePlugin} abstract base class saves and
+ * restores blackboard objects in files. The actual opening of the
+ * input and output streams remains abstract.
+ * <p>
+ * There is one optional parameter naming the persistence root
  * directory. If the parameter is omitted, the persistence root is
  * specified by system properties.
- * @property org.cougaar.install.path Used by FilePersistence as the
+ *
+ * @property org.cougaar.install.path
+ * Used by FilePersistence as the
  * parent directory for persistence snapshots when there is no
  * directory specified in configuration parameters and
  * org.cougaar.core.persistence.path is a relative pathname. This
  * property is not used if the plugin is configured with a specific
  * parameter specifying the location of the persistence root.
- * @property org.cougaar.core.persistence.path Specifies the directory
+ *
+ * @property org.cougaar.core.persistence.path
+ * Specifies the directory
  * in which persistence snapshots should be saved. If this is a
  * relative path, it the base will be the value or
  * org.cougaar.install.path. This property is not used if the plugin
  * is configured with a specific parameter specifying the location of
  * the persistence root.
- **/
+ */
 public abstract class FilePersistenceBase
   extends PersistencePluginAdapter
   implements PersistencePlugin, PersistenceNames
@@ -123,8 +127,8 @@ public abstract class FilePersistenceBase
       pps.getLogger().fatal("Not a directory: " + persistenceRoot);
       throw new PersistenceException("Persistence root unavailable");
     }
-    String clusterName = pps.getMessageAddress().getAddress();
-    persistenceDirectory = new File(persistenceRoot, clusterName);
+    String agentName = pps.getMessageAddress().getAddress();
+    persistenceDirectory = new File(persistenceRoot, agentName);
     if (!persistenceDirectory.isDirectory()) {
       if (!persistenceDirectory.mkdirs()) {
         String msg = "FilePersistence(" + name + ") not a directory: " + persistenceDirectory;

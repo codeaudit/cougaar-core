@@ -28,6 +28,9 @@ package org.cougaar.core.persist;
 
 import java.io.Serializable;
 
+/**
+ * A unique {@link PersistenceClient} identifier.
+ */
 public class PersistenceIdentity implements Serializable {
   private static final long serialVersionUID = -8590022936582649529L;
 

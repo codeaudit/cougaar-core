@@ -66,11 +66,12 @@ import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.util.log.Logger;
 
 /**
- * This persistence class saves plan objects in a database. It saves and
- * restores persistence deltas in RDB tables.
- *
- * We store the deltas for each cluster in a separate table named
- * after the cluster: delta_<clustername>. The table has three columns:
+ * This {@link PersistencePlugin} saves blackboard objects in a
+ * database. It saves and restores persistence deltas in RDB tables.
+ * <p>
+ * We store the deltas for each agent in a separate table named
+ * after the agent: delta_&lt;agentName&gt;. The table has three columns:
+ * <pre> 
  * seqno  -- has an INTEGER delta sequence number
  * active -- has a CHAR indicating the kind of delta stored
  *           x -- full delta (all data)
@@ -80,11 +81,20 @@ import org.cougaar.util.log.Logger;
  *   The above codes were selected for backward compatibility with the
  *   former t/f meaning active was true/false
  * data   -- has a LONG RAW with the serialized data
- * @property org.cougaar.core.persistence.database.url Specify the database to use for DatabasePersistence.
- * @property org.cougaar.core.persistence.database.user Specify the database user to use for DatabasePersistence.
- * @property org.cougaar.core.persistence.database.password Specify the database password to use for DatabasePersistence.
- * @property org.cougaar.core.persistence.database.driver Specify the database driver to use for DatabasePersistence.
- **/
+ * </pre> 
+ *
+ * @property org.cougaar.core.persistence.database.url
+ * Specify the database to use for DatabasePersistence.
+ *
+ * @property org.cougaar.core.persistence.database.user
+ * Specify the database user to use for DatabasePersistence.
+ *
+ * @property org.cougaar.core.persistence.database.password
+ * Specify the database password to use for DatabasePersistence.
+ *
+ * @property org.cougaar.core.persistence.database.driver
+ * Specify the database driver to use for DatabasePersistence.
+ */
 public class DatabasePersistence
   extends PersistencePluginAdapter
   implements PersistencePlugin
@@ -154,7 +164,7 @@ public class DatabasePersistence
     throws PersistenceException
   {
     init(pps, name, params);
-    String clusterName = pps.getMessageAddress().getAddress().replace('-', '_');
+    String agentName = pps.getMessageAddress().getAddress().replace('-', '_');
     Logger ls = pps.getLogger();
     if (ls.isInfoEnabled()) {
       StringBuffer buf = new StringBuffer();
@@ -164,7 +174,7 @@ public class DatabasePersistence
       }
       ls.info(buf.toString());
     }
-    deltaTable = name + "_" + clusterName;
+    deltaTable = name + "_" + agentName;
     if (databaseDriver != null) {
       try {
         Class.forName(databaseDriver);
@@ -508,7 +518,7 @@ public class DatabasePersistence
   /**
    * Override adapter version since we actually have a database
    * connection we can return instead of throwing an exception.
-   **/
+   */
   public Connection getDatabaseConnection(Object locker) {
     if (locker == null) throw new IllegalArgumentException("locker is null");
     synchronized (connectionLock) {
@@ -552,7 +562,7 @@ public class DatabasePersistence
    * back the connection. Additionally, we can keep track of open
    * statements to guard against an unreasonable accumulation of them
    * (indicating a failure to close the statement.
-   **/
+   */
   class WrappedConnection implements Connection {
     Connection c;
     boolean active = false;
@@ -1017,7 +1027,7 @@ public class DatabasePersistence
       }
       /**
        * @deprecated in the original
-       **/
+       */
       public void setUnicodeStream(int arg0, java.io.InputStream arg1, int arg2) throws java.sql.SQLException {
         if (!active) throw new SQLException("getDatabaseConnection not called");
         throw new java.sql.SQLException("Method not supported");
@@ -1074,7 +1084,7 @@ public class DatabasePersistence
       }
       /**
        * @deprecated in the original
-       **/
+       */
       public java.math.BigDecimal getBigDecimal(int paramIndex)  throws java.sql.SQLException {
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return ( theCallableStatement.getBigDecimal( paramIndex ) );
@@ -1155,7 +1165,7 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return theCallableStatement.getDouble(arg0);
       }
-      /** @deprecated in the original **/
+      /** @deprecated in the original */
       public java.math.BigDecimal getBigDecimal(int arg0, int arg1) throws java.sql.SQLException {
         if (!active) throw new SQLException("getDatabaseConnection not called");
         throw new java.sql.SQLException("Method not supported");

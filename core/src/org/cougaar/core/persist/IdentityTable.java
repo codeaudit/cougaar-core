@@ -35,21 +35,21 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.GC;
 
 /**
- * Identifies all objects that have been (or are about to be written
- * to persistence media). This purpose of this table is to remember
+ * Identifies all objects that have been (or are about to be) written
+ * to persistence media. This purpose of this table is to remember
  * objects that have persisted in previous persistence snapshots so
  * that references to such objects in subsequent persistence deltas
  * can be replaced with references to the previously persisted
  * objects. This is similar to the wire handle of the Java
  * serialization process (ObjectOutputStream), but applies across
  * persistence snapshots whereas the wire handle applies within a
- * single snapshot. <p>
- *
+ * single snapshot.
+ * <p>
  * This class is essentially a hash table implementation. It differs
  * from the java.util versions of hash tables in that the values are
- * WeakReferences so that values to which there are no longer any
- * references get removed from the table. WeakHashMap has weak keys,
- * not weak values. <p>
+ * {@link WeakReference}s so that values to which there are no longer
+ * any references get removed from the table. WeakHashMap has weak
+ * keys, not weak values.
  */
 class IdentityTable {
   static class MyArrayList extends ArrayList {
@@ -134,7 +134,7 @@ class IdentityTable {
    * @param object the object
    * @return the PersistenceAssociation for the object
    * @return null if the object has no current association
-   **/
+   */
   public PersistenceAssociation find(Object object) {
     processQueue();
     int hash = System.identityHashCode(object);
@@ -169,7 +169,7 @@ class IdentityTable {
    * @param o the object of the PersistenceAssociation
    * @param ref The PersistenceReference of the object.
    * @return the new PersistenceAssociation
-   **/
+   */
   public PersistenceAssociation create(Object o, PersistenceReference ref) {
     if (count > table.length * 3 / 4) {
       rehash();
@@ -215,7 +215,7 @@ class IdentityTable {
    * @param ref the PersistenceReference
    * @return the corresponding PersistenceAssociation
    * @return null if the is no corresponding PersistenceAssociation
-   **/
+   */
   public PersistenceAssociation get(PersistenceReference ref) {
     return get(ref.intValue());
   }
@@ -225,7 +225,7 @@ class IdentityTable {
    * @param ix the index
    * @return the corresponding PersistenceAssociation
    * @return null if the is no corresponding PersistenceAssociation
-   **/
+   */
   public PersistenceAssociation get(int ix) {
     processQueue();
     if (ix < 0 || ix >= persistentObjects.size()) return null;

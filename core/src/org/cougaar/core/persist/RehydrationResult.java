@@ -34,9 +34,9 @@ import java.util.List;
 import org.cougaar.core.blackboard.MessageManager;
 
 /**
- * Rehydration has three results to return, this little class simply
- * bundles them together.
- **/
+ * Rehydration has three results to return, where this little class
+ * simply bundles them together.
+ */
 public class RehydrationResult {
   public List undistributedEnvelopes;
   public MessageManager messageManager;

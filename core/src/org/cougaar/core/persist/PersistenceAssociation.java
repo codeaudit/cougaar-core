@@ -33,14 +33,13 @@ import java.lang.ref.WeakReference;
  * This class establishes an association between an object that has
  * been persisted and a reference number. It also captures the state
  * of the object.
- **/
-
+ */
 public class PersistenceAssociation extends WeakReference {
 
   /**
    * The id assigned to the object. This id is used to replace the
    * object when its actual value is not significant.
-   **/
+   */
   private PersistenceReference referenceId;
 
   private PersistenceIdentity clientId;
@@ -48,7 +47,7 @@ public class PersistenceAssociation extends WeakReference {
   /**
    * Records if the object has not yet been removed from the plan.
    * Used to manage the lifecycle of IdentityTable entries.
-   **/
+   */
   private static final int NEW      = 0;
   private static final int ACTIVE   = 1;
   private static final int INACTIVE = 2;
@@ -57,18 +56,18 @@ public class PersistenceAssociation extends WeakReference {
   /**
    * Temporarily used to mark objects needing to be persisted or that
    * have been rehydrated
-   **/
+   */
   private boolean marked = false;
 
   /**
    * The hashcode of the object. For efficiency (see IdentityTable).
-   **/
+   */
   int hash;
 
   /**
    * Chain of associations in IdentityTable. Links together all the
    * entries in a hashtable bucket.
-   **/
+   */
   PersistenceAssociation next;
 
   PersistenceAssociation(Object object, int id, ReferenceQueue refQ) {
@@ -104,7 +103,7 @@ public class PersistenceAssociation extends WeakReference {
    * mark serves to identify associations that are being written to
    * this persistence delta. During rehydration, the mark is used to
    * identify associations that were restored from a particular delta.
-   **/
+   */
   public void setMarked(boolean newMarked) {
     marked = newMarked;
   }

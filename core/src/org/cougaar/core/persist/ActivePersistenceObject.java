@@ -29,8 +29,8 @@ package org.cougaar.core.persist;
 import org.cougaar.util.log.Logger;
 
 /**
- * Interface for objects that require special persistence
- * and rehydration handling.
+ * An object that requires special persistence and rehydration
+ * handling.
  * <p>
  * This is typically used as a hack for odd blackboard objects that
  * can't [de]serialize correctly, or unusual domains.  <b>AVOID</b>

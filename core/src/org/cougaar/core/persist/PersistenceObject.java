@@ -29,8 +29,8 @@ package org.cougaar.core.persist;
 import java.io.Serializable;
 
 /**
- * An opaque class to contain the persistence snapshot
- **/
+ * An opaque class to contain the persistence snapshot.
+ */
 public class PersistenceObject implements Serializable {
     private byte[] bytes;
     private String name;

@@ -35,23 +35,27 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This persistence plugin saves and restores plan objects in
- * files. There is one optional parameter naming the persistence
+ * This {@link PersistencePlugin} saves and restores blackboard
+ * objects in files. There is one optional parameter naming the persistence
  * root directory. If the parameter is omitted, the persistence root
  * is specified by system properties.
- * @property org.cougaar.install.path Used by FilePersistence as the
+ *
+ * @property org.cougaar.install.path
+ * Used by FilePersistence as the
  * parent directory for persistence snapshots when there is no
  * directory specified in configuration parameters and
  * org.cougaar.core.persistence.path is a relative pathname. This
  * property is not used if the plugin is configured with a specific
  * parameter specifying the location of the persistence root.
- * @property org.cougaar.core.persistence.path Specifies the directory
+ *
+ * @property org.cougaar.core.persistence.path
+ * Specifies the directory
  * in which persistence snapshots should be saved. If this is a
  * relative path, it the base will be the value or
  * org.cougaar.install.path. This property is not used if the plugin
  * is configured with a specific parameter specifying the location of
  * the persistence root.
- **/
+ */
 public class FilePersistence
   extends FilePersistenceBase
   implements PersistencePlugin
@@ -60,7 +64,7 @@ public class FilePersistence
    * Wrap a FileOutputStream to prove safe close semantics. Explicitly
    * sync the file descriptor on close() to insure the file has been
    * completely written to the disk.
-   **/
+   */
   private static class SafeFileOutputStream extends OutputStream {
     private FileOutputStream fileOutputStream;
 

@@ -28,8 +28,9 @@ package org.cougaar.core.persist;
 
 import java.io.Serializable;
 
-/** An opaque marker class used to persist state of an object which 
+/**
+ * An opaque marker class used to persist state of an object which 
  * is not itself persistable.  
- **/
+ */
 public interface PersistenceState extends Serializable {
 }

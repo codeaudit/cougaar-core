@@ -28,6 +28,9 @@ package org.cougaar.core.persist;
 
 import java.util.List;
 
+/**
+ * Required service requestor API for the {@link PersistenceService}.
+ */ 
 public interface PersistenceClient {
   /**
    * Get the PersistenceIdentity of the client. A PersistenceIdentity
@@ -35,7 +38,7 @@ public interface PersistenceClient {
    * It is used as the key to retrieving the persisted state of the
    * client after rehydration.
    * @return the PersistenceIdentity of the client.
-   **/
+   */
   PersistenceIdentity getPersistenceIdentity();
 
   /**
@@ -49,6 +52,6 @@ public interface PersistenceClient {
    * tuple appears, the rehydrated state will not include the object.
    * All other types of objects are simple persisted with no
    * add/remove semantics.
-   **/
+   */
   List getPersistenceData();
 }

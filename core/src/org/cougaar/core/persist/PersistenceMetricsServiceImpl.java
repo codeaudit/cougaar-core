@@ -31,6 +31,9 @@ import java.util.List;
 
 import org.cougaar.core.service.PersistenceMetricsService;
 
+/**
+ * {@link PersistenceMetricsService} implementation.
+ */
 public class PersistenceMetricsServiceImpl implements PersistenceMetricsService {
 
   private PersistenceMetricImpl fullAverageMetric = new PersistenceMetricImpl();
@@ -60,7 +63,7 @@ public class PersistenceMetricsServiceImpl implements PersistenceMetricsService 
   /**
    * Get all retained metrics. The maximum number retained is
    * currently a constant MAX_METRICS
-   **/
+   */
   public Metric[] getAll(int which) {
     synchronized (metrics) {
       if (which == ALL) {
@@ -85,7 +88,7 @@ public class PersistenceMetricsServiceImpl implements PersistenceMetricsService 
   /**
    * Get the average of all metrics ever generated including the ones
    * that have been dropped due to exceeding MAX_METRICS
-   **/
+   */
   public Metric getAverage(int which) {
     switch (which) {
     case FULL:

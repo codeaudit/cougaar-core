@@ -43,9 +43,10 @@ import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.ServletService;
 
 /**
- * Simple servlet describing the persistence snapshots available for the agent,
- * and allowing direct request of a Full Persistence snapshot.
- **/
+ * This component is a {@link javax.servlet.Servlet} that displays
+ * the persistence snapshots available for the agent, and allows
+ * the user to request a Full Persistence snapshot.
+ */
 public class PersistenceMetricsServlet extends ServiceUserPlugin {
   private static final String PERSIST_NOW = "PersistNow";
 

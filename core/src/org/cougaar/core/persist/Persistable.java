@@ -26,6 +26,9 @@
 
 package org.cougaar.core.persist;
 
+/**
+ * A marker interface for persistable objects.
+ */
 public interface Persistable {
   /**
    * Provide a hint to Persistence on how to handle this object. <p>
@@ -40,6 +43,6 @@ public interface Persistable {
    *     return persistThisInstance;
    *   }
    * </pre>
-   **/
+   */
   boolean isPersistable();
 }

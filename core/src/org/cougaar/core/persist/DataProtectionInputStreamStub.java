@@ -32,6 +32,12 @@ import java.io.InputStream;
 
 import org.cougaar.core.service.DataProtectionKey;
 
+/**
+ * A trivial {@link InputStream} for testing the {@link
+ * org.cougaar.core.service.DataProtectionService}.
+ *
+ * @see DataProtectionOutputStreamStub
+ */
 public class DataProtectionInputStreamStub extends FilterInputStream {
   private DataProtectionKeyStub keyStub;
   // Our own buffer so we don't pollute the callers buffers.

@@ -26,7 +26,9 @@
 
 package org.cougaar.core.persist;
 
-
+/**
+ * An {@link Exception} thrown when an object can not be persisted.
+ */
 public class NotPersistableException extends Exception {
   public NotPersistableException() {
   }

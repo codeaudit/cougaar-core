@@ -33,7 +33,6 @@ import java.io.Serializable;
  * persisted. During rehydration this objects are resolved into the
  * real objects. It is merely an Integer.
  */
-
 public class PersistenceReference implements Serializable {
   private int id;
   public PersistenceReference(int id) {

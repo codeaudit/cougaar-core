@@ -28,6 +28,10 @@ package org.cougaar.core.persist;
 
 import org.cougaar.core.service.DataProtectionKey;
 
+/**
+ * A trivial {@link DataProtectionKey} used by the
+ * {@link DataProtectionInputStreamStub}.
+ */
 public class DataProtectionKeyStub implements DataProtectionKey {
   private static java.util.Random random = new java.util.Random();
 

@@ -43,7 +43,7 @@ import org.cougaar.util.log.Logger;
  * must be inside a PersistenceAssociation. This defining instance is
  * stored in the identityTable. Thereafter, its values are updated
  * from later versions of the same object.
- **/
+ */
 public class PersistenceInputStream extends ObjectInputStream implements PersistenceStream {
   private Logger logger;
 
@@ -69,7 +69,7 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
    * InputStream implementation that extracts a segment of bytes from
    * an ObjectInputStream. This is the input counterpart of the
    * PersistenceOutputStream.writeBytes
-   **/
+   */
   private static class Substream extends FilterInputStream {
     private int bytes;
     public Substream(ObjectInputStream ois) throws IOException {
@@ -124,7 +124,7 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
    * @param references the array of references for objects that were
    * written when this association was written. This allows us to know
    * in advance the identity of each object as it is read.
-   **/
+   */
   public PersistenceAssociation readAssociation(PersistenceReference[] references)
     throws IOException, ClassNotFoundException
   {

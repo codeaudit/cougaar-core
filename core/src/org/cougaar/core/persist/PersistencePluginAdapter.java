@@ -31,10 +31,10 @@ import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.util.log.Logger;
 
 /**
- * Adapter to simplify writing PersistencePlugin implementations.
+ * Adapter to simplify writing {@link PersistencePlugin} implementations.
  * Implements several methods in the PersistencePlugin API that often
  * need not be specialized in individual implementaions.
- **/
+ */
 public abstract class PersistencePluginAdapter implements PersistenceNames {
   protected static final String[] emptyStringArray = new String[0];
   protected static final OMCRangeList emptyOMCRangeList =

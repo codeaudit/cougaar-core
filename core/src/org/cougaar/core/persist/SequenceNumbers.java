@@ -26,7 +26,9 @@
 
 package org.cougaar.core.persist;
 
-
+/**
+ * A persistence sequence range and timestamp.
+ */
 class SequenceNumbers implements Comparable {
     int first = 0;
     int current = 0;

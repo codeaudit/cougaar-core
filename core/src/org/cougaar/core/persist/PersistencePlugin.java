@@ -34,13 +34,16 @@ import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.service.DataProtectionKey;
 
 /**
+ * A media-specific persistence handler for reading and writing
+ * snapshots.
+ * <p> 
  * PersistencePlugin defines the API that media-specific persistence
  * plugins must implement. A persistence plugin defines a medium that
  * can be used to store a series of persistence snapshots. When an
  * agent restarts, a set of these snapshots called a rehydration set
  * is retrieved from the persistence medium to reconstitute or
  * "rehydrate" the previous state of the agent.
- **/
+ */
 public interface PersistencePlugin {
 
   /**
@@ -53,7 +56,7 @@ public interface PersistencePlugin {
    * @param params String parameters to configure the plugin. The
    * parameters come from configuration information and
    * interpretation is up to the plugin.
-   **/
+   */
   void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException;
 
@@ -62,12 +65,12 @@ public interface PersistencePlugin {
    * should have a distinct name. The name can be computed by the
    * plugin based on its class and parameters or it can be specified
    * as an argument in the constructor.
-   **/
+   */
   String getName();
 
   /**
    * Get the average interval between persistence snapshots for this plugin
-   **/
+   */
   long getPersistenceInterval();
 
   void setPersistenceInterval(long newInterval);
@@ -75,14 +78,14 @@ public interface PersistencePlugin {
   /**
    * Is this persistence medium writable? Non-writable media are only
    * used for rehydration.
-   **/
+   */
   boolean isWritable();
 
   void setWritable(boolean newDisable);
 
   /**
    * Get the number of incremental snapshots between full snapshots.
-   **/
+   */
   int getConsolidationPeriod();
 
   void setConsolidationPeriod(int newPeriod);
@@ -90,7 +93,7 @@ public interface PersistencePlugin {
   /**
    * Get the number of parameters for this plugin.
    * @return the number of parameters
-   **/
+   */
   int getParamCount();
 
   /**
@@ -99,7 +102,7 @@ public interface PersistencePlugin {
    * (inclusive) and the value returned by
    * {@link #getParamCount getParamCount} (exclusive).
    * @return the value of the specified parameter.
-   **/
+   */
   String getParam(int i);
 
   /**
@@ -109,7 +112,7 @@ public interface PersistencePlugin {
    * media plugins have}.
    * @return an array of the names of the controls for this media
    * plugin.
-   **/
+   */
   String[] getControlNames();
 
   /**
@@ -117,7 +120,7 @@ public interface PersistencePlugin {
    * control. Values supplied to {@link #setControl} are guaranteed
    * to be in the specified ranges.
    * @return the list or allowed ranges.
-   **/
+   */
   OMCRangeList getControlValues(String controlName);
 
   /**
@@ -125,7 +128,7 @@ public interface PersistencePlugin {
    * in the ranges specified by {@link #getControlValues}
    * @param controlName the name of the control
    * @param newValue the new value of the control
-   **/
+   */
   void setControl(String controlName, Comparable newValue);
 
   /**
@@ -138,7 +141,7 @@ public interface PersistencePlugin {
    * @param suffix identifies which set of persistence deltas are
    * wanted. A non-empty suffix specifies an specific, archived
    * state. An empty suffix specifies all available sets.
-   **/
+   */
   SequenceNumbers[] readSequenceNumbers(String suffix);
 
   /**
@@ -147,12 +150,12 @@ public interface PersistencePlugin {
    * enabled, the old deltas constituting an archive are not
    * discarded.
    * @param cleanupNumbers the numbers to be discarded (or archived).
-   **/
+   */
   void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
 
   /**
    * Delete old archives
-   **/
+   */
   void cleanupArchive();
 
   /**
@@ -168,7 +171,7 @@ public interface PersistencePlugin {
    * @param full indicates that the information to be written is a
    * complete state dump and does not depend on any earlier deltas.
    * It may be useful to distinctively mark such deltas.
-   **/
+   */
   OutputStream openOutputStream(int deltaNumber, boolean full)
     throws IOException;
 
@@ -180,7 +183,7 @@ public interface PersistencePlugin {
    * one just written that comprise a complete rehydration set.
    * Subsequent calls to readSequenceNumbers should return these
    * values.
-   **/
+   */
   void abortOutputStream(SequenceNumbers retainNumbers);
 
   /**
@@ -193,14 +196,14 @@ public interface PersistencePlugin {
    * one just written that comprise a complete rehydration set.
    * Subsequent calls to readSequenceNumbers should return these
    * values.
-   **/
+   */
   void finishOutputStream(SequenceNumbers retainNumbers, boolean full);
 
   /**
    * Open an InputStream from which a persistence delta can be
    * read.
    * @param deltaNumber the number of the delta to be opened
-   **/
+   */
   InputStream openInputStream(int deltaNumber)
     throws IOException;
 
@@ -208,7 +211,7 @@ public interface PersistencePlugin {
    * Clean up after closing the input stream
    * @param deltaNumber the number of the delta being closed.
    * Provided as a convenience to the method
-   **/
+   */
   void finishInputStream(int deltaNumber);
 
   /**
@@ -216,7 +219,7 @@ public interface PersistencePlugin {
    * deltas are being written for coordinated transaction
    * management. Non-database implementations should throw an
    * UnsupportedOperationException
-   **/
+   */
   java.sql.Connection getDatabaseConnection(Object locker) throws UnsupportedOperationException;
 
   /**
@@ -224,36 +227,36 @@ public interface PersistencePlugin {
    * deltas are being written for coordinated transaction
    * management. Non-database implementations should throw an
    * UnsupportedOperationException
-   **/
+   */
   void releaseDatabaseConnection(Object locker) throws UnsupportedOperationException;
 
   /**
    * Store an encrypted key for a particular delta number
    * @param deltaNumber the number of the delta for which the key is used.
    * @param key has the encrypted key to be stored
-   **/
+   */
   void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
     throws IOException;
 
   /**
    * Retrieve an encrypted key for a particular delta number
    * @param deltaNumber the number of the delta for which the key is used.
-   **/
+   */
   DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
     throws IOException;
 
   /**
    * Check that this agent instance still owns the persistence data
-   **/
+   */
   boolean checkOwnership();
 
   /**
    * Lock out other instances of this agent.
-   **/
+   */
   void lockOwnership() throws PersistenceException;
 
   /**
    * Release the lockout of other instances of this agent.
-   **/
+   */
   void unlockOwnership() throws PersistenceException;
 }

@@ -44,6 +44,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 
+/**
+ * {@link Persistence} interface for the {@link
+ * org.cougaar.core.blackboard.Blackboard}.
+ */
 public class BlackboardPersistence implements Persistence {
   private PersistenceServiceForBlackboard persistenceService;
   private LoggingService logger;
@@ -94,7 +98,7 @@ public class BlackboardPersistence implements Persistence {
 
   /**
    * Keeps all associations of objects that have been persisted.
-   **/
+   */
  
   /**
    * @return true if persistence is disabled, except for
@@ -115,13 +119,13 @@ public class BlackboardPersistence implements Persistence {
    * &nbsp;&nbsp;T = 1/(1/T1 + 1/T2 + ... + 1/Tn)
    * <p>
    * @return the time of the next persistence delta
-   **/
+   */
   public long getPersistenceTime() {
     return persistenceService.getPersistenceTime();
   }
 
   /**
-   * Rehydrate a persisted cluster. Reads all the deltas in
+   * Rehydrate a persisted agent. Reads all the deltas in
    * order keeping the latest (last encountered) values from
    * every object.
    * @param oldObjects Changes recorded in all but the last delta.
@@ -149,7 +153,7 @@ public class BlackboardPersistence implements Persistence {
    * Get a set of the Keys of the SubscriberStates in the rehydration info.
    * Used by the Distributor to track which subscribers have not
    * rehydrated.
-   **/
+   */
   public Set getSubscriberStateKeys() {
     synchronized (rehydrationSubscriberStatesLock) {
       if (rehydrationSubscriberStates == null)
@@ -248,7 +252,7 @@ public class BlackboardPersistence implements Persistence {
    * outboxes which are in undistributedEnvelopes.
    * @param undistributedEnvelopes Envelopes that have not yet been distributed
    * @param subscriberStates The subscriber states to record
-   **/
+   */
   public PersistenceObject persist(List epochEnvelopes,
                                    List undistributedEnvelopes,
                                    List subscriberStates,

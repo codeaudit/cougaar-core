@@ -26,7 +26,12 @@
 
 package org.cougaar.core.persist;
 
-
+/**
+ * A exception thrown by {@link
+ * org.cougaar.core.service.BlackboardService#persistNow()}.
+ * <p>
+ * Actually, it doesn't throw this anymore.
+ */
 public class PersistenceNotEnabledException extends Exception {
     public PersistenceNotEnabledException() {
     }

@@ -34,6 +34,10 @@ import java.util.Random;
 
 import org.cougaar.core.plugin.ServiceUserPlugin;
 
+/**
+ * This component exercises the blackboard and can be used to debug
+ * trivial persistence problems.
+ */
 public class Exercise extends ServiceUserPlugin {
   private Item[] objects = new Item[1000];
   private Random random = new Random();

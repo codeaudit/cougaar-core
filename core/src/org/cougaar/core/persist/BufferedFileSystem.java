@@ -40,13 +40,13 @@ import org.cougaar.util.CircularQueue;
 import org.cougaar.util.log.Logger;
 
 /**
- * A package to support buffered and otherwise queued access to the
+ * Support for buffered and otherwise queued access to the
  * file system. Primarily, this serializes access to writing and
  * renaming and reading files. All file write and rename actions
  * return immediately without waiting for the actual filesystem
  * operations to complete. File reads invariably block until prior
  * writes and renames have concluded.
- **/
+ */
 public class BufferedFileSystem implements Runnable {
   private static final int BUFSIZE=100000;
   private static final int MAXBUFFERS=100; // 10 Mbytes max
@@ -61,7 +61,7 @@ public class BufferedFileSystem implements Runnable {
    * for this purpose. Up to MAXKEPTBUFFERS are allocated and reused
    * freely. If demand exceeds MAXKEPTBUFFERS, additional buffers are
    * allocated up to MAXBUFFERS. Demand in excess of MAXBUFFERS blocks.
-   **/
+   */
   private static byte[] getBuffer() {
     synchronized (buffers) {
       while (totalBuffers >= MAXBUFFERS) {
@@ -103,7 +103,7 @@ public class BufferedFileSystem implements Runnable {
    * Wrap a FileOutputStream to provide safe close semantics.
    * Explicitly sync the file descriptor on close() to insure the file
    * has been completely written to the disk.
-   **/
+   */
   private class BufferedFileOutputStream extends OutputStream {
     // The real OutputStream
     private FileOutputStream fileOutputStream;

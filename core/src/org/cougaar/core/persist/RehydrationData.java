@@ -35,9 +35,9 @@ import java.util.List;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 
 /**
- * Rehydration has two results to return, the little class simply
- * bundles them together.
- **/
+ * Rehydration has two results to return, where this little class
+ * simply bundles them together.
+ */
 public class RehydrationData {
   protected List objects = new ArrayList();
   protected PersistenceEnvelope envelope = new PersistenceEnvelope();

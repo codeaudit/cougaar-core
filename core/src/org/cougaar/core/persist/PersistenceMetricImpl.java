@@ -28,6 +28,10 @@ package org.cougaar.core.persist;
 
 import org.cougaar.core.service.PersistenceMetricsService;
 
+/**
+ * {@link org.cougaar.core.service.PersistenceMetricsService.Metric}
+ * implementation.
+ */
 public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
   private String name;
   private long startTime, endTime, cpuTime, size;

@@ -26,6 +26,9 @@
 
 package org.cougaar.core.persist;
 
+/**
+ * Persistence constants.
+ */
 interface PersistenceNames {
   // Property name prefix
   final String PERSISTENCE_PROP_PREFIX = "org.cougaar.core.persistence.";

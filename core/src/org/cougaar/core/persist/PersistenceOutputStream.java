@@ -35,6 +35,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.log.Logger;
 
+/**
+ * Write persistable objects to a stream.
+ * @see PersistenceInputStream
+ */
 public class PersistenceOutputStream extends ObjectOutputStream implements PersistenceStream {
 
   private static final int DEFAULT_INITIAL_SIZE = 10000;
@@ -91,7 +95,7 @@ public class PersistenceOutputStream extends ObjectOutputStream implements Persi
   /**
    * Write the bytes encoding everything we stored preceded by the
    * byte count.
-   **/
+   */
   public void writeBytes(ObjectOutputStream oos) throws IOException {
     oos.writeInt(byteStream.size());
     byteStream.writeTo(oos);

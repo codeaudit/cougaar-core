@@ -29,12 +29,22 @@ package org.cougaar.core.persist;
 import org.cougaar.core.component.Service;
 
 /**
- * The public interface for persistence
+ * This service allows clients to rehydrate data from the most
+ * recent persistence snapshot.
+ * <p>
+ * Note that the {@link PersistenceServiceForBlackboard} service
+ * contains the "persist" method, since the blackboard usually
+ * initiates the periodic persist.  This may seem a bit backwards,
+ * primarily due to historical reasons.
+ * <p>
+ * Service requestors must implement {@link PersistenceClient}. 
+ *
+ * @see PersistenceServiceForBlackboard 
  */
 public interface PersistenceService extends Service {
   /**
    * Get the rehydration envelope from the most recent persisted state.
    * @return null if there is no persisted state.
-   **/
+   */
   RehydrationData getRehydrationData();
 }

@@ -36,6 +36,11 @@ import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This component creates blackboard {@link
+ * org.cougaar.core.adaptivity.OperatingMode}s that control
+ * persistence settings.
+ */ 
 public class PersistenceControlPlugin extends ServiceUserPlugin {
   private static class MyOperatingMode
     extends OperatingModeImpl

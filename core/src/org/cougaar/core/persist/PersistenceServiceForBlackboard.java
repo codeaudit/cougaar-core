@@ -28,7 +28,9 @@ package org.cougaar.core.persist;
 
 
 /**
- * The public interface for persistence
+ * This service is an extended {@link PersistenceService} for use
+ * by the blackboard's {@link BlackboardPersistence}, including
+ * the {@link #persist} method.
  */
 public interface PersistenceServiceForBlackboard extends PersistenceService {
   /**
@@ -36,7 +38,7 @@ public interface PersistenceServiceForBlackboard extends PersistenceService {
    * will be obtained from all PersistenceClients using that
    * interface. All clients in a node using this method should use a
    * ReservationManager to avoid blocking on a static global lock.
-   **/
+   */
   PersistenceObject persist(boolean returnBytes, boolean full);
   java.sql.Connection getDatabaseConnection(Object locker);
   void releaseDatabaseConnection(Object locker);

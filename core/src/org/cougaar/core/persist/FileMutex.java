@@ -37,6 +37,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
+/**
+ * A file lock.
+ */
 public class FileMutex {
   private static final SimpleDateFormat uniqueNameFormat;
   static {

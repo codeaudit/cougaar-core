@@ -33,11 +33,16 @@ import java.io.OutputStream;
 import org.cougaar.core.service.DataProtectionKey;
 
 /**
- * This persistence class provides implementation stubs that do
- * nothing. Running with this Persistence implementation incurs most
- * of the work of doing persistence, but discards the results. This is
- * only used for performance testing.
- **/
+ * A {@link PersistencePlugin} that does nothing.
+ * <p>
+ * Persistence clients can check the {@link
+ * Persistence#isDummyPersistence} method to avoid the (minimal)
+ * overhead imposed by this implementation.
+ * <p>
+ * Running with this persistence implementation incurs most
+ * of the work of doing persistence, but discards the results.
+ * This is often used for performance testing.
+ */
 public class DummyPersistence
   extends PersistencePluginAdapter
   implements PersistencePlugin

@@ -74,10 +74,10 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * This persistence class is the base for several persistence
- * classes. It manages everything except the actual storage of
- * persistence deltas.
- *
+ * This component advertises the {@link PersistenceService} and
+ * manages all persistence activities except for the actual storage
+ * of persistence deltas, which is done by {@link PersistencePlugin}s.
+ * <p>
  * As the distributor is about to about to distribute the objects in a
  * set of envelopes, those envelopes are passed to an instance of this
  * class.  The contents of those envelopes are serialized into a
@@ -86,14 +86,16 @@ import org.cougaar.util.log.Logging;
  * but they must have been stored in earlier deltas.  Instead of
  * rewriting those objects to the new delta, references to the earlier
  * objects are stored instead.
- *
+ * <p>
  * Restoring the state from this series is a bit problematic in that a
  * given object may have been written to several deltas; only the
  * latest copy is valid and all references from other objects must be
  * made to this latest copy and all others should be ignored.  This is
  * handled by overwriting the value of the earlier objects with newer
  * values from later versions of the objects.  
- * @property org.cougaar.core.persistence.class Specify the
+ *
+ * @property org.cougaar.core.persistence.class
+ * Specify the
  * persistence classes to be used. The value consists of one or more
  * elements separated by commas. Each element specifies one
  * persistence plugin and consists of the name of the class of the
@@ -101,22 +103,33 @@ import org.cougaar.util.log.Logging;
  * colons. The interpretation of the parameters depends on the plugin
  * so see the documentation of the individual plugin classes for
  * details.
- * @property org.cougaar.core.persistence.archivingDisabled Set true
+ *
+ * @property org.cougaar.core.persistence.archivingDisabled
+ * Set true
  * to discard archival deltas. Overridden by
  * org.cougaar.core.persistence.archiveCount.
- * @property org.cougaar.core.persistence.archiveCount An integer
+ *
+ * @property org.cougaar.core.persistence.archiveCount
+ * An integer
  * specifying how may persistence archive snapshots to keep. In the
  * absence of a value for this property, the archivingDisabled
  * property is used to set this value to 0 for disabled and
  * Integer.MAX_VALUE for enabled.
- * @property org.cougaar.core.persistence.clear Set true to discard all deltas on startup
+ *
+ * @property org.cougaar.core.persistence.clear
+ * Set true to discard all deltas on startup
+ *
  * @property org.cougaar.core.persistence.consolidationPeriod
  * The number of incremental deltas between full deltas (default = 10)
- * @property org.cougaar.core.persistence.lazyInterval specifies the
+ *
+ * @property org.cougaar.core.persistence.lazyInterval
+ * specifies the
  * interval in milliseconds between the generation of persistence
  * deltas. Default is 300000 (5 minutes). This will be overridden if
  * the persistence control and adaptivity engines are running.
- * @property org.cougaar.core.persistence.DataProtectionServiceStubEnabled set to true to enable 
+ *
+ * @property org.cougaar.core.persistence.DataProtectionServiceStubEnabled
+ * set to true to enable 
  * a debugging implementation of DataProtectionService if no real one is found.
  */
 public class PersistenceServiceComponent
@@ -214,7 +227,7 @@ public class PersistenceServiceComponent
      * multiply that by the ratio of the new and old intervals. The
      * new base time and delta count are set so that we appear to be
      * behind by the adjusted amount.
-     **/
+     */
     void setInterval(long newInterval) {
       long now = System.currentTimeMillis();
       long persistenceInterval = ppi.getPersistenceInterval();
@@ -374,7 +387,7 @@ public class PersistenceServiceComponent
    * name for the parameter (without the org.cougaar.persistence.
    * prefix). Many of the values in this list will contain commas and
    * this must be quoted with backslash or quotes.
-   **/
+   */
   private static List getParametersFromProperties(MessageAddress agentId) {
     List ret = new ArrayList();
     String pname = PERSISTENCE_PARAMETERS_PROP + "." + agentId;
@@ -541,7 +554,7 @@ public class PersistenceServiceComponent
 
   /**
    * Keeps all associations of objects that have been persisted.
-   **/
+   */
   private IdentityTable identityTable;
   private SequenceNumbers sequenceNumbers = null;
   private ObjectOutputStream currentOutput;
@@ -564,7 +577,7 @@ public class PersistenceServiceComponent
    * The current PersistencePlugin being used to generate persistence
    * deltas. This is changed just prior to generating a full delta if
    * there is a different plugin having priority.
-   **/
+   */
   private PersistencePluginInfo currentPersistPluginInfo;
 
   private long previousPersistenceTime = System.currentTimeMillis();
@@ -606,7 +619,7 @@ public class PersistenceServiceComponent
    * &nbsp;&nbsp;T = 1/(1/T1 + 1/T2 + ... + 1/Tn)
    * <p>
    * @return the time of the next persistence delta
-   **/
+   */
   public long getPersistenceTime() {
     if (recomputeNextPersistenceTime) {
       double sum = 0.0;
@@ -639,7 +652,7 @@ public class PersistenceServiceComponent
   }
 
   /**
-   * Rehydrate a persisted cluster. Reads all the deltas in order
+   * Rehydrate a persisted agent. Reads all the deltas in order
    * keeping the latest (last encountered) values from every object.
    * The rehydrated state is saved in rehydrationResult.
    * @param state a PersistenceObject if rehydrating from a saved
@@ -763,7 +776,7 @@ public class PersistenceServiceComponent
    * sets. Create RehydrationSets from the sequence numbers sets and
    * sort them by timestamp.
    * @return the sorted RehydrationSets
-   **/
+   */
   private RehydrationSet[] getRehydrationSets(String suffix) {
     List result = new ArrayList();
     for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
@@ -807,7 +820,7 @@ public class PersistenceServiceComponent
 
   /**
    * Erase all the effects of a failed rehydration attempt.
-   **/
+   */
   private void resetRehydration(Collection rehydrationCollection) {
     identityTable = new IdentityTable(logger);
     rehydrationCollection.clear();
@@ -881,7 +894,7 @@ public class PersistenceServiceComponent
 
   /**
    * Get highest sequence numbers recorded on any medium
-   **/
+   */
   private int getHighestSequenceNumber() {
     int best = 0;
     for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
@@ -1056,7 +1069,7 @@ public class PersistenceServiceComponent
    * fairly quickly and then waits a long time for its turn to come up
    * again. This suggests that it might be wise to reduce the
    * consolidation period of infrequent plugins.
-   **/
+   */
 
   private void selectNextPlugin() {
     PersistencePluginInfo best = null;
@@ -1083,7 +1096,7 @@ public class PersistenceServiceComponent
    * reference to such objects to avoid an NPE when it is not known
    * that a reference exists. Only used during the first delta after
    * rehydration.
-   **/
+   */
   private ArrayList objectsThatMightGoAway = new ArrayList();
 
   private final static Object vmPersistLock = new Object();
@@ -1092,7 +1105,7 @@ public class PersistenceServiceComponent
    * Process the data from all clients. Envelopes and such are put
    * into the identityTable as PersistenceAssociations. The list of
    * everything left over is stored in a Map indexed by client id.
-   **/
+   */
   private Map getClientData() {
     Map data = new HashMap(clients.size());
     for (Iterator i = clients.entrySet().iterator(); i.hasNext(); ) {
@@ -1125,7 +1138,7 @@ public class PersistenceServiceComponent
 
   /**
    * End a persistence epoch by generating a persistence delta.
-   **/
+   */
   PersistenceObject persist(boolean returnBytes, boolean full) {
     if (isDummy && !returnBytes) {
       return null;
@@ -1346,7 +1359,7 @@ public class PersistenceServiceComponent
     s.flush();
   }
 
-  /** The format of timestamps in the log **/
+  /** The format of timestamps in the log */
   private static DateFormat logTimeFormat =
     new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 

@@ -34,6 +34,9 @@ import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.core.service.DataProtectionKeyEnvelope;
 import org.cougaar.core.service.DataProtectionService;
 
+/**
+ * A trivial {@link DataProtectionService} implementation.
+ */
 public class DataProtectionServiceStub implements DataProtectionService {
   public OutputStream getOutputStream(DataProtectionKeyEnvelope pke, OutputStream os)
     throws IOException

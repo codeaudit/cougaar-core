@@ -28,8 +28,12 @@ package org.cougaar.core.persist;
 
 
 /**
- * Marker class for objects that should not be persisted. Such objects
- * must be recreated after rehydration if they are still relevant.
+ * A marker interface for objects that should not be persisted.
+ * Such objects must be recreated after rehydration if they are still
+ * relevant.
+ * <p>
+ * If an object is both {@link NotPersistable} and {@link
+ * Persistable} then it is considered {@link NotPersistable}.
  */
 public interface NotPersistable
 {

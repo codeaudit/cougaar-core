@@ -34,10 +34,11 @@ import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
 
 /**
- * The public interface for persistence. This is the old interface to
- * persistence and is still used for blackboard persistence.
- * The implementation recasts these methods into the new
- * PersistenceService interface.
+ * An extended persistence interface for {@link
+ * BlackboardPersistence}.
+ * <p> 
+ * The {@link BlackboardPersistence} implementation recasts these
+ * methods into the new {@link PersistenceService} interface.
  */
 public interface Persistence {
   /**
@@ -45,7 +46,7 @@ public interface Persistence {
    * @param undistributedEnvelopes Envelopes that the distribute is about to distribute
    * @param allEpochEnvelopes All envelopes from this epoch
    * @param subscriberStates The subscriber states to record
-   **/
+   */
     PersistenceObject persist(List undistributedEnvelopes,
                               List allEpochEnvelopes,
                               List subscriberStates,
@@ -57,7 +58,7 @@ public interface Persistence {
     /**
      * Get the rehydration envelope from the most recent persisted state.
      * @return null if there is no persisted state.
-     **/
+     */
     RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state);
     PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
     boolean hasSubscriberStates();
@@ -67,7 +68,7 @@ public interface Persistence {
    * Get a set of the Keys of the SubscriberStates in the rehydration info.
    * Used by the Distributor to track which subscribers have not
    * rehydrated.
-   **/
+   */
   public Set getSubscriberStateKeys();
 
     java.sql.Connection getDatabaseConnection(Object locker);

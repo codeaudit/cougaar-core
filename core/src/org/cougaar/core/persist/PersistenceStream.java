@@ -26,7 +26,9 @@
 
 package org.cougaar.core.persist;
 
-/** Marker class for Persistence Streams **/
+/**
+ * Marker interface for persistence I/O streams.
+ */
 public interface PersistenceStream 
 {
 }

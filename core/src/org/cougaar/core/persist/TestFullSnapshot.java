@@ -30,6 +30,10 @@ import java.io.Serializable;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This component tests {@link 
+ * org.cougaar.core.service.BlackboardService#persistNow()}
+ */
 public class TestFullSnapshot extends ComponentPlugin {
   private static class Item implements Serializable {
     byte[] bytes = new byte[10000];

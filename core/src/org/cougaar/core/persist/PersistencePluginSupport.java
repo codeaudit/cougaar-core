@@ -29,15 +29,18 @@ package org.cougaar.core.persist;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 
+/**
+ * Support methods for {@link PersistencePlugin}s.
+ */ 
 public interface PersistencePluginSupport {
     /**
      * The MessageAddress of the agent. Can be used to construction
      * agent-specific identifiers, file names, table names, etc.
-     **/
+     */
     MessageAddress getMessageAddress();
 
     /**
      * Get the current Logger instance.
-     **/
+     */
     Logger getLogger();
 }
