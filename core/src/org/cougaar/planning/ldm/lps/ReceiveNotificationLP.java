@@ -218,7 +218,7 @@ public class ReceiveNotificationLP
           //System.err.print("=");
         }
       } catch (RuntimeException re) {
-        logger.error("Caught exception while processing DelayedAggregateResults for "+pe+"("+id+")", re);        
+        logger.error("Caught exception while processing DelayedAggregateResults for "+pe, re);
       }
     }
 
