@@ -355,13 +355,15 @@ public class ClusterImpl extends Agent
       getDistributor().setBlackboard(myBlackboard);
 
       Collection domains = DomainManager.values();
+      Domain rootDomain = DomainManager.find("root"); // HACK to let Metrics see plan objects
+
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
         Domain d = (Domain) i.next();
 
         // add all the domain-specific logic providers
         XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
         myBlackboard.addXPlan(xPlan);
-        if (d == getFactory()) {
+        if (d == rootDomain) { // Replace HACK to let Metrics count plan objects
           myLogPlan = (LogPlan) xPlan;
         }
         Collection lps = d.createLogicProviders(xPlan, this);
@@ -657,6 +659,8 @@ public class ClusterImpl extends Agent
   }
 
   public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+    if (ms == null)
+      ms = new MetricsSnapshot();
     ms.clusterName = getClusterIdentifier().cleanToString();
     ms.nodeName = getBindingSite().getName();
     ms.time = System.currentTimeMillis();
@@ -677,10 +681,12 @@ public class ClusterImpl extends Agent
     }
     
     // logplan stuff
-    ms.assets = myLogPlan.getAssetCount();
-    ms.planelements = myLogPlan.getPlanElementCount();
-    ms.tasks = myLogPlan.getTaskCount();
-    ms.workflows = myLogPlan.getWorkflowCount();
+    if (myLogPlan != null) {
+      ms.assets = myLogPlan.getAssetCount();
+      ms.planelements = myLogPlan.getPlanElementCount();
+      ms.tasks = myLogPlan.getTaskCount();
+      ms.workflows = myLogPlan.getWorkflowCount();
+    }
 
     // cluster metrics
     ms.pluginCount = pluginManager.size();
