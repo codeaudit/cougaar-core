@@ -56,7 +56,9 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   private static final String ACTIVITY_DELAY_KEY = "ACTIVITY_DELAY=";
   private long SLEEP_INTERVAL = NORMAL_SLEEP_INTERVAL;
   private long ACTIVITY_DELAY = NORMAL_ACTIVITY_DELAY;
-  private ChangeReport myChangeReport = new ChangeReport() {};
+  private static class MyChangeReport implements ChangeReport {
+  }
+  private ChangeReport myChangeReport = new MyChangeReport();
   private Set myChangeReports = Collections.singleton(myChangeReport);
   private Set changedRelays = new HashSet();
   private static final Class[] requiredServices = {};
@@ -71,20 +73,6 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   private boolean updateTaskCompletionPending = true;
   private boolean debug = false;
   private Map filters = new WeakHashMap();
-  protected UnaryPredicate createTasksPredicate() {
-    return new UnaryPredicate() {
-        public boolean execute(Object o) {
-          if (o instanceof Task) {
-            Task task = (Task) o;
-            if (ignoredVerbs.contains(task.getVerb())) return false;
-            return true;
-          }
-          return false;
-        }
-      };
-  }
-
-  private UnaryPredicate tasksPredicate;;
 
   private static UnaryPredicate activityPredicate =
     new UnaryPredicate() {
@@ -95,46 +83,17 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       }
     };
 
-  private static class CompletionCounter implements Thunk {
-    private double totalConfidence;
-    private int peCount;
-//     private Map verbCounts = new HashMap();
-    private double completionThreshold = 0.99;
-    void init() {
-      totalConfidence = 0.0;
-      peCount = 0;
-//       verbCounts.clear();
-    }
-    public void apply(Object o) {
-      Task task = (Task) o;
-      PlanElement pe = task.getPlanElement();
-      if (pe != null) {
-        AllocationResult ar = pe.getEstimatedResult();
-        if (ar != null) {
-          double conf = ar.getConfidenceRating();
-          conf = Math.min(conf/0.89999999, 1.0);
-          totalConfidence += conf;
-          peCount++;
-          if (conf > completionThreshold) return;
-        }
-      }
-//       Verb verb = task.getVerb();
-//       Count count = (Count) verbCounts.get(verb);
-//       if (count == null) {
-//         count = new Count();
-//         verbCounts.put(verb, count);
-//       }
-//       count.count++;
-    }
-  }
-  private CompletionCounter completionCounter = new CompletionCounter();
+  protected CompletionCalculator calc;
 
   public CompletionTargetPlugin() {
     super(requiredServices);
   }
 
-  protected void addIgnoredVerb(Verb verb) {
-    ignoredVerbs.add(verb);
+  protected CompletionCalculator getCalculator() {
+    if (calc == null) {
+      calc = new CompletionCalculator();
+    }
+    return calc;
   }
 
   public void setupSubscriptions() {
@@ -222,15 +181,9 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   }
 
   private void updateTaskCompletion() {
-    if (tasksPredicate == null) tasksPredicate = createTasksPredicate();
-    Collection tasks = blackboard.query(tasksPredicate);
-    completionCounter.init();
-    if (tasks.size() > 0) {
-      Collectors.apply(completionCounter, tasks);
-      taskCompletion = completionCounter.totalConfidence / tasks.size();
-    } else {
-      taskCompletion = 1.0;
-    }
+    CompletionCalculator cc = getCalculator();
+    Collection objs = blackboard.query(cc.getPredicate());
+    taskCompletion = cc.calculate(objs);
     updateTaskCompletionPending = false;
   }
 
