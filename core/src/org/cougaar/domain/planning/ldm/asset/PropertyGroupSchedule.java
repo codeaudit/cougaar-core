@@ -305,7 +305,7 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
       properties[1]= new PropertyDescriptor("default", PropertyGroupSchedule.class, "getDefault", null);
       properties[2]= new PropertyDescriptor("schedule", PropertyGroupSchedule.class, "toArray", null);
     } catch (Exception e) { System.err.println("Caught: "+e); e.printStackTrace(); }
-  };
+  }
 
   public PropertyDescriptor[] getPropertyDescriptors() {
     return properties;

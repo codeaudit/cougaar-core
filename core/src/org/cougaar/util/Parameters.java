@@ -55,7 +55,7 @@ public class Parameters {
     }
 
     try {
-      InputStream in = ConfigFileFinder.open("cougaar.rc");
+      InputStream in = ConfigFinder.getInstance().open("cougaar.rc");
       if (in != null) {
         parseParameterStream("cougaar.rc", in);
         found=true;
@@ -80,7 +80,7 @@ public class Parameters {
    // @deprecated
    // check for .alprc in config path.
     try {
-      InputStream in = ConfigFileFinder.open(".alprc");
+      InputStream in = ConfigFinder.getInstance().open(".alprc");
       if (in != null) {
         System.err.println("Warning: Found an \".alprc\" in ConfigPath.  Please use cougaar.rc instead.");
         parseParameterStream("ConfigPath/.alprc", in);
@@ -179,7 +179,7 @@ public class Parameters {
    * If no parameter is found and no defval is supplied, will return null.
    * The places looked at to find values are (in order):
    *  the extra argument map (if supplied)
-   *  the static parameter map (supplied by ConfigFileFinder/.alprc);
+   *  the static parameter map (supplied by ConfigFinder/.alprc);
    *  the System properties
    *  any default value.
    **/

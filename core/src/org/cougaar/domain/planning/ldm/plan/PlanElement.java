@@ -87,10 +87,10 @@ public interface PlanElement
    **/
   void setObservedResult(AllocationResult observedResult);
   
-  public static interface PlanElementChangeReport extends ChangeReport {
+  interface PlanElementChangeReport extends ChangeReport {
   }
 
-  public abstract static class ResultChangeReport implements PlanElementChangeReport {
+  abstract class ResultChangeReport implements PlanElementChangeReport {
     private int type;
     public final static int UNDEFINED_TYPE = AspectType.UNDEFINED;
     private double oldValue;
@@ -133,7 +133,7 @@ public interface PlanElement
   // change reports
 
   /** Something in the Estimated result changed. **/
-  public static class EstimatedResultChangeReport extends ResultChangeReport {
+  class EstimatedResultChangeReport extends ResultChangeReport {
     public EstimatedResultChangeReport() { super(); }
     public EstimatedResultChangeReport(int t) { super(t); }
     public EstimatedResultChangeReport(int t, double ov) { super(t,ov); }
@@ -142,7 +142,7 @@ public interface PlanElement
     }
   }
   /** Something in the reported result changed. **/
-  public static class ReportedResultChangeReport extends ResultChangeReport {
+  class ReportedResultChangeReport extends ResultChangeReport {
     public ReportedResultChangeReport() { super(); }
     public ReportedResultChangeReport(int t) { super(t); }
     public ReportedResultChangeReport(int t, double ov) { super(t,ov); }
@@ -151,7 +151,7 @@ public interface PlanElement
     }
   }
   /** Something in the observed result changed. **/
-  public static class ObservedResultChangeReport extends ResultChangeReport {
+  class ObservedResultChangeReport extends ResultChangeReport {
     public ObservedResultChangeReport() { super(); }
     public ObservedResultChangeReport(int t) { super(t); }
     public ObservedResultChangeReport(int t, double ov) { super(t,ov); }

@@ -22,11 +22,8 @@
 package org.cougaar.domain.planning.ldm.plan;
 
 /** Directive to transfer Transferables
- * 
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: TransferableAssignment.java,v 1.3 2001-08-22 20:14:16 mthome Exp $
  **/
-public interface TransferableAssignment extends Directive{
-
-  public Transferable getTransferable();
+public interface TransferableAssignment extends Directive
+{
+  Transferable getTransferable();
 }

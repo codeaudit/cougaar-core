@@ -22,16 +22,16 @@
 package org.cougaar.domain.planning.ldm.plan;
 
 import java.util.*;
-
+import java.io.Serializable;
 /** AllocationResultAggregator is a class which specifies how allocationresults
  * should be aggregated.  Currenlty used by Workflow.computeAllocationResult
  * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
  **/
 
 public interface AllocationResultAggregator 
-  extends java.io.Serializable, AspectType // for Constants
+  extends Serializable, AspectType // for Constants
 {
-  public static final double SIGNIFICANT_CONFIDENCE_RATING_DELTA = 0.0001;
+  double SIGNIFICANT_CONFIDENCE_RATING_DELTA = 0.0001;
   
   /** @return AllocationResult The computed AllocationResult
    * @param wf The workflow that is using this aggregator to compute it's AllocationResult
@@ -40,18 +40,18 @@ public interface AllocationResultAggregator
    * @see org.cougaar.domain.planning.ldm.plan.Workflow
    * @see org.cougaar.clusteorbject.TaskPenaltyTable
    **/
-  public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar);
+  AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar);
   
   /** static accessor for a default/generic AllocationResultAggregator that does
    * a simple summation of all measures (including extensions) found in all allocationresults in the
    * subtasks of the workflow.
    */
-  public static AllocationResultAggregator SUM = new Sum();
+  AllocationResultAggregator SUM = new Sum();
 
-  public static AllocationResultAggregator DEFAULT = new DefaultARA();
+  AllocationResultAggregator DEFAULT = new DefaultARA();
   
   // implementation of a default/generic AllocationResultAggregator
-  public class Sum implements AllocationResultAggregator {
+  class Sum implements AllocationResultAggregator {
     private static final double UNDEF = -1;
     public Sum() {}
     public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar) {
@@ -84,7 +84,7 @@ public interface AllocationResultAggregator
    * 
    * returns null when there are no subtasks or any task has no result.
    **/
-  public class DefaultARA implements AllocationResultAggregator {
+  class DefaultARA implements AllocationResultAggregator {
     private static final String UNDEFINED = "UNDEFINED";
 
     public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar) {
@@ -343,13 +343,13 @@ public interface AllocationResultAggregator
     }
   }
 
-  static final int[] K02 = new int[] {0,2};
-  static final int[] K012 = new int[] {0,1,2};
-  static final int[] K0126 = new int[] {0,1,2,6};
+  int[] K02 = new int[] {0,2};
+  int[] K012 = new int[] {0,1,2};
+  int[] K0126 = new int[] {0,1,2,6};
 
-  static final HashMap hack = new HashMap();
+  HashMap hack = new HashMap();
   
-  static final class KeyHolder {
+  final class KeyHolder {
     int[] keys;
     KeyHolder(int keys[]) {
       this.keys = keys;

@@ -37,7 +37,7 @@ public interface LDMServesClient
   extends ClusterContext
 {
   /** the (internal) time to mean unspecified **/
-  public static final long UNSPECIFIED_TIME = 0L;
+  long UNSPECIFIED_TIME = 0L;
 
   /** @return the Root LDM Factory.  Equivalent to
    * (RootFactory)getFactory("Root") except will be somewhat more efficient.

@@ -33,5 +33,5 @@ public interface ClusterServesMessageTransport
    * Expected message types include Query, ClusterManagement, Directives
    * etc.
    **/
-  public void receiveMessage(Message aMessage); 
+  void receiveMessage(Message aMessage); 
 }

@@ -37,7 +37,7 @@ public interface NewTimeSpan extends TimeSpan {
    * 
    * Should throw IllegalArgumentException if startTime >= endTime
    */
-  public void setTimeSpan(long startTime, long endTime);
+  void setTimeSpan(long startTime, long endTime);
 }
 
 

@@ -26,15 +26,13 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 
 /** AssetAssignment Interface identifies those method signatures associated 
  *  with AssetAssignment Directives.
- *
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssetAssignment.java,v 1.3 2001-08-22 20:14:09 mthome Exp $
  **/
 
 public interface AssetAssignment extends Directive {
-  public static final byte UPDATE = 0;
-  public static final byte NEW = 1;
-  public static final byte REPEAT = 2;
+  byte UPDATE = 0;
+  byte NEW = 1;
+  byte REPEAT = 2;
+
   /**
    * Answer with the Asset to be assigned by this Directive.
    * @return org.cougaar.domain.planning.ldm.asset.Asset

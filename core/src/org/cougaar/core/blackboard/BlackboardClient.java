@@ -29,7 +29,7 @@ public interface BlackboardClient {
    * Return a name for this BlackboardClient. All clients in a
    * cluster should have distinct names.
    */
-  public String getBlackboardClientName();
+  String getBlackboardClientName();
 
   long currentTimeMillis( );
 
@@ -39,11 +39,11 @@ public interface BlackboardClient {
    **/
   boolean triggerEvent(Object event);
 
-  static class Local extends ThreadLocal {
+  class Local extends ThreadLocal {
     public BlackboardClient getClient() {
       return (BlackboardClient) get();
     }
   }
 
-  public static final Local current = new Local();
+  Local current = new Local();
 }

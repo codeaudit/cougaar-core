@@ -25,36 +25,36 @@ package org.cougaar.domain.planning.ldm.plan;
  **/
 public interface ScheduleElementType {
   
-  static final Class SIMPLE = ScheduleElement.class;
-  static final Class MIXED = ScheduleElement.class;
+  Class SIMPLE = ScheduleElement.class;
+  Class MIXED = ScheduleElement.class;
 
-  static final Class ASSIGNED_RELATIONSHIP = AssignedRelationshipElement.class;
-  static final Class ASSIGNED_AVAILABILITY = AssignedAvailabilityElement.class;
-  static final Class ITINERARY = ItineraryElement.class;
-  static final Class LOCATION = LocationScheduleElement.class;
-  static final Class LOCATIONRANGE = LocationRangeScheduleElement.class;
-  static final Class RELATIONSHIP = Relationship.class;
-  static final Class PLAN_ELEMENT = PlanElement.class;
+  Class ASSIGNED_RELATIONSHIP = AssignedRelationshipElement.class;
+  Class ASSIGNED_AVAILABILITY = AssignedAvailabilityElement.class;
+  Class ITINERARY = ItineraryElement.class;
+  Class LOCATION = LocationScheduleElement.class;
+  Class LOCATIONRANGE = LocationRangeScheduleElement.class;
+  Class RELATIONSHIP = Relationship.class;
+  Class PLAN_ELEMENT = PlanElement.class;
 
   /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.QUANTITY
    **/
-  static final Class QUANTITY = ScheduleElement.class;
+  Class QUANTITY = ScheduleElement.class;
 
   /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.QUANTIITYRANGE
    **/
-  static final Class QUANTITYRANGE = ScheduleElement.class;
+  Class QUANTITYRANGE = ScheduleElement.class;
 
  /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.RATE
    **/
-  static final Class RATE = ScheduleElement.class;
+  Class RATE = ScheduleElement.class;
 
  /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.CAPACITY
    **/
-  static final Class CAPACITY = ScheduleElement.class;
+  Class CAPACITY = ScheduleElement.class;
 
   /** @deprecated move to appropriate class in the domain layer
    **/
-  static final Class LABOR = ScheduleElement.class;
+  Class LABOR = ScheduleElement.class;
 }
 
 

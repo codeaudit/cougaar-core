@@ -25,5 +25,5 @@ package org.cougaar.core.util;
  * @see AbstractPrinter
  */
 public interface SelfPrinter {
-  public void printContent(AsciiPrinter pr);
+  void printContent(AsciiPrinter pr);
 }

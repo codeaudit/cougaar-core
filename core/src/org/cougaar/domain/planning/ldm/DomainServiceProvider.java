@@ -50,8 +50,9 @@ public class DomainServiceProvider implements ServiceProvider {
     public RootFactory getFactory() {
       return theService.getFactory();
     }
+    /** @deprecated **/
     public RootFactory getLdmFactory() {
-      return theService.getLdmFactory();
+      return theService.getFactory();
     }
     public Factory getFactory(String domainname) {
       return theService.getFactory(domainname);

@@ -29,8 +29,6 @@ import java.util.Hashtable;
   * Distributes all aspect values amongst all parent tasks, divides COST and 
   * QUANTITY aspects evenly among all parent tasks.
   * Distributes all AuxiliaryQueryTypes and data to all parent tasks.
-  * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: AllocationResultDistributor.java,v 1.3 2001-08-22 20:14:08 mthome Exp $
   * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
   **/
 
@@ -47,10 +45,10 @@ public interface AllocationResultDistributor
    * @see org.cougaar.domain.planning.ldm.plan.TaskScoreTable
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    */
-  public TaskScoreTable calculate(Vector parents, AllocationResult aggregateAllocationResult);
+  TaskScoreTable calculate(Vector parents, AllocationResult aggregateAllocationResult);
   
   /* static accessor for a default distributor */
-  public static AllocationResultDistributor DEFAULT = new DefaultDistributor();
+  AllocationResultDistributor DEFAULT = new DefaultDistributor();
   
   // implementation of the default distributor
   /** Default distributor makes the best guess computation possible
@@ -62,7 +60,7 @@ public interface AllocationResultDistributor
    * aggregated.
    **/
 
-  public static class DefaultDistributor
+  class DefaultDistributor
     implements AllocationResultDistributor 
   {
     public DefaultDistributor() {}

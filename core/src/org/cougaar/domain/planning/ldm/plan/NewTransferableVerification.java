@@ -24,10 +24,9 @@ package org.cougaar.domain.planning.ldm.plan;
 import org.cougaar.core.society.UID;
 
 /** Directive to verify Transferables
- * 
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: NewTransferableVerification.java,v 1.3 2001-08-22 20:14:14 mthome Exp $
  **/
-public interface NewTransferableVerification extends NewDirective {
-  public void setTransferableUID(UID newUID);
+public interface NewTransferableVerification 
+  extends NewDirective 
+{
+  void setTransferableUID(UID newUID);
 }

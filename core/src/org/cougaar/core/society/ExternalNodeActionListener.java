@@ -44,7 +44,7 @@ public interface ExternalNodeActionListener extends Remote {
    * @param enc the "source" external-node-controller
    * @param cid the "event-details" of the added Cluster's identifier
    */
-  public void handleClusterAdd(
+  void handleClusterAdd(
       ExternalNodeController enc,
       ClusterIdentifier cid) throws RemoteException;
 

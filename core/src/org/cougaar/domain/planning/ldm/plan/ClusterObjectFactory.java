@@ -53,8 +53,8 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterObjectFactory.java,v 1.5 2001-08-22 20:14:10 mthome Exp $
- * @version $Id: ClusterObjectFactory.java,v 1.5 2001-08-22 20:14:10 mthome Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.6 2001-09-06 14:59:58 mthome Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.6 2001-09-06 14:59:58 mthome Exp $
  *
  * @see org.cougaar.component.ComponentServesPlugIn
  */
@@ -114,9 +114,8 @@ public interface ClusterObjectFactory {
     * @param aTransferable
     * @param anAsset - should be of type Organization
     * @return TranserableTransfer
-    */
-  public TransferableTransfer 
-    createTransferableTransfer(Transferable aTransferable, Asset anAsset);
+    */ 
+  TransferableTransfer createTransferableTransfer(Transferable aTransferable, Asset anAsset);
   
   /** Build a new AssetTransfer (planelement)
    * @param aPlan The Plan this PlanElement is against
@@ -130,13 +129,13 @@ public interface ClusterObjectFactory {
    * @param aRole  The Role of the Asset while transferred
    * @return AssetTransfer
    **/
-  public AssetTransfer createAssetTransfer(Plan aPlan, 
-                                           Task aTask, 
-                                           org.cougaar.domain.planning.ldm.asset.Asset anAsset, 
-                                           Schedule aSchedule, 
-                                           org.cougaar.domain.planning.ldm.asset.Asset toAsset, 
-                                           AllocationResult estimatedresult, 
-                                           Role aRole);
+  AssetTransfer createAssetTransfer(Plan aPlan, 
+                                    Task aTask, 
+                                    org.cougaar.domain.planning.ldm.asset.Asset anAsset, 
+                                    Schedule aSchedule, 
+                                    org.cougaar.domain.planning.ldm.asset.Asset toAsset, 
+                                    AllocationResult estimatedresult, 
+                                    Role aRole);
 
   /** Build a new Allocation (planelement)
    * @param aPlan - The Plan this PlanElement is against
@@ -147,8 +146,11 @@ public interface ClusterObjectFactory {
    * @see org.cougaar.domain.planning.ldm.Asset
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    **/
-  public Allocation createAllocation(Plan aPlan, Task aTask, org.cougaar.domain.planning.ldm.asset.Asset anAsset,
-                                     AllocationResult estimatedresult, Role aRole);
+  Allocation createAllocation(Plan aPlan, 
+                              Task aTask, 
+                              org.cougaar.domain.planning.ldm.asset.Asset anAsset,
+                              AllocationResult estimatedresult, 
+                              Role aRole);
                               
   /** Build a new Expansion (planelement)
    * @param aPlan
@@ -159,7 +161,7 @@ public interface ClusterObjectFactory {
    * @see org.cougaar.domain.planning.ldm.plan.Workflow
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    */
-  public Expansion createExpansion(Plan aPlan, Task aTask, Workflow aWorkflow, AllocationResult estimatedresult);
+  Expansion createExpansion(Plan aPlan, Task aTask, Workflow aWorkflow, AllocationResult estimatedresult);
    
   /** Build a new Aggregation (planelement)
    * @param aPlan
@@ -171,7 +173,7 @@ public interface ClusterObjectFactory {
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    */
 
-  public Aggregation createAggregation(Plan aPlan, Task aTask, Composition aComposition, AllocationResult estimatedresult);
+  Aggregation createAggregation(Plan aPlan, Task aTask, Composition aComposition, AllocationResult estimatedresult);
   
   /** Build a new FailedDisposition (planelement)
    * @param aPlan
@@ -181,7 +183,7 @@ public interface ClusterObjectFactory {
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    */
 
-  public Disposition createFailedDisposition(Plan aPlan, Task aTask, AllocationResult failure);
+  Disposition createFailedDisposition(Plan aPlan, Task aTask, AllocationResult failure);
   	
   /** Build a new Disposition
    * @param aPlan
@@ -190,7 +192,7 @@ public interface ClusterObjectFactory {
    * @return a Disposition
    * @see org.cougaar.domain.planning.ldm.plan.AllocationResult
    */
-  public Disposition createDisposition(Plan aPlan, Task aTask, AllocationResult result);
+  Disposition createDisposition(Plan aPlan, Task aTask, AllocationResult result);
 
   /** Build a new simple schedule that contains only one start and end
    * date.
@@ -295,7 +297,7 @@ public interface ClusterObjectFactory {
    * @param hasRelationships HasRelationships to which the relationship 
    * schedule will apply
    **/
-  public NewRelationshipSchedule newRelationshipSchedule(HasRelationships hasRelationships);
+  NewRelationshipSchedule newRelationshipSchedule(HasRelationships hasRelationships);
   
   /** Build a new relationship schedule for the specified HasRelationships.
    * @param hasRelationships HasRelationships to which the relationship 

@@ -69,7 +69,7 @@ public class XMLize {
 	  numberClass  = Class.forName ("java.lang.Number");
 	  booleanClass = Class.forName ("java.lang.Boolean");
       } catch (ClassNotFoundException cnfe) {}
-  };
+  }
 
   public static Element getPlanObjectXML(
       Object obj, Document doc) {
@@ -335,7 +335,7 @@ public class XMLize {
       UID uid;
       if ((obj instanceof UniqueObject) &&
           ((uid = (((UniqueObject)obj).getUID())) != null) &&
-          ((sID = uid.getUID()) != null)) {
+          ((sID = uid.toString()) != null)) {
         Element item = doc.createElement("UID");
         item.appendChild(doc.createTextNode(sID));
         parentElement.appendChild(item);

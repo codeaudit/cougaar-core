@@ -21,9 +21,6 @@
 
 package org.cougaar.core.society;
 
-
-import org.cougaar.util.ConfigFileFinder;
-
 import java.io.*;
 import java.util.Date;
 import java.util.HashMap;

@@ -35,5 +35,5 @@ public abstract class ServiceEvent extends ComponentModelEvent {
   public final ServiceBroker getServiceBroker() { return (ServiceBroker) getSource(); }
 
   /** @return the specific service involved in this event **/
-  public final Class getService() { return service; };
+  public final Class getService() { return service; }
 }

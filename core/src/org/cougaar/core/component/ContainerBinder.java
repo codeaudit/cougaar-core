@@ -36,8 +36,8 @@ import org.cougaar.util.GenericStateModel;
 public interface ContainerBinder
   extends Binder
 {
-  public boolean add(Object o);
+  boolean add(Object o);
 
-  public boolean remove(Object o);
+  boolean remove(Object o);
 }
 

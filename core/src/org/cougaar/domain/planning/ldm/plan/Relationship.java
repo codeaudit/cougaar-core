@@ -33,23 +33,23 @@ public interface Relationship extends ScheduleElement {
   /** Role performed by HasRelationship A
    * @return Role which HasRelationships A performs
    */
-  public Role getRoleA();
+  Role getRoleA();
 
   /**
    * 
    * @return HasRelationships A
    */
-  public HasRelationships getA();
+  HasRelationships getA();
 
   /** Role performed  by HasRelationships B
    * @return Role which HasRelationships B performs
    */
-  public Role getRoleB();
+  Role getRoleB();
   
   /**
    * @return HasRelationships B
    */
-  public HasRelationships getB();
+  HasRelationships getB();
 
 }
 

@@ -37,7 +37,7 @@ public interface Thunk
    * May be reused via reset() method, but no attempt is made to
    * make instances thread-safe.
    **/
-  public static class Counter implements Thunk {
+  class Counter implements Thunk {
     private int counter = 0;
     public Counter() {}
     public void apply(Object o) {
@@ -48,7 +48,7 @@ public interface Thunk
   }
 
   /** a Thunk which collects all the arguments into a Collection **/
-  public static class Collector implements Thunk {
+  class Collector implements Thunk {
     private final Collection c;
     public Collector() { c = new ArrayList(); }
     public Collector(Collection c) { this.c=c; }

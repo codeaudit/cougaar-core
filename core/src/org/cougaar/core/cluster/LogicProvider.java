@@ -22,6 +22,8 @@
 
 package org.cougaar.core.cluster;
 
+/** Base class for all LogicProviders 
+ **/
 public interface LogicProvider {
-  public void init();
+  void init();
 }

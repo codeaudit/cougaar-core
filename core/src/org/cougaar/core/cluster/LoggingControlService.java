@@ -18,21 +18,21 @@ import java.util.Enumeration;
 
 public interface LoggingControlService extends Service {
 
-  public static final int CONSOLE = 1;
-  public static final int STREAM  = 2;
-  public static final int FILE    = 3;
+  int CONSOLE = 1;
+  int STREAM  = 2;
+  int FILE    = 3;
 
-  public int getLoggingLevel(String node);
-  public void setLoggingLevel(String node, int level);
-  //public void setLoggingLevel(String node, int level, boolean recursiveSet);
+  int getLoggingLevel(String node);
+  void setLoggingLevel(String node, int level);
+  //void setLoggingLevel(String node, int level, boolean recursiveSet);
 
-  public Enumeration getAllLoggingNodes();
+  Enumeration getAllLoggingNodes();
 
-  public Enumeration getOutputTypes(String node);
-  public void addOutputType(String node, int outputType, Object outputDevice);
-  public void addOutputType(String node, int outputType);
-  //public void removeOutputType(String node, int outputType);
-  //public void setOutputType(String node, int outputType, boolean recursiveSet);
+  Enumeration getOutputTypes(String node);
+  void addOutputType(String node, int outputType, Object outputDevice);
+  void addOutputType(String node, int outputType);
+  //void removeOutputType(String node, int outputType);
+  //void setOutputType(String node, int outputType, boolean recursiveSet);
 
 }
 

@@ -63,7 +63,7 @@ public interface NameServer extends Map {
   int size(Object directory);
   Collection values();
   Collection values(Object directory);
-  public static interface Directory {
+  interface Directory {
     String getPath();
   }
 }

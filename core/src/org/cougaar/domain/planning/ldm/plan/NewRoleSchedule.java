@@ -23,12 +23,9 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /** NewRoleSchedule Interface
  *  Allows a setter for newly created assets to set their available schedule
- *
  **/
 
 public interface NewRoleSchedule extends RoleSchedule {
-
-
   /** SHOULD *ONLY* BE CALLED BY THE ASSET CREATOR or THE ASSETTRANSFER LP!
     * set the availableschedule
     * The AvailableSchedule represents the time period that this asset
@@ -37,6 +34,5 @@ public interface NewRoleSchedule extends RoleSchedule {
     * @param avschedule - the schedule that the asset is assigned 
     * or available to this cluster
     **/
-  public void setAvailableSchedule(Schedule avschedule);
-  
+  void setAvailableSchedule(Schedule avschedule);
 }

@@ -23,20 +23,18 @@ package org.cougaar.domain.planning.ldm.plan;
 
 /* Constant names for different 'priorities'.  Note that priorities
  * should only be set on tasks created by the same customer.
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Priority.java,v 1.3 2001-08-22 20:14:15 mthome Exp $
  */
 public interface Priority {
-  static final byte UNDEFINED = 0;
+  byte UNDEFINED = 0;
   
-  static final byte VERY_LOW = 1;
+  byte VERY_LOW = 1;
     
-  static final byte LOW = 2;
+  byte LOW = 2;
     
-  static final byte MEDIUM = 3;
+  byte MEDIUM = 3;
     
-  static final byte HIGH = 4;
+  byte HIGH = 4;
     
-  static final byte VERY_HIGH = 5;
+  byte VERY_HIGH = 5;
   
 }

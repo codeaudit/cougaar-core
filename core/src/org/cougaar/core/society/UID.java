@@ -122,7 +122,7 @@ public final class UID
   }
 
   /**
-   * Parse the given String into a UID.
+   * Parse the given String into a UID object useful for doing searches and comparisons.
    * <p>
    * The String's format should match <tt>UID.toString()</tt>.
    * <p>

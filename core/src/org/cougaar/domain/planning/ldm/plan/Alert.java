@@ -25,8 +25,6 @@ import org.cougaar.core.society.UniqueObject;
 
 /** Alert interface
  **/
-
-
 public interface Alert extends UniqueObject {
 
   /**
@@ -45,15 +43,15 @@ public interface Alert extends UniqueObject {
   boolean getAcknowledged();
 
 
-  static public final int UNDEFINED_SEVERITY = -1;
-  static public final int LOW_SEVERITY = 0;
-  static public final int MEDIUM_SEVERITY = 1;
-  static public final int HIGH_SEVERITY = 2;
+  int UNDEFINED_SEVERITY = -1;
+  int LOW_SEVERITY = 0;
+  int MEDIUM_SEVERITY = 1;
+  int HIGH_SEVERITY = 2;
 
   // MIN_SEVERITY and MAX_SEVERITY used to check for valid severity values.
   // Simple minded but works so long as we can keep a contiguous set of severities.
-  static public final int MIN_SEVERITY = UNDEFINED_SEVERITY;
-  static public final int MAX_SEVERITY = HIGH_SEVERITY;
+  int MIN_SEVERITY = UNDEFINED_SEVERITY;
+  int MAX_SEVERITY = HIGH_SEVERITY;
 
   /**
    * Indicates Alert severity
@@ -61,8 +59,8 @@ public interface Alert extends UniqueObject {
    */
   int getSeverity();
 
-  static public final int UNDEFINED_TYPE = -1;
-  static public final int CONSUMPTION_DEVIATION_TYPE = 5;
+  int UNDEFINED_TYPE = -1;
+  int CONSUMPTION_DEVIATION_TYPE = 5;
 
   /**
    * Indicates Alert type. 

@@ -29,8 +29,6 @@ import org.cougaar.core.cluster.ClusterIdentifier;
  * Services provided to ClusterManagement by Cluster.
  * Currently, the only service in addition to ClusterStateModel is
  * message reception capability.
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterServesClusterManagement.java,v 1.4 2001-08-22 20:13:45 mthome Exp $
  **/
 
 public interface ClusterServesClusterManagement extends ClusterStateModel, ClusterServesMessageTransport
@@ -48,5 +46,5 @@ public interface ClusterServesClusterManagement extends ClusterStateModel, Clust
    * java-beans resource initialization phase at a later time.
    * @param id The new identifier for this cluster.
    **/
-  public void setClusterIdentifier(ClusterIdentifier id);
+  void setClusterIdentifier(ClusterIdentifier id);
 }

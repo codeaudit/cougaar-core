@@ -62,7 +62,7 @@ import org.cougaar.core.component.ServiceBroker;
 
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
-  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, PluginBase
+  implements PlugInServesCluster, BlackboardClient, PluginBase
 {
 
   /** keep this around for compatability with old plugins **/
@@ -546,7 +546,7 @@ public abstract class PlugInAdapter
     PluginAlarm pa = new PluginAlarm(wakeTime);
     getAlarmService().addAlarm(pa);
     return pa;
-  };
+  }
 
   /** Convenience method to specify period of time to wait before
    * stimulating plugin (based on COUGAAR scenario time).
@@ -566,7 +566,7 @@ public abstract class PlugInAdapter
     PluginAlarm pa = new PluginAlarm(absTime);
     getAlarmService().addAlarm(pa);
     return pa;
-  };
+  }
 
   /** like wakeAt() except always in real (wallclock) time.
    **/ 	
@@ -580,7 +580,7 @@ public abstract class PlugInAdapter
     PluginAlarm pa = new PluginAlarm(wakeTime);
     getAlarmService().addRealTimeAlarm(pa);
     return pa;
-  };
+  }
 
   /** like wakeAfter() except always in real (wallclock) time.
    **/
@@ -595,7 +595,7 @@ public abstract class PlugInAdapter
     PluginAlarm pa = new PluginAlarm(absTime);
     getAlarmService().addRealTimeAlarm(pa);
     return pa;
-  };
+  }
 
 
   /** What is the current Scenario time? 

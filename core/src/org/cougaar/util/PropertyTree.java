@@ -151,7 +151,7 @@ public class PropertyTree
         }
       }
 
-    };
+    }
 
   private static final long serialVersionUID = 182883718294610011L;
 

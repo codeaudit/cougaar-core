@@ -26,5 +26,5 @@ import org.cougaar.util.UnaryPredicate;
 import org.cougaar.domain.planning.ldm.plan.Verb;
 
 public interface NewAllocationsPredicate extends UnaryPredicate {
-    public void setVerb( Verb vb );
+  void setVerb( Verb vb );
 }

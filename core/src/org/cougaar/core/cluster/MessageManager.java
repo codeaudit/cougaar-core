@@ -26,12 +26,13 @@ import org.cougaar.core.cluster.AckDirectiveMessage;
 import java.util.Iterator;
 
 public interface MessageManager {
-  public static final int OK      = 0;
-  public static final int RESTART = 4;
-  public static final int IGNORE  = 8;
-  public static final int DUPLICATE = IGNORE + 1;
-  public static final int FUTURE    = IGNORE + 2;
-  public static final int PRESENT   = OK;
+  int OK      = 0;
+  int RESTART = 4;
+  int IGNORE  = 8;
+  int DUPLICATE = IGNORE + 1;
+  int FUTURE    = IGNORE + 2;
+  int PRESENT   = OK;
+
   /**
    * Start the message manager running. The message manager should be
    * inactive until this method is called because it does know know

@@ -28,23 +28,15 @@ package org.cougaar.domain.planning.ldm.plan;
   * relationship information about the Tasks
   * contained in the Workflow.  A Task can have
   * more than one applicable Constraint.
-  *
-  * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: Constraint.java,v 1.3 2001-08-22 20:14:10 mthome Exp $
   **/
 public interface Constraint
 {
-//    /** @deprecated **/
-//    public static final int INITIATED = 0;
-//    /** @deprecated **/
-//    public static final int COMPLETED = 1;
-
-  public static final int COINCIDENT = 0;
-  public static final int BEFORE = -1;
-  public static final int AFTER = 1;
-  public static final int GREATERTHAN = 1;
-  public static final int LESSTHAN = -1;
-  public static final int EQUALTO = 0;
+  int COINCIDENT = 0;
+  int BEFORE = -1;
+  int AFTER = 1;
+  int GREATERTHAN = 1;
+  int LESSTHAN = -1;
+  int EQUALTO = 0;
 
   /** 
    * <PRE> Task mytask = myconstraint.getConstrainingTask(); </PRE>

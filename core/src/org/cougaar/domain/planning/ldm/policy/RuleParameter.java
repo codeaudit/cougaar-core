@@ -42,28 +42,28 @@ public interface RuleParameter extends Cloneable {
   /**
    * Define list of constant parameter types:
    */
-  public final static int INTEGER_PARAMETER = 1;
-  public final static int DOUBLE_PARAMETER = 2;
-  public final static int STRING_PARAMETER = 3;
-  public final static int ENUMERATION_PARAMETER = 4;
-  public final static int BOOLEAN_PARAMETER = 5;
-  public final static int CLASS_PARAMETER = 6;
-  public final static int KEY_PARAMETER = 7;
-  public final static int RANGE_PARAMETER = 8;
-  public final static int LONG_PARAMETER = 9;
-  public final static int PREDICATE_PARAMETER = 10;
+  int INTEGER_PARAMETER = 1;
+  int DOUBLE_PARAMETER = 2;
+  int STRING_PARAMETER = 3;
+  int ENUMERATION_PARAMETER = 4;
+  int BOOLEAN_PARAMETER = 5;
+  int CLASS_PARAMETER = 6;
+  int KEY_PARAMETER = 7;
+  int RANGE_PARAMETER = 8;
+  int LONG_PARAMETER = 9;
+  int PREDICATE_PARAMETER = 10;
 
   /**
    * Type of given parameter
    * @return int type of given parameter
    */
-  public int ParameterType();
+  int ParameterType();
 
   /**
    * Get parameter object value for parameter
    * @return Object with given parameter value. Note : could be null.
    */
-  public Object getValue();
+  Object getValue();
 
   /**
    * Set parameter object value 
@@ -71,7 +71,7 @@ public interface RuleParameter extends Cloneable {
    * @throws RuleParameterIllegalValueException if value set is illegal for 
    * given parameter
    */
-  public void setValue(Object new_value) 
+  void setValue(Object new_value) 
        throws RuleParameterIllegalValueException;
 
   /**
@@ -80,14 +80,14 @@ public interface RuleParameter extends Cloneable {
    * @return true if the test_object is within the allowable range, false
    * otherwise.
    **/
-  public boolean inRange(Object test_object);
+  boolean inRange(Object test_object);
 
   /**
    * @return the name of the parameter
    **/
-  public String getName();
+  String getName();
 
-  public Object clone();
+  Object clone();
 }
 
 

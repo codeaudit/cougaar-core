@@ -163,7 +163,7 @@ public class LogWriter implements Runnable {
    *   Accessor method of theFileSize property size is expresed in Bytes (1024 = 1KB).
    *   <p>
    *   @return int The int value for the file size in bytes**/
-  private final int getFileSize( ) { return theFileSize; };
+  private final int getFileSize( ) { return theFileSize; }
 
   /**
    *   Accessor method for theWrapArround property.

@@ -85,7 +85,7 @@ public abstract class PlugIn
    * State implementations need not be serializable for
    * persistence or any other reason.
    **/
-  public static interface State {
+  public interface State {
   }
 }
     

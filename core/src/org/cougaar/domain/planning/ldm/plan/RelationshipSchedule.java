@@ -47,7 +47,7 @@ public interface RelationshipSchedule extends Schedule {
    * @return a sorted Collection containing all Relationships which
    * which pass the specified UnaryPredicate
    **/
-  public Collection getMatchingRelationships(UnaryPredicate predicate);
+  Collection getMatchingRelationships(UnaryPredicate predicate);
 
   /** getMatchingRelationships - return all Relationships where the other 
    * has the specified role. getMatchingRelationships(SUBORDINATE) returns 
@@ -194,7 +194,7 @@ public interface RelationshipSchedule extends Schedule {
    * @param relationship Relationship
    * @return Role
    */
-  public Role getMyRole(Relationship relationship);
+  Role getMyRole(Relationship relationship);
 
   /** getMyRole - return role for other HasRelationships in the specified
    * relationship.
@@ -202,7 +202,7 @@ public interface RelationshipSchedule extends Schedule {
    * @param relationship Relationship
    * @return Role
    */
-  public Role getOtherRole(Relationship relationship);
+  Role getOtherRole(Relationship relationship);
 
   /** getOther  - return other (i.e. not schedule's) HasRelationships in the
    * specified relationship.
@@ -210,10 +210,11 @@ public interface RelationshipSchedule extends Schedule {
    * @param relationship Relationship
    * @return HasRelationships
    */
-  public HasRelationships getOther(Relationship relationship);
+  HasRelationships getOther(Relationship relationship);
 
-  public static class RelationshipScheduleChangeReport implements 
-    ChangeReport {
+  class RelationshipScheduleChangeReport 
+    implements ChangeReport 
+  {
     public RelationshipScheduleChangeReport() {
     }
 

@@ -110,8 +110,8 @@ public abstract class BasePersistence implements Persistence {
     }
   }
 
-  static interface PersistenceCreator {
-    public BasePersistence create() throws PersistenceException;
+  interface PersistenceCreator {
+    BasePersistence create() throws PersistenceException;
   }
 
   protected abstract SequenceNumbers readSequenceNumbers(String suffix);

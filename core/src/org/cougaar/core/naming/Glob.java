@@ -182,7 +182,7 @@ public class Glob {
         return buf;
     }
 
-    public static interface Segment {
+    public interface Segment {
         void setOff(int newOff);
         int getOff();
         int getMin(); // The minimum length of this segment

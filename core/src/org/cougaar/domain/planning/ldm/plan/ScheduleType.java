@@ -24,33 +24,33 @@ package org.cougaar.domain.planning.ldm.plan;
 /** Constant names for types of Schedules
  **/
 public interface ScheduleType {
-  static final String ASSIGNED_RELATIONSHIP = "Assigned_Relationship";
-  static final String ASSIGNED_AVAILABILITY = "Assigned_Availability";
-  static final String OTHER = "Other";
-  static final String RELATIONSHIP = "Relationship";
-  static final String ROLE = "Role";
+  String ASSIGNED_RELATIONSHIP = "Assigned_Relationship";
+  String ASSIGNED_AVAILABILITY = "Assigned_Availability";
+  String OTHER = "Other";
+  String RELATIONSHIP = "Relationship";
+  String ROLE = "Role";
   
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.TOTAL_CAPACITY
    **/
-  static final String TOTAL_CAPACITY = "Total_Capacity";
+  String TOTAL_CAPACITY = "Total_Capacity";
 
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.ALLOCATED_CAPACITY
    **/
-  static final String ALLOCATED_CAPACITY = "Allocated_Capacity";
+  String ALLOCATED_CAPACITY = "Allocated_Capacity";
 
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.AVAILABLE_CAPACITY
    **/
-  static final String AVAILABLE_CAPACITY = "Available_Capacity";
+  String AVAILABLE_CAPACITY = "Available_Capacity";
 
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.TOTAL_INVENTORY
    **/
-  static final String TOTAL_INVENTORY = "Total_Inventory";
+  String TOTAL_INVENTORY = "Total_Inventory";
 
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.ACTUAL_CAPACITY
    **/
-  static final String ACTUAL_CAPACITY = "Actual_Capacity";
+  String ACTUAL_CAPACITY = "Actual_Capacity";
 
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.LABOR
    **/
-  static final String LABOR = "Labor";
+  String LABOR = "Labor";
 }

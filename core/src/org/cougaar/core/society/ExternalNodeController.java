@@ -41,7 +41,7 @@ public interface ExternalNodeController extends Remote {
    * <p>
    * Could be modified to support multiple listeners.
    */
-  public ExternalNodeActionListener getExternalNodeActionListener()
+  ExternalNodeActionListener getExternalNodeActionListener()
     throws RemoteException;
 
   /**
@@ -49,7 +49,7 @@ public interface ExternalNodeController extends Remote {
    * <p>
    * Could be modified to support multiple listeners.
    */
-  public void setExternalNodeActionListener(
+  void setExternalNodeActionListener(
       ExternalNodeActionListener eListener) throws RemoteException;
 
   //
@@ -59,7 +59,7 @@ public interface ExternalNodeController extends Remote {
   // For example, we could define an interface:
   //   public interface ExternalNodeActionInterests implements Serializable {
   //     ..
-  //     public boolean interestedInClusterAdd();
+  //     boolean interestedInClusterAdd();
   //     ..
   //   }
   // Note that this is non-Remote, or at least the external client's
@@ -75,7 +75,7 @@ public interface ExternalNodeController extends Remote {
   /**
    * Get the host name for the controlled Node.
    */
-  public String getHostName() throws RemoteException;
+  String getHostName() throws RemoteException;
 
   /**
    * Get the <code>NodeIdentifier</code> for the controlled Node.
@@ -83,7 +83,7 @@ public interface ExternalNodeController extends Remote {
    * The NodeIdentifier's address should match the bound name of
    * this ExternalNodeController in the RMI registry.
    */
-  public NodeIdentifier getNodeIdentifier() throws RemoteException;
+  NodeIdentifier getNodeIdentifier() throws RemoteException;
 
   /**
    * Return a <code>List</code> of <code>ClusterIdentifiers</code> for 
@@ -94,7 +94,7 @@ public interface ExternalNodeController extends Remote {
    * and additional cluster information, such as the names of all loaded 
    * PlugIns, etc.
    */
-  public List getClusterIdentifiers() throws RemoteException;
+  List getClusterIdentifiers() throws RemoteException;
 
   //
   // Other information-getters will be added here, such as:

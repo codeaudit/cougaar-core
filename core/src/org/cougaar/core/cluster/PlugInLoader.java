@@ -24,7 +24,7 @@ package org.cougaar.core.cluster;
 import java.beans.Beans;
 import java.util.*;
 import org.cougaar.core.plugin.PlugInServesCluster;
-import org.cougaar.core.plugin.ParameterizedPlugIn;
+//import org.cougaar.core.plugin.ParameterizedPlugIn;
 import java.net.*;
 import java.io.*;
 import java.security.*;
@@ -45,6 +45,8 @@ import org.cougaar.core.society.KeyRing;
  * Checks for signatures on plugin jar files.
  *
  * There should be exactly one of these per VM.
+ *
+ * @deprecated Do not use - ancient code kept for historical value.
  **/
 
 class PlugInLoader {
@@ -216,12 +218,14 @@ class PlugInLoader {
       
         // check that the plugin is trusted enough.
         if (authenticatePlugIn(plugin) == true || !checkplugins) {
+          /*
           if (plugin instanceof ParameterizedPlugIn) {
             if (arguments != null) {
               // ((ParameterizedPlugIn)plugin).setParameters(arguments);
               System.err.println("Cannot set parameter with PlugInLoader");
             }
           }
+          */
           return plugin;
         }
       }

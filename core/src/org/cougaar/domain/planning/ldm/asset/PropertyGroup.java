@@ -24,7 +24,7 @@ import java.io.Serializable;
 
 public interface PropertyGroup extends Serializable, Cloneable {
 
-  public Object clone() throws CloneNotSupportedException;
+  Object clone() throws CloneNotSupportedException;
 
   /** Unlock the PropertyGroup by returning an object which
    * has setter methods that side-effect this object.

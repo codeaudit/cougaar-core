@@ -23,7 +23,8 @@ package org.cougaar.domain.planning.ldm.asset;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.NewTimeSpan;
 
-public interface NewTimePhasedPropertyGroup extends NewPropertyGroup, NewTimeSpan, TimePhasedPropertyGroup {
-
-  public void setTimeSpan(TimeSpan timeSpan);
+public interface NewTimePhasedPropertyGroup
+  extends NewPropertyGroup, NewTimeSpan, TimePhasedPropertyGroup 
+{
+  void setTimeSpan(TimeSpan timeSpan);
 }

@@ -45,8 +45,7 @@ import java.util.*;
 
 public class RootFactory
   extends ClusterObjectFactoryImpl
-  implements Factory, LdmFactory
-  // LdmFactory implements will be dropped shortly.
+  implements Factory, ClusterObjectFactory
 {
 
   /** map of propertyclassname to factorymethod **/

@@ -24,31 +24,29 @@ package org.cougaar.domain.planning.ldm.plan;
 /* Constant names for Auxiliary Query types which are used to return
  * extra information within an AllocationResult that are not necessarily
  * related to a preference
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AuxiliaryQueryType.java,v 1.4 2001-08-22 20:14:10 mthome Exp $
  */
 public interface AuxiliaryQueryType {
   
-  static final int PORT_NAME = 0;
+  int PORT_NAME = 0;
     
-  static final int FAILURE_REASON = 1;
+  int FAILURE_REASON = 1;
   
-  static final int UNIT_SOURCED = 2;
+  int UNIT_SOURCED = 2;
   
-  static final int POE_DATE = 3;
+  int POE_DATE = 3;
   
-  static final int POD_DATE = 4;
+  int POD_DATE = 4;
   
-  static final int READINESS = 5;
+  int READINESS = 5;
   
-  static final int OVERTIME = 6;
+  int OVERTIME = 6;
   
-  static final int PLANES_AVAILABLE = 7;
+  int PLANES_AVAILABLE = 7;
   
 
-  static final int LAST_AQTYPE = 7;
-  static final int AQTYPE_COUNT = LAST_AQTYPE+1;
+  int LAST_AQTYPE = 7;
+  int AQTYPE_COUNT = LAST_AQTYPE+1;
   
-  static final int UNDEFINED = -1;
+  int UNDEFINED = -1;
 }
 

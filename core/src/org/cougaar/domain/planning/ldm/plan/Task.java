@@ -194,9 +194,9 @@ public interface Task
    **/
   Context getContext();
 
-  public static interface TaskChangeReport extends ChangeReport {}
+  interface TaskChangeReport extends ChangeReport {}
 
-  public static class PreferenceChangeReport implements TaskChangeReport {
+  class PreferenceChangeReport implements TaskChangeReport {
     private int type;
     public final static int UNDEFINED_TYPE = AspectType.UNDEFINED;
     private Preference old = null;
@@ -234,7 +234,7 @@ public interface Task
     }
   }
 
-  public static class PrepositionChangeReport implements TaskChangeReport {
+  class PrepositionChangeReport implements TaskChangeReport {
     private String prep;
 
     public PrepositionChangeReport() {

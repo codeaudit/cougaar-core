@@ -25,7 +25,7 @@ import java.io.*;
 import java.lang.reflect.*;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.util.ConfigFileFinder;
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.naming.RMINameServer;
 import java.util.*;
@@ -66,7 +66,7 @@ public class Communications {
   
   private void read_alpreg() {
     try {
-      InputStream fs = ConfigFileFinder.open(configFileName);
+      InputStream fs = ConfigFinder.getInstance().open(configFileName);
       if (fs == null) {
         System.out.println("Could not find "+configFileName+": Will use defaults.");
         return;

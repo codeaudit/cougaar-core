@@ -505,7 +505,7 @@ public class ArrayMap
       public String toString() {
         return key+"="+value;
       }
-    };
+    }
 
   public String toString() {
     int n = l.size();

@@ -44,7 +44,7 @@ public interface ClusterContext
 
   LDMServesPlugIn getLDM();
 
-  public static final class DummyClusterContext implements ClusterContext {
+  final class DummyClusterContext implements ClusterContext {
     private static final ClusterIdentifier cid = new ClusterIdentifier("_Dummy");
     public ClusterIdentifier getClusterIdentifier() { return cid; }
     public UIDServer getUIDServer() { return null; }

@@ -29,11 +29,11 @@ import org.cougaar.domain.planning.ldm.LDMServesClient;
  **/
 public interface ClusterServesLogicProvider extends LDMServesClient
 {
-  public ClusterIdentifier getClusterIdentifier();
+  ClusterIdentifier getClusterIdentifier();
 
   /** Send an asynchronous message.
    **/
-  public void sendMessage(ClusterMessage message);
+  void sendMessage(ClusterMessage message);
 
   /** @return current scenario time in milliseconds **/
   long currentTimeMillis();

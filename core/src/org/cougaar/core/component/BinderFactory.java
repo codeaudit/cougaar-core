@@ -38,15 +38,17 @@ public interface BinderFactory extends Component
   /** Lowest-priority for a BinderFactory.  Default infrastructure
    * BinderFactories are generally at this level.
    **/
-  public final static int MIN_PRIORITY = 0;
+  int MIN_PRIORITY = 0;
+
   /** Typical intermediate priority for "real-world" BinderFactories.
    * Higher priorities should be used mainly for BinderFactoryWrappers.
    **/
-  public final static int NORM_PRIORITY = 50;
+  int NORM_PRIORITY = 50;
+
   /** Highest priority, for use by very important specific
    * BinderFactoryWrappers.
    **/
-  public final static int MAX_PRIORITY = 100;
+  int MAX_PRIORITY = 100;
 
   /** The priority of this binder factory.  The range of values
    * is specified by the MIN_PRIORITY to MAX_PRIORITY.
@@ -72,14 +74,14 @@ public interface BinderFactory extends Component
    **/
   Binder getBinder(Object child);
 
-  public final static class BFComparator implements Comparator {
+  final class BFComparator implements Comparator {
     public int compare(Object o1, Object o2) {
       return ((BinderFactory)o2).getPriority() - ((BinderFactory)o1).getPriority();
     }
   }
 
   /** a comparator for keeping Binder Factories sorted **/
-  final static Comparator comparator = new BFComparator();
+  Comparator comparator = new BFComparator();
 
   /** Get the BinderFactory's ComponentFactory.  
    * May return null if the BinderFactory doesn't make components.

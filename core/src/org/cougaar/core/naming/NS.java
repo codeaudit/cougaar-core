@@ -32,7 +32,7 @@ import org.cougaar.core.society.NameServer;
  **/
 
 public interface NS extends Remote {
-  public static final String DirSeparator = "/";
+  String DirSeparator = "/";
   
   void clear(String directory) throws RemoteException;
   void clear(NameServer.Directory directory) throws RemoteException;

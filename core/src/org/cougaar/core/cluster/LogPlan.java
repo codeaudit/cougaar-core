@@ -108,7 +108,7 @@ public class LogPlan
 
   /** @deprecated Use findPlanElement(UID uid) instead. **/
   public PlanElement findPlanElement(String id) {
-    return planElementSet.findPlanElement(new UID(id));
+    return planElementSet.findPlanElement(UID.toUID(id));
   }
 
   public PlanElement findPlanElement(UID uid) {
@@ -125,7 +125,7 @@ public class LogPlan
 
   /** @deprecated Use findTask(UID uid) instead. **/
   public Task findTask(String id) {
-    return findTask(new UID(id));
+    return findTask(UID.toUID(id));
   }
 
   public Task findTask(UID uid) {

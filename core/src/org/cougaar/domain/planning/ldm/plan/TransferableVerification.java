@@ -25,9 +25,9 @@ import org.cougaar.core.society.UID;
 
 /** Directive to verify Transferables
  * 
- * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: TransferableVerification.java,v 1.3 2001-08-22 20:14:17 mthome Exp $
  **/
-public interface TransferableVerification extends Directive{
-  public UID getTransferableUID();
+public interface TransferableVerification 
+  extends Directive
+{
+  UID getTransferableUID();
 }

@@ -814,7 +814,7 @@ public class Asset extends org.cougaar.domain.planning.ldm.asset.AssetSkeleton
 
   // ChangeReport tracking
   //
-  public static interface AssetChangeReport extends ChangeReport {}
+  public interface AssetChangeReport extends ChangeReport {}
 }
 
 

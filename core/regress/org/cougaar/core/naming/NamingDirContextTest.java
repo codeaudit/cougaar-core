@@ -53,7 +53,7 @@ public class NamingDirContextTest extends TestCase {
     subtreeSearchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
   }
 
-  public static interface TestBindData {
+  public interface TestBindData {
     String getName();
     Object getObject();
     Attributes getAttributes() throws NamingException;

@@ -35,11 +35,11 @@ import java.awt.GridBagConstraints;
 public abstract class MinMaxPanel extends JPanel {
   private JCheckBox enable = new JCheckBox();
   private JProgressBar progress = new JProgressBar() {
-    public Dimension getPreferredSize() {
-      return new Dimension(100, super.getPreferredSize().height);
-    }
-  };
-;
+      public Dimension getPreferredSize() {
+        return new Dimension(100, super.getPreferredSize().height);
+      }
+    };
+
   private Spinner minSpinner = new Spinner(0, 1000, 1000);
   private Spinner maxSpinner = new Spinner(0, 1000, 1000);
 

@@ -51,34 +51,34 @@ import org.w3c.dom.Document;
  * @see OperatorFactory
  */
 public interface Operator 
-    extends UnaryPredicate, XMLizable {
-
+    extends UnaryPredicate, XMLizable 
+{
   /**
    * Constants for <code>Operator</code> <tt>parse</tt> and 
    * <tt>toString</tt> style.
    */
-  public static final int PAREN_FLAG =   (1 << 0);
-  public static final int XML_FLAG =     (1 << 1);
-  public static final int PRETTY_FLAG =  (1 << 2);
-  public static final int VERBOSE_FLAG = (1 << 3);
+  int PAREN_FLAG =   (1 << 0);
+  int XML_FLAG =     (1 << 1);
+  int PRETTY_FLAG =  (1 << 2);
+  int VERBOSE_FLAG = (1 << 3);
 
   /**
    * Default style for <tt>toString</tt> -- currently pretty-printed XML.
    */
-  public static final int DEFAULT_STYLE = 
+  int DEFAULT_STYLE = 
     (XML_FLAG | PRETTY_FLAG);
 
   /**
    * <tt>execute</tt> method from <code>UnaryPredicate</code>.
    */
-  public boolean execute(final Object o);
+  boolean execute(final Object o);
 
   /**
    * <tt>operate</tt> method acts like <tt>execute</tt>, but returns
    * an <code>Object</code> -- <code>UnaryPredicate</code> users should
    * use <tt>execute</tt> instead!
    */
-  public Object operate(final Object o);
+  Object operate(final Object o);
 
   /**
    * Sets a constant value in the <code>Operator</code>, which is accessed
@@ -105,7 +105,7 @@ public interface Operator
    * @param key the "get" constant identifier
    * @param val the new value of the constant
    */
-  public void setConst(final String key, final Object val);
+  void setConst(final String key, final Object val);
 
   /**
    * <pre>
@@ -124,12 +124,12 @@ public interface Operator
    * @see #allows
    * @see #equals
    */
-  public boolean implies(final Operator oper);
+  boolean implies(final Operator oper);
 
   /**
    * Equivalent to <tt>oper.implies(this)</tt>.
    */
-  public boolean impliedBy(final Operator oper);
+  boolean impliedBy(final Operator oper);
 
   /**
    * <pre>
@@ -151,7 +151,7 @@ public interface Operator
    * @see #implies
    * @see #equals
    */
-  public boolean allows(final Operator oper);
+  boolean allows(final Operator oper);
 
   /**
    * <pre>
@@ -167,7 +167,7 @@ public interface Operator
    * @see #implies
    * @see #allows
    */
-  public boolean equals(final Operator oper);
+  boolean equals(final Operator oper);
 
   /**
    * Convert <code>this</code> to a <code>String</code>.
@@ -176,14 +176,14 @@ public interface Operator
    *    (XML_FLAG | VERBOSE_FLAG) or
    *    (PAREN_FLAG | PRETTY_FLAG), etc
    */
-  public String toString(final int style);
+  String toString(final int style);
 
   /**
    * Get an XML <code>Element</code> representation in the given <tt>style</tt>.
    * <p>
    * @param style currently only VERBOSE_FLAG is used
    */
-  public Element getXML(Document doc, final int style);
+  Element getXML(Document doc, final int style);
 
   /**
    * Get an XML <code>Element</code> representation in the 
@@ -191,5 +191,5 @@ public interface Operator
    * <p>
    * <tt>getXML</tt> method from <code>XMLizable</code>.
    */
-  public Element getXML(Document doc);
+  Element getXML(Document doc);
 }

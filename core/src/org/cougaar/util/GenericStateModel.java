@@ -26,21 +26,21 @@ package org.cougaar.util;
  *  clusters, components and plugins.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: GenericStateModel.java,v 1.5 2001-08-22 20:14:21 mthome Exp $
+ * @version $Id: GenericStateModel.java,v 1.6 2001-09-06 14:59:59 mthome Exp $
  */
 
 public interface GenericStateModel {
 
   /** UNINITIALIZED state - should never be returned by getModelState() **/
-  public static final int UNINITIALIZED = -1;
+  int UNINITIALIZED = -1;
   /** initialized but not yet attached to an enclosing object **/
-  public static final int UNLOADED = 1;
-  /** attached to a cluster **/
-  public static final int LOADED = 2;
+  int UNLOADED = 1;
+  /** attached to a parent container **/
+  int LOADED = 2;
   /** possibly doing work **/
-  public static final int ACTIVE = 3;
+  int ACTIVE = 3;
   /** forbidden from doing new work, but may be reactivated **/
-  public static final int IDLE = 4;
+  int IDLE = 4;
 
   /** Initialize.  Transition object from undefined to UNLOADED state.
    * Treat initialize() as an extended constructor.

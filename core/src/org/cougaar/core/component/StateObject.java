@@ -51,7 +51,7 @@ public interface StateObject
    *
    * @return null if this Component currently has no state
    */
-  public Object getState();
+  Object getState();
 
   /**
    * Set-state is called by the parent Container if the state
@@ -60,6 +60,6 @@ public interface StateObject
    * The state Object is whatever this StateComponent provided
    * in it's <tt>getState()</tt> implementation.
    */
-  public void setState(Object o);
+  void setState(Object o);
 
 }

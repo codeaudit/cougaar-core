@@ -27,7 +27,7 @@ package org.cougaar.core.society;
  **/
 
 public interface MessageStatistics {
-  public static final int[] BIN_SIZES = {
+  int[] BIN_SIZES = {
     100,
     200,
     500,
@@ -39,8 +39,10 @@ public interface MessageStatistics {
     50000,
     100000
   };
-  public static final int NBINS = BIN_SIZES.length;
-  public class Statistics {
+
+  int NBINS = BIN_SIZES.length;
+
+  class Statistics {
     public double averageMessageQueueLength;
     public long totalMessageBytes;
     public long totalMessageCount;

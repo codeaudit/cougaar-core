@@ -25,8 +25,6 @@ import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.cluster.ClusterIdentifier;
 
 /** Transferable 
- * @author   ALPINE <alpine-software@bbn.com>
- * @version  $Id: Transferable.java,v 1.3 2001-08-22 20:14:16 mthome Exp $
  *
  * Interface that describes the methods an object needs to be
  * transfered from one cluster to another using the Transferable Logic
@@ -36,20 +34,20 @@ public interface Transferable extends Cloneable, UniqueObject {
   /** A Transferable must be fully cloneable, otherwise unwanted side effects
    * may show up when object replicas are on clusters in the same VM
    **/
-  public Object clone();
+  Object clone();
 
   /** 
    * A "close enough" version of equals() used by the Logic Provider
    * to find the local version of an object transfered from another cluster
    **/
-  public boolean same(Transferable other);
+  boolean same(Transferable other);
 
   /**
    * Set all relevent parameters to the values in other.
    * Almost a deep copy.
    * @param other - must be of same type as this
    **/
-  public void setAll(Transferable other);
+  void setAll(Transferable other);
 
-  public boolean isFrom(ClusterIdentifier src);
+  boolean isFrom(ClusterIdentifier src);
 }

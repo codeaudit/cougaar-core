@@ -30,7 +30,7 @@ public interface ConstraintEvent
    * This value is used to denote an unknown aspect value in all
    * constraint events.
    **/
-  public static final double NOVALUE = Double.NaN;
+  double NOVALUE = Double.NaN;
 
   /* getValue returns the allocation result of the
    * aspect when the task is constraining or
