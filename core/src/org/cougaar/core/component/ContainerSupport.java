@@ -176,10 +176,19 @@ public abstract class ContainerSupport
 
   /**
    * Get an Iterator of all child Binders.
+   *
+   * @see #listBinders
+   */
+  protected Iterator binderIterator() {
+    return listBinders().iterator();
+  }
+
+  /**
+   * Get a List of all child Binders.
    * <p>
    * Need a "ContainerSupport.lock()" to make this safe...
    */
-  protected Iterator binderIterator() {
+  protected List listBinders() {
     synchronized(boundComponents) {
       int l = boundComponents.size();
       ArrayList tmp = new ArrayList(l);
@@ -187,7 +196,7 @@ public abstract class ContainerSupport
         BoundComponent bc = (BoundComponent) boundComponents.get(i);
         tmp.add(bc.getBinder());
       }
-      return tmp.iterator();
+      return tmp;
     }
   }
 
