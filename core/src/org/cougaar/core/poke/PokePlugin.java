@@ -103,8 +103,6 @@ public class PokePlugin implements PluginBase, BlackboardClient {
 
     if (myScheduler != null) {
       Pokable pokeMe = new PluginCallback();
-      // Tell him how to reach me
-      myScheduler.setPokable(this, pokeMe);
       // Tell him to schedule me, and get his callback object
       schedulerProd = myScheduler.register(pokeMe);
     }
