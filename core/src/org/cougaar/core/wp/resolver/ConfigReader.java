@@ -116,6 +116,9 @@ public class ConfigReader {
   private static void readConfig() {
     logger = LoggerFactory.getInstance().createLogger(
         ConfigReader.class);
+    if (logger.isDetailEnabled()) {
+      logger.detail("reading config");
+    }
     try {
       read_file(FILENAME);
       read_props();
@@ -196,6 +199,9 @@ public class ConfigReader {
    * since this is the old PSP server port.
    */
   protected static AddressEntry parse(String line) {
+    if (logger.isDetailEnabled()) {
+      logger.detail("parse("+line+")");
+    }
     if (line.startsWith("#") ||
         line.startsWith("[") ||
         line.startsWith("//")) {
@@ -211,11 +217,17 @@ public class ConfigReader {
         "hostname".equals(name)) {
       // save for later
       host = value;
+      if (logger.isDetailEnabled()) {
+        logger.detail("host="+host);
+      }
       return null;
     }
     if ("port".equals(name)) {
       // save for later
       port = Integer.parseInt(value);
+      if (logger.isDetailEnabled()) {
+        logger.detail("port="+port);
+      }
       return null;
     } 
     if ("alias".equals(name) ||
@@ -226,6 +238,9 @@ public class ConfigReader {
     // trim off the old psp server port
     if (value.endsWith(":5555")) {
       value = value.substring(0, value.length()-5); 
+      if (logger.isDetailEnabled()) {
+        logger.detail("removed trailing :5555");
+      }
     }
     // parse
     int atIdx = value.indexOf('@');
@@ -267,28 +282,59 @@ public class ConfigReader {
     URI uri = URI.create(suri);
     AddressEntry ae = AddressEntry.getAddressEntry(
         name, type, uri);
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "parsed "+ae+
+          " (name="+name+
+          " value="+value+
+          " atIdx="+atIdx+
+          " comIdx="+comIdx+
+          " colIdx="+colIdx+
+          " col2Idx="+col2Idx+
+          " suri="+suri+")");
+    }
     return ae;
   }
 
   private static void read_file(String filename) {
+    if (logger.isDetailEnabled()) {
+      logger.detail("read_file("+filename+")");
+    }
     try {
       InputStream fs = ConfigFinder.getInstance().open(filename);
-      if (fs != null) {
-        BufferedReader in = 
-          new BufferedReader(new InputStreamReader(fs));
-        String line = null;
-        while ((line = in.readLine()) != null) {
-          add(line);
+      if (fs == null) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("unable to open file "+filename);
         }
-        in.close();
-        if (host != null && 0 < port) {
-          // backwards compatibility!
-          add("WP="+host+":"+port);
-        }
-        host = null;
-        port = -1;
+        return;
       }
+      if (logger.isDetailEnabled()) {
+        logger.detail("reading file "+filename);
+      }
+      BufferedReader in = 
+        new BufferedReader(new InputStreamReader(fs));
+      String line = null;
+      while ((line = in.readLine()) != null) {
+        add(line);
+      }
+      if (logger.isDetailEnabled()) {
+        logger.detail("closing file "+filename);
+      }
+      in.close();
+      if (host != null && 0 < port) {
+        // backwards compatibility!
+        if (logger.isDetailEnabled()) {
+          logger.detail(
+              "adding backwards compatible "+host+":"+port);
+        }
+        add("WP="+host+":"+port);
+      }
+      host = null;
+      port = -1;
     } catch (FileNotFoundException fnfe) {
+      if (logger.isDetailEnabled()) {
+        logger.detail("file not found "+filename, fnfe);
+      }
     } catch(Exception e) {
       if (logger.isErrorEnabled()) {
         logger.error("Failed read of "+filename, e);
@@ -297,8 +343,15 @@ public class ConfigReader {
   }
 
   private static void read_props() {
+    if (logger.isDetailEnabled()) {
+      logger.detail("read_props()");
+    }
+
     String server = System.getProperty(SERVER_PROP);
     if (server != null) {
+      if (logger.isDetailEnabled()) {
+        logger.detail("adding \"WP="+server+"\" from "+SERVER_PROP);
+      }
       add("WP="+server);
     }
 
@@ -312,11 +365,18 @@ public class ConfigReader {
       String name = key.substring(PROP_PREFIX.length());
       String value = props.getProperty(key);
       String line = name+"="+value;
+      if (logger.isDetailEnabled()) {
+        logger.detail("adding \""+line+"\" from "+PROP_PREFIX+"*");
+      }
       add(line);
     }
 
     if (host != null && 0 < port) {
       // backwards compatibility!
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "adding backwards compatible "+host+":"+port);
+      }
       add("WP="+host+":"+port);
     }
     host = null;
