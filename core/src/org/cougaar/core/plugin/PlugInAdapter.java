@@ -114,6 +114,15 @@ public abstract class PlugInAdapter
     return alarmService;
   }
 
+  // demo control service
+  private DemoControlService demoControlService = null;
+  public final void setDemoControlService(DemoControlService dcs) {
+    demoControlService = dcs;
+  }
+  protected final DemoControlService getDemoControlService() {
+    return demoControlService;
+  }
+
   //
   // Implement (some of) BlackboardClient
   //
@@ -326,17 +335,22 @@ public abstract class PlugInAdapter
       // evil ones
       public Distributor getDistributor() { throw new RuntimeException("Should not be called"); }
       public void schedulePlugIn(ScheduleablePlugIn p) {throw new RuntimeException("Should not be called");}
-      public void setTime(long time) {throw new RuntimeException("Should not be called");}
-      public void setTime(long time, boolean foo) {throw new RuntimeException("Should not be called");}
-      public void setTimeRate(double rate) {throw new RuntimeException("Should not be called");}
-      public void advanceTime(long period) {throw new RuntimeException("Should not be called");}
-      public void advanceTime(long period, boolean foo) {throw new RuntimeException("Should not be called");}
-      public void advanceTime(long period, double rate) {throw new RuntimeException("Should not be called");}
-      public void advanceTime(ExecutionTimer.Change[] changes) {throw new RuntimeException("Should not be called");}
-      public double getExecutionRate() { throw new RuntimeException("Should not be called"); }
+
+      // DemoControl service
+      public void setTime(long time) { getDemoControlService().setTime(time);}
+      public void setTime(long time, boolean foo) { getDemoControlService().setTime(time,foo);}
+      public void setTimeRate(double rate) { getDemoControlService().setTimeRate(rate); }
+      public void advanceTime(long period) { getDemoControlService().advanceTime(period); }
+      public void advanceTime(long period, boolean foo) { getDemoControlService().advanceTime(period, foo); }
+      public void advanceTime(long period, double rate) { getDemoControlService().advanceTime(period, rate); }
+      public void advanceTime(ExecutionTimer.Change[] changes) { getDemoControlService().advanceTime(changes); }
+      public double getExecutionRate() { return getDemoControlService().getExecutionRate(); }
+
+      // alarm service
       public long currentTimeMillis() { throw new RuntimeException("Should not be called"); }
       public void addAlarm(Alarm alarm) {throw new RuntimeException("Should not be called");}
       public void addRealTimeAlarm(Alarm a) {throw new RuntimeException("Should not be called");}
+
       public MetricsSnapshot getMetricsSnapshot() { throw new RuntimeException("Should not be called");  }
       public java.sql.Connection getDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
       public void releaseDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}

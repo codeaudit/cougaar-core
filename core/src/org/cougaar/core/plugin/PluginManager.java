@@ -47,6 +47,9 @@ public class PluginManager
     childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
     childContext.addService(AlarmService.class, new AlarmServiceProvider(agent));
     childContext.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
+
+    // hack service for demo control
+    childContext.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
