@@ -292,6 +292,13 @@ public class SchedulerServiceProvider
 
     synchronized void suspend() {
       if (running) {
+        // BUG 842: disable MultiScheduler suspend.  This is the low-risk
+        // solution until the better fix is ready and well tested.  See 
+        // the bug report for further details.
+        System.err.println(
+            "Warning: Bug 842"+
+            " (scheduler \"suspend\" disabled, okay to proceed)");
+        /*
         running = false;
         synchronized (runnables) {
           runnables.notifyAll();
@@ -304,6 +311,7 @@ public class SchedulerServiceProvider
         }
         //schedulerThread = null;
         threads = null;
+        */
       }
     }
 
