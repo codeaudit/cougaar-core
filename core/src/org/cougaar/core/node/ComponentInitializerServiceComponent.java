@@ -68,7 +68,12 @@ implements Component
     try {
       ServiceProvider sp;
       if (dbInit == null) {
-        sp = new FileComponentInitializerServiceProvider();
+        String prop = System.getProperty("org.cougaar.core.node.XML");
+        if(prop != null && prop.equals("true")) {
+          sp = new XMLFileComponentInitializerServiceProvider();
+        } else {
+          sp = new FileComponentInitializerServiceProvider();
+        }
       } else {
         sp = new DBComponentInitializerServiceProvider(dbInit);
       }
