@@ -29,14 +29,14 @@ public interface LoggerController {
    * <p>
    * This should be moved to a different interface...
    */
-  public LoggerController getLoggerController(String name);
+  LoggerController getLoggerController(String name);
 
   /**
    * Special "static" method to get the names of all loggers.
    * <p>
    * This should be moved to a different interface...
    */
-  public Enumeration getAllLoggerNames();
+  Enumeration getAllLoggerNames();
 
   /**
    * Get the logging level.
@@ -45,7 +45,7 @@ public interface LoggerController {
    *
    * @see Logger
    */
-  public int getLoggingLevel();
+  int getLoggingLevel();
 
   /**
    * Set the logging level.
@@ -54,7 +54,7 @@ public interface LoggerController {
    *
    * @see Logger
    */
-  public void setLoggingLevel(int level);
+  void setLoggingLevel(int level);
 
   /**
    * Get an array of all LogTargets for this logger.
@@ -62,7 +62,7 @@ public interface LoggerController {
    * return an array of {@link LogTarget} representing all
    * the various logging destinations.
    */
-  public LogTarget[] getLogTargets();
+  LogTarget[] getLogTargets();
 
   /**
    * Add a logging destination.
@@ -73,16 +73,16 @@ public interface LoggerController {
    * output stream object for STREAM.
    *
    */
-  public void addLogTarget(
+  void addLogTarget(
       int outputType, Object outputDevice);
 
   /**
    * Add a console output type to this logger.
    * <p>
-   * This is equivalent to:<pre>
+   * This is equivalent to:<pre/>
    *   addLogTarget(LogTarget.CONSOLE, null);</pre>
    */
-  public void addConsole();
+  void addConsole();
 
   /**
    * Remove a logging output type.
@@ -93,7 +93,7 @@ public interface LoggerController {
    * type being removed.  Null for Console, filename for FILE, the actual
    * output stream object for STREAM.
    */
-  public boolean removeLogTarget(
+  boolean removeLogTarget(
       int outputType, Object outputDevice);
 
   /**
@@ -109,7 +109,7 @@ public interface LoggerController {
    * type being removed.  Null for Console, filename for FILE,
    * the String identifier name associated with the output stream.
    */
-  public boolean removeLogTarget(
+  boolean removeLogTarget(
       int outputType, String deviceString);
 
 }
