@@ -56,9 +56,7 @@ public final class ThreadServiceImpl
     private static final int MaxRunningCountDefault = Integer.MAX_VALUE;
 
 
-    public ThreadServiceImpl(ServiceBroker sb, 
-			     String name) 
-    {
+    public ThreadServiceImpl(ServiceBroker sb, String name) {
 	LoggingService loggingService = (LoggingService)
 	    sb.getService(this, LoggingService.class, null);
 	
@@ -133,7 +131,7 @@ public final class ThreadServiceImpl
 	{
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		ControllablePool pool = proxy.threadPool;
+		ControllablePool pool = proxy.pool;
 		pool.setQueueComparator(comparator);
 	    }
 	}
@@ -142,14 +140,14 @@ public final class ThreadServiceImpl
 	public void setMaxRunningThreadCount(ThreadService svc, int count) {
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		proxy.threadPool.setMaxRunningThreadCount(count);
+		proxy.pool.setMaxRunningThreadCount(count);
 	    }
 	}
 
 	public int maxRunningThreadCount(ThreadService svc) {
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		return proxy.threadPool.maxRunningThreadCount();
+		return proxy.pool.maxRunningThreadCount();
 	    } else {
 		return -1;
 	    }
@@ -158,7 +156,7 @@ public final class ThreadServiceImpl
 	public int runningThreadCount(ThreadService svc) {
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		return proxy.threadPool.runningThreadCount();
+		return proxy.pool.runningThreadCount();
 	    } else {
 		return -1;
 	    }
@@ -168,7 +166,7 @@ public final class ThreadServiceImpl
 	public int activeThreadCount(ThreadService svc) {
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		return proxy.threadPool.activeThreadCount();
+		return proxy.pool.activeThreadCount();
 	    } else {
 		return -1;
 	    }
@@ -178,7 +176,7 @@ public final class ThreadServiceImpl
 	public int pendingThreadCount(ThreadService svc) {
 	    if (svc != null && svc instanceof ThreadServiceProxy) {
 		ThreadServiceProxy proxy = (ThreadServiceProxy) svc;
-		return proxy.threadPool.pendingThreadCount();
+		return proxy.pool.pendingThreadCount();
 	    } else {
 		return -1;
 	    }
@@ -515,12 +513,13 @@ public final class ThreadServiceImpl
      * The proxy implementation of Thread Service.
      */
     private static class ThreadServiceProxy implements ThreadService {
-	private ControllablePool threadPool;
+	private ControllablePool pool;
 	private ArrayList listeners;
 	private ThreadGroup group;
 	private TimerRunnable timer;
 	private LoggingService loggingService;
 	private ThreadServiceProxy parent;
+	private ArrayList children;
 
 	private ThreadServiceProxy(ThreadService parentService,
 				   String name,
@@ -529,10 +528,13 @@ public final class ThreadServiceImpl
 	    this.loggingService = loggingService;
 	    listeners = new ArrayList();
 	    parent = (ThreadServiceProxy) parentService;
-	    if (parent == null)
+	    children = new ArrayList();
+	    if (parent == null) {
 		group = new ThreadGroup(name);
-	    else 
+	    } else {
+		parent.addChild(this);
 		group = new ThreadGroup(parent.group, name);
+	    }
 
 	    timer = new TimerRunnable(this, loggingService);
 
@@ -541,7 +543,7 @@ public final class ThreadServiceImpl
 	    int maxSize = PropertyParser.getInt(MaxPoolSizeProp, 
 						MaxPoolSizeDefault);
 
-	    threadPool = new ControllablePool(this,
+	    pool = new ControllablePool(this,
 					      group, 
 					      initialSize,
 					      maxSize);
@@ -552,6 +554,9 @@ public final class ThreadServiceImpl
 	    thread.start();
 	}
 
+	private synchronized void addChild(ThreadServiceProxy child) {
+	    children.add(child);
+	}
 
 	private Thread consumeThread(Thread thread,  Object consumer) {
 	    ((ControllableThread) thread).consumer = consumer;
@@ -600,14 +605,14 @@ public final class ThreadServiceImpl
 
 
 	public Thread getThread(Object consumer, Runnable runnable) {
-	    return consumeThread(threadPool.getThread(runnable),  consumer);
+	    return consumeThread(pool.getThread(runnable),  consumer);
 	}
 
 	public Thread getThread(Object consumer, 
 				Runnable runnable, 
 				String name) 
 	{
-	    return consumeThread(threadPool.getThread(runnable, name), 
+	    return consumeThread(pool.getThread(runnable, name), 
 				 consumer);
 	}
 
