@@ -34,6 +34,7 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.AgentQuiescenceStateService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.core.service.QuiescenceReportService;
@@ -94,6 +95,9 @@ implements Component
           sb);
     rootsb.addService(QuiescenceReportService.class, qrsp);
     rootsb.addService(QuiescenceReportForDistributorService.class, qrsp);
+    // Service for querying the quiescence / enabled state of agents, used
+    // by the QuiescenceStateServlet
+    rootsb.addService(AgentQuiescenceStateService.class, qrsp);
 
     // mark our node as non-quiescent until we are started, which
     // will occur after all other components have been loaded.

@@ -64,13 +64,28 @@ class QuiescenceState {
   public Set getIncomingEntrySet() {
     return getIncomingMessageNumbers().entrySet();
   }
-
+  
   public boolean isEnabled() {
     return enabled;
   }
 
   public void setEnabled(boolean newEnabled) {
     enabled = newEnabled;
+  }
+
+  /**
+   * Is the agent "alive" - as in, not marked as dead cause its a duplicate
+   **/
+  public boolean isAlive() {
+    return isAlive;
+  }
+
+  /**
+   * Called when the agent is dead - another instance of the agent elsewhere
+   * is the real instance, and this one should be ignored. Not un-doable.
+   **/
+  public void setDead() {
+    isAlive = false;
   }
 
   public boolean isQuiescent() {
@@ -81,14 +96,14 @@ class QuiescenceState {
     if (isQuiescent) {
       nonQuiescenceCount--;
       if (logger.isDetailEnabled()) {
-        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + me);
+        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
       } else if (nonQuiescenceCount == 0 && logger.isDebugEnabled()) {
         logger.debug(me + " is quiescent");
       }
     } else {
       nonQuiescenceCount++;
       if (logger.isDetailEnabled()) {
-        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + me);
+        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
       } else if (nonQuiescenceCount == 1 && logger.isDebugEnabled()) {
         logger.debug(me + " is not quiescent");
       }
@@ -142,4 +157,7 @@ class QuiescenceState {
   private MessageAddress me;
   private boolean enabled = false;
   private Logger logger;
+  // Until we have agent suicide, agents can be local, enabled, but dead -- no one
+  // should be communicating with them, and we don't want to consider them for local quiescence
+  private boolean isAlive = true;
 }

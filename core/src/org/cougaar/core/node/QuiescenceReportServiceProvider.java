@@ -31,13 +31,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.AgentQuiescenceStateService;
 import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.core.service.QuiescenceReportService;
@@ -56,20 +57,20 @@ import org.cougaar.util.log.Logging;
  * this change.
  *
  * @property org.cougaar.core.node.quiescenceAnnounceDelay specifies the 
- * number of millisecond that the Node waits when it thinks it has become 
+ * number of milliseconds that the Node waits when it thinks it has become 
  * quiescent to send an event announcing the fact. This suppresses 
  * possible toggling. Default is 20 seconds.
  **/
 class QuiescenceReportServiceProvider implements ServiceProvider {
   private Map quiescenceStates = new HashMap();
   private boolean isQuiescent = false;
-  /**
-   * A List of all agents local to this node regardless of whether
-   * they are "active" or not.
-   **/
+
+  // Predicate to get the quiscence states for agents that have enabled
+  // their QRS and have not been marked as dead (duplicated elsewhere)
   private UnaryPredicate enabledQuiescenceStatePredicate = new UnaryPredicate() {
       public boolean execute(Object o) {
-        return ((QuiescenceState) o).isEnabled();
+	QuiescenceState qs = (QuiescenceState)o;
+        return (qs.isEnabled() && qs.isAlive());
       }
     };
   private Logger logger;
@@ -77,6 +78,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   private AgentContainer agentContainer;
   private ServiceBroker sb;
   private QuiescenceAnnouncer quiescenceAnnouncer;
+  private AgentQuiescenceStateService aqsService = null;
 
   private static final long ANNOUNCEMENT_DELAY = Long.parseLong(System.getProperty("org.cougaar.core.node.quiescenceAnnounceDelay", "20000"));
 
@@ -112,6 +114,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     if (serviceClass == QuiescenceReportForDistributorService.class) {
       return new QuiescenceReportForDistributorServiceImpl(requestor.toString());
     }
+    if (serviceClass == AgentQuiescenceStateService.class) {
+      if (aqsService == null)
+	aqsService = new AgentQuiescenceStateServiceImpl();
+      return aqsService;
+    }
     throw new IllegalArgumentException("Cannot provide " + serviceClass.getName());
   }
 
@@ -122,6 +129,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       QuiescenceReportService quiescenceReportService = (QuiescenceReportService) service;
       quiescenceReportService.setQuiescentState();
     }
+    // Nothing to do to release the aqsService
   }
 
   private static void setMessageMap(MessageAddress me, Map messageNumbers, Map newMap) {
@@ -135,7 +143,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
   }
 
-  private QuiescenceState getQuiescenceState(MessageAddress me) {
+  private synchronized QuiescenceState getQuiescenceState(MessageAddress me) {
     QuiescenceState quiescenceState = (QuiescenceState) quiescenceStates.get(me);
     if (quiescenceState == null) {
       quiescenceState = new QuiescenceState(me, logger);
@@ -145,7 +153,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   }
 
   /** Just like getQuiescenceState, except does not create empty ones for misses **/
-  private QuiescenceState accessQuiescenceState(MessageAddress me) {
+  private synchronized QuiescenceState accessQuiescenceState(MessageAddress me) {
     return (QuiescenceState) quiescenceStates.get(me);
   }
 
@@ -156,7 +164,8 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   private boolean isLocalAgent(MessageAddress otherAgent) {
     QuiescenceState otherState = (QuiescenceState) quiescenceStates.get(otherAgent);
     if (otherState == null) return false;
-    return otherState.isEnabled();
+    // Also return false if the otherState.isEnabled() && otherState's agent isDead
+    return (otherState.isEnabled() && otherState.isAlive());
   }
 
   /**
@@ -209,11 +218,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     checkQuiescence();
   }
 
-  private synchronized void setQuiescent(QuiescenceState quiescenceState, boolean isQuiescent) {
-    quiescenceState.setQuiescent(isQuiescent);
-    if (isQuiescent) {
+  private synchronized void setQuiescent(QuiescenceState quiescenceState, boolean isAgentQuiescent) {
+    quiescenceState.setQuiescent(isAgentQuiescent);
+    if (isAgentQuiescent && quiescenceState.isEnabled() && quiescenceState.isAlive()) {
       checkQuiescence();
-    } else if (quiescenceState.isEnabled()) {
+    } else if (quiescenceState.isEnabled() && quiescenceState.isAlive()) {
       // Only cancel quiescence if the state that announced it was not quiescent isEnabled
       // This prevents early-loading plugins from toggling quiescence of the Node
       cancelQuiescence();
@@ -222,6 +231,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
   private boolean allAgentsAreQuiescent() {
     boolean result = true;
+    // Loop through each Agent whose quiescence we care about
     for (Iterator theseStates = getQuiescenceStatesIterator(); theseStates.hasNext(); ) {
       QuiescenceState thisAgentState = (QuiescenceState) theseStates.next();
       if (!thisAgentState.isQuiescent()) {
@@ -272,7 +282,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
         MessageAddress thatAgent = (MessageAddress) thisNumber.getKey();
         QuiescenceState thatAgentState = accessQuiescenceState(thatAgent);
-        if (thatAgentState != null && thatAgentState.isEnabled()) {
+        if (thatAgentState != null && thatAgentState.isEnabled() && thatAgentState.isAlive()) {
           number_compares++;
           Integer sentNumber = thisAgentState.getOutgoingMessageNumber(thatAgent);
           Integer rcvdNumber = thatAgentState.getIncomingMessageNumber(thisAgent);
@@ -318,6 +328,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     // of other nodes.
     StringBuffer ms = new StringBuffer();
     ms.append("<node name=\"").append(nodeName).append("\" quiescent=\"true\">").append(EOL);
+    // Loop over relevant agents to get message numbers
     for (Iterator states = getQuiescenceStatesIterator(); states.hasNext(); ) {
       QuiescenceState quiescenceState = (QuiescenceState) states.next();
       ms.append(" <agent name=\"")
@@ -495,5 +506,92 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false);
       isQuiescent = false;
     }
+  }
+
+  private synchronized MessageAddress[] listQuiescenceStates() {
+    // return a new collection from quiescenceStates.keySet();
+    Collection states = quiescenceStates.keySet();
+    return (MessageAddress[])states.toArray(new MessageAddress[states.size()]);
+  }
+
+  // Put this in separate synch method so can ensure setDead is protected, and can call checkQuiescence
+  private synchronized void setAgentDead(MessageAddress agentAddress) {
+    QuiescenceState qState = accessQuiescenceState(agentAddress);
+    if (qState == null)
+      return;
+    qState.setDead();
+    checkQuiescence();
+  }
+
+  // Service to support servlet to mark agents as dead (and view all agent registered)
+  private class AgentQuiescenceStateServiceImpl implements AgentQuiescenceStateService {
+    /** Is the Node altogether quiescent **/
+    public boolean isNodeQuiescent() {
+      return QuiescenceReportServiceProvider.this.isQuiescent;
+    }
+
+    /**
+     * List the local agents with quiescence states for the Node to consider
+     * @return an array of MessageAddresses registered with the Nodes QuiescenceReportService
+     **/
+    public MessageAddress[] listAgentsRegistered() {
+      return listQuiescenceStates();
+    }
+
+    /**
+     * Is the named agent's quiescence service enabled (ie the Distributor is fully loaded)?
+     * @param agentAddress The agent to query
+     * @return true if the agent's quiescence service has been enabled and it counts towards Node quiescence, false otherwise or if it does not exist locally
+     **/
+    public boolean isAgentEnabled(MessageAddress agentAddress) {
+      if (agentAddress == null)
+	return false;
+      QuiescenceState qState = accessQuiescenceState(agentAddress);
+      if (qState == null)
+	return false;
+      return qState.isEnabled();
+    }
+
+    /**
+     * Is the named agent quiescent?
+     * @param agentAddress The agent to query
+     * @return true if the Agent's Distributor is quiescent, false otherwise or if the agent does not exist locally
+     **/
+    public boolean isAgentQuiescent(MessageAddress agentAddress) {
+      if (agentAddress == null)
+	return false;
+      QuiescenceState qState = accessQuiescenceState(agentAddress);
+      if (qState == null)
+	return false;
+      return qState.isQuiescent();
+    }
+
+    /**
+     * Is the named agent alive for quiescence purposes, or has it been
+     * marked as dead to be ignored?
+     * @param agentAddress The agent to query
+     * @return false if the agent is dead and should be ignored for local quiescence or does not exist locally
+     **/
+    public boolean isAgentAlive(MessageAddress agentAddress) {
+      if (agentAddress == null)
+	return false;
+      QuiescenceState qState = accessQuiescenceState(agentAddress);
+      if (qState == null)
+	return false;
+      return qState.isAlive();
+    }
+
+    /**
+     * Mark the named agent as dead - it has been restarted elsewhere, and should
+     * be ignored locally for quiescence calculations.
+     * @param agentAddress The Agent to mark as dead
+     **/
+    public void setAgentDead(MessageAddress agentAddress) {
+      if (agentAddress == null)
+	return;
+      QuiescenceReportServiceProvider.this.setAgentDead(agentAddress);
+    }
+
+    // Other options: list message numbers? 
   }
 }
