@@ -140,11 +140,7 @@ public final class ServletUtil {
   }
 
   /**
-   * Make the GET and POST passing of parameters transparent to 
-   * the user.
-   * <p>
-   * Determine either GET or POST methods, call with respective 
-   * ServletUtil methods.
+   * Simplify the parsing of URL parameters.
    *
    * @see ParamVisitor inner-class defined at the end of this class
    */
@@ -152,19 +148,8 @@ public final class ServletUtil {
       ParamVisitor vis, 
       HttpServletRequest req) throws IOException
   {  
-    String meth = req.getMethod();
-    if (meth.equals("GET")) {
-      // check for no query params
-      if (req.getQueryString() != null) {
-        Map m = HttpUtils.parseQueryString(req.getQueryString());
-        parseParams(vis, m);
-      }
-    } else if (meth.equals("POST")) {
-      int len = req.getContentLength();
-      ServletInputStream in = req.getInputStream();
-      Map m = HttpUtils.parsePostData(len, in);
-      parseParams(vis, m);
-    }
+    Map m = req.getParameterMap();
+    parseParams(vis, m);
   }
 
   /**
@@ -177,12 +162,24 @@ public final class ServletUtil {
   public static void parseParams(
       ParamVisitor vis, 
       Map m) {
+    if (m.isEmpty()) {
+      return;
+    }
     Iterator iter = m.entrySet().iterator();
     while (iter.hasNext()) {
-      Map.Entry me = (Map.Entry)iter.next();
-      String key = me.getKey().toString();
-      String[] value_array = (String[])me.getValue();
-      String value = value_array[0];
+      Map.Entry me = (Map.Entry) iter.next();
+      String key = (String) me.getKey();
+      if (key == null) {
+        continue;
+      }
+      String[] values = (String[]) me.getValue();
+      if ((values == null) || (values.length <= 0)) {
+        continue;
+      }
+      String value = values[0];
+      if (value == null) {
+        continue;
+      }
       vis.setParam(key, value);      
     }
   }
