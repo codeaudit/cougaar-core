@@ -28,7 +28,7 @@ package org.cougaar.core.adaptivity;
  * (array) of operating mode constraints that specify the values that
  * the modes should be given.
  **/
-public class PlayBase {
+public class PlayBase implements java.io.Serializable {
 
   private ConstrainingClause ifClause;
   private ConstraintPhrase[] operatingModeConstraints;

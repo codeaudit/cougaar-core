@@ -23,7 +23,7 @@ package org.cougaar.core.adaptivity;
 /**
  * Defines boolean operator constants.
  */
-public class Operator {
+public class Operator implements java.io.Serializable {
     public static final int MAXP = 10;
     protected String op;
     protected int lp;
@@ -50,7 +50,13 @@ public class Operator {
         return op.hashCode();
     }
     public boolean equals(Object o) {
-        return this == o;
+        if (this == o) return true;
+        if (o instanceof Operator) {
+            Operator that = (Operator) o;
+            return (this.op.equals(that.op) &&
+                    this.nOperands == that.nOperands);
+        }
+        return false;
     }
     public String toString() {
         return op;

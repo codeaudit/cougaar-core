@@ -222,9 +222,10 @@ public class PlayHelper {
           PolicyKernel old = iaomp.getPolicyKernel();
           if (!old.equals(pk)) {
             iaomp.setPolicyKernel(pk);
-            iaompUpdates.add(operatingModeName);
+            iaompChanges.add(operatingModeName);
           }
         }
+        iaompUpdates.add(operatingModeName);
       } else {
         Comparable value = omme.newValue.getEffectiveValue();
         OperatingMode om = operatingModeService.getOperatingModeByName(operatingModeName);

@@ -30,7 +30,7 @@ package org.cougaar.core.adaptivity;
  * to the OperatingMode if it needs to know when changes occur.
  * Alternatively, the value can be examined as needed.
  **/
-public interface OperatingMode {
+public interface OperatingMode extends java.io.Serializable {
     /**
      * Gets the (distinct) name of this OperatingMode. The names of
      * all the OperatingMode on a particular blackboard must be

@@ -28,7 +28,7 @@ import java.util.*;
  * read out in the opposite (prefix) order.
  **/
 
-public class ConstrainingClause {
+public class ConstrainingClause implements java.io.Serializable {
 
   public static final ConstrainingClause TRUE_CLAUSE;
   public static final ConstrainingClause FALSE_CLAUSE;

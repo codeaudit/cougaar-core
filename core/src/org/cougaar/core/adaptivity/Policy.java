@@ -22,7 +22,7 @@ package org.cougaar.core.adaptivity;
 
 import org.cougaar.core.util.UniqueObject;
 
-interface Policy extends UniqueObject {
+interface Policy extends UniqueObject, java.io.Serializable {
 
   /**
    * The name of the policy

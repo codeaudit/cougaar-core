@@ -37,7 +37,7 @@ import org.cougaar.core.util.UniqueObject;
  **/
 public class InterAgentOperatingMode
   extends OperatingModeImpl
-  implements Relay.Source, UniqueObject
+  implements Relay.Source, UniqueObject, java.io.Serializable 
 {
   // FIXME this shouldn't be transient!
   private transient Set targets = Collections.EMPTY_SET;

@@ -20,6 +20,6 @@
  */
 package org.cougaar.core.adaptivity;
 
-public interface OperatingModeListener {
+public interface OperatingModeListener extends java.io.Serializable {
     void operatingModeChanged(OperatingMode m, Comparable oldValue);
 }

@@ -24,7 +24,7 @@ package org.cougaar.core.adaptivity;
  * A phrase fragment used to express a boolean comparison and a set of
  * valid values to compare against.
  **/
-public class ConstraintOpValue {
+public class ConstraintOpValue implements java.io.Serializable {
   ConstraintOperator operator;
   OMCRangeList allowedValues;
   

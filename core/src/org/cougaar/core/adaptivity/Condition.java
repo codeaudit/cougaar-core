@@ -31,7 +31,7 @@ package org.cougaar.core.adaptivity;
  * not define a setValue method because establishing the current value
  * is the responsibility of the owner of the Condition.
  **/
-public interface Condition {
+public interface Condition extends java.io.Serializable {
 
     /**
      * Gets the (distinct) name of this Condition. The names of all
