@@ -33,36 +33,38 @@ import java.lang.ref.WeakReference;
 public class PersistenceAssociation extends WeakReference {
 
   /**
-   * The id assigned to the object. This is id is used to replace the
+   * The id assigned to the object. This id is used to replace the
    * object when its actual value is not significant.
    **/
   private PersistenceReference referenceId;
 
+  private PersistenceIdentity clientId;
+
   /**
-   * Records if the object has not yet been removed from the
-   * plan. In a persistence delta, this boolean does not include the
-   * effect of envelopes that have not yet been distributed.
+   * Records if the object has not yet been removed from the plan.
+   * Used to manage the lifecycle of IdentityTable entries.
    **/
   private static final int NEW      = 0;
   private static final int ACTIVE   = 1;
   private static final int INACTIVE = 2;
   private int active = NEW;
+
   /**
-   * marked is used to identify associations having objects that need
-   * to be written to the current delta to avoid double writing those
-   * objects.
+   * Temporarily used to mark objects needing to be persisted or that
+   * have been rehydrated
    **/
   private boolean marked = false;
 
   /**
-   * The hashcode of the object. See IdentityTable.
+   * The hashcode of the object. For efficiency (see IdentityTable).
    **/
   int hash;
 
   /**
-   * Chain of associations in IdentityTable.
+   * Chain of associations in IdentityTable. Links together all the
+   * entries in a hashtable bucket.
    **/
-  PersistenceAssociation next;  // Chain of PersistenceAssociations in hash table
+  PersistenceAssociation next;
 
   PersistenceAssociation(Object object, int id, ReferenceQueue refQ) {
     this(object, new PersistenceReference(id), refQ);
@@ -82,6 +84,14 @@ public class PersistenceAssociation extends WeakReference {
 
   public PersistenceReference getReferenceId() {
     return referenceId;
+  }
+
+  public PersistenceIdentity getClientId() {
+    return clientId;
+  }
+
+  public void setClientId(PersistenceIdentity newClientId) {
+    clientId = newClientId;
   }
 
   /**

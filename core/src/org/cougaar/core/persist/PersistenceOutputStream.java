@@ -29,14 +29,14 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.LinkedByteOutputStream;
+import org.cougaar.util.log.Logger;
 
 public class PersistenceOutputStream extends ObjectOutputStream {
 
   private static final int DEFAULT_INITIAL_SIZE = 10000;
 
-  private LoggingService logger;
+  private Logger logger;
   private boolean debug;
 
   public MessageAddress getOriginator() { return null; }
@@ -55,7 +55,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   /**
    * Public constructor
    */
-  public PersistenceOutputStream(LoggingService logger) throws IOException {
+  public PersistenceOutputStream(Logger logger) throws IOException {
     this(new LinkedByteOutputStream(DEFAULT_INITIAL_SIZE), logger);
   }
 
@@ -64,7 +64,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
    * we are using.
    * @param stream the byte buffer into which we store everything.
    */
-  private PersistenceOutputStream(LinkedByteOutputStream stream, LoggingService logger) throws IOException {
+  private PersistenceOutputStream(LinkedByteOutputStream stream, Logger logger) throws IOException {
     super(stream);
     byteStream = stream;
     enableReplaceObject(true);
@@ -114,6 +114,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
     throws IOException {
     writeIndex = new ArrayList();
     writeInt(pAssoc.getActive());
+    writeObject(pAssoc.getClientId());
     try {
       writeObject(pAssoc.getObject());
     }
@@ -205,9 +206,9 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   }
 
   /**
-   * Object identity table. Normally, this is supplied by the creator of this stream.
+   * Object identity table. This is supplied by the creator of this stream.
    */
-  private IdentityTable identityTable = new IdentityTable();
+  private IdentityTable identityTable;
 
   /**
    * Get the IdentityTable being used by this stream. This is not

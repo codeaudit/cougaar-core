@@ -30,8 +30,7 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
-
+import org.cougaar.util.log.Logger; 
 /**
  * Read persisted objects from a stream. Detects objects that have
  * been wrapped in a PersistenceAssociation and resolves those to the
@@ -41,7 +40,7 @@ import org.cougaar.core.service.LoggingService;
  * from later versions of the same object.
  **/
 public class PersistenceInputStream extends ObjectInputStream {
-  private LoggingService logger;
+  private Logger logger;
 
   public MessageAddress getOriginator() { return null; }
   public MessageAddress getTarget() { return null; }
@@ -92,7 +91,7 @@ public class PersistenceInputStream extends ObjectInputStream {
    * Construct from the array of bytes containing the encoded objects.
    * @param bytes the bytes containing the encoded objects.
    */
-  public PersistenceInputStream(ObjectInputStream ois, LoggingService logger) throws IOException {
+  public PersistenceInputStream(ObjectInputStream ois, Logger logger) throws IOException {
     super(new Substream(ois));
     enableResolveObject(true);
     this.logger = logger;
@@ -126,6 +125,7 @@ public class PersistenceInputStream extends ObjectInputStream {
     this.references = references;
     nextReadIndex = 0;
     int active = readInt();
+    PersistenceIdentity clientId = (PersistenceIdentity) readObject();
     Object object = readObject();
     if (object instanceof ActivePersistenceObject) {
       ((ActivePersistenceObject) object).checkRehydration(logger);
@@ -136,6 +136,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       logger.error("Null PersistenceAssociation found for " + object.getClass().getName() + ": " + object);
     } else {
       pAssoc.setActive(active);
+      pAssoc.setClientId(clientId);
     }
     if (logger.isDebugEnabled()) logger.debug("read association " + pAssoc);
     return pAssoc;
@@ -260,9 +261,9 @@ public class PersistenceInputStream extends ObjectInputStream {
   }
 
   /**
-   * Object identity table. Normally, this is supplied by the creator of this stream.
+   * Object identity table. This is supplied by the creator of this stream.
    */
-  private IdentityTable identityTable = new IdentityTable();
+  private IdentityTable identityTable;
 
   /**
    * Get the IdentityTable being used by this stream. This is not
