@@ -1,5 +1,11 @@
 2001-09-06  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/naming/Glob.java:
+	Moved tests from here to regression test GlobTest.java
+
+	* org/cougaar/core/naming/NamingSocketFactory.java:
+	Print instructions on first failure to create ssl server socket.
+
 	* org/cougaar/core/naming/NSImpl.java:
 	Create using NamingSocketFactory.
 
