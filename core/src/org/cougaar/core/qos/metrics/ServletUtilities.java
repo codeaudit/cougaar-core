@@ -22,7 +22,9 @@
 package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.util.Date;
 
 /* Colors picks a color for displaying a Metric. The both metric value
  * and metric credibility a taken into account when choosing the
@@ -38,6 +40,8 @@ import java.text.DecimalFormat;
 public class ServletUtilities implements Constants 
 {
     private static final DecimalFormat f2_1 = new DecimalFormat("0.0");
+    private static final DateFormat dateFormatter = 
+	DateFormat.getDateTimeInstance();
 
     private static final String PALE_YELLOW = "\"#ffffee\"";
     private static final String PALE_GREEN = "\"#eeffee\"";
@@ -104,9 +108,10 @@ public class ServletUtilities implements Constants
 	    return "Bogus value";
     }				  
 
+
     public static String mouseDoc(Metric data) {
 	StringBuffer buf = new StringBuffer();
-	java.util.Date date= new java.util.Date(data.getTimestamp());
+	Date timestamp = new Date(data.getTimestamp());
 	Object value = data.getRawValue();
 	String units =  data.getUnits();
 	double credibility = data.getCredibility();
@@ -124,7 +129,7 @@ public class ServletUtilities implements Constants
 	    buf.append(provenance);
 	}
 	buf.append(" at ");
-	buf.append(date);
+	buf.append(dateFormatter.format(timestamp));
 	if (halflife > 0) {
 	    buf.append(" [halflife=");
 	    buf.append(halflife);
