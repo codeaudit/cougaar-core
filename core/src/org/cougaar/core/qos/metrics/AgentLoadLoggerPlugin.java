@@ -31,6 +31,7 @@ import org.cougaar.core.service.TopologyReaderService;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
@@ -46,10 +47,16 @@ public class AgentLoadLoggerPlugin
     private PrintWriter out;
     private DecimalFormat formatter = new DecimalFormat("00.00");
     private boolean first_time = true;
+    private ArrayList agents;
+    private long start;
 
     private class Poller extends TimerTask {
 	public void run() {
-	    dump();
+	    if (first_time) 
+		collectNames();
+	    else
+		dump();
+	    first_time = false;
 	}
     }
 
@@ -58,16 +65,8 @@ public class AgentLoadLoggerPlugin
     }
 
 
-    private void dumpAgentData(String name) {
-	String path  ="Agent(" +name+ ")" +PATH_SEPR+ ONE_SEC_LOAD_AVG;	
-	Metric metric = metricsService.getValue(path);
-	double value = metric.doubleValue();
-	String formattedValue = formatter.format(value);
-	out.print('\t');
-	out.print(formattedValue);
-    }
-
-    private void dump() {
+    private void collectNames() {
+	start = System.currentTimeMillis();
 	Set matches = null;
 	try {
 	    matches = topologyService.getAllEntries(null,  // Agent
@@ -80,23 +79,38 @@ public class AgentLoadLoggerPlugin
 	    return;
 	}
 	if (matches == null) return;
-	if (first_time)
-	    out.print("Time");
-	else
-	    out.print(System.currentTimeMillis());
+	
+	agents = new ArrayList();
+	out.print("Time");
 	Iterator itr = matches.iterator();
 	while (itr.hasNext()) {
 	    TopologyEntry entry = (TopologyEntry) itr.next();
 	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
 	    String name = entry.getAgent();
-	    if (first_time) {
-		out.print('\t');
-		out.print(name);
-	    } else {
-		dumpAgentData(name);
-	    }
+	    out.print('\t');
+	    out.print(name);
+	    agents.add(name);
 	}
-	first_time = false;
+	out.println("");
+	out.flush();
+    }
+
+    private void dumpAgentData(String name) {
+	String path  ="Agent(" +name+ ")" +PATH_SEPR+ ONE_SEC_LOAD_AVG;	
+	Metric metric = metricsService.getValue(path);
+	double value = metric.doubleValue();
+	String formattedValue = formatter.format(value);
+	out.print('\t');
+	out.print(formattedValue);
+    }
+
+    private void dump() {
+	out.print(MetricsServiceProvider.relativeTimeMillis()/1000.0);
+	Iterator itr = agents.iterator();
+	while (itr.hasNext()) {
+	    String name = (String) itr.next();
+	    dumpAgentData(name);
+	}
 	out.println("");
 	out.flush();
     }
@@ -131,7 +145,7 @@ public class AgentLoadLoggerPlugin
 	}
 
 
-	threadService.schedule(new Poller(), 20000, 500);
+	threadService.schedule(new Poller(), 60000, 500);
 	
     }
 

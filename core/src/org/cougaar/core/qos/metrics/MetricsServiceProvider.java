@@ -34,12 +34,16 @@ public final class MetricsServiceProvider implements ServiceProvider
     private static final String UPDATER_IMPL_CLASS =
 	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
 
+    private static long Start;
+    public static long relativeTimeMillis() {
+	return System.currentTimeMillis()-Start;
+    }
 
     private MetricsService retriever;
     private MetricsUpdateService updater;
 
     public MetricsServiceProvider(ServiceBroker sb, NodeIdentifier id) {
-
+	Start = System.currentTimeMillis();
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
 	    Class[] parameters = { ServiceBroker.class, NodeIdentifier.class };
