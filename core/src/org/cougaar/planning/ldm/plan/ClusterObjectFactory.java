@@ -356,9 +356,18 @@ public interface ClusterObjectFactory {
     * @param aspecttypes  The AspectTypes (and order) of the results.
     * @param result  The value for each aspect.
     * @return AllocationResult  A new AllocationResult
+    * @deprecated Use #newAllocationResult(double,boolean,AspectValue[]);
     */
   AllocationResult newAllocationResult(double rating, boolean success, int[] aspecttypes, double[] result);
   
+  /** Create a new NON-PHASE AllocationResult
+    * @param rating The confidence rating of this result.
+    * @param success  Whether the allocationresult violated any preferences.
+    * @param aspectvalues The AspectValues of the result.
+    * @return AllocationResult  A new AllocationResult
+    */
+  AllocationResult newAllocationResult(double rating, boolean success, AspectValue[] avrs);
+
   /** Create a new  PHASED AllocationResult instance. 
     * @param rating The confidence rating of this result.
     * @param success  Whether the allocationresult violated any preferences.
@@ -369,29 +378,42 @@ public interface ClusterObjectFactory {
     * For Example a phased answer may look like
     * [ [10, 100.00, c0], [5, 50.00, c3], [5, 50.00, c6] ]
     * @return AllocationResult
+    * @deprecated use #newPhasedAllocationResult(double,boolean,AspectValue[],Collection)
     */
   AllocationResult newPhasedAllocationResult(double rating, boolean success, int[] aspecttypes, double[] rollup, Enumeration allresults);
+
+  /** Create a new  PHASED AllocationResult instance. 
+    * @param rating The confidence rating of this result.
+    * @param success  Whether the allocationresult violated any preferences.
+    * @param aspecttypes  The AspectTypes (and order) of the results.
+    * @param rollup  The summary values for each aspect as AspectValues.
+    * @param allresults  An Enumeration of Vectors representing
+    * each phased collection of results.
+    * For Example a phased answer may look like
+    * [ [10, 100.00, c0], [5, 50.00, c3], [5, 50.00, c6] ]
+    * @return AllocationResult
+    */
+  AllocationResult newPhasedAllocationResult(double rating, boolean success, AspectValue[] rollup, Enumeration allresults);
   
   /** Create a new AllocationResult that takes a PHASED result in the form of AspectValues.
    * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
    * @param rating The confidence rating of this result.
    * @param success  Whether the allocationresult violated any preferences.
    * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
-   * @param phasedresults  A List of the phased results. The List should contain
-   * one List of AspectValues for each phase of the results.  
+   * @param phasedresults  A Collection of the phased results. The Collection 
+   * must contain one Collection or Array of AspectValues for each phase of the results.
    * @return AllocationResult
    */
-  AllocationResult newAVPhasedAllocationResult(double rating, boolean success, AspectValue[] rollupavs, List phasedresults);
+  AllocationResult newPhasedAllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults);
   
-  /** Create a new AllocationResult that takes a result in the form of AspectValues (NON-PHASED).
-   * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
-   * @param rating The confidence rating of this result.
-   * @param success  Whether the allocationresult violated any preferences.
-   * @param aspectvalues  The AspectValues(can be aspectvalue subclasses) that represent the results.  
-   * @return AllocationResult
+  /**
+   * @deprecated use #newPhasedAllocationResult(double,boolean,AspectValue[],Collection)
+   */
+  AllocationResult newAVPhasedAllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults);
+
+  /** @deprecated use #newAllocationResult(double,boolean,AspectValue[]);
    */
   AllocationResult newAVAllocationResult(double rating, boolean success, AspectValue[] aspectvalues);
-
   
   
   /** Create a new Preference.

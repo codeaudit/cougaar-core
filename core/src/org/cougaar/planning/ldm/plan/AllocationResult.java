@@ -49,12 +49,23 @@ public class AllocationResult
    * @param aspectvalues  The AspectValues(can be aspectvalue subclasses) that represent the results.  
    * @note Prior to Cougaar 10.0, there was a similar constructor which took an int[] and double[] instead of 
    * the current AspectValue[].  This change is required because most ApectValue types
-   * are not longer represented by int/double pairs.
+   * are not longer represented by int/double pairs.  This constructor may be made 
+   * private at some point in the future.
    */
   public AllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
     isSuccess = success;
     setAspectValueResults((AspectValue[]) aspectvalues.clone());
     confrating = (float) rating;
+  }
+
+  /** Factory that takes a result in the form of AspectValues (NON-PHASED).
+   * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
+   * @param rating The confidence rating of this result.
+   * @param success  Whether the allocationresult violated any preferences.
+   * @param avs  The AspectValues(can be aspectvalue subclasses) that represent the results.  
+   */
+  public static AllocationResult newAllocationResult(double rating, boolean success, AspectValue[] avs) {
+    return new AllocationResult(rating, success, avs);
   }
 
   /** @deprecated Use #AllocationResult(double,boolean,AspectValue[]) instead because
@@ -97,6 +108,8 @@ public class AllocationResult
    * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
    * @param phasedresults  A Collections of the phased results. The Collection should contain
    * one Collection or AspectValue[] of AspectValues for each phase of the results.  
+   * @note The associated factory is preferred as the constructor may be made private in
+   * a future version.
    */
   public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults) {
     isSuccess = success;
@@ -105,12 +118,25 @@ public class AllocationResult
     confrating = (float) rating;
   }
 
+  /** AllocationResult factory that takes a PHASED result in the form of AspectValues.
+   * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
+   * @param rating The confidence rating of this result.
+   * @param success  Whether the allocationresult violated any preferences.
+   * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
+   * @param phasedresults  A Collections of the phased results. The Collection should contain
+   * one Collection or AspectValue[] of AspectValues for each phase of the results.  
+   */
+  public static AllocationResult newAllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults) {
+    return new AllocationResult(rating, success, rollupavs, phasedresults);
+  }
 
   /**
    * Construct a merged AllocationResult containing AspectValues from
    * two AllocationResults. If both arguments have the same aspects,
    * the values from the first (dominant) result are used. The result
    * is never phased.
+   * @note The associated factory is preferred as the constructor may be made private in
+   * a future version.
    **/
   public AllocationResult(AllocationResult ar1, AllocationResult ar2) {
     int len1 = ar1.avResults.length;
@@ -143,6 +169,16 @@ public class AllocationResult
     }
     // checkAVResults();
     isSuccess = ar1.isSuccess() || ar2.isSuccess();
+  }
+
+  /**
+   * Construct a merged AllocationResult containing AspectValues from
+   * two AllocationResults. If both arguments have the same aspects,
+   * the values from the first (dominant) result are used. The result
+   * is never phased.
+   **/
+  public static AllocationResult newAllocationResult(AllocationResult ar1, AllocationResult ar2) {
+    return new AllocationResult(ar1, ar2);
   }
 
   public Object clone() {

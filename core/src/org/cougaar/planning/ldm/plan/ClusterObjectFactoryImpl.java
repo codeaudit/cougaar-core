@@ -647,7 +647,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return pt;
   }
   
-  // Build a new NON-PHASED AllocationResult
+  /** @deprecated **/
   public AllocationResult newAllocationResult(double rating, boolean success, int[] aspecttypes, double[] result) {
       if (aspecttypes == null || result == null) {
         throw new IllegalArgumentException("bad arguments: cof.newAllocationResult("+aspecttypes+", "+result+")");
@@ -657,7 +657,12 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return ar;
   }
   
+  public AllocationResult newAllocationResult(double rating, boolean success, AspectValue[] avrs) {
+    return AllocationResult.newAllocationResult(rating, success, avrs);
+  }
+
   // Build a new PHASED AllocationResult
+  /** @deprecated **/
   public AllocationResult newPhasedAllocationResult(double rating, boolean success, int[] aspecttypes, double[] rollup, Enumeration allresults) {
     if (aspecttypes == null ||
         rollup == null ||
@@ -670,8 +675,22 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return par;
   }
   
-  /** Build a new Phased AspectValue AllocationResult.   */
-  public AllocationResult newAVPhasedAllocationResult(double rating, boolean success, AspectValue[] rollupavs, List phasedresults) {
+  /** @deprecated **/
+  public AllocationResult newPhasedAllocationResult(double rating, boolean success, 
+                                                    AspectValue[] avs, Enumeration allresults) {
+    AllocationResult par = new AllocationResult(rating, success, avs, allresults);
+    return par;
+  }
+
+  public AllocationResult newPhasedAllocationResult(double rating, boolean success, 
+                                                    AspectValue[] avs, Collection allresults) {
+    AllocationResult par = new AllocationResult(rating, success, avs, allresults);
+    return par;
+  }
+
+  /** @deprecated **/
+  public AllocationResult newAVPhasedAllocationResult(double rating, boolean success, 
+                                                      AspectValue[] rollupavs, Collection phasedresults) {
     if (phasedresults == null ||
         rollupavs == null ||
         phasedresults.isEmpty() ||
@@ -682,7 +701,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return avpar;
   }
   
-  /** Build an new NON-Phased AspectValue AllocationResult   */
+  /** @deprecated **/
   public AllocationResult newAVAllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
     if (aspectvalues == null ||
         aspectvalues.length == 0 ) {
@@ -693,7 +712,6 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return avar;
   }
 
-  
   //Build a new Preference
   public Preference newPreference(int aspecttype, ScoringFunction scorefunction) {
     if (aspecttype < 0 ||
