@@ -21,6 +21,7 @@
 package org.cougaar.core.domain;
 
 import java.util.List;
+import java.util.Set;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 
@@ -95,6 +96,10 @@ public class DomainForBlackboardServiceProvider implements ServiceProvider {
 
     public void invokeRestartLogicProviders(ClusterIdentifier cid) {
       theService.invokeRestartLogicProviders(cid);
+    }
+
+    public void invokeABAChangeLogicProviders(Set communities) {
+      theService.invokeABAChangeLogicProviders(communities);
     }
 
     public void setBlackboard(Blackboard blackboard) {

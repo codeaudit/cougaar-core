@@ -48,6 +48,7 @@ public abstract class DomainAdapter
   private final List myEnvelopeLPs = new ArrayList();
   private final List myMessageLPs = new ArrayList();
   private final List myRestartLPs = new ArrayList();
+  private final List myABAChangeLPs = new ArrayList();
   
   private Factory myFactory;
 
@@ -158,6 +159,18 @@ public abstract class DomainAdapter
       }
     }
   }
+  public void invokeABAChangeLogicProviders(Set communities) {
+    synchronized (myABAChangeLPs) {
+      for (int index = 0; index < myABAChangeLPs.size(); index++) {
+        try {
+          ((ABAChangeLogicProvider) myABAChangeLPs.get(index)).abaChange(communities);
+        }
+        catch (RuntimeException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+  }
 
   /** 
    * setParameter - Should only be used by the binding utilities when 
@@ -193,6 +206,9 @@ public abstract class DomainAdapter
     if (lp instanceof RestartLogicProvider) {
       myRestartLPs.add(lp);
     }
+    if (lp instanceof ABAChangeLogicProvider) {
+      myABAChangeLPs.add(lp);
+    }
     
     lp.init();
   }
@@ -207,6 +223,10 @@ public abstract class DomainAdapter
 
   private final List getRestartLPs() {
     return myRestartLPs;
+  }
+
+  private final List getABAChangeLPs() {
+    return myABAChangeLPs;
   }
 
   /** load the LDMFactory for this Domain. Should call setFactory() to set the
@@ -243,13 +263,4 @@ public abstract class DomainAdapter
     
     myXPlan = xPlan;
   }
-
 }
-
-
-
-
-
-
-
-

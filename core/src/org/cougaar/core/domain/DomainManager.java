@@ -302,6 +302,15 @@ public class DomainManager
     }
   }
 
+  /** invoke ABAChangeLogicProviders across all currently loaded domains **/
+  public void invokeABAChangeLogicProviders(Set communities) {
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();) {
+      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
+      b.getDomain().invokeABAChangeLogicProviders(communities);
+    }
+  }
+
   //
   // binding services
   //

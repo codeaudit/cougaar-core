@@ -22,6 +22,7 @@
 package org.cougaar.core.domain;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
@@ -60,6 +61,13 @@ public interface Domain
 
   /** invoke the RestartLogicProviders for this domain **/
   void invokeRestartLogicProviders(ClusterIdentifier cid);
+
+  /**
+   * invoke the ABAChangeLogicProviders for this domain
+   * @param communities the set of communities with potiential
+   * changes. If null, all communities may have changed.
+   **/
+  void invokeABAChangeLogicProviders(Set communities);
 
   /** returns the domain name  - uniqueness not currently enforced **/
   String getDomainName();
