@@ -1,0 +1,311 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Template" content="C:\Program Files\Microsoft Office\Office\html.dot">
+   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <title>Society Config Notes</title>
+</head>
+<body link="#0000FF" vlink="#800080">
+
+<center>
+<h2>
+<b>ALP Society Startup and Configuration: MB 6.6</b></h2></center>
+
+<h2>
+<b>Overview</b></h2>
+<font size=+0>To install MB 6.6, first unzip the "core-MB-&lt;builddate>.zip"
+file. It will create a top-level "alp-&lt;builddate>" directory and appropriate
+subdirectories. Then, unzip the alpine-MB-&lt;builddate>.zip, utility-MB-&lt;builddate>.zip,
+tutorial-MB-&lt;builddate>.zip and tools-MB-&lt;builddate>.zip files in
+the alp-&lt;builddate> directory. This unzip process will overlay the original
+structure with the appropriate files and subdirectories. As with previous
+releases, the environment variable ALP_INSTALL_PATH should point to the
+alp-&lt;builddate> directory.</font>
+<p>To verify correct installation of the ALP software, a small but non-trivial
+test society relying only on ALPINE PlugIns is included in "alpine\configs\minitestconfig."
+This society is configured to run in a single node on a single computer.
+This configuration can be modified as required for PlugIn testing.&nbsp;
+Minitestconfig features a reduced 4-cluster society with GLS initiating
+at 3ID and flowing down to subordinate clusters. The ARBN cluster generates
+Transport tasks that are eventually allocated to MCCGlobalMode. These tasks
+are allocated and the allocation results propagated back to the task originator.
+The task originator (ARBN) evaluates the results and modifies the task
+preferences to achieve an acceptable solution. Subcontractors are encouraged
+to bring their PlugIns up to full compliance with the new infrastructure
+modifications, possibly using the minitestconfig society. A separate document
+provides a <a href="MiniTestConfig.html">functional description of the
+minitestconfig</a> society.
+<p>The following "jar" files are used in the baseline society configuration
+and are located in the alp\lib directory:
+<ul>
+<li>
+core.jar: ALP core infrastructure</li>
+
+<li>
+alpine.jar: domain infrastructure support and ALPINE PlugIns</li>
+
+<li>
+tools.jar: scalability and test tools</li>
+
+<li>
+utility.jar: contracts and gss</li>
+
+<li>
+build.jar: code generators for ALP software</li>
+
+<li>
+xmlj_2_0_11.jar: XML parser</li>
+</ul>
+
+<h2>
+<b>3rd Party Commercial Software</b></h2>
+The ALP society software depends on a number of freely distributed 3rd
+party software packages. These software packages can be obtained free from
+their respective sources. The <a href="https://www.alpine.bbn.com">ALPINE
+web site</a> (HTTPS://www.alpine.bbn.com/) contains a list of freely available
+3rd party commercial software in the "DSE Software" Area. For MiniBuild
+6.x, we use the following versions of 3rd party software:
+<br>&nbsp;
+<br>&nbsp;
+<table BORDER CELLPADDING=2 WIDTH="100%" >
+<tr>
+<td>JDK 1.2.2</td>
+
+<td><a href="http://java.sun.com/products/index.html">http://java.sun.com/products/index.html</a></td>
+</tr>
+
+<tr>
+<td>Oracle JDBC Thin Drivers v8.0.4&nbsp;</td>
+
+<td><a href="http://technet.oracle.com/software/download.htm">http://technet.oracle.com/software/download.htm</a></td>
+</tr>
+
+<tr>
+<td>ECMA Fesi Interpreter</td>
+
+<td><a href="http://home.worldcom.ch/~jmlugrin/fesi/index.html">http://home.worldcom.ch/~jmlugrin/fesi/index.html</a></td>
+</tr>
+
+<tr>
+<td>JESS Interpreter</td>
+
+<td><a href="http://herzberg.ca.sandia.gov/jess/index.html">http://herzberg.ca.sandia.gov/jess/index.html</a></td>
+</tr>
+
+<tr>
+<td>XY Graph</td>
+
+<td><a href="http://home.sprynet.com/~gbildson/ngraph/download.html">http://home.sprynet.com/~gbildson/ngraph/download.html</a></td>
+</tr>
+</table>
+
+<h2>
+<b>Installation and Configuration</b></h2>
+Please read the following information carefully. The following information
+describes the current organization of "jar" and data files and system parameters.
+In addition, this information describes the organization of PlugIn software
+submissions and how PlugIns must reference private data files and software
+libraries.
+<p>Unpacking the release package (alp.zip or alp.tar) should produce the
+following directory structure (use of "alp\&lt;product>" directories for
+PlugIn-related files will be required in all future software submissions
+and all future infrastructure releases):
+<ul>
+<li>
+alp\lib ---------------- "jar" files for the infrastructure, ALPINE PlugIns,
+and COTS libraries</li>
+
+<li>
+alp\bin ---------------- "bat" and "csh" scripts for setting environment
+variables and paths</li>
+
+<li>
+alp\configs ----------- subdirectories of society configuration files (e.g.,
+minitestconfig)</li>
+
+<li>
+alp\releaseNotes ----- text descriptions of the ALP software release</li>
+
+<li>
+alp\src --------------- infrastructure source code</li>
+
+<li>
+alp\doc\javadoc ------"javadoc" for ALP infrastructure</li>
+
+<li>
+alp\&lt;product>------ product specific data files and non-java executables
+(each PlugIn or ALP participant will have a corresponding subdirectory)</li>
+</ul>
+The following information describes the configuration scheme for ALPINE
+software distributions. Please note the new organization of release software
+and data files for PlugIn software and society configuration directories.
+<ol>
+<li>
+There are environment variables and Java system properties as defined in
+the table below. The purpose of these parameters is to control ALP system
+behavior and minimize placing environment variables in the Node.bat or
+Node.csh files.</li>
+
+<li>
+The environment variable ALP_INSTALL_PATH must point to the installation
+directory "alp." In addition, the system property alp.install.path must
+point to the same directory. These variables will allow the infrastructure
+and PlugIns to find the necessary "jar" files (alp\lib) and data files
+(alp\&lt;product-n>).</li>
+
+<li>
+For system testing in a single node configuration, "serialization" of ALP
+objects can be forced by setting the alp.message.alwaysSerialize system
+property to True. This feature cannot be used in a multiple node scenario
+and should be False.</li>
+
+<li>
+Please note that the Node.bat/csh files are only present in the alp/bin
+directory. They have been removed from all configuration directories to
+encourage use of a single version in a standard location. We suggest adding
+%ALP_INSTALL_PATH%\bin to your PATH environment variable.</li>
+
+<li>
+Although we have not tested all society configurations on all types of
+processing platforms, all ALP infrastructure software is compatible with
+NT, UNIX and LINUX operating systems.</li>
+
+<li>
+The file "setlibpath.bat" in "core\bin" creates the path to all "jar" files
+and "setarguments.bat" defines the command line arguments to&nbsp; java.exe,
+rather than using "node.bat" to perform this function. All "node.bat" files
+should call these files.</li>
+
+<li>
+Execution of "Node.bat" and "Node.csh" requires passing the "node name"
+as the first argument to these scripts, rather than coding them into the
+scripts. The node name argument must match the node name used for the &lt;nodename>.ini
+file.</li>
+
+<li>
+To find initialization files (e.g., clustername-prototype-ini.dat and OPlan.ini),
+the infrastructure will first look in the local directory and then look
+in the {$ALP_INSTALL_PATH}\configs\common.</li>
+</ol>
+
+<p><br><b>Table 1: Environment variables and system properties used to
+control ALP system behavior</b>
+<br>&nbsp;
+<br>&nbsp;
+<table BORDER CELLPADDING=7 WIDTH="646" >
+<tr>
+<td VALIGN=TOP WIDTH="22%"><b>Name</b></td>
+
+<td VALIGN=TOP WIDTH="20%"><b>Type</b></td>
+
+<td VALIGN=TOP WIDTH="22%"><b>Value</b></td>
+
+<td VALIGN=TOP WIDTH="36%"><b>Usage</b></td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">ALP_INSTALL_PATH</td>
+
+<td VALIGN=TOP WIDTH="20%">Environment Variable</td>
+
+<td VALIGN=TOP WIDTH="22%">&lt;drive>:\alp</td>
+
+<td VALIGN=TOP WIDTH="36%">Top-level location of ALP software&nbsp;</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.install.path</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">&lt;drive>:\alp</td>
+
+<td VALIGN=TOP WIDTH="36%">Top-level location of ALP software&nbsp;</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.message.alwaysSerialize</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">Boolean (True or False)</td>
+
+<td VALIGN=TOP WIDTH="36%">Forces serialization of objects between clusters.
+Only usable in single node configurations</td>
+</tr>
+
+<tr>
+<td>alp.enforceTransactions</td>
+
+<td>Java System Property</td>
+
+<td>Boolean (True or False)</td>
+
+<td>Produces warnings when LogPlan accesses are attempted outside safe
+transaction boundaries&nbsp;</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.message.retryInterval</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">Integer</td>
+
+<td VALIGN=TOP WIDTH="36%">Timeout period for messages in milliseconds&nbsp;</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.message.retryMaxCount</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">Integer</td>
+
+<td VALIGN=TOP WIDTH="36%">Max number of times to retry failed messages&nbsp;</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.domain.foo</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">Class Name</td>
+
+<td VALIGN=TOP WIDTH="36%">Specifies the class that defines the domain
+package where the domain corresponds with "foo"</td>
+</tr>
+
+<tr>
+<td VALIGN=TOP WIDTH="22%">alp.cluster.metrics</td>
+
+<td VALIGN=TOP WIDTH="20%">Java System Property</td>
+
+<td VALIGN=TOP WIDTH="22%">Boolean</td>
+
+<td VALIGN=TOP WIDTH="36%">Turns on or off metrics collection&nbsp;</td>
+</tr>
+</table>
+
+<h2>
+<b>Populating Clusters with Assets</b></h2>
+The initial population of assets for a particular organization in MiniBuild
+6.0 is handled by Data PlugIns, specifically the LDMXMLPlugIn&nbsp; that
+reads assets from an XML formated file. Also included in the release is
+an LDMSQLPlugIn that reads assets from the JTAV snapshot database on eiger.
+Examples can be found in the alpine.plugin package. On start-up, the XML
+PlugIns query the XML files and create the specified LDM objects. Note
+that the ClusterAsset.ini file is no longer used in the test society.
+<p>The JDBC drivers required for the LDMSQLPlugIns are freely available
+from Oracle. All of our required functionality is available in a portable
+ZIP file that needs to be added to the ALP CLASSPATH. Oracle suggests that
+the zip file be placed in $ORACLE_HOME/jdbc/lib/classes111.zip. While we
+are not able to provide this zip file in the release, it is available on
+the web: <a href="http://technet.oracle.com/software/download.htm">Oracle
+JDBC Thin Drivers</a> (http://technet.oracle.com/software/download.htm).
+<br>&nbsp;
+<p><b><font face="Arial,Helvetica"><a href="release_notes_index.html">Return
+to Release Notes</a></font></b>
+</body>
+</html>

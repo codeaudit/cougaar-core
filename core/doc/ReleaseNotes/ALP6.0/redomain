@@ -1,0 +1,329 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+
+# update references to symbols changed as a result of 
+# splitting the LDM into multiple domain packages.
+
+# usage:
+#   redomain `find sourcetree -name "*.java" -print`
+# go out for lunch while it runs.
+
+$tmp = "/tmp/repackage2.$$";
+
+while ($file = shift) {
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    # fgi plan objects
+    $found += &subfgi(
+		      "SupplySource",
+		      "DepotSupplySource",
+		      "DRMSSupplySource",
+		      "MailingAddress",
+		      "RequisitionStatus",
+		      "Requisition",
+		      "DodaacLocation",
+		      "VendorSupplySource",
+		      "VendorContract",
+		      "Vendor",
+		      "PhoneListing",
+		     );
+		      
+    # logistics plan objects
+    $found += &subalp(
+		      "AircrewSkill",
+		      "Agency",
+		      "AssetConsumptionRate",
+		      "CasRep",
+		      "CSSCapability",
+		      "Capability",
+		      "CapacityScheduleElement",
+		      "CapacityType",
+		      "GeolocLocation",
+		      "IcaoLocation",
+		      "LaborSchedule",
+		      "MOS",
+		      "NamedPosition",
+		      "Position",
+		      "QuantityRangeScheduleElement",
+		      "QuantityScheduleElement",
+		      "RateScheduleElement",
+		      "Relationship",
+		      "Service",
+		      "Skill"
+		     );
+    # logistics oplan objects
+    $found += &subalpo(
+		       "DFSP",
+		       "ForcePackage",
+		       "OpTempo",
+		       "OplanContributor",
+		       "Oplan",
+		       "OrgActivity",
+		       "OrgRelation",
+		       "POD",
+		       "TimeSpan"
+		       );
+    # logistics assets
+    $found += &subalpa(
+		       "Inventory",
+		       "VolumetricInventory",
+		       "Capacity",
+		       "Ammunition",
+		       "Barge",
+		       "BulkPOL",
+		       "BulkWater",
+		       "CargoFixedWingAircraft",
+		       "CargoLoad",
+		       "CargoRotaryWingAircraft",
+		       "CargoShip",
+		       "CargoVehicle",
+		       "ClassIIClothingAndEquipment",
+		       "ClassIIIPOL",
+		       "ClassISubsistence",
+		       "ClassIVConstructionMaterial",
+		       "ClassIXRepairPart",
+		       "ClassVAmmunition",
+		       "ClassVIIIMedical",
+		       "ClassVIIMajorEndItem",
+		       "ClassVIPersonalDemandItem",
+		       "ClassXNonMilitaryItem",
+		       "Clothing",
+		       "Consumable",
+		       "Container",
+		       "Package",
+		       "Convoy",
+		       "Deck",
+		       "Explosive",
+		       "Facility",
+		       "FightingShip",
+		       "FixedWingAircraftWeapon",
+		       "Food",
+		       "LoadPlan",
+		       "Manifest",
+		       "MilitaryPerson",
+		       "Missile",
+		       "MissileLauncher",
+		       "OrganizationAdapter",
+		       "Organization",
+		       "MilitaryOrganization",
+		       "OtherIndividualEquipment",
+		       "OtherMajorEndItem",
+		       "PackagedPOL",
+		       "Person",
+		       "PhysicalAsset",
+		       "RailCar",
+		       "Repairable",
+		       "RotaryWingAircraftWeapon",
+		       "SelfPropelledGroundWeapon",
+		       "SmallArms",
+		       "TowedGroundWeapon",
+		       "Trailer",
+		       "Train",
+		       "TrainEngine",
+		       "TransportationAirLink",
+		       "TransportationLinkPoint",
+		       "TransportationGraph",
+		       "TransportationLink",
+		       "TransportationNetwork",
+		       "TransportationNode",
+		       "TransportationRoadLink",
+		       "TransportationRailLink",
+		       "TransportationRoute",
+		       "TransportationSeaLink",
+		       "Truck",
+		       "Warhead",
+		       "Weapon",
+		       "RadarSystem",
+		       "NavyRadarSystem",
+		       "VerticalLaunchSystem",
+		       "DigitalNetworkSystem",
+		       "CommSystem",
+		       "FuelSystem",
+		       "ElectronicBoard",
+		       "PropertyTest" # misc
+		       );
+    # logistics PGs
+    $found += &subalpp(
+		       "AirConditionPG",
+		       "AirLiftPG",
+		       "AirLinkPG",
+		       "AirSelfPropulsionPG",
+		       "AirTransportationPG",
+		       "AirVehiclePG",
+		       "AirPortPG",
+		       "AmmunitionPG",
+		       "AmmunitionPropertyGroups",
+		       "AssetConsumptionRatePG",
+		       "AssignedPG",
+		       "AssignmentPG",
+		       "BulkSolidPG",
+		       "CSSCapabilityPG",
+		       "CargoFacilityPG",
+		       "CargoPG",
+		       "ConditionPG",
+		       "ConsumablePG",
+		       "ContainPG",
+		       "CostPG",
+		       "DeckPG",
+		       "EnvironmentalConditionPG",
+		       "ExplosivePG",
+		       "FacilityPG",
+		       "FoodPG",
+		       "FuelPG",
+		       "FuelSupplyPG",
+		       "GroundSelfPropulsionPG",
+		       "GroundVehiclePG",
+		       "LandConditionPG",
+		       "LiftPG",
+		       "LiquidPG",
+		       "LiquidSUpplyPG",
+		       "MEIPG",
+		       "MaintenancePG",
+		       "ManagedAssetPG",
+		       "MidAirRefuelPG",
+		       "MilitaryOrgPG",
+		       "MilitartPersonPG",
+		       "MissileLauncherPG",
+		       "OffRoadTransportationPG",
+		       "OnRoadTransportationPG",
+		       "OrganizationPG",
+		       "PackagePG",
+		       "PersonPG",
+		       "PersonSustainmentPG",
+		       "PhysicalAssetPropertyGroups",
+		       "PhysicalPG",
+		       "PositionPG",
+		       "RailLinkPG",
+		       "RailSelfPropulsionPG",
+		       "RailTerminalPG",
+		       "RailTransportationPG",
+		       "RailVehiclePG",
+		       "RepairDepotPG",
+		       "RepairPartPropertyGroups",
+		       "RepairabilityPG",
+		       "RepairablePG",
+		       "RoadLinkPG",
+		       "ScheduledContentPG",
+		       "SeaConditionPG",
+		       "SeaLinkPG",
+		       "SeaTransportationPG",
+		       "SeaportPG",
+		       "SelfPropulsionPropertyGroups",
+		       "ShipConfigurationPG",
+		       "SupplyDepotPG",
+		       "SupplyPG",
+		       "SupportPG",
+		       "TowPG",
+		       "TransportationLinkPropertyGroups",
+		       "TransportationNodePropertyGroups",
+		       "TransportationPG",
+		       "TruckTerminalPG",
+		       "VolumetricStockagePG",
+		       "WarheadPG",
+		       "WaterPG",
+		       "WaterSelfPropulsionPG",
+		       "WaterSupplyPG",
+		       "WaterVehiclePG",
+		       "WeaponPG"
+		       );
+
+    # moved Policies
+    $found += &subalppol(
+			 "StockageLevelPolicy",
+			 "ShipPolicy"
+			);
+    
+    # other assorted symbols
+    $found += &misc();
+    print OUT $_;
+  }
+  close(OUT);
+  close(IN);
+
+  if ($found) {
+    # made changes
+    print "Fixing $file";
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$file");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+    print ".\n";
+  }
+}
+
+unlink($tmp);
+
+sub subfgi {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.plan\.${sym}Impl/mil\.darpa\.log\.fgi\.domain\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.plan\.New$sym/mil\.darpa\.log\.fgi\.domain\.New$sym/g);
+    $found += (s/alp\.ldm\.plan\.$sym/mil\.darpa\.log\.fgi\.domain\.$sym/g);
+  }
+  $found;
+}
+
+sub subalp {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.plan\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.plan\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.plan\.New$sym/mil\.darpa\.log\.alp\.domain\.plan\.New$sym/g);
+    $found += (s/alp\.ldm\.plan\.$sym/mil\.darpa\.log\.alp\.domain\.plan\.$sym/g);
+  }
+  $found;
+}
+
+sub subalpo {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.oplan\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.oplan\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.oplan\.New$sym/mil\.darpa\.log\.alp\.domain\.oplan\.New$sym/g);
+    $found += (s/alp\.ldm\.oplan\.$sym/mil\.darpa\.log\.alp\.domain\.oplan\.$sym/g);
+  }
+  $found;
+}
+  
+sub subalpa {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.asset\.${sym}/mil\.darpa\.log\.alp\.domain\.asset\.${sym}/g);
+  }
+  $found;
+}
+sub subalpp {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.asset\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.asset\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.asset\.New$sym/mil\.darpa\.log\.alp\.domain\.asset\.New$sym/g);
+    $found += (s/alp\.ldm\.asset\.$sym/mil\.darpa\.log\.alp\.domain\.asset\.$sym/g);
+  }
+  $found;
+}
+
+sub subalppol {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.plan\.policy\.${sym}/mil\.darpa\.log\.alp\.domain\.policy\.${sym}/g);
+  }
+  $found;
+}
+
+sub misc {
+  local($found)=0;
+  $found += (s/alp\.ldm\.plan\.policy/alp\.ldm\.policy/g);
+  $found += (s/alp\.ldm\.plan\.trigger/alp\.ldm\.trigger/g);
+  $found;
+}

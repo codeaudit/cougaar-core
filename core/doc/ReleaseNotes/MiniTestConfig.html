@@ -1,0 +1,206 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Rich Lazarus">
+   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <title>MiniTestConfig Functional Description</title>
+</head>
+<body>
+
+<h2>
+MiniTestConfig Functional Description</h2>
+
+<h3>
+Overview:</h3>
+ALPINE only maintains the node configurations that we are currently using
+for testing purposes and for the ALP demonstrations. These node configurations
+are available in subdirectories under alp/configs in the release. To execute
+the ALP society, these nodes can be combined to form a society that can
+be executed on a single computer or distributed across multiple computers.
+Note that only <b>minitestconfig</b> will work "out of the box". SingleNode
+can also be used to test domain specific threads by installing submissions
+by various subcontractors. PlugIn developers are encouraged to use minitestconfig
+and singlenode as a starting point for bringing PlugIns up to MB 6.6 compliance.
+<p>The minitestconfig consists of 3ID, 1BDE, 3-69-ARBN and MCCGlobalMode
+clusters. It handles the GetLogSupport and Transport tasks. This configuration
+contains a single transportation thread which illustrates some of the features
+of MB 6.0 and some of the dynamic replanning infrastructure features. The
+ARBN cluster generates Transport tasks that are eventually allocated to
+MCCGlobalMode. These tasks are allocated to local assets and the allocation
+results propagated back to the task originator. The task originator (ARBN)
+evaluates the results and modifies the task preferences to achieve an acceptable
+solution.
+<p>When starting this configuration, the society "hooks up" on its own
+using a series of "OrgReportPlugIns,"&nbsp; and provides several control
+buttons. Press the "Publish Oplan" to send the Operation Plan to the clusters.
+Without the Oplan, most of the PlugIns don't have enough information to
+do their jobs. One hits "Send GLS root" to start the generation of support
+and transportation tasks for the selected Oplan. The Oplan can be selected
+from a combo box just above the "Send GLS root " button. One can inspect
+the Cluster LogPlans to inspect the resultant plan elements. One can then
+hit "Rescind" and verify that all plan elements derived from the initial
+GLS are removed.
+<p>The LDMXMLPlugIn extracts Assets and PropertyGroups from an XML formatted
+file and populates the cluster. Transport tasks are generated to transport
+these assets (tanks). The MCCGlobalMode cluster should contain approximately
+5 transport tasks after a successful run. Thereafter, the rescind button
+can be used to rescind the GetLogSupport task which inturn rescinds all
+the tasks in the society except for ReportForDuty and ReportForService
+tasks. Refer to the PDG for information on how to customize this PlugIn,
+create your own, or create an SQL-based LDMPlugIn.
+<br>&nbsp;
+<h3>
+Detailed PlugIn Activities:</h3>
+<b>3-69-ARBN Cluster:</b>
+<ul>
+<li>
+<b>LDMXMLPlugIn</b>:&nbsp; By default, the 3-69-ARBN.ldm.xml file (read
+upon startup by the LDMXMLPlugIn) gives the Cluster 20 M1A1 Tanks to be
+transported.&nbsp; Both the number of tanks and their schedules can be
+adjusted by editing the 3-69-ARBN.ldm.xml file.</li>
+
+<li>
+<b>StrategicTransportProjectionExpanderPlugIn</b>: This PlugIn looks for
+all the Physical Assets belonging to the Cluster and generates TRANSPORT
+Tasks for each one.&nbsp; They are scheduled to be transported from Ft.
+Stewart to Al Haba, SA.&nbsp; The ScoringFunction used is the PreferredAtValue
+function, with the getBest() values corresponding to the start date and
+end date of the requested task.&nbsp; The end date of the Tasks are currently
+hard coded for 5 days beyond the start date (current date). This PlugIn
+maintains a subscription for the Expansions that it creates. When the reported
+allocation results "changes" the Expansion and stimulates the PlugIn, the
+PlugIn executes the following actions:</li>
+
+<ul>
+<li>
+evaluates the allocation result for isSuccess=false</li>
+
+<li>
+determines the appropriate task to modify to improve the results</li>
+
+<li>
+modifies the task preferences</li>
+
+<li>
+publishes the changed task.</li>
+</ul>
+
+<li>
+<b>AllocationAssessorPlugIn</b>:&nbsp; The sample AllocationAssessorPlugIn
+subscribes for Allocations whose reported result is not successful. When
+it receives such an Allocation, the PlugIn creates and publishes an Alert.
+The Alert contains some explanitory text in the description field and wraps
+the Allocation.</li>
+
+<li>
+<b>AlertReaderPlugIn</b>: The sample AlertReaderPlugIn subscribes to and
+displays Alerts.</li>
+</ul>
+<b>3ID Cluster:</b>
+<ul>
+<li>
+<b>PredictorExpanderPlugIn (optional):</b> This expander PlugIn uses the
+Predictor made available by the MCCGlobalMode Cluster to make initial decisions
+regarding the handling of incoming expandable Tasks. When Transport requests
+are received (in our scenario we are transporting tanks from Ft. Stewart,
+GA to Ft. Irwin, CA), this PlugIn expands these Tasks into two subtasks
+- one transport leg from Ft. Stewart to Ft. Hood, and another leg from
+Ft. Hood to Ft. Irwin. The expected dates associated with these Tasks are
+created based on information requested from the MCCGlobalMode Predictor.</li>
+
+<p><br>This PlugIn is not enabled in the default configuration of MiniTestConfig.
+In order to enable this PlugIn, the 3ID.ini file should be edited, enabling
+the PredictorExpanderPlugIn and the StrategicTransportAlloctorPlugIn, and
+disabling the TaskStrategicTransportAllocatorPlugIn.</ul>
+<b>MCCGlobalMode Cluster:</b>
+<ul>
+<li>
+<b>LDMXMLPlugIn</b>: By default the MCCGlobalMode.ldm.xml file (read upon
+startup by the LDMXMLPlugIn) gives the Cluster 3 HETs for use in transporting
+M1A1 Tanks.&nbsp; Both the number of HETs and their schedules may be modified
+through editing of the MCCGlobalMode.ldm.xml file.</li>
+
+<li>
+<b>MCCAggregatorPlugIn</b>: This PlugIn will watch for all incoming TRANSPORT
+Tasks and attempt to create Aggregations of two Tasks each. The logic behind
+the Aggregation is as follows:</li>
+
+<ul>
+<li>
+Create Aggregations which result in two Tanks per HET for transport,</li>
+
+<li>
+Make sure incoming TRANSPORT Tasks are to the same destination, and</li>
+
+<li>
+Make sure incoming TRANSPORT Tasks have roughly the same END_TIME Aspect.</li>
+</ul>
+The MPTask within these Aggregations is given the new Verb TRANSPORTATIONMISSION.
+These new Aggregations are then published.
+<li>
+<b>MCCAllocatorPlugIn</b>: This PlugIn will attempt to allocate all incoming
+TRANSPORTATIONMISSION Tasks (part of the Aggregations created by the MCCAggregatorPlugIn)
+to its CargoVehicles.&nbsp; Because of time limitations (along with availability
+of CargoVehicles), some Allocations should fail, resulting in a FailedDisposition
+being generated.&nbsp; The Cluster's PolicyPlugIn can be used to alter
+the turnaround time between allocated Tasks, although we are limited to
+land-based transport (HETs) currently. The only AspectTypes that are looked
+for in incoming Tasks are START_TIME and END_TIME.&nbsp; Tasks are allocated
+against a HET's RoleSchedule via a simple greedy scheduling algorithm.</li>
+
+<li>
+<b>MCCTriggerCreatorPlugIn</b>: This PlugIn allows for the creation and
+use of Triggers in this scenario. At startup, this PlugIn will create a
+Trigger that watches for Allocations that are in conflict with other Allocations.
+If any of these are found, the action of this Trigger is to rescind the
+older of the two conflicting Allocations and generate a FailedDisposition
+in its place.</li>
+
+<br>In order to bring about the conditions that will result in the use
+of this Trigger, a GUI window ("MCCTriggerCreatorPlugIn") has been created
+with a button labeled "Maintain HETs." This button should not be used until
+after the society has quiesced into its post-GLS state. At that time, pressing
+of this button will send the HETs that belong to MCCGlobalMode into maintenance
+for one day. This new Allocation will be in direct conflict with Allocations
+created earlier. This wakes the Trigger, creates new FailedDisposition,
+and begins a new cycle of re-allocation within the society in order to
+resolve these conflicts.
+<li>
+<b>MCCPredictorPlugIn</b>: This PlugIn creates a simple Predictor to be
+associated with the MCCGlobalMode Cluster. The Predictor's logic is fairly
+straightforward: a statically-defined number representing the expected
+shipping time turnaround is employed in the quick estimation of completion
+of a given Task. If the amount of time between the START_TIME and END_TIME
+Aspects of a given Task is less than the estimated total shipping time
+for the Cluster, an unsuccessful AllocationResult is generated; otherwise,
+success is assumed.</li>
+
+<br>The PlugIn's sole job is to create an instance of a Predictor (implemented
+as an inner class) and adds the Predictor as a slot value of the Cluster's
+ClusterPropertyGroup.
+<li>
+<b>XMLPolicyPlugIn</b>: The XMLPolicyPlugIn reads Policy information stored
+in XML format (in policy.ldm.xml) and creates and publishes Policy objects.</li>
+
+<li>
+<b>PolicyPlugIn</b>: The sample PolicyPlugIn subscribes for ShipPolicy
+objects. It puts up a simple GUI for each ShipPolicy in the Log Plan. The
+GUI allows the user to change the ShipMode and the ShipDays. A slider allows
+the user to change the value of ShipDays between one and ten. A set of
+radio buttons allows the user to set the ShipMode to Sea, Air, or Ground.&nbsp;
+The changes are published so that other PlugIns can receive and react to
+the changes. The sample PolicyPlugIn create and publishes a ShipPolicy
+object.</li>
+
+<li>
+<b>PropagationPlugIn</b>: The PropagationPlugIn uses an XML file (forward.xml)
+to send Log Plan objects that implement the Transportable interface to
+other clusters. Currently, Oplan and Policy are the only objects that implement
+the Transportable interface. Eventually, each cluster will need its own
+XML file. Currently all clusters use forward.xml which tells the PropagationPlugIn
+to send Oplan to Subordinates and ShipPolicy to Supporting StrategicTransportationProviders.</li>
+</ul>
+
+</body>
+</html>

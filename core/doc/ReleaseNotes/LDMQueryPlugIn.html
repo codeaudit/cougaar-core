@@ -1,0 +1,103 @@
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<META NAME="Generator" CONTENT="Microsoft Word 97">
+<TITLE>LDMQuery PlugIn</TITLE>
+<META NAME="Template" CONTENT="C:\MSOffice\Office\html.dot">
+</HEAD>
+<BODY LINK="#0000ff" VLINK="#800080">
+
+<FONT SIZE=5><P ALIGN="CENTER">LDMQuery PlugIn</P>
+</FONT><FONT SIZE=2><P>&nbsp;</P>
+</FONT><U><FONT FACE="Arial"><P>Overview</P>
+</U></FONT><P>The LDMQuery PlugIn is used to query contemporary (external) databases for asset and property information. Once retrieved, the information is stored in the given cluster’s Log Plan as assets, prototypes and properties. Assets and properties can then be retrieved by other cluster PlugIns using the interfaces available to the Log Plan.</P>
+<P>The LDMQuery PlugIn queries either local or remote data sources using Java Database Connectivity (JDBC). This PlugIn builds on existing functionality found in the current LDMSQLPlugIn and QueryHandler class, but adds the capability to be able to query alternative data sources when a given data source is unreachable. This PlugIn also makes use of the QueryHandler classes, with slight modifications to incorporate this multiple database approach. In future releases, the LDM Query PlugIn may provide a Layered Initialization mechanism for querying databases using mechanisms other than JDBC.</P>
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><U><FONT FACE="Arial"><P>LDMQuery PlugIn Behavior</P>
+</U></FONT><P>When the LDMQuery PlugIn first initializes, it retrieves a query file, configuration file, and a UIC parameter. The database configuration file contains information about the databases that are to be used by the given cluster. This <A HREF="exampleCFG.html">figure</A> shows an example of such a configuration file.</P>
+<P>&nbsp;</P>
+<P>The database name is composed of the JDBC url and actual database name. The database driver represents the type of JDBC driver to use for a given database. The user id and password are required in order to successfully connect to the database. The minimum and maximum number represents the minimum and maximum number of connections for a given database pool. The number of tries specifies the number of attempts that should be made to connect to a given database. The timeout value indicates the time (in seconds) in which the given driver will wait when logging into a database. This value is also used to determine if certain database connections are stale, deadlocked, or are in a hanging state.</P>
+<P>The LDMQuery PlugIn also uses a query file. The query file lists all of the possible queries that may be used when retrieving prototype and property information for a given cluster. The query file is used to associate various queries with a given prototype or property. Lines starting with "%" indicate the start of a query section and the rest of the line specifies the specific QueryHandler class to use. Lines beginning with the word "DB_NAME" represent the database that is to be used to create the given prototype, property or asset within the Log Plan. Proceeding each database line is a corresponding query line. This query line represents the query that is associated with the given prototype or property provider class. This <A HREF="exampleQ.html">figure</A>, shows an example of such a query file.</P>
+<U><P>LDMQuery PlugIn Details</P>
+</U><P>The new classes created and used by this query mechanism are as follows:</P>
+<OL>
+
+<LI>LDMQueryPlugIn</LI>
+<LI>LDMConnectionDriver</LI>
+<LI>LDMConnectionPool</LI>
+<LI>LDMConnection</LI></OL>
+
+<P>The following files are files that currently exist in the ALP infrastructure, but were modified (some of them slightly), so that the LDMQueryPlugIn and the LDMSQLPlugIn could both still be used.</P>
+<TABLE BORDER CELLSPACING=1 CELLPADDING=7 WIDTH=619>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P><B>File Name</B></TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<B><P>Change Description</B></TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>AircraftPropertyProvider.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to call the appropriate executeSQL or executeQuery method based on the type of PlugIn that is currently in use (LDMQueryPlugIn or LDMSQLPlugIn)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>ECPropertyProvider.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to call the appropriate executeSQL or executeQuery method based on the type of PlugIn that is currently in use (LDMQueryPlugIn or LDMSQLPlugIn)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>PeriodicQuery.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to call the appropriate executeSQL or executeQuery method based on the type of PlugIn that is currently in use (LDMQueryPlugIn or LDMSQLPlugIn)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLAssetPrototypeProvider.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLCommAirCreator.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLAssetCreator.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>QueryHandler.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLAggregateAssetCreator.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLGlobalAirProtoCreator.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+<TR><TD WIDTH="45%" VALIGN="TOP">
+<P>SQLGDSSCreator.java</TD>
+<TD WIDTH="55%" VALIGN="TOP">
+<P>Changed to support an additional the LDMQueryPlugIn and the LDMSQLPlugIn (Slight modification)</TD>
+</TR>
+</TABLE>
+
+<FONT SIZE=2><P>&nbsp;</P>
+</FONT><P>The LDMQuery PlugIn class, which inherits from the LDMEssentialPlugIn class, represents the actual PlugIn that gets instantiated by a given cluster at initialization. The cluster infrastructure initializes this PlugIn by calling the setupSubscriptions method. </P>
+<P>Once called, the PlugIn parses the database files located in the given directory. As the database information is parsed, the LDMConnectionDriver object is instantiated for each unique JDBC url.</P>
+<P>The LDMConnectionDriver object does the following:</P>
+<OL>
+
+<LI>Loads the <CODE>Driver</CODE> class passed to the constructor by the calling program. </LI>
+<LI>Initializes a <CODE>LDMConnectionPool</CODE> object for the connections with the JDBC url, login user ID, and login password, along with other information found in the &lt;database_type_name&gt;.cfg file. This information is passed to the constructor by the LDMQuery PlugIn.</LI></OL>
+
+<P>&nbsp;</P>
+<P>The LDMConnectionPool class makes connections available to the calling program with the getConnection method. This method searches for an available connection in the connection pool. If no connection is available from the pool, a new connection is created, as long at the maximum pool size has not been reached. If a connection is available from the pool, the connection is returned to the calling program. This class shall make a number of attempts to connect to the database before returning a null to the caller indicating that the connection failed. The number of attempts depends on the number that is specified in the configuration file.</P>
+<P>The LDMConnection class contains information about the actual connection. It implements the Connection interface found in the JDK sql package. It also provides additional information, such as if a connection is available for leasing or not. It is used by the LDMConnectionPool and returns the actual connection along with information about whether the connection is available for use. A series of passthru methods are implemented within this class. These methods of required because the LDMConnection class implements the JDK Connection class. </P>
+<P>Once the database configuration file is parsed and the appropriate database connection driver/pool objects are instantiated, the database query file is parsed. When a query handler name is read in, which is the text that follows the %, the corresponding query handler object is created. All remaining database names and SQL queries associated with the given query handler are stored in the query handler properties. After the parsing of the query files has been completed, the appropriate query handlers are started and each query handler calls the executeSQL method passing in the sql to be used, database name associated with the sql, and a handle to it’s own class instance. The LDMQueryPlugIn searches for the database driver that matches the given database name. It then calls the connect method to retrieve a connection from the LDMConnectionDriver object. Once a connection is returned, the given SQL statement is executed to perform the appropriate query. The information that is returned from the database query is then passed back to the calling query handler class. If the connection fails, the query handler is notified and must then execute one of the alternative queries stored in its properties list.</P>
+<FONT SIZE=2><P>&nbsp;</P></FONT></BODY>
+</HTML>

@@ -1,0 +1,94 @@
+/*
+ * <copyright>
+ *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ *  Raytheon Systems Company (RSC) Consortium).
+ *  This software to be used only in accordance with the
+ *  COUGAAR licence agreement.
+ * </copyright>
+ */
+
+
+package org.cougaar.domain.planning.ldm.plan;
+
+import java.util.Enumeration;
+
+/** NewWorkflow extends Workflow with set methods and other methods useful
+ *  for building valid objects.
+ **/
+
+public interface NewWorkflow 
+  extends Workflow 
+{
+
+  /** setParentTask allows you to set the parent task
+    * or base task of a Worflow.
+    * <PRE> myworkflow.setParentTask(mytask); </PRE>
+    * @param parentTask  Should be a Task that is the task that was expanded to create the Workflow.
+    **/
+		
+  void setParentTask(Task parentTask);
+  
+  /** setTasks allows you to pass in the Tasks that were created
+  	* during the expansion of the parentTask.  These Task objects make up
+  	* a Workflow (along with Constraint objects).
+  	* <PRE> myworkflow.setTasks(myenumoftasks); </PRE>
+  	* @param tasks - Enumeration{Task} tasks that make up the workflow
+  	**/
+  	
+  void setTasks(Enumeration tasks);
+  
+  /** addTask allows you to add a Task to a Workflow.
+  	* <PRE> myworkflow.addTask(mynewtask); </PRE>
+  	* @param newTask -  Task to add
+  	**/
+  	
+  void addTask(Task newTask);
+  
+  /** Remove the specified Task from the Workflow's sub-task collection  
+    * @param remTask The Task to be removed.
+    **/
+  void removeTask(Task remTask);
+  
+  /** setConstraints allows you to add an Enumeration
+  	* of Constraints to a Workflow.  Each Constraint has
+  	* a relationship with a pair of Tasks in a Workflow.
+  	* <PRE> myworkflow.setConstraints(myenumofconstraints);</PRE>
+  	* @param enumofConstraints - Enumeration{Constraint} constraints to add to workflow
+  	**/
+  	
+  void setConstraints(Enumeration enumofConstraints);
+  
+  /** addConstraint allows you to add a Constraint to a Workflow.
+   * <PRE> myworkflow.addConstraint(mynewconstraint); </PRE>
+   * @param newConstraint  - Constraint to add
+   **/
+  	
+  void addConstraint(Constraint newConstraint);
+
+  
+  /** sets a specific compute algorithm to use while computing the aggregated
+   * allocation results of the workflow.  If this method is not called, the 
+   * allocationresult will be aggregated using the default 
+   * AllocationResultAggregator (Sum). 
+   * @param aragg The AllocationResultAggregator to use.
+   * @see org.cougaar.domain.planning.ldm.plan.AllocationResultAggregator
+   */
+  void setAllocationResultAggregator(AllocationResultAggregator aragg);
+
+  /** Tells the infrastructure whether subtasks of the workflow
+   * should be rescinded when the Expansion of the workflow is rescinded.
+   * True means the infrastructure automatically performs the subtask rescinds.
+   * False means that the PlugIn is responsible for rescinding the subtasks
+   * of the workflow or reattaching the workflow and its subtasks to 
+   * a new parent task and its Expansion.  
+   * @param isProp 
+   **/
+  void setIsPropagatingToSubtasks(boolean isProp);
+  
+  /** @deprecated  Use setIsPropagatingToSubtasks(boolean isProp) - 
+    * default value is true
+    **/
+  void setIsPropagatingToSubtasks();
+
+}

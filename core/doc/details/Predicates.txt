@@ -1,0 +1,35 @@
+Many predicates in ALP are created using a construct something like this:
+
+  private UnaryPredicate myXYZPredicate = new UnaryPredicate() {
+    public boolean execute(Object o) {
+      <various tests on 0>
+        return result;
+    }
+  };
+
+Sometimes the predicate is never stored in a variable and used immediately
+in creating a subscription. Other times the predicate is stored in a local
+variable. This style works pretty well, but hidden under the covers is the
+fact that these predicates create anonymous inner classes and contain a
+non-transient reference to the outer class instance. Such predicates are not
+serializable and therefore cannot be transferred to other clusters or saved
+persistently. This is particularly problematic in the case of Triggers which
+are added to the plan and must be serializable.
+
+It is almost never necessary for these predicates to reference their outer
+class. Indeed, one could make an argument that it is a mistake to do so.
+Everyone should get in the habit of making the predicates static:
+
+  private static UnaryPredicate myXYZPredicate = new UnaryPredicate() {
+    public boolean execute(Object o) {
+      <various tests on o>
+        return result;
+    }
+  };
+
+Anonymous inner classes created in the context of a static field
+initialization or withing a static method are static inner classes and don't
+have a reference to any outer class instance. For cases where there is
+information in the outer class needed by the predicate, consider defining a
+private static class extending UnaryPredicate and pass this needed
+information information to the constructor.

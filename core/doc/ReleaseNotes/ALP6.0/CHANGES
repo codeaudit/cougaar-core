@@ -1,0 +1,137 @@
+-*- Outline -*-
+Detailed description of changes from ALP 5.4:
+
+* source arrangement
+
+** all modules are top-level: build, core, alpine
+
+** all modules have similar structure.
+
+*** module/src is root of module's java source package tree
+
+*** module/doc is documentation on the module
+
+** Code generators are now in build/src
+
+** sample configs are in alpine/configs
+
+** sample scripts (e.g. Node) are in alpine/bin 
+
+* package arrangement
+
+** alp.build == code generators
+
+*** All code generators are in the alp.build package.  Any ".def"
+files should refer to these packages instead of the old locations.
+
+** alp.* == core runtime
+
+** mil.darpa.log.alp == logistics domain
+
+** mil.darpa.log.alpine = Alpine plugins
+
+* task.getParentTask() and Proxiable objects dropped.
+
+* domain packages
+
+** Domain infrastructure.
+
+*** alp.ldm.Domain is the primary API
+
+*** domains are specified with -Dalp.domain.foo=domainclassname
+see alpine/bin/setarguments.csh for an example.
+
+** RootDomain and getFactory
+
+*** The Factory for the root domain is RootFactory.
+This is equivalent to the old (now deprecated) LdmFactory class. 
+
+*** getFactory, et al.
+
+**** getLdmFactory() is deprecated.
+
+**** getFactory() method returns a RootFactory, while 
+
+**** getFactory(String domainName) returns the higher-level Factory interface.
+
+** Separation of root, alp and fgi domains.
+
+*** RootFactory can create all assets and core plan object.
+
+*** ALPFactory (getFactory("ALP")) creates ALP domain objects.
+
+*** Domain-specific PG accessors are not available on non-domain Asset instances.
+except via OtherPropertyGroup support.
+
+*** Constants
+Verb, Role and Preposition previous had many predefined values as
+final static class data members.  Most of these values are actually
+rather domain specific, so they've been moved into the alp domain
+package.  For example, where you might have previously referenced
+"Verb.Transport", you should now reference "Constants.Verb.Transport". 
+the "Constants" class is in mil.darpa.log.alp.domain.  You may find
+the reconstant script useful in converting existing plugins.
+
+* OpenSource/Library requirements
+
+** Voyager dropped in favor of RMI
+
+** JGL dropped in favor of JDK Collections Framework
+Use the "unjgl" script to do safe fixes.  There are also various
+changes that will need to be done by hand.  E.g. Conversion of jgl
+Iterators to Collections Iterators, etc.
+
+*** Subscriptions use Collections instead of JGL
+
+*** Schedules use Collections instead of JGL
+Schedules, RoleSchedules, etc.  Many Additional features and increased 
+performance.
+
+* Other
+
+** Changes
+
+*** ClusterIdentifiers print as "Foo" instead of "<Foo>"
+
+*** Proxiable, TaskProxy, etc. have been removed.
+
+*** Task.getParentTask has been replaced with Task.getParentTaskUID.
+
+*** Many methods taking Date arguments have been deprecated.
+Especially in schedule-related classes, the primary methods take
+longs (milliseconds in java epoch).  Deprecations will be removed in
+ALP 6.1.
+
+** New features
+
+*** RMINameServer doesn't require an "Admin" node.  
+It now starts one if it cannot open a connection *and* the admin node
+is expected to be local. 
+
+*** PlugIn.query()
+PlugIn.query(UnaryPredicate) is a hook for an efficient one-shot 
+LogPlan query mechanism.  The initial implementation is no better than 
+subscribe/unsubscribe, but a future release will be much faster.
+
+*** Annotations
+Task, Workflow, PlanElement may have an Annotation
+attached.  An Annotation is an optional bit of PlugIn state or
+information related to the object where the plugin can store interim
+data/state/tags/etc useful for later planning cycles.  Annotations
+must be Serializable and are persisted but are never transferred
+between clusters.  Other than providing persistence support, the
+infrastructure ignores Annotations.
+
+*** Context
+Tasks may have a planning context attached.  This is intended to
+provide a domain-independent hook for domain-dependent concepts such
+as OPlan ID.
+
+*** Plugin Threading model
+PlugIns can select their threading model regardless of base
+class (at load time).  This eliminates the redundancy between
+SimplifiedPlugIn and SimplifiedFatPlugIn (for instance).  See
+PlugInAdapter.createThreadingModel and .chooseThreadingModel(int) for
+more information.
+	
+* ( Updated tutorial materiel is in the tutorial module )

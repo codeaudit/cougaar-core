@@ -1,0 +1,39 @@
+;!generate: org.cougaar.tools.build.AssetWriter
+
+;
+; <copyright>
+;  Copyright 1997-2000 Defense Advanced Research Projects
+;  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+;  Raytheon Systems Company (RSC) Consortium).
+;  This software to be used only in accordance with the
+;  COUGAAR licence agreement.
+; </copyright>
+;
+
+;; Basis for generating class definitions for Subclasses of Assets
+;;
+
+
+[AbstractAsset Asset]
+
+;; AggregateAssetAdapter is hand-generated
+[AggregateAsset AggregateAssetAdapter]
+; schedule is in aggregateAssetAdapter
+;slots = Asset
+
+;; Asset really needs to be hand-generated.
+;;
+;[Asset org.cougaar.domain.planning.ldm.asset.AssetSkeleton]
+;; AssetSkeleton has all the default accessors and the
+;; otherproperties support
+;slots=Asset Prototype,\
+;	ItemIdentificationPG, \
+;	TypeIdentificationPG
+;Prototype.exact=true
+
+[AssetGroup Asset]
+import=java.util.Vector
+slots=Vector Assets
+Assets.init= new Vector()
+Assets.exact=true
+

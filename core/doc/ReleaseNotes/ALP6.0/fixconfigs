@@ -1,0 +1,98 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+
+# fix config files
+
+# usage:
+#   fixconfigs `find sourcetree -name "*-ini.dat" -print`
+
+$tmp = "/tmp/repackage2.$$";
+
+while ($file = shift) {
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    $found += (s/^ClusterIdentifier\W+String/ClusterIdentifier\tClusterIdentifier/);
+    print OUT $_;
+  }
+  close(OUT);
+  close(IN);
+
+  if ($found) {
+    # made changes
+    print "Fixing $file";
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$file");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+    print ".\n";
+  }
+}
+
+unlink($tmp);
+
+sub subfgi {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.plan\.${sym}Impl/mil\.darpa\.log\.fgi\.domain\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.plan\.New$sym/mil\.darpa\.log\.fgi\.domain\.New$sym/g);
+    $found += (s/alp\.ldm\.plan\.$sym/mil\.darpa\.log\.fgi\.domain\.$sym/g);
+  }
+  $found;
+}
+
+sub subalp {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.plan\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.plan\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.plan\.New$sym/mil\.darpa\.log\.alp\.domain\.plan\.New$sym/g);
+    $found += (s/alp\.ldm\.plan\.$sym/mil\.darpa\.log\.alp\.domain\.plan\.$sym/g);
+  }
+  $found;
+}
+
+sub subalpo {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.oplan\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.oplan\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.oplan\.New$sym/mil\.darpa\.log\.alp\.domain\.oplan\.New$sym/g);
+    $found += (s/alp\.ldm\.oplan\.$sym/mil\.darpa\.log\.alp\.domain\.oplan\.$sym/g);
+  }
+  $found;
+}
+  
+sub subalpa {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.asset\.${sym}/mil\.darpa\.log\.alp\.domain\.asset\.${sym}/g);
+  }
+  $found;
+}
+sub subalpp {
+  local($found)=0;
+  local($sym);
+  while ( ($sym=pop(@_)) ) {
+    $found += (s/alp\.ldm\.asset\.${sym}Impl/mil\.darpa\.log\.alp\.domain\.asset\.${sym}Impl/g);
+    $found += (s/alp\.ldm\.asset\.New$sym/mil\.darpa\.log\.alp\.domain\.asset\.New$sym/g);
+    $found += (s/alp\.ldm\.asset\.$sym/mil\.darpa\.log\.alp\.domain\.asset\.$sym/g);
+  }
+  $found;
+}
+
+
+sub misc {
+  local($found)=0;
+  $found += (s/alp\.ldm\.plan\.policy/alp\.ldm\.policy/g);
+  $found += (s/alp\.ldm\.plan\.trigger/alp\.ldm\.trigger/g);
+  $found;
+}

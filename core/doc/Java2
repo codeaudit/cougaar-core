@@ -1,0 +1,13 @@
+Notes on Java2 port of ALP
+
+Third-party packages should either be installed as extensions in
+JAVA_HOME/jre/lib/ext (where JAVA_HOME is wherever java is installed
+on your machine) or should be entered in your CLASSPATH before running 
+the Node scripts.
+
+JGL has not yet been released for Java2, and Alpine has decided to put 
+off porting to standard Java2 Collections until we can evaluate the
+Objectspace JGL port.  For now, we recommend recompiling JGL 3.1.0 for
+java2 yourself.  Included in this directory is the (unix) shell script 
+for producing a jgl.jar file from the JGL 3.1.0 sources: compileJGL
+

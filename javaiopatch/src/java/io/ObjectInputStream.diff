@@ -1,0 +1,84 @@
+*** /usr/java/jdk/src/java/io/ObjectInputStream.java	Thu Oct 19 16:36:27 2000
+--- ObjectInputStream.java	Fri Oct 27 12:46:57 2000
+***************
+*** 991,997 ****
+  	if (currentClassDesc.isExternalizable()) {
+  	    try {
+  		currentObject = (currentClass == null) ?
+! 		              null : allocateNewObject(currentClass, currentClass);
+  		handle = assignWireOffset(currentObject);
+  		boolean prevmode = blockDataMode;
+  		try {
+--- 991,997 ----
+  	if (currentClassDesc.isExternalizable()) {
+  	    try {
+  		currentObject = (currentClass == null) ?
+! 		              null : allocateNewObjectOverride(currentClass, currentClass);
+  		handle = assignWireOffset(currentObject);
+  		boolean prevmode = blockDataMode;
+  		try {
+***************
+*** 1118,1124 ****
+  	     */
+  	    try {
+  		currentObject = (currentClass == null) ?
+! 		                 null : allocateNewObject(currentClass, currclass);
+  	    } catch (NoSuchMethodError e) {
+  		throw new InvalidClassException(currclass.getName(),
+  						e.getMessage());
+--- 1118,1124 ----
+  	     */
+  	    try {
+  		currentObject = (currentClass == null) ?
+! 		                 null : allocateNewObjectOverride(currentClass, currclass);
+  	    } catch (NoSuchMethodError e) {
+  		throw new InvalidClassException(currclass.getName(),
+  						e.getMessage());
+***************
+*** 1660,1666 ****
+       * see DataInputStream for the details and alternatives.
+       */
+      public String readLine() throws IOException {
+! 	return dis.readLine();
+      }
+  
+      /**
+--- 1660,1669 ----
+       * see DataInputStream for the details and alternatives.
+       */
+      public String readLine() throws IOException {
+!       // MIK - Hack to prevent deprecation warnings
+!       //  return dis.readLine();
+!       BufferedReader d = new BufferedReader(new InputStreamReader(dis));
+!       return d.readLine();
+      }
+  
+      /**
+***************
+*** 2181,2190 ****
+      private IOException abortIOException = null;
+      private ClassNotFoundException abortClassNotFoundException = null;
+  
+      /* Allocate a new object for the specified class
+       * Native since newInstance may not be able to find a zero arg constructor.
+       */
+!     private static native Object allocateNewObject(Class aclass, Class initclass)
+  	throws InstantiationException, IllegalAccessException;
+      
+      /* Allocate a new array for the specified class
+--- 2184,2198 ----
+      private IOException abortIOException = null;
+      private ClassNotFoundException abortClassNotFoundException = null;
+  
++     protected Object allocateNewObjectOverride(Class cl, Class scl)
++       throws InstantiationException, IllegalAccessException {
++       return allocateNewObject(cl, scl);
++     }
++ 
+      /* Allocate a new object for the specified class
+       * Native since newInstance may not be able to find a zero arg constructor.
+       */
+!     public static native Object allocateNewObject(Class aclass, Class initclass)
+  	throws InstantiationException, IllegalAccessException;
+      
+      /* Allocate a new array for the specified class

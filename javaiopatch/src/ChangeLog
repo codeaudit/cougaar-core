@@ -1,0 +1,7 @@
+2000-10-30  Michael Thome  <mthome@bbn.com>
+
+	* ObjectInputStream
+	Make allocateNewObject public so that the new introspection-based
+	code can invoke the method.  As a side effect, javaiopatch no
+	longer needs to be compiled in any particular order w/rt other ALP 
+	modules.

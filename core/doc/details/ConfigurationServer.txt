@@ -1,0 +1,63 @@
+A Node may use a Configuration Server (CS) to find the configuration files 
+instead of the local directory/filesystem.
+
+A CS is simply a virtual directory specifiable by a URL.  
+A Node may be started with a "-cs URL" argument to specify the CS,
+where URL should be a virtual directory (not a file - must end with
+'/').  Supported URL protocols are http, file and ftp.  
+
+CS Examples: 
+    http://configs.alpine.log.darpa.mil/
+    file:/usr/alp/configs/
+    ftp://alpuser:password@ftp.alpine.log.darpa.mil/configs/
+
+The simplest form would also specify the particular config directory
+with the CS spec.  E.g:
+    http://configs.alpine.log.darpa.mil/minitestconfig/
+
+More generally, the config may be specified on the node command line
+as well using the -config argument.  E.g.
+    Node MiniNode -cs http://configs.alpine.log.darpa.mil/ -config minitestconfig
+
+When a -config argument is supplied, it is effectively appended to the 
+CS url with an additional trailing '/'.
+
+To avoid loading alpreg.ini through the network (which works fine, but 
+may be undesirable for large, multi-nameserver societies), the
+"registry" spec may be specified on the node command line with the
+"-ns" argument.  eg:
+    Node MiniNode -ns ns.alp.org:ns.alp.org:8000:5555
+
+
+
+Full example:
+
+// The name server:
+Node admin -cs http://configs.alpine.log.darpa.mil/ \
+	-config minitestconfig \
+	-ns ns.alpine.log.darpa.mil:ns.alpine.log.darpa.mil:8000:5555
+
+// 4 cluster mininode
+Node MiniNode -cs http://configs.alpine.log.darpa.mil/ \
+	-config minitestconfig \
+	-ns ns.alpine.log.darpa.mil:ns.alpine.log.darpa.mil:8000:5555
+
+
+Notes:
+* If -cs is not specified the old behavior is used (searching the
+local directories).
+
+* ConfigServer directories should have *all* files needed appear
+locally.  That is, to the client (Node), even common config files need 
+to appear in the virtual directory.  Keep in mind that while the
+CS always appears to be a simple ftp/file/http server, it may actually 
+do something more interesting (e.g. generate the files on the fly from 
+http requests by querying a database).
+
+* When -ns is specified, the Node will *never* attempt to read
+alpreg.ini.
+
+* In order to work correctly with the CS, plugins should not attempt
+to open any config files directly, but should use
+ConfigFileFinder.open(String).
+

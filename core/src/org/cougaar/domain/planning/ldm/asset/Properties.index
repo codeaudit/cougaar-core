@@ -1,0 +1,32 @@
+- - - - - List of machine generated PropertyGroups - - - - -
+* ClusterPG
+An asset that is represented by an ALP Cluster
+    org.cougaar.core.cluster.ClusterIdentifier ClusterIdentifier;	//The ClusterIdentifier for adressing this asset.
+    Predictor Predictor;	//Predictor (if any) for the Cluster
+* ItemIdentificationPG
+Identification of a unique, actual Asset, e.g. by VIN, SSN, etc.
+    String ItemIdentification;	//A String of the form "<type>/<id>", e.g. "SN/105G13F7YM0G"
+    String Nomenclature;	//A String describing the Asset in human-readable form.
+    String AlternateItemIdentification;	// Not to be used as ClusterId.  Use ClusterPG.getClusterIdentifier() instead.
+* TypeIdentificationPG
+Identification of a type of Asset, e.g. by NSN, part number, etc.
+    String TypeIdentification;	//A String of the form "<type>/<id>", e.g. "NSN/0913801298439"
+    String Nomenclature;	//A human-readable description of this type.
+    String AlternateTypeIdentification;	//examples: "LIN/T13168", "DODIC/C786"
+* global
+- - - - - Permuted index of PropertyGroupSlots - - - - -
+* AlternateItemIdentification
+    ItemIdentificationPG
+* AlternateTypeIdentification
+    TypeIdentificationPG
+* ClusterIdentifier
+    ClusterPG
+* ItemIdentification
+    ItemIdentificationPG
+* Nomenclature
+    ItemIdentificationPG
+    TypeIdentificationPG
+* Predictor
+    ClusterPG
+* TypeIdentification
+    TypeIdentificationPG

@@ -1,0 +1,63 @@
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=windows-1252">
+<META NAME="Generator" CONTENT="Microsoft Word 97">
+<TITLE># non live eiger jtav query</TITLE>
+</HEAD>
+<BODY>
+
+<P># non live eiger jtav query</P>
+<P>%SQLAssetPrototypeProvider</P>
+<P>Assetclass = PhysicalAsset</P>
+
+<P>%ECPropertyProvider</P>
+<P>DB_NAME1=jdbc:oracle:thin:@199.170.235.113:1521:orcl1query1  = select substr(model_desc||' '||lin_desc,1,30) model_desc, \</P>
+<P>&#9;length, width, height, max_wgt, \</P>
+<P>&#9;sq_ft, cubic_ft, cgo_cat_cd \</P>
+<P>&#9;from equipment_characteristics \</P>
+<P>  where nsn = (:nsns) \</P>
+<P>&#9;and lin_index=(select min(lin_index) \</P>
+<P>  from equipment_characteristics \</P>
+<P>  where nsn = (:nsns) )</P>
+
+<P>DB_NAME2=jdbc:oracle:thin:@199.170.235.158:1521:jtavquery2  = select substr(model_desc||' '||lin_desc,1,30) model_desc, \&#9;length, width, height, max_wgt, \&#9;sq_ft, cubic_ft, cgo_cat_cd \&#9;from equipment_characteristics \  where nsn = (:nsns) \&#9;and lin_index=(select min(lin_index) \  from equipment_characteristics \  where nsn = (:nsns) )</P>
+<P>DB_NAME3 = jdbc:oracle:thin:@199.170.235.61:1521:alpdump</P>
+<P>query3 = select substr(model_desc||' '||lin_desc,1,30) model_desc, \</P>
+<P>&#9;length, width, height, max_wgt, \</P>
+<P>&#9;sq_ft, cubic_ft, cgo_cat_cd \</P>
+<P>&#9;from equipment_characteristics \</P>
+<P>  where nsn = (:nsns) \</P>
+<P>&#9;and lin_index=(select min(lin_index) \</P>
+<P>  from equipment_characteristics \</P>
+<P>  where nsn = (:nsns) )</P>
+
+<P>&nbsp;</P>
+<P>&nbsp;</P>
+<P>%Global</P>
+<P>DB_NAME1=jdbc:oracle:thin:@199.170.235.113:1521:orcl1</P>
+<P>query1 = select nsn, sum(qty_oh), nomenclature \</P>
+<P>  from jtav_equipment \</P>
+<P>  where substr(nsn,5,13) in (:niins) \</P>
+<P>  and uic4 in (:uics) \</P>
+<P>  group by nsn, nomenclature</P>
+<P>DB_NAME2=jdbc:oracle:thin:@199.170.235.158:1521:jtav</P>
+<P>query2 = select nsn, sum(qty_oh), nomenclature \</P>
+<P>  from jtav_equipment \</P>
+<P>  where substr(nsn,5,13) in (:niins) \</P>
+<P>  and uic4 in (:uics) \</P>
+<P>  group by nsn, nomenclature</P>
+<P>DB_NAME3 = jdbc:oracle:thin:@199.170.235.61:1521:alpdump</P>
+<P>query3 = select nsn, sum(qty_oh), nomenclature \</P>
+<P>  from jtav_equipment \</P>
+<P>  where substr(nsn,5,13) in (:niins) \</P>
+<P>  and uic4 in (:uics) \</P>
+<P>  group by nsn, nomenclature</P>
+<P>  </P>
+<P>%SQLAssetCreator</P>
+<P>niins = '010871095' </P>
+
+<P>%SQLAggregateAssetCreator</P>
+<P>niins = '011007672'</P>
+<FONT SIZE=2><P> </P>
+</FONT></BODY>
+</HTML>

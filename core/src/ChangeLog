@@ -1,0 +1,2361 @@
+2000-11-21  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* alp.util.OptionPane
+	This is a replacement for JOptionPane that fixes the workaround
+	for bug#4135218. That workaround computes a static adjustment of
+	the preferred size of the JOptionPane inside a JDialog. The static
+	adjustment fails to account for UI changes such as those used to
+	make fonts bigger in demo mode.
+
+	alp.util.OptionPane extends JOptionPane and supplies replacements
+	for the two basic methods: showOptionPane and showInputPane. It
+	does not furnish replacements for the convenience versions of
+	these methods having fewer arguments or with certain defaults.
+	Since static methods can't be overridden, to use this replacement,
+	you must use the full blown basic methods.
+
+2000-11-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AlertParameter
+	Add isVisible, setVisible, isEditable, and setEditable. Invisible
+	parameters can be used to carry information that doesn't need/want
+	to be displayed. Editable parameters can be used to all the
+	operator to alter values.
+
+	* AllocationResult
+	Fix Bug 61, range check of aspect type.
+
+2000-10-30  Michael Thome  <mthome@bbn.com>
+
+	* PersistenceInputStream
+	Use introspection rather than superclass calls so that we can
+	avoid all sorts of compile-time complexity with javaiopatch.
+	The result is that while javaiopatch is still required in
+	bootclasspath at runtime when persistence is activated, it is no
+	longer required at compile time.
+
+2000-10-27  Michael Thome  <mthome@bbn.com>
+
+	* BasePersistence
+	Provide a ClusterContext for rehydration so that Assets, for
+	instance, are reattached to the local LDM.  To deserialization
+	methods, the situation will appear as though they were being
+	deserialized within a message from the cluster to itself.
+
+	* Subscriber
+	Disable, by default, unpublished change warnings.
+	-Dalp.subscriber.warnUnpublishChanges=true will re-enable them.
+
+2000-10-26  Michael Thome  <mthome@bbn.com>
+
+	* Subscriber
+	Use the right accessor to find the correct transaction to get the
+	unposted change reports to avoid potentially very confusing
+	warnings (phew!).
+
+	* ALPPlan, LogPlan
+	Plug a memory leak.  Also minor cleanup.
+
+2000-10-25  Michael Thome  <mthome@bbn.com>
+
+	* ObjectInputStream
+	Moved to javaiopatch module.
+
+2000-10-20  Michael Thome  <mthome@bbn.com>
+
+	* AssetSet, ClusterImpl, DomainManager, Registry, RootFactory
+	Back off use of StringKey.  AssetSet was the only remaining
+	high-bandwidth user of StringKey.  My suspicion is that the
+	speedup on non-hotspot VMs is propably below the waterline and the 
+	slowdown on hotspotful VMs is a win, especially in reduced consing 
+	costs.  We'll not re-insert this optimization without re-analysis
+	of actual performance, as even micro-benchmarks show interpreted
+	performace, e.g. within optimiz-it, as artificially widening the
+	gap on VMs which have String.hashCode problem.
+
+2000-10-19  Michael Thome  <mthome@bbn.com>
+
+	* EssentialAssetFactory
+	Added hashCode and equals methods.
+
+	* RootFactory
+	Redundantly adding asset/pg factories quietly tolerated.
+	Added containsPropertyGroupFactory and containsAssetFactory
+	methods as a preferred way to tell if a factory is already
+	loaded. addPropertyGroupFactory now allows passing in the class
+	in addition to an instance, since only the class is ever used.
+	Also cleaned out some old code.
+
+2000-10-18  Michael Thome  <mthome@bbn.com>
+
+	* Bootstrapper
+	Extend the list of classes not loaded by the custom classloader.
+	Also provide a method to extend the list.  See Bootstrapper
+	javadoc for details.
+
+	* alp.society.LsNS
+	A mini-application which recursively prints the entire contents of 
+	the NameServer.
+
+	* RMIMessageTransport
+	Support a variety of toggles which control how message queues map
+	to threads and RMI server objects.  Should be considered
+	experimental as this point, but may eventually become the default.
+	To activate, set alp.message.fastTransport=true.
+	Results in reduced threading and better network multiplexing, so
+	should result in lower overall network cost, especially for
+	societies where nodes have many clusters.  Minimal or zero benefit 
+	for societies where each node supports a single cluster.
+	
+	See javadoc or core/doc/ReleaseNotes/CHANGES for more info.
+
+2000-10-16  Michael Thome  <mthome@bbn.com>
+
+	* Bootstrapper
+	Can be used as a top-level bootstrapper for arbitrary classes.
+	First argument specifies the class, the rest are passed to the
+	public static method class.launch or class.main.
+
+2000-10-12  Michael Thome  <mthome@bbn.com>
+
+	* BasePersistence
+	Only one cluster of a node at a time may be actively persisting at 
+	once.  What a sad hack... sigh.
+
+	* Node
+	System property alp.useBootstrapper=false can be used to
+	circumvent the bootstrapper and the jar-file search.  Of course,
+	this means that the incoming classpath needs to be correctly set
+	up before invocation.  Users of IDEs may want to invoke
+	Node.launch instead of Node.main as an alternative way of
+	circumventing the custom classloader.
+
+	* EventEnvelopeTuple, EventSubscription
+	Initial infrastructure for non-persistent event distribution
+	between intra-cluster entities handling in-band with respect to
+	transactions. The goal is to make alarm/wake/timer events be
+	handled this way.
+
+2000-09-27  Michael Thome  <mthome@bbn.com>
+
+	* Node
+	Node now re-launches itself using Bootstrapper.  This allows huge
+	simplification of the startup scripts and makes it reasonable to
+	have some basic scripts in the core bin directory.
+	
+	* Bootstrapper
+	Searches a predicable set of locations and then launches a class
+	(main-like) using a custom classloader.
+	
+	* UID
+	Smaller datastructure with full backward compatability.  Now
+	stores "FOO" and a long instead of "FOO/<long>".
+
+2000-09-25  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* alp.util.Random
+	Extends java.util.Random to add nextPoisson(double mean) that
+	returns a random deviate drawn from a Poisson distribution having
+	the specified mean.
+
+	* alp.util.MoreMath
+	Additional math functions. Specifically, gammaLn computes the
+	natural log of the gamma function. Useful for statistical
+	calculations (see alp.util.Random).
+
+2000-09-22  Michael Thome  <mthome@bbn.com>
+
+	* Measure, Derivative
+	Support a richer API for gui and closer-to-measure-neutral use
+	without requiring introspection.
+
+	* measures.def
+	Minor changes to Speed et al - add some units, drop others.
+
+2000-09-21  Michael Thome  <mthome@bbn.com>
+
+	* DomainManager
+	Also looks in config file LDMDomains.ini to find domain
+	specifications. Added one in alpine configs/common and updated
+	scripts.  Also copied some basic scripts over to core/bin so that
+	there is something useful there for the COUGAAR distribution.
+
+	* Bootstrapper, Node
+	Bootstrapper implements a special classloader, then launches the
+	specified class using that loader.  Allows searching for all
+	appropriate jar files.  Would be good to implement node-level jar
+	authentication at this point.  Node now uses Bootstrapper.
+
+2000-09-20  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* alp.cluster
+	Added longer schedule of execution timer changes so that more
+	complex patterns of execution time can be specified. Added
+	interface for specifying a series of time changes that are
+	consistent with each other, e.g., "In 5 seconds change to rate
+	1440 for 25 seconds and then switch to rate 1.0".
+
+2000-09-15  Michael Thome  <mthome@bbn.com>
+
+	* alp.ldm.measure
+	Added Measure and Derivative interfaces.  Updated AbstractMeasure
+	to match. Updated measures.def to take advantage of new features
+	of MeasureWriter.  In particular, Rate is now an interface rather
+	than a class.  The old Rate class functionality is now AbstractRate.
+
+	* alp.persist*.*
+	Rename alp.persist2.* to alp.persist.*.
+
+2000-09-06  Michael Thome  <mthome@bbn.com>
+
+	* Transaction
+	Finally, a real Transaction abstraction.  Supports ChangeReport
+	collection per object.  Stores reference in a thread-local
+	variable to make sure it is available to all.
+	
+	* Update
+	ALPPlan, Subscriber, PublishableAdapter, Publishable to use
+	Transaction.  PublishableAdapter now uses the Transaction
+	mechanism for ChangeReport collection.	Subscriber may choose the
+	Transaction class to use to support fancier interation mechanisms:
+	e.g. for whatif.  Complains if there are outstanding changes left
+	on transaction close.
+
+	Removed noteChangeReport from PublishableAdapter and updated
+	TaskImpl and PlanElementImpl to call Transaction.noteChangeReport
+	directly.
+	
+2000-08-31  Michael Thome  <mthome@bbn.com>
+
+	* AllocationResultAggregator, TaskScoreTable
+	Performance improvements. Bug 32.
+
+2000-08-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ExecutionTimer et. al.
+	Multiple files changed to implement variable rate execution clock.
+	The current execution time is computed as
+	System.currentTimeMillis() * rate + offset. The API allows the
+	rate and offset to be changed as well as specify the time at which
+	the change is to take effect. Time parameter changes are strictly
+	ordered so that only the dominant change needs to be kept.
+
+	* PlanElement et. al.
+	Multiple files changed to add observed allocation results. Tasks
+	now have "observable aspects" such that observed results of these
+	aspects can created. The observed results are merged with other
+	received (not observed) results to form the reported results.
+
+2000-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ConfigFinder
+	If alp.config is not defined the value "common" is used instead of
+	minitestconfig. This means that, usually, no config files will be
+	found unless they are in "." or $HOME/.alp since the standard
+	alp.config.path will simply include $INSTALL/configs/common twice.
+	This was done to reduce the surprise when config files are found
+	in minitestconfig when that isn't the actual configuration being
+	used.
+
+2000-08-21  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	implement Publishable.
+
+	* ALPPlan, LogPlan
+	Fix stupid infinite loop while calling getWorkflowCount.
+
+	* Debug, etc
+	Eliminate unused references to Debug facility.
+
+	* Citizen, ClusterProfile, Node
+	Clean up - remove Citizen, simplify other code to prepare for app
+	server merge
+
+2000-08-16  Michael Thome  <mthome@bbn.com>
+
+	* Timer, RealTimer, ExecutionTimer
+	Renamed ScenarioTimer to ExecutionTimer.  Extended Timer with
+	RealTimer and made the base class abstract.  Updated ClusterImpl.
+
+	* Communications
+	Fix bug where -ns argument to Node was not functional.
+	Expand syntax allowed for alp.name.server to allow for full
+	specification: e.g. host[:port[:lpsport]].  -ns just sets
+	alp.name.server so has the same syntax.
+
+2000-08-15  Michael Thome  <mthome@bbn.com>
+
+	* QuerySubscription, PlugInAdapter, Subscriber, Distributor, ALPPlan
+	Make query() avoid most subscription overhead.
+
+2000-08-10  Michael Thome  <mthome@bbn.com>
+
+	* HysteresisProvider, SubscriptionEnvelope:
+ 	Removed as they are no longer supported anyway.
+
+2000-08-09  Michael Thome  <mthome@bbn.com>
+
+	* CollectionSubscription
+	Now implements and advertises Collection.
+
+	* CollectionSubscription
+	When using a DynamicUnaryPredicate, alters its behavior so that it 
+	attempts to handle implicit adds and removes of objects in
+	response to change reports.  This is rather more expensive than
+	the standard UnaryPredicate case, so should only be used with cause.
+
+	* *EnvelopeTuple, Subscription, et.al.
+	Move the predicate testing logic from the tuple into the
+	subscription.  While this does not change the logic flow, it moves 
+	the boundaries around a little both to make things a little more
+	OO-orderly, as well as to make the new DynamicUnaryPredicate
+	handling implementation simpler.  Essentially, what used to happen 
+	was:
+		AddEnvelopeTuple.applyToSubscription()
+		  if(Subscription.getPredicate().execute())
+		    Subscription.privateAdd()
+	now:
+		AddEnvelopeTuple.applyToSubscription()
+		  Subscription.conditionalAdd()
+		    if (predicate.execute())
+		      privateAdd();
+	
+	This also lets us keep the subscription predicate non-public.
+	
+	* DynamicUnaryPredicate
+	Marker for a UnaryPredicate which tests for mutable properties of
+	objects. 
+	
+	* SimpleSubscription, Subscriber
+	remove SimpleSubscription.  Just use CollectionSubscription
+	instead: Subscriber so modified.
+
+	* CollectionSubscription
+	Make it non-abstract.
+	
+2000-08-08  Michael Thome  <mthome@bbn.com>
+
+	* LogicProvider, alp.cluster.*
+	Allow for a consistent logic-provider threading model.  In
+	particular, LPs have always operated on a sub-transaction basis,
+	yet the products of LPs have not been available to themselves
+	until the end of the transaction.  The new behavior allows LPs to
+	immediately effect the logplan via add/remove/change so that
+	ALPPlan and XPlan subscriptions are visibly updated.  This change
+	should not alter extra-LP visibility at all.
+
+2000-08-07  Michael Thome  <mthome@bbn.com>
+
+	* Verb, Role, etc
+	Add back various serialization optimizations which had been
+	implemented by Object{Input,Output}StreamWithContext.
+	
+	* ObjectInputStreamWithContext, ObjectOutputStreamWithContext 
+	Removed now unused classes and cut dangling imports.  
+
+	* ALPObjectStream, ComplexObject, MessageContext, alp.io.*
+	More serialization cleanup.  Removed classes, no longer need
+	the package. Remove old import references.
+
+2000-08-04  Michael Thome  <mthome@bbn.com>
+
+	* alp.ldm.(various)
+	Changed implementations so that they no longer key off of
+	AlpObject*Stream instances.  Occasionally check for persistence
+	streams, sometimes check context, e.g. for Asset.  Most of these
+	could now be further simplified to use default serialization
+	instead of needing transients and custom read/riteObject methods.
+
+	* alp.persist
+	Dropped most of ancient persistence implementation, which had been 
+	subject to extensive bit rot and depended on ALPObject*Stream
+	functionality. 
+	
+	* ALPObject*Stream, etc.
+	Dropped ALPObjectInputStream, ALPObjectOutputStream in favor of
+	lighter-weight context discovery mechanism using thread-local
+	variables.  See ClusterContextTable statics for implementation
+	and DirectiveMessage for use.  Left are the implementations of
+	ObjectInput/OutputStreamWithContext for reference on some
+	potential optimizations to add back at a later point.  These
+	optimizations need to be reexamined anyway as they are likely to
+	be stale by now.
+
+	
+2000-08-03  Michael Thome  <mthome@bbn.com>
+
+	* properties.def
+	Disable DataQuality support for all core PGs.
+
+	* PropertyGroup
+	add boolean hasDataQuality() method.
+
+	* alp.ldm.dq.DataQuality, HasDataQuality, NewHasDataQuality
+	DataQuality support classes.
+
+2000-08-01  Michael Thome  <mthome@bbn.com>
+
+	* measures.def
+	Use new MeasureWriter features to better define CostRate, Speed,
+	MassTransferRate, FlowRate.  Added TimeRate to support "time
+	consumed for an activity per time unit".  
+
+	Replaced bogus Volume.TONS with Volume.MTONS with the correct
+	value.  The old TONS was equivalent to 100 cubic feet.
+
+2000-07-26  Jim Winston <jwinston@bbn.com>
+
+	* alp.ui.planserver.server, alp.ui.planserver.server.slp
+	Silenced verbose messages to System.out
+	
+2000-07-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Task, NewTask, TaskImpl
+	Add support for EventGenerator: addObservableAspect and
+	getObservableAspects allow specification and retrieval of the
+	aspects of the allocation result of the disposition of the task
+	that can be observed in reports generated by the event generator.
+
+2000-07-20  Michael Thome  <mthome@bbn.com>
+
+	* ClusterContextTable, DirectiveMessage
+	Beginnings of eliminating the nested serialization stream for
+	directive/cluster messages.  This change is just to support the
+	new Thread-local state on serialization/deserialization -- no old
+	functionality has been removed.
+
+	* AssetSkeletonBase
+	Fix bug where setFooPG with a non-immediate slot can result in
+	multiple versions of the PG on the otherPGs list.  We now will
+	replace the first matching PG rather than blindly adding it.
+	May result in a very slight performance hit with long PG lists,
+	but much more correct.  Also tweak synchronization slightly to
+	improve correctness and safety.
+
+2000-07-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* IncrementalSubscription, SortedSubscription
+	New subscription class that returns elements() and getAddedList()
+	in sorted order. IncrementSubscription modified to expose creation
+	of the added set so that the SortedSubscription subclass can
+	override to create a SortedSet. Other methods of
+	IncrementalSubscription are overridden to detect changes that
+	might disorder the collection.
+
+2000-07-06  Michael Thome  <mthome@bbn.com>
+
+	* Asset, RootFactory
+	Simplify LDM registration process.  For non-factories Asset
+	instance registration, just call asset.registerWithLDM(ldm)
+	instead of setUID(nextUID) and bindToLDM(ldm);
+
+2000-07-03  Michael Thome  <mthome@bbn.com>
+
+	* alp.util.Stack
+	Removed.  Hasn't been used since pre-jdk1.2 days.
+
+	* ClusterServesPlugIn, ClusterImpl
+	Provide ConfigFinder instance to plugins for forward
+	compatability.  Current implementation just returns the
+	singleton. 
+
+	* ConfigFinder, ConfigFileFinder
+	Merge in ZIP file support from susan.
+
+2000-06-30  Michael Thome  <mthome@bbn.com>
+
+	* ConfigFinder, ConfigFileFinder
+	new class ConfigFinder is a non-static, more generalized version
+	of ConfigFileFinder.  ConfigFileFinder has been updated to use the 
+	singleton version of ConfigFinder.
+
+2000-06-21  Michael Thome  <mthome@bbn.com>
+
+	* Communications
+	Fix selection of message transports.  There is still plenty of
+	opportunity for cleanup here.
+
+	* DirectiveMessage
+	Comment out the checks and calls to exit so that we can again run
+	multi-node on the same machine.
+
+	* RMIMessageTransport
+	Don't generate an exception when a name lookup returns null.
+
+	* alp.util.Reflect
+	Add memoized Constructor retrieval and getMethod, getConstructor
+	methods which return null rather than exceptions on not finding
+	the appropriate item in the class.
+
+2000-06-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Various
+	Added optimistic persistence support. This allows for rehydration
+	from persistence information that is not in sync with the state of
+	other clusters. Discrepancies are reconciled by resending Tasks,
+	AssetAssignments, and TransferableTransfers to insure that other
+	clusters have the objects implied by the rehydrated state and by
+	sending Notifications, AssetVerifications, and
+	TransferableVerifications for objects in the rehydrated state of
+	the cluster. The other clusters rescind any object mentioned in
+	the verification message that is not current.
+
+	* MessageManagerImpl
+	Detect restarted clusters and initiate the resynchronization process.
+
+2000-06-14  Michael Thome  <mthome@bbn.com>
+
+	* RMIMessageTransport
+	Make slightly more modular to support subclassing in order to add
+	QUO-style rmi proxies.  An example of client-side use is supplied
+	in a comment.  Added generateServerSideProxy and
+	generateClientSideProxy methods.
+
+2000-06-13  Michael Thome  <mthome@bbn.com>
+
+	* various
+	Remove double-check tricks to avoid sync because it is subtly
+	dangerous: out-of-order constructor/assign execution can result in 
+	visibility of pre-constructor-called objects.
+
+2000-06-02  Beth DePass  <bdepass@bbn.com>
+  
+	* Workflow and Composition isPropagating changes
+	Default for propagation flag is now TRUE.
+	Setter for propagating flag on workflows and compositions now
+	takes a boolean argument instead of being a one time setter.
+	Old setters are deprecated for now.
+	Workflows and their subtasks, regardless of the value of the 
+	propagation flag, are no longer published as a result of an expansion
+	being published.
+	Workflows are no longer active subscription objects.
+	All active subscription removal logic that was in WorkflowImpl
+	(that is still valid) has been moved up to ExpansionImpl.
+	SimplePlugIn and the helper classes have been updated/added to
+	to not call setispropagating as the default is now true.
+	SimplePlugIn and the helper classes have been updated/added to 
+	with publishAddExpansion(subscriber, planelement) which now publishes the
+	expansion planelement AND any subtasks on the workflow.
+
+
+2000-05-31  Michael Thome  <mthome@bbn.com>
+
+	* Directive
+	Require that all directives are Serializable.  Fixes serialization 
+	of DirectiveWithChangeReports bug.
+
+2000-05-25  Michael Thome  <mthome@bbn.com>
+
+	* Various
+	Merge in changes from ALP6.2 (stable) up to ALP62M1 merge point.
+
+2000-05-24  Michael Thome  <mthome@bbn.com>
+
+	* TimeAspectValue
+	Add a timeValue alias for longValue.
+
+2000-05-22  Michael Thome  <mthome@bbn.com>
+
+	* Task, NewTask, TaskImpl
+	Collect detailed changeReports for preference modifications
+
+	* ChangeReport, et.al.
+	Detailed ChangeReport support, with LP and messaging complete.
+	
+2000-05-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* alp.cluster.ALPPlan etc.
+	LogPlan-like objects need to be domain-specific. Because the
+	collection of domains is arbitrary, cannot use
+	inheritance. Instead LogPlan and similar "XPlans" must implement
+	XPlanServesALPPlan and must be created by the Domain. XPlans
+	delegate the ALPPlanServesLogicProvider methods the the underlying
+	ALPPlan.
+
+2000-05-11  Michael Thome  <mthome@bbn.com>
+
+	* alp.ldm.asset.PGDelegate
+	Required interface for BehaviorGroup delegation.  See 
+	ReleaseNotes/ALP6.2/BehaviorGroups.txt for details.
+	
+2000-05-10  Michael Thome  <mthome@bbn.com>
+
+	* TaskImpl
+	Fix obscure bug which manifested when using a UI to examine tasks
+	with preferences but no prepositional phrases and which had been
+	serialized.
+
+	* Simplified*PlugIn
+	deprecated.  Better to use SimplePlugIn et al.
+
+	* EssentialPlugIn
+	Removed. Ancient, easy to break, incomplete... gone.
+
+	* TaskImpl, PlanElementImpl
+	Fix references to static inner classes of interfaces so that javac 
+	can compile these guys.
+
+	* PublishableAdapter
+	Base class to help implementing Publishable.
+
+	* ChangeReport, Publishable
+	Moved to alp.cluster from alp.ldm.plan.
+
+	* Task
+	ChangeReport support for tasks.
+
+2000-05-09  Michael Thome  <mthome@bbn.com>
+
+	* PlanElementImpl
+	Basic ChangeReport collection functionality and an initial
+	low-fidelity cut at AllocationResult change reports.
+
+	* PlanElement
+	Make Publishable, add pseudo-inner classes implement ChangeReport.
+
+	* AspectType
+	Add UNDEFINED value and make comments javadoc complient.
+
+	* Subscriber
+	Clear changereports on publishAdd, complain if there are
+	outstanding ChangeReports on publishRemove.
+
+	* IncrementalSubscription
+	Add Collection-returning accessors for delta lists.
+
+2000-04-27  Michael Thome  <mthome@bbn.com>
+
+	* ALPPlan
+	Provide ChangeReport change api for LPs.
+
+	* persist2/BasePersistence
+	Tweak for new EnvelopeTuple implementations.
+
+	* ExpanderHelper, AllocatorHelper
+	Adjust some helpers to call a more direct change propagation
+	method.  For now, the helper methods depend on automatic
+	changereport collection.  They may need to provide different
+	information at some point.
+
+	* PlugInAdapter, PlugInDelegate
+	Convenience methods for accessing the new Subscriber publishChange 
+	API.  While plugins could use the Subscriber methods themselves,
+	in practice, most will want to use the slightly-more-convenient
+	delagating methods here.  In effect, this is the
+	"producer-of-change" end of the change propagation API.
+
+	* Subscriber
+	Extend publishChange to collect ChangeReports from Publishable
+	objects and from an optional extra argument to propagate to change 
+	consumers.  
+
+	* CollectionSubscription
+	Collect ChangeReports from ChangeEnvelopeTuples and make 'em
+	available to subscription clients.  This facility could go
+	elsewhere, but this seems to be as good as any.  Other obvious
+	choices are either at Subscription (the base class) or at
+	IncrementalSubscription.  This is the "consumer-of-change" side of 
+	the change propagation API.
+
+	* Subscription, et.al.
+	Make the privateChange API take a second argument always.  There
+	is no need for a convenience function because this is *very*
+	internal. 
+
+	* Envelope, PersistenceEnvelope
+	Simplify and delegate more behavior to the EnvelopeTuples. 
+	
+	* *EnvelopeTuple
+	Moved tuple types into separate classes.  Significantly improves
+	clarity and probably improves performance by reducing the size of
+	a tuple.  Also, each tuple now performs the subscription
+	modifications rather than the Envelope doing the job.
+
+	* Publishable, ChangeReport
+	Basic new classes for change tracking facility.  Publishable has
+	some persistence functionality which I can no longer remember the
+	appropriate description of.
+
+2000-04-26  Michael Thome  <mthome@bbn.com>
+
+	* LatePropertyProvider, et.al.
+	Full support for Late-binding PropertyProviders, Null_PG and
+	Future_PG implementations.
+
+	* AssetSkeletonBase, Asset*
+	Rewrite of PG resolution.  Much cleaner supporting late binding,
+	futures, nulls, simpler prototype relationships.  Not yet
+	optimized/tuned.
+
+2000-04-20  Michael Thome  <mthome@bbn.com>
+
+	* AssetWriter
+	Support for dealing with Null_PG values and serialization of
+	NullPGs and Future_PGs.
+
+	* PGWriter
+	All machine-generated PGs build both Future and Null variations.
+	FooPG.nullPG holds a static "NullPG" value.  FooPG.Future is
+	always a class which implements both FooPG and Future_PG.
+
+	* Future_PG
+	Base interface for "Future" PGs: PGs which are temporary
+	placeholders for the "real" PG values.  See examples for more
+	information. Use of futurePG accessors block until "finalized"
+	with a real value.  PlugIns emitting Future_PG instances must
+	have their own thread to prevent deadlocks.
+
+	* Null_PG
+	Base interface for "Null" PGs: PGs which are more-or-less PG-typed
+	empty/illegal values.  Use to distinguish between possibly defined
+	PGs (late-bound) and known-to-be-undefined PGs.
+	
+2000-04-19  Jim Winston <jwinston@bbn.com>
+	* MPTaskImpl
+	When setParentTasks() is called, if the Context of the MPTask is null,
+	the Context of the MPTask is set to the union of the Contexts of the
+	parent tasks. Only Contexts that are instances of ContextOfUIDs are included.
+	The result is a new ContextOfUIDs that contains one instance of each UID
+	contained in the parent tasks' ContextOfUIDs.
+
+2000-04-13  Michael Thome  <mthome@bbn.com>
+
+	* AssetSkeletonBase
+	Add some convenience methods and tweak semantics slightly - see
+	the new documentation.
+
+2000-04-06  Jim Winston	 <jwinston@bbn.com>
+	* Policy
+	Added setContext() and getContext() methods
+
+2000-03-31  Jim Winston	 <jwinston@bbn.com>
+	* ContextOfUIDs
+	New class. Implements Context. For use when Context of a task can be referenced
+	by UIDs.
+	
+2000-03-27  Michael Thome  <mthome@bbn.com>
+
+	* ClusterObjectFactory
+	createDisposition added, but leave createFailedDisposition, both
+	for backward compatability and for convenience.	
+
+	* Disposition
+	Replace FailedDisposition with Disposition, which may be used both 
+	for failure or vacuous success states.  Fixed various other
+	classes to match.
+
+2000-03-24  Michael Thome  <mthome@bbn.com>
+
+	* PlugIn*
+	Add a nice little claim/unclaim feature to do the claiming
+	gruntwork for you. Remember to check the return value of claim in
+	case you happen not to have won the race.
+
+	* Claimable, ClaimableImpl
+	add boolean tryClaim method to atomically grab a claim on an object.
+
+	* TimeSpanSet
+	Now extend ArrayListFoundation to be sigificantly faster and
+	smaller, since we are no longer a wrapper around an ArrayList.
+	More improvements await.  Fixed up extending classes.
+
+	* ArrayListFoundation
+	Modified version of ArrayList to provide direct access to internal 
+	structures for extending classes.	
+
+2000-03-22  Michael Thome  <mthome@bbn.com>
+
+	* version.def
+	update to version 6.1, and branched ALP 6.0
+
+	* FailedDisposition
+	Better name for FailedAllocation.	
+
+	* alp.ldm.predicate
+	New package has a bunch of useful predefined predicates suitable
+	both for direct use and for subclassing.
+
+2000-03-21  Michael Thome  <mthome@bbn.com>
+
+	* Verb, Role, Preposition
+	Move non-core constants to Domain.  See, for example,
+	mil.darpa.log.alp.domain.Constants.
+
+2000-03-10  Michael Thome  <mthome@bbn.com>
+
+	* alp.plugin.PlugIn, PlugInContext, et.al.
+	Full support for stateless plugins.  See documentation in
+	alp.plugin.PlugIn for information.	
+
+	* RoleSchedule, et.al.
+	Use Collections API, extends TimeSpanSet.
+	Renamed getRoleSchedule to getRoleSheduleElements.
+	deprecated all Date-based methods. 
+	Simplified implementation.
+
+	* PEBinaryPredicate, StartDateBinaryPredicate
+	removed.
+
+	* Collectors
+	Remove JGL support.
+
+	* ScheduleImpl
+	Correct semantics of getEndTime, getEndDate.
+
+	* Filters
+	Some careful optimizations to avoid consing new empty collections, 
+	and cheaper operation on lists.
+
+	* ScheduleUtilities
+	Rewrite of many old methods.  The rest should also be
+	rewritten. addOrSubtractToThisSchedule functionality has been
+	moved to addSchedules and subtractSchedules methods.
+
+	* Schedule
+	extends Collection to integrate with other Collections.
+	extends TimeSpan so you can compare whole schedules or have a
+	schedule of schedules.
+	addOrSubtractToThisSchedule functionality has been moved to
+	ScheduleUtilities.
+
+	* Schedule, ScheduleImpl, ScheduleUtilities, etc
+	Schedules are now JDK Collection-based.  All methods with JGL
+	arguments or return-values have been removed.  Date-based methods
+	are all deprecated in favor of long millis methods.
+	SimpleScheduleFoo methods are removed.
+
+2000-03-09  Michael Thome  <mthome@bbn.com>
+
+	* alp.util.TimeSpanSet
+	Basic building block for schedules.  Maintains a sorted list of
+	implementations of TimeSpan objects.  Not very efficient right now,
+	but the API is pretty much correct and the implementation can be
+	fixed with binary instead of sequential searching, some special
+	cases for copy and compare, and perhaps doing internal array
+	management instead of using an ArrayList for the actual storage.	
+
+	* alp.util.TimeSpan
+	Abstraction of objects with a temporal extent.  The generic
+	schedule collection will operate on TimeSpan elements.
+
+2000-03-08  Michael Thome  <mthome@bbn.com>
+
+	* Annotatable
+	Abstraction of plan objects with Annotation.  Decided to simplify
+	things with the new interface.
+
+	* Context
+	Allow tasks to have a planning context attached.  This is intended 
+	to allow, for instance, the Logistics Domain to attach an Oplan ID 
+	to tasks to indicate which Oplan the task is supporting.
+
+	* Subscription, et.al.
+	Remove JGL from all subscription-related code.  Uses JDK
+	Collections Framework instead.
+
+2000-03-07  Michael Thome  <mthome@bbn.com>
+
+	* PlugInAdapter.query()
+	API for future light-weight query of LogPlan.
+
+	* UnaryPredicate
+	New class: staging for removal of JGL.
+
+2000-03-06  Michael Thome  <mthome@bbn.com>
+
+	* alp.plugin.Annotation, Task, Workflow, PlanElement
+	Allow the constructing plugin to tag certain LDM objects with a
+	plugin-specified state object (Annotation).  See Annotation
+	for more information.	
+
+	* DomainManager
+	Get collections of known domains by name or value.
+
+	* RMINameServer
+	Automatically start the nameserver when local and couldn't contact 
+	it the first time around.  May be disabled by alp.nameserver.auto=false
+
+2000-03-03  Michael Thome  <mthome@bbn.com>
+
+	* ClusterIdentifier.toString
+	no longer puts <> around the name.
+
+	* VersionWriter, MeasureWriter, AssetWriter, PGWriter
+	moved to build module, all in the alp.build package.
+	Updated .def files appropriately.
+
+	* alp.ldm.policy, alp.ldm.trigger
+	Move these packages up a level from alp.ldm.plan.
+	Moved Ship and StockageLevel policies to logistics domain.
+
+2000-03-02  Michael Thome  <mthome@bbn.com>
+
+	* Various
+	Make sure core doesn't use now moved classes.
+	
+	* alp.ldm.asset, alp.ldm.plan, alp.ldm.oplan
+	Move ALP-specific domain objects to mil.darpa.log.alp.domain.
+
+	* Factory
+	Remove all methods from interface.  Implementations are free to
+	add whatever methods which are required.  Otherwise, plugins
+	should use RootFactory for asset construction.
+	
+	* Domain
+	Change the LogicProvider insertion api to construct the LPs and
+	pass them back to the cluster for insertion into the LogPlan
+	rather than to require the Domain method to insert them. This
+	allows LogPlan.addLogicProvider to not be public.
+
+2000-03-01  Michael Thome  <mthome@bbn.com>
+
+	* alp.ldm.plan
+	remove FGI-specific domain objects
+
+	* Claimable, ClaimableImpl
+	Moved from alp.ldm.plan to alp.cluster.
+
+	* Message
+	make Message classes concrete: Impl classes renamed to be the
+	primary classes, interfaces dropped.
+	
+	Moved ClusterMessage, AckDirectiveMessage, DirectiveMessage,
+	AdvanceClockMessage to alp.cluster.
+	
+ 	Moved Add/RemovePlugIn to alp.plugin. 
+
+	* alp.ldm.plan.Predicate
+	remove redundant class.
+
+	* alp.ldm.asset.AssetIntrospection
+	moved from alp.ldm.plan.
+
+	* alp.util.PropertyNameValue
+	moved from alp.ldm.plan.
+
+	* alp.util.XMLizer
+	renamed alp.ldm.plan.XMLPlanObjectConverter.
+
+	* alp.util.XMLizable
+	renamed alp.ldm.plan.XMLPlanObject.	
+
+2000-02-29  Michael Thome  <mthome@bbn.com>
+
+	* LDMServesClient, ClusterServesPlugIn
+	Extends from ClusterContext to reduce redundancy in method specs.
+	It would be nice to get rid of some of the extras in ClusterContext.
+
+	* LdmFactory
+	Add back a deprecated LdmFactory interface to provide some measure 
+	of backward compatability so that we can put off large quantities
+	of plugin rewriting a little longer.
+
+2000-02-28  Michael Thome  <mthome@bbn.com>
+
+	* ClusterImpl
+	Manage Domain factories for plugins, interface to Domains, load
+	LPs through domains, etc.  This completes the infrastructure part
+	of the first cut at Pluggable domains.
+
+	* LDM
+	Updates to make use of the below.
+
+	* LDMServesClient
+	New base interface for various others to extend with common methods.
+
+	* RootFactory
+	Replacement instantiable class for old LdmFactory.  Implements all 
+	the required asset functionality including support for additional
+	Asset and PG factories.  RootFactory is the LDM factory for the
+	Root Domain - see above.
+
+	* Factory
+	Base interface API for all LDM Factories.  Just the basics -
+	assumes only asset api is available, presumably often via
+	delegation.
+
+	* LdmFactory, SelfBeanInfo, LdmObject
+	Removed.
+
+	* SelfDescribingBeanInfo
+	moved from alp.ldm to alp.util.
+
+2000-02-25  Michael Thome  <mthome@bbn.com>
+
+	* Task
+	changed getParentTask() to getParentTaskUID().  MPTask and
+	Workflow still have parent *tasks* since they don't generally get
+	serialized. 
+
+	* Proxiable
+	Remove all support for transparent remote Proxy object.  Too
+	complicated, too fragile, and far too easy to abuse.
+
+2000-02-24  Michael Thome  <mthome@bbn.com>
+
+	* ProxiableSet
+	removed - anyone can use UniqueObjectSet instead.
+
+	* UniqueObjectSet
+	Generalize ProxiableSet, since Proxiable is going away.
+
+2000-02-23  Michael Thome  <mthome@bbn.com>
+
+	* society
+	Remove voyager support.  Broken and buggy and nobody seems
+	interested in fixing it.
+
+2000-02-22  Michael Thome  <mthome@bbn.com>
+
+	* scalability, management
+	moved packages to tools module.
+
+	* Copyrights
+	Updated copyright comments as appropriate.  Any files which have
+	< copyright > < /copyright > pairs (without the extra spaces) can
+	be updated mechanically in the future.
+
+	* various
+	Removed dead code.
+
+	* ClusterIdentifier
+	moved from alp to alp.cluster.
+
+	* GenericStateModel*, StateModelException
+	moved from alp to alp.util.
+
+	* mil.darpa.log.alp
+	Merged m.d.l.a classes into alp.* to prepare for breaking them
+	back out into domain packages.  Exceptions:  merged
+	m.d.l.a.utilities into alp.util, m.d.l.a.data into alp.ldm.
+
+2000-02-16  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* DirectiveMessageImpl Remove try-catch around deserialization of
+	DirectiveMessage. Yes, I know I already did that, but this one is
+	in readExternal.
+
+	* DatabasePersistence
+	Add logging output to files.
+
+2000-02-16  Michael Thome  <mthome@bbn.com>
+
+	* ALPObject, QoSO, lots-of-others
+	Removed ALPObject and QoSO.  Worse than useless: the isValid
+	methods look like they should be useful, but the implementations
+	are usually wrong and occasionally NPE.
+
+	* AggregationImpl, CompositionImpl
+	Fix an infinite recursion in auto-propagate rescind.  Several
+	synchronization fixes should close some potential bogons. Don't
+	copy collections so gratuitously.
+
+2000-02-16  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* DirectiveMessageImpl
+	Remove try-catch around deserialization of the directives. Allow
+	the exception to propagate so that the entire DirectiveMessage is
+	abandoned instead of being processed with the missing directives.
+
+	* RescindLP
+	Disable short-circuiting of rescinds of tasks allocated to
+	self. Doing so allows rescinds to get ahead of allocates such that
+	rescind finds nothing to rescind and, later, the supposedly
+	rescinded task appears.
+
+	* Persistence
+	Embed debugging statements in conditionals to reduce consing when
+	not debugging.
+	Replace references to unpublished plan elements with null instead
+	of throwing an exception. This may help with the Aggregator
+	problem.
+
+	* Preposition intern all the constants.
+
+	* MessageManager given separate thread for sending ACKs so that
+	ACK transmission can held off during epoch advancement. Remove
+	epoch numbering.
+
+2000-02-15  Michael Thome  <mthome@bbn.com>
+
+	* PlugInAdapter, *PlugIn
+	All plugin classes can now select their threading model at load
+	time.  The whole API is in PlugInAdapter and all the basic
+	subclasses have be greatly simplified to take advantage by
+	choosing whichever threading model they wish.  Provisions are made 
+	to allow a plugin to implement its own threading model, but a
+	pretty good range is supplied (NONE, ONESHOT, SINGLE, SHARED).
+	All defaults are consistent - no source changes (or recompiles!)
+	are required.  The old base classes will probably be deprecated
+	for ALP 6.0 just to re-simplify the choice of base class.  
+	Also, the SINGLE threading model has new options to lower the
+	priority and/or stop the explicit post-cycle() yield.
+
+2000-02-11  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Expose the database connection through the ClusterServersPlugIn
+	API so plugins can use the same database transaction as
+	persistence.
+
+	* Add database version of persistence storing deltas in database
+	table "long raw" column.
+
+2000-02-10  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	Remove support for -Dalp.traceAssets.
+
+2000-02-10  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Add StringUtility.appendArray(StringBuffer buf, Object[] array)
+	to append the string representation of an array to a StringBuffer.
+
+	* Add StringUtility.arrayToString(Object[]) to form a string
+	representation of an array of the form "[<item>,<item>,...]" where
+	each <item> is the toString() value of the objects in the array.
+
+	* Reinstate sequence number transport in messages. This is
+	essential for correct operation of persistence. Also remove
+	epochid and contents. These are not being used.
+
+	* Change DirectiveMessage to hold an array of directives instead
+	of just one. Fill one directive message for each destination with
+	the directives that result from all the transactions handled by
+	the logplan in one cycle. This insures that the effect of the
+	directives will enter the destination logplan in a single
+	transaction. Plugins can take advantage of this by knowing that
+	every change made by one plugin in one transaction will appear in
+	one transaction of another plugin even if the second plugin is in
+	another cluster.
+
+2000-02-09  Michael Thome  <mthome@bbn.com>
+
+	* TaskScoreTable, ExpansionImpl
+	Re-implement TaskScoreTable as a simplified closed HashTable. 
+	There's a terrible inefficiency somewhere in here: the
+	TaskScoreTable is recreated each time something changes, and then
+	the expansion's SubTaskResult list is *also* recreated each time
+	it is asked for.  We need to re-examine the whole partial-results
+	logic.
+	
+2000-02-08  Michael Thome  <mthome@bbn.com>
+
+	* PingNameServer
+	A utility for testing NameServer functionality.
+
+2000-02-07  Michael Thome  <mthome@bbn.com>
+
+	* Node
+	Disable Application server support for now.
+	Add VM and OS information on startup.  Make Cluster loading
+	process nicer.
+
+2000-02-04  Michael Thome  <mthome@bbn.com>
+
+	* RMI*, Communications, etc
+	Cut over to a full-RMI system.  It should be pretty easy now that
+	it is properly generalized, to make the Voyager stuff work again.
+	Updates to management console to work with the new mechanism are
+	still in progress.  Otherwise, everything else is functional.
+	
+	* NameServer, RMINameServer, et.al.
+	Extended NameServer api to extend Java Collections Map api.  Added 
+	functionality to support a directory structure on top of
+	traditional Map interface.
+
+2000-02-01  Michael Thome  <mthome@bbn.com>
+
+	* Parameters
+	ALP parameter utility for doing various sorts of string
+	substitution based on the calling environment.
+
+2000-01-29  Michael Thome  <mthome@bbn.com>
+
+	* TriggerManagerPlugIn
+	Adjust logic slightly. make it a fat plugin. 
+	Add alp.trigger.verbosity=0.  Set =2 to print progress notes.  
+	Add alp.trigger.minWait=1000 to set minimum wait pause time.
+
+	* PeriodicAlarm, Timer
+	Add support for non-terminating, periodic alarms.
+	Also, timer always waits at least 0.1 seconds between alarms to
+	make sure that it doesn't run all out.  This is particularly
+	important since otherwise periodic alarms can be written to cause
+	severe damage.
+
+	* RMINameserver, RMIMessageTransport
+	Add alp.nameserver.verbosity parameter.  If 0 (default),
+	nameservice reports are very quiet. if 1, stackdumps on errors.
+	If 2, progress reports and stack dumps.
+
+2000-01-28  Michael Thome  <mthome@bbn.com>
+
+	* UID
+	Adjust uid comparison a bit.  Shouldn't be functionally different
+	but is probably slightly faster.
+
+	* PlanElementImpl
+	wire in reality plan.  Update beaninfo here and for directive to
+	not publish plan.
+
+	* Node
+	First create all the clusters, then populate them with plugins.
+	Prevents needing to queue messages for forward-referenced clusters 
+	in the same node.
+
+	* RMIMessageTransport
+	Check earlier in the chain for intra-node delivery options to
+	avoid incurring the inQ/outQ overhead.
+
+	* RoleScheduleImpl
+	Reuse PEBinaryPredicate instance.  Optimize predicates so as not
+	to defeat memoization of aspect value accessors.
+	
+	* PEBinaryPredicate
+	make just one instance to be reused, for instance by
+	RoleScheduleImpl. Also optimize.		
+
+	* TaskImpl
+	Make UID non-transient: we're spending too much time recomputing
+	'em.
+
+	* DirectiveImpl
+	Wire in RealityPlan to save a cell and some serialization cost.
+
+	* PlanImpl, ClusterObjectFactory
+	Make realityPlan a static.
+
+	* ClusterImpl
+	Turn off the showProgress newline generation, as it doesn't help
+	readability and adds a moderately contended lock.
+
+	* ReceiveNotificationLP, NotificationLP
+	send intra-cluster notifications via direct-call rather than
+	actually creating a notification and a directive message and then
+	sending it through the message transport.  This should be a big
+	improvement for busy multi-level clusters - e.g. those with
+	several cooperating plugins.
+
+	* Verb
+	Adjust equals methods: 
+	equals(String) checks for == before equals and no longer interns
+	the argument to optimize the most common case.
+	equals(Object) checks for == and includes string equality for
+	consistency. 
+
+2000-01-27  Michael Thome  <mthome@bbn.com>
+
+	* RMIMessageTransport
+	Extend fallback mode timeouts for large, slow societies.
+
+	* ClusterObjectFactoryImpl
+	Stop registering proxiables.  Nobody should care, anyway.
+
+	* LaborScheduleImpl
+	Partial rewrite.  Keeps combined schedule around instead of
+	recomputing each time it is needed. Some improvements in
+	computation of combined schedule. Thunk operations work on
+	combined schedule instead of bogus set.
+
+	* QuantityScheduleElement
+	SumQuantities utility Thunk.
+
+	* ScheduleUtilities
+	Minor optimizations and a bunch of Thunk-based utility methods.
+
+	* Thunk
+	Add some utility thunk classes: Counter and Collector
+
+
+	* ScheduleUtilities
+	Move to alp.ldm.plan from alp.ldm.plan, leaving a
+	deprecated shell behind.
+
+2000-01-26  Michael Thome  <mthome@bbn.com>
+
+	* RMIMessageTransport
+	Detect old Admin node or multiple message clients with the same
+	name. Add alp.message.decacheFailureLimit parameter, show
+	exceptions on transport errors while tracing is turned on,
+	printing them to log (.cml) files.		
+
+2000-01-18  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	Equals for assets is defined as being exactly the same class and
+	having equals TypeIdentification and ItemIdentification codes. 
+	
+	* AggregateAssetAdapter
+	Equals for aggregate assets is defined as having the same quantity
+	of the same (equals) asset.  TID and IID are ignored.
+	
+	* MessageTransport, Citizen
+	Generalize the MessageTransport selection code.  Simplest option
+	is to set system property alp.message.transport to the short name
+	of the transport.  Example:
+		-Dalp.message.transport=RMI
+	Currently valid values are "RMI" (the default), "Voyager" and "Pipe".
+	alp.message.transportClass property still works and overrides the above.
+
+	* Citizen
+	Make RMI the default transport/nameserver.
+
+	* RMINameServer
+	add system property alp.nameserver.verbose=false.  Iff true, will
+	report non-fatal namespace exceptions, otherwise will print "!" to 
+	err each time.
+
+2000-01-13  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	Add -Dalp.traceAssets=true flag to enable reporting of Asset
+	prototype transfers.
+
+	* AssetWriter
+	Change some casting so that failed prototype transfer wont cause
+	class cast exceptions.
+
+2000-01-12  Michael Thome  <mthome@bbn.com>
+
+	* alp.society.rmi.*
+	Slightly hacked first cut at an RMI-based MessageTransport and
+	NameServer.  Still requires the voyager-based FdsRegistry code for 
+	compatibility with PSPs, management console, etc.  Turned on with 
+	-Dalp.message.transportClass=alp.society.rmi.RMIMessageTransport
+
+2000-01-11  Michael Thome  <mthome@bbn.com>
+
+	* VoyagerMessageTransport
+	Make fallbackCount default to 10 (>50 seconds). 
+	Add decacheFailureLimit parameter - simply retries sends this many 
+	times (forever if 0) before forcing another namespace lookup.
+	DestinationQueues will now discover local clients instead of
+	relying on voyager for forward-referenced (local) destinations.
+
+	* FdsRegistry
+	Change MulticastAddress lookup to not take a prefix to reduce
+	String consing.
+
+	* DirectiveMessage, et.al.
+	Make DirectiveMessages faster to serialize.
+
+	* ClusterIdentifier, MessageAddress
+	Make lighter-weight and fast to serialize.
+
+	* alp.util.FastString
+	String wrapper class for fast (CPU-wise) serialization of strings.
+	You can turn off use of this with -Dalp.message.useFastString=false.
+
+2000-01-07  Michael Thome  <mthome@bbn.com>
+
+	* RoleSchedule, et.al.
+	Maintain RoleSchedule at publish boundaries rather than at
+	allocation and LP time. 
+
+	* MessageTransport, PipedMessageTransport
+	Performance improvements for debugging.  Also make the default for 
+	alwaysSerialize actually not serialize loopback messages
+	(e.g. cluster to itself).  This is more like what
+	VoyagerMessageTransport does, though it contradicts
+	"alwaysSerialize".  Use alp.message.useLocalDelivery=false to
+	restore to the previous behavior.  Also implements a deadletter
+	box for messages directed to clusters which do not yet exist -
+	this box is traversed whenever a new cluster is added so that
+	forward references work without forever looping on clusters which
+	will never exist.
+
+	* ReceiveNotificationLP
+	More useful debug message when we get an unhandle-able notification.
+
+	* TaskProxyImpl
+	Dump stack whenever some loser dereferences a taskProxy.
+
+	* VoyagerMessageTransport
+	Enter a slow-retry fallback mode after 5 consecutive message
+	failures.  See javadoc for more info.
+
+2000-01-03  Michael Thome  <mthome@bbn.com>
+
+	* alp.util.StringKey, alp.cluster.*Set
+	Use StringKey to avoid recomputing string hashCodes bazillions of times.
+
+	* SharedPlugInManager
+	Better scheduler: the more recently a plugin ran, the lower it's
+	priority in the queue.
+
+	* Various
+	Initialize HashMaps to non-default, reasonable, prime sizes.
+
+	* UID, MessageAddress
+	Cache the hashcode, so as not to recompute based on the string
+	each lookup.
+
+	* AllocationResult
+	Include aux queries in isEquals test.  TOPS request.
+
+	* TaskImpl
+	Indicate how many auxqueries present during tostring.  Any more
+	information is up to the caller.  TOPS request.
+
+	* RoleScheduleImpl
+	Use correct predicates throughout, based on those in
+	SchedulePredicate.  More documentation, cleanup. SRA request.
+
+	* SchedulePredicate
+	Fix some end-time checks, document. SRA request.
+
+1999-12-16  Michael Thome  <mthome@bbn.com>
+
+	* AspectValue
+	Add equals(Object) and hashCode methods.
+
+1999-12-05  Michael Thome  <mthome@bbn.com>
+
+	* ClusterImpl
+	Faster and more fair incoming message queuing.
+
+	* TaskImpl, ClusterMessageImpl
+	More useful toString methods
+
+	* FdsRegistry
+	Reduce the time spent in synchronized code when the code is going
+	to have to timeout/fail.
+
+1999-12-04  Michael Thome  <mthome@bbn.com>
+
+	* AspectValue
+	catch setting the value to NaN.
+
+1999-12-03  Michael Thome  <mthome@bbn.com>
+
+	* PlanElement, et.al.
+	Make plan elements self-describing beans, not exposing the
+	conflict methods.
+
+	* Schedule, et.al.
+	Update docs and implementations to reflect closed-start/open-end
+	of scheduleElement time span definition.
+
+1999-12-01  Michael Thome  <mthome@bbn.com>
+
+	* ScalabilityManager
+	resolve some slightly ambiguous method references.
+	
+	* ReceiveNotificationLP, ExpansionImpl, TaskScoreTable
+	Much faster maintenance of expansion subtask results.  Includes
+	api additions to supporting objects.
+
+	* Verb, UID, PrepositionalPhraseImpl, TaskImpl
+	Optimize critical equality tests with == when appropriate.
+	
+	* RescindLP
+	Disable conflict flagging code - see yesterday's log below for
+	info.
+
+1999-11-30  Michael Thome  <mthome@bbn.com>
+
+	* SimplifiedFatPlugIn
+	New plugin base class like SimplifiedPlugIn except has a thread of 
+	its own.
+
+	* ClusterImpl, AllocationImpl, AssetTransferImpl
+	Disconnected RoleScheduleConflictLP and have accessors throw
+	exceptions if/when called.  Computation of the Conflicts was a
+	cpu hog, and since nobody actually uses the information...
+
+	* Oplan, et.al.
+	Oplan.clone() now does a deep copy of the components, so that we
+	don't share detailed state within a node (and miss change
+	reports). should fix a bug noticed by TASC.
+
+	* ClusterImpl
+	Property alp.cluster.trafficPeriod, defaulting to 80, indicates
+	how many traffic characters to print to stdout before adding a
+	newline.  If <= 0, no newlines will be printed.
+
+1999-11-29  Michael Thome  <mthome@bbn.com>
+
+	* SingleThreadedPlugIn, SharedPlugInManager
+	name Threads.
+
+	* ClusterImpl
+	print \n after every 10 status chars.
+
+	* Schedule, ScheduleImpl
+	Accessor for Thunk application.
+
+	* Thunk, Collectors
+	Abstract and cheap iteration over set-like objects.
+
+	* Envelope
+	avoid consing iterators in inner loop of transaction opens.  Small 
+	but significant overhead because these points are exercised so
+	often. Small additional gains could be had by using a simpler
+	implementation of List - for instance one that doesn't do bounds
+	checking on each get(int) or one that exposes the internal array
+	on demand.
+
+	* Asset
+	Increase efficiency of setPropertyGroup(), which used some
+	expensive and uncached introspection to do its thing.  Now uses
+	less expensive introspection and caches its results in a static.
+	Requires the PropertyGroup changes below.  Also removed some old
+	debugging code and supplied reasonable initial sizes for
+	hashset/hashmaps.
+
+	* PropertyGroup, *PG, PGWriter
+	add getters so that we can avoid introspecting to find the
+	asset.setFoo method names in Asset.
+
+1999-11-24  Michael Thome  <mthome@bbn.com>
+
+	* management
+	Reduce Date and string consing.
+
+	* PGWriter
+	Consistency on statics in generated interface code.
+
+	* Subscriber
+	reduce consing of empty iterators.
+
+	
+1999-11-23  Michael Thome  <mthome@bbn.com>
+
+	* ClusterImpl
+	Minor cleanup. Added alp.cluster.showTraffic=false to turn off the 
+	message sent/received characters (+/-).		
+
+	* TriggerManagerPlugIn
+	Rewrite to clean up the control flow.  Simpler, uses the below
+	changes to be smarter about redundant alarms and proper time to
+	sleep. Never goes to sleep for less than 1sec, though it can still 
+	be wake()ed by logplan changes.
+
+	* PlugInAdapter.PlugInAlarm
+	Added a toString() method to PlugInAlarm so that the verbose modde 
+	of Timer is actually slightly useful.
+
+	* Alarm, PlugInAdapter, Timer, ScenarioTimer
+	Added Alarm.cancel() method.
+
+	* TriggerTimeBasedMonitor
+	Use system time consistently.  Add getRemainingTime method to use
+	in deciding how long to wait.
+
+	* Trigger
+	Move call to IndicateRan to end of execute, so that we time-based
+	triggers that take a while to execute don't end up running
+	constantly. 
+
+	* PlugInAdapter
+	New sanity checks on wake* calls.  Complains when the wake times
+	requested are already past.
+
+	* Timer
+	Add some debugging options:
+		alp.timer=quiet		no output
+		alp.timer=visible	asterix on each alarm
+		alp.timer=verbose	timer and alarm printed each alarm
+	quiet is the current default.  A current concern is that alarms
+	are being set to go off very rapidly or lots of alarms set to go
+	off in the past.  If these turn out to be happening, we'll have to
+	implement a minimum wait time.
+	
+
+1999-11-22  Michael Thome  <mthome@bbn.com>
+
+	* ForcePackage
+	update .equals() to not NPE on empty ForcePackageID.
+
+	* AllocationResult
+	Attempt to fix significant redundant cloning of number arrays -
+	mostly reduced time and temporary-object consing.  Really needs a
+	full rewrite with an eye towards efficiency AND safety.
+
+	* PreferenceChangeLP, TaskImpl
+	Better version of hack to fix comodification errors in
+	PreferenceChangeLP. 
+
+1999-11-19  Michael Thome  <mthome@bbn.com>
+
+	* ClusterImpl
+	PluginLoader semantics are too complicated for people in crunch
+	mode.  Default is now to use *only* classpath to load classes.
+	-Dalp.cluster.pluginloader=true will turn the plugin loader back
+	on. 
+
+	* ReceiveTransferableLP
+	Reconcile incoming Oplans with the logplan, add/remove/change
+	subordinate objects (OplanContributors) as needed.
+
+	* Oplan, et.al.
+	Make ForcePackage, OrgRelation and OrgActivity subordinate object
+	to Oplan. Various Oplan objects now support equals()
+
+	* Translations
+	utility class for translating between different java object holder 
+	implementations.  E.g. Enumeration to Collection, etc.
+
+1999-11-17  Michael Thome  <mthome@bbn.com>
+
+	* AssetSkeletonBase
+	Break out static code from AssetSkeleton for several reasons:
+		a. PGWriter no longer has to write it.
+		b. simplify modifying the static stuff.
+	Taking advantage of the latter point, it now does lazy
+	otherProperties construction, now uses an ArrayList instead of a
+	Vector, and it smarter about sets, etc.  Result is lower memory
+	load, may be slightly faster too.  Basis for correcting some
+	long-standing awkwardnesses - stay tuned.
+
+	* LdmFactory, ClusterObjectFactoryImpl, etc
+	LDMFactory and related classes now use the plugin classloader to
+	find classes at runtime instead of Class.forName.  This should
+	allow creation of policy objects, and non-standard assets and pgs 
+	from plugins loaded with the plugin classloader, e.g. from plugins 
+	not in classpath.	
+
+1999-11-16  Michael Thome  <mthome@bbn.com>
+
+	* alp.util.CircularQueue
+	New utility collection which implements an efficient circular
+	queue of objects.  Used in MessageTransport et al as a much
+	lighter-weight message-passing object insulating the various
+	threads from each other.  Replaces JGL queue and Collection
+	LinkedList uses.  Reduces consing of short-lived objects since
+	both old cases allocate element holders, whereas CircularQueue
+	just uses an array of Object as backing store.  See javadoc for
+	more details.
+
+	* PGs
+	Removed confusing empty PGs: OrganizationPropertyGroups,
+	OrganizationTypePropertyGroups, MilitaryOrganizationPG,
+	NonMilitaryFederalOrganizationPG, StateAndLocalOrganizationPG,
+	CommercialOrganizationPG, ForeignMilitaryOrganizationPG,
+	ForeignGovernmentalOrganizationPG.  Changed MilitaryOrganization
+	asset to have a default slot of MilitaryOrgPG rather than the (now
+	removed) MilitaryOrganizationPG.
+
+1999-11-15  Michael Thome  <mthome@bbn.com>
+
+	* CapacityScheduleElement
+	New type of ScheduleElement with a Capacity as the stored value
+	per SE.
+
+	* ProxyQueryTable
+	Moved proxy query handler to new file from clusterImpl,
+	cleaned/rewrote, removed lots of old/broken stuff. Also fixed a
+	bug which prevented proxy queries from actually working at all.
+
+1999-11-12  Michael Thome  <mthome@bbn.com>
+
+	* SchedulePredicate
+	Change to use longs instead of Dates.
+
+	* TriggerManagerPlugIn
+	set minimum interval for timer-based triggers to 1000ms.
+
+	* TaskImpl, ScheduleElement
+	Make smaller in-memory and serialization footprints.
+	ScheduleElement ordering should be faster, too.
+
+	* ObjectInputStreamWithContext
+	use resolveObject to support re-uniquing object after
+	serialization.  Intern short strings on deserialization, also
+	"intern" Service, Role, Verb and CIDs.
+
+1999-11-11  Michael Thome  <mthome@bbn.com>
+
+	* OPlan various
+	Fix beaninfo for several classes which declared a
+	PropertyDescriptor array larger than the set of properties
+	actually filled in.
+
+	* PipedMessageTransport
+	implement an optional byte counter for the pipe to track the sizes
+	of messages.
+
+1999-11-10  Michael Thome  <mthome@bbn.com>
+
+	* ArgTable (Node)
+	Allow simplified arguments to Node.  Assume that a
+	non-dash-prefixed argument is the Node name ("Foo" is like "-n
+	Foo").  Also, a name of "admin" or "Administrator" sets the
+	defaults to be what the node scripts have been setting.
+	Should be completely backward-compatible.
+
+	* Preposition
+	add MAINTAINING
+
+	* LaborScheduleImpl, ScheduleImpl
+	Rearrange synchronization to allow LSI schedules to be modified.
+	Also reduces copy operations.
+
+	* *PG
+	Fix beaninfo indexed collection getters to handle unset (null)
+	collections without generating invocation errors.
+
+1999-11-08  Michael Thome  <mthome@bbn.com>
+
+	* ContainPG
+	Added IsPrepositioned boolean slot.  Used to specify that a cargo
+	vehicle is designated as holding prepo.  This implies that it will
+	be full of prepo cargo at the start of an operation.
+
+	* Asset, etc
+	Changed serialization of Asset prototypes.  Here's the new
+	algorithm:
+	If Cluster A is sending Asset Q with Prototype P to Cluster B:
+
+	In A (serialization), while encoding Q, if P has already been sent
+	to B, send only the TypeIdentification (TID) of P, else send the
+	whole object, noting first that we've sent it at least once to
+	B. Send only null if P is null.    
+	
+	In B (deserialization), while decoding Q, if P is sent as a TID,
+	look up the TID in B's LDM.  If we fail, construct P as a plain
+	Asset, expose to local PropertyProviders, and cache P, using the
+	new P instance as Q's prototype.  If P is sent as an asset, check
+	B's LDM.  If found, drop the serialized P on the floor and use the 
+	local prototype, otherwise expose the prototype to the local B
+	PropertyProviders, cache it and continue.
+
+	This should be stable with persistence, resulting only in
+	redundant sends of the prototypes by A to B after A is
+	reconstructed. 
+
+	* Container
+	add ScheduledContentPG to Container (TOPS reqest)
+	
+	* Package
+	New Asset class. Like Container, but for temporary items like
+	pallets, et al.
+
+
+1999-11-05  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	If while deserializing there is no prototype provider in the
+	current cluster for the instance's prototype asset, we'll create
+	one, expose it to propertyproviders and cache it for later.
+
+	* PlugInAdapter
+	Use RealTime alarms for RealTime variations of wake*.  The
+	previous wake* methods are still scenario time.  Timer needs for
+	throttling computation, batching, etc, should be better served by
+	the RealTime methods.
+
+	All wake* methods now return the alarm instance actually set.
+	This allows callers to use Alarm.hasExpired() to test to see if
+	that particular alarm has rung, regardless of if the they missed
+	the wake or not.
+
+	* Alarm
+	Added hasExpired() method.
+
+	* Timer, ScenarioTimer
+	Split Timer into two classes, one for realtime, the other for 
+	scenario time.
+
+	* ClusterImpl, ClusterServesPlugIn
+	Expose RealTime timers to plugins (and implement them).
+
+	* FDSRegistry
+	Pass more lookup exceptions through to caller so that the caller
+	can determine the best course of action.
+
+	* VoyagerMessageTransport
+	Respond loudly to serious lookup problems (e.g. host not found).
+	Also, more isLogging support for destination-queues.
+
+1999-11-03  Michael Thome  <mthome@bbn.com>
+
+	* measures.def
+	Changed common unit of Duration to hours and Mass to short_tons.
+	SRA request.
+
+	* PGs
+	Another attempt to get the beaninfo for collection types correct.
+	It is unfortunate that java doesn't allow any form of casting from
+	Object[] to Foo[].
+
+1999-11-01  Michael Thome  <mthome@bbn.com>
+
+	* PlugInLoader
+	Replaced PlugInClassLoader with PlugInLoader.  PIL is a single
+	facility which uses URLClassLoader to extend the directories used
+	to load plugin classes to .../lib/*, .../plugins/* and
+	.../<product>/lib/* where "*" is any *.{jar,zip,plugin}.  This
+	implementation doesn't actually use a security manager, but
+	does verify loaded plugin class certificates.  See
+	doc/details/Security.txt for further information.  Does not
+	restrict plugins from referencing each other.
+
+	* KeyRing
+	Move keystore functionality from SignedMessageSecurityManager to
+	KeyRing to be used by multiple places.  A side effect is that the
+	system properties used to control have changed slightly.
+	doc/details/Security.txt has further information.
+	
+
+1999-10-29  Michael Thome  <mthome@bbn.com>
+
+	* VoyagerMessageTransport
+	Be a little louder when Voyager times out or otherwise fails to
+	deliver a message.
+
+	* FdsRegistry
+	Rework of threading and synchronization.  Several potential
+	deadlocks removed.  Much lower lock contention, particularly for
+	PSP use which can stress the registry's reentrant properties.
+	Many fewer network operations while holding locks.  No longer have 
+	synchronized methods - instead have two guard locks to separate
+	the two major sync usage bodies.  Intended functionality should be 
+	unchanged - just more stable and perhaps slightly faster. Old
+	version is retained (temporarily) in FdsRegistry.old.
+
+1999-10-27  Michael Thome  <mthome@bbn.com>
+
+	* alp/ldm/assets/(various)
+	Merged in Tops deltas.  Mostly changes to TransportationNetwork
+	assets and PGs.
+
+	* AssetWriter
+	Removed redundant beaninfo slots, since we chain upwards to get
+	the info.  Doesn't actually change visible behavior, since bean
+	introspector eliminates duplicates.
+
+	* PositionImpl et al
+	fixed clone methods to work without lat/lon defined.  No need to
+	construct new lat/lon objects since they are immutable.
+
+1999-10-15  Michael Thome  <mthome@bbn.com>
+
+	* Skill
+	added parser-based constructors which take a string of
+	"/"-separated values.
+
+	* VoyagerMessageTransport
+	Fixed multicast messages for destination queues.
+	Also wait 5 seconds instead of 5ms before recycling an idle
+	message delivery queue
+
+	Also cleaned house - removed some dead code, updated
+	documentation, adjusted system property use.
+	
+	* SharedPlugInManager
+	Try and catch errors.  Many JITs will remain trashed, however, so
+	you'll have to run interpreted if you get this.
+
+1999-10-12  Michael Thome  <mthome@bbn.com>
+
+	* CSSCapability
+	Added CSSCapability(String) constructor.  In conjunction with the
+	below should allow .ini file parsers to build CSSCapability
+	objects.  See javadoc for examples and more info.
+ 	
+	Added equals and hashcode.
+
+	* alp.ldm.measure
+	Added Count back in (was commented out for some reason).  Also
+	made sure that the default unit for all measures (index 0) is
+	the metric base unit wherever possible.
+	
+	String constructors for measures now can take both things like:
+	"123 grams" and "123.0grams".
+
+	Added Test class as a point test.
+
+	new measure.getCommonUnit() returns a commonly-used unit.
+	generally, the unit returned is the one most often used by
+	military logistics planners for transportation purposes.
+
+	new measure.getUnitName(int) returns the name of the unit
+	specified.
+
+	Added equals and hashCode to Capacity.
+
+	Added Capacity(String) constructor which uses reflection to parse
+	the argument.
+
+	Made "units" the default unit for Count, keeping eaches as an
+	alias.
+
+	Extended point test to ping Capacity parser.
+	
+1999-10-04  Michael Thome  <mthome@bbn.com>
+
+	* ClaimableImpl
+	Rewritten to use PrivilegedClaimant instead of special cases.
+	Adjusted to make sure that all claims warnings really are warnings 
+	rather than enforced reports.
+	Added system property alp.cluster.claim.isLoud.  Only prints stack 
+	traces when set to true, otherwise will be quieter and remind the
+	user about isLoud on the first report.
+
+	* PrivilegedClaimant
+	New Class generalizes the privileged access to claimable objects
+	that were previously only available to Assessors and core internal
+	objects (e.g. LogPlan).  Read the javadoc before using it!
+
+
+	* alp.test.IntrospectionTest
+	Test fixture for beans introspection of any class.
+
+	* Role
+	BeanInfo added.
+
+	* alp.ldm.asset.*
+	New beans introspection mechanism.  Each asset and PG supplies
+	beaninfo directly instead of relying on extra BeanInfo classes.
+	PG Collections are now supported and lockedPGs are better
+	supported with simpler special-casing.  This should be 100%
+	backward compatible, possibly modulo client handling of new
+	facilities.  Do not compile this set on top of an existing class
+	hierarchy - many classes (BeanInfo) are no longer generated, so
+	you'll have problems if you mix old .classes with new code.
+
+1999-10-01  Michael Thome  <mthome@bbn.com>
+
+	* FdsRegistry
+	Quiet debug messages, turn off explicit GC as a major runtime
+	lose, especially for demos.
+
+	* VoyagerMessageTransport
+	Rewrite Multicast delivery to take advantage of
+	QueuedMessageDelivery. Also somewhat cleaner logic flow.
+
+	* FdsRegistry
+	Repair multicast message target lookup so that time propagation
+	works again.
+
+	* MilitaryOrgPG
+	added home_location slot as a quicker access to org's geoloc.
+
+	* PGBeanInfo
+	Changed PGWriter to write better BeanInfo defs:
+	1. Fixed bug with method-like properties by no-longer having
+	beaninfo representations for those "slots".
+	2. Added support of Collection-typed slots as IndexedProperties.
+
+1999-09-30  Michael Thome  <mthome@bbn.com>
+
+	* alp.ldm.asset.CSSCapabilityPG
+	Has a list of CSSCapability objects.
+
+	* alp.ldm.plan.CSSCapability
+	Has a capability "type" like "MOS/43B" or "FuelTransport" and a
+	Capacity like "88 hours per day" or "1000 gallons per minute".
+	
+	* alp.ldm.measure.Capacity
+	New Measure class has a scalar numerator and a duration
+	denominator. Can also support "instantaneous" Capacity with
+	unspecified duration.  CSS support.
+
+	* alp.ldm.measure.Scalar
+	New Measure class is a superclass of various scalar measures
+	like Mass, Volume, Distance and Duration.  Prerequisite for CSS
+	support.
+	
+	* alp.ldm.measure.Count
+	Resurrected count for CSS support.
+
+	* SignedMessageSecurityManager
+	Implemented a real MSM (loosely) based on BBN Columbia's IA
+	wizards.  Signs messages and depends on local (config)
+	availability of public keys.  See doc/details for the whole story
+	with all the details of the demo implementation.
+
+1999-09-29  Michael Thome  <mthome@bbn.com>
+
+	* MessageSecurityManager
+	Initial interfaces for MSM, along with a SecureMessage ifc and
+	vacuous impls in DummyMessageSecurityManager.
+
+1999-09-27  Michael Thome  <mthome@bbn.com>
+
+	* PlugInClassLoader
+	Quiet warning (PLUGIN directory missing) since nobody, including
+	alpine, is building "correct" plugins. Also make it work properly
+	under windows, since zip entries do not get their names translated 
+	between '/' and '\\'.  sigh.
+
+	* alp.util.Sortings
+	Extensions to Collection.sort include non-destructive sorting,
+	sorting of any Collection type, and use of element keys
+	(Mapping). Example: you can get a copy of a list of people sorted
+	by name with something like:
+		Collection byName = Sortings.sort(people, alphabeticCompare, mapName);
+	where alphabeticCompare is a comparator and mapName is a Mapping
+	which returns the name of a person.  The result will be a new
+	list containing the people of the original list, sorted by name.
+	
+1999-09-24  Michael Thome  <mthome@bbn.com>
+
+	* assets
+	More adjustment of ERQ support (as negotiated with ICIS).
+	yesterdays support dumped:
+	  - removed VolumetricStorageTank, FuelTank
+	  - changed VolumetricERQPG to VolumetricStockagePG
+	current support:
+	- new asset classes:
+	  - Inventory isa Asset, hasa ScheduledContentPG
+	  - VolumetricInventory isa Inventory, hasa VolumetricStockagePG
+	- new VolumetricStockagePG
+	  - has reorder_level, min_reorder_volume and unobtainable volumes
+	It would be nice if we had a Quantity/Quantized measure so that
+	we could support multiple measures of stockage parameters with one
+	Inventory Asset and one StockagePG.  Maybe next year.
+
+	* Skill
+	Added a bunch of Predicates selecting for various skill types.
+	see additional notes in today's ChangeLog entries below.
+
+	* Person
+	Simplified Person hierarchy:
+	- only two classes of Person, all others removed.
+	  - Person: has PersonPG
+	  - MilitaryPerson: has MilitaryPersonPG and AssignmentPG
+	- only two classeses of Person PGs, all others removed.
+	  - PersonPG: replaces PersonIDPG, adds a Collection of Skills
+	  - MilitaryPersonPG: unchanged.
+	Note: the alp.util.Filters utility class will be helpful for
+	anyone who wants to search the skills set for particular skill
+	codes, types, etc.  For example, to find a Person's MOS:
+		Collection skills = person.getPersonPG().getSkills();
+		Skill mos = Filters.findElement(skills, Skill.mosP);
+	
+	* Skill
+	New generic representation of personal Skills used by PersonPG.
+	Most skills are represented by the Skill class: e.g. the MOS 11B
+	might be constructed as:
+		new Skill("MOS","11B","Infantryman");  // prints as "MOS/11B"
+	Also an extension of Skill is AircrewSkill:
+		new AircrewSkill("C-17", "Pilot", "AirRefueling", "A1", true);
+	(which prints as "Aircrew/Pilot").
+	Skill defines a bunch of Predicates which test for various common
+	skill types (e.g. MOS).
+	
+1999-09-23  Michael Thome  <mthome@bbn.com>
+
+	* assets
+	remove "old=" lines from PG defs.
+	Support for ERQ (requested by ICIS).
+	- new assets: 
+	  - VolumetricStorageTank which is a major end item similar
+	  to a container except it stores liquids and has a
+	  VolumetricERQPG. 
+	  - FuelTank which is a vacuous subclass of the above.
+	- new PG:
+	  - VolumetricERQPG which represents EconomicReorderQuantity.
+	
+	* Measures
+	New constructors:
+	- Measure(double, int) is like newMeasure(double, int).
+	- Measure(String) takes strings like "number unit" where number is 
+	any kind of parsable double representation and unit is a valid
+	(full) unit name - any mix of case is accepted.  E.g. "47.3 pounds"		
+
+	* Composition
+	Require that the combinedTask be an MP task at compile time.
+
+	* alp.util
+	Various classes that should have been part of the JDK Collections
+	framework:
+	- Predicate:  Similar to the JGL UnaryPredicate.
+	- Filters:  Predicate-based subsetting of Collections.
+	- Mapping:  Predicate-like functional object transformer.
+	- Mappings:  Mapping-based Collection transformation.
+
+1999-09-22  Michael Thome  <mthome@bbn.com>
+
+	* TaskProxyImpl
+	removed deprecated getID().  use getKey().
+
+	* TaskImpl
+	removed deprecated getID().  use getKey().
+	
+	* ConfigFileFinder
+	removed deprecated locate(String).  Use an open method.
+
+	* PlugInAdapter
+	removed deprecated getComponent().  Use getCluster().
+	removed deprecated wake(long).  Use wakeAfter(long).
+
+	* EssentialPlugin
+	removed deprecated withSubscriptionLock().  Use open/closeTransaction().
+
+	* ClusterObjectFactory
+	removed deprecated createAssetTransfer w/out Role argument.  Use
+	method with Role argument.
+	removed deprecated createAllocation w/out Role argument.  Use
+	method with Role argument.
+	deprecated getVerb(String). Use Verb constructor.
+
+	* OrganizationAdapter
+	removed deprecated getPredictor.  Use getClusterPG().getPredictor()
+	removed deprecated setPredictor.  Use getClusterPG().setPredictor()
+	
+	* Asset
+	removed deprecated removeATRoleSchedule().  Use getRoleSchedule().removeATRoleSchedule()  
+
+1999-09-17  Michael Thome  <mthome@bbn.com>
+
+	* DefaultPrototypeProviderPlugIn
+	disable it by not loading by default.  If someone needs it, it
+	can still be loaded in cluster config files.
+
+	* PGWriter
+	Added getFooHandler accessors so that one could tell if there is
+	a value handler installed without requiring a try/catch.  Also
+	made it all compilable with javac.  Javac bug reported to Javasoft.
+
+1999-09-15  Michael Thome  <mthome@bbn.com>
+
+	* Asset*BeanInfo
+	New generated BeanInfo classes parallel the asset tree and
+	recursively find all the properties.  Added some BeanInfo classes
+	for non-generated adapter and special asset classes.
+
+	* AssetConsumptionRatePG
+	New PG with computed slot for adding Consumption rates to assets.
+  	Added to asset tree as a required PG at ClassVIIMajorEndItem.
+	(requested by ICIS) 
+
+	* NewPrepositionalPhrase.setIndirectObject(Object)
+	method added for most-general case. (requested by TOPS)
+
+1999-09-13  Michael Thome  <mthome@bbn.com>
+
+	* AssetConsumptionRate
+	Corrected package.  Was alp.ldm.asset, now alp.ldm.plan.
+
+1999-09-09  Michael Thome  <mthome@bbn.com>
+
+	* ConfigFileFinder
+	Strongly deprecate locate() method which finds a File, add a new
+	method open() which returns an InputStream.  New functionality
+	(open) does the same old thing with raw (relative) file names by
+	default, but can also retrieve files using a variety of other
+	methods: ftp, http and file.  When the property alp.config.server
+	is set with node's -cs argument, it should be a prefix to a
+	configuration server directory
+	(e.g. "http://config.alp.org/"). when the property alp.config is 
+	set with node's -config argument, it is appended to the cs url
+	(e.g. "minitestconfig").  
+	See alp/doc/details/ConfigurationServer.txt for details.
+	
+
+	* alpine.society.*
+	Support for ConfigurationServer. Added -cs option to set the
+	configuration server URL. Added -ns option to set the name server
+	string, in place of using alpreg.ini.
+ 	
+	
+	
+
+1999-09-03  Michael Thome  <mthome@bbn.com>
+
+	* Subscriptions
+	Subscription communication is now keyed solely on subscription
+	instance, rather than predicate.  This eliminated ambiguity in
+	cases where there are multiple subscriptions with the same
+	predicate. the subscribe(UnaryPredicate) pattern is now removed
+	completely.
+
+	* VoyagerMessageTransport
+	All Messages with the same destination are queued together.  Each
+	queue is emptied by its' own thread with is started on demand and
+	stopped when idle for long enough.  Should reduce maximum thread
+	load in general, and result in much lower overall thread-system
+	contention. Also fewer simulateous connection attempts per
+	cluster, since multiple messages to X from Y will be delivered
+	serially instead of attempting it all at the same time.
+
+	* asset.*
+	Machine-generate BeanInfo classes for Assets.
+
+	* AssetConsumptionRate
+	FCR-like interface.  Still needs a PG to hook everything up.
+
+1999-08-27  Michael Thome  <mthome@bbn.com>
+
+	* Timer
+	Timer had used TreeSet to keep the alarms in the right
+	order. Unfortunately, TreeSet assumes that equal ordering == equal 
+	objects (seems pretty bogus to me).  This meant that you couldn't
+	have two different alarms set to go off at the same time.  Now we
+	use arrayList and a custom insert to keep the order right.  We
+	still use a comparator so when sun fixes things, we can go back to 
+	a better implementation.
+
+1999-08-26  Michael Thome  <mthome@bbn.com>
+
+	* LogicProvider et al
+	Eliminate test() method as requiring redundant processing - just
+	call execute() and let it decide if it can handle it or not.
+	Simplified API of helper functions by moving them to
+	EnvelopeTuple. Did some general cleanup of LPs while porting them
+	to new api.
+
+	* task.getPlanElement
+	Maintain task.getPlanElement at publish* boundaries. Had been
+	doing adds at PE construction time and removes at (un)claim time.
+	
+	* LogicProvider
+	Use LdmFactory instead of ClusterObjectFactory.
+
+	* Asset*
+	Separate the concepts of copying an asset ("I have a new truck
+	just like this other one except, of course, with a different VIN
+	and bumper number") and subset-cloning an asset ("This is a
+	representation of this same asset with only the subset of its
+	capabilities I allow to to use").  The former is available via
+	LdmFactory.copyInstance(Asset) and the latter via
+	LdmFactory.cloneInstance(Asset).  See documentation for details.
+	Asset.copy() should no longer be used.
+
+1999-08-19  Michael Thome  <mthome@bbn.com>
+
+	* AssetTransfer
+	Change an AssetTransfer and an update message is sent, which can
+	update the available schedule and a handful of asset properties:
+	ClusterPG, OrganizationPG, AssignedPG.  This allows serving
+	cluster, predictor, and available roles to be updated as needed.
+	Beware, though of trying to use predictors to represent dynamic
+	state - you'll just flood the society with useless messages.
+
+	* Asset/PGWriter
+	Asset.set*PG now all take simply PropertyGroup as an argument.
+	Should greatly simplify reflective data plugins.  Old "NewFooPG"
+	requirement was leftover from an ancient requirement.
+
+1999-08-18  Michael Thome  <mthome@bbn.com>
+
+	* OrganizationAdapter
+	Use ClusterPG as real storage for ClusterID and Predictor.
+
+1999-08-16  Michael Thome  <mthome@bbn.com>
+
+	* LDM
+	Major Rework of Properties for OpenSource release.
+	In general:
+	 Property and Capability suffixes changed to "PG".
+	 Organization asset hierarchy simplified.
+	 Removed some deadwood.
+	
+	* PGWriter
+ 	(was PropertyWriter) produces a perl script (updateLDM.pl)
+	to convert between old and new propertygroups and a
+	Properties.index which has an alphabetically-sorted list of
+	property groups with documentation and slots along with a 
+	permuted index of property slots.
+	updateLDM.pl and Properties.index should be copied to the
+	alp/doc/ReleaseNotes tree prior to each release.
+
+	* properties.def
+	Added TOPS-requested property changes, as modified by the above
+	changes. 
+	
+1999-08-12  Michael Thome  <mthome@bbn.com>
+
+	* LDM
+	Removed lots of deprecated and stale code, including old OPlan
+	implementation.
+	
+	* measures
+	Lots of minor changes.  New Energy class, better Power definition.
+	removed Count.
+
+	* Verb
+	alp.ldm.plan.Verb is now a real class
+
+	* Role
+	Expanded implementation
+
+	* MOS
+	New MOS object - patterned on Verb
+
+1999-08-02  Michael Thome  <mthome@bbn.com>
+
+	* LDM.getPrototype
+	Add an optional second argument, an Asset class hint as to what
+	type of Asset you are asking for.  If specified, any returned
+	Asset should be instanceof the specified class - that is, an
+	instance of that Asset class or a Subclass.  If not specified,
+	PropertyProviders must still check and see if they know about the
+	specified typeid.
+
+	* PrototypeProvider
+	changed getPrototype to take a required second argument - the
+	Asset Class being looked for.  See documentation and above for
+	information.  While this is an incompatible change, it is better
+	than the alternative: adding yet another LDMPI class and method
+	signature. 
+
+	* Citizen
+	Rename "shortCircuit" option to less deceptive name "alwaysSerialize".
+
+1999-07-30  Michael Thome  <mthome@bbn.com>
+
+	* PropertyWriter
+	Added facility for defining properties which take arguments,
+	supplied by LDM plugin handlers.
+
+1999-07-29  Michael Thome  <mthome@bbn.com>
+
+	* NewSchedule
+	Add some mutators for schedules.  COF returns
+	NewSchedule. ScheduleImpl implements full api.
+
+1999-07-27  Michael Thome  <mthome@bbn.com>
+
+	* PropertyWriter
+	New facilities:  Generic Collection types, e.g. Collection<Role>
+	now fully supported.  Slots may be left unspecified or the def may 
+	specify a class to "new" for initial value. Add property controls
+	to allow specification of getters/setters - eliminates need for
+	some adapters. 
+
+1999-07-26  Michael Thome  <mthome@bbn.com>
+
+	* Roles
+	Initial work on getting Collections of Roles into the Asset tree.
+	OrganizationCapability and AssignedCapability gets a Collections
+	of Roles instead of a CSV string.  Complete backward compatability
+	maintained with an adapter class offering the old, now deprecated
+	methods. 
+
+1999-07-23  Michael Thome  <mthome@bbn.com>
+
+	* Workflow.isPropagatingToSubtasks
+	Replaces isPropagatingRescind.  Name changed to reflect two
+	changes: (1) default value has changed to false, (2) that in
+	addition to rescind, add is also propagated when set.
+
+	* alp.cluster.ActiveSubscriptionObject
+	implemented by various ldm object so that some
+	subscription-related code can be executed at add/remove/change-
+	time.  The methods can return false to veto the events.  This
+	moves the object vs Subscription interaction code from LPs into
+	the affected objects.  WorkflowImpl, PlanElementImpl and TaskImpl
+	all implement ASO.
+	
+1999-07-22  Michael Thome  <mthome@bbn.com>
+
+	* mdla.cluster.LogPlan
+	Cleaned up redundant events generated by logic providers.
+	
+1999-07-16  Michael Thome  <mthome@bbn.com>
+
+	* Asset
+	New method setProperty(Property) does The Right Thing with any
+	valid propertyset object.  Uses introspection to figure out the
+	setter to use, or uses addOtherProperty as fallback for "foreign"
+	properties.  Support changes in all PropertyGroups via
+	PropertyWriter. 
+	
+1999-07-15  Michael Thome  <mthome@bbn.com>
+
+	* MB5.2

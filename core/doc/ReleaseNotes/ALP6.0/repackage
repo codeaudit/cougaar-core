@@ -1,0 +1,63 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+
+$tmp = "/tmp/repackage1.$$";
+
+while ($file = shift) {
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    if (/mil\.darpa\.log\.alp[^i]/) {
+      $found = 1;
+      s/mil\.darpa\.log\.alp/alp/g;
+    }
+    if (/mil\/darpa\/log\/alp[^i]/) {
+      $found = 1;
+      s/mil\/darpa\/log\/alp/alp/g;
+    }
+
+    if (/alp\.utility/) {
+      $found = 1;
+      s/alp\.utility/alp\.util/g;
+    }
+
+    if (/alp\.StateModelException/) {
+      $found = 1;
+      s/alp\.StateModelException/alp.util.StateModelException/g;
+    }
+    if (/alp\.ClusterIdentifier/) {
+      $found = 1;
+      s/alp\.ClusterIdentifier/alp.cluster.ClusterIdentifier/g;
+    }
+    print OUT $_;
+  }
+  close(OUT);
+  close(IN);
+
+  if ($found) {
+    # made changes
+    print "Fixing $file";
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$file");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+    print ".\n";
+  }
+}
+unlink($tmp);
+
+# Rule:
+# mil.darpa.log.alp.* -> alp.*
+#
+# Exceptions to above rule:
+# mil.darpa.log.alp.MessageImpl -> alp.society.MessageImpl
+# mil.darpa.log.alp.ClusterContextTable ->alp.cluster.ClusterContextTable
+# mil.darpa.log.alp.utility.* -> alp.util.*
+# mil.darpa.log.alp.data.* -> alp.ldm.*
+#

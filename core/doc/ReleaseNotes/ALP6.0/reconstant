@@ -1,0 +1,40 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+#
+# Most files which are modified with this script
+# will also need an additional line:
+# import mil.darpa.log.alp.domain.Constants;
+#
+
+$tmp = "/tmp/reconstant1.$$";
+
+while ($file = shift) {
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    $found += (s/Verb\./Constants\.Verb\./);
+    $found += (s/Role\./Constants\.Role\./);
+    $found += (s/Preposition\./Constants\.Preposition\./);
+    print OUT $_;
+  }
+  close(OUT);
+  close(IN);
+
+  if ($found) {
+    # made changes
+    print "Fixing $file";
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$file");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+    print ".\n";
+  }
+}
+unlink($tmp);
+

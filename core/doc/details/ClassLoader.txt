@@ -1,0 +1,19 @@
+ALP uses a custom classloader for plugins that are appropriately
+installed, along with supporting libraries.
+
+The plugin classloader searches for *.{jar,zip,plugin} in the
+following order:
+	lib/
+	plugins/
+	<product>/lib/
+	$CLASSPATH
+
+All are relative to the value of ALP_INSTALL_PATH.
+
+None of these need to be in your classpath, though the current install 
+puts alp-core and voyager jars in lib.
+
+To recap: CLASSPATH should be something like:
+	$ALP_INSTALL_PATH/lib/alp-core.jar:$ALP_INSTALL_PATH/lib/voyager.jar
+Nothing else should be needed.
+

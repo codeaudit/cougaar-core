@@ -1,0 +1,30 @@
+ALP Infrastructure Runtime glossary and discussion
+
+Symbols output during execution:
+	'.'	"heartbeat" indicates that the VM (Node) is relatively 
+		idle (and hasn't crashed).  '.' is printed by a
+		one-per-vm low-priority process at most once every 5
+		seconds.
+
+	'+'	Indicates that a Message was sent by a cluster in this 
+		node.  This includes messages send by a cluster to
+		iteself, but does not include messages send by
+		non-clusters (e.g. by Node initialization processes).
+
+	'-'	Indicates that a Message was received by a cluster,
+		including loopback messages.  Does not imply *any*
+		processing of the message.
+
+	'^'	Indicates that a call has been been to Objectspace's
+		Voyager API.  Voyager is known to be a memory hog.
+
+	'@'	Indicates that a remote management console has requested
+		information from the node.
+
+	'~'	Indicates that a the local management console has polled
+		all nodes it knows for updated management data.
+	
+Other symbols may appear from time to time - mostly due to debugging
+and tracing of experimental code.  The above symbols are retained
+because of their utility to human viewers, not for any technical
+reason.

@@ -1,0 +1,123 @@
+* MB 6.8.2
+
+New PG in alp domain LocationSchedulePG is maintained by
+OrgRTDataPlugin (for "Home location") and by new OPlanWatcherLP (for
+oplan-directed location assignments).  It is up to consumers to
+interpret the schedule and assign semantics.  However, a useful method
+is TimeSpanSet.getMinimalIntersectingElement(long time) which when
+called on a schedule, will return the shortest element overlapping the
+specified time.  This is experimental functionality at this point.
+
+NOTE: TimeSpan MIN_VALUE and MAX_VALUE are no longer == Long.MIN_VALUE
+and MAX_VALUE.  This should not effect correct code, but you
+might notice slightly different dates in UIs for elements which
+represent unbounded time.  It is very important that you not use
+Long.MIN/MAX_VALUE for schedules - *always* use TimeSpan.MIN/MAX_VALUE.
+
+* MB 6.8.1
+
+bugfixes
+
+* MB 6.8
+
+The new classloading Node bootstrapper may cause problems with certain 
+IDEs.  There are two workarounds:
+	1. call Node.launch instead of Node.main.
+	2. pass -Dalp.useBootstrapper=false to java command.
+Both options require that the classpath be complete and correct, as
+the bootstrapper will not do any jar-file searching.
+
+Also, the Bootstrapper's classloader will not load any classes which
+start with "java.", "javax.", "sun.", "com.sun." or "net.jini.".  This 
+list may be extended by supplying a -Dalp.bootstrapper.exclusions=foo.:bar.
+System property.  The value of the property should be a list of 
+package prefixes separated by colon (":") characters.
+
+New System property alp.message.fastTransport=true (default is false)
+optimizes the rmi message transport for societies where nodes usually
+contain multiple clusters.  This option instructs the RMI
+MessageTransport to:
+ 1. send messages via one thread-per node rather than one per cluster
+when possible. 
+ 2. registers each cluster as a redirect to the appropriate node. 
+In addition, by default, each node will only register one server
+object regardless of how many clusters are served (e.g. multiple
+name entries will refer to the same server object).
+fastTransport and all the detailed settings it controls
+(useNodeDelivery, useNodeRedirect, useServerProxies, useLocalDelivery) 
+may be mixed freely within a society so can be used to tune
+communities or individual nodes.
+
+The patch to java.io.ObjectInputStream which previously had sources in
+the core module and was built into alpio.jar, has been moved to its
+own module "javaiopatch".  All the scripts have been updated
+accordingly. 
+
+* MB 6.6
+
+Add Automatic generation of "rate" measures in terms of base
+measures. See core/doc/details/MeasureWriter.txt for details on new
+and old features.  (this part back-patched into MB 6.4.1)
+All "rate" measures now implement the interface alp.ldm.measures.Rate.
+The old (misnamed) Rate class is still available as AbstractRate.
+	
+Add support for DataQuality measures on PropertyGroups.  Details are
+described in core/doc/details/DataQuality.txt
+
+Replaced old directive message serialization technique with a
+lighter-weight solution.  Greatly simplifies most old ldm object
+serialization code and allows finally dropping the old persistence
+mechanism (long unused).
+
+LogicProviders now appear to publish to the plan instantaneously
+rather than having to wait for the end of the transaction.  This makes 
+the run model of LPs internally consistant - that is, they are both
+invoked at a sub-transaction level and (now) have visibility into the
+logplan at the same level of granularity.
+
+PlugIns may now use DynamicUnaryPredicate rather than UnaryPredicate
+for subscribing using predicates which select for things which are
+expected to change.  Essentially, the new facility will automatically
+add or remove objects as a result of change events when the internal
+collection is out of phase with the current state of the objects.
+There is considerable overhead when using these predicates, so it is
+not the default.  It still may only be used for standard subscriptions
+(CollectionSubscription and IncrementalSubscription and extensions),
+and the base objects that are being selected must be publishChanged by
+someone in order to pick up the modifications.
+
+PlugIn.query(UnaryPredicate) is now *much* more efficient than
+one-shot subscriptions.  PlugIn should now use query in place of any
+existing subscribe/unsubscribe patterns.
+
+New Transaction objects are kept in thread-local references.
+Transaction contains the rendezvous point between ChangeReports (which 
+had incorrectly been stored on the Publishable objects) and the
+subscriber/plan mechanisms.  Also provides a useful hook to whatif
+processing.
+
+Old (broken) persistence support has been dropped entirely.  The new
+(working) persistence support has been merged into the old package.
+
+The DomainManager will now first initialize Domains from properties
+(as before, looking for System properties of the form "alp.domain.foo=...") 
+and then from a config file "LDMDomains.ini".  The alpine tree has one 
+of these files set up in the configs/common directory for alpine demo
+use.  We expect that most people will prefer to the file method, but
+both are retained for compatability and flexibility.
+
+Node now uses Bootstrapper to re-classload itself with searched-for
+jars, etc.  The makes it possible to start alp with only core.jar in
+the classpath.  Startup scripts have been updated (simplified)
+accordingly.  Classpath is still honored, and takes precedence over
+searched-for jars.  See alp.society.Bootstrapper for more information.
+
+New (non-core) module "server" implements an application-server-like
+mechanism for running nodes (and societies) remotely.  This facility
+is intended to be used for testing&integration and (perhaps) demo
+use. See server/doc/README for basic documentation and instructions.
+
+* MB 6.4 
+
+New default behavior for BehaviorGroups. See
+core/doc/details/BehaviorGroups.txt for details. 

@@ -1,0 +1,325 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <meta name="Template" content="C:\Program Files\Microsoft Office\Office\html.dot">
+   <title>Release Notes</title>
+</head>
+<body link="#0000FF" vlink="#800080">
+&nbsp;
+<table BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH="600" >
+<tr>
+<td ALIGN=CENTER WIDTH="200"><a href="HTTPS://www.alpine.bbn.com/"><img SRC="alpine-logo-small.gif" BORDER=0 height=83 width=95></a></td>
+
+<td ALIGN=CENTER WIDTH="200">
+<h2>
+<b><font size=+2>Release Notes</font></b></h2>
+
+<h2>
+<b><font size=+2>ALP 6.6</font></b></h2>
+</td>
+
+<td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 height=83 width=95></a></td>
+</tr>
+</table>
+
+<table ALIGN=LEFT BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH="600" >
+<tr>
+<td ALIGN=LEFT WIDTH="600">
+<hr>
+<p>Jump down to:&nbsp;
+<ul>
+<li>
+<a href="#overview">Overview of this Release</a></li>
+
+<li>
+<a href="#organization">Organization of a Release</a></li>
+
+<li>
+<a href="#utilities">Utilities in a Release</a></li>
+
+<li>
+<a href="#example">MiniTestConfig Example Implementations</a></li>
+
+<li>
+<a href="#delivering">Delivering Software Products (PlugIns)</a></li>
+
+<li>
+<a href="#developing">Developing and Running ALP Societies</a></li>
+
+<li>
+<a href="#future">Future Releases</a></li>
+
+<li>
+<a href="#questions">Questions and Bug Reports</a></li>
+
+<li>
+<a href="#bugs">Known bugs and other issues</a></li>
+</ul>
+
+<hr>
+<h2>
+<a NAME="overview"></a>Overview of this Release</h2>
+MiniBuild 6.8 is a new branch release. For the integration activities scheduled
+as part of the next ALP PlugIn Developers Workshop, we will use the latest
+point release on the ALP v6.8 branch. All changes to the ALP v6.8 branch
+will compatible with the previously release APIs. We expect all PlugIns
+to be compatible with the ALP v6.8 branch software. MiniBuild 6.8 contains
+the following significant enhancements or modifications:
+<ul>
+<li>
+Changes in the transfers of Organization Assets that should fix problems
+reported in 6.6 with missing PGs and Predictors.</li>
+
+<li>
+Addition of the "AS" Prepositional Phrase to represent an array of roles
+and the timespan preference in a Report For Service tasks that replace
+Relationship Schedules.</li>
+
+<li>
+Addition of AdministrativeSuperior/AdministrativeSubordinate roles which
+will allow code to distinguish between superior/subordinate relationships
+created at start up and dynamic superior/subordinate relationships.</li>
+
+<li>
+Addition of the System property alp.message.fastTransport=true (default
+is false)</li>
+
+<br>which optimizes the rmi message transport for societies where nodes
+usually
+<br>contain multiple clusters.
+<li>
+The patch to java.io.ObjectInputStream which previously had sources in</li>
+
+<br>the core module and was built into alpio.jar, has been moved to its
+<br>own module "javaiopatch".
+<li>
+Changes to the Boostrapper classloader.</li>
+
+<li>
+Addition of Overtime and Readiness AuxiliaryQueryTypes</li>
+
+<br>&nbsp;
+<p>&nbsp;</ul>
+For additional details, please review the following documentation:
+<ul>
+<li>
+<a href="CHANGES">CHANGES</a> and doc/details</li>
+
+<li>
+core/doc/Javadoc</li>
+
+<li>
+PlugIn Developers Guide, v6.6</li>
+
+<li>
+core/src/Changelog</li>
+
+<li>
+PlugIn Developer Workshop presentations (on the <a href="HTTPS://www.alpine.bbn.com/">ALPINE
+website</a>)</li>
+</ul>
+
+<h2>
+<a NAME="organization"></a>Organization of a Release&nbsp;</h2>
+The files in an ALP release fall into the following organizational areas:
+<ul>
+<li>
+"core:" domain independent agent architecture</li>
+
+<li>
+"alpine:" LDM and PlugIns with a logistics domain focus based on the ALP
+program objectives</li>
+
+<li>
+"utility:" GSS and PlugIn Contracts</li>
+
+<li>
+"tools:" scalability and test tools</li>
+
+<li>
+"tutorial:" non-logistics sample societies and PlugIns</li>
+
+<li>
+"server:" centralized society initiation and management for testing, integration
+and demonstration</li>
+</ul>
+
+<h2>
+<a NAME="utilities"></a>Utilities in a Release&nbsp;</h2>
+The following PSPs (in the alpine module) and LPS services are tested with
+each release and should aid in PlugIn debugging and understanding society
+behavior:&nbsp;
+<ul>
+<li>
+alpine/demo/TASKS.PSP</li>
+
+<li>
+alpine/demo/PLUGIN_LOADER.PSP</li>
+
+<li>
+alpine/demo/SOCIETY_METRICS.PSP</li>
+
+<li>
+alpine/demo/OPLAN_EDIT.PSP</li>
+
+<li>
+?list?psps</li>
+
+<br>&nbsp;
+<p>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;</ul>
+
+<h2>
+<a NAME="example"></a>MiniTestConfig Example Implementations</h2>
+ALPINE maintains only the node configurations that we are currently using
+for testing purposes and for the ALP demonstrations. These node configurations
+are available in subdirectories under "alpine/configs" in the release.
+To execute the ALP society, these nodes can be combined to form a society
+that can be executed on a single computer or distributed across multiple
+computers. Note that only <b><a href="MiniTestConfig.html">minitestconfig</a></b>
+will work "out of the box". We intend to expand this test society in subsequent
+MiniBuild releases in size and complexity. PlugIn developers are encouraged
+to use <b>minitestconfig</b> as a starting point for bringing PlugIn compliance
+up to the latest infrastructure release. In addition, the subdirectory
+"flag-config" contains the configuration files used for the Flag Demonstration
+society. This society requires the use of PlugIns from various ALP participants.&nbsp;
+<br>&nbsp;
+<h2>
+<a NAME="delivering"></a>Delivering Software Products (PlugIns)</h2>
+Choose a product name that reflects the functionality of the family of
+PlugIns. Avoid names with obvious collision problems such as those associated
+with the Logistics domain. There needs to be a direct correlation between
+your product name and your Java package name. It is recommended that you
+follow the usual Java package naming guidelines (e.g., "com.bbn.tops...").&nbsp;
+<p>We will be providing a cvs repository for ALP plugin developers that
+are ALPINE subcontractors and participating in the FY2000 demonstration.
+If you would like to participate, we will provide you with details as to
+how to interact with the cvs repository (setting CVSROOT and passwords).
+The directory structure should follow the one described at the March ALP
+PlugIn Developers workshop.&nbsp;
+<ul>
+<li>
+product: root cvs directory and jar file name; this "jar" file should be
+sufficient for demonstration and testing and include non-ALP jar dependencies</li>
+
+<li>
+product/lib: PlugIn developer produced jar files</li>
+
+<li>
+product/src/*: java source tree used to produce &lt;product.jar; these
+sources will be compiled by the ALPINE nightly build process to produce
+the demonstrated "jar" file (only include java source and jar resource
+files in this directory tree)</li>
+
+<li>
+product/bin/*: run-time information required by your software such as script
+files and non-java executables</li>
+
+<li>
+product/data/*: run-time information required by your software such as
+data files and initialization information</li>
+
+<li>
+product/doc/*; javadoc of source code, design documents, installation instructions,
+operating instructions</li>
+
+<li>
+product/configs/*; any test society configuration directories used for
+PlugIn testing</li>
+
+<br>&nbsp;
+<p>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;
+<br>&nbsp;</ul>
+All PlugIn software must use the Java system parameter "alp.install.path"
+or the environment variable ALP_INSTALL_PATH to find data files, scripts,
+and external programs. For example, if your product is "tops," your classes
+will be in:&nbsp;
+<blockquote>"$ALP_INSTALL_PATH\plugins\tops.jar"</blockquote>
+and your java code could find your data files with:&nbsp;
+<dir>
+<dl>
+<dt>
+<font face="Courier New"><font size=-1>Properties props = System.getProperties();</font></font></dt>
+
+<dt>
+<font face="Courier New"><font size=-1>String path = props.getProperty("alp.install.path")
++</font></font></dt>
+
+<dt>
+<font face="Courier New"><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+props.getProperty("file.separator") + "tops" +</font></font></dt>
+
+<dt>
+<font face="Courier New"><font size=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+props.getProperty("file.separator") + "myData.dat";</font></font></dt>
+</dl>
+</dir>
+
+<h2>
+<a NAME="developing"></a>Developing and Running ALP Societies</h2>
+
+<h3>
+General Development&nbsp;</h3>
+
+<ul>
+<li>
+<a href="SocStartup-Config.html">Society Configuration and Startup</a></li>
+
+<li>
+<a href="MiniTestConfig.html">MiniTestConfig Functional Description</a></li>
+</ul>
+
+<h3>
+User Interface Development&nbsp;</h3>
+
+<ul>
+<li>
+<a href="../ui/help.html">ALP UI LogPlanServer Services&nbsp;</a></li>
+
+<li>
+<a href="../ui/pspdevguide.html">PlanServiceProvider Developer's Guide</a></li>
+
+<li>
+<a href="../ui/StandardUIServices.html">Standard UI Services</a></li>
+</ul>
+
+<h2>
+<a NAME="future"></a>Future Releases</h2>
+We anticipate that there may be further releases as we address system deficiencies
+and enhancement requests. Please watch the alp-plugin-developers email
+list and carefully read the latest PlugIn Developers Guide (PDG) and all
+release notes.&nbsp;
+<h2>
+<a NAME="questions"></a>Questions and Bug Reports</h2>
+In addition, email infrastructure questions and initiate community discussions
+through alp-plugin-developers@bbn.com. Bug and system-enhancement reports
+can be submitted through the <a href="HTTPS://www.alpine.bbn.com/">ALPINE</a>
+or <a href="http://www.cougaar.org">COUGAAR</a> websites.&nbsp;
+<h2>
+<a NAME="bugs"></a>Known bugs and other issues</h2>
+None known.&nbsp;</td>
+</tr>
+</table>
+
+</body>
+</html>

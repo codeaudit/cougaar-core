@@ -1,0 +1,46 @@
+1999-03-01  Beth DePass <bdepass@bbn.com>
+  * ExtendedPenaltyImpl, PenaltyValueImpl, SinglePenaltyImpl, ClusterObjectFactoryImpl
+  Support for ExtendedPenalty which can be defined on PenaltyValue.
+  As Designed (for now) String and double.
+  
+1999-03-01  Beth DePass <bdepass@bbn.com>
+  * WorkflowImpl
+  Support for customizable PenaltyValueAggregators to be used in computing
+  the penaltyvalues across subtasks of a workflow.  Additional factory like
+  support for the penaltyvalueaggregators.  Implemenation of TaskPenaltyTable.
+
+1999-02-10  Beth DePass <bdepass@bbn.com>
+  * RoleScheduleImpl
+  Deprecate and add methods to conform to new PenaltyValue arrays.
+  
+1999-02-10  Beth DePass <bdepass@bbn.com>
+  * WorkflowImpl
+  Rework the compute penalty method to use the new PenaltyValue arrays.
+  
+1999-02-10  Beth DePass <bdepass@bbn.com>
+  * PenaltyValueImpl
+  Rework complete - penalty value is now a wrapper for penaltymeasure/value
+  pairs stored in an array. Code needs to be added for extensions. Inner
+  class enumerator included.
+  
+1999-02-05  Beth DePass <bdepass@bbn.com>
+  * PenaltyValueImpl
+  Start on rework to move to measure/value array. 
+
+1999-02-03  Beth DePass <bdepass@bbn.com>
+  * PlanElementImpl
+  Update doRoleSchedule method to conform to new RoleSchedule object
+  
+1999-02-03  Beth DePass <bdepass@bbn.com>
+  * RoleScheduleImpl
+  New... make RoleSchedule a first class object, instead of a container
+  inside of asset.
+  
+
+
+
+	
+	
+
+	
+	

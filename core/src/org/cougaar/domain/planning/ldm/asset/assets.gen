@@ -1,0 +1,5 @@
+assets.gen
+AbstractAsset.java
+AggregateAsset.java
+AssetGroup.java
+AssetFactory.java
