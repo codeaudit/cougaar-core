@@ -46,7 +46,7 @@ import org.cougaar.planning.ldm.plan.Directive;
  * received from remote have their content published, if not already present.
  * Locally sent <code>ABM</code>s, are delivered locally
  * if that is the intent, delivered to the given <code>ClusterIdentifier</code>
- * if the destination is explicit, or are expanded. <code>MessageType</code>
+ * if the destination is explicit, or are expanded. <code>ABMAddress</code>
  * destinations are expanded via the YellowPages into a list of
  * actual destinations. New <code>ABM</code>s are created for these,
  * and they are sent.  Then the original <code>ABM</code> is logplan.remove()ed 
@@ -106,25 +106,25 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
     }
 
     /**
-     * If MessageAddress reflects MessageType, obtain
+     * If MessageAddress reflects ABMAddress, obtain
      * a List of interested agents and send out 
      * ABM directives to them. 
      **/    
-    if (destination instanceof MessageType) {
+    if (destination instanceof ABMAddress) {
       if(logger.isDebugEnabled()) {
-	logger.debug("LP at " + cluster.getClusterIdentifier().toString() + " sees a MessageType:" + dir);
+	logger.debug("LP at " + cluster.getClusterIdentifier().toString() + " sees a ABMAddress:" + dir);
       }
 
       if( myfact == null ) {
 	if(logger.isErrorEnabled()) {
-          logger.error("Error getting destinations for ABM with destination MessageType - null factory.");
+          logger.error("Error getting destinations for ABM with destination ABMAddress - null factory.");
 	}
 	// dont want to continue with directive
 	return;
       }
 
       // get list of message addresses
-      List mas = myfact.getYP().getDestinations((MessageType)destination);
+      List mas = myfact.getYP().getDestinations((ABMAddress)destination);
       // iterate over those & send out as directives
       if( mas!=null )
         {
@@ -155,10 +155,10 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
 	  logger.debug("YP returning null list of MessageAddrs for directive." + dir);
 	}
       }
-    } // end of loop to handle MessageType destinations
+    } // end of loop to handle ABMAddress destinations
 
     // What about destinations that are neither
-    // a ClusterIdentifier or a MessageType? Are there such things?
+    // a ClusterIdentifier or a ABMAddress? Are there such things?
     // Should I just try to send those?
     // FIXME!
 

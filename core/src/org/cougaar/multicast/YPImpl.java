@@ -44,10 +44,10 @@ public class YPImpl implements YP
   /**
    * Gets message addresses of all interesting sensors in multicast.
    *
-   * @param mt a <code>MessageType</code>
+   * @param mt a <code>ABMAddress</code>
    * @return a list of <code>ClusterIdentifier</code>s
    **/  
-  public List getDestinations(MessageType mt) {
+  public List getDestinations(ABMAddress mt) {
 
     // check for naming, and return all interested sensor Message Addresses
     

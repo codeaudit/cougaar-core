@@ -69,7 +69,7 @@ public class ABMFactory
   
   /**
    * Creates a new ABM Object, given a wrapped object and 
-   * destination. The destination will often be a <code>MessageType</code>,
+   * destination. The destination will often be a <code>ABMAddress</code>,
    * indicating the kind of message contained in the <code>ContextWrapper</code>, 
    * and therefore the the set of recipients for this <code>ABM</code>. But 
    * it may in fact also be a generic address.<br>
@@ -92,7 +92,7 @@ public class ABMFactory
   /**
    * Creates a new ABM Object, given an existing ABM Object and 
    * destination. Used by the <code>ABMTransportLP</code> to expand
-   * a message addressed to a <code>MessageType</code> into multiple
+   * a message addressed to a <code>ABMAddress</code> into multiple
    * messages for each subscribing Agent.
    *
    * @param anABM an <code>ABM</code> to re-address

@@ -42,13 +42,13 @@ import org.cougaar.planning.ldm.plan.DirectiveImpl;
  * real content with some context, and a <code>MessageAddress</code>. 
  * This <code>MessageAddress</code> could be an actual destination, like a
  * <code>ClusterIdentifier</code>. But for multicast it will be a 
- * <code>MessageType</code>. This type indicates the kind of message being 
+ * <code>ABMAddress</code>. This type indicates the kind of message being 
  * sent. Recipients must register an interest in messages of this type
  * within their community, via the Yellow Pages.
  * 
  * @see ContextWrapper
  * @see ABMFactory
- * @see MessageType
+ * @see ABMAddress
  */
 public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publishable, Serializable
 {
@@ -63,7 +63,7 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
    *
    * @param uid an <code>UID</code> to identify it
    * @param bw a <code>ContextWrapper</code>, the content to be sent
-   * @param dest a <code>MessageAddress</code> destination, often a <code>MessageType</code>
+   * @param dest a <code>MessageAddress</code> destination, often a <code>ABMAddress</code>
    * @param source a <code>ClusterIdentifier</code> to ID the sending Agent
    */
   public ABM (UID uid, ContextWrapper bw, MessageAddress dest, ClusterIdentifier source) {
@@ -115,7 +115,7 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
   /**
    * Allows access to <code>ABM</code>'s destination. This is distinct
    * from the <code>getDestination()</code> inherited from DirectiveImpl.
-   * This slot may contain a MessageType or other non-deliverable address,
+   * This slot may contain a ABMAddress or other non-deliverable address,
    * while the inherited slot should always contain a deliverable address.
    * 
    * @return dest, a <code>MessageAddress</code>

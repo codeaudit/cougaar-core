@@ -36,8 +36,8 @@ public interface YP
    * in the same community(ies) as this Agent that have the given attribute.
    * Note that the return list may be empty.
    *
-   * @param mt a <code>MessageType</code> destination to expand
+   * @param mt a <code>ABMAddress</code> destination to expand
    * @return a <code>List</code> of <code>MessageAddress</code>'s
    */
-  List getDestinations(MessageType mt);
+  List getDestinations(ABMAddress mt);
 }
