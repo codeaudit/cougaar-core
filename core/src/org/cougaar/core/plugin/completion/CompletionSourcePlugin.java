@@ -21,12 +21,14 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.relay.RelayChangeReport;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.TopologyReaderService;
@@ -160,19 +162,20 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
       ClusterIdentifier cid = new ClusterIdentifier((String) i.next());
       if (!cid.equals(me)) targets.add(cid);
     }
-    if (relay != null && !targets.equals(relay.getTargets())) {
-      blackboard.publishRemove(relay);
-      relay = null;
-    }
     if (relay == null) {
       relay = new CompletionRelay(null, targets, TASK_COMPLETION_THRESHOLD, CPU_CONSUMPTION_THRESHOLD);
       relay.setUID(uidService.nextUID());
       if (logger.isInfoEnabled()) logger.info("New relay for " + targets);
       blackboard.publishAdd(relay);
       return true;
-    } else {
-      if (logger.isDebugEnabled()) logger.debug("Same relay for " + targets);
     }
+    if (!targets.equals(relay.getTargets())) {
+      RelayChangeReport rcr = new RelayChangeReport(relay);
+      blackboard.publishChange(relay, Collections.singleton(rcr));
+      if (logger.isInfoEnabled()) logger.info("Changed relay for " + targets);
+      return true;
+    }
+    if (logger.isDebugEnabled()) logger.debug("Same relay for " + targets);
     return false;
   }
 

@@ -1,3 +1,10 @@
+2002-07-01  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionSourcePlugin.java:
+	Bug #1260 -- Add Relay target-set change support
+	Use support for changing target set to avoid creating new Relays.
+	Instead, just amend the target set.
+
 2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* CompletionTargetPlugin.java: 

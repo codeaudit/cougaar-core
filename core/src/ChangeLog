@@ -1,3 +1,15 @@
+2002-07-01  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Bug #1260 -- Add Relay target-set change support
+	Use information in RelayChangeReport to rescind relays from former
+	targets.
+
+	* org/cougaar/core/relay/RelayChangeReport.java:
+	Bug #1260 -- Add Relay target-set change support
+	This ChangeReport provides the information needed by the RelayLP
+	to support changing a Relay's target set.
+
 2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/PlayHelper.java:

@@ -112,8 +112,30 @@ public class RelayLP extends LogPlanLogicProvider
    **/
   private void localChange(Relay.Source rs, Collection changes) {
     Set targets = rs.getTargets();
-    if (targets == null) return; // Not really a source, apparently
-    if (targets.isEmpty()) return; // No targets
+    Collection oldTargets = null;
+    if (changes != null) {
+      for (Iterator i = changes.iterator(); i.hasNext(); ) {
+        Object o = i.next();
+        if (o instanceof RelayChangeReport) {
+          if (oldTargets == null) {
+            RelayChangeReport rcr = (RelayChangeReport) o;
+            oldTargets = rcr.getOldTargets();
+          }
+          i.remove();
+        }
+      }
+    }
+    if (oldTargets != null) {
+      if (targets != null) oldTargets.removeAll(targets);
+      UID uid = rs.getUID();
+      for (Iterator i = oldTargets.iterator(); i.hasNext(); ) {
+        MessageAddress target = (MessageAddress) i.next();
+        sendRemove(uid, target);
+      }
+    }
+    if (targets == null || targets.isEmpty()) {
+      return; // No targets
+    }
 
     // FIXME check for targets-change-report:
     //   calculate set differences
