@@ -1,0 +1,33 @@
+<html><head>
+<title>Agent mobility support</title>
+</head><body>
+<h2>Agent mobility support</h2>
+<p>
+Agent mobility is divided into two primary pieces:<ol>
+<p>
+<li>
+The infrastructure's services and implementation.  This
+includes the low-level "MobilityDispatchService" and 
+"MobilityListenerService" APIs, and only allows a 
+component within an agent to request <i>its own</i>
+agent to move.
+</li>
+<p>
+<li>
+The simplified "MoveAgent" API for plugin use.  This
+includes the "MoveAgent" data structure, the 
+"mobility" domain and factory to create this data
+structure, and the "MoveAgentPlugin" to process the
+MoveAgent objects.  The MoveAgentPlugin uses the
+low-level infrastructure services to perform the 
+move.  A Relay is used to transfer the request to
+the to-be-moved agent.
+<p>
+The MoveAgent API is analagous to a Task-based API,
+where the move "Ticket" is transferred between the
+agents.
+</li>
+<p>
+</ol>
+
+</body></html>
