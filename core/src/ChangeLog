@@ -1,3 +1,18 @@
+2003-04-07  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/node/Heartbeat.java:
+	Bug #2743 -- Dots and other characters printed to System.err/out
+	interfere with logging
+	Use Logging.printDot instead of System.out.print.
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Use LoggingServiceWithPrefix instead of home-brew prefix printer.
+
+	* org/cougaar/core/logging/LoggingServiceWithPrefix.java: 
+	Bug #2743 -- Dots and other characters printed to System.err/out
+	interfere with logging
+	Add printDot method.
+
 2003-04-04  Todd Wright  <twright@bbn.com>
 
 	* org/cougaar/core/domain/*
