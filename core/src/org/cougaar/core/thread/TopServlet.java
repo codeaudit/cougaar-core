@@ -27,17 +27,11 @@ import org.cougaar.core.service.ThreadControlService;
 
 import java.io.PrintWriter;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-
-
-class TopServlet extends HttpServlet
+class TopServlet extends ServletFrameset
 {
 
     private ThreadStatusService statusService;
@@ -61,7 +55,12 @@ class TopServlet extends HttpServlet
 	    }
 	};
 
-    public TopServlet(ServiceBroker sb) {
+
+
+    public TopServlet(ServiceBroker sb) 
+    {
+	super(sb);
+
 	NodeControlService ncs = (NodeControlService)
 	    sb.getService(this, NodeControlService.class, null);
 
@@ -81,16 +80,9 @@ class TopServlet extends HttpServlet
 	}
     }
 
-    String getPath() {
-	return "/threads/top";
-    }
 
-    String getTitle() {
-	return "Threads";
-    }
-
-
-    private void printHeaders(PrintWriter out) {
+    private void printHeaders(PrintWriter out) 
+    {
 	out.print("<tr>");
 	out.print("<th align=left><b>State</b></th>");
 	out.print("<th align=left><b>Time(ms)</b></th>");
@@ -100,7 +92,8 @@ class TopServlet extends HttpServlet
 	out.print("</tr>");
     }
 
-    private void printCell(String data, boolean italics, PrintWriter out) {
+    private void printCell(String data, boolean italics, PrintWriter out) 
+    {
 	out.print("<td>");
 	if (italics) out.print("<i>");
 	out.print(data);
@@ -108,7 +101,8 @@ class TopServlet extends HttpServlet
 	out.print("</td>");
     }
 
-    private void printCell(long data, boolean italics, PrintWriter out) {
+    private void printCell(long data, boolean italics, PrintWriter out) 
+    {
 	out.print("<td align=right>");
 	if (italics) out.print("<i>");
 	out.print(data);
@@ -129,7 +123,7 @@ class TopServlet extends HttpServlet
 	out.print("</tr>");
     }
 
-    void printSummary(List status, PrintWriter out) 
+    private void printSummary(List status, PrintWriter out) 
     {
 	int max = controlService.maxRunningThreadCount();
 	int running = 0;
@@ -160,7 +154,22 @@ class TopServlet extends HttpServlet
 	out.print("</b>");
     }
 
-    void printPage(PrintWriter out) {
+
+
+    // Implementations of ServletFrameset's abstract methods
+
+    String getPath() 
+    {
+	return "/threads/top";
+    }
+
+    String getTitle() 
+    {
+	return "Threads";
+    }
+
+    void printPage(PrintWriter out) 
+    {
 	List status = statusService.getStatus();
 	if (status == null) {
 	    // print some error message
@@ -191,64 +200,4 @@ class TopServlet extends HttpServlet
 	out.print("</table>");
     }
 
-    private static final String REFRESH_FIELD_PARAM = "refresh";
-
-    private void printRefreshForm(HttpServletRequest request,
-				  PrintWriter out)
-    {
-	String refresh  = request.getParameter(REFRESH_FIELD_PARAM);
-	int refreshSeconds = 
-	    ((refresh != null) ?
-	     Integer.parseInt(refresh) :
-	     0);
-
-	out.print("<hr>");
-	out.print("Refresh (in seconds): ");
-	out.print("<input type=\"text\" size=10 name=\"");
-	out.print(REFRESH_FIELD_PARAM);
-	out.print("\"");
-	if (refresh != null) {
-	    out.print(" value=\"");
-	    out.print(refresh);
-	    out.print("\"");
-	}
-	out.print(">");
-
-	if (refresh != null) {
-	    out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
-	    out.print(refresh);
-	    out.print("\">");
-	}
-
-	out.print("<input type=\"submit\" name=\"action\" value=\"Refresh\">");
-    }
-
-    public void doGet(HttpServletRequest request,
-		      HttpServletResponse response) 
-	throws java.io.IOException 
-    {
-
-	response.setContentType("text/html");
-	PrintWriter out = response.getWriter();
-
-	out.print("<html><HEAD>");
-
-	out.print("<TITLE>");
-	out.print(getTitle());
-	out.print("</TITLE></HEAD><body><H1>");
-	out.print(getTitle());
-	out.print("</H1>");
-
-	out.print("Date: ");
-	out.print(new Date());
-	
-	printPage(out);
-	
-	printRefreshForm(request, out);
-
-
-	out.print("</body></html>\n");
-
-	out.close();
-    }
 }
