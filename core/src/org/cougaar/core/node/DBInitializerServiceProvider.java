@@ -41,6 +41,7 @@ import java.util.Collections;
 import org.cougaar.util.DBProperties;
 import org.cougaar.util.DBConnectionPool;
 import org.cougaar.util.Parameters;
+import org.cougaar.util.log.Logging;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
@@ -95,6 +96,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
     this.trialId = trialId;
+    Logging.getLogger(DBInitializerServiceProvider.class).info("Will initialize for trial " + trialId + " from DB " + database);
 
     try {
       String dbtype = dbp.getDBType();
@@ -130,6 +132,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     } catch (ClassNotFoundException e) {
       throw new SQLException("Driver not found for " + database);
     }
+    Logging.getLogger(DBInitializerServiceProvider.class).info("Initializing from assemblies: AsbMatch: " + assemblyMatch);
   }
 
   private Map createSubstitutions() {
@@ -198,21 +201,28 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   }
 
   private class InitializerServiceImpl implements InitializerService {
+    // Remember, this returns only items strictly _below_ the given 
+    // insertion point, listed as children of the given component.
     public ComponentDescription[]
       getComponentDescriptions(String parentName, String containerInsertionPoint)
       throws InitializerServiceException
     {
+      Logging.getLogger(DBInitializerServiceProvider.class).debug("In getComponentDescriptions");
       if (parentName == null) throw new IllegalArgumentException("parentName cannot be null");
       // append a dot to containerInsertionPoint if not already there
       if (!containerInsertionPoint.endsWith(".")) containerInsertionPoint += ".";
       Map substitutions = createSubstitutions();
       substitutions.put(":parent_name:", parentName);
       substitutions.put(":container_insertion_point:", containerInsertionPoint);
+      Logging.getLogger(DBInitializerServiceProvider.class).info("Looking for direct sub-components of " + parentName + " just below insertion point " + containerInsertionPoint);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
           String query = dbp.getQuery("queryComponents",  substitutions);
+
+	  //Logging.getLogger(DBInitializerServiceProvider.class).debug("getComponentDescriptions doing query " + query);
+
           ResultSet rs = executeQuery(stmt, query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
@@ -248,6 +258,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             stmt2.close();
           }
           int len = componentDescriptions.size();
+	  Logging.getLogger(DBInitializerServiceProvider.class).debug("... returning " + len + " CDescriptions");
           ComponentDescription[] result = new ComponentDescription[len];
           result = (ComponentDescription[])
             componentDescriptions.toArray(result);
@@ -291,6 +302,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String getAgentPrototype(String agentName)
       throws InitializerServiceException
     {
+      Logging.getLogger(DBInitializerServiceProvider.class).debug("In getAgentPrototype");
       Map substitutions = createSubstitutions();
       substitutions.put(":agent_name:", agentName);
       try {
@@ -317,6 +329,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String[] getAgentPropertyGroupNames(String agentName)
       throws InitializerServiceException
     {
+      Logging.getLogger(DBInitializerServiceProvider.class).debug("In getAgentPropGroupNames");
       Map substitutions = createSubstitutions();
       substitutions.put(":agent_name:", agentName);
       try {
@@ -350,6 +363,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public Object[][] getAgentProperties(String agentName, String pgName)
       throws InitializerServiceException
     {
+      Logging.getLogger(DBInitializerServiceProvider.class).debug("In getAgentProperties");
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         Map substitutions = createSubstitutions();
