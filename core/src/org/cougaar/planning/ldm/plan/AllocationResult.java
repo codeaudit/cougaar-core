@@ -326,7 +326,7 @@ public class AllocationResult
    * If the result is not phased, use AllocationResult.getResult()
    * <P> Warning!!! Not all AspectValues can be simply represented as
    * a double. Use of this method with such AspectValues is undefined.
-   * @return Enumeration{double[]}  The collection of double[]'s.
+   * @return Enumeration<AspectValue[]> 
    */  
   public Enumeration getPhasedResults() {
     if (!isPhased()) throw new IllegalArgumentException("Not phased");
@@ -345,8 +345,7 @@ public class AllocationResult
   /** A List of Lists that represent each phased result in the form
    * of AspectValues.
    * If the result is not phased, use getAspectValueResults()
-   * @return A List of Lists.  Each internal List represents
-   * a phased result.  If the AllocationResult is not phased, will return null.
+   * @return A List<AspectValue[]>. If the AllocationResult is not phased, will return null.
    */
   public List getPhasedAspectValueResults() {
     if (phasedavrs == null) {
