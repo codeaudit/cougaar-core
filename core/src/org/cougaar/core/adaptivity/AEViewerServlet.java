@@ -21,6 +21,8 @@
 
 package org.cougaar.core.adaptivity;
 
+import java.lang.reflect.Constructor;
+
 import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -163,39 +165,77 @@ public class AEViewerServlet extends HttpServlet {
     OperatingMode bbOM = (OperatingMode)blackboardCollection.iterator().next();
 
     String newValue = request.getParameter(VALUE);
-    Integer intValue = null;
-    Double dubValue = null;
-    
+
+    Class omClass = bbOM.getValue().getClass();
+
+    // Is it a String?
     try {
-      intValue = new Integer(newValue);
-    } catch (NumberFormatException nfe) { 
-      /* no-op */ 
-    }
-    try {
-      dubValue = new Double(newValue);
-    } catch (NumberFormatException nfe) { 
-      /* no-op */ 
-    }
-    
-    try {
-      if (intValue != null) {
-	bbOM.setValue(intValue);
-      } else if (dubValue != null) {
-	bbOM.setValue(dubValue) ;
-      } else {
+      if (omClass == String.class) {
+	// set it and be done with it.
 	bbOM.setValue(newValue);
+      } 
+      else {
+	// If not, hope that whatever it is has a String constructor
+	Constructor cons = null;
+	try {
+	  cons = omClass.getConstructor( new Class[] {String.class});
+	} catch (NoSuchMethodException nsme) {
+	  System.err.println("AEViewerServlet: Error, no String constructor for OperatingMode containing class " + omClass + " " + nsme);
+	  out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+	  out.println("There is no String constructor for OperatingMode containing class " +omClass + " " + nsme);
+	  return;
+	} catch (RuntimeException re) {
+	  out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+	  out.println(re);
+	  return;
+	}
+	
+	if (cons != null) {
+	  // Make a new one of whatever it is and set OM value
+	  Comparable newThing = 
+	    (Comparable) cons.newInstance(new String[] {newValue});
+	  bbOM.setValue(newThing);
+	} else {
+	  out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+	  out.print("Can't set ");
+	  out.print(bbOM.getName());
+	  out.print("to " + newValue);
+	  out.println("<br>No constructor " + omClass +"(String)");
+	}
       }
     } catch (IllegalArgumentException iae) {
       out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
       out.print(newValue);
       out.print(" is not a valid value for ");
       out.println(bbOM.getName());
+      out.print("<br>");
+      out.println(iae);
+      return;
+    } catch (java.lang.reflect.InvocationTargetException ite) {
+      out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+      out.print(newValue);
+      out.print(" is not a valid value for ");
+      out.println(bbOM.getName());
+      out.print("<br>");
+      out.println(ite);
+      return;
+    } catch (InstantiationException ie) {
+      out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+      out.print(ie);
+      return;
+    } catch (IllegalAccessException iae) {
+      out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+      out.print(iae);
+      return;
+    } catch (RuntimeException re) {
+      out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
+      out.print(re);
       return;
     }
     
     BlackboardService blackboard = support.getBlackboardService();
     blackboard.openTransaction();
-    // write the updated policy to the blackboard
+    // write the updated operating mode to the blackboard
     blackboard.publishChange(bbOM);
     blackboard.closeTransaction();
     
