@@ -1,5 +1,69 @@
 2002-07-08  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/topology/TopologyReaderServiceComponent.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Use new listener feature of NamingService to implement a topology
+	cache. Now, unless the topology actually changes, the naming
+	service is not accessed to answer questions that have already been
+	asked.
+
+	* org/cougaar/core/naming/naming.rmic:
+	Bug #1590 -- Extensive Name Server processing load
+	Add NSCallbackImpl to list of items needing rmic.
+
+	* org/cougaar/core/naming/UsingCallbacks.txt:
+	Bug #1590 -- Extensive Name Server processing load
+	Brief description of using new features.
+
+	* org/cougaar/core/naming/NamingServiceFactory.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Create NamingEventContext rather than NamingDirContext.
+
+	* org/cougaar/core/naming/NamingEventContext.java:
+	Bug #1590 -- Extensive Name Server processing load
+	New code implementing various methods for adding listeners to the
+	name server.
+
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Expose search code to be used by NamingEventContext. Also fix
+	handling of attributes when creating subcontexts.
+
+	* org/cougaar/core/naming/NamingContext.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Fix problem in handling of attributes when creating subcontexts
+	uncovered in testing other changes.
+
+	* org/cougaar/core/naming/NSNamingEvent.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Carries the information about name server changes back to the
+	client application.
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Added support for attaching callbacks to objects in the naming
+	service and invoking those callback when things change. Also
+	regularized the implementation of context directories and other
+	objects to capture the similarities w.r.t. attributes and (now)
+	callbacks.
+
+	* org/cougaar/core/naming/NSCallbackImpl.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Implementation of callback interface.
+
+	* org/cougaar/core/naming/NSCallback.java: 
+	Bug #1590 -- Extensive Name Server processing load
+	Definition of the callback interface. Implemented on the client
+	side and invoked by the server to signal changes to the data in
+	the server.
+
+	* org/cougaar/core/naming/NS.java:
+	Bug #1590 -- Extensive Name Server processing load
+	Add support for registering listeners to the naming server so
+	applications can listen for changes to the naming server. This
+	permits TopologyService and others to not poll the naming service
+	and be more efficient.
+
 	* org/cougaar/core/adaptivity/PlayHelper.java:
 	bug # 1604 -- Intermittent adaptivity engine cpu sucking
 	A debug print loop in the PlayHelper enumerates the operating
