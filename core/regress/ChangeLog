@@ -1,3 +1,8 @@
+2001-09-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Regress.java:
+	Add GlobTest
+
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Regress.java:
