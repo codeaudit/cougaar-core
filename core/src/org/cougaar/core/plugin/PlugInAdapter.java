@@ -831,7 +831,7 @@ public abstract class PlugInAdapter
   protected class OneShotThreading extends Threading {
     public OneShotThreading() {}
     public void start() {
-      prerun();
+      prerun1();
     }
   }
 
@@ -840,7 +840,7 @@ public abstract class PlugInAdapter
     public SharedThreading() {}
     public void start() {
       getCluster().schedulePlugIn(this);
-      prerun();
+      prerun1();
     }
 
     //
@@ -853,7 +853,7 @@ public abstract class PlugInAdapter
 
     public final void externalCycle(boolean wasExplicit) {
       setAwakened(wasExplicit);
-      cycle();
+      cycle1();
     }
   }
 
@@ -935,7 +935,7 @@ public abstract class PlugInAdapter
     private boolean isRunning = true;
     private boolean isActive = true;
     public final void run() {
-      prerun();                 // plugin first time through
+      prerun1();                 // plugin first time through
       while (isRunning) {
         boolean xwakep = waker.waitForSignal();
         setAwakened(xwakep);
@@ -953,7 +953,7 @@ public abstract class PlugInAdapter
           isActive = false;
         }
         if (isActive) {
-          cycle();                // do work
+          cycle1();                // do work
           if (isYielding)
             Thread.yield();
         }
@@ -967,6 +967,11 @@ public abstract class PlugInAdapter
    * Non-standard threading models are encouraged but not required to use 
    * this method to retain compatability.
    **/
+  private void prerun1() {
+    SubscriptionClient.current.set(this);
+    prerun();
+    SubscriptionClient.current.set(null);
+  }
   protected void prerun() { }
 
   /** Called by all the standard Threading models (except for OneShotThreading)
@@ -975,6 +980,11 @@ public abstract class PlugInAdapter
    * Non-standard threading models are encouraged but not required to use 
    * this method to retain compatability.
    **/
+  private void cycle1() {
+    SubscriptionClient.current.set(this);
+    cycle();
+    SubscriptionClient.current.set(null);
+  }
   protected void cycle() {}
 
 }
