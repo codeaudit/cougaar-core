@@ -1,8 +1,8 @@
-<!-- Autobuild-generated ANT script for building the Cougaar module "javaiopatch". -->
+<!-- Autobuild-generated ANT script for building the Cougaar module "core". -->
 <!-- The source for this file is in build/data/moduleTemplate.xml -->
 
 <!-- autobuild might execute this with something like:
-  ant -DTARGETBASE=/tmp/target -DMODSOURCE=/tmp/cougaar/latest/src/javaiopatch 
+  ant -DTARGETBASE=/tmp/target -DMODSOURCE=/tmp/cougaar/latest/src/core 
       -DTMP=/tmp/tmpdir               -->
 
 <!-- Instructions for individual users:
@@ -25,30 +25,30 @@
      Individuals may choose to edit or override in particular the 'Tool options' below
      (compiler, toggle deprecation warnings, etc). 
 
-     For target options, from the "javaiopatch" directory or a
+     For target options, from the "core" directory or a
      sub-directory, do:
           ant -projecthelp
      Or more generally, do:
-          ant -b $COUGAAR_INSTALL_PATH/javaiopatch/build.xml -projecthelp
+          ant -b $COUGAAR_INSTALL_PATH/core/build.xml -projecthelp
 
      Target default is 'compile', to compile the module, leaving class files in
-     javaiopatch/tmp/classes, which should then be your setting for
+     core/tmp/classes, which should then be your setting for
      COUGAAR_DEV_PATH.
 
      Other typical targets:
      'clean' -- remove old module jar files (from TARGETBASE/lib ie
      usually COUGAAR_INSTALL_PATH/lib), plus class files
 
-     'dist-module' -- generate a new jar file TARGETBASE/lib/javaiopatch-date.jar
-         (ie typically COUGAAR_INSTALL_PATH/lib/javaiopatch-date.jar)
+     'dist-module' -- generate a new jar file TARGETBASE/lib/core-date.jar
+         (ie typically COUGAAR_INSTALL_PATH/lib/core-date.jar)
      -->
 
      <!-- Note use of JAVA_HOME, java.class.path, jikes.class.path -->
 
   <!-- -----------------------------------------------------------   -->
-<project name="javaiopatch" default="compile">
-    <property name="module" value="javaiopatch"/>
-    <property name="moduleUp" value="javaiopatch"/>
+<project name="core" default="compile">
+    <property name="module" value="core"/>
+    <property name="moduleUp" value="core"/>
 
     <!-- ================ Tool options ================ -->
     <!-- Individual users may choose to modify these settings. -->
@@ -120,7 +120,7 @@
     <!-- These properties are filled out by the autobuilder -->
     
     <!-- jarfiles required by this module, relative to various other paths -->
-    <property name="compile.jarlist" value=""/>
+    <property name="compile.jarlist" value="${target.lib}/bootstrap.jar,${target.lib}/util.jar,${target.sys}/xerces.jar,${target.sys}/log4j.jar,${target.sys}/servlet.jar"/>
     <!-- javadoc package spec for building javadocs -->
     <property name="javadoc.packages" value=""/>
     
