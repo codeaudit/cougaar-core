@@ -200,8 +200,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
         NamingEnumeration bindings = listBindings("");
         while (bindings.hasMore()) {
           Binding binding = (Binding) bindings.next();
-          
-          System.out.println("\t" + binding.getName() + " " + binding.getObject());
         } 
         
         throw new NameNotFoundException(name + " not found");
