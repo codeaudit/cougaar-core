@@ -25,7 +25,7 @@ package org.cougaar.core.society;
  * In a system with multiple SendQueues, the <strong>matches</strong>
  * method would be used by the SendQueueFactory to avoid making any
  * particular queue more than once.  */
-interface SendQueue 
+public interface SendQueue 
 {
     /**
      * Used by MessageTransportServerProxy's to queue outgoing

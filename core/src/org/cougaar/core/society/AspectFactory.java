@@ -22,10 +22,9 @@ import java.lang.reflect.Constructor;
  * of the factory.  The aspect delegates are made on the fly by each
  * aspect, if it wishes to attach one for a given factory
  * interface. */
-abstract public class AspectFactory implements MessageTransportCutpoints
+abstract public class AspectFactory 
+    implements MessageTransportCutpoints, Debug
 {
-    private static final boolean debug =
-	Boolean.getBoolean("org.cougaar.core.society.transport.DebugTransport");
     private ArrayList aspects;
 
     protected AspectFactory(ArrayList aspects) {
@@ -47,7 +46,7 @@ abstract public class AspectFactory implements MessageTransportCutpoints
 		    (MessageTransportAspect) itr.next();
 		Object candidate = aspect.getDelegate(delegate, cutpoint);
 		if (candidate != null) delegate = candidate;
-		if (debug) System.out.println("======> " + delegate);
+		if (DEBUG_TRANSPORT) System.out.println("======> " + delegate);
 	    }
 	}
 	return delegate;

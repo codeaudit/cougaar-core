@@ -31,7 +31,7 @@ package org.cougaar.core.society;
  * DestinationQueueFactory to avoid making more than one queue for a
  * given destinationAddress.  */
 
-interface DestinationQueue 
+public interface DestinationQueue 
 {
     /**
      * Adds the message to the queue. */

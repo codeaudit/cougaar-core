@@ -17,10 +17,8 @@ import java.rmi.RemoteException;
 /**
  * This is utility class which hides the grimy details of dealing with
  * NameServers from the rest of the message transport subsystem.  */
-public class NameSupport
+public class NameSupport implements Debug
 {
-    public static final boolean DEBUG = 
-	Boolean.getBoolean("org.cougaar.core.society.DebugTransport");
     public static final String CLUSTERDIR = "/clusters/";
     public static final String MTDIR = "/MessageTransports/";
     
@@ -36,7 +34,7 @@ public class NameSupport
     private final void _registerWithSociety(String key, Object proxy) 
 	throws RemoteException
     {
-	if (DEBUG)
+	if (DEBUG_TRANSPORT)
 	    System.out.println("***Registering :" + key + ":proxy = "+ proxy);
 	Object old = nameserver.put(key, proxy);
 	if (old != null) {
@@ -84,7 +82,7 @@ public class NameSupport
 	    String key = CLUSTERDIR + addr.getAddress() + transportType ;
 	    Object object = nameserver.get(key);
 
-	    if (DEBUG)
+	    if (DEBUG_TRANSPORT)
 		System.out.println("***Looking Up :" + key + 
 				   ":object "+ object);
 	    if (object == null) { 

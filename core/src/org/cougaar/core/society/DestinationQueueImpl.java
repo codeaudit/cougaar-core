@@ -20,15 +20,12 @@ import org.cougaar.util.CircularQueue;
 class DestinationQueueImpl extends CircularQueue implements DestinationQueue
 {
     private MessageAddress destination;
-    private LinkSender sender;
 
-    DestinationQueueImpl(String name, 
-		     MessageAddress destination,
-		     LinkSenderFactory factory)
+    DestinationQueueImpl(MessageAddress destination)
     {
 	this.destination = destination;
-	sender = factory.getLinkSender(name, destination, this);
     }
+
 
 
     /**

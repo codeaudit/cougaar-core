@@ -14,8 +14,9 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.lang.reflect.Constructor;
 
-import org.cougaar.core.society.rmi.SimpleRMIMessageTransport;
 import org.cougaar.core.society.rmi.RMIMessageTransport;
+import org.cougaar.core.society.rmi.SimpleRMIMessageTransport;
+
 
 /**
  * A factory which instantiates all MessageTransports.  It will always

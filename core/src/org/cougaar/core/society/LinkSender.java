@@ -27,16 +27,19 @@ public class LinkSender implements Runnable
     private MessageTransportRegistry registry;
     private Thread thread;
     private DestinationQueue queue;
+    private Object queueLock;
     private ArrayList destinationLinks;
 
     protected LinkSender(String name, 
 			 MessageAddress destination, 
 			 MessageTransportRegistry registry,
 			 MessageTransportFactory transportFactory,
-			 DestinationQueue queue) 
+			 DestinationQueue queue,
+			 Object queueLock) 
     {
 	this.destination = destination;
 	this.queue = queue;
+	this.queueLock = queueLock;
 	this.transportFactory = transportFactory;
 	this.registry = registry;
 
@@ -91,9 +94,9 @@ public class LinkSender implements Runnable
     public void run() {
 	Message message = null;
 	while (true) {
-	    synchronized (queue) {
+	    synchronized (queueLock) {
 		while (queue.isEmpty()) {
-		    try { queue.wait(); } catch (InterruptedException e) {}
+		    try { queueLock.wait(); } catch (InterruptedException e) {}
 		}
 
 		message = (Message) queue.next();

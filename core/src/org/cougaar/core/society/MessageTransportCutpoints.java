@@ -13,4 +13,8 @@ public interface MessageTransportCutpoints
     public static final int ReceiveLink = 6;
     public static final int RemoteProxy = 7;
     public static final int RemoteImpl = 8;
+    public static final int RmiClientOutputStream = 9;
+    public static final int RmiClientInputStream = 10;
+    public static final int RmiServerOutputStream = 11;
+    public static final int RmiServerInputStream = 12;
 }

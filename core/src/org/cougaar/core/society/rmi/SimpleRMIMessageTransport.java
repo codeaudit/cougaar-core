@@ -19,6 +19,7 @@ import org.cougaar.core.society.NameServer;
 import org.cougaar.core.society.NameSupport;
 
 import java.rmi.RemoteException;
+import java.rmi.server.RMISocketFactory;
 import java.util.HashMap;
 
 /**
@@ -59,6 +60,16 @@ public class SimpleRMIMessageTransport
     public SimpleRMIMessageTransport(String id, java.util.ArrayList aspects) {
 	super(aspects); 
 	links = new HashMap();
+	RMISocketFactory socfac = RMISocketFactory.getSocketFactory();
+	if (! (socfac instanceof SocketFactory)) {
+	    socfac = new SocketFactory(this);
+	    try {
+		RMISocketFactory.setSocketFactory(socfac);
+	    }
+	    catch (java.io.IOException ex) {
+		ex.printStackTrace();
+	    }
+	}
     }
 
 

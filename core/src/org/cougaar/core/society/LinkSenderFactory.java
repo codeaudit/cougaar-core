@@ -29,12 +29,14 @@ public class LinkSenderFactory
 
     /**
      * Instantiate a LinkSender (no find-or-make here). */
-    public LinkSender getLinkSender(String name, 
-				    MessageAddress destination, 
+    public LinkSender getLinkSender(MessageAddress destination, 
+				    Object queue_lock,
 				    DestinationQueue queue)
 					
     {
-	return new LinkSender(name, destination, registry, transportFactory, queue);
+	return new LinkSender(destination.toString(), destination,
+			      registry, transportFactory, 
+			      queue, queue_lock);
     }
 
 }

@@ -24,6 +24,7 @@ class LoopbackMessageTransport
 	super(aspects);
     }
 
+    // NB:  No aspects here!  Is that the right thing to do?
     public DestinationLink getDestinationLink(MessageAddress address) {
 	return this;
     }
