@@ -65,9 +65,9 @@ public class NodeResourcesServlet
 	Metric metric = metricsService.getValue(path+name);
 	if (metric == null)
 	    metric= new MetricImpl(new Double(0.00), 0,"units","test");
-	out.print("<tr><td><b>");
+	out.print("<tr><td>");
 	out.print(name);
-	out.print(" </b></td>");
+	out.print("</td>");
 	ServletUtilities.valueTable(metric, ignore, 
 			 highlight,greater,formatter, out);
 	out.print("</tr>\n");	
@@ -76,8 +76,13 @@ public class NodeResourcesServlet
     public void printPage(HttpServletRequest request, PrintWriter out) {
 	String nodePath = "Agent(" +getNodeID()+ ")"+PATH_SEPR;
 	
+
+	// Space between the intro and the content
+	out.print("<br><br>");
+
 	//Header Row
-	out.print("<table border=1>\n");
+	out.print("<table border=3 rules=groups>\n");
+	out.print("<colgroup><colgroup>");
 	out.print("<tr>");
 	out.print("<th>RESOURCE</th>");
 	out.print("<th>Value</th>");

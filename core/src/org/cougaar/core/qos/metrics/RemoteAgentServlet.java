@@ -93,13 +93,17 @@ public class RemoteAgentServlet
 	Set matches = agentStatusService.getRemoteAgents();
 	if (matches == null) return;
 
+	// Space between the intro and the content
+	out.print("<br><br>");
+
 	//Header Row
-	out.print("<table border=1>\n");
+	out.print("<table border=3 cellpadding=2 rules=groups>\n");
+	out.print("<colgroup span=1><colgroup span=3><colgroup span=1><colgroup span=2><colgroup span=1><colgroup span=2>");
 	out.print("<tr>");
 	out.print("<th>AGENTS</th>");
-	out.print("<th>Spoke To</th>");
-	out.print("<th>Heard From</th>");
-	out.print("<th>Spoke Err</th>");
+	out.print("<th>SpokeTo</th>");
+	out.print("<th>HeardFrom</th>");
+	out.print("<th>SpokeErr</th>");
 	out.print("<th>Queue</th>");
 	out.print("<th>MsgTo</th>");
 	out.print("<th>MsgFrom</th>");
@@ -206,9 +210,9 @@ public class RemoteAgentServlet
 
 
 	    //output Row
-	    out.print("<tr><td><b>");
+	    out.print("<tr><td>");
 	    out.print(name);
-	    out.print(" </b></td>");
+	    out.print("</td>");
 	    ServletUtilities.valueTable(spoke, 0.0, 30.0, true, f3_0, out);
 	    ServletUtilities.valueTable(heard, 0.0, 30.0, true, f3_0, out);
 	    ServletUtilities.valueTable(error, 0.0, 60.0, false, f3_0, out);
