@@ -768,10 +768,10 @@ public class SimpleAgent
         getServiceBroker().getService(
             this, MobileAgentService.class, null);
       if (myMobileAgentService == null) {
-        if (log.isWarnEnabled()) {
-          log.warn(
+        if (log.isInfoEnabled()) {
+          log.info(
               "Agent "+getAgentIdentifier()+
-              " unable to register for agent mobility");
+              " not registered for agent mobility");
         }
       }
     }
