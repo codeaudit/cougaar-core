@@ -36,6 +36,7 @@ public class StringObjectFactory {
 
   public static Object parseObject(Factory ldmf, String type, String arg) {
     Class cl;
+
     try {
       cl = findClass(type);
     } catch (RuntimeException noSuchClassE) {
@@ -68,6 +69,11 @@ public class StringObjectFactory {
         throw new RuntimeException("Construction problem "+noSuchClassE);
       }
     }
+
+    if (classClass.isAssignableFrom(cl)) {
+      return cl;
+    }
+
     try {
       if (javaUtilCollectionClass.isAssignableFrom(cl)) {
         if ((arg == null) || (arg.length() <= 0))
@@ -236,18 +242,26 @@ public class StringObjectFactory {
    */
 
   protected static final Class javaUtilCollectionClass;
+  protected static final Class classClass;
   protected static HashMap classes;
   protected static HashMap methods;
   protected static final Collection packages;
 
   static {
-    Class colClass;
+    Class forNameClass;
     try {
-      colClass = Class.forName("java.util.Collection");
+      forNameClass = Class.forName("java.util.Collection");
     } catch (Exception e) {
-      colClass = null; //never!
+      forNameClass = null; //never!
     }
-    javaUtilCollectionClass = colClass;
+    javaUtilCollectionClass = forNameClass;
+
+    try {
+      forNameClass = Class.forName("java.lang.Class");
+    } catch (Exception e) {
+      forNameClass = null; //never!
+    }
+    classClass = forNameClass;
 
     // initialize packages:
     packages = new ArrayList();
