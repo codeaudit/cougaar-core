@@ -156,18 +156,12 @@ public class AgentManager
     // FIXME cleanup this code
     //
     // first check that the agent isn't already loaded
-    Iterator iter = super.boundComponents.iterator();
-    while (iter.hasNext()) {
+    for (Iterator iter = binderIterator(); iter.hasNext(); ) {
       Object oi = iter.next();
-      if (!(oi instanceof BoundComponent)) {
+      if (!(oi instanceof AgentBinder)) {
         continue;
       }
-      BoundComponent bc = (BoundComponent)oi;
-      Binder b = bc.getBinder();
-      if (!(b instanceof AgentBinder)) {
-        continue;
-      }
-      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      MessageAddress id = ((AgentBinder) oi).getAgentIdentifier();
       if (agentId.equals(id)) {
         // agent already exists
         throw new RuntimeException(
@@ -187,24 +181,27 @@ public class AgentManager
     // FIXME cleanup this code
     //
     // find the agent in the set of children
-    Iterator iter = super.boundComponents.iterator();
-    while (iter.hasNext()) {
-      Object oi = iter.next();
-      if (!(oi instanceof BoundComponent)) {
-        continue;
-      }
-      BoundComponent bc = (BoundComponent)oi;
-      Binder b = bc.getBinder();
-      if (!(b instanceof AgentBinder)) {
-        continue;
-      }
-      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
-      if (agentId.equals(id)) {
-        // remove the agent
-        iter.remove();
-        return;
+    synchronized (boundComponents) {
+      Iterator iter = super.boundComponents.iterator();
+      while (iter.hasNext()) {
+        Object oi = iter.next();
+        if (!(oi instanceof BoundComponent)) {
+          continue;
+        }
+        BoundComponent bc = (BoundComponent)oi;
+        Binder b = bc.getBinder();
+        if (!(b instanceof AgentBinder)) {
+          continue;
+        }
+        MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+        if (agentId.equals(id)) {
+          // remove the agent
+          iter.remove();
+          return;
+        }
       }
     }
+
     // no such agent
     throw new RuntimeException(
         "Agent "+agentId+" is not loaded");
@@ -212,29 +209,32 @@ public class AgentManager
 
   public ComponentDescription getAgentDescription(MessageAddress agentId) {
     // FIXME cleanup this code
-    Iterator iter = super.boundComponents.iterator();
-    while (iter.hasNext()) {
-      Object oi = iter.next();
-      if (!(oi instanceof BoundComponent)) {
-        continue;
-      }
-      BoundComponent bc = (BoundComponent)oi;
-      Binder b = bc.getBinder();
-      if (!(b instanceof AgentBinder)) {
-        continue;
-      }
-      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
-      if (agentId.equals(id)) {
-        Object cmp = bc.getComponent();
-        if (cmp instanceof ComponentDescription) {
-          // found the description
-          return (ComponentDescription) cmp;
-        } else {
-          // description not known
-          return null;
+    synchronized (boundComponents) {
+      Iterator iter = super.boundComponents.iterator();
+      while (iter.hasNext()) {
+        Object oi = iter.next();
+        if (!(oi instanceof BoundComponent)) {
+          continue;
+        }
+        BoundComponent bc = (BoundComponent)oi;
+        Binder b = bc.getBinder();
+        if (!(b instanceof AgentBinder)) {
+          continue;
+        }
+        MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+        if (agentId.equals(id)) {
+          Object cmp = bc.getComponent();
+          if (cmp instanceof ComponentDescription) {
+            // found the description
+            return (ComponentDescription) cmp;
+          } else {
+            // description not known
+            return null;
+          }
         }
       }
     }
+
     // no such agent
     return null;
   }
