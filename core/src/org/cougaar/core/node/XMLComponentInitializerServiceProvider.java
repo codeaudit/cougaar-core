@@ -94,17 +94,37 @@ public class XMLComponentInitializerServiceProvider
   public XMLComponentInitializerServiceProvider() {
     this.logger = Logging.getLogger(getClass());
 
-    filename = System.getProperty("org.cougaar.society.file", "society.xml");
-    nodename = System.getProperty("org.cougaar.node.name", "Node");
+    filename = System.getProperty("org.cougaar.society.file");
+    nodename = System.getProperty("org.cougaar.node.name");
     if (logger.isShoutEnabled())
       logger.shout(
-        "Will initialize node from XML file "
+        "Will initialize node from XML file \""
           + filename
-          + ", creating node "
-          + nodename);
+          + "\", creating node named \""
+          + nodename
+          + "\"");
 
+    if ((nodename == null) && logger.isErrorEnabled())
+      logger.error(
+        "Node name is null. That's not going to work. Set -Dorg.cougaar.node.name.");
+    if ("".equals(nodename) && logger.isErrorEnabled())
+      logger.error(
+        "Node name is the empty string.  That's not going to work. Set -Dorg.cougaar.node.name.");
+    if ((filename == null) && logger.isErrorEnabled())
+      logger.error(
+        "File name is null. That's not going to work. Set -Dorg.cougaar.society.file.");
+    if ("".equals(filename) && logger.isErrorEnabled())
+      logger.error(
+        "File name is the empty string.  That's not going to work. Set -Dorg.cougaar.society.file.");
     try {
       parseFile();
+      if ((allComponents.size() == 0) && logger.isErrorEnabled())
+        logger.error(
+          "The configuration for node \""
+            + nodename
+            + "\" was not found in the file \""
+            + filename
+            + "\"");
     } catch (Exception e) {
       logger.error("Exception reading society XML file " + filename, e);
     }
