@@ -156,9 +156,8 @@ implements Component
 
     bb = (BlackboardForAgent)
       sb.getService(this, BlackboardForAgent.class, null);
-    if (bb == null) {
-      throw new RuntimeException(
-          "Unable to obtain BlackboardForAgent");
+    if (bb == null && log.isWarnEnabled()) {
+      log.warn("Unable to obtain BlackboardForAgent");
     }
 
     // advertise our agent add/remove listener
@@ -394,6 +393,13 @@ implements Component
     if (addingAgents) {
       if (log.isInfoEnabled()) {
         log.info("Still loading, delaying persistNow until active");
+      }
+      return;
+    }
+
+    if (bb == null) {
+      if (log.isInfoEnabled()) {
+        log.info("Unable to persistNow, BlackboardService is null");
       }
       return;
     }
