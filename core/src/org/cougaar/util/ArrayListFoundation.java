@@ -42,7 +42,7 @@ public class ArrayListFoundation extends AbstractList
    *
    * @serial
    */
-  protected int size;
+  protected transient int size;
   
   /**
    * Constructs an empty list with the specified initial capacity.
@@ -657,22 +657,35 @@ public class ArrayListFoundation extends AbstractList
   
   /**
    * Save the state of the <tt>ArrayListFoundation</tt> instance to a stream (that
-   * is, serialize it).
+   * is, serialize it). We need to be careful to not hold our monitor
+   * while serializing subobjects. Doing so is prone to deadlock. So
+   * make a copy of the elementData so it can't change while
+   * serialization is happening.
    *
    * @serialData The length of the array backing the <tt>ArrayListFoundation</tt>
    *             instance is emitted (int), followed by all of its elements
    *             (each an <tt>Object</tt>) in the proper order.
    */
-  private synchronized void writeObject(java.io.ObjectOutputStream s)
+  private void writeObject(java.io.ObjectOutputStream s)
     throws java.io.IOException{
-    // Write out element count, and any hidden stuff
+    // Write out any hidden stuff
     s.defaultWriteObject();
-    
+    int sizeToWrite;
+    int lengthToWrite;
+    Object[] objectsToWrite;
+    synchronized (this) {
+      sizeToWrite = size;
+      lengthToWrite = elementData.length;
+      objectsToWrite = new Object[sizeToWrite];
+      System.arraycopy(elementData, 0, objectsToWrite, 0, sizeToWrite);
+    }
+    // Write out the current size;
+    s.writeInt(sizeToWrite);
     // Write out array length
-    s.writeInt(elementData.length);
+    s.writeInt(lengthToWrite);
     // Write out all elements in the proper order.
-    for (int i=0; i<size; i++)
-      s.writeObject(elementData[i]);
+    for (int i = 0; i < sizeToWrite; i++)
+      s.writeObject(objectsToWrite[i]);
   }
   
   /**
@@ -683,6 +696,7 @@ public class ArrayListFoundation extends AbstractList
     throws java.io.IOException, ClassNotFoundException {
     // Read in size, and any hidden stuff
     s.defaultReadObject();
+    size = s.readInt();
     
     // Read in array length and allocate array
     int arrayLength = s.readInt();
