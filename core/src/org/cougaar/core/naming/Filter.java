@@ -15,4 +15,5 @@ import javax.naming.NamingException;
 
 public interface Filter {
     boolean match(Attributes a) throws NamingException;
+    void toString(StringBuffer b);
 }

@@ -12,19 +12,47 @@ import java.util.Set;
  * Matches unix-style glob patterns
  **/
 public class Glob {
+    /** The parsed segments of the pattern **/
     private Segment[] segments;
 
+    /** A cache of already parsed patterns **/
     private static Map globs = new HashMap();
 
-    public static synchronized Glob parse(String s) {
-        Glob result = (Glob) globs.get(s);
+    /**
+     * Parse a glob pattern or find the previously parsed result. In
+     * glob patterns:
+     * <dl>
+     * <dt>*</dt><dd>matches any number of any character</dd>
+     * <dt>?</dt><dd>matches a single character</dd>
+     * <dt>[...]</dt><dd> Matches any single character in the enclosed
+     * list(s) or range(s). A list is a string of characters. A range
+     * is two characters separated by a dash (-), and includes all the
+     * characters in between in the collating sequence of the default
+     * charset. To include a ']' in the set, put it first. To include
+     * a '-', put it first or last.</dd>
+     * </dl>
+     * @param pattern the pattern to parse.
+     * @return the parsed result. The match method of the returned
+     * object should be used to check if any given string matches the
+     * pattern that was parsed.
+     **/
+    public static synchronized Glob parse(String pattern) {
+        Glob result = (Glob) globs.get(pattern);
         if (result == null) {
-            result = new Glob(s);
-            globs.put(s, result);
+            result = new Glob(pattern);
+            globs.put(pattern, result);
         }
         return result;
     }
 
+    /**
+     * Construct a new Glob to parse a pattern. The constructor is
+     * private. Use the parse method to create or reuse a Glob. The
+     * parsed result consists of an array of Segments where each
+     * Segment corresponds to a portion of the pattern. There are
+     * four kinds of Segments corresponding "*", "?", "[...]" and
+     * ordinary characters.
+     **/
     private Glob(String s) {
         List segmentList = new ArrayList();
         int startPos = 0;
@@ -46,6 +74,9 @@ public class Glob {
                 startPos = i + 1;
                 break;
             case '[':
+                if (startPos < i) {
+                    segmentList.add(new Match(s.substring(startPos, i)));
+                }
                 CharSet charSet = new CharSet();
                 c = s.charAt(++i);
                 if (c == '!') {
@@ -53,17 +84,22 @@ public class Glob {
                     c = s.charAt(++i);
                 }
                 boolean first = true;
-                while (first || c != ']') {
-                    first = false;
-                    char c2 = s.charAt(++i);
-                    if (c2 == '-') {
-                        c2 = s.charAt(++i);
-                        charSet.add(c, c2);
+                boolean dash = false;
+                char pc = c;
+                while (first || c != ']') { // ] must be first if at all
+                    if (!first && c == '-') {
                         c = s.charAt(++i);
+                        if (c == ']') {
+                            charSet.add('-');
+                            break;
+                        }
+                        while (++pc <= c) charSet.add(pc);
                     } else {
-                        charSet.add(c, c);
-                        c = c2;
+                        charSet.add(c);
+                        pc = c;
                     }
+                    c = s.charAt(++i);
+                    first = false;
                 }
                 segmentList.add(charSet.finish());
                 startPos = i + 1;
@@ -78,60 +114,68 @@ public class Glob {
             off += segments[i].getMin();
             segments[i].setOff(off);
         }
+//          for (int i =0; i < segments.length; i++) {
+//              System.out.println(segments[i].getClass().getName()
+//                                 + ": "
+//                                 + segments[i]);
+//          }
     }
 
-    public void setSegments(Segment[] newSegments) {
-        segments = newSegments;
-    }
-
-    public Segment[] getSegments() {
-        return segments;
-    }
-
+    /**
+     * Check if a string matches the pattern. The procedure is to step
+     * through the segments in sequence and see if the segment matches
+     * the beginning of the current string. If it doesn't return false
+     * (failure). If it does, trim off the matched characters and
+     * repeat for the next segment. Each segment specifies the minimum
+     * and maximum characters that it can match. If the maximum
+     * exceeds the minimum, all possibilities are tested starting with
+     * the longest (maximum number of character) until a match is
+     * achieved. If all the possibilities fail, then this method
+     * fails.
+     * @param s the string to test
+     **/
     public boolean match(String s) {
         return match(s, 0);
     }
-    
+
+    /**
+     * Check if a string matches the pattern starting with a
+     * particular segment.
+     * @see match(String s)
+     * @param s the string to test
+     * @param ix the index of the segment to start with (recursive
+     * call).
+     **/
     private boolean match(String s, int ix) {
-        boolean result = match1(s, ix);
-        return result;
-    }
-    private boolean match1(String s, int ix) {
-        if (ix == segments.length) {
-            if (s.length() == 0) {
-                return true;
-            } else {
-//                  System.out.println("long " + s);
-                return false;
+        for (int n = segments.length; ix < n; ) {
+            Segment seg = segments[ix];
+            int off = seg.getOff();
+            if (off > s.length()) {
+                return false;       // Not enough chars left
             }
-        }
-        Segment seg = segments[ix];
-        int off = seg.getOff();
-        if (off > s.length()) {
-//              System.out.println("short " + off);
-            return false;       // Not enough chars left
-        }
-        if (seg.match(s)) {
+            if (!seg.match(s)) return false;
             int min = seg.getMin();
             int nextOff = off - min;
             int max = Math.min(seg.getMax(), s.length() - nextOff);
-            for (int pos = max; pos >= min; pos--) {
+            for (int pos = max; pos > min; pos--) {
                 if (match(s.substring(pos), ix + 1)) {
                     return true;
                 }
             }
-//              System.out.println("offsets " + min + ".." + max + " fail");
-        } else {
-//              System.out.println(seg + "!=" + s);
+            s = s.substring(min); // Tail recursion
+            ix = ix + 1;
         }
-        return false;
+        return s.length() == 0;
     }
 
+    /**
+     * Convert the parsed pattern to a string
+     **/
     public String toString() {
         return appendString(new StringBuffer()).toString();
     }
 
-    protected StringBuffer appendString(StringBuffer buf) {
+    public StringBuffer appendString(StringBuffer buf) {
         for (int i = 0; i < segments.length; i++) {
             buf.append(segments[i].toString());
         }
@@ -212,10 +256,8 @@ public class Glob {
         public boolean negate = false;
         private StringBuffer buf = new StringBuffer();
         private String chars = null;
-        public void add(char c1, char c2) {
-            while (c1 <= c2) {
-                buf.append(c1++);
-            }
+        public void add(char c) {
+            buf.append(c);
         }
         public CharSet finish() {
             chars = buf.substring(0);
@@ -227,11 +269,36 @@ public class Glob {
             return (chars.indexOf(c) >= 0) != negate;
         }
         public String toString() {
-            if (negate) {
-                return "[!" + chars + "]";
-            } else {
-                return "[" + chars + "]";
+            StringBuffer b = new StringBuffer();
+            b.append("[");
+            if (negate) b.append("!");
+            if (chars.indexOf(']') >= 0) b.append(']');
+            int charsInRange = 0;
+            int nextInRange = -1;
+            for (int i = 0, n = chars.length(); i <= n; i++) {
+                int c;
+                if (i < n) {
+                    c = chars.charAt(i);
+                } else {
+                    c = -1;
+                }
+                if (c == '-') continue;
+                if (c == ']') continue;
+                if (charsInRange > 0 && c == nextInRange) {
+                    charsInRange++;
+                } else {
+                    if (charsInRange > 2) b.append('-');
+                    if (charsInRange > 1) b.append((char) (nextInRange - 1));
+                    if (i < n) {
+                        b.append((char) c);
+                        charsInRange = 1;
+                    }
+                }
+                nextInRange = c + 1;
             }
+            if (chars.indexOf('-') >= 0) b.append('-');
+            b.append("]");
+            return b.toString();
         }
     }
 
@@ -308,7 +375,7 @@ public class Glob {
         }
     }
 
-    public static void main(String args[]) {
+    public static void testmain(String args[]) {
         if (args.length > 2) {
             String[] patterns = new String[] {args[0]};
             String[] strings = new String[args.length - 1];
@@ -318,6 +385,13 @@ public class Glob {
             test(new String[] {args[0]}, getTestStrings(50));
         } else {
             test(testPatterns, getTestStrings(50));
+        }
+    }
+
+    public static void main(String args[]) {
+        for (int i = 0; i < args.length; i++) {
+            System.out.println(args[i] + " -> " +
+                               parse(args[i]).toString());
         }
     }
 }
