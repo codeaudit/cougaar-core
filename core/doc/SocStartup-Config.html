@@ -3,22 +3,28 @@
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
    <meta name="Template" content="C:\Program Files\Microsoft Office\Office\html.dot">
-   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <meta name="GENERATOR" content="Mozilla/4.77 [en] (Windows NT 5.0; U) [Netscape]">
    <title>Society Config Notes</title>
 </head>
 <body link="#0000FF" vlink="#800080">
 
 <center>
 <h2>
-<b>COUGAAR Society Startup and Configuration: COUGAAR 8.2</b></h2></center>
+<b>COUGAAR Society Startup and Configuration: COUGAAR 8.6</b></h2></center>
 
 <h2>
 <b>Overview</b></h2>
-<font size=+0>To install COUGAAR 8.2, you'll need cougaar.zip and cougaar-support.zip
-(the first time) to get a</font>
-<br><font size=+0>runnable system.&nbsp; The rest are extras.&nbsp; Furthermore,
-the cougaar-support</font>
-<br><font size=+0>contents do not change very often.</font><font size=+0></font>
+<font size=+0>To install COUGAAR 8.6:</font>
+<br>Go to the cougaar website (<a href="http://www.cougaar.org">www.cougaar.org</a>)
+to get the latest windows Cougaar installer which will install Cougaar
+as well as a MySQL database.&nbsp; This will allow users to run off of
+a local MySQL database rather than accessing an Oracle database located
+in Cambridge, MA at BBN Technologies.
+<p><font size=+0>Or you may install Cougaar8.6, without mySQL, by unzipping
+the cougaar.zip and cougaar-support.zip&nbsp; The rest of the zip files
+are extras.&nbsp; Furthermore, the cougaar-support contents do not change
+very often, so you can unzip that once and keep the contents as updates
+occur to cougaar.zip.</font>
 <p><font size=+0>The zips are designed to be unpacked in the same directory,
 e.g. on</font>
 <br><font size=+0>unix:</font>
@@ -27,18 +33,18 @@ e.g. on</font>
 <br><font size=+0>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unzip /tmp/cougaar.zip</font>
 <br><font size=+0>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unzip -o /tmp/cougaar-support.zip</font>
 <br><font size=+0>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; setenv COUGAAR_INSTALL_PATH
-`pwd`</font><font size=+0></font>
+`pwd`</font>
 <p><font size=+0>Although the zips are intended to be installed in the
 same</font>
 <br><font size=+0>directory, they all have a top-level file "version.txt"
 which contains</font>
 <br><font size=+0>something like:</font>
 <br><font size=+0>COMMENT = cougaar thirdparty jars</font>
-<br><font size=+0>REPOSITORY_TAG = V8_2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br><font size=+0>REPOSITORY_TAG = V8_6_0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 # branch of repository</font>
-<br><font size=+0>REPOSITORY_TIME = 6/1/2001 13:00:29&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br><font size=+0>REPOSITORY_TIME = 11/01/2001 13:00:29&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 # checkout time of repository</font>
-<br><font size=+0>ARCHIVE_TIME = 6/1/2001 13:11:03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<br><font size=+0>ARCHIVE_TIME = 11/01/2001 13:11:03&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 # zip time</font>
 <br><font size=+0>All your zips should have the same REPOSITORY_TAG and
 REPOSITORY_TIME.</font>
@@ -64,8 +70,9 @@ solution. Subcontractors are encouraged to bring their PlugIns up to full
 compliance with the new infrastructure modifications, possibly using the
 minitestconfig society. A separate document provides a <a href="MiniTestConfig.html">functional
 description of the minitestconfig</a> society.
-<p>The following "jar" files are used in the baseline society configuration
-and are located in the cougaar\lib and cougaar\sys directories:
+<p>The following "jar" files are used in the baseline minitestconfig society
+configuration and are located in the cougaar\lib and cougaar\sys directories:
+<br>&nbsp;&nbsp;&nbsp; cougaar/lib
 <ul>
 <li>
 core.jar: COUGAAR core infrastructure</li>
@@ -82,9 +89,23 @@ build.jar: code generators for COUGAAR software</li>
 <li>
 planserver.jar: tools for extracting, entering, and displaying information
 from COUGAAR</li>
-
+</ul>
+&nbsp;&nbsp;&nbsp; cougaar/sys
+<ul>
 <li>
 xerces.jar: XML parser</li>
+
+<li>
+log4j.jar: logging</li>
+
+<li>
+jcchart451K: for some UIs in glm</li>
+
+<li>
+fesi-111.jar: only if using Fesi generic plugin</li>
+
+<li>
+one of the three jdbc drivers: classes12.zip, mm-mysql-2.jar or bbn-postgresql7.1.3.jar</li>
 </ul>
 
 <h2>
@@ -92,10 +113,7 @@ xerces.jar: XML parser</li>
 The COUGAAR society software depends on a number of freely distributed
 3rd party software packages. These software packages can be obtained free
 from their respective sources or from the cougaar-support.zip found in
-the COUGAAR release. The <a href="https://www.alpine.bbn.com">ALPINE web
-site</a> (HTTPS://www.alpine.bbn.com/) contains a list of freely available
-3rd party commercial software in the "DSE Software" Area. For MiniBuild
-8.x, we use the following versions of 3rd party software:
+the COUGAAR release.
 <br>&nbsp;
 <br>&nbsp;
 <table BORDER CELLPADDING=2 WIDTH="98%" >
@@ -106,15 +124,138 @@ site</a> (HTTPS://www.alpine.bbn.com/) contains a list of freely available
 </tr>
 
 <tr>
-<td>Oracle JDBC Thin Drivers v8.0.4&nbsp;</td>
+<td>Java Secure Socket Extension (JSSE)</td>
 
-<td><a href="http://technet.oracle.com/software/download.htm">http://technet.oracle.com/software/download.htm</a></td>
+<td><a href="http://java.sun.com/products/jsse/">http://java.sun.com/products/jsse/</a></td>
 </tr>
 
 <tr>
-<td></td>
+<td>Xerces XML Parser
+<br>jar file is xerces.jar</td>
 
-<td><a href="http://home.sprynet.com/~gbildson/ngraph/download.html"></a></td>
+<td><a href="http://xml.apache.org/xerces2-j/index.html">http://xml.apache.org/xerces2-j/index.html</a></td>
+</tr>
+
+<tr>
+<td>Log 4 J (Logging)
+<br>jar file is log4j.jar</td>
+
+<td><a href="http://jakarta.apache.org/log4j/doc/index.html">http://jakarta.apache.org/log4j/doc/index.html</a></td>
+</tr>
+
+<tr>
+<td>Oracle JDBC Thin Drivers&nbsp;
+<br>any version compatable with jdk1.2/1.3
+<br>we use oracle12.zip
+<br>jar file is classes12.zip</td>
+
+<td><a href="http://otn.oracle.com/software/content.html">http://otn.oracle.com/software/content.html</a>
+<br>(select "Oracle JDBC Drivers")</td>
+</tr>
+
+<tr>
+<td>PostgreSQL 7.1.3 JDBC Driver
+<br>note this is a patched version
+<br>jar file is bbn-postgresql7.1.3.jar</td>
+
+<td><a href="http://www.postgreSQL.org/">http://www.postgreSQL.org/</a></td>
+</tr>
+
+<tr>
+<td>MySQL v2.0.3 JDBC Driver
+<br>jar file is mm-mysql-2.jar&nbsp;</td>
+
+<td><a href="http://sourceforge.net/projects/mmmysql/">http://sourceforge.net/projects/mmmysql/</a></td>
+</tr>
+
+<tr>
+<td>JClass Chart
+<br>Note that developers of jcchart software must purchase a license,
+<br>but users of cougaar and developers of non-jcchart software may use
+<br>the jar without fee.
+<br>jar file is jcchart451K.jar</td>
+
+<td><a href="http://www.sitraka.com/software/jclass/jclasschart.html">http://www.sitraka.com/software/jclass/jclasschart.html</a></td>
+</tr>
+
+<tr>
+<td>Free EcmaScript Interpreter
+<br>jar file is fesi-111.jar</td>
+
+<td><a href="http://home.worldcom.ch/~jmlugrin/fesi/index.html">http://home.worldcom.ch/~jmlugrin/fesi/index.html</a></td>
+</tr>
+
+<tr>
+<td>
+<br><b>Additional Jars necessary to run Small-135 society using CSMART</b></td>
+
+<td></td>
+</tr>
+
+<tr>
+<td>Grappa v1.2
+<br>note this is a patched version
+<br>jar file is grappa1_2_bbn.jar</td>
+
+<td><a href="http://www.research.att.com/sw/tools/graphviz/packages/grappa.html">http://www.research.att.com/sw/tools/graphviz/packages/grappa.html</a></td>
+</tr>
+
+<tr>
+<td>Java2 Enterprise Edition v1.3
+<br>jar file is j2ee.jar</td>
+
+<td><a href="http://java.sun.com/j2ee/">http://java.sun.com/j2ee/</a></td>
+</tr>
+
+<tr>
+<td>JPython
+<br>jar file is jpython.jar</td>
+
+<td><a href="http://www.jython.org/">http://www.jython.org/</a></td>
+</tr>
+
+<tr>
+<td>Java Servlet Development kit (now Jakarta Tomcat)
+<br>jar file is jsdk.jar</td>
+
+<td><a href="http://jakarta.apache.org/tomcat/index.html">http://jakarta.apache.org/tomcat/index.html</a></td>
+</tr>
+
+<tr>
+<td>JUnit v3.7
+<br>required at built-time only
+<br>jar file is junit.jar</td>
+
+<td><a href="http://www.junit.org/">http://www.junit.org/</a></td>
+</tr>
+
+<tr>
+<td>OpenMap v4.2 (full version, not omcore)
+<br>jar file is openmap.jar</td>
+
+<td><a href="http://openmap.bbn.com/">http://openmap.bbn.com/</a></td>
+</tr>
+
+<tr>
+<td>SILK/JScheme
+<br>jar file is silk.jar</td>
+
+<td><a href="http://www.cs.brandeis.edu/silk/jscheme/index.html">http://www.cs.brandeis.edu/silk/jscheme/index.html</a></td>
+</tr>
+
+<tr>
+<td>VGJ
+<br>jar file is vgj.jar</td>
+
+<td><a href="http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html">http://www.eng.auburn.edu/cse/research/research_groups/</a>
+<br><a href="http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html">graph_drawing/graph_drawing.html</a></td>
+</tr>
+
+<tr>
+<td>Xalan XML Parser v3.1.1
+<br>jar file is xalan.jar</td>
+
+<td><a href="http://xml.apache.org/xalan-j/index.html">http://xml.apache.org/xalan-j/index.html</a></td>
 </tr>
 </table>
 
@@ -158,7 +299,7 @@ api ------"javadoc" for COUGAAR infrastructure</li>
 &lt;product*>------ product specific data files and non-java executables
 (each PlugIn or COUGAAR participant will have a corresponding subdirectory)</li>
 </ul>
-The following information describes the configuration scheme for ALPINE
+The following information describes the configuration scheme for Cougaar
 software distributions. Please note the new organization of release software
 and data files for PlugIn software and society configuration directories.
 <ol>
@@ -299,13 +440,14 @@ package where the domain corresponds with "foo"</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">org.cougaar.cluster.metrics</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.cluster.startTime</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
-<td VALIGN=TOP WIDTH="22%">Boolean</td>
+<td VALIGN=TOP WIDTH="22%">&lt;date> Note this is set to 08/10/2005 by
+default for optimal use of the small-135 society and Oplan.</td>
 
-<td VALIGN=TOP WIDTH="36%">Turns on or off metrics collection&nbsp;</td>
+<td VALIGN=TOP WIDTH="36%">Specifies the society start time.</td>
 </tr>
 </table>
 
@@ -317,15 +459,12 @@ from an XML formated file. Also included in the release is an LDMSQLPlugIn
 that reads assets from the JTAV snapshot database on eiger. Examples can
 be found in the alpine.plugin package. On start-up, the XML PlugIns query
 the XML files and create the specified LDM objects.
-<p>The JDBC drivers required for the LDMSQLPlugIns are freely available
-from Oracle. All of our required functionality is available in a portable
-ZIP file that needs to be added to the COUGAAR CLASSPATH. Oracle suggests
-that the zip file be placed in $ORACLE_HOME/jdbc/lib/classes111.zip. While
-we are not able to provide this zip file in the release, it is available
-on the web: <a href="http://technet.oracle.com/software/download.htm">Oracle
-JDBC Thin Drivers</a> (http://technet.oracle.com/software/download.htm).
+<p>The JDBC drivers required for the LDMSQLPlugIns are freely available.&nbsp;
+Please refer to the <a href="details/HeterogeneousDatabase.html">Heterogeneous
+Database Capability</a> document to read about Cougaar running with Oracle,
+MySQL and PostgreSQL databases.
 <br>&nbsp;
-<p><b><font face="Arial,Helvetica"><a href="release_notes_index.html">Return
-to Release Notes</a></font></b>
+<p><b><font face="Arial,Helvetica"><a href="index.html">Return to Release
+Notes</a></font></b>
 </body>
 </html>
