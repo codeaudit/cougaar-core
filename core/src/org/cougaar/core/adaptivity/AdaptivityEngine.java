@@ -255,7 +255,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
           missingConditions.clear();
         } else {
           cancelTimer();
-          startTimer(timeLeft);
+          resetTimer(timeLeft);
         }
       }
     }

@@ -102,6 +102,6 @@ public class ThreatconTestPlugin extends ServiceUserPlugin {
       threatconStep++;
       if (threatconStep == threatconValues.length) threatconStep = 0;
     }
-    startTimer(115000);
+    resetTimer(115000);
   }
 }

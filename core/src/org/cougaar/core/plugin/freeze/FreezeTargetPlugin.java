@@ -240,7 +240,7 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
         logger.debug("Still running: " + consumerSet);
       }
       unfrozenAgents = Collections.singleton(getAgentIdentifier());
-      startTimer(5000);
+      resetTimer(5000);
     }
     for (Iterator i = relaySubscription.iterator(); i.hasNext(); ) {
       FreezeRelayTarget relay = (FreezeRelayTarget) i.next();

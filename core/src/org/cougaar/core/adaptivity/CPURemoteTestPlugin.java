@@ -116,6 +116,6 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
     getBlackboardService().publishChange(cpu);
     cpuStep++;
     if (cpuStep == cpuValues.length) cpuStep = 0;
-    startTimer(60000);
+    resetTimer(60000);
   }
 }

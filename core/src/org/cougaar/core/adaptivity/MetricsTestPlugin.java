@@ -114,6 +114,6 @@ public class MetricsTestPlugin extends ServiceUserPlugin {
     } else {
       logger.warn("metric is null");
     }
-    startTimer(10000);
+    resetTimer(10000);
   }
 }

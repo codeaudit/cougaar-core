@@ -55,11 +55,11 @@ public class TestABA extends ComponentPlugin {
 
   public void setLoggingService(LoggingService s) {
     logger = s;
-    logger = LoggingServiceWithPrefix.add(logger, getMessageAddress() + ": ");
+    logger = LoggingServiceWithPrefix.add(logger, getAgentIdentifier() + ": ");
   }
 
   public void setupSubscriptions() {
-    String cid = getMessageAddress().toString();
+    String cid = getAgentIdentifier().toString();
     boolean is135ARBN = cid.equals("1-35-ARBN");
     relays = (IncrementalSubscription) blackboard.subscribe(relayPredicate);
     if (is135ARBN) {

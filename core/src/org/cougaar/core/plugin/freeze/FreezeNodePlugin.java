@@ -90,7 +90,7 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
       if (logger.isErrorEnabled()) {
         logger.error(
             "Unable to list local agents on node "+
-            getMessageAddress());
+            getAgentIdentifier());
       }
       addrs = Collections.EMPTY_SET;
     } else {

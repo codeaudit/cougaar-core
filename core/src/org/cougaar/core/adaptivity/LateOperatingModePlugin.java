@@ -80,6 +80,6 @@ public class LateOperatingModePlugin extends ServiceUserPlugin {
     } else {
       logger.info("Waiting step " + step);
     }
-    startTimer(5000);
+    resetTimer(5000);
   }
 }

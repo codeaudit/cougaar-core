@@ -31,7 +31,7 @@ import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.util.StringUtility;
+import org.cougaar.util.CSVUtility;
 
 /**
  * Package-private script parser.
@@ -251,7 +251,7 @@ class ScriptParser {
         if (line.startsWith("move ")) {
           line = line.substring(5);
           line = line.trim();
-          List l = StringUtility.parseCSV(line);
+          List l = CSVUtility.parseToList(line);
           ScriptStep ss = parseStep(l);
           ret.add(ss);
           continue;

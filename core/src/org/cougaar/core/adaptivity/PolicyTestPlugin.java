@@ -97,6 +97,6 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
       }
       constrained = true;
     }
-    startTimer(75000);
+    resetTimer(75000);
   }
 }

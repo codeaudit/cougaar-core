@@ -126,6 +126,6 @@ public class CPUTestPlugin extends ServiceUserPlugin {
       cpuStep++;
       if (cpuStep == cpuValues.length) cpuStep = 0;
     }
-    startTimer(5000);
+    resetTimer(5000);
   }
 }

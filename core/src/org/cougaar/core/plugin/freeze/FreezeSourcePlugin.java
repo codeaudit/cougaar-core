@@ -78,7 +78,7 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
   protected synchronized void freeze() {
     if (relay != null) return;  // Already frozen
     if (logger.isDebugEnabled()) logger.debug("freeze");
-    MessageAddress me = getMessageAddress();
+    MessageAddress me = getAgentIdentifier();
     Set names = getTargetNames();
     Set targets = new HashSet(names.size());
     for (Iterator i = names.iterator(); i.hasNext(); ) {
