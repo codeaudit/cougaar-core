@@ -18,4 +18,5 @@ package org.cougaar.core.society;
 public interface MessageTransportAspect extends MessageTransportCutpoints
 {
     public Object getDelegate(Object delegate, int cutpoint);
+    public boolean rejectTransport(MessageTransport transport, int cutpoint);
 }

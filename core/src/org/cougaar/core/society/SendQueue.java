@@ -37,4 +37,9 @@ public interface SendQueue
      * avoid duplicating SendQueues.  */
     public boolean matches(String name);
 
+    /**
+     * Number of messages waiting in the queue.
+     */
+    public int size();
+
 }

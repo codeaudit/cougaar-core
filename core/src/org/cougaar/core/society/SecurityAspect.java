@@ -31,8 +31,6 @@ public class SecurityAspect implements MessageTransportAspect
 	    try {
 		// Object raw = Beans.instantiate(null, name);
 		Object raw = Class.forName(name).newInstance();
-		System.out.println("====== Beans returned object of class " +
-				   raw.getClass());
 		msm = (MessageSecurityManager) raw;
 	    } catch (Exception ex) {
 		ex.printStackTrace();
@@ -49,6 +47,10 @@ public class SecurityAspect implements MessageTransportAspect
 	enabled = ensure_msm() != null;
     }
 
+    public boolean rejectTransport(MessageTransport transport, int cutpoint) {
+	return (transport instanceof LoopbackMessageTransport);
+    }
+
     public boolean isEnabled() {
 	return enabled;
     }
@@ -57,7 +59,7 @@ public class SecurityAspect implements MessageTransportAspect
     // rid of MessageTransportClassic
     Message secure(Message message) {
 	if (msm != null) {
-	    System.out.println("Securing message " + message);
+	    if (Debug.DEBUG_TRANSPORT) System.out.println("Securing message " + message);
 	    return msm.secureMessage(message);
 	} else {
 	    return message;
@@ -76,7 +78,8 @@ public class SecurityAspect implements MessageTransportAspect
 			       " but has no MessageSecurityManager.");
 	    return null;
 	} else {
-	    System.out.println("Unsecuring message " + message);
+	    if (Debug.DEBUG_TRANSPORT)
+		System.out.println("Unsecuring message " + message);
 	    Message msg = msm.unsecureMessage((SecureMessage) message);
 	    if (msg == null) {
 		System.err.println("MessageTransport "+this+
@@ -91,10 +94,10 @@ public class SecurityAspect implements MessageTransportAspect
     public Object getDelegate(Object delegate, int cutpoint) {
 	switch (cutpoint) {
 	case DestinationLink:
-	    return new SignedDestinationLink((DestinationLink) delegate);
+	    return new SecureDestinationLink((DestinationLink) delegate);
 
 	case ReceiveQueue:
-	    return new SignedReceiveQueue((ReceiveQueue) delegate);
+	    return new SecureReceiveQueue((ReceiveQueue) delegate);
 
 	default:
 	    return null;
@@ -103,14 +106,18 @@ public class SecurityAspect implements MessageTransportAspect
     
 
 
-    private class SignedDestinationLink implements DestinationLink {
+    private class SecureDestinationLink implements DestinationLink {
 	private DestinationLink link;
 
-	private SignedDestinationLink(DestinationLink link) {
+	private SecureDestinationLink(DestinationLink link) {
 	    this.link = link;
 	}
 
-	public void forwardMessage(Message message) {
+	public void forwardMessage(Message message) 
+	    throws DestinationLink.UnregisteredNameException, 
+		   DestinationLink.NameLookupException, 
+		   DestinationLink.CommFailureException
+	{
 	    link.forwardMessage(secure(message));
 	}
 
@@ -123,10 +130,10 @@ public class SecurityAspect implements MessageTransportAspect
 
 
 
-    private class SignedReceiveQueue implements ReceiveQueue {
+    private class SecureReceiveQueue implements ReceiveQueue {
 	private ReceiveQueue queue;
 
-	private SignedReceiveQueue(ReceiveQueue queue) {
+	private SecureReceiveQueue(ReceiveQueue queue) {
 	    this.queue = queue;
 	}
 
@@ -138,8 +145,8 @@ public class SecurityAspect implements MessageTransportAspect
 	    return queue.matches(name);
 	}
 
+	public int size() {
+	    return queue.size();
+	}
     }
-
-
-
 }

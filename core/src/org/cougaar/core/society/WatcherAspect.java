@@ -18,7 +18,7 @@ import java.util.Iterator;
  * by attaching delegates to SendQueue and ReceiveQueue objects.  The
  * delegates are implemented as inner classes.  */
 public class WatcherAspect 
-    implements MessageTransportAspect
+    extends StandardAspect
 {
     private ArrayList watchers;
 
@@ -78,6 +78,9 @@ public class WatcherAspect
 	public boolean matches(String name){
 	    return server.matches(name);
 	}
+	public int size() {
+	    return server.size();
+	}
     }
 
 
@@ -97,6 +100,10 @@ public class WatcherAspect
 	
 	public boolean matches(String name) {
 	    return server.matches(name);
+	}
+
+	public int size() {
+	    return server.size();
 	}
     }
 }

@@ -22,6 +22,7 @@ import java.util.Set;
  * and they're created by a LinkSenderFactory.  */
 public class LinkSender implements Runnable
 {
+    private static final int MAX_DELAY = 60 * 1000; // 1 minute
     private MessageAddress destination;
     private MessageTransportFactory transportFactory;
     private MessageTransportRegistry registry;
@@ -79,6 +80,7 @@ public class LinkSender implements Runnable
 	while (itr.hasNext()) {
 	    DestinationLink link = (DestinationLink) itr.next();
 	    int cost = link.cost(message);
+	    if (cost == Integer.MAX_VALUE) continue; // skip these
 	    if (cheapest == null || cost < min_cost) {
 		cheapest = link;
 		min_cost = cost;
@@ -93,6 +95,7 @@ public class LinkSender implements Runnable
      * message, and forwards the message to that link.  */
     public void run() {
 	Message message = null;
+	int delay = 500; // comes from a property
 	while (true) {
 	    synchronized (queueLock) {
 		while (queue.isEmpty()) {
@@ -102,8 +105,24 @@ public class LinkSender implements Runnable
 		message = (Message) queue.next();
 	    }
 	    if (message != null) {
-		DestinationLink link = findCheapestLink(message);
-		link.forwardMessage(message);
+		while (true) {
+		    DestinationLink link = findCheapestLink(message);
+		    if (link != null) {
+			try {
+			    link.forwardMessage(message);
+			    break;
+			} catch (DestinationLink.UnregisteredNameException no_name) {
+			    // nothing to say here
+			} catch (DestinationLink.NameLookupException lookup_error) {
+			    lookup_error.printStackTrace();
+			} catch (DestinationLink.CommFailureException comm_failure) {
+			    comm_failure.printStackTrace();
+			}
+		    }
+		    try { Thread.sleep(delay);}
+		    catch (InterruptedException ex){}
+		    if (delay < MAX_DELAY) delay += delay;
+		}
 	    }
 	}
     }

@@ -10,6 +10,9 @@
 
 package org.cougaar.core.society;
 
+import java.io.PrintWriter;
+import java.io.FileWriter;
+
 /**
  * This is a very simple aspect which is mostly for demonstration
  * purposes.  It attaches aspect delegates to each interface, and each
@@ -17,12 +20,37 @@ package org.cougaar.core.society;
  * trivial trace of a message as it passes through the various stages
  * of the message transport subsystem.  */
 public class TraceAspect 
-    implements MessageTransportAspect
+    extends StandardAspect
 {
 
+    // logging support
+    private PrintWriter logStream = null;
+    private MessageTransportRegistry registry;
+
     public TraceAspect() {
+	registry =  MessageTransportRegistry.getRegistry();
     }
 
+
+    private PrintWriter getLog() {
+	if (logStream == null) {
+	    try {
+		String id = registry.getIdentifier();
+		logStream = new PrintWriter(new FileWriter(id+".cml"), true);
+	    } catch (Exception e) {
+		e.printStackTrace();
+		System.err.println("Logging required but not possible - exiting");
+		System.exit(1);
+	    }
+	}
+	return logStream;
+    }
+
+
+    protected void log(String key, String info) {
+	String id = registry.getIdentifier();
+	getLog().println(id+"\t"+System.currentTimeMillis()+"\t"+key+"\t"+info);
+    }
 
     public Object getDelegate(Object delegate, int cutpoint) {
 	switch (cutpoint) {
@@ -95,8 +123,11 @@ public class TraceAspect
 	}
 	
 	public void sendMessage(Message message) {
-	    System.err.print("SendQueue_");
+	    log("SendQueue", message.toString()+" ("+size()+")");
 	    server.sendMessage(message);
+	}
+	public int size() {
+	    return server.size();
 	}
 	
 	public boolean matches(String name){
@@ -116,7 +147,7 @@ public class TraceAspect
 	}
 	
 	public void routeMessage(Message message) {
-	    System.err.print("Router_");
+	    log("Router", message.getTarget().toString());
 	    server.routeMessage(message);
 	}
 
@@ -137,12 +168,16 @@ public class TraceAspect
 	    return server.isEmpty();
 	}
 
+	public int size() {
+	    return server.size();
+	}
+
 	public Object next() {
 	    return server.next();
 	}
 
 	public void holdMessage(Message message) {
-	    System.err.print("DestinationQueue_");
+	    log("DestinationQueue", message.toString());
 	    server.holdMessage(message);
 	}
 	
@@ -161,8 +196,13 @@ public class TraceAspect
 	    this.server = server;
 	}
 	
-	public void forwardMessage(Message message) {
-	    System.err.print("DestinationLink_");
+	public void forwardMessage(Message message) 
+	    throws DestinationLink.UnregisteredNameException, 
+		   DestinationLink.NameLookupException, 
+		   DestinationLink.CommFailureException
+
+	{
+	    log("DestinationLink", message.toString());
 	    server.forwardMessage(message);
 	}
 	
@@ -182,16 +222,19 @@ public class TraceAspect
 	}
 	
 	public void deliverMessage(Message message) {
-	    System.err.print("ReceiveQueue_");
+	    log("ReceiveQueue", message.toString());
 	    server.deliverMessage(message);
 	}
 	
 	public boolean matches(String name) {
 	    return server.matches(name);
 	}
+	public int size() {
+	    return server.size();
+	}
     }
 
- public class ReceiveLinkDelegate implements ReceiveLink
+    public class ReceiveLinkDelegate implements ReceiveLink
     {
 	private ReceiveLink server;
 	
@@ -201,7 +244,7 @@ public class TraceAspect
 	}
 	
 	public void deliverMessage(Message message) {
-	    System.err.print("ReceiveLink_");
+	    log("ReceiveLink", message.toString());
 	    server.deliverMessage(message);
 	}
 

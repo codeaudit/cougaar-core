@@ -20,6 +20,31 @@ import java.util.Iterator;
  * another. */
 class MessageTransportRegistry
 {
+    private static MessageTransportRegistry instance;
+
+    public static synchronized MessageTransportRegistry 
+	makeRegistry(String name, MessageTransportServerImpl server)
+    {
+	if (instance == null) {
+	    instance = new MessageTransportRegistry(name, server);
+	    return instance;
+	} else {
+	    System.err.println("##### Attempt to make a second MessageTransportRegistry!");
+	    return null;
+	}
+    }
+
+    public static synchronized MessageTransportRegistry
+	getRegistry()
+    {
+	if (instance != null) {
+	    return instance;
+	} else {
+	    System.err.println("##### Attempt to find registry before creating it");
+	    return null;
+	}
+    }
+
     private String name;
     private HashMap myClients = new HashMap(89);
     private HashMap receiveLinks = new HashMap();
@@ -28,7 +53,7 @@ class MessageTransportRegistry
     private ReceiveLinkFactory receiveLinkFactory;
     private WatcherAspect watcherAspect;
 
-    MessageTransportRegistry(String name, MessageTransportServerImpl server) {
+    private MessageTransportRegistry(String name, MessageTransportServerImpl server) {
 	this.name = name;
 	this.server = server;
     }

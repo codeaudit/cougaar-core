@@ -39,11 +39,22 @@ abstract public class AspectFactory
      * factory, is returned.  The 'iface' argument describes the
      * abstract type of the objects which the factory creates.  */
     public Object attachAspects(Object delegate, int cutpoint) {
+	return attachTransportAspects(delegate, cutpoint, null);
+    }
+
+
+    public Object attachTransportAspects(Object delegate, 
+					 int cutpoint, 
+					 MessageTransport transport)
+    {
 	if (aspects != null) {
 	    Iterator itr = aspects.iterator();
 	    while (itr.hasNext()) {
 		MessageTransportAspect aspect = 
 		    (MessageTransportAspect) itr.next();
+		if (transport != null && aspect.rejectTransport(transport, cutpoint))
+		    continue; //skip it
+
 		Object candidate = aspect.getDelegate(delegate, cutpoint);
 		if (candidate != null) delegate = candidate;
 		if (DEBUG_TRANSPORT) System.out.println("======> " + delegate);
@@ -51,5 +62,6 @@ abstract public class AspectFactory
 	}
 	return delegate;
     }
+
 
 }

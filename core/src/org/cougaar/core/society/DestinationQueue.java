@@ -49,4 +49,8 @@ public interface DestinationQueue
     /**
      * Pops the next message off the queue. */
     public Object next();
+    /**
+     * Number of messages waiting in the queue.
+     */
+    public int size();
 }

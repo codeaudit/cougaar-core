@@ -141,7 +141,7 @@ public class SimpleRMIMessageTransport
 	DestinationLink link = (DestinationLink) links.get(address);
 	if (link == null) {
 	    link = new Link(address); // attach aspects
-	    link = (DestinationLink) attachAspects(link, DestinationLink);
+	    link = (DestinationLink) attachTransportAspects(link, DestinationLink, this);
 	    links.put(address, link);
 	}
 	return link;
@@ -181,47 +181,53 @@ public class SimpleRMIMessageTransport
 	    this.target = destination;
 	}
 
-	public int cost (Message message) {
-	    return 1000;
-	}
-
-
-	public void forwardMessage(Message message) {
-	    // The retries for the lookup may want to happen in a
-	    // dedicated thread.
-	    while (remote == null) {
+	private void cacheRemote() 
+	    throws NameLookupException, UnregisteredNameException
+	{
+	    if (remote == null) {
 		try {
 		    remote = lookupRMIObject(target);
 		}
 		catch (Exception lookup_failure) {
-		    System.err.println("Name lookup failure on " + target);
-		    lookup_failure.printStackTrace();
-		    return;
+		    throw new  NameLookupException(lookup_failure);
 		}
-		try { Thread.sleep(500); } catch (InterruptedException ex) {}
+
+		if (remote == null) 
+		    throw new UnregisteredNameException(target);
+
 	    }
+	}
 
-
-	    // The retries for the reroute may want to happen in a
-	    // dedicated thread.
-	    while (true) {
-		try {
-		    remote.rerouteMessage(message);
-		    break;
-		} 
-		catch (RemoteException ex) {
-		    // We should probably be more specific about the
-		    // error catching, since with some exceptions
-		    // there's no point in retrying.
-		    System.err.println("Reroute failure on " + message +
-				       ": " + ex);
-		    System.err.println("Retrying...");
-		}
-		try {Thread.sleep(500);} catch (InterruptedException int_ex) {}
+	public int cost (Message message) {
+	    try {
+		cacheRemote();
+		return 1000;
 	    }
+	    catch (Exception ex) {
+		// not found
+		return Integer.MAX_VALUE;
+	    }
+	}
 
+
+	public void forwardMessage(Message message) 
+	    throws NameLookupException, 
+		   UnregisteredNameException, 
+		   CommFailureException
+	{
+	    cacheRemote();
+	    try {
+		remote.rerouteMessage(message);
+	    } 
+	    catch (RemoteException ex) {
+		// force recache of remote
+		remote = null;
+		throw new CommFailureException(ex);
+	    }
+		    
 	}
     }
+
 
 }
    

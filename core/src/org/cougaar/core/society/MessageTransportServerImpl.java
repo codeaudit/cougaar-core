@@ -11,6 +11,7 @@
 package org.cougaar.core.society;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
@@ -52,7 +53,12 @@ public class MessageTransportServerImpl
     protected SendQueue sendQ;
     protected ReceiveQueue recvQ;
 
-    private ArrayList aspects;
+    private static ArrayList aspects;
+    private static HashMap aspects_table;
+    
+    public static MessageTransportAspect findAspect(String classname) {
+	return (MessageTransportAspect) aspects_table.get(classname);
+    }
 
 
     private void readAspects() {
@@ -61,6 +67,7 @@ public class MessageTransportServerImpl
 	if (classes == null) return;
 
 	aspects = new ArrayList();
+	aspects_table = new HashMap();
 	StringTokenizer tokenizer = new StringTokenizer(classes, ",");
 	while (tokenizer.hasMoreElements()) {
 	    String classname = tokenizer.nextToken();
@@ -69,6 +76,7 @@ public class MessageTransportServerImpl
 		MessageTransportAspect aspect = 
 		    (MessageTransportAspect) aspectClass.newInstance();
 		aspects.add(aspect);
+		aspects_table.put(classname, aspect);
 	    }
 	    catch (Exception ex) {
 		ex.printStackTrace();
@@ -78,10 +86,11 @@ public class MessageTransportServerImpl
     }
 
     public MessageTransportServerImpl(String id) {
-	readAspects();
 
 	nameSupport = new NameSupport(id);
-	registry = new MessageTransportRegistry(id, this);
+	registry = MessageTransportRegistry.makeRegistry(id, this);
+
+	readAspects();
 
 	//Watcher Aspect is special because the MTServicer interace
 	//needs it.  So we have to make the Watcher Aspect all the

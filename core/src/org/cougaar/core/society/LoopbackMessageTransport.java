@@ -20,21 +20,28 @@ class LoopbackMessageTransport
     implements DestinationLink
 {
 
+    private DestinationLink link;
+
     public LoopbackMessageTransport(String id, java.util.ArrayList aspects) {
 	super(aspects);
     }
 
     // NB:  No aspects here!  Is that the right thing to do?
     public DestinationLink getDestinationLink(MessageAddress address) {
-	return this;
+	if (link == null) {
+	    link = (DestinationLink) attachTransportAspects(this, DestinationLink, this);
+	}
+	return link;
     }
 
     // DestinationLink interface
     public int cost(Message msg) {
-	return 
-	    registry.findLocalClient(msg.getTarget()) != null ?
-	    0 :
-	    Integer.MAX_VALUE;
+	MessageAddress addr = msg.getTarget();
+	if (registry.findLocalClient(addr) != null) {
+	    return 0;
+	} else {
+	    return Integer.MAX_VALUE;
+	}
     }
 	
 

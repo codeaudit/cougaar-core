@@ -61,4 +61,11 @@ abstract class MessageQueue extends Thread
      * Process a dequeued message. */
     abstract void dispatch(Message m);
 
+    /**
+     * Number of messages waiting in the queue.
+     */
+    public int size (){
+	return queue.size();
+    }
+      
 }

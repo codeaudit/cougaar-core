@@ -13,7 +13,7 @@ package org.cougaar.core.society.rmi;
 import org.cougaar.core.society.Debug;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageTransportAspect;
+import org.cougaar.core.society.StandardAspect;
 import org.cougaar.core.society.MessageStatistics;
 import org.cougaar.core.society.DestinationQueue;
 
@@ -25,7 +25,8 @@ import java.io.OutputStream;
  * OutputStream of RMI connections.
  */
 public class StatisticsAspect 
-    implements MessageTransportAspect, MessageStatistics, Debug
+    extends StandardAspect
+    implements MessageStatistics, Debug
 
 {
     // This variable holds the total current size of ALL
@@ -142,6 +143,9 @@ public class StatisticsAspect
 	    return queue.isEmpty();
 	}
 
+	public int size() {
+	    return queue.size();
+	}
     }
 
     private class StatisticsStreamWrapper extends OutputStream {

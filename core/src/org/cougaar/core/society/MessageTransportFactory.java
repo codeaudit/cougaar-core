@@ -123,10 +123,7 @@ public final class MessageTransportFactory
 	loopbackTransport.setNameSupport(nameSupport);
 	transports.add(loopbackTransport);
 	
-	if (Boolean.getBoolean("org.cougaar.core.society.UseSimpleRMI"))
-	    defaultTransport = new SimpleRMIMessageTransport(id, aspects);
-	else
-	    defaultTransport = new RMIMessageTransport(id, aspects);
+	defaultTransport = new SimpleRMIMessageTransport(id, aspects);
 	defaultTransport.setRecvQ(recvQ);
 	defaultTransport.setRegistry(registry);
 	defaultTransport.setNameSupport(nameSupport);

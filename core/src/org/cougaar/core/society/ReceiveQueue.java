@@ -38,4 +38,9 @@ public interface ReceiveQueue
      * avoid duplicating ReceiveQueues.  */
     public boolean matches(String name);
 
+    /**
+     * Number of messages waiting in the queue.
+     */
+    public int size();
+
 }
