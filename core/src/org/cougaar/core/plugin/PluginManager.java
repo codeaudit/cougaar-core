@@ -58,20 +58,7 @@ public class PluginManager
   public void initialize() {
     super.initialize();
     ServiceBroker sb = getServiceBroker();
-    // add some services for the plugins.
-    sb.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    sb.addService(AlarmService.class, new AlarmServiceProvider(agent));
-    sb.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    sb.addService(MessageTransportService.class, new MessageTransportServiceProvider(agent));
-    sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
-    // hack service for demo control
-    sb.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
-
-    // scheduler for new plugins
-    sb.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
-
-    // placeholder for LDM Services
-    sb.addService(LDMService.class, new LDMServiceProvider(agent));
+    //add services here (none for now)
   }
 
   protected ComponentFactory specifyComponentFactory() {
