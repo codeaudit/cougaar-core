@@ -654,21 +654,20 @@ public class NamingContext implements Context {
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
-    Object nsObj = getNSObject(getNSKey(), atom);
     
     if (nm.size() == 1) {
-      // Atomic name: Find object in internal data structure
-      if (nsObj != null) {
-        throw new NameAlreadyBoundException("Use rebind to override");
-      }
-      
-      // Add child to internal data structure
+      // Try to add child to internal data structure
       try {
         NSKey nsKey = getNS().createSubDirectory(getNSKey(), atom);
         if (nsKey != null) {
           return createContext(nsKey);
         } else {
-          throw new NamingException("Unable to create subcontext.");
+          if (getNSObject(getNSKey(), atom) != null) {
+            // Failed because name already bound
+            throw new NameAlreadyBoundException("Use rebind to override");
+          } else {
+            throw new NamingException("Unable to create subcontext.");
+          }
         }
       } catch (RemoteException re) {
         re.printStackTrace();
@@ -676,6 +675,7 @@ public class NamingContext implements Context {
       }
     } else {
       // Intermediate name: Consume name in this context and continue
+      Object nsObj = getNSObject(getNSKey(), atom);
       if (!(nsObj instanceof Context)) {
         throw new NotContextException(atom + 
                                       " does not name a context");

@@ -1977,12 +1977,20 @@ public class NamingDirContext extends NamingContext implements DirContext {
                        "c" + NS.DirSeparator + "boo == b" + NS.DirSeparator + 
                        "c" + NS.DirSeparator + "boo: " + same);
 
+    System.out.println("Attempt to use prebound name in createSubcontext");
+    try {
+      ctx.createSubcontext("b");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
     System.out.println("Attempt to remove a Context");
     try {
       ctx.unbind("b");
     } catch (Exception e) {
       e.printStackTrace();
     }
+
 
     System.out.println("Attempt to rename a Context"); 
     try {
@@ -2005,6 +2013,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
       }
     } 
 
+    
     } catch (NamingException ne) {
       ne.printStackTrace();
     } catch (RemoteException re) {
