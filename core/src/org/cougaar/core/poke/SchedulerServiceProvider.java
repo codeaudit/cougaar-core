@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.cougaar.core.component.*;
+import org.cougaar.core.cluster.ClusterImpl;
 
 /**
  * Scheduler that runs its schedulees in a shared thread
@@ -31,9 +32,13 @@ public class SchedulerServiceProvider
   private ArrayList runThese = new ArrayList(13);
   private SchedulerServiceImpl scheduler = new SchedulerServiceImpl();
   private Object runListSemaphore = new Object();
-
+  protected ClusterImpl agent = null;
 
   public SchedulerServiceProvider() {}
+
+  public SchedulerServiceProvider(ClusterImpl cluster) {
+  agent = cluster;
+  }
   
   
   // ServiceProvider methods
@@ -63,7 +68,7 @@ public class SchedulerServiceProvider
     synchronized private void assureStarted() {
       if (scheduler == null) {
 	scheduler = new EasyScheduler();
-	(new Thread(scheduler, "SchedulerServiceProvider/"/*+cid*/)).start();
+	(new Thread(scheduler, "SchedulerServiceProvider/" + agent.getClusterIdentifier())).start();
       }
     }
 
