@@ -57,6 +57,7 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
 	private Message message;
 	Message getMessage() { return message; }
 	DummySecureMessage(Message m) {
+	    super(m.getOriginator(), m.getTarget());
 	    message=m;
 	}
     }
