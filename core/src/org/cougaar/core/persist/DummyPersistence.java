@@ -40,7 +40,7 @@ public class DummyPersistence
   public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
-    init(pps, name);
+    init(pps, name, params);
   }
 
   public SequenceNumbers[] readSequenceNumbers(String suffix) {

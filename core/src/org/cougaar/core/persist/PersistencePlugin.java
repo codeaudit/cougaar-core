@@ -61,6 +61,21 @@ public interface PersistencePlugin {
     String getName();
 
     /**
+     * Get the number of parameters for this plugin.
+     * @return the number of parameters
+     **/
+    int getParamCount();
+
+    /**
+     * Get a specific plugin parameter.
+     * @param i the index of the desired parameter. Must be between 0
+     * (inclusive) and the value returned by
+     * {@link #getParamCount getParamCount} (exclusive).
+     * @return the value of the specified parameter.
+     **/
+    String getParam(int i);
+
+    /**
      * Gets the names of all media-specific controls. The names of
      * these controls must not conflict with the
      * (@link BasePersistence#getMediaControlNames names that all

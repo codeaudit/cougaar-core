@@ -113,7 +113,7 @@ public class DatabasePersistence
   public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
-    init(pps, name);
+    init(pps, name, params);
     String clusterName = pps.getMessageAddress().getAddress().replace('-', '_');
     LoggingService ls = pps.getLoggingService();
     deltaTable = "delta_" + clusterName;

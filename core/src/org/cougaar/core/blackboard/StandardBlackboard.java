@@ -90,6 +90,7 @@ public class StandardBlackboard
 
     bb.init();
     d = bb.getDistributor();
+    d.getPersistence().registerServices(sb);
 
     bb.connectDomains();
 
@@ -114,6 +115,7 @@ public class StandardBlackboard
     sb.revokeService(BlackboardMetricsService.class, bbSP);
     sb.revokeService(BlackboardService.class, bbSP);
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
+    d.getPersistence().unregisterServices(sb);
 
     bb.stop();
     if (msgSwitch != null) {

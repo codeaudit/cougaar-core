@@ -1,3 +1,63 @@
+2003-02-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceMetricsServlet.java:
+	Bug #1655 -- Add metrics for persistence size & frequency
+	A servlet for viewing the persistence metrics of an agent. Shows a
+	table of the retained persistence snapshots with sorting and
+	average metrics for full, delta, and all snapshots.
+
+	* PersistenceMetricsServiceImpl.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Implement the service.
+
+	* PersistenceMetricImpl.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Implement the PersistenceMetricsService.Metric packet of
+	information.
+
+	* PersistenceControlPlugin.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Remove registration of PersistenceControlService.
+
+	* Persistence.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Extend to define methods for registering and unregistering
+	services supplied by Persistence.
+
+	* PersistencePlugin.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Persistence metrics include full identification of the plugin
+	performing the snapshot. Extend this interface to define methods
+	for retrieving parameters.
+
+	* PersistencePluginAdapter.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Persistence metrics include full identification of the plugin
+	performing the snapshot so plugins need to retain this. This
+	adapter base class retains and supplies the information when
+	needed for creating a PersistenceMetricsService.Metric.
+
+	* FilePersistenceBase.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Persistence metrics include full identification of the plugin
+	performing the snapshot so plugins need to retain this. It was
+	previously forgotten once initialization was completed.
+
+	* BasePersistence.java: 
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Instantiate PersistenceMetricsServiceImpl. (Un)register services
+	when requested. Make existing statistics gathering unconditional
+	(instead of only for info logging) and gather additional info.
+	Create PersistenceMetricsService.Metric items after persisting and
+	add to the PersistenceMetricsServiceImpl.
+
+	* Exercise.java:
+	A simple plugin that gives persistence work to do by publishing
+	items that consume time and space when being serialized. For now,
+	rewrite the code to change the time/space/frequency of operation.
+
 2003-01-23  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistencePluginAdapter.java:

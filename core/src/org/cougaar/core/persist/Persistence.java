@@ -26,7 +26,7 @@ import java.util.List;
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
-import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceBroker;
 
 /**
  * The public interface for persistence
@@ -56,6 +56,7 @@ public interface Persistence {
     void disableWrite(String sequenceNumberSuffix);
     java.sql.Connection getDatabaseConnection(Object locker);
     void releaseDatabaseConnection(Object locker);
-    ServiceProvider getServiceProvider();
+    void registerServices(ServiceBroker sb);
+    void unregisterServices(ServiceBroker sb);
     long getPersistenceTime();
 }

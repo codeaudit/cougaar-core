@@ -38,14 +38,24 @@ public class PersistencePluginAdapter
   protected PersistencePluginSupport pps;
 
   protected String name;
+  protected String[] params;
 
-  protected void init(PersistencePluginSupport pps, String name) {
+  protected void init(PersistencePluginSupport pps, String name, String[] params) {
     this.pps = pps;
     this.name = name;
+    this.params = params;
   }
 
   public String getName() {
     return name;
+  }
+
+  public int getParamCount() {
+    return params.length;
+  }
+
+  public String getParam(int i) {
+    return params[i];
   }
 
   public String[] getControlNames() {

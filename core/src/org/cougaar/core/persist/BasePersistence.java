@@ -65,6 +65,7 @@ import org.cougaar.core.service.DataProtectionService;
 import org.cougaar.core.service.DataProtectionServiceClient;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PersistenceControlService;
+import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.LinkedByteOutputStream;
@@ -433,6 +434,9 @@ public class BasePersistence
   private Object rehydrationSubscriberStatesLock = new Object();
 
   private PersistenceState uidServiceState = null;
+
+  private PersistenceMetricsServiceImpl metricsService =
+    new PersistenceMetricsServiceImpl();
 
   protected BasePersistence(ServiceBroker sb)
     throws PersistenceException
@@ -1020,12 +1024,11 @@ public class BasePersistence
                         boolean full,
                         MessageManager messageManager)
   {
+    int deltaNumber = -1;
     long startCPU = 0L;
-    long startTime = 0L;
+    //startCPU = CpuClock.cpuTimeMillis();
+    long startTime = System.currentTimeMillis();
     if (logger.isInfoEnabled()) {
-      //startCPU = CpuClock.cpuTimeMillis();
-      startCPU = 0l;
-      startTime = System.currentTimeMillis();
       logger.info("Persist started");
     }
     int bytesSerialized = 0;
@@ -1088,7 +1091,7 @@ public class BasePersistence
         epochEnvelopes = copyAndRemoveNotPersistable(epochEnvelopes);
         undistributedEnvelopes = copyAndRemoveNotPersistable(undistributedEnvelopes);
         addEnvelopes(epochEnvelopes, true);
-        beginTransaction(full);
+        deltaNumber = beginTransaction(full);
         try {
           if (currentOutput == null && !returnBytes) {
             // Only doing dummy persistence
@@ -1195,15 +1198,16 @@ public class BasePersistence
         previousPersistenceTime +
         currentPersistPluginInfo.persistenceInterval;
     }
+    //long finishCPU = CpuClock.cpuTimeMillis();
+    long finishCPU = 0l;
+    long finishTime = System.currentTimeMillis();
+    PersistenceMetricImpl metric =
+      new PersistenceMetricImpl(formatDeltaNumber(deltaNumber),
+                                startTime, finishTime, finishCPU - startCPU,
+                                bytesSerialized, full, currentPersistPluginInfo.ppi);
+    metricsService.addMetric(metric);
     if (logger.isInfoEnabled()) {
-      //long finishCPU = CpuClock.cpuTimeMillis();
-      long finishCPU = 0l;
-      long finishTime = System.currentTimeMillis();
-      logger.info(
-          "Persisted "+
-          bytesSerialized+" bytes in "+
-          (finishTime-startTime)+" MS");
-      // +", cpu="+(finishCPU - startCPU)
+      logger.info(metric.toString());
     }
     return result;
   }
@@ -1267,7 +1271,7 @@ public class BasePersistence
     return writeDisabled;
   }
 
-  private void beginTransaction(boolean full) throws IOException {
+  private int beginTransaction(boolean full) throws IOException {
     int deltaNumber = sequenceNumbers.current;
     OutputStream os = currentPersistPluginInfo.ppi.openOutputStream(deltaNumber, full);
     if (os != null) {
@@ -1280,6 +1284,7 @@ public class BasePersistence
     } else {
       currentOutput = null;
     }
+    return deltaNumber;
   }
 
   private void rollbackTransaction() {
@@ -1305,18 +1310,36 @@ public class BasePersistence
 
   // ServiceProvider implementation
   public Object getService(ServiceBroker sb, Object requestor, Class cls) {
-    if (cls != PersistenceControlService.class) {
-      throw new IllegalArgumentException("Unknown service class");
+    if (cls == PersistenceControlService.class) {
+      return new PersistenceControlServiceImpl();
     }
-    return new PersistenceControlServiceImpl();
+    if (cls == PersistenceMetricsService.class) {
+      return metricsService;
+    }
+    throw new IllegalArgumentException("Unknown service class");
   }
+
   public void releaseService(ServiceBroker sb, Object requestor, Class cls, Object svc) {
-    if (cls != PersistenceControlService.class) {
-      throw new IllegalArgumentException("Unknown service class");
+    if (cls == PersistenceControlService.class) {
+      return;
     }
+    if (cls == PersistenceMetricsService.class) {
+      return;
+    }
+    throw new IllegalArgumentException("Unknown service class");
   }
 
   // More Persistence implementation
+  public void registerServices(ServiceBroker sb) {
+    sb.addService(PersistenceMetricsService.class, this);
+    sb.addService(PersistenceControlService.class, this);
+  }
+
+  public void unregisterServices(ServiceBroker sb) {
+    sb.revokeService(PersistenceControlService.class, this);
+    sb.revokeService(PersistenceMetricsService.class, this);
+  }
+
   public ServiceProvider getServiceProvider() {
     return this;
   }

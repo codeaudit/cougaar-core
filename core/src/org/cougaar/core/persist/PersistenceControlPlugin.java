@@ -72,28 +72,10 @@ public class PersistenceControlPlugin extends ServiceUserPlugin {
 
   private IncrementalSubscription myOperatingModes;
 
-  private ServiceProvider serviceProvider;
-
   private PersistenceControlService persistenceControlService;
 
   public PersistenceControlPlugin() {
     super(requiredServices);
-  }
-
-  public void load() {
-    super.load();
-    Persistence persistence = blackboard.getPersistence();
-    serviceProvider = persistence.getServiceProvider();
-    getServiceBroker().addService(PersistenceControlService.class,
-                                  serviceProvider);
-  }
-
-  public void unload() {
-    if (serviceProvider != null) {
-      getServiceBroker().revokeService(PersistenceControlService.class,
-                                       serviceProvider);
-    }
-    super.unload();
   }
 
   protected boolean haveServices() {
