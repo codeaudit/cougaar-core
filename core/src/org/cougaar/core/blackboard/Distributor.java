@@ -105,6 +105,9 @@ public class Distributor {
   /** The message manager for this cluster **/
   private MessageManager myMessageManager = null;
 
+  /** Timer thread for periodic lazy-persistence. **/
+  private Timer distributorTimer = null;
+
   /** Debug logging **/
   private transient PrintWriter logWriter = null;
 
@@ -352,8 +355,8 @@ public class Distributor {
     rehydrate(state);
     getMessageManager().start(theCluster, didRehydrate);
 
-    Timer distributorTimer = new Timer();
-    if (lazyPersistence) {
+    if (lazyPersistence && distributorTimer == null) {
+      distributorTimer = new Timer();
       distributorTimer.schedule(new TimerTask() {
         public void run() {
           timerPersist();
@@ -361,6 +364,18 @@ public class Distributor {
       }, 
         TIMER_PERSIST_INTERVAL, 
         TIMER_PERSIST_INTERVAL);
+    }
+  }
+
+  /** provide a hook to stop the distribution thread.
+   * @see #start
+   **/
+  public synchronized void stop() {
+    getMessageManager().stop();
+
+    if (lazyPersistence && distributorTimer != null) {
+      distributorTimer.cancel();
+      distributorTimer = null;
     }
   }
 

@@ -400,6 +400,15 @@ public class MessageManagerImpl implements MessageManager, Serializable {
     }
   }
 
+  public void stop() {
+    if (USE_MESSAGE_MANAGER) {
+      // TODO postponed until needed
+      System.err.println(
+          "\nFIXME MessageManager \"stop()\" for (USE_MESSAGE_MANAGER == true) "+
+          "should halt internal threads");
+    }
+  }
+
   private synchronized void sendKeepAlive() {
     ArrayList messages = new ArrayList(clusterInfo.size());
     Directive[] directives = new Directive[0];

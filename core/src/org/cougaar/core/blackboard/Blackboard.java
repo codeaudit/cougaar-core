@@ -152,6 +152,11 @@ public class Blackboard extends Subscriber
     }
   }
 
+  public void stop() {
+    stopDistributor(myDistributor);
+    myDistributor = null;
+  }
+
   private static class AllObjectsSet extends HashSet {
     Map stacks = createStackMap();
     protected Map createStackMap() {
@@ -496,6 +501,12 @@ public class Blackboard extends Subscriber
     d.start(cluster, state);       // cluster, state
 
     return d;
+  }
+
+  private void stopDistributor(Distributor d) {
+    if (d != null) {
+      d.stop();
+    }
   }
 
   public Distributor getDistributor() {

@@ -42,6 +42,10 @@ public interface MessageManager {
    **/
   void start(ClusterServesLogicProvider aCluster, boolean didRehydrate);
   /**
+   * Stop the message manager, halting any internal activity.
+   **/
+  void stop();
+  /**
    * Add a set of messages to the queue of messages waiting to be
    * transmitted. When persistence is enabled, the messages are held
    * until the end of the epoch.

@@ -115,6 +115,8 @@ public class StandardBlackboard
     sb.revokeService(BlackboardMetricsService.class, bbSP);
     sb.revokeService(BlackboardService.class, bbSP);
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
+
+    bb.stop();
   }
 
   //
