@@ -21,17 +21,12 @@
 
 package org.cougaar.core.thread;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import org.cougaar.core.qos.metrics.MetricsServiceProvider;
+
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.UnaryPredicate;
@@ -50,9 +45,6 @@ import org.cougaar.util.log.Logging;
  * mean that there is no maximum.  The precise meaning of 'maximum' is
  * varies by scheduler class.
  *
- * @property org.cougaar.thread.logfile If set, extensive logging
- * information will be saved in the given file, in tab-separated
- * format (readable by Exel).
  */
 public class Scheduler 
     implements ThreadControlService
@@ -215,55 +207,17 @@ public class Scheduler
     }
 
 
-    private static PrintWriter log;
-    private static final String LOGFILE_PROPERTY =
-	"org.cougaar.thread.logfile";
-
-    private synchronized static boolean ensureLog() {
-	if (log == null) {
-	    String filename = System.getProperty(LOGFILE_PROPERTY);
-	    if (filename == null) return false;
-	    try {
-		FileWriter fw = new FileWriter(filename);
-		log = new PrintWriter(fw);
-	    } catch (java.io.IOException ex) {
-		System.err.println(ex);
-	    }
-	}
-	return log != null;
-    }
-
-    private void log(String action, Object item) {
-	if (!ensureLog()) return;
- 	if (true) return; // disable this completely for now
-	long now = MetricsServiceProvider.relativeTimeMillis();
-	StringBuffer buf = new StringBuffer();
-	buf.append(Double.toString(now/1000.0));
-	buf.append('\t');
-	buf.append(action);
-	buf.append('\t');
-	buf.append(Integer.toString(runningThreadCount));
-	buf.append('\t');
-	buf.append(this.toString());
-	buf.append('\t');
-	if (item != null) buf.append(item.toString());
-	log.println(buf.toString());
-    }
-
     void threadDequeued(SchedulableObject thread) {
-	log("dequeued", thread);
 	listenerProxy.notifyDequeued(thread);
     }
 
     // Called within the thread itself as the first thing it does.
     void threadClaimed(SchedulableObject thread) {
-	log("claimed", thread);
 	listenerProxy.notifyStart(thread);
     }
 
     // Called within the thread itself as the last thing it does.
     void threadReclaimed(SchedulableObject thread) {
-	log("reclaimed", thread);
 	listenerProxy.notifyEnd(thread);
     }
 
@@ -280,7 +234,6 @@ public class Scheduler
     void incrementRunCount(Scheduler consumer) {
 	synchronized (this) {
 	    ++runningThreadCount;
-	    log("increment", consumer);
 	    listenerProxy.notifyRightGiven(consumer);
 	}
     }
@@ -288,7 +241,6 @@ public class Scheduler
     void decrementRunCount(Scheduler consumer, SchedulableObject thread) {
 	synchronized (this) {
 	    --runningThreadCount;
-	    log("decrement", (consumer == this ? ((Object) thread) : ((Object) consumer)));
 	    if (runningThreadCount < 0) {
 		System.out.println("###" +this+ " thread count is " +
 				   runningThreadCount);
