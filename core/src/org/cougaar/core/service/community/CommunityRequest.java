@@ -103,7 +103,11 @@ public interface CommunityRequest extends Publishable {
    *                              membership are automatically applied to the
    *                              generated roster.
    *   LIST_PARENT_COMMUNITIES  - Gets list of communities of which the
-   *                              specified agent is a member
+   *                              specified agent is a member.  The list may be
+   *                              constrained to communities with a set of
+   *                              specific attributes by setting a search filter
+   *                              (see setFilter() method).  If no filter is
+   *                              specified all parent communities are returned.
    *   JOIN_COMMUNITY           - Request to join TargetCommunity
    *   LEAVE_COMMUNITY          - Request to leave TargetCommunity
    *   REASSIGN                 - Reassigns the specified agent from the
@@ -112,6 +116,11 @@ public interface CommunityRequest extends Publishable {
    *   GET_ROLES                - Gets list of roles provided by agent
    *   LIST_ALL_COMMUNITIES     - Gets list of all communities curently bound
    *                              in Yellow Pages
+   *   FIND_COMMUNITIES         - Finds communities that satisfy a given search
+   *                              JNDI filter (defined by setFilter method)
+   *   FIND_ENTITIES            - Finds community entities that satisfy a given
+   *                              JNDI search filter (defined by setFilter()
+   *                              method)
    * </PRE>
    **/
 
@@ -157,4 +166,14 @@ public interface CommunityRequest extends Publishable {
    **/
 
   void setRole(String roleName);
+
+
+  /**
+   * Defines a JNDI compliant search filter that is used in a search.
+   * @param filter  JNDI search filter
+   **/
+
+  void setFilter(String filter);
+
+
 }
