@@ -12,6 +12,7 @@ package org.cougaar.core.logging;
 
 import java.util.Enumeration;
 import java.util.Vector;
+import java.util.HashSet;
 
 import org.cougaar.core.component.*;
 
@@ -182,18 +183,35 @@ public class LoggingServiceProvider implements ServiceProvider {
     }
 
     public Enumeration getAllLoggingNodes() {
-	Vector v = new Vector();
+	HashSet s = new HashSet();
 	Enumeration cats = Category.getCurrentCategories();
 	while(cats.hasMoreElements()) {
 	    Category cat = (Category) cats.nextElement();
-	    v.addElement(cat.getName());
+	    while(cat != null) {
+		Enumeration appenders = cat.getAllAppenders();
+		if(appenders.hasMoreElements())
+		    s.add(cat.getName());
+		if(cat == cat.getRoot()) {
+		    cat = null;
+		}
+		else {
+		    cat = cat.getRoot();
+		}
+	    }		
 	}	
-	return v.elements();
+	return (new Vector(s)).elements();
     }
 
       public LoggingOutputType[] getOutputTypes(String node) {
-	  Enumeration appenders = Category.getInstance(node).getAllAppenders();
-	  Vector outputs = new Vector(10);
+	  Enumeration appenders=null;
+	  if(node.equals("root")) {
+	      appenders = Category.getRoot().getAllAppenders();
+	  }
+	  else {
+	      appenders = Category.getInstance(node).getAllAppenders();
+	  }
+	  Vector outputs = new Vector();
+	  int i;
 
 	  while(appenders.hasMoreElements()){
 	      outputs.addElement(new LoggingProviderOutputTypeImpl(node,(Appender) appenders.nextElement()));
@@ -201,9 +219,11 @@ public class LoggingServiceProvider implements ServiceProvider {
 
 	  LoggingOutputType[] lots = new LoggingOutputType[outputs.size()];
 
-	  for(int i=0; i < outputs.size() ; i++ ) {
+	  for(i=0; i < outputs.size() ; i++ ) {
 	      lots[i] = (LoggingOutputType) outputs.elementAt(i);
 	  }
+
+	  System.out.println("LoggingServiceProvider::Node " + node + " has " + lots.length + " or " + i + " Appenders.");
 
 	  return lots;      
       }
