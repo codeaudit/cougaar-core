@@ -51,16 +51,19 @@ import org.cougaar.util.log.Logging;
  * Subclasses may override the feedback printed.
  * @property org.cougaar.core.agent.service.alarm.Timer.epsilon=10000 milliseconds
  * considered a relatively long time for alarm delivery.
- *
+ * @property org.cougaar.core.agent.service.alarm.Timer.useSchedulable=true Set to false
+ * to use in-band delivery of alarm sounding rather than using a schedulable to wrap the
+ * delivery.
  **/
 
 public abstract class Timer implements Runnable {
   protected final static Logger log = Logging.getLogger(Timer.class);
 
   protected static long epsilon = 10*1000L;
-
+  protected static boolean useSchedulable = true;
   static {
     epsilon = PropertyParser.getLong("org.cougaar.core.agent.service.alarm.Timer.epsilon", epsilon);
+    useSchedulable = PropertyParser.getBoolean("org.cougaar.core.agent.service.alarm.Timer.useSchedulable", useSchedulable);
   }
 
   /** all alarms **/
@@ -239,27 +242,42 @@ public abstract class Timer implements Runnable {
     } // infinite loop
   }
 
-  private void ring(Alarm alarm) {
+  private void ring(final Alarm alarm) {
     if (!alarm.hasExpired()) {  // only ring if it wasn't cancelled already
-      report(alarm);
-      long dt = 0L;
-      try {
-        dt = System.currentTimeMillis(); // real start time
-        alarm.expire();
-        dt = System.currentTimeMillis() - dt; // real delta time
-        //
-        if (dt > epsilon) {
-          if (log.isWarnEnabled()) {
-            log.warn("Alarm "+alarm+" blocked for "+dt+"ms while ringing");
+      if (useSchedulable && threadService != null) { //wrap with schedulable
+        Schedulable quasimodo = threadService.getThread(this, new Runnable() {
+            public void run() {
+              report(alarm);
+              try {
+                alarm.expire();
+              } finally {
+                if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
+                  log.error("Alarm "+alarm+" failed to close it's transaction");
+                }
+              }
+            }},
+                                                        "Alarm Ringer");
+        quasimodo.start();
+      } else {
+        report(alarm);
+        long dt = 0L;
+        try {
+          dt = System.currentTimeMillis(); // real start time
+          alarm.expire();
+          dt = System.currentTimeMillis() - dt; // real delta time
+          //
+          if (dt > epsilon) {
+            if (log.isWarnEnabled()) {
+              log.warn("Alarm "+alarm+" blocked for "+dt+"ms while ringing");
+            }
           }
-        }
-      } finally {
-        // see if the alarm has been evil and as has opened a transaction
-        // but neglected to close it
-        if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
-          log.error("Alarm "+alarm+" failed to close it's transaction");
-        }
-      }
+        } finally {
+          // see if the alarm has been evil and as has opened a transaction
+          // but neglected to close it
+          if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
+            log.error("Alarm "+alarm+" failed to close it's transaction");
+          }
+        }}
     }
   }
 
@@ -288,9 +306,10 @@ public abstract class Timer implements Runnable {
   public Timer() {}
 
   private Schedulable schedulable;
-
+  private ThreadService threadService = null;
 
   public void start(ThreadService tsvc) {
+    threadService = tsvc;
     schedulable = tsvc.getThread(this, this, getName()); // lane?
     // should be nothing on the queue yet, so no need to start.
     // On the other hand, starting is harmless, since it will quit 
