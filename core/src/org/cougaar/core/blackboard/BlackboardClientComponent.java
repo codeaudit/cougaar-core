@@ -171,8 +171,7 @@ public abstract class BlackboardClientComponent
     if ((ais != null) &&
         ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
       agentId = (MessageAddress) an;
-    } else {
-      // FIXME: Log something?
+      //    } else { // Revocation -- nothing more to do 
     }
   }
   public void setSuicideService(SuicideService ss) {
