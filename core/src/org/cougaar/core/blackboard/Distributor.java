@@ -827,6 +827,8 @@ final class Distributor {
           if (logger.isInfoEnabled()) {
             logger.info("Persist completed (finish transaction)");
           }
+          if (logger.isInfoEnabled()) logger.info("reservation release");
+          persistenceReservationManager.release(persistence);
         } else {
           if (logger.isInfoEnabled()) {
             logger.info("Persist deferred, "
@@ -903,7 +905,7 @@ final class Distributor {
           if (logger.isInfoEnabled()) {
             logger.info("reservation waitfor");
           }
-          persistenceReservationManager.waitFor(persistence);
+          persistenceReservationManager.waitFor(persistence, logger);
           // Now we try to persist
           persistActive = true;
           if (logger.isInfoEnabled()) {

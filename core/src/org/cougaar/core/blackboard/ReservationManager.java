@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.LinkedList;
 import java.util.Iterator;
+import org.cougaar.util.log.Logger;
 
 /**
  * Persistence reservations indicate that a persistence instance
@@ -66,6 +67,10 @@ public class ReservationManager {
     public void updateTimestamp(long now) {
       expires = now + timeout;
     }
+
+    public String toString() {
+      return obj.toString();
+    }
   }
 
   public ReservationManager(long timeout) {
@@ -95,7 +100,7 @@ public class ReservationManager {
     return item;
   }
 
-  public synchronized void waitFor(Object p) {
+  public synchronized void waitFor(Object p, Logger logger) {
     if (queue == null) return;
     while (true) {
       long now = System.currentTimeMillis();
@@ -105,7 +110,13 @@ public class ReservationManager {
       try {
         Item firstItem = (Item) queue.getFirst();
         long delay = firstItem.expires - now;
+        if (logger != null && logger.isInfoEnabled()) {
+          logger.info("waitFor " + delay + " for " + firstItem);
+        }
         wait(delay);
+        if (logger != null && logger.isInfoEnabled()) {
+          logger.info("waitFor wait finished");
+        }
       } catch (InterruptedException ie) {
       }
     }
