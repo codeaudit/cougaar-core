@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceSubscriberState;
+import org.cougaar.domain.planning.ldm.plan.Directive;
 
 public class Distributor {
   /*
@@ -81,7 +82,7 @@ public class Distributor {
       : null;
 
   /** The format of timestamps in the log **/
-  private static DateFormat logTimeFormat =
+  private DateFormat logTimeFormat =
     new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS ");
 
   /** Our set of (all) registered Subscribers **/
@@ -431,6 +432,12 @@ public class Distributor {
           alpPlan.restart(msg.getSource());
         }
         if ((code & MessageManager.IGNORE) == 0) {
+          if (logWriter != null) {
+            Directive[] dirs = msg.getDirectives();
+            for (int i = 0; i < dirs.length; i++) {
+              printLog("RECV   " + dirs[i]);
+            }
+          }
           directiveMessages.add(msg);
         }
       } else if (m instanceof AckDirectiveMessage) {
@@ -448,7 +455,14 @@ public class Distributor {
 
     // The following must be unconditional to insure persistence
     // happens.
-    distribute(alpPlan.receiveMessages(directiveMessages), alpPlan.getClient());
+    try {
+      alpPlan.private_startTransaction();
+      Envelope envelope = alpPlan.receiveMessages(directiveMessages);
+      distribute(envelope, alpPlan.getClient());
+    } finally {
+      alpPlan.private_stopTransaction();
+    }
+
     directiveMessages.clear();
   }
 

@@ -1,4 +1,18 @@
+2001-04-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Distributor.java:
+	Debugging Support
+	Include received directives in the distributor log. This gives a
+	much clearer picture of what's happening.
+
 2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Whiteboard.java:
+	Convert changes to ALPPlan made in 7.2 into changes to this file.
+	Add a systemproperty
+	org.cougaar.core.cluster.enablePublishException to enable the
+	generation of PublishExceptions. Defaults to true since such
+	exceptions may indicate a bug. May be set to false to ignore.
 
 	* Subscriber.java:
 	Applies to Bug #241
@@ -29,13 +43,6 @@
 	Add null check when creating an bulk envelope event. Should help
 	catch this bug sooner. IllegalArgumentException should occur if
 	bad BulkEnvelopeTuple is created.
-
-	* ALPPlan.java:
-	Applies to whatever the bug is about debugging output
-	Add a systemproperty
-	org.cougaar.core.cluster.enablePublishException to enable the
-	generation of PublishExceptions. Defaults to true since such
-	exceptions may indicate a bug. May be set to false to ignore.
 
 1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
