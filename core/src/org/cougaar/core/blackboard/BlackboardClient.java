@@ -8,14 +8,17 @@
  * </copyright>
  */
 
-package org.cougaar.core.cluster;
+package org.cougaar.core.blackboard;
 
-public interface SubscriptionClient {
+/** Anyone component requesting BlackboardService must implement
+ * BlackboardClient in order to support blackboard callbacks
+ **/
+public interface BlackboardClient {
   /**
-   * Return a name for this SubscriptionClient. All clients in a
+   * Return a name for this BlackboardClient. All clients in a
    * cluster should have distinct names.
    */
-  public String getSubscriptionClientName();
+  public String getBlackboardClientName();
 
   long currentTimeMillis( );
 
@@ -26,8 +29,8 @@ public interface SubscriptionClient {
   boolean triggerEvent(Object event);
 
   static class Local extends ThreadLocal {
-    public SubscriptionClient getClient() {
-      return (SubscriptionClient) get();
+    public BlackboardClient getClient() {
+      return (BlackboardClient) get();
     }
   }
 

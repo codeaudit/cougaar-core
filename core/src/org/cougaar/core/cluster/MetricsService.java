@@ -7,17 +7,14 @@
  * COUGAAR licence agreement.
  * </copyright>
  */
-package org.cougaar.core.component;
 
-import org.cougaar.core.society.*;
-import java.util.*;
+package org.cougaar.core.cluster;
 
-/** The binding site for talking to the Cougaar MessageTransport
+import org.cougaar.core.component.*;
+
+/** a Service for getting at Metrics information
  **/
 
-public interface MessageTransportBindingSite 
-  extends BindingSite
-{
-  void send(Message m) throws Exception;
-  //...
+public interface MetricsService extends Service {
+  MetricsSnapshot getMetricsSnapshot();
 }

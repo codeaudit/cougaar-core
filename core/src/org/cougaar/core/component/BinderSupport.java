@@ -35,6 +35,9 @@ public abstract class BinderSupport implements Binder
       parentComponent.remove(childComponent);
     }
   }
+  protected final Container getParentComponent() {
+    return parentComponent;
+  }
   protected final Component getChildComponent() {
     return childComponent;
   }
@@ -47,7 +50,7 @@ public abstract class BinderSupport implements Binder
    * to hook up all the requested services for the child component.
    * <p>
    * Initialization steps:
-   * 1. call child.setBinder(Binder) if defined.
+   * 1. call child.setBindingSite(BindingSite) if defined.
    * 2. uses introspection to find and call child.setService(X) methods where 
    * X is a Service.  All such setters are called, even if the service
    * is not found.  If a null answer is not acceptable, the component
@@ -65,10 +68,12 @@ public abstract class BinderSupport implements Binder
     Class childClass = childComponent.getClass();
 
     try {
-      Method m = childClass.getMethod("setBinder", new Class[]{Binder.class});
-      m.invoke(childComponent, new Object[]{this});
+      Method m = childClass.getMethod("setBindingSite", new Class[]{BindingSite.class});
+      if (m != null) {          // use a non-throwing variation in the future
+        m.invoke(childComponent, new Object[]{this});
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      //e.printStackTrace();
       // ignore - maybe they'll use initialize(Binder) or maybe they don't
       // care.
     }
@@ -81,7 +86,7 @@ public abstract class BinderSupport implements Binder
         for (int i=0; i<l; i++) { // look at all the methods
           Method m = methods[i];
           String s = m.getName();
-          if ("setBinder".equals(s)) continue;
+          if ("setBindingSite".equals(s)) continue;
           Class[] params = m.getParameterTypes();
           if (s.startsWith("set") &&
               params.length == 1) {
@@ -98,12 +103,17 @@ public abstract class BinderSupport implements Binder
                 // Let's try getting the service...
                 Object service = services.getService(childComponent, p, null);
                 Object[] args = new Object[] { service };
-                m.invoke(childComponent, args);
+                try {
+                  m.invoke(childComponent, args);
+                } catch (InvocationTargetException ite) {
+                  ite.printStackTrace();
+                }
               }
             }
           }
         }
       } catch (Exception e) {
+        e.printStackTrace();
         throw new RuntimeException(e.toString());
       }
     }

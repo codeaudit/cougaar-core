@@ -77,7 +77,7 @@ public abstract class SimplifiedFatPlugIn extends SingleThreadedPlugIn
   protected final void cycle() {
     try {
       openTransaction();
-      if (wasAwakened() || (getSubscriber().haveCollectionsChanged())) {
+      if (wasAwakened() || (getBlackboardService().haveCollectionsChanged())) {
         execute();
       }
     } catch (Exception e) {

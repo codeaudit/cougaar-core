@@ -94,7 +94,7 @@ public abstract class SimplePlugIn extends PlugInAdapter {
     boolean doExecute = false; // Synonymous with resetTransaction
     try {
       openTransaction();
-      if (wasAwakened() || (getSubscriber().haveCollectionsChanged())) {
+      if (wasAwakened() || (getBlackboardService().haveCollectionsChanged())) {
         if (minTimer != null) {
           if (minTimer.hasExpired() || maxTimer.hasExpired()) {
             minTimer.cancel();
@@ -165,7 +165,7 @@ public abstract class SimplePlugIn extends PlugInAdapter {
     //alternatively, use a different wireExpansion method to pass in an estimated
     //allocation result or to use vectors of subtasks
     // publish the Expansion and the workflow's subtasks.
-    PlugInHelper.publishAddExpansion(getSubscriber(), expansion);
+    PlugInHelper.publishAddExpansion(getBlackboardService(), expansion);
   }
 
 }

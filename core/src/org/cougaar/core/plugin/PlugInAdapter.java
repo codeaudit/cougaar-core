@@ -11,14 +11,23 @@
 package org.cougaar.core.plugin;
 
 import java.util.*;
+import org.cougaar.util.*;
 
+import org.cougaar.core.cluster.*;
+
+import org.cougaar.core.cluster.MetricsSnapshot;
+import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.domain.planning.ldm.RootFactory;
 import org.cougaar.core.plugin.PlugInServesCluster;
+import org.cougaar.core.plugin.ScheduleablePlugIn;
+
+
+import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.blackboard.BlackboardClient;
+import org.cougaar.core.cluster.AlarmService;
+import org.cougaar.core.cluster.AlarmServiceProvider;
 import org.cougaar.core.cluster.ClusterServesPlugIn;
 import org.cougaar.core.cluster.Claimable;
-import org.cougaar.core.cluster.SubscriptionClient;
 import org.cougaar.core.cluster.Subscriber;
 import org.cougaar.core.cluster.CollectionSubscription;
 import org.cougaar.core.cluster.Subscription;
@@ -27,8 +36,17 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.core.cluster.SubscriberException;
 import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.MetricsSnapshot;
-
+import org.cougaar.core.cluster.MetricsService;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Services;
+
+import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
+import org.cougaar.domain.planning.ldm.Factory;
+import org.cougaar.domain.planning.ldm.RootFactory;
+
+import org.cougaar.core.plugin.PlugInServesCluster;
+
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -36,8 +54,13 @@ import org.cougaar.util.UnaryPredicate;
 
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
-  implements PlugInServesCluster, SubscriptionClient, ParameterizedPlugIn
+  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn
 {
+
+  /** keep this around for compatability with old plugins **/
+  protected RootFactory theLDMF = null;
+
+  protected LDMServesPlugIn theLDM = null;
 
   // 
   // constructor
@@ -46,13 +69,58 @@ public abstract class PlugInAdapter
   public PlugInAdapter() {
   }
 
-  //
-  // Implement (some of) SubscriptionClient
-  //
-  protected String subscriptionClientName = null;
+  private PluginBindingSite bindingSite = null;
 
-  public String getSubscriptionClientName() {
-    if (subscriptionClientName == null) {
+  public final void setBindingSite(BindingSite bs) {
+    if (bs instanceof PluginBindingSite) {
+      bindingSite = (PluginBindingSite) bs;
+    } else {
+      throw new RuntimeException("Tried to load "+this+" into "+bs);
+    }
+  }
+
+  protected final PluginBindingSite getBindingSite() {
+    return bindingSite;
+  }
+
+  //
+  // extra services
+  //
+
+  // metrics service
+
+  private MetricsService metricsService = null;
+  public final void setMetricsService(MetricsService s) {
+    metricsService = s;
+  }
+  protected final MetricsService getMetricsService() {
+    return metricsService;
+  }
+
+  protected final MetricsSnapshot getMetricsSnapshot() {
+    if (metricsService != null) {
+      return metricsService.getMetricsSnapshot();
+    } else {
+      return null;
+    }
+  }
+
+  // alarm service
+  private AlarmService alarmService = null;
+  public final void setAlarmService(AlarmService s) {
+    alarmService = s;
+  }
+  protected final AlarmService getAlarmService() {
+    return alarmService;
+  }
+
+  //
+  // Implement (some of) BlackboardClient
+  //
+  protected String blackboardClientName = null;
+
+  public String getBlackboardClientName() {
+    if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
       buf.append(getClass().getName());
       if (parameters != null) {
@@ -65,13 +133,13 @@ public abstract class PlugInAdapter
 	}
 	buf.append("]");
       }
-      subscriptionClientName = buf.substring(0);
+      blackboardClientName = buf.substring(0);
     }
-    return subscriptionClientName;
+    return blackboardClientName;
   }
 
   public String toString() {
-    return getSubscriptionClientName();
+    return getBlackboardClientName();
   }
 
   public boolean triggerEvent(Object event) {
@@ -134,9 +202,16 @@ public abstract class PlugInAdapter
   
   private Vector parameters = null;
 
-  public void setParameters(Vector params) {
-    parameters = params;
+  public void setParameter(Object param) {
+    if (param != null) {
+      if (param instanceof Vector) {
+        parameters = (Vector) param;
+      } else {
+        System.err.println("Warning: "+this+" initialized with non-vector parameter "+param);
+      }
+    }
   }
+
 
   /** get any PlugIn parameters passed by the plugin instantiator.
    * If they haven't been set, will return null.
@@ -151,25 +226,20 @@ public abstract class PlugInAdapter
   // StateModel extensions
   //
 
-  /** Watch for who we are plugging into **/
+  /** Load the plugin.  No longer pays any attention to the passed object,
+   * as it will now always be null.
+   **/
   public void load(Object object) throws StateModelException {
+    getBindingSite().setThreadingChoice(getThreadingChoice());
     super.load(object);
-    if (!(object instanceof ClusterServesPlugIn)) {
-      throw new RuntimeException("Loaded plugin "+this+" into non Cluster "+object);
-    }
-    theCluster =  (ClusterServesPlugIn) object;
-    theDistributor = theCluster.getDistributor();
-    theSubscriber = constructSubscriber(theDistributor);
-    theLDM = theCluster.getLDM();
-    theLDMF = theLDM.getFactory();
-    setThreadingModel(createThreadingModel());
+    theLDM = getBindingSite().getLDM();
+    theLDMF = getBindingSite().getFactory();
+    
+    Services services = getBindingSite().getServices();
   }
 
-  /** start threads but isn't yet allowed to ask component for anything */
-  public void start() throws StateModelException {
-    startThreadingModel();
-    super.start();
-  }
+  /** */
+  public void start() throws StateModelException {}
 
 
   //
@@ -177,107 +247,123 @@ public abstract class PlugInAdapter
   //
 
 
-  /** Construct (and return) a new Subscriber instance for the
-   * plugin to use.  This method is called in the default version
-   * of the load() method to contruct a (the) critical subscriber 
-   * instance for the plugin - that is, the value that is returned by
-   * getSubscriber().  This method should not do anything beyond
-   * the critical construction of this instance.  Subscriber.start() is
-   * called in the (default) plugin.start() method.
-   *
-   * Override to change the class of the created instance.  The default
-   * should be sufficient for nearly all plugins.  Only persistence plugins
-   * are known to sometimes need this level of control, and doing this 
-   * wrong can be A Very Bad Thing.
-   *
-   * This default method creates and initializes an instance
-   * of org.cougaar.core.cluster.Subscriber.
+  /** Was a method of specifying the class of Subscriber to use.  This is 
+   * now a function of the Binder, so is no longer appropriate.
    */
   protected Subscriber constructSubscriber(Distributor distributor) {
-    return new Subscriber(this, distributor);
+    throw new RuntimeException("Dont call me!");
   }
 
   public int getSubscriptionCount() {
-    return getSubscriber().getSubscriptionCount();
+    return getBlackboardService().getSubscriptionCount();
   }
   
   public int getSubscriptionSize() {
-    return getSubscriber().getSubscriptionSize();
+    return getBlackboardService().getSubscriptionSize();
   }
 
   public int getPublishAddedCount() {
-    return getSubscriber().getPublishAddedCount();
+    return getBlackboardService().getPublishAddedCount();
   }
 
   public int getPublishChangedCount() {
-    return getSubscriber().getPublishChangedCount();
+    return getBlackboardService().getPublishChangedCount();
   }
 
   public int getPublishRemovedCount() {
-    return getSubscriber().getPublishRemovedCount();
+    return getBlackboardService().getPublishRemovedCount();
   }
 
   //
   // Ivars and accessor methods
   //
 
-  private Subscriber theSubscriber = null;
+  private BlackboardService theBlackboard = null;
 
-  /** Safely return our Subscription service (Subscriber)
+  public void setBlackboardService(BlackboardService s) {
+    theBlackboard = s;
+  }
+
+  /** Safely return our BlackboardService (Subscriber)
    * PlugIn.load() must have completed in order 
    * for the value to be defined.
+   * This method is public as it is part of the API required by PluginBindingSite to
+   * support the threading models.
    **/
-  protected final Subscriber getSubscriber() {
-    return theSubscriber; 
+  public final BlackboardService getBlackboardService() {
+    return theBlackboard;
   }
-    
-  /** a reference to our subscription handler **/
-  private Distributor theDistributor = null;
 
+    
   /** Safely return our Distribution service (Distributor).
    * load() must have completed for this to 
    * be defined.
+   * @deprecated The Distributor is no longer directly accessible to plugins: This method
+   * returns null.
+   *
    **/
-  protected final Distributor getDistributor() {
-    return theDistributor; 
+  protected Distributor getDistributor() {
+    return null;
   }
     
-  /** a reference to the Cluster **/
-  private ClusterServesPlugIn theCluster = null;
-
   /** let subclasses get ahold of the cluster without having to catch it at
    * load time.  May through a runtime exception if the plugin hasn't been 
    * loaded yet.
+   * @deprecated This method no longer allows direct access to the Cluster (Agent): instead
+   * it will always return null.
    **/
   protected final ClusterServesPlugIn getCluster() {
-    if (theCluster != null) {
-      return theCluster; 
-    } else {
-      throw new RuntimeException("PlugIn must be LOADED before getCluster() is defined.");
-    }
+    return dummyCluster;
+  }
+
+  private ClusterServesPlugIn dummyCluster = new ClusterServesPlugIn() {
+      // real ones
+      public ConfigFinder getConfigFinder() { return getBindingSite().getConfigFinder(); }
+      public ClusterIdentifier getClusterIdentifier() { return PlugInAdapter.this.getClusterIdentifier();}
+      public UIDServer getUIDServer() { return PlugInAdapter.this.getUIDServer(); }
+      
+      // evil ones
+      public Distributor getDistributor() { return null; }
+      public LDMServesPlugIn getLDM() { return null; }
+      public void schedulePlugIn(ScheduleablePlugIn p) {}
+      public void setTime(long time) {}
+      public void setTime(long time, boolean foo) {}
+      public void setTimeRate(double rate) {}
+      public void advanceTime(long period) {}
+      public void advanceTime(long period, boolean foo) {}
+      public void advanceTime(long period, double rate) {}
+      public void advanceTime(ExecutionTimer.Change[] changes) {}
+      public double getExecutionRate() { return 0.0;}
+      public long currentTimeMillis() { return 0; }
+      public void addAlarm(Alarm alarm) {}
+      public void addRealTimeAlarm(Alarm a) {}
+      public MetricsSnapshot getMetricsSnapshot() { return null; }
+      public java.sql.Connection getDatabaseConnection(Object locker) {return null; }
+      public void releaseDatabaseConnection(Object locker) {}
+    };
+
+  protected ConfigFinder getConfigFinder() {
+    return getBindingSite().getConfigFinder();
   }
 
   // 
   // aliases for Transaction handling 
   //
 
-  /** alias for getSubscriber().openTransaction() **/
   protected final void openTransaction() {
-    theSubscriber.openTransaction();
+    getBlackboardService().openTransaction();
   }
 
-  /** alias for getSubscriber().tryOpenTransaction() **/
   protected final boolean tryOpenTransaction() {
-    return theSubscriber.tryOpenTransaction();
+    return getBlackboardService().tryOpenTransaction();
   }
 
-  /** alias for getSubscriber().closeTransaction() **/
   protected final void closeTransaction() throws SubscriberException {
-    theSubscriber.closeTransaction();
+    getBlackboardService().closeTransaction();
   }
-  /** alias for getSubscriber().closeTransaction(boolean) **/
+  
   protected final void closeTransaction(boolean resetp) throws SubscriberException {
-    theSubscriber.closeTransaction(resetp);
+    getBlackboardService().closeTransaction(resetp);
   }
 
 
@@ -295,7 +381,7 @@ public abstract class PlugInAdapter
   protected boolean wasAwakened() { return explicitlyAwakened; }
 
   /** For adapter use only **/
-  protected final void setAwakened(boolean value) { explicitlyAwakened = value; }
+  public final void setAwakened(boolean value) { explicitlyAwakened = value; }
 
   /** 
    * Hook which allows a plugin thread to request that the
@@ -306,9 +392,10 @@ public abstract class PlugInAdapter
    *
    * For plugin use only; No longer called by the infrastructure.
    **/
-  protected final void wake() {
-    theSubscriber.signalClientActivity();
+  public final void wake() {
+    getBlackboardService().signalClientActivity();
   }
+
 
   /** Convenience method to specify given time to stimulate plugin.
    * (based on COUGAAR scenario time). 
@@ -317,15 +404,15 @@ public abstract class PlugInAdapter
    * and may even stop.
    * @param wakeTime actual scenario time to wake in milliseconds.
    **/ 	
-  protected Alarm wakeAt(long wakeTime) { 
-    if (wakeTime < theCluster.currentTimeMillis()) {
+  public Alarm wakeAt(long wakeTime) { 
+    if (wakeTime < getAlarmService().currentTimeMillis()) {
       System.err.println("\nwakeAt("+wakeTime+") is in the past!");
       Thread.dumpStack();
-      wakeTime = theCluster.currentTimeMillis()+1000;
+      wakeTime = getAlarmService().currentTimeMillis()+1000;
     }
       
     PluginAlarm pa = new PluginAlarm(wakeTime);
-    theCluster.addAlarm(pa);
+    getAlarmService().addAlarm(pa);
     return pa;
   };
 
@@ -336,22 +423,22 @@ public abstract class PlugInAdapter
    * and may even stop.
    * @param delayTime (Scenario) milliseconds to wait before waking.
    **/
-  protected Alarm wakeAfter(long delayTime) { 
+  public Alarm wakeAfter(long delayTime) { 
     if (delayTime<=0) {
       System.err.println("\nwakeAfter("+delayTime+") is in the past!");
       Thread.dumpStack();
       delayTime=1000;
     }
       
-    long absTime = theCluster.currentTimeMillis()+delayTime;
+    long absTime = getAlarmService().currentTimeMillis()+delayTime;
     PluginAlarm pa = new PluginAlarm(absTime);
-    theCluster.addAlarm(pa);
+    getAlarmService().addAlarm(pa);
     return pa;
   };
 
   /** like wakeAt() except always in real (wallclock) time.
    **/ 	
-  protected Alarm wakeAtRealTime(long wakeTime) { 
+  public Alarm wakeAtRealTime(long wakeTime) { 
     if (wakeTime < System.currentTimeMillis()) {
       System.err.println("\nwakeAtRealTime("+wakeTime+") is in the past!");
       Thread.dumpStack();
@@ -359,13 +446,13 @@ public abstract class PlugInAdapter
     }
 
     PluginAlarm pa = new PluginAlarm(wakeTime);
-    theCluster.addRealTimeAlarm(pa);
+    getAlarmService().addRealTimeAlarm(pa);
     return pa;
   };
 
   /** like wakeAfter() except always in real (wallclock) time.
    **/
-  protected Alarm wakeAfterRealTime(long delayTime) { 
+  public Alarm wakeAfterRealTime(long delayTime) { 
     if (delayTime<=0) {
       System.err.println("\nwakeAfterRealTime("+delayTime+") is in the past!");
       Thread.dumpStack();
@@ -374,7 +461,7 @@ public abstract class PlugInAdapter
 
     long absTime = System.currentTimeMillis()+delayTime;
     PluginAlarm pa = new PluginAlarm(absTime);
-    theCluster.addRealTimeAlarm(pa);
+    getAlarmService().addRealTimeAlarm(pa);
     return pa;
   };
 
@@ -385,7 +472,7 @@ public abstract class PlugInAdapter
    * and may even stop.
    **/
   public long currentTimeMillis() {
-    return theCluster.currentTimeMillis();
+    return getAlarmService().currentTimeMillis();
   }
 
   /** what is the current (COUGAAR) time as a Date object?
@@ -395,7 +482,7 @@ public abstract class PlugInAdapter
    * load-balancing purposes, as scenario time is discontinuous
    * and may even stop.
    **/
-  protected Date getDate() {
+  public Date getDate() {
     return new Date(currentTimeMillis());
   }
 
@@ -418,7 +505,7 @@ public abstract class PlugInAdapter
    * Alias for getSubscriber().subscribe(UnaryPredicate);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember) {
-    return theSubscriber.subscribe(isMember);
+    return getBlackboardService().subscribe(isMember);
   }
 
   /** like subscribe(UnaryPredicate), but allows specification of
@@ -427,14 +514,14 @@ public abstract class PlugInAdapter
    * Alias for getSubscriber().subscribe(UnaryPredicate, Collection);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, Collection realCollection){
-    return theSubscriber.subscribe(isMember, realCollection);
+    return getBlackboardService().subscribe(isMember, realCollection);
   }
 
   /**
    * Alias for getSubscriber().subscribe(UnaryPredicate, boolean);
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
-    return theSubscriber.subscribe(isMember, isIncremental);
+    return getBlackboardService().subscribe(isMember, isIncremental);
   }
   /**
    * Alias for <code>getSubscriber().subscribe(UnaryPredicate, Collection, boolean);</code>
@@ -448,7 +535,7 @@ public abstract class PlugInAdapter
    * @see org.cougaar.core.cluster.Subscription
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
-    return theSubscriber.subscribe(isMember, realCollection, isIncremental);
+    return getBlackboardService().subscribe(isMember, realCollection, isIncremental);
   }
 
   /** Issue a query against the logplan.  Similar in function to
@@ -457,14 +544,7 @@ public abstract class PlugInAdapter
    * Note: the initial implementation actually does exactly this.
    **/
   protected final Collection query(UnaryPredicate isMember) {
-    /*
-      // old implementation
-    Subscription s = theSubscriber.subscribe(isMember);
-    Collection c = ((CollectionSubscription)s).getCollection();
-    theSubscriber.unsubscribe(s);
-    return c;
-    */
-    return theSubscriber.query(isMember);
+    return getBlackboardService().query(isMember);
   }
 
   /**
@@ -475,30 +555,28 @@ public abstract class PlugInAdapter
    * @see org.cougaar.core.cluster.Subscriber#unsubscribe
    **/
   protected final void unsubscribe(Subscription subscription) {
-    theSubscriber.unsubscribe(subscription);
+    getBlackboardService().unsubscribe(subscription);
   }
 
 
   // 
   // LDM access
   //
-  protected LDMServesPlugIn theLDM = null;
 
   protected final LDMServesPlugIn getLDM() {
-    return theLDM;
+    return getBindingSite().getLDM();
   }
 
-  protected RootFactory theLDMF = null;
   protected final RootFactory getFactory() {
-    return theLDMF;
+    return getBindingSite().getFactory();
   }
   /** @deprecated Use getFactory() */
   protected final RootFactory getLdmFactory() {
-    return theLDMF;
+    return getBindingSite().getFactory();
   }
 
   protected final Factory getFactory(String s) {
-    return theLDM.getFactory(s);
+    return getBindingSite().getFactory(s);
   }
   
   
@@ -507,25 +585,25 @@ public abstract class PlugInAdapter
   // 
 
   protected final ClusterIdentifier getClusterIdentifier() {
-    return theCluster.getClusterIdentifier();
+    return getBindingSite().getClusterIdentifier();
+  }
+
+  protected final UIDServer getUIDServer() {
+    return getBindingSite().getUIDServer();
   }
 
   //
   // LogPlan changes publishing
   //
 
-  /** alias for getSubscriber().publishAdd(Object) */
   protected final boolean publishAdd(Object o) {
-    return theSubscriber.publishAdd(o);
+    return getBlackboardService().publishAdd(o);
   }
-  /** alias for getSubscriber().publishRemove(Object) */
   protected final boolean publishRemove(Object o) {
-    return theSubscriber.publishRemove(o);
+    return getBlackboardService().publishRemove(o);
   }
-
-  /** alias for publishChange(object, null) **/
   protected final boolean publishChange(Object o) {
-    return theSubscriber.publishChange(o, null);
+    return getBlackboardService().publishChange(o, null);
   }
   /** mark an element of the Plan as changed.
    * Behavior is not defined if the object is not a member of the plan.
@@ -539,7 +617,7 @@ public abstract class PlugInAdapter
    * @param changes a set of ChangeReport instances or null.
    **/
   protected final boolean publishChange(Object o, Collection changes) {
-    return theSubscriber.publishChange(o, changes);
+    return getBlackboardService().publishChange(o, changes);
   }
     
 
@@ -562,45 +640,48 @@ public abstract class PlugInAdapter
   // implement PlugInDelegate
   //
   protected class Delegate implements PlugInDelegate {
-    public Subscriber getSubscriber() { 
-      return theSubscriber;
+    public BlackboardService getBlackboardService() { 
+      return theBlackboard;
+    }
+    public BlackboardService getSubscriber() { 
+      return theBlackboard;
     }
     public Distributor getDistributor() {
-      return theDistributor;
+      return null;
     }
     public ClusterServesPlugIn getCluster() {
-      return theCluster;
+      return null;
     }
     public LDMServesPlugIn getLDM() {
-      return theLDM;
+      return getBindingSite().getLDM();
     }
     public RootFactory getFactory() {
-      return theLDMF;
+      return getBindingSite().getFactory();
     }
     /** @deprecated use getFactory() **/
     public RootFactory getLdmFactory() {
-      return theLDMF;
+      return getBindingSite().getFactory();
     }
     public Factory getFactory(String s) {
-      return theLDM.getFactory(s);
+      return getBindingSite().getFactory(s);
     }
     public ClusterIdentifier getClusterIdentifier() {
-      return theCluster.getClusterIdentifier();
+      return getBindingSite().getClusterIdentifier();
     }
     public MetricsSnapshot getMetricsSnapshot() {
-      return theCluster.getMetricsSnapshot();
+      return getMetricsService().getMetricsSnapshot();
     }
     public void openTransaction() {
-      theSubscriber.openTransaction();
+      getBlackboardService().openTransaction();
     }
     public boolean tryOpenTransaction() {
-      return theSubscriber.tryOpenTransaction();
+      return getBlackboardService().tryOpenTransaction();
     }
     public void closeTransaction() throws SubscriberException {
-      theSubscriber.closeTransaction();
+      getBlackboardService().closeTransaction();
     }
     public void closeTransaction(boolean resetp) throws SubscriberException {
-      theSubscriber.closeTransaction(resetp);
+      getBlackboardService().closeTransaction(resetp);
     }
 
     public boolean wasAwakened() { return PlugInAdapter.this.wasAwakened(); }
@@ -621,48 +702,48 @@ public abstract class PlugInAdapter
       return PlugInAdapter.this.wakeAfterRealTime(n);
     }
     public long currentTimeMillis() {
-      return theCluster.currentTimeMillis();
+      return getAlarmService().currentTimeMillis();
     }
     public Date getDate() {
       return new Date(currentTimeMillis());
     }
 
     public Subscription subscribe(UnaryPredicate isMember) {
-      return theSubscriber.subscribe(isMember);
+      return getBlackboardService().subscribe(isMember);
     }
     public Subscription subscribe(UnaryPredicate isMember, Collection realCollection) {
-      return theSubscriber.subscribe(isMember, realCollection);
+      return getBlackboardService().subscribe(isMember, realCollection);
     }
     public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
-      return theSubscriber.subscribe(isMember,isIncremental);
+      return getBlackboardService().subscribe(isMember,isIncremental);
     }
     public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
-      return theSubscriber.subscribe(isMember, realCollection, isIncremental);
+      return getBlackboardService().subscribe(isMember, realCollection, isIncremental);
     }
     public void unsubscribe(Subscription collection) {
-      theSubscriber.unsubscribe(collection);
+      getBlackboardService().unsubscribe(collection);
     }
     public Collection query(UnaryPredicate isMember) {
       return PlugInAdapter.this.query(isMember);
     }
 
     public void publishAdd(Object o) {
-      theSubscriber.publishAdd(o);
+      getBlackboardService().publishAdd(o);
     }
     public void publishRemove(Object o) {
-      theSubscriber.publishRemove(o);
+      getBlackboardService().publishRemove(o);
     }
     public void publishChange(Object o) {
-      theSubscriber.publishChange(o, null);
+      getBlackboardService().publishChange(o, null);
     }
     public void publishChange(Object o, Collection changes) {
-      theSubscriber.publishChange(o, changes);
+      getBlackboardService().publishChange(o, changes);
     }
     public Collection getParameters() {
       return parameters;
     }
     public boolean didRehydrate() {
-      return didRehydrate(getSubscriber());
+      return didRehydrate(getBlackboardService().getSubscriber());
     }
     public boolean didRehydrate(Subscriber subscriber) {
       return subscriber.didRehydrate();
@@ -676,34 +757,8 @@ public abstract class PlugInAdapter
     }
   }
 
-  public class PluginAlarm implements Alarm {
-    private long expiresAt;
-    private boolean expired = false;
-    public PluginAlarm (long expirationTime) {
-      expiresAt = expirationTime;
-    }
-    public long getExpirationTime() { return expiresAt; }
-    public synchronized void expire() {
-      if (!expired) {
-        expired = true;
-        theSubscriber.signalClientActivity();
-      }
-    }
-    public boolean hasExpired() { return expired; }
-    public synchronized boolean cancel() {
-      boolean was = expired;
-      expired=true;
-      return was;
-    }
-    public String toString() {
-      return "<PlugInAlarm "+expiresAt+
-        (expired?"(Expired) ":" ")+
-        "for "+PlugInAdapter.this.toString()+">";
-    }
-  }
-
   public boolean didRehydrate() {
-    return getSubscriber().didRehydrate();
+    return getBlackboardService().getSubscriber().didRehydrate();
   }
 
   public boolean didRehydrate(Subscriber subscriber) {
@@ -718,7 +773,7 @@ public abstract class PlugInAdapter
    **/
   protected boolean claim(Object o) {
     if (o instanceof Claimable) {
-      return ((Claimable)o).tryClaim(theSubscriber);
+      return ((Claimable)o).tryClaim(getBlackboardService());
     } else {
       return false;
     }
@@ -729,43 +784,42 @@ public abstract class PlugInAdapter
    * claimed by this plugin.
    **/
   protected void unclaim(Object o) {
-    ((Claimable) o).resetClaim(theSubscriber);
+    ((Claimable) o).resetClaim(getBlackboardService());
   }
 
   // 
   // threading model
   //
 
-  private Threading threadingModel = null;
+  //dropped
+  //protected final Threading getThreadingModel() { 
+  //  return null;
+  //}
   
-  private void setThreadingModel(Threading t) {
-    threadingModel = t;
-  }
 
-  protected final Threading getThreadingModel() { 
-    return threadingModel;
-  }
-  
-  public final static int UNSPECIFID_THREAD = -1;
-  public final static int NO_THREAD = 0;
-  public final static int SHARED_THREAD = 1;
-  public final static int SINGLE_THREAD = 2;
-  public final static int ONESHOT_THREAD = 3;
+  // keep these here for 
+  public final static int UNSPECIFID_THREAD = PluginBindingSite.UNSPECIFIED_THREAD;
+  public final static int NO_THREAD = PluginBindingSite.NO_THREAD;
+  public final static int SHARED_THREAD = PluginBindingSite.SHARED_THREAD;
+  public final static int SINGLE_THREAD = PluginBindingSite.SINGLE_THREAD;
+  public final static int ONESHOT_THREAD = PluginBindingSite.ONESHOT_THREAD;
 
   private int threadingChoice = UNSPECIFID_THREAD;
 
   /** Set the current choice of threading model.  Will have no effect if
    * the threading model has already been acted on.
+   * @deprecated better to call PluginBindingSite.setThreadingChoice
    **/
   protected final void setThreadingChoice(int m) {
-    if (threadingModel != null) 
-      throw new IllegalArgumentException("Too late to select threading model.");
     threadingChoice = m;
   }
 
-  /** @deprecated use setThreadingChoice instead. **/
+  /** Set the current choice of threading model.  Will have no effect if
+   * the threading model has already been acted on.
+   * @deprecated call PluginBindingSite.setThreadingChoice(m) instead.
+   **/
   protected final void chooseThreadingModel(int m) {
-    setThreadingChoice(m);
+    threadingChoice = m;
   }
 
   /** @return the current choice of threading model.  **/
@@ -773,246 +827,68 @@ public abstract class PlugInAdapter
     return threadingChoice;
   }
 
-  /** return the default threading model for this class.
-   **/
-  protected final int getDefaultThreadingChoice() {
-    return SHARED_THREAD;
-  }
+  // /** return the default threading model for this class.
+  //  * @deprecated ignored
+  //  **/
+  // protected final int getDefaultThreadingChoice() {
+  //   return SHARED_THREAD;
+  // }
 
-  /** create a Threading model object as specified by the plugin.
-   * The default implementation creates a Threading object
-   * based on the value of threadingChoice.
-   * The default choice is to use a SharedThreading model, which
-   * shares thread of execution with others of the same sort in
-   * the cluster.
-   * Most plugins can ignore this altogether.  Most that
-   * want to select different behavior should
-   * call chooseThreadingModel() in their constructer.
-   * PlugIns which implement their own threading model
-   * will need to override createThreadingModel.
-   * createThreadingModel is called late in PlugInAdapter.load(). 
-   * if an extending plugin class wishes to examine or alter
-   * the threading model object, it will be available only when 
-   * PlugInAdapter.load() returns, which is usually called by
-   * the extending plugin classes overriding load() method.
-   * The constructed Threading object is initialized by
-   * PlugInAdapter.start().
-   **/
-  protected Threading createThreadingModel() {
-    Threading t;
-    int choice = getThreadingChoice();
-    if (choice == UNSPECIFID_THREAD) 
-      choice = getDefaultThreadingChoice();
-    switch (threadingChoice) {
-    case NO_THREAD:
-      t = new NoThreading();
-      break;
-    case SHARED_THREAD: 
-      t = new SharedThreading();
-      break;
-    case SINGLE_THREAD:
-      t = new SingleThreading();
-      break;
-    case ONESHOT_THREAD:
-      t = new OneShotThreading();
-      break;
-    default:
-      throw new RuntimeException("Invalid Threading model "+threadingChoice);
-    }
-    return t;
-  }
 
-  private void startThreadingModel() {
-    try {
-      threadingModel.initialize();
-      threadingModel.load(getCluster());
-      threadingModel.start();
-    } catch (RuntimeException e) {
-      System.err.println("Caught exception during threadingModel initialization: "+e);
-      e.printStackTrace();
-    }
-  }
-
-  protected abstract class Threading implements GenericStateModel {
-    public void initialize() {}
-    /** the argument passed to load is a ClusterServesPlugIn **/
-    public void load(Object o) {}
-    public void start() {}
-    public void suspend() {}
-    public void resume() {}
-    public void stop() {}
-    public void halt() {}
-    public void unload() {}
-    public int getState() { 
-      return UNINITIALIZED; 
-    }
-    public String toString() {
-      return getClusterIdentifier()+"/"+(PlugInAdapter.this);
-    }
-  }
-
-  /** up to the class to implement what it needs **/
-  protected class NoThreading extends Threading {
-  }
-    
-  /** prerun only: cycle will never be called. **/
-  protected class OneShotThreading extends Threading {
-    public OneShotThreading() {}
-    public void start() {
-      prerun1();
-    }
-  }
-
-  /** shares a Thread with other SharedThreading plugins in the same cluster **/
-  protected class SharedThreading extends Threading implements ScheduleablePlugIn {
-    public SharedThreading() {}
-    public void start() {
-      getCluster().schedulePlugIn(this);
-      prerun1();
-    }
-
-    //
-    // implementation of ScheduleablePlugIn API 
-    //
-
-    public final void addExternalActivityWatcher(SubscriptionWatcher watcher) {
-      getSubscriber().registerInterest(watcher);
-    }
-
-    public final void externalCycle(boolean wasExplicit) {
-      setAwakened(wasExplicit);
-      cycle1();
-    }
-  }
-
-  /** has its own Thread **/
-  protected class SingleThreading extends Threading implements Runnable {
-    /** a reference to personal Thread which each PlugIn runs in **/
-    private Thread myThread = null;
-    /** our subscription watcher **/
-    private SubscriptionWatcher waker = null;
-    
-    public SingleThreading() {}
-
-    private int priority = Thread.NORM_PRIORITY;
-
-    /** plugins and subclasses may set the Thread priority to 
-     * a value lower than standard.  Requests to raise the priority
-     * are ignored as are all requests after start()
-     * Note that the default priority is one level below the
-     * usual java priority - that is one level below where the
-     * infrastructure runs.
-     **/
-    public void setPriority(int newPriority) {
-      if (newPriority<priority) {
-        priority = newPriority;
-      }
-    }
-    
-    private boolean isYielding = true;
-
-    /** If isYielding is true, the plugin will force a thread yield
-     * after each call to cycle().  This is on by default since plugins
-     * generally need reaction from infrastructure and other plugins
-     * to progress.
-     * This may be set at any time, even though the effect is only periodic.
-     * Most plugins would want to (re)set this value at initialization.
-     **/
-    public void setIsYielding(boolean v) {
-      isYielding = v;
-    }
-
-    public void load(Object object) {
-      waker = getSubscriber().registerInterest();
-    }
-    public void start() {
-      myThread = new Thread(this, "Plugin/"+getClusterIdentifier()+"/"+(PlugInAdapter.this));
-      myThread.setPriority(priority);
-      myThread.start();
-    }
-
-    private boolean suspendRequest = false;
-    public void suspend() { 
-      if (myThread != null) {
-        suspendRequest = true;
-        signalStateChange();
-      }
-    }
-
-    private boolean resumeRequest = false;
-    public void resume() {  
-      if (myThread != null) {
-        resumeRequest = true;
-        signalStateChange();
-      }
-    }
-    private boolean stopRequest = false;
-    public void stop() {
-      if (myThread != null) {
-        stopRequest = true;
-        signalStateChange();
-      }
-    }
-
-    private void signalStateChange() {
-      if (waker != null) {
-        waker.signalNotify(waker.INTERNAL);
-      }
-    }
-
-    private boolean isRunning = true;
-    private boolean isActive = true;
-    public final void run() {
-      prerun1();                 // plugin first time through
-      while (isRunning) {
-        boolean xwakep = waker.waitForSignal();
-        setAwakened(xwakep);
-        if (suspendRequest) {
-          suspendRequest = false;
-          isActive = false;
-        }
-        if (resumeRequest) {
-          resumeRequest = false;
-          isActive = true;
-        }
-        if (stopRequest) {
-          stopRequest = false;
-          isRunning = false;
-          isActive = false;
-        }
-        if (isActive) {
-          cycle1();                // do work
-          if (isYielding)
-            Thread.yield();
-        }
-      }
-    }
-  }
-
-  /** Called by all the standard Threading models to instruct the plugin 
-   * to do plugin-specific initializations.  E.g. setup its subscriptions, etc.
-   *
-   * Non-standard threading models are encouraged but not required to use 
-   * this method to retain compatability.
-   **/
-  private void prerun1() {
-    SubscriptionClient.current.set(this);
+  /** called from PluginBinder **/
+  void plugin_prerun() {
+    BlackboardClient.current.set(this);
     prerun();
-    SubscriptionClient.current.set(null);
+    BlackboardClient.current.set(null);
   }
+
+  /** override to define prerun behavior **/
   protected void prerun() { }
 
-  /** Called by all the standard Threading models (except for OneShotThreading)
-   * each time there is work to be done.
-   *
-   * Non-standard threading models are encouraged but not required to use 
-   * this method to retain compatability.
-   **/
-  private void cycle1() {
-    SubscriptionClient.current.set(this);
+  /** called from PluginBinder **/
+  void plugin_cycle() {
+    BlackboardClient.current.set(this);
     cycle();
-    SubscriptionClient.current.set(null);
+    BlackboardClient.current.set(null);
   }
-  protected void cycle() {}
+
+  /** override to define cycle behavior **/
+  protected void cycle() { }
+
+  // 
+  // compatability methods
+  //
+  
+  /** alias for getBlackboardService **/
+  protected BlackboardService getSubscriber() {
+    return getBlackboardService();
+  }
+
+  public class PluginAlarm implements Alarm {
+    private long expiresAt;
+    private boolean expired = false;
+    public PluginAlarm (long expirationTime) {
+      expiresAt = expirationTime;
+    }
+    public long getExpirationTime() { return expiresAt; }
+    public synchronized void expire() {
+      if (!expired) {
+        expired = true;
+        getBlackboardService().signalClientActivity();
+      }
+    }
+    public boolean hasExpired() { return expired; }
+    public synchronized boolean cancel() {
+      boolean was = expired;
+      expired=true;
+      return was;
+    }
+    public String toString() {
+      return "<PluginAlarm "+expiresAt+
+        (expired?"(Expired) ":" ")+
+        "for "+PlugInAdapter.this.toString()+">";
+    }
+  }
+
 
 }

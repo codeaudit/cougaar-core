@@ -1,16 +1,17 @@
 /*
  * <copyright>
- * Copyright 1997-2001 Defense Advanced Research Projects
+ * Copyright 2001 Defense Advanced Research Projects
  * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  * Raytheon Systems Company (RSC) Consortium).
  * This software to be used only in accordance with the
  * COUGAAR licence agreement.
  * </copyright>
  */
-package org.cougaar.core.component;
+package org.cougaar.core.plugin;
 
 import java.util.*;
 import java.lang.reflect.*;
+import org.cougaar.core.component.*;
 
 /**
  * A BinderFactory for binding domain Plugins.
@@ -46,6 +47,7 @@ public class PluginBinderFactory extends BinderFactorySupport
       ((PluginBinder)binder).initialize();
       return binder;
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException(e.toString());
     }
   }

@@ -11,6 +11,8 @@
 
 package org.cougaar.core.cluster;
 
+import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.util.LockFlag;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
 import org.cougaar.util.EmptyIterator;
@@ -20,14 +22,14 @@ import java.util.*;
 // pollution of subscriber purity for completion checking
 import org.cougaar.domain.planning.ldm.plan.*;
 
-public class Subscriber {
+public class Subscriber implements BlackboardService {
   private static boolean isEnforcing =
     (Boolean.valueOf(System.getProperty("org.cougaar.enforceTransactions", "true"))).booleanValue();
 
   private static boolean warnUnpublishChanges = 
     "true".equals(System.getProperty("org.cougaar.subscriber.warnUnpublishChanges","false"));
 
-  private SubscriptionClient theClient = null;
+  private BlackboardClient theClient = null;
   private Distributor theDistributor = null;
   private String subscriberName = "";
   private boolean shouldBePersisted = true;
@@ -39,16 +41,16 @@ public class Subscriber {
    * to a client and send outgoing messages to a Distributor.
    * Plugin clients will use this API.
    **/
-  public Subscriber(SubscriptionClient client, Distributor Distributor) {
+  public Subscriber(BlackboardClient client, Distributor Distributor) {
     setClientDistributor(client,Distributor);
   }
 
-  public Subscriber(SubscriptionClient client, Distributor Distributor, String subscriberName) {
+  public Subscriber(BlackboardClient client, Distributor Distributor, String subscriberName) {
     setClientDistributor(client,Distributor);
     setName(subscriberName);
   }
 
-  public void setClientDistributor(SubscriptionClient client, Distributor newDistributor)
+  public void setClientDistributor(BlackboardClient client, Distributor newDistributor)
   {
     theClient = client;
     if (theDistributor != newDistributor) {
@@ -109,17 +111,17 @@ public class Subscriber {
             } catch (PublishException pe) {
               synchronized (System.err) {
                 System.err.println(pe.getMessage());
-                SubscriptionClient currentClient = null;
+                BlackboardClient currentClient = null;
                 if (envelope instanceof OutboxEnvelope) {
                   OutboxEnvelope e = (OutboxEnvelope) envelope;
                   currentClient = e.theClient;
                 }
                 if (currentClient == null) {
-                  currentClient = SubscriptionClient.current.getClient();
+                  currentClient = BlackboardClient.current.getClient();
                 }
                 String thisPublisher = null;
                 if (currentClient != null) {
-                  thisPublisher = currentClient.getSubscriptionClientName();
+                  thisPublisher = currentClient.getBlackboardClientName();
                 }
                 if (envelope instanceof Blackboard.PlanEnvelope) {
                   if (thisPublisher == null) {
@@ -387,10 +389,10 @@ public class Subscriber {
   }
 
   public static class OutboxEnvelope extends Envelope {
-    public OutboxEnvelope(SubscriptionClient client) {
+    public OutboxEnvelope(BlackboardClient client) {
       theClient = client;
     }
-    public SubscriptionClient theClient;
+    public BlackboardClient theClient;
   }
 
   /** factory method for creating Envelopes of the correct type **/
@@ -943,7 +945,7 @@ public class Subscriber {
    * May be overridden by subclasses in case they are really
    * delegating to some other object.
    **/
-  public SubscriptionClient getClient() {
+  public BlackboardClient getClient() {
     return theClient;
   }
 
@@ -953,6 +955,12 @@ public class Subscriber {
    **/
   public boolean triggerEvent(Object event) {
     return theClient.triggerEvent(event);
+  }
+  
+  //Leftover from PlugInAdapter - now in BlackboardService... may want to 
+  //deprecate next release?
+  public Subscriber getSubscriber() {
+    return this;
   }
 
 }

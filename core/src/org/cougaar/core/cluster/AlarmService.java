@@ -8,15 +8,15 @@
  * </copyright>
  */
 
-package org.cougaar.core.plugin;
+package org.cougaar.core.cluster;
 
-import org.cougaar.core.component.Component;
+import org.cougaar.core.component.*;
 
-/** Marker class for all plugins.
- */
+/** a Service for getting at Metrics information
+ **/
 
-public interface PlugInServesCluster 
-  extends PlugInStateModel,  Component
-{
+public interface AlarmService extends Service {
+  long currentTimeMillis();
+  void addAlarm(Alarm alarm);
+  void addRealTimeAlarm(Alarm alarm);
 }
-

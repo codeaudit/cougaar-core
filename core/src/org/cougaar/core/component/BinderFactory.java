@@ -71,11 +71,13 @@ public interface BinderFactory extends Component
    **/
   Binder getBinder(Class bindingSite, Object child);
 
+  public final static class BFComparator implements Comparator {
+    public int compare(Object o1, Object o2) {
+      return ((BinderFactory)o2).getPriority() - ((BinderFactory)o1).getPriority();
+    }
+  }
+
   /** a comparator for keeping Binder Factories sorted **/
-  public final static Comparator comparator = new Comparator() {
-      public int compare(Object o1, Object o2) {
-        return ((BinderFactory)o2).getPriority() - ((BinderFactory)o1).getPriority();
-      }
-    };
+  public final static Comparator comparator = new BFComparator();
 }
 

@@ -15,10 +15,12 @@ import java.util.Enumeration;
 import java.util.Collection;
 import java.util.Iterator;
 
+import org.cougaar.core.blackboard.*;
+
 public class PersistenceSubscriber extends Subscriber
 {
-  public PersistenceSubscriber(SubscriptionClient client, Distributor Distributor) {
-    setClientDistributor(client,Distributor);
+  public PersistenceSubscriber(BlackboardClient client, Distributor Distributor) {
+    setClientDistributor(client, Distributor);
   }
 
   /** outgoing transactions are bundled in PersistenceEnvelopes instead 

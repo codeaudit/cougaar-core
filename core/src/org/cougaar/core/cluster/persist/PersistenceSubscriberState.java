@@ -15,13 +15,13 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class PersistenceSubscriberState implements java.io.Serializable {
-  public String subscriptionClientName;	// The name of the client of the subscriber
+  public String clientName;	// The name of the client of the subscriber
   public String subscriberName;		// The name of the subscriber
   public List pendingEnvelopes;
   public List transactionEnvelopes;
 
   public PersistenceSubscriberState(Subscriber subscriber) {
-    subscriptionClientName = subscriber.getClient().getSubscriptionClientName();
+    clientName = subscriber.getClient().getBlackboardClientName();
     subscriberName = subscriber.getName();
     if (subscriber.shouldBePersisted()) {
       this.pendingEnvelopes = subscriber.getPendingEnvelopes();
@@ -30,7 +30,7 @@ public class PersistenceSubscriberState implements java.io.Serializable {
   }
 
   public boolean isSameSubscriberAs(Subscriber subscriber) {
-    if (subscriber.getClient().getSubscriptionClientName().equals(subscriptionClientName) &&
+    if (subscriber.getClient().getBlackboardClientName().equals(clientName) &&
 	subscriber.getName().equals(subscriberName)) {
       return true;
     }
@@ -38,7 +38,7 @@ public class PersistenceSubscriberState implements java.io.Serializable {
   }
 
   public String getKey() {
-    return subscriptionClientName + "." + subscriberName;
+    return clientName + "." + subscriberName;
   }
 
   public String toString() {

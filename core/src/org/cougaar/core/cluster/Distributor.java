@@ -27,6 +27,7 @@ import java.util.List;
 import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceSubscriberState;
 import org.cougaar.domain.planning.ldm.plan.Directive;
+import org.cougaar.core.blackboard.*;
 
 public class Distributor {
   /*
@@ -165,11 +166,11 @@ public class Distributor {
     this.alpPlan = alpPlan;
   }
 
-  private void printEnvelope(Envelope envelope, SubscriptionClient client) {
+  private void printEnvelope(Envelope envelope, BlackboardClient client) {
     boolean first = true;
     for (Iterator tuples = envelope.getAllTuples(); tuples.hasNext(); ) {
       if (first) {
-        printLog("Outbox of " + client.getSubscriptionClientName());
+        printLog("Outbox of " + client.getBlackboardClientName());
         first = false;
       }
       EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
@@ -355,7 +356,7 @@ public class Distributor {
    * given to the message manager for eventual transmission. Finally,
    * the generation of a persistence delta is considered.
    **/
-  private void distribute(Envelope outbox, SubscriptionClient client) {
+  private void distribute(Envelope outbox, BlackboardClient client) {
     if (outbox != null && logWriter != null) {
       printEnvelope(outbox, client);
     }
@@ -527,7 +528,7 @@ public class Distributor {
     }
   }
 
-  public void finishTransaction(Envelope outbox, SubscriptionClient client) {
+  public void finishTransaction(Envelope outbox, BlackboardClient client) {
     synchronized (transactionLock) {
       --transactionCount;
     }

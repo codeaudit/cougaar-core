@@ -1,18 +1,20 @@
 /*
  * <copyright>
- * Copyright 1997-2001 Defense Advanced Research Projects
+ * Copyright 2001 Defense Advanced Research Projects
  * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  * Raytheon Systems Company (RSC) Consortium).
  * This software to be used only in accordance with the
  * COUGAAR licence agreement.
  * </copyright>
  */
-package org.cougaar.core.component;
+package org.cougaar.core.examples.component;
 
 import java.util.*;
 import java.net.URL;
+import org.cougaar.core.component.*;
 
-/** Test case for component model 
+/** Test case for component model.
+ * To Run: java org.cougaar.core.examples.component.Test
  **/
 public class Test {
   public static void main(String[] args) {
@@ -43,7 +45,7 @@ public class Test {
 
     ComponentDescription bd = 
       new ComponentDescription("agent.plugin",
-                               "org.cougaar.core.component.TestPlugin",
+                               "org.cougaar.core.examples.component.TestPlugin",
                                null, // codebase
                                "Foo", // parameter
                                null, // cert

@@ -46,7 +46,7 @@ public class TriggerManagerPlugIn extends SimplifiedFatPlugIn
   private Alarm alarm = null;
 
   public void setupSubscriptions() {
-    getSubscriber().setShouldBePersisted(false);
+    getBlackboardService().setShouldBePersisted(false);
     // Subscribe to all triggers, to maintain list
     triggerSub = (IncrementalSubscription)subscribe( triggerPred );
   }

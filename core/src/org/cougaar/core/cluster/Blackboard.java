@@ -11,6 +11,7 @@ package org.cougaar.core.cluster;
 
 import java.util.*;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.core.blackboard.*;
 
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.domain.planning.ldm.plan.Plan;
@@ -18,7 +19,7 @@ import org.cougaar.domain.planning.ldm.plan.Plan;
 public class Blackboard extends Subscriber
   implements
   BlackboardServesLogicProvider,
-  SubscriptionClient,
+  BlackboardClient,
   PrivilegedClaimant
 {
   protected CollectionSubscription alpPlanObjects;
@@ -89,7 +90,7 @@ public class Blackboard extends Subscriber
   };
 
   public Blackboard(Distributor d, ClusterServesLogicProvider cluster) {
-    setClientDistributor((SubscriptionClient)this, d);
+    setClientDistributor((BlackboardClient)this, d);
     myCluster = cluster;
     myDistributor = d;
   }
@@ -187,7 +188,7 @@ public class Blackboard extends Subscriber
   }
 
   // Subscription Client interface
-  public String getSubscriptionClientName() {
+  public String getBlackboardClientName() {
     return getClass().getName();
   }
 

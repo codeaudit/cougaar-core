@@ -206,8 +206,10 @@ class PlugInLoader {
         // check that the plugin is trusted enough.
         if (authenticatePlugIn(plugin) == true || !checkplugins) {
           if (plugin instanceof ParameterizedPlugIn) {
-            if (arguments != null)
-              ((ParameterizedPlugIn)plugin).setParameters(arguments);
+            if (arguments != null) {
+              // ((ParameterizedPlugIn)plugin).setParameters(arguments);
+              System.err.println("Cannot set parameter with PlugInLoader");
+            }
           }
           return plugin;
         }

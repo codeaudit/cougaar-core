@@ -21,7 +21,6 @@ import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 import org.cougaar.core.cluster.LogicProvider;
 import org.cougaar.core.cluster.Subscriber;
-import org.cougaar.core.cluster.SubscriptionClient;
 
 // ClusterIdentification
 import org.cougaar.core.cluster.ClusterIdentifier;
@@ -40,6 +39,7 @@ import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 import org.cougaar.domain.planning.ldm.plan.Notification;
 import org.cougaar.domain.planning.ldm.plan.Task;
 
+import org.cougaar.core.plugin.PluginManager;
 import org.cougaar.core.plugin.AddPlugInMessage;
 import org.cougaar.core.plugin.RemovePlugInMessage;
 
@@ -211,6 +211,9 @@ public class ClusterImpl
   /** the cluster's UIDServer **/
   private UIDServer myUIDServer = null;
 
+  /** Container which manages the plugins **/
+  private PluginManager pluginManager;
+
   /**
    * Privately set ClusterStateModelState.  Raise an
    * StateModelException if the transition is invalid.
@@ -369,6 +372,10 @@ public class ClusterImpl
       }
     }
 
+    // start up the pluginManager component - should really itself be loaded
+    // as an agent subcomponent.
+    pluginManager = new PluginManager(this);
+
     // transit the state.
     setState(GenericStateModel.LOADED);
   }
@@ -490,9 +497,9 @@ public class ClusterImpl
         handleAdvanceClockMessage((AdvanceClockMessage)message);
       } else if (message instanceof ClusterMessage) {
         if (message instanceof AddPlugInMessage) {
-          receiveAddPlugInMessage((AddPlugInMessage)message);
+          pluginManager.add((AddPlugInMessage)message);
         } else if (message instanceof RemovePlugInMessage ){
-          receiveRemovePlugInMessage((RemovePlugInMessage) message );
+          pluginManager.remove((RemovePlugInMessage) message );
         } else if (message instanceof ClusterInitializedMessage ) {
           receiveClusterInitializedMessage((ClusterInitializedMessage) message);
         } else {
@@ -806,7 +813,7 @@ public class ClusterImpl
     ms.workflows = myLogPlan.getWorkflowCount();
 
     // cluster metrics
-    ms.pluginCount = plugins.size();
+    ms.pluginCount = pluginManager.size();
     ms.thinPluginCount = getSharedPlugInManager().size();
     ms.prototypeProviderCount = prototypeProviders.size();
     ms.propertyProviderCount = propertyProviders.size();
@@ -831,106 +838,6 @@ public class ClusterImpl
       }
       return cl;
     }
-  }
-
-  private static final HashMap purePlugIns = new HashMap(11);
-  private static PlugIn getPurePlugIn(Class c) {
-    synchronized (purePlugIns) {
-      PlugIn plugin = (PlugIn)purePlugIns.get(c);
-      if (plugin == null) {
-        try {
-          plugin = (PlugIn) c.newInstance();
-          purePlugIns.put(c, plugin);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-      return plugin;
-    }
-  }
-
-  public void receiveAddPlugInMessage ( AddPlugInMessage message ) {
-    String pluginclass = message.getPlugIn();
-    try {
-      Vector args = message.getArguments();
-      PlugInServesCluster newPlugIn;
-
-      // get the class of the plugin
-      Class pc = Class.forName(pluginclass);
-      if (PlugIn.class.isAssignableFrom(pc)) {
-        // is a stateless plugin
-        newPlugIn = new StatelessPlugInAdapter(getPurePlugIn(pc));
-      } else {
-        if (usePlugInLoader) {
-          PlugInLoader pil = PlugInLoader.getInstance();
-          newPlugIn = pil.instantiatePlugIn(pluginclass, args);
-        } else {
-          newPlugIn = (PlugInServesCluster)Beans.instantiate(getClass().getClassLoader(), pluginclass);
-        }
-      }
-
-      if (newPlugIn instanceof ParameterizedPlugIn) {
-        if (args != null)
-          ((ParameterizedPlugIn)newPlugIn).setParameters(args);
-      }
-
-      if (newPlugIn == null) 
-        throw new RuntimeException("Could not instantiate "+pluginclass);
-
-      newPlugIn.initialize();
-      newPlugIn.load( this );
-      newPlugIn.start();
-      
-      // make sure that the plugin started (and is active)
-      if( newPlugIn.getState() != PlugInServesCluster.ACTIVE)
-        throw new java.lang.IllegalArgumentException("PlugIn was not in ACTIVE state");
-
-      // record it
-      addPlugIn(newPlugIn);
-
-      // Handle LDM plugins
-      if (newPlugIn instanceof PrototypeProvider) {
-          addPrototypeProvider((PrototypeProvider)newPlugIn);
-      }
-
-      if (newPlugIn instanceof PropertyProvider) {
-          addPropertyProvider((PropertyProvider)newPlugIn);
-      }
-      if (newPlugIn instanceof LatePropertyProvider) {
-          addLatePropertyProvider((LatePropertyProvider)newPlugIn);
-      }
-
-    } catch(Throwable ex) {
-      synchronized (System.err) {
-        System.err.println("Failed to load "+pluginclass+":\n"+ex);
-        if (!(ex instanceof ClassNotFoundException))
-          ex.printStackTrace();
-      }
-    }
-  }
- 
-  public void receiveRemovePlugInMessage ( RemovePlugInMessage message ) {
-    String theClassName = message.getPlugIn();
-    System.err.println("RemovePlugin Message is disabled: "+theClassName);
-  }
-    
-    
-  ///
-  /// Manage the plugins
-  ///
-  private List plugins = new ArrayList();
-
-  public List getPlugins() {
-    return plugins;
-  }
-  public void addPlugIn(PlugInServesCluster plugin) {
-    plugins.add(plugin);
-  }
-  private boolean removePlugIn(PlugInServesCluster plugin) {
-    return plugins.remove(plugin);
-  }
-  private boolean containsPlugIn(PlugInServesCluster plugin) {
-    return plugins.contains(plugin);
   }
 
 

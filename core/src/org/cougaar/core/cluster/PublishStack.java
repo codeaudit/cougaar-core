@@ -9,13 +9,14 @@
  */
 
 package org.cougaar.core.cluster;
+import org.cougaar.core.blackboard.*;
 
 public class PublishStack extends Throwable {
-    public SubscriptionClient theClient = SubscriptionClient.current.getClient();
+    public BlackboardClient theClient = BlackboardClient.current.getClient();
     private static String getClientName() {
-        SubscriptionClient aClient = SubscriptionClient.current.getClient();
+        BlackboardClient aClient = BlackboardClient.current.getClient();
         if (aClient != null) {
-            return aClient.getSubscriptionClientName();
+            return aClient.getBlackboardClientName();
         } else {
             return "Unknown Client";
         }

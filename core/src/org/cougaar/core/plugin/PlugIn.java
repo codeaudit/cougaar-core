@@ -17,6 +17,8 @@ import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.UnaryPredicate;
 import java.util.*;
 
+import org.cougaar.core.component.Component;
+
 /** 
  * This is the basic class required for
  * implementing a "stateless" plugin.  Extending

@@ -19,14 +19,9 @@ import java.util.Vector;
  * the parameters, the org.cougaar.core.plugin.* plugin classes all provide
  * a protected getParameters() method which may be used by subclasses
  * to retrieve the strings.
+ * @deprecated We use introspection and the Component Model to find and 
+ * call setParameter(Object) now instead of setParameters(Vector).
  */
 
 public interface ParameterizedPlugIn {
-
-  /** Lets the Component (or other plugin loader) tell the plugin about
-   * any parameters to be applied.
-   * @param arguments the plugin Parameters in the form of a Vector 
-   * of Strings. 
-   **/
-  void setParameters(Vector arguments);
 }

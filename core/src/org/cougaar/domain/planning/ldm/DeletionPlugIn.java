@@ -275,7 +275,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         deletionPolicies = (CollectionSubscription) subscribe(deletionPolicyPredicate, false);
         checkDeletionPolicies(deletionDelay);
         alarm = wakeAfter(deletionPeriod);
-        getSubscriber().setShouldBePersisted(false); // All subscriptions are created as needed
+        getBlackboardService().setShouldBePersisted(false); // All subscriptions are created as needed
         deletablePlanElementsPredicate = new DeletablePlanElementsPredicate();
     }
 

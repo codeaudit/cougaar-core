@@ -10,7 +10,7 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.Subscriber;
+import org.cougaar.core.blackboard.BlackboardService;
 import org.cougaar.core.cluster.Distributor;
 import org.cougaar.core.cluster.ClusterServesPlugIn;
 import org.cougaar.core.cluster.SubscriberException;
@@ -33,7 +33,9 @@ import java.util.*;
  **/
 
 public interface PlugInDelegate {
-  Subscriber getSubscriber();
+  BlackboardService getBlackboardService();
+  /** Alias for getBlackboardService() **/
+  BlackboardService getSubscriber();
   Distributor getDistributor();
   ClusterServesPlugIn getCluster();
   LDMServesPlugIn getLDM();

@@ -242,7 +242,7 @@ public final class ClusterXMLParser {
     System.out.println("write to stdout");
     try {
       write(System.out, pt);
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       e.printStackTrace();
     }
   }

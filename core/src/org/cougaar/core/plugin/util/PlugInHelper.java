@@ -38,6 +38,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.core.cluster.IncrementalSubscription;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.Subscriber;
+import org.cougaar.core.blackboard.BlackboardService;
 
 import org.cougaar.util.Enumerator;
 
@@ -242,7 +243,7 @@ public class PlugInHelper {
     }
 
     /** Publish a new Expansion and its subtasks **/
-    public static void publishAddExpansion(Subscriber sub, Expansion exp) {
+    public static void publishAddExpansion(BlackboardService sub, Expansion exp) {
         sub.publishAdd(exp);
 
         for (Enumeration esubTasks = exp.getWorkflow().getTasks();

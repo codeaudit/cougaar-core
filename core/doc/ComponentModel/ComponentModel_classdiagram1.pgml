@@ -20,9 +20,9 @@
       width="126"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
     <rectangle name="Fig0.1"
       x="168"
@@ -37,7 +37,7 @@
     <text name="Fig0.2"
       x="169"
       y="825"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -47,7 +47,7 @@
     <text name="Fig0.3"
       x="169"
       y="844"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -82,9 +82,9 @@
       width="108"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
     <rectangle name="Fig1.1"
       x="880"
@@ -99,7 +99,7 @@
     <text name="Fig1.2"
       x="881"
       y="241"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -109,7 +109,7 @@
     <text name="Fig1.3"
       x="881"
       y="260"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -144,9 +144,9 @@
       width="108"
       height="83"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
     <rectangle name="Fig2.1"
       x="872"
@@ -161,7 +161,7 @@
     <text name="Fig2.2"
       x="873"
       y="65"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -171,7 +171,7 @@
     <text name="Fig2.3"
       x="873"
       y="84"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
@@ -190,7 +190,7 @@
     >Services getServices()
 void requestStop()</text>
   </group>
-  <group name="Fig4"
+  <group name="Fig3"
        description="uci.uml.visual.FigInterface[216, 336, 243, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7ff9"
        fill="1"
@@ -201,17 +201,17 @@ void requestStop()</text>
     <private>
     </private>
     
-    <rectangle name="Fig4.0"
+    <rectangle name="Fig3.0"
       x="217"
       y="337"
       width="241"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig4.1"
+    <rectangle name="Fig3.1"
       x="216"
       y="336"
       width="243"
@@ -221,27 +221,27 @@ void requestStop()</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig4.2"
+    <text name="Fig3.2"
       x="217"
       y="337"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig4.3"
+    <text name="Fig3.3"
       x="217"
       y="356"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >BinderFactory</text>
-    <text name="Fig4.4"
+    <text name="Fig3.4"
       x="216"
       y="378"
       fill="1"
@@ -250,9 +250,9 @@ void requestStop()</text>
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
-    >Binder getBinder(Class serviceClass, Object client)</text>
+    >void?? getBinder(Class serviceClass, Object client)</text>
   </group>
-  <group name="Fig5"
+  <group name="Fig4"
        description="uci.uml.visual.FigInterface[128, 936, 110, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7ff7"
        fill="1"
@@ -263,17 +263,17 @@ void requestStop()</text>
     <private>
     </private>
     
-    <rectangle name="Fig5.0"
+    <rectangle name="Fig4.0"
       x="129"
       y="937"
       width="108"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig5.1"
+    <rectangle name="Fig4.1"
       x="128"
       y="936"
       width="110"
@@ -283,27 +283,27 @@ void requestStop()</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig5.2"
+    <text name="Fig4.2"
       x="129"
       y="937"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig5.3"
+    <text name="Fig4.3"
       x="129"
       y="956"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >Container</text>
-    <text name="Fig5.4"
+    <text name="Fig4.4"
       x="128"
       y="978"
       fill="1"
@@ -314,7 +314,7 @@ void requestStop()</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig7"
+  <group name="Fig5"
        description="uci.uml.visual.FigInterface[88, 608, 136, 175]"
        href="-128-89-28-26-7449b8:e6824ad869:-7ff3"
        fill="1"
@@ -325,17 +325,17 @@ void requestStop()</text>
     <private>
     </private>
     
-    <rectangle name="Fig7.0"
+    <rectangle name="Fig5.0"
       x="89"
       y="609"
       width="134"
       height="173"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig7.1"
+    <rectangle name="Fig5.1"
       x="88"
       y="608"
       width="136"
@@ -345,27 +345,27 @@ void requestStop()</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig7.2"
+    <text name="Fig5.2"
       x="89"
       y="609"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig7.3"
+    <text name="Fig5.3"
       x="89"
       y="628"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >ComponentDescription</text>
-    <text name="Fig7.4"
+    <text name="Fig5.4"
       x="88"
       y="650"
       fill="1"
@@ -382,7 +382,7 @@ Object getCertificate()
 Object getLeaseRequested()
 Object getPolicy()</text>
   </group>
-  <group name="Fig8"
+  <group name="Fig6"
        description="uci.uml.visual.FigClass[624, 88, 113, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7ff0"
        fill="1"
@@ -393,17 +393,17 @@ Object getPolicy()</text>
     <private>
     </private>
     
-    <rectangle name="Fig8.0"
+    <rectangle name="Fig6.0"
       x="625"
       y="89"
       width="111"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig8.1"
+    <text name="Fig6.1"
       x="624"
       y="88"
       fill="1"
@@ -413,7 +413,7 @@ Object getPolicy()</text>
       font="dialog.italic"
       textsize="9"
     >ComponentModelEvent</text>
-    <text name="Fig8.2"
+    <text name="Fig6.2"
       x="624"
       y="112"
       fill="1"
@@ -423,7 +423,7 @@ Object getPolicy()</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig8.3"
+    <text name="Fig6.3"
       x="624"
       y="136"
       fill="1"
@@ -434,7 +434,7 @@ Object getPolicy()</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig9"
+  <group name="Fig7"
        description="uci.uml.visual.FigClass[632, 192, 106, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fef"
        fill="1"
@@ -445,17 +445,17 @@ Object getPolicy()</text>
     <private>
     </private>
     
-    <rectangle name="Fig9.0"
+    <rectangle name="Fig7.0"
       x="633"
       y="193"
       width="104"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig9.1"
+    <text name="Fig7.1"
       x="632"
       y="192"
       fill="1"
@@ -465,7 +465,7 @@ Object getPolicy()</text>
       font="dialog.italic"
       textsize="9"
     >ServiceEvent</text>
-    <text name="Fig9.2"
+    <text name="Fig7.2"
       x="632"
       y="216"
       fill="1"
@@ -475,7 +475,7 @@ Object getPolicy()</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig9.3"
+    <text name="Fig7.3"
       x="632"
       y="240"
       fill="1"
@@ -486,7 +486,7 @@ Object getPolicy()</text>
       textsize="9"
     >Services getServices()</text>
   </group>
-  <group name="Fig11"
+  <group name="Fig8"
        description="uci.uml.visual.FigInterface[24, 448, 430, 85]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe9"
        fill="1"
@@ -497,17 +497,17 @@ Object getPolicy()</text>
     <private>
     </private>
     
-    <rectangle name="Fig11.0"
+    <rectangle name="Fig8.0"
       x="25"
       y="449"
       width="428"
       height="83"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig11.1"
+    <rectangle name="Fig8.1"
       x="24"
       y="448"
       width="430"
@@ -517,27 +517,27 @@ Object getPolicy()</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig11.2"
+    <text name="Fig8.2"
       x="25"
       y="449"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig11.3"
+    <text name="Fig8.3"
       x="25"
       y="468"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >ServiceProvider</text>
-    <text name="Fig11.4"
+    <text name="Fig8.4"
       x="24"
       y="490"
       fill="1"
@@ -549,7 +549,7 @@ Object getPolicy()</text>
     >Binder getService(Services services, Object requestor, Class bindingSite)
 void releaseService(Services services, Object requestor, Class bindingSite, Binder service)</text>
   </group>
-  <group name="Fig12"
+  <group name="Fig9"
        description="uci.uml.visual.FigInterface[560, 576, 484, 193]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe7"
        fill="1"
@@ -560,17 +560,17 @@ void releaseService(Services services, Object requestor, Class bindingSite, Bind
     <private>
     </private>
     
-    <rectangle name="Fig12.0"
+    <rectangle name="Fig9.0"
       x="561"
       y="577"
       width="482"
       height="191"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig12.1"
+    <rectangle name="Fig9.1"
       x="560"
       y="576"
       width="484"
@@ -580,27 +580,27 @@ void releaseService(Services services, Object requestor, Class bindingSite, Bind
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig12.2"
+    <text name="Fig9.2"
       x="561"
       y="577"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig12.3"
+    <text name="Fig9.3"
       x="561"
       y="596"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >Services</text>
-    <text name="Fig12.4"
+    <text name="Fig9.4"
       x="560"
       y="618"
       fill="1"
@@ -618,7 +618,7 @@ Iterator getCurrentServiceClasses()
 Object getService(Object requestor, Class serviceClass, ServiceRevokedListener srl)
 void releaseService(Object requestor, Class serviceClass, Object service)</text>
   </group>
-  <group name="Fig13"
+  <group name="Fig10"
        description="uci.uml.visual.FigClass[568, 320, 106, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe5"
        fill="1"
@@ -629,17 +629,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig13.0"
+    <rectangle name="Fig10.0"
       x="569"
       y="321"
       width="104"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig13.1"
+    <text name="Fig10.1"
       x="568"
       y="320"
       fill="1"
@@ -649,7 +649,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >ServiceAvailableEvent</text>
-    <text name="Fig13.2"
+    <text name="Fig10.2"
       x="568"
       y="344"
       fill="1"
@@ -659,7 +659,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >Class bindingSite</text>
-    <text name="Fig13.3"
+    <text name="Fig10.3"
       x="568"
       y="368"
       fill="1"
@@ -670,7 +670,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     >Class getBindingSite()</text>
   </group>
-  <group name="Fig15"
+  <group name="Fig11"
        description="uci.uml.visual.FigClass[696, 320, 106, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe3"
        fill="1"
@@ -681,17 +681,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig15.0"
+    <rectangle name="Fig11.0"
       x="697"
       y="321"
       width="104"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig15.1"
+    <text name="Fig11.1"
       x="696"
       y="320"
       fill="1"
@@ -701,7 +701,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >ServiceRevokedEvent</text>
-    <text name="Fig15.2"
+    <text name="Fig11.2"
       x="696"
       y="344"
       fill="1"
@@ -711,7 +711,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >Class bindingSite</text>
-    <text name="Fig15.3"
+    <text name="Fig11.3"
       x="696"
       y="368"
       fill="1"
@@ -722,7 +722,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     >Class getBindingSite()</text>
   </group>
-  <group name="Fig17"
+  <group name="Fig12"
        description="uci.uml.visual.FigInterface[240, 72, 110, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe0"
        fill="1"
@@ -733,17 +733,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig17.0"
+    <rectangle name="Fig12.0"
       x="241"
       y="73"
       width="108"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig17.1"
+    <rectangle name="Fig12.1"
       x="240"
       y="72"
       width="110"
@@ -753,27 +753,27 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig17.2"
+    <text name="Fig12.2"
       x="241"
       y="73"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig17.3"
+    <text name="Fig12.3"
       x="241"
       y="92"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >ServiceListener</text>
-    <text name="Fig17.4"
+    <text name="Fig12.4"
       x="240"
       y="114"
       fill="1"
@@ -784,7 +784,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig18"
+  <group name="Fig13"
        description="uci.uml.visual.FigInterface[40, 224, 241, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fdf"
        fill="1"
@@ -795,17 +795,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig18.0"
+    <rectangle name="Fig13.0"
       x="41"
       y="225"
       width="239"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig18.1"
+    <rectangle name="Fig13.1"
       x="40"
       y="224"
       width="241"
@@ -815,27 +815,27 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig18.2"
+    <text name="Fig13.2"
       x="41"
       y="225"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig18.3"
+    <text name="Fig13.3"
       x="41"
       y="244"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >ServiceAvailableListener</text>
-    <text name="Fig18.4"
+    <text name="Fig13.4"
       x="40"
       y="266"
       fill="1"
@@ -846,7 +846,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     >void serviceAvailable(ServiceAvailableEvent event)</text>
   </group>
-  <group name="Fig19"
+  <group name="Fig14"
        description="uci.uml.visual.FigInterface[304, 224, 237, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fde"
        fill="1"
@@ -857,17 +857,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig19.0"
+    <rectangle name="Fig14.0"
       x="305"
       y="225"
       width="235"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig19.1"
+    <rectangle name="Fig14.1"
       x="304"
       y="224"
       width="237"
@@ -877,27 +877,27 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig19.2"
+    <text name="Fig14.2"
       x="305"
       y="225"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig19.3"
+    <text name="Fig14.3"
       x="305"
       y="244"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >ServiceRevokedListener</text>
-    <text name="Fig19.4"
+    <text name="Fig14.4"
       x="304"
       y="266"
       fill="1"
@@ -908,7 +908,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     >void serviceRevoked(ServiceRevokedEvent event)</text>
   </group>
-  <group name="Fig22"
+  <group name="Fig15"
        description="uci.uml.visual.FigClass[880, 392, 99, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fdb"
        fill="1"
@@ -919,17 +919,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig22.0"
+    <rectangle name="Fig15.0"
       x="881"
       y="393"
       width="97"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig22.1"
+    <text name="Fig15.1"
       x="880"
       y="392"
       fill="1"
@@ -939,7 +939,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >PaerentBinder</text>
-    <text name="Fig22.2"
+    <text name="Fig15.2"
       x="880"
       y="416"
       fill="1"
@@ -949,7 +949,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig22.3"
+    <text name="Fig15.3"
       x="880"
       y="440"
       fill="1"
@@ -960,7 +960,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig24"
+  <group name="Fig16"
        description="uci.uml.visual.FigClass[64, 1072, 183, 145]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fd8"
        fill="1"
@@ -971,17 +971,17 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
     <private>
     </private>
     
-    <rectangle name="Fig24.0"
+    <rectangle name="Fig16.0"
       x="65"
       y="1073"
       width="181"
       height="143"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig24.1"
+    <text name="Fig16.1"
       x="64"
       y="1072"
       fill="1"
@@ -991,7 +991,7 @@ void releaseService(Object requestor, Class serviceClass, Object service)</text>
       font="dialog"
       textsize="9"
     >ContainerSupport</text>
-    <text name="Fig24.2"
+    <text name="Fig16.2"
       x="64"
       y="1096"
       fill="1"
@@ -1005,7 +1005,7 @@ ComponentFactory componentFactory
 Services childContext
 Collection binderFactories
 String containmentPoint</text>
-    <text name="Fig24.3"
+    <text name="Fig16.3"
       x="64"
       y="1192"
       fill="1"
@@ -1016,7 +1016,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig25"
+  <group name="Fig17"
        description="uci.uml.visual.FigClass[856, 896, 99, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fd6"
        fill="1"
@@ -1027,17 +1027,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig25.0"
+    <rectangle name="Fig17.0"
       x="857"
       y="897"
       width="97"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig25.1"
+    <text name="Fig17.1"
       x="856"
       y="896"
       fill="1"
@@ -1047,7 +1047,7 @@ String containmentPoint</text>
       font="dialog.italic"
       textsize="9"
     >ServicesSupport</text>
-    <text name="Fig25.2"
+    <text name="Fig17.2"
       x="856"
       y="920"
       fill="1"
@@ -1057,7 +1057,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig25.3"
+    <text name="Fig17.3"
       x="856"
       y="944"
       fill="1"
@@ -1068,7 +1068,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig28"
+  <group name="Fig18"
        description="uci.uml.visual.FigClass[856, 1240, 99, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fd0"
        fill="1"
@@ -1079,17 +1079,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig28.0"
+    <rectangle name="Fig18.0"
       x="857"
       y="1241"
       width="97"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig28.1"
+    <text name="Fig18.1"
       x="856"
       y="1240"
       fill="1"
@@ -1099,7 +1099,7 @@ String containmentPoint</text>
       font="dialog.italic"
       textsize="9"
     >Plugin</text>
-    <text name="Fig28.2"
+    <text name="Fig18.2"
       x="856"
       y="1264"
       fill="1"
@@ -1109,7 +1109,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig28.3"
+    <text name="Fig18.3"
       x="856"
       y="1288"
       fill="1"
@@ -1120,7 +1120,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig30"
+  <group name="Fig19"
        description="uci.uml.visual.FigClass[1024, 1232, 99, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fcd"
        fill="1"
@@ -1131,17 +1131,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig30.0"
+    <rectangle name="Fig19.0"
       x="1025"
       y="1233"
       width="97"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig30.1"
+    <text name="Fig19.1"
       x="1024"
       y="1232"
       fill="1"
@@ -1151,7 +1151,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     >PluginBinder</text>
-    <text name="Fig30.2"
+    <text name="Fig19.2"
       x="1024"
       y="1256"
       fill="1"
@@ -1161,7 +1161,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig30.3"
+    <text name="Fig19.3"
       x="1024"
       y="1280"
       fill="1"
@@ -1172,7 +1172,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig31"
+  <group name="Fig20"
        description="uci.uml.visual.FigInterface[1024, 1096, 110, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fcc"
        fill="1"
@@ -1183,17 +1183,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig31.0"
+    <rectangle name="Fig20.0"
       x="1025"
       y="1097"
       width="108"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig31.1"
+    <rectangle name="Fig20.1"
       x="1024"
       y="1096"
       width="110"
@@ -1203,27 +1203,27 @@ String containmentPoint</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig31.2"
+    <text name="Fig20.2"
       x="1025"
       y="1097"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig31.3"
+    <text name="Fig20.3"
       x="1025"
       y="1116"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >PluginBindingSite</text>
-    <text name="Fig31.4"
+    <text name="Fig20.4"
       x="1024"
       y="1138"
       fill="1"
@@ -1234,7 +1234,7 @@ String containmentPoint</text>
       textsize="9"
     >Services getServices()</text>
   </group>
-  <group name="Fig34"
+  <group name="Fig21"
        description="uci.uml.visual.FigClass[688, 1240, 99, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc7"
        fill="1"
@@ -1245,17 +1245,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig34.0"
+    <rectangle name="Fig21.0"
       x="689"
       y="1241"
       width="97"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig34.1"
+    <text name="Fig21.1"
       x="688"
       y="1240"
       fill="1"
@@ -1265,7 +1265,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     >PluginManager</text>
-    <text name="Fig34.2"
+    <text name="Fig21.2"
       x="688"
       y="1264"
       fill="1"
@@ -1275,7 +1275,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig34.3"
+    <text name="Fig21.3"
       x="688"
       y="1288"
       fill="1"
@@ -1286,7 +1286,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig37"
+  <group name="Fig22"
        description="uci.uml.visual.FigInterface[40, 824, 110, 67]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc3"
        fill="1"
@@ -1297,17 +1297,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig37.0"
+    <rectangle name="Fig22.0"
       x="41"
       y="825"
       width="108"
       height="65"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <rectangle name="Fig37.1"
+    <rectangle name="Fig22.1"
       x="40"
       y="824"
       width="110"
@@ -1317,27 +1317,27 @@ String containmentPoint</text>
       stroke="1"
       strokecolor="-16777216"
     />
-    <text name="Fig37.2"
+    <text name="Fig22.2"
       x="41"
       y="825"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="Times"
       textsize="10"
     >&lt;&lt;Interface&gt;&gt;</text>
-    <text name="Fig37.3"
+    <text name="Fig22.3"
       x="41"
       y="844"
-      fill="0"
+      fill="1"
       fillcolor="-1"
       stroke="0"
       strokecolor="-16777216"
       font="dialog"
       textsize="9"
     >Collection</text>
-    <text name="Fig37.4"
+    <text name="Fig22.4"
       x="40"
       y="866"
       fill="1"
@@ -1348,7 +1348,7 @@ String containmentPoint</text>
       textsize="9"
     ></text>
   </group>
-  <group name="Fig39"
+  <group name="Fig23"
        description="uci.uml.visual.FigClass[768, 1072, 153, 73]"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc1"
        fill="1"
@@ -1359,17 +1359,17 @@ String containmentPoint</text>
     <private>
     </private>
     
-    <rectangle name="Fig39.0"
+    <rectangle name="Fig23.0"
       x="769"
       y="1073"
       width="151"
       height="71"
       fill="1"
-      fillcolor="-16711681"
+      fillcolor="-1"
       stroke="1"
-      strokecolor="-16711681"
+      strokecolor="-16777216"
     />
-    <text name="Fig39.1"
+    <text name="Fig23.1"
       x="768"
       y="1072"
       fill="1"
@@ -1379,7 +1379,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     >ComponentFactory</text>
-    <text name="Fig39.2"
+    <text name="Fig23.2"
       x="768"
       y="1096"
       fill="1"
@@ -1389,7 +1389,7 @@ String containmentPoint</text>
       font="dialog"
       textsize="9"
     ></text>
-    <text name="Fig39.3"
+    <text name="Fig23.3"
       x="768"
       y="1120"
       fill="1"
@@ -1400,7 +1400,7 @@ String containmentPoint</text>
       textsize="9"
     >Component createComponent()</text>
   </group>
-  <group name="Fig3"
+  <group name="Fig24"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7ffa"
        stroke="1"
@@ -1412,7 +1412,7 @@ String containmentPoint</text>
       sourceFigNode="Fig1"
       destFigNode="Fig2"
     </private>
-    <path name="Fig3.1"
+    <path name="Fig24.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1425,19 +1425,19 @@ String containmentPoint</text>
               y="148" />
     </path>
   </group>
-  <group name="Fig6"
+  <group name="Fig25"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7ff6"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig5.0"
+      sourcePortFig="Fig4.0"
       destPortFig="Fig0.0"
-      sourceFigNode="Fig5"
+      sourceFigNode="Fig4"
       destFigNode="Fig0"
     </private>
-    <path name="Fig6.1"
+    <path name="Fig25.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1450,19 +1450,19 @@ String containmentPoint</text>
               y="890" />
     </path>
   </group>
-  <group name="Fig10"
+  <group name="Fig26"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fed"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig9.0"
-      destPortFig="Fig8.0"
-      sourceFigNode="Fig9"
-      destFigNode="Fig8"
+      sourcePortFig="Fig7.0"
+      destPortFig="Fig6.0"
+      sourceFigNode="Fig7"
+      destFigNode="Fig6"
     </private>
-    <path name="Fig10.1"
+    <path name="Fig26.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1475,19 +1475,19 @@ String containmentPoint</text>
               y="160" />
     </path>
   </group>
-  <group name="Fig14"
+  <group name="Fig27"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe4"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig13.0"
-      destPortFig="Fig9.0"
-      sourceFigNode="Fig13"
-      destFigNode="Fig9"
+      sourcePortFig="Fig10.0"
+      destPortFig="Fig7.0"
+      sourceFigNode="Fig10"
+      destFigNode="Fig7"
     </private>
-    <path name="Fig14.1"
+    <path name="Fig27.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1500,19 +1500,19 @@ String containmentPoint</text>
               y="264" />
     </path>
   </group>
-  <group name="Fig16"
+  <group name="Fig28"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fe2"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig15.0"
-      destPortFig="Fig9.0"
-      sourceFigNode="Fig15"
-      destFigNode="Fig9"
+      sourcePortFig="Fig11.0"
+      destPortFig="Fig7.0"
+      sourceFigNode="Fig11"
+      destFigNode="Fig7"
     </private>
-    <path name="Fig16.1"
+    <path name="Fig28.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1525,19 +1525,19 @@ String containmentPoint</text>
               y="264" />
     </path>
   </group>
-  <group name="Fig20"
+  <group name="Fig29"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fdd"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig18.0"
-      destPortFig="Fig17.0"
-      sourceFigNode="Fig18"
-      destFigNode="Fig17"
+      sourcePortFig="Fig13.0"
+      destPortFig="Fig12.0"
+      sourceFigNode="Fig13"
+      destFigNode="Fig12"
     </private>
-    <path name="Fig20.1"
+    <path name="Fig29.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1550,19 +1550,19 @@ String containmentPoint</text>
               y="138" />
     </path>
   </group>
-  <group name="Fig21"
+  <group name="Fig30"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fdc"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig19.0"
-      destPortFig="Fig17.0"
-      sourceFigNode="Fig19"
-      destFigNode="Fig17"
+      sourcePortFig="Fig14.0"
+      destPortFig="Fig12.0"
+      sourceFigNode="Fig14"
+      destFigNode="Fig12"
     </private>
-    <path name="Fig21.1"
+    <path name="Fig30.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1575,19 +1575,19 @@ String containmentPoint</text>
               y="138" />
     </path>
   </group>
-  <group name="Fig23"
+  <group name="Fig31"
        description="uci.uml.visual.FigDependency"
        href="-128-89-28-26-7449b8:e6824ad869:-7fda"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig22.0"
+      sourcePortFig="Fig15.0"
       destPortFig="Fig1.0"
-      sourceFigNode="Fig22"
+      sourceFigNode="Fig15"
       destFigNode="Fig1"
     </private>
-    <path name="Fig23.1"
+    <path name="Fig31.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1600,19 +1600,19 @@ String containmentPoint</text>
               y="306" />
     </path>
   </group>
-  <group name="Fig26"
+  <group name="Fig32"
        description="uci.uml.visual.FigDependency"
        href="-128-89-28-26-7449b8:e6824ad869:-7fd5"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig25.0"
-      destPortFig="Fig12.0"
-      sourceFigNode="Fig25"
-      destFigNode="Fig12"
+      sourcePortFig="Fig17.0"
+      destPortFig="Fig9.0"
+      sourceFigNode="Fig17"
+      destFigNode="Fig9"
     </private>
-    <path name="Fig26.1"
+    <path name="Fig32.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1625,19 +1625,19 @@ String containmentPoint</text>
               y="768" />
     </path>
   </group>
-  <group name="Fig27"
+  <group name="Fig33"
        description="uci.uml.visual.FigDependency"
        href="-128-89-28-26-7449b8:e6824ad869:-7fd2"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig24.0"
-      destPortFig="Fig5.0"
-      sourceFigNode="Fig24"
-      destFigNode="Fig5"
+      sourcePortFig="Fig16.0"
+      destPortFig="Fig4.0"
+      sourceFigNode="Fig16"
+      destFigNode="Fig4"
     </private>
-    <path name="Fig27.1"
+    <path name="Fig33.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1650,19 +1650,19 @@ String containmentPoint</text>
               y="1002" />
     </path>
   </group>
-  <group name="Fig29"
+  <group name="Fig34"
        description="uci.uml.visual.FigDependency"
        href="-128-89-28-26-7449b8:e6824ad869:-7fcf"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig28.0"
+      sourcePortFig="Fig18.0"
       destPortFig="Fig0.0"
-      sourceFigNode="Fig28"
+      sourceFigNode="Fig18"
       destFigNode="Fig0"
     </private>
-    <path name="Fig29.1"
+    <path name="Fig34.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1675,19 +1675,19 @@ String containmentPoint</text>
               y="890" />
     </path>
   </group>
-  <group name="Fig32"
+  <group name="Fig35"
        description="uci.uml.visual.FigDependency"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc9"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig30.0"
-      destPortFig="Fig31.0"
-      sourceFigNode="Fig30"
-      destFigNode="Fig31"
+      sourcePortFig="Fig19.0"
+      destPortFig="Fig20.0"
+      sourceFigNode="Fig19"
+      destFigNode="Fig20"
     </private>
-    <path name="Fig32.1"
+    <path name="Fig35.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1700,19 +1700,19 @@ String containmentPoint</text>
               y="1162" />
     </path>
   </group>
-  <group name="Fig33"
+  <group name="Fig36"
        description="uci.uml.visual.FigAssociation"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc8"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig28.0"
-      destPortFig="Fig30.0"
-      sourceFigNode="Fig28"
-      destFigNode="Fig30"
+      sourcePortFig="Fig18.0"
+      destPortFig="Fig19.0"
+      sourceFigNode="Fig18"
+      destFigNode="Fig19"
     </private>
-    <path name="Fig33.1"
+    <path name="Fig36.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1725,19 +1725,19 @@ String containmentPoint</text>
               y="1272" />
     </path>
   </group>
-  <group name="Fig35"
+  <group name="Fig37"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc6"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig34.0"
-      destPortFig="Fig24.0"
-      sourceFigNode="Fig34"
-      destFigNode="Fig24"
+      sourcePortFig="Fig21.0"
+      destPortFig="Fig16.0"
+      sourceFigNode="Fig21"
+      destFigNode="Fig16"
     </private>
-    <path name="Fig35.1"
+    <path name="Fig37.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1752,19 +1752,19 @@ String containmentPoint</text>
               y="1216" />
     </path>
   </group>
-  <group name="Fig36"
+  <group name="Fig38"
        description="uci.uml.visual.FigAssociation"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc5"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig24.0"
-      destPortFig="Fig12.0"
-      sourceFigNode="Fig24"
-      destFigNode="Fig12"
+      sourcePortFig="Fig16.0"
+      destPortFig="Fig9.0"
+      sourceFigNode="Fig16"
+      destFigNode="Fig9"
     </private>
-    <path name="Fig36.1"
+    <path name="Fig38.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1779,19 +1779,19 @@ String containmentPoint</text>
               y="768" />
     </path>
   </group>
-  <group name="Fig38"
+  <group name="Fig39"
        description="uci.uml.visual.FigGeneralization"
        href="-128-89-28-26-7449b8:e6824ad869:-7fc2"
        stroke="1"
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig5.0"
-      destPortFig="Fig37.0"
-      sourceFigNode="Fig5"
-      destFigNode="Fig37"
+      sourcePortFig="Fig4.0"
+      destPortFig="Fig22.0"
+      sourceFigNode="Fig4"
+      destFigNode="Fig22"
     </private>
-    <path name="Fig38.1"
+    <path name="Fig39.1"
       description="uci.gef.FigPoly"
       fill="0"
       fillcolor="-1"
@@ -1811,10 +1811,10 @@ String containmentPoint</text>
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig24.0"
-      destPortFig="Fig39.0"
-      sourceFigNode="Fig24"
-      destFigNode="Fig39"
+      sourcePortFig="Fig16.0"
+      destPortFig="Fig23.0"
+      sourceFigNode="Fig16"
+      destFigNode="Fig23"
     </private>
     <path name="Fig40.1"
       description="uci.gef.FigPoly"
@@ -1836,9 +1836,9 @@ String containmentPoint</text>
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig24.0"
+      sourcePortFig="Fig16.0"
       destPortFig="Fig0.0"
-      sourceFigNode="Fig24"
+      sourceFigNode="Fig16"
       destFigNode="Fig0"
     </private>
     <path name="Fig41.1"
@@ -1865,10 +1865,10 @@ String containmentPoint</text>
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig34.0"
-      destPortFig="Fig30.0"
-      sourceFigNode="Fig34"
-      destFigNode="Fig30"
+      sourcePortFig="Fig21.0"
+      destPortFig="Fig19.0"
+      sourceFigNode="Fig21"
+      destFigNode="Fig19"
     </private>
     <path name="Fig42.1"
       description="uci.gef.FigPoly"
@@ -1894,10 +1894,10 @@ String containmentPoint</text>
        strokecolor="-16777216"
   >
     <private>
-      sourcePortFig="Fig34.0"
-      destPortFig="Fig28.0"
-      sourceFigNode="Fig34"
-      destFigNode="Fig28"
+      sourcePortFig="Fig21.0"
+      destPortFig="Fig18.0"
+      sourceFigNode="Fig21"
+      destFigNode="Fig18"
     </private>
     <path name="Fig43.1"
       description="uci.gef.FigPoly"
