@@ -53,6 +53,7 @@ import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.zip.*;
 import java.util.jar.*;
@@ -172,11 +173,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     }
 
     // now, swap in the revised Argument listing
-    String[] replacementArgs = new String[revisedArgs.size()];
-    for (int i = 0; i < revisedArgs.size(); i++) {
-      replacementArgs[i] = (String)revisedArgs.get(i);
-    }
-    args = replacementArgs;
+    args = (String[]) revisedArgs.toArray(args);
 
     Node myNode = null;
     ArgTable myArgs = new ArgTable(args);
@@ -228,7 +225,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
       myNode = new Node(myArgs);
       myNode.initNode();
       // done with our job... quietly finish.
-    } catch (Exception e) {
+    } catch (Throwable e) {
       System.out.println(
           "Caught an exception at the highest try block.  Exception is: " +
           e );
@@ -489,42 +486,30 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
    *    <p>
    *    @exception UnknownHostException IF the host can not be determined
    **/  
-  protected void initNode() throws UnknownHostException, NamingException {
+  protected void initNode()
+    throws UnknownHostException, NamingException, IOException,
+           SQLException, InitializerServiceException
+  {
     // Command-line script uses "-n MyNode" and lets the filename default
     //   to "MyNode.ini".
     //
     // Remote console always specifies name as a property and the filename
     //   as an argument.
-    String name = null;
+    ComponentDescription[] nodeDescs = null;
+    String name = (String)getArgs().get(NAME_KEY);
     String filename = (String)getArgs().get(FILE_KEY);
-    if (getArgs().containsKey(NAME_KEY)) {
-      name = (String)getArgs().get(NAME_KEY);
-      if (filename == null) {
-        filename = name+".ini";
-      }
-    } else {
-      name = System.getProperty("org.cougaar.node.name");
+    String experimentId = (String) getArgs().get(EXPERIMENT_ID_KEY);
+    if (name == null) name = System.getProperty("org.cougaar.node.name");
+    if (name == null) name = findHostName();
+    if (name == null) throw new IllegalArgumentException("No node name specified");
+    if (filename != null && experimentId != null) {
+      throw new IllegalArgumentException("Both file name (-f) and experiment -X) specified. Only one allowed.");
     }
-    if (name == null) {
-      name = findHostName();
+    if (filename == null && experimentId == null) {
+      filename = name + ".ini";
     }
-
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
-
-    // load node properties
-    ComponentDescription[] nodeDescs = null;
-    if (filename != null) {
-      try {
-        // currently assumes ".ini" format
-        InputStream in = getConfigFinder().open(filename);
-        nodeDescs = INIParser.parse(in, "Node");
-      } catch (Exception e) {
-        System.err.println(
-            "Unable to parse node \""+name+"\" file \""+filename+"\"");
-        e.printStackTrace();
-      }
-    }
 
     ServiceBroker sb = getServiceBroker();
 
@@ -548,6 +533,17 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     //add the vm metrics
     sb.addService(NodeMetricsService.class,
                   new NodeMetricsServiceProvider(new NodeMetricsProxy()));
+
+    ServiceProvider sp;
+    if (filename != null)
+      sp = new FileInitializerServiceProvider(filename);
+    else
+      sp = new DBInitializerServiceProvider(experimentId, name);
+    sb.addService(InitializerService.class, sp);
+    InitializerService is =
+      (InitializerService) sb.getService(this, InitializerService.class, null);
+    nodeDescs = is.getAgentDescriptions(name);
+    sb.releaseService(this, InitializerService.class, is);
 
     // Set up MTS and QOS service provides.
     //
