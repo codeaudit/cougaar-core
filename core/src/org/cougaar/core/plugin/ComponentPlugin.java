@@ -162,7 +162,9 @@ public class ComponentPlugin
   /**
    * Found by introspection by BinderSupport
    **/
-  public void initialize() {
+
+  public void start() {
+    super.start();
     // Tell the scheduler to run me at least this once
     schedulerProd.trigger();
   }
