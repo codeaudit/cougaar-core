@@ -153,10 +153,10 @@ public class NodeTrustComponent
       }
     }
     if (!found) {
-      //drop it on the floor right now 
-      // to  be implemented later so print out a warning
-     logging.warning("\n!!!" + this + "Received a Message that it doesn't know" +
-                         " how to process.");
+      // don't do anything with this message since we don't know
+      // about its type
+     logging.debug("\n!!!" + this + "Received a Message that it doesn't know" +
+                         " how to process: " + message);
     }
   }
 
