@@ -48,6 +48,10 @@ final class SchedulableObject implements Schedulable
     }
 
 
+    Scheduler getScheduler() {
+	return scheduler;
+    }
+
     public String toString() {
 	return "<Schedulable " +name+ " for " +consumer+ ">";
     }
@@ -86,7 +90,7 @@ final class SchedulableObject implements Schedulable
     // Calback from the Reclaimer.
     void reclaimNotify() {
 	scheduler.releaseRights(scheduler, this);
-	if (restart) scheduler.startOrQueue(this);
+	if (restart) Starter.push(this);
     }
 
     void thread_start() {
@@ -112,7 +116,7 @@ final class SchedulableObject implements Schedulable
 	    
 	}
 
-	scheduler.startOrQueue(this);
+	Starter.push(this);
     }
 
 

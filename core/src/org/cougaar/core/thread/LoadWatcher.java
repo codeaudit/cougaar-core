@@ -82,7 +82,7 @@ public class LoadWatcher
 					   CREDIBILITY,
 					   UNITS,
 					   "LoadWatcher");
- 	    metricsUpdateService.updateValue(key, THREAD_SENSOR, metric);
+ 	    metricsUpdateService.updateValue(key, metric);
 	}
 
 

@@ -131,7 +131,8 @@ public class SchedulerWatcher
 					   CREDIBILITY,
 					   "",
 					   PROVENANCE);
- 	    metricsUpdateService.updateValue(prefix+tag, PROVENANCE, metric);
+// 	    metricsUpdateService.updateValue(prefix+tag, PROVENANCE, metric);
+ 	    metricsUpdateService.updateValue(prefix+tag, metric);
 	}
 
 

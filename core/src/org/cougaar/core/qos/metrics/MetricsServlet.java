@@ -38,16 +38,13 @@ import org.cougaar.core.servlet.ServletService;
 
 public class MetricsServlet extends HttpServlet implements Constants
 {
-    private final String myPath = "/qosmetrics";
-    private final String ignoreColor = "<font color=\"#999999\">";
-    private final String normalColor = "<font color=\"#000000\">";
-    private final String highlightColor = "<font color=\"#cc00cc\">";
+    private final String myPath = "/metrics/agent/load";
     private final String endColor = "</font>";
 
     private TopologyReaderService topologyService;
     private MetricsService metricsService;
     private String nodeID;
-    private DecimalFormat formatter;
+    private DecimalFormat f4_2;
 
     public MetricsServlet(ServiceBroker sb) {
 	ServletService servletService = (ServletService)
@@ -78,19 +75,9 @@ public class MetricsServlet extends HttpServlet implements Constants
 				       +myPath+ ">: " +e.getMessage());
 	}
 
-	formatter = new DecimalFormat("00.00");
+	f4_2 = new DecimalFormat("00.00");
     }
 
-    private String loadColor(double value) {
-	    if (value == 0) return ignoreColor;
-	    if (value < 1.0 ) return  normalColor;
-	    return  highlightColor;
-    }
-
-    private String credColor(double value) {
-	    if (value == SECOND_MEAS_CREDIBILITY ) return ignoreColor;
-	    return  highlightColor;
-    }
 
     private void dumpTable(PrintWriter out) {
 	Set matches = null;
@@ -107,6 +94,13 @@ public class MetricsServlet extends HttpServlet implements Constants
 	if (matches == null) return;
 	Iterator itr = matches.iterator();
 	out.print("<table border=1>\n");
+	out.print("<tr><b>");
+	out.print("<td><b>AGENT</b></td>");
+	out.print("<td><b>CPUload</b></td>");
+	out.print("<td><b>Cred</b></td>");
+	out.print("<td><b>MsgOut</b></td>");
+	out.print("<td><b>MsgIn</b></td>");
+	out.print("</b></tr>");
 	while (itr.hasNext()) {
 	    TopologyEntry entry = (TopologyEntry) itr.next();
 	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
@@ -114,20 +108,18 @@ public class MetricsServlet extends HttpServlet implements Constants
 	    String name = entry.getAgent();
 	    String path = "Agent(" +name+ ")"
 		+PATH_SEPR+ ONE_SEC_LOAD_AVG;
-	    Metric metric = metricsService.getValue(path);
-	    double value = metric.doubleValue();
-	    double cred = metric.getCredibility();
-	      
-	    String formattedValue = formatter.format(value);
+	    Metric cpuLoad = metricsService.getValue(path);
+	    Metric msgIn = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric msgOut = new MetricImpl(new Double(0.00), 0,"units","test");
+
 	    out.print("<tr><td><b>");
 	    out.print(name);
-	    out.print(" </b></td><td>");
-	    out.print(loadColor(value));
-	    out.print(formattedValue);
-	    out.print("</font></td><td>");
-	    out.print(credColor(cred));
-	    out.print(cred);
-	    out.print("</font></td></tr>\n");
+	    out.print(" </b></td>");
+	    out.print(Color.valueTable(cpuLoad, 0.0, 1.0, f4_2));
+	    out.print(Color.credTable(cpuLoad));
+	    out.print(Color.valueTable(msgIn, 0.0, 1.0, f4_2));
+	    out.print(Color.valueTable(msgOut, 0.0, 1.0, f4_2));
+	    out.print("</tr>\n");
 
 	}
 	out.print("</table>");
@@ -167,6 +159,9 @@ public class MetricsServlet extends HttpServlet implements Constants
 	dumpTable(out);
 	out.print("<p><p><br>RefreshSeconds: ");
 	out.print(refreshSeconds);
+	out.print("<p><p><h3>Color key</h3>");
+	Color.colorTest(out);
+
 	out.print("</body></html>\n");
 
 	out.close();

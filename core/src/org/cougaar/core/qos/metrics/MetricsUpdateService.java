@@ -25,6 +25,6 @@ import org.cougaar.core.component.Service;
 
 public interface MetricsUpdateService extends Service
 {
-    void updateValue(String key, String type, Metric value);
+    void updateValue(String key, Metric value);
 }
 

@@ -130,12 +130,14 @@ public class Scheduler
 
 
 
-    synchronized void addPendingThread(SchedulableObject thread) 
+    void addPendingThread(SchedulableObject thread) 
     {
-	if (pendingThreads.contains(thread)) return;
-	thread.notifyPending();
+	synchronized (this) {
+	    if (pendingThreads.contains(thread)) return;
+	    thread.notifyPending();
+	    pendingThreads.add(thread);
+	}
 	listenerProxy.notifyQueued(thread);
-	pendingThreads.add(thread);
     }
 
     synchronized void dequeue(SchedulableObject thread) 
@@ -206,20 +208,24 @@ public class Scheduler
 
 
 
-    synchronized void incrementRunCount(Scheduler consumer) {
-	++runningThreadCount;
-	log("increment", consumer);
-	listenerProxy.notifyRightGiven(consumer);
+    void incrementRunCount(Scheduler consumer) {
+	synchronized (this) {
+	    ++runningThreadCount;
+	    log("increment", consumer);
+	    listenerProxy.notifyRightGiven(consumer);
+	}
     }
 
-    synchronized void decrementRunCount(Scheduler consumer, SchedulableObject thread) {
-	--runningThreadCount;
-	log("decrement", (consumer == this ? ((Object) thread) : ((Object) consumer)));
-	if (runningThreadCount < 0) {
-	    System.out.println("###" +this+ " thread count is " +
-			       runningThreadCount);
+    void decrementRunCount(Scheduler consumer, SchedulableObject thread) {
+	synchronized (this) {
+	    --runningThreadCount;
+	    log("decrement", (consumer == this ? ((Object) thread) : ((Object) consumer)));
+	    if (runningThreadCount < 0) {
+		System.out.println("###" +this+ " thread count is " +
+				   runningThreadCount);
+	    }
+	    listenerProxy.notifyRightReturned(consumer);
 	}
-	listenerProxy.notifyRightReturned(consumer);
     }
 
 
