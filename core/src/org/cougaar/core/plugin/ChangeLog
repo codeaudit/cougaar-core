@@ -1,3 +1,10 @@
+2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* freeze/FreezeSocietyPlugin.java:
+	Bug #2659 -- Freeze plugins do not freeze time
+	Set time rate to 0.0 when everybody is frozen. Set it back to 1.0
+	when thawed.
+
 2003-03-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PluginManager.java: 
