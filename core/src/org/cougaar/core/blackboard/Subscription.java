@@ -43,6 +43,8 @@ import java.util.*;
 
 public abstract class Subscription {
 
+  private static final Logger _logger = Logging.getLogger(Subscription.class);
+
   /** Have we recieved our InitializeSubscriptionEnvelope yet?
    * @see #apply(Envelope)
    **/
@@ -70,8 +72,7 @@ public abstract class Subscription {
 
     // blackboard needs no delayed fill
     if (subscriber instanceof Blackboard) {
-	//Logger logger = Logging.getLogger(Subscription.class);
-	//logger.error("Preset InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+	//_logger.error("Preset InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
       setIsInitialized();
     }
   }
@@ -204,20 +205,22 @@ public abstract class Subscription {
       InitializeSubscriptionEnvelope ise = (InitializeSubscriptionEnvelope) envelope;
       if (ise.getSubscription() == this) {
         if (isInitialized) {
-          Logger logger = Logging.getLogger(Subscription.class);
-          logger.error("Received redundant InitializeSubscriptionEnvelope for "+this.predicate);
-          //logger.error("Received redundant InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+          _logger.error("Received redundant InitializeSubscriptionEnvelope for "+this.predicate);
         } else {
-	    //Logger logger = Logging.getLogger(Subscription.class);
-	    //logger.error("Received InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+          if (_logger.isDebugEnabled()) {
+            _logger.debug("Received InitializeSubscriptionEnvelope for "+this.predicate);
+          }
+          setIsInitialized();
 	}
-        setIsInitialized();
       }
       return false;             // doesn't actually change the subscription in any case
     } else {
       if (isInitialized) {
         return privateApply(envelope);
       } else {
+        if (_logger.isInfoEnabled()) {
+          _logger.info("Dropped an envelope for "+this.predicate);
+        }
         return false;
       }
     }
