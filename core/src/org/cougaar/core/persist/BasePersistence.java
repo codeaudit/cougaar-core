@@ -127,9 +127,11 @@ public class BasePersistence
   private static final String PERSISTENCE_SIGNING_CONTROL_NAME = "signing";
   private static final String PERSISTENCE_CONSOLIDATION_PERIOD_NAME = "consolidationPeriod";
   private static final long MIN_PERSISTENCE_INTERVAL = 5000L;
-  private static final long MAX_PERSISTENCE_INTERVAL = 24L*86400000L;
+  private static final long MAX_PERSISTENCE_INTERVAL = 3600000L;
   private static final String DEFAULT_PERSISTENCE_ENCRYPTION = "OFF";
   private static final String DEFAULT_PERSISTENCE_SIGNING = "OFF";
+  private static final String DUMMY_MEDIA_NAME = "dummy";
+  private static final String FILE_MEDIA_NAME = "file";
   private static final String PROP_LAZY_PERSIST_INTERVAL = "org.cougaar.core.persistence.lazyInterval";
   private static final long DEFAULT_LAZY_PERSIST_INTERVAL = 300000L;
   private static final long LAZY_PERSIST_INTERVAL =
@@ -207,6 +209,16 @@ public class BasePersistence
     if (ppio != null) return ppio;
     throw new IllegalArgumentException("No such persistence medium: "
                                        + pluginName);
+  }
+
+  /**
+   * Disable all plugins (by setting their interval to max
+   **/
+  private void disablePlugins() {
+    for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
+      PersistencePluginInfo ppio = (PersistencePluginInfo) i.next();
+      ppio.setInterval(MAX_PERSISTENCE_INTERVAL);
+    }
   }
 
   public class PersistenceControlServiceImpl
@@ -303,9 +315,17 @@ public class BasePersistence
   {
     try {
       BasePersistence result = new BasePersistence(context, sb);
+      String defaultPlugin;
+      boolean disabled = System.getProperty("org.cougaar.core.persistence.enable", "false").equals("false");
       String persistenceClasses =
-        System.getProperty("org.cougaar.core.persistence.class",
-                           FilePersistence.class.getName() + ":file");
+        System.getProperty("org.cougaar.core.persistence.class");
+      if (persistenceClasses == null) {
+        if (disabled) {
+          persistenceClasses = DummyPersistence.class.getName() + ":" + DUMMY_MEDIA_NAME;
+        } else {
+          persistenceClasses = FilePersistence.class.getName() + ":" + FILE_MEDIA_NAME;
+        }
+      }
       StringTokenizer pluginTokens = new StringTokenizer(persistenceClasses, ",");
       while (pluginTokens.hasMoreTokens()) {
         String pluginSpec = pluginTokens.nextToken();
@@ -327,6 +347,9 @@ public class BasePersistence
         PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
         ppi.init(result, pluginName, pluginParams);
         result.addPlugin(ppi);
+      }
+      if (disabled) {
+        result.disablePlugins();
       }
       return result;
     }

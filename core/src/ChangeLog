@@ -1,5 +1,10 @@
 2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Ignore org.cougaar.core.persistence.enabled. Always create
+	persistence so that agent mobility is always possible. See
+	BasePersistence checkin message for more detail.
+
 	* org/cougaar/core/service/BlackboardService.java: 
 	Bug 1232
 	Define closeTransactionDontReset.
