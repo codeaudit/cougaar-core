@@ -90,6 +90,10 @@ import java.lang.reflect.Modifier;
  * values from later versions of the objects.  
  * @property org.cougaar.core.persistence.debug Enable persistence debugging.
  * @property org.cougaar.core.persistence.class Specify the persistence class to be used.
+ * @property org.cougaar.core.persistence.archivingDisabled Set true to discard archival deltas
+ * @property org.cougaar.core.persistence.clear Set true to discard all deltas on startup
+ * @property org.cougaar.core.persistence.consolidationPeriod
+ * The number of incremental deltas between full deltas (default = 10)
  */
 public abstract class BasePersistence implements Persistence {
 //    private static List clusters = new ArrayList();
@@ -190,9 +194,12 @@ public abstract class BasePersistence implements Persistence {
    */
   private IdentityTable identityTable = new IdentityTable();
 
+  private int consolidationPeriod =
+    Integer.getInteger("org.cougaar.core.persistence.consolidationPeriod", 10).intValue();
   private SequenceNumbers sequenceNumbers = null;
   private SequenceNumbers cleanupSequenceNumbers = null;
-  private boolean archivingEnabled = true;
+  protected boolean archivingEnabled =
+    !Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled");
   private ObjectOutputStream currentOutput;
   private ClusterContext clusterContext;
   private Plan reality = null;
@@ -673,7 +680,14 @@ public abstract class BasePersistence implements Persistence {
         objectsToPersist.clear();
         anyMarks(identityTable.iterator());
         full |= returnBytes;
-        if (sequenceNumbers.current - sequenceNumbers.first >= 10 && sequenceNumbers.current % 10 == 0) {
+        // The following fixes an edge condition. The very first delta
+        // (seqno = 0) is always a full delta whether we want it to be
+        // or not because there are no previous ones. Setting full =
+        // true removes any ambiguity about its fullness.
+        if (sequenceNumbers.current == 0) full = true;
+        // Every so often generate a full delta to consolidate and
+        // prevent the number of deltas from increasing without bound.
+        if (sequenceNumbers.current - sequenceNumbers.first >= consolidationPeriod && sequenceNumbers.current % consolidationPeriod == 0) {
           full = true;
         }
         if (full) {

@@ -156,15 +156,15 @@ public class DatabasePersistence
       } else {
         System.err.println("Warning!!!! Persistence Database does not support transactions");
       }
-      System.out.println("Database transaction isolation is " +
-                         theConnection.getTransactionIsolation());
+//        System.out.println("Database transaction isolation is " +
+//                           theConnection.getTransactionIsolation());
       getSequenceNumbers = theConnection.prepareStatement
         ("select count(seqno), min(seqno), max(seqno)+1 from " + deltaTable +
          " where active =" + FULL + " or active = " + INCREMENTAL);
       putSequenceNumbers1 = theConnection.prepareStatement
         ("update " + deltaTable +
          " set active = " + INACTIVE + " where active = " + INCREMENTAL + " and (seqno < ? or seqno >= ?)");
-      putSequenceNumbers1 = theConnection.prepareStatement
+      putSequenceNumbers2 = theConnection.prepareStatement
         ("update " + deltaTable +
          " set active = " + ARCHIVE + " where active = " + FULL + " and (seqno < ? or seqno >= ?)");
       storeDelta = theConnection.prepareStatement
@@ -178,7 +178,11 @@ public class DatabasePersistence
          " where seqno = ? and (active = " + FULL + ") or (active = " + ARCHIVE + ")");
       cleanDeltas = theConnection.prepareStatement
         ("delete from " + deltaTable +
-         " where active = " + INACTIVE + " and seqno >= ? and seqno < ?");
+         " where "
+         + (archivingEnabled
+            ? ("active = " + INACTIVE)
+            : ("active in (" + INACTIVE + "," + ARCHIVE + ")"))
+         + " and seqno >= ? and seqno < ?");
       try {
         ResultSet rs = getSequenceNumbers.executeQuery();
         rs.close();
@@ -258,9 +262,9 @@ public class DatabasePersistence
       putSequenceNumbers1.setInt(1, sequenceNumbers.first);
       putSequenceNumbers1.setInt(2, sequenceNumbers.current);
       putSequenceNumbers1.executeUpdate();
-      putSequenceNumbers1.setInt(1, sequenceNumbers.first);
-      putSequenceNumbers1.setInt(2, sequenceNumbers.current);
-      putSequenceNumbers1.executeUpdate();
+      putSequenceNumbers2.setInt(1, sequenceNumbers.first);
+      putSequenceNumbers2.setInt(2, sequenceNumbers.current);
+      putSequenceNumbers2.executeUpdate();
     }
     catch (SQLException e) {
       fatalException(e);
@@ -294,7 +298,7 @@ public class DatabasePersistence
     private int deltaNumber;
     private boolean full;
 
-    public MyOutputStream(int deltaNumber, boolean ful) {
+    public MyOutputStream(int deltaNumber, boolean full) {
       super(8192);
       this.deltaNumber = deltaNumber;
       this.full = full;
