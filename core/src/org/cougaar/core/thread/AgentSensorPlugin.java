@@ -36,9 +36,16 @@ public class AgentSensorPlugin extends ComponentPlugin
 
 	ServiceBroker sb = getServiceBroker();
 	// Watcher needs the Node's service broker.
+	// 
+	// NB: NodeControlService is only available on NodeAgents.
+	// Loading this plugin in any other context will fail.
 	NodeControlService ncs = (NodeControlService)
 	    sb.getService(this, NodeControlService.class, null);
-	new LoadWatcher(ncs.getRootServiceBroker());
+
+	if (ncs != null)
+	    new LoadWatcher(ncs.getRootServiceBroker());
+	else
+	    System.err.println("AgentSensonPlugin can only be used in NodeAgents");
     }
 
     protected void setupSubscriptions() {
