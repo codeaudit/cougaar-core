@@ -83,8 +83,8 @@ implements Component, Domain
     }
   }
 
-  private static class RootPlanServiceProvider implements ServiceProvider {
-    private static Service theInstance = new RootPlanImpl();
+  private class RootPlanServiceProvider implements ServiceProvider {
+    private Service theInstance = new RootPlanImpl();
     /* (non-Javadoc)
      * @see org.cougaar.core.component.ServiceProvider#getService(org.cougaar.core.component.ServiceBroker, java.lang.Object, java.lang.Class)
      */
