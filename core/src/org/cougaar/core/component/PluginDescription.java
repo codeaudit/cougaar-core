@@ -14,12 +14,39 @@ import java.net.URL;
  * <p>
  * The word "Plugin" should be interpreted as "Runtime loaded
  * Component" which implements the Plugin interface.
+ * <p>
+ * The Description is interpreted and evaluated to varying degrees
+ * as it is passed through the hierarchy until the insertion point
+ * is found.  In particular, the description will be evaluated for
+ * trust attributes at each level before instantiation or pass-through.
+ * <p>
+ * Perhaps this might be better named ComponentDescription.
  **/
 public interface PluginDescription {
-  /** the name of the class to instantiate **/
+  /** The point (ContainerComponent) at which the Plugin 
+   * should be inserted.  This is the name of a class which 
+   * could be loaded in the core (e.g. not in the plugin's
+   * codebase). It is used by the component hierarchy to
+   * determine the container component the plugin should be
+   * added.  This point is interpreted individually by each
+   * (parent) component as it propagates through the container
+   * hierarchy - it may be interpreted any number of times along
+   * the way to the final insertion point.
+   */
+  String getInsertionPoint();
+
+  /** the name of the class to instantiate, relative to the
+   * codebase url.  The class will not be loaded or instantiated
+   * until the putative parent component has been found and has
+   * had the opportunity to verify the plugin's identity and 
+   * authorization.
+   **/
   String getClassname();
 
-  /** Where the code for classname should be loaded from **/
+  /** Where the code for classname should be loaded from.
+   * Will be evaulated for trust before any classes are loaded
+   * from this location.
+   **/
   URL getCodebase();
 
   /** a parameter supplied to the constructor of classname,
