@@ -29,7 +29,7 @@ import java.io.Serializable;
  */
  
 public class AspectLocation extends TypedAspectValue {
-  protected Location loc_value;
+  private Location loc_value;
 
   protected AspectLocation(int type, Location new_loc_value) {
     super(type);

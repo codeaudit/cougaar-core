@@ -25,7 +25,7 @@ package org.cougaar.planning.ldm.plan;
  */
 
 public abstract class TypedAspectValue extends AspectValue {
-  protected int type;
+  private int type;
 
   protected TypedAspectValue(int type) {
     this.type = type;

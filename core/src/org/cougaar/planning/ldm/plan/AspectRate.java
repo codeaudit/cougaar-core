@@ -35,7 +35,7 @@ import org.cougaar.planning.ldm.measure.TimeRate;
  */
  
 public class AspectRate extends TypedAspectValue {
-  protected Rate rate_value;
+  private Rate rate_value;
 
   protected AspectRate(int type, Rate new_rate_value) {
     super(type);

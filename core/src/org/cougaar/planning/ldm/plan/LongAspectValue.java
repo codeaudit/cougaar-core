@@ -25,7 +25,7 @@ package org.cougaar.planning.ldm.plan;
  */
  
 public class LongAspectValue extends TypedAspectValue {
-  protected long value;
+  private long value;
 
   protected LongAspectValue(int type, long value) {
     super(type);

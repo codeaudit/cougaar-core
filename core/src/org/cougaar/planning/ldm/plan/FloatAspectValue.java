@@ -25,7 +25,10 @@ package org.cougaar.planning.ldm.plan;
  */
  
 public class FloatAspectValue extends TypedAspectValue {
-  protected float value;
+  private float value;
+
+  /** zeros cache **/
+  private static FloatAspectValue[] zeros = new FloatAspectValue[20]; // a bit bigger than we now use.
 
   protected FloatAspectValue(int type, float value) {
     super(type);
@@ -42,6 +45,20 @@ public class FloatAspectValue extends TypedAspectValue {
       value = ((AspectValue)o).floatValue();
     } else {
       throw new IllegalArgumentException("Cannot construct a FloatAspectValue from "+o);
+    }
+
+    // cache zeros
+    if (value == 0.0) {
+      synchronized (zeros) {
+        if (type < zeros.length) {
+         FloatAspectValue v = zeros[type];
+          if (v == null) {
+            v = new FloatAspectValue(type,value);
+            zeros[type] = v;
+          }
+          return v;
+        }
+      }
     }
     return new FloatAspectValue(type,value);
   }

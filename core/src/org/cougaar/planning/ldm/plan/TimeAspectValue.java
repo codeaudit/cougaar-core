@@ -67,8 +67,8 @@ public class TimeAspectValue extends LongAspectValue {
 
   public String toString() {
     synchronized (formatDate) {
-      formatDate.setTime((long) value);
-      return dateTimeFormat.format(formatDate) + "[" + type + "]";
+      formatDate.setTime(longValue());
+      return dateTimeFormat.format(formatDate) + "[" + getType() + "]";
     }
   }
 }
