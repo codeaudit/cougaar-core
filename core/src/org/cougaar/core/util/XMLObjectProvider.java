@@ -23,7 +23,7 @@ public interface XMLObjectProvider
      // Add object to internal DOM Document.
      // Most legacy XMLObjectProviders assume obj is XMLizable 
      //
-     public void addPlanObject(Object obj);
+     public void addObject(Object obj);
 
      //
      // Print DOM Document to System.out
