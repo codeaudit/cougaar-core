@@ -3,6 +3,8 @@
 	* BasePersistence.java:
 	Add toString() method so Persistence instances print something
 	meaningful when included in log messages.
+	Bug #2400 -- Make information on persist failures available in log
+	Add error level log message with the exception.
 
 	* FilePersistenceBase.java:
 	Bug #2304 -- Persistence tries to write file "newSequence" to the CWD

@@ -1179,6 +1179,9 @@ public class BasePersistence
           }
         } catch (Exception e) { // Transaction protection
           rollbackTransaction();
+          if (logger.isErrorEnabled()) {
+            logger.error("Persist failed", e);
+          }
           System.err.print("X");
           throw e;
         }
