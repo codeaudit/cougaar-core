@@ -46,11 +46,11 @@ public interface CommunityRoster {
 
 
   /**
-   * Returns an array of Agent names identifying the agent that are
-   * currently a community member.
-   * @return Array of Agent names
+   * Returns a Collection of ClusterIdentifiers identifying the agents that are
+   * currently community members.
+   * @return Collection of Agent ClusterIdentifiers
    */
-  String[] getMemberAgents();
+  Collection getMemberAgents();
 
 
   /**
@@ -62,10 +62,10 @@ public interface CommunityRoster {
 
 
   /**
-   * Returns an array of community names identifying the communities that are
+   * Returns a Collection of community names identifying the communities that are
    * currently a member.
-   * @return Array of community names
+   * @return Collection of community names
    */
-  String[] getMemberCommunities();
+  Collection getMemberCommunities();
 
 }

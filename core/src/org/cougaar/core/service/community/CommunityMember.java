@@ -21,6 +21,7 @@
 package org.cougaar.core.service.community;
 
 import java.util.*;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 /**
  * Defines name, type, and supported roles for a community member.
@@ -28,19 +29,25 @@ import java.util.*;
 
 public class CommunityMember implements java.io.Serializable{
 
-  public static final int AGENT     = 0;
-  public static final int COMMUNITY = 1;
-
-  private int type;                 // Member type (either AGENT or COMMUNITY)
-  private String member;              // Member name
+  private String memberName;                // Member name
+  private ClusterIdentifier agentId;
   private Collection roles = new Vector();  // List of roles provided by member
 
   /**
-   * Constructs a CommunityMember object with an empty role collection.
+   * Constructs a CommunityMember object for a member community
+   * with an empty role collection.
    */
-  public CommunityMember(int type, String member) {
-    this.type = type;
-    this.member = member;
+  public CommunityMember(String memberCommunityName) {
+    this.memberName = memberCommunityName;
+  }
+
+  /**
+   * Constructs a CommunityMember object for a member agent
+   * with an empty role collection.
+   */
+  public CommunityMember(ClusterIdentifier memberAgent) {
+    this.memberName = memberAgent.toString();
+    this.agentId = memberAgent;
   }
 
   /**
@@ -52,21 +59,22 @@ public class CommunityMember implements java.io.Serializable{
   }
 
   /**
-   * Returns the member type (AGENT or COMMUNITY)
-   * @return Member type
-   */
-  public int getType() { return this.type; }
-
-  /**
    * Returns true if this member is an Agent.
    * @return True if an Agent
    */
-  public boolean isAgent() { return (type == AGENT); }
+  public boolean isAgent() { return (agentId != null); }
+
+  /**
+   * Returns the ClusterIdentifier for this member.  Returns null if the
+   * member is not an Agent.
+   * @return True if an Agent
+   */
+  public ClusterIdentifier getAgentId() { return agentId; }
 
   /**
    * Returns member name.
    */
-  public String getName() { return this.member; }
+  public String getName() { return this.memberName; }
 
   /**
    * Return a collection of role names that this member provides.
@@ -76,7 +84,7 @@ public class CommunityMember implements java.io.Serializable{
   public boolean equals(Object obj) {
     if (obj instanceof CommunityMember) {
       CommunityMember cm = (CommunityMember)obj;
-      return (getType() == cm.getType() && getName().equals(cm.getName()));
+      return (getName().equals(cm.getName()));
     }
     return false;
   }
