@@ -324,7 +324,7 @@ public abstract class PlugInAdapter
       public LDMServesPlugIn getLDM() { return PlugInAdapter.this.getLDM(); }
       
       // evil ones
-      public Distributor getDistributor() { return null; }
+      public Distributor getDistributor() { throw new RuntimeException("Should not be called"); }
       public void schedulePlugIn(ScheduleablePlugIn p) {throw new RuntimeException("Should not be called");}
       public void setTime(long time) {throw new RuntimeException("Should not be called");}
       public void setTime(long time, boolean foo) {throw new RuntimeException("Should not be called");}
