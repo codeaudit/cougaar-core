@@ -51,7 +51,7 @@ public interface DataProtectionService
    *  the public key is about to expire, or if the certificate is revoked.
    *
    *  In order to get access to keys at any time, the client must
-   *  implement the PersistenceProtectionServiceClient interface,
+   *  implement the DataProtectionServiceClient interface,
    *  which provides an iterator over all the key envelopes into which
    *  keys have been placed. The client is responsible for storing the
    *  envelope, so that it is available in the Iterator.
