@@ -67,6 +67,7 @@ public class LoggingServiceProvider implements ServiceProvider {
    * ignored and a default logging setup is used.
    * @param env The environment variables which can be used to configure
    *            how logging is performed.
+   */
 
   public LoggingServiceProvider(Hashtable env) {
     BasicConfigurator.configure();
