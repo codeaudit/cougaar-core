@@ -83,8 +83,16 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
       filtered = ((Number) getValue()).doubleValue();
     }
 
+    public void updateRate(double sample, long elapsed) {
+      double f = Math.exp(- elapsed / TIME_CONSTANT);
+      double g = (1.0 - f) / elapsed;
+      filtered = filtered * f + sample * g;
+    }
+
     public void update(double sample, long elapsed) {
-      filtered = filtered / Math.exp(elapsed / TIME_CONSTANT) + sample;
+      double f = Math.exp(- elapsed / TIME_CONSTANT);
+      double g = (1.0 - f);
+      filtered = filtered * f + sample * g;
     }
 
     public void publish() {
@@ -145,10 +153,11 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
   private void update(boolean publish) {
     long now = System.currentTimeMillis();
     long elapsed = now - then;
+    if (elapsed < 1) elapsed = 1;
     then = now;
-    publishRateCondition.update(backlogSubscription.getAddedCollection().size(), elapsed);
+    publishRateCondition.updateRate(backlogSubscription.getAddedCollection().size(), elapsed);
     backlogCondition.update(backlogSubscription.size(), elapsed);
-    disposeRateCondition.update(backlogSubscription.getRemovedCollection().size(), elapsed);
+    disposeRateCondition.updateRate(backlogSubscription.getRemovedCollection().size(), elapsed);
     if (publish) {
       cancelTimer();
       if (logger.isDebugEnabled()){

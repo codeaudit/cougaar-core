@@ -95,7 +95,7 @@ public class OMCBase implements java.io.Serializable {
    **/
   protected void setValue(Comparable newValue) {
     if (!allowedValues.isAllowed(newValue)) {
-      throw new IllegalArgumentException("setValue: value not allowed");
+      throw new IllegalArgumentException("setValue: value " + newValue + " not allowed");
     }
     if (value.compareTo(newValue) == 0) return; // Already set to this value
     Comparable oldValue = getValue();
