@@ -321,25 +321,25 @@ public abstract class PlugInAdapter
       public ConfigFinder getConfigFinder() { return getBindingSite().getConfigFinder(); }
       public ClusterIdentifier getClusterIdentifier() { return PlugInAdapter.this.getClusterIdentifier();}
       public UIDServer getUIDServer() { return PlugInAdapter.this.getUIDServer(); }
+      public LDMServesPlugIn getLDM() { return PlugInAdapter.this.getLDM(); }
       
       // evil ones
       public Distributor getDistributor() { return null; }
-      public LDMServesPlugIn getLDM() { return null; }
-      public void schedulePlugIn(ScheduleablePlugIn p) {}
-      public void setTime(long time) {}
-      public void setTime(long time, boolean foo) {}
-      public void setTimeRate(double rate) {}
-      public void advanceTime(long period) {}
-      public void advanceTime(long period, boolean foo) {}
-      public void advanceTime(long period, double rate) {}
-      public void advanceTime(ExecutionTimer.Change[] changes) {}
-      public double getExecutionRate() { return 0.0;}
-      public long currentTimeMillis() { return 0; }
-      public void addAlarm(Alarm alarm) {}
-      public void addRealTimeAlarm(Alarm a) {}
-      public MetricsSnapshot getMetricsSnapshot() { return null; }
-      public java.sql.Connection getDatabaseConnection(Object locker) {return null; }
-      public void releaseDatabaseConnection(Object locker) {}
+      public void schedulePlugIn(ScheduleablePlugIn p) {throw new RuntimeException("Should not be called");}
+      public void setTime(long time) {throw new RuntimeException("Should not be called");}
+      public void setTime(long time, boolean foo) {throw new RuntimeException("Should not be called");}
+      public void setTimeRate(double rate) {throw new RuntimeException("Should not be called");}
+      public void advanceTime(long period) {throw new RuntimeException("Should not be called");}
+      public void advanceTime(long period, boolean foo) {throw new RuntimeException("Should not be called");}
+      public void advanceTime(long period, double rate) {throw new RuntimeException("Should not be called");}
+      public void advanceTime(ExecutionTimer.Change[] changes) {throw new RuntimeException("Should not be called");}
+      public double getExecutionRate() { throw new RuntimeException("Should not be called"); }
+      public long currentTimeMillis() { throw new RuntimeException("Should not be called"); }
+      public void addAlarm(Alarm alarm) {throw new RuntimeException("Should not be called");}
+      public void addRealTimeAlarm(Alarm a) {throw new RuntimeException("Should not be called");}
+      public MetricsSnapshot getMetricsSnapshot() { throw new RuntimeException("Should not be called");  }
+      public java.sql.Connection getDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
+      public void releaseDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
     };
 
   protected ConfigFinder getConfigFinder() {
