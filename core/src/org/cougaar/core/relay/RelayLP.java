@@ -25,8 +25,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import org.cougaar.core.blackboard.ABATranslation;
 import org.cougaar.core.blackboard.ChangeReport;
@@ -56,16 +58,16 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
 {
   private final RootPlan rootplan;
   private final MessageAddress self;
+  private final Relay.Token token;
 
   private final Logger logger = LoggerFactory.getInstance().createLogger(getClass());
-
-  private Relay.Token token = new Relay.Token(); // FIXME reconcile bug 
 
   public RelayLP(
       RootPlan rootplan, 
       MessageAddress self) {
     this.rootplan = rootplan;
     this.self = self;
+    token = TokenImpl.getToken(self);
   }
 
   public void init() {
@@ -513,7 +515,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   }
 
   /** 
-   * ChangeReport for this LP to identify it's own changes.
+   * ChangeReport for this LP to identify its own changes.
    */
   private static final class MarkerReport implements ChangeReport {
     public static final MarkerReport INSTANCE = new MarkerReport();
@@ -521,5 +523,30 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     private Object readResolve() { return INSTANCE; }
     public String toString() { return "relay-marker-report"; }
     static final long serialVersionUID = 9091843781928322223L;
+  }
+
+  /** 
+   * Token implementation, private to RelayLP.
+   * <p>
+   * Keeps a map of (agent-&gt;token), which allows rehydrated
+   * relay objects to use "==" token matching.
+   */
+  private static final class TokenImpl extends Relay.Token {
+    private static final Map tokens = new HashMap(13);
+    private final MessageAddress addr;
+    public static TokenImpl getToken(MessageAddress addr) {
+      synchronized (tokens) {
+        TokenImpl t = (TokenImpl) tokens.get(addr);
+        if (t == null) {
+          t = new TokenImpl(addr);
+          tokens.put(addr, t);
+        }
+        return t;
+      }
+    }
+    private TokenImpl(MessageAddress addr) { this.addr = addr; }
+    private Object readResolve() { return getToken(addr); }
+    public String toString() { return "<token "+addr+">"; }
+    static final long serialVersionUID = 3878912876728718092L;
   }
 }
