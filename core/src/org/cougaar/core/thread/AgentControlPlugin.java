@@ -22,8 +22,9 @@
 package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.AgentIdentificationService;
 
 public class AgentControlPlugin extends ComponentPlugin
 {
@@ -35,7 +36,11 @@ public class AgentControlPlugin extends ComponentPlugin
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	new SchedulerWatcher(sb, getClusterIdentifier().toString());
+	AgentIdentificationService svc = (AgentIdentificationService)
+	    sb.getService(this, AgentIdentificationService.class, null);
+	// MessageAddress agent = getClusterIdentifier(); // deprecated
+	MessageAddress agent = svc.getMessageAddress();
+	new SchedulerWatcher(sb, agent.toString());
     }
 
     protected void setupSubscriptions() {
