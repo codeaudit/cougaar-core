@@ -49,6 +49,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String AGENT_COMPONENT_TYPE = "AGENT";
   public static final String QUERY_EXPERIMENT = "queryExperiment";
   public static final String QUERY_AGENT_NAMES = "queryAgentNames";
+  public static final String QUERY_COMPONENTS = "queryComponents";
+  public static final String QUERY_COMPONENT_PARAMS = "queryComponentParams";
   public static final String QUERY_AGENT_PROTOTYPE = "queryAgentPrototype";
   public static final String QUERY_PLUGIN_NAMES = "queryPluginNames";
   public static final String QUERY_PLUGIN_PARAMS = "queryPluginParams";
@@ -75,7 +77,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
    * @param node the name of this node used to extract the information
    * pertinent to this node.
    **/
-  public DBInitializerServiceProvider(String experimentId, String node)
+  public DBInitializerServiceProvider(String trialId)
     throws SQLException, IOException
   {
     dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
@@ -83,8 +85,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
-    substitutions.put(":expt_id", experimentId);
-    substitutions.put(":node_name", node);
+    substitutions.put(":trial_id", trialId);
     try {
       String dbtype = dbp.getDBType();
       String driverParam = "driver." + dbtype;
@@ -144,98 +145,73 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   }
 
   private class InitializerServiceImpl implements InitializerService {
-    public ComponentDescription[] getAgentDescriptions(String nodeName)
+    public ComponentDescription[]
+      getComponentDescriptions(String parentName, String insertionPoint)
       throws InitializerServiceException
     {
+      substitutions.put(":parent_name", parentName);
+      substitutions.put(":insertion_point", insertionPoint);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_AGENT_NAMES, substitutions);
+          String query = dbp.getQuery(QUERY_COMPONENTS, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
-            String agentName = getNonNullString(rs, 1, query);
-            Vector vParams = new Vector(1);
-            vParams.add(agentName);
-            ComponentDescription cd =
-              new ComponentDescription("org.cougaar.core.cluster.ClusterImpl",
-                                       AGENT_INSERTION_POINT,
-                                       "org.cougaar.core.cluster.ClusterImpl",
+            String componentName = getNonNullString(rs, 1, query);
+            String componentClass = getNonNullString(rs, 2, query);
+            String componentId = getNonNullString(rs, 3, query);
+            Statement stmt2 = conn.createStatement();
+            substitutions.put(":component_id", componentId);
+            String query2 = dbp.getQuery(QUERY_COMPONENT_PARAMS, substitutions);
+            ResultSet rs2 = stmt2.executeQuery(query2);
+            Vector vParams = new Vector();
+            while (rs2.next()) {
+              vParams.addElement(getNonNullString(rs2, 1, query2));
+            }
+            ComponentDescription desc =
+              new ComponentDescription(componentName,
+                                       insertionPoint,
+                                       componentClass,
                                        null,  // codebase
                                        vParams,
                                        null,  // certificate
                                        null,  // lease
                                        null); // policy
-            componentDescriptions.add(cd);
+            componentDescriptions.add(desc);
+            rs2.close();
+            stmt2.close();
           }
           int len = componentDescriptions.size();
           ComponentDescription[] result = new ComponentDescription[len];
-          return (ComponentDescription[])
+          result = (ComponentDescription[])
             componentDescriptions.toArray(result);
+//            for (int i = 0; i < result.length; i++) {
+//              StringBuffer buf = new StringBuffer();
+//              buf.append(result[i].getInsertionPoint());
+//              buf.append("=");
+//              buf.append(result[i].getClassname());
+//              Vector params = (Vector) result[i].getParameter();
+//              int n = params.size();
+//              if (n > 0) {
+//                for (int j = 0; j < n; j++) {
+//                  if (j == 0)
+//                    buf.append("(");
+//                  else
+//                    buf.append(", ");
+//                  buf.append(params.elementAt(j));
+//                }
+//                buf.append(")");
+//              }
+//              System.out.println(buf);
+//            }
+          return result;
         } finally {
           conn.close();
         }
       } catch (Exception e) {
         e.printStackTrace();
-        throw new InitializerServiceException(e);
-      }
-    }
-
-    public ComponentDescription[] getPluginDescriptions(String agentName)
-      throws InitializerServiceException
-    {
-      try {
-        Connection conn = DBConnectionPool.getConnection(database, username, password);
-        try {
-          Statement stmt = conn.createStatement();
-          substitutions.put(":agent_name", agentName);
-          String query = dbp.getQuery(QUERY_PLUGIN_NAMES, substitutions);
-          ResultSet rs = stmt.executeQuery(query);
-          List componentDescriptions = new ArrayList();
-          while (rs.next()) {
-            String className = getNonNullString(rs, 1, query);
-            String pluginId = getNonNullString(rs, 2, query);
-            Statement stmt2 = conn.createStatement();
-            substitutions.put(":agent_component_id", pluginId);
-            String query2 = dbp.getQuery(QUERY_PLUGIN_PARAMS, substitutions);
-            System.out.print("plugin=" + className + "(");
-            ResultSet rs2 = stmt2.executeQuery(query2);
-            Vector vParams = new Vector();
-            boolean first = true;
-            while (rs2.next()) {
-              String param = getNonNullString(rs2, 1, query2);
-              if (first) {
-                first = false;
-              } else {
-                System.out.print(", ");
-              }
-              System.out.print(param);
-              vParams.addElement(param);
-            }
-            System.out.println(")");
-            rs2.close();
-            stmt2.close();
-            ComponentDescription cd =
-              new ComponentDescription(className,
-                                       PLUGIN_INSERTION_POINT,
-                                       className,
-                                       null,  // codebase
-                                       vParams,
-                                       null,  // certificate
-                                       null,  // lease
-                                       null); // policy
-            componentDescriptions.add(cd);
-          }
-          rs.close();
-          stmt.close();
-          int len = componentDescriptions.size();
-          ComponentDescription[] result = new ComponentDescription[len];
-          return (ComponentDescription[]) componentDescriptions.toArray(result);
-        } finally {
-          conn.close();
-        }
-      } catch (Exception e) {
         throw new InitializerServiceException(e);
       }
     }

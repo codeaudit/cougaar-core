@@ -30,12 +30,6 @@ import org.cougaar.domain.planning.plugin.AssetDataReader;
 import org.cougaar.domain.planning.plugin.AssetDataFileReader;
 
 public class FileInitializerServiceProvider implements ServiceProvider {
-  private String nodefilename;
-
-  public FileInitializerServiceProvider(String filename) {
-    nodefilename = filename;
-  }
-    
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (serviceClass != InitializerService.class)
       throw new IllegalArgumentException(getClass() + " does not furnish "
@@ -49,20 +43,15 @@ public class FileInitializerServiceProvider implements ServiceProvider {
   }
 
   private class InitializerServiceImpl implements InitializerService {
-    public ComponentDescription[] getAgentDescriptions(String nodeName)
+    public ComponentDescription[]
+      getComponentDescriptions(String parentName, String insertionPoint)
       throws InitializerServiceException
     {
       try {
-        // load node properties
-        // currently assumes ".ini" format
-        String filename;
-        if (nodefilename != null)
-          filename = nodefilename;
-        else
-          filename = nodeName + ".ini";
+        String filename = parentName + ".ini";
         InputStream in = ConfigFinder.getInstance().open(filename);
         try {
-          return INIParser.parse(in, "Node");
+          return INIParser.parse(in, insertionPoint);
         } finally {
           in.close();
         }
@@ -71,29 +60,18 @@ public class FileInitializerServiceProvider implements ServiceProvider {
       }
     }
 
-    public ComponentDescription[] getPluginDescriptions(String agentName)
-      throws InitializerServiceException
-    {
-      try {
-        InputStream in = ConfigFinder.getInstance().open(agentName + ".ini");
-        try {
-          return INIParser.parse(in, "Node.AgentManager.Agent.PluginManager");
-        } finally {
-          in.close();
-        }
-      } catch (Exception e) {
-        throw new InitializerServiceException(e);
-      }
-    }
     public String getAgentPrototype(String agentName) {
       throw new UnsupportedOperationException();
     }
+
     public String[] getAgentPropertyGroupNames(String agentName) {
       throw new UnsupportedOperationException();
     }
+
     public Object[][] getAgentProperties(String agentName, String pgName) {
       throw new UnsupportedOperationException();
     }
+
     public String[][] getAgentRelationships(String agentName) {
       throw new UnsupportedOperationException();
     }
@@ -101,6 +79,7 @@ public class FileInitializerServiceProvider implements ServiceProvider {
     public AssetDataReader getAssetDataReader() {
       return new AssetDataFileReader();
     }
+
     public Object[] translateAttributeValue(String type, String key) {
       return new Object[] {type, key};
     }

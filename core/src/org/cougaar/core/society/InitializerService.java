@@ -26,9 +26,9 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.domain.planning.plugin.AssetDataReader;
 
 public interface InitializerService extends Service {
-    ComponentDescription[] getAgentDescriptions(String nodeName)
-        throws InitializerServiceException;
-    ComponentDescription[] getPluginDescriptions(String agentName)
+    ComponentDescription[]
+        getComponentDescriptions(String parentName,
+                                 String insertionPoint)
         throws InitializerServiceException;
     String getAgentPrototype(String agentName)
         throws InitializerServiceException;
