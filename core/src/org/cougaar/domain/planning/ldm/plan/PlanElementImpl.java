@@ -47,7 +47,7 @@ import org.cougaar.core.society.UID;
 
 public abstract class PlanElementImpl 
   extends PublishableAdapter
-  implements PlanElement, NewPlanElement, PEforCollections, XMLizable, ActiveSubscriptionObject, BeanInfo
+  implements PlanElement, NewPlanElement, PEforCollections, ScheduleElement, XMLizable, ActiveSubscriptionObject, BeanInfo
 {
         
   protected transient Task task;   // changed to transient : Persistence
@@ -223,13 +223,61 @@ public abstract class PlanElementImpl
     notify = v;
   }
   
+  // ScheduleElement implementation
+  /** Start date is a millisecond-precision, inclusive time of start.
+   * @return Date Start time for the task 
+   **/
+  public Date getStartDate() { return new Date(getStartTime()); }
+	
+  /** End Date is millisecond-precision, <em>exclusive</em> time of end.
+   * @return Date End time for the task 
+   **/
+  public Date getEndDate() { return new Date(getEndTime()); }
+	
+  /** is the Date on or after the start time and strictly before the end time?
+   *  @return boolean whether the date is included in this time interval.  
+   **/
+  public boolean included(Date date) {
+    return included(date.getTime());
+  }
+	
+  /** is the time on or after the start time and strictly before the end time?
+   * @return boolean whether the time is included in this time interval 
+   **/
+  public boolean included(long time) {
+    return ( (time >= getStartTime()) && (time < getEndTime()) );
+  }
+
+  /** Does the scheduleelement overlap (not merely abut) the schedule?
+   * @return boolean whether schedules overlap 
+   **/
+  public boolean overlapSchedule(ScheduleElement se) {
+    long tstime = se.getStartTime();
+    long tetime = se.getEndTime();
+                
+    return ( tstime < getEndTime() &&
+             tetime > getStartTime() );
+  }
+
+
+  /** Does the scheduleElement meet/abut the schedule?
+   **/
+  public boolean abutSchedule(ScheduleElement se) {
+    long tstime = se.getStartTime();
+    long tetime = se.getEndTime();
+                
+    return ( tstime == getEndTime() ||
+             tetime == getStartTime() );
+  }
+
+
   // If the planelement is either an allocation or an assettransfer, add the 
   // planelement to the respective Asset's RoleSchedule.
   protected void addToRoleSchedule(Asset asset) {
     Asset roleasset = asset;
     if (roleasset != null) {
       RoleScheduleImpl rsi = (RoleScheduleImpl) roleasset.getRoleSchedule();
-      rsi.addToRoleSchedule(this);
+      rsi.add(this);
     } else {
       System.err.println("\n WARNING - could not add PlanElement to roleschedule");
     }
@@ -238,7 +286,7 @@ public abstract class PlanElementImpl
     Asset roleasset = asset;
     if (roleasset != null) {
       RoleScheduleImpl rsi = (RoleScheduleImpl) roleasset.getRoleSchedule();
-      rsi.removeFromRoleSchedule(this);
+      rsi.remove(this);
     } else {
       System.err.println("\n WARNING - could not remove PlanElement from roleschedule");
     }

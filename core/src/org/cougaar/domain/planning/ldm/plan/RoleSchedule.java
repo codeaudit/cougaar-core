@@ -24,7 +24,7 @@ import org.cougaar.util.*;
  **/
 
 public interface RoleSchedule 
-  extends Collection
+  extends Schedule
 {
   /** @return Asset the Asset of this roleschedule.
    **/
@@ -95,3 +95,8 @@ public interface RoleSchedule
    **/
   double addAspectValues(Collection elementsToAdd, int aspecttype);
 }
+
+
+
+
+

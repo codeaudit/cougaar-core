@@ -25,7 +25,7 @@ import org.cougaar.core.cluster.*;
  **/
 
 public interface PlanElement 
-  extends TimeSpan, UniqueObject, Annotatable, Publishable
+  extends ScheduleElement, UniqueObject, Annotatable, Publishable
 {
 	
   /** @return Plan the Plan of this plan element.
@@ -149,3 +149,6 @@ public interface PlanElement
     }
   }
 }
+
+
+

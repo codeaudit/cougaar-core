@@ -17,6 +17,7 @@ public interface ScheduleType {
   static final String ASSIGNED_AVAILABILITY = "Assigned_Availability";
   static final String OTHER = "Other";
   static final String RELATIONSHIP = "Relationship";
+  static final String ROLE = "Role";
   
   /** @deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleType.TOTAL_CAPACITY
    **/

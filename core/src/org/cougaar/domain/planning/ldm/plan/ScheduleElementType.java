@@ -23,6 +23,7 @@ public interface ScheduleElementType {
   static final Class LOCATION = LocationScheduleElement.class;
   static final Class LOCATIONRANGE = LocationRangeScheduleElement.class;
   static final Class RELATIONSHIP = Relationship.class;
+  static final Class PLAN_ELEMENT = PlanElement.class;
 
   /**deprecated Use org.cougaar.domain.glm.ldm.plan.PlanScheduleElementType.QUANTITY
    **/

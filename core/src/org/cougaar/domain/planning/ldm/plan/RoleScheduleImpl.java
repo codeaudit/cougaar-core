@@ -23,18 +23,20 @@ import org.cougaar.util.*;
  **/
 
 public class RoleScheduleImpl 
-  extends TimeSpanSet
+  extends ScheduleImpl
   implements RoleSchedule, NewRoleSchedule
 {
   private transient Schedule availableschedule;
   private Asset asset;
 	
-	
   /** Constructor
    * @param Asset the asset this roleschedule is attached to
    **/
   public RoleScheduleImpl(Asset theasset) {
-    this.asset = theasset;
+    super();
+    setScheduleType(ScheduleType.ROLE);
+    setScheduleElementType(ScheduleElementType.PLAN_ELEMENT);
+    asset = theasset;
   }
 	
   /** @return the Asset of this roleschedule.
@@ -60,7 +62,8 @@ public class RoleScheduleImpl
   /**
    *  ALPINE INTERNAL METHOD - SHOULD NEVER BE CALLED BY A PLUGIN
    *  add a single planelement to the roleschedule container
-   *	@param aPlanElement PlanElement to add
+   *  @param aPlanElement PlanElement to add
+   *  @deprecated Use add(Object aPlanElement) instead.
    **/
   public synchronized void addToRoleSchedule(PlanElement aPlanElement) {
     add(aPlanElement);
@@ -69,7 +72,8 @@ public class RoleScheduleImpl
   /**
    *  ALPINE INTERNAL METHOD - SHOULD NEVER BE CALLED BY A PLUGIN
    *  remove a single planelement from the roleschedule container
-   *	@param aPlanElement PlanElement to remove
+   *  @param aPlanElement PlanElement to remove
+   *  @deprecated Use remove(Object aPlanElement) instead.
    **/
   public synchronized void removeFromRoleSchedule(PlanElement aPlanElement) {
     remove(aPlanElement);
@@ -80,7 +84,7 @@ public class RoleScheduleImpl
   }
 
   public synchronized Collection getEncapsulatedRoleSchedule(long start, long end) {
-    return encapsulatedSet(start,end);
+    return getEncapsulatedScheduleElements(start, end);
   }
 
   public synchronized Collection getEqualAspectValues(final int aspect, final double value) {
@@ -118,23 +122,19 @@ public class RoleScheduleImpl
     return getOverlappingRoleSchedule(start.getTime(), end.getTime());
   }
   public synchronized Collection getOverlappingRoleSchedule(long start, long end) {
-    return intersectingSet(start,end);
+    return getOverlappingScheduleElements(start,end);
   }
   
-  /** This does not clone the elements, so the caller should
-   * have the roleSchedule synchronized.
-   **/
+  /** get an enumeration over a copy of all of the schedule elements of this 
+   * schedule.
+   * Note that this is a copy, changes to the underlying schedule will not be 
+   * reflected in the Enumeration.
+   * @return Enumeration{ScheduleElement}
+   */
   public Enumeration getRoleScheduleElements() {
-    return new Enumerator(this);
+    return getAllScheduleElements();
   }
 
-  public Collection getScheduleElementsWithDate(Date aDate) {
-    return getScheduleElementsWithTime(aDate.getTime());
-  }
-  public synchronized Collection getScheduleElementsWithTime(long time) {
-    return intersectingSet(time);
-  }
-  
   /** Convenience utility that adds the requested aspectvalues of the estimated
     * allocationresult of each PlanElement (RoleSchedule Element) in the given
     * orderedset.
@@ -148,13 +148,30 @@ public class RoleScheduleImpl
   public double addAspectValues(Collection elementsToAdd, 
                                        int aspecttype) {
     double acc = 0.0;
-    for (Iterator i = elementsToAdd.iterator(); i.hasNext(); ) {
-      PlanElement anElement = (PlanElement)i.next();
-      AllocationResult aResult = anElement.getEstimatedResult();
-      if (aResult != null && aResult.isDefined(aspecttype)) {
-        acc += aResult.getValue(aspecttype);
+
+    synchronized (elementsToAdd) {
+      if (elementsToAdd instanceof List) {
+        int listSize = elementsToAdd.size();
+        
+        for (int index = 0; index < listSize; index++) {
+          PlanElement anElement = 
+            (PlanElement)((List) elementsToAdd).get(index);
+          AllocationResult aResult = anElement.getEstimatedResult();
+          if (aResult != null && aResult.isDefined(aspecttype)) {
+            acc += aResult.getValue(aspecttype);
+          }
+        }
+      } else {
+        for (Iterator i = elementsToAdd.iterator(); i.hasNext(); ) {
+          PlanElement anElement = (PlanElement)i.next();
+          AllocationResult aResult = anElement.getEstimatedResult();
+          if (aResult != null && aResult.isDefined(aspecttype)) {
+            acc += aResult.getValue(aspecttype);
+          }
+        }
       }
-    }
+    } // end synchronization on elementsToAdd
+
     return acc;
   }
       
@@ -163,12 +180,17 @@ public class RoleScheduleImpl
     int l = size();
     String[] IDs = new String[l];
     for (int i = 0; i < l; i++) {
-      IDs[i] = ((PlanElement)this.get(i)).getUID().toString();
+      IDs[i] = ((PlanElement)get(i)).getUID().toString();
     }
     return IDs;
   }
 
   public String getRoleScheduleID(int i) {
-    return ((PlanElement)this.get(i)).getUID().toString();
+    return ((PlanElement)get(i)).getUID().toString();
   }
+
 }
+
+
+
+
