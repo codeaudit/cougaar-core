@@ -1,3 +1,42 @@
+2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Subscriber.java:
+	Applies to Bug #241
+	Fixes null pointer exception by checking for null and printing
+	something different. Null pointer exceptions during the printing
+	of PublishExceptions should cease.
+
+	* AddEnvelopeTuple.java:
+	Applies to Bug #181
+	Add null check when creating an add envelope event. Should help
+	catch this bug sooner. IllegalArgumentException should occur if
+	bad publishAdd is performed.
+
+	* ChangeEnvelopeTuple.java:
+	Applies to Bug #181
+	Add null check when creating an change envelope event. Should help
+	catch this bug sooner. IllegalArgumentException should occur if
+	bad publishChange is performed.
+
+	* RemoveEnvelopeTuple.java:
+	Applies to Bug #181
+	Add null check when creating an remove envelope event. Should help
+	catch this bug sooner. IllegalArgumentException should occur if
+	bad publishRemove is performed.
+
+	* BulkEnvelopeTuple.java:
+	Applies to Bug #181
+	Add null check when creating an bulk envelope event. Should help
+	catch this bug sooner. IllegalArgumentException should occur if
+	bad BulkEnvelopeTuple is created.
+
+	* ALPPlan.java:
+	Applies to whatever the bug is about debugging output
+	Add a systemproperty
+	org.cougaar.core.cluster.enablePublishException to enable the
+	generation of PublishExceptions. Defaults to true since such
+	exceptions may indicate a bug. May be set to false to ignore.
+
 1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* Added changes to support persistence:
