@@ -279,6 +279,9 @@ public class AssetDataPlugIn extends SimplePlugIn {
     NewItemIdentificationPG itemIdProp = 
       (NewItemIdentificationPG)asset.getItemIdentificationPG();
     itemIdProp.setItemIdentification(itemIdentification);
+    // Nomenclature defaults to itemIdentification
+    itemIdProp.setNomenclature(itemIdentification);
+
     
     NewClusterPG cpg = (NewClusterPG)asset.getClusterPG();
     cpg.setClusterIdentifier(ClusterIdentifier.getClusterIdentifier(clusterName));
