@@ -42,7 +42,9 @@ import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.persist.BasePersistence;
+import org.cougaar.core.persist.BlackboardPersistence;
 import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceException;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.service.AlarmService;
@@ -590,8 +592,8 @@ public class Blackboard extends Subscriber
     return privateGetPublishedChanges();
   }
 
-  public Object getState() throws PersistenceNotEnabledException {
-    return myDistributor.getState();
+  public PersistenceObject getPersistenceObject() throws PersistenceNotEnabledException {
+    return myDistributor.getPersistenceObject();
   }
 
   /** Ensure that all the domains know that this is THE blackboard
@@ -630,7 +632,8 @@ public class Blackboard extends Subscriber
 
   protected Persistence createPersistence() {
     try {
-      Persistence result = BasePersistence.find(myServiceBroker);
+//       Persistence result = BasePersistence.find(myServiceBroker);
+      Persistence result = BlackboardPersistence.find(myServiceBroker);
       if (System.getProperty("org.cougaar.core.persistence.disableWrite", "false").equals("true")) {
         String sequence =
           System.getProperty("org.cougaar.core.persistence.sequence", "");

@@ -34,6 +34,7 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.service.BlackboardMetricsService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.persist.PersistenceObject;
 
 /** The standard Blackboard Component implementation.
  * For now it just looks like a container but doesn't
@@ -45,7 +46,7 @@ public class StandardBlackboard
 {
   private ServiceBroker sb = null;
   private BindingSite bindingSite = null;
-  private Object loadState = null;
+//   private Object loadState = null;
   private Blackboard bb = null;
   private Distributor d = null;
 
@@ -61,15 +62,23 @@ public class StandardBlackboard
   }
 
   public void setState(Object loadState) {
-    this.loadState = loadState;
+//     this.loadState = loadState;
   }
 
   public Object getState() {
+    return null;
+//     try {
+//       return bb.getState();
+//     } catch (Exception e) {
+//       throw new RuntimeException(
+//           "Unable to capture Blackboard state", e);
+//     }
+  }
+  public PersistenceObject getPersistenceObject() {
     try {
-      return bb.getState();
+      return bb.getPersistenceObject();
     } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to capture Blackboard state", e);
+      throw new RuntimeException("Unable to capture Blackboard state", e);
     }
   }
 
@@ -85,12 +94,13 @@ public class StandardBlackboard
     }
 
     // create blackboard with optional prior-state
-    bb = new Blackboard(msgSwitch, sb, loadState);
-    loadState = null;
+    bb = new Blackboard(msgSwitch, sb, null);
+//     bb = new Blackboard(msgSwitch, sb, loadState);
+//     loadState = null;
 
     bb.init();
     d = bb.getDistributor();
-    d.getPersistence().registerServices(sb);
+//     d.getPersistence().registerServices(sb);
 
     bb.connectDomains();
 
@@ -115,7 +125,7 @@ public class StandardBlackboard
     sb.revokeService(BlackboardMetricsService.class, bbSP);
     sb.revokeService(BlackboardService.class, bbSP);
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
-    d.getPersistence().unregisterServices(sb);
+//     d.getPersistence().unregisterServices(sb);
 
     bb.stop();
     if (msgSwitch != null) {
@@ -184,6 +194,10 @@ public class StandardBlackboard
 
     public void restartAgent(MessageAddress cid) {
       blackboard.getDistributor().restartAgent(cid);
+    }
+
+    public PersistenceObject getPersistenceObject() {
+      return blackboard.getDistributor().getPersistenceObject();
     }
   }
 }

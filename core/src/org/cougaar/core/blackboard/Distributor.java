@@ -35,7 +35,7 @@ import java.util.TimerTask;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.Persistence;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.util.UnaryPredicate;
@@ -734,7 +734,7 @@ final class Distributor {
    * busy. This second clause is needed so we don't end up being idle
    * with needToPersist being true.
    **/
-  private Object doPersistence(
+  private PersistenceObject doPersistence(
       boolean persistedStateNeeded, boolean full) {
     assert !Thread.holdsLock(distributorLock);
     assert  Thread.holdsLock(transactionLock);
@@ -746,7 +746,7 @@ final class Distributor {
             new PersistenceSubscriberState(subscriber));
       }
     }
-    Object result;
+    PersistenceObject result;
     synchronized (getMessageManager()) {
       getMessageManager().advanceEpoch();
       result = persistence.persist(
@@ -846,9 +846,7 @@ final class Distributor {
   /**
    * Force a persistence delta to be generated.
    **/
-  public void persistNow() throws PersistenceNotEnabledException {
-    persist(false, false);
-    System.gc();
+  public void persistNow() {
     persist(false, true);
   }
 
@@ -856,9 +854,7 @@ final class Distributor {
    * Force a (full) persistence delta to be generated and
    * return result
    **/
-  public Object getState() throws PersistenceNotEnabledException {
-    persist(false, false);
-    System.gc();
+  public PersistenceObject getPersistenceObject() {
     return persist(true, true);
   }
 
@@ -880,13 +876,10 @@ final class Distributor {
    * persistence delta if isStateWanted is true, null if
    *   isStateWanted is false.
    **/
-  private Object persist(boolean isStateWanted, boolean full)
-    throws PersistenceNotEnabledException
-    {
+  private PersistenceObject persist(boolean isStateWanted, boolean full) {
       assert !Thread.holdsLock(distributorLock);
       assert !Thread.holdsLock(transactionLock);
-      if (persistence == null)
-        throw new PersistenceNotEnabledException();
+      if (persistence == null) return null;
       while (true) {            // Loop until we succeed and return a result
         synchronized (transactionLock) {
           // First we must wait for any other persistence activity to cease
@@ -929,7 +922,7 @@ final class Distributor {
               if (logger.isInfoEnabled()) {
                 logger.info("Persist started (persist)");
               }
-              Object result = doPersistence(isStateWanted, full);
+              PersistenceObject result = doPersistence(isStateWanted, full);
               if (logger.isInfoEnabled()) logger.info("reservation release");
               persistenceReservationManager.release(persistence);
               if (logger.isInfoEnabled()) {
@@ -987,11 +980,7 @@ final class Distributor {
     // FIXME unlocked access!
     if (needToPersist &&
         (!lazyPersistence || timeToLazilyPersist())) {
-      try {
-        persist(false, false);
-      } catch (PersistenceNotEnabledException pnee) {
-        pnee.printStackTrace();
-      }
+      persist(false, false);
     }
   }
 

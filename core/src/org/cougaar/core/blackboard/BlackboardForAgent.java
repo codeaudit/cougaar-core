@@ -24,6 +24,7 @@ package org.cougaar.core.blackboard;
 import java.util.List;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.Service;
+import org.cougaar.core.persist.PersistenceObject;
 
 /**
  * The service which the Blackboard serves back to the Agent.
@@ -34,4 +35,6 @@ public interface BlackboardForAgent
   void receiveMessages(List messages);
 
   void restartAgent(MessageAddress cid);
+
+  PersistenceObject getPersistenceObject();
 }

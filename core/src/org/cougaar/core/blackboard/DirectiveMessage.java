@@ -31,6 +31,8 @@ import java.util.Collection;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.persist.PersistenceInputStream;
+import org.cougaar.core.persist.PersistenceOutputStream;
 import org.cougaar.util.StringUtility;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -140,18 +142,24 @@ public class DirectiveMessage extends ClusterMessage
    **/
   private void writeObject(final ObjectOutputStream stream) throws IOException {
     stream.defaultWriteObject();
-
-    withContext( getSource(),
-                 new Runnable() {
-                     public void run() {
-                       try {
-                         stream.writeInt(directives.length);
-                         for (int i = 0; i < directives.length; i++) {
-                           stream.writeObject(directives[i]);
-                         }
-                       } catch (Exception e) {
-                         throw new RuntimeException("Thunk", e);
-                       }}});
+    Runnable thunk =
+      new Runnable() {
+        public void run() {
+          try {
+            stream.writeInt(directives.length);
+            for (int i = 0; i < directives.length; i++) {
+              stream.writeObject(directives[i]);
+            }
+          } catch (Exception e) {
+            throw new RuntimeException("Thunk", e);
+          }
+        }
+      };
+    if (stream instanceof PersistenceOutputStream) {
+      thunk.run();
+    } else {
+      withContext( getSource(), thunk);
+    }
   }
 
   /** when we deserialize, note the message context with the 
@@ -164,17 +172,24 @@ public class DirectiveMessage extends ClusterMessage
   {
     stream.defaultReadObject();
 
-    withContext(getDestination(),
-                 new Runnable() {
-                     public void run() {
-                       try {
-                         directives = new Directive[stream.readInt()];
-                         for (int i = 0; i < directives.length; i++) {
-                           directives[i] = (Directive) stream.readObject();
-                         }
-                       } catch (Exception e) {
-                         throw new RuntimeException("Thunk", e);
-                       }}});
+    Runnable thunk =
+      new Runnable() {
+        public void run() {
+          try {
+            directives = new Directive[stream.readInt()];
+            for (int i = 0; i < directives.length; i++) {
+              directives[i] = (Directive) stream.readObject();
+            }
+          } catch (Exception e) {
+            throw new RuntimeException("Thunk", e);
+          }
+        }
+      };
+    if (stream instanceof PersistenceInputStream) {
+      thunk.run();
+    } else {
+      withContext(getDestination(), thunk);
+    }
   }
 
   // Externalizable support
@@ -185,18 +200,24 @@ public class DirectiveMessage extends ClusterMessage
 
     out.writeBoolean(allMessagesAcknowledged);
 
-    withContext( getSource(),
-                 new Runnable() {
-                     public void run() {
-                       try {
-                         out.writeInt(directives.length);
-                         for (int i = 0; i < directives.length; i++) {
-                           out.writeObject(directives[i]);
-                         }
-                       } catch (Exception e) {
-                         throw new RuntimeException("Thunk", e);
-                       }}});
-
+    Runnable thunk =
+      new Runnable() {
+        public void run() {
+          try {
+            out.writeInt(directives.length);
+            for (int i = 0; i < directives.length; i++) {
+              out.writeObject(directives[i]);
+            }
+          } catch (Exception e) {
+            throw new RuntimeException("Thunk", e);
+          }
+        }
+      };
+    if (out instanceof PersistenceOutputStream) {
+      thunk.run();
+    } else {
+      withContext( getSource(), thunk);
+    }
   }
 
   /** when we deserialize, note the message context with the 
@@ -211,17 +232,24 @@ public class DirectiveMessage extends ClusterMessage
 
     allMessagesAcknowledged = in.readBoolean();
 
-    withContext(getDestination(),
-                 new Runnable() {
-                     public void run() {
-                       try {
-                         directives = new Directive[in.readInt()];
-                         for (int i = 0; i < directives.length; i++) {
-                           directives[i] = (Directive) in.readObject();
-                         }
-                       } catch (Exception e) {
-                         throw new RuntimeException("Thunk", e);
-                       }}});
+    Runnable thunk =
+      new Runnable() {
+        public void run() {
+          try {
+            directives = new Directive[in.readInt()];
+            for (int i = 0; i < directives.length; i++) {
+              directives[i] = (Directive) in.readObject();
+            }
+          } catch (Exception e) {
+            throw new RuntimeException("Thunk", e);
+          }
+        }
+      };
+    if (in instanceof PersistenceInputStream) {
+      thunk.run();
+    } else {
+      withContext(getDestination(), thunk);
+    }
   }
 
   /** Wrapper for a Directive so that we can propagate ChangeReports with
