@@ -33,6 +33,7 @@ import java.rmi.server.RMISocketFactory;
 import org.cougaar.core.mts.SocketFactory;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.wp.Timestamp;
 
 /**
  * RMI-specific implementation of a bootstrap lookup.
@@ -86,14 +87,26 @@ extends BootstrapLookupBase
   private static final String DIR_PREFIX = "COUGAAR_WP/";
 
   // pause between RMI registry lookups
-  private static final long DELAY_FOR_LOOKUP = 30*1000;
+  private static final long DELAY_FOR_LOOKUP = 
+    Long.parseLong(
+        System.getProperty(
+          "org.cougaar.core.wp.resolver.bootstrap.rmi.lookup",
+          "30000"));
 
   // pause between alias re-lookup if we find a conflicting
   // alias and `allowAliasChange()` is false.
-  private static final long DELAY_FOR_RETRY_ALIAS = 2*60*1000;
+  private static final long DELAY_FOR_RETRY_ALIAS = 
+    Long.parseLong(
+        System.getProperty(
+          "org.cougaar.core.wp.resolver.bootstrap.rmi.retryAlias",
+          "120000"));
 
   // pause between verification of successful lookups
-  private static final long DELAY_FOR_VERIFY = 2*60*1000;
+  private static final long DELAY_FOR_VERIFY =
+    Long.parseLong(
+        System.getProperty(
+          "org.cougaar.core.wp.resolver.bootstrap.rmi.verify",
+          "120000"));
 
   // if an alias is created, and a subsequent verification
   // fails, should we allow a new alias name?
@@ -197,13 +210,16 @@ extends BootstrapLookupBase
             (shouldBind && bindEntry != null));
         if (r == null) {
           if (logger.isInfoEnabled()) {
+            long now = System.currentTimeMillis();
+            long delay = now+getDelayForLookup();
             logger.info(
                 "Unable to lookup"+
                 (shouldBind ? "/create" : "")+
                 " rmi registry on "+host+":"+port+
-                ", will attempt another lookup in "+
-                getDelayForLookup()+" millis");
+                ", will attempt another lookup at "+
+                Timestamp.toString(delay,now));
           }
+          logger.printDot("!");
           return null;
         }
 
@@ -218,14 +234,16 @@ extends BootstrapLookupBase
           }
           if (newAccess == null) {
             if (logger.isInfoEnabled()) {
+              long now = System.currentTimeMillis();
+              long delay = now+getDelayForLookup();
               logger.info(
                   "Unable to lookup"+
                   (shouldBind ? "/bind" : "")+
                   " rmi remote object for (name="+
                   name+", entry="+bindEntry+") in the "+
                   " rmi registry on "+host+":"+port+
-                  ", will attempt another lookup in "+
-                  getDelayForLookup()+" millis");
+                  ", will attempt another lookup "+
+                  Timestamp.toString(delay,now));
             }
             return null;
           }
@@ -235,13 +253,15 @@ extends BootstrapLookupBase
         AddressEntry newFound = lookupEntry(newAccess);
         if (newFound == null) {
           if (logger.isInfoEnabled()) {
+            long now = System.currentTimeMillis();
+            long delay = now+getDelayForLookup();
             logger.info(
                 "Unable to lookup entry in the rmi"+
                 " remote object ("+newAccess+
                 ") found under name ("+name+
                 ") in the rmi registry on "+host+":"+port+
-                ", will attempt another lookup in "+
-                getDelayForLookup()+" millis");
+                ", will attempt another lookup "+
+                Timestamp.toString(delay,now));
           }
           return null;
         }

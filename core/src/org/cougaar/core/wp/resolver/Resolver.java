@@ -33,6 +33,7 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
@@ -42,16 +43,17 @@ import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.WhitePages; // inlined
+import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.core.wp.resolver.bootstrap.Bootstrap; // inlined
 
 /**
  * This is the client-side white pages resolver, which includes
  * subcomponents to:<ul>
+ *   <li>cache fetched entries and lists</li>
  *   <li>bootstrap the WP</li>
- *   <li>send and receive messages</li>
  *   <li>batch requests</li>
  *   <li>renew binding leases</li>
- *   <li>cache fetched entries with a TTL</li>
+ *   <li>send and receive messages</li>
  * </ul>
  * <p>
  * The subcomponents are pluggable to simply the configuration
@@ -65,7 +67,6 @@ extends ContainerSupport
 
   private ServiceBroker rootsb;
   private LoggingService logger;
-  private WhitePagesService rootwps;
   private MessageAddress agentId;
   private AgentIdentificationService agentIdService;
 
@@ -102,6 +103,26 @@ extends ContainerSupport
 
     // add defaults
     l.add(new ComponentDescription(
+            "CacheEntries",
+            INSERTION_POINT+".CacheEntries",
+            "org.cougaar.core.wp.resolver.CacheEntriesHandler",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
+            "CacheLists",
+            INSERTION_POINT+".CacheLists",
+            "org.cougaar.core.wp.resolver.CacheListsHandler",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
             "Boot",
             Bootstrap.INSERTION_POINT,
             "org.cougaar.core.wp.resolver.bootstrap.Bootstrap",
@@ -111,6 +132,37 @@ extends ContainerSupport
             null,
             null,
             ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
+            "Batch",
+            INSERTION_POINT+".Batch",
+            "org.cougaar.core.wp.resolver.BatchHandler",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
+            "Lease",
+            INSERTION_POINT+".Lease",
+            "org.cougaar.core.wp.resolver.LeaseHandler",
+            null,
+            "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
+            "Remote",
+            INSERTION_POINT+".Remote",
+            "org.cougaar.core.wp.resolver.RemoteHandler",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+
 
     // read config
     ServiceBroker sb = getServiceBroker();
@@ -141,43 +193,22 @@ extends ContainerSupport
       logger.debug("Loading resolver");
     }
 
-    rootwps = (WhitePagesService)
-      rootsb.getService(this, WhitePagesService.class, null);
-    if (rootwps == null) {
-      throw new RuntimeException("Unable to obtain root WP");
-    }
-    if (logger.isDebugEnabled()) {
-      logger.debug("Got rootwps ("+rootwps+")");
-    }
-
     handlerRegistrySP = new HandlerRegistrySP();
     getChildServiceBroker().addService(
         HandlerRegistryService.class, handlerRegistrySP);
 
-    super.load();
-
-    // override the root WPS
+    // advertise the white pages service
     wpsProxySP = new WPSProxySP();
-    ServiceProvider dummySP = new ServiceProvider() {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        throw new InternalError();
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        throw new InternalError();
-      }
-    };
-    rootsb.revokeService(WhitePagesService.class, dummySP);
     if (!rootsb.addService(WhitePagesService.class, wpsProxySP)) {
       if (logger.isErrorEnabled()) {
         logger.error("Failed WPS replace");
       }
     }
 
+    super.load();
+
     if (logger.isInfoEnabled()) {
-      logger.info("Replaced root wp with resolver proxy: "+wpsProxySP);
+      logger.info("Loaded white pages resolver");
     }
   }
 
@@ -186,6 +217,7 @@ extends ContainerSupport
 
     // release services
     ServiceBroker sb = getServiceBroker();
+
     if (agentIdService != null) {
       sb.releaseService(
           this, AgentIdentificationService.class, agentIdService);
@@ -195,11 +227,6 @@ extends ContainerSupport
       sb.releaseService(
           this, LoggingService.class, logger);
       logger = null;
-    }
-    if (rootwps != null) {
-      rootsb.releaseService(
-          this, WhitePagesService.class, rootwps);
-      rootwps = null;
     }
 
     if (handlerRegistrySP != null) {
@@ -233,21 +260,61 @@ extends ContainerSupport
     if (logger.isDebugEnabled()) {
       logger.debug("Resolver intercept wp request: "+req);
     }
-    Response res = req.createResponse();
+    Response origRes = req.createResponse();
+    Response res = origRes;
     for (Iterator iter = handlers.iterator();
         iter.hasNext();
         ) {
       Handler h = (Handler) iter.next();
       res = h.submit(res);
       if (res == null || res.isAvailable()) {
-        return res;
+        if (logger.isDebugEnabled()) {
+          // get class name
+          String id = h.getClass().getName();
+          int idx = id.lastIndexOf('.');
+          if (idx > 0) {
+            id = id.substring(idx+1);
+          }
+          logger.debug(id+" handled "+res);
+        }
+        return origRes;
       }
     }
-    // throw away res, ask NS
+    // must be in the remote handler's outQueue
     if (logger.isDebugEnabled()) {
-      logger.debug("Delegate request to root wps");
+      logger.debug("Sending request to root wp");
     }
-    return rootwps.submit(req);
+    return origRes;
+  }
+
+  private boolean myHandleMessage(Message m) {
+    if (!(m instanceof WhitePagesMessage)) {
+      return false;
+    }
+    WhitePagesMessage wpm = (WhitePagesMessage) m;
+    if (logger.isDebugEnabled()) {
+      logger.debug("Handle white pages message: "+wpm);
+    }
+    return false;
+  }
+
+  private void myExecute(Request req, Object result, long ttl) {
+    // validate
+    if (req instanceof Request.Get) {
+      if (logger.isErrorEnabled()) {
+        logger.error(
+            "Invalid response message!"+
+            "  All outgoing \"get\" requests"+
+            " are upgraded to \"getAll\": "+req);
+      }
+      return;
+    }
+    for (Iterator iter = handlers.iterator();
+        iter.hasNext();
+        ) {
+      Handler h = (Handler) iter.next();
+      h.execute(req, result, ttl);
+    }
   }
 
   private class HandlerRegistrySP 
@@ -259,6 +326,10 @@ extends ContainerSupport
           }
           public void unregister(Handler h) {
             Resolver.this.removeHandler(h);
+          }
+          public void execute(
+              Request req, Object result, long ttl) {
+            Resolver.this.myExecute(req, result, ttl);
           }
         };
       public Object getService(

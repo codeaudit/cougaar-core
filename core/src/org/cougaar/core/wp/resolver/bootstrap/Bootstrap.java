@@ -22,11 +22,9 @@
 package org.cougaar.core.wp.resolver.bootstrap;
 
 import java.net.URL;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +45,7 @@ import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.wp.resolver.Handler;
 import org.cougaar.core.wp.resolver.HandlerRegistryService;
 import org.cougaar.core.wp.resolver.Resolver; // inlined
+import org.cougaar.util.IdentityHashSet;
 
 /**
  * This is the resolver bootstrap cache, which includes
@@ -218,12 +217,16 @@ extends ContainerSupport
       }
     } else if (req instanceof Request.Bind) {
       Request.Bind bin = (Request.Bind) req;
-      AddressEntry ae = bin.getAddressEntry();
-      boolean overWrite = bin.isOverWrite();
-      if (overWrite) {
-        bindWatchers.rebind(ae);
+      if (bin.isRenewal()) {
+        // ignore
       } else {
-        bindWatchers.bind(ae);
+        AddressEntry ae = bin.getAddressEntry();
+        boolean overWrite = bin.isOverWrite();
+        if (overWrite) {
+          bindWatchers.rebind(ae);
+        } else {
+          bindWatchers.bind(ae);
+        }
       }
     } else if (req instanceof Request.Unbind) {
       Request.Unbind unb = (Request.Unbind) req;
@@ -472,39 +475,6 @@ extends ContainerSupport
       public void releaseService(
           ServiceBroker sb, Object requestor,
           Class serviceClass, Object service) {
-      }
-    }
-
-  /**
-   * Hash set based upon identity.
-   * Should be in the JDK's utils...
-   */
-  public static class IdentityHashSet 
-    extends AbstractSet
-    implements Set
-    {
-      private final Map map = new IdentityHashMap();
-      private static final Object PRESENT = new Object();
-      public Iterator iterator() {
-        return map.keySet().iterator();
-      }
-      public int size() {
-        return map.size();
-      }
-      public boolean isEmpty() {
-        return map.isEmpty();
-      }
-      public boolean contains(Object o) {
-        return map.containsKey(o);
-      }
-      public boolean add(Object o) {
-        return map.put(o, PRESENT)==null;
-      }
-      public boolean remove(Object o) {
-        return map.remove(o)==PRESENT;
-      }
-      public void clear() {
-        map.clear();
       }
     }
 }

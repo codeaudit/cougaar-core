@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2002-2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,13 +19,12 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp;
+package org.cougaar.core.wp.server;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
@@ -35,24 +34,24 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.wp.resolver.Resolver; // inlined
-import org.cougaar.core.wp.server.Server; // inlined
+import org.cougaar.core.wp.WhitePages; // inlined
 
 /**
- * This container holds the client-side WP resolver and
- * server WP authorities.
+ * This is the server-side white pages server, which includes
+ * subcomponents to:<ul>
+ *   <li>act as a wp zone authority</li>
+ *   <li>manage bind leases</li>
+ *   <li>redirect requests to other zones</li>
+ * </ul>
  * <p>
- * The job of this component is simply to decide which WP
- * components should be loaded and hold onto them.
- * <p>
- * This component should be inserted into the NodeAgent
- * before the MTS.
+ * The subcomponents are pluggable to simply the configuration
+ * and allow future enhancements.
  */
-public class WhitePages
+public class Server
 extends ContainerSupport
 {
   public static final String INSERTION_POINT = 
-    Agent.INSERTION_POINT + ".WP";
+    WhitePages.INSERTION_POINT + ".Server";
 
   private LoggingService logger;
   private MessageAddress agentId;
@@ -62,8 +61,7 @@ extends ContainerSupport
     this.logger = logger;
   }
 
-  public void setAgentIdentificationService(
-      AgentIdentificationService ais) {
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
     if (ais != null) {
       this.agentId = ais.getMessageAddress();
@@ -79,26 +77,15 @@ extends ContainerSupport
 
     // add defaults
     l.add(new ComponentDescription(
-            "Resolver",
-            Resolver.INSERTION_POINT,
-            "org.cougaar.core.wp.resolver.Resolver",
+            "RootAuth",
+            INSERTION_POINT+".RootAuth",
+            "org.cougaar.core.wp.server.RootAuthority",
             null,
-            null,
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-    l.add(new ComponentDescription(
-            "Server",
-            Server.INSERTION_POINT,
-            "org.cougaar.core.wp.server.Server",
-            null,
-            null,
+            "",
             null,
             null,
             null,
             ComponentDescription.PRIORITY_COMPONENT));
-
 
     // read config
     ServiceBroker sb = getServiceBroker();
@@ -122,6 +109,14 @@ extends ContainerSupport
     }
 
     return new ComponentDescriptions(l);
+  }
+
+  public void load() {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Loading server");
+    }
+
+    super.load();
   }
 
   public void unload() {

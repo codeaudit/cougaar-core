@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2002-2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,23 +19,44 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver;
-
-import org.cougaar.core.component.Service;
-import org.cougaar.core.service.wp.Request;
+package org.cougaar.core.wp;
 
 /**
- * Register and unregister resolver handlers.
+ * Utility class to format longs as:<pre>
+ *    TIME{[+-]RELATIVE_TO_NOW}
+ * </pre>.
  * <p>
- * Only child components of Resolver can obtain this service.
+ * For example, if t=123 and now=300, then <tt>toString(t,now)</tt>
+ * will return:<pre>
+ *    123{-177}
+ * </pre>
+ * <p>
+ * One exception is when t=0, in which case the method will
+ * return:<pre>
+ *    0
+ * </pre>
  */
-public interface HandlerRegistryService
-extends Service 
-{
-  void register(Handler h);
-  void unregister(Handler h);
+public final class Timestamp {
+  private Timestamp() { }
 
-  // tell the handlers to execute the following remote result.
-  // only RemoteHandler should call this!
-  void execute(Request req, Object result, long ttl);
+  public static String toString(long t) {
+    if (t == 0) {
+      return "0";
+    } else {
+      return toString(t, System.currentTimeMillis());
+    }
+  }
+
+  public static String toString(long t, long now) {
+    if (t == 0) {
+      return "0";
+    } else {
+      long diff = t - now;
+      return 
+        t+"{"+
+        (diff >= 0 ?
+         "+"+diff+"}" :
+         diff+"}");
+    }
+  }
 }

@@ -22,7 +22,6 @@
 package org.cougaar.core.wp;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,6 +29,10 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 
 /**
+ * Utility class to recursively find all nodes in the WP.
+ * <p>
+ * Not scalable, so the methods of this class are deprecated.
+ *
  * @property org.cougaar.wp.list.useShortcut
  *   Assume that each Node's MTS binds under "<i>node</i>(MTS)",
  *   which simplifies the "listAllNodes" WP lookup.

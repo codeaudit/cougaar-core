@@ -24,6 +24,7 @@ package org.cougaar.core.wp;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,6 +32,11 @@ import java.util.List;
 import java.util.Set;
 import org.cougaar.core.service.wp.WhitePagesService;
 
+/**
+ * Utility class to recursively find all agents in the WP.
+ * <p>
+ * Not scalable, so the methods of this class are deprecated.
+ */
 public class ListAllAgents {
 
   /**

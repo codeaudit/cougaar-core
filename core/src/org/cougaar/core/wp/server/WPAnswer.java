@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2002-2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,23 +19,44 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver;
+package org.cougaar.core.wp.server;
 
-import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.wp.WhitePagesMessage;
 
 /**
- * Register and unregister resolver handlers.
- * <p>
- * Only child components of Resolver can obtain this service.
+ * This is the response from the server to the resolver.
  */
-public interface HandlerRegistryService
-extends Service 
-{
-  void register(Handler h);
-  void unregister(Handler h);
-
-  // tell the handlers to execute the following remote result.
-  // only RemoteHandler should call this!
-  void execute(Request req, Object result, long ttl);
+public class WPAnswer
+extends WhitePagesMessage {
+  private final Request req;
+  private final Object result;
+  private final long ttl;
+  public WPAnswer(
+      MessageAddress source,
+      MessageAddress target,
+      Request req,
+      Object result,
+      long ttl) {
+    super(source, target);
+    this.req = req;
+    this.result = result;
+    this.ttl = ttl;
+    if (req == null) {
+      throw new IllegalArgumentException("null request");
+    }
+  }
+  public Request getRequest() { return req; }
+  public Object getResult() { return result; }
+  public long getTTL() { return ttl; }
+  // renew, denied, etc
+  public String toString() {
+    return 
+      "(WPAnswer"+
+      " "+super.toString()+
+      " req="+req+
+      " result="+result+
+      ")";
+  }
 }

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2002-2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,23 +19,24 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver;
-
-import org.cougaar.core.component.Service;
-import org.cougaar.core.service.wp.Request;
+package org.cougaar.core.wp;
 
 /**
- * Register and unregister resolver handlers.
+ * Alternative Runnable for runners that want to know their own
+ * Schedulable.
  * <p>
- * Only child components of Resolver can obtain this service.
+ * This is handy if you have multiple independent scheduled timers
+ * and each timer wants to restart itself.
+ * <p>
+ * This will likely be merged this into the ThreadService.
  */
-public interface HandlerRegistryService
-extends Service 
-{
-  void register(Handler h);
-  void unregister(Handler h);
-
-  // tell the handlers to execute the following remote result.
-  // only RemoteHandler should call this!
-  void execute(Request req, Object result, long ttl);
+public interface Scheduled {
+  /**
+   * Execute the scheduled action, like a Runnable's
+   * <tt>run()</tt>.
+   *
+   * @param thread this Schedulable, for optional additional
+   *  scheduling.
+   */
+  void run(SchedulableWrapper thread);
 }

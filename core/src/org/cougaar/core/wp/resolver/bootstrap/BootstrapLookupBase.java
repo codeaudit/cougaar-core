@@ -27,7 +27,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimerTask;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -36,7 +35,8 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.thread.Schedulable;
+import org.cougaar.core.wp.SchedulableWrapper;
+import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -296,63 +296,11 @@ implements Component
     }
 
   /**
-   * Base class for a TimerTask that uses the ThreadService.
-   */
-  protected abstract class TimerBase
-    implements Runnable {
-
-      private TimerTask restartTask;
-      private Schedulable thread;
-
-      public TimerBase() {
-        thread = threadService.getThread(
-            this, this, getName());
-      }
-
-      /**
-       * Get the name of this timer.
-       */
-      public abstract String getName();
-
-      /**
-       * Run the timer task.
-       *
-       * Only one run will occur at a time, as defined by the
-       * ThreadService's Schedulable restart API.
-       */
-      public abstract void run();
-
-      /**
-       * Schedule to run again later.
-       */
-      protected void scheduleRestart(long delay) {
-        if (delay <= 0) {
-          thread.start();
-        } else {
-          restartTask = new TimerTask() {
-            public void run() {
-              // don't run in the timer's thread!
-              thread.start();
-            }
-          };
-          threadService.schedule(restartTask, delay);
-        }
-      }
-
-      /**
-       * Schedule to run again as soon as possible.
-       */
-      protected void restart() {
-        scheduleRestart(0);
-      }
-    }
-
-  /**
    * This manages the lookup and verification for a single
    * bootEntry.
    */
   protected abstract class LookupTimer
-    extends TimerBase {
+    implements Runnable {
 
       protected static final int LOOKUP = 1;
       protected static final int VERIFY = 2;
@@ -375,6 +323,9 @@ implements Component
 
       /** The identifier from the bootEntry path */
       protected final String id;
+
+      /** our thread */
+      protected final SchedulableWrapper thread;
 
       //
       // external interaction (outside the "run()" method)
@@ -471,8 +422,6 @@ implements Component
       protected AddressEntry aliasEntry;
 
       public LookupTimer(AddressEntry bootEntry) {
-        super();
-
         // configure
         this.bootEntry = bootEntry;
         URI uri = bootEntry.getURI();
@@ -485,12 +434,13 @@ implements Component
         String host = uri.getHost();
         this.state = LOOKUP;
 
-        // kick off thread
-        restart();
-      }
+        this.thread = SchedulableWrapper.getThread(
+            threadService, 
+            this, 
+            "White pages bootstrap "+bootEntry);
 
-      public String getName() {
-        return "(id="+id+" boot="+bootEntry+")";
+        // kick off thread
+        thread.start();
       }
 
       public void bind(AddressEntry newBindEntry) {
@@ -529,7 +479,7 @@ implements Component
         synchronized (lock) {
           queuedBindEntry = entry;
         }
-        restart();
+        thread.start();
       }
 
       public void run() {
@@ -580,7 +530,7 @@ implements Component
         }
         if (t >= 0) {
           wakeTime = System.currentTimeMillis()+t;
-          scheduleRestart(t);
+          thread.schedule(t);
         }
 
         if (logger.isDebugEnabled()) {
@@ -626,12 +576,14 @@ implements Component
           // we're not allowed to change the alias
           long delay = getDelayForRetryAlias();
           if (logger.isInfoEnabled()) {
+            long now = System.currentTimeMillis();
+            long lookupTime = now+delay;
             logger.info(
                 "Ignoring lookup in "+uri+
                 " under name ("+name+") where the foundId ("+
                 foundId+") doesn't match the prior aliasId ("+
-                aliasId+"), will attempt another lookup in "+
-                delay+" millis");
+                aliasId+"), will attempt another lookup at "+
+                Timestamp.toString(lookupTime,now));
           }
           // discard what we found, lookup again later
           return delay;
@@ -661,6 +613,8 @@ implements Component
         aliasEntry = newAlias;
 
         if (logger.isInfoEnabled()) {
+          long now = System.currentTimeMillis();
+          long verifyTime=now+getDelayForVerify();
           logger.info(
               (foundEntry.equals(bindEntry) ?
                "Bound" : // well, now they're ==
@@ -677,8 +631,8 @@ implements Component
               (newAlias == null ?
                ("no alias necessary") :
                ("added bootstrap alias "+aliasEntry))+
-              ", will verify in "+
-              getDelayForVerify()+" millis");
+              ", will verify at "+
+              Timestamp.toString(verifyTime,now));
         }
         return getDelayForVerify();
       }
@@ -700,11 +654,13 @@ implements Component
           // enhancement idea: should be back off on a series
           // of successes?
           if (logger.isInfoEnabled()) {
+            long now = System.currentTimeMillis();
+            long verifyTime=now+delay;
             logger.info(
                 "Verified that the bootstrap "+
                 bootEntry+" still matches the found "+
-                foundEntry+", will verify again in "+
-                delay+" millis");
+                foundEntry+", will verify again at "+
+                Timestamp.toString(verifyTime,now));
           }
           return delay;
         }
