@@ -3,7 +3,7 @@
  * Copyright 1997-2001 Defense Advanced Research Projects
  * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  * Raytheon Systems Company (RSC) Consortium).
- * This software to be used only in accordance with the
+  * This software to be used only in accordance with the
  * COUGAAR licence agreement.
  * </copyright>
  */
@@ -34,12 +34,20 @@ import java.security.cert.*;
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $CLASSPATH
+<<<<<<<<<<<<<< variant A
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
- *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
  *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
+ *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
+ *
+>>>>>>>>>>>>>> variant B
+ *  $ALP_INSTALL_PATH/lib/*.{jar,zip,plugin}
+ *  $ALP_INSTALL_PATH/plugins/*.{jar,zip,plugin}
+ *  -Dalp.system.path=whatever/*.{jar,zip,plugin}
+ *  $ALP_INSTALL_PATH/sys/*.{jar,zip,plugin} 
  * </pre>
  * <p>
+======= end of combination
  * As an added bonus, Bootstrapper may be run as an application
  * which takes the fully-qualified class name of the class to run
  * as the first argument.  All other arguments are passed
@@ -86,11 +94,30 @@ public class Bootstrapper
   private static boolean isBootstrapped = false;
 
   public static void main(String[] args) {
-  
     String[] launchArgs = new String[args.length - 1];
     System.arraycopy(args, 1, launchArgs, 0, launchArgs.length);
     launch(args[0], launchArgs);
   }
+
+  /**
+   * Reads the properties from specified url
+   **/
+   public static void readProperties(String propertiesURL){
+       if (propertiesURL != null) {
+	Properties props = System.getProperties();
+	try {    // open url, load into props
+	  URL url = new URL(propertiesURL);
+	  InputStream stream = url.openStream();
+	  props.load(stream);
+	  stream.close();
+	} catch (MalformedURLException me) {
+	  System.err.println(me);
+	} catch (IOException ioe) {
+	  System.err.println(ioe);
+	}
+      }
+       System.out.println("done");
+    }
 
   /**
    * Search the likely spots for jar files and classpaths,
@@ -106,6 +133,8 @@ public class Bootstrapper
     }
     isBootstrapped = true;
 
+    readProperties(System.getProperty("org.cougaar.properties.url"));
+
     ArrayList l = new ArrayList();
     String base = System.getProperty("org.cougaar.install.path");
 
@@ -113,13 +142,13 @@ public class Bootstrapper
     accumulateClasspath(l, System.getProperty("java.class.path"));
     accumulateJars(l, new File(base,"lib"));
     accumulateJars(l, new File(base,"plugins"));
-    accumulateJars(l,new File(base,"sys"));
 
     String sysp = System.getProperty("org.cougaar.system.path");
     if (sysp!=null) {
       accumulateJars(l, new File(sysp));
     }
 
+    accumulateJars(l,new File(base,"sys"));
     URL urls[] = (URL[]) l.toArray(new URL[l.size()]);
     
     try {
