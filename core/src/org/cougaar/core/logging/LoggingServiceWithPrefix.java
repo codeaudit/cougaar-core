@@ -11,6 +11,7 @@
 package org.cougaar.core.logging;
 
 import org.cougaar.util.log.LoggerAdapter;
+import org.cougaar.util.log.Logger;
 import org.cougaar.core.service.LoggingService;
 
 public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingService {
