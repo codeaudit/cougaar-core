@@ -35,7 +35,8 @@ public class MetricsClientPlugin
 {
     protected MetricsService metricsService;
     protected MessageAddress agentID;
-    String paramPath = null;
+    private String paramPath = null;
+    private VariableEvaluator evaluator;
 
   /**
    * Metric CallBack object
@@ -61,15 +62,20 @@ public class MetricsClientPlugin
     super.load();
     ServiceBroker sb = getServiceBroker();
     
-    agentID = getAgentIdentifier();
+    // agentID = getAgentIdentifier();
     
+    evaluator = new StandardVariableEvaluator(sb);
+
     metricsService = ( MetricsService)
       sb.getService(this, MetricsService.class, null);
 	
     MetricsCallback cb = new MetricsCallback();
     paramPath = getParameter("path");
-    if (paramPath == null) paramPath ="Agent(" +agentID+ ")"+PATH_SEPR+"LoadAverage";
-    Object subscriptionKey=metricsService.subscribeToValue(paramPath, cb);
+    if (paramPath == null) 
+	paramPath ="$(localagent)"+PATH_SEPR+"LoadAverage";
+    
+    Object subscriptionKey=metricsService.subscribeToValue(paramPath, cb,
+							   evaluator);
 
   }
 

@@ -37,6 +37,18 @@ public class NullMetricsServiceImpl
 	return MetricImpl.UndefinedMetric;
     }
 
+    public Metric getValue(String path, VariableEvaluator eval) {
+	return MetricImpl.UndefinedMetric;
+    }
+
+    public Metric getValue(String path, 
+			   VariableEvaluator eval,
+			   Properties qos_tags) 
+    {
+	return MetricImpl.UndefinedMetric;
+    }
+
+
     public Object subscribeToValue(String path, 
 				   Observer observer) 
     {
@@ -49,6 +61,22 @@ public class NullMetricsServiceImpl
     {
 	return null;
     }
+
+    public Object subscribeToValue(String path, 
+				   Observer observer,
+				   VariableEvaluator eval) 
+    {
+	return null;
+    }
+
+    public Object subscribeToValue(String path, 
+				   Observer observer,
+				   VariableEvaluator eval,
+				   MetricNotificationQualifier qualifier) 
+    {
+	return null;
+    }
+
 
     public void unsubscribeToValue(Object subscription_handle)
     {

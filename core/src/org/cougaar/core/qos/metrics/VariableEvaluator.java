@@ -21,33 +21,7 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.Observer;
-import java.util.Properties;
-import org.cougaar.core.component.Service;
-
-public interface MetricsService extends Service
+public interface VariableEvaluator
 {
-    Metric getValue(String path);
-    Metric getValue(String path, VariableEvaluator evaluator);
-    Metric getValue(String path, Properties qos_tags);
-    Metric getValue(String path, 
-		    VariableEvaluator evaluator,
-		    Properties qos_tags);
-
-    Object subscribeToValue(String path, Observer observer);
-    Object subscribeToValue(String path, 
-			    Observer observer,
-			    VariableEvaluator evaluator);
-    Object subscribeToValue(String path, 
-			    Observer observer,
-			    MetricNotificationQualifier qualifier);
-    Object subscribeToValue(String path, 
-			    Observer observer,
-			    VariableEvaluator evaluator,
-			    MetricNotificationQualifier qualifier);
-
-    void unsubscribeToValue(Object subscription_handle);
-
-
+    String evaluateVariable(String var);
 }
-
