@@ -63,6 +63,83 @@ public final class ServletUtil {
   }
 
   /**
+   * Encode a String for HTML.
+   * <p>
+   * The String should only be one line (i.e. no CRLFs).
+   * <pre>
+   * Converts:
+   *   &amp; to &amp;amp;
+   *   &lt; to &amp;lt;
+   *   &gt; to &amp;gt;
+   * </pre>
+   */
+  public static final String encodeForHTML(final String s) {
+    int slen = ((s != null) ? s.length() : 0);
+    StringBuffer sb = new StringBuffer((int)(1.10*(double)slen));
+    for (int i = 0; i < slen; i++) {
+      char ci = s.charAt(i);
+      switch (ci) {
+        default:
+          if ((ci >= ' ') && (ci <= '~')) {
+            sb.append(ci);
+          } else {
+            // unsupported?
+            sb.append("?");
+          }
+          break;
+        case '&':
+          sb.append("&amp;");
+          break;
+        case '<':
+          sb.append("&lt;");
+          break;
+        case '>':
+          sb.append("&gt;");
+          break;
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Encode a String for Java.
+   * <pre>
+   * Converts:
+   *   " to \\\"
+   *   \ to \\
+   *   CRLF to \\n
+   * </pre>
+   * Can be used to create javascript pages.
+   */
+  public static final String encodeForJava(final String s) {
+    int slen = ((s != null) ? s.length() : 0);
+    StringBuffer sb = new StringBuffer((int)(1.10*(double)slen));
+    for (int i = 0; i < slen; i++) {
+      char ci = s.charAt(i);
+      switch (ci) {
+        default:
+          if ((ci >= ' ') && (ci <= '~')) {
+            sb.append(ci);
+          } else {
+            // unsupported?
+            sb.append("?");
+          }
+          break;
+        case '\"':
+          sb.append("\\\"");
+          break;
+        case '\\':
+          sb.append("\\\\");
+          break;
+        case '\n':
+          sb.append("\\n");
+          break;
+      }
+    }
+    return sb.toString();
+  }
+
+  /**
    * Make the GET and POST passing of parameters transparent to 
    * the user.
    * <p>

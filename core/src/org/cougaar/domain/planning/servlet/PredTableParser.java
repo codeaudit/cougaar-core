@@ -24,7 +24,7 @@ package org.cougaar.domain.planning.servlet;
 import java.io.*;
 import java.util.*;
 
-import org.cougaar.lib.planserver.StringEncoder;
+import org.cougaar.core.servlet.ServletUtil;
 
 import org.cougaar.util.PropertyTree;
 
@@ -63,8 +63,8 @@ public class PredTableParser {
    *
    *   The first line is the "key", and the following lines make the
    *     "value".  These are encoded with 
-   *     <tt>StringEncoder.encodeForHTML</tt> and 
-   *     <tt>StringEncoder.encodeForJava</tt> 
+   *     <tt>ServletUtil.encodeForHTML</tt> and 
+   *     <tt>ServletUtil.encodeForJava</tt> 
    *     to let the PlanViewServlet print them in HTML and Javascript.
    * </pre>
    * @see #main(String[]) for an example
@@ -119,8 +119,8 @@ readValue:
           }
         }
         // encode the key and value for javascript use
-        String encKey = StringEncoder.encodeForHTML(rawKey);
-        String encValue = StringEncoder.encodeForJava(rawValue);
+        String encKey = ServletUtil.encodeForHTML(rawKey);
+        String encValue = ServletUtil.encodeForJava(rawValue);
         // add to property tree
         pt.put(encKey, encValue);
       }
