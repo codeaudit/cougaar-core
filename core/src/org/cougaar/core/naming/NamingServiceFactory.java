@@ -191,18 +191,23 @@ public class NamingServiceFactory implements InitialContextFactory {
    * Implement the getInitialContext of the InitialContextFactory API.
    **/
   public Context getInitialContext(Hashtable env) {
-    try {
-      return new NamingDirContext(getNS(), getNS().getRoot(), env);
-    } catch (RemoteException re) {
-      if (verbosity > 0) System.err.println(" Failed:");
-      if (verbosity > 1) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
+    boolean first = true;
+    while (true) {
+      try {
+        return new NamingDirContext(getNS(), getNS().getRoot(), env);
+      } catch (RemoteException re) {
+        if (first) {
+          re.printStackTrace();
+          first = false;
+        } else {
+          System.err.print("!");
+        }
+        try {
+          Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+        }
       }
     }
-
-    return null;
   }
 
   /** @return true IFF the Communications server specified is 
