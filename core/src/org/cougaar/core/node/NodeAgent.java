@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.AgentBinder;
 import org.cougaar.core.agent.AgentManagementMessage;
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.CloneAgentMessage;
@@ -75,17 +77,17 @@ import org.cougaar.core.thread.ThreadServiceProvider;
  * <p>
  * Components and services are loaded in the following order:
  * <ul>
- * <li> <em>HIGH<em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
+ * <li> <em>HIGH</em>: NodeControlService, LoggingService, external HIGH components, DefaultAgentIdentityComponent.
  * </li>
- * <li> <em>INTERNAL<em>: ThreadService, NamingService, TopologyWriterServiceComponent, TopologyReaderServiceComponent,
+ * <li> <em>INTERNAL</em>: ThreadService, NamingService, TopologyWriterServiceComponent, TopologyReaderServiceComponent,
  * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport, NodeTrustComponent, RootMobilityComponent,
  * RootServletComponent, external INTERNAL components.
  * </li>
- * <li> <em>BINDER<em>: NodeAgentBinderFactory, external BINDER components.
+ * <li> <em>BINDER</em>: NodeAgentBinderFactory, external BINDER components.
  * </li>
- * <li> <em>COMPONENT<em>: external COMPONENT components.
+ * <li> <em>COMPONENT</em>: external COMPONENT components.
  * </li>
- * <li> <em>LOW<em>: external LOW components.
+ * <li> <em>LOW</em>: external LOW components.
  * </li>
  * </ul>
  */
@@ -549,13 +551,19 @@ public class NodeAgent
 
   private class NodeAgentBinder 
     extends BinderSupport
-    implements NodeAgentBindingSite
+    implements NodeAgentBindingSite, AgentBinder
     {
       public NodeAgentBinder(BinderFactory bf, Object child) {
         super(bf, child);
       }
       protected BindingSite getBinderProxy() {
         return this;
+      }
+      public MessageAddress getAgentIdentifier() {
+        return (getAgent()).getAgentIdentifier();
+      }
+      public Agent getAgent() {
+        return NodeAgent.this;
       }
     }
 }

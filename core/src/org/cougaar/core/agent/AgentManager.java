@@ -52,17 +52,9 @@ public class AgentManager
   implements ContainerAPI, AgentContainer
 {
   public AgentManager() {
-    if (!attachBinderFactory(new AgentBinderFactory())) {
-      throw new RuntimeException("Failed to load the AgentBinderFactory");
-    }
-  }
-
-  /** this constructor used for backwards compatability mode.  Goes away
-   * when we are a contained by a Node component
-   **/
-  public AgentManager(ComponentDescription comdesc) {
-    if (!attachBinderFactory(new AgentBinderFactory())) {
-      throw new RuntimeException("Failed to load the AgentBinderFactory");
+    BinderFactory bf = new DefaultAgentBinderFactory();
+    if (!attachBinderFactory(bf)) {
+      throw new RuntimeException("Failed to load the "+bf);
     }
   }
 
@@ -174,9 +166,8 @@ public class AgentManager
       if (!(b instanceof AgentBinder)) {
         continue;
       }
-      Agent a = ((AgentBinder)b).getAgent();
-      if ((a != null) &&
-          (agentId.equals(a.getAgentIdentifier()))) {
+      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      if (agentId.equals(id)) {
         // agent already exists
         throw new RuntimeException(
             "Agent "+agentId+" already exists");
@@ -206,9 +197,8 @@ public class AgentManager
       if (!(b instanceof AgentBinder)) {
         continue;
       }
-      Agent a = ((AgentBinder)b).getAgent();
-      if ((a != null) &&
-          (agentId.equals(a.getAgentIdentifier()))) {
+      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      if (agentId.equals(id)) {
         // remove the agent
         iter.remove();
         return;
@@ -232,9 +222,8 @@ public class AgentManager
       if (!(b instanceof AgentBinder)) {
         continue;
       }
-      Agent a = ((AgentBinder)b).getAgent();
-      if ((a != null) &&
-          (agentId.equals(a.getAgentIdentifier()))) {
+      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      if (agentId.equals(id)) {
         Object cmp = bc.getComponent();
         if (cmp instanceof ComponentDescription) {
           // found the description
@@ -331,11 +320,10 @@ public class AgentManager
       if (!(b instanceof AgentBinder)) {
         continue;
       }
-      Agent a = ((AgentBinder)b).getAgent();
-      if ((a != null) &&
-          (agentID.equals(a.getAgentIdentifier()))) {
+      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      if (agentID.equals(id)) {
         // found our agent
-        agent = a;
+        agent = ((AgentBinder) b).getAgent();
         Object cmp = bc.getComponent();
         if (cmp instanceof ComponentDescription) {
           desc = (ComponentDescription)cmp;
@@ -364,9 +352,8 @@ public class AgentManager
       if (!(b instanceof AgentBinder)) {
         continue;
       }
-      Agent a = ((AgentBinder)b).getAgent();
-      if ((a != null) &&
-          (agentID.equals(a.getAgentIdentifier()))) {
+      MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
+      if (agentID.equals(id)) {
         // remove the agent
         iter.remove();
         return true;

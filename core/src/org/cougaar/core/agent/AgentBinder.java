@@ -20,40 +20,26 @@
  */
 package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
+import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.mts.MessageAddress;
 
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.agent.*;
+/**
+ * Binder API for all agent binders.
+ */
+public interface AgentBinder extends Binder {
 
-/** The standard Binder for Agents.
- **/
-public class AgentBinder extends BinderSupport implements AgentBindingSite
-{
-  /** All subclasses must implement a matching constructor. **/
-  public AgentBinder(BinderFactory bf, Object child) {
-    super(bf, child);
-  }
+  /**
+   * Get the agent's message address.
+   */
+  MessageAddress getAgentIdentifier();
 
-  protected final Agent getAgent() {
-    return (Agent) getComponent();
-  }
-// protected final AgentManager getAgentManager() {
-//     return (AgentManager)getContainer();
-//   }
-  protected final AgentManagerForBinder getAgentManager() {
-    return (AgentManagerForBinder)getContainer();
-  }
-  protected final BindingSite getBinderProxy() {
-    // horribly unsecure! Means that the component has full access to the binder.
-    return (BindingSite) this;
-  }
+  /**
+   * Obtain direct access to the agent.
+   * <p>
+   * This method may be removed from the binder API due to
+   * security concerns.
+   */
+  Agent getAgent();
 
-  public String toString() {
-    return getAgent() + "'s AgentManagerBinder";
-  }
-
-  public String getName() {return getAgentManager().getName(); }
-  public void registerAgent(Agent agent) { getAgentManager().registerAgent(agent); }
 }

@@ -33,8 +33,4 @@ public class ClusterImpl extends SimpleAgent
   /** Standard, no argument constructor. */
   public ClusterImpl() {
   }
-  public ClusterImpl(ComponentDescription comdesc) {
-    super(comdesc);
-    // services added in load()
-  }
 }

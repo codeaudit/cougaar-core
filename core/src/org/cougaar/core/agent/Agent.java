@@ -47,18 +47,6 @@ public abstract class Agent
     }
   }
 
-   /** this constructor used for backwards compatability mode.  Goes away
-   * when we are a contained by a Node component
-   **/
-  public Agent(ComponentDescription comdesc) {
-    BinderFactory pmbf = new AgentBinderFactory();
-    if (!attachBinderFactory(pmbf)) {
-      throw new RuntimeException("Failed to load the AgentChildBinderFactory");
-    }
-    //no agent services for now... all are loaded from cluster (specific type of agent)
-    System.err.println("Delete me");
-  }
-
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
     childServiceBroker = specifyAgentServiceBroker(bs);

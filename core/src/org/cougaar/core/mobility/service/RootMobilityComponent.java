@@ -360,6 +360,11 @@ implements Component
       // FIXME get the agent's description from its container
       ComponentDescription desc = 
         agentContainer.getAgentDescription(id);
+      if (desc == null) {
+        throw new RuntimeException(
+            "Unable to get agent \""+id+"\"'s ComponentDescription"+
+            " from the agent container ("+agentContainer+")");
+      }
       // FIXME assume that the agent itself provides the state
       StateObject stateProvider =
         ((agent instanceof StateObject) ?

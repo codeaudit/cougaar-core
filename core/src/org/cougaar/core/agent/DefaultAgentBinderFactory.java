@@ -27,14 +27,14 @@ import java.lang.reflect.*;
 import org.cougaar.core.component.*;
 
 /**
- * A BinderFactory for binding Agents to the AgentManager.
+ * The default factory for binding Agents to the AgentManager.
  **/
-public class AgentBinderFactory 
+public class DefaultAgentBinderFactory 
   extends BinderFactorySupport
 {
 
-  /** AgentBinderFactory always uses AgentBinder for Agents, otherwise
-   * it won't bind it.
+  /** 
+   * Binder must implement AgentBinder.
    **/
   public Class getBinderClass(Object child) {
     if (child instanceof ComponentDescription) {
@@ -42,11 +42,11 @@ public class AgentBinderFactory
       if ("Node.AgentManager.Agent".equals(cd.getInsertionPoint())) {
         //Might want to differentiate between Agent and specializations of
         //agents such as Clusters at some point.  But for now...
-        return AgentBinder.class;
+        return DefaultAgentBinder.class;
       }
     } else {
       if (child instanceof Agent) {
-        return AgentBinder.class;
+        return DefaultAgentBinder.class;
       }
     }
  

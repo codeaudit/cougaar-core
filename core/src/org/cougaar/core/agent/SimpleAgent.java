@@ -1097,10 +1097,6 @@ MobilityListener, StateObject
   /** Standard, no argument constructor. */
   public SimpleAgent() {
   }
-  public SimpleAgent(ComponentDescription comdesc) {
-    super(comdesc);
-    // services added in load()
-  }
 
   /** Answer by allowing ClusterManagement to set the ClusterIdentifier for this instance.
    * Assert that this is called once and only once *before* ClusterManagement calls
