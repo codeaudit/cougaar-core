@@ -28,6 +28,14 @@ public class MetricImpl implements Metric
     private String units;
     private String provenance;
 
+    public MetricImpl(double raw, 
+		      double credibility, 
+		      String units, 
+		      String provenance) 
+    {
+	this(new Double(raw), credibility, units, provenance);
+    }
+
     public MetricImpl(Object raw, 
 		      double credibility, 
 		      String units, 

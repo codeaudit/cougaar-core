@@ -70,8 +70,8 @@ public class AgentLoadServlet
 	out.print("<td><b>AGENT</b></td>");
 	out.print("<td><b>CPUload</b></td>");
 	out.print("<td><b>Cred</b></td>");
-	out.print("<td><b>MsgOut</b></td>");
 	out.print("<td><b>MsgIn</b></td>");
+	out.print("<td><b>MsgOut</b></td>");
 	out.print("</b></tr>");
 
 	//Rows
@@ -86,7 +86,8 @@ public class AgentLoadServlet
 	    // Get Metrics
 	    Metric cpuLoad = metricsService.getValue(agentPath
 						     +ONE_SEC_LOAD_AVG);
-	    Metric msgIn = new MetricImpl(new Double(0.00), 0,"units","test");
+	    Metric msgIn = metricsService.getValue(agentPath+
+						   MSG_IN_1_SEC_AVG);
 	    Metric msgOut = new MetricImpl(new Double(0.00), 0,"units","test");
 
 	    //output Row

@@ -43,6 +43,11 @@ public interface Constants
     String THREAD_SENSOR = "COUGAAR_THREAD";
 
     String ONE_SEC_LOAD_AVG = "OneSecondLoadAvg";
+    String MSG_IN_1_SEC_AVG = "MsgIn1SecAvg";
+    String MSG_IN_10_SEC_AVG = "MsgIn10SecAvg";
+    String MSG_IN_100_SEC_AVG = "MsgIn100SecAvg";
+    String MSG_IN_1000_SEC_AVG = "MsgIn1000SecAvg";
+
 
     // Credibility Spectrum: tries to unify many different notions of
     // credibility into a common metric. The Credibility "Calculus" is
