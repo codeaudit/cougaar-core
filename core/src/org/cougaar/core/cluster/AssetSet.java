@@ -15,7 +15,6 @@ import org.cougaar.util.*;
 
 import org.cougaar.domain.planning.ldm.plan.*;
 import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.asset.ItemIdentificationPG;
 
 /**
  * AssetSet is a custom container which maintains a hashtable-like
@@ -26,12 +25,7 @@ public class AssetSet
   extends KeyedSet
 {
   protected Object getKey(Object o) {
-    ItemIdentificationPG iipg = ((Asset) o).getItemIdentificationPG();
-    if (iipg != null) {
-      String s = iipg.getItemIdentification();
-      return s;
-    }
-    return null;
+    return ((Asset) o).getKey();
   }
 
   // special methods for Asset searches
@@ -47,3 +41,7 @@ public class AssetSet
   }
 
 }
+
+
+
+
