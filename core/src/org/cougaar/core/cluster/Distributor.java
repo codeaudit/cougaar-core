@@ -30,6 +30,7 @@ import org.cougaar.core.cluster.persist.PersistenceSubscriberState;
 import org.cougaar.core.cluster.persist.RehydrationResult;
 import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.domain.planning.ldm.plan.Directive;
+import org.cougaar.util.UnaryPredicate;
 
 public class Distributor {
   /*
@@ -217,6 +218,15 @@ public class Distributor {
 
   public MessageManager getMessageManager() {
     return myMessageManager;
+  }
+
+  /** Pass thru to blackboard to safely return blackboard object counts.
+   * Used by BlackboardMetricsService
+   * @param predicate The objects to count in the blackboard
+   * @return int The count of objects that match the predicate currently in the blackboard
+   **/
+  public synchronized int getBlackboardCount(UnaryPredicate predicate) {
+    return alpPlan.countBlackboard(predicate);
   }
 
   /**
