@@ -19,11 +19,14 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.thread;
 
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.ReusableThreadPool;
 import org.cougaar.util.ReusableThread;
@@ -54,11 +57,15 @@ public final class ThreadServiceImpl
 
 
     public ThreadServiceImpl(ServiceBroker sb, 
-			     ThreadService parent,
 			     String name) 
     {
 	LoggingService loggingService = (LoggingService)
 	    sb.getService(this, LoggingService.class, null);
+	
+	ThreadService parent = (ThreadService)
+	    sb.getService(this, ThreadService.class, null);
+
+
 	ThreadServiceProvider provider = 
 	    new ThreadServiceProvider(parent, name, loggingService);
 	sb.addService(ThreadService.class, provider);
@@ -381,8 +388,8 @@ public final class ThreadServiceImpl
 	    thread.timestamp = System.currentTimeMillis();
 	    proxy.notifyPending(thread);
 	    pendingThreads.add(thread);
-	    if (Debug.isDebugEnabled(proxy.loggingService, Debug.THREAD))
-		proxy.loggingService.debug("Added to queue " + pendingThreads);
+// 	    if (proxy.loggingService.isDebugEnabled())
+// 		proxy.loggingService.debug("Added to queue " + pendingThreads);
 	}
 
 	private synchronized void startOrQueue(ControllableThread thread) {

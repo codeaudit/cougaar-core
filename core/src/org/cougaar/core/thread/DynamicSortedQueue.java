@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Comparator;

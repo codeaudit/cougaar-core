@@ -19,12 +19,23 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.service;
 
+import org.cougaar.core.component.Service;
 
-public interface ThreadListener
+import java.util.Comparator;
+
+public interface ThreadControlService extends Service
 {
-    void threadPending(Thread thread, Object consumer);
-    void threadStarted(Thread thread, Object consumer);
-    void threadStopped(Thread thread, Object consumer);
+    // General
+    void setMaxRunningThreadCount(ThreadService proxy, int count);
+    void setQueueComparator(ThreadService proxy, Comparator comparator);
+
+    // Status
+    int runningThreadCount(ThreadService proxy);
+    int pendingThreadCount(ThreadService proxy);
+    int activeThreadCount(ThreadService proxy);
+    int maxRunningThreadCount(ThreadService proxy);
+
+
 }

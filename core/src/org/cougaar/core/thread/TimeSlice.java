@@ -19,12 +19,21 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.thread;
 
-import org.cougaar.core.component.Service;
-
-public interface ThreadListenerService extends Service
+public class TimeSlice
 {
-    void addListener(ThreadService svc, ThreadListener listener);
-    void removeListener(ThreadService svc,ThreadListener listener);
+    public long start;
+    public long end;
+    public boolean in_use;
+
+    TimeSlice(long start, long end) {
+	this.start = start;
+	this.end = end;
+    }
+
+    public boolean isExpired() {
+	return System.currentTimeMillis() >= end;
+    }
+
 }
