@@ -103,11 +103,11 @@ public class PanicButtonPlugin
     // Create JRadioButtons and Group
     JLabel trustlevelLabel = new JLabel("Choose a Trust Level:");
     trustlevelBG = new ButtonGroup();
-    trustNoOne = new JRadioButton("0 - Very High Security");
+    trustNoOne = new JRadioButton("0 - Compromised");
     trustNoOne.setSelected(true);
-    trustFew = new JRadioButton("2 - High Security");
-    trustMedium = new JRadioButton("5 - Medium Security");
-    trustEveryone = new JRadioButton("10 - Low Security");
+    trustFew = new JRadioButton("2 - Suspect");
+    trustMedium = new JRadioButton("5 - Normal");
+    trustEveryone = new JRadioButton("10 - Carefree");
     trustlevelBG.add(trustNoOne);
     trustlevelBG.add(trustFew);
     trustlevelBG.add(trustMedium);
