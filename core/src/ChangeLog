@@ -1,3 +1,11 @@
+2001-09-27  Todd Wright  <twright@bbn.com>
+
+        * org/cougaar/core/society/Node.java:
+	Enhanced "-D" property and command-line parsing.  All
+	command-line arguments now have "-D" equivalents.  Fixed
+	post-classname "-D" arguments to now behave like pre-classname
+	"-D" System Properties.
+
 2001-09-27  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
 
 	* org/cougaar/util/DBProperties.java (Repository):
