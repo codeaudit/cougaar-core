@@ -108,56 +108,25 @@ public class AgentManager
   }
 
   private boolean hookupCluster(ClusterServesClusterManagement cluster) {
-    ClusterIdentifier cid = cluster.getClusterIdentifier();
-    String cname = cid.toString();
-    //System.err.print("\n\t"+cname);
-    //System.err.print("\nLoading Plugins:");
-    try {
-      // parse the cluster properties
-      // currently assume ".ini" files
-      InputStream in = ConfigFinder.getInstance().open(cname+".ini");
-      ComponentDescription[] cDescs = 
-        org.cougaar.core.society.INIParser.parse(in, "Node.AgentManager.Agent");
-      
-      // add the plugins and other cluster components
-      //
-      // FIXME could benefit from a bulk-add message
-      for (int j = 0; j < cDescs.length; j++) {
-        ComponentMessage addCM = 
-          new ComponentMessage(
-                               cid,
-                               cid,
-                               ComponentMessage.ADD,
-                               cDescs[j]);
-        // bypass the message system to initialize the cluster
-        cluster.receiveMessage(addCM);
-      }
+     ClusterIdentifier cid = cluster.getClusterIdentifier();
+     String cname = cid.toString();
+     // tell the cluster to proceed.
+     try {
+       ClusterInitializedMessage m = new ClusterInitializedMessage();
+       m.setOriginator(cid);
+       m.setTarget(cid);
+       cluster.receiveMessage(m);
 
-      // tell the cluster to proceed.
-      ClusterInitializedMessage m = new ClusterInitializedMessage();
-      m.setOriginator(cid);
-      m.setTarget(cid);
-      cluster.receiveMessage(m);
-    } catch (Exception e) {
-      System.err.println("\nUnable to add cluster["+cluster+"] child omponents: "+e);
-      e.printStackTrace();
-    }
+       // register cluster with Node's ExternalNodeActionListener
+       getBindingSite().registerCluster(cluster);
 
-    //System.err.println("\nPlugins Loaded.");
-    // register cluster with Node's ExternalNodeActionListener
-    getBindingSite().registerCluster(cluster);
-    //ExternalNodeActionListener eListener = getBindingSite().getExternalNodeActionListener();
-    // notify the listener
-    // if (eListener != null) {
-//       try {
-//         eListener.handleClusterAdd(eController, cid);
-//       } catch (Exception e) {
-//         // lost listener?  should we kill this Node?
-//         System.err.println("Lost connection to external listener? "+e.getMessage());
-//       }
-//     }
-    // if we are all the way to this point return true
-    return true;
+     } catch (Exception e) {
+       System.err.println("\nUnable to initialize and register cluster["+cluster+"]  "+e);
+       e.printStackTrace();
+     }
+     
+     // if we are all the way to this point return true
+     return true;
   }
 
   /**

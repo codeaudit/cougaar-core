@@ -9,6 +9,7 @@
  */
 package org.cougaar.core.plugin;
 
+import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.PluginManagerBindingSite;
@@ -50,6 +51,26 @@ public class PluginManager
     super.initialize();
     ServiceBroker sb = getServiceBroker();
     //add services here (none for now)
+
+    //try to load this agents clusters from the ini files
+    ClusterIdentifier cid = getBindingSite().getAgentIdentifier();
+    String cname = cid.toString();
+    System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
+    
+    try {
+      // parse the cluster properties
+      // currently assume ".ini" files
+      InputStream in = ConfigFinder.getInstance().open(cname+".ini");
+      ComponentDescription[] cDescs = 
+        org.cougaar.core.society.INIParser.parse(in, "Node.AgentManager.Agent.PluginManager");
+
+      for (int j = 0; j < cDescs.length; j++) {
+        add(cDescs[j]);
+      }
+    } catch (Exception e) {
+      System.err.println("\nUnable to add "+cname+"'s child omponents: "+e);
+      e.printStackTrace();
+    }
   }
 
   protected final PluginManagerBindingSite getBindingSite() {
