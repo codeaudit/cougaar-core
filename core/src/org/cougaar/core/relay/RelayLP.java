@@ -291,7 +291,12 @@ public class RelayLP extends LogPlanLogicProvider
       if (resp != null) {
         int flags = rs.updateResponse(target, resp);
         if ((flags & Relay.RESPONSE_CHANGE) != 0) {
-          Collection c = new ArrayList(changes);
+          Collection c;
+          if (changes == null) {
+            c = new ArrayList(1);
+          } else {
+            c = new ArrayList(changes);
+          }
           c.add(MarkerReport.INSTANCE);
           logplan.change(rs, c);
           if (rs instanceof Relay.Target) localResponse((Relay.Target) rs, changes);
