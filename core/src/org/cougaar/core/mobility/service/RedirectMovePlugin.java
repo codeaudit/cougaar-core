@@ -18,7 +18,7 @@
  * PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.mobility.plugin;
+package org.cougaar.core.mobility.service;
 
 import java.io.Serializable;
 import java.util.*;
