@@ -79,6 +79,7 @@ public class RemoteAgentServlet
     }
 
     public void printPage(HttpServletRequest request, PrintWriter out) {
+	if (agentStatusService == null) return;
 	// Get list of All Agents in society
 	Set matches = agentStatusService.getRemoteAgents();
 	if (matches == null) return;

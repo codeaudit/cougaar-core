@@ -53,6 +53,7 @@ public class AgentLoadServlet
 
     public void printPage(HttpServletRequest request, PrintWriter out) {
 	// Get list of All Agents On this Node
+	if (agentStatusService == null) return;
 	java.util.Set localAgents = agentStatusService.getLocalAgents();
 	if (localAgents == null) return;
 
