@@ -164,8 +164,12 @@ public abstract class Subscription {
    **/
   protected void resetChanges() { setChanged(false); }
 
+  public boolean apply(Envelope envelope) {
+    return envelope.applyToSubscription(this);
+  }
+
   public void fill(Envelope envelope) {
-    if (envelope.applyToSubscription(this)) {
+    if (apply(envelope)) {
       setChanged(true);
       getSubscriber().signalExternalActivity();
     }

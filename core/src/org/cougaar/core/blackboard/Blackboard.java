@@ -83,14 +83,30 @@ public class Blackboard extends Subscriber
 
   // mark the envelopes which we emit so that we can detect them later.
   protected Envelope createEnvelope() {
-    return new PlanEnvelope();
+    if (isTimestamped()) {
+      return new TimestampedPlanEnvelopeImpl();
+    } else {
+      return new PlanEnvelopeImpl();
+    }
   }
 
-  /** Marked Envelope class so that we can detect envelopes which we've
+  /** Marked Envelope <i>interface</i> so that we can detect envelopes which we've
    * emitted.
+   *
+   * This isn't an Envelope, since Envelope is a class, but this interface
+   * will only be applied to the two Envelope subclasses listed below.
    **/
-  public static final class PlanEnvelope extends Envelope {
+  interface PlanEnvelope {
   }
+
+  private static final class PlanEnvelopeImpl 
+    extends Envelope implements PlanEnvelope {
+    }
+
+  private static final class TimestampedPlanEnvelopeImpl
+    extends TimestampedEnvelope implements PlanEnvelope {
+      public boolean isBlackboard() { return true; }
+    }
 
   /** override to immediately publish deltas rather than delay until transaction close **/
   protected EnvelopeTuple clientAddedObject(Object o) {
@@ -138,6 +154,7 @@ public class Blackboard extends Subscriber
     myServiceBroker = sb;
     myDistributor = createDistributor(cluster, state);
     setClientDistributor((BlackboardClient) this, myDistributor);
+    setName("<blackboard>");
     myCluster = cluster;
     
     myDomainService = 
@@ -224,15 +241,32 @@ public class Blackboard extends Subscriber
     if (subscription == everything) {
       return; // Don't fill ourselves
     }
-    Envelope envelope = new Envelope();
+    Envelope envelope = createQueryEnvelope(subscription);
     envelope.bulkAddObject(everything.getCollection());
     subscription.fill(envelope);
   }
 
   public void fillQuery(Subscription subscription) {
-    Envelope envelope = new Envelope();
+    Envelope envelope = createQueryEnvelope(subscription);
     envelope.bulkAddObject(everything.getCollection());
     subscription.fill(envelope);
+  }
+
+  private Envelope createQueryEnvelope(Subscription subscription) {
+    if (isTimestamped()) {
+      TimestampedEnvelope te = new TimestampedEnvelope();
+      Subscriber subscriber = subscription.getSubscriber();
+      if (subscriber != null) {
+        te.setName(subscriber.getName());
+      }
+      long nowTime = System.currentTimeMillis();
+      te.setTransactionOpenTime(nowTime);
+      // should we wait until after the query to set the close time?
+      te.setTransactionCloseTime(nowTime);
+      return te;
+    } else {
+      return new Envelope();
+    }
   }
 
   /** Alias for sendDirective(aDirective, null);
@@ -339,6 +373,13 @@ public class Blackboard extends Subscriber
   }
 
   private final List oneEnvelope = new ArrayList(1);
+
+  /**
+   * called by distributor to prepare for "receiveEnvelope(..)" calls.
+   */
+  public final void prepareForEnvelopes() {
+    setTransactionOpenTime();
+  }
 
   /** called by transaction close within the thread of Plugins.  
    * Also called at the end of an LP pseudo-transaction, but

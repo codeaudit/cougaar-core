@@ -44,6 +44,8 @@ import org.cougaar.planning.ldm.plan.*;
  * @property org.cougaar.core.blackboard.debug Set to true to additional checking on blackboard transactions.  
  * For instance, it will attempt to look for changes to blackboard objects which have not been published
  * at transaction close time.
+ * @property org.cougaar.core.blackboard.timestamp Set to true to enable EnvelopeMetrics
+ *    and TimestampSubscriptions (defaults to false).
  **/
 public class Subscriber implements BlackboardService {
   private static boolean isEnforcing =
@@ -51,6 +53,9 @@ public class Subscriber implements BlackboardService {
 
   private static boolean warnUnpublishChanges = 
     "true".equals(System.getProperty("org.cougaar.core.blackboard.debug","false"));
+
+  private final boolean enableTimestamps = 
+    Boolean.getBoolean("org.cougaar.core.blackboard.timestamp");
 
   private BlackboardClient theClient = null;
   private Distributor theDistributor = null;
@@ -64,12 +69,15 @@ public class Subscriber implements BlackboardService {
    * to a client and send outgoing messages to a Distributor.
    * Plugin clients will use this API.
    **/
-  public Subscriber(BlackboardClient client, Distributor Distributor) {
-    setClientDistributor(client,Distributor);
+  public Subscriber(BlackboardClient client, Distributor distributor) {
+    this(
+        client, 
+        distributor, 
+        ((client != null) ? client.getBlackboardClientName() : null));
   }
 
-  public Subscriber(BlackboardClient client, Distributor Distributor, String subscriberName) {
-    setClientDistributor(client,Distributor);
+  public Subscriber(BlackboardClient client, Distributor distributor, String subscriberName) {
+    setClientDistributor(client,distributor);
     setName(subscriberName);
   }
 
@@ -142,7 +150,7 @@ public class Subscriber implements BlackboardService {
           for (int j = 0, l = transactionEnvelopes.size(); j<l; j++) {
             Envelope envelope = (Envelope) transactionEnvelopes.get(j);
             try {
-              changedp |= envelope.applyToSubscription(subscription);
+              changedp |= subscription.apply(envelope);
             } catch (PublishException pe) {
               synchronized (System.err) {
                 System.err.println(pe.getMessage());
@@ -201,6 +209,13 @@ public class Subscriber implements BlackboardService {
       transactionEnvelopes = null;
     } else {
       recycleInbox(flushInbox());
+    }
+    if (enableTimestamps &&
+        (box instanceof TimestampedEnvelope)) {
+      TimestampedEnvelope te = (TimestampedEnvelope) box;
+      te.setName(getName());
+      te.setTransactionOpenTime(openTime);
+      te.setTransactionCloseTime(System.currentTimeMillis());
     }
     return box;
   }
@@ -437,7 +452,11 @@ public class Subscriber implements BlackboardService {
 
   /** factory method for creating Envelopes of the correct type **/
   protected Envelope createEnvelope() {
-    return new Envelope();
+    if (enableTimestamps) {
+      return new TimestampedEnvelope();
+    } else {
+      return new Envelope();
+    }
 // return new OutboxEnvelope(getClient());  // for debugging
   }
 
@@ -664,6 +683,20 @@ public class Subscriber implements BlackboardService {
     finishOpenTransaction();
   }
 
+  private long openTime = setTransactionOpenTime();
+
+  protected final boolean isTimestamped() {
+    return enableTimestamps;
+  }
+
+  protected final long setTransactionOpenTime() {
+    if (enableTimestamps) {
+      return (openTime = System.currentTimeMillis());
+    } else {
+      return -1;
+    }
+  }
+
   /**
    * Common routine for both openTransaction and tryOpenTransaction
    * does everything except getting the transactionLock busy flag.
@@ -681,6 +714,8 @@ public class Subscriber implements BlackboardService {
     startTransaction();
 
     theDistributor.startTransaction();
+
+    setTransactionOpenTime();
     if (privateUpdateSubscriptions()) {
       setHaveCollectionsChanged();
     }

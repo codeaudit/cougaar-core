@@ -49,6 +49,6 @@ public class QuerySubscription
   // override Subscription.fill to avoid kicking the subscriber due to
   // query activity.
   public void fill(Envelope envelope) {
-    envelope.applyToSubscription(this);
+    apply(envelope);
   }
 }

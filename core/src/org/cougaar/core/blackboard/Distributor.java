@@ -455,6 +455,7 @@ public class Distributor {
         }
       }
     }
+    blackboard.prepareForEnvelopes();
     boolean haveSomethingToDistribute = false;
     // nest loops in case delayed actions cascade into more
     // lp actions.

@@ -177,5 +177,8 @@ public class Envelope implements java.io.Serializable {
     return vp && somethingFired;
   }
 
+  public String toString() {
+    return getClass().getName()+" ["+deltas.size()+"]";
+  }
 }
 
