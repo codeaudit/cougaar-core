@@ -84,6 +84,8 @@ implements BlackboardClient
       log.info ("Creating BlackboardServletSupport");
 
     // create a new "SimpleServletSupport" instance
+    // FIXME - deprecation: Should replace getLDMService().getFactory() with
+    // getDomainService().getFactory()
     return 
       new BlackboardServletSupport (
         path,
