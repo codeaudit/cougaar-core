@@ -42,6 +42,7 @@ abstract class Scheduler
     int runningThreadCount = 0;
     ThreadListenerProxy listenerProxy;
     String name;
+    String printName;
     PolicyTreeNode treeNode;
 
     private Comparator timeComparator =
@@ -71,8 +72,12 @@ abstract class Scheduler
 				  MaxRunningCountDefault);
 	this.listenerProxy = listenerProxy;
 	this.name = name;
+	printName = "<Scheduler " +name+ ">";
     }
 
+    public String toString() {
+	return printName;
+    }
 
 
     void setTreeNode(PolicyTreeNode treeNode) {

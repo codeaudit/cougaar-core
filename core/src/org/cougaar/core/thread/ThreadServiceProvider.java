@@ -36,8 +36,10 @@ public final class ThreadServiceProvider implements ServiceProvider
     private ThreadListenerProxy listenerProxy;
     private Scheduler scheduler;
     private ThreadServiceProxy proxy;
+    private String name;
 	
     public ThreadServiceProvider(ServiceBroker sb, String name) {
+	this.name = name;
 	listenerProxy = new ThreadListenerProxy();
 	if (Boolean.getBoolean("org.cougaar.thread.timeslice"))
 	    scheduler = new TimeSliceScheduler(listenerProxy, name);

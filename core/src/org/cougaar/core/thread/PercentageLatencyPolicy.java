@@ -40,7 +40,12 @@ public class PercentageLatencyPolicy
 	int count;
 
 	double distance(double grandTotal) {
-	    return (targetPercentage-totalTime/grandTotal)/targetPercentage;
+	    double d = (targetPercentage-totalTime/grandTotal)/targetPercentage;
+// 	    System.out.println(child+ 
+// 			       " total=" +totalTime+
+// 			       " grandTotal=" +grandTotal+
+// 			       " targetPercentage=" +targetPercentage);
+	    return d;
 	}
 
     }
@@ -76,7 +81,8 @@ public class PercentageLatencyPolicy
 
 	    double x_distance = x_usage.distance(totalTime);
 	    double y_distance = y_usage.distance(totalTime);
-	    
+			
+
 	    // Smaller distances are less preferable
 	    if (x_distance < y_distance)
 		return 1;
@@ -90,8 +96,11 @@ public class PercentageLatencyPolicy
 
     private static class SubSlice extends TimeSlice {
 	TimeSlice parent;
+	TimeSliceConsumer consumer;
 	
-	SubSlice(TimeSlice parent, long expiration) {
+	SubSlice(TimeSlice parent, 
+		 long expiration) 
+	{
 	    start = System.currentTimeMillis();
 	    end = Math.min(parent.end, start + expiration);
 	    this.parent = parent;
@@ -124,9 +133,10 @@ public class PercentageLatencyPolicy
     private synchronized UsageRecord getUsageRecord(TimeSliceConsumer child) {
 	UsageRecord record = (UsageRecord) records.get(child);
 	if (record == null) {
+	    // System.out.println("Creating new UsageRecord for " +child);
 	    record = new UsageRecord();
-	    record.child = child;
 	    records.put(child, record);
+	    record.child = child;
 	    record.targetPercentage = 
 		PropertyParser.getDouble(properties, child.getName(), .01);
 	}
@@ -135,7 +145,13 @@ public class PercentageLatencyPolicy
 
     private TreeSet rankChildren() {
 	TreeSet orderedChildren = new TreeSet(comparator);
-	orderedChildren.addAll(treeNode.getChildren());
+	Iterator itr = treeNode.getChildren().iterator();
+	PolicyTreeNode childTreeNode = null;
+	while (itr.hasNext()) {
+	    childTreeNode = (PolicyTreeNode) itr.next();
+	    orderedChildren.add(childTreeNode.getPolicy());
+	}
+	orderedChildren.add(treeNode.getScheduler());
 	return orderedChildren;
     }
 
@@ -161,12 +177,20 @@ public class PercentageLatencyPolicy
 	Iterator itr = kids.iterator();
 	while (itr.hasNext()) {
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
-	    if (kid == consumer) return piece;
-	    if (kid.offerSlice(piece)) return null;
+	    if (kid == consumer) {
+		// System.out.println("Giving slice to preferred consumer " + kid);
+		piece.consumer = consumer;
+		return piece;
+	    } else if (kid.offerSlice(piece)) {
+		// System.out.println("Giving slice to " + kid);
+		piece.consumer = kid;
+		return null;
+	    } else {
+		// System.out.println("Not giving slice to " + kid);
+	    }
 	}
-
 	// No one wants it
-	throw new RuntimeException("Zinky says this is impossible.");
+	return null;
     }
 
 
@@ -181,12 +205,15 @@ public class PercentageLatencyPolicy
 	long elapsed = System.currentTimeMillis()-slice.start;
 	SubSlice piece = (SubSlice) slice;
 	TimeSlice whole = piece.parent;
-	UsageRecord record = getUsageRecord(consumer);
+	UsageRecord record = getUsageRecord(piece.consumer);
+
+
+	// System.out.println("Releasing slice from " +consumer+ " (" +piece.consumer+ ")");
+
+
 	record.totalTime += elapsed;
 	++record.count;
 	totalTime += elapsed;
-
-
 
 	if (whole.isExpired()) {
 	    if (isRoot())
@@ -205,9 +232,16 @@ public class PercentageLatencyPolicy
 
 	TreeSet kids = rankChildren();
 	Iterator itr = kids.iterator();
-	while (itr.hasNext()) {
+	while (itr.hasNext()) {	
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
-	    if (kid.offerSlice(piece)) return true;
+	    if (kid.offerSlice(piece)) {
+		// System.out.println("Slice accepted by " + kid);
+		piece.consumer = kid;
+		piece.start = System.currentTimeMillis();
+		return true;
+	    } else {
+		// System.out.println("Slice refused by " + kid);
+	    }
 	}
 	return false;
     }
