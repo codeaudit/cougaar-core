@@ -69,12 +69,23 @@ extends HandlerBase
   // Map<String, MissEntry>
   private final Map misses = new HashMap(13);
 
+
+  //
+  // send upgraded "getAll" requests:
+  //
+
+  private SchedulableWrapper sendGetAllThread;
+
   // Set<String>
   private final Set getAllQueue = new HashSet(13);
 
   // temporary list to drain the getAllQueue
   // List<String>
   private final List tmpRunList = new ArrayList(13);
+
+  //
+  // clean the cache:
+  //
 
   private SchedulableWrapper cleanCacheThread;
 
@@ -90,6 +101,18 @@ extends HandlerBase
     cache = new LRUExpireMap(
         new MyCacheConfig(),              // my config
         new LoggingCacheWatcher(logger)); // my logger
+
+    Scheduled sendGetAllRunner =
+      new Scheduled() {
+        public void run(SchedulableWrapper thread) {
+          // assert (thread == sendGetAllThread);
+          sendGetAll();
+        }
+      };
+    sendGetAllThread = SchedulableWrapper.getThread(
+        threadService,
+        sendGetAllRunner,
+        "White pages client cache send getAll requests");
 
     super.load();
 
@@ -121,7 +144,7 @@ extends HandlerBase
   }
 
   // send upgraded "get" -> "getAll" requests
-  protected void myRun() {
+  private void sendGetAll() {
     synchronized (lock) {
       if (getAllQueue.isEmpty()) {
         return;
@@ -237,7 +260,7 @@ extends HandlerBase
 
     // queue for separate "getAll" submit
     getAllQueue.add(name);
-    restart();
+    sendGetAllThread.start();
 
     if (UPGRADE_GET_TO_GETALL) {
       // the other thread will send our "getAll"
@@ -576,16 +599,16 @@ extends HandlerBase
       // might as well debug our misses-table on the timer thread
       if (logger.isDebugEnabled()) {
         String s = "";
-        s += "##### pending \"get/getAll\" requests & hints #############";
-        s += "table["+misses.size()+"]: ";
+        s += "\n##### pending \"get/getAll\" requests & hints #############";
+        s += "\ntable["+misses.size()+"]: ";
         for (Iterator iter = misses.entrySet().iterator(); iter.hasNext(); ) {
           Map.Entry x = (Map.Entry) iter.next();
           String name = (String) x.getKey();
           MissEntry me = (MissEntry) x.getValue();
-          s += "  "+name+":";
-          s += "     "+me;
+          s += "\n  "+name+":";
+          s += "\n     "+me;
         }
-        s += "###########################################################";
+        s += "\n###########################################################";
         logger.debug(s);
       }
     }

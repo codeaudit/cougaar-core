@@ -61,7 +61,7 @@ import org.cougaar.core.wp.resolver.BootstrapLookupBase;
  * then this class will treat the path as the agent id
  * and create an alias when it resolves the agent id,
  * e.g.<pre>
- *    (Foo, alias, name://NodeX)
+ *    (Foo, alias, name:///NodeX)
  * </pre>
  * This is handy if you want multiple nodes to race to
  * become the alias entry based upon which node is first to

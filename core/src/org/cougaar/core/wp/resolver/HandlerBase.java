@@ -47,7 +47,6 @@ implements Component
   protected MessageAddress agentId;
   private AgentIdentificationService agentIdService;
   protected ThreadService threadService;
-  private SchedulableWrapper thread;
   protected HandlerRegistryService hrs;
 
   private final Handler myHandler = 
@@ -84,17 +83,6 @@ implements Component
       logger.debug("Loading handler");
     }
 
-    Runnable myRunner =
-      new Runnable() {
-        public void run() {
-          myRun();
-        }
-      };
-    thread = SchedulableWrapper.getThread(
-      threadService,
-      myRunner,
-      "White pages resolver "+getClass().getName());
-
     super.load();
 
     // register our handler
@@ -118,13 +106,8 @@ implements Component
           this, HandlerRegistryService.class, hrs);
     }
 
-    // halt our thread
-    if (thread != null) {
-      thread.cancel();
-      thread = null;
-    }
-
     if (threadService != null) {
+      // halt our threads?
       sb.releaseService(this, ThreadService.class, threadService);
       threadService = null;
     }
@@ -140,24 +123,10 @@ implements Component
     }
   }
 
-  /** Schedule to run in the future */
-  protected final void scheduleRestart(long delay) {
-    thread.schedule(delay);
-  }
-
-  /** Schedule to run again as soon as possible. */
-  protected final void restart() {
-    thread.start();
-  }
-
   /** Handle a client-side (outgoing) request */
   protected abstract Response mySubmit(Response res);
 
   /** Handle a server-side (incoming) result */
   protected abstract void myExecute(
       Request req, Object result, long ttl);
-
-  /** Run in a separate "restart()" thread */
-  protected void myRun() {
-  }
 }

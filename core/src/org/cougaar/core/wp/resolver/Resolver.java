@@ -155,7 +155,7 @@ extends ContainerSupport
             INSERTION_POINT+".Remote",
             "org.cougaar.core.wp.resolver.RemoteHandler",
             null,
-            null,
+            "",
             null,
             null,
             null,

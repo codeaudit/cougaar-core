@@ -36,10 +36,13 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Callback;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.WhitePagesMessage;
+import org.cougaar.core.wp.Scheduled;
+import org.cougaar.core.wp.SchedulableWrapper;
 import org.cougaar.core.wp.server.WPAnswer;
 import org.cougaar.core.wp.server.WPQuery;
 
@@ -56,7 +59,33 @@ import org.cougaar.core.wp.server.WPQuery;
 public class RemoteHandler
 extends HandlerBase
 {
+  private RemoteHandlerConfig config;
+
   private WhitePagesService wps;
+
+  //
+  // input (receive from WP server):
+  //
+
+  private final Object inLock = new Object();
+
+  private SchedulableWrapper inThread;
+
+  // received messages
+  // List<WPAnswer>
+  private final List inQueue = new ArrayList();
+
+  // temporary list for use within "checkInQueue()"
+  // List<Object>
+  private final List inRunTmp = new ArrayList();
+
+  //
+  // output (send to WP server):
+  //
+
+  private final Object outLock = new Object();
+
+  private SchedulableWrapper outThread;
 
   private MessageAddress rootAddr;
 
@@ -64,23 +93,23 @@ extends HandlerBase
   // List<Request>
   private final List outQueue = new ArrayList();
 
-  // received messages
-  // List<WPAnswer>
-  private final List inQueue = new ArrayList();
-
-  private long lastLocate = 0;
-
-  // temporary list for use within "checkQueues()"
+  // temporary list for use within "checkOutQueue()"
   // List<Object>
-  private final List runTmp = new ArrayList();
+  private final List outRunTmp = new ArrayList();
 
-  private final MessageHandler myMessageHandler =
-    new MessageHandler() {
-      public boolean handleMessage(Message m) {
-        return myHandleMessage(m);
-      }
-    };
   private MessageSwitchService messageSwitchService;
+
+
+  //
+  // debug queues:
+  //
+
+  private SchedulableWrapper debugThread;
+
+
+  public void setParameter(Object o) {
+    this.config = new RemoteHandlerConfig(o);
+  }
 
   public void setWhitePagesService(WhitePagesService wps) {
     this.wps = wps;
@@ -91,6 +120,47 @@ extends HandlerBase
 
     if (logger.isDebugEnabled()) {
       logger.debug("Loading resolver remote handler");
+    }
+
+    // create threads
+    Scheduled inRunner =
+      new Scheduled() {
+        public void run(SchedulableWrapper thread) {
+          // assert (thread == inThread);
+          checkInQueue();
+        }
+      };
+    inThread = SchedulableWrapper.getThread(
+        threadService,
+        inRunner,
+        "White pages client handle incoming responses");
+
+    Scheduled outRunner =
+      new Scheduled() {
+        public void run(SchedulableWrapper thread) {
+          // assert (thread == outThread);
+          checkOutQueue();
+        }
+      };
+    outThread = SchedulableWrapper.getThread(
+        threadService,
+        outRunner,
+        "White pages client handle outgoing requests");
+
+    if (config.debugQueuesPeriod > 0 &&
+        logger.isDebugEnabled()) {
+      Scheduled debugRunner =
+        new Scheduled() {
+          public void run(SchedulableWrapper thread) {
+            // assert (thread == debugThread);
+            debugQueues(thread);
+          }
+        };
+      debugThread = SchedulableWrapper.getThread(
+          threadService,
+          debugRunner,
+          "White pages client handle outgoing requests");
+      debugThread.start();
     }
 
     // register our message switch (now or later)
@@ -109,8 +179,48 @@ extends HandlerBase
       sb.addServiceListener(sal);
     }
 
-    // schedule root lookup
-    scheduleRestart(5000);
+    // send root lookup
+    Callback myCallback = 
+      new Callback() {
+        public void execute(Response res) {
+          Response.Get gres = (Response.Get) res;
+          AddressEntry ae = gres.getAddressEntry();
+          foundRoot(ae);
+        }
+      };
+    wps.get("WP", "alias", myCallback);
+  }
+
+  private void foundRoot(AddressEntry ae) {
+    String rootName = null;
+    if (ae != null) {
+      String path = ae.getURI().getPath();
+      if (path != null && path.length() > 1) {
+        rootName = path.substring(1);
+      }
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "Extracted root name \""+rootName+
+            "\" from entry "+ae);
+      }
+    }
+    if (rootName == null) {
+      if (logger.isErrorEnabled()) {
+        logger.error(
+            "Root WP resolver"+
+            " (name=\"WP\", type=\"alias\")"+
+            " not found!");
+      }
+      return;
+    }
+    MessageAddress addr = MessageAddress.getMessageAddress(rootName);
+    if (logger.isInfoEnabled()) {
+      logger.info("Located root wp server: "+addr);
+    }
+    synchronized (outLock) {
+      rootAddr = addr;
+    }
+    outThread.start();
   }
 
   private void registerMessageSwitch() {
@@ -123,18 +233,28 @@ extends HandlerBase
       }
       return;
     }
-    messageSwitchService = (MessageSwitchService)
+    MessageSwitchService mss = (MessageSwitchService)
       sb.getService(this, MessageSwitchService.class, null);
-    if (messageSwitchService == null) {
+    if (mss == null) {
       if (logger.isErrorEnabled()) {
         logger.error("Unable to obtain MessageSwitchService");
       }
       return;
     }
-    messageSwitchService.addMessageHandler(myMessageHandler);
+    MessageHandler myMessageHandler =
+      new MessageHandler() {
+        public boolean handleMessage(Message m) {
+          return myHandleMessage(m);
+        }
+      };
+    mss.addMessageHandler(myMessageHandler);
     if (logger.isInfoEnabled()) {
       logger.info("Registered resolver message handler");
     }
+    synchronized (outLock) {
+      this.messageSwitchService = mss;
+    }
+    outThread.start();
   }
 
   public void unload() {
@@ -160,10 +280,14 @@ extends HandlerBase
 
   private void enqueueOut(Request req) {
     // queue to run in our thread
-    synchronized (outQueue) {
+    boolean b;
+    synchronized (outLock) {
       outQueue.add(req);
+      b = (rootAddr != null && messageSwitchService != null);
     }
-    restart();
+    if (b) {
+      outThread.start();
+    }
   }
 
   private boolean myHandleMessage(Message m) {
@@ -172,78 +296,105 @@ extends HandlerBase
     }
     WPAnswer wpa = (WPAnswer) m;
     // queue to run in our thread
-    synchronized (inQueue) {
+    synchronized (inLock) {
       inQueue.add(wpa);
     }
-    restart();
+    inThread.start();
     return true;
   }
   
-  // running in our thread
-  protected void myRun() {
-    checkQueues();
-    // we'll run again when the in/out queues are filled
+  private void checkInQueue() {
+    synchronized (inLock) {
+      if (inQueue.isEmpty()) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("input queue is empty");
+        }
+        return;
+      }
+      inRunTmp.addAll(inQueue);
+      inQueue.clear();
+    }
+    // receive messages
+    for (int i = 0, n = inRunTmp.size(); i < n; i++) {
+      WPAnswer wpa = (WPAnswer) inRunTmp.get(i);
+      receive(wpa);
+    }
+    inRunTmp.clear();
   }
 
-  private void checkQueues() {
-    // empty the inQueue
-    synchronized (inQueue) {
-      if (!inQueue.isEmpty()) {
-        runTmp.addAll(inQueue);
-        inQueue.clear();
+  private void checkOutQueue() {
+    synchronized (outLock) {
+      if (messageSwitchService == null) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("waiting for message switch service");
+        }
+        return;
       }
-    }
-    if (!runTmp.isEmpty()) {
-      // receive messages
-      for (int i = 0, n = runTmp.size(); i < n; i++) {
-        WPAnswer wpa = (WPAnswer) runTmp.get(i);
-        receive(wpa);
+      if (rootAddr == null) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("waiting for root WP address");
+        }
+        return;
       }
-      runTmp.clear();
+      if (outQueue.isEmpty()) {
+        if (logger.isDetailEnabled()) {
+          logger.detail("output queue is empty");
+        }
+        return;
+      }
+      outRunTmp.addAll(outQueue);
+      outQueue.clear();
     }
 
-    // empty the outQueue
-    if (messageSwitchService == null) {
-      // reschedule for later...
-      if (logger.isDetailEnabled()) {
-        logger.detail("waiting for message switch service");
-      }
-    } else {
-      synchronized (outQueue) {
-        if (!outQueue.isEmpty()) {
-          runTmp.addAll(outQueue);
-          outQueue.clear();
-        }
-      }
+    for (int i = 0, n = outRunTmp.size(); i < n; i++) {
+      Request req = (Request) outRunTmp.get(i);
+      send(req);
     }
-    if (!runTmp.isEmpty()) {
-      List notSent = null;
-      for (int i = 0, n = runTmp.size(); i < n; i++) {
-        Request req = (Request) runTmp.get(i);
-        if (!send(req)) {
-          if (notSent == null) {
-            notSent = new ArrayList(n-i);
-          }
-          notSent.add(req);
-        }
-      }
-      runTmp.clear();
+    outRunTmp.clear();
+  }
 
-      if (notSent != null) {
-        // couldn't send some/all of our requests!
-        //
-        // this should be rare in practice and only be caused by a
-        // configuration or bootstrapping delays
-        synchronized (outQueue) {
-          outQueue.addAll(0, notSent);
-        }
+  private void debugQueues(SchedulableWrapper thread) {
+    // assert (thread == debugThread);
+    if (logger.isDebugEnabled()) {
+      debugQueues();
+      // run me again later
+      thread.schedule(config.debugQueuesPeriod);
+    }
+  }
+
+  private void debugQueues() {
+    synchronized (inLock) {
+      String s = "";
+      s += "\n##### debug remote input queue ############################";
+      int n = inQueue.size();
+      s += "\ninQueue["+n+"]: ";
+      for (int i = 0; i < n; i++) {
+        WPAnswer wpa = (WPAnswer) inQueue.get(i);
+        s += "\n   "+wpa;
       }
+      s += "\n###########################################################";
+      logger.debug(s);
+    }
+
+    synchronized (outQueue) {
+      String s = "";
+      s += "\n##### debug remote output queue ###########################";
+      s += "\nrootAddr="+rootAddr;
+      s += "\nmessageSwitchService="+messageSwitchService;
+      int n = outQueue.size();
+      s += "\noutQueue["+n+"]: ";
+      for (int i = 0; i < n; i++) {
+        Request req = (Request) outQueue.get(i);
+        s += "\n   "+req;
+      }
+      s += "\n###########################################################";
+      logger.debug(s);
     }
   }
 
   private void receive(WPAnswer wpa) {
     if (logger.isDetailEnabled()) {
-      logger.detail("Receive answer "+wpa);
+      logger.detail("receiving message: "+wpa);
     }
     // extract message contents
     long ttl = wpa.getTTL();
@@ -258,89 +409,24 @@ extends HandlerBase
     // no-op
   }
 
-  private boolean send(Request req) {
-    if (logger.isDetailEnabled()) {
-      logger.detail("send wp request: "+req);
-    }
-
-    // select the target
-    MessageAddress target = selectTarget(req);
-    if (target == null) {
-      // reschedule for later...
-      return false;
-    }
-
+  private void send(Request req) {
     // create the message
     WhitePagesMessage wpm = 
-      new WPQuery(agentId, target, req);
+      new WPQuery(agentId, rootAddr, req);
 
     // send the message
     if (logger.isDetailEnabled()) {
-      logger.detail("send: \t"+wpm);
+      logger.detail("sending message: \t"+wpm);
     }
     messageSwitchService.sendMessage(wpm);
     // it's on its way...
-    return true;
   }
 
-  private MessageAddress selectTarget(Request req) {
-    // make sure we've located the root server
-    if (rootAddr != null) {
-      return rootAddr;
+  /** config options, soon to be parameters/props */
+  private static class RemoteHandlerConfig {
+    public final long debugQueuesPeriod = 30*1000;
+    public RemoteHandlerConfig(Object o) {
+      // FIXME parse!
     }
-    long now = System.currentTimeMillis();
-    if (lastLocate + 5000 > now) {
-      // we just ran
-      return null;
-    }
-    lastLocate = now;
-
-    // find the root wp server
-    rootAddr = locateRootServer();
-    if (rootAddr == null) {
-      // try again later
-      scheduleRestart(5000);
-      return null;
-    }
-    return rootAddr;
-  }
-
-  private MessageAddress locateRootServer() {
-    // find "WP" -> ("alias" -> "name://<agent>")
-    String rootName = null;
-    AddressEntry rootAE;
-    try {
-      rootAE = wps.get("WP", "alias", -1);
-    } catch (Exception e) {
-      if (logger.isErrorEnabled()) {
-        logger.error("Failed \"WP\" lookup", e);
-      }
-      rootAE = null;
-    }
-    if (rootAE != null) {
-      rootName = rootAE.getURI().getHost();
-      if (logger.isDetailEnabled()) {
-        logger.detail(
-            "Extracted root name \""+rootName+
-            "\" from entry "+rootAE);
-      }
-    }
-    if (rootName == null) {
-      if (logger.isInfoEnabled()) {
-        logger.info(
-            "Root WP resolver"+
-            " (name=\"WP\", type=\"alias\")"+
-            " not found, will try again later");
-      }
-      return null;
-    }
-    MessageAddress addr = MessageAddress.getMessageAddress(rootName);
-    if (logger.isInfoEnabled()) {
-      logger.info("Located root wp server: "+addr);
-    }
-    // let the mts complain if the specific
-    //   wp.get(rootName, "-RMI")
-    // is not in the bootstrap config.
-    return addr;
   }
 }

@@ -33,6 +33,8 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.wp.Scheduled;
+import org.cougaar.core.wp.SchedulableWrapper;
 import org.cougaar.core.wp.Timestamp;
 
 /**
@@ -53,6 +55,12 @@ extends HandlerBase
   // Map<String, Map<String, Lease>>
   private final Map leases = new HashMap();
 
+  //
+  // renew leases:
+  //
+
+  private SchedulableWrapper renewLeasesThread;
+
   public void setParameter(Object o) {
     this.config = new LeaserConfig(o);
   }
@@ -63,7 +71,18 @@ extends HandlerBase
 
   public void load() {
     super.load();
-    scheduleRestart(config.checkLeasesPeriod);
+
+    Scheduled renewLeasesRunner =
+      new Scheduled() {
+        public void run(SchedulableWrapper thread) {
+          renewLeases(thread);
+        }
+      };
+    renewLeasesThread = SchedulableWrapper.getThread(
+        threadService,
+        renewLeasesRunner,
+        "White pages server renew leases");
+    renewLeasesThread.schedule(config.checkLeasesPeriod);
   }
 
   protected Response mySubmit(Response res) {
@@ -428,10 +447,11 @@ extends HandlerBase
     }
   }
 
-  protected void myRun() {
+  private void renewLeases(SchedulableWrapper thread) {
+    // assert (thread == renewLeasesThread);
     renewLeases();
     // run me again later
-    scheduleRestart(config.checkLeasesPeriod);
+    thread.schedule(config.checkLeasesPeriod);
   }
 
   /**

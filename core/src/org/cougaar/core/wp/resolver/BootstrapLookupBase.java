@@ -135,7 +135,7 @@ extends HandlerBase
    * Return true if an alias is allowed to change.
    * <p>
    * E.g. if we did a lookup and created an alias:<pre>
-   *   (WP, alias, name://AgentX)
+   *   (WP, alias, name:///AgentX)
    * </pre>
    * and later found that AgentY is in the registry,
    * the "allow alias" flag tells us if we should
@@ -377,7 +377,7 @@ extends HandlerBase
        * This entry is added to the TableService.
        * <p>
        * E.g.<pre>
-       *   (WP, alias, name://AgentY)
+       *   (WP, alias, name:///AgentY)
        * </pre>
        * <p>
        * If the aliasId is immutable due to the
@@ -700,7 +700,7 @@ extends HandlerBase
               "No alias necessary for id="+id+" == name="+name);
         }
         return AddressEntry.getAddressEntry(
-              id, "alias", URI.create("name://"+name));
+              id, "alias", URI.create("name:///"+name));
       }
 
       public String toString() {

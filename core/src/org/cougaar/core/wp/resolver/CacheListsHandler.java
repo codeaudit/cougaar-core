@@ -31,6 +31,8 @@ import java.util.Set;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.wp.Scheduled;
+import org.cougaar.core.wp.SchedulableWrapper;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.LRUExpireMap;
 import org.cougaar.util.log.Logger;
@@ -55,6 +57,12 @@ extends HandlerBase
   // Map<String, MissEntry>
   private final Map misses = new HashMap(13);
 
+  //
+  // clean the cache:
+  //
+
+  private SchedulableWrapper cleanCacheThread;
+
   public void setParameter(Object o) {
     this.config = new CacheListsConfig(o);
   }
@@ -67,7 +75,18 @@ extends HandlerBase
     super.load();
 
     if (config.cleanCachePeriod > 0) {
-      scheduleRestart(config.cleanCachePeriod);
+      // create expiration timer
+      Scheduled cleanCacheRunner =
+        new Scheduled() {
+          public void run(SchedulableWrapper thread) {
+            cleanCache(thread);
+          }
+        };
+      cleanCacheThread = SchedulableWrapper.getThread(
+          threadService,
+          cleanCacheRunner,
+          "White pages server clean lists cache");
+      cleanCacheThread.schedule(config.cleanCachePeriod);
     }
   }
 
@@ -218,10 +237,11 @@ extends HandlerBase
     }
   }
 
-  protected void myRun() {
+  private void cleanCache(SchedulableWrapper thread) {
+    // assert (thread == cleanCacheThread);
     cleanCache();
     // run me again later
-    scheduleRestart(config.cleanCachePeriod);
+    thread.schedule(config.cleanCachePeriod);
   }
 
   // this is optional, since the LRU will clean
@@ -232,16 +252,16 @@ extends HandlerBase
       // might as well debug our misses-table on the timer thread
       if (logger.isDebugEnabled()) {
         String s = "";
-        s += "##### pending list requests ###############################";
-        s += "table["+misses.size()+"]: ";
+        s += "\n##### pending list requests ###############################";
+        s += "\ntable["+misses.size()+"]: ";
         for (Iterator iter = misses.entrySet().iterator(); iter.hasNext(); ) {
           Map.Entry x = (Map.Entry) iter.next();
           String name = (String) x.getKey();
           MissEntry me = (MissEntry) x.getValue();
-          s += "  "+name+":";
-          s += "     "+me;
+          s += "\n  "+name+":";
+          s += "\n     "+me;
         }
-        s += "###########################################################";
+        s += "\n###########################################################";
         logger.debug(s);
       }
     }

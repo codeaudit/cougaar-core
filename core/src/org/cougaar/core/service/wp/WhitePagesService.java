@@ -101,40 +101,40 @@ public abstract class WhitePagesService implements Service {
 
   /** @see Request.Get */
   public final void get(
-      String name, String type, Callback callback) throws Exception {
+      String name, String type, Callback callback) {
     submit(new Request.Get(Request.NONE, name, type), callback);
   }
   /** @see Request.GetAll */
-  public final void getAll(String name, Callback callback) throws Exception {
+  public final void getAll(String name, Callback callback) {
     submit(new Request.GetAll(Request.NONE, name), callback);
   }
   /** @see Request.List */
-  public final void list(String suffix, Callback callback) throws Exception {
+  public final void list(String suffix, Callback callback) {
     submit(new Request.List(Request.NONE, suffix), callback);
   }
   /** @see Request.Get */
   public final void refresh(
-      String name, String type, Callback callback) throws Exception {
+      String name, String type, Callback callback) {
     submit(new Request.Get(Request.BYPASS_CACHE, name, type), callback);
   }
   /** @see Request.Bind */
-  public final void bind(AddressEntry ae, Callback callback) throws Exception {
+  public final void bind(AddressEntry ae, Callback callback) {
     submit(new Request.Bind(Request.NONE, ae, false, false), callback);
   }
   /** @see Request.Bind */
-  public final void rebind(AddressEntry ae, Callback callback) throws Exception {
+  public final void rebind(AddressEntry ae, Callback callback) {
     submit(new Request.Bind(Request.NONE, ae, true, false), callback);
   }
   /** @see Request.Bind */
-  public final void hint(AddressEntry ae, Callback callback) throws Exception {
+  public final void hint(AddressEntry ae, Callback callback) {
     submit(new Request.Bind(Request.CACHE_ONLY, ae, true, false), callback);
   }
   /** @see Request.Unbind */
-  public final void unbind(AddressEntry ae, Callback callback) throws Exception {
+  public final void unbind(AddressEntry ae, Callback callback) {
     submit(new Request.Unbind(Request.NONE, ae), callback);
   }
   /** @see Request.Unbind */
-  public final void unhint(AddressEntry ae, Callback callback) throws Exception {
+  public final void unhint(AddressEntry ae, Callback callback) {
     submit(new Request.Unbind(Request.CACHE_ONLY, ae), callback);
   }
 
