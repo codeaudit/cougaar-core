@@ -1,3 +1,11 @@
+2001-09-25  Jim Winston  <jwinston@bbn.com>
+
+	* org/cougaar/core/cougaar/domain/planning/ldm/plan/AllocationResult
+	Added   AspectValue[] difference(Preference[] prefs) method
+	This method is for use by expander plugins to see which
+	if any AspectValues in failed allocations have been
+	changed or added by the allocator plugin.
+
 2001-09-18  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
 
 	* org/cougaar/core/plugin/PluginManager.java (Repository):
