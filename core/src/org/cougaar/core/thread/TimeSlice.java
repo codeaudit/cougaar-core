@@ -21,7 +21,7 @@
 
 package org.cougaar.core.thread;
 
-class TimeSlice
+public class TimeSlice
 {
     long start;
     long end;

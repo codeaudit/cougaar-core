@@ -21,7 +21,7 @@
 
 package org.cougaar.core.thread;
 
-interface TimeSliceConsumer
+public interface TimeSliceConsumer
 {
     boolean offerSlice(TimeSlice slice);
     String getName();
