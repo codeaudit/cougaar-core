@@ -26,6 +26,7 @@ import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.SubscriberException;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
+import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.util.UnaryPredicate;
 
 
@@ -194,4 +195,7 @@ public interface BlackboardService extends Service {
    * @exception PersistenceNotEnabledException
    **/
   void persistNow() throws PersistenceNotEnabledException;
+
+  /** Hook to allow access to Blackboard persistence mechanism **/
+  Persistence getPersistence();
 }

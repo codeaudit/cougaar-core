@@ -24,6 +24,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.*;
+import org.cougaar.core.cluster.persist.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.plugin.PluginManagerForBinder;
 
@@ -188,6 +189,9 @@ public class PluginServiceFilter
     }
     public boolean didRehydrate() {
       return bs.didRehydrate();
+    }
+    public Persistence getPersistence() {
+      return bs.getPersistence();
     }
   }
 }
