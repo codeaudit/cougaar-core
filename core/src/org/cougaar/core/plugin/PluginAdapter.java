@@ -489,6 +489,10 @@ public abstract class PluginAdapter
     getBlackboardService().closeTransaction();
   }
   
+  protected final void closeTransactionDontReset() throws SubscriberException {
+    getBlackboardService().closeTransactionDontReset();
+  }
+  
   protected final void closeTransaction(boolean resetp) throws SubscriberException {
     getBlackboardService().closeTransaction(resetp);
   }
