@@ -285,14 +285,31 @@ public final class ConfigFinder {
   class ConfigResolver implements EntityResolver {
     public InputSource resolveEntity (String publicId, String systemId) {
 
-      String filename = systemId.substring(systemId.lastIndexOf(File.separatorChar)+1,
-	 systemId.length());
+      
+      URL url = null;
+
+      try {
+	url = new URL(systemId);
+      } catch(Exception e) {}
+
+      String filename = url.getFile();
+
+      // Because the filename is a URL file name, all separators are a
+      // '/'.  (See RFC 2396)  Because of this, the File.separatorChar
+      // cannot be used, it will fail on Windows platforms.
+      filename = filename.substring(filename.lastIndexOf("/")+1, filename.length());
 
       InputSource is = null;
       try {
 	is = new InputSource(open(filename));
       } catch(IOException e) {
+	e.printStackTrace();
       }
+      
+      if(is == null) {
+	throw new RuntimeException();
+      }
+
       return is;
    } 
   }
