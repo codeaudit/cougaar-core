@@ -255,7 +255,15 @@ You need access to a running MySQL or PostgreSQL database server.
 <ul>
 <li>
 If needed, download and install the latest version of&nbsp; MySQL from
-<a href="http://www.mysql.com">http://www.mysql.com</a>&nbsp;</li>
+<a href="http://www.mysql.com">http://www.mysql.com</a>. On Linux we recommend at least version 3.23.45.&nbsp;</li>
+
+<li>
+When installing on Unix, you must instruct the database to translate
+all table names to lowercase (which is the default on Windows). To do
+this, you set the variable lower_case_table_names=1 by including the line in /etc/my.cnf: <pre>
+[mysqld]
+set-variable	=	lower_case_table_names=1
+</pre></li>
 
 <li>
 You will find a MySQL JDBC driver, version 2.0.3 ( mm-mysql-2.jar) in the
@@ -264,11 +272,11 @@ with the 8.6.0 release.&nbsp; You can find the latest drivers at
 <a href="http://sourceforge.net/projects/mmmysql">http://sourceforge.net/projects/mmmysql</a>&nbsp;</li>
 
 <li>
-Download and import the mysqldump.8.6.txt found in the dbms/data/mysql
-directory in the cougaar.zip</li>
+Download and import the mysql data files found in the dbms/data/mysql
+directory in the cougaar.zip: mysqldump.8.6.txt for the main data, fdm_dump.ZIP (after unzipping) for FDM data, army_spares.ZIP (after unzipping), and spares_index.txt</li>
 
 <li>
-To load: mysql -u {USER} –p{PASSWORD} {DATABASE} &lt; mysqldump.8.6.txt</li>
+To load: mysql -u {USER} –p{PASSWORD} {DATABASE} &lt; [mysqldump.8.6.txt or other file]</li>
 
 <li>
 Or simply download the Cougaar 8.6.0 installer from the Cougaar web site
