@@ -32,20 +32,69 @@ import org.cougaar.util.log.LoggerAdapter;
 
 /**
  * Utility class to wrap all {@link LoggingService} messages with a
- * prefix string.
+ * prefix string, unless already wrapped by a
+ * <tt>LoggingServiceWithPrefix</tt> with that prefix.
+ * 
+ * @property org.cougaar.core.logging.trackDuplicateLoggingPrefix
+ *   Enable debug tracking of duplicate "AgentX: AgentX:"
+ *   LoggingService log messages within the LoggingServiceWithPrefix,
+ *   possibly due to enabling
+ *   "-Dorg.cougaar.core.logging.addAgentPrefix".  Performs an
+ *   expensive check at DETAIL log level, regardless of logger
+ *   configuration, and logs any duplicate prefixes at SHOUT level.
+ *   Defaults to false.
  */
 public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingService {
+
+  private static final boolean TRACK_DUPLICATE_LOGGING_PREFIX =
+    Boolean.getBoolean(
+        "org.cougaar.core.logging.trackDuplicateLoggingPrefix");
+
+  private final String prefix;
+  private final Logger logger;
+
   public static LoggingService add(LoggingService ls, String prefix) {
+    if (ls instanceof LoggingServiceWithPrefix) {
+      LoggingServiceWithPrefix lswp = (LoggingServiceWithPrefix) ls;
+      String s = lswp.prefix;
+      if (prefix == null ? s == null : prefix.equals(s)) {
+        // already prefixed
+        return lswp;
+      }
+    }
     return new LoggingServiceWithPrefix(ls, prefix);
   }
 
-  private String prefix;
-  private Logger logger;
+  public static LoggingService add(Logger logger, String prefix) {
+    if (logger instanceof LoggingService) {
+      return add(((LoggingService) logger), prefix);
+    }
+    return new LoggingServiceWithPrefix(logger, prefix);
+  }
+
   public LoggingServiceWithPrefix(Logger logger, String prefix) {
     this.logger = logger;
     this.prefix = prefix;
   }
-  public boolean isEnabledFor(int level) { return logger.isEnabledFor(level); }
-  public void log(int level, String message, Throwable t) { logger.log(level, prefix + message, t); }
+
+  public boolean isEnabledFor(int level) {
+    if (TRACK_DUPLICATE_LOGGING_PREFIX) {
+      // we want to see all messages, even they won't be logged.
+      // note that this causes extra string consing!
+      return true;
+    }
+    return logger.isEnabledFor(level);
+  }
+  public void log(int level, String message, Throwable t) {
+    if (TRACK_DUPLICATE_LOGGING_PREFIX &&
+        message.regionMatches(0, prefix, 0, prefix.length()-1)) {
+      StackTraceElement[] stack = (new Throwable()).getStackTrace();
+      logger.log(
+          SHOUT,
+          "DuplicateLoggingPrefix - "+stack[2]+": "+message,
+          null);
+    }
+    logger.log(level, prefix + message, t);
+  }
   public void printDot(String dot) {logger.printDot(dot);}
-}  
+}

@@ -32,17 +32,33 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.PropertyParser;
 
 /**
  * This component advertises the {@link LoggingService}
  * to all agents.
+ *
+ * @property org.cougaar.core.logging.addAgentPrefix
+ *   Modify the agent-level LoggingService implementation to add an
+ *   "agent: " prefix to all logging lines.  Options are:
+ *     "true" to enable in both agents and node-agents,
+ *     "agent" to only enable on agents,
+ *     "node" to only enable on the node-agent,
+ *     "false" to disable.
+ *   Defaults to true.
  */
 public final class LoggingServiceComponent
 extends GenericStateModelAdapter
 implements Component
 {
+
+  private static final String ADD_AGENT_PREFIX =
+    System.getProperty(
+        "org.cougaar.core.logging.addAgentPrefix", "true");
 
   private ServiceBroker sb;
   private ServiceBroker rootsb;
@@ -58,22 +74,54 @@ implements Component
 
     NodeControlService ncs = (NodeControlService)
       sb.getService(this, NodeControlService.class, null);
-    if (ncs == null) {
-      throw new RuntimeException("Unable to obtain NodeControlService");
+    if (ncs != null) {
+      rootsb = ncs.getRootServiceBroker();
+      sb.releaseService(this, NodeControlService.class, ncs);
     }
-    rootsb = ncs.getRootServiceBroker();
-    sb.releaseService(this, NodeControlService.class, ncs);
 
-    lsp = new LoggingServiceProvider();
-    rootsb.addService(LoggingService.class, lsp);
-    rootsb.addService(LoggingControlService.class, lsp);
+    String prefix;
+    if (shouldPrefix()) {
+      MessageAddress localAgent = find_local_agent();
+      prefix = localAgent+": ";
+    } else {
+      prefix = null;
+    }
+
+    lsp = new LoggingServiceProvider(prefix);
+
+    ServiceBroker the_sb = (rootsb == null ? sb : rootsb);
+    the_sb.addService(LoggingService.class, lsp);
+    the_sb.addService(LoggingControlService.class, lsp);
   }
   
+  private MessageAddress find_local_agent() {
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    if (ais == null) {
+      return null;
+    }
+    MessageAddress ret = ais.getMessageAddress();
+    sb.releaseService(
+        this, AgentIdentificationService.class, ais);
+    return ret;
+  }
+
   public void unload() {
     super.unload();
 
-    rootsb.revokeService(LoggingControlService.class, lsp);
-    rootsb.revokeService(LoggingService.class, lsp);
+    ServiceBroker the_sb = (rootsb == null ? sb : rootsb);
+    the_sb.revokeService(LoggingControlService.class, lsp);
+    the_sb.revokeService(LoggingService.class, lsp);
     lsp = null;
+  }
+
+  private boolean shouldPrefix() {
+    boolean isNode = (rootsb != null);
+    return
+      ADD_AGENT_PREFIX.equals("true") ||
+      ADD_AGENT_PREFIX.equals("both") ||
+      (isNode ?
+       ADD_AGENT_PREFIX.equals("node") :
+       ADD_AGENT_PREFIX.equals("agents"));
   }
 }

@@ -47,8 +47,42 @@ import java.util.WeakHashMap;
  */
 public class LoggingServiceProvider implements ServiceProvider {
 
-  /** The cache for getLogger() */
-  private static Map loggerCache = new WeakHashMap(11);
+  // maps of prefix -> key -> logger
+  // Map<String, Map<String, LoggerProxy>>
+  private static final Map prefixToLoggerCache = new WeakHashMap(11);
+
+  // our prefix
+  private final String prefix;
+
+  // our logger cache
+  // value of prefixToLoggerCache.get(prefix).
+  // Map<String, LoggerProxy>
+  private final Map loggerCache;
+
+  public LoggingServiceProvider() {
+    this(null);
+  }
+
+  public LoggingServiceProvider(String prefix) {
+    this.prefix = prefix;
+    loggerCache = getLoggerCache(prefix);
+  }
+
+  private static final Map getLoggerCache(String prefix) {
+    synchronized (prefixToLoggerCache) {
+      Map ret = (Map) prefixToLoggerCache.get(prefix);
+      if (ret == null) {
+        ret = new WeakHashMap(11);
+        // new String(key) keeps the entry GCable
+        String weakKey = 
+          (prefix == null ?
+           (null) :
+           new String(prefix)); // intentional "new String"
+        prefixToLoggerCache.put(weakKey, ret);
+      }
+      return ret;
+    }
+  }
 
   public Object getService(
       ServiceBroker sb,
@@ -77,9 +111,15 @@ public class LoggingServiceProvider implements ServiceProvider {
     synchronized (loggerCache) {
       ls = (LoggingService) loggerCache.get(key);
       if (ls == null) {
-        ls = new LoggingServiceImpl(Logging.getLogger(key));
+        Logger logger = Logging.getLogger(key);
+        if (prefix == null) {
+          ls = new LoggingServiceImpl(logger);
+        } else {
+          ls = new LoggingServiceWithPrefix(logger, prefix);
+        }
         // new String(key) keeps the entry GCable
-        loggerCache.put(new String(key),ls);
+        String weakKey = new String(key); 
+        loggerCache.put(weakKey, ls); // intentional "new String"
       }
     }
     return ls;

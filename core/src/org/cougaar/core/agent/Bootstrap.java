@@ -145,8 +145,8 @@ implements Component
 
     l.add(NODE_CONTROL_BLOCKER);
 
+    l.add(LOGGING_SERVICE);
     if (isNode) {
-      l.add(LOGGING_SERVICE);
       l.add(QUIESCENCE_REPORT);
     }
 
