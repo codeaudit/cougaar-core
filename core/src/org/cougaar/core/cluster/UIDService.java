@@ -15,21 +15,8 @@ import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.component.Service;
 
-public interface UIDService extends Service {
-  /** ClusterIdentifier of the proxy server.
-   *  This might go away if we ever really separated proxy 
-   * servers from clusters.
-   **/
-  ClusterIdentifier getClusterIdentifier();
-
- /** get the next Unique ID for the Proxiable object registry
-   * at this server.
-   * It is better for Factories to use the registerUniqueObject method.
-   **/
-  UID nextUID();
-
-  /** assign a new UID to a unique object.
-   **/
-  UID registerUniqueObject(UniqueObject o);
-
+//marker for now - should eventually be the real thing 
+// will eventually take over from UIDServer
+public interface UIDService extends UIDServer {
+ 
 }

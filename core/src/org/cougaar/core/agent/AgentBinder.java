@@ -44,7 +44,7 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
   //}
 
   public String toString() {
-    return getAgent() + "'s AgentBinder";
+    return getAgent() + "'s AgentManagerBinder";
   }
 
 }

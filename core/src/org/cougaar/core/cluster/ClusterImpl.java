@@ -14,9 +14,15 @@ package org.cougaar.core.cluster;
 import java.util.*;
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
+
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.AgentBindingSite;
+
 import org.cougaar.core.cluster.Cluster;
 
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.core.cluster.Distributor;
 import org.cougaar.core.cluster.MetricsSnapshot;
@@ -62,6 +68,9 @@ import org.cougaar.domain.planning.ldm.RootFactory;
 import org.cougaar.domain.planning.ldm.Factory;
 import org.cougaar.domain.planning.ldm.Domain;
 import org.cougaar.domain.planning.ldm.DomainManager;
+import org.cougaar.domain.planning.ldm.DomainService;
+import org.cougaar.domain.planning.ldm.DomainServiceImpl;
+import org.cougaar.domain.planning.ldm.DomainServiceProvider;
 
 // Advertised services I provide to my collaborators
 import org.cougaar.util.GenericStateModel;
@@ -77,6 +86,9 @@ import org.cougaar.core.society.ClusterManagementServesCluster;
 import org.cougaar.core.society.UniqueObject;
 import org.cougaar.domain.planning.ldm.Registry;
 import org.cougaar.domain.planning.ldm.RegistryException;
+import org.cougaar.domain.planning.ldm.PrototypeRegistryServiceProvider;
+import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
+import org.cougaar.domain.planning.ldm.PrototypeRegistry;
 
 // ClusterFactories
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
@@ -133,31 +145,22 @@ import java.beans.Beans;
  *
  * @see org.cougaar.core.society.MessageTransport
  **/
-public class ClusterImpl
+public class ClusterImpl extends Agent
   implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics
 {
   private Distributor myDistributor = null;
-
   private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
-
   private MessageTransportServer messenger = null;
-
   private static boolean isHeartbeatOn = true;
-
   private static boolean isMetricsHeartbeatOn = false;
-
   private static int metricsInterval = 2500; // how often send to metrics display
   private static int idleInterval = 5*1000;
-
   private static boolean idleVerbose = false; // don't be verbose
   private static long idleVerboseInterval = 60*1000L; // 1 minute
-
   private static long maxIdleInterval;
-
   private static int trafficPeriod = 80;
   private static boolean usePlugInLoader = false;
-
   private static boolean showTraffic = true;
   static {
     Properties props = System.getProperties();
@@ -178,7 +181,50 @@ public class ClusterImpl
   }
 
 
-  /**
+  private AgentBindingSite bindingSite = null;
+
+  public final void setBindingSite(BindingSite bs) {
+    if (bs instanceof AgentBindingSite) {
+      bindingSite = (AgentBindingSite) bs;
+    } else {
+      throw new RuntimeException("Tried to laod "+this+"into "+bs);
+    }
+  }
+
+  protected final AgentBindingSite getBindingSite() {
+    return bindingSite;
+  }
+
+  //
+  // services
+  //
+
+  // UID Service
+  private UIDService myUIDService = null;
+  /** @deprectated  Use getUIDService() **/
+  public UIDServer getUIDServer() {
+    return myUIDService;
+  }
+  // public for now for backwards compatability
+  public final UIDService getUIDService() {
+    return myUIDService;
+  }
+
+  //Prototype Service
+  private PrototypeRegistryService myPrototypeService = null;
+  protected final PrototypeRegistryService getPrototypeRegistryService() {
+    return myPrototypeService;
+  }
+
+  //Domain/Factory Service
+  private DomainService myDomainService = null;
+  protected final DomainService getDomainService() {
+    return myDomainService;
+  }
+
+  // end services
+
+ /**
    * myClusterManager_ is a private reference to this cluster's
    * ClusterManagement container.  This value is set once and only
    * once during the #load(Object) phase.
@@ -208,11 +254,7 @@ public class ClusterImpl
    * instance's state.
    **/
   private int myClusterStateModelState_ = GenericStateModel.UNINITIALIZED;
-    
-    
-  /** the cluster's UIDServer **/
-  private UIDServer myUIDServer = null;
-
+       
   /** Container which manages the plugins **/
   private PluginManager pluginManager;
 
@@ -242,7 +284,6 @@ public class ClusterImpl
   }
     
   public Distributor getDistributor() {
-    //if (myDistributor != null) return myDistributor;
     synchronized (this) {
       if (myDistributor == null) {
         myDistributor = new Distributor(getClusterIdentifier().getAddress());
@@ -301,23 +342,33 @@ public class ClusterImpl
     ClusterManagementServesCluster cm = (ClusterManagementServesCluster) o;
     setClusterManagement(cm);
 
-    myUIDServer = new UIDServer(this);
-
     // get the Messenger instance from ClusterManagement
     messenger = cm.getMessageTransportServer();
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
 
-    // initialize LDM parts
-    myRegistry = new Registry();
+    //set up the UIDServer and UIDService
+    UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
+    childServiceBroker.addService(UIDService.class, new UIDServiceProvider(theUIDServer));
+    // for backwards compatability
+    myUIDService = (UIDService) childServiceBroker.getService(this, UIDService.class, null);
+    
+    //set up the PrototypeRegistry and the PrototypeRegistryService
+    PrototypeRegistry myPrototypeRegistry = new PrototypeRegistry();
+    childServiceBroker.addService(PrototypeRegistryService.class, 
+                            new PrototypeRegistryServiceProvider(myPrototypeRegistry));
+    //for backwards compatability
+    myPrototypeService = (PrototypeRegistryService) childServiceBroker.getService(
+                                                     this, PrototypeRegistryService.class, null);
 
-    // get the domains set up
-    DomainManager.initialize();
-
-    // set up the root domain, especially the root factory.
-    Domain rootDomain = DomainManager.find("root");
-    myRootFactory = (RootFactory) rootDomain.getFactory(this);
+    //set up the DomainServiceImpl and the DomainService
+    // DomainServiceImpl needs the PrototypeRegistryService
+    //for now its in the form of this as LDMServesPlugin - should be changed!!!
+    DomainServiceImpl myDSI = new DomainServiceImpl(this);
+    childServiceBroker.addService(DomainService.class, new DomainServiceProvider(myDSI));
+    //for backwards compatability
+    myDomainService = (DomainService) childServiceBroker.getService(this, DomainService.class, null);
 
     // set up Blackboard and LogicProviders
     try {
@@ -331,7 +382,7 @@ public class ClusterImpl
         // add all the domain-specific logic providers
         XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
         myBlackboard.addXPlan(xPlan);
-        if (d == rootDomain) {
+        if (d == getFactory()) {
           myLogPlan = (LogPlan) xPlan;
         }
         Collection lps = d.createLogicProviders(xPlan, this);
@@ -465,6 +516,10 @@ public class ClusterImpl
   /** Standard, no argument constructor. */
   public ClusterImpl() {
   }
+  public ClusterImpl(ComponentDescription comdesc) {
+    super(comdesc);
+    // services added in load()
+  }
   
   /** Answer by allowing ClusterManagement to set the ClusterIdentifier for this instance.
    * Assert that this is called once and only once *before* ClusterManagement calls
@@ -560,122 +615,41 @@ public class ClusterImpl
   }
 
   // 
-  // LDM functionality
+  // LDM PrototypeRegistry backwards compatability
   //
 
-
-  /** set of PrototypeProvider LDM PlugIns **/
-  // might want this to be prioritized lists
-  private List prototypeProviders = new ArrayList();
-
   public void addPrototypeProvider(PrototypeProvider prov) {
-    prototypeProviders.add(prov);
+    getPrototypeRegistryService().addPrototypeProvider(prov);
   }
-
-  /** set of PropertyProvider LDM PlugIns **/
-  private List propertyProviders = new ArrayList();
-  public void addPropertyProvider(PropertyProvider prov) {
-    propertyProviders.add(prov);
-  }
-
-  // use the registry for registering prototypes for now.
-  // later, just replace with a hash table.
   public void cachePrototype(String aTypeName, Asset aPrototype) {
-    Registry r = getRegistry();
-    r.createRegistryTerm(aTypeName, aPrototype);
+    getPrototypeRegistryService().cachePrototype(aTypeName, aPrototype);
   }
-
   public boolean isPrototypeCached(String aTypeName) {
-    return (getRegistry().findDomainName(aTypeName) != null);
+    return getPrototypeRegistryService().isPrototypeCached(aTypeName);
   }    
-
   public Asset getPrototype(String aTypeName) {
     return getPrototype(aTypeName, null);
   }
   public Asset getPrototype(String aTypeName, Class anAssetClass) {
-    Asset found = null;
-
-    // look in our registry first.
-    // the catch is in case some bozo registered a non-asset under this
-    // name.
-    try {
-      found = (Asset) getRegistry().findDomainName(aTypeName);
-      if (found != null) return found;
-    } catch (ClassCastException cce) {}
-    
-    // else, try the prototype providers
-    for (Iterator pps = prototypeProviders.iterator(); pps.hasNext(); ) {
-      PrototypeProvider pp = (PrototypeProvider) pps.next();
-      found = pp.getPrototype(aTypeName, anAssetClass);
-      if (found != null) return found;
-    }
-
-    // might want to throw an exception in a later version
-    return null;
+    return getPrototypeRegistryService().getPrototype(aTypeName, anAssetClass);
   }
-
   public void fillProperties(Asset anAsset) {
-    // expose the asset to all propertyproviders
-    for (Iterator pps = propertyProviders.iterator(); pps.hasNext(); ) {
-      PropertyProvider pp = (PropertyProvider) pps.next();
-      pp.fillProperties(anAsset);
-    }
+    getPrototypeRegistryService().fillProperties(anAsset);
   }
-        
-
-  /** hash of PropertyGroup interface to Lists of LatePropertyProvider instances. **/
-  private HashMap latePPs = new HashMap(11);
-  /** list of LatePropertyProviders who supply all PropertyGroups **/
-  private ArrayList defaultLatePPs = new ArrayList(3); 
+  public void addPropertyProvider(PropertyProvider prov) {
+    getPrototypeRegistryService().addPropertyProvider(prov);
+  }
   public void addLatePropertyProvider(LatePropertyProvider lpp) {
-    Collection c = lpp.getPropertyGroupsProvided();
-    if (c == null) {
-      defaultLatePPs.add(lpp);
-    } else {
-      try {
-        for (Iterator it = c.iterator(); it.hasNext(); ) {
-          Class pgc = (Class) it.next();
-          ArrayList l = (ArrayList) latePPs.get(pgc);
-          if (l == null) {
-            l = new ArrayList(3);
-            latePPs.put(pgc,l);
-          }
-          l.add(lpp);
-        }
-      } catch (ClassCastException e) {
-        System.err.println("LatePropertyProvider "+lpp+" returned an illegal PropertyGroup spec:");
-        e.printStackTrace();
-      }
-    }
+    getPrototypeRegistryService().addLatePropertyProvider(lpp);
   }
-
-  /** hook for late-binding **/
   public PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pgclass, long t) {
-    // specifics
-    ArrayList c = (ArrayList) latePPs.get(pgclass);
-    PropertyGroup pg = null;
-    if (c != null) {
-      pg = tryLateFillers(c, anAsset, pgclass, t);
-    }
-    if (pg == null) {
-      pg = tryLateFillers(defaultLatePPs, anAsset, pgclass, t);
-    }
-    return pg;
+    return getPrototypeRegistryService().lateFillPropertyGroup(anAsset, pgclass, t);
   }
 
-  /** utility method of lateFillPropertyGroup() **/
-  private PropertyGroup tryLateFillers(ArrayList c, Asset anAsset, Class pgclass, long t)
-  {
-    int l = c.size();
-    for (int i = 0; i<l; i++) {
-      LatePropertyProvider lpp = (LatePropertyProvider) c.get(i);
-      PropertyGroup pg = lpp.fillPropertyGroup(anAsset, pgclass, t);
-      if (pg != null) 
-        return pg;
-    }
-    return null;
-  }    
 
+  // 
+  //Domain Service backwards compatability
+  //
 
   /** 
    * Answer with a reference to the Factory
@@ -683,63 +657,29 @@ public class ClusterImpl
    * per Cluster instance.  Hence, ClusterManagment will always provide
    * plugins with access to the ClusterObjectFactory
    **/
-  public ClusterObjectFactory getClusterObjectFactory()
-  {
-    return myRootFactory;
+  public ClusterObjectFactory getClusterObjectFactory()  {
+    return getDomainService().getClusterObjectFactory();
   }
-
-  private RootFactory myRootFactory = null;
-  private Registry myRegistry = null;
-
   /** expose the LDM factory instance to consumers.
    *    @return LdmFactory The fatory object to use in constructing LDM Objects
    **/
   public RootFactory getFactory(){
-    return myRootFactory;
+    return getDomainService().getFactory();
   }
-
-  /** map of domainname to domain factory instance **/
-  private HashMap factories = new HashMap(11);
-  /** map of domains to factories. synchronized on factories **/
-  private HashMap domainFactories = new HashMap(11);
-
   /** @deprecated use getFactory() **/
   public RootFactory getLdmFactory() {
     return getFactory();
   }
-
   /** create a domain-specific factory **/
   public Factory getFactory(String domainname) {
-    String key = domainname;
-    synchronized (factories) {
-      Factory f = (Factory) factories.get(key);
-      if (f != null) return f;
-
-      // bail out for root
-      if ("root".equals(domainname)) {
-        factories.put(key, myRootFactory);
-        return myRootFactory;
-      }
-        
-      Domain d = DomainManager.find(key);
-      if (d == null) return null; // couldn't find the domain!
-
-      f = (Factory) domainFactories.get(d); // check the domain factories set first
-      if (f == null) {
-        f = d.getFactory(this);   // create a new factory
-        if (f == null) return null; // failed to create the factory
-        domainFactories.put(d, f);
-      }
-      factories.put(key, f);    // cache the factory against the name
-      return f;
-    }
+    return getDomainService().getFactory(domainname);
   }
-
   /** Expose the Registry to consumers. 
    **/
-  public Registry getRegistry() {
-    return myRegistry;
-  }
+  // try to get rid of this...
+  //public Registry getRegistry() {
+  //  return myRegistry;
+  //}
 
 
   // bean instantiation
@@ -791,15 +731,14 @@ public class ClusterImpl
     }
   }
 
-  public UIDServer getUIDServer() {
-    return myUIDServer;
+  // hook into Agent
+  public ClusterIdentifier getAgentIdentifier() {
+    return this.getClusterIdentifier();
   }
-
   // additional ClusterContext implementation
 
   /** Answer with your represenation as a ClusterIdentifier instance. **/
-  public ClusterIdentifier getClusterIdentifier() 
-  { 
+  public ClusterIdentifier getClusterIdentifier() { 
     return myClusterIdentity_;
   }
 
@@ -846,9 +785,11 @@ public class ClusterImpl
     //no longer works from cluster as the sharedpluginmanager
     //is now a service
     //ms.thinPluginCount = getSharedPlugInManager().size();
-    ms.prototypeProviderCount = prototypeProviders.size();
-    ms.propertyProviderCount = propertyProviders.size();
-    ms.cachedPrototypeCount = getRegistry().size();
+    //no longer works from cluster as these are part of 
+    //the prototyperegistryservice
+    //ms.prototypeProviderCount = prototypeProviders.size();
+    //ms.propertyProviderCount = propertyProviders.size();
+    //ms.cachedPrototypeCount = getRegistry().size();
 
     // vm stuff
     ms.idleTime = getIdleTime();

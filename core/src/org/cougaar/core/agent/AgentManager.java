@@ -14,13 +14,6 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.*;
 import org.cougaar.core.society.MessageTransportServer;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.DomainServiceProvider;
-import org.cougaar.domain.planning.ldm.DomainService;
-import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
-import org.cougaar.domain.planning.ldm.PrototypeRegistryServiceProvider;
-import org.cougaar.core.cluster.UIDService;
-import org.cougaar.core.cluster.UIDServiceProvider;
 
 import java.beans.*;
 import java.lang.reflect.*;
@@ -47,23 +40,19 @@ public class AgentManager
     }
 
     // add some services for the agents (clusters).
-    //childServiceBroker.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    //childServiceBroker.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    //childServiceBroker.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
-    //childServiceBroker.addService(UIDService.class, new UIDServiceProvider(clustercontext));
-    childServiceBroker.addService(PrototypeRegistryService.class, new PrototypeRegistryServiceProvider());
-    childServiceBroker.addService(DomainService.class, new DomainServiceProvider());
-    
+    // maybe this can be hooked in from Node soon.
+    //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
+    //childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "agent";
+    return "Node.AgentManager";
   }
   protected ServiceBroker specifyChildServiceBroker() {
-    return new AgentServiceBroker();
+    return new AgentManagerServiceBroker();
   }
 
   protected Class specifyChildBindingSite() {
@@ -90,7 +79,7 @@ public class AgentManager
   // support classes
   //
 
-  private static class AgentServiceBroker extends ServiceBrokerSupport {}
+  private static class AgentManagerServiceBroker extends ServiceBrokerSupport {}
   
   //need this or something else???
   // support for direct loading of agents

@@ -14,17 +14,19 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.society.UID;
 import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.cluster.persist.PersistenceState;
+import org.cougaar.core.cluster.persist.StatePersistable;
 
 /** A UIDServiceProvider is a provider class for the UID services. **/
 public class UIDServiceProvider implements ServiceProvider {
-  private UIDServer theServer;
-  public UIDServiceProvider(UIDServer theServer) {
+  private UIDServiceImpl theServer;
+  public UIDServiceProvider(UIDServiceImpl theServer) {
     this.theServer = theServer;
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (UIDService.class.isAssignableFrom(serviceClass)) {
-      return new UIDServiceImpl();
+      return new UIDServiceProxy();
     } else {
       return null;
     }
@@ -33,7 +35,7 @@ public class UIDServiceProvider implements ServiceProvider {
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
   }
 
-  private final class UIDServiceImpl implements UIDService {
+  private final class UIDServiceProxy implements UIDService {
     public ClusterIdentifier getClusterIdentifier() {
       return theServer.getClusterIdentifier();
     }
@@ -42,6 +44,15 @@ public class UIDServiceProvider implements ServiceProvider {
     }
     public UID registerUniqueObject(UniqueObject o) {
       return theServer.registerUniqueObject(o);
+    }
+     // persistence backwards compat
+    public PersistenceState getPersistenceState() {
+      return theServer.getPersistenceState();
+    }
+
+    /** called during persistence rehydration to reset the state **/
+    public void setPersistenceState(PersistenceState state) {
+      theServer.setPersistenceState(state);
     }
   }
 

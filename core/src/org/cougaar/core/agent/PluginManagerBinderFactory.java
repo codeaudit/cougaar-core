@@ -14,17 +14,15 @@ import java.lang.reflect.*;
 import org.cougaar.core.component.*;
 
 /**
- * A BinderFactory for binding Agents to the AgentManager.
+ * A BinderFactory for binding PluginManagers to Agents.
  **/
-public class AgentBinderFactory extends BinderFactorySupport
+public class PluginManagerBinderFactory extends BinderFactorySupport
 {
 
-  /** AgentBinderFactory always uses AgentBinder.
+  /** PluginManagerBinderFactory always uses PluginManagerBinder.
    **/
   public Class getBinderClass(Object child) {
-    //Might want to differentiate between Agent and specializations of
-    //agents such as Clusters at some point.  But for now...
-    return AgentBinder.class;
+    return PluginManagerBinder.class;
   }
   
   /** Bind the Child component.  <p>
@@ -42,11 +40,11 @@ public class AgentBinderFactory extends BinderFactorySupport
    * the child component or null.
    **/
   public Binder bindChild(Class binderClass, Object child) {
-    AgentManager agentman = (AgentManager) getParentComponent();
+    Agent agent = (Agent) getParentComponent();
     try {
       Constructor constructor = binderClass.getConstructor(new Class[]{Object.class, Component.class});
-      Binder binder = (Binder) constructor.newInstance(new Object[] {agentman, child});
-      ((AgentBinder)binder).initialize();
+      Binder binder = (Binder) constructor.newInstance(new Object[] {agent, child});
+      ((PluginManagerBinder)binder).initialize();
       return binder;
     } catch (Exception e) {
       e.printStackTrace();
