@@ -61,7 +61,7 @@ public class Scheduler
     private String printName;
     private TreeNode treeNode;
     private int absoluteMax;
-    private int maxRunningThreads;
+    private int maxRunningThreads=0;
     private int runningThreadCount = 0;
     private int lane;
     protected Logger logger;
@@ -92,18 +92,16 @@ public class Scheduler
     public Scheduler(ThreadListenerProxy listenerProxy) 
     {
 	pendingThreads = new DynamicSortedQueue(timeComparator);
-        if (_logger.isInfoEnabled()) {
-          _logger.info("Initialized maxRunningThreads to "+maxRunningThreads);
-        }
-
 	this.listenerProxy = listenerProxy;
     }
 
     void setAbsoluteMax(int absoluteMax) 
     {
-	
 	this.absoluteMax = absoluteMax;
 	maxRunningThreads = absoluteMax;
+        if (_logger.isInfoEnabled()) {
+          _logger.info("Initialized maxRunningThreads to "+maxRunningThreads);
+        }
     }
 
     // NB: By design this method is NOT synchronized!  
