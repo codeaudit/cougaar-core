@@ -40,6 +40,9 @@ import org.cougaar.core.component.Service;
  *   - unregister-all with "clear()"
  * </pre>
  * <p>
+ * "unregisterAll" is called automatically when this service
+ * is released back to the ServiceBroker. 
+ * <p>
  * "Servlet.init(..)" will be called upon <tt>register</tt>
  * and "Servlet.destroy()" will be called upon <tt>unregister</tt>.
  * Note that a <i>dummy</i> ServletConfig implementation will
