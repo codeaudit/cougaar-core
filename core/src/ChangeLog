@@ -1,5 +1,9 @@
 2002-06-05  Michael Thome  <mthome@bbn.com>
 
+	* org/cougaar/core/plugin/DefaultPluginBinder
+	extend ContainedBinderSupport rather than BinderSupport so that
+	plugins have access to ContainedService.
+
 	* org/cougaar/core/domain/RootFactory.java
 	Add some null argument assertions.  bug 1410
 	

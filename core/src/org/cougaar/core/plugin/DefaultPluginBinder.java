@@ -30,7 +30,7 @@ import java.lang.reflect.*;
 /** The standard Binder for Plugins.
  **/
 public class DefaultPluginBinder 
-  extends BinderSupport 
+  extends ContainedBinderSupport // publish the ContainedService to the subcomponent
   implements PluginBinder
 {
   /** All subclasses must implement a matching constructor. **/
