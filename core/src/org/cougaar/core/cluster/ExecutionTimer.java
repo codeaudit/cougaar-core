@@ -11,7 +11,6 @@
 package org.cougaar.core.cluster;
 
 import org.cougaar.core.cluster.Alarm;
-import alp.util.ShortDateFormat;
 import java.util.*;
 import java.text.*;
 
@@ -318,7 +317,7 @@ public class ExecutionTimer extends Timer {
       try {
         GregorianCalendar calendar = new GregorianCalendar();
         calendar.set(Calendar.HOUR_OF_DAY, 0); // Midnight today
-        long offset = (new ShortDateFormat()).parse(startTime).getTime() - calendar.getTime().getTime();
+        long offset = (new SimpleDateFormat("MM/dd/yyy")).parse(startTime).getTime() - calendar.getTime().getTime();
         theParameters[0] = new Parameters(1.0, offset, 0L);
       } catch (Exception e) {
         System.err.println("Bad org.cougaar.core.cluster.startTime: " + e);
