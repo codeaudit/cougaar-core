@@ -53,7 +53,9 @@ public class MobilityTestDomain extends DomainAdapter {
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
-    this.self = ais.getMessageAddress();
+    if (ais != null) {
+      this.self = ais.getMessageAddress();
+    }
   }
 
   public void setUIDService(UIDService uidService) {
