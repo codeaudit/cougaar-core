@@ -312,7 +312,6 @@ public class SchedulerServiceProvider
         assureStarted();
       }
     }
-    
     class Worker 
       extends WorkerBase
       implements Runnable
@@ -320,16 +319,23 @@ public class SchedulerServiceProvider
       private int id;
       Worker(int i) { id = i; }
       public void run() {
-	while (running) {
+	while (true) {
           Trigger t;
           synchronized (runnables) {
-            while ((t = (Trigger) runnables.next()) == null) {
+            while (true) {
+              if (!(running)) {
+                return;
+              }
+              t = (Trigger) runnables.next();
+              if (t != null) {
+                break;
+              }
               try {
                 runnables.wait();
-              } catch (InterruptedException ie) {}
+              } catch (InterruptedException ie) {
+              }
             }
           }
-          //System.err.println("SPLAT("+id+")!");
           runTrigger(t);
 	}
       }

@@ -1106,14 +1106,24 @@ public abstract class PlugInAdapter
     }
   }
 
-  /** shares a Thread with other SharedThreading plugins in the same cluster
-   * The chain of events is subscription activity calls sw.signalNotify() which
-   * calls requestTrigger which eventually will result in SharedThreading.trigger()
-   * getting called, which will run plugin_cycle().
-   **/
+  /** 
+   * Shares a Thread with other SharedThreading plugins in the same cluster.
+   * <p>
+   * There are two callbacks:<ul>
+   *   <li>the subscription watcher, to track blackboard activity</li>
+   *   <li>the scheduler trigger, to request plugin_cycle()</li>
+   * </ul><br>
+   * The order is:<ol>
+   *   <li>the blackboard calls "subscriptionWatcher.signalNotify(..)"</li>
+   *   <li>the subscription watcher calls "schedTrigger.trigger()"</li>
+   *   <li>the scheduler calls "this.trigger()"</li>
+   *   <li>"this.trigger()" calls "plugin_cycle()"</li>
+   * </li>.
+   */
   protected class SharedThreading extends Threading implements Trigger  {
-    private Trigger requestTrigger = null; // kick this trigger to ask to be run
-    private SubscriptionWatcher sw = null; // kicked by signalNotify when subscription activity
+
+    // callback for subscription activity
+    private SubscriptionWatcher sw = null; 
 
     public void load() {
       super.load();
@@ -1121,35 +1131,67 @@ public abstract class PlugInAdapter
 
     public void start() {
       super.start();
-      getBlackboardService().registerInterest(sw = new ThinWatcher());
-      setRequestTrigger(getSchedulerService().register(this));
-      synchronized (this) {     //  make sure we don't get scheduled while initializing
-        plugin_prerun();
-      }
+      sw = new ThinWatcher();
+      getBlackboardService().registerInterest(sw);
+      plugin_prerun();
+      joinScheduler();
     }
 
-    // we may need to delay an RT activation if it isn't hooked up yet
-    private boolean rtDelayed = false;
-    // we could probably sync on this, but I'm more comfortable with a semephore-like
-    // pattern here...
-    private final Object rtDelayLock = new Object();
+    public void suspend() {
+      exitScheduler();
+    }
 
-    private void setRequestTrigger(Trigger rt) {
-      synchronized (rtDelayLock) {
-        requestTrigger = rt;
-        if (rtDelayed) {
-          rtDelayed = false;    // useless cleanup
-          System.err.println("Warning: avoiding bug 837\nPlease report that you've seen this message at https://www.alpine.bbn.com/bugzilla/show_bug.cgi?id=837");
-          requestTrigger.trigger();
+    public void resume() {
+      joinScheduler();
+    }
+    
+    public void stop() {
+      exitScheduler();
+    }
+
+    // call to request scheduling
+    private Trigger schedTrigger = null; 
+
+    // we could probably sync on this, but I'm more comfortable with a 
+    // semephore-like pattern here...
+    private final Object schedTriggerLock = new Object();
+
+    // set to true when a trigger is desired but the schedTrigger
+    // is unavailable.  When the schedTrigger is next obtained the
+    // pending trigger is issued.
+    private boolean pendingTrigger = false;
+
+    private void joinScheduler() {
+      synchronized (schedTriggerLock) {
+        if (schedTrigger == null) {
+          schedTrigger = getSchedulerService().register(this);
+          if (pendingTrigger) {
+            pendingTrigger = false;    // useless cleanup
+            // note: this isn't bug 837 if we were suspended!
+            /*
+            System.err.println("Warning: avoiding bug 837\nPlease report that you've seen this message at https://www.alpine.bbn.com/bugzilla/show_bug.cgi?id=837");
+            */
+            schedTrigger.trigger();
+          }
         }
       }
     }
-    private void activateRequestTrigger() {
-      synchronized (rtDelayLock) {
-        if (requestTrigger != null) {
-          requestTrigger.trigger();
+
+    private void exitScheduler() {
+      synchronized (schedTriggerLock) {
+        if (schedTrigger != null) {
+          schedTrigger = null;
+          getSchedulerService().unregister(schedTrigger);
+        }
+      }
+    }
+
+    private void requestScheduling() {
+      synchronized (schedTriggerLock) {
+        if (schedTrigger != null) {
+          schedTrigger.trigger();
         } else {
-          rtDelayed = true;
+          pendingTrigger = true;
         }
       }
     }
@@ -1165,16 +1207,16 @@ public abstract class PlugInAdapter
     private class ThinWatcher extends SubscriptionWatcher {
       public void signalNotify(int event) {
         super.signalNotify(event);
-        activateRequestTrigger();
+        requestScheduling();
       }
       public String toString() {
         return "ThinWatcher("+PlugInAdapter.this.toString()+")";
       }
     }
+
     public String toString() {
       return this.getClass().getName()+"("+PlugInAdapter.this.toString()+")";
     }
-
   }
 
   /** has its own Thread **/
