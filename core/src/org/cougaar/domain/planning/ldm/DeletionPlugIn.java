@@ -285,8 +285,12 @@ public class DeletionPlugIn extends SimplePlugIn {
         }
     };
 
-    protected Subscription subscribe(UnaryPredicate p, PlanElementSet c, boolean b) {
-        return super.subscribe(p, c, b);
+    private Subscription doSubscribe(UnaryPredicate p, PlanElementSet c, boolean b) {
+        return subscribe(p, c, b);
+    }
+
+    private void doUnsubscribe(Subscription s) {
+        unsubscribe(s);
     }
 
     private class PESet {
@@ -297,7 +301,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         public PlanElement findPlanElement(UID uid) {
             if (planElementSet == null) {
                 planElementSet = new PlanElementSet();
-                planElementSubscription = DeletionPlugIn.this.subscribe(planElementPredicate, planElementSet, false);
+                planElementSubscription = doSubscribe(planElementPredicate, planElementSet, false);
                 setPlanElementAlarm(subscriptionExpirationTime);
             }
             planElementTime = System.currentTimeMillis() + subscriptionExpirationTime;
@@ -308,7 +312,7 @@ public class DeletionPlugIn extends SimplePlugIn {
             if (planElementAlarm != null && planElementAlarm.hasExpired()) {
                 long timeLeft = planElementTime - System.currentTimeMillis();
                 if (timeLeft <= 10000L) {
-                    DeletionPlugIn.this.unsubscribe(planElementSubscription);
+                    doUnsubscribe(planElementSubscription);
                     planElementSubscription = null;
                     planElementSet = null;
                     planElementAlarm = null;
