@@ -29,6 +29,7 @@ import org.cougaar.core.component.ServiceProvider;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.PrintStream;
@@ -39,6 +40,7 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.CircularQueue;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.Trigger;
 import org.cougaar.core.agent.ClusterImpl;
 
@@ -87,10 +89,14 @@ public class SchedulerServiceProvider
   static long warningTime = 120*1000L; 
 
   /** Should we use a single per-node/vm scheduler (true) or per-agent (false)? **/
-  static boolean staticScheduler = true;
+  static boolean staticScheduler = false;
 
   /** How many threads should we use to schedule components when using the MultiScheduler (4) **/
   static int nThreads = 4;
+
+  static final Class[] emptyTypeArray = new Class[0];
+
+  static final Object[] emptyObjectArray = new Object[0];
 
   static {
     String p = "org.cougaar.core.service.SchedulerService.";
@@ -105,23 +111,20 @@ public class SchedulerServiceProvider
 
 
   private SchedulerBase scheduler;
-  private SchedulerService schedulerProxy;
 
-  public SchedulerServiceProvider() {
-    scheduler = createScheduler("Anonymous");
-    schedulerProxy = new SchedulerProxy(scheduler);
+  public SchedulerServiceProvider(ThreadService threadService, LoggingService log) {
+    this(threadService, log, "Anonymous");
   }
 
-  public SchedulerServiceProvider(String name) {
-    scheduler = createScheduler(name);
-    schedulerProxy = new SchedulerProxy(scheduler);
+  public SchedulerServiceProvider(ThreadService threadService, LoggingService log, String name) {
+    scheduler = createScheduler(threadService, name, log);
   }
   
 
   private static final Object ssLock = new Object();
   private static SchedulerBase singletonScheduler = null;
 
-  protected SchedulerBase createScheduler(String id) {
+  protected SchedulerBase createScheduler(ThreadService threadService, String id, LoggingService log) {
     if (staticScheduler) {
       synchronized (ssLock) {
         if (singletonScheduler == null) {
@@ -131,13 +134,13 @@ public class SchedulerServiceProvider
         return singletonScheduler;
       }
     } else {
-      return new SimpleScheduler(id);
+      return new NormalScheduler(threadService, log);
     }
   }
     
   // ServiceProvider methods
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    return schedulerProxy;
+    return new SchedulerProxy(scheduler, requestor);
   }
 
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service){
@@ -151,10 +154,10 @@ public class SchedulerServiceProvider
     scheduler.resume();
   }
 
-  static abstract class SchedulerBase implements SchedulerService {
-    public Trigger register(Trigger manageMe) {
+  static abstract class SchedulerBase {
+    public Trigger register(Trigger manageMe, Object req) {
       assureStarted();
-      addClient(manageMe);
+      addClient(manageMe, req);
       return new SchedulerCallback(manageMe);
     }
 
@@ -166,7 +169,7 @@ public class SchedulerServiceProvider
     abstract void assureStarted();
 
     /** add a client to the schedule list **/
-    abstract void addClient(Trigger client);
+    abstract void addClient(Trigger client, Object requestor);
 
     /** called to request that client stop being scheduled **/
     abstract void removeClient(Trigger client);
@@ -229,9 +232,94 @@ public class SchedulerServiceProvider
     }
   }
 
+  private static Object invokeMethod(String methodName, Object on, Object dflt) {
+    try {
+      java.lang.reflect.Method method =
+        on.getClass().getMethod(methodName, emptyTypeArray);
+      return method.invoke(on, emptyObjectArray);
+    } catch (Throwable t) {
+      return dflt;
+    }
+  }
 
-  /** SimpleScheduler is a simple on-demand scheduler of trigger requests.
-   * Requests are handled in the order they are requested.
+  /**
+   * NormalScheduler applies threads from a ThreadService to scheduled
+   * clients. Requests are handled in the order they are requested.
+   **/
+  static class NormalScheduler
+    extends SchedulerBase 
+  {
+    private ThreadService threadService;
+    private LoggingService log;
+
+    /**
+     * Maps client Triggers to Worker instances
+     **/
+    private final Map clients = new HashMap(13);
+
+    NormalScheduler(ThreadService threadService, LoggingService log) {
+      this.threadService = threadService;
+      this.log = log;
+    }
+
+    void addClient(Trigger client, Object requestor) {
+      synchronized (clients) {
+        if (!clients.containsKey(client)) {
+          clients.put(client, new Worker(client, requestor));
+        }
+      }
+    }
+    void removeClient(Trigger client) {
+      synchronized (clients) {
+        clients.remove(client);
+      }
+    }
+
+    void scheduleClient(Trigger client) {
+      Worker worker;
+      synchronized (clients) {
+        worker = (Worker) clients.get(client);
+        if (worker == null) {
+          throw new IllegalArgumentException("Attempt to schedule unregistered client: " + client);
+        }
+      }
+      worker.start();
+    }
+
+    void assureStarted() {
+    }
+
+    void suspend() {
+    }
+
+    void resume() {
+    }
+
+    class Worker extends WorkerBase implements Runnable {
+      private Trigger client;
+      private Schedulable schedulable;
+
+      Worker(Trigger client, Object requestor) {
+        this.client = client;
+        String name = requestor.toString();
+//           invokeMethod("getBlackboardClientName",
+//                        requestor,
+//                        requestor.getClass().getName()).toString();
+        schedulable = threadService.getThread(requestor, this, name);
+      }
+
+      public void start() {
+        schedulable.start();
+      }
+
+      public void run() {
+        runTrigger(client);
+      }
+    }
+  }
+
+  /** MultiScheduler applies a fixed set of workers against scheduled
+   * clients. Requests are handled in the order they are requested.
    **/
   static class MultiScheduler
     extends SchedulerBase 
@@ -243,7 +331,7 @@ public class SchedulerServiceProvider
 
     private final CircularQueue runnables = new CircularQueue(32);
 
-    void addClient(Trigger client) {
+    void addClient(Trigger client, Object requestor) {
       synchronized (clients) {
         // only put it on the list if it hasn't already been scheduled
         // Note that this will still allow rescheduling when it is currently
@@ -368,7 +456,7 @@ public class SchedulerServiceProvider
     private ArrayList runnables = new ArrayList(13);
     private ArrayList working = new ArrayList(13);
 
-    void addClient(Trigger client) {
+    void addClient(Trigger client, Object requestor) {
       synchronized (clients) {
         clients.add(client);
       }
@@ -561,13 +649,18 @@ public class SchedulerServiceProvider
 
   /** proxy class to shield the real scheduler from clients **/
   static final class SchedulerProxy implements SchedulerService {
-    private final SchedulerService real;
-    SchedulerProxy(SchedulerService r) { real = r; }
+    private final SchedulerBase scheduler;
+    private final Object requestor;
+
+    SchedulerProxy(SchedulerBase r, Object req) {
+      scheduler = r;
+      requestor = req;
+    }
     public Trigger register(Trigger manageMe) {
-      return real.register(manageMe);
+      return scheduler.register(manageMe, requestor);
     }
     public void unregister(Trigger stopPokingMe) {
-      real.unregister(stopPokingMe);
+      scheduler.unregister(stopPokingMe);
     }
   }    
 
@@ -596,7 +689,4 @@ public class SchedulerServiceProvider
       attention = false;
     }
   }
-
-
-
 }

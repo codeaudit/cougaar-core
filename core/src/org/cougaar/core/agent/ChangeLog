@@ -1,3 +1,20 @@
+2002-05-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* service/scheduler/SchedulerServiceProvider.java:
+	New default scheduler uses ThreadingService instead of real
+	threads.
+
+	* SimpleAgent.java:
+	Use new ThreadService for creating the SchedulerServiceProvider.
+
+2002-05-07  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* service/scheduler/SchedulerServiceProvider.java:
+	Use ThreadingService for new scheduler type that 
+	* SimpleAgent.java:
+	Add ThreadingServiceProvider. Use ThreadingService for
+	SchedulerService.
+
 2002-02-25  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ClusterImpl.java:

@@ -134,6 +134,10 @@ import org.cougaar.core.agent.service.alarm.Alarm;
 // agentid
 import org.cougaar.core.service.AgentIdentificationService;
 
+// Thread services
+import org.cougaar.core.thread.ThreadServiceProvider;
+import org.cougaar.core.service.ThreadService;
+
 // init info
 import org.cougaar.core.node.InitializerService;
 
@@ -213,6 +217,10 @@ public class SimpleAgent
   private AlarmServiceProvider myAlarmServiceProvider;
 
   private DemoControlServiceProvider myDemoControlServiceProvider;
+
+  private ThreadServiceProvider myThreadServiceProvider;
+
+  private ThreadService myThreadService;
 
   private SchedulerServiceProvider mySchedulerServiceProvider;
 
@@ -497,8 +505,15 @@ public class SimpleAgent
     myDemoControlServiceProvider = new DemoControlServiceProvider(this);
     sb.addService(DemoControlService.class, myDemoControlServiceProvider);
 
+    myThreadServiceProvider = new ThreadServiceProvider(sb, "Agent " + this.toString());
+    myThreadServiceProvider.provideServices(sb);
+
+    // my thread service (from node)
+    myThreadService = (ThreadService)
+      sb.getService(this, ThreadService.class, null);
+
     // scheduler for new plugins
-    mySchedulerServiceProvider = new SchedulerServiceProvider(this.toString());
+    mySchedulerServiceProvider = new SchedulerServiceProvider(myThreadService, log, this.toString());
     sb.addService(SchedulerService.class, mySchedulerServiceProvider);
 
     {
@@ -814,6 +829,8 @@ public class SimpleAgent
     sb.revokeService(LDMService.class, myLDMServiceProvider);
 
     sb.revokeService(SchedulerService.class, mySchedulerServiceProvider);
+
+    sb.releaseService(this, ThreadService.class, myThreadService);
 
     sb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
 

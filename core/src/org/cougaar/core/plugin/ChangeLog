@@ -1,3 +1,13 @@
+2002-05-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ServiceUserPlugin.java:
+	Remove debug.
+
+	* DefaultPluginBinder.java:
+	Change getPlugin to getComponent in toString() to eliminate
+	exceptions when the binder is not binding a plugin. For example,
+	when it binds a servlet component.
+
 2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimplifiedPlugin.java: 
