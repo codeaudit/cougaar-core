@@ -38,7 +38,7 @@ class RoundRobinSelector implements RightsSelector
     {
 	SchedulableObject handoff = null;
 	if (currentIndex == -1) {
-	    handoff = scheduler.getNextPendingSuper();
+	    handoff = scheduler.popQueue();
 	    currentIndex = children.size() == 0 ? -1 : 0;
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);

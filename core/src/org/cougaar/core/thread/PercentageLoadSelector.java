@@ -241,7 +241,7 @@ public class PercentageLoadSelector
 	    // need the super method, conveniently available as
 	    // getNextPendingSuper.
 	    if (next == scheduler)
-		handoff = scheduler.getNextPendingSuper();
+		handoff = scheduler.popQueue();
 	    else
 		handoff = next.getNextPending();
 	    if (handoff != null) {

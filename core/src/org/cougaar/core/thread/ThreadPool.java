@@ -82,7 +82,7 @@ public class ThreadPool
 	}
 
 	// Hook for subclasses
-	protected void claim() {
+	private void claim() {
 	    schedulable.claim();
 	}
 
@@ -125,11 +125,10 @@ public class ThreadPool
 	    }
 	}
 
-	protected synchronized void reclaim() {
+	private void reclaim() {
 	    schedulable.reclaim();
 	    setName( "Reclaimed " + getName());
 	    in_use = false;
-	    notifyAll();
 	}
     }
     

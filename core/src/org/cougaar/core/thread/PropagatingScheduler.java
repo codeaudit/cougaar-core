@@ -97,11 +97,6 @@ public class PropagatingScheduler extends Scheduler
     }
 
 
-    // Hack so the selector can get at the super method
-    SchedulableObject getNextPendingSuper() {
-	return super.getNextPending();
-    }
-
     SchedulableObject getNextPending() {
 	return selector.getNextPending();
     }

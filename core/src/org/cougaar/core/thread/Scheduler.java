@@ -42,9 +42,7 @@ public class Scheduler
     private String printName;
     private TreeNode treeNode;
     private int maxRunningThreads;
-
-    // protected for now
-    protected int runningThreadCount = 0;
+    private int runningThreadCount = 0;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -189,30 +187,37 @@ public class Scheduler
 
 
 
-    void incrementRunCount(Scheduler consumer) {
+    synchronized void incrementRunCount(Scheduler consumer) {
 	++runningThreadCount;
 	listenerProxy.notifyRightGiven(consumer);
     }
 
-    void decrementRunCount(Scheduler consumer) {
+    synchronized void decrementRunCount(Scheduler consumer) {
 	--runningThreadCount;
-	if (runningThreadCount < 0) 
-	    System.err.println(this+ " thread count negative " +
+	if (runningThreadCount < 0) {
+	    System.err.println("Thread account oddity: " +this+ 
+			       " thread count is " +
 			       runningThreadCount);
+	}
 	listenerProxy.notifyRightReturned(consumer);
     }
 
 
 
     SchedulableObject getNextPending() {
+	return popQueue();
+    }
+
+    SchedulableObject popQueue() {
 	SchedulableObject thread = null;
 	synchronized(this) {
 	    thread = (SchedulableObject)pendingThreads.next();
+	    if (thread != null) incrementRunCount(this);
 	}
-	if (thread != null) {
-	    threadDequeued(thread);
-	    incrementRunCount(this);
-	}
+
+	// Notify listeners
+	if (thread != null) threadDequeued(thread);
+
 	return thread;
     }
 
