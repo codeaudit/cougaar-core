@@ -64,6 +64,11 @@ public class DomainServiceImpl implements DomainService {
     return domainManager.getFactoryForDomain(domainName);
   }
 
+  /** return a domain-specific factory **/
+  public Factory getFactory(Class domainClass) {
+    return domainManager.getFactoryForDomain(domainClass);
+  }
+
   /** return a List of all domain-specific factories **/
   public List getFactories() {
     return domainManager.getFactories();

@@ -145,6 +145,7 @@ public class XMLObjectFactory {
     /** @deprecated in the original **/
     public RootFactory getLdmFactory() { throwError(); return null; }
     public Factory getFactory(String s) { throwError(); return null; }
+    public Factory getFactory(Class c) { throwError(); return null; }
     public ClassLoader getLDMClassLoader() {
       return this.getClass().getClassLoader();
     }

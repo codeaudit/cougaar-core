@@ -35,7 +35,9 @@ public interface DomainManagerForBinder
   ClusterServesLogicProvider getClusterServesLogicProvider();
   Collection getXPlans();
   XPlanServesBlackboard getXPlanForDomain(String domainName);
+  XPlanServesBlackboard getXPlanForDomain(Class domainClass);
   Factory getFactoryForDomain(String domainName);
+  Factory getFactoryForDomain(Class domainClass);
 }
 
 

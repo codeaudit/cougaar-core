@@ -46,7 +46,11 @@ public interface LDMServesClient
 
   /** @return the Requested Domain's LDM Factory.
    **/
-  Factory getFactory(String domain);
+  Factory getFactory(String domainName);
+
+  /** @return the Requested Domain's LDM Factory.
+   **/
+  Factory getFactory(Class domainClass);
 
   /** Backwards Compatability (pre ALP6.0) alias for getFactory().
    * @deprecated Use getFactory()

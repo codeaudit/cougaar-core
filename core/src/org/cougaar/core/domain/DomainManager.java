@@ -201,6 +201,17 @@ public class DomainManager
     return null;
   }
 
+  public XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();) {
+      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
+      if (b.getDomain().getClass().equals(domainClass)) {
+        return b.getDomain().getXPlan();
+      }
+    }
+    return null;
+  }
+
   public void blackboard(Blackboard blackboard) {
     if (this.blackboard != null) {
       LoggingService logger = 
@@ -233,6 +244,17 @@ public class DomainManager
          childBinders.hasNext();) {
       DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
       if (b.getDomain().getDomainName().equals(domainName)) {
+        return b.getDomain().getFactory();
+      }
+    }
+    return null;
+  }
+
+  public Factory getFactoryForDomain(Class domainClass) {
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();) {
+      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
+      if (b.getDomain().getClass().equals(domainClass)) {
         return b.getDomain().getFactory();
       }
     }
@@ -371,8 +393,16 @@ public class DomainManager
           return DomainManager.this.getXPlanForDomain(domainName);
         }
 
+        public XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+          return DomainManager.this.getXPlanForDomain(domainClass);
+        }
+
         public Factory getFactoryForDomain(String domainName) {
           return DomainManager.this.getFactoryForDomain(domainName);
+        }
+
+        public Factory getFactoryForDomain(Class domainClass) {
+          return DomainManager.this.getFactoryForDomain(domainClass);
         }
 
       };
@@ -567,7 +597,6 @@ public class DomainManager
   }
 
   private void initializeFromProperties(List descs) {
-    //Properties props = System.getProperties();
     Properties props = SystemProperties.getSystemPropertiesWithPrefix(PREFIX);
     for (Enumeration names = props.propertyNames(); names.hasMoreElements(); ) {
       String key = (String) names.nextElement();

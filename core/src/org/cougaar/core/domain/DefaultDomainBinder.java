@@ -57,21 +57,34 @@ public class DefaultDomainBinder
   protected class DomainBindingSiteImpl implements DomainBindingSite {
     public final ServiceBroker getServiceBroker() {
       return DefaultDomainBinder.this.getServiceBroker();
-    }
+    } 
+
     public final void requestStop() {
       DefaultDomainBinder.this.requestStop();
     }
+
     public final ClusterServesLogicProvider getClusterServesLogicProvider() {
       return getDomainManager().getClusterServesLogicProvider();
     }
+
     public final Collection getXPlans() {
       return getDomainManager().getXPlans();
     }
+
     public final XPlanServesBlackboard getXPlanForDomain(String domainName) {
       return getDomainManager().getXPlanForDomain(domainName);
     }
+
+    public final XPlanServesBlackboard getXPlanForDomain(Class domainClass) {
+      return getDomainManager().getXPlanForDomain(domainClass);
+    }
+
     public final Factory getFactoryForDomain(String domainName) {
       return getDomainManager().getFactoryForDomain(domainName);
+    }
+
+    public final Factory getFactoryForDomain(Class domainClass) {
+      return getDomainManager().getFactoryForDomain(domainClass);
     }
 
     public String toString() {

@@ -28,26 +28,16 @@ import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.component.BindingSite;
 
 /**
- * Describe an COUGAAR "Pluggable Domain Package" which consists of
- * a set of domain-specific LDM objects as represented by a 
- * Factory class, and a set of LogicProviders.
- *
- * Domain classes must also implement a static
- * create() method so that they can be constructed
- * by the infrastructure.
- *
- * Domains may optionally implement <pre>Collection<String> getAliases()</pre>
- * to present alias names to the domain manager.  This feature is likely
- * to be removed in short order, as it is only to allow backward-compatability
- * when domain names change.  Use of domain aliases may result in warnings.
+ * A domain's view into its parent component.
  **/
-
 public interface DomainBindingSite extends BindingSite
 {
   ClusterServesLogicProvider getClusterServesLogicProvider();
   Collection getXPlans();
   XPlanServesBlackboard getXPlanForDomain(String domainName);
+  XPlanServesBlackboard getXPlanForDomain(Class domainClass);
   Factory getFactoryForDomain(String domainName);
+  Factory getFactoryForDomain(Class domainClass);
 }
 
 

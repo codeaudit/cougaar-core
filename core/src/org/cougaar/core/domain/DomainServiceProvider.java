@@ -62,8 +62,13 @@ public class DomainServiceProvider implements ServiceProvider {
     public RootFactory getLdmFactory() {
       return theService.getFactory();
     }
-    public Factory getFactory(String domainname) {
-      return theService.getFactory(domainname);
+
+    public Factory getFactory(String domainName) {
+      return theService.getFactory(domainName);
+    }
+
+    public Factory getFactory(Class domainClass) {
+      return theService.getFactory(domainClass);
     }
 
     public List getFactories() {

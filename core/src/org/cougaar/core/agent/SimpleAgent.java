@@ -452,6 +452,9 @@ public class SimpleAgent
                                                         public Factory getFactory(String s) {
                                                           return getDomainService().getFactory(s);
                                                         }
+                                                        public Factory getFactory(Class c) {
+                                                          return getDomainService().getFactory(c);
+                                                        }
                                                         public void addPrototypeProvider(PrototypeProvider plugin) {
                                                           prs.addPrototypeProvider(plugin);
                                                         }
@@ -982,9 +985,13 @@ public class SimpleAgent
   public RootFactory getLdmFactory() {
     return getFactory();
   }
-  /** create a domain-specific factory **/
-  public Factory getFactory(String domainname) {
-    return getDomainService().getFactory(domainname);
+  /** get a domain-specific factory **/
+  public Factory getFactory(String domainName) {
+    return getDomainService().getFactory(domainName);
+  }
+  /** get a domain-specific factory **/
+  public Factory getFactory(Class domainClass) {
+    return getDomainService().getFactory(domainClass);
   }
 
   /**

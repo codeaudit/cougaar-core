@@ -47,7 +47,10 @@ public interface DomainService extends Service {
   RootFactory getLdmFactory();
 
   /** return a domain-specific factory **/
-  Factory getFactory(String domainname);
+  Factory getFactory(String domainName);
+
+  /** return a domain-specific factory **/
+  Factory getFactory(Class domainClass);
 
   /** return a list of all domain-specific factories **/
   List getFactories();
