@@ -26,7 +26,10 @@ public interface LoggingControlService extends Service {
   public void setLoggingLevel(String node, int level);
   //public void setLoggingLevel(String node, int level, boolean recursiveSet);
 
+  public Enumeration getAllLoggingNodes();
+
   public Enumeration getOutputTypes(String node);
+  public void addOutputType(String node, int outputType, Object outputDevice);
   public void addOutputType(String node, int outputType);
   //public void removeOutputType(String node, int outputType);
   //public void setOutputType(String node, int outputType, boolean recursiveSet);

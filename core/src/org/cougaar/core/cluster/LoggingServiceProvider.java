@@ -10,6 +10,9 @@
 
 package org.cougaar.core.cluster;
 
+import java.util.Enumeration;
+import java.util.Vector;
+
 import org.cougaar.core.component.*;
 
 import org.apache.log4j.Category;
@@ -176,6 +179,16 @@ public class LoggingServiceProvider implements ServiceProvider {
       Category.getInstance(node).setPriority(convertIntToPriority(level));
     }
 
+    public Enumeration getAllLoggingNodes() {
+	Vector v = new Vector();
+	Enumeration cats = Category.getCurrentCategories();
+	while(cats.hasMoreElements()) {
+	    Category cat = (Category) cats.nextElement();
+	    v.addElement(cat.getName());
+	}	
+	return v.elements();
+    }
+
     public Enumeration getOutputTypes(String node) {
       return Category.getInstance(node).getAllAppenders();
     }
@@ -186,16 +199,56 @@ public class LoggingServiceProvider implements ServiceProvider {
       Category.getInstance(node).addAppender(convertIntToAppender(outputType,outputDevice));
     }
 
-//     public void removeOutputType(String node, int outputType, Object outputDevice) {
-//       Category.getInstance(node).addAppender(convertIntToAppender(outputType,outputDevice));
-//     }
+     public boolean removeOutputType(String node, int outputType, Object outputDevice) {
+	Category cat = Category.getInstance(node);
+	Enumeration appenders = cat.getAllAppenders();
+	Appender matchingAppender=null;
+
+	while(appenders.hasMoreElements()){
+	    Appender appender = (Appender) appenders.nextElement();
+	    //MWD not done - do the matching.
+
+	    if(appender.getClass() == convertIntToAppenderType(outputType)) {
+		if((appender instanceof ConsoleAppender) ||
+		   ((appender instanceof FileAppender) && (((FileAppender)appender).getFile().equals((String) outputDevice)))){
+		    matchingAppender = appender;
+		}
+		else if(appender.getName().equals(Integer.toString(((OutputStream) outputDevice).hashCode()))) {
+		    matchingAppender = appender;
+		}
+	    }
+	}
+	    
+	if(matchingAppender!=null) {
+	    cat.removeAppender(matchingAppender);
+	    return true;
+	}
+	else {
+	    return false;
+	}
+	
+     }
+	
+      private Class convertIntToAppenderType(int outputType) {
+	switch (outputType) {
+	case LoggingControlService.CONSOLE:
+	    return ConsoleAppender.class;
+	case LoggingControlService.STREAM:
+	    return WriterAppender.class;
+	case LoggingControlService.FILE:
+	    return FileAppender.class;
+	default:
+	    return null;
+	}
+    }
 
     private Appender convertIntToAppender(int outputType, Object outputDevice) {
       switch (outputType) {
       case LoggingControlService.CONSOLE: return new ConsoleAppender(new SimpleLayout());
       case LoggingControlService.STREAM: 
 	if (outputDevice != null && outputDevice instanceof OutputStream) {
-	  return new WriterAppender(new SimpleLayout(), (OutputStream)outputDevice);
+	  WriterAppender appender = new WriterAppender(new SimpleLayout(), (OutputStream)outputDevice);
+	  appender.setName(Integer.toString(outputDevice.hashCode()));
 	} else {
 	  //Report Error
 	}
