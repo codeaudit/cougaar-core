@@ -1,3 +1,15 @@
+2002-04-25  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Improve documentation of updateOperatingModes to include the case
+	of attribute-based remote operating modes. Also fix the parser of
+	such mode names. Difficult to test because there is no way to use
+	attribute-based addressing yet.
+
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Fix documentation of updateOperatingModes -- the real work is now
+	done in PlayHelper.
+
 2002-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/PlayHelper.java:
