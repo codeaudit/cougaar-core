@@ -20,23 +20,29 @@
  */
 package org.cougaar.core.adaptivity;
 
-import java.util.Set;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.ConditionService;
-import org.cougaar.core.service.OperatingModeService;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.ConditionService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.OperatingModeService;
+import org.cougaar.core.service.UIDService;
+import org.cougaar.core.util.UID;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 /**
  * Helper class for computing OperatingModes from plays and
  * Conditions
  **/
 public class PlayHelper { 
+  public static final String AGENT_PREFIX = "agent.";
+  public static final String ATTRIBUTE_PREFIX = "attribute.";
 
   private static class OMMapEntry {
     public OMCRangeList newValue;
@@ -48,23 +54,60 @@ public class PlayHelper {
   }
 
   private Map omMap = new HashMap();
+  private Set iaompUpdates = new HashSet();
+  private Set iaompRemoves = new HashSet();
   private LoggingService logger;
   private OperatingModeService operatingModeService;
   private ConditionService conditionService;
   private BlackboardService blackboard;
+  private UIDService uidService;
   private Map smMap;
 
   public PlayHelper(LoggingService ls,
                     OperatingModeService oms,
                     ConditionService sms,
                     BlackboardService bb,
+                    UIDService us,
                     Map smm)
   {
     logger = ls;
     operatingModeService = oms;
     conditionService = sms;
     blackboard = bb;
+    uidService = us;
     smMap = smm;
+  }
+
+  private static class IAOMPInfo {
+    public String targetName;
+    public String remoteName;
+    public IAOMPInfo(String t, String r) {
+      targetName = t;
+      remoteName = r;
+    }
+    public MessageAddress getTargetAddress() {
+      if (targetName.substring(0, AGENT_PREFIX.length()).equalsIgnoreCase(AGENT_PREFIX)) {
+        return new ClusterIdentifier(targetName.substring(AGENT_PREFIX.length()));
+      }
+//    if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
+//      return new AttributeAddress(targetName.substring(ATTRIBUTE_PREFIX.length()));
+      return new MessageAddress(targetName);
+    }
+  }
+
+  private IAOMPInfo getIAOMPInfo(String operatingModeName) {
+    if (operatingModeName.startsWith("[")) {
+      int pos = operatingModeName.indexOf("]");
+      if (pos > 0) {
+        String targetName = operatingModeName.substring(1, pos);
+        if (targetName.startsWith(AGENT_PREFIX) ||
+            targetName.startsWith(ATTRIBUTE_PREFIX)) {
+          String remoteName = operatingModeName.substring(pos + 1);
+          return new IAOMPInfo(targetName, remoteName);
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -79,9 +122,23 @@ public class PlayHelper {
    * eliminating all possible values for an operating mode, that
    * constraint is logged and ignored. Finally, the operating modes
    * are set to the effective value of the combined constraints.
+   * <p>Some operating modes may be remote (in different agents). Such
+   * remote OperatingModes are designated with a naming convention
+   * wherein the remote location is designated with square brackets,
+   * e.g. [Agent:3ID]<remotename>. The caller supplies a Map of such
+   * remote modes and we use or update that Map accordingly. The names
+   * of remote operating modes that are added or removed are returned.
+   * @param plays the plays to be tested and applied.
+   * @param iaompMap a Map of the current remote operating mode
+   * constraints. Items are added or removed from this Map according
+   * to whether or not the given plays specify constraints on those
+   * remote modes.
+   * @param iaompChanges the names of the remote operating mode
+   * constraints that were added or removed from iaompMap. The action
+   * is implied by whether or not the iaompMap has the named iaomp.
    **/
-  public void updateOperatingModes(Play[] plays) {
-    if (logger.isDebugEnabled()) logger.debug("updateOperatingModes");
+  public void updateOperatingModes(Play[] plays, Map iaompMap, Set iaompChanges) {
+    if (logger.isDebugEnabled()) logger.debug("updateOperatingModes " + plays.length + " plays");
 
     /* run the plays - that is, do the comparisons in the "If" parts
      * of the plays and if they evaluate to true, set the operating modes in
@@ -93,6 +150,7 @@ public class PlayHelper {
       Play play = plays[i];
       try {
         if (eval(play.getIfClause().iterator())) {
+          if (logger.isDebugEnabled()) logger.debug("Using play: " + play);
           ConstraintPhrase[] playConstraints = play.getOperatingModeConstraints();
           for (int j = 0; j < playConstraints.length; j++) {
             ConstraintPhrase cp = playConstraints[j];
@@ -111,27 +169,62 @@ public class PlayHelper {
               }
             }
           }
+        } else {
+          if (logger.isDebugEnabled()) logger.debug("Skipping play: " + play);
         }
       } catch (Exception iae) {
         logger.error("Error in play: " + play, iae);
       }
     }
     Set operatingModes = new HashSet(operatingModeService.getAllOperatingModeNames());
+    iaompChanges.clear();
+    // post initialized -- iaompUpdates.clear();
+    // post initialized -- iaompRemoves.clear();
     logger.debug("Updating operating modes");
     for (Iterator i = omMap.entrySet().iterator(); i.hasNext(); ) {
       Map.Entry entry = (Map.Entry) i.next();
       String operatingModeName = (String) entry.getKey();
       OMMapEntry omme = (OMMapEntry) entry.getValue();
-      Comparable value = omme.newValue.getEffectiveValue();
-      OperatingMode om = operatingModeService.getOperatingModeByName(operatingModeName);
-      if (logger.isInfoEnabled()) logger.info("Setting OperatingMode " + operatingModeName + " to " + value);
-      if (om == null) {
-        if (logger.isDebugEnabled()) logger.debug("OperatingMode not present: " + operatingModeName);
+      int pos;
+      IAOMPInfo iaompInfo = getIAOMPInfo(operatingModeName);
+      if (iaompInfo != null) {
+        // A remote operating mode. Create or update a policy to constrain it.
+        ConstraintPhrase[] cp = {
+          new ConstraintPhrase(iaompInfo.remoteName, ConstraintOperator.IN, omme.newValue)
+        };
+        PolicyKernel pk = new PolicyKernel(ConstrainingClause.TRUE_CLAUSE, cp);
+        InterAgentOperatingModePolicy iaomp =
+          (InterAgentOperatingModePolicy) iaompMap.get(operatingModeName);
+        if (iaomp == null) {
+          iaomp = new InterAgentOperatingModePolicy(pk);
+          iaomp.setUID(uidService.nextUID());
+          iaomp.setTarget(iaompInfo.getTargetAddress());
+          iaompMap.put(operatingModeName, iaomp);
+          iaompChanges.add(operatingModeName);
+        } else {
+          PolicyKernel old = iaomp.getPolicyKernel();
+          if (!old.equals(pk)) {
+            iaomp.setPolicyKernel(pk);
+            iaompUpdates.add(operatingModeName);
+          }
+        }
       } else {
-        om.setValue(value);
-        blackboard.publishChange(om);
+        Comparable value = omme.newValue.getEffectiveValue();
+        OperatingMode om = operatingModeService.getOperatingModeByName(operatingModeName);
+        if (om == null) {
+          if (logger.isDebugEnabled()) logger.debug("OperatingMode not present: " + operatingModeName);
+        } else {
+          Comparable oldValue = om.getValue();
+          Class omValueClass = oldValue.getClass();
+          if (omValueClass != value.getClass()) value = coerceValue(value, omValueClass);
+          if (!value.equals(oldValue)) {
+            if (logger.isInfoEnabled()) logger.info("Setting OperatingMode " + operatingModeName + " to " + value);
+            om.setValue(value);
+            blackboard.publishChange(om);
+          }
+        }
+        operatingModes.remove(operatingModeName); // This one has been accounted for
       }
-      operatingModes.remove(operatingModeName); // This one has been accounted for
     }
     if (!operatingModes.isEmpty()) {
       for (Iterator i = operatingModes.iterator(); i.hasNext(); ) {
@@ -139,6 +232,29 @@ public class PlayHelper {
       }
     }
     omMap.clear();
+
+    // We need to remove all the items from iaompMap that were not
+    // changed or added above. The adds are named in iaompChanges and
+    // the changes are in iaompUpdates.
+    iaompRemoves.addAll(iaompMap.keySet());
+    iaompRemoves.removeAll(iaompUpdates);
+    iaompRemoves.removeAll(iaompChanges);
+    iaompMap.keySet().removeAll(iaompRemoves);
+    // Finally, add all the removes to iaompChanges
+    iaompChanges.addAll(iaompRemoves);
+    iaompUpdates.clear();
+    iaompRemoves.clear();
+  }
+
+  private Comparable coerceValue(Comparable value, Class toClass) {
+    if (toClass == String.class) return value.toString();
+    if (value instanceof Number && Number.class.isAssignableFrom(toClass)) {
+      Number n = (Number) value;
+      if (toClass == Double.class) return new Double(n.doubleValue());
+      if (toClass == Long.class) return new Long(n.longValue());
+      if (toClass == Integer.class) return new Integer(n.intValue());
+    }
+    return value;               // Can't be coerced
   }
 
   /**
@@ -168,7 +284,6 @@ public class PlayHelper {
       OMCRangeList paramRanges = phrase.getAllowedValues();
       ConstraintOperator op = phrase.getOperator();
       Comparable conditionValue = evalArithmetic(x);
-      if (logger.isDebugEnabled()) logger.debug("conditionValue = " + conditionValue);
       if (op.equals(ConstraintOperator.IN) || op.equals(ConstraintOperator.NOTIN)) {
         boolean isIn = paramRanges.isAllowed(conditionValue);
         if (op.equals(ConstraintOperator.IN)) return isIn;

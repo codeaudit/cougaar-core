@@ -29,10 +29,11 @@ import java.util.Map;
 import java.util.Set;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.PlaybookReadService;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.service.OperatingModeService;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.planning.ldm.policy.RangeRuleParameter;
@@ -45,7 +46,7 @@ import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
  * and current conditions. Runs periodically and selects new plays
  * according to the prevailing {@link Condition}s.
  **/
-public class AdaptivityEngine extends ServiceUserPluginBase {
+public class AdaptivityEngine extends ServiceUserPlugin {
   /**
    * A listener that listens to itself. It responds true when it is
    * itself the object of a subscription change.
@@ -64,17 +65,38 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
   private PlaybookReadService playbookService;
   private OperatingModeService operatingModeService;
   private ConditionService conditionService;
+  private UIDService uidService;
 
   private static Class[] requiredServices = {
     PlaybookReadService.class,
     OperatingModeService.class,
     ConditionService.class,
+    UIDService.class
   };
 
   private Subscription conditionListenerSubscription;
   private Subscription playbookListenerSubscription;
 
   private Map smMap = new HashMap();
+
+  /**
+   * Keeps track of the remote operating mode constraints we have
+   * created by name.
+   **/
+  private Map romcMap = new HashMap();
+
+  /**
+   * Keeps a copy of romcMap while updating romcMap. Declared as
+   * instance variable to avoid consing a new one every time.
+   **/
+  private Map tempROMCMap = new HashMap();
+
+  /**
+   * The names of the changed remote operating mode constraints.
+   * Declared as instance variable to avoid consing a new one every
+   * time.
+   **/
+  private Set romcChanges = new HashSet();
 
   private Play[] plays;
 
@@ -97,9 +119,13 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
         getServiceBroker().getService(this, OperatingModeService.class, null);
       conditionService = (ConditionService)
         getServiceBroker().getService(this, ConditionService.class, null);
+      uidService = (UIDService)
+        getServiceBroker().getService(this, UIDService.class, null);
+
       conditionService.addListener(conditionListener);
       playbookService.addListener(playbookListener);
-      helper = new PlayHelper(logger, operatingModeService, conditionService, blackboard, smMap);
+
+      helper = new PlayHelper(logger, operatingModeService, conditionService, blackboard, uidService, smMap);
       return true;
     }
     return false;
@@ -143,19 +169,25 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
    * plays.
    **/
   public synchronized void execute() {
+    boolean debug = logger.isDebugEnabled();
+    if (debug) {
+      if (conditionListenerSubscription.hasChanged()) logger.debug("Condition changed");
+      if (playbookListenerSubscription.hasChanged()) logger.debug("Playbook changed");
+    }
     if (haveServices()) {
       if (plays == null || playbookListenerSubscription.hasChanged()) {
-        if (logger.isDebugEnabled()) logger.debug("getting plays");
         getPlays(playbookService.getCurrentPlays());
-        if (logger.isDebugEnabled()) logger.debug("getting conditions");
+        if (debug) logger.debug("got " + plays.length + " plays");
+        if (debug) logger.debug("getting conditions");
         getConditions();
       } else if (conditionListenerSubscription.hasChanged()) {
-        if (logger.isDebugEnabled()) logger.debug("getting conditions");
         getConditions();
+        if (debug) logger.debug("got " + smMap.size() + " conditions");
       } else {
-        if (logger.isDebugEnabled()) logger.debug("nothing changed");
+        if (debug) logger.debug("nothing changed");
       }
       if (missingConditions.size() == 0) {
+        if (debug) logger.debug("updateOperatingModes");
         updateOperatingModes();
       }
     }
@@ -213,9 +245,29 @@ public class AdaptivityEngine extends ServiceUserPluginBase {
    * eliminating all possible values for an operating mode, that
    * constraint is logged and ignored. Finally, the operating modes
    * are set to the effective value of the combined constraints.
+   * <p>Some constraints apply to remote operating modes. We keep
+   * track of these publish as required so the LP can keep the remote
+   * agent(s) up-to-date.
    **/
   private void updateOperatingModes() {
-    if (logger.isDebugEnabled()) logger.debug("updateOperatingModes");
-    helper.updateOperatingModes(plays);
+    tempROMCMap.putAll(romcMap);
+    helper.updateOperatingModes(plays, romcMap, romcChanges);
+    for (Iterator i = romcChanges.iterator(); i.hasNext(); ) {
+      String operatingModeName = (String) i.next();
+      if (romcMap.containsKey(operatingModeName)) {
+        // Now present. Was it added or changed
+        if (tempROMCMap.containsKey(operatingModeName)) {
+          // Was previously present so must have changed
+          blackboard.publishChange(romcMap.get(operatingModeName));
+        } else {
+          // Was not previously present so must have been added
+          blackboard.publishAdd(romcMap.get(operatingModeName));
+        }
+      } else {
+        // No longer present. Must have been removed.
+        blackboard.publishRemove(tempROMCMap.get(operatingModeName));
+      }
+    }
+    tempROMCMap.clear();
   }
 }

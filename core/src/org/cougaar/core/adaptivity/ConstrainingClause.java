@@ -30,6 +30,15 @@ import java.util.*;
 
 public class ConstrainingClause {
 
+  public static final ConstrainingClause TRUE_CLAUSE;
+  public static final ConstrainingClause FALSE_CLAUSE;
+  static {
+    TRUE_CLAUSE = new ConstrainingClause();
+    TRUE_CLAUSE.push(BooleanOperator.TRUE);
+    FALSE_CLAUSE = new ConstrainingClause();
+    FALSE_CLAUSE.push(BooleanOperator.FALSE);
+  }
+
   private List list = new ArrayList();
   /** 
    * Append an operator or operand onto the list. It is assumed that
@@ -68,6 +77,15 @@ public class ConstrainingClause {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  public int hashCode() {
+    return list.hashCode();
+  }
+
+  public boolean equals(Object o) {
+    if (o instanceof ConstrainingClause) return list.equals(((ConstrainingClause) o).list);
+    return false;
   }
 
   /**
@@ -114,7 +132,3 @@ public class ConstrainingClause {
     return toString(iterator());
   }
 }
-
-
-
-

@@ -24,13 +24,13 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
-public class CPUTestPlugin extends ServiceUserPluginBase {
+public class CPUTestPlugin extends ServiceUserPlugin {
   public static final String CPU_CONDITION_NAME = "CPUTestPlugin.CPU";
 
   private static final OMCRange[] CPU_RANGES = {

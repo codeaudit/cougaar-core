@@ -24,7 +24,7 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.Service;
@@ -37,7 +37,7 @@ import org.cougaar.util.GenericStateModelAdapter;
  * target manifestation of the operating mode is a Sensor that is used
  * by the adaptivity engine to select plays.
  **/
-public class CPURemoteTestPlugin extends ServiceUserPluginBase {
+public class CPURemoteTestPlugin extends ServiceUserPlugin {
   /** The name of the OperatingMode and Condition **/
   public static final String CPU_CONDITION_NAME = "CPURemoteTestPlugin.CPU";
 
@@ -53,8 +53,24 @@ public class CPURemoteTestPlugin extends ServiceUserPluginBase {
 
   private static final Double[] cpuValues = {
     new Double(1.0),
-    new Double(0.5),
-    new Double(0.2),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(1.0),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
+    new Double(0.1),
     new Double(0.1),
   };
 
@@ -102,6 +118,6 @@ public class CPURemoteTestPlugin extends ServiceUserPluginBase {
     getBlackboardService().publishChange(cpu);
     cpuStep++;
     if (cpuStep == cpuValues.length) cpuStep = 0;
-    startTimer(10000);
+    startTimer(60000);
   }
 }

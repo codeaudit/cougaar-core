@@ -44,6 +44,10 @@ public class InterAgentOperatingModePolicy
   protected Relay.Token owner;
 
   // Constructors
+  public InterAgentOperatingModePolicy(PolicyKernel pk) {
+    super(pk);
+  }
+
   public InterAgentOperatingModePolicy(ConstrainingClause ifClause, 
 				       ConstraintPhrase[] omConstraints) {
     super(ifClause, omConstraints);

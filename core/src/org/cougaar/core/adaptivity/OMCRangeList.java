@@ -215,6 +215,24 @@ public class OMCRangeList implements Serializable {
     return allowedValues.length == 0;
   }
 
+  public int hashCode() {
+    int hc = 0;
+    for (int i = 0; i < this.allowedValues.length; i++) {
+      hc = 31 * hc + allowedValues[i].hashCode();
+    }
+    return hc;
+  }
+
+  public boolean equals(Object o) {
+    if (!(o instanceof OMCRangeList)) return false;
+    OMCRangeList that = (OMCRangeList) o;
+    if (this.allowedValues.length != that.allowedValues.length) return false;
+    for (int i = 0; i < this.allowedValues.length; i++) {
+      if (!this.allowedValues[i].equals(that.allowedValues[i])) return false;
+    }
+    return true;
+  }
+
   public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append('{');

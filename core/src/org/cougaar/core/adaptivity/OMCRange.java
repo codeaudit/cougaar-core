@@ -81,4 +81,16 @@ public class OMCRange implements Serializable {
   public Comparable getMax() {
     return max;
   }
+
+  public int hashCode() {
+    return min.hashCode() ^ max.hashCode();
+  }
+
+  public boolean equals(Object o) {
+    if (o instanceof OMCRange) {
+      OMCRange that = (OMCRange) o;
+      return this.min.equals(that.min) && this.max.equals(that.max);
+    }
+    return false;
+  }
 }

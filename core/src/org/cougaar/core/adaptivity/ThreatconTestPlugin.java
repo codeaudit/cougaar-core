@@ -24,13 +24,13 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
-public class ThreatconTestPlugin extends ServiceUserPluginBase {
+public class ThreatconTestPlugin extends ServiceUserPlugin {
   public static final String THREATCON_CONDITION_NAME = "ThreatconTestPlugin.THREATCON";
 
   private static final OMCRange[] THREATCON_RANGES = {

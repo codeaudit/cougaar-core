@@ -24,8 +24,8 @@ import java.util.*;
 import java.io.StreamTokenizer;
 import java.io.IOException;
 import java.io.StreamTokenizer;
-import java.io.FileInputStream;
-import java.io.StringBufferInputStream;
+import java.io.FileReader;
+import java.io.StringReader;
 
 public class Parser {
   StreamTokenizer st;
@@ -36,6 +36,8 @@ public class Parser {
   public Parser(StreamTokenizer s) {
     st = s;
     st.wordChars('_', '_');
+    st.wordChars('[', '[');
+    st.wordChars(']', ']');
     st.ordinaryChars('/', '/');
     st.slashStarComments(true);
     st.slashSlashComments(true);
@@ -381,7 +383,7 @@ public class Parser {
   public static void mai1n (String args []) {
     try {
       for (int i = 0; i < args.length; i++) {
-        StringBufferInputStream sbis = new StringBufferInputStream(args[i]);
+        StringReader sbis = new StringReader(args[i]);
         StreamTokenizer st = new StreamTokenizer(sbis);
         Parser p = new Parser(st);
         ConstrainingClause cc = p.parseConstrainingClause();
@@ -395,7 +397,7 @@ public class Parser {
   public static void main (String args []) {
     try {
       for (int i = 0; i < args.length; i++) {
-        FileInputStream sbis = new FileInputStream(args[i]);
+        FileReader sbis = new FileReader(args[i]);
         StreamTokenizer st = new StreamTokenizer(sbis);
         Parser p = new Parser(st);
         Play[] plays = p.parsePlays();

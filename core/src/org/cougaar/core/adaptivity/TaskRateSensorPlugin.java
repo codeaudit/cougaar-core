@@ -20,18 +20,19 @@
  */
 package org.cougaar.core.adaptivity;
 
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.ConditionService;
-import org.cougaar.core.component.Service;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.persist.NotPersistable;
+import org.cougaar.core.plugin.ServiceUserPlugin;
+import org.cougaar.core.service.ConditionService;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.util.UnaryPredicate;
 
 /**
  * Plugin to sense incoming task rate and publish a Condition
  **/
-public class TaskRateSensorPlugin extends ServiceUserPluginBase {
+public class TaskRateSensorPlugin extends ServiceUserPlugin {
   private static final String CONDITION_NAME = "TaskRateSensorPlugin.TASKRATE";
 
   private static final OMCRange[] TASKRATE_RANGES = {

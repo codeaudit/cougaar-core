@@ -36,208 +36,37 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.CircularQueue;
 
 /**
- * A container for the active Plays. The plays are initialized from a
- * file specified as a plugin parameter. Playbook users access the
- * plays through two services: {@link PlaybookReadService} and
- * {@link PlaybookConstrainService}. The former returns the constrained
- * plays. The latter constrains the original plays with
- * {@link OperatingModePolicy}s.
+ * A container for Plays providing operations to constrain plays with
+ * {@link OperatingModePolicy)s.
  **/
 public class Playbook
-  extends ComponentPlugin
-  implements ServiceProvider
 {
   private Play[] originalPlays = new Play[0];
   private Play[] constrainedPlays = new Play[0];
   private List constraints = new ArrayList();
   private LoggingService logger;
-  private List listeners = new ArrayList(2);
-  private CircularQueue todo = new CircularQueue();
 
-  private class PlaybookReadServiceImpl implements PlaybookReadService {
-    private boolean active = true;
-    /**
-     * Gets an array of the current plays
-     * @return an array of the current plays
-     **/
-    public Play[] getCurrentPlays() {
-      if (!active) throw new RuntimeException("Service has been released or revoked");
-      return constrainedPlays;
-    }
-
-    /**
-     * Add a listener to the playbook. The listener will be
-     * publishChanged if this Playbook is modified.
-     * @param l the Listener
-     **/
-    public void addListener(Listener l) {
-      if (!active) throw new RuntimeException("Service has been released or revoked");
-      listeners.add(l);
-    }
-    /**
-     * Remove a listener to the playbook. The listener will no longer
-     * be publishChanged if this Playbook is modified.
-     * @param l the Listener
-     **/
-    public void removeListener(Listener l) {
-      if (!active) throw new RuntimeException("Service has been released or revoked");
-      listeners.remove(l);
-    }
+  public Playbook(LoggingService logger) {
+    this.logger = logger;
   }
 
-  private class PlaybookConstrainServiceImpl implements PlaybookConstrainService {
-    private boolean active = true;
-    /**
-     * Add another OperatingModePolicy constraint. The plays are
-     * modified so that in all cases where the if clause of the
-     * constraint is true the OperatingMode ranges will all fall
-     * within the constraint.
-     * @param omp the constraint to add
-     **/
-    public void constrain(OperatingModePolicy omp) {
-      if (!active) throw new RuntimeException("Service has been released or revoked");
-      addConstraint(omp);
-    }
-
-    /**
-     * Remove an OperatingModePolicy constraint. The current plays are
-     * recomputed to omit the removed constraint.
-     * @param omp the constraint to remove
-     **/
-    public void unconstrain(OperatingModePolicy omp) {
-      if (!active) throw new RuntimeException("Service has been released or revoked");
-      removeConstraint(omp);
-    }
-  }
-
-  /**
-   * Override to register the services we provide.
-   **/
-  public void load() {
-    super.load();
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
-    getServiceBroker().addService(PlaybookReadService.class, this);
-    getServiceBroker().addService(PlaybookConstrainService.class, this);
-  }
-
-  /**
-   * Override to unregister the services we provide.
-   **/
-  public void unload() {
-    getServiceBroker().revokeService(PlaybookConstrainService.class, this);
-    getServiceBroker().revokeService(PlaybookReadService.class, this);
-    getServiceBroker().releaseService(this, LoggingService.class, logger);
-    super.unload();
-  }
-
-  /**
-   * Read the plays from a file.
-   **/
-  public void setupSubscriptions() {
-    String playFileName = getParameters().iterator().next().toString();
-    try {
-      InputStream is = getConfigFinder().open(playFileName);
-      try {
-        Parser p = new Parser(new StreamTokenizer(is));
-        Play[] plays = p.parsePlays();
-        setPlays(plays);
-      } finally {
-        is.close();
-      }
-    } catch (Exception e) {
-      logger.error("Error parsing play file", e);
-    }
-  }
-
-  /**
-   * Handle requests that arrived through our services. These requests
-   * all fire listeners. The services cannot themselves do this
-   * because of the possibility of a deadlock due to attempts to open
-   * two blackboard transactions simultaneously. The requests are
-   * placed in a queue and executed here.
-   **/
-  public void execute() {
-    synchronized (todo) {
-      while (todo.size() > 0) {
-        try {
-          ((Runnable) todo.next()).run();
-        } catch (RuntimeException e) {
-          logger.error("Error running delayed job", e);
-        }
-      }
-    }
-  }
-
-  /**
-   * Gets (creates) one of our services. Part of the implementation of
-   * the ServiceProvider API
-   * @param sb the ServiceBroker making the request
-   * @param requestor the actual requestor on whose behalf the broker is acting
-   * @param serviceClass the class of the Service desired.
-   * @return an instance of the requested Service if it one we supply.
-   **/
-  public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    if (serviceClass == PlaybookReadService.class) {
-      return new PlaybookReadServiceImpl();
-    }
-    if (serviceClass == PlaybookConstrainService.class) {
-      return new PlaybookConstrainServiceImpl();
-    }
-    return null;
-  }
-
-  /**
-   * Release one of our services. The services use no resources, so
-   * there is nothing to do.
-   **/
-  public void releaseService(ServiceBroker sb, Object requestor, Class
-                             serviceClass, Object service) {
-    if (service instanceof PlaybookReadServiceImpl) {
-      ((PlaybookReadServiceImpl) service).active = false;
-      return;
-    }
-    if (service instanceof PlaybookConstrainServiceImpl) {
-      ((PlaybookConstrainServiceImpl) service).active = false;
-      return;
-    }
-    throw new IllegalArgumentException("Not my service: " + service);
-  }
-
-  private synchronized void addConstraint(OperatingModePolicy omp) {
+  public synchronized void addConstraint(OperatingModePolicy omp) {
     constraints.add(omp);
     constrainPlays(omp);
-    fireListenersLater();
   }
 
-  private synchronized void removeConstraint(OperatingModePolicy omp) {
+  public synchronized void removeConstraint(OperatingModePolicy omp) {
     constraints.remove(omp);
     constrainPlays();
-    fireListenersLater();
   }
 
-  private void fireListenersLater() {
-    synchronized (todo) {
-      todo.add(new Runnable() {
-        public void run() {
-          fireListeners();
-        }
-      });
-    }
-    blackboard.signalClientActivity();
-  }
-
-  private void fireListeners() {
-    for (Iterator i = listeners.iterator(); i.hasNext(); ) {
-      PlaybookReadService.Listener l = (PlaybookReadService.Listener) i.next();
-      blackboard.publishChange(l);
-    }
-    if (logger.isDebugEnabled()) logger.debug("New constrained plays" + System.getProperty("line.separator") + this);
-  }
-
-  private synchronized void setPlays(Play[] plays) {
+  public synchronized void setPlays(Play[] plays) {
     originalPlays = plays;
     constrainPlays();
-    fireListeners();
+  }
+
+  public synchronized Play[] getCurrentPlays() {
+    return constrainedPlays;
   }
 
   /**
@@ -263,8 +92,10 @@ public class Playbook
   private void constrainPlays() {
     constrainedPlays = originalPlays;
     for (Iterator i = constraints.iterator(); i.hasNext(); ) {
+      logger.debug(constrainedPlays.length + " plays");
       constrainPlays((OperatingModePolicy) i.next());
     }
+    logger.debug(constrainedPlays.length + " plays");
   }
 
   /**
@@ -280,7 +111,11 @@ public class Playbook
    * The OperatingModes of the new play are those of the original play
    * but with the ranges of values reduced to those values that the
    * play and the policy have in common. If the set of allowed values
-   * for any OperatingMode is empty, then no play is added.
+   * for any OperatingMode is empty, then no play is added. Finally,
+   * the OperatingModePolicy itself is inserted as a Play to cover the
+   * cases where the policy applies, but no play does. It is not
+   * necessary to add any play predicates to this play, because by
+   * construction all plays are compatible with the policy.
    **/
   private void constrainPlays(OperatingModePolicy omp) {
     List newConstrainedPlays = new ArrayList(constrainedPlays.length);
@@ -311,7 +146,7 @@ public class Playbook
         }
       }
       if (newConstraints == null) {
-        newConstrainedPlays.add(play); // Keep the play as is
+        newConstrainedPlays.add(play); // No overlap. Keep the play as is
       } else {
         // First write a Play that applies when the original play
         // applies, but the constraint policy does not apply
@@ -363,15 +198,8 @@ public class Playbook
         newConstrainedPlays.add(newPlay);
       }
     }
+    // Finally, append the constraint itself as a Play
+    newConstrainedPlays.add(new Play(omp.getIfClause(), omp.getOperatingModeConstraints()));
     constrainedPlays = (Play[]) newConstrainedPlays.toArray(constrainedPlays);
-  }
-
-  public String toString() {
-    StringBuffer buf = new StringBuffer();
-    Play[] plays = constrainedPlays;
-    for (int i = 0; i < plays.length; i++) {
-      buf.append(plays[i]).append(System.getProperty("line.separator"));
-    }
-    return buf.toString();
   }
 }

@@ -46,9 +46,13 @@ public class OperatingModePolicy implements Policy  {
    * @param ifClause the 'if' ConstrainingClause 
    * @param omConstraints an array of constraints to apply to {@link OperatingMode}s
    */
+  public OperatingModePolicy (PolicyKernel pk) {
+    policy = pk;
+  }
+  
   public OperatingModePolicy (ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints) {
-    policy = new PolicyKernel(ifClause, omConstraints);
+    this(new PolicyKernel(ifClause, omConstraints));
   }
   
   public OperatingModePolicy (String policyName,
@@ -106,7 +110,7 @@ public class OperatingModePolicy implements Policy  {
     return policy;
   }
 
-  protected void setPolicyKernel (PolicyKernel pk) {
+  protected void setPolicyKernel(PolicyKernel pk) {
     policy = pk;
   }
 

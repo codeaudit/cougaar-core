@@ -74,4 +74,25 @@ public class PlayBase {
     }
     return buf.toString();
   }
+
+  public int hashCode() {
+    int hc = ifClause.hashCode();
+    for (int i = 0; i < this.operatingModeConstraints.length; i++) {
+      hc = 31 * hc + operatingModeConstraints[i].hashCode();
+    }
+    return hc;
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null) return false;
+    if (this.getClass() != o.getClass()) return false;
+    PlayBase that = (PlayBase) o;
+    if (!this.ifClause.equals(that.ifClause)) return false;
+    if (this.operatingModeConstraints.length != that.operatingModeConstraints.length) return false;
+    for (int i = 0; i < this.operatingModeConstraints.length; i++) {
+      if (!this.operatingModeConstraints[i].equals(that.operatingModeConstraints[i])) return false;
+    }
+    return true;
+  }
 }

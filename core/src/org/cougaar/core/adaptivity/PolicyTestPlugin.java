@@ -20,20 +20,21 @@
  */
 package org.cougaar.core.adaptivity;
 
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.IOException;
 import java.io.StreamTokenizer;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
 
-public class PolicyTestPlugin extends ServiceUserPluginBase {
+public class PolicyTestPlugin extends ServiceUserPlugin {
   private PlaybookConstrainService playbookConstrainService;
 
   private boolean constrained = false;
@@ -51,7 +52,7 @@ public class PolicyTestPlugin extends ServiceUserPluginBase {
   public void setupSubscriptions() {
     String policyFileName = getParameters().iterator().next().toString();
     try {
-      InputStream is = getConfigFinder().open(policyFileName);
+      Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
       try {
         Parser p = new Parser(new StreamTokenizer(is));
         policies = p.parseOperatingModePolicies();
