@@ -16,7 +16,10 @@ import org.cougaar.core.cluster.ClusterMessage;
 
 
 /** 
- * Requests that the cluster add a plugin
+ * Requests that the cluster add a plugin.
+ *
+ * Will likely change to include additional load/run parameters,
+ * perhaps using an <code>org.cougaar.util.PropertyTree</code>.
  **/
 public class AddPlugInMessage extends ClusterMessage
 {
@@ -28,11 +31,6 @@ public class AddPlugInMessage extends ClusterMessage
     super();
   }
         
-  /** Constructor that takes a String name of a PlugIn **/
-  public AddPlugInMessage(String plugin) {
-    parsePlugIn(plugin);
-  }
-        
   /** @return The class name of the PlugIn to be added */
   public String getPlugIn() {
     return theplugin;
@@ -42,29 +40,42 @@ public class AddPlugInMessage extends ClusterMessage
     return arguments;
   }
 
-  /** @param aplugin The class name of the PlugIn to be added **/
-  public void setPlugIn(String aplugin) {
-    parsePlugIn(aplugin);
+  /** 
+   * @param piName The class name of the PlugIn to be added 
+   */
+  public void setPlugIn(String piName) {
+    this.theplugin = piName.intern();
   }
-        
+
+  /** 
+   * @param piArgs Vector of PlugIn parameters
+   */
+  public void setArguments(Vector piArgs) {
+    this.arguments = piArgs;
+  }
+
+  /**
+   * @deprecated
+   */
+  public void setPlugInAndArguments(String s) {
+    int p1 = s.indexOf('(');
+    int p2 = s.indexOf(')');
+    String piName;
+    Vector piArgs;
+    if (p1 >= 0 && p2>=p1) {
+      // has arguments
+      piName = s.substring(0,p1);
+      piArgs = StringUtility.parseCSV(s, p1+1, p2);
+    } else {
+      // no arguments
+      piName = s;
+      piArgs = new Vector();
+    }
+    setPlugIn(s);
+    setArguments(piArgs);
+  }
+
   public String toString() {
     return super.toString() + " " + theplugin;
   }
-
-  // argument utilities
-  
-  private void parsePlugIn(String s) {
-    int p1 = s.indexOf('(');
-    int p2 = s.indexOf(')');
-    if (p1 >= 0 && p2>=p1) {
-      // has arguments
-      theplugin = s.substring(0,p1);
-      arguments = StringUtility.parseCSV(s, p1+1, p2);
-    } else {
-      // no arguments
-      theplugin = s.intern();
-      arguments = new Vector();
-    }
-  }
-
 }

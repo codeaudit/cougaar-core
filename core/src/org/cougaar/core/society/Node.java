@@ -34,6 +34,8 @@ import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.cluster.ClusterInitializedMessage;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.util.ConfigFileFinder;
+import org.cougaar.util.PropertyTree;
 
 import java.beans.Beans;
 
@@ -79,10 +81,6 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     disableRetransmission = Boolean.getBoolean("org.cougaar.core.cluster.persistence.enable");
   }
 
-
-
-  /** Reference containing the Profiler **/
-  private NodeProfiler theProfiler = null;
   private String id = null;
   public String getIdentifier() { return id; }
 
@@ -368,26 +366,6 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   protected void cleanup(){
   }
     
-
-  /**
-   *   This method is responsible for creating the NodeProfilier class for the node.
-   *   <p><PRE>
-   *   PRE CONDITION:    Part of the construction  of a Node.
-   *   POST CONDITION:   Node creates and contains the Node Access Object.
-   *   INVARIANCE:
-   *   </PRE>
-   *    @todo I ust check the DB for the profile object and if not ther then create it
-   **/
-  protected void createProfiler(){
-    NodeProfiler myProfiler = null;
-    if( getArgs().containsKey( FILE_KEY ) )
-      myProfiler = new NodeProfiler( getIdentifier(), (String)getArgs().get( FILE_KEY ) );
-    else
-      myProfiler = new NodeProfiler( getIdentifier() );
-                
-    theProfiler=myProfiler;
-  }
- 
   /**
    *   Returns name of computer platform as an String version of an IPAddress
    *   <p><PRE>
@@ -485,9 +463,24 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
       Communications.getInstance().startNameServer();
     }
 
-    createProfiler();
-    initTransport();        // set up the message handler
-    loadClusters();         // set up the clusters.
+    // load node properties
+    String filename = (String)getArgs().get(FILE_KEY);
+    if (filename == null) {
+      // assume ".ini" file
+      filename = name+".ini";
+    }
+    PropertyTree nodePT;
+    try {
+      // currently assumes ".ini" format
+      InputStream in = ConfigFileFinder.open(filename);
+      nodePT = NodeINIParser.parse(in);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to parse node \""+name+"\" file \""+filename+"\"");
+    }
+
+    initTransport();  // set up the message handler
+    loadClusters(nodePT); // set up the clusters.
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
@@ -506,39 +499,59 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   }
 
   /**
-   *   This method is responsible for creating the AlpProcesses for the node.
+   * This method is responsible for creating the AlpProcesses for the node.
    **/
-  protected void loadClusters(){
+  protected void loadClusters(PropertyTree nodePT) {
     Vector someClusters = new Vector();
+
     //First get a list of processes form the profilier
-    Vector clusterNames = theProfiler.getNodeProfile().getClusterNames();
+    List clusterNames = (List)nodePT.get("clusters");
+    int nClusters = ((clusterNames != null) ? clusterNames.size() : 0);
+    if (nClusters > 0) {
 
-    if (clusterNames.size() > 0) {
-
+      // create the clusters
       System.err.println("Creating Clusters:");
-      // now go through the list an create the object abstractly through the Class static methods
-      for( Enumeration e = clusterNames.elements(); e.hasMoreElements(); ){
-        String myAlias = (String)e.nextElement();
-        
-        System.err.println("\t"+myAlias);
-        ClusterServesClusterManagement newCluster = createCluster(myAlias);
-        someClusters.addElement( newCluster );
+      List clusterProperties = new ArrayList();
+      for (int i = 0; i < nClusters; i++) {
+        String cname = (String)clusterNames.get(i);
+        System.err.println("\t"+cname);
+        // parse the cluster properties
+        PropertyTree clusterPT;
+        try {
+          // currently assume ".ini" files
+          String fname = cname+".ini";
+          InputStream in = ConfigFileFinder.open(fname);
+          clusterPT = ClusterINIParser.parse(in);
+        } catch (Exception e) {
+          e.printStackTrace();
+          clusterPT = null;
+        }
+        clusterProperties.add(clusterPT);
+        // create the cluster
+        ClusterServesClusterManagement newCluster =
+          ((clusterPT != null) ?
+           createCluster(cname, clusterPT) :
+           null);
+        someClusters.addElement(newCluster);
       }
-      System.err.print("Loading Plugins:");
 
-      Enumeration cnames = clusterNames.elements();
-      Enumeration clusters = someClusters.elements();
-      while (cnames.hasMoreElements()) {
-        String cname = (String) cnames.nextElement();
+      // load the plugins
+      System.err.print("Loading Plugins:");
+      for (int i = 0; i < nClusters; i++) {
+        String cname = (String)clusterNames.get(i);
         System.err.print("\n\t"+cname);
-        ClusterServesClusterManagement cluster = (ClusterServesClusterManagement) clusters.nextElement();
+        ClusterServesClusterManagement cluster = 
+          (ClusterServesClusterManagement)someClusters.get(i);
         if (cluster != null) {
-          populateCluster(cname, cluster);
+          PropertyTree clusterPT = (PropertyTree)clusterProperties.get(i);
+          populateCluster(cname, cluster, clusterPT);
         }
       }
+
       System.err.println("\nPlugins Loaded.");
     }
-    setClusters( someClusters );
+
+    setClusters(someClusters);
   }
 
   /**
@@ -562,27 +575,41 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   // ClusterManagementServesCluster
   //
 
-  /**  This method enables the ClusterManagement to instatiate the Cluster and add it
-   *   as a ClusterImpl.  This is accomplished from the Class class methods and the
-   *   data present in the profiler
+  /**
+   * This method enables the ClusterManagement to instatiate the Cluster 
+   * and add it as a ClusterImpl.  
+   *
+   * This is accomplished from the Class class methods and the
+   * data present in the PropertyTree.
    */
-  public ClusterServesClusterManagement createCluster(String clusterid)
-  {
+  public ClusterServesClusterManagement createCluster(
+      String clusterid,
+      PropertyTree clusterPT) {
     try {
-      ClusterProfiler cp = new ClusterProfiler( clusterid );
+      // get the cluster class name
+      String clusterClassName = (String)clusterPT.get("class");
 
-      ClusterServesClusterManagement cluster = cp.createCluster( );
+      // load an instance of the cluster
+      Class clusterClass = Class.forName(clusterClassName);
+      Object clusterInstance = clusterClass.newInstance();
+      if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
+        throw new ClassNotFoundException();
+      }
+      ClusterServesClusterManagement cluster = 
+        (ClusterServesClusterManagement)clusterInstance;
+
       // we pass in the alias as the cluster identifier so we can use this to 
       //translate messages to system proxy objects 
       cluster.setClusterIdentifier(new ClusterIdentifier(clusterid));
+
       //move the cluster to the intialized state
       cluster.initialize();
       cluster.load(this);
       cluster.start();
-      if ( cluster.getState() != cluster.ACTIVE ){
+      if (cluster.getState() != cluster.ACTIVE) {
         System.err.println("Cluster "+cluster+" is not Active!");
       }
-                
+
       return cluster;
     } catch (Exception ex) {
       System.err.println("Caught Exception during cluster initialization:"+ex);
@@ -592,22 +619,29 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   }
 
 
-  public boolean populateCluster(String clusterid, ClusterServesClusterManagement cluster)
+  public boolean populateCluster(
+      String clusterid, 
+      ClusterServesClusterManagement cluster,
+      PropertyTree clusterPT)
   {
+    PropertyTree pluginsPT = (PropertyTree)clusterPT.get("plugins");
     try {
-      ClusterProfiler cp = new ClusterProfiler( clusterid );
-
       ClusterIdentifier cid = new ClusterIdentifier(clusterid);
 
       // add the plugins
-      for (Enumeration e = cp.enumeratePlugins(); e.hasMoreElements();) {
+      int nPlugins = ((pluginsPT != null) ? pluginsPT.size() : 0);
+      for (int i = 0; i < nPlugins; i++) {
+        Map.Entry pi = pluginsPT.get(i);
+        String piName = (String)pi.getKey();
+        Vector piParams = (Vector)pi.getValue();
         AddPlugInMessage myMessage = new AddPlugInMessage();
         myMessage.setOriginator(cid);
         myMessage.setTarget(cid);
-        myMessage.setPlugIn( (String)e.nextElement() );
+        myMessage.setPlugIn(piName);
+        myMessage.setArguments(piParams);
         // bypass the message system to initialize the cluster - send
         // the message directly.
-        cluster.receiveMessage( myMessage);
+        cluster.receiveMessage(myMessage);
       }
 
       // tell the cluster to proceed.
