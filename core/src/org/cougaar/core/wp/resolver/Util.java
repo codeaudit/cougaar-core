@@ -32,6 +32,8 @@ import java.util.Iterator;
 import java.util.Map;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Utility methods for batching requests.
@@ -95,9 +97,14 @@ public final class Util {
             // prevent unequal uid-based validate races.  The uids
             // may have different owners, so we can't figure out
             // the correct order by comparing uid counters.
-            throw new RuntimeException(
-                "UID mismatch in WP uid-based lookup validation, "+
-                "sentObj="+sentObj+", query="+query);
+            Logger logger = Logging.getLogger(Util.class);
+            if (logger.isWarnEnabled()) {
+              logger.warn(
+                  "UID mismatch in WP uid-based lookup validation, "+
+                  "name="+name+", "+
+                  "sentObj="+sentObj+", query="+query,
+                  new Throwable("stacktrace"));
+            }
           }
         } else {
           // invalid
