@@ -811,7 +811,22 @@ public class Blackboard extends Subscriber
   private class CacheClearer implements Runnable {
     private Set changedCommunities = new HashSet();
     private Thread thread;
+
+    // The delay time spent waiting for additional community
+    // change notifications to arrive before processing
+    // all such notifications. A trade-off between
+    // time for ABA translations to be updated
+    // and time for the local Comm Service to update
+    // its cache from the NameService
+    // This is in milliseconds
+    private long waitForNewCommChangeNotifications = Long.getLong("org.cougaar.core.blackboard.waitForNewCommChangeNotifications", 1000L).longValue();
     
+    // If have no changed communities, time to wait for some to appear
+    // before giving up and killing this thread.
+    // Larger number means less allocating / releasing the thread
+    // This is in milliseconds
+    private long waitForSomeCommChanges = Long.getLong("org.cougaar.core.blackboard.waitForSomeCommChanges", 10000L).longValue();
+
     public synchronized void add(String communityName) {
       changedCommunities.add(communityName);
       if (thread == null) {
@@ -827,28 +842,39 @@ public class Blackboard extends Subscriber
       while (true) {
         synchronized (this) {
           if (changedCommunities.size() == 0) {
+	    // See if some change notifications appear
             try {
-              wait(10000L);
+              wait(waitForSomeCommChanges);
             } catch (InterruptedException ie) {
             }
           }
           if (changedCommunities.size() == 0) {
+	    // Still no change notifications. Done with this thread
             thread = null;
             return;
           }
+
+	  // OK. Had some change notifications.
+	  // Wait a little to get any others
           try {
-            Thread.sleep(1000L);
+            Thread.sleep(waitForNewCommChangeNotifications);
           } catch (InterruptedException ie) {
           }
           changes.addAll(changedCommunities);
           changedCommunities.clear();
-        }
+        } // end of synch block
+
+	// Process the community changes
         myDistributor.invokeABAChangeLPs(changes);
         changes.clear();
-      }
-    }
+      } // end of whie loop
+    } // end of run method
   }
 
+  /**
+   * Tell all the ABA interested LPs about the new 
+   * community memberships, using the local cache of ABA translations.
+   **/
   public void invokeABAChangeLPs(Set communities) {
     synchronized (cache) {
       for (Iterator i = cache.values().iterator(); i.hasNext(); ) {
@@ -868,6 +894,7 @@ public class Blackboard extends Subscriber
   public ABATranslation getABATranslation(AttributeBasedAddress aba) {
     synchronized (cache) {
       ABATranslationImpl ret = (ABATranslationImpl) cache.get(aba);
+      if (ret == null) return null;
       if (ret.getOldTranslation() == null) return null;
       if (ret.getCurrentTranslation() == null) {
         ret.setCurrentTranslation(lookupABA(aba));
