@@ -279,8 +279,14 @@ public class QuiescenceStateServlet extends ComponentServlet {
       String s = sreq.getParameter(n);
       if (s==null || s.trim().length()==0) {
         s = null;
-      } else
-	s = URLDecoder.decode(s);
+      } else {
+	try {
+	  s = URLDecoder.decode(s, "UTF-8");
+	} catch (Exception e) {
+          // should never happen, utf-8 is standard.
+          s = null;
+	}
+      }
 
       return s;
     }
