@@ -1108,6 +1108,11 @@ public abstract class PlugInAdapter
     private Thread myThread = null;
     /** our subscription watcher **/
     private SubscriptionWatcher waker = null;
+    private static final int STOPPED = 0;
+    private static final int SUSPENDED = 1;
+    private static final int RUNNING = 2;
+    private int state = STOPPED;
+    private boolean firstRun = true;
     
     public SingleThreading() {}
 
@@ -1143,33 +1148,46 @@ public abstract class PlugInAdapter
       setWaker(getBlackboardService().registerInterest());
     }
 
-    public void start() {
-      myThread = new Thread(this, "Plugin/"+getAgentIdentifier()+"/"+PlugInAdapter.this);
+    public synchronized void start() {
+      if (state != STOPPED) throw new RuntimeException("Not stopped");
+      state = RUNNING;
+      firstRun = true;
+      startThread();
+    }
+
+    public synchronized void suspend() {
+      if (state != RUNNING) throw new RuntimeException("Not running");
+      state = SUSPENDED;
+      stopThread();
+    }
+
+    public synchronized void resume() {
+      if (state != SUSPENDED) throw new RuntimeException("Not suspended");
+      state = RUNNING;
+      startThread();
+    }
+
+    public synchronized void stop() {
+      if (state != SUSPENDED) throw new RuntimeException("Not suspended");
+      state = RUNNING;
+      startThread();
+      suspend();
+    }
+
+    private void startThread() {
+      myThread =
+        new Thread(this, "Plugin/"+getAgentIdentifier()+"/"+PlugInAdapter.this);
       myThread.setPriority(priority);
       myThread.start();
     }
 
-    private boolean suspendRequest = false;
-    public void suspend() { 
-      if (myThread != null) {
-        suspendRequest = true;
-        signalStateChange();
+    private void stopThread() {
+      signalStateChange();
+      try {
+        myThread.join(60000);
+      } catch (InterruptedException ie) {
       }
-    }
-
-    private boolean resumeRequest = false;
-    public void resume() {  
-      if (myThread != null) {
-        resumeRequest = true;
-        signalStateChange();
-      }
-    }
-    private boolean stopRequest = false;
-    public void stop() {
-      if (myThread != null) {
-        stopRequest = true;
-        signalStateChange();
-      }
+      myThread = null;
     }
 
     private void signalStateChange() {
@@ -1178,31 +1196,17 @@ public abstract class PlugInAdapter
       }
     }
 
-    private boolean isRunning = true;
-    private boolean isActive = true;
     public final void run() {
-      plugin_prerun();                 // plugin first time through
-      while (isRunning) {
+      if (firstRun) {
+        plugin_prerun();                 // plugin first time through
+        firstRun = false;
+      }
+      while (state == RUNNING) {
 	boolean xwakep = waker.waitForSignal();
 	setAwakened(xwakep);
-        if (suspendRequest) {
-          suspendRequest = false;
-          isActive = false;
-        }
-        if (resumeRequest) {
-          resumeRequest = false;
-          isActive = true;
-        }
-        if (stopRequest) {
-          stopRequest = false;
-          isRunning = false;
-          isActive = false;
-        }
-        if (isActive) {
-          plugin_cycle();                // do work
-          if (isYielding)
-            Thread.yield();
-        }
+        plugin_cycle();                // do work
+        if (isYielding)
+          Thread.yield();
       }
     }
     public void setWaker(SubscriptionWatcher sw) {
