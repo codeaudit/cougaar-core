@@ -128,13 +128,13 @@ public class DatabasePersistence
     init(pps, name, params);
     String clusterName = pps.getMessageAddress().getAddress().replace('-', '_');
     Logger ls = pps.getLogger();
-    if (true || ls.isInfoEnabled()) {
+    if (ls.isInfoEnabled()) {
       StringBuffer buf = new StringBuffer();
       buf.append("DatabasePersistence;").append(name);
       for (int i = 0; i < params.length; i++) {
         buf.append(";").append(params[i]);
       }
-      ls.shout(buf.toString());
+      ls.info(buf.toString());
     }
     deltaTable = "delta_" + clusterName;
     databaseDriver = parseParam("driver=", databaseDriver);

@@ -69,7 +69,7 @@ public class PersistencePluginAdapter {
         }
       }
     }
-    pps.getLogger().shout("archiveCount=" + archiveCount);
+    pps.getLogger().debug("archiveCount=" + archiveCount);
   }
 
   protected String parseParamValue(String param, String key) {
