@@ -266,10 +266,6 @@ public class BlackboardPersistence implements Persistence {
     return result;
   }
 
-  public void disableWrite(String sequenceNumberSuffix) {
-    persistenceService.disableWrite(sequenceNumberSuffix);
-  }
-
   public java.sql.Connection getDatabaseConnection(Object locker) {
     return persistenceService.getDatabaseConnection(locker);
   }

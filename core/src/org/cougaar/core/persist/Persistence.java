@@ -53,7 +53,6 @@ public interface Persistence {
     PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
     boolean hasSubscriberStates();
     void discardSubscriberState(Subscriber subscriber);
-    void disableWrite(String sequenceNumberSuffix);
     java.sql.Connection getDatabaseConnection(Object locker);
     void releaseDatabaseConnection(Object locker);
     long getPersistenceTime();
