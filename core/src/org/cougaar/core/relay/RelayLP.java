@@ -278,8 +278,13 @@ public class RelayLP extends LogPlanLogicProvider
   private void changeTarget(Relay.Target rt, Object cont, RelayDirective dir, Collection changes) {
     int flags = rt.updateContent(cont, token);
     if ((flags & Relay.CONTENT_CHANGE) != 0) {
-      Collection c = new ArrayList(changes);
-      c.add(MarkerReport.INSTANCE);
+      Collection c;
+      if (changes == null) {
+        c = Collections.singleton(MarkerReport.INSTANCE);
+      } else {
+        c = new ArrayList(changes);
+        c.add(MarkerReport.INSTANCE);
+      }
       logplan.change(rt, c);
       if (rt instanceof Relay.Source) localChange((Relay.Source) rt, changes);
     }

@@ -53,6 +53,8 @@ import org.cougaar.util.UnaryPredicate;
  * This plugin requires a single parameter: a <i>long</i>
  * indicating the time in milliseconds between timeout 
  * checks.
+ *
+ * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 public class PingTimerPlugin
 extends ComponentPlugin 

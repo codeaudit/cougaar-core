@@ -147,6 +147,7 @@ public class SimpleAgent
 
   // state from "suspend()", used within "getState()"
   private List unsentMessages;
+    private org.cougaar.core.mts.AgentState mtsState;
 
   // mobility destination node address
   private MessageAddress moveTargetNode;
@@ -602,6 +603,12 @@ public class SimpleAgent
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) 
       sb.getService(this, MessageTransportService.class, null);
+
+    if (agentState != null) {
+        org.cougaar.core.mts.AgentState t = agentState.mtsState;
+	messenger.getAgentState().mergeAttributes(t);
+    }
+
     messenger.registerClient(this);
 
     if (agentState != null) {
@@ -649,8 +656,13 @@ public class SimpleAgent
     myDemoControlServiceProvider = new DemoControlServiceProvider(this);
     sb.addService(DemoControlService.class, myDemoControlServiceProvider);
 
-    myThreadServiceProvider = new ThreadServiceProvider(sb, "Agent " + this.toString());
-    myThreadServiceProvider.provideServices(sb);
+//     myThreadServiceProvider = new ThreadServiceProvider(sb, "Agent " + this.toString());
+//     myThreadServiceProvider.provideServices(sb);
+
+    // Could use a ComponentDescription
+    myThreadServiceProvider = new ThreadServiceProvider();
+    myThreadServiceProvider.setParameter("name=Agent " + this.toString());
+    add(myThreadServiceProvider);
 
     // my thread service (from node)
     myThreadService = (ThreadService)
@@ -827,6 +839,9 @@ public class SimpleAgent
       // get a list of unsent messages.
       unsentMessages = messenger.flushMessages();
 
+      // get MTS-internal state for this agent
+      mtsState = messenger.getAgentState();
+
       // release messenger, remove agent name-server entry.
       getServiceBroker().releaseService(
           this, MessageTransportService.class, messenger);
@@ -882,6 +897,12 @@ public class SimpleAgent
         messenger = (MessageTransportService) 
           getServiceBroker().getService(
               this, MessageTransportService.class, null);
+
+	if (mtsState != null) {
+	  messenger.getAgentState().mergeAttributes(mtsState);
+          mtsState = null;
+        }
+        
         messenger.registerClient(this);
       }
 
@@ -1134,6 +1155,7 @@ public class SimpleAgent
           moveId,
           mobileIdentity,
           tuples,
+	  mtsState,
           uMsgs,
           restartState);
 
@@ -1457,8 +1479,8 @@ public class SimpleAgent
       if (log.isInfoEnabled()) {
         log.info(
             "Agent "+getAgentIdentifier()+
-            " detected restart of agent "+agentId+
-            ", reconciling blackboards");
+            " detected (re)start of agent "+agentId+
+            ", synchronizing blackboards");
       }
       // blackboard expects cluster-ids
       ClusterIdentifier cid = (ClusterIdentifier) agentId;
@@ -1890,6 +1912,7 @@ public class SimpleAgent
     private final long moveId;
     private final TransferableIdentity identity;
     private final List tuples;  // List<StateTuple>
+      private final org.cougaar.core.mts.AgentState mtsState;
     private final List unsentMessages; // List<ClusterMessage>
     private final Object restartState; // Map<MessageAddress><Long>
 
@@ -1899,6 +1922,7 @@ public class SimpleAgent
         long moveId,
         TransferableIdentity identity,
         List tuples,
+	org.cougaar.core.mts.AgentState mtsState,
         List unsentMessages,
         Object restartState) {
       this.agentId = agentId;
@@ -1906,6 +1930,7 @@ public class SimpleAgent
       this.moveId = moveId;
       this.identity = identity;
       this.tuples = tuples;
+      this.mtsState = mtsState;
       this.unsentMessages = unsentMessages;
       this.restartState = restartState;
       if ((agentId == null) ||
@@ -1920,7 +1945,8 @@ public class SimpleAgent
         "Agent "+agentId+" state, incarnation "+incarnation+
         ", moveId "+moveId+", identity "+identity+
         ", tuples["+tuples.size()+
-        "], unsentMessages["+unsentMessages.size()+
+        "], mtsState "+(mtsState != null)+
+	", unsentMessages["+unsentMessages.size()+
         "]";
     }
 

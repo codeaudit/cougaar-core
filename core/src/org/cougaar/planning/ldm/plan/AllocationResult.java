@@ -331,11 +331,15 @@ public class AllocationResult
   /** A List of Lists that represent each phased result in the form
    * of AspectValues.
    * If the result is not phased, use getAspectValueResults()
-   * @return List  A List of Lists.  Each internal List represents
-   * a phased result.
+   * @return A List of Lists.  Each internal List represents
+   * a phased result.  If the AllocationResult is not phased, will return null.
    */
   public List getPhasedAspectValueResults() {
-    return new ArrayList(phasedavrs);
+    if (phasedavrs == null) {
+      return null;
+    } else {
+      return new ArrayList(phasedavrs);
+    }
   }
         
   /** @return double The confidence rating of this result. */

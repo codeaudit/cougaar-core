@@ -1,3 +1,21 @@
+2002-07-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TaskImpl.java: 
+	Bug #1760 -- publishRemove of subtask still in a workflow should fail
+	If debug is enabled, include a throwable in the log message to
+	identify the caller.
+
+2002-07-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TaskImpl.java:
+	Bug #1760 -- publishRemove of subtask still in a workflow should fail
+	It should be illegal to remove a subtask from the logplan while it
+	is still part of a workflow. Doing so leaves unpublished plan
+	elements dangling from the workflow. Perhaps, removal from the
+	workflow should be automatic. but that would be an API change.
+	Instead throw a runtime exception to catch these cases so they can
+	be fixed.
+
 2002-07-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ScoringFunction.java:

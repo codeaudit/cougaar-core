@@ -73,9 +73,15 @@ public final class MetricsServiceProvider
 	    sb.getService(this, NodeControlService.class, null);
 	ServiceBroker rootsb = ncs.getRootServiceBroker();
 	
-	// Make thread services for this layer
-	ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Metrics");
-	tsp.provideServices(sb);
+	// Could do this as a ComponentDescription
+// 	ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Metrics");
+// 	tsp.provideServices(sb);
+
+	// Could use a ComponentDescription
+	ThreadServiceProvider tsp = new ThreadServiceProvider();
+	tsp.setParameter("name=Metrics");
+	add(tsp);
+
 
 	// Later these two instances will be out child components
 	Start = System.currentTimeMillis();
@@ -142,7 +148,7 @@ public final class MetricsServiceProvider
 
     // We're not using this yet but leave it in anyway.
     protected String specifyContainmentPoint() {
-	return "Node.MetricsService";
+	return "Node.AgentManager.Agent.MetricsService";
     }
 
     public void requestStop() {}

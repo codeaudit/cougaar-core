@@ -76,17 +76,4 @@ public interface MobilityFactory extends Factory {
    */
   MoveAgent createMoveAgent(Ticket ticket);
 
-
-  // the rest is for the infrastructure:
-
-
-  /**
-   * Create a inter-node agent transfer request, for
-   * infrastructure use.
-   */
-  AgentTransfer createAgentTransfer(
-      UID ownerUID,
-      MoveTicket moveTicket,
-      StateTuple state);
-
 }

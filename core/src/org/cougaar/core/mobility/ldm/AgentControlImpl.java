@@ -41,26 +41,26 @@ import org.cougaar.core.util.XMLize;
  * This uses a Relay.
  */
 class AgentControlImpl 
-  implements AgentControl, Relay.Source, Relay.Target, XMLizable, Serializable {
-  
+implements AgentControl, Relay.Source, Relay.Target, XMLizable, Serializable {
+
   private static final ControlStatus NO_CONTROL_STATUS =
     new ControlStatus(NONE, null);
-  
+
   private final UID uid;
   private final UID ownerUID;
   private final MessageAddress source;
   private final MessageAddress target;
   private final AbstractTicket ticket;
   private ControlStatus controlStatus;
-  
+
   private transient Set _targets;
-  
+
   public AgentControlImpl(
-			  UID uid,
-			  UID ownerUID,
-			  MessageAddress source,
-			  MessageAddress target,
-			  AbstractTicket ticket) {
+      UID uid,
+      UID ownerUID,
+      MessageAddress source,
+      MessageAddress target,
+      AbstractTicket ticket) {
     this.uid = uid;
     this.ownerUID = ownerUID;
     this.source = source;
@@ -70,14 +70,14 @@ class AgentControlImpl
         (source == null) ||
         (ticket == null)) {
       throw new IllegalArgumentException(
-					 "null uid/ticket");
+          "null uid/ticket");
     }
     // expecting target to be either addA or origN
     cacheTargets();
     // initial Status:
     this.controlStatus = NO_CONTROL_STATUS;
   }
-  
+
   public UID getUID() {
     return uid;
   }
@@ -102,27 +102,27 @@ class AgentControlImpl
   public int getStatusCode() {
     return controlStatus.getStatusCode();
   }
-  
+
   public String getStatusCodeAsString() {
     int i = getStatusCode();
     switch (i) {
-    case NONE: return "NONE";
-    case CREATED: return "CREATED";
-    case ALREADY_EXISTS: return "ALREADY_EXISTS";
-    case REMOVED: return "REMOVED";
-    case DOES_NOT_EXIST: return "DOES_NOT_EXIST";
-    case MOVED: return "MOVED";
-    case ALREADY_MOVED: return "ALREADY_MOVED";
-    case FAILURE: return "FAILURE";
-    default: return "Unknown ("+i+")";
+      case NONE: return "NONE";
+      case CREATED: return "CREATED";
+      case ALREADY_EXISTS: return "ALREADY_EXISTS";
+      case REMOVED: return "REMOVED";
+      case DOES_NOT_EXIST: return "DOES_NOT_EXIST";
+      case MOVED: return "MOVED";
+      case ALREADY_MOVED: return "ALREADY_MOVED";
+      case FAILURE: return "FAILURE";
+      default: return "Unknown ("+i+")";
     }
   }
-  
+
   public Throwable getFailureStackTrace() {
     return controlStatus.getStack();
   }
-  
-   public void setStatus(int statusCode, Throwable stack) {
+
+  public void setStatus(int statusCode, Throwable stack) {
     ControlStatus newCS = new ControlStatus(statusCode, stack);
     if (!(controlStatus.equals(NO_CONTROL_STATUS))) {
       throw new IllegalArgumentException(
@@ -131,13 +131,13 @@ class AgentControlImpl
     }
     controlStatus = newCS;
   }
- 
-  
+
+
   // Relay.Source:
 
   private void cacheTargets() {
     _targets = 
-      ((target != null) ? 
+      (((target != null) && (!(target.equals(source)))) ? 
        Collections.singleton(target) :
        Collections.EMPTY_SET);
   }
@@ -155,7 +155,7 @@ class AgentControlImpl
   }
 
   public int updateResponse(
-			    MessageAddress t, Object response) {
+      MessageAddress t, Object response) {
     ControlStatus newCS = (ControlStatus) response;
     // assert local-agent == getSource()
     // assert newMS != null
@@ -165,7 +165,7 @@ class AgentControlImpl
     }
     return Relay.NO_CHANGE;
   }
-  
+
   // Relay.Target:
 
   public MessageAddress getSource() {
@@ -177,8 +177,8 @@ class AgentControlImpl
        (controlStatus) : 
        null);
   }
- 
-  
+
+
   public int updateContent(Object content, Token token) {
     // currently the content is immutable
     // maybe support "abort" content in the future
@@ -216,7 +216,7 @@ class AgentControlImpl
       " and target "+target+
       ", status is "+controlStatus;
   }
-  
+
   private static class ControlStatus implements Serializable {
     public final int statusCode;
     public final Throwable stack;
@@ -227,26 +227,31 @@ class AgentControlImpl
     public int getStatusCode() { return statusCode; }
     public Throwable getStack() { return stack; }
     public boolean equals(Object o) {
-      ControlStatus cs = (ControlStatus) o;
-      return 
-        ((cs == this) ||
-         ((statusCode == cs.statusCode) && 
-          ((stack != null) ?
-           (stack.equals(cs.stack)) :
-           (cs.stack == null))));
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof ControlStatus)) {
+        return false;
+      } else {
+        ControlStatus cs = (ControlStatus) o;
+        return 
+          ((statusCode == cs.statusCode) && 
+           ((stack != null) ?
+            (stack.equals(cs.stack)) :
+            (cs.stack == null)));
+      }
     }
     public String toString() {
       return "status ("+statusCode+") stack("+stack+")";
     }
   }
-  
+
   /**
    * Simple factory implementation.
    */
   private static class AgentControlImplFactory 
     implements Relay.TargetFactory, Serializable {
-    
-    public static AgentControlImplFactory INSTANCE = 
+
+      public static AgentControlImplFactory INSTANCE = 
         new AgentControlImplFactory();
 
       private AgentControlImplFactory() { }
@@ -258,9 +263,9 @@ class AgentControlImpl
         return new AgentControlImpl(
             adi.uid, adi.ownerUID, source, null, adi.ticket);
       }
-    
-    private Object readResolve() {
-      return INSTANCE;
+
+      private Object readResolve() {
+        return INSTANCE;
+      }
     }
-  }
 }

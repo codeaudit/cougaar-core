@@ -132,11 +132,6 @@ public abstract class ComponentPlugin
   /**
    * Get the binding site, for subclass use.
    *
-   * @deprecated This method will not be going away, but the return 
-   * type will become a <code>BindingSite</code>, when this class
-   * becomes a simple extension of <code>BlackboardClientComponent</code>. 
-   * For access to the AgentIdentifier and ConfigFinder methods, 
-   * use the versions in the base class directly.
    */
   protected PluginBindingSite getBindingSite() {
     return pluginBindingSite;

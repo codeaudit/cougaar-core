@@ -91,35 +91,7 @@ class MobilityFactoryImpl implements MobilityFactory {
         uid, ownerUID, agentId, target, ticket);
   }
 
-  public AgentTransfer createAgentTransfer(
-					   UID ownerUID,
-					   MoveTicket moveTicket,
-					   StateTuple state) {
-    if (!(agentId.equals(nodeId))) {
-      throw new RuntimeException(
-				 "Only the node ("+nodeId+
-				 ") can create agent transfers, not child agent ("+
-				 agentId+")");
-    }
-    
-    // FIXME - only set up for move tickets
-    
-    MessageAddress source = agentId;
-    MessageAddress target = moveTicket.getDestinationNode();
-    if (target == null) {
-      target = nodeId;
-    }
-    // bug 1325
-    source = makeCID(source);
-    target = makeCID(target);
-    //
-    UID uid = uidService.nextUID();
-    return new AgentTransferImpl(
-				 uid, ownerUID, source, target, moveTicket, state);
-    
-  }
-  
-    // FIXME RelayLP bug 1325!
+  // FIXME RelayLP bug 1325!
   private static MessageAddress makeCID(MessageAddress a) {
     if ((a instanceof NodeIdentifier) ||
         (MessageAddress.class == a.getClass())) {

@@ -1,3 +1,17 @@
+2002-07-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionSourcePlugin.java: 
+	* CompletionRelay.java:
+	Bug #1786 -- Execution servlet doesn't
+	Update for using RelayChangeReports was incomplete. The new target
+	set was not being set so completion relays typically had no targets.
+
+2002-07-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionTargetPlugin.java:
+	Bug #1760 -- Task completion should be at 0.9 confidence level
+	confRating = Math.min(confRating / 0.899999, 1.0);
+
 2002-07-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* CompletionSourcePlugin.java:

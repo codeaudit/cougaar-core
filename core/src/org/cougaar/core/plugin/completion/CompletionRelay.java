@@ -93,7 +93,11 @@ public class CompletionRelay
   void setPersistenceNeeded() {
     persistenceCount++;
   }
-            
+
+  void setTargets(Set newTargets) {
+    this.targetAddresses = newTargets;
+  }
+
   // Relay.Source implementation
   public Set getTargets() {
     return targetAddresses == null ? Collections.EMPTY_SET : targetAddresses;

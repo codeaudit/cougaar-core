@@ -1,3 +1,23 @@
+2002-07-25  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Bug #1864 -- NPE on Blackboard Subscriber closing transaction
+	If a broken Composition/MPTask/Aggregation structure is persisted,
+	it comes back with nulls in the composition list. Find and remove
+	such nulls to prevent a subsequent NPE.
+
+2002-07-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Various Persistence bugs.
+	Squelch the info message about failing to find saved subscriber
+	state for subscribers that do not expect to have saved state.
+
+2002-07-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Change System.exit() to a warning and fixup.
+
 2002-07-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceOutputStream.java: 

@@ -51,6 +51,8 @@ import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.LoggerFactory;
+import org.cougaar.util.log.Logger;
 
 /**  The Distributor
  * 
@@ -59,6 +61,7 @@ import org.cougaar.util.UnaryPredicate;
  **/
 public class Distributor {
   /*
+   * Lies follow:
    * Synchronization methodology. The distributor distributes three
    * kinds of things: envelopes, messages, and timers. All three are
    * synchronized on the distributor object (this) so only one of
@@ -110,7 +113,9 @@ public class Distributor {
   private Timer distributorTimer = null;
 
   /** Debug logging **/
-  private transient PrintWriter logWriter = null;
+  private PrintWriter logWriter = null;
+
+  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
 
   public PublishHistory history =
     System.getProperty("org.cougaar.core.agent.keepPublishHistory", "false").equals("true")
@@ -209,7 +214,7 @@ public class Distributor {
         printLog("Distributor Started");
       }
       catch (IOException e) {
-        System.err.println("Can't open Distributor log file: " + e);
+        logger.error("Can't open Distributor log file: " + e);
       }
     }
     this.blackboard = blackboard;
@@ -437,7 +442,11 @@ public class Distributor {
     Subscriber subscriber = subscription.getSubscriber();
     PersistenceSubscriberState subscriberState = null;
     if (didRehydrate) {
-      subscriberState = persistence.getSubscriberState(subscriber);
+      if (subscriber.isReadyToPersist()) {
+        if (logger.isInfoEnabled()) logger.info("No subscriber state for late subscribe of " + subscriber.getName());
+      } else {
+        subscriberState = persistence.getSubscriberState(subscriber);
+      }
     }
     if (subscriberState != null &&
         subscriberState.pendingEnvelopes != null) {
@@ -569,15 +578,6 @@ public class Distributor {
           maybeSetPersistPending();  // Lock out new transactions
         }
       }
-      if (persistPending) {
-        if (transactionCount == 0) {
-          doPersistence();
-        } else {
-          System.out.println("Persist deferred, "
-                             + transactionCount
-                             + " transactions open");
-        }
-      }
     }
     outboxes.clear();
   }
@@ -585,9 +585,10 @@ public class Distributor {
   public synchronized void restartAgent(ClusterIdentifier cid) {
     try {
       blackboard.startTransaction();
+      this.startTransaction();
       blackboard.restart(cid);
       Envelope envelope = blackboard.receiveMessages(Collections.EMPTY_LIST);
-      distribute(envelope, blackboard.getClient());
+      this.finishTransaction(envelope, blackboard.getClient());
     } finally {
       blackboard.stopTransaction();
     }
@@ -640,8 +641,9 @@ public class Distributor {
     // happens.
     try {
       blackboard.startTransaction();
+      this.startTransaction();       // Blocks if persistence active
       Envelope envelope = blackboard.receiveMessages(directiveMessages);
-      distribute(envelope, blackboard.getClient());
+      this.finishTransaction(envelope, blackboard.getClient());
     } finally {
       blackboard.stopTransaction();
     }
@@ -715,11 +717,12 @@ public class Distributor {
    **/
   private Object transactionLock = new Object();
   private boolean persistPending = false;
+  private boolean persistActive = false;
   private int transactionCount = 0;
 
   public void startTransaction() {
     synchronized (transactionLock) {
-      while (persistPending) {
+      while (persistPending || persistActive) {
         try {
           transactionLock.wait();
         }
@@ -738,9 +741,23 @@ public class Distributor {
   }
 
   public void finishTransaction(Envelope outbox, BlackboardClient client) {
-    finishTransaction();
     synchronized (this) {
       distribute(outbox, client);
+    }
+    synchronized (transactionLock) {
+      if (persistPending) {
+        if (transactionCount == 1) {
+          // transactionCount == 1 implies persistActive == false
+          doPersistence();
+        } else {
+          if (logger.isInfoEnabled()) {
+            logger.info("Persist deferred, "
+                        + transactionCount
+                        + " transactions open");
+          }
+        }
+      }
+      finishTransaction();
     }
   }
 
@@ -764,9 +781,10 @@ public class Distributor {
 
   /**
    * Generate a persistence delta and (maybe) return the data of that
-   * delta. We call startTransaction to insure that persistence is
-   * neither in progress nor can begin. Then we wait until there are
-   * no other transactions in progress and then call doPersistence.
+   * delta. This code parallels that of
+   * startTransaction/finishTransaction except that:
+   *   distribute() is not called
+   *   we wait for all transactions to close
    * @param isStateWanted true if the data of a full persistence delta is wanted
    * @return a state Object including all the data from a full
    * persistence delta if isStateWanted is true, null if isStateWanted
@@ -778,19 +796,26 @@ public class Distributor {
     if (persistence == null)
       throw new PersistenceNotEnabledException();
     synchronized (transactionLock) {
-      startTransaction();
+      while (persistActive) {
+        try {
+          transactionLock.wait();
+        } catch (InterruptedException ie) {
+        }
+      }
+      persistActive = true;
+      transactionCount++;
       try {
-        // Invariant: persistPending==false transactionCount >= 1
         while (transactionCount > 1) {
           try {
             transactionLock.wait();
-          }
-          catch (InterruptedException ie) {
+          } catch (InterruptedException ie) {
           }
         }
+        // persistPending == don't care, transactionCount == 1
         // We are the only one left in the pool
         return doPersistence(isStateWanted, full);
       } finally {
+        persistActive = false;
         finishTransaction();
       }
     }

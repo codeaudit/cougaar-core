@@ -171,6 +171,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     }
     if (!targets.equals(relay.getTargets())) {
       RelayChangeReport rcr = new RelayChangeReport(relay);
+      relay.setTargets(targets);
       blackboard.publishChange(relay, Collections.singleton(rcr));
       if (logger.isInfoEnabled()) logger.info("Changed relay for " + targets);
       return true;

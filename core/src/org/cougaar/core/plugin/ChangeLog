@@ -1,3 +1,9 @@
+2002-07-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/AllocationResultHelper.java:
+	Fix Bug #1887 -- UniversalAllocator failing Consumable tasks at DLAHQ
+	Algorithm for computing success was incorrect.
+
 2002-07-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* TestABA.java:

@@ -136,6 +136,9 @@ public final class UID
     long tId;
     try {
       int l = uid.indexOf('/');
+      if (l == -1) {
+        throw new IllegalArgumentException("String \""+uid+"\" is not a valid UID pattern");
+      }
       tOwner = uid.substring(0,l);
       tId = Long.parseLong(uid.substring(l+1));
     } catch (NumberFormatException ex) {

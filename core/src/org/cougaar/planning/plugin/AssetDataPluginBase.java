@@ -77,6 +77,7 @@ import org.cougaar.planning.ldm.plan.TimeAspectValue;
 import org.cougaar.planning.ldm.plan.Verb;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.Reflect;
+import org.cougaar.util.StateModelException;
 import org.cougaar.util.TimeSpan;
 
 /**
@@ -117,12 +118,30 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
   protected Asset myLocalAsset = null;
   protected NewPropertyGroup property = null;
 
+  public void load(Object object) throws StateModelException {
+    super.load(object);
+    if (!didRehydrate()) {
+      try {
+        openTransaction();
+        processAssets();
+      } catch (Exception e) {
+        synchronized (System.err) {
+          System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+          e.printStackTrace();
+        }
+      } finally {
+        closeTransactionDontReset();
+      }
+    }
+  }
+
   protected void setupSubscriptions() {
     getSubscriber().setShouldBePersisted(false);
 
+    /*
     if (!didRehydrate()) {
       processAssets();	// Objects should already exist after rehydration
-    }
+      } */
   }
 
   public void execute() {

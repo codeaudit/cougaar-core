@@ -22,12 +22,18 @@
 package org.cougaar.core.thread;
 
 import java.lang.reflect.Constructor;
+import java.util.Iterator;
+import java.util.List;
 
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
+import org.cougaar.util.GenericStateModelAdapter;
 
 
 /**
@@ -38,11 +44,15 @@ import org.cougaar.core.service.ThreadListenerService;
  * other reasonable choice at the moment would be
  * 'org.cougaa.core.thread.Scheduler'
  */
-public final class ThreadServiceProvider implements ServiceProvider 
+public final class ThreadServiceProvider 
+    extends GenericStateModelAdapter
+    implements ServiceProvider, Component
 {
     private static final String SCHEDULER_CLASS_PROPERTY = 
 	"org.cougaar.thread.scheduler";
 
+    private ServiceBroker my_sb;
+    private boolean isRoot;
     private ThreadListenerProxy listenerProxy;
     private Scheduler scheduler;
     private ThreadServiceProxy proxy;
@@ -52,20 +62,55 @@ public final class ThreadServiceProvider implements ServiceProvider
      * Create a new set of thread services. Deduce the parent by
      * asking the ServiceBroker.
      */
-    public ThreadServiceProvider(ServiceBroker sb, String name) {
-	this.name = name;
-	ThreadService parent =(ThreadService) 
-	    sb.getService(this, ThreadService.class, null);
-	makeProxies(parent);
+//     public ThreadServiceProvider(ServiceBroker sb, String name) {
+// 	this.name = name;
+// 	ThreadService parent = (ThreadService) 
+// 	    sb.getService(this, ThreadService.class, null);
+// 	makeProxies(parent);
+//     }
+
+
+    public ThreadServiceProvider() {
     }
 
-    /**
-     * Create a new set of thread services.  The parent is provided
-     * explicitly.  No one uses this yet; it may go away.
-     */
-    public ThreadServiceProvider(ThreadService parent, String name) {
-	this.name = name;
+    public void load() {
+	super.load();
+
+	ServiceBroker sb = my_sb;
+	if (isRoot) {
+	    // use the root service broker
+	    NodeControlService ncs = (NodeControlService)
+		my_sb.getService(this, NodeControlService.class, null);
+	    sb = ncs.getRootServiceBroker();
+	}
+	
+	ThreadService parent = (ThreadService) 
+	    sb.getService(this, ThreadService.class, null);
 	makeProxies(parent);
+	provideServices(sb);
+    }
+
+    private void setParameterFromString(String property) {
+	int sepr = property.indexOf('=');
+	if (sepr < 0) return;
+	String key = property.substring(0, sepr);
+	String value = property.substring(++sepr);
+	if (key.equals("name")) {
+	    name = value;
+	} else if (key.equals("isRoot")) {
+	    isRoot = value.equalsIgnoreCase("true");
+	} // add more later
+    }
+
+    public void setParameter(Object param) {
+	if (param instanceof List) {
+	    Iterator itr = ((List) param).iterator();
+	    while(itr.hasNext()) {
+		setParameterFromString((String) itr.next());
+	    }
+	} else if (param instanceof String) {
+	    setParameterFromString((String) param);
+	}
     }
 
     private void makeProxies(ThreadService parent) {
@@ -123,5 +168,9 @@ public final class ThreadServiceProvider implements ServiceProvider
     }
 
  
+    public final void setBindingSite(BindingSite bs) {
+	my_sb = bs.getServiceBroker();
+    }
+
 }
 

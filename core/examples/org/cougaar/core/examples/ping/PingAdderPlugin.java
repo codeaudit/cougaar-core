@@ -51,6 +51,8 @@ import org.cougaar.util.UnaryPredicate;
 /**
  * Plugin that creates Pings to remote agents,
  * repeats the pings up to a specified limit.
+ *
+ * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 public class PingAdderPlugin
 extends ComponentPlugin 

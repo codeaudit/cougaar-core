@@ -45,7 +45,7 @@ class MoveAgentAdapter
 extends AgentControlImpl 
 implements MoveAgent, XMLizable {
 
-  private transient Status myStatus;
+  private Status myStatus;
 
   public MoveAgentAdapter(
       UID uid,

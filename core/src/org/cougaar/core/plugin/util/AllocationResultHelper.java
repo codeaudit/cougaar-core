@@ -143,7 +143,7 @@ public class AllocationResultHelper {
 
     public AllocationResult getAllocationResult(double confrating) {
         AspectValue[] ru = computeRollup();
-        return getAllocationResult(confrating, getScore(ru) <= 0.0, ru);
+        return getAllocationResult(confrating, isSuccess(ru), ru);
     }
 
     public AllocationResult getAllocationResult(double confrating,
@@ -160,21 +160,16 @@ public class AllocationResultHelper {
                                     ru, phasedResults);
     }
 
-    private double getScore(AspectValue[] ru) {
-        double totalWeight = 0.0;
-        double totalScore = 0.0;
+    private boolean isSuccess(AspectValue[] ru) {
         int ix = 0;
         for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ix++) {
             Preference pref = (Preference) e.nextElement();
             ScoringFunction sf = pref.getScoringFunction();
-            double thisWeight = pref.getWeight();
             AspectValue av = ru[ix];
             double thisScore = sf.getScore(av);
-            totalScore += thisScore * thisWeight;
-            totalWeight += thisWeight;
+            if (thisScore >= ScoringFunction.HIGH_THRESHOLD) return false;
         }
-        double score = totalScore / totalWeight;
-        return score;
+        return true;
     }
 
     public boolean isChanged() {

@@ -109,6 +109,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
         AllocationResult ar = pe.getEstimatedResult();
         if (ar != null) {
           double conf = ar.getConfidenceRating();
+          conf = Math.min(conf/0.89999999, 1.0);
           totalConfidence += conf;
           peCount++;
           if (conf > completionThreshold) return;

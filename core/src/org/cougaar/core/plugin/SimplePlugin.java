@@ -49,7 +49,7 @@ public abstract class SimplePlugin extends PluginAdapter {
   private Alarm minTimer = null;
   private Alarm maxTimer = null;
 
-  public final void load(Object object) throws StateModelException {
+  public void load(Object object) throws StateModelException {
     if (getThreadingChoice() == UNSPECIFIED_THREAD)
       setThreadingChoice(SHARED_THREAD);
 

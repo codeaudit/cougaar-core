@@ -21,12 +21,11 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.mts.MessageTransportClient;
-
-import org.cougaar.core.mts.MessageTransportWatcher;
-
+import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportWatcher;
 import org.cougaar.core.component.Service;
 
 /**
@@ -72,5 +71,7 @@ public interface MessageTransportService extends Service
 
     /** @return true IFF the MessageAddress is known to the nameserver **/
     boolean addressKnown(MessageAddress a);
+
+    AgentState getAgentState();
 }
 

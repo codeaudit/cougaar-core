@@ -28,6 +28,8 @@ import org.cougaar.core.util.UniqueObject;
 
 /**
  * A simple ping object between two agents.
+ *
+ * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 public interface Ping extends UniqueObject {
 

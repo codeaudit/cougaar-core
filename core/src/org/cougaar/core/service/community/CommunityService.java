@@ -23,6 +23,7 @@ package org.cougaar.core.service.community;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import javax.naming.directory.Attributes;
+import javax.naming.directory.ModificationItem;
 
 import java.util.*;
 
@@ -67,12 +68,21 @@ public interface CommunityService extends Service {
 
 
   /**
-   * Modifies the attributes associated with a community.
+   * Sets the attributes associated with a community.
    * @param communityName Name of community
    * @param attributes    Communities attributes
    * @return              True if operation was successful
    */
   boolean setCommunityAttributes(String communityName, Attributes attributes);
+
+
+  /**
+   * Modifies the attributes associated with a community.
+   * @param communityName Name of community
+   * @param mods          Attribute modifications to be performed
+   * @return              True if operation was successful
+   */
+  boolean modifyCommunityAttributes(String communityName, ModificationItem[] mods);
 
 
   /**
@@ -115,7 +125,7 @@ public interface CommunityService extends Service {
 
 
   /**
-   * Modifies the attributes associated with specified community entity.
+   * Sets the attributes associated with specified community entity.
    * @param communityName  Entities parent community
    * @param entityName     Name of community entity
    * @param attributes     Attributes to associate with entity
@@ -123,6 +133,17 @@ public interface CommunityService extends Service {
    */
   boolean setEntityAttributes(String communityName, String entityName,
                               Attributes attributes);
+
+
+  /**
+   * Modifies the attributes associated with specified community entity.
+   * @param communityName  Entities parent community
+   * @param entityName     Name of community entity
+   * @param mods           Attribute modifications to be performed
+   * @return               True if operation was successful
+   */
+  boolean modifyEntityAttributes(String communityName, String entityName,
+                                 ModificationItem[] mods);
 
 
   /**

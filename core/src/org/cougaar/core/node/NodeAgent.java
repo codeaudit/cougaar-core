@@ -204,10 +204,29 @@ public class NodeAgent
   protected void loadInternalPriorityComponents() {
     ServiceBroker rootsb = agentServiceBroker;
 
-    {
-      ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
-      tsp.provideServices(rootsb);
-    }
+    
+//     {
+// 	ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
+// 	tsp.provideServices(rootsb);
+//     }
+
+
+    ArrayList threadServiceParams = new ArrayList();
+    threadServiceParams.add("name=Node " + nodeName);
+    threadServiceParams.add("isRoot=true"); // hack to use rootsb
+    ComponentDescription threadServiceDesc = 
+      new ComponentDescription(
+          (getIdentifier()+"Threads"),
+          "Node.AgentManager.Agent.Threads",
+          "org.cougaar.core.thread.ThreadServiceProvider",
+          null,  //codebase
+          threadServiceParams,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    add(threadServiceDesc);
+
+
 
     try {
       rootsb.addService(NamingService.class,
@@ -241,8 +260,18 @@ public class NodeAgent
           null); //policy
     add(topologyReaderSCDesc);
 
-    MetricsServiceProvider msp = new MetricsServiceProvider();
-    add(msp);
+    String msp = new String(getIdentifier()+"MetricsServices");
+    ComponentDescription mspdesc = 
+      new ComponentDescription(
+          msp,
+          "Node.AgentManager.Agent.MetricsServices",
+          "org.cougaar.core.qos.metrics.MetricsServiceProvider",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    add(mspdesc);
 
 
     //add the vm metrics
@@ -264,7 +293,19 @@ public class NodeAgent
     //
     // NB: The order is important for now - MTS *must* be created
     // first.
-    initTransport(rootsb, nodeIdentifier);  
+    String mts = new String(getIdentifier()+"MessageTransport");
+    ComponentDescription mtsdesc = 
+      new ComponentDescription(
+          mts,
+          "Node.AgentManager.Agent.MessageTransport",
+          "org.cougaar.core.mts.MessageTransportServiceProvider",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    add(mtsdesc);
+
 
     // register for external control by the AppServer
     //   -- disabled for now --
@@ -313,6 +354,7 @@ public class NodeAgent
     }
 
     super.loadInternalPriorityComponents();
+
 
   }
 
@@ -442,17 +484,6 @@ public class NodeAgent
     }
   }
 
-  private void initTransport(ServiceBroker rootsb, NodeIdentifier id) {
-    String name = id.toString();
-    MessageTransportServiceProvider mtsp = 
-      new MessageTransportServiceProvider(name);
-    add(mtsp);
-
-    rootsb.addService(MessageTransportService.class, mtsp);
-    rootsb.addService(MessageStatisticsService.class, mtsp);
-    rootsb.addService(MessageWatcherService.class, mtsp);
-    rootsb.addService(AgentStatusService.class, mtsp);
-  }
 
 
   /** deliver or queue the message.  

@@ -42,7 +42,6 @@ import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.arch.*;
 import org.cougaar.core.mobility.ldm.AgentControl;
-import org.cougaar.core.mobility.ldm.AgentTransfer;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -52,8 +51,10 @@ import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.GenericStateModel;
@@ -83,14 +84,6 @@ public abstract class AbstractMobilityPlugin
 	}
       };
   
-  private static final UnaryPredicate TRANSFER_PRED =
-    new UnaryPredicate() {
-	public boolean execute(Object o) {
-	  return (o instanceof AgentTransfer);
-	}
-      };
-  
-
   protected MessageAddress agentId;
   protected MessageAddress nodeId;
   protected boolean isNode;
@@ -102,13 +95,10 @@ public abstract class AbstractMobilityPlugin
 
   private MobilityFactory mobilityFactory;
 
-
   // the rest is only used if (isNode == true):
 
-
-  private IncrementalSubscription transferSub;
-
   protected NodeControlService nodeControlService;
+  protected ThreadService threadService;
   protected TopologyReaderService topologyReaderService;
 
   private ServiceBroker nodeSB;
@@ -213,6 +203,17 @@ public abstract class AbstractMobilityPlugin
       this.agentContainer = (AgentContainer) 
         nodeControlService.getRootContainer();
 
+      // get the thread service
+      threadService = (ThreadService)
+        getServiceBroker().getService(
+            this,
+            ThreadService.class,
+            null);
+      if (threadService == null) {
+        throw new RuntimeException(
+            "Unable to obtain node-level thread service");
+      }
+
       // get the topology service
       topologyReaderService = (TopologyReaderService)
         getServiceBroker().getService(
@@ -283,14 +284,10 @@ public abstract class AbstractMobilityPlugin
 
   protected void setupSubscriptions() {
     // subscribe to control requests that we'll execute
-     controlSub = (IncrementalSubscription)
-       blackboard.subscribe(CONTROL_PRED);
+    controlSub = (IncrementalSubscription)
+      blackboard.subscribe(CONTROL_PRED);
     
     if (isNode) {
-      // subscribe to transfers that we'll generate
-      transferSub = (IncrementalSubscription)
-        blackboard.subscribe(TRANSFER_PRED);
-
       if (blackboard.didRehydrate()) {
         if (log.isWarnEnabled()) {
           log.warn(
@@ -305,35 +302,13 @@ public abstract class AbstractMobilityPlugin
       log.debug("Execute");
     }
 
-    if (isNode) {
-      // fire pending blackboard changes
-      fireAll();
+    if (!isNode) return;
 
-      // watch transfer objects
-      if (transferSub.hasChanged()) {
-        // adds
-        Enumeration en = transferSub.getAddedList();
-        while (en.hasMoreElements()) {
-          AgentTransfer transfer = (AgentTransfer) en.nextElement();
-          addedAgentTransfer(transfer);
-        }
-        // changes
-        en = transferSub.getChangedList();
-        while (en.hasMoreElements()) {
-          AgentTransfer transfer = (AgentTransfer) en.nextElement();
-          changedAgentTransfer(transfer);
-        }
-        // removes
-        en = transferSub.getRemovedList();
-        while (en.hasMoreElements()) {
-          AgentTransfer transfer = (AgentTransfer) en.nextElement();
-          removedAgentTransfer(transfer);
-        }
-      }
-    }
+    // fire pending blackboard changes
+    fireAll();
 
     // watch control requests
-    if(controlSub.hasChanged()) {
+    if (controlSub.hasChanged()) {
       // adds
       Enumeration en = controlSub.getAddedList();
       while (en.hasMoreElements()) {
@@ -369,15 +344,6 @@ public abstract class AbstractMobilityPlugin
   /** a control was removed. */
   protected abstract void removedAgentControl(AgentControl control);
 
-  /** arrival of a controled agent. */
-  protected abstract void addedAgentTransfer(AgentTransfer transfer);
-
-  /** response to a control of a local agent. */
-  protected abstract void changedAgentTransfer(AgentTransfer transfer);
-
-  /** removal of either the source-side or target-side transfer */
-  protected abstract void removedAgentTransfer(AgentTransfer transfer);
-
   /** an agent registers as a mobile agent in the local node. */
   protected abstract void registerAgent(
       MessageAddress id, 
@@ -392,27 +358,25 @@ public abstract class AbstractMobilityPlugin
   // more node-only code:
 
   protected void queue(Runnable r) {
-    // run in a separate thread
-    //
-    // FIXME use thread service!
-    Thread t = new Thread(r, r.toString());
-    t.start();
+    Schedulable sched = 
+      threadService.getThread(this, r, r.toString());
+    sched.start();
   }
 
-  protected AgentTransfer createAgentTransfer(
-      UID controlUID,
-      MoveTicket moveTicket,
-      StateTuple state) {
+  protected AgentControl createAgentControl(
+      UID moveControlUID,
+      MessageAddress destNode,
+      TransferTicket transferTicket) {
     if (mobilityFactory == null) {
       throw new RuntimeException(
           "The agent mobility domain is not available on node "+
           nodeId);
     }
     return
-      mobilityFactory.createAgentTransfer(
-          controlUID,
-          moveTicket,
-          state);
+      mobilityFactory.createAgentControl(
+          moveControlUID,
+          destNode,
+          transferTicket);
   }
 
   protected void fireLater(Runnable r) {

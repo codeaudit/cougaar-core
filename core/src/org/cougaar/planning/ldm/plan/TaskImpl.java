@@ -39,6 +39,7 @@ import org.cougaar.core.util.XMLizable;
 
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
+import org.cougaar.util.log.*;
 import java.util.*;
 
 import java.io.ObjectOutputStream;
@@ -49,7 +50,6 @@ import java.beans.PropertyChangeSupport;
 
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-
 import org.cougaar.core.plugin.Annotation;
  
 /** Implementation of Task.  Instances of Tasks
@@ -790,6 +790,20 @@ public class TaskImpl extends DirectiveImpl
     return true;
   }
   public boolean removingFromLogPlan(Subscriber s) {
+    NewWorkflow wf = (NewWorkflow) getWorkflow();
+    if (wf != null) {
+      for (Enumeration tasks = wf.getTasks(); tasks.hasMoreElements(); ) {
+        if (tasks.nextElement() == this) {
+          Logger log = LoggerFactory.getInstance().createLogger(getClass());
+          if (log.isDebugEnabled()) {
+            log.debug("Illegal publishRemove subtask still in a workflow: " + this, new Throwable());
+          } else if (log.isWarnEnabled()) {
+            log.warn("Illegal publishRemove subtask still in a workflow: " + this);
+          }
+          wf.removeTask(this);
+        }
+      }
+    }
     /*
     synchronized(System.err) {
       System.err.println("taskRemoved = "+this);

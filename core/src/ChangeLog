@@ -1,3 +1,56 @@
+2002-07-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #1832 -- Empty blackboard after rehydrate
+	The "everything" subscription of the Blackboard was no longer
+	being filled aftr rehydration. The fix to suppress erroneous error
+	reports of failure to find saved subscriber state went too far and
+	bypassed the code to fill _all_ subscriptions of the blackboard
+	from the rehydrationEnvelope.
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #1826 -- MessageAttributes not always propagated to DirectiveMessage
+	MessageAddress.equals does not compare qosAttributes as expected.
+	Added a wrapper class for destinations that _does_ compare
+	qosAttributes and use the wrapper as the key to the destination
+	map when addresses have qosAttributes. The bare message address is
+	still used as the key when there are no qosAttributes.
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Various persistence bugs
+	Check for fillSubscription after the first transaction. Log
+	info-level message stating that such late subscriptions will not
+	be "rehydrate" only filled.
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Bug #1825 - Failure to check for null change report collection
+	Check for null change report changeTarget and create a singleton
+	collection of the MarkerReport if there are no changes. Else, copy
+	the collection to a new arraylist and add the MarkerReport.
+
+2002-07-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #1771 -- NODE died shortly after concurrent modification error
+	Still problems in calling distribute while persisting. They are
+	now fixed?
+
+2002-07-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #1771 -- NODE died shortly after concurrent modification error
+	and possibly
+	Bug #1727 -- Base Persistence errors
+	A crack in the distributor allowed persistence snapshots to be
+	initiated with a bunch of envelopes still undistributed. Depending
+	on the timing, these envelopes could be distributed in time to
+	make it into the persistence snapshot (and not be otherwise
+	noticed), or they could be added to the epoch envelopes just as
+	that List was being copied (yielding concurrent modifications
+	exceptions) or could appear to be planelements that had not been
+	published (omitting PlanElement not on blackboard errors).
+	The code has been restructured to eliminate the crack.
+
 2002-07-15  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Blackboard.java:

@@ -83,6 +83,10 @@ import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.MPTask;
+import org.cougaar.planning.ldm.plan.Composition;
+import org.cougaar.planning.ldm.plan.NewComposition;
+import org.cougaar.planning.ldm.plan.Aggregation;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
@@ -673,6 +677,8 @@ public class BasePersistence
                     }
                   }
                 }
+              } else if (obj instanceof MPTask) {
+                fixMPTask((MPTask) obj);
               }
             }
             clusterContext.getUIDServer().setPersistenceState(uidServerState);
@@ -737,6 +743,34 @@ public class BasePersistence
     return (Integer.toHexString(System.identityHashCode(o)) +
             " " +
             (o == null ? "<null>" : o.toString()));
+  }
+
+  /**
+   * Under some circumstances, compositions of MPTasks come back
+   * containing nulls. It's not clear, but they lead to exceptions
+   * later. This fixup scans the composition for nulls and replaces
+   * the aggregation collection if necessary with one containing no
+   * nulls.
+   **/
+  private void fixMPTask(MPTask mpTask) {
+    NewComposition comp = (NewComposition) mpTask.getComposition();
+    List aggregations = comp.getAggregations();
+    List newAggregations = null;
+    for (int i = 0, n = aggregations.size(); i < n; i++) {
+      Aggregation agg = (Aggregation) aggregations.get(i);
+      if (agg == null) {
+        logger.warn("Removing null aggregation from composition of " + mpTask);
+        if (newAggregations == null) {
+          newAggregations = new ArrayList(n - 1);
+          newAggregations.addAll(aggregations.subList(0, i));
+        }
+      } else if (newAggregations != null) {
+        newAggregations.add(agg);
+      }
+    }
+    if (newAggregations != null) {
+      comp.setAggregations(newAggregations);
+    }
   }
 
   private void fixAsset(Asset asset, PlanElement pe) {
@@ -871,8 +905,8 @@ public class BasePersistence
             return pSubscriber;
           }
         }
-        if (logger.isDebugEnabled()) {
-          print("Failed to find " + new PersistenceSubscriberState(subscriber));
+        if (subscriber.shouldBePersisted() && logger.isInfoEnabled()) {
+          logger.info("Failed to find " + new PersistenceSubscriberState(subscriber));
         }
         return null;
       }
@@ -958,8 +992,8 @@ public class BasePersistence
     while (iter.hasNext()) {
       PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
       if (pAssoc.isMarked()) {
-        System.out.println("Already marked: " + pAssoc);
-        System.exit(13);
+        if (logger.isWarnEnabled()) logger.warn("Already marked: " + pAssoc);
+        pAssoc.setMarked(false);
       }
     }
   }

@@ -47,6 +47,8 @@ import org.cougaar.util.UnaryPredicate;
 
 /**
  * Simple viewer of Pings created by the local agent.
+ *
+ * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 public class PingServlet 
 extends BaseServletComponent 

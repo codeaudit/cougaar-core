@@ -34,6 +34,8 @@ import org.cougaar.core.util.XMLize;
  * <p>
  * This uses the Relay support to transfer the data
  * between the source agent and target agent.
+ *
+ * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 class PingImpl 
 implements Ping, Relay.Source, Relay.Target, XMLizable, Serializable {

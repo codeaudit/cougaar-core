@@ -33,6 +33,8 @@ import java.text.DateFormat;
 
 import java.util.*;
 
+import org.cougaar.util.StateModelException;
+
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.SimplePlugin;
@@ -158,12 +160,32 @@ public class AssetDataPlugin extends SimplePlugin {
   private HashMap myOtherAssets = new HashMap();
   private Asset myLocalAsset = null;
 
+ 
+  public void load(Object object) throws StateModelException {
+    super.load(object);
+    if (!didRehydrate()) {
+      try {
+        System.out.println(getClusterIdentifier().toString() + ": processing assets in load");
+        openTransaction();
+        processAssets();
+      } catch (Exception e) {
+        synchronized (System.err) {
+          System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+          e.printStackTrace();
+        }
+      } finally {
+        closeTransactionDontReset();
+      }
+    }
+  }
+
   protected void setupSubscriptions() {
     getSubscriber().setShouldBePersisted(false);
 
+    /*
     if (!didRehydrate()) {
       processAssets();	// Objects should already exist after rehydration
-    }
+      }*/
   }
 
   public void execute() {

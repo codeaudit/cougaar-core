@@ -1,43 +1,11 @@
 <html><body>
 
-Simple inter-agent "ping" code, primarily intended for 
-infrastructure testing of message transport and agent
-mobility.
+Moved to the core:<pre>
 
-<p>
-The "Ping" class is the API, and the "PingImpl" is the 
-Relay-based implementation.
+  org.cougaar.core.mobility.ping
 
-<p>
-The "PingAdderPlugin" can be used to create pings at
-startup.  Minimally four plugin parameters must be
-specified:<pre>
-  [+]startTime, timeoutMillis, limit [, target0, .. targetN]
-</pre>
-For example, to create a series of 5 pings to agent X at 
-20 seconds after startup, and to wait at most 30 seconds for 
-any ping to complete:<pre>
-  +20000, 30000, 5, X
-</pre>
-Another example: to create an infinite series of pings to 
-agent X at startup, with no timeout:<pre>
-  0, 0, 0, X
-</pre>
-Note that the frequency of pings is controlled by the 
-"PingTimerPlugin", which is described below.
-
-<p>
-The "PingServlet" displays locally generated pings,
-and allows the user to create new pings.  This is 
-a component that loads its own internal servlet, and
-does not use the "SimpleServletComponent".  A single
-plugin parameter can optionally be used to override 
-the default "/ping" servlet path.
-
-<p>
-The "PingTimerPlugin" uses a periodic alarm to
-timeout overdue pings and recycle pings for the specified
-number of rounds.  It requires a timera frequence as
-a parameter (e.g. 5000 to check every 5 seconds).
+<pre>
+See bug 1792 for details.  This "examples" copy will be removed
+in a future release.
 
 </body></html>

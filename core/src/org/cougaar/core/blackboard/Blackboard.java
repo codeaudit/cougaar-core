@@ -431,6 +431,42 @@ public class Blackboard extends Subscriber
     return privateGetPublishedChanges();
   }
 
+  private static class DestinationKey {
+    public ClusterIdentifier cid;
+    public MessageAttributes attrs;
+    private int hc;
+    public DestinationKey(ClusterIdentifier cid, MessageAttributes attrs) {
+      this.cid = cid;
+      this.attrs = attrs;
+      hc = cid.hashCode() + attrs.hashCode();
+    }
+    public int hashCode() {
+      return hc;
+    }
+    public boolean equals(Object o) {
+      if (o instanceof DestinationKey) {
+        DestinationKey that = (DestinationKey) o;
+        return this.cid.equals(that.cid) && this.attrs.equals(that.attrs);
+      }
+      return false;
+    }
+  }
+
+  private ClusterIdentifier getDirectiveDestinationOfKey(Object key) {
+    if (key instanceof ClusterIdentifier) {
+      return (ClusterIdentifier) key;
+    } else {
+      DestinationKey dkey = (DestinationKey) key;
+      return dkey.cid;
+    }
+  }
+
+  private Object getDirectiveKeyOfDestination(ClusterIdentifier dest) {
+    MessageAttributes attrs = dest.getQosAttributes();
+    if (attrs == null) return dest;
+    return new DestinationKey(dest, attrs);
+  }
+
   private final HashMap directivesByDestination = new HashMap(89);
   
   /*
@@ -456,7 +492,7 @@ public class Blackboard extends Subscriber
        */
       ArrayList dirs;
 
-      if(dest instanceof AttributeBasedAddress) {
+      if (dest instanceof AttributeBasedAddress) {
         //System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
         MessageAttributes qosAttributes = dest.getQosAttributes();
 	Collection agents = getABAAddresses((AttributeBasedAddress) dest);   // List of CIs
@@ -467,10 +503,11 @@ public class Blackboard extends Subscriber
           if (qosAttributes != null) {
             agentAddress = new ClusterIdentifier(qosAttributes, agentAddress.getAddress());
           }
-	  dirs = (ArrayList)directivesByDestination.get(agentAddress);
+          Object key = getDirectiveKeyOfDestination(agentAddress);
+	  dirs = (ArrayList)directivesByDestination.get(key);
 	  if (dirs == null) {
 	    dirs = new ArrayList();
-	    directivesByDestination.put(agentAddress, dirs); 
+	    directivesByDestination.put(key, dirs); 
 	  }
 	  dirs.add(dir);
 	}
@@ -480,10 +517,11 @@ public class Blackboard extends Subscriber
        * dest is regular ClusterID so proceed as before 
        */
       else {
-	dirs = (ArrayList) directivesByDestination.get(dest);
+        Object key = getDirectiveKeyOfDestination(dest);
+	dirs = (ArrayList) directivesByDestination.get(key);
 	if (dirs == null) {
 	  dirs = new ArrayList();
-	  directivesByDestination.put(dest, dirs);
+	  directivesByDestination.put(key, dirs);
 	}
 	dirs.add(dir);	
       }
@@ -492,9 +530,10 @@ public class Blackboard extends Subscriber
      * By now directivesByDestination only has ArrayLists of ClusterIdentifiers,
      * so we can set their directives as before. 
      */
-    for (Iterator iter = directivesByDestination.keySet().iterator(); iter.hasNext(); ) {
-      ClusterIdentifier tmpci = (ClusterIdentifier) iter.next();
-      ArrayList dirs = (ArrayList) directivesByDestination.get(tmpci);
+    for (Iterator iter = directivesByDestination.entrySet().iterator(); iter.hasNext(); ) {
+      Map.Entry entry = (Map.Entry) iter.next();
+      ClusterIdentifier tmpci = getDirectiveDestinationOfKey(entry.getKey());
+      ArrayList dirs = (ArrayList) entry.getValue();
       int size = dirs.size();
       if (size > 0) {
         Directive[] directives = (Directive[]) dirs.toArray(new Directive[size]);
