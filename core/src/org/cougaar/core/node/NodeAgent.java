@@ -29,11 +29,8 @@ import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentBinder;
-import org.cougaar.core.agent.AgentManagementMessage;
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.CloneAgentMessage;
 import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.MoveAgentMessage;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
@@ -520,32 +517,6 @@ public class NodeAgent
           throw new RuntimeException(
               "Agent mobility disabled in node "+getIdentifier());
         }
-      } else if (m instanceof AgentManagementMessage) {
-        // this is the old mobility support -- it will be
-        // removed in release 9.3
-        //
-        // run in a separate thread (in case the source is local)
-        Runnable r = new Runnable() {
-          public void run() {
-            if (m instanceof MoveAgentMessage) {
-              MoveAgentMessage mam = (MoveAgentMessage) m;
-              agentManager.moveAgent(
-                  mam.getAgentIdentifier(), 
-                  mam.getNodeIdentifier());
-            } else if (m instanceof CloneAgentMessage) {
-              CloneAgentMessage cam = (CloneAgentMessage) m;
-              agentManager.cloneAgent(
-                  cam.getAgentIdentifier(), 
-                  cam.getNodeIdentifier(),
-                  cam.getCloneAgentIdentifier(),
-                  cam.getCloneBlackboard());
-            } else {
-              // ignore
-            }
-          }
-        };
-        Thread t = new Thread(r, m.toString());
-        t.start();
       } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
         // we don't do anything with these. ignore it.
       } else {
