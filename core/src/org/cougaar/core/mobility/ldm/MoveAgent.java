@@ -72,7 +72,7 @@ public interface MoveAgent extends UniqueObject {
    * Immutable class that represents the dynamic status 
    * of the move request.
    */
-  public final class Status implements Serializable {
+  final class Status implements Serializable {
 
     /**
      * Status codes:

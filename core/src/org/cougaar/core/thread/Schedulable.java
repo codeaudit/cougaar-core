@@ -23,7 +23,7 @@ package org.cougaar.core.thread;
 
 public interface Schedulable
 {
-    public void start();
-    public int getState();
-    public boolean cancel();
+    void start();
+    int getState();
+    boolean cancel();
 }
