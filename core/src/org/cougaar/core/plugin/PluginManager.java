@@ -12,7 +12,7 @@ package org.cougaar.core.plugin;
 import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
-import org.cougaar.core.agent.PluginManagerBindingSite;
+import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import java.beans.*;
@@ -38,12 +38,12 @@ public class PluginManager
     }
   }
 
-  private PluginManagerBindingSite bindingSite = null;
+  private AgentChildBindingSite bindingSite = null;
   
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof PluginManagerBindingSite) {
-      bindingSite = (PluginManagerBindingSite) bs;
+    if (bs instanceof AgentChildBindingSite) {
+      bindingSite = (AgentChildBindingSite) bs;
       setChildServiceBroker(new PluginManagerServiceBroker(bs));
     } else {
       throw new RuntimeException("Tried to load "+this+"into " + bs);
@@ -121,7 +121,7 @@ public class PluginManager
   // binding services
   //
 
-  protected final PluginManagerBindingSite getBindingSite() {
+  protected final AgentChildBindingSite getBindingSite() {
     return bindingSite;
   }
   protected ComponentFactory specifyComponentFactory() {
@@ -238,19 +238,3 @@ public class PluginManager
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

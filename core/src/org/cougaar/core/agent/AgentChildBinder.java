@@ -12,22 +12,19 @@ package org.cougaar.core.agent;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.cluster.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.plugin.PluginManager;
 
-/** The standard Binder for PluginManagers and others attaching to an Agent.
+/** The standard Binder for PluginManagers and others children of agent.
  **/
-public class PluginManagerBinder extends BinderSupport implements PluginManagerBindingSite
+public class AgentChildBinder extends BinderSupport implements AgentChildBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
-  public PluginManagerBinder(BinderFactory parentInterface, Object child) {
-    super(parentInterface, child);
+  public AgentChildBinder(BinderFactory bf, Object child) {
+    super(bf, child);
   }
 
-  protected final PluginManager getPluginManager() {
-    return (PluginManager) getComponent();
-  }
   protected final Agent getAgent() {
     return (Agent)getContainer();
   }
@@ -37,6 +34,12 @@ public class PluginManagerBinder extends BinderSupport implements PluginManagerB
   public ConfigFinder getConfigFinder() {
     return getAgent().getConfigFinder();
   }
+
+  public ClusterServesLogicProvider getCluster() { 
+    //throw new RuntimeException("Call to getCluster()");
+    return ((ClusterServesLogicProvider)getContainer());
+  }
+
   /** Defines a pass-through insulation layer to ensure that the plugin cannot 
    * downcast the BindingSite to the Binder and gain control via introspection
    * and/or knowledge of the Binder class.  This is neccessary when Binders do
@@ -48,7 +51,7 @@ public class PluginManagerBinder extends BinderSupport implements PluginManagerB
   }
 
   public String toString() {
-    return getPluginManager() + "'s PluginManagerBinder";
+    return getComponent()+"/AgentChildBinder";
   }
 
 

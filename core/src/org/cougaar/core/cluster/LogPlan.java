@@ -27,7 +27,7 @@ import org.cougaar.core.society.UID;
 public class LogPlan
   implements LogPlanServesLogicProvider, XPlanServesBlackboard, SupportsDelayedLPActions
 {
-  private Blackboard alpPlan;      // Delegate ALPPLanServesLogicProvider methods to this
+  private Blackboard blackboard;      // Delegate ALPPLanServesLogicProvider methods to this
 
   static final UnaryPredicate planElementP = new UnaryPredicate() {
     public boolean execute(Object o) {
@@ -76,19 +76,19 @@ public class LogPlan
   AssetSet assetSet = new AssetSet();
   private CollectionSubscription assetCollection;
 
-  public void setupSubscriptions(Blackboard alpPlan) {
-    this.alpPlan = alpPlan;
+  public void setupSubscriptions(Blackboard blackboard) {
+    this.blackboard = blackboard;
     planElementCollection = new CollectionSubscription(planElementP, planElementSet);
-    alpPlan.subscribe(planElementCollection);
+    blackboard.subscribe(planElementCollection);
 
     uniqueObjectCollection = new CollectionSubscription(uniqueObjectP, uniqueObjectSet);
-    alpPlan.subscribe(uniqueObjectCollection);
+    blackboard.subscribe(uniqueObjectCollection);
 
     taskCollection = new CollectionSubscription(taskP, taskSet);
-    alpPlan.subscribe(taskCollection);
+    blackboard.subscribe(taskCollection);
 
     assetCollection = new CollectionSubscription(assetP, assetSet);
-    alpPlan.subscribe(assetCollection);
+    blackboard.subscribe(assetCollection);
   }
 
   public PlanElement findPlanElement(Task task) {
@@ -190,46 +190,46 @@ public class LogPlan
    * User provided predicate
    **/
   public Enumeration searchBlackboard(UnaryPredicate predicate) {
-    return alpPlan.searchBlackboard(predicate);
+    return blackboard.searchBlackboard(predicate);
   }
 
   public int countBlackboard(UnaryPredicate predicate) {
-    return alpPlan.countBlackboard(predicate);
+    return blackboard.countBlackboard(predicate);
   }
 
   /** Add Object to the LogPlan Collection
    * (All subscribers will be notified)
    **/
   public void add(Object o) {
-    alpPlan.add(o);
+    blackboard.add(o);
   }
 
   /** Removed Object to the LogPlan Collection
    * (All subscribers will be notified)
    **/
   public void remove(Object o) {
-    alpPlan.remove(o);
+    blackboard.remove(o);
   }
 
   /** Change Object to the LogPlan Collection
    * (All subscribers will be notified)
    **/
   public void change(Object o) {
-    alpPlan.change(o, null);
+    blackboard.change(o, null);
   }
 
   /** Change Object to the LogPlan Collection
    * (All subscribers will be notified)
    **/
   public void change(Object o, Collection changes) {
-    alpPlan.change(o, changes);
+    blackboard.change(o, changes);
   }
 
   /**
    * Alias for sendDirective(Directive, null);
    **/
   public void sendDirective(Directive dir) {
-    alpPlan.sendDirective(dir, null);
+    blackboard.sendDirective(dir, null);
   }
 
   /**
@@ -237,11 +237,11 @@ public class LogPlan
    * until it is acknowledged even if clusters crash.
    **/
   public void sendDirective(Directive dir, Collection changes) {
-    alpPlan.sendDirective(dir, changes);
+    blackboard.sendDirective(dir, changes);
   }
 
   public PublishHistory getHistory() {
-    return alpPlan.getHistory();
+    return blackboard.getHistory();
   }
 
   //

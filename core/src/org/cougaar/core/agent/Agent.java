@@ -26,9 +26,9 @@ public abstract class Agent
 {
 
   public Agent() {
-    BinderFactory pmbf = new PluginManagerBinderFactory();
+    BinderFactory pmbf = new AgentChildBinderFactory();
     if (!attachBinderFactory(pmbf)) {
-      throw new RuntimeException("Failed to load the PluginManagerBinderFactory");
+      throw new RuntimeException("Failed to load the AgentChildBinderFactory");
     }
   }
 
@@ -36,12 +36,12 @@ public abstract class Agent
    * when we are a contained by a Node component
    **/
   public Agent(ComponentDescription comdesc) {
-    BinderFactory pmbf = new PluginManagerBinderFactory();
+    BinderFactory pmbf = new AgentBinderFactory();
     if (!attachBinderFactory(pmbf)) {
-      throw new RuntimeException("Failed to load the PluginManagerBinderFactory");
+      throw new RuntimeException("Failed to load the AgentChildBinderFactory");
     }
     //no agent services for now... all are loaded from cluster (specific type of agent)
-  
+    System.err.println("Delete me");
   }
 
   public void setBindingSite(BindingSite bs) {

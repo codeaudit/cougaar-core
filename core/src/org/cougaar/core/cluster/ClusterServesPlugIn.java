@@ -34,7 +34,7 @@ public interface ClusterServesPlugIn
   /**
    * Returns the Distributer associated with this Cluster.
    */
-  Distributor getDistributor();
+  //Distributor getDistributor();
 
   /**
    * @return the cluster's ConfigFinder instance.

@@ -12,10 +12,18 @@ package org.cougaar.core.cluster;
 import java.util.*;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.blackboard.*;
+
+// Persistence
 import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
+import org.cougaar.core.cluster.persist.BasePersistence;
+import org.cougaar.core.cluster.persist.DatabasePersistence;
+import org.cougaar.core.cluster.persist.Persistence;
+import org.cougaar.core.cluster.persist.PersistenceException;
 
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.domain.planning.ldm.plan.Plan;
+
+import org.cougaar.domain.planning.ldm.Domain;
 
 public class Blackboard extends Subscriber
   implements
@@ -23,9 +31,9 @@ public class Blackboard extends Subscriber
   BlackboardClient,
   PrivilegedClaimant
 {
-  protected CollectionSubscription alpPlanObjects;
+  protected CollectionSubscription everything;
   protected ClusterServesLogicProvider myCluster;
-  public Distributor myDistributor;
+  private Distributor myDistributor;
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.cluster.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
@@ -90,10 +98,10 @@ public class Blackboard extends Subscriber
     }
   };
 
-  public Blackboard(Distributor d, ClusterServesLogicProvider cluster) {
-    setClientDistributor((BlackboardClient)this, d);
+  public Blackboard(ClusterServesLogicProvider cluster) {
+    myDistributor = createDistributor(cluster);
+    setClientDistributor((BlackboardClient)this, myDistributor);
     myCluster = cluster;
-    myDistributor = d;
   }
 
   public void addXPlan(XPlanServesBlackboard xPlan) {
@@ -102,6 +110,8 @@ public class Blackboard extends Subscriber
     if (xPlan instanceof SupportsDelayedLPActions) {
       dlaPlans.add(xPlan);
     }
+    xPlan.setupSubscriptions(this);
+    setReadyToPersist();
   }
 
   public Collection getXPlans() {
@@ -128,7 +138,7 @@ public class Blackboard extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("Blackboard.alpPlanObjects.add object already published: " + o.toString(),
+        throw new PublishException("Blackboard.everything.add object already published: " + o.toString(),
                                    priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior publisher: "));
@@ -142,7 +152,7 @@ public class Blackboard extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("Blackboard.alpPlanObjects.remove object not published: " + o.toString(),
+        throw new PublishException("Blackboard.everything.remove object not published: " + o.toString(),
                                    priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior remover: "));
@@ -152,40 +162,13 @@ public class Blackboard extends Subscriber
   }
 
   public final void init() {
-    try {
-      alpPlanObjects =
-        new CollectionSubscription(anythingP,
-                                   enablePublishException
-                                   ? new AllObjectsSet(111)
-                                   : new HashSet(111));
-      subscribe(alpPlanObjects);
-
-      for (Iterator plans = xPlans.iterator(); plans.hasNext(); ) {
-        XPlanServesBlackboard xPlan = (XPlanServesBlackboard) plans.next();
-        xPlan.setupSubscriptions(this);
-      }
-      setReadyToPersist();
-      for (Iterator eProviders = envelopeLPs.iterator(); eProviders.hasNext();){
-        EnvelopeLogicProvider p = (EnvelopeLogicProvider) eProviders.next();
-        try {
-          p.init();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-      for (Iterator mProviders = messageLPs.iterator(); mProviders.hasNext();){
-        MessageLogicProvider p = (MessageLogicProvider) mProviders.next();
-        try {
-          p.init();
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    catch (Exception ex) {
-      System.err.println("Caught exception while in Blackboard.init(): " + ex);
-      ex.printStackTrace();
-    }
+    everything =
+      new CollectionSubscription(anythingP,
+                                 enablePublishException
+                                 ? new AllObjectsSet(111)
+                                 : new HashSet(111));
+    subscribe(everything);
+    setReadyToPersist();
   }
 
   // Subscription Client interface
@@ -201,13 +184,13 @@ public class Blackboard extends Subscriber
   public void fillSubscription(Subscription subscription) {
     if (subscription.getSubscriber() == this) return; // Don't fill ourselves
     Envelope envelope = new Envelope();
-    envelope.bulkAddObject(alpPlanObjects.getCollection());
+    envelope.bulkAddObject(everything.getCollection());
     subscription.fill(envelope);
   }
 
   public void fillQuery(Subscription subscription) {
     Envelope envelope = new Envelope();
-    envelope.bulkAddObject(alpPlanObjects.getCollection());
+    envelope.bulkAddObject(everything.getCollection());
     subscription.fill(envelope);
   }
 
@@ -265,7 +248,7 @@ public class Blackboard extends Subscriber
   public Enumeration searchBlackboard(UnaryPredicate predicate) {
     Vector vec = new Vector();
 
-    for (Iterator i = alpPlanObjects.getCollection().iterator(); i.hasNext(); ) {
+    for (Iterator i = everything.getCollection().iterator(); i.hasNext(); ) {
       Object o = i.next();
       if (predicate.execute(o)) {
         vec.addElement(o);
@@ -276,7 +259,7 @@ public class Blackboard extends Subscriber
 
   public int countBlackboard(UnaryPredicate predicate) {
     int c = 0;
-    for (Iterator i = alpPlanObjects.getCollection().iterator(); i.hasNext(); ) {
+    for (Iterator i = everything.getCollection().iterator(); i.hasNext(); ) {
       Object o = i.next();
       if (predicate.execute(o)) {
         c++;
@@ -404,6 +387,7 @@ public class Blackboard extends Subscriber
     if (lp instanceof RestartLogicProvider) {
       restartLPs.add(lp);
     }
+    lp.init();
   }
 
   private void applyMessageAgainstLogicProviders(DirectiveMessage m) {
@@ -477,4 +461,110 @@ public class Blackboard extends Subscriber
   public Object getState() throws PersistenceNotEnabledException {
     return myDistributor.getState();
   }
+
+  //
+  // domain client support
+  //
+  private final HashMap domains = new HashMap(11);
+  private static class DomainTuple {
+    public Domain domain;
+    public XPlanServesBlackboard xplan;
+    public Collection lps;
+    public DomainTuple(Domain domain, XPlanServesBlackboard xplan, Collection lps) {
+      this.domain = domain;
+      this.xplan = xplan;
+      this.lps = lps;
+    }
+  }
+
+  public XPlanServesBlackboard getXPlanForDomain(Domain d) {
+    synchronized (domains) {
+      DomainTuple dt = (DomainTuple) domains.get(d);
+      if (dt != null) {
+        return dt.xplan;
+      } else {
+        return null;
+      }
+    }
+  }
+
+  /** Adds the domain to the blackboard by adding any XPlan required and
+   * any LogicProviders.
+   **/
+  public void connectDomain(Domain d) {
+    synchronized (domains) {
+      if (domains.get(d) != null) {
+        throw new RuntimeException("Tried to re-add domain "+d);
+      } 
+      
+      DomainTuple dt = null;
+      // create the XPlan
+      XPlanServesBlackboard xplan = d.createXPlan(getXPlans());
+      if (xPlans.contains(xplan)) {
+        // in fact, domains often just use some other domain's xplan.
+        // we should probably forbid this at some point.
+
+        //throw new RuntimeException("Domain "+d+" tried to reuse XPlan "+xplan);
+        //System.err.println("Warning: Domain "+d+" tried to reuse XPlan "+xplan);
+      }
+        
+      // create the LPs and hook them in
+      Collection lps = new ArrayList(d.createLogicProviders(xplan, myCluster));
+
+      // add the domainTuple
+      dt = new DomainTuple(d, xplan, lps);
+      domains.put(d,dt);
+
+      // activate the xplan
+      if (xplan != null) addXPlan(xplan);
+
+      // activate the LPs
+      if (lps != null) {
+        for (Iterator li = lps.iterator(); li.hasNext(); ) {
+          Object lo = li.next();
+          if (lo instanceof LogicProvider) {
+            addLogicProvider((LogicProvider) lo);
+          } else {
+            System.err.println("Domain "+d+" requested loading of a non LogicProvider "+lo+" (Ignored).");
+          }
+        }
+      }
+    }
+  }
+  
+
+  //
+  // Distributor
+  //
+  private Distributor createDistributor(ClusterServesLogicProvider cluster) {
+    Distributor d = new Distributor(this, cluster.getClusterIdentifier().getAddress());
+    Persistence persistence = createPersistence(cluster);
+    boolean lazyPersistence = System.getProperty("org.cougaar.core.cluster.persistence.lazy", "true").equals("true");
+    d.setPersistence(persistence, lazyPersistence);
+    Object state = null;
+    d.start(cluster, state);       // cluster, state
+
+    return d;
+  }
+
+  public Distributor getDistributor() {
+    return myDistributor;
+  }
+
+  protected Persistence createPersistence(ClusterServesLogicProvider cluster) {
+    if (System.getProperty("org.cougaar.core.cluster.persistence.enable", "false").equals("false"))
+      return null;		// Disable persistence for now
+    try {
+      Persistence result = BasePersistence.find(cluster);
+      if (System.getProperty("org.cougaar.core.cluster.persistence.disableWrite", "false").equals("true")) {
+        result.disableWrite();
+      }
+      return result;
+    }
+    catch (PersistenceException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
 }

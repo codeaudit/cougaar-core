@@ -13,15 +13,23 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.cluster.*;
 
-/** A pluginmanager's view of its parent component (Container).
+/** An immediate child component's view of it's Parent
  *
  **/
-public interface PluginManagerBindingSite 
+public interface AgentChildBindingSite 
   extends BindingSite
 {
   ClusterIdentifier getAgentIdentifier();
   ConfigFinder getConfigFinder();
+  /** Temporarly hack to allow getting at cluster services
+   * from LPs (and blackboard).  This will be replaced with
+   * some of the methods defined by ClusterServesLogicProvider 
+   * which are actually used by Blackboard.
+   **/
+  ClusterServesLogicProvider getCluster();
+
 }
 
 

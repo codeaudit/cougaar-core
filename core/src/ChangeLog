@@ -1,3 +1,18 @@
+2001-08-21  Michael Thome  <mthome@bbn.com>
+
+	* AgentChildBindingSite, etc
+	Replaced PluginManagerBindingSite with AgentChildBindingSite so
+	that a single binding site can be used with both pluginmanager and
+	blackboard.
+
+	* StandardBlackboard, et.al.
+	StandardBlackboard is now a real child component of Agent which
+	encapsulates the old Blackboard + Distributor functionality.  Lots
+	more cleanup to be done here, but this is a start.  Blackboard
+	communicates back to the Agent with a BlackboardForAgent service.
+	Persistence (and agent mobility) will be temporarly broken until
+	this gets shaken out.
+
 2001-08-16  Todd Wright <twright@bbn.com>
 
         * Node, AgentManager, Agent, PluginManager, etc

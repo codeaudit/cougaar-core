@@ -14,16 +14,14 @@ import java.lang.reflect.*;
 import org.cougaar.core.component.*;
 
 /**
- * A BinderFactory for binding PluginManagers to Agents.
+ * A BinderFactory for binding PluginManagers and such to Agents.
  **/
-public class PluginManagerBinderFactory extends BinderFactorySupport
+public class AgentChildBinderFactory extends BinderFactorySupport
 {
-
-  /** PluginManagerBinderFactory always uses PluginManagerBinder.
+  /** Always uses AgentChildBinder
    **/
   public Class getBinderClass(Object child) {
-    return PluginManagerBinder.class;
+    return AgentChildBinder.class;
   }
-  
 }
 

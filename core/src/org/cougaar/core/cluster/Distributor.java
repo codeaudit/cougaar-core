@@ -139,12 +139,12 @@ public class Distributor {
   private Subscribers subscribers = new Subscribers();
 
   /** Our Blackboard **/
-  private Blackboard alpPlan;
+  private Blackboard blackboard;
 
   private String myName;
 
   /** Isolated constructor **/
-  public Distributor(String name) {
+  public Distributor(Blackboard blackboard, String name) {
     if (name == null) name = "Anonymous";
     myName = name;
 
@@ -157,6 +157,7 @@ public class Distributor {
         System.err.println("Can't open Distributor log file: " + e);
       }
     }
+    this.blackboard = blackboard;
     // create the message distribution thread (but don't start it),
     // requiring our client to call this.start().
   }
@@ -168,10 +169,6 @@ public class Distributor {
 
   public Persistence getPersistence() {
     return persistence;
-  }
-
-  public void setBlackboard(Blackboard alpPlan) {
-    this.alpPlan = alpPlan;
   }
 
   private void printEnvelope(Envelope envelope, BlackboardClient client) {
@@ -226,7 +223,7 @@ public class Distributor {
    * @return int The count of objects that match the predicate currently in the blackboard
    **/
   public synchronized int getBlackboardCount(UnaryPredicate predicate) {
-    return alpPlan.countBlackboard(predicate);
+    return blackboard.countBlackboard(predicate);
   }
 
   /**
@@ -319,7 +316,7 @@ public class Distributor {
    * Note that although Distributor is Runnable, it does not extend Thread,
    * rather, it maintains it's own thread state privately.
    **/
-  public synchronized void start(Cluster theCluster, Object state) {
+  public synchronized void start(ClusterServesLogicProvider theCluster, Object state) {
     rehydrate(state);
     getMessageManager().start(theCluster, didRehydrate);
   }
@@ -348,7 +345,7 @@ public class Distributor {
    * Provide a new subscription with its initial fill. If the
    * subscriber of the subscription was persisted, we fill from the
    * persisted information (see rehydrateNewSubscription) otherwise we
-   * fill from the Blackboard (alpPlan.fillSubscription).
+   * fill from the Blackboard (blackboard.fillSubscription).
    **/
   public synchronized void fillSubscription(Subscription subscription) {
     Subscriber subscriber = subscription.getSubscriber();
@@ -362,12 +359,12 @@ public class Distributor {
                                subscriberState.transactionEnvelopes,
                                subscriberState.pendingEnvelopes);
     } else {
-      alpPlan.fillSubscription(subscription);
+      blackboard.fillSubscription(subscription);
     }
   }
 
   public synchronized void fillQuery(Subscription subscription) {
-    alpPlan.fillQuery(subscription);
+    blackboard.fillQuery(subscription);
   }
 
   // These are used as locals, but allocated here to reduce consing.
@@ -406,18 +403,18 @@ public class Distributor {
     while (outbox != null && outbox.size() > 0) {
       while (outbox != null && outbox.size() > 0) {
         outboxes.add(outbox);
-        outbox = alpPlan.receiveEnvelope(outbox);
+        outbox = blackboard.receiveEnvelope(outbox);
         haveSomethingToDistribute = true;
       }
 
       // outbox should be empty at this point.
       // execute any pending DelayedLPActions
-      outbox = alpPlan.executeDelayedLPActions();
+      outbox = blackboard.executeDelayedLPActions();
     }
 
     //      while (outbox != null && outbox.size() > 0) {
     //        outboxes.add(outbox);
-    //        outbox = alpPlan.receiveEnvelope(outbox);
+    //        outbox = blackboard.receiveEnvelope(outbox);
     //        haveSomethingToDistribute = true;
     //      }
 
@@ -433,14 +430,14 @@ public class Distributor {
     }
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
-      if (subscriber == alpPlan) continue;
+      if (subscriber == blackboard) continue;
       if (haveSomethingToDistribute) {
         subscriber.receiveEnvelopes(outboxes);
       } else if (!busy && subscriber.isBusy()) {
         busy = true;
       }
     }
-    alpPlan.appendMessagesToSend(messagesToSend); // Fill messagesToSend
+    blackboard.appendMessagesToSend(messagesToSend); // Fill messagesToSend
     if (messagesToSend.size() > 0) {
       getMessageManager().sendMessages(messagesToSend.iterator());
     }
@@ -483,10 +480,10 @@ public class Distributor {
         int code = getMessageManager().receiveMessage(msg);
         if ((code & MessageManager.RESTART) != 0) {
           try {
-            alpPlan.startTransaction();
-            alpPlan.restart(msg.getSource());
+            blackboard.startTransaction();
+            blackboard.restart(msg.getSource());
           } finally {
-            alpPlan.stopTransaction();
+            blackboard.stopTransaction();
           }
         }
         if ((code & MessageManager.IGNORE) == 0) {
@@ -502,7 +499,7 @@ public class Distributor {
         AckDirectiveMessage msg = (AckDirectiveMessage) m;
         int code = getMessageManager().receiveAck(msg);
         if ((code & MessageManager.RESTART) != 0) {
-          alpPlan.restart(msg.getSource()); // Remote cluster has restarted
+          blackboard.restart(msg.getSource()); // Remote cluster has restarted
         }
       }
     }
@@ -514,11 +511,11 @@ public class Distributor {
     // The following must be unconditional to insure persistence
     // happens.
     try {
-      alpPlan.startTransaction();
-      Envelope envelope = alpPlan.receiveMessages(directiveMessages);
-      distribute(envelope, alpPlan.getClient());
+      blackboard.startTransaction();
+      Envelope envelope = blackboard.receiveMessages(directiveMessages);
+      distribute(envelope, blackboard.getClient());
     } finally {
-      alpPlan.stopTransaction();
+      blackboard.stopTransaction();
     }
 
     directiveMessages.clear();

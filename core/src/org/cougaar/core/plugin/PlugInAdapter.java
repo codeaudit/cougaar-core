@@ -291,6 +291,8 @@ public abstract class PlugInAdapter
   }
 
   public void load() throws StateModelException {
+    if (getBlackboardService() == null)
+      System.err.println("Warning: Could not get Blackboard service "+this);
     super.load();
     load(null);
   }

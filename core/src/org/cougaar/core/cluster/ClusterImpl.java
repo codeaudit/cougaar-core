@@ -126,6 +126,8 @@ import org.cougaar.core.cluster.persist.Persistence;
 import org.cougaar.core.cluster.persist.PersistenceException;
 import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 
+import org.cougaar.core.blackboard.*;
+
 import java.beans.Beans;
 
 /**
@@ -157,10 +159,10 @@ import java.beans.Beans;
 public class ClusterImpl extends Agent
   implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
-  private Distributor myDistributor = null;
-  private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
   private MessageTransportService messenger = null;
+
+  private BlackboardForAgent myBlackboard = null;
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
   private SharedThreadingServiceProvider sharedThreadingServiceProvider;
@@ -247,6 +249,7 @@ public class ClusterImpl extends Agent
    **/
   private ClusterIdentifier myClusterIdentity_;
     
+  /*
   protected Persistence createPersistence() {
     if (System.getProperty("org.cougaar.core.cluster.persistence.enable", "false").equals("false"))
       return null;		// Disable persistence for now
@@ -318,22 +321,7 @@ public class ClusterImpl extends Agent
       return myDistributor;
     }
   }
-
-  public void writeKludge(Object state) {
-    try {
-      ObjectOutputStream oos =
-        new ObjectOutputStream(new FileOutputStream("kludge.dat"));
-      try {
-        oos.writeObject(state);
-        System.out.println("Wrote " + state);
-      } finally {
-        oos.close();
-      }
-    } catch (Throwable ex) {
-      System.err.println("Exception " + ex);
-      ex.printStackTrace();
-    }
-  }
+  */
 
   /** 
    * @return the cluster's ConfigFinder.
@@ -454,51 +442,43 @@ public class ClusterImpl extends Agent
     sb.addService(LDMService.class, new LDMServiceProvider(this));
 
     // set up Blackboard and LogicProviders
-    try {
-      myBlackboard = new Blackboard(getDistributor(), this);
-      getDistributor().setBlackboard(myBlackboard);
-      // add blackboard service
-      sb.addService(BlackboardService.class, new BlackboardServiceProvider(getDistributor()));
+    /*
+      // MIK BB
+    myBlackboard = new Blackboard(this);
+    myBlackboard.init();
+    // add blackboard service
+    sb.addService(BlackboardService.class, new BlackboardServiceProvider(getDistributor()));
 
+    // load the domains & lps
+    try {
       Collection domains = DomainManager.values();
       Domain rootDomain = DomainManager.find("root"); // HACK to let Metrics see plan objects
 
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
         Domain d = (Domain) i.next();
 
-        // add all the domain-specific logic providers
-        XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
-        myBlackboard.addXPlan(xPlan);
-        if (d == rootDomain) { // Replace HACK to let Metrics count plan objects
-          myLogPlan = (LogPlan) xPlan;
-        }
-        Collection lps = d.createLogicProviders(xPlan, this);
-        if (lps != null) {
-          for (Iterator li = lps.iterator(); li.hasNext(); ) {
-            Object lo = li.next();
-            if (lo instanceof LogicProvider) {
-              myBlackboard.addLogicProvider((LogicProvider) lo);
-            } else {
-              System.err.println("Domain "+d+" requested loading of a non LogicProvider "+lo+" (Ignored).");
-            }
-          }
+        myBlackboard.connectDomain(d);
+
+        // Replace HACK to let Metrics count plan objects - there should be
+        // a blackboard-level metrics service which deals with this.
+        if (d == rootDomain) {
+          myLogPlan = (LogPlan) myBlackboard.getXPlanForDomain(d);
         }
       }
 
-      // specialLPs
+      // specialLPs - maybe it should have a special domain.  MIK
       if (isMetricsHeartbeatOn) {
         myBlackboard.addLogicProvider(new MetricsLP(myLogPlan, this));
       }
-      myBlackboard.init();
-
     } catch (Exception e) { 
       synchronized (System.err) {
-        System.err.println("Problem loading LogPlan: ");
+        System.err.println("Problem loading Blackboard: ");
         e.printStackTrace(); 
       }
     }
+    */
 
-    // set up all the factories
+    // force set up all the factories
     Collection keys = DomainManager.keySet();
     for (Iterator i = keys.iterator(); i.hasNext(); ) {
       String key = (String) i.next();
@@ -525,6 +505,20 @@ public class ClusterImpl extends Agent
         add(agentState.children[i]);
       }
     } else {
+      // blackboard *MUST* be loaded before pluginmanager (and plugins)
+      add(new ComponentDescription(getClusterIdentifier()+"Blackboard",
+                                   "Node.AgentManager.Agent.Blackboard",
+                                   "org.cougaar.core.blackboard.StandardBlackboard",
+                                   null,
+                                   null,
+                                   null,
+                                   null,
+                                   null));
+      myBlackboard = (BlackboardForAgent) sb.getService(this,BlackboardForAgent.class, null);
+      if (myBlackboard == null) {
+        throw new RuntimeException("Couldn't get BlackboardForAgent!");
+      }
+
       // start up the pluginManager component - should really itself be loaded
       // as an agent subcomponent.
       //pluginManager = new PluginManager();
@@ -545,7 +539,6 @@ public class ClusterImpl extends Agent
       boolean pimwasadded = add(pimdesc);
       //System.err.println("Added "+pimwasadded+" PluginManager: "+pimdesc+" to "+this);
     }
-
 
     //System.err.println("Cluster.load() completed");
   }
@@ -688,13 +681,15 @@ public class ClusterImpl extends Agent
       }
     }
 
-    System.out.println("gettingState");
+    System.out.println("gettingState of Blackboard (disabled)");
+    /*
     try {
       result.bbState = myBlackboard.getState();
     } catch (PersistenceNotEnabledException pnee) {
       pnee.printStackTrace();
       throw new RuntimeException(pnee.toString());
     }
+    */
 
     // Do this here because we might not get another opportunity
     System.out.println("flushMessages");
@@ -791,7 +786,7 @@ public class ClusterImpl extends Agent
   /** Receiver for in-band messages (queued by QueueHandler)
    */
   void receiveQueuedMessages(List messages) {
-    myDistributor.receiveMessages(messages);
+    myBlackboard.receiveMessages(messages);
   }
 
   //
@@ -1422,7 +1417,7 @@ public class ClusterImpl extends Agent
   /**
    **/
   public java.sql.Connection getDatabaseConnection(Object locker) {
-    Persistence persistence = myDistributor.getPersistence();
+    Persistence persistence = myBlackboard.getPersistence();
     if (persistence instanceof DatabasePersistence) {
       DatabasePersistence dbp = (DatabasePersistence) persistence;
       return dbp.getDatabaseConnection(locker);
@@ -1432,7 +1427,7 @@ public class ClusterImpl extends Agent
   }
 
   public void releaseDatabaseConnection(Object locker) {
-    Persistence persistence = myDistributor.getPersistence();
+    Persistence persistence = myBlackboard.getPersistence();
     if (persistence instanceof DatabasePersistence) {
       DatabasePersistence dbp = (DatabasePersistence) persistence;
       dbp.releaseDatabaseConnection(locker);
