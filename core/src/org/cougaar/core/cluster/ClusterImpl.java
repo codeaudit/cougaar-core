@@ -748,11 +748,11 @@ public class ClusterImpl extends Agent
         ComponentDescription desc = cm.getComponentDescription();
         int operation = cm.getOperation();
         switch (operation) {
-          case ComponentMessage.ADD:     
-            //pluginManager.add(desc);     
+          case ComponentMessage.ADD:
+            super.add(desc);     
             break;
           case ComponentMessage.REMOVE:  
-            //pluginManager.remove(desc);  
+            super.remove(desc);  
             break;
           case ComponentMessage.SUSPEND:
           case ComponentMessage.RESUME:
@@ -940,6 +940,7 @@ public class ClusterImpl extends Agent
     //is now a service
     //ms.thinPluginCount = getSharedPlugInManager().size();
     //grab these from the PrototypeRegistryService
+    
     ms.prototypeProviderCount = getPrototypeRegistryService().getPrototypeProviderCount();
     ms.propertyProviderCount = getPrototypeRegistryService().getPropertyProviderCount();
     ms.cachedPrototypeCount = getPrototypeRegistryService().getCachedPrototypeCount();
