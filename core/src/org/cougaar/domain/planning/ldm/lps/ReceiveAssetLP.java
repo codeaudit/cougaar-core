@@ -145,8 +145,10 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     }
 
     // fix up the available schedule for the transferring asset
-    fixAvailSchedule(aa, asset, assignee);
-
+    if (aa.getSchedule() != null) {
+      fixAvailSchedule(aa, asset, assignee);
+    }
+      
     // publish the add or change
     if (assetL == null) {            // add it if it wasn't already there
       logplan.add(asset);
