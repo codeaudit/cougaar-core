@@ -33,8 +33,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
@@ -47,8 +45,10 @@ import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
 import org.cougaar.core.persist.RehydrationData;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -79,12 +79,13 @@ implements Component
 
   private MessageAddress localAgent;
 
+  private Schedulable restartTimer;
+
   // map of agent name to most recently observed incarnation, used
   // to detect the restart of remote agents, which requires a
   // resync beteen this agent and the restarted agent.
   private final Map incarnationMap = new HashMap();
 
-  private Timer restartTimer;
 
   public void setBindingSite(BindingSite bs) {
     this.sb = bs.getServiceBroker();
@@ -306,15 +307,18 @@ implements Component
           "Unable to obtain BlackboardForAgent");
     }
 
-    restartTimer = new Timer();
-    TimerTask tTask = 
-      new TimerTask() {
+    Runnable taskBody = 
+      new Runnable() {
         public void run() {
           checkRestarts();
         }
       };
+    ThreadService threadService = (ThreadService)
+      sb.getService(this, ThreadService.class, null);
+    restartTimer = threadService.getThread(this, taskBody, "Reconciler");
+    sb.releaseService(this, ThreadService.class, threadService);
+
     restartTimer.schedule(
-        tTask,
         RESTART_CHECK_INTERVAL,
         RESTART_CHECK_INTERVAL);
   }
@@ -329,7 +333,7 @@ implements Component
       bb = null;
     }
 
-    restartTimer.cancel();
+    restartTimer.cancelTimer();
     restartTimer = null;
   }
 
