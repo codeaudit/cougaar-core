@@ -32,7 +32,11 @@ import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.service.SchedulerService;
 
-public class BlackboardServletComponent extends SimpleServletComponent {
+public class BlackboardServletComponent 
+extends SimpleServletComponent 
+implements BlackboardClient
+{
+
   protected BlackboardService blackboard;
   private LDMService ldmService = null;
   private SchedulerService scheduler;
