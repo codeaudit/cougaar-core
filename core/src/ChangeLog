@@ -1,3 +1,11 @@
+2001-03-01  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PublishException -- et. al.
+	Add boolean to PublishException indicating whether the lack of a
+	prior publisher is because prior publishers are not being saved or
+	because there was not prior publisher. The exception message
+	reflects this difference.
+
 2001-02-27  Michael Thome  <mthome@bbn.com>
 	
 	* SharedPlugInManager
