@@ -616,8 +616,21 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     //
     // construct the NodeAgent and then hand off control
     // 
-    NodeAgent na = new NodeAgent(getServiceBroker(), agentManager);
-    agentManager.add(na);
+    List naParams = new ArrayList(2);
+    naParams.add(getServiceBroker());
+    naParams.add(agentManager);
+    ComponentDescription naDesc = 
+      new ComponentDescription(
+          name,
+          "Node.AgentManager.Agent",
+          "org.cougaar.core.node.NodeAgent",
+          null,  //codebase
+          naParams,
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH);
+    agentManager.add(naDesc);
 
     // may need to wait for the NodeAgent to come all the way up.
 

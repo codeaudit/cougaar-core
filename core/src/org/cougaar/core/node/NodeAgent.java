@@ -105,13 +105,19 @@ public class NodeAgent
   private String nodeName = null;
   private NodeIdentifier nodeIdentifier = null;
 
-  /** @param asb An unproxied reference to the top-level ServiceBroker so that we can 
-   * add global services.
-   * @param am An unproxied reference to the AgentManager so that we can add agents.
-   **/
-  public NodeAgent(ServiceBroker asb, AgentManager am) {
-    agentServiceBroker = asb;
-    agentManager = am;
+  /**
+   * Set the required NodeAgent parameter.
+   *
+   * @param o A list containing two elements, where the first element is
+   *    an unproxied reference to the top-level ServiceBroker so that 
+   *    we can add global services, and the second element is
+   *    an unproxied reference to the AgentManager so that we can 
+   *    add agents.
+   */
+  public void setParameter(Object o) {
+    List l = (List) o;
+    agentServiceBroker = (ServiceBroker) l.get(0);
+    agentManager = (AgentManager) l.get(1);
   }
 
   ///
