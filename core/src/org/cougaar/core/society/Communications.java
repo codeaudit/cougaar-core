@@ -27,7 +27,6 @@ import java.lang.reflect.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.naming.RMINameServer;
 import java.util.*;
 import java.net.*;
 
@@ -199,14 +198,4 @@ public class Communications {
   public static String getFdsAddress() {
     return getInstance().get("address");
   }
-
-
-
-    
-
-  /** Start an actual NameServer instance **/
-  public void startNameServer() {
-	RMINameServer.create();
-  }
-
 }

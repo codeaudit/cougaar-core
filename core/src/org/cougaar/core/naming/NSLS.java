@@ -30,7 +30,7 @@ public class NSLS {
     public static void main(String[] args) {
         Hashtable env = new Hashtable();
         env.put(Context.INITIAL_CONTEXT_FACTORY,
-                RMINameServer.class.getName());
+                NamingServiceFactory.class.getName());
         try {
             DirContext ctx = new InitialDirContext(env);
             listBindings(ctx, "");
