@@ -40,9 +40,7 @@ import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
 import org.cougaar.util.SyncTriggerModelImpl;
 
-import java.util.Vector;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * Standard base-class for Components that watch the Blackboard for 
@@ -62,8 +60,7 @@ public abstract class ComponentPlugin
   extends org.cougaar.util.GenericStateModelAdapter
   implements PluginBase, BlackboardClient 
 {
-  
-  private Collection parameters;
+  private Object parameter = null;
 
   private SchedulerService scheduler;
   protected BlackboardService blackboard;
@@ -86,18 +83,35 @@ public abstract class ComponentPlugin
    * the ComponentDescription.
    **/
   public void setParameter(Object param) {
-    if (param != null) {
-      parameters = (Collection) param;
-    } else {
-      parameters = new Vector(0);
-    }
+    parameter = param;
   }
   
+  /**
+   * @return the parameter set by {@link #setParameter()}
+   **/
+  public Object getParameter() {
+    return parameter;
+  }
+
   /** 
    * Get any Plugin parameters passed by the plugin instantiator.
+   * @return The parameter specified
+   * if it was a collection, a collection with one element (the parameter) if 
+   * it wasn't a collection, or an empty collection if the parameter wasn't
+   * specified.
    */
   public Collection getParameters() {        
-    return parameters;
+    if (parameter == null) {
+      return new ArrayList(0);
+    } else {
+      if (parameter instanceof Collection) {
+        return (Collection) parameter;
+      } else {
+        List l = new ArrayList(1);
+        l.add(parameter);
+        return l;
+      }
+    }
   }
   
   /**
@@ -348,10 +362,10 @@ public abstract class ComponentPlugin
     if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
       buf.append(getClass().getName());
-      if (parameters != null) {
+      if (parameter instanceof Collection) {
         buf.append("[");
         String sep = "";
-        for (Iterator params = parameters.iterator(); params.hasNext(); ) {
+        for (Iterator params = ((Collection)parameter).iterator(); params.hasNext(); ) {
           buf.append(sep);
           buf.append(params.next().toString());
           sep = ",";
