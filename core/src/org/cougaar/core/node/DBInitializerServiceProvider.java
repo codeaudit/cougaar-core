@@ -466,6 +466,19 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             result[0] = rs.getString(1);
             result[1] = rs.getString(2);
           } else {
+	    // It would be nice to not die if the GEOLOC or whatever
+	    // is not found. I'm just not certain
+	    // how the caller (ie AssetDataDBReader) will react
+	    // if the result is an empty String.
+	    // result[0] = type;
+	    // result[1] = "";
+	    // log.warn("No row returned for attribute value query "
+//                                                   + type
+//                                                   + "("
+//                                                   + key
+//                                                   + ")");
+
+
             throw new InitializerServiceException("No row returned for attribute value query "
                                                   + type
                                                   + "("
