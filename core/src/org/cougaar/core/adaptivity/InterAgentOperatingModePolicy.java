@@ -112,9 +112,9 @@ public class InterAgentOperatingModePolicy
    * This implemenation does nothing because responses are not needed
    * or used.
    **/
-  public boolean updateResponse(MessageAddress target, Object response) {
+  public int updateResponse(MessageAddress target, Object response) {
     // No response expected
-    return false;
+    return Relay.NO_CHANGE;
   }
 
 
@@ -143,12 +143,12 @@ public class InterAgentOperatingModePolicy
    * publishChange the Relay. This implementation returns true only
    * if the new value differs from the current value.
    **/
-  public boolean updateContent(Object content, Relay.Token token) {
+  public int updateContent(Object content, Relay.Token token) {
     if (token != owner) throw new IllegalArgumentException("Not owner");
     InterAgentOperatingModePolicy newOMP = (InterAgentOperatingModePolicy) content;
     // brute force, no brains
     setPolicyKernel(newOMP.getPolicyKernel());
-    return true;
+    return Relay.CONTENT_CHANGE;
   }
 
   /**

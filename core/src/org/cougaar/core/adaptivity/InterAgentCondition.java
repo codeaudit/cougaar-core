@@ -175,13 +175,13 @@ public class InterAgentCondition
    * publishChange the Relay. This implementation returns true only
    * if the new value differs from the current value.
    **/
-  public boolean updateContent(Object content, Relay.Token token) {
+  public int updateContent(Object content, Relay.Token token) {
     if (token != owner) throw new IllegalArgumentException("Not owner");
     InterAgentCondition newCond = (InterAgentCondition) content;
     if (getValue().compareTo(newCond.getValue()) != 0) {
       setValue(newCond.getValue());
-      return true;
+      return Relay.CONTENT_CHANGE;
     }
-    return false;
+    return Relay.NO_CHANGE;
   }
 }

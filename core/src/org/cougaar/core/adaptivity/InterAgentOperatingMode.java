@@ -121,9 +121,9 @@ public class InterAgentOperatingMode
    * This implemenation does nothing because responses are not needed
    * or used.
    **/
-  public boolean updateResponse(MessageAddress target, Object response) {
+  public int updateResponse(MessageAddress target, Object response) {
     // No response expected
-    return false;
+    return Relay.NO_CHANGE;
   }
 
   /**
