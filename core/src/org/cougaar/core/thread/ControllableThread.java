@@ -34,6 +34,7 @@ final class ControllableThread extends ReusableThread
     private boolean suspended;
     private Object suspendLock;
     private ControllablePool pool;
+    private TimeSlice slice;
 
     ControllableThread(ControllablePool pool) 
     {
@@ -57,6 +58,15 @@ final class ControllableThread extends ReusableThread
 
     void consumer(Object consumer) {
 	this.consumer = consumer;
+    }
+
+
+    TimeSlice slice() {
+	return slice;
+    }
+
+    void slice(TimeSlice slice) {
+	this.slice = slice;
     }
 
 
