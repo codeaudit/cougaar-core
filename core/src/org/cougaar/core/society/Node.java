@@ -768,7 +768,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     try {
       if (m instanceof NodeMessage) {
         if (m instanceof AddClustersMessage) {
-          System.out.println("\n\n************** addClusters!");
           loadClusters(((AddClustersMessage)m).getPropertyTree());
         } else {
           System.err.println(
