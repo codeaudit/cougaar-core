@@ -34,7 +34,7 @@ import org.cougaar.core.service.ThreadListenerService;
 final class ThreadServiceProvider implements ServiceProvider 
 {
     private ThreadListenerProxy listenerProxy;
-    private Scheduler scheduler;
+    private AbstractScheduler scheduler;
     private ThreadServiceProxy proxy;
 	
     ThreadServiceProvider(ServiceBroker sb, String name) {

@@ -21,87 +21,21 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.core.service.ThreadControlService;
-import org.cougaar.util.PropertyParser;
 
-import java.util.Comparator;
-
-
-final class Scheduler implements ThreadControlService 
+final class Scheduler extends AbstractScheduler
 {
-    private static final String MaxRunningCountProp =
-	"org.cougaar.thread.running.max";
-    private static final int MaxRunningCountDefault = Integer.MAX_VALUE;
-
-    private DynamicSortedQueue pendingThreads;
-    private int maxRunningThreads;
-    private int runningThreadCount = 0;
-    private ThreadListenerProxy listenerProxy;
-
-    private Comparator timeComparator =
-	new Comparator() {
-		public boolean equals(Object x) {
-		    return x == this;
-		}
-
-		public int compare (Object x, Object y) {
-		    long t1 = ((ControllableThread) x).timestamp();
-		    long t2 = ((ControllableThread) y).timestamp();
-		    if (t1 < t2)
-			return -1;
-		    else if (t1 > t2)
-			return 1;
-		    else
-			return 0;
-		}
-	    };
-
-
-
     Scheduler(ThreadListenerProxy listenerProxy) {
-	pendingThreads = new DynamicSortedQueue(timeComparator);
-	maxRunningThreads = 
-	    PropertyParser.getInt(MaxRunningCountProp, 
-				  MaxRunningCountDefault);
-	this.listenerProxy = listenerProxy;
-
+	super(listenerProxy);
     }
 
-    // ThreadControlService 
-    public synchronized void setQueueComparator(Comparator comparator)
-    {
-	pendingThreads.setComparator(comparator);
-    }
 
-    public synchronized void setMaxRunningThreadCount(int count) {
-	maxRunningThreads = count;
-	    
+    void changedMaxRunningThreadCount() {
 	// Maybe we can run some pending threads
 	while (canStartThread() && !pendingThreads.isEmpty()) {
 	    runNextThread();
 	}
     }
-
-    public int maxRunningThreadCount() {
-	return maxRunningThreads;
-    }
-
-    public synchronized int pendingThreadCount() {
-	return pendingThreads.size();
-    }
-
-    public synchronized int runningThreadCount() {
-	return runningThreadCount;
-    }
-
-
-    public synchronized int activeThreadCount() {
-	return runningThreadCount + pendingThreads.size();
-    }
-
-
-
-
+    
 
     private boolean canStartThread() {
 	return runningThreadCount < maxRunningThreads;
@@ -119,17 +53,9 @@ final class Scheduler implements ThreadControlService
 	    --runningThreadCount; 
 	    if (!pendingThreads.isEmpty()) runNextThread();
 	}
-	listenerProxy.notifyEnd(thread);
+	super.threadEnded(thread);
     }
 
-
-    // Called when a thread has just started
-    void threadStarted(ControllableThread thread) {
-	synchronized (this) {
-	    ++runningThreadCount; 
-	}
-	listenerProxy.notifyStart(thread);
-    }
 
 
     // Yield only if there's a candidate to yield to.  Called when
@@ -177,23 +103,7 @@ final class Scheduler implements ThreadControlService
 	}
     }
 
-    // Called when resuming a suspended or yielded thread that was
-    // queued.
-    void resumeQueuedThread(ControllableThread thread) {
-	synchronized (this) {
-	    ++runningThreadCount; 
-	}
-    }
-
-
-
  
-    private void addPendingThread(ControllableThread thread) 
-    {
-	thread.stamp();
-	listenerProxy.notifyPending(thread);
-	pendingThreads.add(thread);
-    }
 
     synchronized void startOrQueue(ControllableThread thread) {
 	if (canStartThread()) {
