@@ -27,7 +27,7 @@ import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.society.MessageAddress;
 
 
-class QosImplBase
+public class QosImplBase
 {
     static final int STALE_TIME = 10000; // 10 seconds
 
