@@ -37,12 +37,21 @@ final class ThreadListenerProxy implements ThreadListenerService
 	listeners = new ArrayList();
     }
 		    
-    synchronized void notifyPending(SchedulableObject schedulable) {
+    synchronized void notifyQueued(SchedulableObject schedulable) {
 	Object consumer = schedulable.consumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
-	    listener.threadPending(schedulable, consumer);
+	    listener.threadQueued(schedulable, consumer);
+	}
+    }
+
+    synchronized void notifyDequeued(SchedulableObject schedulable) {
+	Object consumer = schedulable.consumer();
+	Iterator itr = listeners.iterator();
+	while (itr.hasNext()) {
+	    ThreadListener listener = (ThreadListener) itr.next();
+	    listener.threadDequeued(schedulable, consumer);
 	}
     }
 
@@ -61,6 +70,24 @@ final class ThreadListenerProxy implements ThreadListenerService
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
 	    listener.threadStopped(schedulable, consumer);
+	}
+    }
+
+    synchronized void notifyRightGiven(Scheduler scheduler) {
+	String id = scheduler.getName();
+	Iterator itr = listeners.iterator();
+	while (itr.hasNext()) {
+	    ThreadListener listener = (ThreadListener) itr.next();
+	    listener.rightGiven(id);
+	}
+    }
+
+    synchronized void notifyRightReturned(Scheduler scheduler) {
+	String id = scheduler.getName();
+	Iterator itr = listeners.iterator();
+	while (itr.hasNext()) {
+	    ThreadListener listener = (ThreadListener) itr.next();
+	    listener.rightReturned(id);
 	}
     }
 

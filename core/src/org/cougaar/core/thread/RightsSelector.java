@@ -21,13 +21,7 @@
 
 package org.cougaar.core.thread;
 
-
-public interface ThreadListener
+public interface RightsSelector
 {
-    void threadQueued(Schedulable schedulable, Object consumer);
-    void threadDequeued(Schedulable schedulable, Object consumer);
-    void threadStarted(Schedulable schedulable, Object consumer);
-    void threadStopped(Schedulable schedulable, Object consumer);
-    void rightGiven(String consumer);
-    void rightReturned(String consumer);
+    public SchedulableObject getNextPending(PropagatingScheduler scheduler);
 }

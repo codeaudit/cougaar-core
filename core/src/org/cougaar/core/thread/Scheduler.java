@@ -76,6 +76,11 @@ public class Scheduler
 	printName = "<Scheduler " +name+ ">";
     }
 
+
+    public void setRightsSelector(RightsSelector selector) {
+	// error? no-op?
+    }
+
     public String toString() {
 	return printName;
     }
@@ -123,34 +128,30 @@ public class Scheduler
 
 
 
-    synchronized SchedulableObject nextPendingThread() {
-	return (SchedulableObject)pendingThreads.next();
-    }
-
-
-    synchronized SchedulableObject nextPendingThread(SchedulableObject thrd)
-    {
-	return (SchedulableObject)pendingThreads.next(thrd);
-    }
-
-
-
 
     synchronized void addPendingThread(SchedulableObject thread) 
     {
 	if (pendingThreads.contains(thread)) return;
 	thread.notifyPending();
-	listenerProxy.notifyPending(thread);
+	listenerProxy.notifyQueued(thread);
 	pendingThreads.add(thread);
     }
 
     synchronized void dequeue(SchedulableObject thread) 
     {
 	pendingThreads.remove(thread);
+	threadDequeued(thread);
     }
 
 
 
+    void threadDequeued(SchedulableObject thread) {
+	if (CougaarThread.Debug)
+	    System.out.println(" Dequeued " +thread+
+			       " run count=" +runningThreadCount+
+			       " queue count=" +pendingThreads.size());
+	listenerProxy.notifyDequeued(thread);
+    }
 
     // Called within the thread itself as the first thing it does.
     void threadClaimed(SchedulableObject thread) {
@@ -168,7 +169,6 @@ public class Scheduler
 			       " run count=" +runningThreadCount+
 			       " queue count=" +pendingThreads.size());
 	listenerProxy.notifyEnd(thread);
-	releaseRights(this);
     }
 
 
@@ -189,18 +189,34 @@ public class Scheduler
 
 
 
+    void incrementRunCount(Scheduler consumer) {
+	++runningThreadCount;
+	listenerProxy.notifyRightGiven(consumer);
+    }
+
+    void decrementRunCount(Scheduler consumer) {
+	--runningThreadCount;
+	listenerProxy.notifyRightReturned(consumer);
+    }
+
 
 
     SchedulableObject getNextPending() {
-	SchedulableObject thread = nextPendingThread();
-	if (thread != null) ++runningThreadCount;
+	SchedulableObject thread = null;
+	synchronized(this) {
+	    thread = (SchedulableObject)pendingThreads.next();
+	}
+	if (thread != null) {
+	    threadDequeued(thread);
+	    incrementRunCount(this);
+	}
 	return thread;
     }
 
 
     synchronized boolean requestRights(Scheduler requestor) {
 	if (maxRunningThreads < 0 || runningThreadCount < maxRunningThreads) {
-	    ++runningThreadCount;
+	    incrementRunCount(requestor);
 	    return true;
 	}
 	return false;
@@ -209,7 +225,7 @@ public class Scheduler
     synchronized void releaseRights(Scheduler consumer) {
 	// If the max has recently decreased it may be lower than the
 	// running count.  In that case don't do a handoff.
-	--runningThreadCount;
+	decrementRunCount(consumer);
 	SchedulableObject handoff = null;
 
 	if (runningThreadCount <= maxRunningThreads) {

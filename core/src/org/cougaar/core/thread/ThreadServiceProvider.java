@@ -79,7 +79,7 @@ public final class ThreadServiceProvider implements ServiceProvider
 	    }
 	}
 	if (scheduler == null) {
-	    scheduler = new SimplePropagatingScheduler(listenerProxy, name);
+	    scheduler = new PropagatingScheduler(listenerProxy, name);
 	}
 
 	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;

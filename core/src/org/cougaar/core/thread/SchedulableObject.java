@@ -83,12 +83,14 @@ final class SchedulableObject implements Schedulable
 	    again = restart;
 	}
 	if (again) scheduler.startOrQueue(this);
-	// Do this from a dedicted thread now
-	// reclaimNotify();
+
+	// Notify listeners
+	scheduler.threadReclaimed(this);
     }
 
+    // Calback from the Reclaimer.
     void reclaimNotify() {
-	scheduler.threadReclaimed(this);
+	scheduler.releaseRights(scheduler);
     }
 
     void thread_start() {

@@ -22,6 +22,7 @@
 package org.cougaar.core.service;
 
 import org.cougaar.core.component.Service;
+import org.cougaar.core.thread.RightsSelector;
 
 import java.util.Comparator;
 
@@ -30,7 +31,7 @@ public interface ThreadControlService extends Service
     // General
     void setMaxRunningThreadCount(int count);
     void setQueueComparator(Comparator comparator);
-    
+    void setRightsSelector(RightsSelector selector);
 
     // Status
     int runningThreadCount();
