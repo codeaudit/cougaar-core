@@ -1349,14 +1349,17 @@ public class DBConnectionPool {
 					 String passwd)
     throws SQLException {
     String key = dbURL + SEP + user;
+    DBConnectionPool pool;
+
     synchronized (dbConnectionPools) {
-      DBConnectionPool pool = (DBConnectionPool) dbConnectionPools.get(key);
+      pool = (DBConnectionPool) dbConnectionPools.get(key);
       if (pool == null) {
 	pool = new DBConnectionPool(key);
 	dbConnectionPools.put(key, pool);
       }
-      return pool.findConnection(dbURL, user, passwd);
     }
+
+    return pool.findConnection(dbURL, user, passwd);
   }
 
   private static Thread timer = new Thread() {
@@ -1401,6 +1404,7 @@ public class DBConnectionPool {
     };
 
   static {
+    timer.setName("DBConnectionPool Timer");
     timer.setDaemon(true);
     timer.start();
   }
@@ -1524,7 +1528,8 @@ public class DBConnectionPool {
             waitingCounter++;
             if (VERBOSITY>=1) {
               if (VERBOSITY>=3) {
-                System.err.println("DBConnectionPool waiting for "+key+" ("+waitingCounter+")");
+                System.err.println("DBConnectionPool waiting for "+key+
+                                   " ("+waitingCounter+" of "+entries.size()+"/"+maxConnections+")");
               } else {
                 System.err.print("w");
               }
@@ -1558,10 +1563,14 @@ public class DBConnectionPool {
           }
         }
       }
-      if (VERBOSITY>=3) System.err.println("DBConnectionPool "+key+" dropping "+entriesToDelete.size()+" entries");
-      for (Iterator e = entriesToDelete.iterator(); e.hasNext(); ) {
-        DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
-        delete(entry);
+      int ndrops = entriesToDelete.size();
+      if (ndrops > 0) {
+        if (VERBOSITY>=3)
+          System.err.println("DBConnectionPool "+key+" dropping "+entriesToDelete.size()+" entries");
+        for (Iterator e = entriesToDelete.iterator(); e.hasNext(); ) {
+          DBConnectionPoolEntry entry = (DBConnectionPoolEntry) e.next();
+          delete(entry);
+        }
       }
     }
   }
