@@ -29,26 +29,22 @@ import org.cougaar.core.agent.ClusterIdentifier;
 
 public class CommunityMember implements java.io.Serializable{
 
+  public static final int AGENT = 0;
+  public static final int COMMUNITY = 1;
+
   private String memberName;                // Member name
-  private ClusterIdentifier agentId;
+  private int type;
   private Collection roles = new Vector();  // List of roles provided by member
 
   /**
    * Constructs a CommunityMember object for a member community
    * with an empty role collection.
    */
-  public CommunityMember(String memberCommunityName) {
-    this.memberName = memberCommunityName;
+  public CommunityMember(String memberName, int type) {
+    this.memberName = memberName;
+    this.type = type;
   }
 
-  /**
-   * Constructs a CommunityMember object for a member agent
-   * with an empty role collection.
-   */
-  public CommunityMember(ClusterIdentifier memberAgent) {
-    this.memberName = memberAgent.toString();
-    this.agentId = memberAgent;
-  }
 
   /**
    * Associates a role with member.
@@ -62,14 +58,19 @@ public class CommunityMember implements java.io.Serializable{
    * Returns true if this member is an Agent.
    * @return True if an Agent
    */
-  public boolean isAgent() { return (agentId != null); }
+  public boolean isAgent() { return (type == AGENT); }
 
   /**
-   * Returns the ClusterIdentifier for this member.  Returns null if the
+   * Returns a ClusterIdentifier for this member.  Returns null if the
    * member is not an Agent.
    * @return True if an Agent
    */
-  public ClusterIdentifier getAgentId() { return agentId; }
+  public ClusterIdentifier getAgentId() {
+    if (isAgent())
+      return new ClusterIdentifier(memberName);
+    else
+      return null;
+  }
 
   /**
    * Returns member name.

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2002 Mobile Intelligence Corp
+ *  Copyright 1997-2001 Mobile Intelligence Corp
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 package org.cougaar.core.service.community;
 
 import org.cougaar.core.component.Service;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import javax.naming.directory.Attributes;
 
 import java.util.*;
@@ -32,7 +32,7 @@ import java.util.*;
  */
 public interface CommunityService extends Service {
 
-  String COMMUNITIES_CONTEXT_NAME = "Communities";
+  public final static String COMMUNITIES_CONTEXT_NAME = "Communities";
 
 
   /**
@@ -79,23 +79,13 @@ public interface CommunityService extends Service {
   /**
    * Adds an entity to a community.
    * @param communityName        Community name
-   * @param entityName           Name of entity to add
+   * @param entity               Entity to add
+   * @param entityName           Name of entity
    * @param attributes           Attributes to associate with entity
    * @return                     True if operation was successful
    */
-  boolean addToCommunity(String communityName, String entityName,
-                         Attributes attributes);
-
-
-  /**
-   * Adds an agent to a community.
-   * @param communityName        Community name
-   * @param agent                Agents ClusterID
-   * @param attributes           Attributes to associate with agent
-   * @return                     True if operation was successful
-   */
-  boolean addToCommunity(String communityName, ClusterIdentifier agent,
-                         Attributes attributes);
+  boolean addToCommunity(String communityName, Object entity,
+                         String entityName, Attributes attributes);
 
 
   /**
@@ -105,6 +95,15 @@ public interface CommunityService extends Service {
    * @return               True if operation was successful
    */
   boolean removeFromCommunity(String communityName, String entityName);
+
+
+  /**
+   * Returns a collection of entity names associated with the specified
+   * community.
+   * @param communityName  Entities parent community
+   * @return               Collection of entity names
+   */
+  Collection listEntities(String communityName);
 
 
   /**
@@ -144,19 +143,9 @@ public interface CommunityService extends Service {
    * purpose search operation using a JNDI search filter.
    * @param communityName Name of community to search
    * @param filter        JNDI search filter
-   * @return              Collection of entity names
+   * @return              Collection of entity objects
    */
   Collection search(String communityName, String filter);
-
-
-  /**
-   * Performs attribute based search of community agents.  This is a general
-   * purpose search operation using a JNDI search filter.
-   * @param communityName Name of community to search
-   * @param filter        JNDI search filter
-   * @return              ClusterIdentifiers for agents satisfying search criteria
-   */
-  Collection agentSearch(String communityName, String filter);
 
 
   /**
@@ -188,31 +177,31 @@ public interface CommunityService extends Service {
 
 
   /**
-   * Adds an agent to list of agents that are notified of changes to specified
-   * community.
-   * @param agent         Listener agents ClusterIdentifier
+   * Adds a listener to list of addresses that are notified of changes to
+   * specified community.
+   * @param addr          Listeners address
    * @param communityName Community of interest
    * @return              True if operation was successful
    */
-  boolean addListener(ClusterIdentifier agent, String communityName);
+  boolean addListener(MessageAddress addr, String communityName);
 
 
   /**
-   * Removes an agent from list of agents that are notified of changes to
+   * Removes a listener from list of addresses that are notified of changes to
    * specified community.
-   * @param agent         Listener agents ClusterIdentifier
+   * @param addr          Listeners address
    * @param communityName Community of interest
    * @return              True if operation was successful
    */
-  boolean removeListener(ClusterIdentifier agent, String communityName);
+  boolean removeListener(MessageAddress addr, String communityName);
 
 
   /**
-   * Returns a collection of ClusterIdentifiers associated with the agents
-   * that are have the attribute "ChangeListener".
+   * Returns a collection of MessageAddresses associated with the entities
+   * that have the attribute "ChangeListener".
    * specified community.
    * @param communityName Community of interest
-   * @return              ClusterIdentifiers of listener agents
+   * @return              Collection of listener MessageAddresses
    */
   Collection getListeners(String communityName);
 
@@ -223,19 +212,9 @@ public interface CommunityService extends Service {
    * "(Role=RoleName)".
    * @param communityName Name of community to query
    * @param roleName      Name of role provided
-   * @return              Collection of entity names
+   * @return              Collection of entity objects
    */
   Collection searchByRole(String communityName, String roleName);
-
-
-  /**
-   * Performs attribute based search of community agents associated with
-   * a given role.
-   * @param communityName Name of community to search
-   * @param filter        JNDI search filter
-   * @return              ClusterIdentifiers for agents satisfying search criteria
-   */
-  Collection agentSearchByRole(String communityName, String roleName);
 
 
   /**
