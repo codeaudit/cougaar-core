@@ -206,14 +206,6 @@ public class NodeAgent
     // set the MessageAddress to be a cid for now (sigh)
     setMessageAddress( new ClusterIdentifier(nodeName) );
 
-    super.loadHighPriorityComponents();
-  }
-
-  protected void loadInternalPriorityComponents() {
-    ServiceBroker localsb = getServiceBroker();
-    ServiceBroker rootsb = agentServiceBroker;
-    AgentManager am = agentManager;
-
     // set up the NodeControlService
     { 
       final Service _nodeControlService = new NodeControlService() {
@@ -238,6 +230,16 @@ public class NodeAgent
         };
       getServiceBroker().addService(NodeControlService.class, ncsp);
     }
+
+
+    super.loadHighPriorityComponents();
+  }
+
+  protected void loadInternalPriorityComponents() {
+    ServiceBroker localsb = getServiceBroker();
+    ServiceBroker rootsb = agentServiceBroker;
+    AgentManager am = agentManager;
+
 
     /*
     // security manager
