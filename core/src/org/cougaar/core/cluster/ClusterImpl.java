@@ -128,14 +128,33 @@ public class ClusterImpl
   extends Agent
   implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
-  private MessageTransportService messenger = null;
-
-  private BlackboardForAgent myBlackboard = null;
+  // services, in order of "load()"
+  private MessageTransportService messenger;
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
-  private SharedThreadingServiceProvider sharedThreadingServiceProvider;
-  private SchedulerServiceProvider schedulerServiceProvider;
 
+  private UIDServiceProvider myUIDServiceProvider;
+  private UIDService myUIDService;
+
+  private PrototypeRegistryService myPrototypeRegistryService;
+  private PrototypeRegistryServiceProvider myPrototypeRegistryServiceProvider;
+
+  private DomainServiceProvider myDomainServiceProvider;
+  private DomainService myDomainService;
+
+  private AlarmServiceProvider myAlarmServiceProvider;
+
+  private SharedThreadingServiceProvider sharedThreadingServiceProvider;
+
+  private DemoControlServiceProvider myDemoControlServiceProvider;
+
+  private SchedulerServiceProvider mySchedulerServiceProvider;
+
+  private LDMServiceProvider myLDMServiceProvider;
+
+  private BlackboardForAgent myBlackboardService;
+
+  // properties
   private static boolean isHeartbeatOn = true;
   private static int idleInterval = 5*1000;
   private static boolean idleVerbose = false; // don't be verbose
@@ -176,7 +195,6 @@ public class ClusterImpl
   //
 
   // UID Service
-  private UIDService myUIDService = null;
   /** @deprecated use getUIDService() **/
   public final UIDServer getUIDServer() {
     return myUIDService;
@@ -187,13 +205,11 @@ public class ClusterImpl
   }
 
   //Prototype Service
-  private PrototypeRegistryService myPrototypeService = null;
   protected final PrototypeRegistryService getPrototypeRegistryService() {
-    return myPrototypeService;
+    return myPrototypeRegistryService;
   }
 
   //Domain/Factory Service
-  private DomainService myDomainService = null;
   protected final DomainService getDomainService() {
     return myDomainService;
   }
@@ -266,62 +282,75 @@ public class ClusterImpl
     ServiceBroker sb = getServiceBroker();
 
     // get the Messenger instance from ClusterManagement
-    messenger = 
-      (MessageTransportService) sb.getService(this, MessageTransportService.class, null);
+    messenger = (MessageTransportService) 
+      sb.getService(this, MessageTransportService.class, null);
     messenger.registerClient(this);
 
-    statisticsService = 
-	(MessageStatisticsService) sb.getService(this,
-						 MessageStatisticsService.class,
-						 null);
+    statisticsService = (MessageStatisticsService) 
+      sb.getService(
+          this, MessageStatisticsService.class, null);
 
-    watcherService = 
-	(MessageWatcherService) sb.getService(this,
-					      MessageWatcherService.class,
-					      null);
+    watcherService = (MessageWatcherService) 
+      sb.getService(
+          this, MessageWatcherService.class, null);
 
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
 
-    //set up the UIDServer and UIDService
+    // set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
-    sb.addService(UIDService.class, new UIDServiceProvider(theUIDServer));
-
+    myUIDServiceProvider = new UIDServiceProvider(theUIDServer);
+    sb.addService(UIDService.class, myUIDServiceProvider);
 
     myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
     
-    //set up the PrototypeRegistry and the PrototypeRegistryService
-    PrototypeRegistry myPrototypeRegistry = new PrototypeRegistry();
-    sb.addService(PrototypeRegistryService.class, 
-                            new PrototypeRegistryServiceProvider(myPrototypeRegistry));
+    // set up the PrototypeRegistry and the PrototypeRegistryService
+    PrototypeRegistry thePrototypeRegistry = new PrototypeRegistry();
+    myPrototypeRegistryServiceProvider = 
+      new PrototypeRegistryServiceProvider(thePrototypeRegistry);
+    sb.addService(
+        PrototypeRegistryService.class, 
+        myPrototypeRegistryServiceProvider);
+
     //for backwards compatability
-    myPrototypeService = (PrototypeRegistryService) sb.getService(
-                                                     this, PrototypeRegistryService.class, null);
+    myPrototypeRegistryService = (PrototypeRegistryService) 
+      sb.getService(
+          this, PrototypeRegistryService.class, null);
 
     //set up the DomainServiceImpl and the DomainService
     // DomainServiceImpl needs the PrototypeRegistryService
     //for now its in the form of this as LDMServesPlugin - should be changed!!!
     DomainServiceImpl myDSI = new DomainServiceImpl(this);
-    sb.addService(DomainService.class, new DomainServiceProvider(myDSI));
+    myDomainServiceProvider = new DomainServiceProvider(myDSI);
+    sb.addService(DomainService.class, myDomainServiceProvider);
+
     //for backwards compatability
-    myDomainService = (DomainService) sb.getService(this, DomainService.class, null);
+    myDomainService = (DomainService) 
+      sb.getService(
+          this, DomainService.class, null);
+
     // add alarm service
-    sb.addService(AlarmService.class, new AlarmServiceProvider(this));
+    myAlarmServiceProvider = new AlarmServiceProvider(this);
+    sb.addService(AlarmService.class, myAlarmServiceProvider);
+
     // add older plugin style shared threading
     sharedThreadingServiceProvider =
       new SharedThreadingServiceProvider(getClusterIdentifier());
     sb.addService(SharedThreadingService.class, sharedThreadingServiceProvider);
+
     // hack service for demo control
-    sb.addService(DemoControlService.class, new DemoControlServiceProvider(this));
+    myDemoControlServiceProvider = new DemoControlServiceProvider(this);
+    sb.addService(DemoControlService.class, myDemoControlServiceProvider);
 
     // scheduler for new plugins
-    schedulerServiceProvider = new SchedulerServiceProvider(this);
-    sb.addService(SchedulerService.class, schedulerServiceProvider);
+    mySchedulerServiceProvider = new SchedulerServiceProvider(this);
+    sb.addService(SchedulerService.class, mySchedulerServiceProvider);
 
     // placeholder for LDM Services should go away and be replaced by the
     // above domainservice and prototyperegistry service
-    sb.addService(LDMService.class, new LDMServiceProvider(this));
+    myLDMServiceProvider = new LDMServiceProvider(this);
+    sb.addService(LDMService.class, myLDMServiceProvider);
 
     // force set up all the factories
     Collection keys = DomainManager.keySet();
@@ -359,10 +388,6 @@ public class ClusterImpl
                                    null,
                                    null,
                                    null));
-      myBlackboard = (BlackboardForAgent) sb.getService(this,BlackboardForAgent.class, null);
-      if (myBlackboard == null) {
-        throw new RuntimeException("Couldn't get BlackboardForAgent!");
-      }
 
       // start up the pluginManager component - should really itself be loaded
       // as an agent subcomponent.
@@ -380,6 +405,13 @@ public class ClusterImpl
             null); //policy
 
       add(pimdesc);
+    }
+
+    // get blackboard service
+    myBlackboardService = (BlackboardForAgent) 
+      sb.getService(this, BlackboardForAgent.class, null);
+    if (myBlackboardService == null) {
+      throw new RuntimeException("Couldn't get BlackboardForAgent!");
     }
 
     //System.err.println("Cluster.load() completed");
@@ -417,7 +449,7 @@ public class ClusterImpl
     sharedThreadingServiceProvider.suspend(); // suspend the plugin scheduling
 
     System.out.println("suspend scheduler service");
-    schedulerServiceProvider.suspend(); // suspend the plugin scheduling
+    mySchedulerServiceProvider.suspend(); // suspend the plugin scheduling
 
     System.out.println("unregisterClient");
     messenger.unregisterClient(ClusterImpl.this);
@@ -431,7 +463,7 @@ public class ClusterImpl
     // re-register for MessageTransport
 
     sharedThreadingServiceProvider.resume(); // resume the plugin scheduling
-    schedulerServiceProvider.resume(); // suspend the plugin scheduling
+    mySchedulerServiceProvider.resume(); // suspend the plugin scheduling
 
     // resume the alarms 
 
@@ -470,6 +502,11 @@ public class ClusterImpl
 
     // unload in reverse order of "load()"
 
+    ServiceBroker sb = getServiceBroker();
+
+    // release child services
+    sb.releaseService(this, BlackboardForAgent.class, myBlackboardService);
+
     // unload children
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();
@@ -479,16 +516,38 @@ public class ClusterImpl
     }
     boundComponents.clear();
 
-    // unload services
-    ServiceBroker sb = getServiceBroker();
+    //
+    // release context-based services
+    //
+
+    sb.revokeService(LDMService.class, myLDMServiceProvider);
+
+    sb.revokeService(SchedulerService.class, mySchedulerServiceProvider);
+
+    sb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
+
+    sb.revokeService(SharedThreadingService.class, sharedThreadingServiceProvider);
+
+    sb.revokeService(AlarmService.class, myAlarmServiceProvider);
+
     sb.releaseService(this, DomainService.class, myDomainService);
-    sb.releaseService(this, PrototypeRegistryService.class, myPrototypeService);
+    sb.revokeService(DomainService.class, myDomainServiceProvider);
+
+    sb.releaseService(this, PrototypeRegistryService.class, 
+                      myPrototypeRegistryService);
+    sb.revokeService(PrototypeRegistryService.class, 
+                     myPrototypeRegistryServiceProvider);
+
     sb.releaseService(this, UIDService.class, myUIDService);
+    sb.revokeService(UIDService.class, myUIDServiceProvider);
 
     // remove ourselves from the VM-local context
     ClusterContextTable.removeContext(getClusterIdentifier());
 
-    // unload remaining services
+    //
+    // release remaining services
+    //
+
     sb.releaseService(this, MessageWatcherService.class, watcherService);
     sb.releaseService(this, MessageStatisticsService.class, statisticsService);
     sb.releaseService(this, MessageTransportService.class, messenger);
@@ -617,7 +676,7 @@ public class ClusterImpl
   /** Receiver for in-band messages (queued by QueueHandler)
    */
   void receiveQueuedMessages(List messages) {
-    myBlackboard.receiveMessages(messages);
+    myBlackboardService.receiveMessages(messages);
   }
 
   //
@@ -1021,7 +1080,7 @@ public class ClusterImpl
   /**
    **/
   public java.sql.Connection getDatabaseConnection(Object locker) {
-    Persistence persistence = myBlackboard.getPersistence();
+    Persistence persistence = myBlackboardService.getPersistence();
     if (persistence instanceof DatabasePersistence) {
       DatabasePersistence dbp = (DatabasePersistence) persistence;
       return dbp.getDatabaseConnection(locker);
@@ -1031,7 +1090,7 @@ public class ClusterImpl
   }
 
   public void releaseDatabaseConnection(Object locker) {
-    Persistence persistence = myBlackboard.getPersistence();
+    Persistence persistence = myBlackboardService.getPersistence();
     if (persistence instanceof DatabasePersistence) {
       DatabasePersistence dbp = (DatabasePersistence) persistence;
       dbp.releaseDatabaseConnection(locker);
