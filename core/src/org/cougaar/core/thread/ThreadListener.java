@@ -27,12 +27,51 @@
 package org.cougaar.core.thread;
 
 
+/**
+ * Objects which wish to subscribe to the ThreadListenerService should
+ * implement this interface.  The methods in the API are all callback
+ * from the corresponding ThreadService.
+ */
 public interface ThreadListener
 {
+    /**
+     * Indicates that the given Schedulable has been queued because it
+     * was unable to to run.  
+     */
     void threadQueued(Schedulable schedulable, Object consumer);
+
+
+    /**
+     * Indicates that the given Schedulable, which was previously
+     * queued, has now been dequeued and is about to run.
+    */
     void threadDequeued(Schedulable schedulable, Object consumer);
+
+    /**
+     * Indicates that the given Schedulable is about to start
+     * running.  This will be called from within the Schedulable's own
+     * thread. 
+    */
     void threadStarted(Schedulable schedulable, Object consumer);
+
+    /**
+     * Indicates that the given Schedulable has just stopped
+     * running.  This will be called from within the Schedulable's own
+     * thread.
+    */
     void threadStopped(Schedulable schedulable, Object consumer);
-    void rightGiven(String consumer);
+
+    /**
+     * Indicates that the given scheduler has been allocated a run-
+     * right, which it will use to run one of its Schedulables.   That
+     * Schedulable might be a queued one or might be a new one asking
+     * to start.
+     */
+    void rightGiven(String scheduler);
+
+    /**
+     * Indicates that some running Schedulable managed by the given
+     * Scheduler has given up its run-right.
+    */
     void rightReturned(String consumer);
 }

@@ -27,8 +27,22 @@
 package org.cougaar.core.thread;
 
 
+/**
+ *  A getNextPending method of a RightSelector is used by a
+ *  PropagatingScheduler to decide now to share rights among its own
+ *  Schedulables and its children.
+ */
 public interface RightsSelector
 {
+    /**
+     * Tells the Selector what its Scheduler is.
+     */
     void setScheduler(PropagatingScheduler scheduler);
+
+    /**
+     * Choose a Schedulable to get the next available right.  This
+     * Schedulable might be owned by the Selector's own Scheduler or
+     * by one of the children of that Scheduler.
+     */
     SchedulableObject getNextPending();
 }
