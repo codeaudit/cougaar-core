@@ -57,6 +57,9 @@ public interface AgentStatusService extends Service
 	public int misdeliveredMessageCount;
 	public String lastLinkProtocolTried;
 	public String lastLinkProtocolSuccess;
+	public long lastHeardFrom;
+	public long lastSentTo;
+	public long lastFailedSend;
     }
 
     AgentState getRemoteAgentState(MessageAddress address);
