@@ -28,6 +28,7 @@ import org.cougaar.core.component.*;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.Configuration;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.LogTarget;
 import org.cougaar.util.log.LoggerController;
@@ -40,8 +41,10 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
@@ -49,8 +52,11 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
+import java.util.Properties;
+import java.util.Iterator;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+
 import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
@@ -240,6 +246,44 @@ implements ContainerAPI, ServiceRevokedListener
   }
 
   /**
+   * Parse and load system properties from a well-known file, as defined
+   * by a system property (default "$INSTALL/configs/common/system.properties")
+   * it will only load properties which do not already have a value.
+   * @property org.cougaar.core.node.properties
+   * @note The property org.cougaar.core.node.properties must be defined as a
+   * standard java -D argument, as it is evaluated extremely early in the Node boot
+   * process.  
+   **/
+
+  private static final void loadSystemProperties() {
+    String u = System.getProperty("org.cougaar.core.node.properties");
+    if (u == null) {
+      u = "$INSTALL/configs/common/system.properties";
+    }
+
+    try {
+      URL cip = Configuration.canonicalizeElement(u);
+      if (cip != null) {
+        Properties p = new Properties();
+        InputStream in = cip.openStream();
+        try {
+          p.load(in);
+        } finally {
+          in.close();
+        }
+        for (Iterator it = p.keySet().iterator(); it.hasNext(); ) {
+          String key = (String) it.next();
+          if (System.getProperty(key) == null) {
+            System.setProperty(key, p.getProperty(key));
+          }
+        }
+      }
+    } catch (Exception e) {
+      //e.printStackTrace();
+    }
+  }
+
+  /**
    * Convert any command-line args to System Properties.
    * <p>
    * System properties are preferred, since it simplifies the
@@ -264,6 +308,8 @@ implements ContainerAPI, ServiceRevokedListener
    * @return false if node should exit
    */
   private static boolean setSystemProperties(String[] args) {
+    loadSystemProperties();
+
     // separate the args into "-D" properties and normal arguments
     for (int i = 0; i < args.length; i++) {
       String argi = args[i];
