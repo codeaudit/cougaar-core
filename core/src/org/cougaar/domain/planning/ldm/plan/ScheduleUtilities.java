@@ -181,9 +181,10 @@ public final class ScheduleUtilities {
    * @throws IllegalArgumentException
    **/
   public static Schedule combineLikeQuantityElements(Schedule aSchedule) {
-    if (! aSchedule.getScheduleElementType().equals(ScheduleElementType.QUANTITY)) {
+    if (!ScheduleElementWithValue.class.
+        isAssignableFrom(aSchedule.getScheduleElementType())) { 
       throw new IllegalArgumentException("ScheduleUtilities.combineLikeQuantityElements expects " +
-                "a Schedule with ScheduleElementWithValues!");
+                                         "a Schedule with ScheduleElementWithValues!");
     }
     double currentQuantity = 0;
     double quantity = 0;
@@ -219,7 +220,7 @@ public final class ScheduleUtilities {
     // create a new schedule to return
     ScheduleImpl newsched = new ScheduleImpl();
     newsched.setScheduleType(aSchedule.getScheduleType());
-    newsched.setScheduleElementType(ScheduleElementType.QUANTITY);
+    newsched.setScheduleElementType(aSchedule.getScheduleElementType());
     newsched.setScheduleElements(minimalScheduleElements);
     
     return newsched;
