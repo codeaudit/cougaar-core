@@ -23,12 +23,9 @@ package org.cougaar.core.domain;
 
 import java.util.Collection;
 
-import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
-
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
+import org.cougaar.core.component.BindingSite;
 
 /**
  * Describe an COUGAAR "Pluggable Domain Package" which consists of
@@ -45,36 +42,12 @@ import org.cougaar.core.blackboard.XPlanServesBlackboard;
  * when domain names change.  Use of domain aliases may result in warnings.
  **/
 
-public interface Domain 
+public interface DomainBindingSite extends BindingSite
 {
-  /**
-   * construct an LDM factory to serve the specified LDM instance.
-   **/
-  Factory getFactory();
-
-  /** invoke the MessageLogicProviders for this domain **/
-  void invokeMessageLogicProviders(DirectiveMessage message);
-
-  /** invoke the EnvelopeLogicProviders for this domain **/
-  void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
-                                    boolean isPersistenceEnvelope);
-
-  /** invoke the RestartLogicProviders for this domain **/
-  void invokeRestartLogicProviders(ClusterIdentifier cid);
-
-  /** returns the domain name  - uniqueness not currently enforced **/
-  String getDomainName();
-
-  /** returns the XPlan instance for the domain - instance may be **/
-  /** be shared among domains **/
-  XPlanServesBlackboard getXPlan();
+  ClusterServesLogicProvider getClusterServesLogicProvider();
+  Collection getXPlans();
+  XPlanServesBlackboard getXPlanForDomain(String domainName);
+  Factory getFactoryForDomain(String domainName);
 }
-
-
-
-
-
-
-
 
 

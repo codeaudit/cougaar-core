@@ -18,23 +18,23 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.BindingSite;
 
-/**
- * @author ALPINE <alpine-software@bbn.com>
+
+/** 
+ * Inteface that describes the minimum expected capabilities of
+ * all Domains
+ * @see org.cougaar.core.component.BinderSupport#initialize()
  **/
-public interface ClusterServesLogicProvider extends LDMServesClient
-{
-  /** Send an asynchronous message.
-   **/
-  void sendMessage(ClusterMessage message);
 
-  /** @return current scenario time in milliseconds **/
-  long currentTimeMillis();
+public interface DomainBase
+  extends Component, Domain
+{
+
+  public void setBindingSite(BindingSite bindingSite);
+
 }

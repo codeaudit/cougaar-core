@@ -65,8 +65,8 @@ public class RootFactory
    * @param ldm LDM object so that Factory can provide convenience aliases to 
    * prototype cache, etc.
    **/
-  public RootFactory( LDMServesPlugin ldm, ClusterIdentifier cid ) {
-    super(ldm, cid);
+  public RootFactory(LDMServesPlugin ldm) {
+    super(ldm, ldm.getClusterIdentifier());
     this.ldm = ldm;
 
     // add the asset factories

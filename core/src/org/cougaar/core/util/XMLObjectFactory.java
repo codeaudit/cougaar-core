@@ -125,7 +125,7 @@ public class XMLObjectFactory {
   public static Factory emptyLFactory;
   static {
     try {
-      emptyLFactory = new RootFactory(new emptyLDMServesPlugin(), null);
+      emptyLFactory = new RootFactory(new emptyLDMServesPlugin());
     } catch (RuntimeException e) {
       e.printStackTrace();
     }
@@ -134,7 +134,7 @@ public class XMLObjectFactory {
     public void throwError() {
       throw new RuntimeException("XMLObjectFactory empty Factory!");
     }
-    public ClusterIdentifier getClusterIdentifier() { throwError(); return null; }
+    public ClusterIdentifier getClusterIdentifier() { return null; }
     public void cachePrototype(String t, Asset a) { throwError(); }
     public boolean isPrototypeCached(String t) { throwError(); return false; }
     public Asset getPrototype(String t, Class c) { throwError(); return null; }

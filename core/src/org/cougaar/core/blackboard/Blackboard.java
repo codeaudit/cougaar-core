@@ -32,10 +32,11 @@ import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 
+import org.cougaar.core.service.DomainForBlackboardService;
+
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Plan;
 
-import org.cougaar.core.domain.Domain;
 
 /** The Blackboard
  *
@@ -59,14 +60,13 @@ public class Blackboard extends Subscriber
   protected ClusterServesLogicProvider myCluster;
   private Distributor myDistributor;
   protected ServiceBroker myServiceBroker;
+  protected DomainForBlackboardService myDomainService;
 
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
     System.getProperty("org.cougaar.core.agent.enablePublishException", "false").equals("true");
 
-  /** The list of XPlans **/
-  private Collection xPlans = new ArrayList();
 
   /** the queue of messages to send **/
   private List sendQueue = new ArrayList();
@@ -129,20 +129,17 @@ public class Blackboard extends Subscriber
     myDistributor = createDistributor(cluster, state);
     setClientDistributor((BlackboardClient) this, myDistributor);
     myCluster = cluster;
-  }
-
-  public void addXPlan(XPlanServesBlackboard xPlan) {
-    if (xPlans.contains(xPlan)) return;
-    xPlans.add(xPlan);
-    if (xPlan instanceof SupportsDelayedLPActions) {
-      dlaPlans.add(xPlan);
+    
+    myDomainService = 
+      (DomainForBlackboardService) sb.getService(this, 
+                                                 DomainForBlackboardService.class, 
+                                                 null);
+    if (myDomainService == null) {
+      RuntimeException re = 
+        new RuntimeException("Couldn't get DomainForBlackboardService!");
+      re.printStackTrace();
+      throw re;
     }
-    xPlan.setupSubscriptions(this);
-    setReadyToPersist();
-  }
-
-  public Collection getXPlans() {
-    return xPlans;
   }
 
   private static class AllObjectsSet extends HashSet {
@@ -240,12 +237,8 @@ public class Blackboard extends Subscriber
     if (aDirective == null) {
       throw new IllegalArgumentException("directive must not be null.");
     } else {
-      if ((c != null) &&
-          (c != AnonymousChangeReport.LIST) &&
-          (c != AnonymousChangeReport.SET) &&
-          (!(c.isEmpty()))) {
-        DirectiveMessage.DirectiveWithChangeReports dd = 
-          new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
+      if (c != null && ((Collection) c).size()>0) {
+        DirectiveMessage.DirectiveWithChangeReports dd = new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
         aDirective = dd;
       }
       sendQueue.add(aDirective);
@@ -397,80 +390,18 @@ public class Blackboard extends Subscriber
   }
 
   public void restart(ClusterIdentifier cid) {
-    for (int i = 0, n = restartLPs.size(); i < n; i++) {
-      RestartLogicProvider p = (RestartLogicProvider) restartLPs.get(i);
-      try {
-        p.restart(cid);
-      }
-      catch (RuntimeException e) {
-        e.printStackTrace();
-      }
-    }
-  }
-
-  private final List envelopeLPs = new ArrayList();
-  private final List messageLPs = new ArrayList();
-  private final List restartLPs = new ArrayList();
-
-  // default protection
-  void addLogicProvider(LogicProvider lp) {
-    if (lp instanceof MessageLogicProvider) {
-      messageLPs.add(lp);
-    }
-    if (lp instanceof EnvelopeLogicProvider) {
-      envelopeLPs.add(lp);
-    }
-    if (lp instanceof RestartLogicProvider) {
-      restartLPs.add(lp);
-    }
-    lp.init();
+    myDomainService.invokeRestartLogicProviders(cid);
   }
 
   private void applyMessageAgainstLogicProviders(DirectiveMessage m) {
-    Directive[] directives = m.getDirectives();
-    int l = messageLPs.size();
-    for (int i = 0; i < l; i++) {
-      MessageLogicProvider p = (MessageLogicProvider) messageLPs.get(i);
-      try {
-        for (int j = 0; j < directives.length; j++) {
-          Directive d = directives[j];
-          Collection cc = AnonymousChangeReport.LIST;
-          if (d instanceof DirectiveMessage.DirectiveWithChangeReports) {
-            DirectiveMessage.DirectiveWithChangeReports dd = 
-              (DirectiveMessage.DirectiveWithChangeReports) d;
-            cc = dd.getChangeReports();
-            d = dd.getDirective();
-          }
-          p.execute(d,cc);
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
+    myDomainService.invokeMessageLogicProviders(m);
   }
 
   /** called by receiveEnvelope (on behalf of a plugin) and consumeTuple (on behalf of
    * an LP).
    **/
   private void callLogicProviders(EnvelopeTuple obj, boolean isPersistenceEnvelope) {
-    Collection changes = null;
-    if (obj instanceof ChangeEnvelopeTuple) {
-      changes = ((ChangeEnvelopeTuple)obj).getChangeReports();
-    }
-    synchronized( envelopeLPs ) {
-      int l = envelopeLPs.size();
-      for (int i=0; i<l; i++) {
-        EnvelopeLogicProvider p = (EnvelopeLogicProvider) envelopeLPs.get(i);
-	if (isPersistenceEnvelope && !(p instanceof LogicProviderNeedingPersistenceEnvelopes)) {
-	  continue;	// This lp does not want contents of PersistenceEnvelopes
-	}
-        try {
-          p.execute(obj, changes);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }
+    myDomainService.invokeEnvelopeLogicProviders(obj, isPersistenceEnvelope);
   }
 
   // handle events - right now do nothing.
@@ -482,16 +413,8 @@ public class Blackboard extends Subscriber
     return myDistributor.history;
   }
 
-  // support delayed LP actions
-  private ArrayList dlaPlans = new ArrayList(1);
-
-  Envelope executeDelayedLPActions() {
-    int l = dlaPlans.size();
-    for (int i=0; i<l; i++) {
-      SupportsDelayedLPActions p = (SupportsDelayedLPActions) dlaPlans.get(i);
-      p.executeDelayedLPActions();
-    }
-
+  protected Envelope executeDelayedLPActions() {
+    myDomainService.invokeDelayedLPActions();
     return privateGetPublishedChanges();
   }
 
@@ -499,74 +422,11 @@ public class Blackboard extends Subscriber
     return myDistributor.getState();
   }
 
-  //
-  // domain client support
-  //
-  private final HashMap domains = new HashMap(11);
-  private static class DomainTuple {
-    public Domain domain;
-    public XPlanServesBlackboard xplan;
-    public Collection lps;
-    public DomainTuple(Domain domain, XPlanServesBlackboard xplan, Collection lps) {
-      this.domain = domain;
-      this.xplan = xplan;
-      this.lps = lps;
-    }
-  }
-
-  public XPlanServesBlackboard getXPlanForDomain(Domain d) {
-    synchronized (domains) {
-      DomainTuple dt = (DomainTuple) domains.get(d);
-      if (dt != null) {
-        return dt.xplan;
-      } else {
-        return null;
-      }
-    }
-  }
-
-  /** Adds the domain to the blackboard by adding any XPlan required and
-   * any LogicProviders.
+  /** Ensure that all the domains know that this is THE blackboard
    **/
-  public void connectDomain(Domain d) {
-    synchronized (domains) {
-      if (domains.get(d) != null) {
-        throw new RuntimeException("Tried to re-add domain "+d);
-      } 
-      
-      DomainTuple dt = null;
-      // create the XPlan
-      XPlanServesBlackboard xplan = d.createXPlan(getXPlans());
-      if (xPlans.contains(xplan)) {
-        // in fact, domains often just use some other domain's xplan.
-        // we should probably forbid this at some point.
-
-        //throw new RuntimeException("Domain "+d+" tried to reuse XPlan "+xplan);
-        //System.err.println("Warning: Domain "+d+" tried to reuse XPlan "+xplan);
-      }
-        
-      // create the LPs and hook them in
-      Collection lps = new ArrayList(d.createLogicProviders(xplan, myCluster));
-
-      // add the domainTuple
-      dt = new DomainTuple(d, xplan, lps);
-      domains.put(d,dt);
-
-      // activate the xplan
-      if (xplan != null) addXPlan(xplan);
-
-      // activate the LPs
-      if (lps != null) {
-        for (Iterator li = lps.iterator(); li.hasNext(); ) {
-          Object lo = li.next();
-          if (lo instanceof LogicProvider) {
-            addLogicProvider((LogicProvider) lo);
-          } else {
-            System.err.println("Domain "+d+" requested loading of a non LogicProvider "+lo+" (Ignored).");
-          }
-        }
-      }
-    }
+  protected void connectDomains() {
+    myDomainService.setBlackboard(this);
+    setReadyToPersist();
   }
   
 

@@ -43,10 +43,7 @@ import org.cougaar.core.plugin.LDMService;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.ServiceRevokedEvent;
 
-import org.cougaar.core.agent.service.domain.DomainServiceProvider;
-import org.cougaar.core.agent.service.domain.DomainServiceImpl;
 import org.cougaar.core.service.DomainService;
-import org.cougaar.core.domain.DomainManager;
 
 import org.cougaar.core.service.PrototypeRegistryService;
 import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;

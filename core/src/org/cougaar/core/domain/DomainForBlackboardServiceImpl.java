@@ -18,20 +18,34 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.blackboard;
 
-import org.cougaar.core.agent.*;
+package org.cougaar.core.domain;
 
-import java.util.Collection;
+import java.util.List;
 
-/** API for LogPlan LogicProviders which handle transaction packets
- * (EnvelopeTuples) rather than Messages.
- **/
+import org.cougaar.core.blackboard.Blackboard;
+import org.cougaar.core.service.DomainForBlackboardService;
 
-public interface EnvelopeLogicProvider extends LogicProvider {
-  /** Called by LogPlan on each received EnvelopeTuple.
-   * @return true iff it actually performed an action based on the 
-   * tuple.
-   **/
-  void execute(EnvelopeTuple m, Collection changeReports);
-}
+public class DomainForBlackboardServiceImpl extends DomainServiceImpl
+ implements DomainForBlackboardService {
+
+  //When cluster creates this service it will
+  //pass a reference to it's PrototypeRegistryService in the form
+  // of itself acting as LDMServesPlugin...
+  //In the future these service may dynamically find each otehr
+  public DomainForBlackboardServiceImpl(DomainManager domainManager) {
+    super(domainManager);
+  }
+  
+  public void setBlackboard(Blackboard blackboard) {
+    domainManager.blackboard(blackboard);
+  }
+
+  public void invokeDelayedLPActions() {
+    domainManager.invokeDelayedLPActions();
+  }
+}  
+
+
+
+

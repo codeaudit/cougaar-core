@@ -18,23 +18,11 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
-
-import org.cougaar.core.blackboard.*;
-
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
+package org.cougaar.core.domain;
 
 /**
- * @author ALPINE <alpine-software@bbn.com>
+ * Marker interface indicating a logic provider that needs to see the
+ * contents of PersistenceEnvelopes.
  **/
-public interface ClusterServesLogicProvider extends LDMServesClient
-{
-  /** Send an asynchronous message.
-   **/
-  void sendMessage(ClusterMessage message);
-
-  /** @return current scenario time in milliseconds **/
-  long currentTimeMillis();
+public interface LogicProviderNeedingPersistenceEnvelopes {
 }

@@ -22,12 +22,15 @@
 package org.cougaar.core.domain;
 
 import java.util.*;
-import org.cougaar.core.domain.LDMServesPlugin;
+
+import org.cougaar.core.agent.ClusterServesLogicProvider;
+
 import org.cougaar.core.blackboard.LogPlan;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
-import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
+
+import org.cougaar.core.component.BindingSite;
+
+import org.cougaar.core.relay.RelayLP;
 
 import org.cougaar.planning.ldm.lps.*;
 
@@ -36,66 +39,96 @@ import org.cougaar.planning.ldm.lps.*;
  * objects and behavior shared by all COUGAAR-based systems.
  **/
 
-public class RootDomain 
-  implements Domain
-{
-  /**
-   * construct an LDM factory to serve the specified LDM instance.
-   **/
-  public Factory getFactory(LDMServesPlugin ldm) {
-    return new RootFactory(ldm, ldm.getClusterIdentifier());
+public class RootDomain extends DomainAdapter {
+
+  private static final String ROOT_NAME = "root".intern();
+
+  public String getDomainName() {
+    return ROOT_NAME;
   }
 
-  /** initialize Domain. Called once on a new instance immediately
-   * after creating the Domain instance via the zero-argument constructor.
-   **/
-  public void initialize() {
+  
+  public void load() {
+    super.load();
   }
 
-  public XPlanServesBlackboard createXPlan(Collection existingXPlans) {
-    for (Iterator plans = existingXPlans.iterator(); plans.hasNext(); ) {
-      XPlanServesBlackboard xPlan = (XPlanServesBlackboard) plans.next();
-      if (xPlan instanceof LogPlan) return xPlan;
+  protected void loadFactory() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
+
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain Factory without a binding site.");
+    } 
+
+    setFactory(new RootFactory(bindingSite.getClusterServesLogicProvider().getLDM()));
+  }
+
+  protected void loadXPlan() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
+
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain XPlan without a binding site.");
+    } 
+
+    Collection xPlans = bindingSite.getXPlans();
+    LogPlan logPlan = null;
+    
+    for (Iterator iterator = xPlans.iterator(); iterator.hasNext();) {
+      XPlanServesBlackboard  xPlan = (XPlanServesBlackboard) iterator.next();
+      if (xPlan instanceof LogPlan) {
+        // Note that this means there are 2 paths to the plan.
+        // Is this okay?
+        logPlan = (LogPlan) logPlan;
+        break;
+      }
     }
-    return new LogPlan();
+    
+    if (logPlan == null) {
+      logPlan = new LogPlan();
+    }
+    
+    setXPlan(logPlan);
   }
 
-  /**
-   * Create new Domain-specific LogicProviders for loading into the LogPlan.
-   * @return a Collection of the LogicProvider instances or null.
-   **/
-  public Collection createLogicProviders(BlackboardServesLogicProvider alpplan, 
-                                         ClusterServesLogicProvider cluster) 
-  {
-    ArrayList l = new ArrayList(15); // don't let this be too small.
-    LogPlanServesLogicProvider logplan = (LogPlanServesLogicProvider) alpplan;
+  protected void loadLPs() {
+    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
 
-    l.add(new org.cougaar.core.relay.RelayLP(logplan, cluster));
+    if (bindingSite == null) {
+      throw new RuntimeException("Binding site for the domain has not be set.\n" +
+                             "Unable to initialize domain LPs without a binding site.");
+    } 
 
-    // MessageLPs
-    l.add(new ReceiveAssetLP(logplan, cluster));
-    l.add(new ReceiveAssetVerificationLP(logplan, cluster));
-    l.add(new ReceiveAssetRescindLP(logplan, cluster));
-    l.add(new ReceiveNotificationLP(logplan, cluster));
-    l.add(new ReceiveDeletionLP(logplan, cluster));
-    l.add(new ReceiveRescindLP(logplan, cluster));
-    l.add(new ReceiveTaskLP(logplan, cluster));
-    //l.add(new AggregationPublishLP(logplan, cluster));
-
+    ClusterServesLogicProvider cluster = bindingSite.getClusterServesLogicProvider();
+    LogPlan logPlan = (LogPlan) getXPlan();
+    
+    addLogicProvider(new ReceiveAssetLP(logPlan, cluster));
+    addLogicProvider(new ReceiveAssetVerificationLP(logPlan, cluster));
+    addLogicProvider(new ReceiveAssetRescindLP(logPlan, cluster));
+    addLogicProvider(new ReceiveNotificationLP(logPlan, cluster));
+    addLogicProvider(new ReceiveDeletionLP(logPlan, cluster));
+    addLogicProvider(new ReceiveRescindLP(logPlan, cluster));
+    addLogicProvider(new ReceiveTaskLP(logPlan, cluster));
+    
     // envelopeLPs
-    l.add(new AssetTransferLP(logplan, cluster));    
-    l.add(new NotificationLP(logplan, cluster));
-    l.add(new DeletionLP(logplan, cluster));
-    l.add(new RemoteClusterAllocationLP(logplan, cluster));
-    l.add(new PreferenceChangeLP(logplan, cluster));
-    l.add(new RescindLP(logplan, cluster));
+    addLogicProvider(new AssetTransferLP(logPlan, cluster));    
+    addLogicProvider(new NotificationLP(logPlan, cluster));
+    addLogicProvider(new DeletionLP(logPlan, cluster));
+    addLogicProvider(new RemoteClusterAllocationLP(logPlan, cluster));
+    addLogicProvider(new PreferenceChangeLP(logPlan, cluster));
+    addLogicProvider(new RescindLP(logPlan, cluster));
+    
     // error detection LP
-    l.add(new ComplainingLP(logplan, cluster));
-
-    // should be done by expander plugins now
-    //l.add(new WorkflowAllocationLP(logplan, cluster));
-    // turn off for now because it is a cpu hog (and isn't used). 
-    //l.add(new RoleScheduleConflictLP(logplan, cluster));
-    return l;
+    addLogicProvider(new ComplainingLP(logPlan, cluster));
+    
+    addLogicProvider(new RelayLP(logPlan, cluster));
   }
 }
+
+
+
+
+
+
+
+

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -18,13 +18,38 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.*;
+import java.util.*;
+import java.lang.reflect.*;
+import org.cougaar.core.component.*;
 
 /**
- * Marker interface indicating a logic provider that needs to see the
- * contents of PersistenceEnvelopes.
+ * A simple BinderFactory for binding domain Domains.
  **/
-public interface LogicProviderNeedingPersistenceEnvelopes {
+public class DefaultDomainBinderFactory extends BinderFactorySupport
+{
+
+  /** Select the binder to use - must be an extension of DefaultDomainBinder.
+   **/
+  protected Class getBinderClass(Object child) {
+    return DefaultDomainBinder.class;
+  }
+  
+  /** Bind a domain with a domain binder. 
+   **/
+  protected Binder bindChild(Class binderClass, Object child) {
+    Binder b = super.bindChild(binderClass, child);
+    if (b == null) {
+      return null;
+    } else {
+      if (b instanceof DefaultDomainBinder) {
+        return b;
+      } else {
+        System.err.println("Illegal binder class specified: "+binderClass);
+        return null;
+      }
+    }
+  }
+
 }

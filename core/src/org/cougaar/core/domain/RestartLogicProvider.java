@@ -18,9 +18,9 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.*;
+import org.cougaar.core.blackboard.ClusterIdentifier;
 
 /** 
  * API for LogPlan LogicProviders which handle agent restarts
@@ -49,3 +49,10 @@ public interface RestartLogicProvider extends LogicProvider {
    **/
   void restart(ClusterIdentifier cid);
 }
+
+
+
+
+
+
+

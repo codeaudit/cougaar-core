@@ -18,29 +18,33 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent.service.domain;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.domain.*;
+import java.util.List;
 
-import org.cougaar.core.service.*;
+import org.cougaar.core.agent.ClusterIdentifier;
 
-import org.cougaar.core.agent.*;
+import org.cougaar.core.blackboard.Blackboard;
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.blackboard.EnvelopeTuple;
 
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 /** A DomainServiceProvider is a provider class for domain factory services. **/
-public class DomainServiceProvider implements ServiceProvider {
-  private DomainServiceImpl theService;
+public class DomainForBlackboardServiceProvider implements ServiceProvider {
+  private DomainForBlackboardServiceImpl theService;
 
-  public DomainServiceProvider(DomainServiceImpl theDomainService) {
+  public DomainForBlackboardServiceProvider(DomainForBlackboardServiceImpl theDomainService) {
     this.theService = theDomainService;
   }
   
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    if (DomainService.class.isAssignableFrom(serviceClass)) {
-      return new DomainServiceProxy();
+    if ((DomainForBlackboardService.class.isAssignableFrom(serviceClass)) &&
+        (requestor instanceof Blackboard)) {
+      return new DomainForBlackboardServiceProxy();
     } else {
       return null;
     }
@@ -49,7 +53,8 @@ public class DomainServiceProvider implements ServiceProvider {
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
   }
 
-  private final class DomainServiceProxy implements DomainService {
+  private final class DomainForBlackboardServiceProxy 
+    implements DomainForBlackboardService {
     public ClusterObjectFactory getClusterObjectFactory() {
       return theService.getClusterObjectFactory();
     }
@@ -63,7 +68,32 @@ public class DomainServiceProvider implements ServiceProvider {
     public Factory getFactory(String domainname) {
       return theService.getFactory(domainname);
     }
-  } // end of DomainServiceProxy
+
+    public List getFactories() {
+      return theService.getFactories();
+    }
+
+    public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
+                                             boolean persistenceEnv) {
+      theService.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
+    }
+
+    public void invokeMessageLogicProviders(DirectiveMessage message) {
+      theService.invokeMessageLogicProviders(message);
+    }
+
+    public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+      theService.invokeRestartLogicProviders(cid);
+    }
+
+    public void setBlackboard(Blackboard blackboard) {
+      theService.setBlackboard(blackboard);
+    }
+
+    public void invokeDelayedLPActions() {
+      theService.invokeDelayedLPActions();
+    }
+  } // end of DomainForBlackboardServiceProxy
 
 }
 

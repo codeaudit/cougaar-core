@@ -18,14 +18,24 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+package org.cougaar.core.domain;
 
+import java.util.Collection;
 
-package org.cougaar.core.agent;
+import org.cougaar.core.blackboard.EnvelopeTuple;
 
-import org.cougaar.core.blackboard.*;
-
-/** Base class for all LogicProviders 
+/** API for LogPlan LogicProviders which handle transaction packets
+ * (EnvelopeTuples) rather than Messages.
  **/
-public interface LogicProvider {
-  void init();
+
+public interface EnvelopeLogicProvider extends LogicProvider {
+  /** Called by LogPlan on each received EnvelopeTuple.
+   * @return true iff it actually performed an action based on the 
+   * tuple.
+   **/
+  void execute(EnvelopeTuple m, Collection changeReports);
 }
+
+
+
+

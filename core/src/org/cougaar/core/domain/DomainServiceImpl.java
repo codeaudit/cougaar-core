@@ -19,91 +19,86 @@
  * </copyright>
  */
 
-package org.cougaar.core.agent.service.domain;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.domain.*;
+import java.util.List;
 
-import org.cougaar.core.service.*;
+import org.cougaar.core.service.DomainService;
 
-import org.cougaar.core.agent.*;
+import org.cougaar.core.agent.ClusterIdentifier;
 
-import org.cougaar.core.domain.LDMServesPlugin;
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.blackboard.EnvelopeTuple;
+
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
-import java.util.HashMap;
+
 
 public class DomainServiceImpl implements DomainService {
 
   private Domain rootDomain = null;
   private RootFactory myRootFactory = null;
-  private LDMServesPlugin registryService;
+  protected DomainManager domainManager = null;
+
 
   //When cluster creates this service it will
   //pass a reference to it's PrototypeRegistryService in the form
   // of itself acting as LDMServesPlugin...
   //In the future these service may dynamically find each otehr
-  public DomainServiceImpl(LDMServesPlugin registryService) {
-    this.registryService = registryService;
-    //get the domains set up
-    DomainManager.initialize();
-    // set up the root domain, especially the root factory.
-    this.rootDomain = DomainManager.find("root");
-    this.myRootFactory = (RootFactory) rootDomain.getFactory(registryService);
+  public DomainServiceImpl(DomainManager domainManager) {
+    this.domainManager = domainManager;
  }
 
   /**
    * Answer with a reference to the Factory
-   * It is inteded that there be one and only one ClusterObjectFactory
+   * It is intended that there be one and only one ClusterObjectFactory
    * per Cluster instance.  Hence, ClusterManagment will always provide
    * plugins with access to the ClusterObjectFactory
    **/
   public ClusterObjectFactory getClusterObjectFactory() {
-    return myRootFactory;
+    return (ClusterObjectFactory) domainManager.getFactoryForDomain("root");
   }
 
   /** expose the LDM factory instance to consumers.
    *  @return LdmFactory The fatory object to use in constructing LDM Objects
    **/
   public RootFactory getFactory(){
-    return myRootFactory;
+    return (RootFactory) domainManager.getFactoryForDomain("root");
   }
 
-  /** map of domainname to domain factory instance **/
-  private HashMap factories = new HashMap(11);
-  /** map of domains to factories. synchronized on factories **/
-  private HashMap domainFactories = new HashMap(11);
- 
   /** @deprecated use getFactory() **/
   public RootFactory getLdmFactory() {
     return getFactory();
   }
 
-  /** create a domain-specific factory **/
-  public Factory getFactory(String domainname) {
-    String key = domainname;
-    synchronized (factories) {
-      Factory f = (Factory) factories.get(key);
-      if (f != null) return f;
+  /** return a domain-specific factory **/
+  public Factory getFactory(String domainName) {
+    return domainManager.getFactoryForDomain(domainName);
+  }
 
-      // bail out for root
-      if ("root".equals(domainname)) {
-        factories.put(key, myRootFactory);
-        return myRootFactory;
-      }
-        
-      Domain d = DomainManager.find(key);
-      if (d == null) return null; // couldn't find the domain!
+  /** return a List of all domain-specific factories **/
+  public List getFactories() {
+    return domainManager.getFactories();
+  }
 
-      f = (Factory) domainFactories.get(d); // check the domain factories set first
-      if (f == null) {
-        f = d.getFactory(registryService);   // create a new factory
-        if (f == null) return null; // failed to create the factory
-        domainFactories.put(d, f);
-      }
-      factories.put(key, f);    // cache the factory against the name
-      return f;
-    }
+  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
+                                           boolean persistenceEnv) {
+    domainManager.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
+  }
+
+  /** invoke MessageLogicProviders across all currently loaded domains **/
+  public void invokeMessageLogicProviders(DirectiveMessage message) {
+    domainManager.invokeMessageLogicProviders(message);
+  }
+
+  /** invoke RestartLogicProviders across all currently loaded domains **/
+  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+    domainManager.invokeRestartLogicProviders(cid);
   }
 
 }  
+
+
+
 

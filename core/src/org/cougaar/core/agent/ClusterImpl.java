@@ -31,8 +31,6 @@ import org.cougaar.core.agent.service.containment.*;
 
 import org.cougaar.core.agent.service.democontrol.*;
 
-import org.cougaar.core.agent.service.domain.*;
-
 import org.cougaar.core.agent.service.registry.*;
 
 import org.cougaar.core.agent.service.scheduler.*;
@@ -104,8 +102,6 @@ import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.Domain;
 import org.cougaar.core.domain.DomainManager;
 import org.cougaar.core.service.DomainService;
-import org.cougaar.core.agent.service.domain.DomainServiceImpl;
-import org.cougaar.core.agent.service.domain.DomainServiceProvider;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.RootFactory;
 
@@ -173,7 +169,6 @@ public class ClusterImpl
   private PrototypeRegistryService myPrototypeRegistryService;
   private PrototypeRegistryServiceProvider myPrototypeRegistryServiceProvider;
 
-  private DomainServiceProvider myDomainServiceProvider;
   private DomainService myDomainService;
 
   private AlarmServiceProvider myAlarmServiceProvider;
@@ -189,7 +184,6 @@ public class ClusterImpl
   private NamingService myNamingService;
 
   private Map clusterInfo = new HashMap();
-
   private static final String TOPOLOGY_CONTEXT_NAME =
     org.cougaar.core.mts.NameSupport.TOPOLOGY_DIR;
   private static final String INCARNATION_ATTRIBUTE_NAME =
@@ -254,6 +248,16 @@ public class ClusterImpl
 
   //Domain/Factory Service
   protected final DomainService getDomainService() {
+    if (myDomainService == null) {
+      myDomainService= 
+        (DomainService) getServiceBroker().getService(this, 
+                                                      DomainService.class, 
+                                                      null);
+      if (myDomainService == null) {
+        throw new RuntimeException("Couldn't get DomainService!");
+      }
+    }
+
     return myDomainService;
   }
 
@@ -370,18 +374,6 @@ public class ClusterImpl
       sb.getService(
           this, PrototypeRegistryService.class, null);
 
-    //set up the DomainServiceImpl and the DomainService
-    // DomainServiceImpl needs the PrototypeRegistryService
-    //for now its in the form of this as LDMServesPlugin - should be changed!!!
-    DomainServiceImpl myDSI = new DomainServiceImpl(this);
-    myDomainServiceProvider = new DomainServiceProvider(myDSI);
-    sb.addService(DomainService.class, myDomainServiceProvider);
-
-    //for backwards compatability
-    myDomainService = (DomainService) 
-      sb.getService(
-          this, DomainService.class, null);
-
     // add alarm service
     myAlarmServiceProvider = new AlarmServiceProvider(this);
     sb.addService(AlarmService.class, myAlarmServiceProvider);
@@ -398,20 +390,6 @@ public class ClusterImpl
     // above domainservice and prototyperegistry service
     myLDMServiceProvider = new LDMServiceProvider(this);
     sb.addService(LDMService.class, myLDMServiceProvider);
-
-    // force set up all the factories
-    Collection keys = DomainManager.keySet();
-    for (Iterator i = keys.iterator(); i.hasNext(); ) {
-      String key = (String) i.next();
-      try {
-        getFactory(key);
-      } catch (Exception e) { 
-        synchronized (System.err) {
-          System.err.println("Problem loading Domain Factory \""+key+"\": ");
-          e.printStackTrace(); 
-        }
-      }
-    }
 
     // transit the state.
     super.load();
@@ -443,6 +421,17 @@ public class ClusterImpl
               null); //policy
         super.add(nsscDesc);
       }
+
+
+      // Domains *MUST* be loaded before the blackboard
+      add(new ComponentDescription(getClusterIdentifier()+"DomainManager",
+                                   "Node.AgentManager.Agent.DomainManager",
+                                   "org.cougaar.core.domain.DomainManager",
+                                   null,
+                                   null,
+                                   null,
+                                   null,
+                                   null));
 
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       add(new ComponentDescription(getClusterIdentifier()+"Blackboard",
@@ -615,9 +604,6 @@ public class ClusterImpl
 
     sb.revokeService(AlarmService.class, myAlarmServiceProvider);
 
-    sb.releaseService(this, DomainService.class, myDomainService);
-    sb.revokeService(DomainService.class, myDomainServiceProvider);
-
     sb.releaseService(this, PrototypeRegistryService.class, 
                       myPrototypeRegistryService);
     sb.revokeService(PrototypeRegistryService.class, 
@@ -640,6 +626,7 @@ public class ClusterImpl
     sb.releaseService(this, MessageWatcherService.class, watcherService);
     sb.releaseService(this, MessageStatisticsService.class, statisticsService);
     sb.releaseService(this, MessageTransportService.class, messenger);
+    sb.releaseService(this, DomainService.class, myDomainService);
   }
 
   /**

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -18,23 +18,18 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.*;
+import org.cougaar.core.component.Binder;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
-
-/**
- * @author ALPINE <alpine-software@bbn.com>
+/** The standard Binder api for Binders.  This is the interface
+ * which the container may call on the Binder.
  **/
-public interface ClusterServesLogicProvider extends LDMServesClient
+public interface DomainBinder
+  extends Binder
 {
-  /** Send an asynchronous message.
-   **/
-  void sendMessage(ClusterMessage message);
-
-  /** @return current scenario time in milliseconds **/
-  long currentTimeMillis();
 }
+
+
+
+

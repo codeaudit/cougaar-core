@@ -18,23 +18,26 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
+package org.cougaar.core.domain;
 
-/**
- * @author ALPINE <alpine-software@bbn.com>
- **/
-public interface ClusterServesLogicProvider extends LDMServesClient
-{
-  /** Send an asynchronous message.
-   **/
-  void sendMessage(ClusterMessage message);
+import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 
-  /** @return current scenario time in milliseconds **/
-  long currentTimeMillis();
+public abstract class LogPlanLogicProvider implements LogicProvider {
+  protected LogPlanServesLogicProvider logplan;
+  protected ClusterServesLogicProvider cluster;
+  protected RootFactory ldmf;
+
+  public LogPlanLogicProvider(LogPlanServesLogicProvider logplan,
+                              ClusterServesLogicProvider cluster)
+  {
+    this.logplan = logplan;
+    this.cluster = cluster;
+    this.ldmf = cluster.getFactory();
+  }
+
+  public void init() {
+  }
 }

@@ -42,7 +42,6 @@ public interface AgentChildBindingSite
    * which are actually used by Blackboard.
    **/
   ClusterServesLogicProvider getCluster();
-
 }
 
 

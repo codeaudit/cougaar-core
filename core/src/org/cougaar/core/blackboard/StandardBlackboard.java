@@ -103,38 +103,7 @@ public class StandardBlackboard
     sb.addService(BlackboardService.class, bbSP);
     sb.addService(BlackboardMetricsService.class, bbSP);
 
-    // load the domains & lps
-    try {
-      Collection domains = DomainManager.values();
-      // MIK BB
-      // HACK to let Metrics see plan objects
-      //Domain rootDomain = DomainManager.find("root"); 
-
-      for (Iterator i = domains.iterator(); i.hasNext(); ) {
-        Domain d = (Domain) i.next();
-
-        bb.connectDomain(d);
-
-        // Replace HACK to let Metrics count plan objects - there should be
-        // a blackboard-level metrics service which deals with this.
-        //if (d == rootDomain) {
-        //  myLogPlan = (LogPlan) bb.getXPlanForDomain(d);
-        //}
-      }
-
-      // MIK BB
-      /*
-      // specialLPs - maybe it should have a special domain.  MIK
-      if (isMetricsHeartbeatOn) {
-        bb.addLogicProvider(new MetricsLP(myLogPlan, this));
-      }
-      */
-    } catch (Exception e) { 
-      synchronized (System.err) {
-        System.err.println("Problem loading Blackboard domains: ");
-        e.printStackTrace(); 
-      }
-    }
+    bb.connectDomains();
 
     // add services here (none for now)
   }
@@ -214,3 +183,4 @@ public class StandardBlackboard
     }
   }
 }
+

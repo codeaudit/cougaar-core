@@ -91,7 +91,8 @@ public abstract class BindingUtility {
               try {
                 m.invoke(child, args);
               } catch (InvocationTargetException ite) {
-                ite.printStackTrace();
+                ite.getCause().printStackTrace();
+                throw ite;
               }
             }
           }
@@ -121,8 +122,8 @@ public abstract class BindingUtility {
 
   public static boolean call0(Object child, String method) {
     Class childClass = child.getClass();
+    Method init = null;
     try {
-      Method init = null;
       try {
         init = childClass.getMethod(method, null);
       } catch (NoSuchMethodException e1) { }
@@ -131,12 +132,12 @@ public abstract class BindingUtility {
         //System.err.println("Invoked "+method+" on "+child);
         return true;
       }
+    } catch (java.lang.reflect.InvocationTargetException ite) {
+      ite.getCause().printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
       //throw e;
     }
     return false;
   }
-
-
 }

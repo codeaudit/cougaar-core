@@ -20,30 +20,10 @@
  */
 
 
-package org.cougaar.core.blackboard;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.agent.*;
-
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.RootFactory;
-
-public abstract class LogPlanLogicProvider implements LogicProvider {
-  protected LogPlanServesLogicProvider logplan;
-  protected ClusterServesLogicProvider cluster;
-  protected RootFactory ldmf;
-
-  public LogPlanLogicProvider(LogPlanServesLogicProvider logplan,
-                              ClusterServesLogicProvider cluster)
-  {
-    this.logplan = logplan;
-    this.cluster = cluster;
-    this.ldmf = cluster.getFactory();
-  }
-
-  public void init() {
-  }
+/** Base class for all LogicProviders 
+ **/
+public interface LogicProvider {
+  void init();
 }

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -18,23 +18,24 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.domain;
 
-import org.cougaar.core.blackboard.*;
+import java.util.Collection;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.domain.LDMServesClient;
+import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.core.blackboard.XPlanServesBlackboard;
+import org.cougaar.core.component.ContainerAPI;
 
-/**
- * @author ALPINE <alpine-software@bbn.com>
+
+/** This is the interface presented to a PluginBinder from the PluginManager.
  **/
-public interface ClusterServesLogicProvider extends LDMServesClient
+public interface DomainManagerForBinder
+  extends ContainerAPI
 {
-  /** Send an asynchronous message.
-   **/
-  void sendMessage(ClusterMessage message);
-
-  /** @return current scenario time in milliseconds **/
-  long currentTimeMillis();
+  ClusterServesLogicProvider getClusterServesLogicProvider();
+  Collection getXPlans();
+  XPlanServesBlackboard getXPlanForDomain(String domainName);
+  Factory getFactoryForDomain(String domainName);
 }
+
+

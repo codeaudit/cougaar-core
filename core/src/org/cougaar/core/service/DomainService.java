@@ -21,15 +21,23 @@
 
 package org.cougaar.core.service;
 
+import java.util.List;
+
 import org.cougaar.core.domain.*;
 
+import org.cougaar.core.agent.ClusterIdentifier;
+
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.blackboard.EnvelopeTuple;
+
 import org.cougaar.core.component.Service;
+
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 public interface DomainService extends Service {
   /**
    * Answer with a reference to the Factory
-   * It is inteded that there be one and only one ClusterObjectFactory
+   * It is intended that there be one and only one ClusterObjectFactory
    * per Cluster instance.  Hence, ClusterManagment will always provide
    * plugins with access to the ClusterObjectFactory
    **/
@@ -43,7 +51,23 @@ public interface DomainService extends Service {
   /** @deprecated use getFactory() **/
   RootFactory getLdmFactory();
 
-  /** create a domain-specific factory **/
+  /** return a domain-specific factory **/
   Factory getFactory(String domainname);
 
+  /** return a list of all domain-specific factories **/
+  List getFactories();
+
+  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
+                                    boolean persistenceEnv);
+  /** invoke MessageLogicProviders across all currently loaded domains **/
+  void invokeMessageLogicProviders(DirectiveMessage message);
+
+  /** invoke RestartLogicProviders across all currently loaded domains **/
+  void invokeRestartLogicProviders(ClusterIdentifier cid);
 }  
+
+
+
+
+
