@@ -42,9 +42,9 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.util.RarelyModifiedList;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This class advertises the SelectService, which manages the list
@@ -260,16 +260,28 @@ implements Component
     // throw a little randomness into the mix
     double rnd = 1.0 + config.randomWeight*(Math.random() - 0.5);
     ret *= rnd;
+    // if this is our primary server, favor it by adjusting its
+    // score
+    if (config.primaryAlias != null &&
+        e.containsAlias(config.primaryAlias)) {
+      ret *= config.primaryWeight;
+    }
     if (logger.isDetailEnabled()) {
       logger.detail(
-          "adjust "+
+          "adjust"+
           ((updateTime <= 0 || config.maxAge < age) ?
-           ("default score "+config.defaultScore+" by ") :
-           ("rtt avg "+e.getAverage()+
+           (" default score "+config.defaultScore+" by") :
+           (" rtt avg "+e.getAverage()+
             " by age ("+age+" of "+config.maxAge+")="+
             ((int)(100.0*ageRatio))+
-            "% and "))+
-          "rand "+rnd+" yields a score of "+ret);
+            "% and"))+
+          " rand "+rnd+
+          ((config.primaryAlias != null &&
+           e.containsAlias(config.primaryAlias)) ?
+           (" and primary-match("+config.primaryAlias+")="+
+           config.primaryWeight) :
+           "")+
+          " yields a score of "+ret);
     }
     if (logger.isDebugEnabled()) {
       logger.debug("Score is "+ret+" for "+e.toString(now));
@@ -681,6 +693,29 @@ implements Component
           System.getProperty(
             "org.cougaar.core.wp.resolver.select.maxTimeout",
             "90000"));
+    public static final String primaryAlias;
+    static {
+      String s = System.getProperty(
+          "org.cougaar.core.wp.resolver.select.primary");
+      // in form "alias(:node)?", extract "alias" prefix
+      int idx = (s == null ? -1 : s.indexOf(':'));
+      primaryAlias = (idx < 0 ? s : s.substring(idx+1));
+    }
+    public static final double primaryWeight;
+    static {
+      String s = 
+        System.getProperty(
+          "org.cougaar.core.wp.resolver.select.favorPrimaryBy",
+          "0.0");
+      double d = (s == null ? 0.0 : Double.parseDouble(s));
+      d = 1.0 - d;
+      if (d > 1.0) {
+        d = 1.0;
+      } else if (d < 0.0) {
+        d = 0.0;
+      }
+      primaryWeight = d;
+    }
 
     public SelectManagerConfig(Object o) {
       // FIXME parse!
