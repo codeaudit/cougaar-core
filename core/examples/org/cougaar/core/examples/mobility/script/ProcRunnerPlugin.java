@@ -43,7 +43,7 @@ import org.cougaar.core.examples.mobility.ldm.StepStatus;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mobility.ldm.MoveAgent;
-import org.cougaar.core.mobility.ldm.MoveAgent$Status;
+import org.cougaar.core.mobility.ldm.MoveAgent.Status;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
