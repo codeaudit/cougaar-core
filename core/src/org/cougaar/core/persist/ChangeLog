@@ -1,3 +1,27 @@
+2002-01-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* DatabasePersistence.java:
+	Fix bug 1014
+	The query to update the status of incremental deltas in the
+	database was being overwritten with the query to update the status
+	of full deltas so incremental deltas remained active forever and
+	were never scavenged. Also the argument specifying if a delta were
+	full or not was misspelled and so no delta was ever marked as
+	"full". Consequently, all deltas were incremental and never
+	scavenged.
+	There was no provision to scavenge full deltas when archiving is
+	disabled. This now fixed so the persistence database can be kept
+	as trim as possible.
+
+	* BasePersistence.java:
+	Fix bug 1014
+	Document clear property
+	Add org.cougaar.core.cluster.persistence.archivingDisabled
+	property to allow archiving to be disabled.
+	Add org.cougaar.core.cluster.persistence.consolidationPeriod
+	property to control how ofter full deltas are generated. Defaults
+	to 10 which it is the prior hard-coded value
+
 2001-11-16  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Persistence.java: 
