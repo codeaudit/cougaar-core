@@ -229,7 +229,7 @@ public class PlugInHelper {
     // TASK PREFERENCE UTILS (taken from glm/.../TaskUtils
     public static long getStartTime(Task task) {
         double startTime = getPreferenceBestValue(task, AspectType.START_TIME);
-        if (startTime == Double.NaN) {
+        if (Double.isNaN(startTime)) {
             throw new IllegalArgumentException("Task has no START_TIME preference");
         }
         return (long) startTime;
@@ -237,7 +237,7 @@ public class PlugInHelper {
 
     public static long getEndTime(Task task) {
         double endTime = getPreferenceBestValue(task, AspectType.END_TIME);
-        if (endTime == Double.NaN) {
+        if (Double.isNaN(endTime)) {
             throw new IllegalArgumentException("Task has no END_TIME preference");
         }
         return (long) endTime;
