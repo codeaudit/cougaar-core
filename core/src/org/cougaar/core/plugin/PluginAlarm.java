@@ -23,19 +23,13 @@
  *  
  * </copyright>
  */
-/*
- * Created on Dec 10, 2003
- *
- * To change the template for this generated file go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
- */
+
 package org.cougaar.core.plugin;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.service.BlackboardService;
 
 /**
- *
  * Extracted from ServiceUserPlugin. This class must be sub-classed to provide
  * access to a plugin's current blackboard.
  */
