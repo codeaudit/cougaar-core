@@ -108,6 +108,7 @@ public class Color  implements Constants {
 	if (cred == 0) return highlightMeas;
 	if (cred <=  DEFAULT_CREDIBILITY) return highlightConfig;
 	if (cred <=  SYS_DEFAULT_CREDIBILITY) return normalMeas;
+	//ignore actual measurements
 	return ignoreMeas;
     }
 

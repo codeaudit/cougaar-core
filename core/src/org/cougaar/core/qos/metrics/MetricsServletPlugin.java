@@ -34,8 +34,9 @@ public class MetricsServletPlugin extends ComponentPlugin
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	new MetricsServlet(sb);
+	new AgentLoadServlet(sb);
 	new RemoteAgentServlet(sb);
+	new NodeResourcesServlet(sb);
     }
 
     protected void setupSubscriptions() {

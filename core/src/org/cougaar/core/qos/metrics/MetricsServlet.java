@@ -36,14 +36,13 @@ import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.servlet.ServletService;
 
-public class MetricsServlet extends HttpServlet implements Constants
+public abstract class MetricsServlet extends HttpServlet implements Constants
 {
-    private final String myPath = "/metrics/agent/load";
 
-    private TopologyReaderService topologyService;
-    private MetricsService metricsService;
-    private String nodeID;
-    private DecimalFormat f4_2;
+    protected TopologyReaderService topologyService;
+    protected MetricsService metricsService;
+    protected String nodeID;
+    protected DecimalFormat f4_2,f6_3,f3_0,f7_0;
 
     public MetricsServlet(ServiceBroker sb) {
 	ServletService servletService = (ServletService)
@@ -68,64 +67,20 @@ public class MetricsServlet extends HttpServlet implements Constants
 
 	// register our servlet
 	try {
-	    servletService.register(myPath, this);
+	    servletService.register(myPath(), this);
 	} catch (Exception e) {
 	    throw new RuntimeException("Unable to register servlet at path <"
-				       +myPath+ ">: " +e.getMessage());
+				       +myPath()+ ">: " +e.getMessage());
 	}
 
 	f4_2 = new DecimalFormat("#0.00");
+	f6_3 = new DecimalFormat("##0.000");
+	f3_0 = new DecimalFormat("##0");
+	f7_0 = new DecimalFormat("#######0");
     }
-
-
-    private void dumpTable(PrintWriter out) {
-	Set matches = null;
-	try {
-	    matches = topologyService.getAllEntries(null,  // Agent
-						    nodeID,// only this node
-						    null, // Host
-						    null, // Site
-						    null); // Enclave
-	} catch (Exception ex) {
-	    // Node hasn't finished initializing yet
-	    return;
-	}
-	if (matches == null) return;
-
-	out.print("<table border=1>\n");
-	out.print("<tr><b>");
-	out.print("<td><b>AGENT</b></td>");
-	out.print("<td><b>CPUload</b></td>");
-	out.print("<td><b>Cred</b></td>");
-	out.print("<td><b>MsgOut</b></td>");
-	out.print("<td><b>MsgIn</b></td>");
-	out.print("</b></tr>");
-
-	Iterator itr = matches.iterator();
-	while (itr.hasNext()) {
-	    TopologyEntry entry = (TopologyEntry) itr.next();
-	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
-
-	    String name = entry.getAgent();
-	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
-
-	    Metric cpuLoad = metricsService.getValue(agentPath
-						     +ONE_SEC_LOAD_AVG);
-	    Metric msgIn = new MetricImpl(new Double(0.00), 0,"units","test");
-	    Metric msgOut = new MetricImpl(new Double(0.00), 0,"units","test");
-
-	    out.print("<tr><td><b>");
-	    out.print(name);
-	    out.print(" </b></td>");
-	    out.print(Color.valueTable(cpuLoad, 0.0, 1.0,true, f4_2));
-	    out.print(Color.credTable(cpuLoad));
-	    out.print(Color.valueTable(msgIn, 0.0, 1.0, true, f4_2));
-	    out.print(Color.valueTable(msgOut, 0.0, 1.0, true, f4_2));
-	    out.print("</tr>\n");
-
-	}
-	out.print("</table>");
-    }
+    protected abstract String myPath();
+    protected abstract String myTitle();
+    protected abstract void outputPage(PrintWriter out);
 
 
     public void doGet(HttpServletRequest request,
@@ -148,18 +103,17 @@ public class MetricsServlet extends HttpServlet implements Constants
 	    out.print(refreshSeconds);
 	    out.print("\">");
 	}
-	out.print("<TITLE> Agent Load for Node ");
-	out.print(nodeID);
-	out.print("</TITLE></HEAD><body>");
-	out.print("<H1> Agent Load for Node ");
-	out.print(nodeID);
+	out.print("<TITLE>");
+	out.print(myTitle());
+	out.print("</TITLE></HEAD><body><H1>");
+	out.print(myTitle());
 	out.print("</H1>");
 
 	out.print("Date: ");
 	out.print(new java.util.Date());
-
-	dumpTable(out);
-	out.print("<p><p><br>RefreshSeconds: ");
+	
+	outputPage(out);
+	out.print("<p><p><br><h2>KEYS</h2>RefreshSeconds: ");	
 	out.print(refreshSeconds);
 	out.print("<p><p><b>Color key</b>");
 	Color.colorTest(out);
