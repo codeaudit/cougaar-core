@@ -71,8 +71,4 @@ public class ShoutPriority extends Priority {
        (SHOUT) :
        (Priority.toPriority(i)));
   }
-
-  public String toString() {
-    return SHOUT_STR;
-  }
 }
