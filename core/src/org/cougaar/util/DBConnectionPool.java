@@ -1478,6 +1478,10 @@ public class DBConnectionPool {
                  m.startsWith("ORA-01000")    // maximum open cursors exceeded  [too many open statements]
                  ) {
         return true;
+      } else if (m.indexOf("Cannot connect to MySQL") > -1) { // MySQL DB unreachable
+        System.err.println("SQLException: " + m);
+        System.err.println("Possible busy server. Retrying....");
+        return true;
       } else {
         return false;
       }
