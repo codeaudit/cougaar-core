@@ -20,15 +20,16 @@ class MessageTransportServerImpl
   implements ContainerAPI
 {
 
+    // Factories
     private MessageTransportServerServiceFactory serviceFactory;
     private MessageTransportFactory transportFactory;
     private SendQueueFactory sendQFactory;
     private ReceiveQueueFactory recvQFactory;
     private DestinationQueueFactory destQFactory;
+
+
+    // Singeltons
     private NameSupport nameSupport;
-
-
-    // Hardwired for now
     private Router router;
     private SendQueue sendQ;
     private ReceiveQueue recvQ;
@@ -290,7 +291,7 @@ class MessageTransportServerImpl
     public void requestStop() {}
 
     protected Class specifyChildBindingSite() {
-	return MessageTransportServerBindingSite.class;
+	return null;
     }
 
 

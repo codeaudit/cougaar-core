@@ -6,9 +6,11 @@ import java.rmi.RemoteException;
 
 public class NameSupport
 {
+    public static final boolean DEBUG = 
+	Boolean.getBoolean("org.cougaar.core.society.DebugTransport");
     public static final String CLUSTERDIR = "/clusters/";
     public static final String MTDIR = "/MessageTransports/";
-
+    
     private MessageAddress myNodeAddress;
     private NameServer nameserver;
     
@@ -21,7 +23,8 @@ public class NameSupport
     private final void _registerWithSociety(String key, Object proxy) 
 	throws RemoteException
     {
-	// System.out.println("***Registering :" + key + ":proxy = "+ proxy);
+	if (DEBUG)
+	    System.out.println("***Registering :" + key + ":proxy = "+ proxy);
 	Object old = nameserver.put(key, proxy);
 	if (old != null) {
 	    System.err.println("Warning: Re-registration of "+
@@ -59,7 +62,8 @@ public class NameSupport
 	}
     }
 
-    public Object lookupAddressInNameServer(MessageAddress address, String transportType)
+    public Object lookupAddressInNameServer(MessageAddress address, 
+					    String transportType)
 	throws Exception 
     {
 	MessageAddress addr = address;
@@ -67,7 +71,9 @@ public class NameSupport
 	    String key = CLUSTERDIR + addr.getAddress() + transportType ;
 	    Object object = nameserver.get(key);
 
-	    // System.out.println("***Looking Up :" + key + ":object "+ object);
+	    if (DEBUG)
+		System.out.println("***Looking Up :" + key + 
+				   ":object "+ object);
 	    if (object == null) { 
 		// unknown?
 		return null; 

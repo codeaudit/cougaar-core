@@ -5,6 +5,7 @@ import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageTransport;
 import org.cougaar.core.society.MessageTransportClient;
 import org.cougaar.core.society.NameServer;
+import org.cougaar.core.society.NameSupport;
 
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -25,7 +26,10 @@ public class SimpleRMIMessageTransport extends MessageTransport
 
 
     private MT lookupRMIObject(MessageAddress address) throws Exception {
-	Object object = nameSupport.lookupAddressInNameServer(address, TRANSPORT_TYPE);
+	Object object = 
+	    nameSupport.lookupAddressInNameServer(address, TRANSPORT_TYPE);
+	if (object == null) return null;
+
 	object = generateClientSideProxy(object);
 	if (object instanceof MT) {
 	    return (MT) object;
@@ -102,7 +106,8 @@ public class SimpleRMIMessageTransport extends MessageTransport
 	    registerMTWithSociety();
 
 	    MessageAddress addr = client.getMessageAddress();
-	    System.out.println("***Client address is  " + addr);
+	    if (NameSupport.DEBUG)
+		System.out.println("***Client address is  " + addr);
 	    Object proxy = generateServerSideProxy(addr);
 	    nameSupport.registerAgentInNameServer(proxy,client,TRANSPORT_TYPE);
 	} catch (Exception e) {

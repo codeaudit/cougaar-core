@@ -17,7 +17,8 @@ public abstract class MessageTransport
     protected MessageTransportRegistry registry;
     protected NameSupport nameSupport;
 
-    abstract public void routeMessage(Message message);
+    // abstract public void routeMessage(Message message);
+    abstract DestinationLink getDestinationLink(MessageAddress destination);
     abstract public void registerClient(MessageTransportClient client);
     abstract public boolean addressKnown(MessageAddress address);
 

@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-class LinkSender implements Runnable
+public class LinkSender implements Runnable
 {
     private MessageAddress destination;
     private MessageTransportServerImpl.MessageTransportFactory transportFactory;
@@ -12,11 +12,11 @@ class LinkSender implements Runnable
     private Thread thread;
     private DestinationQueue queue;
 
-    LinkSender(String name, 
-	       MessageAddress destination, 
-	       MessageTransportRegistry registry,
-	       MessageTransportServerImpl.MessageTransportFactory transportFactory,
-	       DestinationQueue queue) 
+    protected LinkSender(String name, 
+			 MessageAddress destination, 
+			 MessageTransportRegistry registry,
+			 MessageTransportServerImpl.MessageTransportFactory transportFactory,
+			 DestinationQueue queue) 
     {
 	this.destination = destination;
 	this.queue = queue;
@@ -27,7 +27,7 @@ class LinkSender implements Runnable
     }
 
 
-    private MessageTransport selectTransport(Message message) {
+    protected MessageTransport selectTransport(Message message) {
 	String prop = "org.cougaar.message.transportClass";
 	String defaultTransportClass = System.getProperty(prop);
 	MessageTransportClient client = registry.findLocalClient(destination);
@@ -40,7 +40,7 @@ class LinkSender implements Runnable
 	}
     }
 
-    private MessageTransport selectPreferredTransport(String preferredClassname) 
+    protected MessageTransport selectPreferredTransport(String preferredClassname) 
     {
 	Class preferredClass = null;
 	try {
