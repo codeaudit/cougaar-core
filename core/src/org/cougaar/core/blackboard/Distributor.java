@@ -1030,6 +1030,7 @@ final class Distributor {
           // N + A => A (common)
           epochTuples.put(o2, new AddEnvelopeTuple(o2));
         } else {
+	  // Other theoretical cases - not handled
           // A + A => A (error?)
           // C + A => C (error?)
           // R + A => R (error?)
@@ -1047,9 +1048,10 @@ final class Distributor {
         if (tuple.isRemove()) {
           // A + R => N  (common, ~10%)
           epochTuples.remove(o); 
-        } else {
-          // A + A => A  (error?)
-          // A + C => A  (common, ~60%)
+	} else {
+	  // Other theoretical cases, not handled
+	  // A + A => A  (error?)
+	  // A + C => A  (common, ~60%)
         }
       } else if (oldTuple.isChange()) {
         if (tuple.isAdd()) {
@@ -1060,9 +1062,10 @@ final class Distributor {
           epochTuples.put(o, tuple); 
         }
       } else {
-        // R + A => R  (error?)
-        // R + C => R  (error?  probably a race)
-        // R + R => R  (error?)
+	// Other theoretical cases, not handled
+	// R + A => R  (error?)
+	// R + C => R  (error?  probably a race)
+	// R + R => R  (error?)
       }
     }
   }
