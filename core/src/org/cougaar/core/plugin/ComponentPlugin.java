@@ -42,7 +42,7 @@ public class ComponentPlugin
   extends org.cougaar.util.GenericStateModelAdapter
   implements PluginBase, BlackboardClient 
 {
-
+  
   // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;
   protected SchedulerService myScheduler = null;
@@ -55,7 +55,7 @@ public class ComponentPlugin
   private ThinWatcher watcher = null;
   private Collection parameters = null;
   //private Vector parameters = null;
-		
+  
   public ComponentPlugin() { }   
   
   /**
@@ -90,11 +90,11 @@ public class ComponentPlugin
     else
       return System.currentTimeMillis();
   }
-
+  
   public boolean triggerEvent(Object event) {
     return false;
   }
-
+  
   /**
    * Service found by introspection
    **/
@@ -104,47 +104,47 @@ public class ComponentPlugin
     } else {
       throw new RuntimeException("Tried to load "+this+" into "+bs);
     }
-
+    
     serviceBroker = pluginBindingSite.getServiceBroker();
     myScheduler = (SchedulerService )
       serviceBroker.getService(this, SchedulerService.class, 
-			    new ServiceRevokedListener() {
-				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (SchedulerService.class.equals(re.getService()))
-				    myScheduler = null;
-				}
-			      });
-
+			       new ServiceRevokedListener() {
+				   public void serviceRevoked(ServiceRevokedEvent re) {
+				     if (SchedulerService.class.equals(re.getService()))
+				       myScheduler = null;
+				   }
+				 });
+    
     if (myScheduler != null) {
       Trigger pokeMe = new PluginCallback();
       // Tell him to schedule me, and get his callback object
       schedulerProd = myScheduler.register(pokeMe);
     }
-
+    
     // proceed to get blackboard service
     blackboard = (BlackboardService)
       serviceBroker.getService(this, BlackboardService.class,
- 			    new ServiceRevokedListener() {
-				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (BlackboardService.class.equals(re.getService())) {
-				    blackboard = null;
-				    watcher = null;
-				  }
-				}
-			      });
-
+			       new ServiceRevokedListener() {
+				   public void serviceRevoked(ServiceRevokedEvent re) {
+				     if (BlackboardService.class.equals(re.getService())) {
+				       blackboard = null;
+				       watcher = null;
+				     }
+				   }
+				 });
+    
     // proceed to get alarm service
     alarmService = (AlarmService)
       serviceBroker.getService(this, AlarmService.class,
- 			    new ServiceRevokedListener() {
-				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (AlarmService.class.equals(re.getService())) {
-				    alarmService = null;
-				  }
-				}
-			      });
-
-
+			       new ServiceRevokedListener() {
+				   public void serviceRevoked(ServiceRevokedEvent re) {
+				     if (AlarmService.class.equals(re.getService())) {
+				       alarmService = null;
+				     }
+				   }
+				 });
+    
+    
     // someone to watch over me
     watcher = new ThinWatcher();
     if (blackboard != null) {
@@ -152,7 +152,7 @@ public class ComponentPlugin
     } else {
       System.out.println("ComponentPlugin:setBindingSite() !!No Blackboard - oh my");
     }
-
+    
   }
   /**
    * accessor for my bindingsite - interface to by binder
@@ -160,43 +160,43 @@ public class ComponentPlugin
   protected PluginBindingSite getBindingSite() {
     return pluginBindingSite;
   }
-
+  
   /** 
    * accessor for my servicebroker - use this to request services 
    **/
   protected ServiceBroker getServiceBroker() {
     return serviceBroker;
   }
-
+  
   /**
    * accessor for the blackboard service
    **/
   protected BlackboardService getBlackboardService() {
     return blackboard;
   }
-
+  
   /**
    * Found by introspection by BinderSupport
    **/
-
+  
   public void start() {
     super.start();
     // Tell the scheduler to run me at least this once
     schedulerProd.trigger();
   }
-
+  
   /**
    * Found by introspection by ComponentFactory
    * PM expects this, and fails if it isn't here.
    **/
-    public void setParameter(Object param) {
-	if (param != null) {
-	    parameters = (Vector) param; //(Collection) param;
-	} else {
-	    parameters = new Vector(0);
-	}
+  public void setParameter(Object param) {
+    if (param != null) {
+      parameters = (Vector) param; //(Collection) param;
+    } else {
+      parameters = new Vector(0);
     }
-
+  }
+  
   /** get any Plugin parameters passed by the plugin instantiator.
    * If they haven't been set, will return null.
    * Should be set between plugin construction and initialization.
@@ -204,34 +204,33 @@ public class ComponentPlugin
   public Collection getParameters() {        
     return parameters;
   }
-	      
+  
   /*
-		public Vector getParameters() {
-				return parameters;
-		}
+    public Vector getParameters() {
+    return parameters;
+    }
   */
-
- /** let subclasses get ahold of the cluster without having to catch it at
+  
+  /** let subclasses get ahold of the cluster without having to catch it at
    * load time.  May throw a runtime exception if the plugin hasn't been 
    * loaded yet.
-   * @deprecated This method no longer allows direct access to the Cluster (Agent): instead
-   * it will always return null.
+   * 
    **/
-
+  
   protected ConfigFinder getConfigFinder() {
-		 return ((PluginBindingSite) getBindingSite()).getConfigFinder();
-	}
-
-		//public ClusterServesPlugIn getCluster() {
-		//return ComponentPlugin.this.getCluster();
-    //}
-		
-		
-			protected ClusterIdentifier getClusterIdentifier() { 
-			return ComponentPlugin.this.getClusterIdentifier();
-		}
-		
-		
+    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
+  }
+  
+  //public ClusterServesPlugIn getCluster() {
+  //return ComponentPlugin.this.getCluster();
+  //}
+  
+  
+  protected ClusterIdentifier getClusterIdentifier() { 
+    return ComponentPlugin.this.getClusterIdentifier();
+  }
+  
+  
   /**
    * This is the scheduler's hook into me
    **/
@@ -245,21 +244,20 @@ public class ComponentPlugin
       }
     }
   }
-
+  
   protected void precycle() {
     blackboard.openTransaction();
     setupSubscriptions();
-
+    
     // run execute here so subscriptions don't miss out on the first
     // batch in their subscription addedLists
     execute();
-
-
+    
     readyToRun = false;  // don't need to run execute again
     blackboard.closeTransaction();
     primed = true;
   }
-
+  
   protected void cycle() {
     // do stuff
     readyToRun = false;
@@ -267,7 +265,7 @@ public class ComponentPlugin
     execute();
     blackboard.closeTransaction();
   }
-      
+  
   /**
    * override me
    * Called once sometime after initialization
