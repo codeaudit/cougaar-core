@@ -23,6 +23,7 @@ package org.cougaar.core.society;
 
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.domain.planning.plugin.AssetDataReader;
 
 public interface InitializerService extends Service {
     ComponentDescription[] getAgentDescriptions(String nodeName)
@@ -36,5 +37,8 @@ public interface InitializerService extends Service {
     Object[][] getAgentProperties(String agentName, String pgName)
         throws InitializerServiceException;
     String[][] getAgentRelationships(String agentName)
+        throws InitializerServiceException;
+    AssetDataReader getAssetDataReader();
+    Object[] translateAttributeValue(String type, String key)
         throws InitializerServiceException;
 }

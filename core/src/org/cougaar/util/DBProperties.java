@@ -132,11 +132,13 @@ public class DBProperties extends java.util.Properties {
             !substitutions.isEmpty()) {
             for (Iterator keys = substitutions.keySet().iterator(); keys.hasNext(); ) {
                 String key = (String) keys.next();
-                int ix = query.indexOf(key);
-                if (ix >= 0) {
+                int ix = 0;
+                while ((ix = query.indexOf(key, 0)) >= 0) {
+                    String subst = (String) substitutions.get(key);
                     query = query.substring(0, ix)
-                        + (String) substitutions.get(key)
+                        + subst
                         + query.substring(ix + key.length());
+                    ix += subst.length();
                 }
             }
         }
@@ -150,7 +152,7 @@ public class DBProperties extends java.util.Properties {
      * Enable debugging. When debugging is enabled, the queries are
      * printed after substitution has been performed
      **/
-    public void enableDebug(boolean newDebug) {
+    public void setDebug(boolean newDebug) {
         debug = newDebug;
     }
 

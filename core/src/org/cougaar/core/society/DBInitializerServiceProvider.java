@@ -39,21 +39,23 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.domain.planning.plugin.AssetDataReader;
+import org.cougaar.domain.planning.plugin.AssetDataDBReader;
 
 public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String DATABASE = "org.cougaar.configuration.database";
   public static final String QUERY_FILE = "DBInitializer.q";
   public static final String NODE_COMPONENT_TYPE = "NODE";
   public static final String AGENT_COMPONENT_TYPE = "AGENT";
-  public static final String EXPERIMENT_QUERY = "queryExperiment";
-  public static final String AGENT_NAMES_QUERY = "queryAgentNames";
-  public static final String AGENT_PROTOTYPE_QUERY = "queryAgentPrototype";
-  public static final String PLUGIN_NAMES_QUERY = "queryPluginNames";
-  public static final String PLUGIN_PARAMS_QUERY = "queryPluginParams";
-  public static final String AGENT_PG_NAMES_QUERY = "queryAgentPGNames";
-  public static final String LIB_PROPERTIES_QUERY = "queryLibProperties";
-  public static final String AGENT_PROPERTIES_QUERY = "queryAgentProperties";
-  public static final String AGENT_RELATION_QUERY = "queryAgentRelation";
+  public static final String QUERY_EXPERIMENT = "queryExperiment";
+  public static final String QUERY_AGENT_NAMES = "queryAgentNames";
+  public static final String QUERY_AGENT_PROTOTYPE = "queryAgentPrototype";
+  public static final String QUERY_PLUGIN_NAMES = "queryPluginNames";
+  public static final String QUERY_PLUGIN_PARAMS = "queryPluginParams";
+  public static final String QUERY_AGENT_PG_NAMES = "queryAgentPGNames";
+  public static final String QUERY_LIB_PROPERTIES = "queryLibProperties";
+  public static final String QUERY_AGENT_PROPERTIES = "queryAgentProperties";
+  public static final String QUERY_AGENT_RELATION = "queryAgentRelation";
   public static final String AGENT_INSERTION_POINT = "Node.AgentManager.Agent";
   public static final String PLUGIN_INSERTION_POINT =
     "Node.AgentManager.Agent.PluginManager.Plugin";
@@ -68,7 +70,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
    * Constructor creates a DBProperties object from the
    * DBInitializer.q query control file and sets up variables for referencing the database.
    * @param experimentId the identifier of the experiment. Used in the
-   * EXPERIMENT_QUERY to extract the societyId, laydownId, and
+   * QUERY_EXPERIMENT to extract the societyId, laydownId, and
    * oplanIds.
    * @param node the name of this node used to extract the information
    * pertinent to this node.
@@ -77,7 +79,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     throws SQLException, IOException
   {
     dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
-    dbp.enableDebug(true);
+//      dbp.setDebug(true);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
@@ -93,20 +95,23 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       Connection conn = DBConnectionPool.getConnection(database, username, password);
       try {
         Statement stmt = conn.createStatement();
-        String query = dbp.getQuery(EXPERIMENT_QUERY, substitutions);
+        String query = dbp.getQuery(QUERY_EXPERIMENT, substitutions);
         ResultSet rs = stmt.executeQuery(query);
-        String societyId;
-        String laydownId;
-        if (rs.next()) {
-          societyId = getNonNullString(rs, 1, query);
-          laydownId = getNonNullString(rs, 2, query);
-          if (rs.next())
-            throw new SQLException("Multiple matches for experimentId: " + experimentId);
-        } else {
-          throw new SQLException("No match for experimentId: " + experimentId);
+        boolean first = true;
+        StringBuffer assemblyMatch = new StringBuffer();
+        assemblyMatch.append("in (");
+        while (rs.next()) {
+          if (first) {
+            first = false;
+          } else {
+            assemblyMatch.append(", ");
+          }
+          assemblyMatch.append("'");
+          assemblyMatch.append(getNonNullString(rs, 1, query));
+          assemblyMatch.append("'");
         }
-        substitutions.put(":laydown_id", laydownId);
-        substitutions.put(":society_id", societyId);
+        assemblyMatch.append(")");
+        substitutions.put(":assemblyMatch", assemblyMatch.toString());
         rs.close();
         stmt.close();
       } finally {
@@ -146,7 +151,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(AGENT_NAMES_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_AGENT_NAMES, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
@@ -185,7 +190,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         try {
           Statement stmt = conn.createStatement();
           substitutions.put(":agent_name", agentName);
-          String query = dbp.getQuery(PLUGIN_NAMES_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_PLUGIN_NAMES, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
@@ -193,7 +198,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             String pluginId = getNonNullString(rs, 2, query);
             Statement stmt2 = conn.createStatement();
             substitutions.put(":agent_component_id", pluginId);
-            String query2 = dbp.getQuery(PLUGIN_PARAMS_QUERY, substitutions);
+            String query2 = dbp.getQuery(QUERY_PLUGIN_PARAMS, substitutions);
             System.out.print("plugin=" + className + "(");
             ResultSet rs2 = stmt2.executeQuery(query2);
             Vector vParams = new Vector();
@@ -243,7 +248,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(AGENT_PROTOTYPE_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_AGENT_PROTOTYPE, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           if (rs.next()) {
             String result = getNonNullString(rs, 1, query);
@@ -268,7 +273,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(AGENT_PG_NAMES_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_AGENT_PG_NAMES, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List result = new ArrayList();
           while (rs.next()) {
@@ -301,17 +306,17 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         substitutions.put(":pg_name", pgName);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(LIB_PROPERTIES_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_LIB_PROPERTIES, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List result = new ArrayList();
           while (rs.next()) {
             String attributeName = getNonNullString(rs, 1, query);
             String attributeType = getNonNullString(rs, 2, query);
-            boolean collection = rs.getBoolean(3);
+            boolean collection = !rs.getString(3).equals("SINGLE");
             Object attributeId = rs.getObject(4);
             Statement stmt2 = conn.createStatement();
             substitutions.put(":pg_attribute_id", attributeId);
-            String query2 = dbp.getQuery(AGENT_PROPERTIES_QUERY, substitutions);
+            String query2 = dbp.getQuery(QUERY_AGENT_PROPERTIES, substitutions);
             ResultSet rs2 = stmt2.executeQuery(query2);
             Object value;
             if (collection) {
@@ -327,8 +332,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
                 throw new InitializerServiceException("Multiple values for "
                                                       + attributeId);
             } else {
-              throw new InitializerServiceException("No value for "
-                                                    + attributeId);
+              continue;         // Skip missing properties
+//                throw new InitializerServiceException("No value for " + attributeId);
             }
             Object[] e = {attributeName, attributeType, value};
             result.add(e);
@@ -359,7 +364,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         substitutions.put(":agent_name", agentName);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(AGENT_RELATION_QUERY, substitutions);
+          String query = dbp.getQuery(QUERY_AGENT_RELATION, substitutions);
           ResultSet rs = stmt.executeQuery(query);
           List result = new ArrayList();
           while (rs.next()) {
@@ -381,6 +386,76 @@ public class DBInitializerServiceProvider implements ServiceProvider {
         }
       } catch (SQLException e) {
         throw new InitializerServiceException(e);
+      }
+    }
+
+    public AssetDataReader getAssetDataReader() {
+      return new AssetDataDBReader(InitializerServiceImpl.this);
+    }
+
+    /**
+     * Translate the value of a "query" attribute type. The "key"
+     * should be one or more query substitutions. Each substitution is
+     * an equals separated key and value. Multiple substitutions are
+     * separated by semi-colon. Backslash can quote a character
+     * @return a two-element array of attribute type and value.
+     **/
+    public Object[] translateAttributeValue(String type, String key)
+      throws InitializerServiceException
+    {
+//        StringBuffer buf = new StringBuffer();
+//        boolean inKey = true;
+//        String key = null;
+//        String val = null;
+//        try {
+//          for (int i = 0, n = s.length(); i <= n; i++) {
+//            char c = i == n ? ';' : s.charAt(i);
+//            switch (c) {
+//            case '\\':
+//              buf.append(s.charAt(++i)); // Quote next character
+//              break;
+//            case '=':
+//              key = buf.substring(0).trim();
+//              buf.setLength(0);
+//              if (key.length() == 0)
+//                throw new InitializerServiceException("Bad key in " + s);
+//              break;
+//            case ';':
+//              val = buf.substring(0).trim();
+//              buf.setLength(0);
+//              if (key == null) break;
+//              substitutions.put(key, val);
+//              break;
+//            default:
+//              buf.append(c);
+//              break;
+//            }
+//          }
+//        } catch (InitializerServiceException ise) {
+//          throw ise;
+//        } catch (Throwable t) {
+//          throw new InitializerServiceException("Parse failure: " + s);
+//        }
+      substitutions.put(":key", key);
+      try {
+        Connection conn = DBConnectionPool.getConnection(database, username, password);
+        try {
+          Statement stmt = conn.createStatement();
+          String query = dbp.getQuery(type, substitutions);
+          ResultSet rs = stmt.executeQuery(query);
+          Object[] result = new Object[2];
+          if (rs.next()) {
+            result[0] = rs.getString(1);
+            result[1] = rs.getObject(2);
+          }
+          rs.close();
+          stmt.close();
+          return result;
+        } finally {
+          conn.close();
+        }
+      } catch (SQLException sqle) {
+        throw new InitializerServiceException(sqle);
       }
     }
   }

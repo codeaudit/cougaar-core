@@ -26,6 +26,8 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.domain.planning.plugin.AssetDataReader;
+import org.cougaar.domain.planning.plugin.AssetDataFileReader;
 
 public class FileInitializerServiceProvider implements ServiceProvider {
   private String nodefilename;
@@ -94,6 +96,13 @@ public class FileInitializerServiceProvider implements ServiceProvider {
     }
     public String[][] getAgentRelationships(String agentName) {
       throw new UnsupportedOperationException();
+    }
+
+    public AssetDataReader getAssetDataReader() {
+      return new AssetDataFileReader();
+    }
+    public Object[] translateAttributeValue(String type, String key) {
+      return new Object[] {type, key};
     }
   }
 }

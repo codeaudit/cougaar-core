@@ -24,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -33,9 +34,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.society.InitializerService;
 import org.cougaar.core.plugin.SimplePlugIn;
 import org.cougaar.domain.planning.Constants;
 import org.cougaar.domain.planning.ldm.DomainManager;
+import org.cougaar.domain.planning.ldm.RootFactory;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.ItemIdentificationPGImpl;
@@ -72,6 +75,7 @@ import org.cougaar.domain.planning.ldm.plan.ScheduleImpl;
 import org.cougaar.domain.planning.ldm.plan.ScoringFunction;
 import org.cougaar.domain.planning.ldm.plan.TimeAspectValue;
 import org.cougaar.domain.planning.ldm.plan.Verb;
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.Reflect;
 import org.cougaar.util.TimeSpan;
 
@@ -90,6 +94,12 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
   protected static TrivialTimeSpan ETERNITY = 
     new TrivialTimeSpan(TimeSpan.MIN_VALUE,
                         TimeSpan.MAX_VALUE);
+
+  protected InitializerService initializerService;
+
+  public void setInitializerService(InitializerService is) {
+    initializerService = is;
+  }
 
   public long getDefaultStartTime() {
     return TimeSpan.MIN_VALUE;
@@ -126,7 +136,8 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
   protected void processAssets() {
     try {
       String cId = getClusterIdentifier().getAddress();
-      readAsset(cId);
+      AssetDataReader assetDataReader = initializerService.getAssetDataReader();
+      assetDataReader.readAsset(cId, new AssetDataCallbackImpl());
 //        System.out.println("Property Groups: ");
 //        Vector all = myLocalAsset.fetchAllProperties();
 //        try {
@@ -149,7 +160,6 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
 //          e.printStackTrace();
 //        }
       publishAdd(myLocalAsset);
-      System.out.println("published " + myLocalAsset);
 
       // Put the assets for this cluster into array
       for (Iterator iterator = myRelationships.iterator(); 
@@ -161,8 +171,6 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
       e.printStackTrace();
     }
   }
-
-  protected abstract void readAsset(String cId);
 
   protected void createMyLocalAsset(String assetClassName) {
     myAssetClassName = assetClassName;
@@ -197,9 +205,12 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
       relationship.getRoleA() : relationship.getRoleB();
     roles.add(role);
     
-    publishAdd(createReportTask(localClone, sendTo, roles, 
-                                relationship.getStartTime(),
-                                relationship.getEndTime()));
+    NewTask reportTask =
+      createReportTask(localClone, sendTo, roles, 
+                       relationship.getStartTime(),
+                       relationship.getEndTime());
+    publishAdd(reportTask);
+  
   }
 
   protected void setLocationSchedule(String latStr, String lonStr) {
@@ -319,6 +330,10 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
     return saved;
   }
 
+  public long parseDate(String dateString) throws ParseException {
+    return myDateFormat.parse(dateString).getTime();
+  }
+
   protected Object parseExpr(String type, String arg) {
     int i;
 
@@ -362,13 +377,13 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
               String slotname = ss.substring(0, eq).trim();
               String vspec = ss.substring(eq + 1).trim();
               try {
-                long time  = myDateFormat.parse(vspec).getTime();
+                long time  = parseDate(vspec);
                 if (slotname.equals("startTime")) {
                   startTime = time;
                 } else if (slotname.equals("endTime")) {
                   endTime = time;
                 }
-              } catch (java.text.ParseException pe) {
+              } catch (ParseException pe) {
               }
             }
             return new TrivialTimeSpan(startTime, endTime);
@@ -693,8 +708,47 @@ public abstract class AssetDataPlugInBase extends SimplePlugIn {
     }
   }
 
+  private class AssetDataCallbackImpl implements AssetDataCallback {
+    public ConfigFinder getConfigFinder() {
+      return AssetDataPlugInBase.this.getConfigFinder();
+    }
+    public void createMyLocalAsset(String assetClassName) {
+      AssetDataPlugInBase.this.createMyLocalAsset(assetClassName);
+    }
+    public Asset getMyLocalAsset() {
+      return myLocalAsset;
+    }
+    public RootFactory getFactory() {
+      return AssetDataPlugInBase.this.getFactory();
+    }
+    public Object parseExpr(String dataType, String value) {
+      return AssetDataPlugInBase.this.parseExpr(dataType, value);
+    }
+    public long parseDate(String dateString) throws ParseException {
+      return AssetDataPlugInBase.this.parseDate(dateString);
+    }
+    public String getType(String type) {
+      return AssetDataPlugInBase.this.getType(type);
+    }
+    public void callSetter(Object classInstance, String setterName,
+                           String type, Object[] arguments)
+    {
+      AssetDataPlugInBase.this.callSetter(classInstance, setterName, type, arguments);
+    }
+    public void setLocationSchedule(String latStr, String lonStr) {
+      AssetDataPlugInBase.this.setLocationSchedule(latStr, lonStr);
+    }
+    public long getDefaultStartTime() {
+      return AssetDataPlugInBase.this.getDefaultStartTime();
+    }
+    public long getDefaultEndTime() {
+      return AssetDataPlugInBase.this.getDefaultEndTime();
+    }
+    public void addRelationship(String typeId, String itemId,
+                                String otherClusterId, String roleName,
+                                long start, long end)
+    {
+      AssetDataPlugInBase.this.addRelationship(typeId, itemId, otherClusterId, roleName, start, end);
+    }
+  }
 }
-
-
-
-

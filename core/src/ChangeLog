@@ -1,3 +1,44 @@
+2001-09-27  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* org/cougaar/util/DBProperties.java (Repository):
+	Allow for multiple occurances of the same variable.
+
+	* org/cougaar/core/society/InitializerService.java (Repository):
+	Add new methods to API
+
+	* org/cougaar/core/society/FileInitializerServiceProvider.java (Repository):
+	Add new API. The translateAttributeValue method just echoes its
+	arguments since translation is not needed for file-based
+	initialization. The getAssetDataReader returns an
+	AssetDataFileReader instance.
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Switch toe "V3" style database: multiple assembly ids, etc. Add
+	new api for returning asset reader. Add translateAttributeValue
+	method to do query-based substitution of attribute values.	
+
+	* org/cougaar/domain/planning/plugin/AssetDataReader.java (Repository):
+	The API of an asset data reader.
+
+	* org/cougaar/domain/planning/plugin/AssetDataPlugInBase.java (Repository):
+	Extensively revised to separate out the reader functions into a
+	separate class rather than a subclass. This allows the same plugin
+	to be used for both file-based and database-based asset reading.
+	The InitializerService provides the correct implementation of the
+	AssetDataReader according to whether initialization is begin done
+	from a database or files.
+
+	* org/cougaar/domain/planning/plugin/AssetDataFileReader.java (Repository):
+	Implementation of AssetDataReader using files (prototype-ini.dat).
+
+	* org/cougaar/domain/planning/plugin/AssetDataDBReader.java (Repository):
+	Implementation of AssetDataReader using a database.
+
+	* org/cougaar/domain/planning/plugin/AssetDataCallback.java (Repository):
+	This new interface defines the API of readers to be used by the
+	AssetDataPlugIn. It allows the reading of asset definitions (e.g.
+	Organizations) from various media.
+
 2001-09-25  Jim Winston  <jwinston@bbn.com>
 
 	* org/cougaar/core/cougaar/domain/planning/ldm/plan/AllocationResult
