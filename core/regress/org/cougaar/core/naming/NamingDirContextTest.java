@@ -45,11 +45,15 @@ public class NamingDirContextTest extends TestCase {
   NSImpl ns;
   private static SearchControls oneLevelSearchControls;
   private static SearchControls subtreeSearchControls;
+  private static SearchControls boundValueSearchControls;
   static {
     oneLevelSearchControls = new SearchControls();
     oneLevelSearchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
     subtreeSearchControls = new SearchControls();
     subtreeSearchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+    boundValueSearchControls = new SearchControls();
+    boundValueSearchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+    boundValueSearchControls.setReturningObjFlag(true);
   }
 
   public interface TestBindData {
@@ -423,8 +427,8 @@ public class NamingDirContextTest extends TestCase {
         assertNull(matchingNames.put(t.getName(), t));
       }
     }
-    checkSearchResults(tName, ctx, ctx.search("", matchingAttributes), matchingNames);
-    checkSearchResults(tName, ctx, ctx.search("", matchingAttributes, (String[]) null), matchingNames);
+    checkSearchResults(tName, ctx, ctx.search("", matchingAttributes), matchingNames, false);
+    checkSearchResults(tName, ctx, ctx.search("", matchingAttributes, (String[]) null), matchingNames, false);
   }
 
   /**
@@ -442,7 +446,7 @@ public class NamingDirContextTest extends TestCase {
         assertNull(matchingNames.put(t.getName(), t));
       }
     }
-    checkSearchResults(tName, ctx, ctx.search("", matchString, oneLevelSearchControls), matchingNames);
+    checkSearchResults(tName, ctx, ctx.search("", matchString, oneLevelSearchControls), matchingNames, false);
   }
 
   private void testSearchOneLevelSubstring(DirContext ctx, Attribute matchingAttribute) {}
@@ -461,6 +465,7 @@ public class NamingDirContextTest extends TestCase {
       testSearchSubtreeSubstring(contexts, matchingAttribute);
       testSearchSubtreeLessEqual(contexts, matchingAttribute);
       testSearchSubtreeGreaterEqual(contexts, matchingAttribute);
+      testSearchReturningObjEquality(contexts, matchingAttribute);
     }
   }
 
@@ -494,7 +499,43 @@ public class NamingDirContextTest extends TestCase {
         }
       }
     }
-    checkSearchResults(tName, ctx0, ctx0.search("", matchString, subtreeSearchControls), matchingNames);
+    checkSearchResults(tName, ctx0, ctx0.search("", matchString, subtreeSearchControls), matchingNames, false);
+  }
+
+  /**
+   * Test filter string searches that search a subtree for equality
+   * for a single attribute and checks that the bound value is
+   * correct.
+   * @param contexts all the contexts that could contain matches.
+   * contexts[0] is the starting point
+   **/
+  private void testSearchReturningObjEquality(DirContext[] contexts, Attribute matchingAttribute)
+    throws NamingException
+  {
+    String tName = "ReturningObjEquality for " + matchingAttribute;
+    DirContext ctx0 = contexts[0];
+    String matchString = "(" + matchingAttribute.getID() + "=" + matchingAttribute.get() + ")";
+    Map matchingNames = new HashMap();
+    String ctx0Name = ctx0.getNameInNamespace();
+    for (int j = 0; j < contexts.length; j++) {
+      DirContext ctx = contexts[j];
+      String ctxName = ctx.getNameInNamespace(); // Should have same root equal to ctx0Name
+      assertTrue("Test bug -- subcontext name does not start correctly",
+                 ctxName.startsWith(ctx0Name));
+      String prefix;
+      if (ctxName.equals(ctx0Name))
+        prefix = "";
+      else
+        prefix = ctxName.substring(ctx0Name.length() + 1) + "/";
+      for (int i = 0; i < testBindData.length; i++) {
+        TestBindData t = new ContextTestBindData(ctx, testBindData[i]);
+        if (matchingAttribute.equals(t.getAttributes().get(matchingAttribute.getID()))) {
+          String name = prefix + t.getName();
+          assertNull(matchingNames.put(name, t));
+        }
+      }
+    }
+    checkSearchResults(tName, ctx0, ctx0.search("", matchString, boundValueSearchControls), matchingNames, true);
   }
 
   private void testSearchSubtreeSubstring(DirContext[] contexts, Attribute matchingAttribute) {}
@@ -508,7 +549,7 @@ public class NamingDirContextTest extends TestCase {
    * @param matchingNames a Map mapping the names of the expected hits
    * to the corresponding TestBindData
    **/
-  private void checkSearchResults(String tName, DirContext ctx, NamingEnumeration enum, Map matchingNames)
+  private void checkSearchResults(String tName, DirContext ctx, NamingEnumeration enum, Map matchingNames, boolean checkBoundValue)
     throws NamingException
   {
     String ctxName = ctx.getNameInNamespace();
@@ -518,6 +559,11 @@ public class NamingDirContextTest extends TestCase {
       TestBindData t = (TestBindData) matchingNames.get(name);
       assertNotNull(tName + " unexpected match '" + name + "' not in " + matchingNames, t);
       checkAttributes(tName, sr.getAttributes(), t.getAttributes());
+      if (checkBoundValue) {
+        assertEquals(tName + " incorrect bound value", t.getObject(), sr.getObject());
+      } else {
+        assertNull(tName + " superfluous bound value", sr.getObject());
+      }
     }
   }
 
