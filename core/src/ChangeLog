@@ -5,7 +5,7 @@
 	Start of refactoring the Timer/Alarm facilities.  Moves hookup to
 	NodeAgent, with a root service available to Agents.  Abstracts the
 	interface from the actual Timers. Also removes alarms when agent
-	is unloaded, fixing bug 989.
+	is unloaded, fixing bug 989, bug 1486.
 	
 	* Heartbeat, SimpleAgent, NodeAgent
 	Refactored the Heartbeat functionality into a new class connected
