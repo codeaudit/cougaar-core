@@ -64,7 +64,7 @@ public final class UID
   public long getId() { return id; }
 
   public boolean equals(UID other) {
-    return (owner == other.owner && id == other.id);
+    return (other != null && owner == other.owner && id == other.id);
   }
 
   /*
