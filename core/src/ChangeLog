@@ -1,3 +1,8 @@
+2001-11-20  Michael Thome  <mthome@bbn.com>
+
+	* SharedThreading*, SharedPlugInManager
+	Dropped.  Fully replaced by SchedulerService - see below.
+
 2001-11-15  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBProperties.java:
