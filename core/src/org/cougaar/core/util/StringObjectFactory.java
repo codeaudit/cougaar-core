@@ -36,7 +36,6 @@ import org.cougaar.util.Reflect;
  * field setters.  <b>Needs work!</b>  OrtRTDataPlugin should be
  * modifed to use this class!  Should support nesting of objects!
  * <p>
- * @see @main(String[]) for sample usage
  */
 public class StringObjectFactory {
 
@@ -526,7 +525,7 @@ public class StringObjectFactory {
     return null;
   }
 
-  /** Sample usage **/
+  /* Sample usage 
   public static void main(String[] args) {
     Factory ldmf = new RootFactory(null, null);
     String dataType = "GeolocLocation";
@@ -555,5 +554,6 @@ public class StringObjectFactory {
       System.out.println("  Lon: "+loc.getLongitude().getDegrees());
     }
   }
+  */
 
 }
