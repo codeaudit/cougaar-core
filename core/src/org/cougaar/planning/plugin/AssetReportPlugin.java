@@ -330,7 +330,6 @@ public class AssetReportPlugin extends SimplePlugin
 	if (o instanceof Task) {
           Task task = (Task) o;
 	  if ((task.getVerb().equals(Constants.Verb.REPORT)) &&
-              (task.getWorkflow() == null) &&
               (task.getPlanElement() == null)) {
 	    return true;
           }
