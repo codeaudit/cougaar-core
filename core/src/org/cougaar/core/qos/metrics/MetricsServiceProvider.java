@@ -51,7 +51,7 @@ public final class MetricsServiceProvider
 	"org.cougaar.core.qos.rss.RSSMetricsServiceImpl";
 
     private static final String UPDATER_IMPL_CLASS =
-	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
+	"org.cougaar.core.qos.rss.RSSMetricsUpdateServiceImpl";
 
 
 
