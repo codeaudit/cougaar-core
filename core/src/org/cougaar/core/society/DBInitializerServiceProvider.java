@@ -144,12 +144,20 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     return result;
   }
 
+  /**
+   * Wrap a string in quotes. Does not double quotes within the string.
+   **/
+  private static String sqlQuote(String s) {
+    if (s == null) return "null";
+    return "'" + s + "'";
+  }
+
   private class InitializerServiceImpl implements InitializerService {
     public ComponentDescription[]
       getComponentDescriptions(String parentName, String insertionPoint)
       throws InitializerServiceException
     {
-      substitutions.put(":parent_name", parentName);
+      substitutions.put(":parent_name", sqlQuote(parentName));
       substitutions.put(":insertion_point", insertionPoint);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
