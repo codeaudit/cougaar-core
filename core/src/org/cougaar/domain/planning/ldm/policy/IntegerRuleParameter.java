@@ -15,7 +15,7 @@ import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: IntegerRuleParameter.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: IntegerRuleParameter.java,v 1.2 2001-02-15 19:41:37 tomlinso Exp $
  **/
 
 /**
@@ -29,8 +29,14 @@ public class IntegerRuleParameter implements RuleParameter,
   /**
    * Constructor sets min/max values and establishes value as not set
    */
-  public IntegerRuleParameter(String param_name, int min, int max)
-  { 
+  public IntegerRuleParameter(String param_name, int min, int max, int value)
+    throws RuleParameterIllegalValueException
+  {
+    this(param_name, min, max);
+    setValue(new Integer(value));
+  }
+
+  public IntegerRuleParameter(String param_name, int min, int max) {
     my_min = min; my_max = max; my_value = null;
     name = param_name;
   }
@@ -66,6 +72,10 @@ public class IntegerRuleParameter implements RuleParameter,
   public Object getValue()
   {
     return my_value; 
+  }
+
+  public int intValue() {
+    return my_value.intValue();
   }
 
   /**
