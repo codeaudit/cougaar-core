@@ -19,7 +19,7 @@ import org.cougaar.core.util.SelfPrinter;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: RangeRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
+ * @version $Id: RangeRuleParameter.java,v 1.3 2001-03-21 16:14:20 ngivler Exp $
  **/
 
 /**
@@ -134,9 +134,10 @@ public class RangeRuleParameter implements RuleParameter, SelfPrinter,
   }
 
   public Object clone() {
-    RangeRuleParameter rrp 
-      = new RangeRuleParameter(my_name, 
-			       (RangeRuleParameterEntry[])my_ranges.clone());
+    RangeRuleParameter rrp = new RangeRuleParameter(my_name);
+    if (my_ranges != null) {
+      rrp.setRanges((RangeRuleParameterEntry[])my_ranges.clone());
+    }
     try {
       rrp.setValue(my_default_value);
     } catch(RuleParameterIllegalValueException rpive) {}

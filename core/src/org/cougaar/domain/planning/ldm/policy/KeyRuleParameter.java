@@ -21,7 +21,7 @@ import org.cougaar.core.util.SelfPrinter;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: KeyRuleParameter.java,v 1.3 2001-03-08 15:54:51 ngivler Exp $
+ * @version $Id: KeyRuleParameter.java,v 1.4 2001-03-21 16:14:20 ngivler Exp $
  **/
 
 /**
@@ -135,9 +135,10 @@ public class KeyRuleParameter implements RuleParameter, SelfPrinter, java.io.Ser
   }
 
   public Object clone() {
-    KeyRuleParameter krp 
-      = new KeyRuleParameter(my_name, 
-			       (KeyRuleParameterEntry[])my_keys.clone());
+    KeyRuleParameter krp = new KeyRuleParameter(my_name);
+    if (my_keys != null) {
+      krp.setKeys((KeyRuleParameterEntry[])my_keys.clone());
+    }
     try {
       krp.setValue(my_value);
     } catch(RuleParameterIllegalValueException rpive) {}
