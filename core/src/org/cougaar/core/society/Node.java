@@ -72,27 +72,26 @@ import org.cougaar.core.component.*;
 import java.beans.Beans;
 
 /**
-* This class is responsible for creating and maintaining a Node in the alp
-* system.  A Node refers to the actual Physical box or machine that this
-* contains the instatiated object of this class
-* <p>
-* This class is responsible to:
-* <ul>
-* <li>Manage the resources of the computer</li>
-* <li>Provide the message handling for all NodeMessages</li>
-* <li>Provide the highest level of Log file for the latest run</li>
-* <li>Provide validation services to ensure all access request are valid before processing them.</li>
-* </ul>
-* <p>
-* Usage: java [org.cougaar.core.society.Node] [-f configFileName ] [-h] [-help] [-n nodeName]");
-* <ul>
-* <li>-f     Configuration file name.  Default = [NAME]. Example test will map to file test.ini</li>
-* <li>-h     Print the help message.</li>
-* <li>-help  Print the help message.</li>
-* <li>-n     Name. Allows you to name the Node.  Default = Computer's name </li>
-* <li>-p     Port. allows you to specifcy a port number to run nameserver on.  Default = random </li>
-* </ul>
-**/
+ * This class is responsible for creating and maintaining a Node in the alp
+ * system.  A Node refers to the actual Physical box or machine that this
+ * contains the instatiated object of this class
+ * <p>
+ * This class is responsible to:
+ * <ul>
+ * <li>Manage the resources of the computer</li>
+ * <li>Provide the message handling for all NodeMessages</li>
+ * <li>Provide the highest level of Log file for the latest run</li>
+ * <li>Provide validation services to ensure all access request are valid 
+ *     before processing them.</li>
+ * </ul>
+ * <p><pre>
+ * Usage:
+ *    <tt>java [props] org.cougaar.core.society.Node [props] [-help]</tt>
+ * where the "props" are "-D" System Properties, such as:
+ *    "-Dorg.cougaar.node.name=NAME" -- name of the Node
+ * See the documentation for a complete properties list.
+ * </pre>
+ */
 public class Node extends ContainerSupport
 implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
 {
@@ -144,6 +143,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
    * If org.cougaar.useBootstrapper is true, will search for installed jar files
    * in order to load all classes.  Otherwise, will rely solely on classpath.
    *
+   * @see #launch(String[])
    **/
   static public void main(String[] args){
     if ("true".equals(System.getProperty("org.cougaar.useBootstrapper", "true"))) {
@@ -154,47 +154,96 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   }
 
   static public void launch(String[] args) {
-
+    // display the version info
     printVersion();
 
-    // BEGIN BBN Debugging
-    // quickly walk through the args and process any
-    // that match -D
-    Properties debugProperties = new Properties();
-    // elements of args not related to -D values
-    List revisedArgs = new ArrayList();
-    for (int i = 0; i < args.length; i++) {
-      if (args[i].startsWith("-D")) {
-        debugProperties.put(args[i].substring(2), Boolean.TRUE);
+    // convert any command-line args to System Properties
+    setSystemProperties(args);
+
+    // check for valid plugin jars
+    String validateJars = System.getProperty("org.cougaar.validate.jars");
+    if ((validateJars != null) &&
+        ((validateJars.equalsIgnoreCase("true")) ||
+         (validateJars.equals("")))) {
+      // validate
+      if (validatePluginJarsByStream()) {
+        // validation succeeded
       } else {
-        // process a non -D argument
-        revisedArgs.add(args[i]);
+        throw new RuntimeException(
+          "Error!  Found unsigned jars in plugin directory!");
+      }
+    } else {
+      // not validating
+    }
+
+    // try block to ensure we catch all exceptions and exit gracefully
+    try{
+      Node myNode = new Node();
+      myNode.initNode();
+      // done with our job... quietly finish.
+    } catch (Throwable e) {
+      System.out.println(
+          "Caught an exception at the highest try block.  Exception is: " +
+          e );
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Convert any command-line args to System Properties.
+   * <p>
+   * System properties are preferred, since it simplifies the
+   * configuration to just a non-ordered Set of "-D" properties.  
+   * <p>
+   * Also supported are post-classname "-D" command-line properties:
+   *    "java .. classname -Darg .." 
+   * which will override the usual "java -Darg .. classname .."
+   * properties.  For example, "java -Dx=y classname -Dx=z" is
+   * equivalent to "java -Dx=z classname".  This can be useful when 
+   * writing scripts that simply append properties to a command-line.
+   * <p>
+   * Long-term all non-"-D" arguments (<code>ArgTable</code>, "-n name", 
+   * etc) will likely become deprecated, except maybe "-help".
+   *
+   * @see ArgTable
+   */
+  private static void setSystemProperties(String[] args) {
+    java.util.Properties props = System.getProperties();
+    List revisedArgs = new ArrayList();
+
+    // separate the args into "-D" properties and normal arguments
+    for (int i = 0; i < args.length; i++) {
+      String argi = args[i];
+      if (argi.startsWith("-D")) {
+        // transfer a "late" system property
+        int sepIdx = argi.indexOf('=');
+        if (sepIdx < 0) {
+          props.put(argi.substring(2), "");
+        } else {
+          props.put(argi.substring(2, sepIdx), argi.substring(sepIdx+1));
+        }
+      } else {
+        // keep a non "-D" argument
+        revisedArgs.add(argi);
       }
     }
 
-    // now, swap in the revised Argument listing
-    args = (String[]) revisedArgs.toArray(args);
+    // parse the remaining command line arguments
+    ArgTable myArgs = new ArgTable(revisedArgs);
 
-    Node myNode = null;
-    ArgTable myArgs = new ArgTable(args);
+    // transfer the command-line arguments to system properties
 
-    // <START_PLUGIN_JAR_VALIDATION>
-    String validateJars = (String)myArgs.get(SIGNED_PLUGIN_JARS);
-    if (validateJars == null) {
-      // not validating
-    } else if (validatePluginJarsByStream()) {
-      // validation succeeded
-    } else {
-      throw new RuntimeException(
-          "Error!  Found unsigned jars in plugin directory!");
+    String validateJars = (String) myArgs.get(SIGNED_PLUGIN_JARS);
+    if (validateJars != null) {
+      props.put("org.cougaar.validate.jars", validateJars);
+      System.err.println("Set name to "+validateJars);
     }
-    // </START_PLUGIN_JAR_VALIDATION>
 
-    String nodeName = (String) myArgs.get(NAME_KEY) ;
-    java.util.Properties props = System.getProperties();
-
-    // keep track of the node name we are using
-    props.put("org.cougaar.core.society.Node.name", nodeName);
+    String name = (String) myArgs.get(NAME_KEY);
+    if (name != null) {
+      props.put("org.cougaar.node.name", name);
+      System.err.println("Set name to "+name);
+    }
 
     String config = (String) myArgs.get(CONFIG_KEY);
     if (config != null) {
@@ -220,16 +269,28 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
       System.err.println("Using NameServer on port " + port);
     }
 
-    // try block to ensure we catch all exceptions and exit gracefully
-    try{
-      myNode = new Node(myArgs);
-      myNode.initNode();
-      // done with our job... quietly finish.
-    } catch (Throwable e) {
-      System.out.println(
-          "Caught an exception at the highest try block.  Exception is: " +
-          e );
-      e.printStackTrace();
+    String filename = (String) myArgs.get(FILE_KEY);
+    if (filename != null) {
+      props.put("org.cougaar.filename", filename);
+      System.err.println("Using file "+filename);
+    }
+
+    String experimentId = (String) myArgs.get(EXPERIMENT_ID_KEY);
+    if (experimentId != null) {
+      props.put("org.cougaar.experiment.id", experimentId);
+      System.err.println("Using experiment ID "+experimentId);
+    }
+
+    String controlHost = (String) myArgs.get(CONTROL_KEY);
+    if (controlHost != null) {
+      props.put("org.cougaar.control.host", controlHost);
+      System.err.println("Using control host "+controlHost);
+    }
+
+    String controlPort = (String) myArgs.get(CONTROL_PORT_KEY);
+    if (controlPort != null) {
+      props.put("org.cougaar.control.port", controlPort);
+      System.err.println("Using control port "+controlPort);
     }
   }
 
@@ -383,52 +444,14 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     return cert;
   }
 
-
-  /** Reference to the ArgTable used to start this Clsuter **/
-  private ArgTable theArgs;
-  /** Reference to the flag for simulating the start of the testing cycle test **/
-  private boolean theTested = false;
-  /** Address and port number of this machine as provided by the cl args **/
-  private static Vector theAddress;
   // AgentManager component hook for now 
   private AgentManager agentManager;
 
   /**
-   *   Node constructor with command line arguments for port number.  
-   *    Reserved fore use of the SANode to specify  a port number to the AlpServer. 
-   *     Then calls the standard consructor
-   *   <p><PRE>
-   *   PRE CONDITION:   New key word used to construct object
-   *   POST CONDITION:  Object created in the heap
-   *   INVARIANCE:
-   *   </PRE>
-   *    @param someArgs The arg table constucted from the command line agument list.
-   *   @param  The String array conataining all of the arguments passed to the main method
-   *   from the command line
-   *   @return Node Refernce to the object just created by the new keyword
-   *    @exception UnknownHostException IF the host can not be determined
-   **/
-  public Node(ArgTable someArgs, Integer port) throws UnknownHostException {
+   * Create the node, which is configured with System Properties.
+   */
+  public Node() {
     super();
-    setArgs(someArgs);
-    BinderFactory ambf = new AgentManagerBinderFactory();
-    if (!attachBinderFactory(ambf)) {
-      throw new RuntimeException("Failed to load the AgentmanagerBinderFactory in Node");
-    }
-    // start this on our own for now
-    agentManager = new AgentManager();
-    super.add(agentManager);
-  }
-
-  public Node(ArgTable someArgs) throws UnknownHostException {
-    setArgs(someArgs);
-    BinderFactory ambf = new AgentManagerBinderFactory();
-    if (!attachBinderFactory(ambf)) {
-      throw new RuntimeException("Failed to load the AgentmanagerBinderFactory in Node");
-    }
-    //start this on our own for now
-    agentManager = new AgentManager();
-    super.add(agentManager);
   }
 
   protected ComponentFactory specifyComponentFactory() {
@@ -456,15 +479,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
      return InetAddress.getLocalHost().getHostName();
   }
 
-  /**
-   *   Accessor method for theArgs
-   *   <p>
-   *   @return ArgTable  The container that conatins references to all theArgs 
-   **/
-  protected final ArgTable getArgs() {
-    return theArgs; 
-  }
-
   /** Refernece containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
 
@@ -490,33 +504,47 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     throws UnknownHostException, NamingException, IOException,
            SQLException, InitializerServiceException
   {
-    // Command-line script uses "-n MyNode" and lets the filename default
-    //   to "MyNode.ini".
-    //
-    // Remote console always specifies name as a property and the filename
-    //   as an argument.
-    ComponentDescription[] nodeDescs = null;
-    String name = (String)getArgs().get(NAME_KEY);
-    String filename = (String)getArgs().get(FILE_KEY);
-    String experimentId = (String) getArgs().get(EXPERIMENT_ID_KEY);
-    if (name == null) name = System.getProperty("org.cougaar.node.name");
-    if (name == null) name = findHostName();
-    if (name == null) throw new IllegalArgumentException("No node name specified");
-    if (filename != null && experimentId != null) {
-      throw new IllegalArgumentException("Both file name (-f) and experiment -X) specified. Only one allowed.");
+    // get the node name
+    String name = System.getProperty("org.cougaar.node.name");
+    if (name == null) {
+      name = findHostName();
+      if (name == null) {
+        throw new IllegalArgumentException("Node name not specified");
+      }
     }
-    if (filename == null && experimentId == null) {
-      filename = name + ".ini";
+
+    // get the start mode (file or experimentId)
+    String filename = System.getProperty("org.cougaar.filename");
+    String experimentId = System.getProperty("org.cougaar.experiment.id");
+    if (filename == null) {
+      if (experimentId == null) {
+        // use the default "name.ini"
+        filename = name + ".ini";
+      } else {
+        // use the filename
+      }
+    } else if (experimentId == null) {
+      // use the experimentId
+    } else {
+      throw new IllegalArgumentException(
+          "Both file name (-f) and experiment -X) specified. "+
+          "Only one allowed.");
     }
+
+    // set the node name
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
 
+    // create the AgentManager on our own for now
+    BinderFactory ambf = new AgentManagerBinderFactory();
+    if (!attachBinderFactory(ambf)) {
+      throw new RuntimeException(
+          "Failed to load the AgentManagerBinderFactory in Node");
+    }
+    agentManager = new AgentManager();
+    super.add(agentManager);
+  
     ServiceBroker sb = getServiceBroker();
-
-//      if (getArgs().containsKey(REGISTRY_KEY) || 
-//          getArgs().containsKey(LOCAL_KEY)) {
-//        Communications.getInstance().startNameServer();
-//      }
 
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
@@ -524,7 +552,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
 
-    LoggingServiceProvider loggingServiceProvider = new LoggingServiceProvider(System.getProperties());
+    LoggingServiceProvider loggingServiceProvider = 
+      new LoggingServiceProvider(System.getProperties());
     sb.addService(LoggingService.class,
 		  loggingServiceProvider);
     sb.addService(LoggingControlService.class,
@@ -540,9 +569,9 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     else
       sp = new DBInitializerServiceProvider(experimentId, name);
     sb.addService(InitializerService.class, sp);
-    InitializerService is =
-      (InitializerService) sb.getService(this, InitializerService.class, null);
-    nodeDescs = is.getAgentDescriptions(name);
+    InitializerService is = (InitializerService) sb.getService(
+        this, InitializerService.class, null);
+    ComponentDescription[] nodeDescs = is.getAgentDescriptions(name);
     sb.releaseService(this, InitializerService.class, is);
 
     // Set up MTS and QOS service provides.
@@ -606,7 +635,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
    */
   private void registerExternalNodeController() {
     // get the RMI registry host and port address
-    String rmiHost = (String)getArgs().get(CONTROL_KEY);
+    String rmiHost = System.getProperty("org.cougaar.control.host");
     if (rmiHost == null) {
       // default to localhost
       try {
@@ -617,7 +646,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
       rmiHost = null;
     }
     int rmiPort = -1;
-    String srmiPort = (String)getArgs().get(CONTROL_PORT_KEY);
+    String srmiPort = System.getProperty("org.cougaar.control.port");
     if ((srmiPort != null) &&
         (srmiPort.length() > 0)) {
       try {
@@ -745,14 +774,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
         e.printStackTrace();
       }
     }
-  }
-
-  /**
-   * Modifier method for theArgs
-   * @param aTable The ArgTable object that is used to modify theArgs
-   **/
-  protected final void setArgs(ArgTable aTable) {
-    theArgs = aTable; 
   }
 
   public MessageAddress getMessageAddress() {
