@@ -23,6 +23,7 @@ import org.cougaar.core.plugin.SimplePlugIn;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.plan.Allocation;
+import org.cougaar.domain.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
 import org.cougaar.domain.planning.ldm.plan.Expansion;
@@ -33,6 +34,7 @@ import org.cougaar.domain.planning.ldm.plan.Constraint;
 import org.cougaar.domain.planning.ldm.plan.Task;
 import org.cougaar.domain.planning.ldm.plan.NewTask;
 import org.cougaar.domain.planning.ldm.plan.MPTask;
+import org.cougaar.domain.planning.ldm.plan.Verb;
 import org.cougaar.core.plugin.util.PlugInHelper;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.SingleElementEnumeration;
@@ -52,14 +54,16 @@ public class DeletionPlugIn extends SimplePlugIn {
     private static final int DELETION_PERIOD_PARAM = 0;
     private static final int DELETION_DELAY_PARAM  = 1;
 
-    private static final long DEFAULT_DELETION_PERIOD = 86400000L;
-    private static final long DEFAULT_DELETION_DELAY  = 86400000L;
+    private static final long DEFAULT_DELETION_PERIOD = 7 * 86400000L;
+    private static final long DEFAULT_DELETION_DELAY  = 2 * 86400000L;
 
     private static final long subscriptionExpirationTime = 10L * 60L * 1000L;
 
     private long deletionPeriod = DEFAULT_DELETION_PERIOD;
     private long deletionDelay = DEFAULT_DELETION_DELAY;
     private Alarm alarm;
+    private int wakeCount = 0;
+    private long now;           // The current execution time
     private UnaryPredicate deletablePlanElementsPredicate;
 
     private static java.io.PrintWriter logFile = null;
@@ -95,7 +99,8 @@ public class DeletionPlugIn extends SimplePlugIn {
                         if (cpg == null) return true; // Can't be remote w/o ClusterPG
                         ClusterIdentifier destination = cpg.getClusterIdentifier();
                         if (destination == null) return true; // Can't be remote w null destination
-                        return true;
+                        Task remoteTask = ((AllocationforCollections) alloc).getAllocationTask();
+                        return remoteTask.isDeleted(); // Can delete if remote task is deleted
                     }
                     if (pe instanceof Expansion) {
                         Expansion exp = (Expansion) pe;
@@ -185,10 +190,14 @@ public class DeletionPlugIn extends SimplePlugIn {
      * logplan.
      **/
     public void execute() {
-        debug("DeletionPlugIn.execute()");
+        now = currentTimeMillis();
         if (alarm.hasExpired()) { // Time to make the donuts
             checkDeletablePlanElements();
             alarm = wakeAfter(deletionPeriod);
+            if (++wakeCount > 4) {
+                wakeCount = 0;
+                printAllPEs();
+            }
         }
         peSet.checkAlarm();
     }
@@ -203,10 +212,77 @@ public class DeletionPlugIn extends SimplePlugIn {
      **/
     private void checkDeletablePlanElements() {
         Collection c = query(deletablePlanElementsPredicate);
-        debug("Found " + c.size() + " deletable PlanElements");
-        for (Iterator i = c.iterator(); i.hasNext(); ) {
-            checkPlanElement((PlanElement) i.next());
+        if (c.size() > 0) {
+            debug("Found " + c.size() + " deletable PlanElements");
+            for (Iterator i = c.iterator(); i.hasNext(); ) {
+                checkPlanElement((PlanElement) i.next());
+            }
         }
+    }
+
+    private void printAllPEs() {
+        Collection c = query(new UnaryPredicate() {
+            public boolean execute(Object o) {
+                return o instanceof PlanElement;
+            }
+        });
+        if (!c.isEmpty()) {
+            System.out.println("Undeletable Tasks");
+            for (Iterator i = c.iterator(); i.hasNext(); ) {
+                PlanElement pe = (PlanElement) i.next();
+                String reason = canDelete(pe);
+                if (reason == null) {
+                    System.out.println(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": Deletable");
+                } else {
+                    System.out.println(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": " + reason);
+                }
+            }
+        }
+    }
+
+    private String canDelete(PlanElement pe) {
+        if (!isTimeToDelete(pe)) return "Not time to delete";
+        if (pe instanceof Allocation) {
+            Allocation alloc = (Allocation) pe;
+            Asset asset = alloc.getAsset();
+            ClusterPG cpg = asset.getClusterPG();
+            if (cpg != null) {
+                ClusterIdentifier destination = cpg.getClusterIdentifier();
+                if (destination != null) {
+                    Task remoteTask = ((AllocationforCollections) alloc).getAllocationTask();
+                    if (remoteTask == null) return "Awaiting remote task creation";
+                    if (!remoteTask.isDeleted()) return "Remote task not deleted";
+                }
+            }
+        }
+        if (pe instanceof Expansion) {
+            Expansion exp = (Expansion) pe;
+            if (exp.getWorkflow().getTasks().hasMoreElements()) {
+                return "Expands to non-empty workflow";
+            }
+        }
+        Task task = pe.getTask();
+        if (task instanceof MPTask) {
+            MPTask mpTask = (MPTask) task;
+            for (Enumeration e = mpTask.getParentTasks(); e.hasMoreElements(); ) {
+                Task parent = (Task) e.nextElement();
+                PlanElement ppe = parent.getPlanElement(); // This is always an Aggregation
+                String parentReason = canDelete(ppe);
+                if (parentReason != null) return "Has undeletable parent: " + parentReason;
+            }
+        } else {
+            UID ptuid = task.getParentTaskUID();
+            if (ptuid != null) {
+                PlanElement ppe = peSet.findPlanElement(ptuid);
+                if (ppe != null) {
+                    if (!(ppe instanceof Expansion)) {
+                        String parentReason = canDelete(ppe);
+                        if (parentReason != null) return "Has undeletable parent: " + parentReason;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -327,7 +403,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         long et = 0L;
         if (et == 0L) et = computeExpirationTime(pe);
 //  	debug("Expiration time is " + new java.util.Date(et));
-        boolean result = et == 0L || et < currentTimeMillis() - deletionDelay;
+        boolean result = et == 0L || et < now - deletionDelay;
 //          if (result) {
 //              debug("isTimeToDelete: " + new java.util.Date(et));
 //          }
