@@ -267,8 +267,8 @@ public class RootFactory
    * does a createAsset followed by setting the TypeIdentification
    * and the nomenclature to the specified string.
    **/
-  public final Asset createPrototype(Class assetclass, String typeid, String nomen) {
-    Asset proto = createAsset(assetclass);
+  public final Asset createPrototype(String classname, String typeid, String nomen) {
+    Asset proto = createAsset(classname);
     NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
     tip.setTypeIdentification(typeid);
     tip.setNomenclature(nomen);
