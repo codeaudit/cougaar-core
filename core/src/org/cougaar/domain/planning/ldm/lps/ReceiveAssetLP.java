@@ -19,6 +19,7 @@ import org.cougaar.core.cluster.*;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.LocalPG;
 import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
+import org.cougaar.domain.planning.ldm.asset.PropertyGroupSchedule;
 
 import org.cougaar.domain.planning.ldm.plan.AssetAssignment;
 import org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement;
@@ -131,14 +132,21 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
       // If we already had a matching asset - update with property groups
       // from the asset transfer.
       Vector transferredPGs = assetT.fetchAllProperties();
-      
+
       for (Iterator pgIterator = transferredPGs.iterator();
            pgIterator.hasNext();) {
-        PropertyGroup transferredPG = (PropertyGroup) pgIterator.next();
-        
+        Object next = pgIterator.next();
+
         //Don't propagate LocalPGs
-        if (!(transferredPG instanceof LocalPG)) {
-          assetL.addOtherPropertyGroup(transferredPG);
+        if (!(next instanceof LocalPG)) {
+          if (next instanceof PropertyGroup) {
+            assetL.addOtherPropertyGroup((PropertyGroup) next);
+          } else if (next instanceof PropertyGroupSchedule) {
+            assetL.addOtherPropertyGroupSchedule((PropertyGroupSchedule) next);
+          } else {
+            System.err.println("ReceiveAssetLP: unrecognized property type - " + 
+                               next + " - on transferred asset " + assetL);
+          }
         }
       }
     } else {
