@@ -40,6 +40,7 @@ import org.cougaar.util.LockFlag;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
+import org.cougaar.util.CallerTracker;
 
 /** Subscriber is the most common implementation of BlackboardService
  *
@@ -399,10 +400,12 @@ public class Subscriber {
     return s.getCollection();
   }
 
+  private static final CallerTracker pTracker = CallerTracker.getShallowTracker(2);
+
   final void checkTransactionOK(String methodname, Object arg) {
     if (this instanceof Blackboard) return;               // No check for Blackboard
 
-    if (Blackboard.PEDANTIC && arg instanceof Collection) {
+    if (Blackboard.PEDANTIC && arg instanceof Collection && pTracker.isNew()) {
       logger.warn("PEDANTIC: A Collection published by "+theClient, new Throwable());
     }
 

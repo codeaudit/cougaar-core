@@ -31,6 +31,7 @@ import java.util.List;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
+import org.cougaar.util.CallerTracker;
 
 /** 
  * Represent a view of a Plan with in three parts, (1) a description
@@ -104,6 +105,20 @@ public abstract class Subscription {
   /** The predicate that represents this subscription **/
   protected final UnaryPredicate predicate;
 
+  /** stack tracker which selects the first frame that isn't core/lib stuff **/
+  private static final CallerTracker pTracker = 
+    CallerTracker.getPredicateTracker(new UnaryPredicate() {
+        public boolean execute(Object x) {
+          String sn = (String) x;
+          if (sn.startsWith("org.cougaar.core.") ||
+              sn.startsWith("org.cougaar.lib.")) {
+            return false;
+          } else {
+            return true;
+          }
+        }
+      });
+
   /**
    * @note Although allowed, use of DynamicUnaryPredicate can be extremely expensive
    * and tends to create as many problems as it solves.  When in pedantic mode,
@@ -112,7 +127,9 @@ public abstract class Subscription {
    * @see Blackboard#PEDANTIC
    */
   public Subscription(UnaryPredicate p) {
-    if (Blackboard.PEDANTIC && p instanceof org.cougaar.util.DynamicUnaryPredicate) {
+    if (Blackboard.PEDANTIC && 
+        p instanceof org.cougaar.util.DynamicUnaryPredicate
+        && pTracker.isNew()) {
       _logger.warn("Performance hit: use of DynamicUnaryPredicate "+p, new Throwable()); 
     }
     if (p == null) throw new IllegalArgumentException("Predicate must be non-null");
