@@ -116,8 +116,7 @@ public class ReceiveAssetRescindLP
     NewSchedule assetAvailSchedule = 
       (NewSchedule)asset.getRoleSchedule().getAvailableSchedule();
 
-    if (!(asset instanceof HasRelationships) &&
-        !(assignee instanceof HasRelationships)) {
+    if (!(asset instanceof HasRelationships)) {
     
       // Remove Matching Availabilities
       synchronized (assetAvailSchedule) {
