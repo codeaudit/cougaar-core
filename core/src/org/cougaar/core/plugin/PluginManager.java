@@ -81,7 +81,11 @@ public class PluginManager
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
-    this.agentId = ais.getMessageAddress();
+    if (ais == null) {
+      // Revocation
+    } else {
+      this.agentId = ais.getMessageAddress();
+    }
   }
 
   public void setState(Object loadState) {
