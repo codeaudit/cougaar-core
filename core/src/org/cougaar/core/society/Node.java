@@ -548,6 +548,9 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
 
+    //add the vm metrics
+    sb.addService(NodeMetricsService.class,
+                  new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
     // Set up MTS and QOS service provides.
     //
@@ -900,6 +903,21 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   }
 
   private static class NodeServiceBroker extends ServiceBrokerSupport {}
+
+  private class NodeMetricsProxy implements NodeMetricsService {
+    /** Free Memory snapshot from the Java VM   **/
+    public long getFreeMemory() {
+      return Runtime.getRuntime().freeMemory();
+    }
+    /** Total memory snaphsot from the Java VM    */
+    public long getTotalMemory() {
+      return Runtime.getRuntime().totalMemory();
+    }
+    /** The number of active Threads in the main COUGAAR threadgroup **/
+    public int getActiveThreadCount() {
+      return Thread.currentThread().getThreadGroup().activeCount();
+    }
+  }
 
 }
 
