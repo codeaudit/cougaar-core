@@ -1179,7 +1179,11 @@ public class NamingDirContext extends NamingContext implements DirContext {
     case (SearchControls.SUBTREE_SCOPE):
       attrs = getAttributes(name);
       if (filter.match(attrs)) {
-        answer.addElement(new SearchResult(name.toString(), null,
+        Object boundValue = null;
+        if (cons.getReturningObjFlag()) {
+          boundValue = lookup(name);
+        }
+        answer.addElement(new SearchResult(name.toString(), boundValue,
                                            selectAttributes(attrs, cons)));
       }
       break;
@@ -1219,7 +1223,11 @@ public class NamingDirContext extends NamingContext implements DirContext {
       Name name = (Name) prefix.clone(); // Prepare to construct the name
       name.add(item.getName()); // The name of this object relative to original ctx
       if (filter.match(attrs)) {
-        answer.addElement(new SearchResult(name.toString(), null,
+        Object boundValue = null;
+        if (cons.getReturningObjFlag()) {
+          boundValue = lookup(item.getName());
+        }
+        answer.addElement(new SearchResult(name.toString(), boundValue,
                                            selectAttributes(attrs, cons)));
       }
       if (recurse && item.getClassName().equals(getClass().getName())) {
