@@ -44,7 +44,7 @@ import java.security.cert.*;
  * of paths to give to a special NodeClassLoader so that we don't
  * have to maintain many different script files.
  * <p>
- * <pre>
+ * <pre/>
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
