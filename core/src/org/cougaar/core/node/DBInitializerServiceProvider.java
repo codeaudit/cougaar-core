@@ -512,7 +512,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public Collection getCommunityDescriptions(String entityName, String empty)
       throws InitializerServiceException { 
       try {
-        return CommunityConfigUtils.getCommunityConfigsFromDB(entityName);
+        return CommunityConfigUtils.getCommunityConfigsFromDB(entityName, substitutions);
       }
       catch (RuntimeException ex) {
         System.out.println("Exception in getCommunityDescriptions from DB");

@@ -71,9 +71,9 @@ public class CommunityConfigUtils {
     File communityFile = ConfigFinder.getInstance().locateFile(xmlFileName);
     if (communityFile != null) {
       return loadCommunitiesFromFile(communityFile.getAbsolutePath());
-    } else {
-      System.err.println("Error: Could not find file '" +
-        xmlFileName + "' on config path");
+    } 
+    else {
+      System.err.println("Error: Could not find file '" +xmlFileName + "' on config path");
     }
     return new Vector();
   }
@@ -98,7 +98,7 @@ public class CommunityConfigUtils {
    * Get Collection of CommunityConfig objects for named entity.
    * Uses standard cougaar.rc to connect to DB server.
    */
-  public static Collection getCommunityConfigsFromDB(String entityName) {
+  public static Collection getCommunityConfigsFromDB(String entityName, Map substitutions) {
     try {
       DBProperties dbp = DBProperties.readQueryFile(QUERY_FILE);
       String dbStyle = dbp.getDBType();
@@ -106,8 +106,10 @@ public class CommunityConfigUtils {
       String database = dbp.getProperty("database");
       String username = dbp.getProperty("username");
       String password = dbp.getProperty("password");
+      String query1 = dbp.getQuery("queryCommunityEntityAttributes", substitutions);
+      String query2 = dbp.getQuery("queryCommunityAttributes", substitutions);
       Connection conn = DBConnectionPool.getConnection(database, username, password);
-      return getParentCommunities(conn, entityName);
+      return getParentCommunities(conn, entityName, query1, query2);
     } catch(Exception e) {
       e.printStackTrace();
     }
@@ -129,10 +131,11 @@ public class CommunityConfigUtils {
     Class.forName(driverClass);
   }
 
-  public static javax.naming.directory.Attributes getCommunityAttributes(Connection conn, String communityName)
+  public static javax.naming.directory.Attributes getCommunityAttributes(Connection conn, String communityName, String query2)
     throws SQLException {
     Statement s = conn.createStatement();
-    ResultSet rs = s.executeQuery("select * from community_attribute");
+    ResultSet rs = s.executeQuery(query2);
+    //ResultSet rs = s.executeQuery("select * from community_attribute");
     javax.naming.directory.Attributes attrs = new BasicAttributes();
     while(rs.next()) {
       if (rs.getString(1).equals(communityName)) {
@@ -160,11 +163,12 @@ public class CommunityConfigUtils {
     entity.addAttribute(attrId, attrValue);
   }
 
-  public static Collection getParentCommunities(Connection conn, String entityName)
+  public static Collection getParentCommunities(Connection conn, String entityName, String query1, String query2)
     throws SQLException {
 
     Statement s = conn.createStatement();
-    ResultSet rs = s.executeQuery("select * from community_entity_attribute");
+    ResultSet rs = s.executeQuery(query1);
+    //ResultSet rs = s.executeQuery("select * from community_entity_attribute");
     Map configMap = new HashMap();
 
     while(rs.next()) {
@@ -172,7 +176,7 @@ public class CommunityConfigUtils {
         String communityName = rs.getString(1);
         if (!configMap.containsKey(communityName)) {
           CommunityConfig cc = new CommunityConfig(communityName);
-          cc.setAttributes(getCommunityAttributes(conn, communityName));
+          cc.setAttributes(getCommunityAttributes(conn, communityName, query2));
           configMap.put(communityName, cc);
         }
         addEntityAttribute(configMap, communityName, entityName, rs.getString(3), rs.getString(4));
@@ -189,7 +193,7 @@ public class CommunityConfigUtils {
   public static void main(String args[]) {
     //System.setProperty("org.cougaar.config.path", "$CWD;$CWD/test/data;$INSTALL/configs/common");
     //Collection configs = getCommunityConfigsFromFile("communities.xml");
-    Collection configs = getCommunityConfigsFromDB("OSC");
+    Collection configs = getCommunityConfigsFromDB("OSC", new HashMap());
     System.out.println("<Communities>");
     for (Iterator it = configs.iterator(); it.hasNext();) {
       System.out.println(((CommunityConfig)it.next()).toString());
