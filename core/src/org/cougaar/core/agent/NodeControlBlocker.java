@@ -26,7 +26,6 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.NullService;
 import org.cougaar.core.component.Service;
@@ -53,8 +52,8 @@ implements Component
 
   private ServiceProvider ncsp;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

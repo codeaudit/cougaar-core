@@ -25,7 +25,6 @@
  */
 package org.cougaar.core.thread;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
@@ -51,7 +50,10 @@ public class LimitThreadsPlugin
 	super();
     }
 
-
+    public void setServiceBroker(ServiceBroker sb) 
+    {
+	this.sb = sb;
+    }
 
     public void load() 
     {
@@ -74,12 +76,5 @@ public class LimitThreadsPlugin
 	sb.releaseService(this, ThreadControlService.class, tsvc);
 	sb.releaseService(this, LoggingService.class, lsvc);
     }
-
-    public final void setBindingSite(BindingSite bs) 
-    {
-	sb = bs.getServiceBroker();
-    }
-
-
 
 }

@@ -28,7 +28,6 @@ package org.cougaar.core.wp.resolver;
 
 import java.util.List;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
@@ -48,8 +47,8 @@ implements Component
 {
   private ServiceBroker sb;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

@@ -25,7 +25,6 @@
  */
 package org.cougaar.core.node;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -46,10 +45,10 @@ public class FileComponentInitializerServiceComponent
   private ServiceProvider theSP;
   private LoggingService log;
 
-  public void setBindingSite(BindingSite bs) {
+  public void setServiceBroker(ServiceBroker sb) {
     // this is the *node* service broker!  The NodeControlService
     // is not available until the node-agent is created...
-    this.sb = bs.getServiceBroker();
+    this.sb = sb;
   }
 
   public void load() {

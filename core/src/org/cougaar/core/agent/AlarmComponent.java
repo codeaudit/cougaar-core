@@ -29,7 +29,6 @@ package org.cougaar.core.agent;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -59,8 +58,8 @@ implements Component
 
   private AlarmServiceProvider asp;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

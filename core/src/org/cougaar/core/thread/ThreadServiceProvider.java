@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -70,7 +69,7 @@ public final class ThreadServiceProvider
 				      "Pool-"+i);
     }
 
-    private ServiceBroker my_sb;
+    private ServiceBroker sb;
     private boolean isRoot;
     private ThreadListenerProxy listenerProxy;
     private ThreadControlService controlProxy;
@@ -83,23 +82,28 @@ public final class ThreadServiceProvider
     {
     }
 
+    public void setServiceBroker(ServiceBroker sb)
+    {
+        this.sb = sb;
+    }
+
     public void load() 
     {
 	super.load();
 	
 
-	ServiceBroker sb = my_sb;
-	isRoot = !sb.hasService(ThreadService.class);
+	ServiceBroker the_sb = sb;
+	isRoot = !the_sb.hasService(ThreadService.class);
 
 	String type = System.getProperty(SERVICE_TYPE_PROPERTY, 
 					 "hierarchical");
 	if (type.equals("trivial")) {
 	    if (isRoot)	
-		new TrivialThreadServiceProvider().makeServices(sb);
+		new TrivialThreadServiceProvider().makeServices(the_sb);
 	    return;
 	} else if (type.equals("single")) {
 	    if (isRoot)
-		new SingleThreadServiceProvider().makeServices(sb);
+		new SingleThreadServiceProvider().makeServices(the_sb);
 	    return;
 	}
 
@@ -111,14 +115,14 @@ public final class ThreadServiceProvider
         if (name == null) {
 	    // Make default values from position in containment hierarcy
 	    AgentIdentificationService ais = (AgentIdentificationService)
-		sb.getService(this, AgentIdentificationService.class, null);
+		the_sb.getService(this, AgentIdentificationService.class, null);
 	    MessageAddress agentAddr = ais.getMessageAddress();
-	    sb.releaseService(this, AgentIdentificationService.class, ais);
+	    the_sb.releaseService(this, AgentIdentificationService.class, ais);
 	    
 	    NodeIdentificationService nis = (NodeIdentificationService)
-		sb.getService(this, NodeIdentificationService.class, null);
+		the_sb.getService(this, NodeIdentificationService.class, null);
 	    MessageAddress nodeAddr = nis.getMessageAddress();
-	    sb.releaseService(this, NodeIdentificationService.class, nis);
+	    the_sb.releaseService(this, NodeIdentificationService.class, nis);
 
 	    name = 
 		isRoot ?
@@ -131,15 +135,15 @@ public final class ThreadServiceProvider
 	    Reclaimer.startThread();
 	    // use the root service broker
 	    NodeControlService ncs = (NodeControlService)
-		my_sb.getService(this, NodeControlService.class, null);
-	    sb = ncs.getRootServiceBroker();
+		sb.getService(this, NodeControlService.class, null);
+	    the_sb = ncs.getRootServiceBroker();
 
 	}
 	
 	ThreadService parent = (ThreadService) 
-	    sb.getService(this, ThreadService.class, null);
+	    the_sb.getService(this, ThreadService.class, null);
 	final TreeNode node = makeProxies(parent);
-	provideServices(sb);
+	provideServices(the_sb);
 	if (isRoot) {
 	    statusProxy = new ThreadStatusService() {
 		    public List getStatus() {
@@ -149,7 +153,7 @@ public final class ThreadServiceProvider
 			return result;
 		    }
 		};
-	    sb.addService(ThreadStatusService.class, this);
+	    the_sb.addService(ThreadStatusService.class, this);
 	}
     }
 
@@ -227,11 +231,11 @@ public final class ThreadServiceProvider
 	return node;
     }
 
-    private void provideServices(ServiceBroker sb) 
+    private void provideServices(ServiceBroker the_sb) 
     {
-	sb.addService(ThreadService.class, this);
-	sb.addService(ThreadControlService.class, this);
-	sb.addService(ThreadListenerService.class, this);
+	the_sb.addService(ThreadService.class, this);
+	the_sb.addService(ThreadControlService.class, this);
+	the_sb.addService(ThreadListenerService.class, this);
     }
 
 
@@ -258,12 +262,6 @@ public final class ThreadServiceProvider
 			       Class serviceClass, 
 			       Object service)
     {
-    }
-
- 
-    public final void setBindingSite(BindingSite bs) 
-    {
-	my_sb = bs.getServiceBroker();
     }
 
 }

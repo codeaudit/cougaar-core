@@ -74,7 +74,7 @@ public abstract class BlackboardClientComponent
   protected String blackboardClientName;
 
   private BindingSite bindingSite;
-  private ServiceBroker serviceBroker;
+  private ServiceBroker sb;
 
   private TriggerModel tm;
   private SubscriptionWatcher watcher;
@@ -125,7 +125,8 @@ public abstract class BlackboardClientComponent
    */
   public void setBindingSite(BindingSite bs) {
     bindingSite = bs;
-    serviceBroker = bindingSite.getServiceBroker();
+    // set "sb" now, for backwards compatibility
+    sb = bs.getServiceBroker();
   }
 
   /**
@@ -134,12 +135,19 @@ public abstract class BlackboardClientComponent
   protected BindingSite getBindingSite() {
     return bindingSite;
   }
+
+  /**
+   * ServiceBroker is set by reflection at creation-time.
+   */
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
+  }
   
   /** 
    * Get the ServiceBroker, for subclass use.
    */
   protected ServiceBroker getServiceBroker() {
-    return serviceBroker;
+    return sb;
   }
 
   // rely upon load-time introspection to set these services - 
@@ -281,15 +289,15 @@ public abstract class BlackboardClientComponent
     }
     blackboard.unregisterInterest(watcher);
     if (alarmService != null) {
-      serviceBroker.releaseService(this, AlarmService.class, alarmService);
+      sb.releaseService(this, AlarmService.class, alarmService);
       alarmService = null;
     }
     if (blackboard != null) {
-      serviceBroker.releaseService(this, BlackboardService.class, blackboard);
+      sb.releaseService(this, BlackboardService.class, blackboard);
       blackboard = null;
     }
     if (scheduler != null) {
-      serviceBroker.releaseService(this, SchedulerService.class, scheduler);
+      sb.releaseService(this, SchedulerService.class, scheduler);
       scheduler = null;
     }
   }

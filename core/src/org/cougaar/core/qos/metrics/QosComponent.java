@@ -26,7 +26,6 @@
 
 package org.cougaar.core.qos.metrics;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 
@@ -34,14 +33,11 @@ abstract public class QosComponent
     extends ParameterizedComponent
 {
 
-    private BindingSite bindingSite;
     private ServiceBroker sb;
 
-    public final void setBindingSite(BindingSite bs) {
-	this.bindingSite = bs;
-	this.sb = bs.getServiceBroker();
+    public void setServiceBroker(ServiceBroker sb) {
+        this.sb = sb;
     }
-
 
     public ServiceBroker getServiceBroker() {
 	return sb;

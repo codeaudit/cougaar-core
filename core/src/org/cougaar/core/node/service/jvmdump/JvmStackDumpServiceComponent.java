@@ -26,7 +26,6 @@
 
 package org.cougaar.core.node.service.jvmdump;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -53,9 +52,7 @@ implements Component
 
   private ServiceProvider mySP;
 
-  public void setBindingSite(BindingSite bs) {
-    // ignore; we only care about the node-level service broker
-  }
+  // ignore "setServiceBroker", we want the node-level service broke
 
   public void setNodeControlService(NodeControlService ncs) {
     if (ncs != null) {

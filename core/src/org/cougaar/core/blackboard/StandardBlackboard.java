@@ -28,7 +28,6 @@ package org.cougaar.core.blackboard;
 
 import java.util.List;
 import org.cougaar.core.agent.service.MessageSwitchService;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -57,8 +56,8 @@ implements Component
   private BlackboardForAgentServiceProvider bbAgentSP;
   private BlackboardServiceProvider bbSP;
   
-  public void setBindingSite(BindingSite bs) {
-    sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public PersistenceObject getPersistenceObject() {

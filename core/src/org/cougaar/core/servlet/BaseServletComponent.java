@@ -55,7 +55,10 @@ public abstract class BaseServletComponent
 
   public void setBindingSite(BindingSite bindingSite) {
     this.bindingSite = bindingSite;
-    this.serviceBroker = bindingSite.getServiceBroker();
+  }
+
+  public void setServiceBroker(ServiceBroker sb) {
+    this.serviceBroker = sb;
   }
 
   /**

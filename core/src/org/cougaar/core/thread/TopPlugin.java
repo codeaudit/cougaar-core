@@ -28,7 +28,6 @@ package org.cougaar.core.thread;
 
 import java.util.Timer;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
@@ -58,7 +57,9 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	super();
     }
 
-
+    public void setServiceBroker(ServiceBroker sb) {
+        this.sb = sb;
+    }
 
     public void load() {
 	super.load();
@@ -132,11 +133,6 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	sb.releaseService(this, ThreadService.class, tsvc);
 	sched.schedule(0, 10);
     }
-
-    public final void setBindingSite(BindingSite bs) {
-	sb = bs.getServiceBroker();
-    }
-
 
     public ServiceBroker getServiceBroker() {
 	return sb;

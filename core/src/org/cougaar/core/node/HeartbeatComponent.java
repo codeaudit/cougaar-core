@@ -26,7 +26,6 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -55,8 +54,8 @@ implements Component
   private Heartbeat heartbeat;
   private ServiceBroker sb;
 
-  public void setBindingSite(BindingSite bs) {
-      sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

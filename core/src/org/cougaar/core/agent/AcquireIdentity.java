@@ -28,7 +28,6 @@ package org.cougaar.core.agent;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
@@ -78,8 +77,8 @@ implements Component
 
   private MessageAddress localAgent;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

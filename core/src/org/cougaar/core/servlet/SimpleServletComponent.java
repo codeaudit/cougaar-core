@@ -31,7 +31,6 @@ import java.util.List;
 
 import javax.servlet.Servlet;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.mts.MessageAddress;
@@ -108,21 +107,6 @@ extends BaseServletComponent
   //
   protected BlackboardQueryService blackboardQuery;
   protected LoggingService log;
-
-
-  /**
-   * Standard constructor.
-   */
-  public SimpleServletComponent() {
-    super();
-  }
-
-  /**
-   * Save our binding info during initialization.
-   */
-  public void setBindingSite(BindingSite bindingSite) {
-    super.setBindingSite(bindingSite);
-  }
 
   public final void setAgentIdentificationService(AgentIdentificationService ais) {
     MessageAddress an;
@@ -256,7 +240,7 @@ extends BaseServletComponent
    */
   protected SimpleServletSupport createSimpleServletSupport(
       Servlet servlet) {
-    // the agentId is known from "setBindingSite(..)"
+    // the agentId is known from "setAgentIdentificationService(..)"
 
     // get the blackboard query service
     blackboardQuery = (BlackboardQueryService)

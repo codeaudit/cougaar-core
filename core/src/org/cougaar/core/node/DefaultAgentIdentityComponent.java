@@ -28,7 +28,6 @@ package org.cougaar.core.node;
 
 import java.io.Serializable;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -56,9 +55,7 @@ implements Component
 
   private ServiceProvider myAISP;
 
-  public void setBindingSite(BindingSite bs) {
-    // only care about the root-level service broker
-  }
+  // ignore "setServiceBroker", we want the node-level service broke
 
   public void setNodeControlService(NodeControlService ncs) {
     if (ncs == null) {

@@ -25,7 +25,6 @@
  */
 package org.cougaar.core.thread;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
@@ -54,7 +53,9 @@ public class ThreadsWellBehavedPlugin
 	super();
     }
 
-
+    public void setServiceBroker(ServiceBroker sb) {
+        this.sb = sb;
+    }
 
     public void load() {
 	super.load();
@@ -73,11 +74,6 @@ public class ThreadsWellBehavedPlugin
 	sb.releaseService(this, ThreadControlService.class, tsvc);
 	sb.releaseService(this, LoggingService.class, lsvc);
     }
-
-    public final void setBindingSite(BindingSite bs) {
-	sb = bs.getServiceBroker();
-    }
-
 
     public ServiceBroker getServiceBroker() {
 	return sb;

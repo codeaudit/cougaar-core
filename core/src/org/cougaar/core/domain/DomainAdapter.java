@@ -51,7 +51,7 @@ public abstract class DomainAdapter
 {
 
   private BindingSite bindingSite;
-  private ServiceBroker serviceBroker;
+  private ServiceBroker sb;
   private LoggingService logger;
   private XPlanService xplanService;
   private DomainRegistryService domainRegistryService;
@@ -69,11 +69,18 @@ public abstract class DomainAdapter
 
   public void setBindingSite(BindingSite bindingSite) {
     this.bindingSite = bindingSite;
-    serviceBroker = bindingSite.getServiceBroker();
+  }
+
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   protected BindingSite getBindingSite() {
     return bindingSite;
+  }
+
+  protected ServiceBroker getServiceBroker() {
+    return sb;
   }
 
   protected XPlan getXPlanForDomain(String domainName) {
@@ -104,20 +111,20 @@ public abstract class DomainAdapter
     super.load();
 
     LoggingService ls = (LoggingService) 
-      serviceBroker.getService(this, LoggingService.class, null);
+      sb.getService(this, LoggingService.class, null);
     if (ls != null) {
       logger = ls;
     }
 
     xplanService = (XPlanService)
-      serviceBroker.getService(this, XPlanService.class, null);
+      sb.getService(this, XPlanService.class, null);
     if (xplanService == null) {
       throw new RuntimeException(
           "Unable to obtain XPlanService");
     }
 
     domainRegistryService = (DomainRegistryService)
-      serviceBroker.getService(this, DomainRegistryService.class, null);
+      sb.getService(this, DomainRegistryService.class, null);
     if (domainRegistryService == null) {
       throw new RuntimeException(
           "Unable to obtain DomainRegistryService");
@@ -135,19 +142,19 @@ public abstract class DomainAdapter
 
     if (domainRegistryService != null) {
       domainRegistryService.unregisterDomain(this);
-      serviceBroker.releaseService(
+      sb.releaseService(
           this, DomainRegistryService.class, domainRegistryService);
       domainRegistryService = null;
     }
 
     if (xplanService != null) {
-      serviceBroker.releaseService(
+      sb.releaseService(
           this, XPlanService.class, xplanService);
       xplanService = null;
     }
 
     if (logger != LoggingService.NULL) {
-      serviceBroker.releaseService(
+      sb.releaseService(
           this, LoggingService.class, logger);
       logger = LoggingService.NULL;
     }

@@ -34,7 +34,6 @@ import org.cougaar.core.blackboard.ChangeEnvelopeTuple;
 import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
@@ -57,7 +56,7 @@ public final class RootDomain
 extends GenericStateModelAdapter
 implements Component, Domain 
 {
-  private ServiceBroker serviceBroker;
+  private ServiceBroker sb;
   private DomainRegistryService domainRegistryService;
   private MessageAddress self;
   private RootPlan rootplan;
@@ -73,8 +72,8 @@ implements Component, Domain
     }
   }
 
-  public void setBindingSite(BindingSite bs) {
-    this.serviceBroker = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void setAgentIdentificationService(
@@ -89,7 +88,7 @@ implements Component, Domain
     rootplan = new RootPlanImpl();
     relayLP = new RelayLP(rootplan, self);
     domainRegistryService = (DomainRegistryService)
-      serviceBroker.getService(
+      sb.getService(
           this, DomainRegistryService.class, null);
     if (domainRegistryService != null) {
       domainRegistryService.registerDomain(this);
@@ -100,7 +99,7 @@ implements Component, Domain
     super.unload();
     if (domainRegistryService != null) {
       domainRegistryService.unregisterDomain(this);
-      serviceBroker.releaseService(
+      sb.releaseService(
           this, DomainRegistryService.class, domainRegistryService);
       domainRegistryService = null;
     }

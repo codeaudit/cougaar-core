@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.cougaar.core.agent.service.MessageSwitchService;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceAvailableEvent;
 import org.cougaar.core.component.ServiceAvailableListener;
@@ -194,8 +193,8 @@ implements Component
     this.config = new ClientTransportConfig(o);
   }
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void setLoggingService(LoggingService logger) {

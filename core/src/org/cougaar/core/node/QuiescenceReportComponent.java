@@ -27,7 +27,6 @@
 package org.cougaar.core.node;
 
 import org.cougaar.core.agent.AgentContainer;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -59,8 +58,8 @@ implements Component
 
   private QuiescenceReportServiceProvider qrsp;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {

@@ -28,7 +28,6 @@ package org.cougaar.core.agent.service.id;
 
 import java.util.List;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -50,8 +49,8 @@ implements Component
   private AgentIdentificationService aiS;
   private AgentIdentificationServiceProvider aiSP;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void setParameter(Object o) {

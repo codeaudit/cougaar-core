@@ -26,7 +26,6 @@
 
 package org.cougaar.core.mts.singlenode;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -52,8 +51,8 @@ public final class SingleNodeMTSProvider
     protected LoggingService loggingService;
     private SingleNodeMTSProxy proxy;
 
-    public void setBindingSite(BindingSite bs) {
-	sb = bs.getServiceBroker();
+    public void setServiceBroker(ServiceBroker sb) {
+      this.sb = sb;
     }
 
     // does all loading of services

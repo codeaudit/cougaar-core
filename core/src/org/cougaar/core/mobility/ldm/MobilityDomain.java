@@ -67,7 +67,7 @@ public class MobilityDomain extends DomainAdapter {
   }
 
   private UIDService getUIDService() {
-    ServiceBroker sb = getBindingSite().getServiceBroker();
+    ServiceBroker sb = getServiceBroker();
     UIDService uidService = 
       (UIDService)
       sb.getService(
@@ -83,7 +83,7 @@ public class MobilityDomain extends DomainAdapter {
 
   private MessageAddress getAgentId() {
     // get the agentId
-    ServiceBroker sb = getBindingSite().getServiceBroker();
+    ServiceBroker sb = getServiceBroker();
     AgentIdentificationService agentIdService = 
       (AgentIdentificationService)
       sb.getService(
@@ -106,7 +106,7 @@ public class MobilityDomain extends DomainAdapter {
 
   private MessageAddress getNodeId() {
     // get the nodeId
-    ServiceBroker sb = getBindingSite().getServiceBroker();
+    ServiceBroker sb = getServiceBroker();
     NodeIdentificationService nodeIdService = 
       (NodeIdentificationService)
       sb.getService(

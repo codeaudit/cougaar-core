@@ -29,7 +29,6 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -45,7 +44,7 @@ public class TrivialThreadServiceProvider
     extends GenericStateModelAdapter
     implements ServiceProvider, Component
 {
-    private ServiceBroker my_sb;
+    private ServiceBroker sb;
     private ThreadService proxy;
     private ThreadStatusService statusProxy;
 
@@ -53,10 +52,15 @@ public class TrivialThreadServiceProvider
     {
     }
 
+    public void setServiceBroker(ServiceBroker sb)
+    {
+        this.sb = sb;
+    }
+
     public void load() 
     {
 	super.load();
-	/* if (!my_sb.hasService(ThreadService.class)) */ makeServices(my_sb);
+	/* if (!sb.hasService(ThreadService.class)) */ makeServices(sb);
     }
 
 
@@ -76,25 +80,25 @@ public class TrivialThreadServiceProvider
 	    };
     }
 
-    void makeServices(ServiceBroker sb)
+    void makeServices(ServiceBroker the_sb)
     {
 	proxy = makeThreadServiceProxy();
 	statusProxy = makeThreadStatusService();
 
 	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	    the_sb.getService(this, NodeControlService.class, null);
 	ServiceBroker rootsb = null;
 	if (ncs != null) {
 	    rootsb = ncs.getRootServiceBroker();
-	    sb.releaseService(this, NodeControlService.class, ncs);
+	    the_sb.releaseService(this, NodeControlService.class, ncs);
 	}
 
 	if (rootsb != null) {
 	    rootsb.addService(ThreadService.class, this);
 	    rootsb.addService(ThreadStatusService.class, this);
 	} else {
-	    sb.addService(ThreadService.class, this);
-	    sb.addService(ThreadStatusService.class, this);
+	    the_sb.addService(ThreadService.class, this);
+	    the_sb.addService(ThreadStatusService.class, this);
 	}
     }
 
@@ -117,12 +121,6 @@ public class TrivialThreadServiceProvider
 			       Class serviceClass, 
 			       Object service)
     {
-    }
-
- 
-    public final void setBindingSite(BindingSite bs) 
-    {
-	my_sb = bs.getServiceBroker();
     }
 
 }

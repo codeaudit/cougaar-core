@@ -29,7 +29,6 @@ package org.cougaar.core.node;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -55,8 +54,8 @@ implements Component
 
   private ServiceProvider nbsp;
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
   }
 
   public void load() {
