@@ -1167,21 +1167,32 @@ public abstract class PlugInAdapter
           schedTrigger = getSchedulerService().register(this);
           if (pendingTrigger) {
             pendingTrigger = false;    // useless cleanup
-            // note: this isn't bug 837 if we were suspended!
-            /*
-            System.err.println("Warning: avoiding bug 837\nPlease report that you've seen this message at https://www.alpine.bbn.com/bugzilla/show_bug.cgi?id=837");
-            */
             schedTrigger.trigger();
           }
         }
       }
     }
 
+<<<<<<< PlugInAdapter.java
+    // we may need to delay an RT activation if it isn't hooked up yet
+    private boolean rtDelayed = false;
+    // we could probably sync on this, but I'm more comfortable with a semephore-like
+    // pattern here...
+    private final Object rtDelayLock = new Object();
+
+    private void setRequestTrigger(Trigger rt) {
+      synchronized (rtDelayLock) {
+        requestTrigger = rt;
+        if (rtDelayed) {
+          rtDelayed = false;    // useless cleanup
+          requestTrigger.trigger();
+=======
     private void exitScheduler() {
       synchronized (schedTriggerLock) {
         if (schedTrigger != null) {
           schedTrigger = null;
           getSchedulerService().unregister(schedTrigger);
+>>>>>>> 1.42
         }
       }
     }
