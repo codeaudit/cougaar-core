@@ -45,6 +45,7 @@ import java.util.*;
  * default BinderFactory will only actually accept Agents and other Binders.
  * If you want to load other sorts of components into AgentManager, you'll
  * need to supply a Binder which knows how to bind your Component class.
+ * @property org.cougaar.core.node.InitializationComponent is used to indicate what class to initialize communities and Organization assets from. Usually set to XML.
  */
 public class AgentManager
     extends ContainerSupport
@@ -53,7 +54,7 @@ public class AgentManager
 
   private static final String FILENAME_PROP = "org.cougaar.filename";
   private static final String EXPTID_PROP = "org.cougaar.experiment.id";
-  private static final String INITIALIZER_PROP =
+  public static final String INITIALIZER_PROP =
       "org.cougaar.core.node.InitializationComponent";
   private static final String NODE_AGENT_CLASSNAME_PROPERTY =
       "org.cougaar.core.node.classname";
