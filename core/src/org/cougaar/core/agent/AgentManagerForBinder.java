@@ -14,7 +14,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 
 /** This is the interface presented to an AgentBinder from the AgentManager.
  **/
@@ -22,6 +22,6 @@ public interface AgentManagerForBinder
   extends ContainerAPI
 {
   void sendMessage(Message message) throws MessageTransportException;
-  MessageTransportServer getMessageTransportServer();
+  MessageTransportService getMessageTransportServer();
   String getName();
 }

@@ -12,7 +12,7 @@ package org.cougaar.core.society;
 
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 
 /** 
  * Services provided to Clusters by ClusterManagement.
@@ -32,7 +32,7 @@ public interface ClusterManagementServesCluster {
   /**
    * The MessageTransportServer for the Node in which this Cluster resides.
    **/
-  MessageTransportServer getMessageTransportServer();
+  MessageTransportService getMessageTransportServer();
 
   /**
    * The name of this ClusterManager (Node).

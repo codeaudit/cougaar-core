@@ -240,10 +240,10 @@ public class Communications {
   }
 
   private static Object defaultLock = new Object();
-  private static MessageTransportServer defaultMessageTransport = null;
+  private static MessageTransportService defaultMessageTransport = null;
   private static NameServer defaultNameServer = null;
 
-  public static void setDefaultMessageTransport(MessageTransportServer mt) {
+  public static void setDefaultMessageTransport(MessageTransportService mt) {
     synchronized (defaultLock) {
       if (defaultMessageTransport!=null) 
         throw new RuntimeException("Default MessageTransport already set.");
@@ -251,7 +251,7 @@ public class Communications {
     }
   }
 
-  public static MessageTransportServer getDefaultMessageTransport() {
+  public static MessageTransportService getDefaultMessageTransport() {
     return defaultMessageTransport;
   }
   public static NameServer getDefaultNameServer() {

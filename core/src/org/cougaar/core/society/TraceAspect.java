@@ -55,7 +55,7 @@ public class TraceAspect
     public Object getDelegate(Object delegate, int cutpoint) {
 	switch (cutpoint) {
 	case ServiceProxy:
-	    return new ServiceProxyDelegate((MessageTransportServer) delegate);
+	    return new ServiceProxyDelegate((MessageTransportService) delegate);
 
 	case SendQueue:
 	    return new SendQueueDelegate((SendQueue) delegate);
@@ -81,11 +81,11 @@ public class TraceAspect
     }
 
 
-    public class ServiceProxyDelegate implements MessageTransportServer
+    public class ServiceProxyDelegate implements MessageTransportService
     {
-	private MessageTransportServer server;
+	private MessageTransportService server;
 	
-	public ServiceProxyDelegate (MessageTransportServer server) {
+	public ServiceProxyDelegate (MessageTransportService server) {
 	    this.server = server;
 	}
 

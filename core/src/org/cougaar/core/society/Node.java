@@ -469,14 +469,14 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   }
 
   /** Refernece containing the Messenger **/
-  private transient MessageTransportServer theMessenger = null;
+  private transient MessageTransportService theMessenger = null;
 
   /**
    *   Accessor method for theMessenger
    *   <p>
    *   @return Messenger The threaded messenger component of the node as referenced by theMessenger
    **/
-  protected MessageTransportServer getMessenger() { 
+  protected MessageTransportService getMessenger() { 
       // Nb:  One proxy for all requestors!
     return theMessenger; 
   }
@@ -571,11 +571,12 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 //      } else {
 //        theMessenger = Communications.getInstance().startMessageTransport(name);
 //      }
-    MessageTransportServerImpl mtsi = new MessageTransportServerImpl(name);
-    add(mtsi);
-    getServiceBroker().addService(MessageTransportServer.class, mtsi);
-    theMessenger = (MessageTransportServer)
-      getServiceBroker().getService(this, MessageTransportServer.class, null);
+    MessageTransportServiceProvider mtsp = 
+	new MessageTransportServiceProvider(name);
+    add(mtsp);
+    getServiceBroker().addService(MessageTransportService.class, mtsp);
+    theMessenger = (MessageTransportService)
+      getServiceBroker().getService(this, MessageTransportService.class, null);
     Communications.setDefaultMessageTransport(theMessenger);
     // theMessenger.setDisableRetransmission(disableRetransmission);
     System.err.println("Started "+theMessenger);
@@ -798,7 +799,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   // ClusterManagementServesCluster
   //
 
-  public MessageTransportServer getMessageTransportServer() {
+  public MessageTransportService getMessageTransportServer() {
     return getMessenger();
   }
 
@@ -848,7 +849,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     public void sendMessage(Message message) throws MessageTransportException {
       Node.this.sendMessage(message);
     }
-    public MessageTransportServer getMessageTransportServer() {
+    public MessageTransportService getMessageTransportServer() {
       return Node.this.getMessageTransportServer(); 
     }
     public String getName() {return Node.this.getName(); }

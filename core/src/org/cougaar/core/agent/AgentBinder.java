@@ -14,7 +14,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 
 /** The standard Binder for Agents.
  **/
@@ -47,7 +47,7 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
   public void sendMessage(Message message) throws MessageTransportException {
     getAgentManager().sendMessage(message);
   }
-  public MessageTransportServer getMessageTransportServer() {
+  public MessageTransportService getMessageTransportServer() {
     return getAgentManager().getMessageTransportServer();
   }
   public String getName() {return getAgentManager().getName(); }

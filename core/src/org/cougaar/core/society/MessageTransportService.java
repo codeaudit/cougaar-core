@@ -18,7 +18,7 @@ import org.cougaar.core.component.Service;
  *
  **/
 
-public interface MessageTransportServer extends Service
+public interface MessageTransportService extends Service
 {
 
   /** Ask MessageTransport to deliver a message (asynchronously).

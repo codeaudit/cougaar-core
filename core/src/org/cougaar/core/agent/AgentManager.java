@@ -57,7 +57,7 @@ public class AgentManager
     // add some services for the agents (clusters).
     // maybe this can be hooked in from Node soon.
     //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    //childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    //childContext.addService(MessageTransportService.class, new MessageTransportServiceProvider(agent));
 
   }
 
@@ -216,7 +216,7 @@ public class AgentManager
   // old ClusterManagementServesCluster stuff
   // pass this up to Node for now (backwards compat)
   // should shortly move to getting a service the right way!
-  public MessageTransportServer getMessageTransportServer() {
+  public MessageTransportService getMessageTransportServer() {
     return getBindingSite().getMessageTransportServer();
   }
   
@@ -248,7 +248,7 @@ public class AgentManager
     public void sendMessage(Message message) throws MessageTransportException {
       AgentManager.this.sendMessage(message);
     }
-    public MessageTransportServer getMessageTransportServer() {
+    public MessageTransportService getMessageTransportServer() {
       return AgentManager.this.getMessageTransportServer(); 
     }
     public String getName() {return AgentManager.this.getName(); }

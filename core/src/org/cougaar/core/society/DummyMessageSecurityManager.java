@@ -14,7 +14,7 @@ import org.cougaar.core.society.MessageSecurityManager;
 import org.cougaar.core.society.SecureMessage;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageTransportServer;
+
 
 import java.io.*;
 import java.util.Date;

@@ -14,24 +14,24 @@ import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 import org.cougaar.core.society.MessageTransportClient;
 import org.cougaar.core.society.MessageTransportWatcher;
 
 /**
  * A MessageTransportServiceProvider is a provider class that PluginManager calls
- * when a client requests a MessageTransportServer.
+ * when a client requests a MessageTransportService.
  */
 public class MessageTransportServiceProvider implements ServiceProvider {
 
-  private final MessageTransportServer mts;
+  private final MessageTransportService mts;
 
   public MessageTransportServiceProvider(ClusterImpl agent) {
     this.mts = agent.getMessageTransportServer();
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    return new MessageTransportServer() {
+    return new MessageTransportService() {
       public void sendMessage(Message m) {
         // should verify message contents
         mts.sendMessage(m);

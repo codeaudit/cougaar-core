@@ -104,7 +104,7 @@ import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactoryImpl;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageStatistics;
 import org.cougaar.core.society.MessageTransportClient;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 import org.cougaar.core.society.MessageTransportWatcher;
 
 // Scenario time support
@@ -151,7 +151,7 @@ public class ClusterImpl extends Agent
   private Distributor myDistributor = null;
   private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
-  private MessageTransportServer messenger = null;
+  private MessageTransportService messenger = null;
   private static boolean isHeartbeatOn = true;
   private static boolean isMetricsHeartbeatOn = false;
   private static int metricsInterval = 2500; // how often send to metrics display
@@ -615,7 +615,7 @@ public class ClusterImpl extends Agent
   /**
    * Temporary support for <code>MessageTransportServiceProvider</code>.  
    */
-  MessageTransportServer getMessageTransportServer() {
+  MessageTransportService getMessageTransportServer() {
     return messenger;
   }
 

@@ -14,7 +14,6 @@ import org.cougaar.core.society.MessageSecurityManager;
 import org.cougaar.core.society.SecureMessage;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MessageTransportServer;
 
 import org.cougaar.util.ConfigFileFinder;
 

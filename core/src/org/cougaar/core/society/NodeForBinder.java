@@ -19,7 +19,7 @@ import org.cougaar.core.component.*;
 public interface NodeForBinder
   extends ContainerAPI
 {
-  MessageTransportServer getMessageTransportServer();
+  MessageTransportService getMessageTransportServer();
   void sendMessage(Message message) throws MessageTransportException;
   String getIdentifier();
   void registerCluster(ClusterServesClusterManagement cluster);

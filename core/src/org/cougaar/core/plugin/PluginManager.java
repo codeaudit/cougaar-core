@@ -14,7 +14,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.*;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import java.beans.*;
 import java.lang.reflect.*;
@@ -62,7 +62,7 @@ public class PluginManager
     sb.addService(MetricsService.class, new MetricsServiceProvider(agent));
     sb.addService(AlarmService.class, new AlarmServiceProvider(agent));
     sb.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    sb.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    sb.addService(MessageTransportService.class, new MessageTransportServiceProvider(agent));
     sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
     // hack service for demo control
     sb.addService(DemoControlService.class, new DemoControlServiceProvider(agent));

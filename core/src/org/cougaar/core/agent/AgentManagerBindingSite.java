@@ -15,7 +15,7 @@ import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 
 /** An agentmanager's view of its parent component (Container).
  *
@@ -23,7 +23,7 @@ import org.cougaar.core.society.MessageTransportServer;
 public interface AgentManagerBindingSite 
   extends BindingSite
 {
-  MessageTransportServer getMessageTransportServer();
+  MessageTransportService getMessageTransportServer();
   void sendMessage(Message message) throws MessageTransportException;
   String getIdentifier();
   void registerCluster(ClusterServesClusterManagement cluster);

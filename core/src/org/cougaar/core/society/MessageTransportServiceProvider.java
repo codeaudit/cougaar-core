@@ -27,7 +27,7 @@ import org.cougaar.core.naming.NamingService;
  * and a method to create the aspects from the
  * org.cougaar.message.transport.aspects property. */
 
-public class MessageTransportServerImpl 
+public class MessageTransportServiceProvider 
     extends ContainerSupport
     implements ContainerAPI, ServiceProvider, Debug, MessageTransportCutpoints
 {
@@ -89,7 +89,7 @@ public class MessageTransportServerImpl
                                   sb.getService(this, NamingService.class, null));
     }
 
-    public MessageTransportServerImpl(String id) {
+    public MessageTransportServiceProvider(String id) {
         this.id = id;
     }
 
@@ -157,7 +157,7 @@ public class MessageTransportServerImpl
 				      Class serviceClass) 
     {
 	return requestor instanceof Node &&
-	    serviceClass == MessageTransportServer.class;
+	    serviceClass == MessageTransportService.class;
     }
 
     // Hmm, this is copied from AspectFactory, since we can't extend
@@ -184,7 +184,7 @@ public class MessageTransportServerImpl
     {
 	if (validateRequestor(requestor, serviceClass)) {
 	    Object proxy = 
-		new MessageTransportServerProxy(registry, sendQ);
+		new MessageTransportServiceProxy(registry, sendQ);
 	    return attachAspects(proxy, ServiceProxy);
 	} else {
 	    return null;

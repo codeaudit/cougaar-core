@@ -23,7 +23,7 @@ class MessageTransportRegistry
     private static MessageTransportRegistry instance;
 
     public static synchronized MessageTransportRegistry 
-	makeRegistry(String name, MessageTransportServerImpl server)
+	makeRegistry(String name, MessageTransportServiceProvider server)
     {
 	if (instance == null) {
 	    instance = new MessageTransportRegistry(name, server);
@@ -49,14 +49,14 @@ class MessageTransportRegistry
     private String name;
     private HashMap myClients = new HashMap(89);
     private HashMap receiveLinks = new HashMap();
-    private MessageTransportServerImpl server;
+    private MessageTransportServiceProvider serviceProvider;
     private MessageTransportFactory transportFactory;
     private ReceiveLinkFactory receiveLinkFactory;
     private WatcherAspect watcherAspect;
 
-    private MessageTransportRegistry(String name, MessageTransportServerImpl server) {
+    private MessageTransportRegistry(String name, MessageTransportServiceProvider serviceProvider) {
 	this.name = name;
-	this.server = server;
+	this.serviceProvider = serviceProvider;
     }
 
     void setTransportFactory(MessageTransportFactory transportFactory) {

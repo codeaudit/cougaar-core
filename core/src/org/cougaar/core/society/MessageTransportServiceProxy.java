@@ -10,22 +10,45 @@
 
 package org.cougaar.core.society;
 
+import org.cougaar.core.society.rmi.StatisticsAspect;
+
 /**
- * Currently the only implementation of MessageTransportServer.  It
+ * Currently the only implementation of MessageTransportService.  It
  * does almost nothing by itself - its work is accomplished by
  * redirecting calls to the MessageTransportRegistry and the
  * SendQueue.  */
-public class MessageTransportServerProxy implements MessageTransportServer
+public class MessageTransportServiceProxy 
+    implements MessageTransportService, MessageStatistics
 {
     private MessageTransportRegistry registry;
     private SendQueue sendQ;
 
-    public MessageTransportServerProxy(MessageTransportRegistry registry,
+    public MessageTransportServiceProxy(MessageTransportRegistry registry,
 				       SendQueue queue) 
     {
 	this.sendQ = queue;
 	this.registry = registry;
     }
+
+
+    /**
+     * MessageStatistics interface.  Delegate to the relevant aspect. 
+     */
+    public Statistics getMessageStatistics(boolean reset) {
+	if (Debug.DEBUG_TRANSPORT) System.out.println("#### Getting message statistics from aspect");
+	String cname = "org.cougaar.core.society.rmi.StatisticsAspect";
+	MessageTransportAspect aspect = 
+	    MessageTransportServiceProvider.findAspect(cname);
+	if (aspect != null) {
+	    Statistics stats = ((StatisticsAspect) aspect).getMessageStatistics(reset);
+	    if (Debug.DEBUG_TRANSPORT) System.out.println("#### Stats = " + stats);
+	    return stats;
+	} else {
+	    System.err.println("#### Requested statistics but no StatisticsAspect!");
+	    return null;
+	}
+    }
+
 
     /**
      * Any non-null target passes this check. */

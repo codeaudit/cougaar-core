@@ -18,7 +18,7 @@ import org.cougaar.core.society.Node;
 import org.cougaar.core.society.NodeForBinder;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageTransportException;
-import org.cougaar.core.society.MessageTransportServer;
+import org.cougaar.core.society.MessageTransportService;
 
 /** The standard Binder for AgentManagers and possibly others attaching to a Node.
  **/
@@ -55,7 +55,7 @@ public class AgentManagerBinder extends BinderSupport
   }
 
   //backwards compatability pass thrus
-  public MessageTransportServer getMessageTransportServer() {
+  public MessageTransportService getMessageTransportServer() {
     return getNode().getMessageTransportServer();
   }
   public void sendMessage(Message message) throws MessageTransportException {
