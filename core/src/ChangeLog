@@ -1,7 +1,8 @@
 2002-05-29  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/core/node/INIParser.java, org/cougaar/core/node/DBInitializerServiceProvider.java
-	If no component arguments, leave ComponentDescription parameter null.
+	If no component arguments, leave ComponentDescription parameter
+	null - bug 1372.
 
 2002-05-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
