@@ -29,9 +29,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.io.PrintWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -55,16 +57,22 @@ import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.NoResponseException;
+import org.cougaar.core.blackboard.BulkEnvelopeTuple;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.blackboard.BulkEnvelopeTuple;
-import org.cougaar.core.blackboard.PersistenceEnvelope;
-import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.MessageManagerImpl;
+import org.cougaar.core.blackboard.PersistenceEnvelope;
+import org.cougaar.core.blackboard.Publishable;
+import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.persist.PersistMetadata;
+import org.cougaar.core.service.DataProtectionKey;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionService;
+import org.cougaar.core.service.DataProtectionServiceClient;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.planning.ldm.asset.Asset;
@@ -77,14 +85,6 @@ import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
-//import org.cougaar.tools.scalability.performance.jni.CpuClock;
-import org.cougaar.core.persist.PersistMetadata;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import org.cougaar.core.service.DataProtectionService;
-import org.cougaar.core.service.DataProtectionServiceClient;
-import org.cougaar.core.service.DataProtectionKey;
-import org.cougaar.core.service.DataProtectionKeyEnvelope;
 
 /**
  * This persistence class is the base for several persistence
@@ -906,8 +906,17 @@ public class BasePersistence
     return false;
   }
 
+  private boolean isPersistable(Object o) {
+    if (o instanceof NotPersistable) return false;
+    if (o instanceof Publishable) {
+      Publishable pbl = (Publishable) o;
+      return pbl.isPersistable();
+    }
+    return true;
+  }
+
   private void addObjectToPersist(Object object, boolean changeActive, boolean newActive) {
-    if (object instanceof NotPersistable) return;
+    if (!isPersistable(object)) return;
     PersistenceAssociation pAssoc = identityTable.findOrCreate(object);
     if (changeActive) {
       if (newActive) {
@@ -943,11 +952,24 @@ public class BasePersistence
   }
 
   private ArrayList copyAndRemoveNotPersistable(List v) {
+    if (v == null) return null;
     ArrayList result = new ArrayList(v.size());
     for (Iterator iter = v.iterator(); iter.hasNext(); ) {
       Envelope e = (Envelope) iter.next();
-      if (e instanceof NotPersistable) continue;
-      result.add(e);
+      Envelope copy = null;
+      for (Iterator tuples = e.getAllTuples(); tuples.hasNext(); ) {
+        EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
+        Object o = tuple.getObject();
+        if (isPersistable(o)) {
+          if (copy == null) copy = new Envelope();
+          copy.addTuple(tuple);
+        } else {
+          if (logger.isDebugEnabled()) {
+            logger.debug(getAgentName() + ": Removing not persistable " + o);
+          }
+        }
+      }
+      if (copy != null) result.add(copy);
     }
     return result;
   }
@@ -1125,11 +1147,13 @@ public class BasePersistence
               }
               stream.writeInt(subscriberStates.size());
               for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
-                Object obj = iter.next();
+                PersistenceSubscriberState ss = (PersistenceSubscriberState) iter.next();
+                ss.pendingEnvelopes = copyAndRemoveNotPersistable(ss.pendingEnvelopes);
+                ss.transactionEnvelopes = copyAndRemoveNotPersistable(ss.transactionEnvelopes);
                 if (logger.isDebugEnabled()) {
-                  print("Writing " + obj);
+                  print("Writing " + ss);
                 }
-                stream.writeObject(obj);
+                stream.writeObject(ss);
               }
               clearMarks(objectsToPersist.iterator());
               stream.writeObject(messageManager);

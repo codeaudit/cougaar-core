@@ -1,3 +1,31 @@
+2002-06-21  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* FilePersistence.java:
+	Bug #1551 Directory creation race
+	Unconditionally call mkdirs to create the path to the persistence
+	root directory. Then verify that it exists and throw an exception
+	if it does not. The cost of calling mkdirs when it's not needed is
+	miniscule.
+
+	* BasePersistence.java:
+	Bug #1536 -- NotPersistable object are persisted
+	Revise copyAndRemoveNotPersistable to actually remove
+	EnvelopeTuples for not persistable objects. Copies of Envelopes
+	having such tuples are created without the not persistable
+	objects. Use copyAndRemoveNotPersistable to filter not persistable
+	objects out of pendingEnvelopes and transactionEnvelopes of
+	PersistenceSubscriberState.
+	
+	* BasePersistence.java:
+	Bug #1539 -- Publishable.isPersistable is ignored
+	The isPersistable test now covers both NotPersistable objects and
+	Publishable objects for which the isPersistable method return
+	false.
+
+	* NotPersistable.java:
+	Bug #1537
+	Fix javadoc to more accurately describe this marker interface.
+
 2002-06-18  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

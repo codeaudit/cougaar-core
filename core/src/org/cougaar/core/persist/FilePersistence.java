@@ -110,11 +110,10 @@ public class FilePersistence
     } else {
       persistenceRoot = new File(params[0]);
     }
+    persistenceRoot.mkdirs();
     if (!persistenceRoot.isDirectory()) {
-      if (!persistenceRoot.mkdirs()) {
-	pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
-        throw new PersistenceException("Persistence root unavailable");
-      }
+      pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
+      throw new PersistenceException("Persistence root unavailable");
     }
     String clusterName = pps.getClusterIdentifier().getAddress();
     persistenceDirectory = new File(persistenceRoot, clusterName);

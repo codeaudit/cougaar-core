@@ -21,9 +21,9 @@
  
 package org.cougaar.core.persist;
 
-
 /**
- * Marker class for sending 'private' objects through CCv2
+ * Marker class for objects that should not be persisted. Such objects
+ * must be recreated after rehydration if they are still relevant.
  */
 public interface NotPersistable
 {
