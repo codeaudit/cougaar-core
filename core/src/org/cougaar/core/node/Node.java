@@ -659,9 +659,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     // first.
     initTransport();  
 
-    // start Qos
-    initQos();
-
     // register for external control by the AppServer
     //   -- disabled for now --
 
@@ -726,12 +723,16 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
       getServiceBroker().getService(this, MessageTransportService.class, null);
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
+
+    initQos(mtsp);
+    
+
   }
 
 
-  private void initQos() {
+  private void initQos (MessageTransportServiceProvider mtsp) {
     String name = getIdentifier();
-    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name);
+    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name, mtsp);
     add(qmsp);
     getServiceBroker().addService(QosMonitorService.class, qmsp);
     getServiceBroker().addService(ResourceMonitorService.class, qmsp);
