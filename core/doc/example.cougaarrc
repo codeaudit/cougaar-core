@@ -1,5 +1,11 @@
-# the jdbc connection string for the oracle instance to use.
+# These examples are parameters used *only* by the core and glm/mlm 
+# plugins.  You should expect other plugins to use different parameters.
+#
 # these are examples only to show syntax and will NOT actually work.
+#
+
+# the jdbc connection string for the oracle instance to use.
+# HOST:PORT:SID
 org.cougaar.database=database.cougaar.org:1521:cougaar
 org.cougaar.database.user=plugin
 org.cougaar.database.password=pluginPassword
