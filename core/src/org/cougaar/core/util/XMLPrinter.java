@@ -90,7 +90,7 @@ public class XMLPrinter extends AsciiPrinter {
     print("<");
     print(name);
     print(">");
-    print(c);
+    print((int)c);
     print("</");
     print(name);
     print(">");
