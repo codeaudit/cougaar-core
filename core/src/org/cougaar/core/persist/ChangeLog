@@ -1,3 +1,9 @@
+2002-04-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Insure that the currentPersistPluginInfo is never null while
+	persisting.
+
 2002-04-23  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

@@ -974,7 +974,7 @@ public class BasePersistence
           {
             full = true;
           }
-        if (full) {
+        if (full || currentPersistPluginInfo == null) {
           if (currentPersistPluginInfo != null) {
             currentPersistPluginInfo.cleanupSequenceNumbers = // Cleanup the existing since the full replaces them
               new SequenceNumbers(sequenceNumbers);
