@@ -54,7 +54,7 @@ import org.cougaar.util.UnaryPredicate;
 
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
-  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn
+  implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, Plugin
 {
 
   /** keep this around for compatability with old plugins **/
@@ -239,12 +239,12 @@ public abstract class PlugInAdapter
    * as it will now always be null.
    **/
   public void load(Object object) throws StateModelException {
-    getBindingSite().setThreadingChoice(getThreadingChoice());
+    ((PluginAdapterBinder) getBindingSite()).setThreadingChoice(getThreadingChoice());
     super.load(object);
-    theLDM = getBindingSite().getLDM();
-    theLDMF = getBindingSite().getFactory();
+    theLDM = ((PluginAdapterBinder) getBindingSite()).getLDM();
+    theLDMF = ((PluginAdapterBinder) getBindingSite()).getFactory();
     
-    Services services = getBindingSite().getServices();
+    Services services = ((PluginAdapterBinder) getBindingSite()).getServices();
   }
 
   /** */
@@ -316,7 +316,7 @@ public abstract class PlugInAdapter
   }
     
   /** let subclasses get ahold of the cluster without having to catch it at
-   * load time.  May through a runtime exception if the plugin hasn't been 
+   * load time.  May throw a runtime exception if the plugin hasn't been 
    * loaded yet.
    * @deprecated This method no longer allows direct access to the Cluster (Agent): instead
    * it will always return null.
@@ -327,7 +327,7 @@ public abstract class PlugInAdapter
 
   private ClusterServesPlugIn dummyCluster = new ClusterServesPlugIn() {
       // real ones
-      public ConfigFinder getConfigFinder() { return getBindingSite().getConfigFinder(); }
+      public ConfigFinder getConfigFinder() { return ((PluginAdapterBinder) getBindingSite()).getConfigFinder(); }
       public ClusterIdentifier getClusterIdentifier() { return PlugInAdapter.this.getClusterIdentifier();}
       public UIDServer getUIDServer() { return PlugInAdapter.this.getUIDServer(); }
       public LDMServesPlugIn getLDM() { return PlugInAdapter.this.getLDM(); }
@@ -360,7 +360,7 @@ public abstract class PlugInAdapter
     };
 
   protected ConfigFinder getConfigFinder() {
-    return getBindingSite().getConfigFinder();
+    return ((PluginAdapterBinder) getBindingSite()).getConfigFinder();
   }
 
   // 
@@ -581,19 +581,19 @@ public abstract class PlugInAdapter
   //
 
   protected final LDMServesPlugIn getLDM() {
-    return getBindingSite().getLDM();
+    return ((PluginAdapterBinder) getBindingSite()).getLDM();
   }
 
   protected final RootFactory getFactory() {
-    return getBindingSite().getFactory();
+    return ((PluginAdapterBinder) getBindingSite()).getFactory();
   }
   /** @deprecated Use getFactory() */
   protected final RootFactory getLdmFactory() {
-    return getBindingSite().getFactory();
+    return ((PluginAdapterBinder) getBindingSite()).getFactory();
   }
 
   protected final Factory getFactory(String s) {
-    return getBindingSite().getFactory(s);
+    return ((PluginAdapterBinder) getBindingSite()).getFactory(s);
   }
   
   
@@ -602,11 +602,11 @@ public abstract class PlugInAdapter
   // 
 
   protected final ClusterIdentifier getClusterIdentifier() {
-    return getBindingSite().getClusterIdentifier();
+    return ((PluginAdapterBinder) getBindingSite()).getClusterIdentifier();
   }
 
   protected final UIDServer getUIDServer() {
-    return getBindingSite().getUIDServer();
+    return ((PluginAdapterBinder) getBindingSite()).getUIDServer();
   }
 
   //
@@ -670,20 +670,20 @@ public abstract class PlugInAdapter
       return PlugInAdapter.this.getCluster();
     }
     public LDMServesPlugIn getLDM() {
-      return getBindingSite().getLDM();
+      return ((PluginAdapterBinder) getBindingSite()).getLDM();
     }
     public RootFactory getFactory() {
-      return getBindingSite().getFactory();
+      return ((PluginAdapterBinder) getBindingSite()).getFactory();
     }
     /** @deprecated use getFactory() **/
     public RootFactory getLdmFactory() {
-      return getBindingSite().getFactory();
+      return ((PluginAdapterBinder) getBindingSite()).getFactory();
     }
     public Factory getFactory(String s) {
-      return getBindingSite().getFactory(s);
+      return ((PluginAdapterBinder) getBindingSite()).getFactory(s);
     }
     public ClusterIdentifier getClusterIdentifier() {
-      return getBindingSite().getClusterIdentifier();
+      return ((PluginAdapterBinder) getBindingSite()).getClusterIdentifier();
     }
     public MetricsSnapshot getMetricsSnapshot() {
       return getMetricsService().getMetricsSnapshot();
@@ -815,13 +815,13 @@ public abstract class PlugInAdapter
   
 
   // keep these here for 
-  public final static int UNSPECIFID_THREAD = PluginBindingSite.UNSPECIFIED_THREAD;
-  public final static int NO_THREAD = PluginBindingSite.NO_THREAD;
-  public final static int SHARED_THREAD = PluginBindingSite.SHARED_THREAD;
-  public final static int SINGLE_THREAD = PluginBindingSite.SINGLE_THREAD;
-  public final static int ONESHOT_THREAD = PluginBindingSite.ONESHOT_THREAD;
+  public final static int UNSPECIFIED_THREAD = PluginAdapterBinder.UNSPECIFIED_THREAD;
+  public final static int NO_THREAD = PluginAdapterBinder.NO_THREAD;
+  public final static int SHARED_THREAD = PluginAdapterBinder.SHARED_THREAD;
+  public final static int SINGLE_THREAD = PluginAdapterBinder.SINGLE_THREAD;
+  public final static int ONESHOT_THREAD = PluginAdapterBinder.ONESHOT_THREAD;
 
-  private int threadingChoice = UNSPECIFID_THREAD;
+  private int threadingChoice = UNSPECIFIED_THREAD;
 
   /** Set the current choice of threading model.  Will have no effect if
    * the threading model has already been acted on.
@@ -853,7 +853,7 @@ public abstract class PlugInAdapter
 
 
   /** called from PluginBinder **/
-  void plugin_prerun() {
+  public void plugin_prerun() {
     BlackboardClient.current.set(this);
     prerun();
     BlackboardClient.current.set(null);
@@ -863,14 +863,14 @@ public abstract class PlugInAdapter
   protected void prerun() { }
 
   /** called from PluginBinder **/
-  void plugin_cycle() {
+  public void plugin_cycle() {
     BlackboardClient.current.set(this);
     cycle();
     BlackboardClient.current.set(null);
   }
 
   /** override to define cycle behavior **/
-  protected void cycle() { }
+  protected  void cycle() { }
 
   // 
   // compatability methods

@@ -37,7 +37,7 @@ public abstract class SimplePlugIn extends PlugInAdapter {
   private Alarm maxTimer = null;
 
   public final void load(Object object) throws StateModelException {
-    if (getThreadingChoice() == UNSPECIFID_THREAD)
+    if (getThreadingChoice() == UNSPECIFIED_THREAD)
       setThreadingChoice(SHARED_THREAD);
 
     super.load(object);

@@ -28,30 +28,9 @@ import org.cougaar.core.plugin.PlugInDelegate;
 public interface PluginBindingSite 
   extends BindingSite
 {
-  ClusterIdentifier getClusterIdentifier();
-
-  // these should be part of LDMService
-  LDMServesPlugIn getLDM();
-  RootFactory getFactory();
-  Factory getFactory(String s);
-  UIDServer getUIDServer();
-
-  // these should be part of ThreadingService/SchedulerService
-
-  public final static int UNSPECIFIED_THREAD = -1;
-  public final static int NO_THREAD = 0;
-  public final static int SHARED_THREAD = 1;
-  public final static int SINGLE_THREAD = 2;
-  public final static int ONESHOT_THREAD = 3;
-
-  /** Set the current choice of threading model.  Will have no effect if
-   * the threading model has already been acted on.
-   **/
-  void setThreadingChoice(int m);
-
-  /** @return the current choice of threading model.  **/
-  int getThreadingChoice();
+  ClusterIdentifier getAgentIdentifier();
 
   ConfigFinder getConfigFinder();
 
+  UIDServer getUIDServer();
 }

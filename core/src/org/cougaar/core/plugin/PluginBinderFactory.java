@@ -19,10 +19,17 @@ import org.cougaar.core.component.*;
 public class PluginBinderFactory extends BinderFactorySupport
 {
 
-  /** PluginBinderFactory always uses PluginBinder.
+  /** PluginBinderFactory always uses either PluginBinder or PluginAdapterBinder.
    **/
   public Class getBinderClass(Object child) {
-    return PluginBinder.class;
+    if (child instanceof PlugInAdapter) {
+      //System.out.println(getClass().getName() + ".getBinderClass() returning PluginAdapterBinder for " +child);
+      return PluginAdapterBinder.class;
+    }
+    else {
+      //System.out.println(getClass().getName() + ".getBinderClass() returning vanilla PluginBinder "  + child);
+      return PluginBinder.class;
+    }
   }
   
   /** Bind the Child component.  <p>
