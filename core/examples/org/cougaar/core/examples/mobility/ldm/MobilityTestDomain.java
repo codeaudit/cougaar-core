@@ -69,7 +69,7 @@ public class MobilityTestDomain extends DomainAdapter {
 
   public void unload() {
     super.unload();
-    ServiceBroker sb = getBindingSite().getServiceBroker();
+    ServiceBroker sb = getServiceBroker();
     if (uidService != null) {
       sb.releaseService(this, UIDService.class, uidService);
       uidService = null;
