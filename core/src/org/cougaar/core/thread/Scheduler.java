@@ -34,6 +34,9 @@ abstract class Scheduler implements ThreadControlService
 	"org.cougaar.thread.running.max";
     static final int MaxRunningCountDefault = Integer.MAX_VALUE;
 
+    static final boolean DebugThreads = 
+	Boolean.getBoolean("org.cougaar.thread.debug");
+
     protected DynamicSortedQueue pendingThreads;
     protected int maxRunningThreads;
     protected int runningThreadCount = 0;
@@ -121,28 +124,37 @@ abstract class Scheduler implements ThreadControlService
     }
 
 
-    // Called when a thread is about to end
-    void threadEnded(ControllableThread thread) {
-	listenerProxy.notifyEnd(thread);
+
+    void threadStarted(ControllableThread thread) {
+	synchronized (this) { ++runningThreadCount; }
+	if (DebugThreads)
+	    System.out.println("Started one, count=" +runningThreadCount);
     }
 
-    // Called when a thread has just started
-    void threadStarted(ControllableThread thread) {
-	synchronized (this) {
-	    ++runningThreadCount; 
-	}
+    void threadClaimed(ControllableThread thread) {
 	listenerProxy.notifyStart(thread);
     }
 
-
-
-    // Called when resuming a suspended or yielded thread that was
-    // queued.
-    void resumeQueuedThread(ControllableThread thread) {
-	synchronized (this) {
-	    ++runningThreadCount; 
-	}
+    void threadReclaimed(ControllableThread thread) {
+	synchronized (this) { --runningThreadCount; }
+	if (DebugThreads)
+	    System.out.println("Ended one, count=" +runningThreadCount);
+	listenerProxy.notifyEnd(thread);
     }
+
+    void threadResumed(ControllableThread thread) {
+	synchronized (this) { ++runningThreadCount; }
+	if (DebugThreads)
+	    System.out.println("Resumed one, count=" +runningThreadCount);
+    }
+
+    void threadSuspended(ControllableThread thread) {
+	synchronized (this) { --runningThreadCount; }
+	if (DebugThreads)
+	    System.out.println("Suspended one, count=" +runningThreadCount);
+    }
+
+
 
 
 

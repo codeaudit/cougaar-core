@@ -121,7 +121,6 @@ final class TimeSliceScheduler extends Scheduler
 
 
     private void releaseSliceToParent(ControllableThread thread) {
-	--runningThreadCount; 
 	thread.slice().in_use = false;
 	((TimeSliceScheduler) parent).releaseSlice(thread.slice());
     }
@@ -129,7 +128,8 @@ final class TimeSliceScheduler extends Scheduler
 
 
     // Called when a thread is about to end
-    void threadEnded(ControllableThread thread) {
+    void threadReclaimed(ControllableThread thread) {
+	super.threadReclaimed(thread);
 	synchronized (this) {
 	    releaseSliceToParent(thread);
 	    // Could re-use slice
@@ -138,7 +138,6 @@ final class TimeSliceScheduler extends Scheduler
 		if (slice != null) runNextThread(slice);
 	    }
 	}
-	super.threadEnded(thread);
     }
 
 
@@ -152,6 +151,7 @@ final class TimeSliceScheduler extends Scheduler
 	    if (expired) {
 		// If our slice expired, just give up control
 		// without looking for another thread to yield to.
+		threadSuspended(thread);
 		releaseSliceToParent(thread);
 		return true;
 	    }
@@ -170,7 +170,7 @@ final class TimeSliceScheduler extends Scheduler
 		return false;
 	    }
 
-	    --runningThreadCount;
+	    threadSuspended(thread);
 	    candidate.slice(thread.slice());
 		 
 	}
@@ -199,7 +199,7 @@ final class TimeSliceScheduler extends Scheduler
 	TimeSlice slice = getSlice();
 	if (slice != null) {
 	    thread.slice(slice);
-	    ++runningThreadCount;
+	    threadResumed(thread);
 	    return true;
 	} else {
 	    // couldn'resume - place the thread back on the queue
@@ -214,6 +214,7 @@ final class TimeSliceScheduler extends Scheduler
 	TimeSlice slice = getSlice();
 	if (slice != null) {
 	    thread.slice(slice);
+	    threadStarted(thread);
 	    thread.thread_start();
 	} else {
 	    addPendingThread(thread);

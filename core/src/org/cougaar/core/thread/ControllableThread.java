@@ -73,7 +73,7 @@ final class ControllableThread extends ReusableThread
     protected void claim() {
 	// thread has started or restarted
 	super.claim();
-	pool.scheduler().threadStarted(this);
+	pool.scheduler().threadClaimed(this);
     }
 
 
@@ -124,7 +124,7 @@ final class ControllableThread extends ReusableThread
 		    } catch (InterruptedException ex) {
 		    }
 		}
-		pool.scheduler().resumeQueuedThread(this);
+		pool.scheduler().threadResumed(this);
 		suspended = false;
 	    } 
 	}
@@ -133,7 +133,7 @@ final class ControllableThread extends ReusableThread
 
     protected void reclaim() {
 	// thread is done
-	pool.scheduler().threadEnded(this);
+	pool.scheduler().threadReclaimed(this);
 	super.reclaim();
     }
 

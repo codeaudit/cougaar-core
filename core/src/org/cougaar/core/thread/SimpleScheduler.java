@@ -29,14 +29,6 @@ final class SimpleScheduler extends Scheduler
     }
 
 
-    void changedMaxRunningThreadCount() {
-	// Maybe we can run some pending threads
-	while (canStartThread() && !pendingThreads.isEmpty()) {
-	    runNextThread();
-	}
-    }
-    
-
     private boolean canStartThread() {
 	return runningThreadCount < maxRunningThreads;
     }
@@ -47,13 +39,21 @@ final class SimpleScheduler extends Scheduler
     }
 
 
+
+    void changedMaxRunningThreadCount() {
+	// Maybe we can run some pending threads
+	while (canStartThread() && !pendingThreads.isEmpty()) {
+	    runNextThread();
+	}
+    }
+    
+
     // Called when a thread is about to end
-    void threadEnded(ControllableThread thread) {
+    void threadReclaimed(ControllableThread thread) {
+	super.threadReclaimed(thread);
 	synchronized (this) {
-	    --runningThreadCount; 
 	    if (!pendingThreads.isEmpty()) runNextThread();
 	}
-	super.threadEnded(thread);
     }
 
 
@@ -74,9 +74,10 @@ final class SimpleScheduler extends Scheduler
 		return false;
 	    }
 
-	    // We found a thread to yield to. 
-	    --runningThreadCount; 
 	}
+
+	// We found a thread to yield to. 
+	threadSuspended(thread);
 	candidate.start();
 	return true;
     }
@@ -85,7 +86,7 @@ final class SimpleScheduler extends Scheduler
 
     // Called when a thread is about to suspend.
     synchronized void suspendThread(ControllableThread thread) {
-	--runningThreadCount; 
+	threadSuspended(thread);
 	if (!pendingThreads.isEmpty()) runNextThread();
     }
 
@@ -94,7 +95,7 @@ final class SimpleScheduler extends Scheduler
     // otherwise.
     synchronized boolean maybeResumeThread(ControllableThread thread) {
 	if (canStartThread()) {
-	    ++runningThreadCount;
+	    threadResumed(thread);
 	    return true;
 	} else {
 	    // couldn'resume - place the thread back on the queue
@@ -107,6 +108,7 @@ final class SimpleScheduler extends Scheduler
 
     synchronized void startOrQueue(ControllableThread thread) {
 	if (canStartThread()) {
+	    threadStarted(thread);
 	    thread.thread_start();
 	} else {
 	    addPendingThread(thread);
