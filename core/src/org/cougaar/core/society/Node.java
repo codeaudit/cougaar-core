@@ -557,13 +557,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
           "Only one allowed.");
     }
 
-    /* BEGIN_TWRIGHT */
-    System.out.println("\n\nDEBUGGING NODE!!!");
-    System.out.println("  Node name: \""+name+"\"");
-    System.out.println("  File name: \""+filename+"\"");
-    System.out.println("  Experiment Id: \""+experimentId+"\"\n\n");
-    /* END___TWRIGHT */
-
     // set the node name
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
@@ -711,7 +704,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
       if (m instanceof ComponentMessage) {
         ComponentMessage cm = (ComponentMessage)m;
         int operation = cm.getOperation();
-        System.out.println("\n\ngot message: " +cm);
         if (operation == ComponentMessage.ADD) {
           // add
           ComponentDescription cd = cm.getComponentDescription();
