@@ -28,7 +28,6 @@ package org.cougaar.core.plugin.deletion;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * @author RTomlinson
  *
  * A simple implementation of DeletionPolicy providing a fixed set of values
  * established when constructed. Setters are protected an may be overridden in

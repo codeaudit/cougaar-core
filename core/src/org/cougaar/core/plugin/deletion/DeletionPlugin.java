@@ -46,7 +46,6 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * @author RTomlinson
  *
  * How to Configure the DeletionPlugin.
  * 

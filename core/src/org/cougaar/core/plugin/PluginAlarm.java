@@ -35,7 +35,6 @@ import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.service.BlackboardService;
 
 /**
- * @author RTomlinson
  *
  * Extracted from ServiceUserPlugin. This class must be sub-classed to provide
  * access to a plugin's current blackboard.

@@ -26,7 +26,6 @@
 package org.cougaar.core.plugin.deletion;
 
 /**
- * @author RTomlinson
  *
  * Define the interface for blackboard objects that can be deleted. Deletion
  * occurs when a blackboard object is no longer functionally significant

@@ -34,7 +34,6 @@ import org.cougaar.core.mts.MessageAddress;
  * real operations.  There are no direct implementations of Directive,
  * but there are several subclasses with implementations.
  *
- * @author  ALPINE <alpine-software@bbn.com>
  *
  **/
 

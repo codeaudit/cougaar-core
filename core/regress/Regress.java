@@ -31,7 +31,6 @@ import junit.framework.*;
  * Run all of the CSMART JUnit tests.<br>
  * Developers must maintain this to keep the set of tests to run up-to-date.<br>
  *
- * @author <a href="mailto:ahelsing@bbn.com">Aaron Helsinger</a>
  */
 public class Regress extends TestSuite {
   public Regress() {
