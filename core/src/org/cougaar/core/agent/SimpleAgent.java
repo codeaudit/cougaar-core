@@ -400,6 +400,19 @@ MobilityListener, StateObject
             null,
             null,
             ComponentDescription.PRIORITY_COMPONENT));
+
+      // CommunityService *MUST* be loaded before the blackboard
+      l.add(new ComponentDescription(
+            getMessageAddress()+"CommunityService",
+            "Node.AgentManager.Agent.Component",
+            "org.cougaar.community.CommunityServiceComponent",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       l.add(new ComponentDescription(
             getMessageAddress()+"Blackboard",
