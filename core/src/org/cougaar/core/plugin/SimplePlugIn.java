@@ -14,6 +14,7 @@ import java.util.Enumeration;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.util.StateModelException;
 import org.cougaar.core.plugin.util.PlugInHelper;
+import org.cougaar.core.cluster.Alarm;
 
 import org.cougaar.domain.planning.ldm.plan.AllocationResult;
 import org.cougaar.domain.planning.ldm.RootFactory;
@@ -29,6 +30,11 @@ import org.cougaar.domain.planning.ldm.plan.Expansion;
  **/
 
 public abstract class SimplePlugIn extends PlugInAdapter {
+
+  private long minDelay = 0L;
+  private long maxDelay = 0L;
+  private Alarm minTimer = null;
+  private Alarm maxTimer = null;
 
   public final void load(Object object) throws StateModelException {
     chooseThreadingModel(SHARED_THREAD);
@@ -49,6 +55,11 @@ public abstract class SimplePlugIn extends PlugInAdapter {
   }
   public final void stop() throws StateModelException {
     super.stop();
+  }
+
+  protected void setExecutionDelay(long minDelay, long maxDelay) {
+    this.minDelay = minDelay;
+    this.maxDelay = Math.max(minDelay, maxDelay);
   }
 
   /** call initialize within an open transaction. **/
@@ -78,9 +89,29 @@ public abstract class SimplePlugIn extends PlugInAdapter {
    * @See execute() documentation for details
    **/
   protected final void cycle() {
+    boolean doExecute = false; // Synonymous with resetTransaction
     try {
       openTransaction();
       if (wasAwakened() || (getSubscriber().haveCollectionsChanged())) {
+        if (minTimer != null) {
+          if (minTimer.hasExpired() || maxTimer.hasExpired()) {
+            minTimer.cancel();
+            maxTimer.cancel();
+            minTimer = null;
+            maxTimer = null;
+            doExecute = true;
+          } else {
+            minTimer.cancel();
+            minTimer = wakeAfterRealTime(minDelay);
+          }
+        } else if (minDelay > 0) {
+          minTimer = wakeAfterRealTime(minDelay);
+          maxTimer = wakeAfterRealTime(maxDelay);
+        } else {
+          doExecute = true;
+        }
+      }
+      if (doExecute) {
         execute();
       }
     } catch (Exception e) {
@@ -88,8 +119,9 @@ public abstract class SimplePlugIn extends PlugInAdapter {
         System.err.println("Caught "+e);
         e.printStackTrace();
       }
+      doExecute = true;
     } finally {
-      closeTransaction();
+      closeTransaction(doExecute);
     }
   }
 
