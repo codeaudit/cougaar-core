@@ -469,6 +469,7 @@ public class NamingContext implements Context {
   public String getNameInNamespace() throws NamingException {
     try {
       String fullname = getNS().fullName(getDirectory(), "");
+      if (fullname.equals("/")) return "";
       return fullname.substring(1, fullname.length() - 1);
     } catch (RemoteException re) {
       re.printStackTrace();
