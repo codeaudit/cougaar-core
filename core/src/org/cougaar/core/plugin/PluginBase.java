@@ -13,15 +13,27 @@ package org.cougaar.core.plugin;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.BindingSite;
 
-  /** @see org.cougaar.core.component.BinderSupport#initializeChild()
+  /** 
+   * Inteface that describes the minimum expected capabilities of
+   * all Plugins.
+   @see org.cougaar.core.component.BinderSupport#initializeChild()
    **/
 
 public interface PluginBase
-  extends Component
+  extends Component, PlugInStateModel
 {
   /**
    * Found by introspection
    **/
   void setBindingSite(BindingSite bs);
 
+  // BinderSupport looks for initialize() via introspection.
+  // Does it conflict with GenericStateModel initialize()?
+  // void initialize();
+
+  void setAwakened(boolean awake);
+
+  // better names?
+  void plugin_cycle();
+  void plugin_prerun();
 }

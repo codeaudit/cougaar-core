@@ -195,6 +195,10 @@ public class PluginManager
     return agent.getClusterIdentifier();
   }
 
+  public ClusterIdentifier getAgentIdentifier() {
+    return agent.getClusterIdentifier();
+  }
+
   public UIDServer getUIDServer() {
     return agent.getUIDServer();
   }
