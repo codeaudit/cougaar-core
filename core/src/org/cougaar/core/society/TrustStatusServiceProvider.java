@@ -23,6 +23,7 @@ package org.cougaar.core.society;
 
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.StandardAspect;
 
 public class TrustStatusServiceProvider implements ServiceProvider {
   private TrustStatusService tss = null;
@@ -37,11 +38,15 @@ public class TrustStatusServiceProvider implements ServiceProvider {
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    if (serviceClass == TrustStatusService.class) {
+    if (serviceClass == TrustStatusService.class &&
+        requestor instanceof StandardAspect) {
       return tss;
     } else {
-      throw new IllegalArgumentException("TrustStatusServiceProvider does not provide" +
-                                         " service for: " + serviceClass);
+      throw new IllegalArgumentException("TrustStatusServiceProvider does not"+
+                                         " provide service for: " + 
+                                         serviceClass+ " This is a RESTRICTED"+
+                                         " SERVICE!! Requesting Components"+
+                                         " must be of type StandardAspect.");
     }
   }
 
