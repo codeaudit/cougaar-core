@@ -50,27 +50,17 @@ public final class INIParser {
     // no need for a constructor -- these are static utility methods
   }
 
-  public static ComponentDescription[] parse(
-      String filename,
-      String containerInsertionPoint) {
+  public static ComponentDescription[] parse(String filename) {
     try {
-      return 
-        parse(
-            new FileInputStream(filename), 
-            containerInsertionPoint);
+      return parse(new FileInputStream(filename));
     } catch (Exception e) {
       System.err.println(e);
       return null;
     }
   }
 
-  public static ComponentDescription[] parse(
-      InputStream in,
-      String containerInsertionPoint) {
-    return 
-      parse(
-          new BufferedReader(new InputStreamReader(in)),
-          containerInsertionPoint);
+  public static ComponentDescription[] parse(InputStream in) {
+    return parse(new BufferedReader(new InputStreamReader(in)));
   }
 
   /** Pattern for matching insertionPoint&priority **/
@@ -120,11 +110,7 @@ public final class INIParser {
    * of insertion point. Callers must beware they may get themselves. 
    * @see org.cougaar.core.component.ComponentDescription
    */
-  public static ComponentDescription[] parse(
-                                             BufferedReader in,
-                                             String containerInsertionPoint) 
-  {
-
+  public static ComponentDescription[] parse(BufferedReader in) {
     List descs = new ArrayList();
     int line = 0;
     try {
@@ -235,8 +221,9 @@ readDescriptions:
         }
 
         if (insertionPoint.startsWith(".")) {
-          // prefix with container's insertion point
-          insertionPoint = containerInsertionPoint + insertionPoint;
+          System.err.println(
+              "Warning: insertionPoint starts with \".\" on line "+line+": "+s);
+          continue;
         }
 
         if (priority == -1) {
@@ -274,9 +261,6 @@ readDescriptions:
     } catch (IOException ioe) {
       System.err.println("Error: " + ioe);
     }
-
-    // FIXME: To make this method return only strict sub-components
-    // use ComponentDescriptions.extractDirectComponents(containerInsertionPoint)
 
     return (ComponentDescription[])
       descs.toArray(
@@ -318,7 +302,7 @@ readDescriptions:
     System.out.println("testme!");
     String fname = args[0];
     System.out.println("read: "+fname);
-    ComponentDescription[] descs = parse(fname, "testBase");
+    ComponentDescription[] descs = parse(fname);
     System.out.println("write to stdout");
     write(System.out, descs);
   }

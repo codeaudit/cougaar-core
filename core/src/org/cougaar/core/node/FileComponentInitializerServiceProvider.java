@@ -22,6 +22,8 @@
 package org.cougaar.core.node;
 
 import java.io.InputStream;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
@@ -54,16 +56,36 @@ public class FileComponentInitializerServiceProvider implements ServiceProvider 
     public ComponentDescription[] getComponentDescriptions(
         String parentName, String containerInsertionPoint) throws InitializerException {
       try {
+        // parse the file (we could cache this!)
         String filename = parentName;
         if (! parentName.endsWith(".ini")) {
           filename = parentName + ".ini";
         }
         InputStream in = ConfigFinder.getInstance().open(filename);
+        ComponentDescription[] allDescs;
         try {
-          return INIParser.parse(in, containerInsertionPoint);
+          allDescs = INIParser.parse(in);
         } finally {
           in.close();
         }
+
+        // extract the components at the specified insertion point
+        List descs = new ArrayList();
+        String cpr = containerInsertionPoint+".";
+        int cprl  = cpr.length();
+        for (int i = 0, n = allDescs.length; i < n; i++) {
+          ComponentDescription cd = allDescs[i];
+          String ip = cd.getInsertionPoint();
+          if (ip.startsWith(cpr) &&
+              ip.indexOf(".", cprl+1) < 0) {
+            descs.add(cd);
+          }
+        }
+
+        // return as array
+        return (ComponentDescription[])
+          descs.toArray(
+              new ComponentDescription[descs.size()]);
       } catch (Exception e) {
         throw new InitializerException(
             "getComponentDescriptions("+parentName+", "+containerInsertionPoint+")",
