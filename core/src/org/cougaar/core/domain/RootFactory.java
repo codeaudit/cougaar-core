@@ -221,6 +221,7 @@ public class RootFactory
    * "Container" is correct, "org.cougaar.planning.ldm.asset.Container" is not.
    **/
   public final Asset createAsset(String classname) {
+    if (classname == null) throw new IllegalArgumentException("Classname must be non-null");
     try {
       Class ac = findAssetClass(classname);
       if (ac == null) {
@@ -242,6 +243,8 @@ public class RootFactory
    * @param class an LDM Asset class.
    **/
   public final Asset createAsset(Class assetClass) {
+    if (assetClass == null) throw new IllegalArgumentException("assetClass must be non-null");
+
     try {
       Asset asset = (Asset) assetClass.newInstance();
       asset.registerWithLDM(ldm);
@@ -256,6 +259,9 @@ public class RootFactory
    * to the specified string.
    **/
   public final Asset createPrototype(String classname, String typeid) {
+    if (classname == null) throw new IllegalArgumentException("classname must be non-null");
+    //if (typeid == null) throw new IllegalArgumentException("typeid must be non-null");
+
     Asset proto = createAsset(classname);
     NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
     tip.setTypeIdentification(typeid);
@@ -267,6 +273,9 @@ public class RootFactory
    * to the specified string.
    **/
   public final Asset createPrototype(Class assetclass, String typeid) {
+    if (assetclass == null) throw new IllegalArgumentException("assetclass must be non-null");
+    //if (typeid == null) throw new IllegalArgumentException("typeid must be non-null");
+
     Asset proto = createAsset(assetclass);
     NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
     tip.setTypeIdentification(typeid);
@@ -279,6 +288,9 @@ public class RootFactory
    * and the nomenclature to the specified string.
    **/
   public final Asset createPrototype(String classname, String typeid, String nomen) {
+    if (classname == null) throw new IllegalArgumentException("classname must be non-null");
+    //if (typeid == null) throw new IllegalArgumentException("typeid must be non-null");
+
     Asset proto = createAsset(classname);
     NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
     tip.setTypeIdentification(typeid);
@@ -308,6 +320,8 @@ public class RootFactory
    * Most users will find #createInstance(String, String) more convenient.
    **/
   public final Asset createInstance(String prototypeAssetTypeId) {
+    if (prototypeAssetTypeId == null) throw new IllegalArgumentException("prototypeAssetTypeId must be non-null");
+
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
     if (proto == null)
       throw new FactoryException("Could not find a prototype with TypeId = "+ 
@@ -330,6 +344,8 @@ public class RootFactory
    * for its itemIdentificationPG.
    **/
   public final Asset createInstance(String prototypeAssetTypeId, String uniqueId) {
+    if (prototypeAssetTypeId == null) throw new IllegalArgumentException("prototypeAssetTypeId must be non-null");
+
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
     if (proto == null)
       throw new FactoryException("Could not find a prototype with TypeId = "+ 
@@ -388,6 +404,8 @@ public class RootFactory
   /** Create an aggregate asset instance of a prototypical asset.
    **/
   public final Asset createAggregate(String prototypeAssetTypeId, int quantity) {
+    if (prototypeAssetTypeId == null) throw new IllegalArgumentException("prototypeAssetTypeId must be non-null");
+
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
     if (proto == null)
       throw new FactoryException("Could not find a prototype with TypeId = "+ 
@@ -400,6 +418,8 @@ public class RootFactory
   /** Create an aggregate asset instance of a prototypical asset.
    **/
   public Asset createInstance(String prototypeAssetTypeId, int quantity) {
+    if (prototypeAssetTypeId == null) throw new IllegalArgumentException("prototypeAssetTypeId must be non-null");
+
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
     if (proto == null)
       throw new FactoryException("Could not find a prototype with TypeId = "+ 

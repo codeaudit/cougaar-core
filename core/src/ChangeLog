@@ -1,5 +1,11 @@
 2002-06-05  Michael Thome  <mthome@bbn.com>
 
+	* org/cougaar/core/domain/RootFactory.java
+	Add some null argument assertions.  bug 1410
+	
+	* org/cougaar/core/agent/service/registry/PrototypeRegistry.java
+	Add some null argument assertions and some synchronizes. bug 1410
+
 	* org/cougaar/core/node/NodeAgent.java
 	move LoggingService to HIGH pass (bug 1398).  Addded javadoc on
 	which components and services get loaded at which priorities.

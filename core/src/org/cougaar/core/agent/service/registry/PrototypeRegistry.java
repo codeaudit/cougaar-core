@@ -47,6 +47,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   private final List prototypeProviders = new ArrayList();
 
   public void addPrototypeProvider(PrototypeProvider prov) {
+    if (prov == null) throw new IllegalArgumentException("prov must be non-null");
     synchronized (prototypeProviders) {
       prototypeProviders.add(prov);
     }
@@ -55,6 +56,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   /** set of PropertyProvider LDM Plugins **/
   private final List propertyProviders = new ArrayList();
   public void addPropertyProvider(PropertyProvider prov) {
+    if (prov == null) throw new IllegalArgumentException("prov must be non-null");
     synchronized (propertyProviders) {
       propertyProviders.add(prov);
     }
@@ -63,24 +65,35 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   // use the registry for registering prototypes for now.
   // later, just replace with a hash table.
   public void cachePrototype(String aTypeName, Asset aPrototype) {
-    myRegistry.put(aTypeName.intern(), aPrototype);
+    if (aTypeName == null) throw new IllegalArgumentException("aTypeName must be non-null");
+    synchronized (myRegistry) {
+      myRegistry.put(aTypeName.intern(), aPrototype);
+    }
   }
 
   public boolean isPrototypeCached(String aTypeName) {
-    return (myRegistry.get(aTypeName) != null);
+    if (aTypeName == null) throw new IllegalArgumentException("aTypeName must be non-null");
+    synchronized (myRegistry) {
+      return (myRegistry.get(aTypeName) != null);
+    }
   }    
 
   public Asset getPrototype(String aTypeName) {
+    if (aTypeName == null) throw new IllegalArgumentException("aTypeName must be non-null");
     return getPrototype(aTypeName, null);
   }
   public Asset getPrototype(String aTypeName, Class anAssetClass) {
+    if (aTypeName == null) throw new IllegalArgumentException("aTypeName must be non-null");
+
     Asset found = null;
 
     // look in our registry first.
     // the catch is in case some bozo registered a non-asset under this
     // name.
     try {
-      found = (Asset) myRegistry.get(aTypeName);
+      synchronized (myRegistry) {
+        found = (Asset) myRegistry.get(aTypeName);
+      }
       if (found != null) return found;
     } catch (ClassCastException cce) {}
     
@@ -99,6 +112,8 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   }
 
   public void fillProperties(Asset anAsset) {
+    if (anAsset == null) throw new IllegalArgumentException("anAsset must be non-null");
+
     // expose the asset to all propertyproviders
     synchronized (propertyProviders) {
       int l = propertyProviders.size();
