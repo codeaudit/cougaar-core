@@ -81,7 +81,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     throws SQLException, IOException
   {
     dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
-//      dbp.setDebug(true);
+    dbp.setDebug(true);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
@@ -187,25 +187,27 @@ public class DBInitializerServiceProvider implements ServiceProvider {
           ComponentDescription[] result = new ComponentDescription[len];
           result = (ComponentDescription[])
             componentDescriptions.toArray(result);
-//            for (int i = 0; i < result.length; i++) {
-//              StringBuffer buf = new StringBuffer();
-//              buf.append(result[i].getInsertionPoint());
-//              buf.append("=");
-//              buf.append(result[i].getClassname());
-//              Vector params = (Vector) result[i].getParameter();
-//              int n = params.size();
-//              if (n > 0) {
-//                for (int j = 0; j < n; j++) {
-//                  if (j == 0)
-//                    buf.append("(");
-//                  else
-//                    buf.append(", ");
-//                  buf.append(params.elementAt(j));
-//                }
-//                buf.append(")");
-//              }
-//              System.out.println(buf);
-//            }
+          if (false) {
+            for (int i = 0; i < result.length; i++) {
+              StringBuffer buf = new StringBuffer();
+              buf.append(result[i].getInsertionPoint());
+              buf.append("=");
+              buf.append(result[i].getClassname());
+              Vector params = (Vector) result[i].getParameter();
+              int n = params.size();
+              if (n > 0) {
+                for (int j = 0; j < n; j++) {
+                  if (j == 0)
+                    buf.append("(");
+                  else
+                    buf.append(", ");
+                  buf.append(params.elementAt(j));
+                }
+                buf.append(")");
+              }
+              System.out.println(buf);
+            }
+          }
           return result;
         } finally {
           conn.close();
@@ -356,7 +358,24 @@ public class DBInitializerServiceProvider implements ServiceProvider {
           }
           rs.close();
           stmt.close();
-          return (String[][]) result.toArray(new String[result.size()][]);
+          String[][] ary = (String[][]) result.toArray(new String[result.size()][]);
+          if (false) {
+            StringBuffer buf = new StringBuffer();
+            buf.append(System.getProperty("line.separator"));
+            for (int i = 0; i < ary.length; i++) {
+              String[] ary2 = ary[i];
+              buf.append("Relationship of ");
+              buf.append(agentName);
+              buf.append(": ");
+              for (int j = 0; j < ary2.length; j++) {
+                if (j > 0) buf.append('\t');
+                buf.append(ary2[j]);
+              }
+              buf.append(System.getProperty("line.separator"));
+            }
+            System.out.println(buf);
+          }
+          return ary;
         } finally {
           conn.close();
         }
