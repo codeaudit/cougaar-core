@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 import org.cougaar.util.PropertyParser;
 
 /**
@@ -118,10 +119,14 @@ class IdentityTable {
   }
 
 
+  /** Static logger for maybeGC **/
+  private static Logger _logger = Logging.getLogger(IdentityTable.class);
+
   /** lock for GC timer **/
-  private final Object gcLock = new Object();
+  private static final Object gcLock = new Object();
+
   /** when did we last do a GC, guarded by gcLock **/
-  private long gcTime = 0;
+  private static long gcTime = 0L;
 
   private static final long minGCInterval = 
     PropertyParser.getLong("org.cougaar.core.persistence.IdentityTable.minGCInterval", 3000000L);
@@ -133,18 +138,21 @@ class IdentityTable {
    * Minimum number of milliseconds between IdentityTable-directed gcs.
    * Defaults to 3000000 (5 minutes).  Other GCs do not count.
    **/
-  protected final void maybeGC() {
+  protected static final void maybeGC() {
+    long now = System.currentTimeMillis();
     synchronized (gcLock) {
-      long now = System.currentTimeMillis();
-      if (gcTime > (now - minGCInterval)) {
+      if ((gcTime != 0L) &&
+          ((now-gcTime)<minGCInterval)) {
         return;
       } 
-    }
-    System.gc();
-    // I know - but I'd rather not keep it locked for the GC.  
-    // The syncs are moot anyway, since this is invoked per node/vm
-    synchronized (gcLock) {
-      gcTime = System.currentTimeMillis();
+
+      System.gc();
+
+      long tend = System.currentTimeMillis();
+      gcTime = tend;
+      if (_logger.isWarnEnabled()) {
+        _logger.warn("IdentityTable.gc() ran for "+(tend-now)+" millis");
+      }
     }
   }
 

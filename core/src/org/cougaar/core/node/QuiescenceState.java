@@ -57,6 +57,13 @@ class QuiescenceState {
     return (Integer) getIncomingMessageNumbers().get(sender);
   }
 
+  public synchronized int getOutgoingCount() {
+    return outgoingCount;
+  }
+  public synchronized int getIncomingCount() {
+    return incomingCount;
+  }
+
   public boolean isEnabled() {
     return enabled;
   }
@@ -88,6 +95,9 @@ class QuiescenceState {
   }
 
   public void setMessageNumbers(Map outgoing, Map incoming) {
+    outgoingCount = countMap(outgoing);
+    incomingCount = countMap(incoming);
+
     outgoingMessageNumbers = updateMap(outgoingMessageNumbers, outgoing);
     incomingMessageNumbers = updateMap(incomingMessageNumbers, incoming);
     if (logger.isDetailEnabled()) {
@@ -127,6 +137,21 @@ class QuiescenceState {
     }
     return oldMap;
   }
+
+  private static int countMap(Map newMap) {
+    int acc = 0;
+    for (Iterator i = newMap.entrySet().iterator(); i.hasNext(); ) {
+      Map.Entry entry = (Map.Entry) i.next();
+      Integer v = (Integer) entry.getValue();
+      if (v != null) {
+        acc = acc + ((Integer)v).intValue();
+      }
+    }
+    return acc;
+  }
+
+  private int incomingCount = 0;
+  private int outgoingCount = 0;
 
   private Map incomingMessageNumbers = new HashMap(13);
   private Map outgoingMessageNumbers = new HashMap(13);

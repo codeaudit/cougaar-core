@@ -234,32 +234,16 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   }
 
   private boolean noMessagesAreOutstanding() {
+    int out = 0;
+    int in = 0;
+
     checkQuiescence:
     for (Iterator theseStates = getQuiescenceStatesIterator(); theseStates.hasNext(); ) {
       QuiescenceState thisAgentState = (QuiescenceState) theseStates.next();
-      MessageAddress thisAgent = thisAgentState.getAgent();
-      for (Iterator thoseStates = getQuiescenceStatesIterator(); thoseStates.hasNext(); ) {
-        QuiescenceState thatAgentState = (QuiescenceState) thoseStates.next();
-        MessageAddress thatAgent = thatAgentState.getAgent();
-        Integer sentNumber = thisAgentState.getOutgoingMessageNumber(thatAgent);
-        Integer rcvdNumber = thatAgentState.getIncomingMessageNumber(thisAgent);
-        boolean match;
-        if (sentNumber == null) {
-          match = rcvdNumber == null;
-        } else {
-          match = sentNumber.equals(rcvdNumber);
-        }
-        if (!match) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Quiescence prevented by "
-                         + thisAgent + " sent " + sentNumber + ", but "
-                         + thatAgent + " rcvd " + rcvdNumber);
-          }
-          return false;
-        }
-      }
+      out = out + thisAgentState.getOutgoingCount();
+      in  = in  + thisAgentState.getIncomingCount();
     }
-    return true;
+    return (out == in);
   }
 
   private void appendMessageNumbers(StringBuffer ms, Map messages, String listTag, String itemTag) {
