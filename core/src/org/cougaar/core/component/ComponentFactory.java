@@ -44,6 +44,7 @@ public abstract class ComponentFactory
             Method m = cc.getMethod("setParameter", VO);
             m.invoke(o, new Object[]{p});
           } catch (Exception e) {
+            e.printStackTrace();
             throw new ComponentFactoryException("Failed while setting parameter", desc, e);
           }
         }
@@ -52,6 +53,7 @@ public abstract class ComponentFactory
         throw new ComponentFactoryException("ComponentDescription does not name a Component", desc);
       }
     } catch (Exception e) {
+      e.printStackTrace();
       throw new ComponentFactoryException("Component cannot be instantiated", desc, e);
     }
   }
