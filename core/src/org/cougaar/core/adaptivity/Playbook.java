@@ -181,14 +181,7 @@ public class Playbook
       return new PlaybookReadServiceImpl();
     }
     if (serviceClass == PlaybookConstrainService.class) {
-      return new PlaybookConstrainService() {
-        public void constrain(OperatingModePolicy omp) {
-          addConstraint(omp);
-        }
-        public void unconstrain(OperatingModePolicy omp) {
-          removeConstraint(omp);
-        }
-      };
+      return new PlaybookConstrainServiceImpl();
     }
     return null;
   }
@@ -207,7 +200,7 @@ public class Playbook
       ((PlaybookConstrainServiceImpl) service).active = false;
       return;
     }
-    throw new IllegalArgumentException("Not my service");
+    throw new IllegalArgumentException("Not my service: " + service);
   }
 
   private synchronized void addConstraint(OperatingModePolicy omp) {
