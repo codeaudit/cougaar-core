@@ -48,6 +48,10 @@ public final class ClusterContextTable {
   public static void addContext(ClusterIdentifier cid, ClusterContext c) {
     contextTable.put(cid, c);
   }
+  
+  public static void removeContext(ClusterIdentifier cid) {
+    contextTable.remove(cid);
+  }
 
   private static final ThreadLocal theContext = new ThreadLocal() {};
 
