@@ -27,6 +27,7 @@ import java.io.StringReader;
 import java.io.StreamTokenizer;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Iterator;
 
 import javax.servlet.http.HttpServlet;
@@ -148,7 +149,7 @@ public class AEViewerServlet extends HttpServlet {
     blackboard.publishChange(bbPolicy);
     blackboard.closeTransaction();
     
-    out.println("<html><head></head><body><h1>Policy Changed</h1><br>" );
+    out.println("<html><head></head><body><h2>Policy Changed</h2><br>" );
     out.println(bbPolicy.toString());
   }
 
@@ -176,7 +177,7 @@ public class AEViewerServlet extends HttpServlet {
 	bbOM.setValue(newValue);
       }
     } catch (IllegalArgumentException iae) {
-      out.println("<html><head></head><body><h1>ERROR - OperatingMode Not Changed</h1><br>" );
+      out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
       out.print(newValue);
       out.print(" is not a valid value for ");
       out.println(bbOM.getName());
@@ -189,7 +190,7 @@ public class AEViewerServlet extends HttpServlet {
     blackboard.publishChange(bbOM);
     blackboard.closeTransaction();
     
-    out.println("<html><head></head><body><h1>OperatingMode Changed</h1><br>" );
+    out.println("<html><head></head><body><h2>OperatingMode Changed</h2><br>" );
     out.println(bbOM.toString());
   }
   
@@ -198,7 +199,11 @@ public class AEViewerServlet extends HttpServlet {
    * blackboard and send them to the requestor
    */
   private void sendData(PrintWriter out) {
-    out.println("<html><head></head><body><h1><CENTER>Conditions</CENTER></h1><br>" );
+    out.println("<html><head></head><body>");
+
+    writeAgentSelector(out);
+
+    out.println("<h2><CENTER>Conditions</CENTER></h2><br>" );
     Collection conditions = support.queryBlackboard(conditionPredicate);
     out.print("<UL>");
     for (Iterator it = conditions.iterator(); it.hasNext();) {
@@ -207,13 +212,55 @@ public class AEViewerServlet extends HttpServlet {
     }
     out.println("</UL>");
     
-    out.println("<h1><CENTER>OperatingModes</CENTER></h1>" );
+    out.println("<h2><CENTER>Operating Modes</CENTER></h2>" );
     writeOMTable(out);
 
-    out.print("<H1><CENTER>Operating Mode Policies</CENTER></H1><P>\n");
+    out.print("<H2><CENTER>Operating Mode Policies</CENTER></H2><P>\n");
     writePolicyTable(out);
   }
 
+  private void writeAgentSelector(PrintWriter out) {
+
+    out.print(
+	      "<script language=\"JavaScript\">\n"+
+	      "<!--\n"+
+	      "function mySubmit() {\n"+
+	      "  var tidx = document.myForm.formCluster.selectedIndex\n"+
+	      "  var cluster = document.myForm.formCluster.options[tidx].text\n"+
+	      "  document.myForm.action=\"/$\"+cluster+\"");
+    out.print(support.getPath());
+    out.print("\"\n"+
+	      "  return true\n"+
+	      "}\n"+
+	      "// -->\n"+
+	      "</script>\n");
+    out.print("<h2><center>Adaptivity Viewer at ");
+    out.print(support.getEncodedAgentName());
+    out.print(
+	      "</center></h2>\n"+
+	      "<form name=\"myForm\" method=\"get\" "+
+	      "onSubmit=\"return mySubmit()\">\n"+
+	      "Adaptivity Objects at "+
+	      "<select name=\"formCluster\">\n");
+    // lookup all known cluster names
+    List names = support.getAllEncodedAgentNames();
+    int sz = names.size();
+    for (int i = 0; i < sz; i++) {
+      String n = (String) names.get(i);
+      out.print("  <option ");
+      if (n.equals(support.getEncodedAgentName())) {
+	out.print("selected ");
+      }
+      out.print("value=\"");
+      out.print(n);
+      out.print("\">");
+      out.print(n);
+      out.println("</option>");
+    }
+    out.print("</select>");
+    out.println("<input type=submit name=\"formSubmit\" value=\"Reload\"><br>\n</form>");
+
+  }
 
   /**
    * Create a HTML table with a form in each row for editing a policy
