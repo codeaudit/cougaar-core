@@ -311,7 +311,11 @@ public class LocateAgentServlet extends ComponentServlet {
         s = null;
       } else {
 	for (int i = 0; i < s.length; i++) {
-	  s[i] = URLDecoder.decode(s[i], URL_ENCODING);
+          try {
+            s[i] = URLDecoder.decode(s[i], URL_ENCODING);
+          } catch (java.io.UnsupportedEncodingException e) {
+            log.warn("Could not decode \""+s[i]+"\"", e);
+          }
 	}
       }
       return s;
@@ -322,8 +326,13 @@ public class LocateAgentServlet extends ComponentServlet {
       String s = sreq.getParameter(n);
       if (s==null || s.length()==0) {
         s = null;
-      } else
-	s = URLDecoder.decode(s, URL_ENCODING);
+      } else {
+        try {
+          s = URLDecoder.decode(s, URL_ENCODING);
+        } catch (java.io.UnsupportedEncodingException e) {
+          log.warn("Could not decode \""+s+"\"", e);
+        }
+      }
 
       return s;
     }
