@@ -263,7 +263,7 @@ implements Component
 
     if (initialAgents == null) {
       if (log.isWarnEnabled()) {
-        log.warn("Null list of agents");
+        log.warn("Node "+localAgent+" contains zero agents");
       }
       return new ComponentDescription[0];
     }
