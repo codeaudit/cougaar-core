@@ -219,7 +219,6 @@ public class SearchStringParser {
         public void toString(StringBuffer b) {
             b.append("(&");
             for (int i = 0; i < list.length; i++) {
-                b.append(' ');
                 list[i].toString(b);
             }
             b.append(")");
@@ -254,7 +253,6 @@ public class SearchStringParser {
         public void toString(StringBuffer b) {
             b.append("(|");
             for (int i = 0; i < list.length; i++) {
-                b.append(' ');
                 list[i].toString(b);
             }
             b.append(")");
@@ -282,7 +280,7 @@ public class SearchStringParser {
          * Append our contribution to the overall string.
          **/
         public void toString(StringBuffer b) {
-            b.append("(! ");
+            b.append("(!");
             filter.toString(b);
             b.append(")");
         }

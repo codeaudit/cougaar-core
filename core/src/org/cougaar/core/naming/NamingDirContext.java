@@ -678,8 +678,22 @@ public class NamingDirContext extends NamingContext implements DirContext {
       return contains(attrs, matchingAttrs);
     }
 
-    // FIXME!!!
-    public void toString(StringBuffer buf) {}
+    public void toString(StringBuffer b) {
+      b.append("(&");
+      try {
+        for (NamingEnumeration enum = matchingAttrs.getAll(); enum.hasMore(); ) {
+          Attribute attr = (Attribute) enum.next();
+          b.append('(');
+          b.append(attr.getID());
+          b.append('=');
+          b.append(attr.get());
+          b.append(')');
+        }
+      } catch (NamingException ne) {
+        ne.printStackTrace();   // Really don't expect this.
+      }
+      b.append(')');
+    }
   }
   
   
