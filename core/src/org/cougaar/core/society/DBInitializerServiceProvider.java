@@ -202,7 +202,10 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             ResultSet rs2 = executeQuery(stmt2, query2);
             Vector vParams = new Vector();
             while (rs2.next()) {
-              vParams.addElement(getNonNullString(rs2, 1, query2));
+              String param = getNonNullString(rs2, 1, query2);
+              if (!param.startsWith("PROP$")) { // CSMART private arg
+                vParams.addElement(param);
+              }
             }
             ComponentDescription desc =
               new ComponentDescription(componentName,
