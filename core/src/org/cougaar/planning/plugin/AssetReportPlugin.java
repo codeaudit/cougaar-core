@@ -144,7 +144,7 @@ public class AssetReportPlugin extends SimplePlugin
 
     Asset localReportingAsset = findLocalAsset(reportingAsset);
     if ((localReportingAsset == null) ||
-        (!((HasRelationships )localReportingAsset).isSelf())) {
+        (!((HasRelationships )localReportingAsset).isLocal())) {
         //(!localReportingAsset.getClusterPG().getClusterIdentifier().equals(getClusterIdentifier()))) {
       System.err.println(getClusterIdentifier().toString()+
                          "/AssetReportPlugin: unable to process " + 

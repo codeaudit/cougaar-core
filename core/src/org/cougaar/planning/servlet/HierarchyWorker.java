@@ -234,7 +234,7 @@ public class HierarchyWorker
     new UnaryPredicate() {
 	public boolean execute(Object o) {
 	  return 
-	    ((o instanceof HasRelationships) && ((HasRelationships)o).isSelf ());
+	    ((o instanceof HasRelationships) && ((HasRelationships)o).isLocal());
 	}
       };
 
