@@ -1,0 +1,98 @@
+Versions and download locations for standard third-party jar files
+
+Jar files should not be added or updated without updating this file.
+
+NetComponents.jar	version ?
+http://www.savarese.org/oro/software/NetComponents.html
+
+QuoKernel.jar		version ?
+
+activation.jar		version ?
+Java Activation Framework (JAF)
+http://java.sun.com/products/javabeans/glasgow/jaf.html
+
+fesi-111.jar		version ?
+Free EcmaScript Interpreter
+http://home.worldcom.ch/~jmlugrin/fesi/index.html
+
+grappa1_2_bbn.jar	version 1.2 (with bbn modifications)
+Original may be downloaded at
+	http://www.research.att.com/sw/tools/graphviz/packages/grappa.html
+BBN changes have been submitted and are being integrated into
+mainline.  Check the CSMART tree for changes.
+	
+j2ee.jar		version 1.3
+Java2 Enterprise Edition
+http://java.sun.com/j2ee/
+
+jbcl.jar		version ?
+http://community.borland.com/downloads
+
+jcchart451K.jar		version ?
+JClass Chart: developers of jcchart software must purchase a license,
+but users of cougaar and developers of non-jcchart software may use
+the jar without fee.
+http://www.sitraka.com/software/jclass/jclasschart.html
+
+jce1_2-do.jar		version 1.2 (domestic)
+(required for runtime only)
+
+jess50.jar		version 5.0
+Java Expert System Shell
+http://herzberg.ca.sandia.gov/jess/
+
+jms.jar			version ?
+Java Message Service API
+http://java.sun.com/products/jms/
+
+jpython.jar		version ?
+JPython
+http://www.jython.org/
+
+jsdk.jar		version ?
+Java Servlet Development kit (now Jakarta Tomcat)
+http://jakarta.apache.org/tomcat/index.html
+
+junit.jar		version 3.7
+(required at build-time only)
+http://www.junit.org/
+
+log4j.jar		version 1.1.3 (full version)
+http://jakarta.apache.org/log4j/docs/index.html
+
+mail.jar		version ?
+http://java.sun.com/products/javamail/
+
+mm-mysql-2.jar		version 2.0.3
+(required for runtime only)
+http://sourceforge.net/projects/mmmysql/
+
+openmap.jar		version 4.2 (full version, not omcore)
+http://openmap.bbn.com/
+
+oracle12.zip		version any version for jdk 1.2/1.3
+(required for runtime only)
+This is distributed by oracle as classes12.zip.
+http://otn.oracle.com/software/content.html (select "Oracle JDBC Drivers")
+
+qslink.jar		version ?
+Partnet driver. 
+
+silk.jar		version ?
+SILK/JScheme
+http://www.cs.brandeis.edu/silk/jscheme/index.html
+
+vgj.jar			version ?
+http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html
+
+xalan.jar		version ?
+http://xml.apache.org/xalan-j/index.html
+
+xerces.jar		version 3.1.1
+http://xml.apache.org/xerces2-j/index.html
+
+xmlparserv2.jar		version (For Oracle 9i?)
+oracle's xml parser
+http://otn.oracle.com/software/content.html (select "Oracle XML for Java")
+
+
