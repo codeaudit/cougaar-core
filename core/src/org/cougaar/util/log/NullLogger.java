@@ -47,6 +47,9 @@ public class NullLogger implements Logger {
   public boolean isErrorEnabled() { 
     return false;
   }
+  public boolean isShoutEnabled() { 
+    return false;
+  }
   public boolean isFatalEnabled() { 
     return false;
   }
@@ -72,6 +75,10 @@ public class NullLogger implements Logger {
   public void error(String message) { 
   }
   public void error(String message, Throwable t) { 
+  }
+  public void shout(String message) { 
+  }
+  public void shout(String message, Throwable t) { 
   }
   public void fatal(String message) { 
   }

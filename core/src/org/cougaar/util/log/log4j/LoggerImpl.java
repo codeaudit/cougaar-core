@@ -83,10 +83,13 @@ class LoggerImpl implements Logger {
     return cat.isEnabledFor(Priority.WARN);
   }
   public boolean isErrorEnabled() {
-    return true;
+    return cat.isEnabledFor(Priority.ERROR);
+  }
+  public boolean isShoutEnabled() {
+    return cat.isEnabledFor(ShoutPriority.SHOUT);
   }
   public boolean isFatalEnabled() {
-    return true;
+    return cat.isEnabledFor(Priority.FATAL);
   }
 
   //
@@ -134,6 +137,16 @@ class LoggerImpl implements Logger {
   }
 
   /**
+   * Equivalent to "log(SHOUT, ..)".
+   */ 
+  public void shout(String message) {
+    cat.log(ShoutPriority.SHOUT, message);
+  }
+  public void shout(String message, Throwable t) {
+    cat.log(ShoutPriority.SHOUT, message, t);
+  }
+
+  /**
    * Equivalent to "log(FATAL, ..)".
    */ 
   public void fatal(String message) {
@@ -150,6 +163,7 @@ class LoggerImpl implements Logger {
        isInfoEnabled() ? "info" :
        isWarnEnabled() ? "warn" :
        isErrorEnabled() ? "error" :
+       isShoutEnabled() ? "shout" :
        isFatalEnabled() ? "fatal" :
        "none");
   }

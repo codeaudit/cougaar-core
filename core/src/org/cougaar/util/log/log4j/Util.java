@@ -45,6 +45,7 @@ final class Util {
       case Logger.INFO  : return Priority.toPriority(Priority.INFO_INT);
       case Logger.WARN  : return Priority.toPriority(Priority.WARN_INT);
       case Logger.ERROR : return Priority.toPriority(Priority.ERROR_INT);
+      case Logger.SHOUT : return ShoutPriority.SHOUT;
       case Logger.FATAL : return Priority.toPriority(Priority.FATAL_INT);
       default: 
                             return null;
@@ -58,11 +59,12 @@ final class Util {
    */
   public static final int convertPriorityToInt(Priority level) {
     switch (level.toInt()) {
-      case Priority.DEBUG_INT: return Logger.DEBUG;
-      case Priority.INFO_INT : return Logger.INFO;
-      case Priority.WARN_INT : return Logger.WARN;
-      case Priority.ERROR_INT: return Logger.ERROR;
-      case Priority.FATAL_INT: return Logger.FATAL;
+      case Priority.DEBUG_INT:      return Logger.DEBUG;
+      case Priority.INFO_INT :      return Logger.INFO;
+      case Priority.WARN_INT :      return Logger.WARN;
+      case Priority.ERROR_INT:      return Logger.ERROR;
+      case ShoutPriority.SHOUT_INT: return Logger.SHOUT;
+      case Priority.FATAL_INT:      return Logger.FATAL;
       default: 
                                return 0;
     }

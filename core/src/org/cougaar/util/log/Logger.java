@@ -41,14 +41,15 @@ public interface Logger {
    * without notice.  For example, "DEBUG" may be changed from
    * "1" to some other integer constant.  However, the ordering 
    * of:<pre>
-   *   DEBUG &lt; INFO &lt; WARN &lt; ERROR &lt; FATAL
+   *   DEBUG &lt; INFO &lt; WARN &lt; ERROR &lt; SHOUT &lt; FATAL
    * </pre><br> is guaranteed.
    */
   int DEBUG   = 1;
   int INFO    = 2;
   int WARN    = 3;
   int ERROR   = 4;
-  int FATAL   = 5;
+  int SHOUT   = 5;
+  int FATAL   = 6;
 
   /**
    * Logger users should check "isEnabledFor(..)" before requesting 
@@ -128,6 +129,7 @@ public interface Logger {
   boolean isInfoEnabled();
   boolean isWarnEnabled();
   boolean isErrorEnabled();
+  boolean isShoutEnabled();
   boolean isFatalEnabled();
 
   //
@@ -159,9 +161,14 @@ public interface Logger {
   void error(String message, Throwable t);
 
   /**
+   * Equivalent to "log(SHOUT, ..)".
+   */
+  void shout(String message);
+  void shout(String message, Throwable t);
+
+  /**
    * Equivalent to "log(FATAL, ..)".
    */
   void fatal(String message);
   void fatal(String message, Throwable t);
-
 }

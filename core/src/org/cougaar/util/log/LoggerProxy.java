@@ -50,6 +50,9 @@ public class LoggerProxy implements Logger {
   public boolean isErrorEnabled() { 
     return l.isErrorEnabled(); 
   }
+  public boolean isShoutEnabled() { 
+    return l.isShoutEnabled(); 
+  }
   public boolean isFatalEnabled() { 
     return l.isFatalEnabled(); 
   }
@@ -88,6 +91,15 @@ public class LoggerProxy implements Logger {
   public void error(
       String message, Throwable t) { 
     l.error(message, t);
+  }
+
+  public void shout(
+      String message) { 
+    l.shout(message);
+  }
+  public void shout(
+      String message, Throwable t) { 
+    l.shout(message, t);
   }
 
   public void fatal(
