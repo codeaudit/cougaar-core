@@ -1,4 +1,10 @@
-2001-02-27  Ray Tomlinson  <RTomlinson@bbn.com>
+2001-02-27  Michael Thome  <mthome@bbn.com>
+	
+	* org.cougaar.util.PropertyParser
+	Finally created this utility for parsing out values of various
+	types from java.util.Properties.  By default, takes from System
+	properties.  Doesn't reimplement facilities already found
+	elsewhere, e.g. getString and no-default property getters.
 
 	* PublishHistory
 	New facility to assist in debugging publishing errors.
