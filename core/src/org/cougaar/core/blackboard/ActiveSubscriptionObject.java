@@ -26,17 +26,24 @@ import org.cougaar.core.mts.*;
 import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
+/** Blackboard objects which implement this interface
+ * will have the appropriate methods invoked when
+ * publishAdd(), publishChange() or publishRemove().
+ * Typically, these methods are used to maintain
+ * some object state, check for well-formedness and/or
+ * emit warnings about various problems.
+ **/
 public interface ActiveSubscriptionObject {
   /** called by Subscriber.publishAdd().  
-   * @return false iff the change is vetoed.
+   * @throws BlackboardException if the object cannot be committed.
    **/
-  boolean addingToLogPlan(Subscriber subscriber);
+  void addingToBlackboard(Subscriber subscriber);
   /** called by Subscriber.publishChange().  
-   * @return false iff the change is vetoed.
+   * @throws BlackboardException if the object cannot be committed.
    **/
-  boolean changingInLogPlan(Subscriber subscriber);
+  void changingInBlackboard(Subscriber subscriber);
   /** called by Subscriber.publishRemove().  
-   * @return false iff the change is vetoed.
+   * @throws BlackboardException if the object cannot be committed.
    **/
-  boolean removingFromLogPlan(Subscriber subscriber);
+  void removingFromBlackboard(Subscriber subscriber);
 }

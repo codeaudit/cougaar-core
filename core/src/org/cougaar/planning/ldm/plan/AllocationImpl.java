@@ -177,22 +177,20 @@ public class AllocationImpl extends PlanElementImpl
   
 
   // ActiveSubscriptionObject
-  public boolean addingToLogPlan(Subscriber s) {
-    if (!super.addingToLogPlan(s)) return false;
-    addToRoleSchedule(asset);
-    // check for conflicts.
-    return true;
-  }
-  public boolean changingInLogPlan(Subscriber s) {
-    if (!super.changingInLogPlan(s)) return false;
+  public void addingToBlackboard(Subscriber s) {
+    super.addingToBlackboard(s);
+
     // check for conflicts
-    return true;
+    addToRoleSchedule(asset);
   }
-  public boolean removingFromLogPlan(Subscriber s) {
-    if (!super.removingFromLogPlan(s)) return false;
+  public void changingInBlackboard(Subscriber s) {
+    super.changingInBlackboard(s);
+    // check for conflicts
+  }
+  public void removingFromBlackboard(Subscriber s) {
+    super.removingFromBlackboard(s);
     removeFromRoleSchedule(asset);
     // check for conflicts
-    return true;
   }
 
   public Task getAllocationTask() { return allocTask; }

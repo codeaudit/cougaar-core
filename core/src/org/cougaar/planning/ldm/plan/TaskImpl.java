@@ -62,7 +62,7 @@ import org.cougaar.core.plugin.Annotation;
 public class TaskImpl extends DirectiveImpl
   implements Task, NewTask, Cloneable, XMLizable, ActiveSubscriptionObject, java.io.Serializable
 {
-  private static Logger logger = Logging.getLogger(TaskImpl.class);
+  private static final Logger logger = Logging.getLogger(TaskImpl.class);
 
   private Verb verb;
   private transient Asset directObject;  // changed to transient : Persistence
@@ -829,20 +829,17 @@ public class TaskImpl extends DirectiveImpl
   }
 
   // ActiveSubscriptionObject
-  public boolean addingToLogPlan(Subscriber s) {
-    return true;
-  }
-  public boolean changingInLogPlan(Subscriber s) {
+  public void addingToBlackboard(Subscriber s) { }
+  public void changingInBlackboard(Subscriber s) {
     // execution monitoring / commitment time checks
     if (commitmenttime > 0) {
       if ( s.getClient().currentTimeMillis() > commitmenttime ) {
         // its after the commitment time, don't publish the change and return false
-        return false;
+        logger.warn("publishChange of "+this+" past commitmenttime "+commitmenttime);
       }
     }
-    return true;
   }
-  public boolean removingFromLogPlan(Subscriber s) {
+  public void removingFromBlackboard(Subscriber s) {
     NewWorkflow wf = (NewWorkflow) getWorkflow();
     if (wf != null) {
       for (Enumeration tasks = wf.getTasks(); tasks.hasMoreElements(); ) {
@@ -856,13 +853,6 @@ public class TaskImpl extends DirectiveImpl
         }
       }
     }
-    /*
-    synchronized(System.err) {
-      System.err.println("taskRemoved = "+this);
-      Thread.dumpStack();
-    }
-    */
-    return true;
   }
 
 

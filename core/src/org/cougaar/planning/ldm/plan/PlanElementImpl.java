@@ -26,6 +26,7 @@ import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 import org.cougaar.core.blackboard.Subscriber;
 
 import org.cougaar.core.blackboard.PublishableAdapter;
+import org.cougaar.core.blackboard.BlackboardException;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
@@ -40,6 +41,8 @@ import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.util.XMLize;
+
+import org.cougaar.util.log.*;
 
 import java.util.*;
 import org.cougaar.util.SelfDescribingBeanInfo;
@@ -87,6 +90,8 @@ public abstract class PlanElementImpl
   protected AllocationResult estAR = null;
 
   protected transient boolean notify = false;
+
+  private static final Logger logger = Logging.getLogger(PlanElement.class);
 
   //no-arg constructor
   public PlanElementImpl() {}
@@ -339,33 +344,29 @@ public abstract class PlanElementImpl
   }
 
   // ActiveSubscriptionObject
-  public boolean addingToLogPlan(Subscriber s) {
+  public void addingToBlackboard(Subscriber s) {
     Task t = getTask();
     Date comdate = t.getCommitmentDate();
     if (comdate != null) {
       // make sure the current alp time is before commitment time
       if ( s.getClient().currentTimeMillis()  > comdate.getTime() ) {
         // its after the commitment time - don't publish the object
-        return false;
+        logger.warn("publishAdd of "+this+" past commitmenttime "+comdate.getTime());
       }
     }
 
     if (t.getPlanElement() == null) {
       ((TaskImpl)t).privately_setPlanElement(this);
     } else {
-      return false;
+      throw new BlackboardException("publishAdd of miswired PlanElement (task already has PE): "+this);
     }
+  }
 
-    return true;
-  }
-  public boolean changingInLogPlan(Subscriber s) {
-    return true;
-  }
-  public boolean removingFromLogPlan(Subscriber s) {
+  public void changingInBlackboard(Subscriber s) {}
+
+  public void removingFromBlackboard(Subscriber s) {
     Task t = getTask();
     ((TaskImpl)t).privately_resetPlanElement();;
-
-    return true;
   }
 
   private transient Annotation myAnnotation = null;

@@ -152,17 +152,17 @@ public class PluginServiceFilter
     public boolean haveCollectionsChanged() {
       return bs.haveCollectionsChanged();
     }
-    public boolean publishAdd(Object o) {
-      return bs.publishAdd(o);
+    public void publishAdd(Object o) {
+      bs.publishAdd(o);
     }
-    public boolean publishRemove(Object o) {
-      return bs.publishRemove(o);
+    public void publishRemove(Object o) {
+      bs.publishRemove(o);
     }
-    public boolean publishChange(Object o) {
-      return bs.publishChange(o);
+    public void publishChange(Object o) {
+      bs.publishChange(o);
     }
-    public boolean publishChange(Object o, Collection changes) {
-      return bs.publishChange(o,changes);
+    public void publishChange(Object o, Collection changes) {
+      bs.publishChange(o,changes);
     }
     public void openTransaction() {
       bs.openTransaction();

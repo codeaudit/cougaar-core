@@ -736,14 +736,14 @@ public abstract class PluginAdapter
   // LogPlan changes publishing
   //
 
-  protected final boolean publishAdd(Object o) {
-    return getBlackboardService().publishAdd(o);
+  protected void publishAdd(Object o) {
+    getBlackboardService().publishAdd(o);
   }
-  protected final boolean publishRemove(Object o) {
-    return getBlackboardService().publishRemove(o);
+  protected final void publishRemove(Object o) {
+    getBlackboardService().publishRemove(o);
   }
-  protected final boolean publishChange(Object o) {
-    return getBlackboardService().publishChange(o, null);
+  protected final void publishChange(Object o) {
+    getBlackboardService().publishChange(o, null);
   }
   /** mark an element of the Plan as changed.
    * Behavior is not defined if the object is not a member of the plan.
@@ -756,8 +756,8 @@ public abstract class PluginAdapter
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
    **/
-  protected final boolean publishChange(Object o, Collection changes) {
-    return getBlackboardService().publishChange(o, changes);
+  protected final void publishChange(Object o, Collection changes) {
+    getBlackboardService().publishChange(o, changes);
   }
     
 

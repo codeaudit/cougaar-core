@@ -525,13 +525,12 @@ public class Subscriber {
    * Behavior is not defined if the object was already a member of the plan.
    **/
 
-  public final boolean publishAdd(Object o) {
+  public final void publishAdd(Object o) {
     checkTransactionOK("add", o);
 
     if (theDistributor.history != null) theDistributor.history.publishAdd(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      if (! ((ActiveSubscriptionObject)o).addingToLogPlan(this)) 
-        return false;
+      ((ActiveSubscriptionObject)o).addingToBlackboard(this);
     }
 
     if (o instanceof Publishable) {
@@ -542,19 +541,17 @@ public class Subscriber {
     // if we made it this far publish the object and return true.
     clientAddedObject(o);
     publishAddedCount++;
-    return true;
   }
   
   /** Remove an object from the Plan.
    * Behavior is not defined if the object was not already a member of the plan.
    **/
-  public final boolean publishRemove(Object o) {
+  public final void publishRemove(Object o) {
     checkTransactionOK("remove", o);
 
     if (theDistributor.history != null) theDistributor.history.publishRemove(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      if (! ((ActiveSubscriptionObject)o).removingFromLogPlan(this)) 
-        return false;
+      ((ActiveSubscriptionObject)o).removingFromBlackboard(this);
     }
 
     if (o instanceof Publishable) {
@@ -568,13 +565,12 @@ public class Subscriber {
 
     clientRemovedObject(o);
     publishRemovedCount++;
-    return true;
   }
 
   /** Convenience function for publishChange(o, null).
    **/
-  public final boolean publishChange(Object o) {
-    return publishChange(o, null);
+  public final void publishChange(Object o) {
+    publishChange(o, null);
   }
 
   /** mark an element of the Plan as changed.
@@ -588,13 +584,12 @@ public class Subscriber {
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
    **/
-  public final boolean publishChange(Object o, Collection changes) {
+  public final void publishChange(Object o, Collection changes) {
     checkTransactionOK("change", o);    
 
     if (theDistributor.history != null) theDistributor.history.publishChange(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      if (! ((ActiveSubscriptionObject)o).changingInLogPlan(this)) 
-        return false;
+      ((ActiveSubscriptionObject)o).changingInBlackboard(this);
     }
 
     List crs = null;
@@ -620,7 +615,6 @@ public class Subscriber {
     // if we made it this far publish the change and return true.
     clientChangedObject(o, crs);
     publishChangedCount++;
-    return true;
   }
 
   private final boolean isZeroChanges(final Collection c) {

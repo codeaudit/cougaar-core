@@ -244,22 +244,22 @@ public class AssetTransferImpl extends PlanElementImpl
   }
 
   // ActiveSubscriptionObject
-  public boolean addingToLogPlan(Subscriber s) {
-    if (!super.addingToLogPlan(s)) return false;
-    addToRoleSchedule(asset);
+  public void addingToBlackboard(Subscriber s) {
+    super.addingToBlackboard(s);
+
     // check for conflicts.
-    return true;
+    addToRoleSchedule(asset);
   }
-  public boolean changingInLogPlan(Subscriber s) {
-    if (!super.changingInLogPlan(s)) return false;
+  public void changingInBlackboard(Subscriber s) {
+    super.changingInBlackboard(s);
+
     // check for conflicts
-    return true;
   }
-  public boolean removingFromLogPlan(Subscriber s) {
-    if (!super.removingFromLogPlan(s)) return false;
+  public void removingFromBlackboard(Subscriber s) {
+    super.removingFromBlackboard(s);
+
+    // check for conflicts
     removeFromRoleSchedule(asset);
-    // check for conflicts
-    return true;
   }
 
   private void writeObject(ObjectOutputStream stream) throws IOException {

@@ -119,11 +119,11 @@ public interface BlackboardService extends Service {
   // LogPlan changes publishing
   //
 
-  boolean publishAdd(Object o);
+  void publishAdd(Object o);
   
-  boolean publishRemove(Object o);
+  void publishRemove(Object o);
 
-  boolean publishChange(Object o);
+  void publishChange(Object o);
   
   /** mark an element of the Plan as changed.
    * Behavior is not defined if the object is not a member of the plan.
@@ -136,7 +136,7 @@ public interface BlackboardService extends Service {
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
    **/
-  boolean publishChange(Object o, Collection changes); 
+  void publishChange(Object o, Collection changes); 
 
   // 
   // aliases for Transaction handling 

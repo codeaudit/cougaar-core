@@ -24,12 +24,12 @@ import org.cougaar.core.mts.*;
 import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-/** An unchecked Exception thrown when there is a problem detected by
- * subscription mechanisms.
+/** A unchecked Exception thrown when there is a problem detected by
+ * Blackboard interactions.
  **/
 
-public class SubscriptionException extends BlackboardException {
-  public SubscriptionException(String s) { super(s); }
-  public SubscriptionException(String s, Throwable t) { super(s, t); }
-  public SubscriptionException() { super(); }
+public class BlackboardException extends RuntimeException {
+  public BlackboardException(String s) { super(s); }
+  public BlackboardException(String s, Throwable t) { super(s, t); }
+  public BlackboardException() { super(); }
 }
