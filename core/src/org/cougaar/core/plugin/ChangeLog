@@ -1,3 +1,18 @@
+2001-11-02  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Node.java (Repository):
+	Fix insertion point for agents.
+
+	* FileInitializerServiceProvider.java (Repository):
+	Fix interpretation of insertion point.
+
+	* DBInitializerServiceProvider.java (Repository):
+	Fix interpretation of insertion point.
+	Change DBProperties api.
+
+	* PluginManager.java (Repository):
+	Get insertion point by calling specifyContainmentPoint();
+
 2001-10-01  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
 
 	* PluginManager.java (Repository):
