@@ -96,19 +96,21 @@ public class SchedulerServiceProvider
     }
 
     synchronized void suspend() {
-      if (!running) throw new RuntimeException("Not running");
-      running = false;
-      signalActivity();
-      try {
-        schedulerThread.join(60000);
-      } catch (InterruptedException ie) {
+      if (running) {
+        running = false;
+        signalActivity();
+        try {
+          schedulerThread.join(60000);
+        } catch (InterruptedException ie) {
+        }
+        schedulerThread = null;
       }
-      schedulerThread = null;
     }
 
     synchronized void resume() {
-      if (running) throw new RuntimeException("Not suspended");
-      assureStarted();
+      if (!running) {
+        assureStarted();
+      }
     }
 
     /** Semaphore to signal activity in one or more plugins **/
