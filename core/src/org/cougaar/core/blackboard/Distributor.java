@@ -34,8 +34,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.ServiceBroker;
@@ -48,6 +46,8 @@ import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.QuiescenceReportForDistributorService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
@@ -212,8 +212,7 @@ final class Distributor {
   private MessageManager myMessageManager = null;
 
   /** Periodic persistence timer */
-  private Timer distributorTimer = null;
-  private TimerTask timerTask;
+  private Schedulable distributorTimer = null;
 
   private final Subscribers subscribers = new Subscribers();
 
@@ -530,9 +529,8 @@ final class Distributor {
     // start a disabled periodic timer
     synchronized (distributorLock) {
       if (lazyPersistence && distributorTimer == null) {
-        distributorTimer = new Timer();
-        timerTask =
-          new TimerTask() {
+        Runnable task =
+          new Runnable() {
             public void run() {
               synchronized (timerLock) {
                 if (timerActive) {
@@ -541,9 +539,12 @@ final class Distributor {
               }
             }
           };
-        distributorTimer.schedule(
-            timerTask,
-            TIMER_PERSIST_INTERVAL,
+        ThreadService tsvc = (ThreadService)
+          sb.getService(this, ThreadService.class, null);
+        distributorTimer = tsvc.getThread(this, task, "Persistence Timer",
+            ThreadService.WILL_BLOCK_LANE);
+        sb.releaseService(this, ThreadService.class, tsvc);
+        distributorTimer.schedule(TIMER_PERSIST_INTERVAL,
             TIMER_PERSIST_INTERVAL);
       }
     }
@@ -577,7 +578,7 @@ final class Distributor {
     synchronized (distributorLock) {
       if (lazyPersistence) {
         if (distributorTimer != null) {
-          distributorTimer.cancel();
+          distributorTimer.cancelTimer();
           distributorTimer = null;
         }
       }
