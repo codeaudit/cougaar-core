@@ -56,7 +56,7 @@ public class PluginManager
     childContext.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
 
     // scheduler for new plugins
-    childContext.addService(SchedulerService.class, new SchedulerServiceProvider());
+    childContext.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
