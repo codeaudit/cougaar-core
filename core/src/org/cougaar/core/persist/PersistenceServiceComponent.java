@@ -1108,7 +1108,7 @@ import org.cougaar.core.component.BindingSite;
           } // End of non-dummy persistence
           clearMarks(associationsToPersist.iterator());
           commitTransaction();
-          System.err.print("P");
+          logger.printDot("P");
           // Cleanup old deltas and archived snapshots. N.B. The
           // cleanup is happening to the plugin that was just used.
           // When there are several plugins, this is usually different
@@ -1127,7 +1127,7 @@ import org.cougaar.core.component.BindingSite;
           if (logger.isErrorEnabled()) {
             logger.error("Persist failed", e);
           }
-          System.err.print("X");
+          logger.printDot("X");
           throw e;
         }
         objectsThatMightGoAway.clear();

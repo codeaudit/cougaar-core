@@ -1175,7 +1175,7 @@ public class BasePersistence
           } // End of non-dummy persistence
           clearMarks(objectsToPersist.iterator());
           commitTransaction(full);
-          System.err.print("P");
+          logger.printDot("P");
           // Cleanup old deltas and archived snapshots. N.B. The
           // cleanup is happening to the plugin that was just used.
           // When there are several plugins, this is usually different
@@ -1194,7 +1194,7 @@ public class BasePersistence
           if (logger.isErrorEnabled()) {
             logger.error("Persist failed", e);
           }
-          System.err.print("X");
+          logger.printDot("X");
           throw e;
         }
         objectsThatMightGoAway.clear();
