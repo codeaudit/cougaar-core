@@ -53,5 +53,5 @@ public interface Persistence {
   PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
   boolean hasSubscriberStates();
   void discardSubscriberState(Subscriber subscriber);
-  void disableWrite();
+  void disableWrite(String sequenceNumberSuffix);
 }

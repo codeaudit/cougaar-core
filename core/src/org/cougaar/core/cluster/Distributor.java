@@ -477,6 +477,10 @@ public class Distributor {
       if (persistPending) {
         if (transactionCount == 0) {
           doPersistence();
+        } else {
+          System.out.println("Persist deferred, "
+                             + transactionCount
+                             + " transactions open");
         }
       }
     }
@@ -604,10 +608,15 @@ public class Distributor {
     }
   }
 
-  public void finishTransaction(Envelope outbox, BlackboardClient client) {
+  private void finishTransaction() {
     synchronized (transactionLock) {
       --transactionCount;
+      transactionLock.notifyAll();
     }
+  }
+
+  public void finishTransaction(Envelope outbox, BlackboardClient client) {
+    finishTransaction();
     synchronized (this) {
       distribute(outbox, client);
     }
@@ -660,7 +669,7 @@ public class Distributor {
         // We are the only one left in the pool
         return doPersistence(isStateWanted, full);
       } finally {
-        --transactionCount;
+        finishTransaction();
       }
     }
   }

@@ -53,7 +53,7 @@ public class DummyPersistence extends BasePersistence implements Persistence {
     String clusterName = clusterContext.getClusterIdentifier().getAddress();
   }
 
-  protected SequenceNumbers readSequenceNumbers() {
+  protected SequenceNumbers readSequenceNumbers(String suffix) {
     return null;
   }
 

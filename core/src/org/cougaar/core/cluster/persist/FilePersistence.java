@@ -101,13 +101,13 @@ public class FilePersistence extends BasePersistence implements Persistence {
     return new File(persistenceDirectory, "sequence" + suffix);
   }
 
-  private File getNewSequenceFile() {
-    return new File(persistenceDirectory, "newSequence");
+  private File getNewSequenceFile(String suffix) {
+    return new File(persistenceDirectory, "newSequence" + suffix);
   }
 
-  protected SequenceNumbers readSequenceNumbers() {
-    File sequenceFile = getSequenceFile("");
-    File newSequenceFile = getNewSequenceFile();
+  protected SequenceNumbers readSequenceNumbers(String suffix) {
+    File sequenceFile = getSequenceFile(suffix);
+    File newSequenceFile = getNewSequenceFile(suffix);
     if (!sequenceFile.exists() && newSequenceFile.exists()) {
       newSequenceFile.renameTo(sequenceFile);
     }
@@ -134,7 +134,7 @@ public class FilePersistence extends BasePersistence implements Persistence {
   private void writeSequenceNumbers(SequenceNumbers sequenceNumbers, String suffix) {
     try {
       File sequenceFile = getSequenceFile(suffix);
-      File newSequenceFile = getNewSequenceFile();
+      File newSequenceFile = getNewSequenceFile(suffix);
       FileOutputStream fileStream = new FileOutputStream(newSequenceFile);
       DataOutputStream sequenceStream = new DataOutputStream(fileStream);
       try {

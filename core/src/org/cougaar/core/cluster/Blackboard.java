@@ -573,7 +573,9 @@ public class Blackboard extends Subscriber
     try {
       Persistence result = BasePersistence.find(cluster);
       if (System.getProperty("org.cougaar.core.cluster.persistence.disableWrite", "false").equals("true")) {
-        result.disableWrite();
+        String sequence =
+          System.getProperty("org.cougaar.core.cluster.persistence.sequence", "");
+        result.disableWrite(sequence);
       }
       return result;
     }

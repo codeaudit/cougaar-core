@@ -80,6 +80,12 @@ public class DatabasePersistence
   extends BasePersistence
   implements Persistence
 {
+  // Codes used in the active column. Chosen for backward compatibility
+  private static final String INCREMENTAL = "'t'";
+  private static final String FULL        = "'x'";
+  private static final String INACTIVE    = "'f'";
+  private static final String ARCHIVE     = "'a'";
+
   String databaseURL =
     System.getProperty("org.cougaar.core.cluster.persistence.database.url");
   String databaseUser =
@@ -112,6 +118,7 @@ public class DatabasePersistence
   private PreparedStatement putSequenceNumbers2;
   private PreparedStatement storeDelta;
   private PreparedStatement getDelta;
+  private PreparedStatement checkDelta;
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
@@ -149,22 +156,25 @@ public class DatabasePersistence
                          theConnection.getTransactionIsolation());
       getSequenceNumbers = theConnection.prepareStatement
         ("select count(seqno), min(seqno), max(seqno)+1 from " + deltaTable +
-         " where active ='x' or active = 't'");
+         " where active =" + FULL + " or active = " + INCREMENTAL);
       putSequenceNumbers1 = theConnection.prepareStatement
         ("update " + deltaTable +
-         " set active = 'f' where active = 't' and (seqno < ? or seqno >= ?)");
+         " set active = " + INACTIVE + " where active = " + INCREMENTAL + " and (seqno < ? or seqno >= ?)");
       putSequenceNumbers1 = theConnection.prepareStatement
         ("update " + deltaTable +
-         " set active = 'a' where active = 'x' and (seqno < ? or seqno >= ?)");
+         " set active = " + ARCHIVE + " where active = " + FULL + " and (seqno < ? or seqno >= ?)");
       storeDelta = theConnection.prepareStatement
         ("insert into " + deltaTable +
          "(seqno, active, data) values (?, ?, ?)");
       getDelta = theConnection.prepareStatement
         ("select data from " + deltaTable +
          " where seqno = ?");
+      checkDelta = theConnection.prepareStatement
+        ("select count(*) from " + deltaTable +
+         " where seqno = ? and (active = " + FULL + ") or (active = " + ARCHIVE + ")");
       cleanDeltas = theConnection.prepareStatement
         ("delete from " + deltaTable +
-         " where active = 'f' and seqno >= ? and seqno < ?");
+         " where active = " + INACTIVE + " and seqno >= ? and seqno < ?");
       try {
         ResultSet rs = getSequenceNumbers.executeQuery();
         rs.close();
@@ -202,7 +212,19 @@ public class DatabasePersistence
     stmt.executeUpdate(qry);
   }
 
-  protected SequenceNumbers readSequenceNumbers() {
+  protected SequenceNumbers readSequenceNumbers(String suffix) {
+    if (!suffix.equals("")) {
+      if (suffix.startsWith("_")) suffix = suffix.substring(1);
+      try {
+        int deltaNumber = Integer.parseInt(suffix);
+        checkDelta.setInt(1, deltaNumber);
+        ResultSet rs = checkDelta.executeQuery();
+        if (!rs.next()) throw new IllegalArgumentException("Delta " + deltaNumber + " does not exist");
+        return new SequenceNumbers(deltaNumber, deltaNumber + 1);
+      } catch (Exception e) {
+        fatalException(e);
+      }
+    }
     try {
       ResultSet rs = getSequenceNumbers.executeQuery();
       try {

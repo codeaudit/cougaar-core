@@ -114,7 +114,7 @@ public abstract class BasePersistence implements Persistence {
     public BasePersistence create() throws PersistenceException;
   }
 
-  protected abstract SequenceNumbers readSequenceNumbers();
+  protected abstract SequenceNumbers readSequenceNumbers(String suffix);
 
   protected abstract void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
 
@@ -197,6 +197,7 @@ public abstract class BasePersistence implements Persistence {
   private PrintWriter history;
   private PrintWriter rehydrationLog;
   private boolean writeDisabled = false;
+  private String sequenceNumberSuffix = "";
 
   protected BasePersistence(ClusterContext clusterContext)
     throws PersistenceException
@@ -235,7 +236,7 @@ public abstract class BasePersistence implements Persistence {
             || pObject != null) {
           deleteOldPersistence();
         }
-        SequenceNumbers rehydrateNumbers = readSequenceNumbers();
+        SequenceNumbers rehydrateNumbers = readSequenceNumbers(sequenceNumberSuffix);
         if (pObject != null || rehydrateNumbers != null) { // Deltas exist
           if (pObject != null) {
             System.out.println("Rehydrating " + clusterContext.getClusterIdentifier()
@@ -536,7 +537,7 @@ public abstract class BasePersistence implements Persistence {
   private static Envelope[] emptyInbox = new Envelope[0];
 
   private void initSequenceNumbers() {
-    sequenceNumbers = readSequenceNumbers();
+    sequenceNumbers = readSequenceNumbers("");
     if (sequenceNumbers == null) {
       sequenceNumbers = new SequenceNumbers(0, 0);
     } else {
@@ -857,7 +858,8 @@ public abstract class BasePersistence implements Persistence {
     return reality;
   }
 
-  public void disableWrite() {
+  public void disableWrite(String sequenceNumberSuffix) {
+    this.sequenceNumberSuffix = sequenceNumberSuffix;
     writeDisabled = true;
   }
 
