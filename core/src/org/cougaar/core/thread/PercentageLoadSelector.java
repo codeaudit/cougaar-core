@@ -35,6 +35,13 @@ import java.util.Properties;
 import java.util.TimerTask;
 import java.util.TreeSet;
 
+/**
+ * A sample RightsSelector that attempts to select among the children
+ * in such a way as to match a set of target percentages.
+ * 
+ * @property org.cougaar.thread.targets Specifies a file which
+ * contains percentage targets for the children.
+ */
 public class PercentageLoadSelector
     extends RoundRobinSelector
     implements ThreadListener

@@ -32,6 +32,11 @@ import org.cougaar.core.service.ThreadListenerService;
 
 /**
  * The ServiceProvider for ThreadService and ThreadControlService.
+ *
+ * @property org.cougaar.thread.scheduler specifies the class of
+ * scheduler to use.  The default is PropagatingScheduler.  The only
+ * other reasonable choice at the moment would be
+ * 'org.cougaa.core.thread.Scheduler'
  */
 public final class ThreadServiceProvider implements ServiceProvider 
 {

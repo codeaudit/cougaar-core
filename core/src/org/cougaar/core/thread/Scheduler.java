@@ -30,6 +30,22 @@ import java.io.PrintWriter;
 import java.util.Comparator;
 
 
+/**
+ * The base class of thread-scheduler.  It allows a certain maximum
+ * number of threads to running, queuing any requests beyond that.  An
+ * items is dequeued when a running thread stops.  The maximum is per
+ * thread-service, not global.  This scheduler is not used by default
+ * (the PropagatingScheduler extension is the default).
+ *
+ * @property org.cougaar.thread.running.max specifies the maximum
+ * number of running threads.  A negative number is interpreted to
+ * mean that there is no maximum.  The precise meaning of 'maximum' is
+ * varies by scheduler class.
+ *
+ * @property org.cougaar.thread.logfile If set, extensive logging
+ * information will be saved in the given file, in tab-separated
+ * format (readable by Exel).
+ */
 public class Scheduler 
     implements ThreadControlService
 {
