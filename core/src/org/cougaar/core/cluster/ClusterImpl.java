@@ -650,7 +650,7 @@ public class ClusterImpl
         // internal message queue
         getQueueHandler().addMessage((ClusterMessage)message);
       } else {
-        System.err.println("\n"+this+": Received unhandled Message: "+message);
+        System.err.println("\n"+this+": Received unhandled Message ("+message.getClass()+"): "+message);
       }
     } catch( Exception e) {
       System.err.println("Unhandled Exception: "+e);
