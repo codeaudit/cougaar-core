@@ -578,7 +578,114 @@ public class Blackboard extends Subscriber
    * an LP).
    **/
   private void callLogicProviders(EnvelopeTuple obj, boolean isPersistenceEnvelope) {
+    if (!isPersistenceEnvelope) {
+      handleActiveSubscriptionObjects(obj);
+    }
     myDomainService.invokeEnvelopeLogicProviders(obj, isPersistenceEnvelope);
+  }
+
+  private void handleActiveSubscriptionObjects(EnvelopeTuple tup) {
+    if (ActiveSubscriptionObject.deferCommit) {
+      Object o = tup.getObject();
+      if (o instanceof ActiveSubscriptionObject) {
+        ActiveSubscriptionObject aso = (ActiveSubscriptionObject) o;
+        try {
+          if (tup.isAdd()) {
+            aso.addingToBlackboard(this, true);
+          } else if (tup.isChange()) {
+            aso.changingInBlackboard(this, true);
+          } else if (tup.isRemove()) {
+            aso.removingFromBlackboard(this, true);
+          } // else ignore: bulk and event are uneffected by ASOs
+        } catch (BlackboardException be) {
+          logger.error("Deferred ActiveSubscriptionObject action could not be vetoed", be);
+        }
+      }
+    }
+  }
+  
+  private final static ObjectTracker tracker = new ObjectTracker();
+  public final static ObjectTracker getTracker() { return tracker; }
+
+  public static class ObjectTracker {
+    private final static Logger log = Logging.getLogger(ObjectTracker.class);
+    private static final Set globalSet = new HashSet(11);
+    private final ThreadLocal localSet = new ThreadLocal() {
+        protected synchronized Object initialValue() { return new HashSet(11); }
+      };
+    
+    public Set getLocalSet() {
+      return (Set) (localSet.get());
+    }
+
+    public void checkpoint(boolean commit, Object ob, Object a) {
+      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+        if (commit) {
+          resolve(ob, a);
+        } else {
+          track(ob, a);
+        }
+      }
+    }
+    private void track(Object ob, Object a) {
+      Object o = new Traversal(ob,a);
+      if (log.isDebugEnabled()) log.debug("Tracking "+o);
+      synchronized (globalSet) {
+        globalSet.add(o);
+      }
+      getLocalSet().add(o);
+    }
+
+    private void resolve(Object ob, Object a) {
+      Object o = new Traversal(ob,a);
+      if (log.isDebugEnabled()) log.debug("Resolving "+o);
+      synchronized (globalSet) {
+        globalSet.remove(o);
+      }
+      getLocalSet().remove(o);
+    }
+
+    public void clearLocalSet() {
+      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+        getLocalSet().clear();
+      }
+    }
+
+    public void checkAccess(Object ob, Object a) {
+      if (ActiveSubscriptionObject.deferCommit) { /*short circuit if we aren't actually tracking ASO gaps*/
+        Object o = new Traversal(ob,a);
+        if (log.isDebugEnabled()) log.debug("Checking "+o);
+        boolean locP = getLocalSet().contains(o);
+        if (locP) {
+          log.warn("Local access of uncommitted ActiveSubscriptionObject data "+o, new Throwable());
+        } else {
+          if (log.isDebugEnabled()) {
+            boolean gloP;
+            synchronized (globalSet) {
+              gloP = globalSet.contains(o);
+            }
+            if (gloP) {
+              log.debug("Global access of uncommitted ActiveSubscriptionObject data "+o, new Throwable());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public static class Traversal {
+    private final Object o;
+    private final Object a;
+    public Traversal(Object o, Object a) { this.o=o; this.a=a;}
+    public boolean equals(Object thing) {
+      if (thing instanceof Traversal) {
+        return o.equals(((Traversal)thing).o) && a.equals(((Traversal)thing).a);
+      } else {
+        return false;
+      }
+    }
+    public int hashCode() { return o.hashCode(); } /*don't bother to spread 'em out*/
+    public String toString() { return "Traversal("+a+") "+o; }
   }
 
   public PublishHistory getHistory() {

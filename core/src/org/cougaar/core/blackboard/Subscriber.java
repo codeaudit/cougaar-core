@@ -544,7 +544,10 @@ public class Subscriber {
 
     if (theDistributor.history != null) theDistributor.history.publishAdd(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      ((ActiveSubscriptionObject)o).addingToBlackboard(this);
+      ((ActiveSubscriptionObject)o).addingToBlackboard(this, false);
+      if (!ActiveSubscriptionObject.deferCommit) {
+        ((ActiveSubscriptionObject)o).addingToBlackboard(this, true);
+      }
     }
 
     if (o instanceof Publishable) {
@@ -565,7 +568,10 @@ public class Subscriber {
 
     if (theDistributor.history != null) theDistributor.history.publishRemove(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      ((ActiveSubscriptionObject)o).removingFromBlackboard(this);
+      ((ActiveSubscriptionObject)o).removingFromBlackboard(this, false);
+      if (!ActiveSubscriptionObject.deferCommit) {
+        ((ActiveSubscriptionObject)o).removingFromBlackboard(this, true);
+      }
     }
 
     if (o instanceof Publishable) {
@@ -603,7 +609,10 @@ public class Subscriber {
 
     if (theDistributor.history != null) theDistributor.history.publishChange(o);
     if (o instanceof ActiveSubscriptionObject ) {
-      ((ActiveSubscriptionObject)o).changingInBlackboard(this);
+      ((ActiveSubscriptionObject)o).changingInBlackboard(this, false);
+      if (!ActiveSubscriptionObject.deferCommit) {
+        ((ActiveSubscriptionObject)o).changingInBlackboard(this, true);
+      }
     }
 
     List crs = null;

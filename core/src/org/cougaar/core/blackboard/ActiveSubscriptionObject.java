@@ -25,7 +25,7 @@
  */
 
 package org.cougaar.core.blackboard;
-
+import org.cougaar.util.PropertyParser;
 
 /** Blackboard objects which implement this interface
  * will have the appropriate methods invoked when
@@ -35,16 +35,33 @@ package org.cougaar.core.blackboard;
  * emit warnings about various problems.
  **/
 public interface ActiveSubscriptionObject {
+  /** default value for property deferCommit **/
+  boolean DEFAULT_DEFER_COMMIT = false;
+
+  /** Property for controlling deferred commit of ActiveSubscriptionObject methods **/
+  String DEFER_COMMIT_PROPERTY = ActiveSubscriptionObject.class.getName()+".deferCommit";
+
+  /** When deferCommit is true, ActiveSubscriptionObject methods will be invoked with commit=false at 
+   * publish time, and commit=true at LP time.  When deferCommit is false, both invocations
+   * will happen at publishTime and certain checks will be disabled (as uninteresting).
+   * The default value is defined by #DEFAULT_DEFER_COMMIT
+   * @property org.cougaar.core.blackboard.ActiveSubscriptionObject.deferCommit 
+   * When set to true, causes ActiveSubscriptionObject side effects to occur
+   * at LP invocation time rather than immediately during publishAdd
+   * @note deferCommit implies that the ActiveSubscriptionObject cannot veto publishes!
+   **/
+  boolean deferCommit = PropertyParser.getBoolean(DEFER_COMMIT_PROPERTY, DEFAULT_DEFER_COMMIT);
+
   /** called by Subscriber.publishAdd().  
    * @throws BlackboardException if the object cannot be committed.
    **/
-  void addingToBlackboard(Subscriber subscriber);
+  void addingToBlackboard(Subscriber subscriber, boolean commit);
   /** called by Subscriber.publishChange().  
    * @throws BlackboardException if the object cannot be committed.
    **/
-  void changingInBlackboard(Subscriber subscriber);
+  void changingInBlackboard(Subscriber subscriber, boolean commit);
   /** called by Subscriber.publishRemove().  
    * @throws BlackboardException if the object cannot be committed.
    **/
-  void removingFromBlackboard(Subscriber subscriber);
+  void removingFromBlackboard(Subscriber subscriber, boolean commit);
 }
