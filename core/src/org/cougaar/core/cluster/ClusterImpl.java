@@ -270,21 +270,23 @@ public class ClusterImpl
    * a List.
    */
   public void setParameter(Object o) {
-    String sID = null;
-    if (o instanceof String) {
-      sID = (String)o;
+    ClusterIdentifier cid = null;
+    if (o instanceof ClusterIdentifier) {
+      cid = (ClusterIdentifier) o;
+    } else if (o instanceof String) {
+      cid = new ClusterIdentifier((String) o);
     } else if (o instanceof List) {
       List l = (List)o;
       if (l.size() > 0) {
         Object o1 = l.get(0);
-        if (o1 instanceof String) {
-          sID = (String)o1;
+        if (o1 instanceof ClusterIdentifier) {
+          cid = (ClusterIdentifier) o1;
+        } else if (o1 instanceof String) {
+          cid = new ClusterIdentifier((String) o1);
         }
       }
     }
-    if (sID != null) {
-      setClusterIdentifier(new ClusterIdentifier(sID));
-    }
+    setClusterIdentifier(cid);
   }
     
   /** Notify object about its "parent"
