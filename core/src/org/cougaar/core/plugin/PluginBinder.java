@@ -21,7 +21,7 @@ public class PluginBinder extends BinderSupport implements PluginBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
   public PluginBinder(Object parentInterface, Component child) {
-    super(((PluginManager) parentInterface).getChildContext(), 
+    super(((PluginManager) parentInterface).getChildServiceBroker(), 
           (PluginManager) parentInterface, 
           child);
   }

@@ -18,7 +18,7 @@ public abstract class ContainerSupport
 {
   protected final ComponentFactory componentFactory = specifyComponentFactory();
   protected final String myContainmentPoint = specifyContainmentPoint();
-  protected final ServiceBroker childContext = specifyChildContext();
+  protected final ServiceBroker childServiceBroker = specifyChildServiceBroker();
   protected final Class childBindingSite = specifyChildBindingSite();
 
   /** The actual set of child BoundComponent loaded. 
@@ -53,7 +53,7 @@ public abstract class ContainerSupport
    * Note that this value might be only part of the process for 
    * actually finding the services for children and/or peers.
    **/
-  protected abstract ServiceBroker specifyChildContext();
+  protected abstract ServiceBroker specifyChildServiceBroker();
   
   /** Define to specify the BindingSite used to bind child components.
    **/

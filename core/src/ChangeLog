@@ -1,3 +1,10 @@
+2001-07-18  Michael Thome  <mthome@bbn.com>
+
+	* ContainerSupport
+	Changed method specifyChildContext() to
+	specifyChildServiceBroker() and data member childContext to
+	childServiceBroker for consistency.
+
 2001-07-16  Michael Thome  <mthome@bbn.com>
 
 	* ConfigFinder

@@ -47,16 +47,16 @@ public class PluginManager
     }
 
     // add some services for the plugins.
-    childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    childContext.addService(AlarmService.class, new AlarmServiceProvider(agent));
-    childContext.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
-    childContext.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
+    childServiceBroker.addService(MetricsService.class, new MetricsServiceProvider(agent));
+    childServiceBroker.addService(AlarmService.class, new AlarmServiceProvider(agent));
+    childServiceBroker.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
+    childServiceBroker.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    childServiceBroker.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
     // hack service for demo control
-    childContext.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
+    childServiceBroker.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
 
     // scheduler for new plugins
-    childContext.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
+    childServiceBroker.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
@@ -65,7 +65,7 @@ public class PluginManager
   protected String specifyContainmentPoint() {
     return "agent.plugin";
   }
-  protected ServiceBroker specifyChildContext() {
+  protected ServiceBroker specifyChildServiceBroker() {
     return new PluginServiceBroker();
   }
 
@@ -85,8 +85,8 @@ public class PluginManager
    * should use package protection to give access only to PluginBinderSupport,
    * but makes it public for use by Test example.
    **/
-  public final ServiceBroker getChildContext() {
-    return childContext;
+  public final ServiceBroker getChildServiceBroker() {
+    return childServiceBroker;
   }
 
   //
