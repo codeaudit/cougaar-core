@@ -365,20 +365,39 @@ extends BaseServletComponent
       private void writeFailure(Exception e) throws IOException {
         // select response message
         String msg = action+" failed";
+
+        // generate an HTML error response, with a 404 error code.
+        //
+        // use "setStatus" instead of "sendError" -- see bug 1259
+
         response.setContentType("text/html");
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        PrintWriter out = response.getWriter();
+
         // build up response
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(baos);
-        out.print("<html><head><title>");
-        out.print(msg);
         out.print(
+            "<html><head><title>"+
+            action+
+            " failed"+
             "</title></head>"+
             "<body>\n"+
-            "<center><h1>");
-        out.print(msg);
-        out.print("</h1></center>"+
+            "<center><h1>"+
+            action+
+            " failed"+
+            "</h1></center>"+
             "<p><pre>\n");
-        e.printStackTrace(out);
+        boolean isUnknownClass = false;
+        for (Throwable t = e; t != null; t = t.getCause()) {
+          if (t instanceof ClassNotFoundException) {
+            isUnknownClass = true;
+            break;
+          }
+        }
+        if (isUnknownClass) {
+          out.print("<h2>Unknown class \""+classname+"\"</h2>");
+        } else {
+          e.printStackTrace(out);
+        }
         out.print(
             "\n</pre><p>"+
             "Please double-check these parameters:\n");
@@ -386,10 +405,6 @@ extends BaseServletComponent
         out.print(
             "</body></html>\n");
         out.close();
-        // send error code
-        response.sendError(
-            HttpServletResponse.SC_BAD_REQUEST,
-            new String(baos.toByteArray()));
       }
 
       private void writeSuccess(boolean ret) throws IOException {
