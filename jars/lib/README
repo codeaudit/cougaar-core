@@ -13,6 +13,8 @@ NetComponents.jar	version ?
 http://www.savarese.org/oro/software/NetComponents.html
 
 quoSumo.jar		version ?
+couggaar is the distribution point for this jar.  It contains all the classes
+required to run quo, qos.
 
 activation.jar		version ?
 Java Activation Framework (JAF)
@@ -33,6 +35,8 @@ Java2 Enterprise Edition
 http://java.sun.com/j2ee/
 
 jacorb.jar		version 1.3.30
+This contains Java orb required for running corba.  Specific use would
+be to run CorbaNode in quo/test/bin/configs/QuoNode
 http://www.jacorb.org/
 
 jbcl.jar		version ?
