@@ -406,10 +406,19 @@ public class LoggingServiceProvider implements ServiceProvider {
   private class LoggingControlServiceImpl implements LoggingControlService {
 
     public int getLoggingLevel(String node) {
-      return convertPriorityToInt(Category.getInstance(node).getChainedPriority());
+	if(node.equals("root")) {
+	    return convertPriorityToInt(Category.getRoot().getChainedPriority());
+	} else {
+	    return convertPriorityToInt(Category.getInstance(node).getChainedPriority());
+	}
     }
     public void setLoggingLevel(String node, int level) {
-      Category.getInstance(node).setPriority(convertIntToPriority(level));
+	if(node.equals("root")) {
+	    Category.getRoot().setPriority(convertIntToPriority(level));
+	}
+	else {
+	    Category.getInstance(node).setPriority(convertIntToPriority(level));
+	}
     }
 
     public Enumeration getAllLoggingNodes() {
