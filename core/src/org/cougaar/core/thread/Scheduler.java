@@ -195,9 +195,11 @@ public class Scheduler
     synchronized void decrementRunCount(Scheduler consumer) {
 	--runningThreadCount;
 	if (runningThreadCount < 0) {
-	    System.err.println("Thread account oddity: " +this+ 
-			       " thread count is " +
-			       runningThreadCount);
+	    if (getTreeNode().getParent() == null ||
+		CougaarThread.Debug)
+		System.err.println("Thread account oddity: " +this+ 
+				   " thread count is " +
+				   runningThreadCount);
 	}
 	listenerProxy.notifyRightReturned(consumer);
     }
