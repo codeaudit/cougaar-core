@@ -21,10 +21,21 @@
 
 package org.cougaar.core.plugin.completion;
 
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Constructor;
+import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Set;
+import java.util.Iterator;
+import java.util.TreeMap;
+import java.util.SortedMap;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.servlet.ServletService;
 
 /**
  * This plugin gathers and integrates completion information from
@@ -38,10 +49,25 @@ import org.cougaar.core.service.TopologyReaderService;
  **/
 
 public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
-  private static final long NORMAL_TIME_ADVANCE_DELAY = 5000L;
-  private static final long ADVANCE_TIME_ADVANCE_DELAY = 20000L;
-  private static final long INITIAL_TIME_ADVANCE_DELAY = 240000L;
-  private static final long TIME_STEP = 86400000L;
+  /** Length of inactive period required before time is advanced **/
+  private static final long DEFAULT_NORMAL_TIME_ADVANCE_DELAY = 5000L;
+  /** Length of inactive period required before time is advanced for the first time **/
+  private static final long DEFAULT_INITIAL_TIME_ADVANCE_DELAY = 240000L;
+  /** Length of time after time is advanced before another advance is allowed. **/
+  private static final long DEFAULT_ADVANCE_TIME_ADVANCE_DELAY = 20000L;
+  /** How much to advance time **/
+  private static final long DEFAULT_TIME_STEP = 86400000L;
+  private static final Class[] stringArgType = {String.class};
+
+
+  private long NORMAL_TIME_ADVANCE_DELAY = DEFAULT_NORMAL_TIME_ADVANCE_DELAY;
+  private long INITIAL_TIME_ADVANCE_DELAY = DEFAULT_INITIAL_TIME_ADVANCE_DELAY;
+  private long ADVANCE_TIME_ADVANCE_DELAY = DEFAULT_ADVANCE_TIME_ADVANCE_DELAY;
+  private long TIME_STEP = DEFAULT_TIME_STEP;
+  private int advancementSteps = 0;
+  private static final Class[] requiredServices = {
+    ServletService.class
+  };
 
   /**
    * Subclasses should provide an array of CompletionActions to be
@@ -59,14 +85,34 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   private long tomorrow = Long.MIN_VALUE;	// Demo time must
                                                 // exceed this before
                                                 // time step
-  private CompletionAction[] completionActions;
+  private CompletionAction[] completionActions = null;
+
   private int nextCompletionAction = 0;
 
   private LaggardFilter filter = new LaggardFilter();
 
-  protected CompletionAction[] getCompletionActions() {
-    return new CompletionAction[0];
+  private ServletService servletService = null;
+
+  public CompletionSocietyPlugin() {
+    super(requiredServices);
   }
+
+  protected boolean haveServices() {
+    if (servletService != null) return true;
+    if (super.haveServices()) {
+      servletService = (ServletService)
+        getServiceBroker().getService(this, ServletService.class, null);
+      try {
+        servletService.register("/completionControl", new CompletionControlServlet());
+      } catch (Exception e) {
+        logger.error("Failed to register completionControl servlet", e);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  protected abstract CompletionAction[] getCompletionActions();
 
   protected Set getTargetNames() {
     return topologyReaderService.getAll(TopologyReaderService.NODE);
@@ -77,9 +123,15 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
     if (logger.isInfoEnabled() && filter.filter(worstLaggard)) {
       logger.info(getClusterIdentifier() + ": new worst " + worstLaggard);
     }
+    if (completionActions == null) {
+      completionActions = getCompletionActions();
+    }
     if (nextCompletionAction < completionActions.length) {
       try {
         if (completionActions[nextCompletionAction].checkCompletion(haveLaggard)) {
+          if (logger.isInfoEnabled()) {
+            logger.info("Completed " + completionActions[nextCompletionAction]);
+          }
           nextCompletionAction++;
         }
       } catch (Exception e) {
@@ -102,9 +154,10 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
    * first time advance.
    **/
   protected void checkTimeAdvance(boolean haveLaggard) {
+    if (advancementSteps <= 0) return;
     long demoNow = alarmService.currentTimeMillis();
     if (tomorrow == Long.MIN_VALUE) {
-      tomorrow = demoNow;
+      tomorrow = (demoNow / TIME_STEP) * TIME_STEP; // Beginning of today
       timeToAdvanceTime = now + INITIAL_TIME_ADVANCE_DELAY;
     }
 
@@ -116,7 +169,9 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
       if (timeToGo > 0) {
         if (logger.isDebugEnabled()) logger.debug(timeToGo + " left");
       } else {
-        tomorrow = ((demoNow / TIME_STEP) + 1) * TIME_STEP;
+        long newTomorrow = ((demoNow / TIME_STEP) + 1) * TIME_STEP;
+        advancementSteps -= (int) ((newTomorrow - tomorrow) / TIME_STEP);
+        tomorrow = newTomorrow;
         try {
           demoControlService.setTime(tomorrow, true);
           if (logger.isInfoEnabled()) {
@@ -135,6 +190,88 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
                              + formatDate(tomorrow));
         }
         timeToAdvanceTime = now + ADVANCE_TIME_ADVANCE_DELAY;
+      }
+    }
+  }
+
+  private class CompletionControlServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+      doPostOrGet(request, response, false);
+    }
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+      doPostOrGet(request, response, true);
+    }
+    protected void doPostOrGet(HttpServletRequest request, HttpServletResponse response, boolean doUpdate)
+      throws IOException
+    {
+      PrintWriter out = response.getWriter();
+      if (!"Submit".equals(request.getParameter("submit"))) {
+        doUpdate = false;
+      }
+      response.setContentType("text/html");
+      out.println("<html>\n  <head>\n    <title>Completion Control</title>\n  </head>");
+      out.println("  <body>\n    <h1>Completion Control Servlet</h1>"
+                  + "    <form action=\"completionControl\" method=\"post\">");
+      out.println("      <table>");
+      out.println("        <tr><td>Scenario Time</td><td>"
+                  + formatDate(alarmService.currentTimeMillis())
+                  + "</td></tr>");
+      INITIAL_TIME_ADVANCE_DELAY =
+        handleField("initialDelay",
+                    "Initial Time Advance Delay",
+                    "The duration of the quiet period required before the first time advance",
+                    new Long(INITIAL_TIME_ADVANCE_DELAY),
+                    request, out, doUpdate).longValue();
+      NORMAL_TIME_ADVANCE_DELAY =
+        handleField("normalDelay",
+                    "Normal Time Advance Delay",
+                    "The duration of the quiet period required before the normal time advances",
+                    new Long(NORMAL_TIME_ADVANCE_DELAY),
+                    request, out, doUpdate).longValue();
+      ADVANCE_TIME_ADVANCE_DELAY =
+        handleField("advanceDelay",
+                    "Advance Time Delay",
+                    "The delay after a time advance before the next time advance is allowed",
+                    new Long(ADVANCE_TIME_ADVANCE_DELAY),
+                    request, out, doUpdate).longValue();
+      TIME_STEP =
+        handleField("timeStep",
+                    "Advance Time Step",
+                    "The size of the time step for each advancement",
+                    new Long(TIME_STEP),
+                    request, out, doUpdate).longValue();
+      advancementSteps =
+        handleField("nSteps",
+                    "Number of Time Steps to Advance",
+                    "Specifies how many steps of advancement should be performed",
+                    new Integer(advancementSteps),
+                    request, out, doUpdate).intValue();
+      out.println("      </table>");
+      out.println("<input type=\"submit\" name=\"submit\" value=\"Submit\">");
+      out.println("<input type=\"submit\" name=\"submit\" value=\"Refresh\">");
+      out.println("    </form>\n  </body>\n</html>");
+    }
+
+    private Number handleField(String name, String label, String description, Number currentValue,
+                               HttpServletRequest request, PrintWriter out, boolean doUpdate)
+    {
+      Number newValue = createValue(currentValue, request.getParameter(name));
+      if (doUpdate && newValue != null && !newValue.equals(currentValue)) {
+        currentValue = newValue;
+      }
+      out.println("        <tr><td>" + label + "</td><td>"
+                  + "<input name=\"" + name + "\" type=\"text\" value=\""
+                  + currentValue.toString() + "\"></td></tr>");
+      return currentValue;
+    }
+
+    private Number createValue(Number currentValue, String v) {
+      try {
+        Constructor constructor = currentValue.getClass().getConstructor(stringArgType);
+        Object[] args = {v};
+        return (Number) constructor.newInstance(args);
+      } catch (Exception e) {
+        return currentValue;
       }
     }
   }

@@ -69,8 +69,19 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private int shortCheckTargetsCount = 0;
   private CompletionRelay relay;                // The relay we sent
 
+  private static Class[] concatRequiredServices(Class[] a1, Class[] a2) {
+    Class[] result = new Class[a1.length + a2.length];
+    System.arraycopy(a1, 0, result, 0, a1.length);
+    System.arraycopy(a2, 0, result, a1.length, a2.length);
+    return result;
+  }
+
   public CompletionSourcePlugin() {
     super(requiredServices);
+  }
+
+  public CompletionSourcePlugin(Class[] requiredServices) {
+    super(concatRequiredServices(CompletionSourcePlugin.requiredServices, requiredServices));
   }
 
   public void suspend() {
@@ -85,7 +96,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     super.suspend();
   }
 
-  private boolean haveServices() {
+  protected boolean haveServices() {
     if (uidService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
