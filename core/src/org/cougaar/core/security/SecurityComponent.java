@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society;
+package org.cougaar.core.security;
 
 import org.cougaar.core.component.*;
 import org.cougaar.util.*;
