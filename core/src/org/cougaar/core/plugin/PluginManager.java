@@ -102,14 +102,22 @@ public class PluginManager
     int n = ((children != null) ? children.length : 0);
     for (int i = 0; i < n; i++) {
       Object x = children[i];
+      ComponentDescription cd = null;
+      Object cstate = null;
       if (x instanceof ComponentDescription) {
-        ComponentDescription child = (ComponentDescription) x;
-        String ip = child.getInsertionPoint();
+        cd = (ComponentDescription) x;
+      } else if (x instanceof StateTuple) {
+        StateTuple st = (StateTuple) x;
+        cd = st.getComponentDescription();
+        cstate = st.getState();
+      }
+      if (cd != null) {
+        String ip = cd.getInsertionPoint();
         // PluginManager should only load plugins!
         if (ip != null &&
             ip.startsWith("Node.AgentManager.Agent.PluginManager.")) {
           try {
-            add(child);
+            add(x);
           } catch (ComponentRuntimeException cre) {
             // cre.printStackTrace();
             Throwable th = cre;
@@ -118,7 +126,7 @@ public class PluginManager
               if (nx == null) break;
               th = nx;
             }
-            System.err.println("Failed to load "+child+":");
+            System.err.println("Failed to load "+cd+":");
             th.printStackTrace();
           }
         }
