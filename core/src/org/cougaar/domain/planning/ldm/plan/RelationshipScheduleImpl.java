@@ -377,6 +377,17 @@ public class RelationshipScheduleImpl extends ScheduleImpl
       mySchedule = newSchedule;
     }
 
+    public boolean isLocal() {
+      return true;
+    }
+
+    public void setLocal(boolean flag) {
+    }
+
+    public boolean isSelf() {
+      return isLocal();
+    }
+
     public void setUID(org.cougaar.core.society.UID uid) {
       myUID = uid;
     }
