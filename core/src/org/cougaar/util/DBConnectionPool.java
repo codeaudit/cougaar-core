@@ -45,7 +45,7 @@ import java.util.*;
  * messages be turned on? 1=progress, 2=warnings, 3=loud progress
  **/
 public class DBConnectionPool {
-
+  
   /**
    * A hash table relating the database URL and user to a connection
    * pool.
@@ -144,7 +144,7 @@ public class DBConnectionPool {
     /**
      * Create a PoolConnection to return to the user.
      */
-    Connection getPoolConnection() {
+    Connection getPoolConnection() throws SQLException {
       return new PoolConnection(theConnection);
     }
 
@@ -187,11 +187,14 @@ public class DBConnectionPool {
      */
     class PoolConnection implements Connection {
       Connection c;
+      boolean supportsTransactions;
       boolean closed = false;
       ArrayList statements = new ArrayList();
-      PoolConnection(Connection realConnection) {
+      PoolConnection(Connection realConnection) throws SQLException {
 	c = realConnection;
-      }
+	supportsTransactions = c.getMetaData().supportsTransactions();
+      }	  
+      
       private void destroyPool() {
 	DBConnectionPoolEntry entry = DBConnectionPoolEntry.this;
         // If this Connection is in the pool, then destroy the pool,
@@ -332,8 +335,8 @@ public class DBConnectionPool {
       public void commit() throws SQLException {
         if (closed) throw new SQLException("Connection is closed");
         try {
-	  c.commit();
-        } catch (SQLException sqle) {
+	  if (supportsTransactions) c.commit();
+	} catch (SQLException sqle) {
           destroyPool();
           throw sqle;
         }
@@ -360,7 +363,7 @@ public class DBConnectionPool {
 	if (closed) return;
         closed = true;
         try {
-          c.commit();
+	  if (supportsTransactions) c.commit();
 	  synchronized (statements) {
 	    while (statements.size() > 0) {
 	      PoolStatement statement = (PoolStatement) statements.get(0);
@@ -1607,8 +1610,8 @@ public class DBConnectionPool {
     }
   }
 
-
   /*
+  
   // hack test routine - take three args "host:port:SID" "user" "password" 
   public static void main(String arg[]) {
     try {
@@ -1624,55 +1627,55 @@ public class DBConnectionPool {
 
       // each cycle hits the database with lots at the same time
       for (int cycle = 0; cycle<10; cycle++) {
-        System.out.print("Cycle "+cycle+":");
+	System.out.print("Cycle "+cycle+":");
         
-        class Acc {
-          long x;
-        }
-        final Acc waitA = new Acc();
-        final Acc queryA = new Acc();
+	class Acc {
+	  long x;
+	}
+	final Acc waitA = new Acc();
+	final Acc queryA = new Acc();
 
-        for (int i = 0; i< nthreads; i++) {
-          threads[i] = new Thread(new Runnable() {
-              public void run() {
-                try {
-                long t0 = System.currentTimeMillis();
-                Connection c = DBConnectionPool.getConnection(url,user,password);
-                long t1 = System.currentTimeMillis();
-                waitA.x += (t1-t0);
-                Statement s = c.createStatement();
-                ResultSet rs = s.executeQuery("select container_20_ft_qty from ue_summary_mtmc");
-                int n =0;
-                while(rs.next()) { n++; }
-                // 44 rows
-                if (n != 44) throw new RuntimeException("Oops! Got the wrong count.");
-                s.close();
-                c.close();
-                long t2 = System.currentTimeMillis();
-                queryA.x += (t2-t1);
-                } catch (SQLException e) {
-                  e.printStackTrace();
-                }
-              }
-            });
-        }
-        System.out.print(" .");
-        for (int i = 0; i< nthreads; i++) {
-          threads[i].start();
-        }
-        System.out.print(" .");
-        for (int i = 0; i< nthreads; i++) {
-          threads[i].join();
-        }
+	for (int i = 0; i< nthreads; i++) {
+	  threads[i] = new Thread(new Runnable() {
+	      public void run() {
+		try {
+		  long t0 = System.currentTimeMillis();
+		  Connection c = DBConnectionPool.getConnection(url,user,password);
+		  long t1 = System.currentTimeMillis();
+		  waitA.x += (t1-t0);
+		  Statement s = c.createStatement();
+		  ResultSet rs = s.executeQuery("select container_20_ft_qty from ue_summary_mtmc");
+		  int n =0;
+		  while(rs.next()) { n++; }
+		  // 44 rows
+		  if (n != 44) throw new RuntimeException("Oops! Got the wrong count.");
+		  s.close();
+		  c.close();
+		  long t2 = System.currentTimeMillis();
+		  queryA.x += (t2-t1);
+		} catch (SQLException e) {
+		  e.printStackTrace();
+		}
+	      }
+	    });
+	}
+	System.out.print(" .");
+	for (int i = 0; i< nthreads; i++) {
+	  threads[i].start();
+	}
+	System.out.print(" .");
+	for (int i = 0; i< nthreads; i++) {
+	  threads[i].join();
+	}
         
-        double avwait = waitA.x/((double)nthreads);
-        double avquery = queryA.x/((double)nthreads);
-        System.out.println();
-        System.out.println("\tAverage Connection wait = "+avwait);
-        System.out.println("\tAverage Query wait  = "+avquery);
+	double avwait = waitA.x/((double)nthreads);
+	double avquery = queryA.x/((double)nthreads);
+	System.out.println();
+	System.out.println("\tAverage Connection wait = "+avwait);
+	System.out.println("\tAverage Query wait  = "+avquery);
 
-      // wait for a bit to let the reaper run
-      Thread.sleep(2*1000);
+	// wait for a bit to let the reaper run
+	Thread.sleep(2*1000);
       }
     } catch (Exception e) {
       e.printStackTrace();
