@@ -110,15 +110,6 @@ extends HttpServlet
     pv.execute(request, response);  
   }
 
-  public void doPost(
-      HttpServletRequest request,
-      HttpServletResponse response) throws IOException, ServletException
-  {
-    // create a new "PlanViewer" context per request
-    PlanViewer pv = new PlanViewer(support);
-    pv.execute(request, response);  
-  }
-
   /**
    * This inner class does all the work.
    * <p>
