@@ -1,3 +1,24 @@
+2001-08-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ClusterImpl.java:
+	Replace StateTuple[] with AgentState having both the StateTuple[]
+	describing every child as well as the blackboard state. During
+	load(), the loadState is used for creating the blackboard as well
+	as all the children. The suspend (and resume) methods suspend (and
+	resume) the shared plugin service provider. This effectively
+	suspends (and resumes) all the plugins using the shared scheduler.
+
+	* SharedPlugInManager.java:
+	Implement suspend and resume methods. Suspend sets a flag, signals
+	the thread to wake up and waits for the thread to die. The thread
+	examines the flag on each iteration and if set, exits. Resume
+	simply calls assureStarted which creates a new thread and starts
+	it running.
+
+	* SharedThreadingServiceProvider.java:
+	Pass through suspend and resume to the underlying shard plugin
+	manager.
+
 2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* Subscriber.java:

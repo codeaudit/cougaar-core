@@ -1,3 +1,8 @@
+2001-08-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/PlugInAdapter.java:
+	Modify suspend() and resume() for the SingleThread model to wait for the thread to actually respond to the suspend or resume request
+
 2001-05-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* util/PlugInHelper.java:
