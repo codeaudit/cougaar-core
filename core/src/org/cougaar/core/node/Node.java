@@ -21,22 +21,29 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.bootstrap.Bootstrapper;
+import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.AgentManager;
+import org.cougaar.core.component.*;
+import org.cougaar.core.logging.LoggingControlService;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.LogTarget;
+import org.cougaar.util.log.LoggerController;
+import org.cougaar.util.log.Logging;
+
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
@@ -99,7 +106,7 @@ import org.cougaar.util.log.LogTarget; // inlined
  * @property org.cougaar.filename
  *   The file name (.ini) for starting this Node, which defaults to 
  *   (<em>org.cougaar.node.name</em>+".ini") if both <em>org.cougaar.filename</em>
- *   and </em>org.cougaar.experiment.id</em> are not specified.  If this property 
+ *   and <em>org.cougaar.experiment.id</em> are not specified.  If this property 
  *   is specified then <em>org.cougaar.experiment.id</em> must not be specified.
  * @property org.cougaar.experiment.id
  *   The experiment identifier for running this Node; see 
@@ -134,6 +141,11 @@ import org.cougaar.util.log.LogTarget; // inlined
  *   not found or not loaded properly, Node will refuse to run.  See 
  *   org.cougaar.core.node.StandardSecurityComponent for sample implementation.
  *
+ * @property org.cougaar.core.node.InitializationComponent
+ *   Used to specify which service component to use.  Can be passed in
+ *   short hand (<em>DB</em>, <em>XML</em>, <em>File</em>) or as a fully specified class:
+ *   <em>org.cougaar.core.node.DBComponentInitializerServiceComponent</em>
+ *
  * </pre>
  */
 public class Node extends ContainerSupport
@@ -141,6 +153,9 @@ implements ContainerAPI, ServiceRevokedListener
 {
   public static final String INSERTION_POINT = "Node";
   private MessageAddress myNodeIdentity_ = null;
+  public static final String FILENAME_PROP = "org.cougaar.filename";
+  public static final String EXPTID_PROP = "org.cougaar.experiment.id";
+  public static final String INITIALIZER_PROP = "org.cougaar.core.node.InitializationComponent";
 
   public String getIdentifier() {
     return 
@@ -500,8 +515,7 @@ implements ContainerAPI, ServiceRevokedListener
   /**
    *    This method provides the initialization of a Node.
    *    <p>
-   *    @exception UnknownHostException IF the host can not be determined
-   **/  
+   **/
   protected void initNode() {
     // get the node name
     String name = System.getProperty("org.cougaar.node.name");
@@ -528,27 +542,17 @@ implements ContainerAPI, ServiceRevokedListener
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
 
-    // maybe provide the DBInitializerService, depending upon the
-    // "expermentId" system property
-    ComponentDescription dbInitDesc = 
-      new ComponentDescription(
-          "db-init",
-          Node.INSERTION_POINT+".Init",
-          "org.cougaar.core.node.DBInitializerServiceComponent",
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
-    add(dbInitDesc);
-
     // we need the initializerservice so that AgentManager can load external binders
+    // This will use the CSMART DB (advertising the DBInitializerService)
+    // if the experiment_id system property was set, and some other
+    // initializer was not selected.
+    // Otherwise, INI files are used (and no DBInitializerService is provided)
+    // however, users may specify, for example, an XML initializer
     ComponentDescription compInitDesc = 
       new ComponentDescription(
           "component-init",
           Node.INSERTION_POINT+".Init",
-          "org.cougaar.core.node.ComponentInitializerServiceComponent",
+          getInitializerComponentName(),
           null,  //codebase
           null,  //params
           null,  //certificate
@@ -587,6 +591,52 @@ implements ContainerAPI, ServiceRevokedListener
 
     // may need to wait for the NodeAgent to come all the way up.
 
+  }
+
+  // Select the ComponentInitializer to use
+  private String getInitializerComponentName() {
+    String component = System.getProperty(INITIALIZER_PROP);
+
+    if (component == null) {
+      component = getOldComponentString();
+      System.setProperty(INITIALIZER_PROP, component);
+    }
+
+    // If full class name not specified, intuit it
+    if(component.indexOf(".") == -1 ) {
+      // Build up the name, full name was not specified.
+      component = "org.cougaar.core.node." + component + "ComponentInitializerServiceComponent";
+    }
+    Logging.getLogger(getClass()).info("Will intialize components from " + component);
+
+    return component;
+  }
+
+  // Figure out whether to use Files or CSMART DB for Component initalization
+  // if not explicitly specified with -D argument
+  private String getOldComponentString() {
+    String filename = System.getProperty(FILENAME_PROP);
+    String expt = System.getProperty(EXPTID_PROP);
+    if ((filename == null) && (expt == null)) {
+      // use the default "name.ini"
+      filename = myNodeIdentity_.getAddress() + ".ini";
+      Logging.getLogger(getClass()).info(
+          "Got no filename or experimentId! Using default " + filename);
+      return "File";
+    }
+    if (filename == null) {
+      // use the experiment ID to read from the DB
+      Logging.getLogger(getClass()).info(
+          "Got no filename, using exptID " + expt);
+      return "DB";
+    }
+    if (expt == null) {
+      // use the filename provided
+      Logging.getLogger(getClass()).info(
+          "Got no exptID, using given filename " + filename);
+    }
+
+    return "File";
   }
 
   public MessageAddress getMessageAddress() {
