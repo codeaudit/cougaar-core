@@ -123,7 +123,7 @@ public class RemoteAgentServlet
 		if (entry == null) {
 		    agentHost = localHost;
 		} else {
-		    agentHost = entry.getAddress().getPath().substring(1);
+		    agentHost = entry.getAddress().getHost();
 		}
 		agentHost = canonicalizeAddress(agentHost);
 	    } catch (Exception ex1) {
