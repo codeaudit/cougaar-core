@@ -14,14 +14,14 @@ import java.io.Serializable;
 
 /*
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AspectLocation.java,v 1.2 2001-04-03 14:00:34 tomlinso Exp $
+ * @version $Id: AspectLocation.java,v 1.3 2001-04-05 00:48:32 gvidaver Exp $
  */
  
 public class AspectLocation extends AspectValue {
   protected Location loc_value;
 
   public AspectLocation(int type, Location new_loc_value) {
-    super(type, Double.NaN);
+    super(type, 0.0);
 
     this.loc_value = new_loc_value;
   }
