@@ -20,6 +20,10 @@
  */
 package org.cougaar.core.cluster.persist;
 
+/**
+ * An exception to be throw when exceptions occur during persistence
+ * operations. Primarily (exclusively) used during initialization.
+ **/
 public class PersistenceException extends Exception {
   public PersistenceException() {
   }
