@@ -1,19 +1,25 @@
-269a270
->         try {
-418a420,423
->         } catch (NotSerializableException nse) {
->             System.out.println("NSE: " + obj.getClass().getName());
->             throw nse;
->         }
-1974c1979
-<     };
----
->     }
-2200c2205
-<      };
----
->      }
-2495c2500
-< };
----
-> }
+*** /usr/local/java/jdk1.4/src/java/io/ObjectOutputStream.java	Sat Jan  5 03:13:51 2002
+--- ObjectOutputStream.java	Tue Feb 19 11:01:08 2002
+***************
+*** 270,275 ****
+--- 270,276 ----
+       * 		OutputStream.
+       */
+      public final void writeObject(Object obj) throws IOException {
++       try {
+  	if (enableOverride) {
+  	    writeObjectOverride(obj);
+  	    return;
+***************
+*** 282,287 ****
+--- 283,292 ----
+  	    }
+  	    throw ex;
+  	}
++       } catch (NotSerializableException nse) {
++         System.out.println("NSE: "+obj.getClass().getName());
++         throw nse;
++       }
+      }
+  
+      /**
