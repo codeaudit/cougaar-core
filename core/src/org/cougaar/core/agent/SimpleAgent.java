@@ -81,6 +81,7 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.service.wp.Callback;
 import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.log.Logging;
@@ -90,7 +91,10 @@ import org.cougaar.util.log.Logging;
  * provides basic services to Agent Components.
  * <p>
  * @property org.cougaar.core.agent.showTraffic
- *   If <em>true</em>, shows '+' and '-' on message sends and receives.
+ *   If <em>true</em>, shows '+' and '-' on message sends and receives
+ *   except for white pages messages.  If <em>wp</em>, then shows
+ *   both the above +/- for regular send/receive and W/w for white
+ *   pages send/receive.
  *
  * @property org.cougaar.core.agent quiet
  *   Makes standard output as quiet as possible.
@@ -205,13 +209,25 @@ implements AgentIdentityClient
   private static final boolean VERBOSE_RESTART = true;//false;
   private static final long RESTART_CHECK_INTERVAL = 43000L;
   private static final boolean showTraffic;
+  private static final boolean showWhitePagesTraffic;
   private static final boolean isQuiet;
   private static final boolean isCommunityEnabled;
   private static final boolean isPlanningEnabled;
   private static final boolean isServletEnabled;
 
   static {
-    showTraffic=PropertyParser.getBoolean("org.cougaar.core.agent.showTraffic", true);
+    String trafficParam =
+      System.getProperty("org.cougaar.core.agent.showTraffic", "true");
+    if ("true".equalsIgnoreCase(trafficParam)) {
+      showTraffic = true;
+      showWhitePagesTraffic = false;
+    } else if ("wp".equalsIgnoreCase(trafficParam)) {
+      showTraffic = true;
+      showWhitePagesTraffic = true;
+    } else {
+      showTraffic = false;
+      showWhitePagesTraffic = false;
+    }
     isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
     isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
@@ -266,7 +282,6 @@ implements AgentIdentityClient
       parameters = Collections.singletonList(cid);
     } else if (o instanceof List) {
       parameters = (List) o;
-      System.out.println("parameters.size() = " + parameters.size());
       if (parameters.size() > 0) {
         Object o1 = parameters.get(0);
         if (o1 instanceof MessageAddress) {
@@ -1335,7 +1350,13 @@ implements AgentIdentityClient
     if (showTraffic) {
       rawMessageSwitch.addMessageHandler(new MessageHandler() {
           public boolean handleMessage(Message message) {
-            showProgress("-");
+            if (message instanceof WhitePagesMessage) {
+              if (showWhitePagesTraffic) {
+                showProgress("w");
+              }
+            } else {
+              showProgress("-");
+            }
             return false;         // don't ever consume it
           }
         });
@@ -1759,7 +1780,15 @@ implements AgentIdentityClient
   private void sendMessage(Message message)
   {
     sentMessageTo(message.getTarget());
-    if (showTraffic) showProgress("+");
+    if (showTraffic) {
+      if (message instanceof WhitePagesMessage) {
+        if (showWhitePagesTraffic) {
+          showProgress("W");
+        }
+      } else {
+        showProgress("+");
+      }
+    }
     try {
       if (messenger == null) {
         throw new RuntimeException(
