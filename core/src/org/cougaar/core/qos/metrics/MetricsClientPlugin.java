@@ -33,8 +33,18 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Basic Metric Service Client subscribes to a Metric path given in
- * the Agent's .ini file and prints the value if it ever changes
+ * Basic Metric Service Client subscribes to a Metric and prints the
+ * value to standout, when the Metric value ever changes. The path is given as
+ * a parameter when the MetricClientPlugin is loaded. e.g 
+ *
+ *     <component
+ *         name='org.cougaar.core.qos.metrics.MetricsClientPlugin(path=foo)"
+ *         class='org.cougaar.core.qos.metrics.MetricsClientPlugin"
+ *          insertionpoint='Node.AgentManager.Agent.PluginManager.Plugin'>
+ *         <argument>
+ *           path=Agent(AgentA):MsgIn100SecAvg
+ *         </argument>
+ *       </component>
  */
 public class MetricsClientPlugin 
     extends ParameterizedPlugin
