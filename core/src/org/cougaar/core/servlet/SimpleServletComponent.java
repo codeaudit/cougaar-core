@@ -27,11 +27,14 @@ import java.util.List;
 import javax.servlet.Servlet;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BindingUtility;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.GenericStateModel;
 
 /**
  * Component that loads a <code>Servlet</code> and provides
@@ -92,6 +95,9 @@ extends BaseServletComponent
 
   // servlet that we'll load
   protected Servlet servlet;
+
+  // backwards compatibility!
+  protected Component comp;
 
   //
   // Services for our SimpleServletSupport use
@@ -170,35 +176,32 @@ extends BaseServletComponent
       throw new RuntimeException(
           "Unable to load Servlet class: "+classname);
     }
-    if (!(Servlet.class.isAssignableFrom(cl))) {
+    if (Servlet.class.isAssignableFrom(cl)) {
+      // good
+    } else if (Component.class.isAssignableFrom(cl)) {
+      // deprecated!
+    } else {
       throw new IllegalArgumentException(
           "Class \""+classname+"\" does not implement \""+
           Servlet.class.getName()+"\"");
     }
 
     // create a zero-arg instance
+    Object inst;
     try {
-      this.servlet = (Servlet) cl.newInstance();
+      inst = cl.newInstance();
     } catch (Exception e) {
-      // check for bug 1073 (deprecated servlet constructor)
-      boolean hasDeprecatedConstructor = false;
-      try {
-        Constructor cons = cl.getConstructor(
-            new Class[]{SimpleServletSupport.class});
-        hasDeprecatedConstructor = true;
-      } catch (Exception e2) {
-        // ignore
-      }
-      if (hasDeprecatedConstructor) {
-        // throw a specific "bug 1073" exception
-        throw new RuntimeException(
-            "Unsupported servlet constructor method \""+
-            classname+"(SimpleServletSupport ..)\";"+
-            " see bug 1073");
-      }
       // throw the general "no-constructor" exception
       throw new RuntimeException(
           "Unable to create Servlet instance: ", e);
+    }
+
+    if (inst instanceof Servlet) {
+      this.servlet = (Servlet) inst;
+    } else {
+      this.comp = (Component) inst;
+      BindingUtility.activate(inst, bindingSite, serviceBroker);
+      return null;
     }
 
     // check for the support requirement
@@ -283,6 +286,25 @@ extends BaseServletComponent
         blackboardQuery = null;
       }
       servlet = null;
+    }
+    if (comp != null) {
+      switch (comp.getModelState()) {
+        case GenericStateModel.ACTIVE:
+          comp.suspend();
+          // fall-through
+        case GenericStateModel.IDLE:
+          comp.stop();
+          // fall-through
+        case GenericStateModel.LOADED:
+          comp.unload();
+          // fall-through
+        case GenericStateModel.UNLOADED:
+          // unloaded
+          break;
+        default:
+          // never?
+      }
+      comp = null;
     }
   }
 

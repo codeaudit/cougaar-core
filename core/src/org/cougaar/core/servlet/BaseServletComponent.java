@@ -82,14 +82,16 @@ public abstract class BaseServletComponent
     Servlet servlet = createServlet();
 
     // register the servlet
-    try {
-      servletService.register(path, servlet);
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to register servlet \""+
-          servlet.getClass().getName()+
-          "\" with path \""+
-          path+"\": "+e);
+    if (servlet != null) {
+      try {
+        servletService.register(path, servlet);
+      } catch (Exception e) {
+        throw new RuntimeException(
+            "Unable to register servlet \""+
+            servlet.getClass().getName()+
+            "\" with path \""+
+            path+"\": "+e);
+      }
     }
   }
 
