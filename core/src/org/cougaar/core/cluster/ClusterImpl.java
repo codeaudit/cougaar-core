@@ -1123,37 +1123,53 @@ public class ClusterImpl extends Agent
    * consisting of a count of messages in/out and a 
    * count of the logplan elements.  Only if org.cougaar.core.cluster.metrics is true.
    **/
-  private class MetricsHeartbeat implements Runnable {
-    public void run() {
-      boolean checked = false;
-      boolean keepRunning = true;
-      boolean isAddressKnown = false;
-      while (keepRunning) {
+  private class MetricsHeartbeat extends Thread {
+    private boolean keepRunning = true;
+    private boolean checked = false;  // Stop checking once our address is known
+    public MetricsHeartbeat() {
+      super("MetricsHeartbeat");
+    }
+
+    public synchronized void halt() {
+      if (keepRunning) {
+        keepRunning = false;
+        interrupt();
         try {
-          Thread.sleep(metricsInterval); // sleep for (at least) this time
-        } catch (InterruptedException ie) {}
-        if (messenger!=null) {
-          if (checked || messenger.addressKnown(metricsAddress)) {
-            checked=true;
-            // Send metrics info.  Get logplan cnts from logplan, pass it along
-            int assetcnt = myLogPlan.getAssetCount();
-            int planelemcnt = myLogPlan.getPlanElementCount();
-            int taskcnt = myLogPlan.getTaskCount();
-            int workflowcnt = myLogPlan.getWorkflowCount();
-            // turn off metrics heartbeat after first failed metrics message
-          
-            MessageWatcher mw = getMessageWatcher();
-            Message mm = new MetricsMessage(getMessageAddress(), metricsAddress,
-                                            System.currentTimeMillis(),
-                                            mw.directivesIn, mw.directivesOut,
-                                            mw.notificationsIn, mw.notificationsOut,
-                                            assetcnt, planelemcnt,
-                                            taskcnt, workflowcnt);
-            messenger.sendMessage(mm);
-          } else {
-	    isMetricsHeartbeatOn=false;
-	    keepRunning = false;
-	  }
+          join();
+        } catch (InterruptedException ie) {
+        }
+      }
+    }
+
+    public void run() {
+      synchronized (this) {
+        while (keepRunning) {
+          try {
+            Thread.sleep(metricsInterval); // sleep for (at least) this time
+          } catch (InterruptedException ie) {}
+          if (messenger != null) {
+            if (checked || messenger.addressKnown(metricsAddress)) {
+              checked = true;
+              // Send metrics info.  Get logplan cnts from logplan, pass it along
+              int assetcnt = myLogPlan.getAssetCount();
+              int planelemcnt = myLogPlan.getPlanElementCount();
+              int taskcnt = myLogPlan.getTaskCount();
+              int workflowcnt = myLogPlan.getWorkflowCount();
+              // turn off metrics heartbeat after first failed metrics message
+              
+              MessageWatcher mw = getMessageWatcher();
+              Message mm = new MetricsMessage(getMessageAddress(), metricsAddress,
+                                              System.currentTimeMillis(),
+                                              mw.directivesIn, mw.directivesOut,
+                                              mw.notificationsIn, mw.notificationsOut,
+                                              assetcnt, planelemcnt,
+                                              taskcnt, workflowcnt);
+              messenger.sendMessage(mm);
+            } else {
+              isMetricsHeartbeatOn = false;
+              keepRunning = false;
+            }
+          }
         }
       }
     }
@@ -1209,11 +1225,11 @@ public class ClusterImpl extends Agent
     }
   }
 
-  private Thread metricsheartbeat = null;
+  private MetricsHeartbeat metricsheartbeat = null;
 
   private void startMetricsHeartbeat() {
     if (metricsheartbeat == null) {
-      metricsheartbeat = new Thread(new MetricsHeartbeat(), "MetricsHeartbeat");
+      metricsheartbeat = new MetricsHeartbeat();
       metricsheartbeat.setPriority(Thread.MAX_PRIORITY);
       metricsheartbeat.start();
     }
@@ -1374,11 +1390,7 @@ public class ClusterImpl extends Agent
   public void startMetrics()
   {
     getMessageWatcher();        // Create if necessary
-    if (metricsheartbeat == null) {
-      metricsheartbeat = new Thread(new MetricsHeartbeat(), "MetricsHeartbeat");
-      metricsheartbeat.setPriority(Thread.MAX_PRIORITY);
-      metricsheartbeat.start();
-    }
+    startMetricsHeartbeat();
     metricsOn = true;
   }
   
