@@ -19,23 +19,11 @@
  * </copyright>
  */
 
-package org.cougaar.core.service;
+package org.cougaar.core.thread;
 
-import org.cougaar.core.component.Service;
-import org.cougaar.core.thread.Schedulable;
-
-import java.util.TimerTask;
-
-public interface ThreadService extends Service
+public interface Schedulable
 {
-    Schedulable getThread(Object consumer, Runnable runnable);
-    Schedulable getThread(Object consumer, Runnable runnable, String name);
-
-    TimerTask getTimerTask(Object consumer, Runnable runnable);
-    TimerTask getTimerTask(Object consumer, Runnable runnable, String name);
-
-    void schedule(TimerTask task, long delay);
-    void schedule(TimerTask task, long delay, long interval);
-    void scheduleAtFixedRate(TimerTask task, long delay, long interval);
-
+    public void start();
+    public int getState();
+    public boolean cancel();
 }

@@ -50,7 +50,7 @@ final class SimpleScheduler extends Scheduler
     
 
     // Called when a thread is about to end
-    void threadReclaimed(ControllableThread thread) {
+    void threadReclaimed(SchedulableObject thread) {
 	super.threadReclaimed(thread);
 	if (pendingThreadCount() > 0) runNextThread();
     }
@@ -59,8 +59,8 @@ final class SimpleScheduler extends Scheduler
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
-    boolean maybeYieldThread(ControllableThread thread) {
-	ControllableThread candidate = null;
+    boolean maybeYieldThread(SchedulableObject thread) {
+	SchedulableObject candidate = null;
 	if (pendingThreadCount() == 0) {
 	    // No point yielding since no pending threads
 	    return false;
@@ -82,7 +82,7 @@ final class SimpleScheduler extends Scheduler
 
 
     // Called when a thread is about to suspend.
-    void suspendThread(ControllableThread thread) {
+    void suspendThread(SchedulableObject thread) {
 	super.suspendThread(thread);
 	if (pendingThreadCount() > 0) runNextThread();
     }
@@ -91,7 +91,7 @@ final class SimpleScheduler extends Scheduler
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
-    boolean maybeResumeThread(ControllableThread thread) {
+    boolean maybeResumeThread(SchedulableObject thread) {
 	if (canStartThread()) {
 	    resumeThread(thread);
 	    return true;
@@ -104,7 +104,7 @@ final class SimpleScheduler extends Scheduler
 
  
 
-    void startOrQueue(ControllableThread thread) {
+    void startOrQueue(SchedulableObject thread) {
 	if (canStartThread()) {
 	    thread.thread_start();
 	} else {

@@ -21,43 +21,38 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.ReusableThreadPool;
 import org.cougaar.util.ReusableThread;
-import org.cougaar.util.PropertyParser;
 
-/**
- * A special kind of ReusableThreadPool which makes
- * ControllableThreads.
- */
-final class ControllablePool extends ReusableThreadPool 
+final class SchedulableThread extends ReusableThread
 {
 
-    private static final String InitialPoolSizeProp =
-	"org.cougaar.thread.poolsize.initial";
-    private static final int InitialPoolSizeDefault = 32;
-    private static final String MaxPoolSizeProp =
-	"org.cougaar.thread.poolsize.max";
-    private static final int MaxPoolSizeDefault = 64;
+    SchedulableObject schedulable;
 
-
-    private Scheduler scheduler;
-
-    ControllablePool(ThreadGroup group, Scheduler scheduler)  {
-	super(group, 
-	      PropertyParser.getInt(InitialPoolSizeProp, 
-				    InitialPoolSizeDefault),
-	      PropertyParser.getInt(MaxPoolSizeProp, 
-				    MaxPoolSizeDefault));
-	this.scheduler = scheduler;
+    SchedulableThread(SchedulableThreadPool pool) 
+    {
+	super(pool);
     }
 
-    protected ReusableThread constructReusableThread() {
-	return  new ControllableThread(this);
+    SchedulableObject getSchedulable() {
+	return schedulable;
     }
 
-    Scheduler scheduler() {
-	return scheduler;
+    void start(SchedulableObject schedulable) {
+	this.schedulable = schedulable;
+	start();
+    }
+
+    protected void claim() {
+	// thread has started or restarted
+	super.claim();
+	schedulable.claim();
+    }
+
+    protected void reclaim() {
+	// thread is done
+	schedulable.reclaim();
+	setName( "Reclaimed " + getName());
+	super.reclaim();
     }
 
 }
-

@@ -31,7 +31,7 @@ import java.util.TimerTask;
  */
 final class ThreadServiceProxy 	implements ThreadService
 {
-    private ControllablePool pool;
+    private SchedulableThreadPool pool;
     private TimerRunnable timer;
     private TreeNode treeNode;
 
@@ -55,25 +55,17 @@ final class ThreadServiceProxy 	implements ThreadService
     }
 
 
-    private Thread consumeThread(Thread thread,  Object consumer) {
-	((ControllableThread) thread).consumer(consumer);
-	return thread;
+
+
+    public Schedulable getThread(Object consumer, Runnable runnable) {
+	return new SchedulableObject(pool, runnable, null, consumer);
     }
 
-
-
-
-
-    public Thread getThread(Object consumer, Runnable runnable) {
-	return consumeThread(pool.getThread(runnable),  consumer);
-    }
-
-    public Thread getThread(Object consumer, 
-			    Runnable runnable, 
-			    String name) 
+    public Schedulable getThread(Object consumer, 
+				 Runnable runnable, 
+				 String name) 
     {
-	return consumeThread(pool.getThread(runnable, name), 
-			     consumer);
+	return new SchedulableObject(pool, runnable, name, consumer);
     }
 
 

@@ -41,7 +41,7 @@ final class TimeSliceScheduler extends Scheduler
 
 
     private void runNextThread(TimeSlice slice) {
-	ControllableThread thread = nextPendingThread();
+	SchedulableObject thread = nextPendingThread();
 	if (thread != null) {
 	    thread.slice(slice);
 	    if (CougaarThread.Debug)
@@ -65,7 +65,7 @@ final class TimeSliceScheduler extends Scheduler
 
 
 
-    private void releaseThreadSlice(ControllableThread thread) {
+    private void releaseThreadSlice(SchedulableObject thread) {
 	TimeSlice slice = thread.slice();
 	thread.slice(null);
 	releaseSlice(slice);
@@ -74,7 +74,7 @@ final class TimeSliceScheduler extends Scheduler
 
 
 
-    private void handoffSlice(ControllableThread thread) {
+    private void handoffSlice(SchedulableObject thread) {
 	boolean expired = thread.slice().isExpired();
 	boolean queue_empty = pendingThreadCount() == 0;
 	if (expired) {
@@ -95,7 +95,7 @@ final class TimeSliceScheduler extends Scheduler
     
 
 
-    void threadClaimed(ControllableThread thread) {
+    void threadClaimed(SchedulableObject thread) {
 	TimeSlice slice = thread.slice();
 	if (slice != null) slice.run_start = System.currentTimeMillis();
 	super.threadClaimed(thread);
@@ -103,20 +103,20 @@ final class TimeSliceScheduler extends Scheduler
 	
 
     // Called when a thread is about to end
-    void threadReclaimed(ControllableThread thread) {
+    void threadReclaimed(SchedulableObject thread) {
 	super.threadReclaimed(thread);
 	handoffSlice(thread);
     }
 
     // Called when a thread is about to suspend.
-    void suspendThread(ControllableThread thread)
+    void suspendThread(SchedulableObject thread)
     {
 	super.suspendThread(thread);
 	handoffSlice(thread);
     }
 
 
-    void resumeThread(ControllableThread thread) {
+    void resumeThread(SchedulableObject thread) {
 	TimeSlice slice = thread.slice();
 	if (slice != null) slice.run_start = System.currentTimeMillis();
 	super.resumeThread(thread);
@@ -124,8 +124,8 @@ final class TimeSliceScheduler extends Scheduler
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
-    boolean maybeYieldThread(ControllableThread thread) {
-	ControllableThread candidate = null;
+    boolean maybeYieldThread(SchedulableObject thread) {
+	SchedulableObject candidate = null;
 	boolean expired = thread.slice().isExpired();
 	if (expired) {
 	    if (CougaarThread.Debug) 
@@ -169,7 +169,7 @@ final class TimeSliceScheduler extends Scheduler
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
-    boolean maybeResumeThread(ControllableThread thread)
+    boolean maybeResumeThread(SchedulableObject thread)
     {
 	TimeSlice slice = getSlice();
 	if (slice != null) {
@@ -187,7 +187,7 @@ final class TimeSliceScheduler extends Scheduler
 
  
 
-    void startOrQueue(ControllableThread thread) {
+    void startOrQueue(SchedulableObject thread) {
 	// If some external caller has tried to start the thread it
 	// should have no slice yet.  If the thread is being started
 	// or resumed from the scheduler itself, it will have a slice

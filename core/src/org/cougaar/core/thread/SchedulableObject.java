@@ -21,26 +21,32 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.ReusableThread;
 
-/**
- * A special kind of ReusableThread which will notify listeners at
- * the beginning and end of the internal run method of the thread.
- */
-final class ControllableThread extends ReusableThread
+final class SchedulableObject implements Schedulable
 {
     private long timestamp;
     private Object consumer;
     private boolean suspended;
     private Object suspendLock;
-    private ControllablePool pool;
+    private SchedulableThreadPool pool;
     private TimeSlice slice;
+    private SchedulableThread thread;
+    private Runnable runnable;
+    private String name;
+    private boolean restart;
+    private boolean cancelled;
+    private boolean queued;
 
-    ControllableThread(ControllablePool pool) 
+    SchedulableObject(SchedulableThreadPool pool, 
+		      Runnable runnable, 
+		      String name,
+		      Object consumer) 
     {
-	super(pool);
 	this.suspendLock = new Object();
 	this.pool = pool;
+	this.runnable = runnable;
+	this.name = name;
+	this.consumer = consumer;
     }
 
 
@@ -48,16 +54,13 @@ final class ControllableThread extends ReusableThread
 	return timestamp;
     }
 
-    void stamp() {
+    void notifyPending() {
+	queued = true;
 	timestamp = System.currentTimeMillis();
     }
 
     Object consumer() {
 	return consumer;
-    }
-
-    void consumer(Object consumer) {
-	this.consumer = consumer;
     }
 
 
@@ -70,9 +73,8 @@ final class ControllableThread extends ReusableThread
     }
 
 
-    protected void claim() {
+    void claim() {
 	// thread has started or restarted
-	super.claim();
 	pool.scheduler().threadClaimed(this);
     }
 
@@ -102,7 +104,7 @@ final class ControllableThread extends ReusableThread
 
     void suspend(long millis) {
 	pool.scheduler().suspendThread(this);
-	try { sleep(millis); }
+	try { thread.sleep(millis); }
 	catch (InterruptedException ex) {}
 	attemptResume();
     }
@@ -131,27 +133,76 @@ final class ControllableThread extends ReusableThread
     }
 
 
-    protected void reclaim() {
+    void reclaim() {
 	// thread is done
+	boolean again = false;
+	synchronized (this) { 
+	    thread = null;  
+	    again = restart;
+	}
 	pool.scheduler().threadReclaimed(this);
-	setName( "Reclaimed " + getName());
-	super.reclaim();
+	if (again) pool.scheduler().startOrQueue(this);
     }
 
     void thread_start() {
 	pool.scheduler().threadStarting(this);
-	super.start();
+	synchronized (this) {
+	    restart = false;
+	    queued = false;
+	    thread = (SchedulableThread) pool.getThread(runnable, name);
+	    thread.start(this);
+	}
     }
 
     public void start() {
+
 	if (suspended) {
 	    synchronized (suspendLock) {
 		suspendLock.notify();
 		return;
 	    }
-	} else {
-	    pool.scheduler().startOrQueue(this);
 	}
+	
+	synchronized (this) {
+	    if (cancelled) return;
+	    if (thread != null) {
+		// Currently running - set flag so it restarts itself
+		// when the current run finishes
+		restart = true;
+		return;
+	    }
+	}
+
+	pool.scheduler().startOrQueue(this);
+    }
+
+
+    public synchronized int getState() {
+	if (suspended) 
+	    return CougaarThread.THREAD_SUSPENDED;
+	else if (queued)
+	    return CougaarThread.THREAD_PENDING;
+	else if (thread != null)
+	    return CougaarThread.THREAD_RUNNING;
+	else
+	    return CougaarThread.THREAD_DORMANT;
+    }
+
+    public boolean cancel() {
+	synchronized (this) {
+	    cancelled = true;
+	    restart = false;
+	    if (thread != null) {
+		// Currently running.  Do we need to do anything
+		// special if it's suspended?
+		if (suspended) thread.interrupt();
+		return false;
+	    } 
+	    if (queued) pool.scheduler().dequeue(this);
+	    queued = false;
+	    return true;
+	}
+
     }
 
 }

@@ -51,8 +51,8 @@ abstract class Scheduler
 		}
 
 		public int compare (Object x, Object y) {
-		    long t1 = ((ControllableThread) x).timestamp();
-		    long t2 = ((ControllableThread) y).timestamp();
+		    long t1 = ((SchedulableObject) x).timestamp();
+		    long t2 = ((SchedulableObject) y).timestamp();
 		    if (t1 < t2)
 			return -1;
 		    else if (t1 > t2)
@@ -131,14 +131,14 @@ abstract class Scheduler
     }
 
 
-    synchronized ControllableThread nextPendingThread() {
-	return (ControllableThread)pendingThreads.next();
+    synchronized SchedulableObject nextPendingThread() {
+	return (SchedulableObject)pendingThreads.next();
     }
 
 
-    synchronized ControllableThread nextPendingThread(ControllableThread thrd)
+    synchronized SchedulableObject nextPendingThread(SchedulableObject thrd)
     {
-	return (ControllableThread)pendingThreads.next(thrd);
+	return (SchedulableObject)pendingThreads.next(thrd);
     }
 
     TimeSlicePolicy getPolicy() {
@@ -157,19 +157,26 @@ abstract class Scheduler
 	getPolicy().noteChangeOfOwnership(this, slice);
     }
 
-    synchronized void addPendingThread(ControllableThread thread) 
+    synchronized void addPendingThread(SchedulableObject thread) 
     {
-	thread.stamp();
+	if (pendingThreads.contains(thread)) return;
+	thread.notifyPending();
 	listenerProxy.notifyPending(thread);
 	pendingThreads.add(thread);
     }
+
+    synchronized void dequeue(SchedulableObject thread) 
+    {
+	pendingThreads.remove(thread);
+    }
+
 
 
 
     // Called when a request has been made to start the thread (from
     // some other thread).  The count needs to be adjusted here, not
     // when the thread actually starts running.
-    void threadStarting(ControllableThread thread) {
+    void threadStarting(SchedulableObject thread) {
 	synchronized (this) { ++runningThreadCount; }
 	if (CougaarThread.Debug)
 	    System.out.println("Started " +thread+
@@ -177,12 +184,12 @@ abstract class Scheduler
     }
 
     // Called within the thread itself as the first thing it does.
-    void threadClaimed(ControllableThread thread) {
+    void threadClaimed(SchedulableObject thread) {
 	listenerProxy.notifyStart(thread);
     }
 
     // Called within the thread itself as the last thing it does.
-    void threadReclaimed(ControllableThread thread) {
+    void threadReclaimed(SchedulableObject thread) {
 	synchronized (this) { --runningThreadCount; }
 	if (CougaarThread.Debug)
 	    System.out.println("Ended " +thread+ 
@@ -190,14 +197,14 @@ abstract class Scheduler
 	listenerProxy.notifyEnd(thread);
     }
 
-    void threadResumed(ControllableThread thread) {
+    void threadResumed(SchedulableObject thread) {
 	synchronized (this) { ++runningThreadCount; }
 	if (CougaarThread.Debug)
 	    System.out.println("Resumed " +thread+
 			       ", count=" +runningThreadCount);
     }
 
-    void threadSuspended(ControllableThread thread) {
+    void threadSuspended(SchedulableObject thread) {
 	synchronized (this) { --runningThreadCount; }
 	if (CougaarThread.Debug)
 	    System.out.println("Suspended " +thread+
@@ -206,13 +213,13 @@ abstract class Scheduler
 
 
     // Called when a thread is about to suspend.
-    synchronized void suspendThread(ControllableThread thread) {
+    synchronized void suspendThread(SchedulableObject thread) {
 	threadSuspended(thread);
     }
 
 
     // Called when a thread is about to resume
-    synchronized void resumeThread(ControllableThread thread) {
+    synchronized void resumeThread(SchedulableObject thread) {
 	threadResumed(thread);
     }
 
@@ -223,12 +230,12 @@ abstract class Scheduler
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
-    abstract boolean maybeYieldThread(ControllableThread thread);
+    abstract boolean maybeYieldThread(SchedulableObject thread);
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
-    abstract boolean maybeResumeThread(ControllableThread thread);
+    abstract boolean maybeResumeThread(SchedulableObject thread);
 
-    abstract void startOrQueue(ControllableThread thread);
+    abstract void startOrQueue(SchedulableObject thread);
 
 }

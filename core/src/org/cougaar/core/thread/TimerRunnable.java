@@ -30,7 +30,7 @@ public class TimerRunnable implements Runnable
 	}
 
 
-	private Thread getThread() {
+	private Schedulable getThread() {
 	    return threadService.getThread(consumer, this, name);
 	}
 
@@ -154,7 +154,7 @@ public class TimerRunnable implements Runnable
 	    if (wrapper.cancelled) continue;
 	    if (wrapper.runnable && wrapper.nextrun <= time) {
 		wrapper.runnable = false;
-		Thread thread = wrapper.getThread();
+		Schedulable thread = wrapper.getThread();
 		thread.start();
 		// wrapper.run();
 	    }

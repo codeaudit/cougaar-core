@@ -49,6 +49,11 @@ public class DynamicSortedQueue
 	return "<DQ[" +store.size()+ "] " +store.toString()+ ">";
     }
 
+
+    public boolean contains(Object x) {
+	return store.contains(x);
+    }
+
     public void setComparator(Comparator comparator) {
 	this.comparator = comparator;
     }
@@ -64,7 +69,7 @@ public class DynamicSortedQueue
     }
 
 
-    private void remove(Object x) {
+    public void remove(Object x) {
 	store.remove(x);
     }
 	    

@@ -37,30 +37,30 @@ final class ThreadListenerProxy implements ThreadListenerService
 	listeners = new ArrayList();
     }
 		    
-    synchronized void notifyPending(ControllableThread thread) {
-	Object consumer = thread.consumer();
+    synchronized void notifyPending(SchedulableObject schedulable) {
+	Object consumer = schedulable.consumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
-	    listener.threadPending(thread, consumer);
+	    listener.threadPending(schedulable, consumer);
 	}
     }
 
-    synchronized void notifyStart(ControllableThread thread) {
-	Object consumer = thread.consumer();
+    synchronized void notifyStart(SchedulableObject schedulable) {
+	Object consumer = schedulable.consumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
-	    listener.threadStarted(thread, consumer);
+	    listener.threadStarted(schedulable, consumer);
 	}
     }
 
-    synchronized void notifyEnd(ControllableThread thread) {
-	Object consumer = thread.consumer();
+    synchronized void notifyEnd(SchedulableObject schedulable) {
+	Object consumer = schedulable.consumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
-	    listener.threadStopped(thread, consumer);
+	    listener.threadStopped(schedulable, consumer);
 	}
     }
 

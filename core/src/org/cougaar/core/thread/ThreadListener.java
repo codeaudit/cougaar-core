@@ -24,7 +24,7 @@ package org.cougaar.core.thread;
 
 public interface ThreadListener
 {
-    void threadPending(Thread thread, Object consumer);
-    void threadStarted(Thread thread, Object consumer);
-    void threadStopped(Thread thread, Object consumer);
+    void threadPending(Schedulable schedulable, Object consumer);
+    void threadStarted(Schedulable schedulable, Object consumer);
+    void threadStopped(Schedulable schedulable, Object consumer);
 }

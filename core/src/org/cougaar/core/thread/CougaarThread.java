@@ -24,37 +24,44 @@ package org.cougaar.core.thread;
 public class CougaarThread
 {
 
+    // Four states: running, suspended, pending, dormant
+    public static final int THREAD_RUNNING = 0;
+    public static final int THREAD_SUSPENDED = 1;
+    public static final int THREAD_PENDING = 2;
+    public static final int THREAD_DORMANT = 3;
+
     public static final boolean Debug = 
 	Boolean.getBoolean("org.cougaar.thread.debug");
 
     
-    public static void sleep(long millis) {
+    private static SchedulableObject getSchedulableObject() {
 	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).suspend(millis);
-	}
+	if (thread instanceof SchedulableThread) 
+	    return ((SchedulableThread) thread).getSchedulable();
+	else
+	    return null;
+		    
+    }
+
+    public static void sleep(long millis) {
+	SchedulableObject sched =  getSchedulableObject();
+	if (sched != null)  sched.suspend(millis);
     }
 
 
     public static void yield() {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).yield(null);
-	}
+	SchedulableObject sched =  getSchedulableObject();
+	if (sched != null)  sched.yield(null);
     }
 
     public static void wait(Object lock, long millis) {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).wait(lock, millis);
-	}
+	SchedulableObject sched =  getSchedulableObject();
+	if (sched != null)  sched.wait(lock, millis);
     }
 
     public static void wait(Object lock) {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).wait(lock);
-	}
+	SchedulableObject sched =  getSchedulableObject();
+	if (sched != null)  sched.wait(lock);
     }
 
 }
