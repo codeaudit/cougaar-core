@@ -29,7 +29,9 @@ package org.cougaar.core.qos.metrics;
 import java.util.Observer;
 import java.util.Properties;
 
-/* Null Metric Sevice that returns only Undefined Metrics
+/**
+ * Null MetricsSevice implementation that always returnds 0 `*
+ * credibility Metrics.
  */
 public class NullMetricsServiceImpl
     implements MetricsService,DataFeedRegistrationService

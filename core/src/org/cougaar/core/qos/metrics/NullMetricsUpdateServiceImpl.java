@@ -27,7 +27,8 @@
 
 package org.cougaar.core.qos.metrics;
 
-/* Null Metric Update service that just sends upldates into oblivion
+/**
+ * Null MetricsUpdateService that sends updates into oblivion.
  */
 public class NullMetricsUpdateServiceImpl
     implements MetricsUpdateService

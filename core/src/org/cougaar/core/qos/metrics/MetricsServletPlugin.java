@@ -29,6 +29,15 @@ package org.cougaar.core.qos.metrics;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.plugin.ComponentPlugin;
 
+/**
+ * This Plugin loads a standard set of metric servlets.
+ *
+ * @see AgentLoadServlet
+ * @see RemoteAgentServlet
+ * @see NodeResourcesServlet
+ * @see MetricQueryServlet
+ * @see MetricsWriterServlet
+ */
 public class MetricsServletPlugin extends ComponentPlugin
 {
     public MetricsServletPlugin() {

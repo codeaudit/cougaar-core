@@ -32,6 +32,11 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 
 
+/**
+ * This VariableEvaluator can find values for <code>$(localhost)</code> (the
+ * current host), <code>$(localnode)</code> (the current node) and
+ * <code>$(localagent)</code> (the current agent).
+ */
 public class StandardVariableEvaluator implements VariableEvaluator
 {
     protected ServiceBroker sb;

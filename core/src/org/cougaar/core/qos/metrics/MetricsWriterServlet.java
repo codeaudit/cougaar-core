@@ -36,6 +36,10 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ServletService;
 
 
+/**
+ * This Servlet provides url access to the MetricsUpdateService.  The
+ * required URI parameters are <code>key</code> and <code>value</code>.
+ */
 public class MetricsWriterServlet
     extends HttpServlet
     implements Constants

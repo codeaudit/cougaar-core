@@ -29,6 +29,9 @@ package org.cougaar.core.qos.metrics;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 
+/**
+ * Abstract parent class of Components in the qos Container.
+ */
 abstract public class QosComponent
     extends ParameterizedComponent
 {

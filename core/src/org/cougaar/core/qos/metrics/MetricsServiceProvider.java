@@ -30,6 +30,12 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.NodeControlService;
 
+/**
+ * This Component provides trivial implementation of the
+ * MetricsService, MetricsUpdateService and 
+ * DataFeedRegistrationService.   Use this for a minimal COUGAAR in
+ * which a real MetricsService is not required.
+ */
 public final class MetricsServiceProvider
     extends QosComponent
     implements ServiceProvider

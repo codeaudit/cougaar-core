@@ -28,9 +28,8 @@ package org.cougaar.core.qos.metrics;
 
 /**
  * VariableEvaluators are used to provide context-specific values for
- * variables that appear in metrics queuries.  Typical variables
- * include '$(localhost)' (the current host), '$(localnode)' (the current
- * node) and '$(localagent)' (the current agent).
+ * variables that appear in metrics queuries.  Variables are specified
+ * in parens preceded by a dollar sign: <code>$(myvar).
  */
 public interface VariableEvaluator
 {

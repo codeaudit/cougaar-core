@@ -31,8 +31,11 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.Date;
-
-/* Colors picks a color for displaying a Metric. The both metric value
+/**
+ * Utility class with static fields and methods that are useful for
+ * html display of metrics data.
+ *
+ * Colors picks a color for displaying a Metric. The both metric value
  * and metric credibility a taken into account when choosing the
  * color.  Nine color bins are defined, with each dimension having
  * three places. The metric value can has thresholds for Ignore,

@@ -38,6 +38,11 @@ import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.servlet.ServletFrameset;
 
+/**
+ * Abstract parent class of many Metrics-related servlets.  It
+ * provides some useful text formatters, access to services and lists
+ * of local agents, and a standard bottom frame in a FrameSet.
+ */
 public abstract class MetricsServlet 
     extends ServletFrameset
     implements Constants
