@@ -23,6 +23,7 @@
 package org.cougaar.planning.servlet;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -177,10 +178,6 @@ extends HttpServlet
     public static final String PREDICATE = "pred";
     private String pred;
 
-    // predicate style
-    public static final String PREDICATE_STYLE = "predStyle";
-    private String predStyle;
-
     // view parsed predicate for debugging
     public static final String PREDICATE_DEBUG = "predDebug";
     private boolean predDebug;
@@ -237,8 +234,6 @@ extends HttpServlet
               limit = "true".equalsIgnoreCase(value);
             } else if (name.equalsIgnoreCase(PREDICATE)) {
               pred = value;
-            } else if (name.equalsIgnoreCase(PREDICATE_STYLE)) {
-              predStyle = value;
             } else if (name.equalsIgnoreCase(PREDICATE_DEBUG)) {
               predDebug = 
                 ((value != null) ?  
@@ -1700,9 +1695,6 @@ extends HttpServlet
       }
       out.print(
           "  }\n"+
-          "  document.myForm."+
-          PREDICATE_STYLE+
-          ".selectedIndex=0\n"+
           "  document.myForm.pred.value=s\n"+
           "}\n"+
           "// -->\n"+
@@ -1764,12 +1756,6 @@ extends HttpServlet
           " matches<br>\n"+
           "<input type=\"submit\" name=\"formSubmit\" value=\"Search\"><br>\n"+
           "<p><hr>\n"+
-          "Style: <select name=\""+
-          PREDICATE_STYLE+
-          "\">\n"+
-          "<option selected>Lisp format</option>\n"+
-          "<option>XML format</option>\n"+
-          "</select>,&nbsp;\n"+
           "<input type=\"checkbox\" name=\""+
           PREDICATE_DEBUG+
           "\" value=\"true\">View parsed predicate<br>\n"+
@@ -1800,13 +1786,6 @@ extends HttpServlet
       }
 
       String inputPred = pred;
-      int inputStyle =
-        (Operator.PRETTY_FLAG |
-         Operator.VERBOSE_FLAG |
-         (((predStyle == null) ||
-           (!("xml".regionMatches(true, 0, predStyle, 0, 3)))) ?
-          Operator.PAREN_FLAG :
-          Operator.XML_FLAG));
 
       out.print("<html><head><title>");
       out.print(support.getEncodedAgentName());
@@ -1815,21 +1794,14 @@ extends HttpServlet
           "<body bgcolor=\"#F0F0F0\"><p>\n"+
           "Search <b>");
       out.print(support.getEncodedAgentName());
-      out.print("</b> using ");
-      out.print(
-          (((inputStyle & Operator.PAREN_FLAG) != 0) ? 
-           "Lisp" : "XML"));
-      out.print("-style predicate: <br><pre>\n");
+      out.print("</b> using Lisp-style predicate: <br><pre>\n");
       out.print(inputPred);
       out.print("</pre><p>\n<hr><br>\n");
 
-      // get an instance of the default operator factory
-      OperatorFactory operFactory = OperatorFactory.getInstance();
-
       // parse the input to create a unary predicate
-      Operator parsedPred;
+      UnaryPredicate parsedPred;
       try {
-        parsedPred = operFactory.create(inputStyle, inputPred);
+        parsedPred = UnaryPredicateParser.parse(inputPred);
       } catch (Exception parseE) {
         // display compile error
         out.print(
@@ -1853,7 +1825,7 @@ extends HttpServlet
       if (predDebug) {
         // this is useful in general, but clutters the screen...
         out.print("Parsed as:<pre>\n");
-        out.print(parsedPred.toString(inputStyle));
+        out.print(parsedPred);
         out.print("</pre><br><hr><br>\n");
       }
 
@@ -4279,6 +4251,43 @@ extends HttpServlet
           this.out.write(GREATER_THAN);
         } else {
           this.out.write(c);
+        }
+      }
+    }
+
+    private static class UnaryPredicateParser {
+      private static String CLNAME = 
+        "org.cougaar.lib.contract.lang.OperatorFactoryImpl";
+      private static Integer STYLE =
+        new Integer(13); //paren-pretty-verbose
+
+      private static Exception loadE;
+      private static Object inst;
+      private static Method meth;
+
+      public static UnaryPredicate parse(
+          String s) throws Exception {
+        ensureIsLoaded();
+        return (UnaryPredicate)
+          meth.invoke(inst, new Object[] {STYLE, s});
+      }
+
+      private static synchronized void ensureIsLoaded() throws Exception {
+        if (inst == null) {
+          if (loadE == null) {
+            try {
+              Class cl = Class.forName(CLNAME);
+              meth = cl.getMethod(
+                  "create", 
+                  new Class[] {Integer.TYPE, Object.class});
+              inst = cl.newInstance(); 
+              return;
+            } catch (Exception e) {
+              loadE = new RuntimeException(
+                  "Unable to load "+CLNAME, e);
+            }
+          }
+          throw loadE;
         }
       }
     }
