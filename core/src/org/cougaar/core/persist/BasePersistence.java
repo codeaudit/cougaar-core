@@ -536,8 +536,8 @@ public class BasePersistence
                   try {
                     if (pObject != null) {
                       if (logger.isInfoEnabled()) {
-                        printRehydrationLog("Rehydrating " + clusterContext.getClusterIdentifier()
-                                            + " from " + pObject);
+                        logger.info("Rehydrating " + clusterContext.getClusterIdentifier()
+                                    + " from " + pObject);
                       }
                       resultPtr[0] = rehydrateFromBytes(pObject.getBytes());
                     } else {
@@ -551,10 +551,10 @@ public class BasePersistence
                         SequenceNumbers rehydrateNumbers = rehydrationSets[i].sequenceNumbers;
                         PersistencePlugin ppi = rehydrationSets[i].ppi;
                         if (logger.isInfoEnabled()) {
-                          printRehydrationLog("Rehydrating "
-                                              + clusterContext.getClusterIdentifier()
-                                              + " "
-                                              + rehydrateNumbers.toString());
+                          logger.info("Rehydrating "
+                                      + clusterContext.getClusterIdentifier()
+                                      + " "
+                                      + rehydrateNumbers.toString());
                         }
                         try {
                           while (rehydrateNumbers.first < rehydrateNumbers.current - 1) {
@@ -579,6 +579,7 @@ public class BasePersistence
                 }};
 
             ClusterContextTable.withClusterContext(clusterContext, thunk);
+            result = resultPtr[0];
           
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
               PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
@@ -590,31 +591,35 @@ public class BasePersistence
             clearMarks(identityTable.iterator());
             if (logger.isDebugEnabled()) {
               printIdentityTable("");
-              printRehydrationLog("OldObjects");
+              logger.debug("OldObjects");
               logEnvelopeContents(oldObjects);
-              printRehydrationLog("Undistributed Envelopes");
-              for (Iterator ii = result.undistributedEnvelopes.iterator();
-                   ii.hasNext(); ) {
-                Envelope env = (Envelope) ii.next();
-                logEnvelopeContents(env);
+              if (result.undistributedEnvelopes == null) {
+                logger.debug("Undistributed Envelopes is null");
+              } else {
+                logger.debug("Undistributed Envelopes");
+                for (Iterator ii = result.undistributedEnvelopes.iterator();
+                     ii.hasNext(); ) {
+                  Envelope env = (Envelope) ii.next();
+                  logEnvelopeContents(env);
+                }
               }
-              printRehydrationLog(rehydrationSubscriberStates.size() + " Subscriber States");
+              logger.debug(rehydrationSubscriberStates.size() + " Subscriber States");
               for (Iterator si = rehydrationSubscriberStates.iterator(); si.hasNext(); ) {
                 PersistenceSubscriberState ss = (PersistenceSubscriberState) si.next();
                 if (ss.pendingEnvelopes == null) {
-                  printRehydrationLog("Subscriber not persisted " + ss.getKey());
+                  logger.debug("Subscriber not persisted " + ss.getKey());
                 } else {
-                  printRehydrationLog("Pending envelopes of " + ss.getKey());
+                  logger.debug("Pending envelopes of " + ss.getKey());
                   for (int i = 0, n = ss.pendingEnvelopes.size(); i < n; i++) {
                     logEnvelopeContents((Envelope) ss.pendingEnvelopes.get(i));
                   }
-                  printRehydrationLog("Transaction envelopes of " + ss.getKey());
+                  logger.debug("Transaction envelopes of " + ss.getKey());
                   if (ss.transactionEnvelopes != null) {
                     for (int i = 0, n = ss.transactionEnvelopes.size(); i < n; i++) {
                       logEnvelopeContents((Envelope) ss.transactionEnvelopes.get(i));
                     }
                   } else {
-                    printRehydrationLog("None");
+                    logger.debug("None");
                   }
                 }
               }
@@ -724,7 +729,7 @@ public class BasePersistence
       case Envelope.CHANGE: action = "CHANGE"; break;
       case Envelope.BULK: action = "BULK"; break;
       }
-      printRehydrationLog(action + " " + t.getObject());
+      logger.debug(action + " " + t.getObject());
     }
   }
 
@@ -796,7 +801,7 @@ public class BasePersistence
       }
 //        byte[] bytes = (byte[]) currentInput.readObject();
 //        PersistenceInputStream stream = new PersistenceInputStream(bytes);
-      PersistenceInputStream stream = new PersistenceInputStream(currentInput);
+      PersistenceInputStream stream = new PersistenceInputStream(currentInput, logger);
       if (logger.isDebugEnabled()) {
         writeHistoryHeader();
       }
@@ -1131,7 +1136,7 @@ public class BasePersistence
         addEnvelopes(epochEnvelopes, true);
         beginTransaction(full);
         try {
-          PersistenceOutputStream stream = new PersistenceOutputStream();
+          PersistenceOutputStream stream = new PersistenceOutputStream(logger);
           if (logger.isDebugEnabled()) {
             writeHistoryHeader();
           }
@@ -1246,19 +1251,13 @@ public class BasePersistence
   }
 
   void printIdentityTable(String id) {
-    printRehydrationLog("IdentityTable begins");
+    logger.debug("IdentityTable begins");
     for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
       PersistenceAssociation pAssoc =
         (PersistenceAssociation) iter.next();
-      printRehydrationLog(id + pAssoc);
+      logger.debug(id + pAssoc);
     }
-    printRehydrationLog("IdentityTable ends");
-  }
-
-  void printRehydrationLog(String message) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(message);
-    }
+    logger.debug("IdentityTable ends");
   }
 
   public LoggingService getLoggingService() {

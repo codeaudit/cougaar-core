@@ -23,9 +23,9 @@ package org.cougaar.core.persist;
 import java.io.*;
 import java.util.*;
 import java.lang.reflect.*;
-
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * Read persisted objects from a stream. Detects objects that have
@@ -36,22 +36,13 @@ import org.cougaar.core.mts.MessageAddress;
  * from later versions of the same object.
  **/
 public class PersistenceInputStream extends ObjectInputStream {
-  private PrintWriter history = null;
-
+  private LoggingService logger;
 
   public MessageAddress getOriginator() { return null; }
   public MessageAddress getTarget() { return null; }
 
-  public void setHistoryWriter(PrintWriter s) {
-    history = s;
-  }
-
   public void close() throws IOException {
     super.close();
-    if (history != null) {
-      history.close();
-      history = null;
-    }
   }
 
   /**
@@ -96,9 +87,10 @@ public class PersistenceInputStream extends ObjectInputStream {
    * Construct from the array of bytes containing the encoded objects.
    * @param bytes the bytes containing the encoded objects.
    */
-  public PersistenceInputStream(ObjectInputStream ois) throws IOException {
+  public PersistenceInputStream(ObjectInputStream ois, LoggingService logger) throws IOException {
     super(new Substream(ois));
     enableResolveObject(true);
+    this.logger = logger;
   }
 
   static void checkSuperclass() {
@@ -138,9 +130,7 @@ public class PersistenceInputStream extends ObjectInputStream {
     } else {
       pAssoc.setActive(active);
     }
-    if (history != null) {
-      print("read association " + pAssoc);
-    }
+    if (logger.isDebugEnabled()) logger.debug("read association " + pAssoc);
     return pAssoc;
   }
 
@@ -214,23 +204,23 @@ public class PersistenceInputStream extends ObjectInputStream {
 	if (pAssoc == null) {
 	  Object object = callNewInstanceFromDesc(this, desc);
 	  pAssoc = identityTable.create(object, reference);
-	  print("Allocating " + BasePersistence.getObjectName(object) + " @ " + reference);
+	  if (logger.isDebugEnabled()) logger.debug("Allocating " + BasePersistence.getObjectName(object) + " @ " + reference);
 	  return object;
 	}
 	Object result = pAssoc.getObject();
 	if (result == null) throw new InstantiationException("no object @ " + reference);
 	if (result.getClass() != clazz) throw new InstantiationException("wrong object @ " + reference);
-	print("Overwriting " + BasePersistence.getObjectName(result) + " @ " + reference);
+	if (logger.isDebugEnabled()) logger.debug("Overwriting " + BasePersistence.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
         Object result = callNewInstanceFromDesc(this, desc);
-        print("Allocating " + (nextReadIndex-1) + " " +
+        if (logger.isDebugEnabled()) logger.debug("Allocating " + (nextReadIndex-1) + " " +
               BasePersistence.getObjectName(result));
         return result;
       }
     }
     Object result = callNewInstanceFromDesc(this, desc);
-    print("Allocating " + BasePersistence.getObjectName(result));
+    if (logger.isDebugEnabled()) logger.debug("Allocating " + BasePersistence.getObjectName(result));
     return result;
   }
 
@@ -242,10 +232,10 @@ public class PersistenceInputStream extends ObjectInputStream {
         org.cougaar.planning.ldm.plan.Task task = pe.getTask();
         if (task != null) {
           if (task.getPlanElement() != pe) {
-            print("Bad " + object.getClass().getName() + ": pe.getTask()=" + pe.getTask() + " task.getPlanElement()=" + task.getPlanElement());
+            //            if (logger.isWarnEnabled()) logger.warn("Bad " + object.getClass().getName() + ": pe.getTask()=" + pe.getTask() + " task.getPlanElement()=" + task.getPlanElement());
           }
         } else {
-          print("Bad " + object.getClass().getName() + ": pe.getTask()=null");
+          //          if (logger.isWarnEnabled()) logger.warn("Bad " + object.getClass().getName() + ": pe.getTask()=null");
         }
       }
     }
@@ -271,21 +261,12 @@ public class PersistenceInputStream extends ObjectInputStream {
 //  	return null;
       }
       Object result = pAssoc.getObject();
-      print("Resolving " + BasePersistence.getObjectName(result) + " @ " + pRef);
+      if (logger.isDebugEnabled()) logger.debug("Resolving " + BasePersistence.getObjectName(result) + " @ " + pRef);
       return result;
     } else {
-      print("Passing " + BasePersistence.getObjectName(o));
+      if (logger.isDebugEnabled()) logger.debug("Passing " + BasePersistence.getObjectName(o));
       return o;
     }
-  }
-
-  private void print(String message) {
-    if (history != null) {
-      history.println(message);
-      history.flush();
-    }
-//      String clusterName = clusterContext.getClusterIdentifier().getAddress();
-//      System.out.println(clusterName + " -- " + message);
   }
 
   /**

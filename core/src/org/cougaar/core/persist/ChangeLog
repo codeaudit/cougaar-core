@@ -1,3 +1,12 @@
+2002-07-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Fix bad ContextTable change in rehydrate().
+
+	* PersistenceOutputStream.java: 
+	* PersistenceInputStream.java: 
+	Restore debug code that got lost during LoggingService conversion.
+
 2002-07-09  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

@@ -31,16 +31,14 @@ import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 
 public class PersistenceOutputStream extends ObjectOutputStream {
-  private PrintWriter history = null;
+  private LoggingService logger;
+  private boolean debug;
 
   public MessageAddress getOriginator() { return null; }
   public MessageAddress getTarget() { return null; }
-
-  public void setHistoryWriter(PrintWriter s) {
-    history = s;
-  }
 
   /**
    * Keeps track of the (identity of) objects written to the stream.
@@ -55,8 +53,8 @@ public class PersistenceOutputStream extends ObjectOutputStream {
   /**
    * Public constructor
    */
-  public PersistenceOutputStream() throws IOException {
-    this(new ByteArrayOutputStream(10000));
+  public PersistenceOutputStream(LoggingService logger) throws IOException {
+    this(new ByteArrayOutputStream(10000), logger);
   }
 
   /**
@@ -64,10 +62,12 @@ public class PersistenceOutputStream extends ObjectOutputStream {
    * we are using.
    * @param stream the ByteArrayOutputStream into which we store everything.
    */
-  private PersistenceOutputStream(ByteArrayOutputStream stream) throws IOException {
+  private PersistenceOutputStream(ByteArrayOutputStream stream, LoggingService logger) throws IOException {
     super(stream);
     byteStream = stream;
     enableReplaceObject(true);
+    this.logger = logger;
+    this.debug = logger.isDebugEnabled();
   }
 
 //    /**
@@ -116,11 +116,11 @@ public class PersistenceOutputStream extends ObjectOutputStream {
       writeObject(pAssoc.getObject());
     }
     catch (java.io.NotSerializableException e) {
-      System.err.println(e + " for: " + pAssoc.getObject().getClass().getName()
-                         + ": " + pAssoc.getObject());
+      logger.error(e + " for: " + pAssoc.getObject().getClass().getName()
+                   + ": " + pAssoc.getObject());
     }
     catch (IllegalArgumentException e) {
-      System.err.println(e + " for: " + pAssoc.getObject().getClass().getName());
+      logger.error(e + " for: " + pAssoc.getObject().getClass().getName());
     }
     PersistenceReference[] result = new PersistenceReference[writeIndex.size()];
     result = (PersistenceReference[]) writeIndex.toArray(result);
@@ -137,56 +137,53 @@ public class PersistenceOutputStream extends ObjectOutputStream {
    */
   protected Object replaceObject(Object o) {
     if (o instanceof PersistenceReference) {
-//      print("Writing Ref ", o);
+      if (debug) print("Writing Ref ", o);
       return o;
     }
     if (o.getClass().isArray()) {
-//      print("Writing array " + java.lang.reflect.Array.getLength(o));
+      if (debug) print("Writing array " + java.lang.reflect.Array.getLength(o));
       return o;
     }
     if (o instanceof String) {
-//      print("Writing String ", o);
+      if (debug) print("Writing String ", o);
       return o;
     }
     PersistenceAssociation pAssoc = identityTable.find(o);
     if (pAssoc == null) {
+      // This is (probably) _not_ something we care about
       if (writeIndex != null) {
-	writeIndex.add(null);
+	writeIndex.add(null);   // No identityTable fixup needed
       }
       if (o instanceof PlanElement) {
-	return null;            // Not persisted yet
+        if (debug) print("Omitting unpublished pe: " + o);
+	return null;            // Not published yet
       }
-//      print("Writing " + o);
+      if (debug) print("Writing " + o);
       return o;
     }
     if (pAssoc.isMarked()) {
       if (writeIndex != null) {
+        // Remember that we wrote it here
 	writeIndex.add(pAssoc.getReferenceId());
       }
-//      print("Writing ", pAssoc, " as ", o);
+      if (debug) print("Writing ", pAssoc, " as ", o);
       return o;
     }
-//    print("Subst ", pAssoc, " for ", o);
+    if (debug) print("Subst ", pAssoc, " for ", o);
     return pAssoc.getReferenceId();
   }
 
   private void print(String intro, PersistenceAssociation pAssoc,
                      String prep, Object o) {
-    if (history != null) {
-//      print(intro + pAssoc.getReferenceId() + (pAssoc.isActive() ? " active" : " inactive") + prep + o);
-    }
+    print(intro + pAssoc.getReferenceId() + (pAssoc.isActive() ? " active" : " inactive") + prep + o);
   }
 
   private void print(String intro, Object o) {
-    if (history != null) {
-//      print(intro + o);
-    }
+    print(intro + o);
   }
 
   private void print(String message) {
-    if (history != null) {
-      history.println(message);
-    }
+    logger.debug(message);
 //  String clusterName = clusterContext.getClusterIdentifier().getAddress();
 //  System.out.println(clusterName + " -- " + message);
   }
