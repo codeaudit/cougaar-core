@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+
+<!--
+* <copyright>
+*  Copyright 2000-2003 BBNT Solutions, LLC
+*  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
+*
+*  This program is free software; you can redistribute it and/or modify
+*  it under the terms of the Cougaar Open Source License as published by
+*  DARPA on the Cougaar Open Source Website (www.cougaar.org).
+*
+*  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
+*  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
+*  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
+*  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT
+*  ANY WARRANTIES AS TO NON-INFRINGEMENT.  IN NO EVENT SHALL COPYRIGHT
+*  HOLDER BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT OR CONSEQUENTIAL
+*  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE OF DATA OR PROFITS,
+*  TORTIOUS CONDUCT, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+*  PERFORMANCE OF THE COUGAAR SOFTWARE.
+* </copyright>
+-->
+
+
+<!-- XML Schema for documents that describe Cougaar societies -->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Top level element -->
+  <xs:element name="society" type="societyType">
+    <!-- Not sure hosts have to be unique. 
+         Could be OK to have a host's nodes separated in here
+    <xs:unique name="hosts">
+      <xs:selector xpath="host"/>
+      <xs:field xpath="@name"/>
+    </xs:unique> 
+    -->
+    <!-- Ensure that there are not two nodes with the same name in the society-->
+    <xs:unique name="nodes">
+      <xs:selector xpath="host/node"/>
+      <xs:field xpath="@name"/>
+    </xs:unique>
+    <!-- Ensure that there are not two agents with the same name in the society-->
+    <xs:unique name="agents">
+      <xs:selector xpath="host/node/agent"/>
+      <xs:field xpath="@name"/>
+    </xs:unique>
+  </xs:element>
+
+  <!-- Type for top level society element -->
+  <!-- (A sequence of hosts)              -->
+  <xs:complexType name="societyType">
+    <xs:sequence>
+      <xs:element name="host" type="hostType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <!-- Type for hosts                     -->
+  <!-- (A sequence of nodes)              -->
+  <xs:complexType name="hostType">
+    <xs:sequence>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="attribute" type="attributeType"/>
+        <xs:element name="node" type="nodeType" minOccurs="0" maxOccurs="unbounded">
+          <!-- Ensure that there are not two components with the same name in the node agent -->
+          <xs:unique name="nodecomponents">
+            <xs:selector xpath="component"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+        </xs:element>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <!-- Type for nodes                     -->
+  <!-- (several possible attributes)      -->
+  <xs:complexType name="nodeType">
+    <xs:sequence>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="attribute" type="attributeType"/>
+        <xs:element name="prog_parameter" type="xs:string"/>
+        <xs:element name="env_parameter" type="xs:string"/>
+        <xs:element name="class" type="xs:string"/>
+        <xs:element name="vm_parameter" type="xs:string"/>
+        <xs:element name="agent" type="agentType">
+          <!-- Ensure that there are not two components with the same name in this agent -->
+          <xs:unique name="components">
+            <xs:selector xpath="component"/>
+            <xs:field xpath="@name"/>
+          </xs:unique>
+	</xs:element>
+        <xs:element name="component" type="componentType"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+
+  <!-- Arbitrary attributes that can be added to an agent, node, or host  -->
+  <xs:complexType name="attributeType" mixed="true">
+      <xs:sequence>
+        <xs:any minOccurs="0"/>
+      </xs:sequence>
+  </xs:complexType>
+    
+  <!-- Type for agents: a sequence of components and attributes -->
+  <xs:complexType name="agentType">
+    <xs:sequence>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="component" type="componentType"/>
+        <xs:element name="attribute" type="attributeType"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="order" type="xs:decimal" />
+    <xs:attribute name="name" type="xs:string" use="required"/>
+    <xs:attribute name="class" type="xs:string" use="optional"
+        default="org.cougaar.core.agent.SimpleAgent"/>
+  </xs:complexType>
+
+  <!-- Type for components: attributes and arguments -->
+  <xs:complexType name="componentType">
+    <xs:sequence>
+      <xs:element name="argument" type="argumentType" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="order" type="xs:decimal" />
+    <xs:attribute name="name" type="xs:string" />
+    <xs:attribute name="class" type="xs:string" />
+    <xs:attribute name="priority" use="optional" default="STANDARD">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="HIGH"/>
+          <xs:enumeration value="INTERNAL"/>
+          <xs:enumeration value="BINDER"/>
+          <xs:enumeration value="COMPONENT"/>
+          <xs:enumeration value="LOW"/>
+          <xs:enumeration value="STANDARD"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="insertionpoint" use="optional" 
+	default="Node.AgentManager.Agent.PluginManager.Plugin">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="Node.AgentManager.Agent.PluginManager.Plugin"/>
+          <xs:enumeration value="Node.AgentManager.Agent.PluginManager.Binder"/>
+          <xs:enumeration value="Node.AgentManager.Agent.SecurityComponent"/>
+          <xs:enumeration value="Node.AgentManager.Binder"/>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <!-- Type for component arguments: ordered strings -->
+  <xs:complexType name="argumentType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="order" type="xs:decimal" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+</xs:schema>
+
