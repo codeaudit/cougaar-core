@@ -186,17 +186,23 @@ extends BaseServletComponent
     try {
       this.servlet = (Servlet) cl.newInstance();
     } catch (Exception e) {
+      // check for bug 1073 (deprecated servlet constructor)
+      boolean hasDeprecatedConstructor = false;
       try {
-        // check for bug 1073 (deprecated servlet constructor)
         Constructor cons = cl.getConstructor(
             new Class[]{SimpleServletSupport.class});
-        throw new RuntimeException(
-          "Unsupported servlet constructor method \""+
-          classname+"(SimpleServletSupport ..)\";"+
-          " see bug 1073");
+        hasDeprecatedConstructor = true;
       } catch (Exception e2) {
-        // lacks valid constructor
+        // ignore
       }
+      if (hasDeprecatedConstructor) {
+        // throw a specific "bug 1073" exception
+        throw new RuntimeException(
+            "Unsupported servlet constructor method \""+
+            classname+"(SimpleServletSupport ..)\";"+
+            " see bug 1073");
+      }
+      // throw the general "no-constructor" exception
       throw new RuntimeException(
           "Unable to create Servlet instance: ", e);
     }
