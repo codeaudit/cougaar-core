@@ -172,8 +172,8 @@ public class PluginServiceFilter
     public boolean shouldBePersisted() {
       return bs.shouldBePersisted();
     }
-    public void setReadyToPersist() {
-      bs.setReadyToPersist();
+    public void persistNow() throws org.cougaar.core.cluster.persist.PersistenceNotEnabledException {
+      bs.persistNow();
     }
     public boolean didRehydrate() {
       return bs.didRehydrate();
