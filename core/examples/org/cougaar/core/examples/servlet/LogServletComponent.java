@@ -84,12 +84,21 @@ public class LogServletComponent extends BaseServletComponent {
       out.println("<li>isInfo : "+log.isInfoEnabled()+"</li>");
       out.println("<li>isWarn : "+log.isWarnEnabled()+"</li>");
       out.println("<li>isError: "+log.isErrorEnabled()+"</li>");
+      out.println("<li>isShout: "+log.isShoutEnabled()+"</li>");
       out.println("<li>isFatal: "+log.isFatalEnabled()+"</li>");
       out.println("</ul><p>");
       out.println("logging sample debug message<p>");
-      log.debug("my log debug message");
+      log.debug("test debug message");
+      out.println("logging sample info message<p>");
+      log.info("test info message");
+      out.println("logging sample warn message<p>");
+      log.warn("test warn message");
       out.println("logging sample error message<p>");
-      log.error("my log error message");
+      log.error("test error message");
+      out.println("logging sample shout message<p>");
+      log.shout("test shout message");
+      out.println("logging sample fatal message<p>");
+      log.fatal("test fatal message");
       out.println("</body></html>");
     }
   }
