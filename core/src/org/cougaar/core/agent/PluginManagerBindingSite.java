@@ -13,7 +13,6 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.UIDServer;
 
 /** A pluginmanager's view of its parent component (Container).
  *
@@ -22,10 +21,7 @@ public interface PluginManagerBindingSite
   extends BindingSite
 {
   ClusterIdentifier getAgentIdentifier();
-
   ConfigFinder getConfigFinder();
-  //should go away soon
-  UIDServer getUIDServer();
 }
 
 

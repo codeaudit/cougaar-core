@@ -12,7 +12,7 @@ package org.cougaar.core.agent;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.component.*;
 import org.cougaar.core.plugin.PluginManager;
 
@@ -33,9 +33,6 @@ public class PluginManagerBinder extends BinderSupport implements PluginManagerB
   }
   public ClusterIdentifier getAgentIdentifier() {
     return getAgent().getAgentIdentifier();
-  }
-  public UIDServer getUIDServer() {
-    return getAgent().getUIDServer();
   }
   public ConfigFinder getConfigFinder() {
     return getAgent().getConfigFinder();

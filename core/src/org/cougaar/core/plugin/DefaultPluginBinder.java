@@ -13,7 +13,6 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.UIDServer;
 import java.lang.reflect.*;
 
 /** The standard Binder for Plugins.
@@ -48,9 +47,6 @@ public class DefaultPluginBinder
     }
     public final ClusterIdentifier getAgentIdentifier() {
       return getPluginManager().getAgentIdentifier();
-    }
-    public final UIDServer getUIDServer() {
-      return getPluginManager().getUIDServer();
     }
     public final ConfigFinder getConfigFinder() {
       return getPluginManager().getConfigFinder();

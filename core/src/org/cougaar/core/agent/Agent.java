@@ -14,7 +14,6 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.util.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.UIDServer;
 
 
 /** 
@@ -69,7 +68,6 @@ public abstract class Agent
 
   //backwards compatability to attach to Cluster Agents for now
   abstract public ClusterIdentifier getAgentIdentifier();
-  abstract public UIDServer getUIDServer();
   abstract public ConfigFinder getConfigFinder();
 
   //
@@ -87,4 +85,6 @@ public abstract class Agent
     }
   }
 }
+
+
 

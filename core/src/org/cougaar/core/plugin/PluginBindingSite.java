@@ -12,15 +12,7 @@ package org.cougaar.core.plugin;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.ClusterServesPlugIn;
-import org.cougaar.core.cluster.UIDServer;
-import org.cougaar.core.plugin.PlugInDelegate;
 
 /** A plugin's view of its parent component (Container).
  *
@@ -29,8 +21,5 @@ public interface PluginBindingSite
   extends BindingSite
 {
   ClusterIdentifier getAgentIdentifier();
-
   ConfigFinder getConfigFinder();
-
-  UIDServer getUIDServer();
 }

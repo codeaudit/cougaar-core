@@ -212,11 +212,11 @@ public class ClusterImpl extends Agent
 
   // UID Service
   private UIDService myUIDService = null;
-  /** @deprectated  Use getUIDService() **/
-  public UIDServer getUIDServer() {
+  /** @deprecated use getUIDService() **/
+  public final UIDServer getUIDServer() {
     return myUIDService;
   }
-  // public for now for backwards compatability
+  //public for backwards compatability for now
   public final UIDService getUIDService() {
     return myUIDService;
   }
@@ -429,7 +429,7 @@ public class ClusterImpl extends Agent
 
     // start up the pluginManager component - should really itself be loaded
     // as an agent subcomponent.
-    pluginManager = new PluginManager(this);
+    pluginManager = new PluginManager();
     //System.err.println("Added PluginManager to "+this);
     add(pluginManager);
 

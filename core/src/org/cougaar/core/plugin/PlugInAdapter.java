@@ -21,9 +21,6 @@ import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.core.plugin.ScheduleablePlugIn;
 
-
-import org.cougaar.core.blackboard.BlackboardService;
-import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.cluster.AlarmService;
 import org.cougaar.core.cluster.AlarmServiceProvider;
 import org.cougaar.core.cluster.ClusterServesPlugIn;
@@ -38,12 +35,6 @@ import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.core.cluster.MetricsService;
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.ServiceBroker;
-
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.domain.planning.ldm.RootFactory;
 
 import org.cougaar.core.plugin.PlugInServesCluster;
 
@@ -152,6 +143,33 @@ public abstract class PlugInAdapter
   }
   protected final SharedThreadingService getSharedThreadingService() {
     return sharedThreadingService;
+  }
+
+  //UID service
+  private UIDService theUIDService = null;
+  public void setUIDService(UIDService us) {
+    theUIDService = us;
+  }
+  public final UIDService getUIDService() {
+    return theUIDService;
+  }
+
+  //Domain service (factory service piece of old LDM)
+  private DomainService theDomainService = null;
+  public void setDomainService(DomainService ds) {
+    theDomainService = ds;
+  }
+  public final DomainService getDomainService() {
+    return theDomainService;
+  }
+
+  //PrototypeRegistryService (prototype/property piece of old LDM)
+  private PrototypeRegistryService thePrototypeRegistryService = null;
+  public void setPrototypeRegistryService(PrototypeRegistryService prs) {
+    thePrototypeRegistryService = prs;
+  }
+  public final PrototypeRegistryService getPrototypeRegistryService() {
+    return thePrototypeRegistryService;
   }
 
   //
@@ -283,16 +301,16 @@ public abstract class PlugInAdapter
   public void load(Object object) {
     setThreadingChoice(getThreadingChoice()); // choose the threading model
     theLDM = getLDMService().getLDM();
-    theLDMF = getLDMService().getFactory();
+    theLDMF = getDomainService().getFactory();
 
     if (this instanceof PrototypeProvider) {
-      getLDMService().addPrototypeProvider((PrototypeProvider)this);
+      getPrototypeRegistryService().addPrototypeProvider((PrototypeProvider)this);
     }
     if (this instanceof PropertyProvider) {
-      getLDMService().addPropertyProvider((PropertyProvider)this);
+      getPrototypeRegistryService().addPropertyProvider((PropertyProvider)this);
     }
     if (this instanceof LatePropertyProvider) {
-      getLDMService().addLatePropertyProvider((LatePropertyProvider)this);
+      getPrototypeRegistryService().addLatePropertyProvider((LatePropertyProvider)this);
     }
     
     //ServiceBroker sb = getBindingSite().getServiceBroker();
@@ -343,6 +361,7 @@ public abstract class PlugInAdapter
   // Ivars and accessor methods
   //
 
+  //Blackboard service
   private BlackboardService theBlackboard = null;
 
   public void setBlackboardService(BlackboardService s) {
@@ -359,7 +378,6 @@ public abstract class PlugInAdapter
     return theBlackboard;
   }
 
-    
   /** Safely return our Distribution service (Distributor).
    * load() must have completed for this to 
    * be defined.
@@ -650,7 +668,7 @@ public abstract class PlugInAdapter
   }
 
   protected final Factory getFactory(String s) {
-    return getLDMService().getFactory(s);
+    return getDomainService().getFactory(s);
   }
   
   
@@ -666,7 +684,7 @@ public abstract class PlugInAdapter
   }
 
   protected final UIDServer getUIDServer() {
-    return ((PluginBindingSite) getBindingSite()).getUIDServer();
+    return getUIDService();
   }
 
   //
@@ -733,14 +751,14 @@ public abstract class PlugInAdapter
       return getLDMService().getLDM();
     }
     public RootFactory getFactory() {
-      return getLDMService().getFactory();
+      return getDomainService().getFactory();
     }
     /** @deprecated use getFactory() **/
     public RootFactory getLdmFactory() {
-      return getLDMService().getFactory();
+      return getDomainService().getFactory();
     }
     public Factory getFactory(String s) {
-      return getLDMService().getFactory(s);
+      return getDomainService().getFactory(s);
     }
     public ClusterIdentifier getClusterIdentifier() {
       return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();

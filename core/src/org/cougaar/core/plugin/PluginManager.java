@@ -11,11 +11,9 @@ package org.cougaar.core.plugin;
 
 import java.util.*;
 import org.cougaar.util.*;
+import org.cougaar.core.agent.PluginManagerBindingSite;
 import org.cougaar.core.component.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.cluster.*;
-import org.cougaar.core.mts.MessageTransportService;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
+import org.cougaar.core.cluster.ClusterIdentifier;
 import java.beans.*;
 import java.lang.reflect.*;
 
@@ -29,9 +27,6 @@ import java.lang.reflect.*;
 public class PluginManager 
   extends ContainerSupport
 {
-  private ClusterImpl agent = null; // stopgap hack
-
-  ClusterImpl getAgent() { return agent; }
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
@@ -39,20 +34,16 @@ public class PluginManager
     }
   }
 
-  /** this constructor used for backwards compatability mode.  Goes away
-   * when we are a contained by an Agent component
-   **/
-  public PluginManager(ClusterImpl agent) {
-    this.agent = agent;
-    if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
-      throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
-    }
-    
-  }
+  private PluginManagerBindingSite bindingSite = null;
   
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    setChildServiceBroker(new PluginManagerServiceBroker(bs));
+    if (bs instanceof PluginManagerBindingSite) {
+      bindingSite = (PluginManagerBindingSite) bs;
+      setChildServiceBroker(new PluginManagerServiceBroker(bs));
+    } else {
+      throw new RuntimeException("Tried to load "+this+"into " + bs);
+    }
   }
 
   public void initialize() {
@@ -61,6 +52,9 @@ public class PluginManager
     //add services here (none for now)
   }
 
+  protected final PluginManagerBindingSite getBindingSite() {
+    return bindingSite;
+  }
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();
   }
@@ -79,9 +73,6 @@ public class PluginManager
         public void requestStop() {}
         public ClusterIdentifier getAgentIdentifier() {
           return PluginManager.this.getAgentIdentifier();
-        }
-        public UIDServer getUIDServer() {
-          return PluginManager.this.getUIDServer();
         }
         public ConfigFinder getConfigFinder() {
           return PluginManager.this.getConfigFinder();
@@ -105,47 +96,37 @@ public class PluginManager
     }
   }
   
-
-  // standin API for LDMService called by PluginBinder for temporary support
-  void addPrototypeProvider(PrototypeProvider plugin) {
-    agent.addPrototypeProvider(plugin);
-  }
-  void addPropertyProvider(PropertyProvider plugin) {
-    agent.addPropertyProvider(plugin);
-  }
-  void addLatePropertyProvider(LatePropertyProvider plugin) {
-    agent.addLatePropertyProvider(plugin);
-  }
-
-
-
   // 
   // other services
   //
   
   public ClusterIdentifier getClusterIdentifier() {
-    return agent.getClusterIdentifier();
+    return getAgentIdentifier();
   }
-
   public ClusterIdentifier getAgentIdentifier() {
-    return agent.getClusterIdentifier();
+    return getBindingSite().getAgentIdentifier();
   }
-
-  public UIDServer getUIDServer() {
-    return agent.getUIDServer();
-  }
-
-  public LDMServesPlugIn getLDM() {
-    return agent.getLDM();
-  }
-
   public ConfigFinder getConfigFinder() {
-    return agent.getConfigFinder();
+    return getBindingSite().getConfigFinder();
   }
-
   public String toString() {
     return getAgentIdentifier().toString()+"/PluginManager";
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
