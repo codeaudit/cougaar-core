@@ -44,8 +44,18 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.domain.planning.plugin.AssetDataReader;
 import org.cougaar.domain.planning.plugin.AssetDataDBReader;
 
+/**
+ * Implementation of InitializerServiceProvider that reads
+ * initialization information from a database.
+ * @property org.cougaar.core.initializer.log specifies that name of a
+ * log file into which every query executed is written along with the
+ * elapsed time for the query to execute.
+ **/
 public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String QUERY_FILE = "DBInitializer.q";
+  private static final String PROP_LOG_FILE =
+    "org.cougaar.core.initializer.log";
+  private static final String logFileName = System.getProperty(PROP_LOG_FILE);
 
   private DBProperties dbp;
   private String database;
@@ -71,7 +81,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
     substitutions.put(":trial_id:", trialId);
-//      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
+    if (logFileName != null)
+      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
     try {
       String dbtype = dbp.getDBType();
       insureDriverClass(dbtype);
