@@ -1517,11 +1517,26 @@ final class Distributor {
   private void timerPersist() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    // FIXME unlocked access!
-    if (needToPersist &&
-        (!lazyPersistence || timeToLazilyPersist())) {
-      persist(false, false);
+    if (lazyPersistence && !timeToLazilyPersist()) {
+      return;
     }
+    synchronized (distributorLock) {
+      if (!needToPersist) {
+        return;
+      }
+    }
+    synchronized (transactionLock) {
+      if ((persistFlags & PERSIST_ACTIVE) != 0) {
+        return;
+      }
+      if ((persistFlags & PERSIST_PENDING) != 0 &&
+          transactionCount >= 1) {
+        return;
+      }
+    }
+    // there's a small window here where we may do an unnecessary
+    // second persist, but that would be harmless and quick
+    persist(false, false);
   }
 
   private void logEnvelope(Envelope envelope, BlackboardClient client) {
