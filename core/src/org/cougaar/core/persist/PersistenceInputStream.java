@@ -103,7 +103,18 @@ public class PersistenceInputStream extends ObjectInputStream {
 
   static void checkSuperclass() {
     try {
-      PersistenceInputStream.class.getSuperclass().getDeclaredMethod("allocateNewObjectOverride", new Class[] {Class.class, Class.class});
+      /*
+      Method []methods = PersistenceInputStream.class.getSuperclass().getDeclaredMethods();
+      for (int i = 0; i < methods.length; i++) {
+        System.out.print(methods[i].getName() + ": ");
+        Class[] parameters = methods[i].getParameterTypes();
+        for (int j = 0; j < parameters.length; j ++) {
+          System.out.print(parameters[j] + " ");;
+        }
+        System.out.print("\n");
+      }
+      */
+      PersistenceInputStream.class.getSuperclass().getDeclaredMethod("newInstanceFromDesc", new Class[] {ObjectStreamClass.class});
     }
     catch (Exception e) {
       System.err.println("Fatal error " + e.toString());
