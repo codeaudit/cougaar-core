@@ -33,12 +33,15 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.service.SchedulerService;
 
 public class BlackboardServletComponent extends SimpleServletComponent {
-  private BlackboardService blackboard;
+  protected BlackboardService blackboard;
   private LDMService ldmService = null;
   private SchedulerService scheduler;
 
-  public final void setBlacboardService(BlackboardService s) {
+  public final void setBlackboardService(BlackboardService s) {
     blackboard = s;
+  }
+  protected final BlackboardService getBlackboardService() {
+    return blackboard;
   }
   public final void setLDMService(LDMService s) {
     ldmService = s;
