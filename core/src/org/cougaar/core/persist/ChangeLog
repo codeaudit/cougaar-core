@@ -1,3 +1,16 @@
+2002-06-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* FilePersistence.java:
+	* FilePersistenceBase.java:
+	Factored out the code common to all file-based persistence plugins
+	into FilePersistenceBase.java leaving just abstract method
+	implementations in FilePersistence.
+
+	* BasePersistence.java:
+	Use StringUtility.parseCSV() to parse plugin parameters. This
+	allows for quoting the separator character which is necessary for
+	specifying a drive letter in a directory name.
+
 2002-06-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* DataProtectionServiceStub.java: 
