@@ -1,3 +1,11 @@
+2004-01-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceServiceComponent.java:
+	Bug #3438 -- Persist exception fails to clearMarks()
+	Replace clearMarks with addExistingMarkedAssociations. This
+	assumes that any marked associations correspond to earlier persist
+	failures. The marked associations are persisted again.
+
 2004-01-05  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceServiceComponent.java:

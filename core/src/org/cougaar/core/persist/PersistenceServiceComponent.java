@@ -939,6 +939,10 @@ public class PersistenceServiceComponent
   private void addAssociationToPersist(PersistenceAssociation pAssoc) {
     if (pAssoc.isMarked()) return; // Already scheduled to be written
     pAssoc.setMarked(true);
+    addMarkedAssociation(pAssoc);
+  }
+
+  private void addMarkedAssociation(PersistenceAssociation pAssoc) {
     objectsThatMightGoAway.add(pAssoc.getObject());
     associationsToPersist.add(pAssoc);
   }
@@ -950,12 +954,14 @@ public class PersistenceServiceComponent
     }
   }
 
-  private void anyMarks(Iterator iter) {
+  private void addExistingMarkedAssociations(Iterator iter) {
     while (iter.hasNext()) {
       PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
       if (pAssoc.isMarked()) {
-        if (logger.isWarnEnabled()) logger.warn("Already marked: " + pAssoc);
-        pAssoc.setMarked(false);
+        if (logger.isInfoEnabled()) {
+          logger.info("Previously marked: " + pAssoc);
+        }
+        addMarkedAssociation(pAssoc);
       }
     }
   }
@@ -1096,7 +1102,7 @@ public class PersistenceServiceComponent
       try {
 	associationsToPersist.clear();
 	objectsThatMightGoAway.clear();
-	anyMarks(identityTable.iterator());
+	addExistingMarkedAssociations(identityTable.iterator());
 	if (sequenceNumbers == null) {
 	  initSequenceNumbers();
 	}
@@ -1228,7 +1234,7 @@ public class PersistenceServiceComponent
 	    }
 	  } // End of non-dummy persistence
 	  clearMarks(associationsToPersist.iterator());
-	  commitTransaction();
+          commitTransaction();
 	  logger.printDot("P");
 	  // Cleanup old deltas and archived snapshots. N.B. The
 	  // cleanup is happening to the plugin that was just used.
@@ -1400,8 +1406,12 @@ public class PersistenceServiceComponent
       super(clientId);
     }
 
-    public PersistenceObject persist(boolean returnBytes, boolean full) {
-      return PersistenceServiceComponent.this.persist(returnBytes, full);
+    public PersistenceObject persist(
+      boolean returnBytes,
+      boolean full) {
+      return PersistenceServiceComponent.this.persist(
+        returnBytes,
+        full);
     }
     public java.sql.Connection getDatabaseConnection(Object locker) {
       return PersistenceServiceComponent.this.getDatabaseConnection(locker);
