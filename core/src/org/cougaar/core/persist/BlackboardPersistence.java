@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -131,12 +133,28 @@ public class BlackboardPersistence implements Persistence {
     return result;
   }
 
+  /**
+   * Get a set of the Keys of the SubscriberStates in the rehydration info.
+   * Used by the Distributor to track which subscribers have not
+   * rehydrated.
+   **/
+  public Set getSubscriberStateKeys() {
+    synchronized (rehydrationSubscriberStatesLock) {
+      if (rehydrationSubscriberStates == null)
+	return Collections.EMPTY_SET;
+      Set keys = new HashSet();
+      for (int i = 0; i < rehydrationSubscriberStates.size(); i++) 
+	keys.add(((PersistenceSubscriberState)rehydrationSubscriberStates.get(i)).getKey());
+      return keys;
+    }
+  }
+
   public boolean hasSubscriberStates() {
     synchronized (rehydrationSubscriberStatesLock) {
       return rehydrationSubscriberStates != null;
     }
   }
-
+  
   public void discardSubscriberState(Subscriber subscriber) {
     synchronized (rehydrationSubscriberStatesLock) {
       if (rehydrationSubscriberStates != null) {

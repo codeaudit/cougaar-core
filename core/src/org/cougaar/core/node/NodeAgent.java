@@ -53,6 +53,7 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.core.service.QuiescenceReportService;
+import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.util.CircularQueue;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
@@ -167,12 +168,10 @@ extends SimpleAgent
     }
     public void removeAgent(MessageAddress agentId) {
       agentManager.removeAgent(agentId);
-      qrsp.agentRemoved();
       persistNow();
     }
     public boolean remove(Object o) {
       boolean result = agentManager.remove(o);
-      qrsp.agentRemoved();
       persistNow();
       return result;
     }
@@ -228,6 +227,7 @@ extends SimpleAgent
 
     qrsp = new QuiescenceReportServiceProvider(nodeName, agentManagerProxy, csb);
     rootsb.addService(QuiescenceReportService.class, qrsp);
+    rootsb.addService(QuiescenceReportForDistributorService.class, qrsp);
     // For simplicity we get an QuiescenceReportService instance
     // directly from the provider because we do not have an
     // AgentIdentifierService.

@@ -36,6 +36,15 @@ import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
 
+/**
+ * The QuiescenceMonitor is used by the Distributor to determine
+ * if an agent is quiescent. The QM tracks which blackboard clients
+ * we care about quiescence for, and numbers incoming and outgoing
+ * messsages for those we care about. The QM uses a ConfigFinder
+ * accessed text file to identify which BlackboardClients to count
+ * in the quiescence calculation. Typically this excludes all infrastructure
+ * components, and includes only application-internal components.
+ **/
 class QuiescenceMonitor {
   private static final String CONFIG_FILE = "quiescencemonitor.dat";
   private static final String[] defaultExcludedClients = {
@@ -49,12 +58,14 @@ class QuiescenceMonitor {
   private boolean isQuiescent = false;
   private String messageNumbersChangedFor = null;
   private static class State implements Serializable {
-    State(Map imn, Map omn) {
+    State(Map imn, Map omn, boolean isQ) {
       outgoingMessageNumbers = omn;
       incomingMessageNumbers = imn;
+      isQuiescent = isQ;
     }
     private Map outgoingMessageNumbers;
     private Map incomingMessageNumbers;
+    private boolean isQuiescent;
   }
   private Map outgoingMessageNumbers = new HashMap();
   private Map incomingMessageNumbers = new HashMap();
@@ -98,12 +109,13 @@ class QuiescenceMonitor {
     State state = (State) newState;
     incomingMessageNumbers = state.incomingMessageNumbers;
     outgoingMessageNumbers = state.outgoingMessageNumbers;
+    isQuiescent = state.isQuiescent;
     messageNumbersChangedFor = "setState";
     setSubscribersAreQuiescent(isQuiescent);
   }
 
   Object getState() {
-    return new State(incomingMessageNumbers, outgoingMessageNumbers);
+    return new State(incomingMessageNumbers, outgoingMessageNumbers, isQuiescent);
   }
 
   private void initMessageNumberCounter() {
@@ -127,8 +139,11 @@ class QuiescenceMonitor {
     exclusions.add(new Exclusion(line));
   }
 
-  boolean isQuiescenceRequired(BlackboardClient client) {
-    String clientName = client.getBlackboardClientName();
+  // Is quiescence required for this blackboard client (by name)
+  // Note that exclusions typically end in .*, so if this is really
+  // a PersistenceSubscriberState.getKey which has extra stuff at the end,
+  // this will still match
+  boolean isQuiescenceRequired(String clientName) {
     Boolean required = (Boolean) checkedClients.get(clientName);
     if (required == null) {
       required = Boolean.TRUE;
@@ -152,6 +167,12 @@ class QuiescenceMonitor {
       checkedClients.put(clientName, required);
     }
     return required.booleanValue();
+  }
+
+  // Is quiescence required for this blackboard client. Will use the client name
+  boolean isQuiescenceRequired(BlackboardClient client) {
+    String clientName = client.getBlackboardClientName();
+    return isQuiescenceRequired(clientName);
   }
 
   synchronized void setSubscribersAreQuiescent(boolean subscribersAreQuiescent) {
@@ -195,7 +216,7 @@ class QuiescenceMonitor {
 
   synchronized boolean numberIncomingMessage(DirectiveMessage msg) {
     MessageAddress src = msg.getSource();
-    src = src.getPrimary();
+    src = src.getPrimary(); // Strip any attributes
     int messageNumber = msg.getContentsId();
     if (messageNumber == 0) return false; // Message from plugin not required for quiescence
     incomingMessageNumbers.put(src, new Integer(messageNumber));
@@ -205,7 +226,7 @@ class QuiescenceMonitor {
 
   synchronized void numberOutgoingMessage(DirectiveMessage msg) {
     MessageAddress dst = msg.getDestination();
-    dst = dst.getPrimary();
+    dst = dst.getPrimary(); // Strip any attributes
     int messageNumber = nextMessageNumber();
     msg.setContentsId(messageNumber);
     outgoingMessageNumbers.put(dst, new Integer(messageNumber));

@@ -34,20 +34,29 @@ import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.EventService;
+import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.core.service.QuiescenceReportService;
+import org.cougaar.util.FilteredIterator;
+import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 class QuiescenceReportServiceProvider implements ServiceProvider {
   private Map quiescenceStates = new HashMap();
   private boolean isQuiescent = false;
-  private List localAgents = new ArrayList();
+  /**
+   * A List of all agents local to this node regardless of whether
+   * they are "active" or not.
+   **/
+  private UnaryPredicate enabledQuiescenceStatePredicate = new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return ((QuiescenceState) o).isEnabled();
+      }
+    };
   private Logger logger;
   private String nodeName;
   private AgentContainer agentContainer;
   private ServiceBroker sb;
-  private EventService eventService;
-  private Object eventServiceLock = new Object();
   private QuiescenceAnnouncer quiescenceAnnouncer;
 
   private static final long ANNOUNCEMENT_DELAY = 30000L;
@@ -69,10 +78,13 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
                            Object requestor,
                            Class serviceClass)
   {
-    if (serviceClass != QuiescenceReportService.class) {
-      throw new IllegalArgumentException("Can only provide QuiescenceReportService!");
+    if (serviceClass == QuiescenceReportService.class) {
+      return new QuiescenceReportServiceImpl(requestor.toString());
     }
-    return new QuiescenceReportServiceImpl(requestor.toString());
+    if (serviceClass == QuiescenceReportForDistributorService.class) {
+      return new QuiescenceReportForDistributorServiceImpl(requestor.toString());
+    }
+    throw new IllegalArgumentException("Cannot provide " + serviceClass.getName());
   }
 
   public void releaseService(ServiceBroker xsb, Object requestor,
@@ -86,33 +98,37 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
   // Used by NodeAgent to create an instance for a specific agent address.
   QuiescenceReportService createQuiescenceReportService(MessageAddress agent) {
-    return new QuiescenceReportServiceImpl(agent);
+    return new QuiescenceReportServiceImpl(agent.getPrimary()); // drop MessageAttributes
   }
 
-  void agentRemoved() {
-    checkQuiescence();
-  }
-
-  private void event(String msg) {
-    synchronized (eventServiceLock) {
-      if (eventService == null) {
-        eventService = (EventService) sb.getService(this, EventService.class, null);
-        if (eventService == null) {
-          logger.error("No EventService available for " + EOL + msg);
-          return;
-        }
-      }
+  private static void setMessageMap(MessageAddress me, Map messageNumbers, Map newMap) {
+    Map existingMap = (Map) messageNumbers.get(me);
+    if (existingMap == null) {
+      existingMap = new HashMap(newMap);
+      messageNumbers.put(me, existingMap);
+    } else {
+      existingMap.clear();
+      existingMap.putAll(newMap);
     }
-    eventService.event(msg);
   }
 
   private QuiescenceState getQuiescenceState(MessageAddress me) {
     QuiescenceState quiescenceState = (QuiescenceState) quiescenceStates.get(me);
     if (quiescenceState == null) {
-      quiescenceState = new QuiescenceState(me);
+      quiescenceState = new QuiescenceState(me, logger);
       quiescenceStates.put(me, quiescenceState);
     }
     return quiescenceState;
+  }
+
+  private Iterator getQuiescenceStatesIterator() {
+    return new FilteredIterator(quiescenceStates.values().iterator(), enabledQuiescenceStatePredicate);
+  }
+
+  private boolean isLocalAgent(MessageAddress otherAgent) {
+    QuiescenceState otherState = (QuiescenceState) quiescenceStates.get(otherAgent);
+    if (otherState == null) return false;
+    return otherState.isEnabled();
   }
 
   /**
@@ -120,13 +136,13 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
    * messages are outstanding, we announce our quiescence. Otherwise,
    * we cancel quiescence.
    **/
-  private synchronized void checkQuiescence() {
+  private void checkQuiescence() {
     // We could be quiescent
-    localAgents.clear();
-    localAgents.addAll(agentContainer.getAgentAddresses());
     // If an agent moves out of this node, we need to clean out any
-    // remembered message numbers. Remember if any removes happened
-    quiescenceStates.keySet().retainAll(localAgents);
+    // remembered message numbers.
+    // FIXME: To be safe, should do getPrimary() on all the addresses returned
+    // by the agentContainer, to strip off MessageAttributes
+    quiescenceStates.keySet().retainAll(agentContainer.getAgentAddresses());
     if (allAgentsAreQuiescent() && noMessagesAreOutstanding()) {
       announceQuiescence();
       if (!isQuiescent && logger.isInfoEnabled()) {
@@ -138,36 +154,56 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
   }
 
-  private synchronized void cancelQuiescence() {
+  private void cancelQuiescence() {
     if (isQuiescent) {
       announceNonQuiescence();
       isQuiescent = false;
     }
   }
 
-  private synchronized void setMessageNumbers(QuiescenceState quiescenceState, Map outgoing, Map incoming) {
+  private synchronized void setQuiescenceReportEnabled(QuiescenceState quiescenceState,
+                                                       boolean enabled)
+  {
+    quiescenceState.setEnabled(enabled);
+    if (logger.isInfoEnabled()) {
+      logger.info((enabled ? "Enabled " : "Disabled ")
+                  + quiescenceState.getAgentName());
+    }
+    checkQuiescence();
+  }
+
+  private synchronized void setMessageNumbers(QuiescenceState quiescenceState,
+                                              Map outgoing, Map incoming)
+  {
     quiescenceState.setMessageNumbers(outgoing, incoming);
+    checkQuiescence();
   }
 
   private synchronized void setQuiescent(QuiescenceState quiescenceState, boolean isQuiescent) {
     quiescenceState.setQuiescent(isQuiescent);
+    if (isQuiescent) {
+      checkQuiescence();
+    } else if (quiescenceState.isEnabled()) {
+      // Only cancel quiescence if the state that announced it was not quiescent isEnabled
+      // This prevents early-loading plugins from toggling quiescence of the Node
+      cancelQuiescence();
+    }
   }
 
   private boolean allAgentsAreQuiescent() {
     boolean result = true;
-    for (Iterator theseAgents = localAgents.iterator(); theseAgents.hasNext(); ) {
-      MessageAddress thisAgent = (MessageAddress) theseAgents.next();
-      QuiescenceState thisAgentState = getQuiescenceState(thisAgent);
+    for (Iterator theseStates = getQuiescenceStatesIterator(); theseStates.hasNext(); ) {
+      QuiescenceState thisAgentState = (QuiescenceState) theseStates.next();
       if (!thisAgentState.isQuiescent()) {
         result = false;
         if (logger.isDebugEnabled()) {
-          logger.debug(thisAgent + " is not quiescent");
+          logger.debug(thisAgentState.getAgentName() + " is not quiescent");
         } else {
           break;
         }
       } else {
         if (logger.isDebugEnabled()) {
-          logger.debug(thisAgent + " is quiescent");
+          logger.debug(thisAgentState.getAgentName() + " is quiescent");
         }
       }
     }
@@ -176,12 +212,12 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
   private boolean noMessagesAreOutstanding() {
     checkQuiescence:
-    for (Iterator theseAgents = localAgents.iterator(); theseAgents.hasNext(); ) {
-      MessageAddress thisAgent = (MessageAddress) theseAgents.next();
-      QuiescenceState thisAgentState = getQuiescenceState(thisAgent);
-      for (Iterator thoseAgents = localAgents.iterator(); thoseAgents.hasNext(); ) {
-        MessageAddress thatAgent = (MessageAddress) thoseAgents.next();
-        QuiescenceState thatAgentState = getQuiescenceState(thatAgent);
+    for (Iterator theseStates = getQuiescenceStatesIterator(); theseStates.hasNext(); ) {
+      QuiescenceState thisAgentState = (QuiescenceState) theseStates.next();
+      MessageAddress thisAgent = thisAgentState.getAgent();
+      for (Iterator thoseStates = getQuiescenceStatesIterator(); thoseStates.hasNext(); ) {
+        QuiescenceState thatAgentState = (QuiescenceState) thoseStates.next();
+        MessageAddress thatAgent = thatAgentState.getAgent();
         Integer sentNumber = thisAgentState.getOutgoingMessageNumber(thatAgent);
         Integer rcvdNumber = thatAgentState.getIncomingMessageNumber(thisAgent);
         boolean match;
@@ -208,7 +244,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     for (Iterator entries = messages.entrySet().iterator(); entries.hasNext(); ) {
       Map.Entry entry = (Map.Entry) entries.next();
       MessageAddress otherAgent = (MessageAddress) entry.getKey();
-      if (localAgents.contains(otherAgent)) continue;
+      if (isLocalAgent(otherAgent)) continue; // Exclude local agents
       Integer msgnum = (Integer) entry.getValue(); // 
       ms.append("   <").append(itemTag).append(" agent=\"").append(otherAgent)
         .append("\" msgnum=\"").append(msgnum).append("\"/>").append(EOL);
@@ -222,10 +258,12 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     // of other nodes.
     StringBuffer ms = new StringBuffer();
     ms.append("<node name=\"").append(nodeName).append("\" quiescent=\"true\">").append(EOL);
-    for (Iterator agents = localAgents.iterator(); agents.hasNext(); ) {
-      MessageAddress agent = (MessageAddress) agents.next();
-      ms.append(" <agent name=\"").append(agent.getAddress()).append("\">").append(EOL);
-      QuiescenceState quiescenceState = getQuiescenceState(agent);
+    for (Iterator states = getQuiescenceStatesIterator(); states.hasNext(); ) {
+      QuiescenceState quiescenceState = (QuiescenceState) states.next();
+      ms.append(" <agent name=\"")
+        .append(quiescenceState.getAgentName())
+        .append("\">")
+        .append(EOL);
       appendMessageNumbers(ms, quiescenceState.getOutgoingMessageNumbers(), "receivers", "dest");
       appendMessageNumbers(ms, quiescenceState.getIncomingMessageNumbers(), "senders", "src");
       ms.append(" </agent>").append(EOL);
@@ -243,8 +281,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
   private class QuiescenceAnnouncer extends Thread {
     private String pendingAnnouncement;
+    private boolean lastAnnouncedQuiescence = true;
     private long announcementTime;
     private boolean running;
+    private EventService eventService;
+    private Object eventServiceLock = new Object();
 
     public QuiescenceAnnouncer() {
       super("Quiescence Announcer");
@@ -261,11 +302,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
 
     public synchronized void announceNonquiescence(String announcement) {
-      if (pendingAnnouncement == null) {
+      // Cancel pending announcment if any
+      pendingAnnouncement = null;
+      if (lastAnnouncedQuiescence) {
         event(announcement);
-      } else {
-        // No need to announce because we have not yet announced quiescence
-        pendingAnnouncement = null;
+        lastAnnouncedQuiescence = false;
       }
     }
 
@@ -281,6 +322,19 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       return announcementTime - System.currentTimeMillis();
     }
 
+    private void event(String msg) {
+      synchronized (eventServiceLock) {
+        if (eventService == null) {
+          eventService = (EventService) sb.getService(QuiescenceReportServiceProvider.this, EventService.class, null);
+          if (eventService == null) {
+            logger.error("No EventService available for " + EOL + msg);
+            return;
+          }
+        }
+      }
+      eventService.event(msg);
+    }
+
     public synchronized void run() {
       long delay;
       while (running) {
@@ -292,6 +346,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
           } else {
             event(pendingAnnouncement);
             pendingAnnouncement = null;
+            lastAnnouncedQuiescence = true;
           }
         } catch (Exception e) {
           logger.error("QuiescenceAnnouncer", e);
@@ -300,99 +355,26 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
   }
 
-  private class QuiescenceState {
-    public QuiescenceState(MessageAddress me) {
-      this.me = me;
+  private class QuiescenceReportForDistributorServiceImpl
+    extends QuiescenceReportServiceImpl
+    implements QuiescenceReportForDistributorService
+  {
+    public QuiescenceReportForDistributorServiceImpl(String requestorName) {
+      super(requestorName);
     }
 
-    public Map getOutgoingMessageNumbers() {
-      return outgoingMessageNumbers;
+    public void setQuiescenceReportEnabled(boolean enabled) {
+      QuiescenceReportServiceProvider.this.setQuiescenceReportEnabled(quiescenceState, enabled);
     }
-
-    public Map getIncomingMessageNumbers() {
-      return incomingMessageNumbers;
-    }
-
-    public Integer getOutgoingMessageNumber(MessageAddress receiver) {
-      return (Integer) getOutgoingMessageNumbers().get(receiver);
-    }
-
-    public Integer getIncomingMessageNumber(MessageAddress sender) {
-      return (Integer) getIncomingMessageNumbers().get(sender);
-    }
-
-    public boolean isQuiescent() {
-      return nonQuiescenceCount == 0;
-    }
-
-    public void setQuiescent(boolean isQuiescent) {
-      if (isQuiescent) {
-        nonQuiescenceCount--;
-        if (logger.isDetailEnabled()) {
-          logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + me);
-        } else if (nonQuiescenceCount == 0 && logger.isDebugEnabled()) {
-          logger.debug(me + " is quiescent");
-        }
-      } else {
-        nonQuiescenceCount++;
-        if (logger.isDetailEnabled()) {
-          logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + me);
-        } else if (nonQuiescenceCount == 1 && logger.isDebugEnabled()) {
-          logger.debug(me + " is not quiescent");
-        }
-      }
-    }
-
-    public void setMessageNumbers(Map outgoing, Map incoming) {
-      outgoingMessageNumbers = updateMap(outgoingMessageNumbers, outgoing);
-      incomingMessageNumbers = updateMap(incomingMessageNumbers, incoming);
-      if (logger.isDetailEnabled()) {
-        logger.detail("setMessageNumbers for " + me
-                      + ", outgoing=" + outgoing
-                      + ", incoming=" + incoming);
-      } else if (logger.isDebugEnabled()) {
-        logger.debug("setMessageNumbers for " + me);
-      }
-    }
-
-    public String getAgentName() {
-      return me.toString();
-    }
-
-    private Map incomingMessageNumbers = new HashMap(13);
-    private Map outgoingMessageNumbers = new HashMap(13);
-    private int nonQuiescenceCount = 0;
-    private MessageAddress me;
-  }
-
-  /**
-   * Update an existing map to equal a new Map where the keys in the
-   * old map are very likely to be the same as the keys in the new Map
-   * while minimizing additional memory allocation.
-   **/
-  private static Map updateMap(Map oldMap, Map newMap) {
-    if (newMap == null) {
-      throw new IllegalArgumentException("Null Map");
-    }
-    if (oldMap == null) return new HashMap(newMap);
-    // Flush all keys missing from the new map
-    oldMap.keySet().retainAll(newMap.keySet());
-    // Avoid oldMap.putAll(newMap) since it expands the (Hash)Map
-    // assuming the newMap has a non-intersecting keyset.
-    for (Iterator i = newMap.entrySet().iterator(); i.hasNext(); ) {
-      Map.Entry entry = (Map.Entry) i.next();
-      oldMap.put(entry.getKey(), entry.getValue());
-    }
-    return oldMap;
   }
 
   private class QuiescenceReportServiceImpl implements QuiescenceReportService {
-    private QuiescenceState quiescenceState = null;
+    protected QuiescenceState quiescenceState = null;
     private boolean isQuiescent = true; // We haven't been counted as not quiescent yet
     private String requestorName;
 
     public QuiescenceReportServiceImpl(MessageAddress agent) {
-      quiescenceState = getQuiescenceState(agent);
+      quiescenceState = getQuiescenceState(agent); // Drop messageAttributes
       this.requestorName= agent.toString();
     }
 
@@ -423,7 +405,6 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     public void setMessageNumbers(Map outgoing, Map incoming) {
       if (quiescenceState == null) throw new RuntimeException("AgentIdentificationService has not be set");
       QuiescenceReportServiceProvider.this.setMessageNumbers(quiescenceState, outgoing, incoming);
-      checkQuiescence();
     }
 
     /**
@@ -435,9 +416,8 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       if (logger.isDebugEnabled()) {
         logger.debug("setQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
       }
-      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true);
       isQuiescent = true;
-      checkQuiescence();
+      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true);
     }
 
     /**
@@ -453,7 +433,6 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       }
       QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false);
       isQuiescent = false;
-      cancelQuiescence();
     }
   }
 }

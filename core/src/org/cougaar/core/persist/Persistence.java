@@ -22,6 +22,7 @@
 package org.cougaar.core.persist;
 
 import java.util.List;
+import java.util.Set;
 
 import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
@@ -56,6 +57,14 @@ public interface Persistence {
     PersistenceSubscriberState getSubscriberState(Subscriber subscriber);
     boolean hasSubscriberStates();
     void discardSubscriberState(Subscriber subscriber);
+
+  /**
+   * Get a set of the Keys of the SubscriberStates in the rehydration info.
+   * Used by the Distributor to track which subscribers have not
+   * rehydrated.
+   **/
+  public Set getSubscriberStateKeys();
+
     java.sql.Connection getDatabaseConnection(Object locker);
     void releaseDatabaseConnection(Object locker);
     long getPersistenceTime();

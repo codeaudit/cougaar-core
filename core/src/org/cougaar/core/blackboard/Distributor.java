@@ -42,7 +42,7 @@ import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.QuiescenceReportService;
+import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
@@ -248,9 +248,15 @@ final class Distributor {
   private PersistenceEnvelope rehydrationEnvelope = null;
 
   private QuiescenceMonitor quiescenceMonitor;
+  private boolean quiescenceReportEnabled = false; // Not yet enabled
 
   private ServiceBroker sb;
-  private QuiescenceReportService quiescenceReportService;
+  private QuiescenceReportForDistributorService quiescenceReportService;
+
+  // Subscribers who should rehydrate before enabling the QuiescenceService
+  // that is, the set of subscribers remaining to rehydrate for
+  // which quiescence is required
+  private Set subscribersToRehydrate = Collections.EMPTY_SET;
 
   /** Isolated constructor **/
   public Distributor(Blackboard blackboard, ServiceBroker sb, String name) {
@@ -267,8 +273,8 @@ final class Distributor {
     AgentIdentificationService ais = (AgentIdentificationService)
       sb.getService(this, AgentIdentificationService.class, null);
     nodeBusyService.setAgentIdentificationService(ais);
-    quiescenceReportService = (QuiescenceReportService)
-      sb.getService(this, QuiescenceReportService.class, null);
+    quiescenceReportService = (QuiescenceReportForDistributorService)
+      sb.getService(this, QuiescenceReportForDistributorService.class, null);
     quiescenceReportService.setAgentIdentificationService(ais);
     quiescenceMonitor = new QuiescenceMonitor(quiescenceReportService, logger);
   }
@@ -297,12 +303,34 @@ final class Distributor {
   void discardRehydrationInfo(Subscriber subscriber) {
     synchronized (distributorLock) {
       if (rehydrationEnvelope != null) {
-        persistence.discardSubscriberState(subscriber);
-        if (!persistence.hasSubscriberStates()) {
-          // discard rehydration info:
-          rehydrationEnvelope = null;
-          postRehydrationEnvelopes = null;
-        }
+	// Only need to check subscriber count to enable quiescence
+	if (! quiescenceReportEnabled) {
+	  // Remove this subscriber from those we want to rehydrate before
+	  // registering with the quiescence service.
+	  // Later, in distribute, we'll see if this was in fact the last
+	  // relevant subscriber to be rehydrated
+	  PersistenceSubscriberState pss = persistence.getSubscriberState(subscriber);
+	  if (pss != null) {
+	    String key = pss.getKey();
+	    boolean didRemove = subscribersToRehydrate.remove(key);
+	    if (didRemove && logger.isDebugEnabled())
+	      logger.debug(".discard: Rehydrated q-relevant subscriber " + key);
+	  }
+	}
+
+	// Now dump its subscriber state
+	// (needs to be after above so we can get the key...)
+	persistence.discardSubscriberState(subscriber);
+
+	// If there are no more persistence subscriber states left, dump
+	// the rehydration information -- we're done with it
+	if (! persistence.hasSubscriberStates()) {
+	  if (logger.isDebugEnabled())
+	    logger.debug(".discard: No sub states left at all. discarding rehydration info");
+	  // discard rehydration info:
+	  rehydrationEnvelope = null;
+	  postRehydrationEnvelopes = null;
+	}
       }
     }
   }
@@ -377,6 +405,34 @@ final class Distributor {
       if (rr.quiescenceMonitorState != null) {
         quiescenceMonitor.setState(rr.quiescenceMonitorState);
       }
+
+      // Distributor tracks the subscribers who have yet to rehydrate
+      // However, we only really care about those for whom we require
+      // quiescence
+      subscribersToRehydrate = persistence.getSubscriberStateKeys();
+      if (logger.isDebugEnabled())
+	logger.debug("Initial number of subscribers: " + subscribersToRehydrate.size());
+      // Synchronize so that a subscriber who already 
+      // is in discardRehydrationInfo doesnt cause a ConcurrentModExc
+      synchronized (distributorLock) {
+	Iterator iter = subscribersToRehydrate.iterator();
+	List toRemove = new ArrayList();
+	while (iter.hasNext()) {
+	  String key = (String)iter.next();
+	  if (! quiescenceMonitor.isQuiescenceRequired(key)) {
+	    if (logger.isDebugEnabled())
+	      logger.debug("Ignoring subscriber " + key);
+	    toRemove.add(key);
+	  } else {
+	    if (logger.isDebugEnabled())
+	      logger.debug("NOT Ignoring subscriber " + key);
+	  }
+	}
+	subscribersToRehydrate.removeAll(toRemove);
+	if (logger.isDebugEnabled())
+	  logger.debug("Trimmed number of subscribers: " + subscribersToRehydrate.size());
+      } // end synchronized(distributorLock)
+
       if (lazyPersistence) {    // Ignore any rehydrated message manager
         myMessageManager = new MessageManagerImpl(false);
       } else {
@@ -580,7 +636,8 @@ final class Distributor {
   public void stop() {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    sb.releaseService(this, QuiescenceReportService.class, quiescenceReportService);
+    quiescenceReportService.setQuiescenceReportEnabled(false); // Finished here
+    sb.releaseService(this, QuiescenceReportForDistributorService.class, quiescenceReportService);
     stopTimer();
     synchronized (distributorLock) {
       getMessageManager().stop();
@@ -648,7 +705,8 @@ final class Distributor {
         blackboard.fillSubscription(subscription);
       }
 
-      // distribute the initialize envelope
+      // distribute the initialize envelope -- used for subs
+      // to know when their first transaction is done
       /*
          {
       // option 1
@@ -765,14 +823,21 @@ final class Distributor {
       if (subscriberBusy) {
         busy = true;
       }
-      if (newSubscribersAreQuiescent && !subscriber.isQuiescent()) {
-        BlackboardClient inboxClient = subscriber.getClient();
-        if (quiescenceMonitor.isQuiescenceRequired(inboxClient)) {
-          if (logger.isDebugEnabled()) {
-            logger.debug(inboxClient.getBlackboardClientName() + " prevents quiescence");
-          }
-          newSubscribersAreQuiescent = false;
-        }
+
+      if (quiescenceReportEnabled) {
+	// Check if at least one subscriber we care about is
+	// now non-quiescent
+	BlackboardClient inboxClient = subscriber.getClient();
+	if (quiescenceMonitor.isQuiescenceRequired(inboxClient)) {
+	  if (newSubscribersAreQuiescent && !subscriber.isQuiescent()) {
+	    if (logger.isDebugEnabled()) {
+	      logger.debug("There is at least one q-relevant subscriber, so this distribute prevents quiescence.");
+	    }
+	    if (logger.isDetailEnabled())
+	      logger.detail("       First such subscriber: " + inboxClient.getBlackboardClientName());
+	    newSubscribersAreQuiescent = false;
+	  }
+	}
       }
     }
     // Fill messagesToSend
@@ -780,6 +845,8 @@ final class Distributor {
     if (messagesToSend.size() > 0) {
       for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
         DirectiveMessage msg = (DirectiveMessage) i.next();
+	// If the publisher is q-relevant, then we number the message
+	// to require a succesful receipt for quiescence
         if (clientQuiescenceRequired) quiescenceMonitor.numberOutgoingMessage(msg);
         if (logger.isDetailEnabled()) {
           Directive[] dirs = msg.getDirectives();
@@ -810,9 +877,41 @@ final class Distributor {
       }
     }
     outboxes.clear();
-    quiescenceMonitor.setSubscribersAreQuiescent(newSubscribersAreQuiescent);
+
+    // Update the cumulative quiescence of all the subscriber inboxes
+    // based on this distribute: Non-q if a Q-relevant comp published something
+    // to this agent, and we have at least one q-relevant subscriber
+    if (quiescenceReportEnabled)
+      quiescenceMonitor.setSubscribersAreQuiescent(newSubscribersAreQuiescent);
+
+    // If we have not yet enabled the QRS, check to see if this 
+    // call to distribute means the last relevant subscriber
+    // has rehydrated. If so, enable the QuiescenceReportService.
+    // Note that discardRehydrationInfo is where we remove the subscribers
+    // from the list we want to rehydrate first.
+
+    // If this distribute is happening at the close of the first transaction
+    // of the last q-relevant subscriber, then we enable the QRS -- but _after_
+    // we've updated the Quiescence state based on the results of
+    // this distribute -- otherwise, the close of the first transaction
+    // of the last q-relevant subscriber would always make you non-q on rehydrate
+    if (!quiescenceReportEnabled) {
+      int nLeft = subscribersToRehydrate.size();
+      if (nLeft == 0) {
+	if (logger.isDebugEnabled())
+	  logger.debug(".distribute: No more q-relevant subscribers to rehydrate. Enabling QRS.");
+        quiescenceReportService.setQuiescenceReportEnabled(true); // All ready to go
+        quiescenceReportEnabled = true;
+      } else if (logger.isDebugEnabled()) {
+	if (nLeft == 1) 
+	  logger.debug(".distribute: sole remaining q-relevant subscriber left to rehydrate: " + subscribersToRehydrate);
+	else
+	  logger.debug(".distribute: " + nLeft + " q-relevant subscribers left to rehydrate");
+      }
+    } // end check to enable QRS
+
     return result;
-  }
+  } // end of distribute()
 
   public void restartAgent(MessageAddress cid) {
     assert !Thread.holdsLock(distributorLock);
@@ -848,6 +947,7 @@ final class Distributor {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     try {
+      // Do one of the incoming messages come from a q-relevant component?
       boolean messagesRequireQuiescence = false;
       boolean persistWanted = false;
       startTransaction(); // Blocks if persistence active
