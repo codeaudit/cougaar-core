@@ -93,9 +93,19 @@ public class NamingSocketFactory
     }
 
     public Socket createSocket(String host, int port) throws IOException {
-        return useSSL
-            ? SSLSocketFactory.getDefault().createSocket(host, port)
-            : new Socket(host, port);
+        if (useSSL) {
+            try {
+                return SSLSocketFactory.getDefault().createSocket(host, port);
+            } catch (SocketException se) {
+                if (firstError) {
+                    firstError = false;
+                    System.err.print(SSL_INSTRUCTIONS);
+                }
+                throw se;
+            }
+        } else {
+            return new Socket(host, port);
+        }
     }
 
     public ServerSocket createServerSocket(int port) throws IOException {
