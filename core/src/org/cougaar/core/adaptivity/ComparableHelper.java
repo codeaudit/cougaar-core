@@ -50,7 +50,7 @@ public class ComparableHelper {
    * Initialize the minimumValue and maximumValue Maps.
    **/
   static {
-    maximumValue.put(String.class, "\uffff");
+    maximumValue.put(String.class, ComparableHelper.ffffString);
     maximumValue.put(Double.class, new Double(Double.MAX_VALUE));
     maximumValue.put(Float.class, new Float(Float.MAX_VALUE));
     maximumValue.put(Long.class, new Long(Long.MAX_VALUE));
@@ -123,7 +123,7 @@ public class ComparableHelper {
     String tail;
     if (lastChar == '\u0000') {
       head = decrementString(head);
-      tail = "\uffff";
+      tail = ComparableHelper.ffffString;
     } else {
       tail = new String(new char[] {(char) (lastChar - 1)});
     }
