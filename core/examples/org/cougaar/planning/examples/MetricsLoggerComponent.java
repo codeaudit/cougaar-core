@@ -46,7 +46,10 @@ import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.planning.service.PrototypeRegistryService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.blackboard.Directive;
+import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.Notification;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -151,10 +154,10 @@ implements Component
 
   private void logBlackboardMetrics() {
     if (bbMetricsService != null) {
-      logger.info("Asset Count: " + bbMetricsService.getAssetCount());
-      logger.info("Plan Element Count: " + bbMetricsService.getPlanElementCount());
-      logger.info("Task Count: " + bbMetricsService.getTaskCount());
-      logger.info("Total Blackboard Object Count: " + bbMetricsService.getBlackboardObjectCount());
+      logger.info("Asset Count: " + bbMetricsService.getBlackboardCount(Asset.class));
+      logger.info("Plan Element Count: " + bbMetricsService.getBlackboardCount(PlanElement.class));
+      logger.info("Task Count: " + bbMetricsService.getBlackboardCount(Task.class));
+      logger.info("Total Blackboard Object Count: " + bbMetricsService.getBlackboardCount());
     }
   }
 
@@ -251,10 +254,10 @@ implements Component
       buf.append(", 0, 0, 0");
     }
     if (bbMetricsService != null) {
-      buf.append(", ").append(bbMetricsService.getAssetCount());
-      buf.append(", ").append(bbMetricsService.getPlanElementCount());
-      buf.append(", ").append(bbMetricsService.getTaskCount());
-      buf.append(", ").append(bbMetricsService.getBlackboardObjectCount());
+      buf.append(", ").append(bbMetricsService.getBlackboardCount(Asset.class));
+      buf.append(", ").append(bbMetricsService.getBlackboardCount(PlanElement.class));
+      buf.append(", ").append(bbMetricsService.getBlackboardCount(Task.class));
+      buf.append(", ").append(bbMetricsService.getBlackboardCount());
     } else {
       buf.append(", 0, 0, 0, 0");
     }

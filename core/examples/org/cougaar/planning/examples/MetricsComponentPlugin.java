@@ -40,7 +40,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.Message;
 
 import org.cougaar.planning.service.PrototypeRegistryService;
+import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.Notification;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.core.blackboard.Directive;
 
 import org.cougaar.core.blackboard.DirectiveMessage;
@@ -167,10 +170,10 @@ public class MetricsComponentPlugin
           System.out.println("Prototype Provider Count: " + protoProviderCount);
 
           //get all BlackBoardMetricsServices metrics
-          assetCount = bbMetricsService.getAssetCount();
-          planElementCount = bbMetricsService.getPlanElementCount();
-          taskCount = bbMetricsService.getTaskCount();
-          totalBlackboardCount = bbMetricsService.getBlackboardObjectCount();
+          assetCount = bbMetricsService.getBlackboardCount(Asset.class);
+          planElementCount = bbMetricsService.getBlackboardCount(PlanElement.class);
+          taskCount = bbMetricsService.getBlackboardCount(Task.class);
+          totalBlackboardCount = bbMetricsService.getBlackboardCount();
           System.out.println("Asset Count: " + assetCount);
           System.out.println("Plan Element Count: " + planElementCount);
           System.out.println("Task Count: " + taskCount);
