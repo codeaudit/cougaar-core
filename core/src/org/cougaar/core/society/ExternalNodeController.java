@@ -17,13 +17,49 @@ import java.util.List;
 import org.cougaar.util.PropertyTree;
 
 /**
- * The <code>NodeController</code> is the external API for a loaded Node
- * that allows an outside JVM (console) to access and control the Node.
+ * The <code>ExternalNodeController</code> is the external API for a loaded 
+ * Node that allows an outside JVM "client" to access and control the Node.
  * <p>
  * Currently uses RMI, but could be modified to use another protocol
  * (e.g. HTTP server).
  */
-public interface NodeController extends Remote {
+public interface ExternalNodeController extends Remote {
+
+  /**
+   * Get the external action listener.
+   * <p>
+   * Could be modified to support multiple listeners.
+   */
+  public ExternalNodeActionListener getExternalNodeActionListener()
+    throws RemoteException;
+
+  /**
+   * Set the external action listener.
+   * <p>
+   * Could be modified to support multiple listeners.
+   */
+  public void setExternalNodeActionListener(
+      ExternalNodeActionListener eListener) throws RemoteException;
+
+  //
+  // Could support a listener-push Object to restrict items of interest, 
+  // which would keep the RMI/notification costs down.  
+  //
+  // For example, we could define an interface:
+  //   public interface ExternalNodeActionInterests implements Serializable {
+  //     ..
+  //     public boolean interestedInClusterAdd();
+  //     ..
+  //   }
+  // Note that this is non-Remote, or at least the external client's
+  // implementation needn't subclass this to an RMI Remote but instead
+  // "upload" a serialized implementation (via a method in this controller).
+  // The Node can then check this (presumed) local "interests" interface and 
+  // not send a listener event if the implementation returns false for 
+  // that type of event, which would reduce needless RMI messaging.   The 
+  // cost is that the client must upload a new "ExternalNodeActionInterests" 
+  // implementation if it modifies it's interests.
+  //
 
   /**
    * Get the host name for the controlled Node.
@@ -34,7 +70,7 @@ public interface NodeController extends Remote {
    * Get the <code>NodeIdentifier</code> for the controlled Node.
    *
    * The NodeIdentifier's address should match the bound name of
-   * this NodeController in the RMI registry.
+   * this ExternalNodeController in the RMI registry.
    */
   public NodeIdentifier getNodeIdentifier() throws RemoteException;
 

@@ -21,9 +21,9 @@ public interface ArgTableIfc {
   /** name service **/
   final String NS_KEY = "ns";
 
-  /** host for the NodeController RMI registry **/
+  /** host for the ExternalNodeController RMI registry **/
   public final String CONTROL_KEY = "control";
-  /** port for the NodeController RMI registry **/
+  /** port for the ExternalNodeController RMI registry **/
   public final String CONTROL_PORT_KEY = "controlPort";
 
   /** Publish the -c keys so we do not hard code all over the place. **/

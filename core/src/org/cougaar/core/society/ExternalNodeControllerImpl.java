@@ -11,25 +11,38 @@
 package org.cougaar.core.society;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
 
 import org.cougaar.util.PropertyTree;
 
 /**
- * Implementation of <code>NodeController</code>.
+ * Implementation of <code>ExternalNodeController</code>.
  *
- * @see NodeController
+ * @see ExternalNodeController
  */
-public class NodeControllerImpl 
-implements NodeController {
+public class ExternalNodeControllerImpl 
+extends UnicastRemoteObject 
+implements ExternalNodeController {
+
+  private ExternalNodeActionListener eListener;
 
   private final Node node;
 
-  public NodeControllerImpl(Node node) {
+  public ExternalNodeControllerImpl(Node node) throws RemoteException {
     this.node = node;
   }
 
-  public String getHostName() throws RemoteException {
+  public ExternalNodeActionListener getExternalNodeActionListener() {
+    return eListener;
+  }
+
+  public void setExternalNodeActionListener(
+      ExternalNodeActionListener eListener) {
+    this.eListener = eListener;
+  }
+
+  public String getHostName() {
     try {
       return node.findHostName();
     } catch (java.net.UnknownHostException e) {
@@ -37,15 +50,15 @@ implements NodeController {
     }
   }
 
-  public NodeIdentifier getNodeIdentifier() throws RemoteException {
+  public NodeIdentifier getNodeIdentifier() {
     return node.getNodeIdentifier();
   }
 
-  public List getClusterIdentifiers() throws RemoteException {
+  public List getClusterIdentifiers() {
     return node.getClusterIdentifiers();
   }
 
-  public void addClusters(PropertyTree pt) throws RemoteException {
+  public void addClusters(PropertyTree pt) {
     AddClustersMessage myMessage = new AddClustersMessage();
     myMessage.setOriginator(null);  // from RMI!
     myMessage.setTarget(node.getNodeIdentifier());

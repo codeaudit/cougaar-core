@@ -16,6 +16,8 @@ import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.Cluster;
 
+import org.cougaar.core.component.ComponentDescription;
+
 import org.cougaar.core.cluster.Distributor;
 import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
@@ -28,6 +30,7 @@ import org.cougaar.core.cluster.ClusterIdentifier;
 // root = ClusterMessage
 import org.cougaar.core.cluster.ClusterMessage;
 import org.cougaar.core.society.Message;
+import org.cougaar.core.society.ComponentMessage;
 // inherits from ClusterMessage
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.core.cluster.DirectiveMessage;
@@ -495,6 +498,25 @@ public class ClusterImpl
     try {
       if (message instanceof AdvanceClockMessage) {
         handleAdvanceClockMessage((AdvanceClockMessage)message);
+      } else if (message instanceof ComponentMessage) {
+        ComponentMessage cm = (ComponentMessage)message;
+        ComponentDescription desc = cm.getComponentDescription();
+        int operation = cm.getOperation();
+        switch (operation) {
+          case ComponentMessage.ADD:     
+            pluginManager.add(desc);     
+            break;
+          case ComponentMessage.REMOVE:  
+            pluginManager.remove(desc);  
+            break;
+          case ComponentMessage.SUSPEND:
+          case ComponentMessage.RESUME:
+          case ComponentMessage.RELOAD:
+            // not implemented yet -- requires modifications to Container
+          default:
+            throw new UnsupportedOperationException(
+              "Unsupported ComponentMessage: "+message);
+        }
       } else if (message instanceof ClusterMessage) {
         if (message instanceof AddPlugInMessage) {
           pluginManager.add((AddPlugInMessage)message);

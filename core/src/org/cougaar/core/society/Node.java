@@ -13,6 +13,8 @@ package org.cougaar.core.society;
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.society.ClusterManagementServesCluster;
 
+import org.cougaar.core.component.ComponentDescription;
+
 import java.io.Serializable;
 import java.io.*;
 import java.net.InetAddress;
@@ -549,7 +551,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     // set up the message handler and register this Node
     initTransport();  
 
-    registerNodeController();
+    registerExternalNodeController();
 
     // load the clusters with an "AddClustersMessage".  
     if ((nodePT != null) &&
@@ -587,14 +589,17 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     theMessenger.registerClient(this);
   }
 
+  // external controller for this node
+  private ExternalNodeController eController;
+
   /**
-   * Create a <code>NodeController</code> for this Node and register it
-   * for external use.
+   * Create an <code>ExternalNodeController</code> for this Node and 
+   * register it for external use.
    * <p>
    * Currently uses RMI, but could be modified to use another protocol
    * (e.g. HTTP server).
    */
-  private void registerNodeController() {
+  private void registerExternalNodeController() {
     // get the RMI registry host and port address
     String rmiHost = (String)getArgs().get(CONTROL_KEY);
     if (rmiHost == null) {
@@ -624,28 +629,35 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     }
 
     try {
+      /*
       // create the local hook
-      NodeController localNC = new NodeControllerImpl(this);
+      ExternalNodeController localENC = new ExternalNodeControllerImpl(this);
       
       // export to a remote hook
-      NodeController remoteNC = 
-        (NodeController)UnicastRemoteObject.exportObject(localNC);
+      ExternalNodeController remoteENC = 
+        (ExternalNodeController)UnicastRemoteObject.exportObject(localENC);
+        */
+      ExternalNodeController remoteENC = new ExternalNodeControllerImpl(this);
       
       // use the NodeIdentifier's address as the binding name
       //  - this might need to be modified to incorporate the host name...
       String bindName = getIdentifier();
 
-      // release to the RMI registry
+      // get the RMI registry
       Registry reg = LocateRegistry.getRegistry(rmiHost, rmiPort);      
-      reg.rebind(bindName, remoteNC);
+
+      // make available
+      reg.rebind(bindName, remoteENC);
       
       System.err.println(
           "Registered for external control as \""+bindName+"\""+
           " in RMI registry \""+rmiHost+":"+rmiPort+"\"");
 
+      eController = remoteENC;
+
       // never unbind!
       //reg.unbind(getIdentifier());
-      //UnicastRemoteObject.unexportObject(remoteNC, true);
+      //UnicastRemoteObject.unexportObject(remoteENC, true);
     } catch (Exception e) {
       System.err.println("Unable to register for external control:");
       e.printStackTrace();
@@ -739,7 +751,43 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
 
     System.err.println("\nPlugins Loaded.");
 
+    // append to the list of clusters
     addClusters(addedClusters);
+
+    // get the (optional) external listener
+    ExternalNodeActionListener eListener;
+    try {
+      eListener =
+        ((eController != null) ? 
+         eController.getExternalNodeActionListener() :
+         null);
+    } catch (Exception e) {
+      eListener = null;
+    }
+
+    // notify the listener
+    if (eListener != null) {
+      int n = addedClusters.size();
+      for (int i = 0; i < n; i++) {
+        ClusterServesClusterManagement ci = 
+          (ClusterServesClusterManagement)addedClusters.get(i);
+        if (ci != null) {
+          ClusterIdentifier ciId = ci.getClusterIdentifier();
+          try {
+            eListener.handleClusterAdd(eController, ciId);
+          } catch (Exception e) {
+            // lost listener?  should we kill this Node?
+            System.err.println(
+                "Lost connection to external listener? "+e.getMessage());
+            try {
+              eController.setExternalNodeActionListener(null);
+            } catch (Exception e2) {
+            }
+            break;
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -805,6 +853,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
         Map.Entry pi = pluginsPT.get(i);
         String piName = (String)pi.getKey();
         Vector piParams = (Vector)pi.getValue();
+        // OLD-style:
+        /*
         AddPlugInMessage myMessage = new AddPlugInMessage();
         myMessage.setOriginator(cid);
         myMessage.setTarget(cid);
@@ -813,6 +863,25 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
         // bypass the message system to initialize the cluster - send
         // the message directly.
         cluster.receiveMessage(myMessage);
+        */
+        // NEW-style:
+        ComponentMessage addCM = new ComponentMessage();
+        addCM.setOriginator(cid);
+        addCM.setTarget(cid);
+        addCM.setTarget(cid);
+        addCM.setOperation(ComponentMessage.ADD);
+        ComponentDescription desc = 
+          new ComponentDescription(
+              "agent.plugin",
+              piName,
+              null,     // codebase
+              piParams,
+              null,     // certificate
+              null,     // lease
+              null);    // policy
+        addCM.setComponentDescription(desc);
+        // bypass the message system to initialize the cluster
+        cluster.receiveMessage(addCM);
       }
 
       // tell the cluster to proceed.
@@ -856,28 +925,154 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     }
   }
 
+  private final synchronized void addCluster(
+      ClusterServesClusterManagement cluster) {
+    if (theClusters == null) {
+      theClusters = new Vector();
+    }
+    theClusters.addElement(cluster);
+  }
+
   public MessageAddress getMessageAddress() {
     return myNodeIdentity_;
   }
 
+  // replace with Container's add, but keep this basic code
+  private final void add(ComponentDescription desc) {
+    try {
+      // check insertion point
+      String insertionPoint = desc.getInsertionPoint();
+      if (!("agent".equals(insertionPoint))) {
+        throw new IllegalArgumentException(
+            "Expecting \"add\" insertion point to be \"agent\", not: "+
+            insertionPoint);
+      }
+      // check parameter -- for now only support new clusters
+      Object parameter = desc.getParameter();
+      if (!(parameter instanceof PropertyTree)) {
+        throw new IllegalArgumentException(
+            "Expecting PropertyTree parameter, not: "+
+            ((parameter != null) ? 
+             parameter.getClass().getName() : 
+             "null"));
+      }
+      PropertyTree cpt = (PropertyTree)parameter;
+      // check classname
+      String classname = desc.getClassname();
+      if (classname != null) {
+        Object oclass = cpt.get("class");
+        if (oclass == null) {
+          // use desc's classname
+          cpt.put("class", classname);
+        } else if (classname.equals(oclass)) {
+          // good -- they match
+        } else {
+          throw new IllegalArgumentException(
+              "Cluster specification \"class\" ("+oclass+") must match "+
+              "ComponentDescription's \"classname\" ("+classname+")");
+        }
+      }
+      // later use codebase and other arguments
+      //
+      // create the cluster
+      ClusterServesClusterManagement cluster = createCluster(cpt);
+      populateCluster(cluster, cpt);
+      addCluster(cluster);
+    } catch (Exception e) {
+      System.err.println(
+          "Node unable to add component: "+e.getMessage());
+    }
+  }
+
+  private final String getClusterName(ComponentDescription desc) {
+    // check insertion point
+    String insertionPoint = desc.getInsertionPoint();
+    if (!("agent".equals(insertionPoint))) {
+      throw new IllegalArgumentException(
+          "Expecting insertion point to be \"agent\", not: "+
+          insertionPoint);
+    }
+    // check parameter -- for now only support new clusters
+    Object parameter = desc.getParameter();
+    if (!(parameter instanceof PropertyTree)) {
+      throw new IllegalArgumentException(
+          "Expecting PropertyTree parameter, not: "+
+          ((parameter != null) ? 
+           parameter.getClass().getName() : 
+           "null"));
+    }
+    PropertyTree cpt = (PropertyTree)parameter;
+    // check name
+    Object oname = cpt.get("name");
+    if (!(oname instanceof String)) {
+      throw new IllegalArgumentException(
+          "Expecting a cluster PropertyTree with a \"name\", not "+
+          ((oname != null) ? oname.getClass().getName() : "null"));
+    }
+    return (String)oname;
+  }
+
+  // replace with Container's remove
+  private final void remove(ComponentDescription desc) {
+    String cname = getClusterName(desc);
+    // not implemented yet!  maybe once Node is a real Container...
+    throw new UnsupportedOperationException(
+        "Remove cluster ("+cname+") not implemented yet!");
+  }
+
+  // replace with Container's suspend
+  private final void suspend(ComponentDescription desc) {
+    String cname = getClusterName(desc);
+    // not implemented yet!  maybe once Node is a real Container...
+    throw new UnsupportedOperationException(
+        "Suspend cluster ("+cname+") not implemented yet!");
+  }
+
+  // replace with Container's resume
+  private final void resume(ComponentDescription desc) {
+    String cname = getClusterName(desc);
+    // not implemented yet!  maybe once Node is a real Container...
+    throw new UnsupportedOperationException(
+        "Resume cluster ("+cname+") not implemented yet!");
+  }
+
+  // replace with Container's reload
+  private final void reload(ComponentDescription desc) {
+    String cname = getClusterName(desc);
+    // not implemented yet!  maybe once Node is a real Container...
+    throw new UnsupportedOperationException(
+        "Reload cluster ("+cname+") not implemented yet!");
+  }
+ 
+ 
   public void receiveMessage(Message m) {
     try {
-      if (m instanceof NodeMessage) {
-        if (m instanceof AddClustersMessage) {
-          // note that both startup and NodeController requests will 
-          // short-circuit the MessageTransport, and the NodeController
-          // requests will set the Originator to null.
-          loadClusters(((AddClustersMessage)m).getPropertyTree());
-        } else {
-          System.err.println(
-              "\n"+this+": Received unhandled Message: "+m);
+      if (m instanceof ComponentMessage) {
+        ComponentMessage cm = (ComponentMessage)m;
+        ComponentDescription desc = cm.getComponentDescription();
+        int operation = cm.getOperation();
+        switch (operation) {
+          case ComponentMessage.ADD:     add(desc);     break;
+          case ComponentMessage.REMOVE:  remove(desc);  break;
+          case ComponentMessage.SUSPEND: suspend(desc); break;
+          case ComponentMessage.RESUME:  resume(desc);  break;
+          case ComponentMessage.RELOAD:  reload(desc);  break;
+          default:
+            throw new UnsupportedOperationException(
+              "Unsupported ComponentMessage: "+m);
         }
+      } else if (m instanceof AddClustersMessage) {
+        // need this for batched cluster-add, at least until an
+        //   "AddAllComponentsMessage" is implemented.
+        PropertyTree pt = ((AddClustersMessage)m).getPropertyTree();
+        loadClusters(pt);
       } else {
-        System.err.println(
-            "\n"+this+": Received unhandled Message: "+m);
+        throw new UnsupportedOperationException(
+            "Unsupported Message: "+
+            ((m != null) ? m.getClass().getName() : "null"));
       }
     } catch (Exception e) {
-      System.err.println("Unhandled Exception: "+e);
+      System.err.println("Node received invalid message: "+e.getMessage());
       e.printStackTrace();
     }
   }
