@@ -100,8 +100,6 @@ public class AdaptivityEngine extends ServiceUserPlugin {
 
   private Play[] plays;
 
-  private Set missingConditions = new HashSet();
-
   private Listener playbookListener = new Listener();
 
   private Listener conditionListener = new Listener();
@@ -186,10 +184,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
       } else {
         if (debug) logger.debug("nothing changed");
       }
-      if (missingConditions.size() == 0) {
-        if (debug) logger.debug("updateOperatingModes");
-        updateOperatingModes();
-      }
+      if (debug) logger.debug("updateOperatingModes");
+      updateOperatingModes();
     }
   }
 
@@ -199,12 +195,10 @@ public class AdaptivityEngine extends ServiceUserPlugin {
 
   /**
    * Scan the current plays for required conditions and stash
-   * them in smMap for use in running the plays. Record the names of
-   * any that are missing in the missingConditions Set.
+   * them in smMap for use in running the plays.
    **/
   private void getConditions() {
     smMap.clear();
-    missingConditions.clear();
     for (int i = 0; i < plays.length; i++) {
       Play play = plays[i];
       for (Iterator x = play.getIfClause().iterator(); x.hasNext(); ) {
@@ -213,22 +207,11 @@ public class AdaptivityEngine extends ServiceUserPlugin {
           String name = (String) o;
           if (!smMap.containsKey(name)) {
             Condition sm = conditionService.getConditionByName(name);
-            if (sm == null) {
-              missingConditions.add(name);
-            } else {
+            if (sm != null) {
               smMap.put(name, sm);
             }
           }
         }
-      }
-    }
-    if (logger.isDebugEnabled()) {
-      if (missingConditions.size() > 0) {
-        for (Iterator i = missingConditions.iterator(); i.hasNext(); ) {
-          logger.debug("condition " + i.next() + " not availble");
-        }
-      } else {
-        logger.debug("Have all required conditions");
       }
     }
   }
