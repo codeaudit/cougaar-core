@@ -1,12 +1,30 @@
 2002-06-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* BufferedFilePersistence.java:
+	Enh #1547 -- Persists take long time, blocking agent progress
+	Persistence plugin that soaks up persistence output into ram
+	buffers and spools out the data to a (presumably slow) file
+	system. This allows the writing of a persistence snapshot to
+	complete more quickly and let the actual data writes proceed in
+	the background.
+
+	* BufferedFileSystem.java:
+	Enh #1547 -- Persists take long time, blocking agent progress
+	New file provides support for BufferedFilePersistence plugin.
+	Opens buffered file output streams using a separate thread to
+	spool the data to the file long after the stream has been written
+	and closed. Uses up to 10 MBytes of buffering. Provides hooks for
+	synchronizing renames and reads with the buffered output.
+
 	* FilePersistence.java:
 	* FilePersistenceBase.java:
+	Enh #1547 -- Persists take long time, blocking agent progress
 	Factored out the code common to all file-based persistence plugins
 	into FilePersistenceBase.java leaving just abstract method
 	implementations in FilePersistence.
 
 	* BasePersistence.java:
+	Enh #1547 -- Persists take long time, blocking agent progress
 	Use StringUtility.parseCSV() to parse plugin parameters. This
 	allows for quoting the separator character which is necessary for
 	specifying a drive letter in a directory name.
