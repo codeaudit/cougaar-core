@@ -8,6 +8,10 @@ import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.plan.AspectValue;
 import org.cougaar.domain.planning.ldm.plan.Context;
 import org.cougaar.domain.planning.ldm.plan.Expansion;
+import org.cougaar.domain.planning.ldm.plan.NewComposition;
+import org.cougaar.domain.planning.ldm.plan.MPTask;
+import org.cougaar.domain.planning.ldm.plan.NewMPTask;
+import org.cougaar.domain.planning.ldm.plan.Aggregation;
 import org.cougaar.domain.planning.ldm.plan.NewTask;
 import org.cougaar.domain.planning.ldm.plan.NewWorkflow;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
@@ -26,7 +30,12 @@ import org.cougaar.core.cluster.IncrementalSubscription;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.Subscriber;
 
+import org.cougaar.util.Enumerator;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 
@@ -114,7 +123,9 @@ public class PlugInHelper {
      * If <subTask> has no context, sets it to that of <parent>
      * Uses a null estimated AllocationResult for the expansion.
      */
-    public static Expansion wireExpansion(Task parent, NewTask subTask, RootFactory ldmf){
+    public static Expansion wireExpansion(Task parent, NewTask subTask,
+                                          RootFactory ldmf)
+    {
 	//use a null estimated allocation result
 	return wireExpansion(parent, subTask, ldmf, null);
     }
@@ -123,7 +134,9 @@ public class PlugInHelper {
      * Same as wireExpansion(Task, NewTask, RootFactory) but uses the
      * specified AllocationResult for the expansion.
      */
-    public static Expansion wireExpansion(Task parent, NewTask subTask, RootFactory ldmf, AllocationResult ar){
+    public static Expansion wireExpansion(Task parent, NewTask subTask,
+                                          RootFactory ldmf, AllocationResult ar)
+    {
 
 	NewWorkflow wf = ldmf.newWorkflow();
 
@@ -132,7 +145,8 @@ public class PlugInHelper {
         subTask.setParentTask(parent);
 	wf.addTask( subTask );
 
-    // Set the Context of the subTask to be that of the parent, unless it has already been set
+        // Set the Context of the subTask to be that of the parent, unless it
+        // has already been set
 	if (subTask.getContext() == null) {
 	    subTask.setContext(parent.getContext());
 	}
@@ -146,14 +160,15 @@ public class PlugInHelper {
     /**
      * Wire a new subtask into an existing expansion
      **/
-    public static void wireExpansion(Expansion exp, NewTask subTask){
+    public static void wireExpansion(Expansion exp, NewTask subTask) {
         Task parent = exp.getTask();
         NewWorkflow wf = (NewWorkflow) exp.getWorkflow();
         subTask.setParentTask(parent);
 	subTask.setWorkflow(wf);
 	wf.addTask(subTask);
 
-        // Set the Context of the subTask to be that of the parent, unless it has already been set
+        // Set the Context of the subTask to be that of the parent,
+        // unless it has already been set
 	if ( subTask.getContext() == null) {
 	    subTask.setContext(parent.getContext());
 	}
@@ -164,7 +179,9 @@ public class PlugInHelper {
    * of subtasks is used. All the subtasks in the Vector are added to the
    * Workflow.
    */
-    public static Expansion wireExpansion( Task parentTask, Vector subTasks, RootFactory ldmf ) {
+    public static Expansion wireExpansion(Task parentTask, Vector subTasks,
+                                          RootFactory ldmf)
+    {
 	return wireExpansion( parentTask, subTasks, ldmf, null);
     }
 
@@ -172,14 +189,17 @@ public class PlugInHelper {
      * Same as wireExpansion(Task, Vector, RootFactory) except uses
      * the specified AllocationResult
      */
-    public static Expansion wireExpansion( Task parentTask, Vector subTasks, RootFactory ldmf, AllocationResult ar ) {
-
+    public static Expansion wireExpansion(Task parentTask, Vector subTasks,
+                                          RootFactory ldmf,
+                                          AllocationResult ar)
+    {
 	NewWorkflow wf = ldmf.newWorkflow();
 
-	wf.setParentTask( parentTask );
+	wf.setParentTask(parentTask);
 
 	Context context = parentTask.getContext();
-	for (Enumeration esubTasks = subTasks.elements(); esubTasks.hasMoreElements(); ) {
+	for (Enumeration esubTasks = subTasks.elements();
+             esubTasks.hasMoreElements(); ) {
 	    NewTask myTask = (NewTask) esubTasks.nextElement();
 	    myTask.setWorkflow(wf);
 	    myTask.setParentTask(parentTask);
@@ -190,9 +210,7 @@ public class PlugInHelper {
 	    }
 	}
 
-	Expansion exp = ldmf.createExpansion(parentTask.getPlan(), parentTask, wf, ar);
-
-	return exp;
+	return ldmf.createExpansion(parentTask.getPlan(), parentTask, wf, ar);
     }
 
     /**
@@ -200,7 +218,7 @@ public class PlugInHelper {
      * has identical Verb, DirectObject, Plan, Preferences,
      * Context, and PrepositionalPhrases as <task>.
      */
-    public static NewTask makeSubtask( Task task, RootFactory rtFactory ) {
+    public static NewTask makeSubtask(Task task, RootFactory rtFactory) {
 
 	NewTask subtask = rtFactory.newTask();
 
@@ -220,10 +238,77 @@ public class PlugInHelper {
     public static void publishAddExpansion(Subscriber sub, Expansion exp) {
         sub.publishAdd(exp);
 
-        for (Enumeration esubTasks = exp.getWorkflow().getTasks(); esubTasks.hasMoreElements(); ) {
+        for (Enumeration esubTasks = exp.getWorkflow().getTasks();
+             esubTasks.hasMoreElements(); ) {
             Task myTask = (Task) esubTasks.nextElement();
             sub.publishAdd(myTask);
         }
+    }
+
+    // 2 wireaggregation methods -- one for a single parent and one for a
+    // Collection of parents
+
+    /**
+     * Connect a parent task to an MPTask. If the MPTask does not have
+     * a Composition one is created for it. The MPTask may already
+     * have other Aggregations.
+     * @return the Aggregation created. The caller is responsible for publishing
+     * the new Aggregation.
+     **/
+    public static Aggregation wireAggregation(Task parent, NewMPTask mpTask,
+                                              RootFactory ldmf,
+                                              AllocationResult ar)
+    {
+        NewComposition composition = (NewComposition) mpTask.getComposition();
+        if (composition == null) {
+            composition = ldmf.newComposition();
+            composition.setCombinedTask(mpTask);
+            mpTask.setComposition(composition);
+        }
+        Aggregation agg =
+            ldmf.createAggregation(parent.getPlan(), parent, composition, ar);
+        composition.addAggregation(agg);
+        mpTask.setParentTasks(new Enumerator(composition.getParentTasks()));
+        return agg;
+    }
+
+    /**
+     * Connect a Collection of parent tasks to an MPTask. If the
+     * MPTask does not have a Composition one is created for it. The
+     * MPTask may already have other Aggregations. An estimated
+     * AllocationResult is created for all Aggregations having a
+     * confidence rating and success flag as specified by the
+     * arguments.
+     * @param parents the parents to be wired to the MPTask
+     * @param mpTask the MPTask of the aggregation
+     * @param ldmf the factory
+     * @param confrating the confidence rating of all the created Aggregations
+     * @param success the "success" flag for all the created Aggregations
+     * @return a Collection of the Aggregations created. These have _not_ been
+     * published. The caller is responsible for publishing them.
+     **/
+    public static Collection wireAggregation(Collection parents, NewMPTask mpTask,
+                                             RootFactory ldmf,
+                                             double confrating, boolean success)
+    {
+        NewComposition composition = (NewComposition) mpTask.getComposition();
+        if (composition == null) {
+            composition = ldmf.newComposition();
+            composition.setCombinedTask(mpTask);
+            mpTask.setComposition(composition);
+        }
+        ArrayList result = new ArrayList(parents.size());
+        for (Iterator i = parents.iterator(); i.hasNext(); ) {
+            Task parent = (Task) i.next();
+            AllocationResult ar =
+                createEstimatedAllocationResult(parent, ldmf, confrating, success);
+            Aggregation agg =
+                ldmf.createAggregation(parent.getPlan(), parent, composition, ar);
+            composition.addAggregation(agg);
+            result.add(agg);
+        }
+        mpTask.setParentTasks(new Enumerator(composition.getParentTasks()));
+        return result;
     }
 
     // TASK PREFERENCE UTILS (taken from glm/.../TaskUtils
