@@ -112,6 +112,7 @@ public class AgentManager
       try {
         nodeName = InetAddress.getLocalHost().getHostName();
       } catch (UnknownHostException uhe) {
+        throw new RuntimeException("Node name not specified and couldn't guess from local host name.", uhe);
       }
       if (nodeName == null) {
         throw new IllegalArgumentException("Node name not specified");
@@ -397,11 +398,17 @@ public class AgentManager
           cid = MessageAddress.getMessageAddress((String) o1);
         } else {
           // shouldn't happen
+	  // o1 unknown Object type!
+	  Logger logger = Logging.getLogger(AgentManager.class);
+	  if (logger.isWarnEnabled())
+	    logger.warn("Unknown object class in ComponentDescription List at CID spot: " + o1);
         }
       }
     } else {
-      // sometimes we get a null (e.g. agent binder)
+      // sometimes we get a null ComponentDesc parameter (e.g. agent binder)
+      // so cid will be null. This is OK.
     }
+
     return cid;
   }
 
