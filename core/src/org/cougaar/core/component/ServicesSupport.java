@@ -146,7 +146,7 @@ public abstract class ServicesSupport
       if (service != null && srl != null) {
         addServiceListener(new ServiceRevokedListener() {
             public void serviceRevoked(ServiceRevokedEvent re) {
-              if (serviceClass.equals(re.getBindingSite()))
+              if (serviceClass.equals(re.getRevokedService()))
                 srl.serviceRevoked(re);
             }
           });

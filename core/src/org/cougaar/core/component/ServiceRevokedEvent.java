@@ -11,20 +11,20 @@ package org.cougaar.core.component;
 
 import java.util.*;
 
-/** ServiceRevokedEvent indicates that a new service is available
- * in a given service context.
+/** ServiceRevokedEvent indicates that a service has been 
+ * revoked in a service context.
  * @see java.beans.beancontext.BeanContextServiceRevokedEvent
  **/
 public class ServiceRevokedEvent extends ServiceEvent {
-  private Class bindingSite;
+  private Class revokedService;
 
   /** Construct a ServiceRevokedEvent **/
-  ServiceRevokedEvent(Services services, Class bindingSite) {
+  ServiceRevokedEvent(Services services, Class revokedService) {
     super(services);
-    this.bindingSite = bindingSite;
+    this.revokedService = revokedService;
   }
 
   /** @return the revoked BindingSite **/
-  public final Class getBindingSite() { return bindingSite; }
+  public final Class getRevokedService() { return revokedService; }
 
 }
