@@ -4,9 +4,7 @@ Changed the third party charting software from Sitraka (was KLGroup)
 jcchart400K.jar to an upgrade of jcchart451K.jar.   Enables Inventory GUI 
 improvements.  Cannot mix and match different builds of glm and core.
 
-Added a new (experimental) JDBC Connection pool facility, 
-JDBCConnectionManager.  Existing SQL plugins will be ported to use
-this facility.
+Promoted Delta's DBConnectionPool facility to org.cougaar.util.
 
 * MB 7.0.1
 
