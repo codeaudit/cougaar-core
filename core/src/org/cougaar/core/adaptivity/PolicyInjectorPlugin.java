@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.IOException;
 import java.io.StreamTokenizer;
+import java.util.Iterator;
 
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.plugin.PluginBindingSite;
@@ -31,6 +32,10 @@ import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.LoggingService;
 
+/**
+ * Plugin that reads policies from files and publishes them
+ * to the blackboard
+ **/
 public class PolicyInjectorPlugin extends ComponentPlugin {
 
   private LoggingService logger;
@@ -48,26 +53,29 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
   }
 
   public void setupSubscriptions() {
-    String policyFileName = getParameters().iterator().next().toString();
-    try {
-      Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
-      try {
-        Parser p = new Parser(is, logger);
-        policies = p.parseOperatingModePolicies();
-      } finally {
-        is.close();
-      }
-    } catch (Exception e) {
-      logger.error("Error parsing policy file", e);
-    }
     String here = ((PluginBindingSite)getBindingSite()).getAgentIdentifier().toString();
+    for (Iterator fileIterator = getParameters().iterator(); 
+	 fileIterator.hasNext();) {
+      String policyFileName = fileIterator.next().toString();
+      try {
+	Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
+	try {
+	  Parser p = new Parser(is, logger);
+	  policies = p.parseOperatingModePolicies();
+	} finally {
+	  is.close();
+	}
+      } catch (Exception e) {
+	logger.error("Error parsing policy file " + policyFileName, e);
+      }
+    }
     for (int i=0; i<policies.length; i++) {
       policies[i].setAuthority(here);
       uidService.registerUniqueObject(policies[i]);
       blackboard.publishAdd(policies[i]);
     }
   }
-
+  
   public void execute() {
   }
 
