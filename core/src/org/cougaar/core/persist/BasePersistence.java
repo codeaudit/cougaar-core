@@ -661,8 +661,12 @@ public class BasePersistence
   private RehydrationResult rehydrateOneDelta(PersistencePlugin ppi, int deltaNumber, boolean lastDelta)
     throws IOException, ClassNotFoundException
   {
-    return rehydrateFromStream(ppi.openObjectInputStream(deltaNumber),
-                               deltaNumber, lastDelta);
+    ObjectInputStream ois = ppi.openObjectInputStream(deltaNumber);
+    try {
+      return rehydrateFromStream(ois, deltaNumber, lastDelta);
+    } finally {
+      ppi.closeObjectInputStream(deltaNumber, ois);
+    }
   }
 
   private RehydrationResult rehydrateFromBytes(byte[] bytes)
@@ -721,16 +725,6 @@ public class BasePersistence
     catch (IOException e) {
       logger.error("IOException reading " + (lastDelta ? "last " : " ") + "delta " + deltaNumber);
       throw e;
-    }
-    finally {
-      if ((currentPersistPluginInfo != null) &&
-          (currentPersistPluginInfo.ppi != null)) {
-        currentPersistPluginInfo.ppi.closeObjectInputStream(deltaNumber, currentInput);
-      } else {
-        System.err.println(
-            "WARNING: readFromStream with null currentPersistPluginInfo[.ppi],"+
-            " will skip object-stream close");
-      }
     }
   }
 

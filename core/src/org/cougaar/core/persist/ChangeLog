@@ -1,3 +1,10 @@
+2002-04-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Move the "finally" clause from rehydrateFromStream to the caller
+	(rehydrateOneDelta) where access to the correct persistence plugin
+	is possible.
+
 2002-04-19  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PersistenceControlPlugin.java:
