@@ -24,33 +24,36 @@ package org.cougaar.core.persist;
 import java.sql.Connection;
 import org.cougaar.core.adaptivity.OMCRange;
 import org.cougaar.core.adaptivity.OMCRangeList;
+import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.Logger;
 
 /**
  * Adapter to simplify writing PersistencePlugin implementations.
  * Implements several methods in the PersistencePlugin API that often
  * need not be specialized in individual implementaions.
  **/
-public class PersistencePluginAdapter {
+public abstract class PersistencePluginAdapter implements PersistenceNames {
   protected static final String[] emptyStringArray = new String[0];
   protected static final OMCRangeList emptyOMCRangeList =
     new OMCRangeList(new OMCRange[0]);
-  protected static final String ARCHIVE_COUNT =
-    PersistencePlugin.ARCHIVE_COUNT_PARAM.substring(0, PersistencePlugin.ARCHIVE_COUNT_PARAM.length() - 1);
   protected static String[] controlNames = {
-    ARCHIVE_COUNT
+    PERSISTENCE_ARCHIVE_COUNT_NAME
   };
   protected PersistencePluginSupport pps;
 
   protected String name;
   protected String[] params;
   protected int archiveCount;     // The number of archives to keep
+  protected int consolidationPeriod;
+  protected long persistenceInterval;
+  protected boolean writable = true;
 
   protected void init(PersistencePluginSupport pps, String name, String[] params) {
     this.pps = pps;
     this.name = name;
     this.params = params;
     try {
-      archiveCount = Integer.parseInt(System.getProperty("org.cougaar.core.persistence.archiveCount"));
+      archiveCount = Integer.parseInt(System.getProperty(PERSISTENCE_ARCHIVE_COUNT_PROP));
     } catch (Exception e) {
       if (Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled")) {
         archiveCount = 0;
@@ -58,19 +61,38 @@ public class PersistencePluginAdapter {
         archiveCount = Integer.MAX_VALUE;
       }
     }
+    Logger logger = pps.getLogger();
     for (int i = 0; i < params.length; i++) {
       String param = params[i];
-      if (param.startsWith(PersistencePlugin.ARCHIVE_COUNT_PARAM)) {
-        try {
-          archiveCount = Integer.parseInt(param.substring(PersistencePlugin.ARCHIVE_COUNT_PARAM.length()));
-          break;
-        } catch (Exception e) {
-          pps.getLogger().error("Parse error " + param);
+      try {
+        if (param.startsWith(PERSISTENCE_ARCHIVE_COUNT_PREFIX)) {
+          archiveCount = Integer.parseInt(param.substring(PERSISTENCE_ARCHIVE_COUNT_PREFIX.length()));
+          if (logger.isDebugEnabled()) logger.debug("archiveCount=" + archiveCount);
+          continue;
         }
+        if (param.startsWith(PERSISTENCE_INTERVAL_PREFIX)) {
+          persistenceInterval = Long.parseLong(param.substring(PERSISTENCE_INTERVAL_PREFIX.length()));
+          if (logger.isDebugEnabled()) logger.debug("persistenceInterval=" + persistenceInterval);
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_CONSOLIDATION_PERIOD_PREFIX)) {
+          consolidationPeriod = Integer.parseInt(param.substring(PERSISTENCE_CONSOLIDATION_PERIOD_PREFIX.length()));
+          if (logger.isDebugEnabled()) logger.debug("consolidationPeriod=" + consolidationPeriod);
+          continue;
+        }
+        if (param.startsWith(PERSISTENCE_DISABLE_WRITE_PREFIX)) {
+          writable = !"true".equals(param.substring(PERSISTENCE_DISABLE_WRITE_PREFIX.length()));
+          if (logger.isDebugEnabled()) logger.debug("writable=" + writable);
+          continue;
+        }
+        handleParameter(param);
+      } catch (Exception e) {
+        pps.getLogger().error("Parse error " + param);
       }
     }
-    pps.getLogger().debug("archiveCount=" + archiveCount);
   }
+
+  protected abstract void handleParameter(String param);
 
   protected String parseParamValue(String param, String key) {
     if (param.startsWith(key)) {
@@ -81,6 +103,30 @@ public class PersistencePluginAdapter {
 
   public String getName() {
     return name;
+  }
+
+  public boolean isWritable() {
+    return writable;
+  }
+
+  public void setWritable(boolean newWritable) {
+    writable = newWritable;
+  }
+
+  public long getPersistenceInterval() {
+    return persistenceInterval;
+  }
+
+  public void setPersistenceInterval(long newInterval) {
+    persistenceInterval = newInterval;
+  }
+
+  public int getConsolidationPeriod() {
+    return consolidationPeriod;
+  }
+
+  public void setConsolidationPeriod(int newPeriod) {
+    consolidationPeriod = newPeriod;
   }
 
   public int getParamCount() {
@@ -96,14 +142,14 @@ public class PersistencePluginAdapter {
   }
 
   public OMCRangeList getControlValues(String controlName) {
-    if (ARCHIVE_COUNT.equals(controlName)) {
+    if (PERSISTENCE_ARCHIVE_COUNT_NAME.equals(controlName)) {
       return new OMCRangeList(new Integer(0), new Integer(Integer.MAX_VALUE));
     }
     return emptyOMCRangeList;   // Should never be called
   }
   
   public void setControl(String controlName, Comparable newValue) {
-    if (ARCHIVE_COUNT.equals(controlName)) {
+    if (PERSISTENCE_ARCHIVE_COUNT_NAME.equals(controlName)) {
       archiveCount = ((Integer) newValue).intValue();
     }
   }

@@ -67,51 +67,53 @@ import org.cougaar.util.log.Logger;
  **/
 public abstract class FilePersistenceBase
   extends PersistencePluginAdapter
-  implements PersistencePlugin
+  implements PersistencePlugin, PersistenceNames
 {
   private static final String NEWSEQUENCE = "newSequence";
   private static final String SEQUENCE = "sequence";
   private static final String MUTEX = "mutex";
   private static final String OWNER = "owner";
   private static final long MUTEX_TIMEOUT = 60000L;
-  private static final String PERSISTENCE_ROOT_PARAM =
-    "persistenceRoot=";
 
-  private static File getDefaultPersistenceRoot() {
+  private static File getDefaultPersistenceRoot(String name) {
     String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
     File workspaceDirectory =
       new File(System.getProperty("org.cougaar.workspace", installPath + "/workspace"));
     return new File(workspaceDirectory,
-                    System.getProperty("org.cougaar.core.persistence.path", "P"));
+                    System.getProperty("org.cougaar.core.persistence.path", name));
   }
 
   private File persistenceDirectory;
+  private File persistenceRoot;
   private File ownerFile;
   private String instanceId;
   private FileMutex mutex;
   private int deltaNumber;      // The number of the currently open output file.
 
-  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
-    throws PersistenceException
-  {
-    init(pps, name, params);
-    File persistenceRoot;
-    if (params.length == 1 && params[0].indexOf('=') < 0) {
-      String path = params[0];
-      persistenceRoot = new File(path);
+  protected void handleParameter(String param) {
+    String value;
+    if ((value = parseParamValue(param, PERSISTENCE_ROOT_PREFIX)) != null) {
+      persistenceRoot = new File(value);
     } else {
-      persistenceRoot = getDefaultPersistenceRoot();
-    }
-    for (int i = 0; i < params.length; i++) {
-      String param = params[i];
-      String value;
-      if ((value = parseParamValue(param, PERSISTENCE_ROOT_PARAM)) != null) {
-        persistenceRoot = new File(value);
-        continue;
-      }
       if (pps.getLogger().isWarnEnabled()) {
         pps.getLogger().warn(name + ": Unrecognized parameter " + param);
       }
+    }
+  }
+
+  public void init(PersistencePluginSupport pps,
+                   String name,
+                   String[] params,
+                   boolean deleteOldPersistence)
+    throws PersistenceException
+  {
+    // Special case for old-style nameless first parameter (means persistenceRoot=<param>)
+    if (params.length == 1 && params[0].indexOf('=') < 0) {
+      params[0] = PERSISTENCE_ROOT_PREFIX + params[0];
+    }
+    init(pps, name, params);
+    if (persistenceRoot == null) {
+      persistenceRoot = getDefaultPersistenceRoot(name);
     }
     persistenceRoot.mkdirs();
     if (!persistenceRoot.isDirectory()) {

@@ -43,6 +43,14 @@ public class DummyPersistence
     init(pps, name, params);
   }
 
+  protected void handleParameter(String param) {
+    // Ignore params
+  }
+
+  public boolean isWritable() {
+    return true;                // Cannot be disabled.
+  }
+
   public SequenceNumbers[] readSequenceNumbers(String suffix) {
     return new SequenceNumbers[0];
   }

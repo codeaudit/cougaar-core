@@ -122,6 +122,37 @@ public class DatabasePersistence
     return dflt;
   }
 
+  protected void handleParameter(String param) {
+    String value;
+    if ((value = parseParamValue(param, PERSISTENCE_DB_DRIVER_PREFIX)) != null) {
+      databaseDriver = value;
+      return;
+    }
+    if ((value = parseParamValue(param, PERSISTENCE_DB_URL_PREFIX)) != null) {
+      databaseURL = value;
+      return;
+    }
+    if ((value = parseParamValue(param, PERSISTENCE_DB_USER_PREFIX)) != null) {
+      databaseUser = value;
+      return;
+    }
+    if ((value = parseParamValue(param, PERSISTENCE_DB_PASSWORD_PREFIX)) != null) {
+      databasePassword = value;
+      return;
+    }
+    if ((value = parseParamValue(param, PERSISTENCE_DB_INTDEF_PREFIX)) != null) {
+      intDef = value;
+      return;
+    }
+    if ((value = parseParamValue(param, PERSISTENCE_DB_LONGBINARYDEF_PREFIX)) != null) {
+      longBinaryDef = value;
+      return;
+    }
+    if (pps.getLogger().isWarnEnabled()) {
+      pps.getLogger().warn(name + ": Unrecognized parameter " + param);
+    }
+  }
+
   public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
@@ -136,13 +167,7 @@ public class DatabasePersistence
       }
       ls.info(buf.toString());
     }
-    deltaTable = "delta_" + clusterName;
-    databaseDriver = parseParam("driver=", databaseDriver);
-    databaseURL = parseParam("url=", databaseURL);
-    databaseUser = parseParam("user=", databaseUser);
-    databasePassword = parseParam("password=", databasePassword);
-    intDef = parseParam("intDef=", intDef);
-    longBinaryDef = parseParam("longBinaryDef=", longBinaryDef);
+    deltaTable = name + "_" + clusterName;
     if (databaseDriver != null) {
       try {
         Class.forName(databaseDriver);
