@@ -55,7 +55,8 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerFactory;
 
 /**
- * Logic provider to transmit and update Relay objects.
+ * A {@link LogicProvider} to transmit and update {@link Relay}
+ * objects.
  *
  * @see Relay
  */
@@ -85,7 +86,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
    * target responses back to the source.
    * @param o an EnvelopeTuple where the tuple.object is
    *    a Relay.Source or Relay.Target
-   **/
+   */
   public void execute(EnvelopeTuple o, Collection changes) {
     Object obj = o.getObject();
     if (obj instanceof Relay) { // Quick test for Target or Source
@@ -140,7 +141,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   /**
    * Handle a change to this source. We need to send the new content
    * to the targets.
-   **/
+   */
   private void localChange(Relay.Source rs, Collection changes) {
     Set targets = rs.getTargets();
     Collection oldTargets = null;
@@ -214,7 +215,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   /**
    * Handle a change to this target. We need to send the new response
    * to the source
-   **/
+   */
   private void localResponse(Relay.Target rt, Collection changes) {
     MessageAddress source = rt.getSource();
     if (source == null) return; // No source
@@ -397,9 +398,9 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   // RestartLogicProvider implementation
 
   /**
-   * Cluster restart handler. Resend all our Relay.Source again and
+   * Agent restart handler. Resend all our Relay.Source again and
    * send verification directives for all our Relay.Targets.
-   **/
+   */
   public void restart(final MessageAddress cid) {
     if (logger.isInfoEnabled()) {
       logger.info(

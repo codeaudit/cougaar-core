@@ -33,10 +33,13 @@ import java.util.Set;
 import org.cougaar.core.blackboard.ChangeReport;
 
 /**
- * A ChangeReport to be used when publishing changes to the target set
- * of a Relay. Failure to do so will cause dangling relay targets in
- * agents that are no longer in the target set.
- *
+ * A {@link ChangeReport} to change the targets of a relay.
+ * <p>
+ * This ChangeReport must be used used when publishing changes to the
+ * <b>target</b> set of a Relay (as opposed to the relay's content).
+ * Failure to do so will cause dangling relay targets in agents that
+ * are no longer in the target set.
+ * <p>
  * Usage is:<pre>
  *   Collection changes = Collections.singleton(new RelayChangeReport(relay));
  *   relay.setTargets(newTargets);
@@ -49,14 +52,14 @@ import org.cougaar.core.blackboard.ChangeReport;
  * carries a copy of the old set to the RelayLP which uses it to
  * insure that the old targets are correctly reconciled with the new
  * targets.
- **/
+ */
 public class RelayChangeReport implements ChangeReport {
   private Collection oldTargets;
 
   /**
    * Constructor from a Relay.Source. The about-to-become-old targets
    * are recorded.
-   **/
+   */
   public RelayChangeReport(Relay.Source rs) {
     Set targets = rs.getTargets();
     oldTargets = new ArrayList(targets.size());
@@ -66,7 +69,7 @@ public class RelayChangeReport implements ChangeReport {
   /**
    * Get the recorded list of old target addresses. For use by the
    * RelayLP.
-   **/
+   */
   Collection getOldTargets() {
     return oldTargets;
   }

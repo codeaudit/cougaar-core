@@ -35,7 +35,7 @@ import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
 
 /**
- * Implementation of SimpleRelay.
+ * Implementation of {@link SimpleRelay}.
  * <p>
  * Components must compare their local agent's address to the
  * "getSource()" and "getTarget()" addresses to decide whether they

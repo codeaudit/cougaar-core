@@ -115,7 +115,7 @@ public interface Relay extends UniqueObject {
      * Get the address of the Agent holding the Source copy of this
      * Relay. If null is returned, then responses will not be sent.
      * @return the address from which this Relay came.
-     **/
+     */
     MessageAddress getSource();
 
     /**

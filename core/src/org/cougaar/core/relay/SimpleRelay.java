@@ -31,7 +31,7 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
 /**
- * Blackboard object API to send a query object to a remote agent,
+ * A blackboard object API to send a query object to a remote agent,
  * which can optionally reply back to the sender.
  * <p>
  * Multiple rounds of query/reply are supported.

@@ -42,8 +42,8 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Example SimpleRelay client, which both sends relays and replies
- * to them.
+ * This component is an example {@link SimpleRelay} client, which
+ * both sends relays and replies to them.
  * <p>
  * To use, add this component to an agent and specify a target,
  * for example in "AgentA" with a target of "AgentB":<pre> 

@@ -30,10 +30,10 @@ import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.util.UID;
 
 /**
- * Define Directives for Relay messages. Directives can add, change,
- * and remove a Relay.Target and send responses back to the
- * Relay.Source.
- **/
+ * A {@link org.cougaar.core.blackboard.Directive} for relay
+ * messages, which can add/change/remove a {@link Relay.Target} and
+ * send responses back to the {@link Relay.Source}.
+ */
 public abstract class RelayDirective extends DirectiveImpl {
   protected final UID uid;
 
