@@ -19,7 +19,7 @@ import org.cougaar.util.TimeSpan;
 /**
  * A RelationshipImpl is the encapsulation of a time phased relationship
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: RelationshipImpl.java,v 1.1 2000-12-15 20:16:44 mthome Exp $
+ * @version $Id: RelationshipImpl.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
  **/
 
 public class RelationshipImpl extends ScheduleElementImpl 
@@ -92,6 +92,7 @@ public class RelationshipImpl extends ScheduleElementImpl
     
     return (getRoleA().equals(other.getRoleA()) &&
             getA().equals(other.getA()) &&
+            getRoleB().equals(other.getRoleB()) &&
             getB().equals(other.getB()) && 
             getStartTime() == other.getStartTime() &&
             getEndTime() == other.getEndTime());

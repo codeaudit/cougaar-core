@@ -42,8 +42,8 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterObjectFactory.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
- * @version $Id: ClusterObjectFactory.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
  *
  * @see org.cougaar.component.ComponentServesPlugIn
  */
@@ -54,6 +54,7 @@ public interface ClusterObjectFactory {
   NewAssetAssignment newAssetAssignment();
   NewComposition newComposition();
   NewConstraint newConstraint();
+
   NewAssignedRelationshipElement newAssignedRelationshipElement();
   NewAssignedRelationshipElement newAssignedRelationshipElement(Asset assetA,
                                                                 Role roleA,
@@ -198,16 +199,16 @@ public interface ClusterObjectFactory {
   NewSchedule newSimpleSchedule(long startTime, long endTime);
   
   /** Create an assigned relationship schedule.  This schedule is a container
-   * of AssignedRelationshipElements. Should only be used in AssetAssignment 
-   * directives.
+   * of AssignedRelationshipElements. Should only be used by logic providers
+   * in handling new/modified/removed AssetTransfers.
    * @param Enumeration{AssignedRelationshipElement}
    * @see org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement
    **/
   NewSchedule newAssignedRelationshipSchedule(Enumeration elements);
 
   /** Create an empty assigned relationship schedule. Schedule elements added
-   * later must be AssignedRelationshipElements. Schedule should only be 
-   * use for AssetAssignment directives.
+   * later must be AssignedRelationshipElements. Should only be used by logic 
+   * providers in handling new/modified/removed AssetTransfers.
    * @see org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement
    **/
   NewSchedule newAssignedRelationshipSchedule();

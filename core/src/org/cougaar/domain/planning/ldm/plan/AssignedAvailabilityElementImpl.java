@@ -16,7 +16,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * AssignedAvailabilityElement represents the availability to a specific asset
  * over a time interval.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedAvailabilityElementImpl.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: AssignedAvailabilityElementImpl.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
  **/
 
 
@@ -47,5 +47,27 @@ public class AssignedAvailabilityElementImpl extends ScheduleElementImpl
     myAssignee = assignee;
   }
 
+  /** 
+   * equals - performs field by field comparison
+   *
+   * @param object Object to compare
+   * @return boolean if 'same' 
+   */
+  public boolean equals(Object object) {
+    if (object == this) {
+      return true;
+    }
+
+    if (!(object instanceof AssignedAvailabilityElement)) {
+      return false;
+    }
+
+    AssignedAvailabilityElement other = (AssignedAvailabilityElement)object;
+
+    
+    return (getAssignee().equals(other.getAssignee()) &&
+            getStartTime() == other.getStartTime() &&
+            getEndTime() == other.getEndTime());
+  }
   
 }

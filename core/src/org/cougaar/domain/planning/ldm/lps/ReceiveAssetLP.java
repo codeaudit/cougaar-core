@@ -30,12 +30,13 @@ import org.cougaar.domain.planning.ldm.plan.NewSchedule;
 import org.cougaar.domain.planning.ldm.plan.Relationship;
 import org.cougaar.domain.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.domain.planning.ldm.plan.Role;
-import org.cougaar.domain.planning.ldm.plan.RoleSchedule;
 import org.cougaar.domain.planning.ldm.plan.Schedule;
 import org.cougaar.domain.planning.ldm.plan.ScheduleElement;
 
 import org.cougaar.util.Enumerator;
+import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
+import org.cougaar.util.UnaryPredicate;
 
 
 /**
@@ -45,8 +46,11 @@ import org.cougaar.util.TimeSpan;
   * other subscribers.
   **/
 
-public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogicProvider
-{
+public class ReceiveAssetLP extends LogPlanLogicProvider 
+  implements MessageLogicProvider {
+
+  private static TimeSpan ETERNITY = new MutableTimeSpan();
+
   public ReceiveAssetLP(LogPlanServesLogicProvider logplan,
                        ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
@@ -113,7 +117,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
         removeExistingRelationships(aa.getSchedule(), rs_a, rs_assignee);
       } 
 
-      addRelationships(aa.getSchedule(), rs_a, rs_assignee);
+      addRelationships(aa, rs_a, rs_assignee);
       
       Collection changeReports = new ArrayList();
       changeReports.add(new RelationshipSchedule.RelationshipScheduleChangeReport());
@@ -139,7 +143,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
       } 
     }
 
-    // fix up the available schedule
+    // fix up the available schedule for the transferring asset
     fixAvailSchedule(aa, asset, assignee);
 
     // publish the add or change
@@ -158,7 +162,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
 
   }
 
-  protected void addRelationships(Schedule aaSchedule,
+  protected void addRelationships(AssetAssignment aa,
                                   RelationshipSchedule transferringSchedule,
                                   RelationshipSchedule receivingSchedule) {
     Asset transferring = (Asset)transferringSchedule.getHasRelationships();
@@ -166,25 +170,13 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
 
     Asset receiving = (Asset)receivingSchedule.getHasRelationships();
     String receivingID = receiving.getItemIdentificationPG().getItemIdentification();
-    
-    synchronized (aaSchedule) {
-      Iterator iterator = aaSchedule.iterator();
-      
-      while (iterator.hasNext()) {
-        AssignedRelationshipElement aaRelationship = 
-          (AssignedRelationshipElement)iterator.next();
-        
-        Relationship localRelationship = ldmf.newRelationship(aaRelationship,
-                                                              transferring,
-                                                              receiving);
-        transferringSchedule.add(localRelationship);
-        
-        localRelationship = ldmf.newRelationship(aaRelationship,
-                                                 transferring,
-                                                 receiving);
-        receivingSchedule.add(localRelationship);
-      }
-    }
+
+    Collection localRelationships = convertToRelationships(aa,
+                                                           transferring,
+                                                           receiving);
+    transferringSchedule.addAll(localRelationships);
+
+    receivingSchedule.addAll(localRelationships);
   }
 
   private void removeExistingRelationships(Schedule aaSchedule,
@@ -200,35 +192,39 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
     String receivingID = 
       ((Asset) receivingAsset).getItemIdentificationPG().getItemIdentification();
 
-    Iterator aaIterator = aaSchedule.iterator();
-
-    while (aaIterator.hasNext()) {
+    //Safe because aaSchedule should be an AssignedRelationshipSchedule - 
+    // supports iterator(). (Assumption is that AssignedRelationshipSchedule
+    // is only used by LPs.)
+    for (Iterator aaIterator = aaSchedule.iterator();
+         aaIterator.hasNext();) {
       AssignedRelationshipElement aaRelationship = 
         (AssignedRelationshipElement) aaIterator.next();
       
       Role role = (aaRelationship.getItemIDA().equals(receivingID)) ?
         aaRelationship.getRoleA() : aaRelationship.getRoleB();
-                                                                            
+      
       Collection remove = 
         transferringSchedule.getMatchingRelationships(role,
                                                       receivingAsset,
-                                                      TimeSpan.MIN_VALUE,
-                                                      TimeSpan.MAX_VALUE);
+                                                      ETERNITY);
+      
       transferringSchedule.removeAll(remove);
-
+      
       role = (aaRelationship.getItemIDA().equals(transferringID)) ?
         aaRelationship.getRoleA() : aaRelationship.getRoleB();
       remove = 
         receivingSchedule.getMatchingRelationships(role,
                                                    transferringAsset,
-                                                   TimeSpan.MIN_VALUE,
-                                                   TimeSpan.MAX_VALUE);
+                                                   ETERNITY);
+      
       receivingSchedule.removeAll(remove);
     }
   }
 
+  // Update availability info for the transferred asset
+  // AvailableSchedule reflects availability within the current cluster
   private void fixAvailSchedule(AssetAssignment aa, Asset asset,
-                                Asset assignee) {
+                                final Asset assignee) {
     NewSchedule availSchedule = 
       (NewSchedule)asset.getRoleSchedule().getAvailableSchedule();
 
@@ -237,47 +233,72 @@ public class ReceiveAssetLP extends LogPlanLogicProvider implements MessageLogic
       ((NewRoleSchedule)asset.getRoleSchedule()).setAvailableSchedule(availSchedule);
     }
 
-    if ((aa.isUpdate() || aa.isRepeat()) || 
-        (related(asset) && related(assignee))) {
-      // Remove existing entries 
-      Iterator iterator = availSchedule.iterator();
-      while (iterator.hasNext()) {
-        Object next = iterator.next();
-        if ((next instanceof AssignedAvailabilityElement) &&
-            (((AssignedAvailabilityElement)next).getAssignee().equals(assignee))) {
-          iterator.remove();
+    synchronized (availSchedule) {
+
+      if ((aa.isUpdate() || aa.isRepeat()) || 
+          (related(asset) && related(assignee))) {
+        Collection remove = availSchedule.filter(new UnaryPredicate() {
+          public boolean execute(Object o) {
+            return ((o instanceof AssignedAvailabilityElement) &&
+                     (((AssignedAvailabilityElement)o).getAssignee().equals(assignee)));
+          }
+        });
+        availSchedule.removeAll(remove);
+      }
+      
+      //Add entries to the available schedule using the assignee
+      if (related(asset) && related(assignee)) {
+        //Construct aggregate avail info from the relationship schedule
+        RelationshipSchedule relationshipSchedule = 
+          ((HasRelationships)asset).getRelationshipSchedule();
+        Collection collection = 
+          relationshipSchedule.getMatchingRelationships((HasRelationships)assignee,
+                                                        ETERNITY);
+        
+        // If any relationships, add a single avail element with the 
+        // min start and max end
+        if (collection.size() > 0) {
+          Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
+          availSchedule.add(ldmf.newAssignedAvailabilityElement(assignee,
+                                                                schedule.getStartTime(),
+                                                                schedule.getEndTime()));
+        }
+      } else {
+        //Copy availability info directly from aa schedule
+
+        //Don't iterate over schedule directly because Schedule doesn't support
+        //iterator().
+        Iterator iterator = new ArrayList(aa.getSchedule()).iterator();
+        while (iterator.hasNext()) {
+          ScheduleElement avail = (ScheduleElement)iterator.next();
+          availSchedule.add(ldmf.newAssignedAvailabilityElement(assignee, 
+                                                                avail.getStartTime(),
+                                                                avail.getEndTime()));
         }
       }
+    } // end sync block
+  }
+
+  protected Collection convertToRelationships(AssetAssignment aa,
+                                              Asset transferring,
+                                              Asset receiving) {
+    ArrayList relationships = new ArrayList(aa.getSchedule().size());
+
+    //Safe because aaSchedule should be an AssignedRelationshipSchedule - 
+    // supports iterator(). (Assumption is that AssignedRelationshipSchedule
+    // is only used by LPs.)
+    for (Iterator iterator = aa.getSchedule().iterator();
+         iterator.hasNext();) {
+      AssignedRelationshipElement aaRelationship = 
+        (AssignedRelationshipElement)iterator.next();
+      
+      Relationship localRelationship = ldmf.newRelationship(aaRelationship,
+                                                            transferring,
+                                                            receiving);
+      relationships.add(localRelationship);
     }
     
-    //Add entries to the available schedule using the assignee
-    if (related(asset) && related(assignee)) {
-      //Construct aggregate avail info from the relationship schedule
-      RelationshipSchedule relationshipSchedule = 
-        ((HasRelationships)asset).getRelationshipSchedule();
-      Collection collection = 
-        relationshipSchedule.getMatchingRelationships((HasRelationships)assignee,
-                                                      TimeSpan.MIN_VALUE,
-                                                      TimeSpan.MAX_VALUE);
-
-      // If any relationships, add a single avail element with the 
-      // min start and max end
-      if (collection.size() > 0) {
-        Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
-        availSchedule.add(ldmf.newAssignedAvailabilityElement(assignee,
-                                                              schedule.getStartTime(),
-                                                              schedule.getEndTime()));
-      }
-    } else {
-      //Copy availability info directly from aa schedule
-      Iterator iterator = aa.getSchedule().iterator();
-      while (iterator.hasNext()) {
-        ScheduleElement avail = (ScheduleElement)iterator.next();
-        availSchedule.add(ldmf.newAssignedAvailabilityElement(assignee, 
-                                                              avail.getStartTime(),
-                                                              avail.getEndTime()));
-      }
-    }
+    return relationships;
   }
 }
 

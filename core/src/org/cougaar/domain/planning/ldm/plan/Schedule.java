@@ -10,7 +10,6 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
-import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;
 
@@ -50,6 +49,11 @@ public interface Schedule
         
   /** Apply a Thunk to each ScheduleElement in the Schedule **/
   void applyThunkToScheduleElements(Thunk t);
+
+  /** return subset of elements which meet the specified predicate
+   * @return Collection(ScheduleElements)
+   */
+  Collection filter(UnaryPredicate predicate);
 
   /**
    * @deprecated Use getScheduleElementsWithTime(long aTime)

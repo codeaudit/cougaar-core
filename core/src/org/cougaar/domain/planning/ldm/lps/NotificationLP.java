@@ -22,13 +22,11 @@ import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.domain.planning.ldm.plan.Disposition;
 import org.cougaar.domain.planning.ldm.plan.Expansion;
-import org.cougaar.domain.planning.ldm.plan.HasRelationships;
 import org.cougaar.domain.planning.ldm.plan.MPTask;
 import org.cougaar.domain.planning.ldm.plan.NewNotification;
 import org.cougaar.domain.planning.ldm.plan.NewTask;
 import org.cougaar.domain.planning.ldm.plan.PEforCollections;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
-import org.cougaar.domain.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.domain.planning.ldm.plan.ScheduleElement;
 import org.cougaar.domain.planning.ldm.plan.Task;
 import org.cougaar.domain.planning.ldm.plan.TaskScoreTable;
@@ -44,7 +42,7 @@ import java.util.Collection;
  * rescinded PlanElements (removed from collection)
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NotificationLP.java,v 1.1 2000-12-15 20:16:45 mthome Exp $
+  * @version $Id: NotificationLP.java,v 1.2 2001-01-04 19:14:20 ngivler Exp $
   **/
 
 public class NotificationLP

@@ -89,6 +89,16 @@ public class RelationshipScheduleImpl extends ScheduleImpl
     return true;
   }
 
+  /** getMatchingRelationships - return all Relationships which pass the
+   * specified UnaryPredicate.
+   * 
+   * @param predicate UnaryPredicate to use in screening Relationships
+   * @return a sorted Collection containing all Relationships which
+   * which pass the specified UnaryPredicate
+   **/
+  public synchronized Collection getMatchingRelationships(UnaryPredicate predicate) {
+    return Filters.filter(protectedIterator(), predicate);
+  }
 
   /** getMatchingRelationships - return all Relationships which contain the
    * specified role.
@@ -97,9 +107,9 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified Role
    **/
-  public Collection getMatchingRelationships(final Role role) {
+  public synchronized Collection getMatchingRelationships(final Role role) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(this, new UnaryPredicate() {
+    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return schedule.getOtherRole(relationship).equals(role);
@@ -116,11 +126,11 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified Role and overlap the specified time span
    **/
-  public Collection getMatchingRelationships(final Role role, 
-                                             final long startTime, 
-                                             final long endTime) {
+  public synchronized Collection getMatchingRelationships(final Role role, 
+                                                          final long startTime, 
+                                                          final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(this, new UnaryPredicate() {
+    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).equals(role)) &&
@@ -139,8 +149,8 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified Role and overlap the specified time span
    **/
-  public Collection getMatchingRelationships(final Role role, 
-                                             final TimeSpan timeSpan) {
+  public synchronized Collection getMatchingRelationships(final Role role, 
+                                                          final TimeSpan timeSpan) {
     return getMatchingRelationships(role, timeSpan.getStartTime(),
                                     timeSpan.getEndTime());
   }
@@ -156,12 +166,12 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * which match the specified Role, direct object flag and overlap the 
    * specified time span
    **/
-  public Collection getMatchingRelationships(final Role role, 
-                                             final HasRelationships other,
-                                             final long startTime, 
-                                             final long endTime) {
+  public synchronized Collection getMatchingRelationships(final Role role, 
+                                                          final HasRelationships other,
+                                                          final long startTime, 
+                                                          final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(this, new UnaryPredicate() {
+    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).equals(role)) &&
@@ -183,9 +193,9 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified Role and overlap the specified time span
    **/
-  public Collection getMatchingRelationships(final Role role, 
-                                             final HasRelationships other,
-                                             final TimeSpan timeSpan) {
+  public synchronized Collection getMatchingRelationships(final Role role, 
+                                                          final HasRelationships other,
+                                                          final TimeSpan timeSpan) {
     return getMatchingRelationships(role,
                                     other,
                                     timeSpan.getStartTime(), 
@@ -202,11 +212,11 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * which match the specified Role, direct object flag and overlap the 
    * specified time span
    **/
-  public Collection getMatchingRelationships(final HasRelationships other,
-                                             final long startTime, 
-                                             final long endTime) {
+  public synchronized Collection getMatchingRelationships(final HasRelationships other,
+                                                          final long startTime, 
+                                                          final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(this, new UnaryPredicate() {
+    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOther(relationship).equals(other)) &&
@@ -224,8 +234,8 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified Role and overlap the specified time span
    **/
-  public Collection getMatchingRelationships(final HasRelationships other,
-                                             final TimeSpan timeSpan) {
+  public synchronized Collection getMatchingRelationships(final HasRelationships other,
+                                                          final TimeSpan timeSpan) {
     return getMatchingRelationships(other,
                                     timeSpan.getStartTime(), 
                                     timeSpan.getEndTime());
@@ -241,11 +251,11 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * which match the specified role suffix and overlap the 
    * specified time span
    **/
-  public Collection getMatchingRelationships(final String roleSuffix,
-                                             final long startTime, 
-                                             final long endTime) {
+  public synchronized Collection getMatchingRelationships(final String roleSuffix,
+                                                          final long startTime, 
+                                                          final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(this, new UnaryPredicate() {
+    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).getName().endsWith(roleSuffix)) &&
@@ -263,10 +273,42 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * @return a sorted Collection containing all Relationships which
    * which match the specified role suffix and overlap the specified time span
    **/
-  public Collection getMatchingRelationships(final String roleSuffix,
-                                             final TimeSpan timeSpan) {
+  public synchronized Collection getMatchingRelationships(final String roleSuffix,
+                                                          final TimeSpan timeSpan) {
     return getMatchingRelationships(roleSuffix,
                                     timeSpan.getStartTime(), 
+                                    timeSpan.getEndTime());
+  }
+
+
+  /** getMatchingRelationships - return all Relationships which overlap the 
+   * specified time span. 
+   * 
+   * @param startTime long specifying the start of the time span
+   * @param endTime long specifying the end of the time span
+   * @return a sorted Collection containing all Relationships which
+   * which match overlap the specified time span
+   **/
+  public synchronized Collection getMatchingRelationships(final long startTime, 
+                                                          final long endTime) {
+    return Filters.filter(protectedIterator(), new UnaryPredicate() {
+      public boolean execute(Object obj) {
+        Relationship relationship = (Relationship)obj;
+        return ((relationship.getStartTime() < endTime) &&
+                (relationship.getEndTime() > startTime));
+      }
+    });
+  }
+
+  /** getMatchingRelationships - return all Relationships which overlap the 
+   * specified time span.
+   * 
+   * @param timeSpan TimeSpan 
+   * @return a sorted Collection containing all Relationships which
+   * which contain overlap the specified time span
+   **/
+  public synchronized Collection getMatchingRelationships(final TimeSpan timeSpan) {
+    return getMatchingRelationships(timeSpan.getStartTime(), 
                                     timeSpan.getEndTime());
   }
 

@@ -41,8 +41,8 @@ public final class Filters {
     return (subset==null)?emptyCollection:subset;
   }
 
-  /** Compute the subset of the Collection which satisfies the Predicate.
-   * Any ordering of the original Collection is maintained.
+  /** Compute the subset of the List which satisfies the Predicate.
+   * Any ordering of the original List is maintained.
    * @return a Collection which is always actually an ArrayList.
    **/
   public static Collection filter(List c, UnaryPredicate p) {
@@ -50,6 +50,28 @@ public final class Filters {
     int l = c.size();
     for (int i = 0; i<l; i++) {
       Object element = c.get(i);
+      if (p.execute(element)) {
+        if (subset == null) subset = new ArrayList(5);
+        subset.add(element);
+      }
+    }
+    return (subset==null)?emptyCollection:subset;
+  }
+
+  /** Compute the subset of the Collection which satisfies the Predicate.
+   * Any ordering of the original Collection is maintained.
+   * @return a Collection which is always actually an ArrayList.
+   **/
+  /** Compute the subset of the Collection underlying the specified Iterator
+   * which satisfies the Predicate.
+   * Any ordering of the original Collection is maintained.
+   * @param iterator Iterator over Collection to be filtered.
+   * @return a Collection which is always actually an ArrayList.
+   **/
+  public static Collection filter(Iterator iterator, UnaryPredicate p) {
+    ArrayList subset = null;
+    while (iterator.hasNext()) {
+      Object element = iterator.next();
       if (p.execute(element)) {
         if (subset == null) subset = new ArrayList(5);
         subset.add(element);

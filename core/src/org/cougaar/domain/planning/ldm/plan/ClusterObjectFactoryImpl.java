@@ -279,8 +279,8 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
 
     if ((asset instanceof HasRelationships) &&
         (rescindeeAsset instanceof HasRelationships) &&
-        (!rescindSchedule.getScheduleType().equals(ScheduleType.ASSIGNED_RELATIONSHIP))) {
-      throw new IllegalArgumentException("bad argument: cof.newAssetRescind: schedule must be " + ScheduleType.ASSIGNED_RELATIONSHIP + " for assets which implement HasRelationships");
+        (!(rescindSchedule instanceof AssignedRelationshipScheduleImpl))) {
+      throw new IllegalArgumentException("bad argument: cof.newAssetRescind: schedule must be " + AssignedRelationshipScheduleImpl.class + " for assets which implement HasRelationships");
     } 
       
     return new AssetRescindImpl(cid, 
@@ -324,28 +324,24 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
   }
 
   /** Create an assigned relationship schedule.  This schedule is a container
-   * of AssignedRelationshipElements. Should only be used in AssetAssignment 
-   * directives.
+   * of AssignedRelationshipElements. Should only be used by logic providers
+   * in handling new/modified/removed AssetTransfers 
    * @param Enumeration{AssignedRelationshipElement}
    * @see org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement
    **/
   public NewSchedule newAssignedRelationshipSchedule(Enumeration elements) {
-    ScheduleImpl s = new ScheduleImpl();
-    s.setScheduleType(ScheduleType.ASSIGNED_RELATIONSHIP);
-    s.setScheduleElementType(ScheduleElementType.ASSIGNED_RELATIONSHIP);
+    ScheduleImpl s = new AssignedRelationshipScheduleImpl();
     s.setScheduleElements(elements);
     return s;
   }
 
   /** Create an empty assigned relationship schedule. Schedule elements added
-   * later must be AssignedRelationshipElements. Schedule should only be 
-   * use for AssetAssignment directives.
+   * later must be AssignedRelationshipElements. Should only be used by logic 
+   * providers in handling new/modified/removed AssetTransfers 
    * @see org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement
    **/
   public NewSchedule newAssignedRelationshipSchedule() {
-    ScheduleImpl s = new ScheduleImpl();
-    s.setScheduleType(ScheduleType.ASSIGNED_RELATIONSHIP);
-    s.setScheduleElementType(ScheduleElementType.ASSIGNED_RELATIONSHIP);
+    ScheduleImpl s = new AssignedRelationshipScheduleImpl();
     return s;
   }
 

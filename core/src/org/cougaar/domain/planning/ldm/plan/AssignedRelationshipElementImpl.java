@@ -19,7 +19,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * ItemIdentification from their ItemIdentificationPG
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedRelationshipElementImpl.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: AssignedRelationshipElementImpl.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
  **/
 
 public class AssignedRelationshipElementImpl extends ScheduleElementImpl
@@ -136,6 +136,32 @@ public class AssignedRelationshipElementImpl extends ScheduleElementImpl
    **/
   public void setRoleB(Role role) {
     myRoleB = role;
+  }
+
+  /** 
+   * equals - performs field by field comparison
+   *
+   * @param object Object to compare
+   * @return boolean if 'same' 
+   */
+  public boolean equals(Object object) {
+    if (object == this) {
+      return true;
+    }
+
+    if (!(object instanceof AssignedRelationshipElement)) {
+      return false;
+    }
+
+    AssignedRelationshipElement other = (AssignedRelationshipElement)object;
+
+    
+    return (getItemIDA().equals(other.getItemIDA()) &&
+            getRoleA().equals(other.getRoleA()) &&
+            getItemIDB().equals(other.getItemIDB()) && 
+            getRoleB().equals(other.getRoleB()) &&
+            getStartTime() == other.getStartTime() &&
+            getEndTime() == other.getEndTime());
   }
   
 }

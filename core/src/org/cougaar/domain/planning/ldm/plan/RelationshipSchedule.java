@@ -14,6 +14,7 @@ import java.util.Collection;
 
 import org.cougaar.core.cluster.ChangeReport;
 import org.cougaar.util.TimeSpan;
+import org.cougaar.util.UnaryPredicate;
 
 /** 
  * A RelationshipSchedule is a representation of an object (must implement
@@ -27,6 +28,15 @@ public interface RelationshipSchedule extends Schedule {
    * the schedule
    */
   HasRelationships getHasRelationships();
+
+  /** getMatchingRelationships - return all Relationships which pass the
+   * specified UnaryPredicate.
+   * 
+   * @param predicate UnaryPredicate to use in screening Relationships
+   * @return a sorted Collection containing all Relationships which
+   * which pass the specified UnaryPredicate
+   **/
+  public Collection getMatchingRelationships(UnaryPredicate predicate);
 
   /** getMatchingRelationships - return all Relationships where the other 
    * has the specified role. getMatchingRelationships(SUBORDINATE) returns 
@@ -145,6 +155,27 @@ public interface RelationshipSchedule extends Schedule {
    **/
   Collection getMatchingRelationships(String roleSuffix,
                                       TimeSpan timeSpan);
+
+
+  /** getMatchingRelationships - return all Relationships which overlap the 
+   * specified time span. 
+   * 
+   * @param startTime long specifying the start of the time span
+   * @param endTime long specifying the end of the time span
+   * @return a sorted Collection containing all Relationships which
+   * which match overlap the specified time span
+   **/
+  Collection getMatchingRelationships(long startTime,
+                                      long endTime);
+
+  /** getMatchingRelationships - return all Relationships which overlap the 
+   * specified time span.
+   * 
+   * @param timeSpan TimeSpan 
+   * @return a sorted Collection containing all Relationships which
+   * which contain overlap the specified time span
+   **/
+  Collection getMatchingRelationships(TimeSpan timeSpan);
 
   /** getMyRole - return role for schedule's HasRelationships in the specified
    * relationship.

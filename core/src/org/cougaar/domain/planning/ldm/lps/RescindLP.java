@@ -43,7 +43,9 @@ import org.cougaar.domain.planning.ldm.plan.TaskRescind;
 import org.cougaar.core.society.UID;
 
 import org.cougaar.util.Enumerator;
+import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
+import org.cougaar.util.UnaryPredicate;
 
 import java.util.*;
 
@@ -195,8 +197,10 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       rescindSchedule = ldmf.newAssignedRelationshipSchedule();
       RelationshipSchedule transferSchedule = 
         ((HasRelationships)at.getAsset()).getRelationshipSchedule();
+      Collection transferRelationships = 
+        transferSchedule.getMatchingRelationships(new MutableTimeSpan());
 
-      for (Iterator iterator = transferSchedule.iterator();
+      for (Iterator iterator = transferRelationships.iterator();
            iterator.hasNext();) {
         Relationship relationship = (Relationship)iterator.next();
         ((NewSchedule)rescindSchedule).add(ldmf.newAssignedRelationshipElement(relationship));
@@ -218,30 +222,33 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       }
 
       // Update local relationship schedules
-      localAsset.getRelationshipSchedule().removeAll(transferSchedule);
-      localAssignee.getRelationshipSchedule().removeAll(transferSchedule);
+      RelationshipSchedule localSchedule = localAsset.getRelationshipSchedule();
+      localSchedule.removeAll(transferRelationships);        
+      
+      localSchedule = localAssignee.getRelationshipSchedule();
+      localSchedule.removeAll(transferRelationships);
       
       // Update assignee avail
       // Remove all current entries denoting asset avail to assignee
       NewSchedule assigneeAvailSchedule = 
         (NewSchedule)((Asset)localAssignee).getRoleSchedule().getAvailableSchedule();
-
-      for (Iterator iterator = assigneeAvailSchedule.iterator();
-           iterator.hasNext();) {
-        Object next = iterator.next();
-        if ((next instanceof AssignedAvailabilityElement) &&
-            (((AssignedAvailabilityElement)next).getAssignee().equals(localAsset))) {
-          iterator.remove();
-        }
-      }
+      synchronized (assigneeAvailSchedule) {
+        final Asset asset = (Asset)localAsset;
+        Collection remove = assigneeAvailSchedule.filter(new UnaryPredicate() {
+          public boolean execute(Object o) {
+            return ((o instanceof AssignedAvailabilityElement) &&
+                    (((AssignedAvailabilityElement)o).getAssignee().equals(asset)));
+          }  
+        });
+        assigneeAvailSchedule.removeAll(remove);
+      } // end sync block
 
       // Get all relationships with asset
       RelationshipSchedule relationshipSchedule = 
         (localAssignee).getRelationshipSchedule();
       Collection collection = 
         relationshipSchedule.getMatchingRelationships(localAsset,
-                                                      TimeSpan.MIN_VALUE,
-                                                      TimeSpan.MAX_VALUE);
+                                                      new MutableTimeSpan());
       
       // If any relationships, add a single avail element with the 
       // min start and max end
@@ -249,9 +256,11 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
         
         // Add a new avail element
-        assigneeAvailSchedule.add(ldmf.newAssignedAvailabilityElement((Asset)localAsset,
-                                                                      schedule.getStartTime(),
-                                                                      schedule.getEndTime()));
+        synchronized (assigneeAvailSchedule) {
+          assigneeAvailSchedule.add(ldmf.newAssignedAvailabilityElement((Asset)localAsset,
+                                                                        schedule.getStartTime(),
+                                                                        schedule.getEndTime()));
+        }
       }
 
       logplan.change(localAsset, null);

@@ -29,6 +29,7 @@ import org.cougaar.domain.planning.ldm.plan.Schedule;
 import org.cougaar.core.society.UID;
 
 import org.cougaar.util.Enumerator;
+import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
 
@@ -99,23 +100,18 @@ public class ReceiveAssetRescindLP
 
 
     // Remove matching relationships
-    for (Iterator iterator = ar.getSchedule().iterator(); 
-         iterator.hasNext();) {
-      AssignedRelationshipElement rescindElement = 
-        (AssignedRelationshipElement)iterator.next();
-      
-      Relationship relationship = ldmf.newRelationship(rescindElement,
-                                                       asset,
-                                                       assignee);
-      
-      assetRelationshipSchedule.remove(relationship);
-      assigneeRelationshipSchedule.remove(relationship);
-    }
+    Collection rescinds = convertToRelationships(ar, asset, assignee);
+
+    assetRelationshipSchedule.removeAll(rescinds);
+
+    assigneeRelationshipSchedule.removeAll(rescinds);
   }
 
+  // Update availability info for the asset (aka transferring asset)
+  // AvailableSchedule reflects availablity within the current cluster
   private void updateAvailSchedule(AssetRescind ar,
                                    Asset asset,
-                                   Asset assignee) {
+                                   final Asset assignee) {
 
     NewSchedule assetAvailSchedule = 
       (NewSchedule)asset.getRoleSchedule().getAvailableSchedule();
@@ -124,7 +120,9 @@ public class ReceiveAssetRescindLP
         !(assignee instanceof HasRelationships)) {
     
       // Remove Matching Availabilities
-      assetAvailSchedule.removeAll(ar.getSchedule());
+      synchronized (assetAvailSchedule) {
+        assetAvailSchedule.removeAll(ar.getSchedule());
+      }
 
       // We're done
       return;
@@ -134,33 +132,56 @@ public class ReceiveAssetRescindLP
     //based on the relationship schedule
 
     // Remove all current entries denoting asset avail to assignee
-    for (Iterator iterator = assetAvailSchedule.iterator();
-         iterator.hasNext();) {
-      Object next = iterator.next();
-      if ((next instanceof AssignedAvailabilityElement) &&
-          (((AssignedAvailabilityElement)next).getAssignee().equals(assignee))) {
-        iterator.remove();
+    synchronized (assetAvailSchedule) {
+      Collection remove = assetAvailSchedule.filter(new UnaryPredicate() {
+        public boolean execute(Object o) {
+          return ((o instanceof AssignedAvailabilityElement) &&
+                  (((AssignedAvailabilityElement)o).getAssignee().equals(assignee)));
+        }  
+      });
+      assetAvailSchedule.removeAll(remove);
+      
+      // Get all relationships between asset and assignee
+      RelationshipSchedule relationshipSchedule = 
+        ((HasRelationships)asset).getRelationshipSchedule();
+      Collection collection = 
+        relationshipSchedule.getMatchingRelationships((HasRelationships)assignee,
+                                                      new MutableTimeSpan());
+      
+      // If any relationships, add a single avail element with the 
+      // min start and max end
+      if (collection.size() > 0) {
+        Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
+        
+        // Add a new avail element
+        assetAvailSchedule.add(ldmf.newAssignedAvailabilityElement(assignee,
+                                                                   schedule.getStartTime(),
+                                                                   schedule.getEndTime()));
       }
+    } // end sync block
+  }
+
+  protected Collection convertToRelationships(AssetRescind ar,
+                                              Asset asset,
+                                              Asset assignee) {
+    ArrayList relationships = new ArrayList(ar.getSchedule().size());
+
+    // Safe because ar.getSchedule is an AssignedRelationshipScheduleImpl.
+    // AssignedRelationshipImpl supports iterator. (Assumption is that
+    // AssignedRelaionshipImpl is only used/processed by LPs.)
+    for (Iterator iterator = ar.getSchedule().iterator(); 
+         iterator.hasNext();) {
+      AssignedRelationshipElement rescindElement = 
+        (AssignedRelationshipElement)iterator.next();
+      
+      Relationship relationship = ldmf.newRelationship(rescindElement,
+                                                       asset,
+                                                       assignee);
+      
+      relationships.add(relationship);
     }
 
-    // Get all relationships with assignee.
-    RelationshipSchedule relationshipSchedule = 
-      ((HasRelationships)asset).getRelationshipSchedule();
-    Collection collection = 
-      relationshipSchedule.getMatchingRelationships((HasRelationships)assignee,
-                                                    TimeSpan.MIN_VALUE,
-                                                    TimeSpan.MAX_VALUE);
-
-    // If any relationships, add a single avail element with the 
-    // min start and max end
-    if (collection.size() > 0) {
-      Schedule schedule = ldmf.newSchedule(new Enumerator(collection));
-
-      // Add a new avail element
-      assetAvailSchedule.add(ldmf.newAssignedAvailabilityElement(assignee,
-                                                                 schedule.getStartTime(),
-                                                                 schedule.getEndTime()));
-    }
+    return relationships;
   }
 }
  

@@ -43,14 +43,6 @@ public class TimeSpanSet
       }
     }
   }
-
-  public boolean contains(Object o) {
-    if (o instanceof TimeSpan) {
-      return find((TimeSpan)o) != -1;
-    }
-    return false;
-  }
-
   public boolean add(Object o) {
     if (! (o instanceof TimeSpan)) 
       throw new IllegalArgumentException();
@@ -63,16 +55,8 @@ public class TimeSpanSet
     return true;
   }
 
-  public boolean remove(Object o) {
-    // find it faster
-    if (o instanceof TimeSpan) {
-      int i = find((TimeSpan)o);
-      if (i == -1) return false;
-      super.remove(i);
-      return true;
-    } else {
-      return false;
-    }
+  public void add(int i, Object o) {
+    throw new UnsupportedOperationException("TimeSpanSet.add(int index, Object o) is not supported."); 
   }
 
   public boolean addAll(Collection c) {
@@ -89,6 +73,28 @@ public class TimeSpanSet
     throw new UnsupportedOperationException("TimeSpanSet.addAll(int index, Collection c) is not supported."); 
   }
 
+  public boolean contains(Object o) {
+    if (o instanceof TimeSpan) {
+      return find((TimeSpan)o) != -1;
+    }
+    return false;
+  }
+
+  public boolean remove(Object o) {
+    // find it faster
+    if (o instanceof TimeSpan) {
+      int i = find((TimeSpan)o);
+      if (i == -1) return false;
+      super.remove(i);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public Object set(int index, Object element) {
+    throw new UnsupportedOperationException("TimeSpanSet.set(int index, Object element) is not supported."); 
+  }
 
   public String toString() {
     // do we want to change the implementation here?
@@ -105,7 +111,7 @@ public class TimeSpanSet
   public final SortedSet headSet(Object toElement){
     throw new UnsupportedOperationException();
   }
-  public final Object last() {
+  public Object last() {
     int l = size;
     return (l > 0)?elementData[l-1]:null;
   }
@@ -160,6 +166,118 @@ public class TimeSpanSet
       }
     };
 
+
+  /** @return the intersecting Element with the smallest timespan.
+   * The result is undefined if there is a tie for smallest and null 
+   * if there are no elements.
+   **/
+  public Object getMinimalIntersectingElement(final long time) {
+    int l = size;
+    if (l==0) return null;
+
+    TimeSpan best = null;
+    long bestd = TimeSpan.MAX_VALUE-TimeSpan.MIN_VALUE;
+
+    for (int i = 0; i<l; i++) {
+      TimeSpan ts = (TimeSpan) elementData[i];
+      long t0 = ts.getStartTime();
+      if (time<t0) break; // if the element is after our point, we're done
+
+      long t1 = ts.getEndTime();
+      if (t1<time) continue; // if the point is after the endpoint, we continue
+
+      long d=t1-t0;
+      if (best ==null ||
+          (d < bestd) ) {
+        best = ts;
+        bestd = d;
+      }
+    }
+    return best;
+  }
+
+  /** @return the subset of elements which meet the specified predicate.
+   **/
+  public Collection filter(UnaryPredicate predicate) {
+    return Filters.filter(this, predicate);
+  }
+
+  /** @return the subset of elements which intersect with 
+   * the specified time.
+   **/
+  public final Collection intersectingSet(final long time) {
+    return filter(new UnaryPredicate() {
+        public boolean execute(Object o) {
+          TimeSpan ts = (TimeSpan) o;
+          return (time >= ts.getStartTime() &&
+                  time < ts.getEndTime());
+        }
+      });
+  }
+
+  /** @return the subset of elements which intersect with the
+   * specified time span.
+   **/
+  public final Collection intersectingSet(final long startTime, 
+                                          final long endTime) {
+    return filter(new UnaryPredicate() {
+        public boolean execute(Object o) {
+          TimeSpan ts = (TimeSpan) o;
+          return (ts.getStartTime()<endTime &&
+                  ts.getEndTime()>startTime);
+        }
+      });
+  }
+  
+  /** @return the subset of elements which intersect with the
+   * specified time span.
+   **/
+  public final Collection intersectingSet(TimeSpan span) {
+    return intersectingSet(span.getStartTime(), span.getEndTime());
+  }
+
+  /** @return the subset of elements which are completely enclosed
+   * by the specified time span.
+   **/
+  public final Collection encapsulatedSet(final long startTime, 
+                                          final long endTime) {
+    return filter(new UnaryPredicate() {
+        public boolean execute(Object o) {
+          TimeSpan ts = (TimeSpan) o;
+          return (ts.getStartTime()>=startTime &&
+                  ts.getEndTime()<=endTime);
+        }
+      });
+  }
+
+  /** @return the subset of elements which are completely enclosed
+   * by the specified time span.
+   **/
+  public final Collection encapsulatedSet(TimeSpan span) {
+    return encapsulatedSet(span.getStartTime(), span.getEndTime());
+  }
+
+  /** @return the subset of elements which completely enclose
+   * the specified time span.
+   **/
+  public final Collection encapsulatingSet(final long startTime, 
+                                           final long endTime) {
+    return filter(new UnaryPredicate() {
+        public boolean execute(Object o) {
+          TimeSpan ts = (TimeSpan) o;
+          return (startTime <= ts.getStartTime() &&
+                  endTime >= ts.getEndTime());
+        }
+      });
+  }
+    
+  /** @return the subset of elements which completely enclose
+   * the specified time span.
+   **/
+  public final Collection encapsulatingSet(TimeSpan span) {
+    return encapsulatingSet(span.getStartTime(), span.getEndTime());
+  }
+
   // private support
 
   /** 
@@ -208,109 +326,6 @@ public class TimeSpanSet
     }
     return l;
   }
-
-  /** @return the intersecting Element with the smallest timespan.
-   * The result is undefined if there is a tie for smallest and null 
-   * if there are no elements.
-   **/
-  public final Object getMinimalIntersectingElement(final long time) {
-    int l = size;
-    if (l==0) return null;
-
-    TimeSpan best = null;
-    long bestd = TimeSpan.MAX_VALUE-TimeSpan.MIN_VALUE;
-
-    for (int i = 0; i<l; i++) {
-      TimeSpan ts = (TimeSpan) elementData[i];
-      long t0 = ts.getStartTime();
-      if (time<t0) break; // if the element is after our point, we're done
-
-      long t1 = ts.getEndTime();
-      if (t1<time) continue; // if the point is after the endpoint, we continue
-
-      long d=t1-t0;
-      if (best ==null ||
-          (d < bestd) ) {
-        best = ts;
-        bestd = d;
-      }
-    }
-    return best;
-  }
-
-  /** @return the subset of elements which intersect with 
-   * the specified time.
-   **/
-  public final Collection intersectingSet(final long time) {
-    return Filters.filter(this, new UnaryPredicate() {
-        public boolean execute(Object o) {
-          TimeSpan ts = (TimeSpan) o;
-          return (time >= ts.getStartTime() &&
-                  time < ts.getEndTime());
-        }
-      });
-  }
-
-  /** @return the subset of elements which intersect with the
-   * specified time span.
-   **/
-  public final Collection intersectingSet(final long startTime, final long endTime) {
-    return Filters.filter(this, new UnaryPredicate() {
-        public boolean execute(Object o) {
-          TimeSpan ts = (TimeSpan) o;
-          return (ts.getStartTime()<endTime &&
-                  ts.getEndTime()>startTime);
-        }
-      });
-  }
-  
-  /** @return the subset of elements which intersect with the
-   * specified time span.
-   **/
-  public final Collection intersectingSet(TimeSpan span) {
-    return intersectingSet(span.getStartTime(), span.getEndTime());
-  }
-
-  /** @return the subset of elements which are completely enclosed
-   * by the specified time span.
-   **/
-  public final Collection encapsulatedSet(final long startTime, final long endTime) {
-    return Filters.filter(this, new UnaryPredicate() {
-        public boolean execute(Object o) {
-          TimeSpan ts = (TimeSpan) o;
-          return (ts.getStartTime()>=startTime &&
-                  ts.getEndTime()<=endTime);
-        }
-      });
-  }
-
-  /** @return the subset of elements which are completely enclosed
-   * by the specified time span.
-   **/
-  public final Collection encapsulatedSet(TimeSpan span) {
-    return encapsulatedSet(span.getStartTime(), span.getEndTime());
-  }
-
-  /** @return the subset of elements which completely enclose
-   * the specified time span.
-   **/
-  public final Collection encapsulatingSet(final long startTime, final long endTime) {
-    return Filters.filter(this, new UnaryPredicate() {
-        public boolean execute(Object o) {
-          TimeSpan ts = (TimeSpan) o;
-          return (startTime <= ts.getStartTime() &&
-                  endTime >= ts.getEndTime());
-        }
-      });
-  }
-    
-  /** @return the subset of elements which completely enclose
-   * the specified time span.
-   **/
-  public final Collection encapsulatingSet(TimeSpan span) {
-    return encapsulatingSet(span.getStartTime(), span.getEndTime());
-  }
-
 
   public static void main(String arg[]) {
     class X implements TimeSpan {

@@ -17,25 +17,23 @@ import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 
 import org.cougaar.domain.planning.ldm.plan.AssetAssignment;
 import org.cougaar.domain.planning.ldm.plan.AssetTransfer;
-import org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement;
 import org.cougaar.domain.planning.ldm.plan.AssignedAvailabilityElement;
+import org.cougaar.domain.planning.ldm.plan.AssignedRelationshipElement;
 import org.cougaar.domain.planning.ldm.plan.HasRelationships;
 import org.cougaar.domain.planning.ldm.plan.NewAssetAssignment;
 import org.cougaar.domain.planning.ldm.plan.NewAssetVerification;
 import org.cougaar.domain.planning.ldm.plan.NewRelationshipSchedule;
 import org.cougaar.domain.planning.ldm.plan.NewRoleSchedule;
 import org.cougaar.domain.planning.ldm.plan.NewSchedule;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
 import org.cougaar.domain.planning.ldm.plan.Relationship;
 import org.cougaar.domain.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.domain.planning.ldm.plan.RelationshipScheduleImpl;
 import org.cougaar.domain.planning.ldm.plan.Role;
 import org.cougaar.domain.planning.ldm.plan.Schedule;
-import org.cougaar.domain.planning.ldm.plan.ScheduleElement;
 
 import org.cougaar.util.Debug;
-
 import org.cougaar.util.Enumerator;
+import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
 
@@ -52,6 +50,7 @@ public class AssetTransferLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
+  private static TimeSpan ETERNITY = new MutableTimeSpan();
 
   public AssetTransferLP(LogPlanServesLogicProvider logplan,
                          ClusterServesLogicProvider cluster) {
@@ -132,16 +131,17 @@ public class AssetTransferLP
 
         HashMap hash = new HashMap(3);
 
-        RelationshipScheduleImpl relationshipSchedule = 
-          (RelationshipScheduleImpl)((HasRelationships)asset).getRelationshipSchedule();
+        RelationshipSchedule relationshipSchedule = 
+          (RelationshipSchedule)((HasRelationships)asset).getRelationshipSchedule();
 
-        for (Iterator iterator = relationshipSchedule.iterator();
+        Collection relationships = new ArrayList(relationshipSchedule);
+        for (Iterator iterator = relationships.iterator();
              iterator.hasNext();) {
           Relationship relationship = (Relationship)iterator.next();
-
+          
           Asset otherAsset = 
             (Asset)relationshipSchedule.getOther(relationship);
-
+          
           NewSchedule verifySchedule = (NewSchedule)hash.get(otherAsset);
           if (verifySchedule == null) {
             verifySchedule = ldmf.newAssignedRelationshipSchedule();
@@ -150,14 +150,13 @@ public class AssetTransferLP
           
           verifySchedule.add(ldmf.newAssignedRelationshipElement(relationship));
         }
-        
+
         for (Iterator iterator = hash.keySet().iterator();
              iterator.hasNext();) {
           Asset receivingAsset = (Asset)iterator.next();
-
-          Schedule verifySchedule = 
-            (RelationshipSchedule)hash.get(receivingAsset);
-                                 
+          
+          Schedule verifySchedule = (Schedule)hash.get(receivingAsset);
+          
           NewAssetVerification nav = 
             ldmf.newAssetVerification(ldmf.cloneInstance(asset),
                                       ldmf.cloneInstance(receivingAsset),
@@ -211,10 +210,10 @@ public class AssetTransferLP
       // Clear role and relationship schedules to ensure that there 
       // are no dangling references to other organizations.
       Asset asset = naa.getAsset();
-      if (((HasRelationships )asset).getRelationshipSchedule() != 
-          null) {
-        ((HasRelationships )asset).getRelationshipSchedule().clear();
-      }
+      RelationshipSchedule relationshipSchedule = 
+        ((HasRelationships )asset).getRelationshipSchedule();
+      relationshipSchedule = null;
+
       if (asset.getRoleSchedule() != null) {
         asset.getRoleSchedule().clear();
       } 
@@ -223,10 +222,11 @@ public class AssetTransferLP
       }
 
       Asset assignee = naa.getAssignee();
-      if (((HasRelationships )assignee).getRelationshipSchedule() != 
-          null) {
-        ((HasRelationships )assignee).getRelationshipSchedule().clear();
-      }
+      relationshipSchedule = 
+        ((HasRelationships )assignee).getRelationshipSchedule();
+      relationshipSchedule = null;
+
+
       if (assignee.getRoleSchedule() != null) {
         assignee.getRoleSchedule().clear();
       } 
@@ -245,28 +245,37 @@ public class AssetTransferLP
   }
          
   private Schedule makeAARelationshipSchedule(NewAssetAssignment naa, 
-                                              AssetTransfer at) { 
+                                              final AssetTransfer at) { 
     
     // construct appropriate relationship schedule for the asset assignment
     Schedule aaAssetSchedule = 
       ldmf.newAssignedRelationshipSchedule();
-    
-    Iterator iterator = 
-      ((HasRelationships)at.getAsset()).getRelationshipSchedule().iterator();
-    while (iterator.hasNext()) {
-      Relationship relationship = (Relationship)iterator.next();
-      
-      // Verify that all relationships are with the receiver
-      if (!(relationship.getA().equals(at.getAssignee())) &&
-          !(relationship.getB().equals(at.getAssignee()))) {
-        System.err.println("AssetTransferLP: Relationships on the " + 
-                           " AssetTransfer must be limited to the " + 
-                           " transferring and receiving asset.\n" + 
-                           "Dropping relationship " + relationship + 
-                           " on transfer of " + at.getAsset() + " to " + 
-                           at.getAssignee());
-        continue;
+
+    RelationshipSchedule relationshipSchedule = 
+      ((HasRelationships)at.getAsset()).getRelationshipSchedule();
+    Collection relationships = relationshipSchedule.filter(new UnaryPredicate() {
+      public boolean execute(Object o) {
+        Relationship relationship = (Relationship)o;        
+
+        // Verify that all relationships are with the receiver
+        if (!(relationship.getA().equals(at.getAssignee())) &&
+            !(relationship.getB().equals(at.getAssignee()))) {
+          System.err.println("AssetTransferLP: Relationships on the " + 
+                             " AssetTransfer must be limited to the " + 
+                             " transferring and receiving asset.\n" + 
+                             "Dropping relationship " + relationship + 
+                             " on transfer of " + at.getAsset() + " to " + 
+                             at.getAssignee());
+          return false;
+        } else {
+          return true;
+        }
       }
+    });
+
+    for (Iterator iterator = relationships.iterator();
+         iterator.hasNext();) {
+      Relationship relationship = (Relationship)iterator.next();
       
       Asset a = (relationship.getA().equals(naa.getAsset())) ?
         naa.getAsset() : naa.getAssignee();
@@ -291,8 +300,12 @@ public class AssetTransferLP
                          at.getAsset() + " - transferring to " + 
                          at.getAssignee()+ " - is not local to this cluster.");
       return false;
+    } else if (localTransferringAsset == at.getAsset()) {
+      System.err.println("AssetTransferLP: Assets in AssetTransfer must be " +
+                         " clones. AssetTransfer - " + at.getUID() + 
+                         " - references assets in the log plan.");
     }
-              
+    
     Asset receivingAsset = at.getAssignee();
     Asset localReceivingAsset = logplan.findAsset(receivingAsset);
 
@@ -302,50 +315,37 @@ public class AssetTransferLP
     } else {
       receivingAsset = localReceivingAsset;
 
+      if (localReceivingAsset == at.getAssignee()) {
+        System.err.println("AssetTransferLP: Assets in AssetTransfer must be " +
+                           " clones. AssetTransfer - " + at.getUID() + 
+                           " - references assets in the log plan.");
+      }
     }
 
-    RelationshipSchedule receivingSchedule =
-      ((HasRelationships)receivingAsset).getRelationshipSchedule();
-    RelationshipSchedule transferringSchedule = 
-      ((HasRelationships)localTransferringAsset).getRelationshipSchedule();
-    RelationshipSchedule atSchedule = 
-      ((HasRelationships)at.getAsset()).getRelationshipSchedule();
 
     if ((kind == AssetAssignment.UPDATE) ||
         (kind == AssetAssignment.REPEAT)) {
       //Remove existing relationships
-      removeExistingRelationships(atSchedule, 
-                                  transferringSchedule, 
-                                  receivingSchedule);
+      removeExistingRelationships(at, 
+                                  (HasRelationships)localTransferringAsset,
+                                  (HasRelationships)receivingAsset);
     }
 
-    // Add transfer relationships from transfer to local assets
-    for (Iterator iterator = atSchedule.iterator(); 
-         iterator.hasNext();) {
-      Relationship atRelationship = (Relationship)iterator.next();
+    // Add transfer relationships to local assets
+    Collection localRelationships = 
+      convertToLocalRelationships(at,
+                                  localTransferringAsset,
+                                  receivingAsset);
 
-      Asset A = 
-        (atRelationship.getA().equals(at.getAsset())) ?
-         localTransferringAsset : receivingAsset;
-      Asset B = 
-        (atRelationship.getB().equals(at.getAsset())) ?
-        localTransferringAsset : receivingAsset;
-      Relationship localRelationship = 
-        ldmf.newRelationship(atRelationship.getRoleA(),
-                             (HasRelationships)A,
-                             (HasRelationships)B,
-                             atRelationship.getStartTime(),
-                             atRelationship.getEndTime());
-      transferringSchedule.add(localRelationship);
 
-      localRelationship = 
-        ldmf.newRelationship(atRelationship.getRoleA(),
-                             (HasRelationships)A,
-                             (HasRelationships)B,
-                             atRelationship.getStartTime(),
-                             atRelationship.getEndTime());
-      receivingSchedule.add(localRelationship);
-    }
+    RelationshipSchedule transferringSchedule = 
+      ((HasRelationships)localTransferringAsset).getRelationshipSchedule();
+    transferringSchedule.addAll(localRelationships);
+
+    RelationshipSchedule receivingSchedule =
+      ((HasRelationships)receivingAsset).getRelationshipSchedule();
+    receivingSchedule.addAll(localRelationships);
+      
 
     fixAvailSchedule(receivingAsset, localTransferringAsset);
     
@@ -364,33 +364,36 @@ public class AssetTransferLP
     return true;
   }
 
-
-  private void fixAvailSchedule(Asset receivingAsset, Asset transferringAsset) {
+  // Update availability info for the receiving asset
+  // AvailableSchedule reflects availablity within the current cluster
+  private void fixAvailSchedule(final Asset receivingAsset, 
+                                final Asset transferringAsset) {
     NewSchedule availSchedule = 
       (NewSchedule)receivingAsset.getRoleSchedule().getAvailableSchedule();
 
     if (availSchedule == null) {
       availSchedule = ldmf.newAssignedAvailabilitySchedule();
       ((NewRoleSchedule)receivingAsset.getRoleSchedule()).setAvailableSchedule(availSchedule);
+    } else {
+      // Remove an existing entrie which refer to the receiving asset
+      synchronized (availSchedule) {
+        Collection remove = availSchedule.filter(new UnaryPredicate() {
+          public boolean execute(Object o) {
+            return ((o instanceof AssignedAvailabilityElement) &&
+                    (((AssignedAvailabilityElement)o).getAssignee().equals(transferringAsset)));
+          }
+        });
+        availSchedule.removeAll(remove);
+      } // end synchronization
     }
-
-    Iterator iterator = availSchedule.iterator();
-    while (iterator.hasNext()) {
-      Object next = iterator.next();
-      if ((next instanceof AssignedAvailabilityElement) &&
-          (((AssignedAvailabilityElement)next).getAssignee().equals(transferringAsset))) {
-        iterator.remove();
-      }
-    }
-    
+      
     //Construct aggregate avail info from the relationship schedule
     RelationshipSchedule relationshipSchedule = 
       ((HasRelationships)receivingAsset).getRelationshipSchedule();
-    Collection collection = 
+    Collection collection =  
       relationshipSchedule.getMatchingRelationships((HasRelationships)transferringAsset,
-                                                    TimeSpan.MIN_VALUE,
-                                                    TimeSpan.MAX_VALUE);
-
+                                                    ETERNITY);
+    
     // If any relationships, add a single avail element with the 
     // min start and max end
     if (collection.size() > 0) {
@@ -401,37 +404,71 @@ public class AssetTransferLP
     }
   }
 
-  private void removeExistingRelationships(RelationshipSchedule atSchedule,
-                                           RelationshipSchedule transferringSchedule,
-                                           RelationshipSchedule receivingSchedule) {
-    HasRelationships transferringAsset = 
-      transferringSchedule.getHasRelationships();
-    HasRelationships receivingAsset = 
-      receivingSchedule.getHasRelationships();
+  private void removeExistingRelationships(AssetTransfer at,
+                                           HasRelationships transferringAsset,
+                                           HasRelationships receivingAsset) {
 
-    for (Iterator atIterator = atSchedule.iterator();
+    RelationshipSchedule receivingSchedule = 
+      receivingAsset.getRelationshipSchedule();
+    RelationshipSchedule transferringSchedule = 
+      transferringAsset.getRelationshipSchedule();
+    
+    RelationshipSchedule atRelationshipSchedule = 
+      ((HasRelationships)at.getAsset()).getRelationshipSchedule();
+    Collection atRelationships = new ArrayList(atRelationshipSchedule);
+    
+    for (Iterator atIterator = atRelationships.iterator();
          atIterator.hasNext();) {
       Relationship relationship = (Relationship) atIterator.next();
       
       Role role = (relationship.getA().equals(receivingAsset)) ?
         relationship.getRoleA() : relationship.getRoleB();
-                                                                            
+      
       Collection remove = 
         transferringSchedule.getMatchingRelationships(role,
                                                       receivingAsset,
-                                                      TimeSpan.MIN_VALUE,
-                                                      TimeSpan.MAX_VALUE);
+                                                      ETERNITY);
       transferringSchedule.removeAll(remove);
-
+      
       role = (relationship.getA().equals(transferringAsset)) ?
-       relationship.getRoleA() :relationship.getRoleB();
+        relationship.getRoleA() :relationship.getRoleB();
       remove = 
         receivingSchedule.getMatchingRelationships(role,
                                                    transferringAsset,
-                                                   TimeSpan.MIN_VALUE,
-                                                   TimeSpan.MAX_VALUE);
+                                                   ETERNITY);
       receivingSchedule.removeAll(remove);
+    } 
+  }
+
+  protected Collection convertToLocalRelationships(AssetTransfer at,
+                                                   Asset localTransferringAsset,
+                                                   Asset receivingAsset) {
+    RelationshipSchedule atRelationshipSchedule = 
+      ((HasRelationships)at.getAsset()).getRelationshipSchedule();
+    Collection atRelationships = new ArrayList(atRelationshipSchedule);
+
+    ArrayList localRelationships = new ArrayList(atRelationships.size());
+
+    for (Iterator iterator = atRelationships.iterator(); 
+         iterator.hasNext();) {
+      Relationship atRelationship = (Relationship)iterator.next();
+      
+      Asset A = 
+        (atRelationship.getA().equals(at.getAsset())) ?
+        localTransferringAsset : receivingAsset;
+      Asset B = 
+        (atRelationship.getB().equals(at.getAsset())) ?
+        localTransferringAsset : receivingAsset;
+      Relationship localRelationship = 
+        ldmf.newRelationship(atRelationship.getRoleA(),
+                             (HasRelationships)A,
+                             (HasRelationships)B,
+                             atRelationship.getStartTime(),
+                             atRelationship.getEndTime());
+      localRelationships.add(localRelationship);
     }
+
+    return localRelationships;
   }
 }
 

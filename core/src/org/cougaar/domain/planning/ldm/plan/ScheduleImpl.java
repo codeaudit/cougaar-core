@@ -10,7 +10,6 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
-import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;
 
@@ -20,7 +19,7 @@ import java.util.*;
  */
 
 public class ScheduleImpl 
-  extends TimeSpanSet
+  extends SynchronizedTimeSpanSet
   implements Schedule, NewSchedule
 {
   protected String scheduleType = ScheduleType.OTHER;
@@ -62,7 +61,7 @@ public class ScheduleImpl
     return scheduleElementType;
   }
         
-  public Date getStartDate() {
+  public synchronized Date getStartDate() {
     TimeSpan ts = (TimeSpan) first();
     if (ts == null) {
       throw new IndexOutOfBoundsException("Called getStartDate on an empty schedule");
@@ -70,12 +69,12 @@ public class ScheduleImpl
     return new Date(ts.getStartTime());
   }
 
-  public long getStartTime() {
+  public synchronized long getStartTime() {
     TimeSpan ts = (TimeSpan) first();
     return (ts == null)? MIN_VALUE : ts.getStartTime();
   }
 
-  public Date getEndDate() {
+  public synchronized Date getEndDate() {
     TimeSpan ts = (TimeSpan) last();
     if (ts == null) {
       throw new IndexOutOfBoundsException("Called getEndDate on an empty schedule");
@@ -101,19 +100,30 @@ public class ScheduleImpl
    * if there is no synchronize on the schedule.
    * @return Enumeration{ScheduleElement}
    */
-  public Enumeration getAllScheduleElements() {
-    return new Enumerator(this);
+  public synchronized Enumeration getAllScheduleElements() {
+    UnsupportedOperationException uae = 
+      new UnsupportedOperationException("ScheduleImpl.getAllScheduleElements");
+    uae.printStackTrace();
+    
+    ArrayList copy = new ArrayList(this);
+    return new Enumerator(copy);
   }
-        
+   
+  public synchronized Collection filter(UnaryPredicate predicate) {
+    return Filters.filter(protectedIterator(), predicate);
+  }
+
+  
   /** get a colleciton of schedule elements that include this date.
    * Note that the schedule element can have a start or end date
    * that equals the given date or the date may fall in the time span
    * of a schedule element.
    * @return OrderedSet
    */
-  public Collection getScheduleElementsWithDate(Date aDate) {
+  public synchronized Collection getScheduleElementsWithDate(Date aDate) {
     return getScheduleElementsWithTime(aDate.getTime());
   }
+
   public synchronized Collection getScheduleElementsWithTime(final long aTime) {
     return intersectingSet(aTime);
   }
@@ -128,7 +138,7 @@ public class ScheduleImpl
    * or may not be fully bound by the date range - they may overlap.
    * @return OrderedSet
    */
-  public Collection getOverlappingScheduleElements(Date startDate, Date endDate){
+  public synchronized Collection getOverlappingScheduleElements(Date startDate, Date endDate){
     return getOverlappingScheduleElements(startDate.getTime(), endDate.getTime());
   }
 
@@ -142,7 +152,7 @@ public class ScheduleImpl
    * or encapsulated by a date range.
    * @return OrderedSet
    */
-  public Collection getEncapsulatedScheduleElements(Date startDate, Date endDate) {
+  public synchronized Collection getEncapsulatedScheduleElements(Date startDate, Date endDate) {
     return getEncapsulatedScheduleElements(startDate.getTime(), endDate.getTime());
   } 
         
@@ -172,7 +182,6 @@ public class ScheduleImpl
    * there is only one schedule element.
    * @param aScheduleElement
    **/
-  // NOTE*********** making this public for the agg asset thing -needs to be changes back after its deprecated
   public synchronized void setScheduleElement(ScheduleElement aScheduleElement) {
     clear();
     add(aScheduleElement);
@@ -181,7 +190,7 @@ public class ScheduleImpl
   /** Return the Collection.   
    * This is now a noop.
    **/
-  public synchronized Collection UnderlyingContainer() {
+  public Collection UnderlyingContainer() {
     return this;
   }
 
@@ -202,16 +211,68 @@ public class ScheduleImpl
     addAll(collection);
   }
 
-  /**
-   * BOZO - write a comment
-   * Should simply return false
-   */
-  public boolean add(Object o) {
-    if (!isAppropriateScheduleElement(o)) {
-      throw new ClassCastException();
-    }
+  // Over write ArrayList methods
 
+  /** add object to Schedule. Verifies that object matches specifed
+   * ScheduleElement type.
+   * @param o Object to add to Schedule
+   * @return boolean true if successful, else false
+   */
+  public synchronized boolean add(Object o) {
+    if (!isAppropriateScheduleElement(o)) {
+      ClassCastException cce = new ClassCastException("ScheduleImpl.add(Object o): o - " + o + " does not match schedule element type - " + getScheduleElementType());
+      cce.printStackTrace();
+      return false;
+    }
+    
     return super.add(o);
+  }
+      
+  /** returns Iterator over a copy of the Schedule. Prints a warning and
+   *  dumps a stack trace.
+   *  Use filter() to get an copy which can be iterated over without 
+   *  the warning.
+   *  @return Iterator over a copy
+   */
+  public synchronized Iterator iterator() {
+    UnsupportedOperationException uae = 
+      new UnsupportedOperationException("ScheduleImpl.iterator()." +
+                                        " Returning an iterator over a copy of this Schedule");
+    uae.printStackTrace();
+    
+    ArrayList copy = new ArrayList(this);
+    return copy.iterator();
+  }
+
+  /** listIterator - Unsupported
+   *  @throw UnsupportedOperationException
+   */
+  public synchronized ListIterator listIterator() {
+    throw new UnsupportedOperationException("ScheduleImpl.listIterator() is not supported.");
+  }
+
+  /** listIterator - Unsupported
+   *  @throw UnsupportedOperationException
+   */
+  public synchronized ListIterator listIterator(int index) {
+    throw new UnsupportedOperationException("ScheduleImpl.listIterator(int index) is not supported.");
+  }
+
+  /** returns a subset from a copy of the Schedule.  Prints a warning and
+   *  dumps a stack trace. Subset made from a copy of the Schedule so that 
+   *  the Schedule continues to Synchronization safe.
+   *  Use filter() to get an copy which can be iterated over without 
+   *  the warning.
+   *  @return Iterator over a copy
+   */
+  public synchronized List subList(int fromIndex, int toIndex) {
+    UnsupportedOperationException uae = 
+      new UnsupportedOperationException("ScheduleImpl.subList(int fromIndex, int toIndex)" +
+                                        " Returning an subList over a copy of this Schedule");
+    uae.printStackTrace();
+
+    ArrayList copy = new ArrayList(this);
+    return copy.subList(fromIndex, toIndex);
   }
 
   public synchronized void setScheduleElements(Enumeration someScheduleElements) {
@@ -228,9 +289,12 @@ public class ScheduleImpl
     }
   }
         
-
-  // NOTE*********** making this public for the agg asset thing -needs to be changes back after its deprecated
+  /* setScheduleType - type can only be set for empty schedule.
+   */
   public void setScheduleType(String type) {
+    if (!isEmpty()) {
+      throw new ClassCastException("Can not set ScheduleType for non-empty schedule");
+    }
     scheduleType = type;
   }
   
@@ -259,14 +323,19 @@ public class ScheduleImpl
         
   /* methods returned by ScheduleImplBeanInfo */
 
-  public ScheduleElement[] getScheduleElements() {
+  public synchronized ScheduleElement[] getScheduleElements() {
     ScheduleElement s[] = new ScheduleElement[size()];
     return (ScheduleElement[])toArray(s);
   }
 
-  public ScheduleElement getScheduleElement(int i) {
+  public synchronized ScheduleElement getScheduleElement(int i) {
     return (ScheduleElement)elementData[i];
   }
+
+  protected Iterator protectedIterator() {
+    return super.iterator();
+  }
+
 
   public static void main(String []args) {
     Vector vector = new Vector();
