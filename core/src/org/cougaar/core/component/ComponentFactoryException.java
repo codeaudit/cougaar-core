@@ -22,31 +22,25 @@ package org.cougaar.core.component;
 
 import java.util.*;
 
-/** Exception thrown by ComponentFactory
+/** RuntimeException thrown by ComponentFactory
+ * @note was a checked exception until Cougaar 9.2.
  **/
-public class ComponentFactoryException extends Exception
+public class ComponentFactoryException extends ComponentRuntimeException
 {
-  private final String explanation;
-  private final ComponentDescription cd;
-  private final Exception nestedException;
-  public ComponentFactoryException(String explanation, ComponentDescription cd, Exception nestedException) {
-    this.explanation = explanation;
-    this.cd = cd;
-    this.nestedException = nestedException;
+  public ComponentFactoryException(String explanation, ComponentDescription cd, Throwable nestedException) {
+    super(explanation, cd, nestedException);
   }
   
   public ComponentFactoryException(String explanation, ComponentDescription cd) {
-    this.explanation = explanation;
-    this.cd = cd;
-    this.nestedException = null;
+    super(explanation, cd);
   }
 
-  public String toString() {
-    return "<ComponentFactoryException: "+explanation+" for "+cd+">";
-  }
-
-  public Exception getNestedException() { 
-    return nestedException;
+  /** 
+   * @note in versions prior to Cougaar 9.2, returned Exception rather than Throwable.
+   * @deprecated use Throwable.getCause() instead. 
+   **/
+  public Throwable getNestedException() { 
+    return getCause();
   }
 }
 

@@ -107,15 +107,13 @@ public class SchedulerServiceProvider
   private SchedulerBase scheduler;
   private SchedulerService schedulerProxy;
 
-  protected ClusterImpl agent = null;
-
   public SchedulerServiceProvider() {
     scheduler = createScheduler("Anonymous");
     schedulerProxy = new SchedulerProxy(scheduler);
   }
 
-  public SchedulerServiceProvider(ClusterImpl cluster) {
-    scheduler = createScheduler(cluster.toString());
+  public SchedulerServiceProvider(String name) {
+    scheduler = createScheduler(name);
     schedulerProxy = new SchedulerProxy(scheduler);
   }
   

@@ -26,7 +26,7 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.util.*;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 
 /** 
@@ -59,9 +59,12 @@ public abstract class Agent
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    setChildServiceBroker(new AgentServiceBroker(bs));
+    setChildServiceBroker(specifyAgentServiceBroker(bs));
   }
 
+  protected ServiceBroker specifyAgentServiceBroker(BindingSite bs) {
+    return new AgentServiceBroker(bs);
+  }
   // Do we need state model stuff here???
   //protected void initialize() {}
 
@@ -80,7 +83,7 @@ public abstract class Agent
   }
 
   //backwards compatability to attach to Cluster Agents for now
-  abstract public ClusterIdentifier getAgentIdentifier();
+  abstract public MessageAddress getAgentIdentifier();
   abstract public ConfigFinder getConfigFinder();
 
   //

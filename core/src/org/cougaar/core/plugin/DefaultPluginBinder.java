@@ -24,6 +24,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import java.lang.reflect.*;
 
 /** The standard Binder for Plugins.
@@ -57,7 +58,7 @@ public class DefaultPluginBinder
       DefaultPluginBinder.this.requestStop();
     }
     public final ClusterIdentifier getAgentIdentifier() {
-      return getPluginManager().getAgentIdentifier();
+      return (ClusterIdentifier) getPluginManager().getAgentIdentifier();
     }
     public final ConfigFinder getConfigFinder() {
       return getPluginManager().getConfigFinder();
@@ -72,7 +73,7 @@ public class DefaultPluginBinder
   }
 
   /** useful shorthand for binder functions **/
-  protected final ClusterIdentifier getAgentIdentifier() {
+  protected final MessageAddress getAgentIdentifier() {
     return getPluginManager().getAgentIdentifier();
   }
 

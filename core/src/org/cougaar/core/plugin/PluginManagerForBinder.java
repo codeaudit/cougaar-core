@@ -24,12 +24,13 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** This is the interface presented to a PluginBinder from the PluginManager.
  **/
 public interface PluginManagerForBinder
   extends ContainerAPI
 {
-  ClusterIdentifier getAgentIdentifier();
+  MessageAddress getAgentIdentifier();
   ConfigFinder getConfigFinder();
 }

@@ -36,8 +36,7 @@ public abstract class ComponentFactory
     try {
       return Class.forName(desc.getClassname());
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new ComponentFactoryException("loadClass failure:", desc, e);
+      throw new ComponentFactoryException("Couldn't load component class", desc, e);
     }
   }
 
@@ -47,11 +46,11 @@ public abstract class ComponentFactory
    * a Component in order for the rest of the default code to work.
    **/
   protected Object instantiateClass(Class cc) {
+    System.err.println("MIK: instantiateClass should not be called!!!  Please report this message to bugzilla");
     try {
       return cc.newInstance();
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw new ComponentFactoryException("Couldn't instantiate class", null, e);
     }
   }
 
@@ -64,19 +63,13 @@ public abstract class ComponentFactory
       if (o instanceof Component) {
         Object p = desc.getParameter();
         if (p != null) {
-//  	  if (!((Collection)p).isEmpty()) {
-	    try {
-	      Method m = cc.getMethod("setParameter", VO);
-	      m.invoke(o, new Object[]{p});
-	    } catch (Exception e) {
-	      e.printStackTrace();
-	      throw new ComponentFactoryException("Failed while setting parameter", desc, e);
-//  	    }
-	  }
+          //if (!((Collection)p).isEmpty()) ...
+          Method m = cc.getMethod("setParameter", VO);
+          m.invoke(o, new Object[]{p});
 	}
         return (Component) o;
       } else {
-        throw new ComponentFactoryException("ComponentDescription does not name a Component", desc);
+        throw new IllegalArgumentException("ComponentDescription "+desc+" does not name a Component");
       }
     } catch (Exception e) {
       e.printStackTrace();

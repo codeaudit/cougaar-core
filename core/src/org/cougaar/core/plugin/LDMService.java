@@ -34,13 +34,32 @@ import org.cougaar.core.domain.*;
 public interface LDMService 
   extends Service 
 {
+  /** Get a reference to the LDM object.  
+   * @todo This should be refactored for Cougaar 9.4.
+   **/
   LDMServesPlugin getLDM();
+
+  /** Get a reference to the root factory.
+   * @deprecated Use DomainService instead (9.2).
+   **/
   RootFactory getFactory();
+  /** Get a reference to a specific factory.
+   * @deprecated Use DomainService instead (9.2).
+   **/
   Factory getFactory(String s);
 
   // standin API for LDMService called by PluginBinder for temporary support
+  /** Add a PrototypeProvider.
+   * @deprecated Use PrototypeRegistryService instead (9.2).
+   **/
   void addPrototypeProvider(PrototypeProvider plugin);
+  /** Add a PropertyProvider.
+   * @deprecated Use PrototypeRegistryService instead (9.2).
+   **/
   void addPropertyProvider(PropertyProvider plugin);
+  /** Add a LatePropertyProvider.
+   * @deprecated Use PrototypeRegistryService instead (9.2).
+   **/
   void addLatePropertyProvider(LatePropertyProvider plugin);
 }
   

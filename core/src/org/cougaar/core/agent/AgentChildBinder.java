@@ -28,6 +28,7 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.plugin.PluginManager;
+import org.cougaar.core.mts.MessageAddress;
 
 /** The standard Binder for PluginManagers and others children of agent.
  **/
@@ -70,7 +71,7 @@ implements AgentChildBindingSite, ContainerBinder
   protected final Agent getAgent() {
     return (Agent)getContainer();
   }
-  public ClusterIdentifier getAgentIdentifier() {
+  public MessageAddress getAgentIdentifier() {
     return getAgent().getAgentIdentifier();
   }
   public ConfigFinder getConfigFinder() {

@@ -43,15 +43,15 @@ public final class ClusterContextTable {
   /** find the cluster named by CID in my local VM.
    * Anyone caught using this in plugins will be shot.
    **/
-  public static ClusterContext findContext(ClusterIdentifier cid) {
+  public static ClusterContext findContext(MessageAddress cid) {
     return (ClusterContext) contextTable.get(cid);
   }
 
-  public static void addContext(ClusterIdentifier cid, ClusterContext c) {
+  public static void addContext(MessageAddress cid, ClusterContext c) {
     contextTable.put(cid, c);
   }
   
-  public static void removeContext(ClusterIdentifier cid) {
+  public static void removeContext(MessageAddress cid) {
     contextTable.remove(cid);
   }
 

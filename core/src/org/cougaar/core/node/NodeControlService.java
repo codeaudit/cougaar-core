@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2000-2001 BBNT Solutions, LLC
+ *  Copyright 1997-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -18,30 +18,19 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
 
-import org.cougaar.core.blackboard.*;
+package org.cougaar.core.node;
 
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.*;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.Container;
 
-/** An immediate child component's view of it's Parent
- *
+/** Service offered to components of NodeAgent to allow sufficient 
+ * non-local access to the Node for control purposes.
  **/
-public interface AgentChildBindingSite 
-  extends BindingSite
+public interface NodeControlService 
+  extends Service 
 {
-  MessageAddress getAgentIdentifier();
-  ConfigFinder getConfigFinder();
-  /** Temporarly hack to allow getting at Agent services
-   * from LPs (and blackboard).  This will be replaced with
-   * some of the methods defined by ClusterServesLogicProvider 
-   * which are actually used by Blackboard.
-   **/
-  ClusterServesLogicProvider getCluster();
+  ServiceBroker getRootServiceBroker();
+  Container getRootContainer();
 }
-
-

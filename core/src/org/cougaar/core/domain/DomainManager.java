@@ -30,6 +30,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
@@ -41,6 +42,7 @@ import org.cougaar.core.security.bootstrap.SystemProperties;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.node.NodeControlService;
 
 import java.beans.*;
 import java.lang.reflect.*;
@@ -88,6 +90,14 @@ public class DomainManager
     }
   }
 
+  private NodeControlService nodeControlService = null;
+  public void setNodeControlService(NodeControlService ncs) {
+    nodeControlService = ncs;
+  }
+  protected NodeControlService getNodeControlService() {
+    return nodeControlService;
+  }
+
   public void setState(Object loadState) {
     this.loadState = loadState;
   }
@@ -96,6 +106,7 @@ public class DomainManager
     super.load();
 
     serviceBroker = bindingSite.getServiceBroker();
+
     domainSP = new DomainServiceProvider(new DomainServiceImpl(this));
     serviceBroker.addService(DomainService.class, domainSP);
 
@@ -112,7 +123,7 @@ public class DomainManager
     }
 
     // display the agent id
-    ClusterIdentifier cid = getBindingSite().getAgentIdentifier();
+    MessageAddress cid = getBindingSite().getAgentIdentifier();
     String cname = cid.toString();
 
     if (loggingService.isDebugEnabled()) {

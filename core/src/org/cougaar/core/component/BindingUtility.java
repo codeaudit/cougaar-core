@@ -51,15 +51,19 @@ public abstract class BindingUtility {
         return false;
       }
 
-      if (m != null) {          // use a non-throwing variation in the future
-        //System.err.println("Invoking "+child+".setBindingSite("+bindingSite+")");
-        m.invoke(child, new Object[]{bindingSite});
-        return true;
-      } 
+      /*
+      // getMethod currently never returns null (it'll throw and exception instead)
+      if (m == null) {
+        return false;
+      }
+      */
+
+      //System.err.println("Invoking "+child+".setBindingSite("+bindingSite+")");
+      m.invoke(child, new Object[]{bindingSite});
+      return true;
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new ComponentLoadFailure("Couldn't set BindingSite", child, e);
     }
-    return false;
   }
 
   public static boolean setServices(Object child, ServiceBroker servicebroker) {
@@ -91,16 +95,15 @@ public abstract class BindingUtility {
               try {
                 m.invoke(child, args);
               } catch (InvocationTargetException ite) {
-                ite.getCause().printStackTrace();
-                throw ite;
+                //ite.getCause().printStackTrace();
+                throw ite.getCause();
               }
             }
           }
         }
       }
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e.toString());
+    } catch (Throwable e) {
+      throw new ComponentLoadFailure("Couldn't set services", child, e);
     }
     return true;
   }

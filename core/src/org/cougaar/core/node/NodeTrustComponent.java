@@ -24,7 +24,7 @@ import org.cougaar.core.mts.*;
 
 import org.cougaar.core.component.*;
 
-import org.cougaar.core.agent.AgentManagerBindingSite;
+import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.service.MessageTransportService;
@@ -42,7 +42,7 @@ public class NodeTrustComponent
   extends ContainerSupport
   implements StateObject, MessageTransportClient, NodePolicyWatcher
 {
-  private AgentManagerBindingSite bindingSite = null;
+  private AgentChildBindingSite bindingSite = null;
   private Object loadState = null;
   private TrustStatusServiceImpl theTSS;
   private TrustStatusServiceProvider tssSP;
@@ -52,12 +52,17 @@ public class NodeTrustComponent
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof AgentManagerBindingSite) {
-      bindingSite = (AgentManagerBindingSite) bs;
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bs);
-    }
+    bindingSite = (AgentChildBindingSite) bs; // allow ClassCastException to pass up
   }
+
+  private NodeIdentificationService nodeIdentificationService = null;
+  public void setNodeIdentificationService(NodeIdentificationService nis) {
+    nodeIdentificationService = nis;
+  }
+  protected NodeIdentificationService getNodeIdentificationService() {
+    return nodeIdentificationService;
+  }
+
 
   public void setState(Object loadState) {
     this.loadState = loadState;
@@ -124,7 +129,7 @@ public class NodeTrustComponent
   // binding services
   //
 
-  protected final AgentManagerBindingSite getBindingSite() {
+  protected final AgentChildBindingSite getBindingSite() {
     return bindingSite;
   }
   protected String specifyContainmentPoint() {
@@ -165,8 +170,8 @@ public class NodeTrustComponent
       return myaddress;
     } else {
       //create it
-      String nodename = getBindingSite().getIdentifier();
-      myaddress = new MessageAddress(nodename+"-Policy");
+      String name = getNodeIdentificationService().getNodeIdentifier().toString();
+      myaddress = new MessageAddress(name+"-Policy");
       return myaddress;
     }
   }

@@ -18,30 +18,21 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.node;
 
 import org.cougaar.core.blackboard.*;
 
 import java.util.*;
 import org.cougaar.util.*;
+import org.cougaar.core.agent.ClusterServesClusterManagement;
 import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.*;
+import org.cougaar.core.mts.Message;
 
-/** An immediate child component's view of it's Parent
- *
+/** BindingSite for children of NodeAgent other than PluginManager
  **/
-public interface AgentChildBindingSite 
+public interface NodeAgentBindingSite 
   extends BindingSite
 {
-  MessageAddress getAgentIdentifier();
-  ConfigFinder getConfigFinder();
-  /** Temporarly hack to allow getting at Agent services
-   * from LPs (and blackboard).  This will be replaced with
-   * some of the methods defined by ClusterServesLogicProvider 
-   * which are actually used by Blackboard.
-   **/
-  ClusterServesLogicProvider getCluster();
 }
 
 

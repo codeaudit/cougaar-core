@@ -51,6 +51,8 @@ public abstract class BinderSupport
     }
   }
 
+  /** @throws ComponentFactoryException when it cannot be constructed.
+   **/
   protected Component constructChild() {
     if (child != null) return child;
     ComponentFactory cf = getComponentFactory();
@@ -61,12 +63,7 @@ public abstract class BinderSupport
       throw new RuntimeException("No valid ComponentDescription.");
     }
       
-    try {
-      return cf.createComponent(childD);
-    } catch (ComponentFactoryException cfe) {
-      cfe.printStackTrace();
-      throw new RuntimeException("Failed to construct child: "+cfe);
-    }
+    return cf.createComponent(childD);
   }
 
   // implement the BindingSite api

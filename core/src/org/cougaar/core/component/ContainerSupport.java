@@ -247,7 +247,9 @@ public abstract class ContainerSupport
         }
       } else {
         // wrong insertion point!
-        return false;
+        throw new ComponentLoadFailure("Wrong InsertionPoint ("+containmentPrefix+" doesn't prefix "+ip+")",
+                                       cd);
+          //return false;
       }
     } else if (o instanceof BinderFactory) {
       return attachBinderFactory((BinderFactory)o);
@@ -296,27 +298,23 @@ public abstract class ContainerSupport
    * when this loadComponent complete successfully.
    *
    * @return true on success.
+   * @throws ComponentLoadFailure When the component Cannot be loaded.
    **/
   protected boolean loadComponent(Object c, Object cstate) {
-    try {
-      Binder b = bindComponent(c);
-      if (b != null) {
-        BoundComponent bc = new BoundComponent(b,c);
-        synchronized (boundComponents) {
-          boundComponents.add(bc);
-        }
-        if (cstate != null) {
-          // provide the state during load
-	  b.setState(cstate);
-	}
-        b.load();
-        b.start();
-        return true;
-      } else {
-        return false;
+    Binder b = bindComponent(c);
+    if (b != null) {
+      BoundComponent bc = new BoundComponent(b,c);
+      synchronized (boundComponents) {
+        boundComponents.add(bc);
       }
-    } catch (RuntimeException e) {
-      e.printStackTrace();
+      if (cstate != null) {
+        // provide the state during load
+        b.setState(cstate);
+      }
+      b.load();
+      b.start();
+      return true;
+    } else {
       return false;
     }
   }
@@ -370,31 +368,25 @@ public abstract class ContainerSupport
         // done
         return b;
       } else {
-        System.err.println("No binder found for "+c);
-        return null;
+        throw new ComponentLoadFailure("No binder found", c);
       }
     }    
   }
 
   /** Called when a componentDescription insertion point ends in .Binder or .BinderFactory 
-   *
+   * @throws ComponentFactoryException if the BinderFactory Cannot be loaded.
    **/
   protected boolean loadBinderFactory(ComponentDescription cd) {
     if (checkBinderFactory(cd)) {
-      try {
-        Component bfc = componentFactory.createComponent(cd);
-        if (bfc instanceof BinderFactory) {
-          return attachBinderFactory((BinderFactory)bfc);
-        } else {
-          System.err.println("Not a BinderFactory: "+bfc);
-        }
-      } catch (ComponentFactoryException cfe) {
-        cfe.printStackTrace();
+      Component bfc = componentFactory.createComponent(cd);
+      if (bfc instanceof BinderFactory) {
+        return attachBinderFactory((BinderFactory)bfc);
+      } else {
+        throw new ComponentLoadFailure("Not a BinderFactory", cd);
       }
     } else {
-      System.err.println("Failed BinderFactory test: "+cd);
+      throw new ComponentLoadFailure("Failed BinderFactory test", cd);
     }
-    return false;
   }
 
   /** @return true iff the binderfactory is trusted enought to load **/

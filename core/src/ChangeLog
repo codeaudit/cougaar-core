@@ -1,3 +1,22 @@
+2002-04-17  Michael Thome  <mthome@bbn.com>
+
+	* StandardSecurityComponent, NodeTrustComponent
+	Children of NodeAgent - that is, most components which were
+	previously children of Node - are now bound by
+	AgentChildBindingSite rather than AgentManagerBindingSite.
+
+2002-04-15  Michael Thome  <mthome@bbn.com>
+
+	* org/cougaar/core/agent/SimpleAgent, org/cougaar/core/agent/ClusterImpl
+	Most of ClusterImpl moved to SimpleAgent.
+	
+	* org/cougaar/core/node/NodeAgent
+	Most Node functionality moved to NodeAgent from Node
+	
+	* Various
+	Began move from ClusterIdentifier to MessageAddress.
+	PluginBindingSite and lower still use ClusterIdentifier.
+
 2002-04-11  Noelle Givler  <ngivler@bbn.com>
 
 	* org/cougaar/core/domain:

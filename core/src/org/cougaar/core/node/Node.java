@@ -151,7 +151,7 @@ import org.cougaar.core.security.bootstrap.SystemProperties;
  * </pre>
  */
 public class Node extends ContainerSupport
-implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
+implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
   private NodeIdentifier myNodeIdentity_ = null;
 
@@ -305,25 +305,25 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
       (String) myArgs.get(ArgTableIfc.SIGNED_PLUGIN_JARS);
     if (validateJars != null) {
       System.setProperty("org.cougaar.validate.jars", validateJars);
-      System.err.println("Set name to "+validateJars);
+      //System.err.println("Set name to "+validateJars);
     }
 
     String name = (String) myArgs.get(ArgTableIfc.NAME_KEY);
     if (name != null) {
       System.setProperty("org.cougaar.node.name", name);
-      System.err.println("Set name to "+name);
+      //System.err.println("Set name to "+name);
     }
 
     String config = (String) myArgs.get(ArgTableIfc.CONFIG_KEY);
     if (config != null) {
       System.setProperty("org.cougaar.config", config);
-      System.err.println("Set config to "+config);
+      //System.err.println("Set config to "+config);
     }
 
     String cs = (String) myArgs.get(ArgTableIfc.CS_KEY);
     if (cs != null && cs.length()>0) {
       System.setProperty("org.cougaar.config.server", cs);
-      System.err.println("Using ConfigurationServer at "+cs);
+      //System.err.println("Using ConfigurationServer at "+cs);
     }
 
     String ns = (String) myArgs.get(ArgTableIfc.NS_KEY);
@@ -521,7 +521,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     return new NodeServiceBroker();
   }
   protected ServiceBroker specifyChildServiceBroker() {
-    // Nobody above us so we have a plain old ServiceBroker
     return new NodeServiceBroker();
   }
   protected ContainerAPI getContainerProxy() {
@@ -552,18 +551,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
   protected String findHostName() throws UnknownHostException {
      return InetAddress.getLocalHost().getHostName();
   }
-
-  /** Refernece containing the Messenger **/
-  private transient MessageTransportService theMessenger = null;
-
-  /**
-   * Post a message to the destination's message queue
-   * @param aMessage The message object to post into the system.
-   **/
-  public final void sendMessage(Message aMessage) 
-    throws MessageTransportException {
-      theMessenger.sendMessage(aMessage);
-    }
 
   public ConfigFinder getConfigFinder() {
     return ConfigFinder.getInstance();
@@ -609,283 +596,38 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
 
-    // create the AgentManager on our own for now
-    BinderFactory ambf = new AgentManagerBinderFactory();
-    if (!attachBinderFactory(ambf)) {
-      throw new RuntimeException(
-          "Failed to load the AgentManagerBinderFactory in Node");
-    }
-
-    {
-      //String smn = System.getProperty(SecurityComponent.SMC_PROP);
-      String smn = System.getProperty(SecurityComponent.SMC_PROP, "org.cougaar.core.security.StandardSecurityComponent");
-      if (smn != null) {
-        try {
-          Class smc = Class.forName(smn);
-          if (SecurityComponent.class.isAssignableFrom(smc)) {
-            ComponentDescription smcd = 
-              new ComponentDescription(
-                                       getIdentifier()+"SecurityComponent",
-                                       "Node.SecurityComponent",
-                                       smn,
-                                       null,  //codebase
-                                       null,  //parameters
-                                       null,  //certificate
-                                       null,  //lease
-                                       null); //policy
-            super.add(smcd);
-          } else {
-            System.err.println("Error: SecurityComponent specified as "+smn+" which is not an instance of SecurityComponent");
-            System.exit(1);
-          }
-        } catch (Exception e) {
-          System.err.println("Error: Could not load SecurityComponent "+smn+": "+e);
-          e.printStackTrace();
-          System.exit(1);
-        }
-      }
-    }
-
+    // sb is our service broker (for *all* agents)
     ServiceBroker sb = getServiceBroker();
 
-    ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Node " + name);
-    tsp.provideServices(sb);
-
-
-    agentManager = new AgentManager();
-    super.add(agentManager);
-  
+    // we need to make this available here so others can get it.
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
-    
-    sb.addService(NamingService.class,
-                  new NamingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("javax.naming.")));
 
-    LoggingServiceProvider loggingServiceProvider = 
-      new LoggingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("org.cougaar.core.logging."));
-    sb.addService(LoggingService.class,
-		  loggingServiceProvider);
-    sb.addService(LoggingControlService.class,
-		  loggingServiceProvider);
-    
-
-    NodeIdentifier id = getNodeIdentifier();
-    MetricsServiceProvider msp = new MetricsServiceProvider(sb, id);
-    sb.addService(MetricsService.class, msp);
-    sb.addService(MetricsUpdateService.class, msp);
-
-
-    //add the vm metrics
-    sb.addService(NodeMetricsService.class,
-                  new NodeMetricsServiceProvider(new NodeMetricsProxy()));
-
-    ServiceProvider sp;
-    if (filename != null) {
-      sp = new FileInitializerServiceProvider();
-    } else {
-      sp = new DBInitializerServiceProvider(experimentId);
-    }
-    sb.addService(InitializerService.class, sp);
-    InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
-
-    ComponentDescription[] agentDescs =
-      is.getComponentDescriptions(name, "Node.AgentManager");
-    sb.releaseService(this, InitializerService.class, is);
-
-
-    // Set up MTS and QOS service provides.
     //
-    // NB: The order is important for now - MTS *must* be created
-    // first.
-    initTransport();  
+    // construct the NodeAgent and hook it in.
+    // 
 
-    // register for external control by the AppServer
-    //   -- disabled for now --
-
-    // start up the NodeTrust component
-    String ntc = new String(getIdentifier()+"NodeTrust");
-    ComponentDescription ntcdesc = 
-      new ComponentDescription(
-                                ntc,
-                                "Node.NodeTrust",
-                                "org.cougaar.core.node.NodeTrustComponent",
-                                null,  //codebase
-                                null,  //parameters
-                                null,  //certificate
-                                null,  //lease
-                                null); //policy
-    super.add(ntcdesc);
-
-    String enableServlets = 
-      System.getProperty("org.cougaar.core.servlet.enable");
-    if ((enableServlets == null) ||
-        (enableServlets.equalsIgnoreCase("true"))) {
-      // start up the Node-level ServletService component
-      ComponentDescription nsscDesc = 
-        new ComponentDescription(
-            (getIdentifier()+"ServletService"),
-            "Node.NodeServletService",
-            "org.cougaar.lib.web.service.RootServletServiceComponent",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null); //policy
-      super.add(nsscDesc);
+    BinderFactory ambf = new AgentManagerBinderFactory();
+    if (!attachBinderFactory(ambf)) {
+      throw new Error("Failed to load the AgentManagerBinderFactory in Node");
     }
 
-    // load the clusters
+    // create the AgentManager on our own for now
+    agentManager = new AgentManager();
+    super.add(agentManager);
+
     //
-    // once bulk-add ComponentMessages are implements this can
-    //   be done with "this.receiveMessage(compMsg)"
-    add(agentDescs);
+    // construct the NodeAgent and then hand off control
+    // 
+    NodeAgent na = new NodeAgent(getServiceBroker(), agentManager);
+    agentManager.add(na);
 
-    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
+    // may need to wait for the NodeAgent to come all the way up.
 
-  }
-
-
-    // **** QUO *****
-    // Change this to create (or find?) a MessageTransportManager as the
-    // value of theMessenger.
-  private void initTransport() {
-    String name = getIdentifier();
-    MessageTransportServiceProvider mtsp = 
-	new MessageTransportServiceProvider(name);
-    add(mtsp);
-    ServiceBroker sb = getServiceBroker();
-    sb.addService(MessageTransportService.class, mtsp);
-    sb.addService(MessageStatisticsService.class, mtsp);
-    sb.addService(MessageWatcherService.class, mtsp);
-    sb.addService(AgentStatusService.class, mtsp);
-
-    theMessenger = (MessageTransportService)
-      getServiceBroker().getService(this, MessageTransportService.class, null);
-    System.err.println("Started "+theMessenger);
-    theMessenger.registerClient(this);
-
-    initQos(mtsp);
-    
-
-  }
-
-
-  private void initQos (MessageTransportServiceProvider mtsp) {
-    String name = getIdentifier();
-    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name, mtsp);
-    add(qmsp);
-    getServiceBroker().addService(QosMonitorService.class, qmsp);
-  }
-
-
-  // Need this so that when the AgentManager creates a cluster, the cluster
-  // gets properly hooked up with the externalnodeactionlistener and
-  // gets put into the Node's running list of clusters.
-  // This is an artifact of moving the cluster creation to AgentManager and
-  // should probably be cleanup up further.
-
-  private void registerCluster(ClusterServesClusterManagement cluster) {
-    // notify the remote AppServer controller
-    //  -- disabled for now --
-  }
-
-
-  // replace with Container's add, but keep this basic code
-  private final void add(ComponentDescription desc) {
-    // simply wrap as a single-element "bulk" operation
-    ComponentDescription[] descs = new ComponentDescription[1];
-    descs[0] = desc;
-    add(descs);
-  }
- 
-  /**
-   * Add Clusters and their child Components (Plugins, etc) to this Node.
-   * <p>
-   * Note that this is a bulk operation, since the loading process is:<ol>
-   *   <li>Create the empty clusters</li>
-   *   <li>Add the Plugins and initialize the clusters</li>
-   * </ol>
-   * <p>
-   */
-  protected void add(ComponentDescription[] descs) {
-    int nDescs = ((descs != null) ? descs.length : 0);
-    //System.err.print("Creating Clusters:");
-    for (int i = 0; i < nDescs; i++) {
-      ComponentDescription desc = descs[i];
-      try {
-        //Let the agentmanager create the cluster
-        agentManager.add(desc);
-      } catch (Exception e) {
-        System.err.println("Exception creating component ("+desc+"): " + e);
-        e.printStackTrace();
-      }
-    }
   }
 
   public MessageAddress getMessageAddress() {
     return myNodeIdentity_;
-  }
-
-  public void receiveMessage(final Message m) {
-    try {
-      if (m instanceof ComponentMessage) {
-        ComponentMessage cm = (ComponentMessage)m;
-        int operation = cm.getOperation();
-        if (operation == ComponentMessage.ADD) {
-          // add
-          ComponentDescription cd = cm.getComponentDescription();
-          StateTuple st = 
-            new StateTuple(
-                cd,
-                cm.getState());
-          // should do "add(st)", but requires Node fixes
-          //
-          // for now we do this work-around:
-          String ip = cd.getInsertionPoint();
-          if (!("Node.AgentManager.Agent".equals(ip))) {
-            throw new UnsupportedOperationException(
-              "Only Agent ADD supported for now, not "+ip);
-          }
-          agentManager.add(st);
-        } else {
-          // not implemented yet!  will be okay once Node is a Container
-          throw new UnsupportedOperationException(
-            "Unsupported ComponentMessage: "+m);
-        }
-      } else if (m instanceof AgentManagementMessage) {
-        // run in a separate thread (in case the source is local)
-        Runnable r = new Runnable() {
-          public void run() {
-            if (m instanceof MoveAgentMessage) {
-              MoveAgentMessage mam = (MoveAgentMessage) m;
-              agentManager.moveAgent(
-                  mam.getAgentIdentifier(), 
-                  mam.getNodeIdentifier());
-            } else if (m instanceof CloneAgentMessage) {
-              CloneAgentMessage cam = (CloneAgentMessage) m;
-              agentManager.cloneAgent(
-                  cam.getAgentIdentifier(), 
-                  cam.getNodeIdentifier(),
-                  cam.getCloneAgentIdentifier(),
-                  cam.getCloneBlackboard());
-            } else {
-              // ignore
-            }
-          }
-        };
-        Thread t = new Thread(r, m.toString());
-        t.start();
-      } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
-        // we don't do anything with these. ignore it.
-      } else {
-        throw new UnsupportedOperationException(
-            "Unsupported Message: "+
-            ((m != null) ? m.getClass().getName() : "null"));
-      }
-    } catch (Exception e) {
-      System.err.println("Node received invalid message: "+e.getMessage());
-      e.printStackTrace();
-    }
   }
 
   //
@@ -974,26 +716,11 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     public void requestStop() {}
     // extra pieces
     public void registerCluster(ClusterServesClusterManagement cluster) {
-      Node.this.registerCluster(cluster);
+      // NOOP
     }
   }
 
   private static class NodeServiceBroker extends ServiceBrokerSupport {}
-
-  private class NodeMetricsProxy implements NodeMetricsService {
-    /** Free Memory snapshot from the Java VM   **/
-    public long getFreeMemory() {
-      return Runtime.getRuntime().freeMemory();
-    }
-    /** Total memory snaphsot from the Java VM    */
-    public long getTotalMemory() {
-      return Runtime.getRuntime().totalMemory();
-    }
-    /** The number of active Threads in the main COUGAAR threadgroup **/
-    public int getActiveThreadCount() {
-      return Thread.currentThread().getThreadGroup().activeCount();
-    }
-  }
 
 }
 

@@ -18,30 +18,19 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-package org.cougaar.core.agent;
+package org.cougaar.core.component;
 
-import org.cougaar.core.blackboard.*;
-
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.*;
-
-/** An immediate child component's view of it's Parent
- *
+/** RuntimeException thrown when a component cannot be loaded.
+ * @since 9.2
  **/
-public interface AgentChildBindingSite 
-  extends BindingSite
+public class ComponentLoadFailure extends ComponentRuntimeException
 {
-  MessageAddress getAgentIdentifier();
-  ConfigFinder getConfigFinder();
-  /** Temporarly hack to allow getting at Agent services
-   * from LPs (and blackboard).  This will be replaced with
-   * some of the methods defined by ClusterServesLogicProvider 
-   * which are actually used by Blackboard.
-   **/
-  ClusterServesLogicProvider getCluster();
+  public ComponentLoadFailure(String explanation, Object cd, Throwable nestedException) {
+    super(explanation, cd, nestedException);
+  }
+  
+  public ComponentLoadFailure(String explanation, Object cd) {
+    super(explanation, cd);
+  }
 }
-
 

@@ -22,6 +22,7 @@
 package org.cougaar.core.security;
 
 import org.cougaar.core.component.*;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.mts.*;
 import org.cougaar.core.service.MessageTransportService;
@@ -42,18 +43,19 @@ public final class StandardSecurityComponent
   public final static String SMD_PROP = PROP_PREFIX+".Domain";
 
   protected Object guard = null;
-  protected AgentManagerBindingSite bindingSite = null;
+  protected AgentChildBindingSite bindingSite = null;
 
   public StandardSecurityComponent() {
   }
 
   public void setBindingSite(BindingSite bs) {
-    if (bs instanceof AgentManagerBindingSite) {
-      bindingSite = (AgentManagerBindingSite) bs;
+    if (bs instanceof AgentChildBindingSite) {
+      bindingSite = (AgentChildBindingSite) bs;
     } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bs);
+      throw new RuntimeException("Tried to load "+this+" into " + bs);
     }
   }
+
   protected MessageTransportService mts = null;
   public synchronized final void setMessageTransportService(MessageTransportService mts) {
     if (this.mts == null && mts != null) {
@@ -62,7 +64,19 @@ public final class StandardSecurityComponent
     }
   }
 
+  private NodeIdentificationService nodeIdentificationService = null;
+  public void setNodeIdentificationService(NodeIdentificationService nis) {
+    nodeIdentificationService = nis;
+  }
+  protected NodeIdentificationService getNodeIdentificationService() {
+    return nodeIdentificationService;
+  }
+
   public void load() {
+    if (nodeIdentificationService == null) {
+      throw new RuntimeException("StandardSecurityComponent requires the NodeIdentificationService");
+    }
+
     super.load();
     String dmId = System.getProperty(SMD_PROP);
     // hacks for backward compatability
@@ -90,7 +104,7 @@ public final class StandardSecurityComponent
     }
     
     // figure out the name
-    String name = bindingSite.getName();
+    String name = getNodeIdentificationService().getNodeIdentifier().toString();
 
     if (dmId == null) {
       //System.err.println("System property "+SMD_PROP+" not set.\nProceeding without Guard!");

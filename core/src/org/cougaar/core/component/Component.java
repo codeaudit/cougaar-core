@@ -36,7 +36,7 @@ import org.cougaar.util.GenericStateModel;
  * 2. if a ComponentDescription is being used to create the
  * component, and it specifies a non-null parameter, the optional
  * setParameter(Object) method is called with the parameter as the
- * argument.  A ComponentFactoryException will be raised if the
+ * argument.  A ComponentFactoryException will be thrown if the
  * parameter is non-null, but no setParameter(Object) method is 
  * defined.
  * 3. The binder (if capable) will use introspection to 

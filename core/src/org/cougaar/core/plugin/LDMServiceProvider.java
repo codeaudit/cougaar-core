@@ -21,7 +21,8 @@
 package org.cougaar.core.plugin;
 
 import org.cougaar.core.domain.*;
-
+import org.cougaar.core.service.PrototypeRegistryService;
+import org.cougaar.core.service.DomainService;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
@@ -32,15 +33,24 @@ import org.cougaar.core.domain.*;
 /** placeholder to clean up plugin->manager interactions **/
 public class LDMServiceProvider implements ServiceProvider
 {
-  private ClusterImpl agent;
+  private LDMService ls;
+  /*
+  public LDMServiceProvider(LDMServesPlugin lsp, PrototypeRegistryService prs, DomainService ds) {
+    // rather this was an assert!
+    if (lsp == null || prs == null || ds == null)
+      throw new IllegalArgumentException("LDMServiceProvider Constructor arguments must be non-null ("+
+                                         lsp+", "+prs+", "+ds+")");
 
-  public LDMServiceProvider(ClusterImpl agent) {
-    this.agent = agent;
+    this.ls = new LDMServiceImpl(lsp,prs,ds);
+  }
+  */
+  public LDMServiceProvider(LDMService ls) {
+    this.ls = ls;
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
     if (LDMService.class.isAssignableFrom(serviceClass)) {
-      return new LDMServiceImpl();
+      return ls;
     } else {
       return null;
     }
@@ -49,26 +59,34 @@ public class LDMServiceProvider implements ServiceProvider
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
   }
 
-  private class LDMServiceImpl implements LDMService {
+  private static class LDMServiceImpl implements LDMService {
+    private LDMServesPlugin lsp;
+    private PrototypeRegistryService prs;
+    private DomainService ds;
+    private LDMServiceImpl(LDMServesPlugin lsp, PrototypeRegistryService prs, DomainService ds) {
+      this.lsp = lsp;
+      this.prs = prs;
+      this.ds = ds;
+    }
     public LDMServesPlugin getLDM() {
-      return agent.getLDM();
+      return lsp;
     }
     public RootFactory getFactory() {
-      return getLDM().getFactory();
+      return ds.getFactory();
     }
     public Factory getFactory(String s) {
-      return getLDM().getFactory(s);
+      return ds.getFactory(s);
     }
 
     // standin API for LDMService called by PluginBinder for temporary support
     public void addPrototypeProvider(PrototypeProvider plugin) {
-      agent.addPrototypeProvider(plugin);
+      prs.addPrototypeProvider(plugin);
     }
     public void addPropertyProvider(PropertyProvider plugin) {
-      agent.addPropertyProvider(plugin);
+      prs.addPropertyProvider(plugin);
     }
     public void addLatePropertyProvider(LatePropertyProvider plugin) {
-      agent.addLatePropertyProvider(plugin);
+      prs.addLatePropertyProvider(plugin);
     }
   }
 }

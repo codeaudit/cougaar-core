@@ -27,6 +27,7 @@ import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import java.beans.*;
 import java.lang.reflect.*;
 
@@ -71,7 +72,7 @@ public class PluginManager
     // add services here (none for now)
 
     // display the agent id
-    ClusterIdentifier cid = getBindingSite().getAgentIdentifier();
+    MessageAddress cid = getBindingSite().getAgentIdentifier();
     String cname = cid.toString();
     // System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
     
@@ -100,7 +101,16 @@ public class PluginManager
     // load the child Components (Plugins, etc)
     int n = ((children != null) ? children.length : 0);
     for (int i = 0; i < n; i++) {
-      add(children[i]);
+      Object x = children[i];
+      if (x instanceof ComponentDescription) {
+        ComponentDescription child = (ComponentDescription) x;
+        String ip = child.getInsertionPoint();
+        // PluginManager should only load plugins!
+        if (ip != null &&
+            ip.startsWith("Node.AgentManager.Agent.PluginManager.")) {
+          add(child);
+        }
+      }
     }
   }
 
@@ -151,7 +161,7 @@ public class PluginManager
           return PluginManager.this.remove(childComponent);
         }
         public void requestStop() {}
-        public ClusterIdentifier getAgentIdentifier() {
+        public MessageAddress getAgentIdentifier() {
           return PluginManager.this.getAgentIdentifier();
         }
         public ConfigFinder getConfigFinder() {
@@ -240,9 +250,9 @@ public class PluginManager
   //
   
   public ClusterIdentifier getClusterIdentifier() {
-    return getAgentIdentifier();
+    return (ClusterIdentifier)getAgentIdentifier();
   }
-  public ClusterIdentifier getAgentIdentifier() {
+  public MessageAddress getAgentIdentifier() {
     return getBindingSite().getAgentIdentifier();
   }
   public ConfigFinder getConfigFinder() {
