@@ -25,6 +25,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
+import org.cougaar.core.society.InitializerService;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import java.beans.*;
 import java.lang.reflect.*;
@@ -81,19 +82,18 @@ public class PluginManager
       children = (StateTuple[])loadState;
       loadState = null;
     } else {
+      ServiceBroker sb = getServiceBroker();
+      InitializerService is = (InitializerService)
+        sb.getService(this, InitializerService.class, null);
       try {
-        // parse the cluster properties
-        // currently assume ".ini" files
-        InputStream in = ConfigFinder.getInstance().open(cname+".ini");
-        children = 
-          org.cougaar.core.society.INIParser.parse(
-              in, 
-              "Node.AgentManager.Agent.PluginManager");
+        children = is.getPluginDescriptions(cname);
       } catch (Exception e) {
         System.err.println(
             "\nUnable to add "+cname+"'s child Components: "+e);
         e.printStackTrace();
         children = null;
+      } finally {
+        sb.releaseService(this, InitializerService.class, is);
       }
     }
 
