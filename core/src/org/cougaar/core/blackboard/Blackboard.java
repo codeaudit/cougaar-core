@@ -590,24 +590,17 @@ public class Blackboard extends Subscriber
 
     // return a List of agent_names for the matching roleValue in HashMap 
     synchronized (cache) {
-      for (Iterator i = cache.entrySet().iterator(); i.hasNext(); ) {
-        Map.Entry ent = (Map.Entry) i.next();
-	String roleValue = (String)ent.getKey();
-	//System.out.println("roleValue is: " + roleValue);
-	
-	// if ABA's role = rolevalue, get out of hashmap a set of clusterids
-	if(dest.getAttributeValue().equals(roleValue)) {
-	  List values = (ArrayList) ent.getValue();
-	  if(values != null) {
-	    l = new ArrayList();
-	    for (Iterator iter = values.iterator(); iter.hasNext(); ) {
-	      l.add(iter.next());
-	    }
+      String keyval = dest.getAttributeValue();
+      if(cache.containsKey(keyval)) {
+	List values = (ArrayList) cache.get(keyval);
+	if(values != null) {
+	  l = new ArrayList();
+	  for (Iterator iter = values.iterator(); iter.hasNext(); ) {
+	    l.add(iter.next());
 	  }
 	}
       }
     }
-    
     
     // else query NameServer
     if(l != null){
