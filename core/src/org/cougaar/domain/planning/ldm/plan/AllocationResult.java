@@ -114,23 +114,22 @@ public class AllocationResult
   public AllocationResult(AllocationResult ar1, AllocationResult ar2) {
     int len1 = ar1.avResults.length;
     int len2 = ar2.avResults.length;
-    int nAspects = len1;
-    float sumConfRating = ar1.confrating * nAspects;
-    avResults = new AspectValue[len1 + len2];
-    System.arraycopy(ar1.avResults, 0, avResults, 0, nAspects);
+    List mergedavs = new ArrayList(len1 + len2);
   outer:
     for (int i = 0; i < len2; i++) {
-      int aspectType = ar2.avResults[i].getAspectType();
-      for (int j = 0; j < nAspects; j++) {
-        if (aspectType == avResults[j].getAspectType()) {
+      AspectValue av2 = ar2.avResults[i];
+      int aspectType = av2.getAspectType();
+      for (int j = 0; j < len1; j++) {
+        if (aspectType == ar1.avResults[j].getAspectType()) {
           continue outer;       // Already have this AspectType
         }
       }
-      // New aspectType. Append to arrays
-      avResults[nAspects++] = ar2.avResults[i];
-      sumConfRating += ar2.confrating;
+      mergedavs.add(av2);
     }
-    confrating = sumConfRating / nAspects;
+    mergedavs.addAll(Arrays.asList(ar1.avResults));
+    int nAspects = mergedavs.size();
+    avResults = (AspectValue[]) mergedavs.toArray(new AspectValue[nAspects]);
+    confrating = (ar1.confrating * len1 + ar2.confrating * (nAspects - len1)) / nAspects;
 
     if (ar1.auxqueries != null) {
       auxqueries = (String[]) ar1.auxqueries.clone();
@@ -141,6 +140,7 @@ public class AllocationResult
         if (mergedQueries[i] == null) mergedQueries[i] = ar2.auxqueries[i];
       }
     }
+//      checkAVResults();
     isSuccess = ar1.isSuccess() || ar2.isSuccess();
   }
 
@@ -394,7 +394,14 @@ public class AllocationResult
    */
   private void setAspectValueResults(AspectValue[] avresult) {
     avResults = avresult;
+//      checkAVResults();
     clearMemos();
+  }
+
+  private void checkAVResults() {
+    for (int i = 0; i < avResults.length; i++) {
+      if (avResults[i] == null) throw new NullPointerException("null AspectValue at index " + i);
+    }
   }
         
   /** A collection of arrays (double[]) that represents each phased result.
