@@ -51,12 +51,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   private static final long SLEEP_INTERVAL = 5000L;
   private static final long ACTIVITY_DELAY = 600000;
   private static final Class[] requiredServices = {};
-  private static final Set ignoredVerbs = new HashSet();
-  static {
-    ignoredVerbs.add(Verb.getVerb("DetermineRequirements"));
-    ignoredVerbs.add(Verb.getVerb("GetLogSupport"));
-    ignoredVerbs.add(Verb.getVerb("MaintainInventory"));
-  }
+  private Set ignoredVerbs = new HashSet();
   private IncrementalSubscription relaySubscription;
   private IncrementalSubscription activitySubscription;
   private long now;             // Time of current execute()
@@ -66,7 +61,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   private boolean updateTaskCompletionPending = true;
   private boolean debug = false;
   private Map filters = new WeakHashMap();
-  private static UnaryPredicate tasksPredicate =
+  private UnaryPredicate tasksPredicate =
     new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof Task) {
@@ -77,7 +72,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
         return false;
       }
     };
-  private static UnaryPredicate pePredicate =
+  private UnaryPredicate pePredicate =
     new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof PlanElement) {
@@ -131,6 +126,10 @@ public class CompletionTargetPlugin extends CompletionPlugin {
 
   public CompletionTargetPlugin() {
     super(requiredServices);
+  }
+
+  protected void addIgnoredVerb(Verb verb) {
+    ignoredVerbs.add(verb);
   }
 
   public void setupSubscriptions() {

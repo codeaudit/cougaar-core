@@ -113,21 +113,18 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     if (haveServices()) {
       if (timerExpired()) {
         cancelTimer();
-        boolean needCheckLaggards = true;
         now = System.currentTimeMillis();
         if (now > nextCheckTargetsTime) {
           if (checkTargets()) {
             shortCheckTargetsCount = 0; // Reset and start over
             nextCheckTargetsTime = now + SHORT_CHECK_TARGETS_INTERVAL;
-            needCheckLaggards = false;
           } else if (shortCheckTargetsCount < SHORT_CHECK_TARGETS_MAX) {
             shortCheckTargetsCount++;
             nextCheckTargetsTime = now + SHORT_CHECK_TARGETS_INTERVAL;
-          } else {              // Keep using the short interval
+          } else {              // Switch to using the long interval
             nextCheckTargetsTime = now + LONG_CHECK_TARGETS_INTERVAL;
           }
-        }
-        if (needCheckLaggards) {
+        } else if (shortCheckTargetsCount >= SHORT_CHECK_TARGETS_MAX) {
           checkLaggards();
         }
         startTimer(UPDATE_INTERVAL);

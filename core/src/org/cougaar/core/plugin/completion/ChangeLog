@@ -1,5 +1,21 @@
 2002-05-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* CompletionTargetPlugin.java:
+	Remove GLM-specific specialization (verbs to ignore) and provide
+	interface whereby domain specializations can tailor the verbs to
+	ignore.
+
+	* CompletionSourcePlugin.java:
+	Don't start waiting for completion until the relay targets have
+	stabilized. This makes it easier for subclass CompletionActions to
+	work reliably by not trying to invoke such actions until all
+	agents and nodes are present and accounted for.
+
+	* CompletionSocietyPlugin.java:
+	Remove GLM-specific specializations and provide CompletionAction
+	interface for extensions to specialize behavior such as publishing
+	the oplan or sending GLS.
+
 	* TestPlugin.java:
 	A test plugin for debugging the completion determination. Provides
 	a daily set of supply tasks derived from projections to give

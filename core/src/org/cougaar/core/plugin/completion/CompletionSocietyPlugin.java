@@ -37,26 +37,60 @@ import org.cougaar.core.service.TopologyReaderService;
  * work.
  **/
 
-public class CompletionSocietyPlugin extends CompletionSourcePlugin {
+public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   private static final long NORMAL_TIME_ADVANCE_DELAY = 5000L;
   private static final long ADVANCE_TIME_ADVANCE_DELAY = 20000L;
   private static final long INITIAL_TIME_ADVANCE_DELAY = 240000L;
   private static final long TIME_STEP = 86400000L;
 
+  /**
+   * Subclasses should provide an array of CompletionActions to be
+   * handled. Each action will be invoked whenever the laggard
+   * status changes until the action returns true. After an action
+   * returns true, the next action is invoked until it returns true.
+   * This continues until all completion actions have returned true.
+   * After that, the standard time-advance action is invoked.
+   **/
+  public interface CompletionAction {
+    public boolean checkCompletion(boolean haveLaggard);
+  }
+
   private long timeToAdvanceTime = Long.MIN_VALUE; // Time to advance time (maybe)
-  private long tomorrow = Long.MIN_VALUE;	// Demo time must exceed this before time step
+  private long tomorrow = Long.MIN_VALUE;	// Demo time must
+                                                // exceed this before
+                                                // time step
+  private CompletionAction[] completionActions;
+  private int nextCompletionAction = 0;
 
   private LaggardFilter filter = new LaggardFilter();
+
+  protected CompletionAction[] getCompletionActions() {
+    return new CompletionAction[0];
+  }
 
   protected Set getTargetNames() {
     return topologyReaderService.getAll(TopologyReaderService.NODE);
   }
 
   protected void handleNewLaggard(Laggard worstLaggard) {
+    boolean haveLaggard = worstLaggard != null && worstLaggard.isLaggard();
     if (logger.isInfoEnabled() && filter.filter(worstLaggard)) {
       logger.info(getClusterIdentifier() + ": new worst " + worstLaggard);
     }
-    checkTimeAdvance(worstLaggard != null && worstLaggard.isLaggard());
+    if (nextCompletionAction < completionActions.length) {
+      try {
+        if (completionActions[nextCompletionAction].checkCompletion(haveLaggard)) {
+          nextCompletionAction++;
+        }
+      } catch (Exception e) {
+        logger.error("Error executing completion action "
+                     + completionActions[nextCompletionAction],
+                     e);
+        nextCompletionAction++;
+      }
+    } else {
+      checkTimeAdvance(haveLaggard);
+    }
   }
 
   /**
@@ -67,7 +101,7 @@ public class CompletionSocietyPlugin extends CompletionSourcePlugin {
    * agents have had an opportunity to become laggards due to the
    * first time advance.
    **/
-  private void checkTimeAdvance(boolean haveLaggard) {
+  protected void checkTimeAdvance(boolean haveLaggard) {
     long demoNow = alarmService.currentTimeMillis();
     if (tomorrow == Long.MIN_VALUE) {
       tomorrow = demoNow;
