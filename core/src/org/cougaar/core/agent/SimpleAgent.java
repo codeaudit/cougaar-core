@@ -335,19 +335,16 @@ public class SimpleAgent
     setClusterIdentifier(cid);
   }
     
-  /** Notify object about its "parent"
-   *  Object should transition to the LOADED state.
-   *  Called object should check that caller is an instanceof
-   *  the appropriate class
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void load() throws StateModelException {
+  public void load() {
     // Confirm that my container is indeed ClusterManagement
     if (!( getBindingSite() instanceof AgentBindingSite ) ) {
       throw new StateModelException(
           "Container ("+getBindingSite()+") does not implement AgentBindingSite");
     }
+    super.load();
+  }
+
+  protected void loadHighPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
 
     // get our log
@@ -359,6 +356,12 @@ public class SimpleAgent
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getMessageAddress(), this);
+
+    super.loadHighPriorityComponents();
+  }
+
+  protected void loadInternalPriorityComponents() {
+    ServiceBroker sb = getServiceBroker();
 
     // add the containment service
     myAgentContainmentServiceProvider = 
@@ -469,8 +472,16 @@ public class SimpleAgent
       sb.addService(LDMService.class, myLDMServiceProvider);
     }
  
-    // transit the state.
-    super.load();
+
+    super.loadInternalPriorityComponents();
+  }
+
+  protected void loadBinderPriorityComponents() {
+    super.loadBinderPriorityComponents();
+  }
+
+  protected void loadComponentPriorityComponents() {
+    ServiceBroker sb = getServiceBroker();
 
     if (loadState instanceof AgentState) {
       // use the existing state
@@ -570,7 +581,13 @@ public class SimpleAgent
       throw new RuntimeException("Couldn't get NamingService!");
     }
 
+    super.loadComponentPriorityComponents();
   }
+
+  protected void loadLowPriorityComponents() {
+    super.loadLowPriorityComponents();
+  }
+
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.

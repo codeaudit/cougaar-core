@@ -162,10 +162,16 @@ public class NodeAgent
   private ServiceBroker agentServiceBroker = null;
   private AgentManager agentManager = null;
 
+  private ComponentDescription[] agentDescs = null;
+
   /** A reference to the MessageTransportService containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
 
   private RootMobilityComponent agentMobility;
+
+  private String nodeName = null;
+  private NodeIdentifier nodeIdentifier = null;
+
 
   /** @param asb An unproxied reference to the top-level ServiceBroker so that we can 
    * add global services.
@@ -176,26 +182,20 @@ public class NodeAgent
     agentManager = am;
   }
 
-  /*
-  public NodeAgent(ComponentDescription comdesc) {
-    super(comdesc);
-  }
-  */
+  ///
+  /// subcomponent phases
+  /// 
 
-  public void load() 
-    throws StateModelException 
-  {
+  protected void loadHighPriorityComponents() {
     ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
     AgentManager am = agentManager;
 
-    String name;
-    NodeIdentifier id;
     try {
       NodeIdentificationService nis = (NodeIdentificationService) rootsb.getService(this,NodeIdentificationService.class,null);
       if (nis != null) {
-        id = nis.getNodeIdentifier();
-        name = id.toString();
+        nodeIdentifier = nis.getNodeIdentifier();
+        nodeName = nodeIdentifier.toString();
       } else {
         throw new RuntimeException("No node name specified");
       }
@@ -204,15 +204,15 @@ public class NodeAgent
     }
 
     // set the MessageAddress to be a cid for now (sigh)
-    setMessageAddress( new ClusterIdentifier(name) );
+    setMessageAddress( new ClusterIdentifier(nodeName) );
 
-    // set up our binder factory
-    {
-      BinderFactory nabf = new NodeAgentBinderFactory();
-      if (!attachBinderFactory(nabf)) {
-        throw new Error("Failed to load the NodeAgentBinderFactory in NodeAgent");
-      }
-    }
+    super.loadHighPriorityComponents();
+  }
+
+  protected void loadInternalPriorityComponents() {
+    ServiceBroker localsb = getServiceBroker();
+    ServiceBroker rootsb = agentServiceBroker;
+    AgentManager am = agentManager;
 
     // set up the NodeControlService
     { 
@@ -272,7 +272,7 @@ public class NodeAgent
     }
     */
 
-    ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + name);
+    ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
     tsp.provideServices(rootsb);
 
     try {
@@ -293,7 +293,7 @@ public class NodeAgent
       throw new Error("Couldn't initialize LoggingService "+ioe);
     }
 
-    MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, id);
+    MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, nodeIdentifier);
     rootsb.addService(MetricsService.class, msp);
     rootsb.addService(MetricsUpdateService.class, msp);
 
@@ -307,7 +307,7 @@ public class NodeAgent
     if (filename == null) {
       if (experimentId == null) {
         // use the default "name.ini"
-        filename = name + ".ini";
+        filename = nodeName + ".ini";
       } else {
         // use the filename
       }
@@ -320,7 +320,6 @@ public class NodeAgent
     }
 
 
-    ComponentDescription[] agentDescs;
     try {
       ServiceProvider sp;
       if (filename != null) {
@@ -332,7 +331,7 @@ public class NodeAgent
 
       InitializerService is = (InitializerService) rootsb.getService(this, InitializerService.class, null);
       agentDescs =
-        is.getComponentDescriptions(name, "Node.AgentManager");
+        is.getComponentDescriptions(nodeName, "Node.AgentManager");
       rootsb.releaseService(this, InitializerService.class, is);
     } catch (Exception e) {
       throw new Error("Couldn't initialize NodeAgent from InitializerService "+e);
@@ -343,7 +342,7 @@ public class NodeAgent
     //
     // NB: The order is important for now - MTS *must* be created
     // first.
-    initTransport(rootsb, id);  
+    initTransport(rootsb, nodeIdentifier);  
 
     // register for external control by the AppServer
     //   -- disabled for now --
@@ -398,6 +397,32 @@ public class NodeAgent
       }
     }
 
+    super.loadInternalPriorityComponents();
+
+  }
+
+  protected void loadBinderPriorityComponents() {
+    // set up our binder factory
+    {
+      BinderFactory nabf = new NodeAgentBinderFactory();
+      if (!attachBinderFactory(nabf)) {
+        throw new Error("Failed to load the NodeAgentBinderFactory in NodeAgent");
+      }
+    }
+
+    super.loadBinderPriorityComponents();
+  }
+
+  protected void loadComponentPriorityComponents() {
+    super.loadComponentPriorityComponents();
+
+  }
+  protected void loadLowPriorityComponents() {
+    super.loadLowPriorityComponents();
+  }
+
+  public void load() 
+  {
     super.load();
 
     // load the clusters
@@ -408,6 +433,7 @@ public class NodeAgent
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
+
 
   public boolean add(Object o) {
     return super.add(o);
@@ -436,8 +462,12 @@ public class NodeAgent
     for (int i = 0; i < nDescs; i++) {
       ComponentDescription desc = descs[i];
       try {
-        //Let the agentmanager create the cluster
-        agentManager.add(desc);
+        String ip = desc.getInsertionPoint();
+        // only try to load Agents and AgentBinders
+        if ("Node.AgentManager.Agent".equals(ip) ||
+            "Node.AgentManager.Binder".equals(ip)) {
+          agentManager.add(desc);
+        }
       } catch (Exception e) {
         System.err.println("Exception creating component ("+desc+"): " + e);
         e.printStackTrace();
