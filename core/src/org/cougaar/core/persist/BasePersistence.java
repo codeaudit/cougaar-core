@@ -723,7 +723,14 @@ public class BasePersistence
       throw e;
     }
     finally {
-      currentPersistPluginInfo.ppi.closeObjectInputStream(deltaNumber, currentInput);
+      if ((currentPersistPluginInfo != null) &&
+          (currentPersistPluginInfo.ppi != null)) {
+        currentPersistPluginInfo.ppi.closeObjectInputStream(deltaNumber, currentInput);
+      } else {
+        System.err.println(
+            "WARNING: readFromStream with null currentPersistPluginInfo[.ppi],"+
+            " will skip object-stream close");
+      }
     }
   }
 
