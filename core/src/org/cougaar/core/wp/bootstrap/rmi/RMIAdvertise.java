@@ -111,6 +111,10 @@ extends AdvertiseBase
     if (!Util.isLocalHost(host)) {
       return null;
     }
+    String filter = RMIUtil.getFilter(ae, agentId, log);
+    if (!agentName.equals(filter)) {
+      return null;
+    }
     return ae;
   }
 
