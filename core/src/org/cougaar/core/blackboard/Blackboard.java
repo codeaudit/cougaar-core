@@ -240,8 +240,12 @@ public class Blackboard extends Subscriber
     if (aDirective == null) {
       throw new IllegalArgumentException("directive must not be null.");
     } else {
-      if (c != null && ((Collection) c).size()>0) {
-        DirectiveMessage.DirectiveWithChangeReports dd = new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
+      if ((c != null) &&
+          (c != AnonymousChangeReport.LIST) &&
+          (c != AnonymousChangeReport.SET) &&
+          (!(c.isEmpty()))) {
+        DirectiveMessage.DirectiveWithChangeReports dd = 
+          new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
         aDirective = dd;
       }
       sendQueue.add(aDirective);
@@ -430,9 +434,10 @@ public class Blackboard extends Subscriber
       try {
         for (int j = 0; j < directives.length; j++) {
           Directive d = directives[j];
-          Collection cc = null;
+          Collection cc = AnonymousChangeReport.LIST;
           if (d instanceof DirectiveMessage.DirectiveWithChangeReports) {
-            DirectiveMessage.DirectiveWithChangeReports dd = (DirectiveMessage.DirectiveWithChangeReports) d;
+            DirectiveMessage.DirectiveWithChangeReports dd = 
+              (DirectiveMessage.DirectiveWithChangeReports) d;
             cc = dd.getChangeReports();
             d = dd.getDirective();
           }

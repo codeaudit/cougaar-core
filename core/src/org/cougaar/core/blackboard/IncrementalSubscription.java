@@ -39,7 +39,6 @@ public class IncrementalSubscription extends CollectionSubscription {
 
   private Set myAddedSet = null; 
   private List myRemovedList = null;
-  private List myChangedList = null;
 
   protected void resetChanges() {
     super.resetChanges();
@@ -47,8 +46,6 @@ public class IncrementalSubscription extends CollectionSubscription {
       myAddedSet.clear();
     if (myRemovedList != null)
       myRemovedList.clear();
-    if (myChangedList != null)
-      myChangedList.clear();
   }
 
 
@@ -90,16 +87,14 @@ public class IncrementalSubscription extends CollectionSubscription {
    **/
   public Enumeration getChangedList() {
     subscriber.checkTransactionOK("getChangedList()");
-    if (myChangedList == null || myChangedList.isEmpty())
-      return Empty.enumeration;
-    return new Enumerator(myChangedList);
+    return super.privateGetChangedList();
   }
 
   /** @return a possibly empty collection of objects marked as changed
    * since the last transaction. Will not return null.
    **/
   public Collection getChangedCollection() {
-    return (myChangedList!=null)?myChangedList:Collections.EMPTY_LIST;
+    return super.privateGetChangedCollection();
   }
 
   /**
@@ -119,11 +114,6 @@ public class IncrementalSubscription extends CollectionSubscription {
     if (myRemovedList == null) myRemovedList = new ArrayList(3);
     myRemovedList.add( o );
   }
-  /** called by privateChange **/
-  private void addToChangedList( Object o ) {
-    if (myChangedList == null) myChangedList = new ArrayList(3);
-    myChangedList.add( o );
-  }
 
   protected void privateAdd(Object o, boolean isVisible) { 
     super.privateAdd(o, isVisible);
@@ -141,10 +131,9 @@ public class IncrementalSubscription extends CollectionSubscription {
   }
 
   protected void privateChange(Object o, List changes, boolean isVisible) {
-    super.privateChange(o, changes, isVisible);
     if (isVisible) {
       setChanged(true);
-      addToChangedList(o);
+      super.privateChange(o, changes, true);
     }
   }
 }

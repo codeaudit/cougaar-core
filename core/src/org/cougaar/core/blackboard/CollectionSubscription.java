@@ -115,18 +115,42 @@ public class CollectionSubscription
   }
 
   protected void privateChange(Object o, List changes, boolean isVisible) {
-    if (isVisible && changes != null) {
-      int l = changes.size();
-      HashSet set = (HashSet)changeMap.get(o);
-      if (set == null) {
-        changeMap.put(o, set = new HashSet(l));
+    if (isVisible) {
+      Set set = (Set) changeMap.get(o);
+      // here we avoid creating a new set instance if it will only
+      //   contain the anonymous change report
+      if (changes == AnonymousChangeReport.LIST) {
+        if (set == null) {
+          changeMap.put(o, AnonymousChangeReport.SET);
+        } else if (set != AnonymousChangeReport.SET) {
+          set.add(AnonymousChangeReport.INSTANCE);
+        }
+      } else {
+        if (set == null) {
+          int l = changes.size();
+          changeMap.put(o, set = new HashSet(l));
+        } else if (set == AnonymousChangeReport.SET) {
+          int l = 1 + changes.size();
+          changeMap.put(o, set = new HashSet(l));
+          set.add(AnonymousChangeReport.INSTANCE);
+        }
+        // this should be sufficient because "Set.add" is defined
+        // as only adding an element if it isn't already there.
+        // In any case, it is critical that only the *FIRST* of a 
+        // match be included in the set.
+        set.addAll(changes);
       }
-      // this should be sufficient because HashSet.add is defined
-      // as only adding an element if it isn't already there.
-      // In any case, it is critical that only the *FIRST* of a 
-      // match be included in the set.
-      set.addAll(changes);
     }
+  }
+
+  protected Enumeration privateGetChangedList() {
+    if (changeMap.isEmpty()) return Empty.enumeration;
+    return new Enumerator(changeMap.keySet());
+  }
+
+  protected Collection privateGetChangedCollection() {
+    if (changeMap.isEmpty()) return Collections.EMPTY_SET;
+    return changeMap.keySet();
   }
 
   private HashMap changeMap = new HashMap(13);
@@ -139,13 +163,19 @@ public class CollectionSubscription
 
   /** Return a Set which contains the set of ChangeReports which
    * apply to the specified object in the current transaction.
-   * As there is no requirement that there be a ChangeReport (or even an
-   * actual change) associated with a publishChange, existance of an
-   * object in a change list does not necessarily imply any ChangeReports
-   * for that object.<p>
-   *
+   * <p>
+   * If an object is changed without specifying a ChangeReport
+   * then the "AnonymousChangeReport" is used.  Thus the set
+   * is always non-null and contains one or more entries.
+   * <p>
+   * If an object is not changed during the transaction then
+   * this method returns null.
+   * <p>
    * Illegal to call outside of transaction boundaries.
-   * @return a Set of zero or more ChangeReport instances or null.
+   *
+   * @return if the object was changed: a non-null Set of one or 
+   *    more ChangeReport instances, possibly containing the 
+   *    AnonymousChangeReport; otherwise null.
    **/
   public Set getChangeReports(Object o) {
     subscriber.checkTransactionOK("hasChanged()");

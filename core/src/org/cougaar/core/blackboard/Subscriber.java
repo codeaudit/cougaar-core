@@ -551,8 +551,16 @@ public class Subscriber implements BlackboardService {
     if (o instanceof Publishable) {
       crs = Transaction.getCurrentTransaction().getChangeReports(o);
     }
-    if (changes != null) {
-      if (crs == null) {
+
+    // convert null or empty changes to the "anonymous" list
+    if (isZeroChanges(changes)) {
+      if (isZeroChanges(crs)) {
+        crs = AnonymousChangeReport.LIST;
+      } else {
+        // use crs as-is
+      }
+    } else {
+      if (isZeroChanges(crs)) {
         crs = new ArrayList(changes);
       } else {
         crs.addAll(changes);
@@ -564,6 +572,15 @@ public class Subscriber implements BlackboardService {
     publishChangedCount++;
     return true;
   }
+
+  private final boolean isZeroChanges(final Collection c) {
+    return
+      ((c == null) || 
+       (c == AnonymousChangeReport.LIST) || 
+       (c == AnonymousChangeReport.SET) || 
+       (c.isEmpty()));
+  }
+
 
   /** A extension subscriber may call this method to execute bulkAdd transactions.
    * This is protected because it is of very limited to other than persistance plugins.
