@@ -60,6 +60,7 @@ import org.cougaar.core.agent.AgentBindingSite;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
@@ -132,6 +133,9 @@ import org.cougaar.core.agent.service.alarm.Alarm;
 
 // agentid
 import org.cougaar.core.service.AgentIdentificationService;
+
+// init info
+import org.cougaar.core.node.InitializerService;
 
 // Persistence
 //  import org.cougaar.core.persist.DatabasePersistence;
@@ -346,6 +350,26 @@ public class SimpleAgent
     setClusterIdentifier(cid);
   }
     
+  /** Get the components from the InitializerService or the state **/
+  protected ComponentDescriptions findExternalComponentDescriptions() {
+    // display the agent id
+    String cname = getIdentifier();
+
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
+    try {
+      String cp = specifyContainmentPoint();
+      ComponentDescription[] cds = is.getComponentDescriptions(cname, specifyContainmentPoint());
+      return new ComponentDescriptions(cds);
+    } catch (Exception e) {
+      System.err.println("\nUnable to add "+cname+"'s child Components: "+e);
+      e.printStackTrace();
+      return null;
+    } finally {
+      sb.releaseService(this, InitializerService.class, is);
+    }
+  }
+
   public void load() {
     // Confirm that my container is indeed ClusterManagement
     if (!( getBindingSite() instanceof AgentBindingSite ) ) {

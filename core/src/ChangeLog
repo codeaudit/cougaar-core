@@ -1,3 +1,14 @@
+2002-05-20  Michael Thome  <mthome@bbn.com>
+
+	* NodeAgent
+	Support for bug 1340, with some additional cleanups.
+
+	* SimpleAgent
+	Accept direct externally-specified components - bug 1340.
+
+	* Agent
+	Minor cleanup of dead code.
+
 2002-05-17  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/core/service/BlackboardQueryService, etc

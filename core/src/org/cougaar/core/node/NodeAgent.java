@@ -171,7 +171,6 @@ public class NodeAgent
   private String nodeName = null;
   private NodeIdentifier nodeIdentifier = null;
 
-
   /** @param asb An unproxied reference to the top-level ServiceBroker so that we can 
    * add global services.
    * @param am An unproxied reference to the AgentManager so that we can add agents.
@@ -189,21 +188,6 @@ public class NodeAgent
     ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
     AgentManager am = agentManager;
-
-    try {
-      NodeIdentificationService nis = (NodeIdentificationService) rootsb.getService(this,NodeIdentificationService.class,null);
-      if (nis != null) {
-        nodeIdentifier = nis.getNodeIdentifier();
-        nodeName = nodeIdentifier.toString();
-      } else {
-        throw new RuntimeException("No node name specified");
-      }
-    } catch (RuntimeException e) {
-      throw new Error("Couldn't figure out Node name "+e);
-    }
-
-    // set the MessageAddress to be a cid for now (sigh)
-    setMessageAddress( new ClusterIdentifier(nodeName) );
 
     // set up the NodeControlService
     { 
@@ -238,40 +222,6 @@ public class NodeAgent
     ServiceBroker localsb = getServiceBroker();
     ServiceBroker rootsb = agentServiceBroker;
     AgentManager am = agentManager;
-
-
-    /*
-    // security manager
-    {
-      String smn = System.getProperty(SecurityComponent.SMC_PROP,
-                                      "org.cougaar.core.node.StandardSecurityComponent");
-      if (smn != null) {
-        try {
-          Class smc = Class.forName(smn);
-          if (SecurityComponent.class.isAssignableFrom(smc)) {
-            ComponentDescription smcd = 
-              new ComponentDescription(
-                                       id.toString()+"SecurityComponent",
-                                       "Node.AgentManager.Agent.SecurityComponent",
-                                       smn,
-                                       null,  //codebase
-                                       null,  //parameters
-                                       null,  //certificate
-                                       null,  //lease
-                                       null); //policy
-            super.add(smcd);
-          } else {
-            System.err.println("Error: SecurityComponent specified as "+smn+" which is not an instance of SecurityComponent");
-            System.exit(1);
-          }
-        } catch (Exception e) {
-          System.err.println("Error: Could not load SecurityComponent "+smn+": "+e);
-          e.printStackTrace();
-          System.exit(1);
-        }
-      }
-    }
-    */
 
     ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
     tsp.provideServices(rootsb);
@@ -332,33 +282,7 @@ public class NodeAgent
     rootsb.addService(NodeMetricsService.class,
                   new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
-    String filename = System.getProperty("org.cougaar.filename");
-    String experimentId = System.getProperty("org.cougaar.experiment.id");
-    if (filename == null) {
-      if (experimentId == null) {
-        // use the default "name.ini"
-        filename = nodeName + ".ini";
-      } else {
-        // use the filename
-      }
-    } else if (experimentId == null) {
-      // use the experimentId
-    } else {
-      throw new IllegalArgumentException(
-          "Both file name (-f) and experiment -X) specified. "+
-          "Only one allowed.");
-    }
-
-
     try {
-      ServiceProvider sp;
-      if (filename != null) {
-        sp = new FileInitializerServiceProvider();
-      } else {
-        sp = new DBInitializerServiceProvider(experimentId);
-      }
-      rootsb.addService(InitializerService.class, sp);
-
       InitializerService is = (InitializerService) rootsb.getService(this, InitializerService.class, null);
       agentDescs =
         is.getComponentDescriptions(nodeName, "Node.AgentManager");
@@ -453,6 +377,55 @@ public class NodeAgent
 
   public void load() 
   {
+    ServiceBroker localsb = getServiceBroker();
+    ServiceBroker rootsb = agentServiceBroker;
+    AgentManager am = agentManager;
+
+    try {
+      NodeIdentificationService nis = (NodeIdentificationService) rootsb.getService(this,NodeIdentificationService.class,null);
+      if (nis != null) {
+        nodeIdentifier = nis.getNodeIdentifier();
+        nodeName = nodeIdentifier.toString();
+      } else {
+        throw new RuntimeException("No node name specified");
+      }
+    } catch (RuntimeException e) {
+      throw new Error("Couldn't figure out Node name "+e);
+    }
+
+    // set the MessageAddress to be a cid for now (sigh)
+    setMessageAddress( new ClusterIdentifier(nodeName) );
+
+    String filename = System.getProperty("org.cougaar.filename");
+    String experimentId = System.getProperty("org.cougaar.experiment.id");
+    if (filename == null) {
+      if (experimentId == null) {
+        // use the default "name.ini"
+        filename = nodeName + ".ini";
+      } else {
+        // use the filename
+      }
+    } else if (experimentId == null) {
+      // use the experimentId
+    } else {
+      throw new IllegalArgumentException(
+          "Both file name (-f) and experiment -X) specified. "+
+          "Only one allowed.");
+    }
+
+
+    try {
+      ServiceProvider sp;
+      if (filename != null) {
+        sp = new FileInitializerServiceProvider();
+      } else {
+        sp = new DBInitializerServiceProvider(experimentId);
+      }
+      rootsb.addService(InitializerService.class, sp);
+    } catch (Exception yech) {
+      throw new Error("Couldn't initialize node", yech);
+    }
+
     super.load();
 
     // load the clusters
@@ -478,7 +451,7 @@ public class NodeAgent
   }
  
   /**
-   * Add Clusters and their child Components (Plugins, etc) to this Node.
+   * Add Agents and their child Components (Plugins, etc) to this Node.
    * <p>
    * Note that this is a bulk operation, since the loading process is:<ol>
    *   <li>Create the empty clusters</li>
@@ -487,21 +460,12 @@ public class NodeAgent
    * <p>
    */
   protected void addAgents(ComponentDescription[] descs) {
-    int nDescs = ((descs != null) ? descs.length : 0);
-    //System.err.print("Creating Clusters:");
-    for (int i = 0; i < nDescs; i++) {
-      ComponentDescription desc = descs[i];
-      try {
-        String ip = desc.getInsertionPoint();
-        // only try to load Agents and AgentBinders
-        if ("Node.AgentManager.Agent".equals(ip) ||
-            "Node.AgentManager.Binder".equals(ip)) {
-          agentManager.add(desc);
-        }
-      } catch (Exception e) {
-        System.err.println("Exception creating component ("+desc+"): " + e);
-        e.printStackTrace();
-      }
+    ComponentDescriptions cds = new ComponentDescriptions(descs);
+    List cdcs = cds.extractDirectComponents("Node.AgentManager");
+    try {
+      agentManager.addAll(cdcs);
+    } catch (RuntimeException re) {
+      re.printStackTrace();
     }
   }
 

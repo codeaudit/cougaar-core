@@ -84,12 +84,6 @@ public abstract class Agent
     }
   }
 
-  // Do we need state model stuff here???
-  //protected void initialize() {}
-
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
   protected String specifyContainmentPoint() {
     return "Node.AgentManager.Agent";
   }
