@@ -49,29 +49,13 @@ public class PlugInHelper {
      * <t> has no preferences.
      */
     //force everyone to specify the confidence rating and success
-    public static AllocationResult createEstimatedAllocationResult(Task t, RootFactory ldmFactory, double confrating, boolean success) {
-	Enumeration preferences = t.getPreferences();
-	Vector aspects = new Vector();
-	Vector results = new Vector();
-	while ( preferences != null && preferences.hasMoreElements() ) {
-	  // do something really simple for now.
-	  Preference pref = (Preference) preferences.nextElement();
-	  int at = pref.getAspectType();
-	  aspects.addElement(new Integer(at));
-	  ScoringFunction sf = pref.getScoringFunction();
-	  // allocate as if you can do it at the "Best" point
-	  double myresult = ((AspectScorePoint)sf.getBest()).getValue();
-	  results.addElement(new Double(myresult));
-	}
-	int[] aspectarray = new int[aspects.size()];
-	double[] resultsarray = new double[results.size()];
-	for (int i = 0; i < aspectarray.length; i++)
-		aspectarray[i] = (int) ((Integer)aspects.elementAt(i)).intValue();
-	for (int j = 0; j < resultsarray.length; j++ )
-		resultsarray[j] = (double) ((Double)results.elementAt(j)).doubleValue();
-
-	AllocationResult myestimate = ldmFactory.newAllocationResult(confrating, success, aspectarray, resultsarray);
-	return myestimate;
+    public static AllocationResult createEstimatedAllocationResult(Task t,
+                                                                   RootFactory ldmFactory,
+                                                                   double confrating,
+                                                                   boolean success)
+    {
+        return new AllocationResultHelper(t, null)
+            .getAllocationResult(confrating, success);
     }
 
     /**
