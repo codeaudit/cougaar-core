@@ -4,6 +4,12 @@ Package reorganization to support COUGAAR opensource release 7.0.
 Details may be found in 7.0/alp7.pkg.  Changes are reflected in
 javadocs and other documentation.
 
+Default database connection information has been moved out of all
+standard ".q" and ".cfg" files.  A file .alprc must be found somewhere
+in the config path in order for any of the demonstration configs to
+work.  An example .alprc file may be found in this directory as
+"example.alprc".
+
 * MB 6.8.2
 
 New PG in alp domain LocationSchedulePG is maintained by

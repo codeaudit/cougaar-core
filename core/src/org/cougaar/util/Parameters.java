@@ -14,7 +14,7 @@ import java.net.*;
 import java.util.*;
 
 /**
- * ALP Parameter String utilities.
+ * COUGAAR Parameter String utilities.
  * Parameters may be specifed in the form "NAME" or "NAME:DEFAULT"
  * The NAME will be looked up in a passed-in parameter table (if supplied),
  * then system properties and then the default.
@@ -42,11 +42,12 @@ public class Parameters {
           String value = line.substring(i+1).trim();
           parameterMap.put(param, value);
         } catch (RuntimeException re) {
-          System.err.println("Badly formed line in HOME/.alprc ("+l+"):\n"+line);
+          System.err.println("Badly formed line in \".alprc\" ("+l+"):\n"+line);
         }
       }
       br.close();
     } catch (Exception e) { 
+      System.err.println("Warning: Could not find \".alprc\" anywhere in the Config Path.");
       // ignore
     }
   }
