@@ -105,7 +105,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
         if (!serviceAcquired[i]) {
           if (sb.hasService(serviceClasses[i])) {
             if (logger.isDebugEnabled()) {
-              logger.debug(serviceClasses[i].getName() + " acquired");
+//               logger.debug(serviceClasses[i].getName() + " acquired");
             }
             Object o = sb.getService(this, serviceClasses[i], null);
             if (o == null) {
@@ -117,7 +117,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
             }
           } else {
             if (logger.isDebugEnabled()) {
-              logger.debug(serviceClasses[i].getName() + " missing");
+//               logger.debug(serviceClasses[i].getName() + " missing");
             }
             allServicesAcquired = false;
           }
@@ -145,7 +145,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    **/
   protected void startTimer(final long delay) {
     if (timer != null) return;  // update already scheduled
-    if (logger.isDebugEnabled()) logger.debug("Starting timer " + delay);
+//     if (logger.isDebugEnabled()) logger.debug("Starting timer " + delay);
     timer = new Alarm() {
       long expirationTime = System.currentTimeMillis() + delay;
       boolean expired = false;
@@ -171,7 +171,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    **/
   protected void cancelTimer() {
     if (timer == null) return;
-    if (logger.isDebugEnabled()) logger.debug("Cancelling timer");
+//     if (logger.isDebugEnabled()) logger.debug("Cancelling timer");
     timer.cancel();
     timer = null;
   }
