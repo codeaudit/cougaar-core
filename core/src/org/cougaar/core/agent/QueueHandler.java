@@ -41,6 +41,8 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -62,7 +64,7 @@ implements Component
 
   private MessageAddress localAgent;
 
-  private QueueHandlerThread thread;
+  private QueueHandlerBody body;
   private boolean isStarted;
   private Object lock = new Object();
 
@@ -87,12 +89,13 @@ implements Component
     mss = (MessageSwitchService)
       sb.getService(this, MessageSwitchService.class, null);
 
+
     // register message handler to observe all incoming messages
     MessageHandler mh = new MessageHandler() {
       public boolean handleMessage(Message message) {
         if (message instanceof ClusterMessage) {
           // internal message queue
-          getThread().addMessage((ClusterMessage) message);
+          getHandler().addMessage((ClusterMessage) message);
           return true;
         } else {
           return false;
@@ -104,6 +107,7 @@ implements Component
 
   public void start() {
     super.start();
+
 
     // get blackboard service
     //
@@ -119,6 +123,7 @@ implements Component
     }
 
     startThread();
+
   }
 
   public void suspend() {
@@ -155,7 +160,7 @@ implements Component
   private void startThread() {
     synchronized (lock) {
       if (!isStarted) {
-        getThread().start();
+        getHandler().start();
         isStarted = true;
       }
     }
@@ -164,9 +169,9 @@ implements Component
   private void stopThread() {
     synchronized (lock) {
       if (isStarted) {
-        getThread().halt();
+        getHandler().halt();
         isStarted = false;
-        thread = null;
+        body = null;
       }
     }
   }
@@ -179,9 +184,9 @@ implements Component
     }
   }
 
-  private QueueHandlerThread getThread() {
+  private QueueHandlerBody getHandler() {
     synchronized (lock) {
-      if (thread == null) {
+      if (body == null) {
         QueueClient qc = new QueueClient() {
           public MessageAddress getMessageAddress() {
             return localAgent;
@@ -190,9 +195,12 @@ implements Component
             receiveMessages(messages);
           }
         };
-        thread = new QueueHandlerThread(qc);
+        ThreadService tsvc = (ThreadService)
+          sb.getService(this, ThreadService.class, null);
+        body = new QueueHandlerBody(qc, tsvc);
+        sb.releaseService(this, ThreadService.class, tsvc);
       }
-      return thread;
+      return body;
     }
   }
 
@@ -201,56 +209,63 @@ implements Component
     void receiveQueuedMessages(List messages);
   }
 
-  private static final class QueueHandlerThread extends Thread {
+  private static final class QueueHandlerBody implements Runnable {
     private QueueClient client;
     private final List queue = new ArrayList();
     private final List msgs = new ArrayList();
-    private boolean running = true;
-    public QueueHandlerThread(QueueClient client) {
-      super(client.getMessageAddress()+"/RQ");
+    private boolean running = false;
+    private boolean active = false;
+    private Schedulable sched;
+    public QueueHandlerBody(QueueClient client,
+        ThreadService tsvc)
+    {
       this.client = client;
+      sched = tsvc.getThread(this, this, 
+          client.getMessageAddress()+"/RQ");
+    }
+    void start() {
+      sched.start();
+      running = true;
     }
     public void halt() {
       synchronized (queue) {
         running = false;
-        queue.notify();
-      }
-      try {
-        // wait for this thread to stop
-        join(); 
-      } catch (InterruptedException ie) {
+        sched.cancel();
+        while (active) {
+          try {
+            queue.wait();
+          } catch (InterruptedException ie) {
+          }
+        }
       }
       client = null;
     }
     public void run() {
-      while (true) {
-        synchronized (queue) {
-          if (!running) {
-            return;
-          }
-          while (running && queue.isEmpty()) {
-            try {
-              queue.wait();
-            } catch (InterruptedException ie) {
-            }
-          }
-          msgs.addAll(queue);
-          queue.clear();
+      synchronized (queue) {
+        if (!running) {
+          return;
         }
-        if (!msgs.isEmpty()) {
-          client.receiveQueuedMessages(msgs);
-          msgs.clear();
+        if (queue.isEmpty()) {
+          return;
         }
+
+        active = true;
+        msgs.addAll(queue);
+        queue.clear();
+      }
+      if (!msgs.isEmpty()) {
+        client.receiveQueuedMessages(msgs);
+        msgs.clear();
+      }
+      synchronized (queue) {
+        active = false;
+        queue.notify(); // only used for halt()
       }
     }
     public void addMessage(ClusterMessage m) {
       synchronized (queue) {
-        if (!running) {
-          System.err.println(
-              "Queue is not running, message will be ignored!");
-        }
         queue.add(m);
-        queue.notify();
+        if (running) sched.start(); // restart 
       }
     }
   }
