@@ -96,10 +96,14 @@ public class AgentManager
             desc.getInsertionPoint());
       }
 
+      //System.out.println("ADDING desc: "+desc);
+
       // add the agent
       if (!(super.add(desc))) {
         return false;
       }
+
+      //System.out.println("Added "+desc);
 
       // send the Agent an "initialized" message
       //
@@ -136,6 +140,8 @@ public class AgentManager
         return false;
       }
       cluster = (ClusterServesClusterManagement)agent;
+
+      //System.out.println("Cluster: "+cluster);
 
       // hookup the Cluster
       return hookupCluster(cluster);
@@ -272,13 +278,15 @@ public class AgentManager
 
     // create a ComponentDescription for the agent, set it's state
     ComponentDescription cd;
-    if (origDesc != null) {
+    if (origDesc != null) {      
+      Vector param = new Vector(1);
+      param.add("copied"+agentID.toString());
       cd = new ComponentDescription(
           origDesc.getName(),
           origDesc.getInsertionPoint(),
           origDesc.getClassname(),
           origDesc.getCodebase(),
-          origDesc.getParameter(),
+          param, //origDesc.getParameter(),
           origDesc.getCertificate(),
           origDesc.getLeaseRequested(),
           origDesc.getPolicy(),
@@ -286,7 +294,7 @@ public class AgentManager
     } else {
       // lost the description?
       Vector param = new Vector(1);
-      param.add(agentID.toString());
+      param.add("copied"+agentID.toString());
       cd = new ComponentDescription(
           "org.cougaar.core.cluster.ClusterImpl",
           "Node.AgentManager.Agent",
@@ -297,6 +305,13 @@ public class AgentManager
           null, // lease
           null, // policy
           state);
+    }
+
+    System.out.println(
+		       "add("+cd+")");
+    add(cd);
+    if (true) {
+      return;
     }
 
     // create an ADD ComponentMessage with the ComponentDescription

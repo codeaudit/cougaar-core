@@ -542,6 +542,9 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 //        Communications.getInstance().startNameServer();
 //      }
 
+    sb.addService(NodeIdentificationService.class,
+		  new NodeIdentificationServiceProvider(nid));
+    
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
 
