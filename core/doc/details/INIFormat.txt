@@ -1,0 +1,60 @@
+Nodes and Clusters are loaded at startup with ".ini" files.
+
+Here is an example Node-level INI file:
+
+--- sample Node INI file ---#
+# ignored comments
+
+# load three clusters:
+cluster = FirstCluster
+cluster = SecondCluster
+cluster = AnotherCluster
+# etc comments
+[ignored section headers]
+----------------------------
+
+The Node then loads INI files for each cluster:
+
+--- sample "FirstCluster.ini" -----------------
+# a plugin with two arguments:
+plugin = somePackage.SomePlugin(arg1, arg2)
+
+# a plugin with one argument:
+plugin = somePackage.AnotherPlugin(arg)
+
+# a plugin with zero arguments:
+plugin = somePackage.LastPlugin
+-----------------------------------------------
+
+The 8.2.2 INI parser maintains this format for backwards compatibility,
+but now provides a new format:
+
+   "insertionPoint = classname(args)"
+
+This format supports ComponentDescriptions and the loading of new
+Components and BinderFactories.
+
+The above two examples can be rewritten as:
+
+--- new sample Node INI file ---
+# same old format:
+cluster = FirstCluster
+
+# new format usage for "SecondCluster":
+Node.AgentManager.Agent = org.cougaar.core.cluster.ClusterImpl(SecondCluster)
+
+# shorthand usage for "AnotherCluster":
+.AgentManager.Agent = org.cougaar.core.cluster.ClusterImpl(AnotherCluster)
+----------------------------
+
+--- new sample "FirstCluster.ini" -----------------
+# same old format:
+plugin = somePackage.SomePlugin(arg1, arg2)
+
+# the new format:
+Node.AgentManager.Agent.PluginManager.Plugin = somePackage.AnotherPlugin(arg)
+
+# shorthand, since the agent is relative to it's "Node.AgentManager.Agent"
+.PluginManager.Plugin = somePackage.LastPlugin
+-----------------------------------------------
+
