@@ -15,7 +15,6 @@ import org.cougaar.util.*;
 
 import org.cougaar.core.cluster.*;
 
-import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
@@ -33,7 +32,7 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.core.cluster.SubscriberException;
 import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.MetricsSnapshot;
-import org.cougaar.core.cluster.MetricsService;
+//import org.cougaar.core.cluster.MetricsService;
 import org.cougaar.core.cluster.ClusterIdentifier;
 
 import org.cougaar.core.plugin.PlugInServesCluster;
@@ -93,31 +92,59 @@ public abstract class PlugInAdapter
     return ldmService;
   }
 
-  // metrics service
+//   // metrics service
 
-  private MetricsService metricsService = null;
-  public final void setMetricsService(MetricsService s) {
-    metricsService = s;
-  }
-  protected final MetricsService getMetricsService() {
-    return metricsService;
-  }
+//   private MetricsService metricsService = null;
+//   public final void setMetricsService(MetricsService s) {
+//     metricsService = s;
+//   }
+//   protected final MetricsService getMetricsService() {
+//     return metricsService;
+//   }
 
-  /** @deprecated supply a <code>MetricsSnapshot</code> object **/
+//   /** @deprecated supply a <code>MetricsSnapshot</code> object **/
+//   protected final MetricsSnapshot getMetricsSnapshot() {
+//     if (metricsService != null) {
+//       return metricsService.getMetricsSnapshot();
+//     } else {
+//       return null;
+//     }
+//   }
+
+//   protected final MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+//     if (metricsService != null) {
+//       return metricsService.getMetricsSnapshot(ms, resetMsgStats);
+//     } else {
+//       return null;
+//     }
+//   }
+
+  /**
+   * @deprecated use various metrics services - throws a runtime exception
+   * @see org.cougaar.core.blackboard.BlackboardMetricsService
+   * @see org.cougaar.core.mts.MessageStatisticsService
+   * @see org.cougaar.core.mts.MessageWatcherService
+   * @see org.cougaar.core.society.NodeMetricsService
+   * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+   */
   protected final MetricsSnapshot getMetricsSnapshot() {
-    if (metricsService != null) {
-      return metricsService.getMetricsSnapshot();
-    } else {
-      return null;
-    }
+    throw new RuntimeException("\n GetMetricsSnapshot is no longer supported.  Please use the various node level and agent level metrics services.");
+    //return new MetricsSnapshot();
   }
 
+  /**
+   * @deprecated use various metrics services - throws a runtime exception
+   * @see org.cougaar.core.blackboard.BlackboardMetricsService
+   * @see org.cougaar.core.mts.MessageStatisticsService
+   * @see org.cougaar.core.mts.MessageWatcherService
+   * @see org.cougaar.core.society.NodeMetricsService
+   * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+   */
   protected final MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
-    if (metricsService != null) {
-      return metricsService.getMetricsSnapshot(ms, resetMsgStats);
-    } else {
-      return null;
-    }
+    throw new RuntimeException("\n GetMetricsSnapshot is no longer supported.  Please use the various node level and agent level metrics services.");
+ //    if (ms == null)
+//       ms = new MetricsSnapshot();
+//     return ms;
   }
 
   // alarm service
@@ -441,8 +468,8 @@ public abstract class PlugInAdapter
       public void addRealTimeAlarm(Alarm a) {getAlarmService().addRealTimeAlarm(a);}
 
       // metrics service
-      public MetricsSnapshot getMetricsSnapshot() { return getMetricsService().getMetricsSnapshot(); }
-      public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) { return getMetricsService().getMetricsSnapshot(ms, resetMsgStats); }
+      public MetricsSnapshot getMetricsSnapshot() { return PlugInAdapter.this.getMetricsSnapshot(); }
+      public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) { return PlugInAdapter.this.getMetricsSnapshot(ms, resetMsgStats); }
 
       // ??
       public java.sql.Connection getDatabaseConnection(Object locker) {throw new RuntimeException("Should not be called");}
@@ -782,10 +809,10 @@ public abstract class PlugInAdapter
       return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
     }
     public MetricsSnapshot getMetricsSnapshot() {
-      return getMetricsService().getMetricsSnapshot();
+      return PlugInAdapter.this.getMetricsSnapshot();
     }
     public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
-      return getMetricsService().getMetricsSnapshot(ms, resetMsgStats);
+      return PlugInAdapter.this.getMetricsSnapshot(ms, resetMsgStats);
     }
     public void openTransaction() {
       getBlackboardService().openTransaction();
