@@ -76,11 +76,26 @@ import java.security.cert.*;
  * unable to load the rest of the classes.  Both problems tend to
  * crop up when you can least afford this confusion.
  * <p>
+ * <em>Important Note:</em>Do not put Cougaar classes on your classpath.  If
+ * the SystemClassloader loads a cougaar class, it will refer to SystemClassloader-loaded
+ * core classes which exist in a different namespace than Bootstrapper-loaded
+ * classes.  This problem will cause all sorts of loading problems.
+ * <p>
  * The System property <em>org.cougaar.core.node.bootstrapper.loud</em>
  * controls debugging output of the bootstrapping classloader.  When set to
  * "true" will output the list of jar/zip files used to load classes (in order).
  * When set to "shout" will additionally print the location of the jar/zip file
  * used to load each and every class.
+ * @property org.cougaar.core.node.bootstrapper.loud=false Set to "true" to 
+ * information about classloader path and order.  Set to "loud" to get information
+ * about where each loaded class comes from.
+ * @property org.cougaar.properties.url=URL Set to specify where an additional
+ * set of System Properties should be loaded from.
+ * @property org.cougaar.install.path The directory where this Cougaar instance is installed. <em>REQUIRED</em>
+ * @property org.cougaar.class.path Classpath-like setting searched immediately before discovered lib jars.
+ * @property org.cougaar.system.path Classpath-like setting searched immediately before discovered sys jars.
+ * @property org.cougaar.bootstrapper.exclusions Allow explicitly excluding package prefixes from 
+ * the Bootstrap Classloader's concern.
  **/
 public class Bootstrapper
 {
