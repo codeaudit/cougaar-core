@@ -66,7 +66,10 @@ implements ExternalNodeController {
   }
 
   public List getClusterIdentifiers() {
-    return node.getClusterIdentifiers();
+    // disabled for now
+    java.util.ArrayList l = new java.util.ArrayList(1);
+    l.add("list-all-clusters-disabled");
+    return l;
   }
 
 }

@@ -384,8 +384,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 
   /** Reference to the ArgTable used to start this Clsuter **/
   private ArgTable theArgs;
-  /** Reference contatinment of the SetOfObject of Clusters **/
-  private Vector theClusters = new Vector();
   /** Reference to the flag for simulating the start of the testing cycle test **/
   private boolean theTested = false;
   /** Address and port number of this machine as provided by the cl args **/
@@ -465,32 +463,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     return theArgs; 
   }
 
-  /**
-   * Accessor method for theClusters
-   * <p>
-   * @return A Vector that contains references to all the cluster objects
-   **/
-  public final Vector getClusters() {
-    return 
-      ((theClusters != null) ? 
-       (theClusters) :
-       new Vector(0));
-  }
-
-  public final synchronized List getClusterIdentifiers() {
-    int n = ((theClusters != null) ? theClusters.size() : 0);
-    List l = new ArrayList(n);
-    for (int i = 0; i < n; i++) {
-      ClusterServesClusterManagement ci = 
-        (ClusterServesClusterManagement)theClusters.elementAt(i);
-      l.add(ci.getClusterIdentifier());
-    }
-    return l;
-  }
-
   /** Refernece containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
-
 
   /**
    * Post a message to the destination's message queue
@@ -731,8 +705,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
         }
       }
     }
-    //add to the cluster list
-    addCluster(cluster);
   }
 
 
@@ -774,27 +746,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
    **/
   protected final void setArgs(ArgTable aTable) {
     theArgs = aTable; 
-  }
-
-  private final synchronized void addClusters(List addedClusters) { 
-    int n = addedClusters.size();
-    if (theClusters == null) {
-      theClusters = new Vector(addedClusters.size());
-    }
-    for (int i = 0; i < n; i++) {
-      Object oi = addedClusters.get(i);
-      if (oi != null) {
-        theClusters.addElement(oi);
-      }
-    }
-  }
-
-  private final synchronized void addCluster(
-      ClusterServesClusterManagement cluster) {
-    if (theClusters == null) {
-      theClusters = new Vector();
-    }
-    theClusters.addElement(cluster);
   }
 
   public MessageAddress getMessageAddress() {
