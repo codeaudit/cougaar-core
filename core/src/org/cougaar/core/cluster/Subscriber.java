@@ -435,6 +435,7 @@ public class Subscriber {
    **/
 
   public final boolean publishAdd(Object o) {
+    if (theDistributor.history != null) theDistributor.history.publishAdd(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).addingToLogPlan(this)) 
         return false;
@@ -454,6 +455,7 @@ public class Subscriber {
    * Behavior is not defined if the object was not already a member of the plan.
    **/
   public final boolean publishRemove(Object o) {
+    if (theDistributor.history != null) theDistributor.history.publishRemove(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).removingFromLogPlan(this)) 
         return false;
@@ -491,6 +493,7 @@ public class Subscriber {
    * @param changes a set of ChangeReport instances or null.
    **/
   public final boolean publishChange(Object o, Collection changes) {
+    if (theDistributor.history != null) theDistributor.history.publishChange(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).changingInLogPlan(this)) 
         return false;

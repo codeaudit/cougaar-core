@@ -49,5 +49,8 @@ public interface ALPPlanServesLogicProvider
    * until it is acknowledged even if clusters crash.
    **/
   void sendDirective(Directive dir, Collection changeReports);
+
+  PublishHistory getHistory();
+
 }
 

@@ -14,7 +14,7 @@ public class ALPPlan extends Subscriber
 {
   protected CollectionSubscription alpPlanObjects;
   protected ClusterServesLogicProvider myCluster;
-  protected Distributor myDistributor;
+  public Distributor myDistributor;
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.cluster.savePriorPublisher", "false").equals("true");
 
@@ -432,4 +432,7 @@ public class ALPPlan extends Subscriber
     return false;
   }
 
+  public PublishHistory getHistory() {
+    return myDistributor.history;
+  }
 }

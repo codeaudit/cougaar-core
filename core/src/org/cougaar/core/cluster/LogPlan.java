@@ -238,4 +238,8 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesALPPlan
   public void sendDirective(Directive dir, Collection changes) {
     alpPlan.sendDirective(dir, changes);
   }
+
+  public PublishHistory getHistory() {
+    return alpPlan.getHistory();
+  }
 }

@@ -75,6 +75,11 @@ public class Distributor {
   /** Debug logging **/
   private transient PrintWriter logWriter = null;
 
+  public PublishHistory history =
+    System.getProperty("org.cougaar.core.cluster.keepPublishHistory", "false").equals("true")
+      ? new PublishHistory()
+      : null;
+
   /** The format of timestamps in the log **/
   private static DateFormat logTimeFormat =
     new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS ");
