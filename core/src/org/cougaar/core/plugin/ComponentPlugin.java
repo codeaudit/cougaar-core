@@ -25,7 +25,6 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedEvent;
 import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.Trigger;
 
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.blackboard.BlackboardService;
@@ -35,45 +34,286 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 
 import org.cougaar.core.cluster.ClusterServesPlugIn;
 import org.cougaar.core.cluster.ClusterIdentifier;
+
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.core.component.Trigger;
+import org.cougaar.util.TriggerModel;
+import org.cougaar.util.SyncTriggerModelImpl;
 
 import java.util.Vector;
 import java.util.Collection;
 import java.util.Iterator;
 
 /**
- * first new-fangled plugin. It doesn't do much, but it
- * holds on to its own blackboard subscription watcher.
- * Uses new SchedulerService.
- *
- * Use it as a base class. Make a derived class simply by overriding 
- * setupSubscriptions() and execute()
- **/
-public class ComponentPlugin 
+ * Standard base-class for Components that watch the Blackboard for 
+ * activity and use the shared thread-scheduler.
+ * <p>
+ * Create a derived class by implementing 
+ * <tt>setupSubscriptions()</tt> and <tt>execute()</tt>.
+ * <p>
+ * Note that both "precycle()" and "cycle()" will be run by the
+ * scheduler.  This means that the scheduling order <i>in relation to 
+ * other scheduled Components</i> may be *random* (i.e. this 
+ * ComponentPlugin might load first but be precycled last!).  In 
+ * general a Component should <b>not</b> make assumptions about the 
+ * load or schedule ordering.
+ */
+public abstract class ComponentPlugin 
   extends org.cougaar.util.GenericStateModelAdapter
   implements PluginBase, BlackboardClient 
 {
   
-  // Do we have a rule of thumb as to what should be private versus protected?
-  protected boolean readyToRun = false;
-  protected SchedulerService myScheduler = null;
-  protected Trigger schedulerProd = null;
-  protected BlackboardService blackboard = null;
-  protected AlarmService alarmService = null;
-  protected boolean primed = false;
-  private PluginBindingSite pluginBindingSite = null;
-  private ServiceBroker serviceBroker = null;
-  private ThinWatcher watcher = null;
-  private Collection parameters = null;
+  private Collection parameters;
+
+  private SchedulerService scheduler;
+  protected BlackboardService blackboard;
+  protected AlarmService alarmService;
+
+  protected String blackboardClientName;
+
+  private PluginBindingSite pluginBindingSite;
+  private ServiceBroker serviceBroker;
+
+  private TriggerModel tm;
+  private SubscriptionWatcher watcher;
   
-  public ComponentPlugin() { }   
+  public ComponentPlugin() { 
+  }
   
   /**
-   * BlackboardClient implementation 
-   * BlackboardService access requires the requestor to implement BlackboardClient
+   * Called just after construction (via introspection) by the 
+   * loader if a non-null parameter Object was specified by
+   * the ComponentDescription.
    **/
-  protected String blackboardClientName = null;
+  public void setParameter(Object param) {
+    if (param != null) {
+      parameters = (Vector) param;
+    } else {
+      parameters = new Vector(0);
+    }
+  }
   
+  /** 
+   * Get any Plugin parameters passed by the plugin instantiator.
+   */
+  public Collection getParameters() {        
+    return parameters;
+  }
+  
+  /**
+   * Binding site is set by reflection at creation-time.
+   */
+  public void setBindingSite(BindingSite bs) {
+    if (bs instanceof PluginBindingSite) {
+      pluginBindingSite = (PluginBindingSite)bs;
+    } else {
+      throw new RuntimeException("Tried to load "+this+" into "+bs);
+    }
+    serviceBroker = pluginBindingSite.getServiceBroker();
+  }
+
+  /**
+   * Get the binding site, for subclass use.
+   */
+  protected PluginBindingSite getBindingSite() {
+    return pluginBindingSite;
+  }
+  
+  /** 
+   * Get the binding site, for subclass use.
+   */
+  protected ServiceBroker getServiceBroker() {
+    return serviceBroker;
+  }
+
+  // rely upon load-time introspection to set these services - 
+  //   don't worry about revokation.
+  public final void setSchedulerService(SchedulerService ss) {
+    scheduler = ss;
+  }
+  public final void setBlackboardService(BlackboardService bs) {
+    blackboard = bs;
+  }
+  public final void setAlarmService(AlarmService s) {
+    alarmService = s;
+  }
+
+  /**
+   * Get the blackboard service, for subclass use.
+   */
+  protected BlackboardService getBlackboardService() {
+    return blackboard;
+  }
+
+  /**
+   * Get the alarm service, for subclass use.
+   */
+  protected AlarmService getAlarmService() {
+    return alarmService;
+  }
+  
+  //
+  // implement GenericStateModel:
+  //
+
+  public void initialize() {
+    super.initialize();
+  }
+
+  public void load() {
+    super.load();
+    
+    // create a blackboard watcher
+    this.watcher = 
+      new SubscriptionWatcher() {
+        public void signalNotify(int event) {
+          // gets called frequently as the blackboard objects change
+          super.signalNotify(event);
+          tm.trigger();
+        }
+        public String toString() {
+          return "ThinWatcher("+ComponentPlugin.this.toString()+")";
+        }
+      };
+
+    // create a callback for running this component
+    Trigger myTrigger = 
+      new Trigger() {
+        private boolean didPrecycle = false;
+        // no need to "sync" when using "SyncTriggerModel"
+        public void trigger() {
+          watcher.clearSignal(); 
+          if (didPrecycle) {
+            cycle();
+          } else {
+            didPrecycle = true;
+            precycle();
+          }
+        }
+        public String toString() {
+          return "Trigger("+ComponentPlugin.this.toString()+")";
+        }
+      };
+
+    // create the trigger model
+    this.tm = new SyncTriggerModelImpl(scheduler, myTrigger);
+
+    // activate the blackboard watcher
+    blackboard.registerInterest(watcher);
+
+    // activate the trigger model
+    tm.initialize();
+    tm.load();
+  }
+
+  public void start() {
+    super.start();
+    tm.start();
+    // Tell the scheduler to run me at least this once
+    tm.trigger();
+  }
+
+  public void suspend() {
+    super.suspend();
+    tm.suspend();
+  }
+
+  public void resume() {
+    super.resume();
+    tm.resume();
+  }
+
+  public void stop() {
+    super.stop();
+    tm.stop();
+  }
+
+  public void halt() {
+    super.halt();
+    tm.halt();
+  }
+  
+  public void unload() {
+    super.unload();
+    if (tm != null) {
+      tm.unload();
+      tm = null;
+    }
+    blackboard.unregisterInterest(watcher);
+    if (alarmService != null) {
+      serviceBroker.releaseService(this, AlarmService.class, alarmService);
+      alarmService = null;
+    }
+    if (blackboard != null) {
+      serviceBroker.releaseService(this, BlackboardService.class, blackboard);
+      blackboard = null;
+    }
+    if (scheduler != null) {
+      serviceBroker.releaseService(this, SchedulerService.class, scheduler);
+      scheduler = null;
+    }
+  }
+
+  //
+  // implement basic "callback" actions
+  //
+
+  protected void precycle() {
+    try {
+      blackboard.openTransaction();
+      setupSubscriptions();
+    
+      // run execute here so subscriptions don't miss out on the first
+      // batch in their subscription addedLists
+      execute();                // MIK: I don't like this!!!
+    } catch (Throwable t) {
+      System.err.println("Error: Uncaught exception in "+this+": "+t);
+      t.printStackTrace();
+    } finally {
+      blackboard.closeTransaction();
+    }
+  }      
+  
+  protected void cycle() {
+    // do stuff
+    try {
+      blackboard.openTransaction();
+      execute();
+    } catch (Throwable t) {
+      System.err.println("Error: Uncaught exception in "+this+": "+t);
+      t.printStackTrace();
+    } finally {
+      blackboard.closeTransaction();
+    }
+  }
+  
+  /**
+   * Called once after initialization, as a "pre-execute()".
+   */
+  protected abstract void setupSubscriptions();
+  
+  /**
+   * Called every time this component is scheduled to run.
+   */
+  protected abstract void execute();
+  
+  //
+  // misc utility methods:
+  //
+
+  protected ConfigFinder getConfigFinder() {
+    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
+  }
+  
+  /** 
+   * @deprecated Use the self Organization or plugin parameters 
+   * instead.  This method with be removed for cougaar 9.0.
+   */
+  protected ClusterIdentifier getClusterIdentifier() { 
+    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
+  }
+  
+  // for BlackboardClient use
   public synchronized String getBlackboardClientName() {
     if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
@@ -93,7 +333,6 @@ public class ComponentPlugin
     return blackboardClientName;
   }
   
-  
   public long currentTimeMillis() {
     if (alarmService != null)
       return alarmService.currentTimeMillis();
@@ -101,218 +340,12 @@ public class ComponentPlugin
       return System.currentTimeMillis();
   }
   
+  // odd BlackboardClient method -- will likely be removed.
   public boolean triggerEvent(Object event) {
     return false;
   }
   
-  /**
-   * Service found by introspection
-   **/
-  public void setBindingSite(BindingSite bs) {
-    if (bs instanceof PluginBindingSite) {
-      pluginBindingSite = (PluginBindingSite)bs;
-    } else {
-      throw new RuntimeException("Tried to load "+this+" into "+bs);
-    }
-    serviceBroker = pluginBindingSite.getServiceBroker();
-  }
-
-  // rely on setSchedulerService for now - don't worry about revokation
-  public final void setSchedulerService(SchedulerService ss) {
-    myScheduler = ss;
-  }
-  public final void setBlackboardService(BlackboardService bs) {
-    blackboard = bs;
-  }
-  public final void setAlarmService(AlarmService s) {
-    alarmService = s;
-  }
-  public void load() {
-    super.load();
-    if (myScheduler != null) {
-      Trigger pokeMe = new PluginCallback();
-      // Tell him to schedule me, and get his callback object
-      schedulerProd = myScheduler.register(pokeMe);
-    }
-    // someone to watch over me
-    watcher = new ThinWatcher();
-    if (blackboard != null) {
-      blackboard.registerInterest(watcher);
-    } else {
-      System.out.println("ComponentPlugin:setBindingSite() !!No Blackboard - oh my");
-    }
-    
-  }
-
-  public void unload() {
-    super.unload();
-    if (alarmService != null) {
-      serviceBroker.releaseService(this, AlarmService.class, alarmService);
-    }
-    if (blackboard != null) {
-      serviceBroker.releaseService(this, BlackboardService.class, blackboard);
-    }
-    if (myScheduler != null) {
-      serviceBroker.releaseService(this, SchedulerService.class, myScheduler);
-    }
-  }
-
-  /**
-   * accessor for my bindingsite - interface to by binder
-   **/
-  protected PluginBindingSite getBindingSite() {
-    return pluginBindingSite;
-  }
-  
-  /** 
-   * accessor for my servicebroker - use this to request services 
-   **/
-  protected ServiceBroker getServiceBroker() {
-    return serviceBroker;
-  }
-  
-  /**
-   * accessor for the blackboard service
-   **/
-  protected BlackboardService getBlackboardService() {
-    return blackboard;
-  }
-  
-  /**
-   * Found by introspection by BinderSupport
-   **/
-  
-  public void start() {
-    super.start();
-    // Tell the scheduler to run me at least this once
-    schedulerProd.trigger();
-  }
-  
-  /**
-   * Found by introspection by ComponentFactory
-   * PM expects this, and fails if it isn't here.
-   **/
-  public void setParameter(Object param) {
-    if (param != null) {
-      parameters = (Vector) param;
-    } else {
-      parameters = new Vector(0);
-    }
-  }
-  
-  /** get any Plugin parameters passed by the plugin instantiator.
-   * If they haven't been set, will return null.
-   * Should be set between plugin construction and initialization.
-   **/
-  public Collection getParameters() {        
-    return parameters;
-  }
-  
-  /*
-    public Vector getParameters() {
-    return parameters;
-    }
-  */
-  
-  /** let subclasses get ahold of the cluster without having to catch it at
-   * load time.  May throw a runtime exception if the plugin hasn't been 
-   * loaded yet.
-   * 
-   **/
-  
-  protected ConfigFinder getConfigFinder() {
-    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
-  }
-  
-  /** @deprecated Use the self Organization or plugin parameters instead.  This method with
-   * be removed for cougaar 9.0.
-   **/
-  protected ClusterIdentifier getClusterIdentifier() { 
-    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
-  }
-  
-  
-  /**
-   * This is the scheduler's hook into me
-   **/
-  protected class PluginCallback implements Trigger {
-    public synchronized void trigger() {
-      if (!primed) {
-        precycle();
-      }
-      if (readyToRun) { 
-        cycle();
-      }
-    }
-    public String toString() {
-      return "Trigger("+ComponentPlugin.this.toString()+")";
-    }
-  }
-  
-  protected void precycle() {
-    try {
-      blackboard.openTransaction();
-      setupSubscriptions();
-    
-      // run execute here so subscriptions don't miss out on the first
-      // batch in their subscription addedLists
-      execute();                // MIK: I don't like this!!!
-    
-      readyToRun = false;  // don't need to run execute again
-    } catch (Throwable t) {
-      System.err.println("Error: Uncaught exception in "+this+": "+t);
-      t.printStackTrace();
-    } finally {
-      blackboard.closeTransaction();
-      primed = true;
-    }
-  }      
-  
-  protected void cycle() {
-    // do stuff
-    readyToRun = false;
-    try {
-      blackboard.openTransaction();
-      execute();
-    } catch (Throwable t) {
-      System.err.println("Error: Uncaught exception in "+this+": "+t);
-      t.printStackTrace();
-    } finally {
-      blackboard.closeTransaction();
-    }
-  }
-  
-  /**
-   * override me
-   * Called once sometime after initialization
-   **/
-  protected void setupSubscriptions() {}
-  
-  /**
-   * override me
-   * Called everytime plugin is scheduled to run
-   **/
-  protected void execute() {}
-  
   public String toString() {
     return getBlackboardClientName();
-  }
-  
-  protected class ThinWatcher extends SubscriptionWatcher {
-    /** Override this method so we don't have to do a wait()
-     */
-    public void signalNotify(int event) {
-      // gets called frequently as the blackboard objects change
-      super.signalNotify(event);
-      
-      // ask the scheduler to run us again.
-      if (schedulerProd != null) {
-        readyToRun = true;
-        schedulerProd.trigger();
-      }
-    }
-    public String toString() {
-      return "ThinWatcher("+ComponentPlugin.this.toString()+")";
-    }
   }
 }

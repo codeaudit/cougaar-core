@@ -50,6 +50,9 @@ import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.core.component.Trigger;
+import org.cougaar.util.TriggerModel;
+import org.cougaar.util.SyncTriggerModelImpl;
 import org.cougaar.util.UnaryPredicate;
 
 import org.cougaar.domain.planning.ldm.*;
@@ -1120,90 +1123,62 @@ public abstract class PlugInAdapter
    *   <li>"this.trigger()" calls "plugin_cycle()"</li>
    * </li>.
    */
-  protected class SharedThreading extends Threading implements Trigger  {
+  protected class SharedThreading extends Threading {
 
     // callback for subscription activity
     private SubscriptionWatcher sw = null; 
+    private TriggerModel tm;
+
+    private boolean didPrerun = false;
 
     public void load() {
-      super.load();
+      sw = new ThinWatcher();
+      getBlackboardService().registerInterest(sw);
+      Trigger piTrig = new PlugInTrigger();
+      tm = new SyncTriggerModelImpl(getSchedulerService(), piTrig);
     }
 
     public void start() {
-      super.start();
-      sw = new ThinWatcher();
-      getBlackboardService().registerInterest(sw);
-      plugin_prerun();
-      joinScheduler();
+      if (!(didPrerun)) {
+        didPrerun = true;
+        plugin_prerun();
+      }
+      tm.start();
     }
 
     public void suspend() {
-      exitScheduler();
+      tm.suspend();
     }
 
     public void resume() {
-      joinScheduler();
+      tm.resume();
     }
     
     public void stop() {
-      exitScheduler();
+      tm.stop();
     }
 
-    // call to request scheduling
-    private Trigger schedTrigger = null; 
-
-    // we could probably sync on this, but I'm more comfortable with a 
-    // semephore-like pattern here...
-    private final Object schedTriggerLock = new Object();
-
-    // set to true when a trigger is desired but the schedTrigger
-    // is unavailable.  When the schedTrigger is next obtained the
-    // pending trigger is issued.
-    private boolean pendingTrigger = false;
-
-    private void joinScheduler() {
-      synchronized (schedTriggerLock) {
-        if (schedTrigger == null) {
-          schedTrigger = getSchedulerService().register(this);
-          if (pendingTrigger) {
-            pendingTrigger = false;    // useless cleanup
-            schedTrigger.trigger();
-          }
-        }
-      }
-    }
-
-    private void exitScheduler() {
-      synchronized (schedTriggerLock) {
-        if (schedTrigger != null) {
-          schedTrigger = null;
-          getSchedulerService().unregister(schedTrigger);
-        }
-      }
-    }
-
-    private void requestScheduling() {
-      synchronized (schedTriggerLock) {
-        if (schedTrigger != null) {
-          schedTrigger.trigger();
-        } else {
-          pendingTrigger = true;
-        }
-      }
+    public void unload() {
+      tm.unload();
+      getBlackboardService().unregisterInterest(sw);
+      sw = null;
     }
 
     // implement Trigger
 
-    // called by scheduler to activate (in the right thread context)
-    public synchronized void trigger() {
-      setAwakened(sw.clearSignal()); // get wake() right
-      plugin_cycle();
+    private class PlugInTrigger implements Trigger {
+      // no need to "sync" when using "SyncTriggerModel"
+      public void trigger() {
+        // get wake() right
+        setAwakened(sw.clearSignal()); 
+        plugin_cycle();
+      }
     }
 
     private class ThinWatcher extends SubscriptionWatcher {
       public void signalNotify(int event) {
         super.signalNotify(event);
-        requestScheduling();
+        tm.trigger();
       }
       public String toString() {
         return "ThinWatcher("+PlugInAdapter.this.toString()+")";

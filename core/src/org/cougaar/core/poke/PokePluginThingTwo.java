@@ -61,7 +61,6 @@ public class PokePluginThingTwo extends ComponentPlugin {
 
   protected void execute() {
     System.out.println("PokePluginThingTwo.execute() " + me);
-    readyToRun = false;
 
     if (stringSubscription.hasChanged()) {
       for (Iterator it = stringSubscription.iterator(); it.hasNext();) {

@@ -21,98 +21,149 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.SchedulerService;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedEvent;
-import org.cougaar.core.component.ServiceRevokedListener;
+
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.Trigger;
+import org.cougaar.util.TriggerModel;
+import org.cougaar.util.SyncTriggerModelImpl;
 
-
+import org.cougaar.core.cluster.SchedulerService;
 
 /**
- * Minimal plugin. It uses the SchedulerService for a shared thread, but otherwise does nothing
- *
- **/
-public class MinPlugin 
+ * A minimal Plugin that illustrates use of the scheduler 
+ * service.
+ */
+public abstract class MinPlugin
   extends org.cougaar.util.GenericStateModelAdapter
-  implements PluginBase 
+  implements PluginBase
 {
+  
+  protected Object parameter;
 
-  // Do we have a rule of thumb as to what should be private versus protected?
-  protected boolean readyToRun = false;
-  protected Trigger schedulerProd = null;
-  protected boolean primed = false;
-  protected SchedulerService myScheduler = null;
-  private PluginBindingSite pluginBindingSite = null;
+  protected BindingSite bindingSite;
+  protected ServiceBroker serviceBroker;
 
-
-  public MinPlugin() { }
-
+  protected SchedulerService scheduler;
+  protected TriggerModel tm;
+  
+  public MinPlugin() { 
+  }
+  
   /**
-   * Found by introspection
+   * Called just after construction (via introspection) by the 
+   * loader if a non-null parameter Object was specified by
+   * the ComponentDescription.
    **/
+  public void setParameter(Object param) {
+    this.parameter = param;
+  }
+  
+  /**
+   * Binding site is set by reflection at creation-time.
+   */
   public void setBindingSite(BindingSite bs) {
-    System.out.println("MinPlugin.setBindingSite() " + toString() );
-    if (bs instanceof PluginBindingSite) {
-      pluginBindingSite = (PluginBindingSite)bs;
-    } else {
-      throw new RuntimeException("Tried to load "+this+" into "+bs);
-    }
-
-    ServiceBroker myServiceBroker = pluginBindingSite.getServiceBroker();
-    myScheduler = (SchedulerService )
-      myServiceBroker.getService(this, SchedulerService.class, 
-			    new ServiceRevokedListener() {
-				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (SchedulerService.class.equals(re.getService()))
-				    myScheduler = null;
-				}
-			      });
-
-    if (myScheduler != null) {
-      Trigger pokeMe = new PluginCallback();
-      // Tell him to schedule me, and get his callback object
-      schedulerProd = myScheduler.register(pokeMe);
-    }
-
+    this.bindingSite = bs;
+    this.serviceBroker = bs.getServiceBroker();
   }
 
-  protected PluginBindingSite getBindingSite() {
-    return pluginBindingSite;
-  }
+  //
+  // implement GenericStateModel:
+  //
 
-
-  /**
-   * Found by introspection by BinderSupport
-   **/
   public void initialize() {
-    // Tell the scheduler to run me at least this once
-    schedulerProd.trigger();
+    super.initialize();
   }
 
-  /**
-   * This is the scheduler's hook into me
-   **/
-  protected class PluginCallback implements Trigger {
-    public void trigger() {
-      System.out.println("PluginCallback.trigger()");
-      if (!primed) {
-	precycle();
-      }
-      if (readyToRun) {
-	cycle();
-      }
+  public void load() {
+    super.load();
+    
+    // obtain the scheduler service
+    scheduler = (SchedulerService)
+      serviceBroker.getService(
+          this,
+          SchedulerService.class,
+          null);
+    if (scheduler == null) {
+      throw new RuntimeException(
+          this+" unable to obtain scheduler");
+    }
+
+    // create a callback for running this component
+    Trigger myTrigger = 
+      new Trigger() {
+        public void trigger() {
+          cycle();
+        }
+        public String toString() {
+          return MinPlugin.this.toString();
+        }
+      };
+
+    // create the trigger model
+    this.tm = new SyncTriggerModelImpl(scheduler, myTrigger);
+
+    // activate the trigger model
+    tm.initialize();
+    tm.load();
+  }
+
+  public void start() {
+    super.start();
+    tm.start();
+    // run "cycle()" at least once
+    tm.trigger();
+  }
+
+  public void suspend() {
+    super.suspend();
+    tm.suspend();
+  }
+
+  public void resume() {
+    super.resume();
+    tm.resume();
+  }
+
+  public void stop() {
+    super.stop();
+    tm.stop();
+  }
+
+  public void halt() {
+    super.halt();
+    tm.halt();
+  }
+  
+  public void unload() {
+    super.unload();
+    if (tm != null) {
+      tm.unload();
+      tm = null;
+    }
+    if (scheduler != null) {
+      serviceBroker.releaseService(
+          this, SchedulerService.class, scheduler);
+      scheduler = null;
     }
   }
 
-  protected void precycle() {
-    primed = true;
-  }
-
-  protected void cycle() {
-    // do stuff
-    readyToRun = false;
-  }
+  /**
+   * "cycle()" is called by the scheduler thread to perform
+   * MinPlugin activity.
+   * <p>
+   * The first "cycle()" is requested by "start()".  Later cycles 
+   * can be requested by using "tm.trigger()", from either within
+   * "cycle()" itself or from another class (e.g. a blackboard 
+   * watcher).
+   * <p>
+   * Typically the first "cycle()" is used as an initialization
+   * step, so a "boolean didPrecycle" is kept in the subclass.
+   * <p>
+   * This method should not be synchronized, since it is only
+   * called by the scheduler's (synchronized) trigger model.
+   */
+  protected abstract void cycle();
 
 }

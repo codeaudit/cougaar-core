@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2001 BBNT Solutions, LLC
+ *  Copyright 1997-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,20 +19,21 @@
  * </copyright>
  */
 
-package org.cougaar.core.component;
+package org.cougaar.util;
+
+// soon to move to "org.cougaar.util.Trigger":
+import org.cougaar.core.component.Trigger;
 
 /**
- * Generic callback interface.
+ * An interface for a Trigger that's also a GenericStateModel.
  * <p>
- * This is similar to <code>Runnable</code>, but is typically used 
- * as an API to <i>request</i> a run.
- * <p>
- * <b>NOTE: this should be moved to "org.cougaar.util"</b>
+ * The result of "trigger()" will depend upon the current model 
+ * state.  For example, while suspended the trigger requests
+ * are buffered until the model is resumed.
  */
-public interface Trigger {
+public interface TriggerModel extends Trigger, GenericStateModel {
 
-  /**
-   * Callback to activate object.
-   */
-  void trigger();
+  // includes "trigger()" and the state-transition methods:
+  //   "start()", "stop()", "suspend()", etc.
+
 }

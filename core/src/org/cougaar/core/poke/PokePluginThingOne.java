@@ -61,7 +61,6 @@ public class PokePluginThingOne extends ComponentPlugin {
 
   protected void execute() {
     System.out.println("PokePluginThingOne.execute() " + me);
-    readyToRun = false;
 
     if (stringSubscription.hasChanged()) {
       for (Iterator it = stringSubscription.iterator(); it.hasNext();) {
