@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.resolver;
 
 import java.io.Serializable;
-
 import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
@@ -36,8 +35,8 @@ import org.cougaar.core.wp.Timestamp;
  * indicating that either a new Record was successfully bound
  * or an existing Lease was extended.
  * <p>
- * The client must renew this lease before it expires, otherwise
- * the server(s) will automatically remove it.
+ * The LeaseManager client must renew this lease before it expires,
+ * otherwise the server(s) will automatically remove it.
  * <p>
  * Renewals can pass the UID of the Record, as documented in
  * the ModifyService.

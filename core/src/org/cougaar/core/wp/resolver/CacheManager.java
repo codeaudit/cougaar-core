@@ -33,10 +33,11 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
@@ -46,7 +47,10 @@ import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
+import org.cougaar.core.wp.bootstrap.Bundle;
+import org.cougaar.core.wp.bootstrap.HintService;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.UnaryPredicate;
 
@@ -59,7 +63,7 @@ import org.cougaar.util.UnaryPredicate;
  *   <li>Allows the client to add bootstrapped cache "hints"</li>
  *   <li>Holds both positive and negative results</li>
  *   <li>Evicts expired and least-recently-used entries</li>
- *   <li>Renewals (in the background) recently-used entries that
+ *   <li>Renews (in the background) recently-used entries that
  *       will soon expire</li>
  *   <li>Allows the client to flush and force-renewal entries
  *       that are known to be stale</li>
@@ -102,8 +106,6 @@ implements Component
 
   private LookupService lookupService;
 
-  private PendingVersionBindService pendingVersionBindService;
-
   private final LookupService.Client myLookupClient = 
     new LookupService.Client() {
       public void lookupAnswer(long baseTime, Map m) {
@@ -112,6 +114,7 @@ implements Component
     };
 
   private CacheSP cacheSP;
+  private HintSP hintSP;
 
   private final Object lock = new Object();
 
@@ -132,18 +135,6 @@ implements Component
   private LRUMap cache;
 
   //
-  // send upgraded "getAll" requests:
-  //
-
-  // Set<String>
-//  private final Set lookupQueue = new HashSet(13);
-//
-//  // temporary list to drain the lookupQueue, only used
-//  // within the scheduled "sendGetAllRunner" thread.
-//  // List<String>
-//  private final List tmpLookupQueue = new ArrayList(13);
-
-  //
   // clean the cache:
   //
 
@@ -156,7 +147,7 @@ implements Component
   private Schedulable prefetchThread;
 
   public void setParameter(Object o) {
-    this.config = new CacheConfig(o);
+    configure(o);
   }
 
   public void setServiceBroker(ServiceBroker sb) {
@@ -171,13 +162,17 @@ implements Component
     this.threadService = threadService;
   }
 
-  public void setPendingVersionBindService(
-      PendingVersionBindService pendingVersionBindService) {
-    this.pendingVersionBindService = pendingVersionBindService;
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new CacheConfig(o);
   }
 
   public void load() {
     super.load();
+
+    configure(null);
 
     cache = new LRUMap(config.maxSize);
 
@@ -199,6 +194,8 @@ implements Component
     // advertise our service
     cacheSP = new CacheSP();
     sb.addService(CacheService.class, cacheSP);
+    hintSP = new HintSP();
+    sb.addService(HintService.class, hintSP);
 
     if (0 < config.cleanPeriod) {
       // create expiration timer
@@ -234,6 +231,10 @@ implements Component
   }
 
   public void unload() {
+    if (hintSP != null) {
+      sb.revokeService(HintService.class, hintSP);
+      hintSP = null;
+    }
     if (cacheSP != null) {
       sb.revokeService(
           CacheService.class, cacheSP);
@@ -243,13 +244,6 @@ implements Component
       sb.releaseService(
           myLookupClient, LookupService.class, lookupService);
       lookupService = null;
-    }
-    if (pendingVersionBindService != null) {
-      sb.releaseService(
-          this,
-          PendingVersionBindService.class,
-          pendingVersionBindService);
-      pendingVersionBindService = null;
     }
     if (threadService != null) {
       // halt our threads?
@@ -403,28 +397,6 @@ implements Component
       // cache hit
       setResult(res, result);
 
-    } else if ("version".equals(type)) {
-
-      // typically we'd only send the "getAll" and let that
-      // answer this "get(*, version)" request, but bug 2837
-      // forces us to short-circuit "version" lookups to avoid
-      // deadlocking the MTS.
-      //
-      // note that we need to check this even if "mustSend" is
-      // false, since the version lookup might not be the first
-      // "pending" lookup.
-
-      AddressEntry ae = 
-        pendingVersionBindService.getPendingVersionBind(
-            name);
-      if (ae != null) {
-        if (logger.isInfoEnabled()) {
-          logger.info(
-              "Bug 2837, short-cutting local version lookup"+
-              " for the pending bind "+ae);
-        }
-        setResult(res, ae);
-      }
     }
 
     if (mustSend) {
@@ -748,10 +720,40 @@ implements Component
   }
 
   //
+  // bootstrap entries into the cache:
+  //
+
+  private void add(String name, Bundle bundle) {
+    long now = System.currentTimeMillis();
+    UID uid = bundle.getUID();
+    long ttd = bundle.getTTD();
+    Object data = bundle.getEntries();
+    if (data == null) {
+      data = Collections.EMPTY_MAP;
+    }
+    Record r = new Record(uid, ttd, data);
+    Map m = Collections.singletonMap(name, r);
+    lookupAnswer(now, m, true);
+  }
+
+  private void remove(String name, Bundle bundle) {
+    // TODO
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          "Unsupported cache remove("+name+", "+bundle+")"+
+          ", just letting it time out...");
+    }
+  }
+
+  //
   // callback for remote lookup answers:
   //
 
   private void lookupAnswer(long baseTime, Map m) {
+    lookupAnswer(baseTime, m, false);
+  }
+
+  private void lookupAnswer(long baseTime, Map m, boolean create) {
     for (Iterator iter = m.entrySet().iterator();
         iter.hasNext();
         ) {
@@ -778,7 +780,7 @@ implements Component
         throw new IllegalArgumentException(
             "Lookup callback map unexpected value: "+me);
       }
-      gotAll(name, uid, baseTime, ttd, hasData, data); 
+      gotAll(name, uid, baseTime, ttd, hasData, data, create);
     }
   }
 
@@ -788,10 +790,21 @@ implements Component
       long baseTime,
       long ttd,
       boolean hasData,
-      Object data) {
+      Object data,
+      boolean create) {
     List responses;
     synchronized (lock) {
       Entry e = (Entry) cache.get(name);
+      if (create) {
+        long now = System.currentTimeMillis();
+        if (e == null) {
+          e = newEntry(now, null);
+          cache.put(name, e);
+        }
+        if (!e.wasSent()) {
+          e.setSendTime(now);
+        }
+      }
       if (e != null && e.wasSent()) {
         // set in cache, maybe force another lookup if !hasData
         responses = 
@@ -1275,7 +1288,7 @@ implements Component
     return (0 < nfreed);
   }
 
-  /** config options, soon to be parameters/props */
+  /** config options */
   private static class CacheConfig {
     public final long cleanPeriod;
     public final long prefetchPeriod;
@@ -1286,38 +1299,15 @@ implements Component
     public final int maxSize;
 
     public CacheConfig(Object o) {
-      // FIXME parse!
-      cleanPeriod =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.cleanPeriod",
-              "10000"));
-      prefetchPeriod =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.prefetchPeriod",
-              "10000"));
-      minTTD =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.minTTD",
-              "5000"));
-      maxTTD =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.maxTTD",
-              "600000"));
-      minSize =
-        Integer.parseInt(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.minSize",
-              "16"));
-      initSize = minSize;
-      maxSize =
-        Integer.parseInt(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.cache.maxSize",
-              "2048"));
+      Parameters p = 
+        new Parameters(o, "org.cougaar.core.wp.resolver.cache.");
+      cleanPeriod = p.getLong("cleanPeriod", 10000);
+      prefetchPeriod = p.getLong("prefetchPeriod", 10000);
+      minTTD = p.getLong("minTTD", 5000);
+      maxTTD = p.getLong("maxTTD", 600000);
+      minSize = p.getInt("minSize", 16);
+      initSize = p.getInt("initSize", minSize);
+      maxSize = p.getInt("maxSize", 2048);
       if (maxSize <= 0 || maxSize < minSize) {
         throw new RuntimeException(
             "Invalid cache size (min="+minSize+", max="+maxSize+")");
@@ -1900,6 +1890,30 @@ implements Component
           return null;
         }
         return cs;
+      }
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+      }
+    }
+
+  private class HintSP
+    implements ServiceProvider {
+      private final HintService hs =
+        new HintService() {
+          public void add(String name, Bundle bundle) {
+            CacheManager.this.add(name, bundle);
+          }
+          public void remove(String name, Bundle bundle) {
+            CacheManager.this.remove(name, bundle);
+          }
+        };
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (!HintService.class.isAssignableFrom(serviceClass)) {
+          return null;
+        }
+        return hs;
       }
       public void releaseService(
           ServiceBroker sb, Object requestor,

@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.Map;
-
 import org.cougaar.core.component.Service;
 
 /**
@@ -71,10 +70,7 @@ public interface ModifyService extends Service {
    */
   void modify(Map m);
 
-  /**
-   * The service API that must be implemented by the requestor
-   * of this service.
-   */
+  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Receive the answer to a modify request.

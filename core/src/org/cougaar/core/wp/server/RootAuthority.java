@@ -28,15 +28,16 @@ package org.cougaar.core.wp.server;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
@@ -46,6 +47,7 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesProtectionService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.resolver.Lease;
 import org.cougaar.core.wp.resolver.LeaseDenied;
@@ -59,23 +61,17 @@ import org.cougaar.util.GenericStateModelAdapter;
  * This is the single-point white pages server, which is the
  * authority for all naming zones.
  * <p>
- * This class will be split up and enhanced for Cougaar 10.6+.
+ * Refactor me!
  */
 public class RootAuthority
 extends GenericStateModelAdapter
 implements Component
 {
-  // cache successes for 1.5 minutes:
-  private static final String DEFAULT_SUCCESS_TTD =  "90000";
-  // cache failures for  0.5 minutes:
-  private static final String DEFAULT_FAIL_TTD    =  "30000";
-  // leases expire after 4.0 minutes:
-  private static final String DEFAULT_EXPIRE_TTD  = "240000";
-
   private static final int LOOKUP  = 0;
   private static final int MODIFY  = 1;
   private static final int FORWARD = 2;
-  private static final int FORWARD_ANSWER = 3;
+  private static final int PING    = 3;
+  private static final int FORWARD_ANSWER = 4;
 
   private RootConfig config;
 
@@ -86,6 +82,7 @@ implements Component
   private UIDService uidService;
   private WhitePagesProtectionService protectS;
 
+  private PingAckService pingAckService;
   private LookupAckService lookupAckService;
   private ModifyAckService modifyAckService;
   private ForwardAckService forwardAckService;
@@ -107,6 +104,13 @@ implements Component
     this.config = new RootConfig(o);
   }
 
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new RootConfig(o);
+  }
+
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
   }
@@ -125,6 +129,8 @@ implements Component
 
   public void load() {
     super.load();
+
+    configure(null);
 
     if (logger.isDebugEnabled()) {
       logger.debug("Loading server root authority");
@@ -172,7 +178,9 @@ implements Component
       "White pages server expiration checker");
     expireThread.schedule(config.checkExpirePeriod);
 
-    // register for lookups, modifies, forwards, and forward-acks
+    // register for server-transport
+    pingAckService = (PingAckService)
+      sb.getService(myClient, PingAckService.class, null);
     lookupAckService = (LookupAckService)
       sb.getService(myClient, LookupAckService.class, null);
     modifyAckService = (ModifyAckService)
@@ -182,7 +190,8 @@ implements Component
     forwardService = (ForwardService)
       sb.getService(myClient, ForwardService.class, null);
     String s =
-      (lookupAckService == null  ? "LookupAckService" :
+      (pingAckService == null  ? "PingAckService" :
+       lookupAckService == null  ? "LookupAckService" :
        modifyAckService == null  ? "ModifyAckService" :
        forwardAckService == null ? "forwardAckService" :
        forwardService == null    ? "forwardService" :
@@ -215,6 +224,11 @@ implements Component
           myClient, LookupAckService.class, lookupAckService);
       lookupAckService = null;
     }
+    if (pingAckService != null) {
+      sb.releaseService(
+          myClient, PingAckService.class, pingAckService);
+      pingAckService = null;
+    }
     if (threadService != null) {
       sb.releaseService(this, ThreadService.class, threadService);
       threadService = null;
@@ -234,6 +248,7 @@ implements Component
 
   /**
    * Callback from on of our registered services:<ul>
+   *   <li>PingAckService:    <i>PING</i></li> 
    *   <li>LookupAckService:  <i>LOOKUP</i></li> 
    *   <li>ModifyAckService:  <i>MODIFY</i></li> 
    *   <li>ForwardAckService: <i>FORWARD</i></li> 
@@ -245,6 +260,13 @@ implements Component
       MessageAddress clientAddr,
       long clientTime,
       Map m) {
+    if (action == PING) {
+      // empty ping-ack
+      pingAckService.pingAnswer(
+          clientAddr, clientTime, null);
+      return;
+    }
+
     int n = (m == null ? 0 : m.size());
     if (n == 0) {
       return;
@@ -279,29 +301,20 @@ implements Component
     switch (action) {
       case LOOKUP:
         lookupAckService.lookupAnswer(
-            clientAddr,
-            clientTime,
-            answers);
+            clientAddr, clientTime, answers);
         break;
       case MODIFY:
         modifyAckService.modifyAnswer(
-            clientAddr,
-            clientTime,
-            answers);
+            clientAddr, clientTime, answers);
         break;
       case FORWARD:
         forwardAckService.forwardAnswer(
-            clientAddr,
-            clientTime,
-            answers);
+            clientAddr, clientTime, answers);
         break;
       case FORWARD_ANSWER:
         long maxTTD = findMaxTTD(answers);
         forwardService.forward(
-            clientAddr,
-            //clientTime,
-            answers,
-            maxTTD);
+            clientAddr, answers, maxTTD);
         break;
       default:
         throw new IllegalArgumentException(
@@ -1101,9 +1114,17 @@ implements Component
   }
 
   /** implement all the various client APIs */
-  private class MyClient implements
-    LookupAckService.Client, ModifyAckService.Client,
-  ForwardAckService.Client, ForwardService.Client {
+  private class MyClient
+    implements
+    PingAckService.Client,
+  LookupAckService.Client,
+  ModifyAckService.Client,
+  ForwardAckService.Client,
+  ForwardService.Client {
+    public void ping(
+        MessageAddress clientAddr, long clientTime, Map m) {
+      handleAll(PING, clientAddr, clientTime, m);
+    }
     public void lookup(
         MessageAddress clientAddr, long clientTime, Map m) {
       handleAll(LOOKUP, clientAddr, clientTime, m);
@@ -1122,32 +1143,21 @@ implements Component
     }
   }
 
-  /** config options, soon to be parameters/props */
+  /** config options */
   private static class RootConfig {
-    public final AddressEntry[] entries;
     public final long successTTD;
     public final long failTTD;
     public final long expireTTD;
-    public final long forwardPeriod = 30*1000;
-    public final long checkExpirePeriod = 30*1000;
+    public final long forwardPeriod;
+    public final long checkExpirePeriod;
     public RootConfig(Object o) {
-      entries = new AddressEntry[0];
-      // FIXME parse!
-      successTTD =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.server.successTTD",
-              DEFAULT_SUCCESS_TTD));
-      failTTD =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.server.failTTD",
-              DEFAULT_FAIL_TTD));
-      expireTTD =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.server.expireTTD",
-              DEFAULT_EXPIRE_TTD));
+      Parameters p = 
+        new Parameters(o, "org.cougaar.core.wp.server.");
+      successTTD = p.getLong("successTTD", 90000);
+      failTTD = p.getLong("failTTD", 30000);
+      expireTTD = p.getLong("expireTTD", 240000);
+      forwardPeriod = p.getLong("forwardPeriod", 30000);
+      checkExpirePeriod = p.getLong("checkExpirePeriod", 30000);
     }
   }
 

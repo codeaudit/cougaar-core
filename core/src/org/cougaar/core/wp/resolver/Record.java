@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.resolver;
 
 import java.io.Serializable;
-
 import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
@@ -142,6 +141,26 @@ public final class Record implements Serializable {
    */
   public Object getData() {
     return data;
+  }
+
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof Record)) {
+      return false;
+    }
+    Record r = (Record) o;
+    return 
+      uid.equals(r.uid) &&
+      ttd == r.ttd &&
+      (data == null ?
+       r.data == null :
+       data.equals(r.data));
+  }
+
+  public int hashCode() {
+    return uid.hashCode();
   }
 
   public String toString() {

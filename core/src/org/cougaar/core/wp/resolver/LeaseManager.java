@@ -32,11 +32,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
@@ -46,8 +48,12 @@ import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
+import org.cougaar.core.wp.bootstrap.Bundle;
+import org.cougaar.core.wp.bootstrap.BundleService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This class watches for bind/unbind requests and maintains
@@ -57,10 +63,6 @@ public class LeaseManager
 extends GenericStateModelAdapter
 implements Component
 {
-  // see bug 2837 + bug 2839
-//  private static final boolean SHORTCUT_NON_VERSION_GET = 
-//    Boolean.getBoolean(
-//        "org.cougaar.core.wp.resolver.shortcutNonVersionLookup");
 
   private LeaserConfig config;
 
@@ -69,6 +71,8 @@ implements Component
   private final Map leases = new HashMap();
 
   private ServiceBroker sb;
+  private ServiceBroker rootsb;
+
   private LoggingService logger;
   private MessageAddress agentId;
   private ThreadService threadService;
@@ -83,7 +87,10 @@ implements Component
     };
 
   private LeaseSP leaseSP;
-  private PendingVersionBindSP pendingVersionBindSP;
+  private BundleSP bundleSP;
+
+  private final RarelyModifiedList listeners =
+    new RarelyModifiedList();
 
   //
   // renew leases:
@@ -92,7 +99,7 @@ implements Component
   private Schedulable renewLeasesThread;
 
   public void setParameter(Object o) {
-    this.config = new LeaserConfig(o);
+    configure(o);
   }
 
   public void setServiceBroker(ServiceBroker sb) {
@@ -111,8 +118,17 @@ implements Component
     this.uidService = uidService;
   }
 
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new LeaserConfig(o);
+  }
+
   public void load() {
     super.load();
+
+    configure(null);
 
     // which agent are we in?
     AgentIdentificationService ais = (AgentIdentificationService)
@@ -142,26 +158,31 @@ implements Component
         "White pages server renew leases");
     renewLeasesThread.schedule(config.checkLeasesPeriod);
 
-    // advertise our service
+    NodeControlService ncs = (NodeControlService)
+      sb.getService(this, NodeControlService.class, null);
+    if (ncs != null) {
+      rootsb = ncs.getRootServiceBroker();
+      sb.releaseService(this, NodeControlService.class, ncs);
+    }
+
+    // advertise our services
     leaseSP = new LeaseSP();
     sb.addService(LeaseService.class, leaseSP);
-    pendingVersionBindSP = new PendingVersionBindSP();
-    sb.addService(
-        PendingVersionBindService.class,
-        pendingVersionBindSP);
+    bundleSP = new BundleSP();
+    ServiceBroker bundleSB = (rootsb == null ? sb : rootsb);
+    bundleSB.addService(BundleService.class, bundleSP);
   }
 
   public void unload() {
-    if (leaseSP != null) {
-      sb.revokeService(
-          LeaseService.class, leaseSP);
-      leaseSP = null;
+    if (bundleSP != null) {
+      ServiceBroker bundleSB = (rootsb == null ? sb : rootsb);
+      bundleSB.revokeService(BundleService.class, bundleSP);
+      bundleSP = null;
     }
-    if (pendingVersionBindSP != null) {
-      sb.revokeService(
-          PendingVersionBindService.class,
-          pendingVersionBindSP);
-      pendingVersionBindSP = null;
+    ServiceBroker bundleSB = (rootsb == null ? sb : rootsb);
+    if (leaseSP != null) {
+      sb.revokeService(LeaseService.class, leaseSP);
+      leaseSP = null;
     }
     if (modifyService != null) {
       sb.releaseService(
@@ -185,33 +206,61 @@ implements Component
     super.unload();
   }
 
-  /**
-   * Handle a known bootstrapping bug.
-   * <p>
-   * Bug 2837:<br>
-   * The MTS blocks on the version lookup in SendLinkImpl's
-   * constructor, during the MTS load.  The fix is to move the
-   * version info out of the WP.
-   * <p>
-   * Check for a pending bind and pretend that it went through.
-   * This is reasonable since it's a local bind.
-   */
-  private AddressEntry getPendingVersionBind(String name) {
-    AddressEntry ae = null;
+
+  private Bundle getBundle(String name) {
     synchronized (leases) {
       ActiveLease lease = (ActiveLease) leases.get(name);
-      if (lease != null) {
-        Map m = (Map) lease.record.getData();
-        ae = (m == null ? null : (AddressEntry) m.get("version"));
+      return asBundle(name, lease);
+    }
+  }
+  private Map getAllBundles() {
+    synchronized (leases) {
+      Map ret = new HashMap(leases.size());
+      for (Iterator iter = leases.entrySet().iterator();
+          iter.hasNext();
+          ) {
+        Map.Entry me = (Map.Entry) iter.next();
+        String name = (String) me.getKey();
+        ActiveLease lease = (ActiveLease) me.getValue();
+        Bundle bundle = asBundle(name, lease);
+        if (bundle == null) {
+          continue;
+        }
+        ret.put(name, bundle);
+      }
+      return ret;
+    }
+  }
+  private Bundle asBundle(String name, ActiveLease lease) {
+    if (lease == null) {
+      return null;
+    }
+    Record record = lease.record;
+    if (record == null) {
+      return null;
+    }
+    UID uid = record.getUID();
+    long ttd;
+    if (lease.sendTime > 0) {
+      // still pending
+      ttd = config.minBundleTTD;
+    } else {
+      // use server ttd
+      ttd = lease.expireTime - lease.boundTime;
+      if (ttd < config.minBundleTTD) {
+        ttd = config.minBundleTTD;
       }
     }
-    if (ae != null &&
-        logger.isInfoEnabled()) {
-      logger.info(
-          "Bug 2837, short-cutting local version lookup "+name+
-          " for the pending bind "+ae);
-    }
-    return ae;
+    Map entries = (Map) record.getData();
+    Bundle bundle = new Bundle(name, uid, ttd, entries);
+    return bundle;
+  }
+  private void register(BundleService.Client bsc) {
+    listeners.add(bsc);
+    bsc.addAll(getAllBundles());
+  }
+  private void unregister(BundleService.Client bsc) {
+    listeners.remove(bsc);
   }
 
   private void submit(Response res, String agent) {
@@ -242,6 +291,7 @@ implements Component
     boolean createNewLease = false;
     String unifiedAgent = null;
     Record record = null;
+    Bundle bundle = null;
 
     AddressEntry ae = req.getAddressEntry();
     String name = ae.getName();
@@ -366,6 +416,8 @@ implements Component
         if (oldAE == null && logger.isInfoEnabled()) {
           logger.info("Binding new lease: "+lease);
         }
+
+        bundle = asBundle(name, lease);
       }
     }
 
@@ -382,16 +434,26 @@ implements Component
       return;
     }
 
-    if (createNewLease) {
-      // must send
-      // FIXME batch?
-      Object o = record; 
-      if (unifiedAgent != null) {
-        o = new NameTag(unifiedAgent, o); 
-      }
-      Map m = Collections.singletonMap(name, o);
-      modifyService.modify(m);
+    if (!createNewLease) {
+      return;
     }
+
+    // tell listeners
+    if (bundle != null) { 
+      List l = listeners.getUnmodifiableList();
+      for (Iterator iter = l.iterator(); iter.hasNext(); ) {
+        BundleService.Client bsc = (BundleService.Client) iter.next();
+        bsc.add(name, bundle);
+      }
+    }
+
+    // send
+    Object o = record; 
+    if (unifiedAgent != null) {
+      o = new NameTag(unifiedAgent, o); 
+    }
+    Map m = Collections.singletonMap(name, o);
+    modifyService.modify(m);
   }
   
   private void unbind(
@@ -408,6 +470,7 @@ implements Component
     String unifiedAgent = null;
 
     Record record = null;
+    Bundle bundle = null;
 
     synchronized (leases) {
       AddressEntry oldAE = null;
@@ -479,6 +542,8 @@ implements Component
         if (logger.isInfoEnabled()) {
           logger.info("New lease: "+lease);
         }
+
+        bundle = asBundle(name, lease);
       }
     }
 
@@ -498,14 +563,32 @@ implements Component
       res.setResult(Boolean.TRUE);
     }
 
-    if (createNewLease) {
-      Object o = record; 
-      if (unifiedAgent != null) {
-        o = new NameTag(unifiedAgent, o); 
-      }
-      Map m = Collections.singletonMap(name, o);
-      modifyService.modify(m);
+    if (!createNewLease) {
+      return;
     }
+
+    // tell listeners
+    if (bundle != null) { 
+      Map entries = bundle.getEntries();
+      boolean rem = (entries == null || entries.isEmpty());
+      List l = listeners.getUnmodifiableList();
+      for (Iterator iter = l.iterator(); iter.hasNext(); ) {
+        BundleService.Client bsc = (BundleService.Client) iter.next();
+        if (rem) {
+          bsc.remove(name, bundle);
+        } else {
+          bsc.add(name, bundle);
+        }
+      }
+    }
+
+    // send
+    Object o = record; 
+    if (unifiedAgent != null) {
+      o = new NameTag(unifiedAgent, o); 
+    }
+    Map m = Collections.singletonMap(name, o);
+    modifyService.modify(m);
   }
 
   private void modifyAnswer(long baseTime, Map m) {
@@ -848,23 +931,19 @@ implements Component
     lease.expireTime = expTime;
   }
 
-  /** config options, soon to be parameters/props */
+  /** config options */
   private static class LeaserConfig {
     public final double renewRatio;
     public final double tripWeight;
+    public final long minBundleTTD;
     public final long checkLeasesPeriod = 20*1000;
+
     public LeaserConfig(Object o) {
-      // FIXME parse!
-      renewRatio = 
-        Double.parseDouble(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.lease.renewRation",
-              "0.75"));
-      tripWeight =
-        Double.parseDouble(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.lease.tripWeight",
-              "0.75"));
+      Parameters p = 
+        new Parameters(o, "org.cougaar.core.wp.resolver.lease.");
+      renewRatio = p.getDouble("renewRatio", 0.75);
+      tripWeight = p.getDouble("tripWeight", 0.75);
+      minBundleTTD = p.getLong("minBundleTTD", 60000);
     }
   }
 
@@ -996,28 +1075,6 @@ implements Component
     }
   }
 
-  private class PendingVersionBindSP 
-    implements ServiceProvider {
-      private final PendingVersionBindService pvbs =
-        new PendingVersionBindService() {
-          public AddressEntry getPendingVersionBind(String name) {
-            return LeaseManager.this.getPendingVersionBind(name);
-          }
-        };
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!PendingVersionBindService.class.isAssignableFrom(
-              serviceClass)) {
-          return null;
-        }
-        return pvbs;
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-      }
-    }
- 
   private class LeaseSP 
     implements ServiceProvider {
       private final LeaseService ls =
@@ -1037,5 +1094,49 @@ implements Component
           ServiceBroker sb, Object requestor,
           Class serviceClass, Object service) {
       }
+    }
+
+  private class BundleSP 
+    implements ServiceProvider {
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (!BundleService.class.isAssignableFrom(serviceClass)) {
+          return null;
+        }
+        BundleService.Client client =
+          (requestor instanceof BundleService.Client ?
+           (BundleService.Client) requestor :
+           null);
+        BundleServiceImpl rsi = new BundleServiceImpl(client);
+        if (client != null) {
+          LeaseManager.this.register(client);
+        }
+        return rsi;
+      }
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+        if (!(service instanceof BundleServiceImpl)) {
+          return;
+        }
+        BundleServiceImpl rsi = (BundleServiceImpl) service;
+        BundleService.Client client = rsi.client;
+        if (client != null) {
+          LeaseManager.this.unregister(client);
+        }
+      }
+      private class BundleServiceImpl 
+        implements BundleService {
+          private final Client client;
+          public BundleServiceImpl(Client client) {
+            this.client = client;
+          }
+          public Bundle getBundle(String name) {
+            return LeaseManager.this.getBundle(name);
+          }
+          public Map getAllBundles() {
+            return LeaseManager.this.getAllBundles();
+          }
+        }
     }
 }

@@ -30,7 +30,6 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 
@@ -38,7 +37,6 @@ import org.cougaar.core.service.wp.WhitePagesService;
  * Utility class to recursively find all nodes in the WP.
  * <p>
  * Not scalable, so the methods of this class are deprecated.
- *
  */
 public final class ListAllNodes {
 

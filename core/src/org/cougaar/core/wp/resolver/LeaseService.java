@@ -42,9 +42,6 @@ public interface LeaseService extends Service {
    * fully handles these requests, either by answering them
    * immediately based upon pending/active leases or by sending
    * remote lease requests.
-   * <p>
-   * The lease manager is also told about "get" operations, to
-   * work around version number lookup bug 2839.
    *
    * @param agent the agent making the request 
    */

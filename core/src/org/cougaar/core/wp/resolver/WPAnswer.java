@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.Map;
-
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.WhitePagesMessage;
@@ -41,6 +40,7 @@ public final class WPAnswer extends WhitePagesMessage {
   public static final int LOOKUP  = 0;
   public static final int MODIFY  = 1;
   public static final int FORWARD = 2;
+  public static final int PING = 3;
 
   private final long sendTime;
   private final long replyTime;
@@ -66,10 +66,11 @@ public final class WPAnswer extends WhitePagesMessage {
     String s =
       ((sendTime <= 0) ? "invalid send time: "+sendTime :
        (replyTime <= 0) ? "invalid reply time: "+replyTime :
-       (m == null) ? "null map" :
+       (m == null && action != PING) ? "null map" :
        (action != LOOKUP &&
         action != MODIFY &&
-        action != FORWARD) ? "invalid action: "+action : 
+        action != FORWARD &&
+        action != PING) ? "invalid action: "+action : 
        null);
     if (s != null) {
       throw new IllegalArgumentException(s);
@@ -134,7 +135,8 @@ public final class WPAnswer extends WhitePagesMessage {
       "("+
       (action == LOOKUP ? "lookup" :
        action == MODIFY ? "modify" :
-       "forward")+
+       action == FORWARD ? "forward" :
+       "ping")+
       "-answer from="+getOriginator()+
       " to="+getTarget()+
       " sent="+Timestamp.toString(sendTime, now)+

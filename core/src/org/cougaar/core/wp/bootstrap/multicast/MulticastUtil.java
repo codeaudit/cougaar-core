@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 2002-2004 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -24,24 +24,41 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.rmi;
+package org.cougaar.core.wp.bootstrap.multicast;
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
-
+import java.net.URI;
+import java.util.Map;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.wp.bootstrap.Bundle;
 
 /**
- * Remote interface for WP AddressEntry bootstrap.
+ * Utility methods. 
  */
-public interface RMIAccess
-extends Remote 
-{
-  /**
-   * Get the AddressEntry.
-   * <p>
-   * This method always returns the same (".equals")
-   * AddressEntry.
-   */
-  AddressEntry getAddressEntry() throws RemoteException;
+public final class MulticastUtil {
+
+  private MulticastUtil() {}
+
+  public static AddressEntry getBootEntry(Bundle b) {
+    if (b != null) {
+      Map m = b.getEntries();
+      if (m != null) {
+        Object o = m.get("-MULTICAST_REG");
+        if (o == null) {
+          o = m.get("-MCAST_REG");
+        }
+        if (o instanceof AddressEntry) {
+          AddressEntry ae = (AddressEntry) o;
+          URI uri = ae.getURI();
+          if (uri != null) {
+            String scheme= uri.getScheme();
+            if ("multicast".equals(scheme) ||
+                "mcast".equals(scheme)) {
+              return ae;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
 }

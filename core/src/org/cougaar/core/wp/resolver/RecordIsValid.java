@@ -27,17 +27,16 @@
 package org.cougaar.core.wp.resolver;
 
 import java.io.Serializable;
-
 import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.Timestamp;
 
 /**
- * A data response from a successful LookupService lookup,
- * which validates the client's cached Record and extends
- * the TTL for the cached data.
+ * A data response from a successful LookupService lookup, which
+ * validates the client's cached Record and extends the TTL for
+ * the cached data.
  * <p>
- * This is only used if the client passed a non-null UID in
- * the lookup.
+ * This is only used if the client passed a non-null UID in the
+ * lookup.
  * <p>
  * The client sent the UID of the Record, and this "RecordIsValid"
  * confirms that the Record with that UID hasn't changed and
@@ -66,9 +65,7 @@ public final class RecordIsValid implements Serializable {
     }
   }
 
-  /**
-   * The UID of the validated Record.
-   */
+  /** The UID of the validated Record. */
   public UID getUID() {
     return uid;
   }

@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.Map;
-
 import org.cougaar.core.component.Service;
 
 /**
@@ -58,10 +57,7 @@ public interface LookupService extends Service {
    */
   void lookup(Map m);
 
-  /**
-   * The service API that must be implemented by the requestor
-   * of this service.
-   */
+  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Respond to a lookup request.

@@ -33,23 +33,9 @@ import org.cougaar.core.mts.MessageAddress;
  * This is the "server selection service" that the client uses to
  * select a white pages server.
  * <p>
- * The primary job of this service is to manage the list of servers
- * and rank them based upon the {@link #update} feedback from
- * the clients and policy.
- * <p>
- * Design goals:<br>
- *   We want to prefer servers that are working, but we also want
- * to occasionally select a server that we haven't tried recently
- * (to explore our options).  Our solution must balance across
- * the servers, since we're sharing the servers with other clients.
- * Also, we don't want to change servers too rapidly, since this
- * may expose minor discrepancies due to server replication delays.
- * <p> 
- * This may be extended to segregate servers, e.g.<ul>
- *   <li>read-only servers</li> 
- *   <li>segregation based upon name (e.g. chord hashing)</li> 
- *   <li>hierarchical servers</li> 
- * </ul>
+ * The primary job of this service is to locate servers and select
+ * the best one.  The {@link #update} feedback can be used to
+ * aid selection.
  */
 public interface SelectService extends Service {
 
@@ -81,6 +67,7 @@ public interface SelectService extends Service {
    */
   boolean contains(MessageAddress addr);
 
+  /** The service requestor must implement this API **/
   interface Client {
     /**
      * The set of servers has changed, either with added or removed

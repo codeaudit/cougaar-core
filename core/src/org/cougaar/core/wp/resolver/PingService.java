@@ -27,21 +27,33 @@
 package org.cougaar.core.wp.resolver;
 
 import org.cougaar.core.component.Service;
-import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
- * This is a work-around service for bug 2837.
+ * This is the ping transport layer of the white pages client,
+ * which is used by the white pages server selector.
  * <p>
- * The lease manager advertises this service.  It allows the
- * cache to answer "get(*, version)" requests by looking in
- * the pending lease queue.
+ * This API hides the MTS and messaging details.  Also, it
+ * ensures that the client's return address is sent to the
+ * server, otherwise the server's reply message will be lost.
+ * <p>
+ * The service requestor must implement the Client API.
  */
-public interface PendingVersionBindService extends Service {
+public interface PingService extends Service {
 
   /**
-   * @return non-null AddressEntry if a "version" bind
-   * is pending.
+   * Send a ping to a server. 
    */
-  public AddressEntry getPendingVersionBind(String name);
+  void ping(MessageAddress addr, long deadline);
 
+  /** The service requestor must implement this API **/
+  interface Client {
+    /**
+     * Receive the answer to a modify request.
+     * <p>
+     * For now just the round-trip-time is passed back, but this
+     * could be enhanced to send back more info. 
+     */
+    void pingAnswer(MessageAddress addr, long rtt);
+  }
 }

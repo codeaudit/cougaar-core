@@ -24,36 +24,31 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver;
+package org.cougaar.core.wp.bootstrap;
 
+import java.util.Map;
 import org.cougaar.core.component.Service;
-import org.cougaar.core.service.wp.Request;
 
 /**
- * This service allows components to watch local "bind" and
- * "unbind" operations.
- * <p>
- * The primary clients of this service are the bootstrapper
- * classes, which must translate encoded "hints" into usable
- * addresses and advertise local addresses in remote registries.
- * <p>
- * For example, a bootstrapper may translate symbolic RMI
- * registry address hints to RMI stubs hints, and advertise
- * local RMI stub bindings in a remote RMI registry.
- * <p>
- * This service is typically advertised by the component
- * that advertises the LeaseService.
- * <p>
- * The service requestor must implement the Client API.
+ * This service provides {@link Bundle}s for local agents. 
  */
-public interface BindObserverService extends Service {
+public interface BundleService extends Service {
+
+  /** Get the bundle for a local agent */
+  Bundle getBundle(String name);
 
   /**
-   * The service API that must be implemented by the requestor
-   * of this service.
+   * Get the bundles for all local agents.
+   * @return a Map of String names to Bundles 
    */
+  Map getAllBundles();
+
+  /** The service requestor can implement this API */
   interface Client {
-    /** Observe a Bind or Unbind request */
-    void submit(Request req);
+    // blackboard-like tracking
+    void add(String name, Bundle bundle);
+    void addAll(Map m);
+    void change(String name, Bundle bundle);
+    void remove(String name, Bundle bundle);
   }
 }

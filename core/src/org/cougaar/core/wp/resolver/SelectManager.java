@@ -1,14 +1,14 @@
 /*
  * <copyright>
- *  
+ *
  *  Copyright 2002-2004 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
- * 
+ *
  *  You can redistribute this software and/or modify it under the
  *  terms of the Cougaar Open Source License as published on the
  *  Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -20,83 +20,122 @@
  *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *  
+ *
  * </copyright>
  */
 
 package org.cougaar.core.wp.resolver;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.wp.MessageTimeoutUtils;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
+import org.cougaar.core.wp.bootstrap.BootstrapService;
+import org.cougaar.core.wp.bootstrap.ServersService;
+import org.cougaar.core.wp.resolver.SelectService.Client;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 
 /**
- * This class advertises the SelectService, which manages the list
- * of white pages servers and ranks them based upon measured
- * performance. 
+ * This class advertises the SelectService, which controls the
+ * ClientTransport's server selection.
  * <p>
- * We measure the average and std-dev of the round-trip-time (RTT),
- * using the standard TCP smoothing algorithm (<i>Jacobson88</i>,
- * sec 2, appendix A).
+ * This implementation uses the BootstrapService to discover
+ * servers and the PingService to send ping messages to the found
+ * servers, measuring the round-trip-time (RTT).  Once we have a
+ * server, we stop the discovery and use the found servers, selecting
+ * between them based upon the RTT.  If the best RTT becomes
+ * unacceptably low, we rediscover and re-ping new servers.
+ * <p>
+ * This component is pluggable, so it can be replaced with an
+ * alternate implementation. 
  */
 public class SelectManager
 extends GenericStateModelAdapter
 implements Component
 {
-  private SelectManagerConfig config;
-
   private ServiceBroker sb;
   private LoggingService logger;
+  private ThreadService threadService;
+
+  private SelectManagerConfig config;
+
+  private Schedulable checkPingsThread;
+
+  private BootstrapService bootstrapService;
 
   private SelectSP selectSP;
 
-  private RarelyModifiedList clients = new RarelyModifiedList();
+  private RarelyModifiedList selectClients = new RarelyModifiedList();
 
-  private BindObserverService bindObserverService;
+  private PingService pingService;
 
-  private final BindObserverService.Client myClient = 
-    new BindObserverService.Client() {
-      public void submit(Request req) {
-        SelectManager.this.observeBind(req);
+  private final PingService.Client pingClient =
+    new PingService.Client() {
+      public void pingAnswer(MessageAddress addr, long rtt) {
+        SelectManager.this.pingAnswer(addr, rtt);
+      }
+    };
+
+  private ServersService serversService;
+
+  private final ServersService.Client serversClient =
+    new ServersService.Client() {
+      public void add(MessageAddress addr) {
+        SelectManager.this.addServer(addr);
+      }
+      public void addAll(Set s) {
+        for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+          addServer((MessageAddress) iter.next());
+        }
+      }
+      public void remove(MessageAddress addr) {
+        SelectManager.this.removeServer(addr);
+      }
+      public void removeAll(Set s) {
+        for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+          removeServer((MessageAddress) iter.next());
+        }
       }
     };
 
   private final Object lock = new Object();
 
+  private boolean searching;
+  private boolean foundAny;
+  private long pingDeadline;
+
   // map from MessageAddress String address to Entry
   //
-  // Map<String, Entry> 
-  final Map entries = new HashMap();
+  // Map<String, Entry>
+  private final Map entries = new HashMap();
 
-  long selectTime;
-  long selectTimeout;
-  MessageAddress selectAddr;
+  private long selectTime;
+  private long selectTimeout;
+  private MessageAddress selectAddr;
 
   // memoize the target, since messages with attributes don't
   // implement "equals()" or "hashCode()" correctly.  By using
   // a memoized value we allow our client to use a map of
   // addresses.
-  MessageAddress memoAddr;
-  long memoDeadline;
-  MessageAddress memoTarget;
+  private MessageAddress memoAddr;
+  private long memoDeadline;
+  private MessageAddress memoTarget;
 
   public void setParameter(Object o) {
-    this.config = new SelectManagerConfig(o);
+    configure(o);
   }
 
   public void setServiceBroker(ServiceBroker sb) {
@@ -107,6 +146,17 @@ implements Component
     this.logger = logger;
   }
 
+  public void setThreadService(ThreadService threadService) {
+    this.threadService = threadService;
+  }
+
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new SelectManagerConfig(o);
+  }
+
   public void load() {
     super.load();
 
@@ -114,29 +164,82 @@ implements Component
       logger.debug("Loading resolver select manager");
     }
 
-    // register to observe local binds
-    bindObserverService = (BindObserverService)
-      sb.getService(myClient, BindObserverService.class, null);
-    if (bindObserverService == null) {
-      throw new RuntimeException(
-          "Unable to register bind observer");
-    }
+    configure(null);
+
+    // monitor ping-based searching
+    Runnable checkPingsRunner =
+      new Runnable() {
+        public void run() {
+          // assert (thread == checkPingsThread);
+          checkPings();
+        }
+      };
+    checkPingsThread = threadService.getThread(
+        this,
+        checkPingsRunner,
+        "White pages server selector check pings");
+
+    // listen for the services
+    ServiceFinder.Callback sfc =
+      new ServiceFinder.Callback() {
+        public void foundService(Service s) {
+          SelectManager.this.foundService(s);
+        }
+      };
+    ServiceFinder.findServiceLater(
+        sb, PingService.class, pingClient, sfc);
+    ServiceFinder.findServiceLater(
+        sb, BootstrapService.class, null, sfc);
+    ServiceFinder.findServiceLater(
+        sb, ServersService.class, serversClient, sfc);
 
     // advertise our service
     selectSP = new SelectSP();
     sb.addService(SelectService.class, selectSP);
   }
 
-  public void unload() {
-    if (bindObserverService != null) {
-      sb.releaseService(
-          this, BindObserverService.class, bindObserverService);
-      bindObserverService = null;
+  private void foundService(Service s) {
+    synchronized (lock) {
+      if (s instanceof PingService) {
+        pingService = (PingService) s;
+        if (searching) {
+          sendPings();
+        }
+      } else if (s instanceof BootstrapService) {
+        bootstrapService = (BootstrapService) s;
+        if (searching) {
+          bootstrapService.startSearching();
+        }
+      } else if (s instanceof ServersService) {
+        serversService = (ServersService) s;
+      }
     }
+  }
+
+  public void unload() {
     if (selectSP != null) {
       sb.revokeService(
           SelectService.class, selectSP);
       selectSP = null;
+    }
+    if (serversService != null) {
+      sb.releaseService(
+          serversClient,
+          ServersService.class,
+          serversService);
+      serversService = null;
+    }
+    if (bootstrapService != null) {
+      sb.releaseService(
+          this,
+          BootstrapService.class,
+          bootstrapService);
+    }
+    if (pingService != null) {
+      sb.releaseService(
+          pingClient,
+          PingService.class,
+          pingService);
     }
     if (logger != null) {
       sb.releaseService(
@@ -146,11 +249,175 @@ implements Component
     super.unload();
   }
 
+  // timer fired, see if we've found our servers
+  private void checkPings() {
+    synchronized (lock) {
+      if (!searching) {
+        return;
+      }
+      // do we have at least one server?
+      if (selectAddr != null && foundAny) {
+        stopSearching();
+        return;
+      }
+      // keep searching
+      sendPings();
+    }
+  }
+
+  private void startSearching() {
+    if (searching) {
+      return;
+    }
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          "Starting bootstrap search, sending pings to servers["+
+          entries.size()+"]="+entries.keySet());
+    }
+    searching = true;
+    if (bootstrapService != null) {
+      bootstrapService.startSearching();
+    }
+    // send pings to the servers we know about
+    sendPings();
+  }
+
+  private void stopSearching() {
+    if (!searching) {
+      return;
+    }
+    searching = false;
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          "Stopping bootstrap search, found servers["+
+          entries.size()+"]="+entries.keySet());
+    }
+    pingDeadline = -1;
+    foundAny = false;
+    if (bootstrapService != null) {
+      bootstrapService.stopSearching();
+    }
+  }
+
+  private void sendPings() {
+    long now = System.currentTimeMillis();
+    pingDeadline = now + config.pingTimeout;
+    if (pingService == null) {
+      return;
+    }
+    checkPingsThread.schedule(config.pingTimeout);
+    long dropTime =
+      (config.dropAge >= 0 ?
+       (now - config.dropAge) :
+       0);
+    for (Iterator iter = entries.entrySet().iterator();
+        iter.hasNext();
+        ) {
+      Map.Entry me = (Map.Entry) iter.next();
+      String name = (String) me.getKey();
+      Entry e = (Entry) me.getValue();
+      if (e.getUpdateTime() < dropTime) {
+        if (logger.isInfoEnabled()) {
+          logger.info("Dropping unused server: "+e.toString(now));
+        }
+        iter.remove();
+        continue;
+      }
+      MessageAddress addr = e.getMessageAddress();
+      if (logger.isDebugEnabled()) {
+        logger.debug("Sending ping["+entries.size()+"] to "+addr);
+      }
+      pingService.ping(addr, pingDeadline);
+    }
+  }
+
+  // receive a ping-ack.
+  // if it's our first server, makeSelection and tell our clients.
+  // wait for the timer to stopSearching, to allow more servers.
+  private void pingAnswer(MessageAddress addr, long rtt) {
+    if (logger.isDetailEnabled()) {
+      logger.detail("pingAnswer("+addr+", "+rtt+")");
+    }
+    synchronized (lock) {
+      String s = addr.getAddress();
+      Entry e = (Entry) entries.get(s);
+      if (e == null) {
+        return;
+      }
+      long now = System.currentTimeMillis();
+      e.reset((int) rtt, now);
+      if (!searching) {
+        return;
+      }
+      if (selectAddr != null && foundAny) {
+        // another server, keep searching
+        return;
+      }
+      makeSelection(now);
+      if (selectAddr == null) {
+        // server is bad?
+        return;
+      }
+      foundAny = true;
+    }
+    // now that we have a server, tell our clients
+    tellClients();
+  }
+
+  // add a server.
+  // if we're searching, send a ping to it.
+  // wait for a ping-ack before stopSearching or makeSelection
+  private void addServer(MessageAddress addr) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Adding server "+addr);
+    }
+    synchronized (lock) {
+      String s = addr.getAddress();
+      Entry e = (Entry) entries.get(s);
+      if (e != null) {
+        return;
+      }
+      e = new Entry(addr);
+      long now = System.currentTimeMillis();
+      e.reset((int) config.lousyScore, now);
+      entries.put(s, e);
+      if (searching && pingService != null) {
+        pingService.ping(addr, pingDeadline);
+      }
+      if (logger.isInfoEnabled()) {
+        logger.info(
+            "Added white pages server "+addr+" to servers["+
+            entries.size()+"]="+entries.keySet());
+      }
+    }
+  }
+
+  // remove a server.
+  private void removeServer(MessageAddress addr) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Removing server "+addr);
+    }
+    synchronized (lock) {
+      String s = addr.getAddress();
+      if (entries.remove(s) == null) {
+        return;
+      }
+      clearSelection(addr);
+      // if searching, fix foundAny?
+      if (logger.isInfoEnabled()) {
+        logger.info(
+            "Removed white pages server "+addr+" from servers["+
+            entries.size()+"]="+entries.keySet());
+      }
+      return;
+    }
+  }
+
   private MessageAddress select(boolean lookup, String name) {
     // select the entry with the min score
     synchronized (lock) {
       long now = System.currentTimeMillis();
-      if (selectTime < now) {
+      if (now > selectTime) {
         makeSelection(now);
       }
       if (selectAddr == null) {
@@ -158,9 +425,9 @@ implements Component
       }
       long deadline = now + selectTimeout;
       // round up the deadline for better memoizing
-      if (1 < config.deadlineMod) {
+      if (config.deadlineMod > 1) {
         long mod = deadline % config.deadlineMod;
-        if (0 < mod) {
+        if (mod > 0) {
           deadline += config.deadlineMod - mod;
         }
       }
@@ -170,7 +437,7 @@ implements Component
           (deadline == memoDeadline)) {
         target = memoTarget;
       } else {
-        target = 
+        target =
           MessageTimeoutUtils.setDeadline(
               selectAddr,
               deadline);
@@ -186,18 +453,20 @@ implements Component
     selectTime = now + config.period;
     int n = entries.size();
     if (n <= 0) {
-      // no servers (yet?)
+      // no servers yet
       selectAddr = null;
       selectTimeout = 1; // unused
+      startSearching();
       return;
     }
-    // select the best server, using our "computeScore" method
+    // select the best server
     Entry bestEntry;
     double bestScore = 0.0;
     Iterator iter = entries.entrySet().iterator();
     if (n == 1) {
       Map.Entry me = (Map.Entry) iter.next();
       bestEntry = (Entry) me.getValue();
+      bestScore = computeScore(bestEntry, now);
     } else {
       bestEntry = null;
       for (int i = 0; i < n; i++) {
@@ -210,8 +479,12 @@ implements Component
         }
       }
     }
+    // if all servers are lousy, start searching for new ones
+    if (bestScore >= config.lousyScore) {
+      startSearching();
+    }
     // attach timeout
-    int timeout = bestEntry.getTimeout(); 
+    int timeout = bestEntry.getTimeout();
     if (timeout == 0) {
       timeout = config.defaultTimeout;
     } else if (timeout <= config.minTimeout) {
@@ -243,44 +516,14 @@ implements Component
    */
   private double computeScore(Entry e, long now) {
     // assert (Thread.holdsLock(lock));
-    double ret;
-    long updateTime = e.getUpdateTime();
-    long age = now - updateTime;
-    double ageRatio;
-    if (updateTime <= 0 || config.maxAge < age) {
-      ret = config.defaultScore;
-      ageRatio = 1.0;
-    } else {
-      ret = (double) e.getAverage();
-      // make unused entries look better by decaying their score
-      ageRatio = ((double) age / config.maxAge); 
-      ret = ret + ageRatio*(config.defaultScore - ret);
-    }
-    // throw a little randomness into the mix
-    double rnd = 1.0 + config.randomWeight*(Math.random() - 0.5);
-    ret *= rnd;
-    // if this is our primary server, favor it by adjusting its
-    // score
-    if (config.primaryAlias != null &&
-        e.containsAlias(config.primaryAlias)) {
+    double ret = (double) e.getAverage();
+    // favor primary server by adjusting its score
+    boolean isPrimary =
+      (config.primaryAddress != null &&
+       config.primaryAddress.equals(
+         e.getMessageAddress().getAddress()));
+    if (isPrimary) {
       ret *= config.primaryWeight;
-    }
-    if (logger.isDetailEnabled()) {
-      logger.detail(
-          "adjust"+
-          ((updateTime <= 0 || config.maxAge < age) ?
-           (" default score "+config.defaultScore+" by") :
-           (" rtt avg "+e.getAverage()+
-            " by age ("+age+" of "+config.maxAge+")="+
-            ((int)(100.0*ageRatio))+
-            "% and"))+
-          " rand "+rnd+
-          ((config.primaryAlias != null &&
-           e.containsAlias(config.primaryAlias)) ?
-           (" and primary-match("+config.primaryAlias+")="+
-           config.primaryWeight) :
-           "")+
-          " yields a score of "+ret);
     }
     if (logger.isDebugEnabled()) {
       logger.debug("Score is "+ret+" for "+e.toString(now));
@@ -305,12 +548,7 @@ implements Component
    */
   private void update(Entry e, long rtt, boolean timeout, long now) {
     // assert (Thread.holdsLock(lock));
-    int i = (int) rtt; 
-    if (timeout) {
-      // timeouts count double!
-      i <<= 1;
-    }
-    e.update(i, now);
+    e.update((int) rtt, now);
     if (logger.isDetailEnabled()) {
       logger.detail(
           "updated entry with "+
@@ -320,83 +558,18 @@ implements Component
     // force re-select if this is our selectAddr and it's bad now?
   }
 
-  /**
-   * If an address entry is in the form:<pre>
-   *   (name=<i>ALIAS</i> type=alias uri=name:///<i>NAME</i>)
-   * </pre> then this method parses out the <i>NAME</i>,
-   * otherwise we return null.
-   */
-  public static String parseAlias(AddressEntry ae) {
-    if (!"alias".equals(ae.getType())) {
-      return null;
-    }
-    String alias = ae.getName();
-    if (!alias.matches("WP(-\\d+)?")) {
-      return null;
-    }
-    String path = ae.getURI().getPath();
-    if (path == null && path.length() < 1) {
-      return null;
-    } 
-    return path.substring(1);
-  }
-
-  private void observeBind(Request req) {
-    boolean bind;
-    AddressEntry ae;
-    if (req instanceof Request.Bind) {
-      bind = true;
-      ae = ((Request.Bind) req).getAddressEntry();
-    } else if (req instanceof Request.Unbind) {
-      bind = false;
-      ae = ((Request.Unbind) req).getAddressEntry();
-    } else {
-      return;
-    }
-    if (logger.isDetailEnabled()) {
-      logger.detail("observe "+req);
-    }
-    String alias = ae.getName();
-    String name = parseAlias(ae);
-    if (name == null) {
-      return;
-    }
-    MessageAddress addr = MessageAddress.getMessageAddress(name);
-    if (bind) {
-      add(alias, addr);
-    } else {
-      remove(alias);
-    }
-
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          (bind ? "Added" : "Removed")+
-          " white pages server "+addr+
-          " based upon local "+
-          (bind ? "" : "un")+
-          "bind: "+ae+
-          ", servers="+my_toString());
-    }
-
-    // tell our clients to check their sent messages, since we've
-    // either added a new server (important if we had zero servers)
-    // or we've removed a server (must revisit any messages we sent
-    // to that server).
-    tellClients(); 
-  }
-
   //
   // the rest is fairly straight-forward...
   //
 
   private void register(SelectService.Client c) {
-    clients.add(c);
+    selectClients.add(c);
   }
   private void unregister(SelectService.Client c) {
-    clients.remove(c);
+    selectClients.remove(c);
   }
   private void tellClients() {
-    List cl = clients.getUnmodifiableList();
+    List cl = selectClients.getUnmodifiableList();
     for (int i = 0, ln = cl.size(); i < ln; i++) {
       SelectService.Client c = (SelectService.Client) cl.get(i);
       c.onChange();
@@ -422,48 +595,6 @@ implements Component
     }
   }
 
-  private void add(String alias, MessageAddress addr) {
-    synchronized (lock) {
-      remove(alias);
-      String s = addr.getAddress();
-      Entry e = (Entry) entries.get(s);
-      if (e == null) {
-        if (entries.isEmpty()) {
-          // force selection, we've found a server
-          selectTime = 0;
-        }
-        e = new Entry(addr);
-        entries.put(s, e);
-      }
-      e.addAlias(alias);
-    }
-  }
-
-  private void remove(String alias) {
-    synchronized (lock) {
-      Entry match = null;
-      for (Iterator iter = entries.values().iterator();
-          iter.hasNext();
-          ) {
-        Entry e = (Entry) iter.next();
-        if (e.containsAlias(alias)) {
-          match = e;
-          break;
-        }
-      }
-      if (match == null) {
-        return;
-      }
-      //
-      match.removeAlias(alias);
-      if (match.numAliases() == 0) {
-        clearSelection(match.addr);
-        String s = match.addr.getAddress();
-        entries.remove(s);
-      }
-    }
-  }
-
   private String my_toString() {
     synchronized (lock) {
       return "(servers="+entries.toString()+")";
@@ -473,7 +604,7 @@ implements Component
   /**
    * An entry monitors the performance for a single server.
    */
-  static class Entry {
+  private static class Entry {
 
     // alpha for average updates is 1/8
     private static final int GAIN_AVG = 3;
@@ -484,7 +615,6 @@ implements Component
     // the timeout quartile is the same as the GAIN_VAR
 
     private final MessageAddress addr;
-    private Set aliases = new HashSet();
     private long updateTime;
 
     /** @see update */
@@ -502,34 +632,38 @@ implements Component
         throw new IllegalArgumentException(s);
       }
     }
-    
+
+    public void reset(int rtt, long now) {
+      updateTime = now;
+      sa = rtt << GAIN_AVG;
+      sv = 0;
+      rto = rtt;
+    }
+
     /**
      * Update our rtt average and std-dev.
      * <p>
      * For math see <i>Jacobson88</i>, sec2, appendix A.  This is
      * the standard TCP rtt-based timeout smoothing algorithm.
      *
-     * @param rtt the measured round-trip-time 
+     * @param rtt the measured round-trip-time
      * @param now the current time
-     */ 
+     */
     public void update(int rtt, long now) {
       if (updateTime <= 0) {
-        updateTime = now;
-        sa = rtt << GAIN_AVG;
-        sv = 0;
-        rto = rtt;
-      } else {
-        updateTime = now;
-        int m = rtt; 
-        m -= (sa >> GAIN_AVG);
-        sa += m;
-        if (m < 0) {
-          m = -m;
-        }
-        m -= (sv >> GAIN_VAR);
-        sv += m;
-        rto = (sa >> GAIN_AVG) + sv;
+        reset(rtt, now);
+        return;
       }
+      updateTime = now;
+      int m = rtt;
+      m -= (sa >> GAIN_AVG);
+      sa += m;
+      if (m < 0) {
+        m = -m;
+      }
+      m -= (sv >> GAIN_VAR);
+      sv += m;
+      rto = (sa >> GAIN_AVG) + sv;
     }
 
     /** @return the time of the most recent update */
@@ -559,32 +693,14 @@ implements Component
       return addr;
     }
 
-    public int numAliases() {
-      return aliases.size();
-    }
-    public boolean containsAlias(String alias) {
-      return aliases.contains(alias);
-    }
-    public void addAlias(String alias) {
-      if (alias == null) {
-        throw new IllegalArgumentException(
-            "null alias");
-      }
-      aliases.add(alias);
-    }
-    public void removeAlias(String alias) {
-      aliases.remove(alias);
-    }
-
     public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }
 
     public String toString(long now) {
-      return 
+      return
         "(server address="+addr+
-        " alias="+aliases+
         " updateTime="+
         Timestamp.toString(getUpdateTime(), now)+
         " average="+getAverage()+
@@ -594,119 +710,62 @@ implements Component
     }
   }
 
-  private class SelectSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!SelectService.class.isAssignableFrom(serviceClass)) {
-          return null;
+  private class SelectSP extends ServiceProviderBase {
+    protected void register(Object client) {
+      SelectManager.this.register((SelectService.Client) client);
+    }
+    protected void unregister(Object client) {
+      SelectManager.this.unregister((SelectService.Client) client);
+    }
+    protected Class getServiceClass() { return SelectService.class; }
+    protected Class getClientClass() { return SelectService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements SelectService {
+      public SI(Object client) { super(client); }
+        public boolean contains(MessageAddress addr) {
+          return SelectManager.this.contains(addr);
         }
-        if (!(requestor instanceof SelectService.Client)) {
-          throw new IllegalArgumentException(
-              "SelectService"+
-              " requestor must implement "+
-              "SelectService.Client");
+        public MessageAddress select(boolean lookup, String name) {
+          return SelectManager.this.select(lookup, name);
         }
-        SelectService.Client client = (SelectService.Client) requestor;
-        SelectService ssi = new SelectServiceImpl(client);
-        SelectManager.this.register(client);
-        return ssi;
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof SelectServiceImpl)) {
-          return;
+        public void update(
+            MessageAddress addr, long duration, boolean timeout) {
+          SelectManager.this.update(addr, duration, timeout);
         }
-        SelectServiceImpl ssi = (SelectServiceImpl) service;
-        SelectService.Client client = ssi.client;
-        SelectManager.this.unregister(client);
-      }
-      private class SelectServiceImpl 
-        implements SelectService {
-          private final Client client;
-          public SelectServiceImpl(Client client) {
-            this.client = client;
-          }
-          public boolean contains(MessageAddress addr) {
-            return SelectManager.this.contains(addr);
-          }
-          public MessageAddress select(
-              boolean lookup,
-              String name) {
-            return SelectManager.this.select(
-                lookup, name);
-          }
-          public void update(
-              MessageAddress addr,
-              long duration,
-              boolean timeout) {
-            SelectManager.this.update(
-                addr, duration, timeout);
-          }
-          public String toString() {
-            return SelectManager.this.my_toString();
-          }
+        public String toString() {
+          return SelectManager.this.my_toString();
         }
     }
+  }
 
-  /** config options, soon to be parameters/props */
+  /** config options */
   private static class SelectManagerConfig {
-    public static final long period =
-      Long.parseLong(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.period",
-            "30000"));
-    public static final long maxAge =
-      Long.parseLong(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.maxAge",
-            "300000"));
-    public static final double defaultScore =
-      Double.parseDouble(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.defaultScore",
-            "750.0"));
-    public static final double randomWeight =
-      Double.parseDouble(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.randomWeight",
-            "0.3"));
-    public static final long deadlineMod =
-      Long.parseLong(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.deadlineMod",
-            "25"));
-    public static final int minTimeout =
-      Integer.parseInt(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.minTimeout",
-            "3000"));
-    public static final int defaultTimeout =
-      Integer.parseInt(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.defaultTimeout",
-            "20000"));
-    public static final int maxTimeout =
-      Integer.parseInt(
-          System.getProperty(
-            "org.cougaar.core.wp.resolver.select.maxTimeout",
-            "90000"));
-    public static final String primaryAlias;
-    static {
-      String s = System.getProperty(
-          "org.cougaar.core.wp.resolver.select.primary");
-      // in form "alias(:node)?", extract "alias" prefix
+    public final long period;
+    public final long dropAge;
+    public final long deadlineMod;
+    public final int minTimeout;
+    public final int defaultTimeout;
+    public final int maxTimeout;
+    public final String primaryAddress;
+    public final double primaryWeight;
+    public final long pingTimeout;
+    public final double lousyScore;
+
+    public SelectManagerConfig(Object o) {
+      Parameters p =
+        new Parameters(o, "org.cougaar.core.wp.resolver.select.");
+      period = p.getLong("period", 30000);
+      dropAge = p.getLong("dropAge", 300000);
+      double defaultScore = p.getDouble("defaultScore", 750.0);
+      deadlineMod = p.getLong("deadlineMod", 25);
+      minTimeout = p.getInt("minTimeout", 3000);
+      defaultTimeout = p.getInt("defaultTimeout", 20000);
+      maxTimeout = p.getInt("maxTimeout", 90000);
+      String s = p.getString("primary");
+      // in form "alias(:addr)?", extract "addr" suffix
       int idx = (s == null ? -1 : s.indexOf(':'));
-      primaryAlias = (idx < 0 ? s : s.substring(idx+1));
-    }
-    public static final double primaryWeight;
-    static {
-      String s = 
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.select.favorPrimaryBy",
-          "0.0");
-      double d = (s == null ? 0.0 : Double.parseDouble(s));
+      primaryAddress = (idx <= 0 ? s : s.substring(idx+1));
+      double d = p.getDouble("favorPrimaryBy", 0.0);
       d = 1.0 - d;
       if (d > 1.0) {
         d = 1.0;
@@ -714,10 +773,10 @@ implements Component
         d = 0.0;
       }
       primaryWeight = d;
-    }
-
-    public SelectManagerConfig(Object o) {
-      // FIXME parse!
+      pingTimeout = p.getLong("pingTimeout", 30000);
+      d = p.getDouble("lousyScore", 3000);
+      d = Math.min(d, 4*defaultScore);
+      lousyScore = d;
     }
   }
 }

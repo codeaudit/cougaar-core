@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.server;
 
 import java.util.Map;
-
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -81,17 +80,9 @@ public interface ForwardService extends Service {
    */
   void forward(MessageAddress target, Map m, long ttd);
 
-  /**
-   * The service API that must be implemented by the requestor
-   * of this service.
-   */
+  /** The service requestor must implement this API **/
   interface Client {
-    /**
-     * Receive the answer to a forward request.
-     */
-    void forwardAnswer(
-        MessageAddress addr,
-        long baseTime,
-        Map m);
+    /** Receive the answer to a forward request. */
+    void forwardAnswer(MessageAddress addr, long baseTime, Map m);
   }
 }

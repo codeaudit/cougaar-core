@@ -27,11 +27,12 @@
 package org.cougaar.core.wp.server;
 
 import java.io.Serializable;
-
+import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.resolver.Lease;
 import org.cougaar.core.wp.resolver.Record;
 
 /**
+ * Data forwarded between servers.
  */
 public final class Forward implements Serializable {
 

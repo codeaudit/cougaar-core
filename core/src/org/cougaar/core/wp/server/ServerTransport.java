@@ -27,33 +27,39 @@
 package org.cougaar.core.wp.server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceAvailableEvent;
 import org.cougaar.core.component.ServiceAvailableListener;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceListener;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.util.RarelyModifiedList;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.WhitePagesMessage;
-import org.cougaar.core.wp.resolver.ConfigReader;
+import org.cougaar.core.wp.bootstrap.PeersService;
+import org.cougaar.core.wp.resolver.ServiceProviderBase;
 import org.cougaar.core.wp.resolver.WPAnswer;
 import org.cougaar.core.wp.resolver.WPQuery;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This component sends and receives messages for the server.
@@ -77,7 +83,7 @@ implements Component
         "org.cougaar.core.wp.server.useServerTime");
 
   // pick an action that doesn't conflict with WPQuery
-  private static final int FORWARD_ANSWER = 3;
+  private static final int FORWARD_ANSWER = 4;
 
   private ServerTransportConfig config;
 
@@ -87,11 +93,36 @@ implements Component
   private ThreadService threadService;
   private WhitePagesService wps;
 
+  private PeersService peersService;
+  private final PeersService.Client
+    peersClient =
+    new PeersService.Client() {
+      public void add(MessageAddress addr) {
+        ServerTransport.this.addPeer(addr);
+      }
+      public void addAll(Set s) {
+        for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+          add((MessageAddress) iter.next());
+        }
+      }
+      public void remove(MessageAddress addr) {
+        ServerTransport.this.removePeer(addr);
+      }
+      public void removeAll(Set s) {
+        for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+          remove((MessageAddress) iter.next());
+        }
+      }
+    };
+
+  private PingAckSP pingAckSP;
   private LookupAckSP lookupAckSP;
   private ModifyAckSP modifyAckSP;
   private ForwardAckSP forwardAckSP;
   private ForwardSP forwardSP;
 
+  private RarelyModifiedList pingAckClients = 
+    new RarelyModifiedList();
   private RarelyModifiedList lookupAckClients = 
     new RarelyModifiedList();
   private RarelyModifiedList modifyAckClients = 
@@ -100,6 +131,13 @@ implements Component
     new RarelyModifiedList();
   private RarelyModifiedList forwardClients = 
     new RarelyModifiedList();
+
+  //
+  // peer servers
+  //
+
+  private final Object peersLock = new Object();
+  private Set peers = Collections.EMPTY_SET;
 
   //
   // output (send to WP server):
@@ -122,8 +160,6 @@ implements Component
   //
   // List<WhitePagesMessage> 
   private List sendQueue;
-
-  private final Map peers = new HashMap();
 
   //
   // input (receive from WP server):
@@ -148,7 +184,14 @@ implements Component
   private Schedulable debugThread;
 
   public void setParameter(Object o) {
-    this.config = new ServerTransportConfig(o);
+    configure(o);
+  }
+
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new ServerTransportConfig(o);
   }
 
   public void setServiceBroker(ServiceBroker sb) {
@@ -170,6 +213,8 @@ implements Component
   public void load() {
     super.load();
 
+    configure(null);
+
     if (logger.isDebugEnabled()) {
       logger.debug("Loading server remote handler");
     }
@@ -180,7 +225,16 @@ implements Component
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
 
-    readConfig();
+    // watch for peer servers
+    peersService = (PeersService)
+      sb.getService(
+          peersClient,
+          PeersService.class,
+          null);
+    if (peersService == null) {
+      throw new RuntimeException(
+          "Unable to obtain PeersService");
+    }
 
     // create threads
     Runnable receiveRunner =
@@ -228,6 +282,8 @@ implements Component
     }
 
     // advertise our services
+    pingAckSP = new PingAckSP();
+    sb.addService(PingAckService.class, pingAckSP);
     lookupAckSP = new LookupAckSP();
     sb.addService(LookupAckService.class, lookupAckSP);
     modifyAckSP = new ModifyAckSP();
@@ -255,12 +311,24 @@ implements Component
       sb.revokeService(LookupAckService.class, lookupAckSP);
       lookupAckSP = null;
     }
+    if (pingAckSP != null) {
+      sb.revokeService(PingAckService.class, pingAckSP);
+      pingAckSP = null;
+    }
 
     if (messageSwitchService != null) {
       //messageSwitchService.removeMessageHandler(myMessageHandler);
       sb.releaseService(
           this, MessageSwitchService.class, messageSwitchService);
       messageSwitchService = null;
+    }
+
+    if (peersService != null) {
+      sb.releaseService(
+          peersClient,
+          PeersService.class,
+          peersService);
+      peersService = null;
     }
 
     if (wps != null) {
@@ -281,58 +349,62 @@ implements Component
     super.unload();
   }
 
-  private void readConfig() {
-    // for now we share the same "alpreg.ini" as the client
-    //
-    // we look for any entries where the name is "WP" or matches
-    // ("WP-"+number).  We'll assume that those are potential
-    // white pages alias entries, as either:
-    //    already an "alias" entry
-    //    an entry that will be bootstrapped (e.g. "-RMIREG")
-    //
-    // before we send messages to these servers we'll ask the
-    // local white pages cache if it contains an entry for the
-    // name.
-    List l = ConfigReader.listEntries();
-    Map initPeers = new HashMap();
-    for (int i = 0, n = l.size(); i < n; i++) {
-      AddressEntry ae = (AddressEntry) l.get(i);
-      String alias = ae.getName();
-      if (!alias.matches("WP(-\\d+)?")) {
-        continue;
-      }
-      String agent = null;
-      String type = ae.getType();
-      if (type.equals("alias") ||
-          type.equals("-RMI_REG")) { 
-        agent = ae.getURI().getPath().substring(1);
-        if ("*".equals(agent)) {
-          agent = null;
-        }
-      }
-      MessageAddress addr =
-        (agent == null ?
-         (null) :
-         MessageAddress.getMessageAddress(agent));
-      Peer p = new Peer(
-          alias,
-          agent,
-          addr,
-          (addr != null),
-          ae);
-      initPeers.put(alias, p);
+  private void addPeer(MessageAddress addr) {
+    updatePeer(true, addr);
+  }
+  private void removePeer(MessageAddress addr) {
+    updatePeer(false, addr);
+  }
+  private void updatePeer(boolean add, MessageAddress addr) {
+    if (addr == null) {
+      return;
     }
-    synchronized (sendLock) {
+    synchronized (peersLock) {
+      MessageAddress a = addr.getPrimary();
+      if (add == peers.contains(a)) {
+        if (logger.isInfoEnabled()) {
+          logger.info(
+              "Ignoring "+(add ? "add" : "remove")+" of peer "+a+
+              " that is "+(add ? "already" : "not")+
+              " in our peers["+peers.size()+"]="+peers);
+        }
+        return;
+      }
+      // copy-on-write
+      Set np = new HashSet(peers); 
+      if (add) {
+        np.add(a);
+      } else {
+        np.remove(a);
+      }
+      peers = Collections.unmodifiableSet(np);
       if (logger.isInfoEnabled()) {
         logger.info(
-            "Found servers["+initPeers.size()+"]="+
-            initPeers);
+            (add ? "Added" : "Removed")+
+            " peer server "+a+" "+
+            (add ? "to" : "from")+
+            " peers["+peers.size()+"]="+peers);
       }
-      if (initPeers.isEmpty() && logger.isErrorEnabled()) {
-        logger.error("Empty list of white pages servers found");
-      }
-      peers.putAll(initPeers);
     }
+    // TODO on "add" we should forward old messages within the
+    // expire ttd, but this would require help from the server
+    // tables.  For now we'll ignore this case and let the next
+    // "forward" take care of new peers.
+  }
+  private Set getPeers() {
+    synchronized (peersLock) {
+      return peers;
+    }
+  }
+  private boolean isPeer(MessageAddress addr) {
+    if (addr == null) {
+      return false;
+    }
+    MessageAddress a = addr.getPrimary();
+    if (agentId.equals(a)) {
+      return false;
+    }
+    return getPeers().contains(a);
   }
 
   private void registerMessageSwitch() {
@@ -394,71 +466,85 @@ implements Component
     }
   }
 
-  private void register(LookupAckService.Client c) {
-    lookupAckClients.add(c);
+  private List getList(int action) {
+    return
+      (action == WPAnswer.LOOKUP ? lookupAckClients :
+       action == WPAnswer.MODIFY ? modifyAckClients :
+       action == WPAnswer.FORWARD ? forwardAckClients :
+       action == WPAnswer.PING ? pingAckClients :
+       action == FORWARD_ANSWER ? forwardClients :
+       null);
   }
-  private void unregister(LookupAckService.Client c) {
-    lookupAckClients.remove(c);
+  private void register(int action, Object c) {
+    getList(action).add(c);
   }
-  private void register(ModifyAckService.Client c) {
-    modifyAckClients.add(c);
+  private void unregister(int action, Object c) {
+    getList(action).remove(c);
   }
-  private void unregister(ModifyAckService.Client c) {
-    modifyAckClients.remove(c);
-  }
-  private void register(ForwardAckService.Client c) {
-    forwardAckClients.add(c);
-  }
-  private void unregister(ForwardAckService.Client c) {
-    forwardAckClients.remove(c);
-  }
-  private void register(ForwardService.Client c) {
-    forwardClients.add(c);
-  }
-  private void unregister(ForwardService.Client c) {
-    forwardClients.remove(c);
-  }
-
-  private void lookupAnswer(
+  private void tellClients(
+      int action,
       MessageAddress clientAddr,
       long clientTime,
       Map m) {
-    send(WPAnswer.LOOKUP, clientAddr, clientTime, m);
-  }
-
-  private void modifyAnswer(
-      MessageAddress clientAddr,
-      long clientTime,
-      Map m) {
-    send(WPAnswer.MODIFY, clientAddr, clientTime, m);
-  }
-  
-  private void forwardAnswer(
-      MessageAddress clientAddr,
-      long clientTime,
-      Map m) {
-    // verify that our peers still include this target?
-    if (peers.size() <= 1) {
-      // only one server
+    // tell our clients (refactor me?)
+    int n = (m == null ? 0 : m.size());
+    if (n == 0 && action != WPAnswer.PING) {
       return;
     }
-    send(WPAnswer.FORWARD, clientAddr, clientTime, m);
+    if (action == WPAnswer.LOOKUP) {
+      List l = lookupAckClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        LookupAckService.Client c = (LookupAckService.Client) l.get(i);
+        c.lookup(clientAddr, clientTime, m);
+      }
+    } else if (action == WPAnswer.MODIFY) {
+      List l = modifyAckClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        ModifyAckService.Client c = (ModifyAckService.Client) l.get(i);
+        c.modify(clientAddr, clientTime, m);
+      }
+    } else if (action == WPAnswer.FORWARD) {
+      List l = forwardAckClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        ForwardAckService.Client c = (ForwardAckService.Client) l.get(i);
+        c.forward(clientAddr, clientTime, m);
+      }
+    } else if (action == WPAnswer.PING) {
+      List l = pingAckClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        PingAckService.Client c = (PingAckService.Client) l.get(i);
+        c.ping(clientAddr, clientTime, m);
+      }
+    } else if (action == FORWARD_ANSWER) {
+      List l = forwardClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        ForwardService.Client c = (ForwardService.Client) l.get(i);
+        c.forwardAnswer(clientAddr, clientTime, m);
+      }
+    } else if (logger.isErrorEnabled()) {
+      logger.error("Unknown action "+action);
+    }
   }
-  
+
   private void send(
       int action,
       MessageAddress clientAddr,
       long clientTime,
       Map m) {
-    if (m == null || m.isEmpty()) {
+    if ((m == null || m.isEmpty()) &&
+        (action != WPAnswer.PING)) {
+      return;
+    }
+    if (action == WPAnswer.FORWARD && !isPeer(clientAddr)) {
+      // ignore, either the local server or a non-peer
       return;
     }
 
     long now = System.currentTimeMillis();
 
     long timeout =
-      (action == WPAnswer.LOOKUP ?
-       config.lookupTimeoutMillis :
+      (action == WPAnswer.LOOKUP ? config.lookupTimeoutMillis :
+       action == WPAnswer.PING ? config.pingTimeoutMillis :
        config.modifyTimeoutMillis);
     if (0 < timeout && 0 < graceTime) {
       long diff = graceTime - now;
@@ -487,63 +573,24 @@ implements Component
   }
 
   private void forward(Map m, long ttd) {
-    int n = peers.size();
-    if (n <= 1) {
-      // only one server, and we're it!
-      return;
+    Set targets = getPeers();
+    int n = targets.size();
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "forwarding "+m+" to all peers["+n+"]="+targets+
+          " except ourselves("+agentId+")");
     }
     long now = System.currentTimeMillis();
     long ttl = now + ttd;
-    Iterator iter = peers.entrySet().iterator();
+    Iterator iter = targets.iterator();
     for (int i = 0; i < n; i++) {
-      Map.Entry me = (Map.Entry) iter.next();
-      String alias = (String) me.getKey();
-      Peer p = (Peer) me.getValue();
-      MessageAddress target;
-      if (p.fixedAddr) {
-        target = p.addr;
-      } else {
-        if (logger.isDetailEnabled()) {
-          logger.detail("forward to non-fixed peer: "+p);
-        }
-        AddressEntry ae;
-        try {
-          ae = wps.get(alias, "alias", -1);
-        } catch (Exception e) {
-          // should never happens, since this is a cache-only request
-          ae = null;
-        }
-        if (ae == null) {
-          // alias not listed
-          if (p.ae != null) {
-            p.ae = null;
-            p.name = null;
-            p.addr = null;
-          }
-          if (logger.isDebugEnabled()) {
-            logger.debug("Peer not found in local cache: "+p);
-          }
-          continue;
-        }
-        if (ae.equals(p.ae)) {
-          // same as before
-          target = p.addr;
-        } else {
-          // parse alias entry
-          String path = ae.getURI().getPath();
-          String name = path.substring(1);
-          target = MessageAddress.getMessageAddress(name);
-          target = MessageTimeoutUtils.setDeadline(target, ttl);
-          p.addr = target;
-          p.name = name;
-          p.ae = ae;
-        }
-      }
-      // exclude the local server
+      MessageAddress target = (MessageAddress) iter.next();
       if (agentId.equals(target.getPrimary())) {
+        // exclude the local server
         continue;
       }
       // send to this target
+      target = MessageTimeoutUtils.setDeadline(target, ttl);
       WPQuery wpq = new WPQuery(
         agentId,
         target,
@@ -555,9 +602,8 @@ implements Component
   }
   
   private void forward(MessageAddress addr, Map m, long ttd) {
-    // verify that our peers still include this target?
-    if (peers.size() <= 1) {
-      // only one server
+    if (!isPeer(addr)) {
+      // ignore, either the local server or a non-peer
       return;
     }
     // send to this target
@@ -640,39 +686,7 @@ implements Component
       action = FORWARD_ANSWER;
     }
 
-    int n = (m == null ? 0 : m.size());
-    if (n == 0) {
-      return;
-    }
-
-    // tell our clients (refactor me?)
-    if (action == WPQuery.LOOKUP) {
-      List l = lookupAckClients.getUnmodifiableList();
-      for (int i = 0, ln = l.size(); i < ln; i++) {
-        LookupAckService.Client c = (LookupAckService.Client) l.get(i);
-        c.lookup(clientAddr, clientTime, m);
-      }
-    } else if (action == WPQuery.MODIFY) {
-      List l = modifyAckClients.getUnmodifiableList();
-      for (int i = 0, ln = l.size(); i < ln; i++) {
-        ModifyAckService.Client c = (ModifyAckService.Client) l.get(i);
-        c.modify(clientAddr, clientTime, m);
-      }
-    } else if (action == WPQuery.FORWARD) {
-      List l = forwardAckClients.getUnmodifiableList();
-      for (int i = 0, ln = l.size(); i < ln; i++) {
-        ForwardAckService.Client c = (ForwardAckService.Client) l.get(i);
-        c.forward(clientAddr, clientTime, m);
-      }
-    } else if (action == FORWARD_ANSWER) {
-      List l = forwardClients.getUnmodifiableList();
-      for (int i = 0, ln = l.size(); i < ln; i++) {
-        ForwardService.Client c = (ForwardService.Client) l.get(i);
-        c.forwardAnswer(clientAddr, clientTime, m);
-      }
-    } else if (logger.isErrorEnabled()) {
-      logger.error("Unknown action "+action+" for message "+wpm);
-    }
+    tellClients(action, clientAddr, clientTime, m);
   }
 
   //
@@ -680,14 +694,18 @@ implements Component
   //
 
   private boolean receive(Message m) {
-    if (m instanceof WPQuery ||
-        (m instanceof WPAnswer &&
-         (((WPAnswer) m).getAction() == WPAnswer.FORWARD))) {
-      WhitePagesMessage wpm = (WhitePagesMessage) m;
-      receiveLater(wpm);
-      return true;
+    if (m instanceof WPQuery) {
+      // match
+    } else if (m instanceof WPAnswer) {
+      if (((WPAnswer) m).getAction() != WPAnswer.FORWARD) {
+        return false;
+      }
+    } else {
+      return false;
     }
-    return false;
+    WhitePagesMessage wpm = (WhitePagesMessage) m;
+    receiveLater(wpm);
+    return true;
   }
 
   private void receiveLater(WhitePagesMessage m) {
@@ -749,236 +767,96 @@ implements Component
     debugThread.schedule(config.debugQueuesPeriod);
   }
 
-  private static class Peer {
-    public final String alias;
-    public String name;
-    public MessageAddress addr;
-    public final boolean fixedAddr;
-    public AddressEntry ae;
-
-    public Peer(
-        String alias,
-        String name,
-        MessageAddress addr,
-        boolean fixedAddr,
-        AddressEntry ae) {
-      this.alias = alias;
-      this.name = name;
-      this.addr = addr;
-      this.fixedAddr = fixedAddr;
-      this.ae = ae;
-      if (alias == null) {
-        throw new IllegalArgumentException("null alias");
-      }
+  private abstract class SPBase extends ServiceProviderBase {
+    protected abstract int getAction();
+    protected void register(Object client) {
+      ServerTransport.this.register(getAction(), client);
     }
-
-    public String toString() {
-      return 
-        "(alias="+alias+
-        " name="+name+
-        " addr="+addr+
-        " fixed="+fixedAddr+
-        " ae="+ae+
-        ")";
+    protected void unregister(Object client) {
+      ServerTransport.this.unregister(getAction(), client);
     }
   }
 
-  private class LookupAckSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!LookupAckService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof LookupAckService.Client)) {
-          throw new IllegalArgumentException(
-              "LookupAckService"+
-              " requestor must implement "+
-              "LookupAckService.Client");
-        }
-        LookupAckService.Client client = (LookupAckService.Client) requestor;
-        LookupAckService si = new LookupAckServiceImpl(client);
-        ServerTransport.this.register(client);
-        return si;
+  private class PingAckSP extends SPBase {
+    protected int getAction() { return WPAnswer.PING; }
+    protected Class getServiceClass() { return PingAckService.class; }
+    protected Class getClientClass() { return PingAckService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements PingAckService {
+      public SI(Object client) { super(client); }
+      public void pingAnswer(MessageAddress clientAddr, long clientTime, Map m) {
+        ServerTransport.this.send(WPAnswer.PING, clientAddr, clientTime, m);
       }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof LookupAckServiceImpl)) {
-          return;
-        }
-        LookupAckServiceImpl si = (LookupAckServiceImpl) service;
-        LookupAckService.Client client = si.client;
-        ServerTransport.this.unregister(client);
-      }
-      private class LookupAckServiceImpl 
-        implements LookupAckService {
-          private final Client client;
-          public LookupAckServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void lookupAnswer(
-              MessageAddress clientAddr,
-              long clientTime,
-              Map m) {
-            ServerTransport.this.lookupAnswer(
-                clientAddr,
-                clientTime,
-                m);
-          }
-        }
     }
-
-  private class ModifyAckSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!ModifyAckService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof ModifyAckService.Client)) {
-          throw new IllegalArgumentException(
-              "ModifyAckService"+
-              " requestor must implement "+
-              "ModifyAckService.Client");
-        }
-        ModifyAckService.Client client = (ModifyAckService.Client) requestor;
-        ModifyAckServiceImpl si = new ModifyAckServiceImpl(client);
-        ServerTransport.this.register(client);
-        return si;
+  }
+  private class LookupAckSP extends SPBase {
+    protected int getAction() { return WPAnswer.LOOKUP; }
+    protected Class getServiceClass() { return LookupAckService.class; }
+    protected Class getClientClass() { return LookupAckService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements LookupAckService {
+      public SI(Object client) { super(client); }
+      public void lookupAnswer(MessageAddress clientAddr, long clientTime, Map m) {
+        ServerTransport.this.send(WPAnswer.LOOKUP, clientAddr, clientTime, m);
       }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof ModifyAckServiceImpl)) {
-          return;
-        }
-        ModifyAckServiceImpl si = (ModifyAckServiceImpl) service;
-        ModifyAckService.Client client = si.client;
-        ServerTransport.this.unregister(client);
-      }
-      private class ModifyAckServiceImpl 
-        implements ModifyAckService {
-          private final Client client;
-          public ModifyAckServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void modifyAnswer(
-              MessageAddress clientAddr,
-              long clientTime,
-              Map m) {
-            ServerTransport.this.modifyAnswer(
-                clientAddr,
-                clientTime,
-                m);
-          }
-        }
     }
-
-  private class ForwardAckSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!ForwardAckService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof ForwardAckService.Client)) {
-          throw new IllegalArgumentException(
-              "ForwardAckService"+
-              " requestor must implement "+
-              "ForwardAckService.Client");
-        }
-        ForwardAckService.Client client = (ForwardAckService.Client) requestor;
-        ForwardAckService si = new ForwardAckServiceImpl(client);
-        ServerTransport.this.register(client);
-        return si;
+  }
+  private class ModifyAckSP extends SPBase {
+    protected int getAction() { return WPAnswer.MODIFY; }
+    protected Class getServiceClass() { return ModifyAckService.class; }
+    protected Class getClientClass() { return ModifyAckService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements ModifyAckService {
+      public SI(Object client) { super(client); }
+      public void modifyAnswer(MessageAddress clientAddr, long clientTime, Map m) {
+        ServerTransport.this.send(WPAnswer.MODIFY, clientAddr, clientTime, m);
       }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof ForwardAckServiceImpl)) {
-          return;
-        }
-        ForwardAckServiceImpl si = (ForwardAckServiceImpl) service;
-        ForwardAckService.Client client = si.client;
-        ServerTransport.this.unregister(client);
-      }
-      private class ForwardAckServiceImpl 
-        implements ForwardAckService {
-          private final Client client;
-          public ForwardAckServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void forwardAnswer(
-              MessageAddress clientAddr,
-              long clientTime,
-              Map m) {
-            ServerTransport.this.forwardAnswer(
-                clientAddr,
-                clientTime,
-                m);
-          }
-        }
     }
-
-  private class ForwardSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!ForwardService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof ForwardService.Client)) {
-          throw new IllegalArgumentException(
-              "ForwardService"+
-              " requestor must implement "+
-              "ForwardService.Client");
-        }
-        ForwardService.Client client = (ForwardService.Client) requestor;
-        ForwardService si = new ForwardServiceImpl(client);
-        ServerTransport.this.register(client);
-        return si;
+  }
+  private class ForwardAckSP extends SPBase {
+    protected int getAction() { return WPAnswer.FORWARD; }
+    protected Class getServiceClass() { return ForwardAckService.class; }
+    protected Class getClientClass() { return ForwardAckService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements ForwardAckService {
+      public SI(Object client) { super(client); }
+      public void forwardAnswer(MessageAddress clientAddr, long clientTime, Map m) {
+        ServerTransport.this.send(WPAnswer.FORWARD, clientAddr, clientTime, m);
       }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof ForwardServiceImpl)) {
-          return;
-        }
-        ForwardServiceImpl si = (ForwardServiceImpl) service;
-        ForwardService.Client client = si.client;
-        ServerTransport.this.unregister(client);
-      }
-      private class ForwardServiceImpl 
-        implements ForwardService {
-          private final Client client;
-          public ForwardServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void forward(Map m, long ttd) {
-            ServerTransport.this.forward(m, ttd);
-          }
-          public void forward(MessageAddress target, Map m, long ttd) {
-            ServerTransport.this.forward(target, m, ttd);
-          }
-        }
     }
+  }
+  private class ForwardSP extends SPBase {
+    protected int getAction() { return FORWARD_ANSWER; }
+    protected Class getServiceClass() { return ForwardService.class; }
+    protected Class getClientClass() { return ForwardService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements ForwardService {
+      public SI(Object client) { super(client); }
+      public void forward(Map m, long ttd) {
+        ServerTransport.this.forward(m, ttd);
+      }
+      public void forward(MessageAddress target, Map m, long ttd) {
+        ServerTransport.this.forward(target, m, ttd);
+      }
+    }
+  }
 
-
-  /** config options, soon to be parameters/props */
+  /** config options */
   private static class ServerTransportConfig {
-    public static final long debugQueuesPeriod = 30*1000;
-
-    public static final long graceMillis = 0;
-
-    // this should match the maximum cache TTL
-    public static final long lookupTimeoutMillis = 90*1000;
-
-    // this should match the maximum lease TTL
-    public static final long modifyTimeoutMillis = 90*1000;
-
+    public final long debugQueuesPeriod;
+    public final long graceMillis;
+    // these should match the server TTLs
+    public final long lookupTimeoutMillis;
+    public final long modifyTimeoutMillis;
+    public final long pingTimeoutMillis;
     public ServerTransportConfig(Object o) {
-      // FIXME parse!
+      Parameters p = 
+        new Parameters(o, "org.cougaar.core.wp.server.");
+      debugQueuesPeriod = p.getLong("debugQueuesPeriod", 30000);
+      graceMillis = p.getLong("graceMillis", 0);
+      lookupTimeoutMillis = p.getLong("lookupTimeoutMillis", 90000);
+      modifyTimeoutMillis = p.getLong("modifyTimeoutMillis", 90000);
+      pingTimeoutMillis = p.getLong("pingTimeoutMillis", 90000);
     }
   }
 }

@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 2002-2004 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -24,41 +24,31 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.rmi;
+package org.cougaar.core.wp.bootstrap;
 
-import java.rmi.RemoteException;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
-import java.rmi.server.UnicastRemoteObject;
-
-import org.cougaar.core.service.wp.AddressEntry;
+import java.util.Map;
+import org.cougaar.core.component.Service;
 
 /**
- * Implementation of RMIAccess.
- * <p>
- * Note that the entry value is final; we could just as well
- * advertise this entry in any other directory service
- * (JavaSpaces, LDAP, FTP, etc).
+ * This service is used by advertises to listen for local agent
+ * bind/unbind changes. 
  */
-public class RMIAccessImpl 
-extends UnicastRemoteObject
-implements RMIAccess {
+public interface AdvertiseService extends Service {
 
-  private final AddressEntry entry;
+  /** Get the bundle for a local agent */
+  Bundle getBundle(String name);
 
-  public RMIAccessImpl(
-      AddressEntry entry,
-      RMIClientSocketFactory csf,
-      RMIServerSocketFactory ssf) throws RemoteException {
-    super(0, csf, ssf);
-    this.entry = entry;
-  }
+  /**
+   * Get the bundles for all local agents.
+   * @return a Map of String names to Bundles 
+   */
+  Map getAllBundles();
 
-  public AddressEntry getAddressEntry() {
-    return entry;
-  }
-
-  public String toString() {
-    return "RMIAccessImpl for "+entry;
+  /** The service requestor can implement this API */
+  interface Client {
+    // blackboard-like tracking
+    void add(String name, Bundle bundle);
+    void change(String name, Bundle bundle);
+    void remove(String name, Bundle bundle);
   }
 }

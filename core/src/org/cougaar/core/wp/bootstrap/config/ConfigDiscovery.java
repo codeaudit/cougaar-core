@@ -24,28 +24,31 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver;
+package org.cougaar.core.wp.bootstrap.config;
 
-import java.util.List;
-
+import java.util.Map;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.wp.bootstrap.ConfigService;
+import org.cougaar.core.wp.bootstrap.DiscoveryService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This component simply loads the entries listed by the
- * ConfigReader into the white pages cache as "hints".
- * 
- * @see ConfigReader
+ * This component copies bundles found in the {@link ConfigService}
+ * to the {@link DiscoveryService}.
+ * <p>
+ * This is the simple static bootstrap.
  */
-public class ConfigLoader
+public class ConfigDiscovery
 extends GenericStateModelAdapter
-implements Component
+implements Component, DiscoveryService.Client
 {
   private ServiceBroker sb;
+
+  private DiscoveryService discoveryService;
+
+  private ConfigService configService;
 
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
@@ -54,38 +57,37 @@ implements Component
   public void load() {
     super.load();
 
-    LoggingService logger = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
-    WhitePagesService wps = (WhitePagesService)
-      sb.getService(this, WhitePagesService.class, null);
-
-    // do all our work
-    List l;
-    try {
-      l = ConfigReader.listEntries();
-    } catch (Exception e) {
-      logger.error("Failed white pages configuration", e);
-      l = null;
+    configService = (ConfigService)
+      sb.getService(this, ConfigService.class, null);
+    if (configService == null) {
+      throw new RuntimeException("Unable to obtain ConfigService");
     }
 
-    int n = (l == null ? 0 : l.size());
-    for (int i = 0; i < n; i++) {
-      AddressEntry ae = (AddressEntry) l.get(i);
-      if (logger.isInfoEnabled()) {
-        logger.info("Add bootstrap entry: "+ae);
-      }
-      try {
-        wps.hint(ae);
-      } catch (Exception e) {
-        if (logger.isErrorEnabled()) {
-          logger.error(
-              "Unable to add bootstrap hint: "+ae, e);
-        }
-      }
+    discoveryService = (DiscoveryService)
+      sb.getService(this, DiscoveryService.class, null);
+    if (discoveryService == null) {
+      throw new RuntimeException("Unable to obtain DiscoveryService");
+    }
+  }
+
+  public void unload() {
+    if (discoveryService != null) {
+      sb.releaseService(this, DiscoveryService.class, discoveryService);
+      discoveryService = null;
+    }
+    if (configService != null) {
+      sb.releaseService(this, ConfigService.class, configService);
+      configService = null;
     }
 
-    sb.releaseService(this, WhitePagesService.class, wps);
-    sb.releaseService(this, LoggingService.class, logger);
-    sb = null;
+    super.unload();
+  }
+
+  public void startSearching() {
+    Map m = configService.getBundles();
+    discoveryService.update(m);
+  }
+
+  public void stopSearching() {
   }
 }

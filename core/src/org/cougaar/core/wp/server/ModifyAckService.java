@@ -27,7 +27,6 @@
 package org.cougaar.core.wp.server;
 
 import java.util.Map;
-
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -54,18 +53,11 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public interface ModifyAckService extends Service {
 
-  /**
-   * Acknowledge a client's "modify" request.
-   */
+  /** Acknowledge a client's "modify" request. */
   void modifyAnswer(
-      MessageAddress clientAddr,
-      long clientTime,
-      Map m);
+      MessageAddress clientAddr, long clientTime, Map m);
 
-  /**
-   * The service API that must be implemented by the requestor
-   * of this service.
-   */
+  /** The service requestor must implement this API **/
   interface Client {
     /**
      * Handle a client's modify request.
@@ -73,8 +65,6 @@ public interface ModifyAckService extends Service {
      * The server should call the "modifyAnswer" method.
      */
     void modify(
-        MessageAddress clientAddr,
-        long clientTime,
-        Map m);
+        MessageAddress clientAddr, long clientTime, Map m);
   }
 }

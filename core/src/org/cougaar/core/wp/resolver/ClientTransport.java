@@ -34,26 +34,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.cougaar.core.agent.service.MessageSwitchService;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceAvailableEvent;
-import org.cougaar.core.component.ServiceAvailableListener;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageHandler;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.WhitePagesProtectionService;
 import org.cougaar.core.thread.Schedulable;
-import org.cougaar.core.util.UID;
 import org.cougaar.core.wp.MessageTimeoutUtils;
-import org.cougaar.util.RarelyModifiedList;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
-import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.RarelyModifiedList;
 
 /**
  * This component sends and receives messages for the resolver.
@@ -65,6 +59,9 @@ import org.cougaar.util.GenericStateModelAdapter;
  * This component is responsible for the resolver-side hierarchy
  * traversal and replication.
  *
+ * All of these properties are also component parameters by
+ * removing the "org.cougaar.core.wp.resolver.transport."
+ * prefix: 
  * <pre>
  * @property org.cougaar.core.wp.resolver.transport.nagleMillis
  *   Delay in milliseconds before sending messages, to improve
@@ -82,10 +79,8 @@ import org.cougaar.util.GenericStateModelAdapter;
  * </pre> 
  */
 public class ClientTransport
-extends GenericStateModelAdapter
-implements Component
+extends TransportBase
 {
-
 
   // this is a dummy address for messages that can't be
   // sent yet, e.g. because there are no WP servers.
@@ -96,17 +91,16 @@ implements Component
 
   private ClientTransportConfig config;
 
-  private ServiceBroker sb;
-  private LoggingService logger;
-  private MessageAddress agentId;
-  private ThreadService threadService;
   private WhitePagesProtectionService protectS;
 
   private SelectService selectService;
 
+  private PingSP pingSP;
   private LookupSP lookupSP;
   private ModifySP modifySP;
 
+  private RarelyModifiedList pingClients = 
+    new RarelyModifiedList();
   private RarelyModifiedList lookupClients = 
     new RarelyModifiedList();
   private RarelyModifiedList modifyClients = 
@@ -123,9 +117,7 @@ implements Component
   // output (send to WP server):
   //
 
-  private final Object sendLock = new Object();
-
-  private MessageSwitchService messageSwitchService;
+  private final Object myLock = new Object();
 
   // this is our startup grace-time on message timeouts, which is
   // based upon the time we obtained our messageSwitchService plus
@@ -148,8 +140,13 @@ implements Component
   // Map<String, Entry>
   private final Map mods = new HashMap();
 
+  // the most recent modify for this node, separately locked
+  // to avoid a ping/select deadlock.
+  private final Object nodeModifyLock = new Object();
+  private Map nodeModify;
+
   // temporary fields for use in "send" and related methods.
-  // accessed within sendLock.
+  // accessed within myLock.
   private long now;
   private boolean sendNow;
   private boolean sendLater;
@@ -190,33 +187,24 @@ implements Component
   private final Stats modifyStats = new Stats();
 
   public void setParameter(Object o) {
-    this.config = new ClientTransportConfig(o);
+    configure(o);
   }
 
-  public void setServiceBroker(ServiceBroker sb) {
-    this.sb = sb;
-  }
-
-  public void setLoggingService(LoggingService logger) {
-    this.logger = logger;
-  }
-
-  public void setThreadService(ThreadService threadService) {
-    this.threadService = threadService;
+  private void configure(Object o) {
+    if (config != null) {
+      return;
+    }
+    config = new ClientTransportConfig(o);
   }
 
   public void load() {
     super.load();
 
+    configure(null);
+
     if (logger.isDebugEnabled()) {
       logger.debug("Loading resolver remote handler");
     }
-
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
 
     protectS =
       (WhitePagesProtectionService)
@@ -239,17 +227,6 @@ implements Component
           releaseRunner,
           "White pages client \"nagle\" delayed sendler");
     }
-    Runnable receiveRunner =
-      new Runnable() {
-        public void run() {
-          // assert (thread == receiveThread);
-          receiveNow();
-        }
-      };
-    receiveThread = threadService.getThread(
-        this,
-        receiveRunner,
-        "White pages client handle incoming responses");
 
     Runnable checkDeadlinesRunner =
       new Runnable() {
@@ -271,23 +248,9 @@ implements Component
           "Unable to obtain SelectService");
     }
 
-    // register our message switch (now or later)
-    if (sb.hasService(MessageSwitchService.class)) {
-      registerMessageSwitch();
-    } else {
-      ServiceAvailableListener sal =
-        new ServiceAvailableListener() {
-          public void serviceAvailable(ServiceAvailableEvent ae) {
-            Class cl = ae.getService();
-            if (MessageSwitchService.class.isAssignableFrom(cl)) {
-              registerMessageSwitch();
-            }
-          }
-        };
-      sb.addServiceListener(sal);
-    }
-
     // advertise our service
+    pingSP = new PingSP();
+    sb.addService(PingService.class, pingSP);
     lookupSP = new LookupSP();
     sb.addService(LookupService.class, lookupSP);
     modifySP = new ModifySP();
@@ -303,16 +266,9 @@ implements Component
       sb.revokeService(LookupService.class, lookupSP);
       lookupSP = null;
     }
-
-    MessageSwitchService mss;
-    synchronized (sendLock) {
-      mss = messageSwitchService;
-      messageSwitchService = null;
-    }
-    if (mss != null) {
-      //mss.removeMessageHandler(myMessageHandler);
-      sb.releaseService(this, MessageSwitchService.class, mss);
-      mss = null;
+    if (pingSP != null) {
+      sb.revokeService(PingService.class, pingSP);
+      pingSP = null;
     }
 
     if (selectService != null) {
@@ -327,54 +283,12 @@ implements Component
       protectS = null;
     }
 
-    if (threadService != null) {
-      // halt our threads?
-      sb.releaseService(this, ThreadService.class, threadService);
-      threadService = null;
-    }
-    if (logger != null) {
-      sb.releaseService(this, LoggingService.class, logger);
-      logger = null;
-    }
-
     super.unload();
   }
 
-  private void registerMessageSwitch() {
-    // service broker now has the MessageSwitchService
-    //
-    // should we do this in a separate thread?
-    synchronized (sendLock) {
-      if (messageSwitchService != null) {
-        if (logger.isErrorEnabled()) {
-          logger.error("Already obtained our message switch");
-        }
-        return;
-      }
-      // we could lock out additional register attempts
-      // at this point, but they are not expected.
-    }
-    MessageSwitchService mss = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
-    if (mss == null) {
-      if (logger.isErrorEnabled()) {
-        logger.error("Unable to obtain MessageSwitchService");
-      }
-      return;
-    }
-    MessageHandler myMessageHandler =
-      new MessageHandler() {
-        public boolean handleMessage(Message m) {
-          return receive(m);
-        }
-      };
-    mss.addMessageHandler(myMessageHandler);
-    if (logger.isInfoEnabled()) {
-      logger.info("Registered with message transport");
-    }
-    // should this be synchronized?
-    synchronized (sendLock) {
-      this.messageSwitchService = mss;
+  protected void foundMessageTransport() {
+    // super.foundMessageTransport();
+    synchronized (myLock) {
       long now = System.currentTimeMillis();
       if (config.graceMillis >= 0) {
         this.graceTime = now + config.graceMillis;
@@ -385,18 +299,18 @@ implements Component
     }
   }
 
-  private void register(LookupService.Client lsc) {
-    lookupClients.add(lsc);
+  private List getList(int action) {
+    return
+      (action == WPQuery.PING ? pingClients :
+       action == WPQuery.LOOKUP ? lookupClients :
+       action == WPQuery.MODIFY ? modifyClients :
+       null);
   }
-  private void unregister(LookupService.Client lsc) {
-    lookupClients.remove(lsc);
+  private void register(int action, Object c) {
+    getList(action).add(c);
   }
-
-  private void register(ModifyService.Client usc) {
-    modifyClients.add(usc);
-  }
-  private void unregister(ModifyService.Client usc) {
-    modifyClients.remove(usc);
+  private void unregister(int action, Object c) {
+    getList(action).remove(c);
   }
 
   private void onServerChange() {
@@ -405,7 +319,7 @@ implements Component
     // kick the thread, since either we've added a new server
     // (important if we had zero servers) or we've removed a
     // server (must revisit any messages we sent to that server).
-    synchronized (sendLock) {
+    synchronized (myLock) {
       checkDeadlinesTime = System.currentTimeMillis();
       checkDeadlinesThread.start();
     }
@@ -414,6 +328,46 @@ implements Component
   //
   // send:
   //
+
+  private void ping(MessageAddress addr, long deadline) {
+    long now = System.currentTimeMillis();
+    if (now > deadline) {
+      // to late?
+      return;
+    }
+    MessageAddress target = 
+      MessageTimeoutUtils.setDeadline(
+          addr,
+          deadline);
+    // must send our node's "modify" record first, otherwise
+    // the target can't reply!
+    Map modObj;
+    synchronized (nodeModifyLock) {
+      modObj = nodeModify;
+    }
+    if (modObj == null) {
+      if (logger.isWarnEnabled()) {
+        logger.warn(
+            "Sending ping("+addr+
+            ") without first sending reply-to data for "+agentId);
+      }
+    } else {
+      WPQuery modq = new WPQuery(
+          agentId,
+          target,
+          now,
+          WPQuery.MODIFY,
+          modObj);
+      sendOrQueue(modq);
+    }
+    WPQuery wpq = new WPQuery(
+        agentId,
+        target,
+        now,
+        WPQuery.PING,
+        null);
+    sendOrQueue(wpq);
+  }
 
   private void lookup(Map m) {
     send(true, m);
@@ -447,7 +401,10 @@ implements Component
     Map lookupsToSend;
     Map modifiesToSend;
 
-    synchronized (sendLock) {
+    // save modify-node record for ping use
+    updateNodeModify(lookup, m); 
+
+    synchronized (myLock) {
       try {
         // initialize temporary variables
         init();
@@ -455,7 +412,7 @@ implements Component
         // create entries for the new queries
         checkSendMap(lookup, m);
 
-        if (!hasMessageTransport()) {
+        if (!canSendMessages()) {
           // no MTS yet?  We'll kick a thread when the MTS shows up
           return;
         }
@@ -513,6 +470,25 @@ implements Component
     modifyAddrs.clear();
   }
 
+  private void updateNodeModify(boolean lookup, Map m) {
+    synchronized (nodeModifyLock) {
+      Map newM = 
+        Util.updateNodeModify(
+            lookup,
+            m,
+            agentId,
+            nodeModify);
+      if (newM != nodeModify) {
+        if (logger.isDetailEnabled()) {
+          logger.detail(
+              "updated node "+agentId+
+              " modify from "+nodeModify+" to "+newM);
+        }
+        nodeModify = newM;
+      }
+    }
+  }
+
   private void checkSendMap(boolean lookup, Map m) {
     int n = (m == null ? 0 : m.size());
     if (n == 0) {
@@ -526,7 +502,7 @@ implements Component
         Map.Entry me = (Map.Entry) iter.next();
         String name = (String) me.getKey();
         Object query = me.getValue();
-        if (mustSendNow(lookup, name, query)) {
+        if (Util.mustSendNow(lookup, name, query)) {
           if (logger.isDetailEnabled()) {
             logger.detail(
                 "mustSendNow("+lookup+", "+name+", "+query+")");
@@ -544,12 +520,14 @@ implements Component
       Map.Entry me = (Map.Entry) iter.next();
       String name = (String) me.getKey();
       Object query = me.getValue();
-      // select the target, add to queue
-      if (!shouldSend(lookup, name, query, now)) {
+      Entry e = (Entry) table.get(name);
+      // add to queue
+      if (e != null &&
+          !shouldSend(lookup, name, query, e.getQuery())) {
         continue;
       }
       // add or replace the entry
-      Entry e = new Entry(query, now);
+      e = new Entry(query, now);
       table.put(name, e);
       if (sendNow) {
         names.add(name);
@@ -566,8 +544,32 @@ implements Component
     }
   }
 
-  private boolean hasMessageTransport() {
-    if (messageSwitchService != null) {
+  private boolean shouldSend(
+      boolean lookup,
+      String name,
+      Object query,
+      Object sentObj) {
+    try {
+      if (Util.shouldSend(lookup, name, query, sentObj)) {
+        return true;
+      }
+    } catch (Exception err) {
+      if (logger.isErrorEnabled()) {
+        logger.error("shouldSend failed", err);
+      }
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug(
+          "Not sending "+
+          (lookup ? "lookup" : "modify")+
+          " (name="+name+" query="+query+
+          "), since we've already sent "+sentObj);
+    }
+    return false;
+  }
+
+  private boolean canSendMessages() {
+    if (hasMessageTransport()) {
       return true;
     }
     if (logger.isDetailEnabled()) {
@@ -675,6 +677,41 @@ implements Component
       // schedule our next deadline check
       ensureDeadlineTimer();
     }
+  }
+
+  /**
+   * Special test for local-node uid-based modify requests.
+   */
+  private boolean shortcutNodeModify(
+      boolean lookup,
+      String name,
+      Entry e,
+      long now) {
+    // replace with modify(ourNodeModify)
+    Object query = e.getQuery();
+    Object answer = Util.shortcutNodeModify(lookup, agentId, name, query);
+    if (answer == null) {
+      return false;
+    }
+    Map m = Collections.singletonMap(name, answer);
+    WPAnswer wpa = new WPAnswer(
+        e.getTarget(),   // from the server
+        agentId,         // back to us
+        e.getSendTime(), // our sendTime
+        now,             // the "server" sendTime
+        true,            // use the above time
+        WPAnswer.MODIFY, // modify
+        m);              // the lease-not-known answer
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          "Timeout waiting for uid-based modify response"+
+          " (name="+name+" query="+query+
+          "), pretending that the server"+
+          " sent back a lease-not-known response: "+
+          wpa);
+    }
+    receive(wpa);
+    return true;
   }
 
   private boolean shouldReleaseNow() {
@@ -856,7 +893,7 @@ implements Component
       if (logger.isDetailEnabled()) {
         logger.detail("sending message: "+wpq);
       }
-      messageSwitchService.sendMessage(wpq);
+      sendOrQueue(wpq);
     }
   }
   
@@ -901,50 +938,41 @@ implements Component
   // receive:
   //
 
-  private boolean receive(Message m) {
+  protected boolean shouldReceive(Message m) {
     if (m instanceof WPAnswer) {
       WPAnswer wpa = (WPAnswer) m;
-      if (wpa.getAction() != WPAnswer.FORWARD) {
-        receiveLater(wpa);
-        return true;
-      }
+      int action = wpa.getAction();
+      return 
+        (action == WPAnswer.LOOKUP ||
+         action == WPAnswer.MODIFY ||
+         action == WPAnswer.PING);
     }
     return false;
   }
 
-  private void receiveLater(WPAnswer wpa) {
-    // queue to run in our thread
-    synchronized (receiveQueue) {
-      receiveQueue.add(wpa);
-    }
-    receiveThread.start();
-  }
-
-  private void receiveNow() {
-    synchronized (receiveQueue) {
-      if (receiveQueue.isEmpty()) {
-        if (logger.isDetailEnabled()) {
-          logger.detail("input queue is empty");
-        }
-        return;
-      }
-      receiveTmp.addAll(receiveQueue);
-      receiveQueue.clear();
-    }
-    // receive messages
-    for (int i = 0, n = receiveTmp.size(); i < n; i++) {
-      WPAnswer wpa = (WPAnswer) receiveTmp.get(i);
-      receiveNow(wpa);
-    }
-    receiveTmp.clear();
-  }
-
-  private void receiveNow(WPAnswer wpa) {
+  protected void receiveNow(Message msg) {
     if (logger.isDetailEnabled()) {
-      logger.detail("receiving message: "+wpa);
+      logger.detail("receiving message: "+msg);
     }
 
-    boolean lookup = (wpa.getAction() == WPQuery.LOOKUP);
+    WPAnswer wpa = (WPAnswer) msg;
+    int action = wpa.getAction();
+
+    MessageAddress addr = wpa.getOriginator();
+    long sendTime = wpa.getSendTime();
+    long now = System.currentTimeMillis();
+    long rtt = (now - sendTime);
+
+    if (action == WPAnswer.PING) {
+      List l = pingClients.getUnmodifiableList();
+      for (int i = 0, ln = l.size(); i < ln; i++) {
+        PingService.Client c = (PingService.Client) l.get(i);
+        c.pingAnswer(addr, rtt);
+      }
+      return;
+    }
+
+    boolean lookup = (action == WPAnswer.LOOKUP);
     Map m = wpa.getMap();
 
     stats(lookup).receiveNow(m);
@@ -954,18 +982,13 @@ implements Component
       return;
     }
 
-    MessageAddress addr = wpa.getOriginator();
-    long sendTime = wpa.getSendTime();
     long replyTime = wpa.getReplyTime();
     boolean useServerTime = wpa.useServerTime();
-
-    long now = System.currentTimeMillis();
-    long rtt = (now - sendTime);
 
     Map answerMap = null;
 
     // remove from pending queue
-    synchronized (sendLock) {
+    synchronized (myLock) {
       Iterator iter = m.entrySet().iterator();
       for (int i = 0; i < n; i++) {
         Map.Entry me = (Map.Entry) iter.next();
@@ -1022,6 +1045,53 @@ implements Component
     }
   }
 
+  /**
+   * Figure out if we should accept this request response, including
+   * whether or not we sent it and any necessary ordering/version
+   * tests.
+   */
+  private boolean shouldReceive(
+      boolean lookup, 
+      MessageAddress addr,
+      String name,
+      Object answer,
+      long now) {
+    // assert (Thread.holdsLock(myLock));
+
+    Map table = (lookup ? lookups : mods);
+
+    boolean accepted;
+    Entry e = (Entry) table.get(name);
+    if (e == null) {
+      // not sent?
+      accepted = false; 
+    } else {
+      Object sentObj = e.getQuery();
+      accepted = Util.shouldReceive(lookup, name, answer, sentObj);
+      if (accepted) {
+        // clear the table entry
+        table.remove(name);
+      }
+    }
+
+    if (logger.isInfoEnabled()) {
+      logger.info(
+          (accepted ? "Accepting" : "Ignoring")+
+          " "+
+          (lookup ? "lookup" : "modify")+
+          " response (name="+
+          name+", answer="+answer+
+          ") returned by "+addr+
+          ", since it "+
+          (accepted ? "matches" : "doesn't match")+
+          " our sent query: "+
+          (e == null ? "<null>" : e.toString(now)));
+    }
+
+    return accepted;
+  }
+
+
   //
   // debug printer:
   //
@@ -1054,11 +1124,10 @@ implements Component
     }
 
     String currentServers = selectService.toString();
-    synchronized (sendLock) {
+    synchronized (myLock) {
       String s = "";
       s += "\n##### client transport output queue #######################";
       s += "\nservers="+currentServers;
-      s += "\nmessageSwitchService="+messageSwitchService;
       long now = System.currentTimeMillis();
       boolean firstPass = true;
       while (true) {
@@ -1087,293 +1156,6 @@ implements Component
       s += "\n###########################################################";
       logger.debug(s);
     }
-  }
-
-  //
-  // The following methods have a lot of knowledge that's specific to
-  // the cache and lease managers, so perhaps it should be refactored
-  // to the client APIs.
-  //
-
-  /**
-   * Avoid nagle on first-time name listings, since these are
-   * typically user-interface requests.
-   */
-  private boolean mustSendNow(
-      boolean lookup,
-      String name,
-      Object query) {
-    // we could do an expensive stack check for a UI thread
-    return
-      lookup &&
-      name != null &&
-      name.length() > 0 &&
-      name.charAt(0) == '.' &&
-      query == null;
-  }
-
-  /**
-   * Figure out if we should send this request, either because it's
-   * new or it supercedes the pending request. 
-   */
-  private boolean shouldSend(
-      boolean lookup,
-      String name,
-      Object query,
-      long now) {
-    // assert (Thread.holdsLock(sendLock));
-
-    Map table = (lookup ? lookups : mods);
-
-    Entry e = (Entry) table.get(name);
-    if (e == null) {
-      return true;
-    }
-
-    Object sentObj = e.getQuery();
-    Object sentO = sentObj;
-    if (sentO instanceof NameTag) {
-      sentO = ((NameTag) sentO).getObject();
-    }
-    Object q = query;
-    if (q instanceof NameTag) {
-      q = ((NameTag) q).getObject();
-    }
-
-    boolean create = false;
-    if (sentO == null ? q == null : sentO.equals(q)) {
-      // already sent?
-    } else {
-      if (lookup) {
-        if (q == null) {
-          // promote from uid-based validate to full-lookup
-          create = true;
-        } else if (q instanceof UID) {
-          if (sentO == null) {
-            // already sent a full-lookup
-          } else {
-            // possible bug in cache manager, which is supposed to
-            // prevent unequal uid-based validate races.  The uids
-            // may have different owners, so we can't figure out
-            // the correct order by comparing uid counters.
-            if (logger.isErrorEnabled()) {
-              logger.error(
-                "UID mismatch in WP uid-based lookup validation, "+
-                "sentObj="+sentObj+", query="+query+", entry="+
-                e.toString(now));
-            }
-          }
-        } else {
-          // invalid
-        }
-      } else {
-        UID sentUID = 
-          (sentO instanceof UID ? ((UID) sentO) :
-           sentO instanceof Record ? ((Record) sentO).getUID() :
-           null);
-        UID qUID = 
-          (q instanceof UID ? ((UID) q) :
-           q instanceof Record ? ((Record) q).getUID() :
-           null);
-        if (sentUID != null &&
-            qUID != null &&
-            sentUID.getOwner().equals(qUID.getOwner())) {
-          if (sentUID.getId() < qUID.getId()) {
-            // send the query, since it has a more recent uid.
-            // Usually q is a full-renew that should replace an
-            // pending sentObj (either uid-renew or full-renew)
-            // that's now stale.
-            create = true;
-          } else if (
-              sentUID.getId() == qUID.getId() &&
-              sentO instanceof UID &&
-              q instanceof Record) {
-            // promote from uid-renew to full-renew.  This is
-            // necessary to handle a "lease-not-known" response
-            // while a uid-renew is pending.
-            create = true;
-          } else {
-            // ignore this query.  Usually the uids match, q is
-            // a uid-renew, and we're still waiting for the
-            // sentObj full-renew.  This also handles rare race
-            // conditions, where the order of multi-threaded queries
-            // passing through the lease manager is jumbled.
-          }
-        } else {
-          // invalid
-        }
-      }
-    }
-
-    if (!create && logger.isDebugEnabled()) {
-      logger.debug(
-          "Not sending "+
-          (lookup ? "lookup" : "modify")+
-          " (name="+name+
-          " query="+query+
-          "), since we've already sent: "+
-          (e == null ? "null" : e.toString(now)));
-    }
-
-    return create;
-  }
-
-  /**
-   * Special test for local-node uid-based modify requests.
-   */
-  private boolean shortcutNodeModify(
-      boolean lookup,
-      String name,
-      Entry e,
-      long now) {
-    // see if this is a uid-based modify for our own node
-    if (lookup || !name.equals(agentId.getAddress())) {
-      return false;
-    }
-    Object query = e.getQuery();
-    Object q = query;
-    if (q instanceof NameTag) {
-      q = ((NameTag) q).getObject();
-    }
-    if (!(q instanceof UID)) {
-      return false;
-    }
-    // this is a uid-based renewal of our node, but maybe the server
-    // crashed and forgot the record data necessary to send back a
-    // "lease-not-known" response!
-    //
-    // the ugly fix is to pretend that the server sent back a
-    // lease-not-known response.  This will force the lease
-    // manager to send a renewal that contains the full record.
-    //
-    // if we're correct then the server's queued lease-not-known
-    // messages may stream back, which is wasteful but okay.
-    UID uid = (UID) q;
-    Object answer = new LeaseNotKnown(uid);
-    Map m = Collections.singletonMap(name, answer);
-    WPAnswer wpa = new WPAnswer(
-        e.getTarget(),   // from the server
-        agentId,         // back to us
-        e.getSendTime(), // our sendTime
-        now,             // the "server" sendTime
-        true,            // use the above time
-        WPAnswer.MODIFY, // modify
-        m);              // the lease-not-known answer
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          "Timeout waiting for uid-based modify response"+
-          " (uid="+uid+"), pretending that the server"+
-          " sent back a lease-not-known response: "+
-          wpa);
-    }
-    receiveLater(wpa);
-    return true;
-  }
-
-  /**
-   * Figure out if we should accept this request response, including
-   * whether or not we sent it and any necessary ordering/version
-   * tests.
-   */
-  private boolean shouldReceive(
-      boolean lookup, 
-      MessageAddress addr,
-      String name,
-      Object answer,
-      long now) {
-    // assert (Thread.holdsLock(sendLock));
-
-    Map table = (lookup ? lookups : mods);
-
-    boolean accepted = false;
-    Entry e = (Entry) table.get(name);
-    if (e == null) {
-      // not sent?
-    } else {
-      Object sentObj = e.getQuery();
-      // see if this matches what we sent
-      if (lookup) {
-        if (answer instanceof Record) {
-          // we accept this, even if we sent a different UID,
-          // since this is the latest value
-          accepted = true;
-        } else if (answer instanceof RecordIsValid) {
-          if (sentObj == null) {
-            // either we didn't send a uid-based lookup
-            // or we just sent a full-record look request,
-            // so ignore this.
-          } else {
-            UID uid = ((RecordIsValid) answer).getUID();
-            if (uid.equals(sentObj)) {
-              // okay, we sent this
-              accepted = true;
-            } else {
-              // we sent a uid-based validation and
-              // an ack for a different uid came back.  Our
-              // uid-based message is still in flight, so either
-              // we didn't send the lookup or this is a stale
-              // message.
-            }
-          }
-        } else {
-          // invalid response
-        }
-      } else {
-        UID uid;
-        if (answer instanceof Lease) {
-          uid = ((Lease) answer).getUID();
-        } else if (answer instanceof LeaseNotKnown) {
-          uid = ((LeaseNotKnown) answer).getUID();
-        } else if (answer instanceof LeaseDenied) {
-          uid = ((LeaseDenied) answer).getUID();
-        } else {
-          // invalid response
-          uid = null;
-        }
-        UID sentUID;
-        Object sentO = sentObj;
-        if (sentO instanceof NameTag) {
-          sentO = ((NameTag) sentO).getObject();
-        }
-        if (sentO instanceof UID) {
-          sentUID = (UID) sentO;
-        } else if (sentO instanceof Record) {
-          sentUID = ((Record) sentO).getUID();
-        } else {
-          // we sent an invalid query?
-          sentUID = null;
-        }
-        if (uid != null && uid.equals(sentUID)) {
-          // okay, we sent this
-          accepted = true;
-        } else {
-          // either we never sent this, or it's stale,
-          // or the server is confused.  If we're mistaken
-          // then our retry timer will resent the modify.
-        }
-      }
-    }
-
-    if (accepted) {
-      // clear the table entry
-      table.remove(name);
-    }
-
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          (accepted ? "Accepting" : "Ignoring")+
-          " "+
-          (lookup ? "lookup" : "modify")+
-          " response (name="+
-          name+", answer="+answer+
-          ") returned by "+addr+
-          ", since it "+
-          (accepted ? "matches" : "doesn't match")+
-          " our sent query: "+
-          (e == null ? "<null>" : e.toString(now)));
-    }
-
-    return accepted;
   }
 
   //
@@ -1527,7 +1309,7 @@ implements Component
         if (wpa == null) {
           return;
         }
-        boolean lookup = (wpa.getAction() == WPQuery.LOOKUP);
+        boolean lookup = (wpa.getAction() == WPAnswer.LOOKUP);
         Map m = wpa.getMap();
         receiveNow(m);
       }
@@ -1548,87 +1330,54 @@ implements Component
     }
   }
 
-  private class LookupSP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!LookupService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof LookupService.Client)) {
-          throw new IllegalArgumentException(
-              "LookupService"+
-              " requestor must implement "+
-              "LookupService.Client");
-        }
-        LookupService.Client client = (LookupService.Client) requestor;
-        LookupService lsi = new LookupServiceImpl(client);
-        ClientTransport.this.register(client);
-        return lsi;
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof LookupServiceImpl)) {
-          return;
-        }
-        LookupServiceImpl lsi = (LookupServiceImpl) service;
-        LookupService.Client client = lsi.client;
-        ClientTransport.this.unregister(client);
-      }
-      private class LookupServiceImpl 
-        implements LookupService {
-          private final Client client;
-          public LookupServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void lookup(Map m) {
-            ClientTransport.this.lookup(m);
-          }
-        }
+  private abstract class SPBase extends ServiceProviderBase {
+    protected abstract int getAction();
+    protected void register(Object client) {
+      ClientTransport.this.register(getAction(), client);
     }
-
-  private class ModifySP 
-    implements ServiceProvider {
-      public Object getService(
-          ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!ModifyService.class.isAssignableFrom(serviceClass)) {
-          return null;
-        }
-        if (!(requestor instanceof ModifyService.Client)) {
-          throw new IllegalArgumentException(
-              "ModifyService"+
-              " requestor must implement "+
-              "ModifyService.Client");
-        }
-        ModifyService.Client client = (ModifyService.Client) requestor;
-        ModifyServiceImpl msi = new ModifyServiceImpl(client);
-        ClientTransport.this.register(client);
-        return msi;
-      }
-      public void releaseService(
-          ServiceBroker sb, Object requestor,
-          Class serviceClass, Object service) {
-        if (!(service instanceof ModifyServiceImpl)) {
-          return;
-        }
-        ModifyServiceImpl msi = (ModifyServiceImpl) service;
-        ModifyService.Client client = msi.client;
-        ClientTransport.this.unregister(client);
-      }
-      private class ModifyServiceImpl 
-        implements ModifyService {
-          private final Client client;
-          public ModifyServiceImpl(Client client) {
-            this.client = client;
-          }
-          public void modify(Map m) {
-            ClientTransport.this.modify(m);
-          }
-        }
+    protected void unregister(Object client) {
+      ClientTransport.this.unregister(getAction(), client);
     }
+  }
 
-  /** config options, soon to be parameters/props */
+  private class PingSP extends SPBase {
+    protected int getAction() { return WPQuery.PING; }
+    protected Class getServiceClass() { return PingService.class; }
+    protected Class getClientClass() { return PingService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements PingService {
+      public SI(Object client) { super(client); }
+      public void ping(MessageAddress addr, long deadline) {
+        ClientTransport.this.ping(addr, deadline);
+      }
+    }
+  }
+  private class LookupSP extends SPBase {
+    protected int getAction() { return WPQuery.LOOKUP; }
+    protected Class getServiceClass() { return LookupService.class; }
+    protected Class getClientClass() { return LookupService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements LookupService {
+      public SI(Object client) { super(client); }
+      public void lookup(Map m) {
+        ClientTransport.this.lookup(m);
+      }
+    }
+  }
+  private class ModifySP extends SPBase {
+    protected int getAction() { return WPQuery.MODIFY; }
+    protected Class getServiceClass() { return ModifyService.class; }
+    protected Class getClientClass() { return ModifyService.Client.class; }
+    protected Service getService(Object client) { return new SI(client); }
+    protected class SI extends MyServiceImpl implements ModifyService {
+      public SI(Object client) { super(client); }
+      public void modify(Map m) {
+        ClientTransport.this.modify(m);
+      }
+    }
+  }
+
+  /** config options */
   private static class ClientTransportConfig {
     public final long nagleMillis;
     public final boolean noListNagle;
@@ -1636,25 +1385,12 @@ implements Component
     public final long graceMillis;
 
     public ClientTransportConfig(Object o) {
-      // FIXME parse!
-      nagleMillis =  
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.transport.nagleMillis",
-              "0"));
-      noListNagle =
-        Boolean.getBoolean(
-            "org.cougaar.core.wp.resolver.transport.noListNagle");
-      checkDeadlinesPeriod =
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.transport.checkDeadlinesPeriod",
-              "10000"));
-      graceMillis =  
-        Long.parseLong(
-            System.getProperty(
-              "org.cougaar.core.wp.resolver.transport.graceMillis",
-              "0"));
+      Parameters p =
+        new Parameters(o, "org.cougaar.core.wp.resolver.transport.");
+      nagleMillis = p.getLong("nagleMillis", 0);
+      noListNagle = p.getBoolean("noListNagle", false);
+      checkDeadlinesPeriod = p.getLong("checkDeadlinesPeriod", 10000);
+      graceMillis = p.getLong("graceMillis", 0);
     }
   }
 }
