@@ -333,6 +333,24 @@ public class ConfigReader {
     String type = m3.group(6);
     String scheme = m3.group(7);
     String suri = m3.group(8);
+    if (agent == null &&
+        type == null &&
+        scheme == null &&
+        suri != null &&
+        suri.endsWith("@") &&
+        suri.matches("[^\\s=@:,/]+@")) {
+      // fix bad pattern! just an agent name
+      agent = suri.substring(0, suri.length()-1);
+      suri = null;
+    }
+    AddressEntry ae2 =
+      (agent == null ?
+       (null) :
+       AddressEntry.getAddressEntry(
+         name, "alias", URI.create("name:///"+agent)));
+    if (suri == null) {
+      return ae2;
+    }
     if ("address".equals(name) ||
         "hostname".equals(name)) {
       // save for later
@@ -387,9 +405,6 @@ public class ConfigReader {
       return ae;
     }
     // both AGENT@ and URI
-    AddressEntry ae2 =
-      AddressEntry.getAddressEntry(
-          name, "alias", URI.create("name:///"+agent));
     List l = new ArrayList(2);
     l.add(ae2);
     l.add(ae);
