@@ -622,6 +622,8 @@ public class ClusterImpl extends Agent
   public void unload() {
     super.unload();
 
+    // unload in reverse order of "load()"
+
     // unload children
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();
@@ -631,11 +633,16 @@ public class ClusterImpl extends Agent
     }
     boundComponents.clear();
 
-    // unload all services
+    // unload services
     ServiceBroker sb = getServiceBroker();
     sb.releaseService(this, DomainService.class, myDomainService);
     sb.releaseService(this, PrototypeRegistryService.class, myPrototypeService);
     sb.releaseService(this, UIDService.class, myUIDService);
+
+    // remove ourselves from the VM-local context
+    ClusterContextTable.removeContext(getClusterIdentifier());
+
+    // unload remaining services
     sb.releaseService(this, MessageWatcherService.class, watcherService);
     sb.releaseService(this, MessageStatisticsService.class, statisticsService);
     sb.releaseService(this, MessageTransportService.class, messenger);
@@ -915,18 +922,20 @@ public class ClusterImpl extends Agent
   private QueueHandler getQueueHandler() {
     synchronized (this) {
       if (queueHandler == null) {
-        queueHandler =  new QueueHandler(getClusterIdentifier().getAddress() + "/RQ");
+        queueHandler = new QueueHandler(this);
       }
       return queueHandler;
     }
   }
 
-  private class QueueHandler extends Thread {
+  private static class QueueHandler extends Thread {
+    private ClusterImpl cluster;
     private List queue = new ArrayList();
     private List msgs = new ArrayList();
     private boolean running = true;
-    public QueueHandler(String name) {
-      super(name);
+    public QueueHandler(ClusterImpl cluster) {
+      super(cluster.getClusterIdentifier().getAddress() + "/RQ");
+      this.cluster = cluster;
     }
     public void halt() {
       synchronized (queue) {
@@ -934,9 +943,11 @@ public class ClusterImpl extends Agent
         queue.notify();
       }
       try {
-        join();                   // Wait for this thread to stop
+        // wait for this thread to stop
+        join(); 
       } catch (InterruptedException ie) {
       }
+      cluster = null;
     }
     public void run() {
       ClusterMessage m;
@@ -953,7 +964,9 @@ public class ClusterImpl extends Agent
           msgs.addAll(queue);
           queue.clear();
         }
-        if (msgs.size() > 0) receiveQueuedMessages(msgs);
+        if (msgs.size() > 0) {
+          cluster.receiveQueuedMessages(msgs);
+        }
         msgs.clear();
       }
     }
@@ -970,8 +983,10 @@ public class ClusterImpl extends Agent
    * just prints '.'s every few seconds when nothing else
    * is happening.
    * deactivated by -Dorg.cougaar.core.cluster.heartbeat=false
+   *
+   * Should be moved into Node as a Node-level Service.
    **/
-  private class Heartbeat implements Runnable {
+  private static class Heartbeat implements Runnable {
     private long firstTime;
     private long lastVerboseTime;
 
@@ -1017,7 +1032,7 @@ public class ClusterImpl extends Agent
   private static long lastHeartbeat = 0L;
   private static long idleTime = 0L;
 
-  private void startHeartbeat() {
+  private static void startHeartbeat() {
     synchronized (heartbeatLock) {
       if (heartbeat == null) {
         heartbeat = new Thread(new Heartbeat(), "Heartbeat");
