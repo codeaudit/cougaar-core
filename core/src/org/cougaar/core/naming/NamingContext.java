@@ -1012,7 +1012,10 @@ public class NamingContext implements Context {
       ne.setRootCause(re);
       throw ne;
     }
-    
+    return getNSObject(nsObject);
+  }
+
+  protected Object getNSObject(Object nsObject) {
     if (nsObject instanceof NSKey) {
       return createContext((NSKey) nsObject);
     } else {
@@ -1020,7 +1023,7 @@ public class NamingContext implements Context {
     }
   }
     
-    // Class for enumerating name/class pairs
+  // Class for enumerating name/class pairs
   protected class ListOfNames implements NamingEnumeration {
     protected Iterator myEntries;
     
