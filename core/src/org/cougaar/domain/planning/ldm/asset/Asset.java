@@ -24,7 +24,7 @@ import org.cougaar.domain.planning.ldm.plan.RoleSchedule;
 import org.cougaar.domain.planning.ldm.plan.Schedule;
 import org.cougaar.domain.planning.ldm.plan.PlanElement;
 import org.cougaar.domain.planning.ldm.plan.AssetTransfer;
-import org.cougaar.util.XMLizable;
+import org.cougaar.core.util.XMLizable;
 import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.society.UID;
 import org.cougaar.core.cluster.ClusterContext;
@@ -39,7 +39,7 @@ import org.cougaar.domain.planning.ldm.RootFactory;
 // only for transition period
 import org.cougaar.domain.planning.ldm.plan.RoleScheduleImpl;
 
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLize;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

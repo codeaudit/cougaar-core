@@ -14,6 +14,7 @@ import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.cluster.ClusterContext;
 import org.cougaar.core.society.MessageAddress;
 import java.util.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
 public final class ClusterContextTable {

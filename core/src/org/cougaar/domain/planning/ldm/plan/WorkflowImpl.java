@@ -19,8 +19,8 @@ import org.cougaar.core.cluster.ActiveSubscriptionObject;
 import org.cougaar.core.cluster.ClaimableImpl;
 
 import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.util.XMLizable;
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLizable;
+import org.cougaar.core.util.XMLize;
 import org.cougaar.util.Empty;
 
 import java.util.Vector;

@@ -9,7 +9,7 @@
  */
 
 
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.AssetIntrospection;

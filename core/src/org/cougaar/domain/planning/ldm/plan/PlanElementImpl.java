@@ -14,13 +14,13 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 
 import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.util.XMLizable;
+import org.cougaar.core.util.XMLizable;
 import org.cougaar.domain.planning.ldm.plan.AllocationResult;
 
 import org.cougaar.core.cluster.Transaction;
 import org.cougaar.core.cluster.*;
 
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLize;
 
 import java.util.*;
 import org.cougaar.util.SelfDescribingBeanInfo;

@@ -18,6 +18,7 @@ import java.io.Serializable;
 
 import org.cougaar.core.society.NameServer;
 import java.util.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
 /** actual RMI remote object providing the implementation of NameServer.

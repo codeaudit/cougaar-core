@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import java.io.ObjectOutputStream;
 

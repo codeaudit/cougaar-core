@@ -20,6 +20,7 @@ import org.cougaar.domain.planning.ldm.asset.*;
 import org.cougaar.domain.planning.ldm.plan.*;
 import java.util.*;
 import java.io.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.beans.SimpleBeanInfo;
 

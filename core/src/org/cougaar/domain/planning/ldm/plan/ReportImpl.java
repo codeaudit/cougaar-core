@@ -20,13 +20,13 @@ import org.cougaar.domain.planning.ldm.plan.NewReport;
 
 import org.cougaar.core.society.UID;
 
-import org.cougaar.util.XMLizable;
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLizable;
+import org.cougaar.core.util.XMLize;
 
 
 /** Report Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ReportImpl.java,v 1.1 2000-12-15 20:16:44 mthome Exp $
+ * @version $Id: ReportImpl.java,v 1.2 2001-01-03 14:33:07 mthome Exp $
  *
  * Informational report contains a text and an associated date. 
  **/

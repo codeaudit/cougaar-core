@@ -10,6 +10,7 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;
 

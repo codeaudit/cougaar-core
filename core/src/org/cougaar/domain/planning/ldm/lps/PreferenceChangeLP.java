@@ -23,12 +23,13 @@ import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.domain.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.domain.planning.ldm.plan.TaskImpl;
 import java.util.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
 /** PreferenceChangeLogicProvider class provides the logic to propogate
  *  preference changes to tasks that have been sent to other clusters
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PreferenceChangeLP.java,v 1.1 2000-12-15 20:16:45 mthome Exp $
+ * @version $Id: PreferenceChangeLP.java,v 1.2 2001-01-03 14:33:06 mthome Exp $
  **/
 
 public class PreferenceChangeLP extends LogPlanLogicProvider implements EnvelopeLogicProvider {

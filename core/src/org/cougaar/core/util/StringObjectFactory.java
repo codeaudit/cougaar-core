@@ -7,7 +7,7 @@
  *  COUGAAR licence agreement.
  * </copyright>
  */
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -16,6 +16,7 @@ import java.util.*;
 
 import org.cougaar.domain.planning.ldm.Factory;
 import org.cougaar.util.StringUtility;
+import org.cougaar.util.Reflect;
 
 /**
  * String-based Object factory, using reflection and ALP factories.

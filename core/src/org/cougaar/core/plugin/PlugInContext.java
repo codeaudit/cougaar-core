@@ -13,6 +13,7 @@ package org.cougaar.core.plugin;
 import org.cougaar.core.cluster.*;
 import org.cougaar.domain.planning.ldm.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;
 

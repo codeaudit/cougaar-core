@@ -8,78 +8,64 @@
  * </copyright>
  */
 
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 /**
- * Note:.
- *   Currently starts html page with useless "<tr><td ..>" and ends
- *   the page with a "</td></tr>".  Most browsers will ignore, and
- *   I will fix soon.
  * @see AbstractPrinter
  */
-public class HTMLPrinter extends AsciiPrinter {
+public class StringPrinter extends AsciiPrinter {
 
   public static void main(String[] args) {
-    testMain("html");
+    testMain("string");
   }
 
-  public HTMLPrinter(java.io.OutputStream out) {
+  public StringPrinter(java.io.OutputStream out) {
     super(out);
   }
 
-  public void beforeFirstPrint() {
-    print("<HTML><HEAD><TITLE>HTML Output</TITLE></HEAD><BODY>\n");
-  }
-
-  public void afterLastPrint() {
-    print("</BODY></HTML>");
-  }
-
   public void printBegin(String type, String name) {
-    print("<tr><td align=right colspan=3>\n<table width=\"95%\" border=1 cellpadding=2>\n<tr><td colspan=3 bgcolor=lightgrey><center><b>");
     print(type);
-    print("&nbsp;&nbsp;&nbsp;");
+    print(" ");
     print(name);
-    print("</center></b></td></tr>\n");
+    print(" {\n");
   }
 
   public void printEnd(String name) {
-    print("</table><p>\n</td></tr>\n");
+    print("}\n");
   }
 
   public void printBeginCollection(String type, String name, int size) {
-    printBegin(type+"("+size+")", name);
-  }
-
-  public void printBeginElement() {
+    print(type);
+    print("(");
+    print(size);
+    print(") ");
+    print(name);
+    print(" {\n");
   }
 
   protected void printElement(StringObjectInfo soi) {
-    printBegin(soi.getClassName(), "element");
-    print(soi.getClassName(), "&nbsp;", soi.getValue());
-    printEnd("element");
-  }
-
-  public void printEndElement() {
+    print(soi.getClassName());
+    print(" element {");
+    print(soi.getValue());
+    print("}\n");
   }
 
   public void printEndCollection(String name) {
-    printEnd(name);
+    print("} \n");
   }
 
   public void print(String className, String fieldName, String value) {
-    print("<tr><td>");
     print(className);
-    print("</td><td>");
+    print(" ");
     print(fieldName);
-    print("</td><td>");
+    print(": ");
     print(value);
-    print("</td></tr>\n");
+    print("\n");
   }
 
   public void print(String x, String name) {
     if (x != null)
-      print("java.lang.String", name, x);
+      print("String", name, x);
   }
 
   public void print(boolean z, String name) {
@@ -114,4 +100,13 @@ public class HTMLPrinter extends AsciiPrinter {
     print("double", name, Double.toString(d));
   }
 
+  public static String toString(SelfPrinter sp) {
+    java.io.ByteArrayOutputStream baout = 
+      new java.io.ByteArrayOutputStream();
+    StringPrinter pr = new StringPrinter(baout);
+    pr.printBegin(sp.getClass().getName(), "toString");
+    sp.printContent(pr);
+    pr.printEnd("toString");
+    return baout.toString();
+  }
 }

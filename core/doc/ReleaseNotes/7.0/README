@@ -7,7 +7,9 @@ repackage	the perl script used to do the actual port. see below
 		for instructions.
 reorgglm	the perl script to do the GLM ldm package
 		cleanup. (see below)
-
+reorgocu	Perl script to help with the org.cougaar.util split
+		(some classes were moved to org.cougaar.core.util)
+	
 
 To run the scripts, assuming that *your* software packags aren't
 changing:
@@ -19,6 +21,8 @@ changing:
 % repackage /your/source/tree/root alp7.pkg
 # apply the glm changes:
 % find /your/source/tree/root -name "*.java" -print | reorgglm
+# apply the org.cougaar.util changes:
+% find /your/source/tree/root -name "*.java" -print | reorgocu
 
 I *strongly* recommend that you run the scripts on a copy of your tree.
 

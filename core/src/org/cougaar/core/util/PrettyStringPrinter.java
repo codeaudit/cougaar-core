@@ -7,7 +7,7 @@
  * be found at http://www.cougaar.org or email: info@cougaar.org.
  */
 
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 /**
  * @see AbstractPrinter

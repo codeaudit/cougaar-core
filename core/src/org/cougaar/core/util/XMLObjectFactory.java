@@ -7,7 +7,7 @@
  *  COUGAAR licence agreement.
  * </copyright>
  */
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;

@@ -13,9 +13,9 @@ package org.cougaar.domain.planning.ldm.policy;
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 
-import org.cougaar.util.XMLizable;
+import org.cougaar.core.util.XMLizable;
 import org.cougaar.domain.planning.ldm.plan.Transferable;
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLize;
 import org.cougaar.domain.planning.ldm.plan.Context;
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -33,7 +33,7 @@ import org.cougaar.core.society.UID;
 
 /** Policy implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Policy.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: Policy.java,v 1.2 2001-01-03 14:33:07 mthome Exp $
  **/
 
 

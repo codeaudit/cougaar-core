@@ -8,7 +8,10 @@
  * </copyright>
  */
 
-package org.cougaar.util;
+package org.cougaar.core.util;
+
+import org.cougaar.core.util.*;
+import org.cougaar.util.*;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;

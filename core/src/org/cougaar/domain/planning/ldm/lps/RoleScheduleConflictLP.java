@@ -24,6 +24,7 @@ import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 
 import java.util.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
 /** RoleScheduleConflictLP checks an Asset's roleschedule for potential

@@ -8,7 +8,7 @@
  * </copyright>
  */
  
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -16,9 +16,6 @@ import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-
-import org.cougaar.domain.planning.ldm.plan.Location;
-import org.cougaar.domain.planning.ldm.plan.Verb;
 
 /**
  * <code>Abstract Printer</code>.
@@ -161,7 +158,7 @@ public abstract class AbstractPrinter extends PrintStream {
       pr.print(sT, "SubTest");
     }
     public String toString() {
-      return org.cougaar.util.PrettyStringPrinter.toString(this);
+      return org.cougaar.core.util.PrettyStringPrinter.toString(this);
     }
   }
 

@@ -18,8 +18,9 @@ import org.cougaar.core.cluster.LogPlanServesLogicProvider;
 
 import org.cougaar.core.cluster.Transaction;
 import org.cougaar.core.cluster.*;
-import org.cougaar.util.XMLizable;
+import org.cougaar.core.util.XMLizable;
 
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;
 

@@ -16,7 +16,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Vector;
-import org.cougaar.util.PropertyNameValue;
+import org.cougaar.core.util.PropertyNameValue;
 
 public class AssetIntrospection {
 

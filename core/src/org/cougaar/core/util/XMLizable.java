@@ -8,14 +8,14 @@
  * </copyright>
  */
 
-package org.cougaar.util;
+package org.cougaar.core.util;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 
 /** An interface to advertise that an object is a plan object
  * that can be converted to XML.
- * @see org.cougaar.util.XMLize
+ * @see org.cougaar.core.util.XMLize
  **/
 
 public interface XMLizable

@@ -18,12 +18,12 @@ import org.cougaar.domain.planning.ldm.plan.AlertParameter;
 
 import org.cougaar.core.society.UID;
 
-import org.cougaar.util.XMLizable;
-import org.cougaar.util.XMLize;
+import org.cougaar.core.util.XMLizable;
+import org.cougaar.core.util.XMLize;
 
 /** Alert Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AlertImpl.java,v 1.1 2000-12-15 20:16:43 mthome Exp $
+ * @version $Id: AlertImpl.java,v 1.2 2001-01-03 14:33:07 mthome Exp $
  *
  * Open issues - 
  * what happens when no one is subscribed to listen for this alert

@@ -1,0 +1,99 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+
+# moves references to the following symbols from
+# org.cougaar.util to org.cougaar.core.util:
+# AbstractPrinter.java
+# AsciiPrettyPrinter.java
+# AsciiPrinter.java
+# DataPrinter.java
+# DefaultPrinter.java
+# HTMLPrinter.java
+# PrettyStringPrinter.java
+# PrettyXMLPrinter.java
+# StringObjectFactory.java
+# StringPrinter.java
+# XMLObjectFactory.java
+# XMLPrinter.java
+# XMLizable.java
+# XMLize.java
+
+$tmp = "/tmp/reorgocu.$$";
+
+while (<>) {
+  chop;
+  $file = $_;
+  print STDERR "$file";
+  
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    # make sure that we re-split the glm package imports
+    if (/import org\.cougaar\.util\.\*;/) {
+      print OUT "import org.cougaar.core.util.\*;\n";
+      $found++;
+    }
+
+    # move these to ldm
+    s/org\.cougaar\.util\.AbstractPrinter/org\.cougaar\.core\.util\.AbstractPrinter/g && $found++;
+    s/org\.cougaar\.util\.AsciiPrettyPrinter/org\.cougaar\.core\.util\.AsciiPrettyPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.AsciiPrinter/org\.cougaar\.core\.util\.AsciiPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.DataPrinter/org\.cougaar\.core\.util\.DataPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.DefaultPrinter/org\.cougaar\.core\.util\.DefaultPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.SelfPrinter/org\.cougaar\.core\.util\.SelfPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.HTMLPrinter/org\.cougaar\.core\.util\.HTMLPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.PrettyStringPrinter/org\.cougaar\.core\.util\.PrettyStringPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.PrettyXMLPrinter/org\.cougaar\.core\.util\.PrettyXMLPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.StringObjectFactory/org\.cougaar\.core\.util\.StringObjectFactory/g
+      && $found++;
+    s/org\.cougaar\.util\.StringPrinter/org\.cougaar\.core\.util\.StringPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.XMLObjectFactory/org\.cougaar\.core\.util\.XMLObjectFactory/g
+      && $found++;
+    s/org\.cougaar\.util\.XMLPrinter/org\.cougaar\.core\.util\.XMLPrinter/g
+      && $found++;
+    s/org\.cougaar\.util\.XMLizable/org\.cougaar\.core\.util\.XMLizable/g
+      && $found++;
+    s/org\.cougaar\.util\.Operator/org\.cougaar\.core\.util\.Operator/g
+      && $found++;
+    s/org\.cougaar\.util\.OperatorFactory/org\.cougaar\.core\.util\.OperatorFactory/g
+      && $found++;
+    s/org\.cougaar\.util\.XMLize/org\.cougaar\.core\.util\.XMLize/g
+      && $found++;
+    s/org\.cougaar\.util\.PropertyNameValue/org\.cougaar\.core\.util\.PropertyNameValue/g
+      && $found++;
+
+
+    print OUT $_;
+  }
+  close(OUT);
+  close(IN);
+
+  print STDERR "\t$found\n";
+  if ($found) {
+    # made changes
+
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$file");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+  }
+}
+
+unlink($tmp);
+
+

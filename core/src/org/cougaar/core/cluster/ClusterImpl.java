@@ -12,6 +12,7 @@ package org.cougaar.core.cluster;
 
 // java.util classes
 import java.util.*;
+import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.cluster.Cluster;
 
