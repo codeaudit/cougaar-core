@@ -242,18 +242,26 @@ public class ScheduleImpl
     return copy.iterator();
   }
 
-  /** listIterator - Unsupported
-   *  @throw UnsupportedOperationException
+  /** listIterator - Returns an iterator of the elements in this list 
+   * (in proper sequence).
+   * Iterator does not support add(Object o)/set(Object o)
+   * @return ListIterator
    */
   public synchronized ListIterator listIterator() {
-    throw new UnsupportedOperationException("ScheduleImpl.listIterator() is not supported.");
+    return listIterator(0);
   }
 
-  /** listIterator - Unsupported
-   *  @throw UnsupportedOperationException
+  /** listIterator - Returns a list iterator of the elements in this list (in
+   * proper sequence), starting at the specified position in the list.
+   * Iterator does not support add(Object o)/set(Object o)
+   * @return ListIterator
    */
-  public synchronized ListIterator listIterator(int index) {
-    throw new UnsupportedOperationException("ScheduleImpl.listIterator(int index) is not supported.");
+  public ListIterator listIterator(final int index) {
+    if (index<0 || index>size)
+      throw new IndexOutOfBoundsException("Index: "+index+", Size: "+size);
+
+    System.out.println("ScheduleImpl.ListIterator()");
+    return new ListItr(index);
   }
 
   /** returns a subset from a copy of the Schedule.  Prints a warning and
@@ -337,6 +345,108 @@ public class ScheduleImpl
     return super.iterator();
   }
 
+  // ScheduleImpl specific. Code from java.util.AbstractList but
+  // does not support add/set - don't want to mess up the sort order.
+  private class ListItr implements ListIterator {
+
+    /**
+     * Index of element to be returned by subsequent call to next.
+     */
+    int cursor = 0;
+    
+    /**
+     * Index of element returned by most recent call to next or
+     * previous.  Reset to -1 if this element is deleted by a call
+     * to remove.
+     */
+    int lastRet = -1;
+    
+    /**
+     * The modCount value that the iterator believes that the backing
+     * List should have.  If this expectation is violated, the iterator
+     * has detected concurrent modification.
+     */
+    int expectedModCount = ScheduleImpl.this.modCount;
+    
+    ListItr(int index) {
+      cursor = index;
+    }
+
+    public void set(Object o) {
+      throw new UnsupportedOperationException("ScheduleImpl.ListIterator.set(Object o) is not supported.");
+    }
+    
+    public void add(Object o) {
+      throw new UnsupportedOperationException("ScheduleImpl.ListIterator.add(Object o) is not supported.");
+    }
+    
+    public boolean hasNext() {
+      return cursor != size();
+    }
+    
+    public Object next() {
+      try {
+        Object next = get(cursor);
+        checkForComodification();
+        lastRet = cursor++;
+        return next;
+      } catch(IndexOutOfBoundsException e) {
+        checkForComodification();
+        throw new NoSuchElementException();
+      }
+    }
+    
+    public boolean hasPrevious() {
+      return cursor != 0;
+    }
+    
+    public Object previous() {
+      try {
+        Object previous = get(--cursor);
+        checkForComodification();
+        lastRet = cursor;
+        return previous;
+      } catch(IndexOutOfBoundsException e) {
+        checkForComodification();
+        throw new NoSuchElementException();
+      }
+    }
+    
+    public int nextIndex() {
+      return cursor;
+    }
+    
+    public int previousIndex() {
+      return cursor-1;
+    }
+    
+    
+    public void remove() {
+      if (lastRet == -1)
+        throw new IllegalStateException();
+      
+      try {
+        ScheduleImpl.this.remove(lastRet);
+        if (lastRet < cursor)
+          cursor--;
+        lastRet = -1;
+        
+        int newModCount = ScheduleImpl.this.modCount;
+        if (newModCount - expectedModCount > 1)
+          throw new ConcurrentModificationException();
+        expectedModCount = newModCount;
+      } catch(IndexOutOfBoundsException e) {
+        throw new ConcurrentModificationException();
+      }
+    }
+    
+    final void checkForComodification() {
+      if (ScheduleImpl.this.modCount != expectedModCount)
+        throw new ConcurrentModificationException();
+    }
+
+  }
+  
   private static class TestScheduleElementImpl extends LocationScheduleElementImpl
     implements ScheduleElementWithValue {
 
@@ -390,11 +500,9 @@ public class ScheduleImpl
     schedule2.addAll(schedule1);
     System.out.println("Schedule2 after adding Schedule1: " + schedule2);
 
-    Schedule schedule3 = 
-      ScheduleUtilities.subtractSchedules(schedule2, schedule2);
+    ScheduleImpl schedule3 = 
+      (ScheduleImpl )ScheduleUtilities.subtractSchedules(schedule2, schedule2);
     System.out.println("Schedule3 (Schedule2 - Schedule2): "+ schedule3);
-
-    schedule3.iterator();
 
     schedule2.setScheduleElements(vector);
     schedule2.addAll(1, vector);

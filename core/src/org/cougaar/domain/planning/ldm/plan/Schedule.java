@@ -25,7 +25,7 @@ import java.util.*;
  **/
 
 public interface Schedule
-  extends Collection, TimeSpan
+  extends List, TimeSpan
 {
   /** get a string describing what type of schedule this is (i.e.
    * what kind of scheduleelements this schedule containts).
