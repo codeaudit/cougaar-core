@@ -64,4 +64,8 @@ public class LatLonPointImpl
     return new LatLonPointImpl(lat, lon);
   }
 
+  public String toString() {
+    return "("+lat+", "+lon+")";
+  }
+
 }
