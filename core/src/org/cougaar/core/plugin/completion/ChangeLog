@@ -1,0 +1,58 @@
+2002-05-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TestPlugin.java:
+	A test plugin for debugging the completion determination. Provides
+	a daily set of supply tasks derived from projections to give
+	agents something to do as time passes.
+
+	* LaggardFilter.java:
+	Determines if a putative Laggard value is worth sending. Retains
+	the last Laggard that was judged worthy of sending and judges if a
+	new one should be sent depending on whether or not the change is
+	significant or if sufficient time has passed.
+
+	* Laggard.java:
+	A brief summary of the state of laggardliness of an agent
+	containing the cpuConsumption and taskCompletion values plus a
+	boolean indicating if the agent is really a laggard or not.
+
+	* CompletionTargetPlugin.java:
+	A plugin for sensing agent activity and sending the completion
+	status of the agent as responses to CompletionRelays. Both the
+	presence and status of activity are sensed. If any Task or
+	PlanElement is added, removed, or changed, the cpuConsumption
+	countdown is restarted. cpuConsumption decreases linearly in time
+	from 1.0 to 0.0 over a ten minute span. taskCompletion is computed
+	as the average of the confidence ratings of the estimated
+	allocation result of all tasks excluding certain tasks for which
+	plugins fail to provide reliable confidence ratings
+	(DetermineRequirements, getLogSupport and MaintainInventory).
+	Updated values are sent as responses as warranted. Care is taken
+	to limit the frequency of interesting, but insignificant changes.
+	In particular, it really only matters if the laggard thresholds
+	are crossed. Otherwise, the changes are not significant so updates
+	are scheduled over long intervals.
+
+	* CompletionSourcePlugin.java:
+	Base class for plugins that send relays (CompletionNodePlugin and
+	CompletionSocietyPlugin). Ascertains the correct set of targets,
+	fashions a CompletionRelay and sends it. Retrieves the relay
+	responses and dispatches them to subclass methods for handling.
+
+	* CompletionSocietyPlugin.java:
+	The root completion plugin. Gathers completion status from all
+	nodes and decides when to advance execution time.
+
+	* CompletionRelay.java:
+	A Relay to request task completion and cpu activity status from
+	nodes and agents.
+
+	* CompletionPlugin.java:
+	Base class provides some common services to subclasses
+
+	* CompletionNodePlugin.java:
+	A plugin for completion sensing in a NodeAgent. Identifies the
+	Agents of the Node and sends them a CompletionRelay so they can
+	report back the completion state. Subscribes to CompletionRelays
+	from higher levels and reports a completion state based on those
+	of the node's agents (least completed agent).
