@@ -22,6 +22,8 @@
 package org.cougaar.planning.ldm.plan;
 
 import java.io.Serializable;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -625,6 +627,13 @@ public class AllocationResult
     }
 
     return returnDiff;
+  }
+
+  private void readObject(ObjectInputStream ois)
+    throws IOException, ClassNotFoundException
+  {
+    ois.defaultReadObject();
+    clearMemos();
   }
 
     // for unit testing only

@@ -1,3 +1,11 @@
+2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AllocationResult.java:
+	Bug 2104 -- Array index out of bound exception in AllocationResult
+	after rehydration
+	Add readObject and call clearMemos to properly initialize
+	transient variables.
+
 2002-07-23  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* TaskImpl.java: 
