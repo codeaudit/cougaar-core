@@ -548,11 +548,13 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
 
-    initQos();
 
-    // set up the message handler and register this Node
+    // Set up MTS and QOS service provides.
+    //
+    // NB: The order is important for now - MTS *must* be created
+    // first.
     initTransport();  
-
+    initQos();
 
     registerExternalNodeController();
 
@@ -585,7 +587,8 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
 
 
   private void initQos() {
-    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider();
+    String name = getIdentifier();
+    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name);
     add(qmsp);
     getServiceBroker().addService(QosMonitorService.class, qmsp);
     getServiceBroker().addService(ResourceMonitorService.class, qmsp);

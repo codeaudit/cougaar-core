@@ -31,22 +31,17 @@ public class QosMonitorServiceProvider
     private QosMonitorService qms;
     private ResourceMonitorService rms;
     private NameSupport nameSupport;
+    private String id;
 
-    public QosMonitorServiceProvider() {
+    public QosMonitorServiceProvider(String id) {
+	this.id = id;
     }
 
-
-    private NameSupport createNameSupport(String id) {
-        ServiceBroker sb = getServiceBroker();
-        if (sb == null) throw new RuntimeException("No service broker");
-        return new NameSupportImpl(id, (NamingService)
-                                  sb.getService(this, NamingService.class, null));
-    }
 
     public void initialize() {
-
-	// local initialization goes here
-	nameSupport = createNameSupport("QosMonitorServiceProvider");
+	// NB: This depends on the fact that MTS has already created
+	// the NameSupport singleton!
+	nameSupport = NameSupportImpl.instance();
         super.initialize();
     }
 
