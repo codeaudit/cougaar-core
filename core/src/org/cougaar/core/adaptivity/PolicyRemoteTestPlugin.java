@@ -30,6 +30,7 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.PlaybookConstrainService;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterIdentifier;
@@ -42,7 +43,10 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 
   private InterAgentOperatingModePolicy[] policies;
 
+  private UIDService uidService;
+
   private static final Class[] requiredServices = {
+    UIDService.class
   };
 
   public PolicyRemoteTestPlugin() {
@@ -71,6 +75,9 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 					    tempPolicies[i].getIfClause(), 
 					    tempPolicies[i].getOperatingModeConstraints());
       policies[i] = iaomp;
+      if (haveServices()) {
+  	uidService.registerUniqueObject(policies[i]);
+      }
     }
     setPolicies();
   }
@@ -82,6 +89,17 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     }
   }
 
+  private boolean haveServices() {
+    if (uidService != null) return true;
+    if (acquireServices()) {
+      ServiceBroker sb = getServiceBroker();
+      uidService = (UIDService)
+        sb.getService(this, UIDService.class, null);
+      return true;
+    }
+    return false;
+  }
+
   private void setPolicies() {
     if (!published) {
       if (logger.isInfoEnabled()) logger.info("publishing policy");
@@ -89,6 +107,7 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 	policies[i].setTarget(new ClusterIdentifier("Provider"));
 	getBlackboardService().publishAdd(policies[i]);
 	published = true;
+	startTimer(75000);
       }
     } else {
       if (logger.isInfoEnabled()) logger.info("Removing policy");
@@ -99,6 +118,5 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
       }
       published = false;
     }
-    startTimer(75000);
   }
 }

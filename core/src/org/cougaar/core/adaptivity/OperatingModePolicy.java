@@ -36,7 +36,7 @@ import org.cougaar.core.util.UID;
 
 public class OperatingModePolicy implements Policy  {
 
-  private UID uid;
+  private UID uid = null;
   private String policyName;
   private String authority;
   private PolicyKernel policy;
@@ -98,7 +98,7 @@ public class OperatingModePolicy implements Policy  {
    * @param uid the UID to be given to this
    **/
   public void setUID(UID uid) {
-    if (uid != null) throw new RuntimeException("Attempt to change UID");
+    if (this.uid != null) throw new RuntimeException("Attempt to change UID: " + uid);
     this.uid = uid;
   }
 

@@ -39,7 +39,6 @@ public class InterAgentOperatingModePolicy
   implements Relay.Source, Relay.Target
 {
   private transient Set targets = Collections.EMPTY_SET;
-  private UID uid;
   protected String authority;
   protected MessageAddress source;
   protected Relay.Token owner;
@@ -61,7 +60,7 @@ public class InterAgentOperatingModePolicy
 					   MessageAddress src, 
 					   Relay.Token owner) {
     this(other.getAuthority(), other.getIfClause(), other.getOperatingModeConstraints());
-    this.uid = other.getUID();
+    setUID(other.getUID());
     this.owner = owner;
     this.source = src;
   }
@@ -82,21 +81,6 @@ public class InterAgentOperatingModePolicy
    **/
   public void setTarget(MessageAddress targetAddress) {
     targets = Collections.singleton(targetAddress);
-  }
-
-  // UniqueObject interface
-  public UID getUID() {
-    return uid;
-  }
-
-  /**
-   * Set the UID (unique identifier) of this UniqueObject. Used only
-   * during initialization.
-   * @param uid the UID to be given to this
-   **/
-  public void setUID(UID uid) {
-    if (uid != null) throw new RuntimeException("Attempt to change UID");
-    this.uid = uid;
   }
 
   // Relay.Source interface
