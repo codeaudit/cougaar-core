@@ -244,14 +244,26 @@ public class RootFactory
   }
 
 
-  /** Create an instance of a prototypical asset. **/
+  /** Create an instance of a prototypical asset.
+   * This variation does <em>not</em> add an ItemIdentificationCode
+   * to the constructed asset instance.  Without itemIDs,
+   * multiple instances of a prototype will test as .equals(), and
+   * can be confusing if they're added to the logplan.
+   * Most users will find #createInstance(Asset, String) more convenient.
+   **/
   public final Asset createInstance(Asset prototypeAsset) {
     Asset asset = prototypeAsset.createInstance();
     asset.registerWithLDM(ldm);
     return asset;
   }
 
-  /** Create an instance of a prototypical asset. **/
+  /** Create an instance of a prototypical asset.
+   * This variation does <em>not</em> add an ItemIdentificationCode
+   * to the constructed asset instance.  Without itemIDs,
+   * multiple instances of a prototype will test as .equals(), and
+   * can be confusing if they're added to the logplan.
+   * Most users will find #createInstance(String, String) more convenient.
+   **/
   public final Asset createInstance(String prototypeAssetTypeId) {
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
     if (proto == null)
@@ -263,7 +275,7 @@ public class RootFactory
   }
 
   /** Create an instance of a prototypical asset, specifying an initial 
-   * UniqueID for its itemIdentificationPG 
+   * UniqueID for its itemIdentificationPG .
    **/
   public final Asset createInstance(Asset prototypeAsset, String uniqueId) {
     Asset asset = prototypeAsset.createInstance(uniqueId);
@@ -272,7 +284,7 @@ public class RootFactory
   }
 
   /** Create an instance of a prototypical asset, specifying an initial UniqueID 
-   * 
+   * for its itemIdentificationPG.
    **/
   public final Asset createInstance(String prototypeAssetTypeId, String uniqueId) {
     Asset proto = ldm.getPrototype(prototypeAssetTypeId);
