@@ -67,6 +67,7 @@ public class DeletionPlugIn extends SimplePlugIn {
     private UnaryPredicate deletablePlanElementsPredicate;
 
     private static java.io.PrintWriter logFile = null;
+    private static final boolean DEBUG = false;
 
     static {
         try {
@@ -194,9 +195,11 @@ public class DeletionPlugIn extends SimplePlugIn {
         if (alarm.hasExpired()) { // Time to make the donuts
             checkDeletablePlanElements();
             alarm = wakeAfter(deletionPeriod);
-            if (++wakeCount > 4) {
-                wakeCount = 0;
-                printAllPEs();
+            if (DEBUG) {
+                if (++wakeCount > 4) {
+                    wakeCount = 0;
+                    printAllPEs();
+                }
             }
         }
         peSet.checkAlarm();
@@ -213,7 +216,7 @@ public class DeletionPlugIn extends SimplePlugIn {
     private void checkDeletablePlanElements() {
         Collection c = query(deletablePlanElementsPredicate);
         if (c.size() > 0) {
-            debug("Found " + c.size() + " deletable PlanElements");
+            if (DEBUG) debug("Found " + c.size() + " deletable PlanElements");
             for (Iterator i = c.iterator(); i.hasNext(); ) {
                 checkPlanElement((PlanElement) i.next());
             }
@@ -227,14 +230,14 @@ public class DeletionPlugIn extends SimplePlugIn {
             }
         });
         if (!c.isEmpty()) {
-            System.out.println("Undeletable Tasks");
+            debug("Undeletable Tasks");
             for (Iterator i = c.iterator(); i.hasNext(); ) {
                 PlanElement pe = (PlanElement) i.next();
                 String reason = canDelete(pe);
                 if (reason == null) {
-                    System.out.println(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": Deletable");
+                    debug(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": Deletable");
                 } else {
-                    System.out.println(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": " + reason);
+                    debug(pe.getTask().getUID() + " " + pe.getTask().getVerb() + ": " + reason);
                 }
             }
         }
@@ -330,36 +333,36 @@ public class DeletionPlugIn extends SimplePlugIn {
 //      }
 
     private void delete(Task task) {
-        debug("Deleting " + task);
+        if (DEBUG) debug("Deleting " + task);
         ((NewTask) task).setDeleted(true);  // Prevent LP from propagating deletion
         if (task instanceof MPTask) {
             // Delete multiple parent tasks
             MPTask mpTask =(MPTask) task;
-            debug("Task is MPTask, deleting parents");
+            if (DEBUG) debug("Task is MPTask, deleting parents");
             for (Enumeration e = mpTask.getParentTasks(); e.hasMoreElements(); ) {
                 Task parent = (Task) e.nextElement();
                 delete(parent);    // ppe is always an Aggregation
             }
-            debug("All parents deleted");
+            if (DEBUG) debug("All parents deleted");
         } else {
-            debug("Checking parent");
+            if (DEBUG) debug("Checking parent");
             UID ptuid = task.getParentTaskUID();
             if (ptuid == null) {
-                debug("Deleting root");
+                if (DEBUG) debug("Deleting root");
                 deleteRootTask(task);
             } else {
                 PlanElement ppe = peSet.findPlanElement(ptuid);
                 if (ppe == null) { // Parent is in another cluster
                                 // Nothing further to do
-                    debug("Parent " + ptuid + " not found");
+                    if (DEBUG) debug("Parent " + ptuid + " not found");
                     deleteRootTask(task);
                 } else {
                     if (ppe instanceof Expansion) {
-                        debug("Parent is expansion, deleting subtask");
+                        if (DEBUG) debug("Parent is expansion, deleting subtask");
                         deleteSubtask((Expansion) ppe, task);
                     } else {
-                        debug("Parent is expansion, deleting subtask");
-                        debug("Parent is other, propagating");
+                        if (DEBUG) debug("Parent is expansion, deleting subtask");
+                        if (DEBUG) debug("Parent is other, propagating");
                         delete(ppe.getTask()); // Not sure this is possible, but parallels "isDeleteAllowed"
                     }
                 }
@@ -402,10 +405,10 @@ public class DeletionPlugIn extends SimplePlugIn {
     private boolean isTimeToDelete(PlanElement pe) {
         long et = 0L;
         if (et == 0L) et = computeExpirationTime(pe);
-//  	debug("Expiration time is " + new java.util.Date(et));
+//  	if (DEBUG) debug("Expiration time is " + new java.util.Date(et));
         boolean result = et == 0L || et < now - deletionDelay;
 //          if (result) {
-//              debug("isTimeToDelete: " + new java.util.Date(et));
+//              if (DEBUG) debug("isTimeToDelete: " + new java.util.Date(et));
 //          }
         return result;
     }
