@@ -99,9 +99,14 @@ public class AggregateAssetAdapter extends Asset  {
     AggregateAssetAdapter oaa = (AggregateAssetAdapter) o;
     if (myAsset != null && !(myAsset.equals(oaa.getAsset()))) return false;
     if (thequantity != oaa.getQuantity()) return false;
-    if ((getItemIdentificationPG() != null && oaa.getItemIdentificationPG() != null) &&
-	(!(getItemIdentificationPG().getItemIdentification().equals(oaa.getItemIdentificationPG().getItemIdentification())))) 
-	return false;
-    return true;
+    ItemIdentificationPG pg1 = getItemIdentificationPG();
+    String id1 = (pg1 ==null)?null:pg1.getItemIdentification();
+    ItemIdentificationPG pg2 = oaa.getItemIdentificationPG();
+    String id2 = (pg2 ==null)?null:pg2.getItemIdentification();
+
+                                // return true IFF
+    return (id1 != null &&      // both have non-null item ids
+            id1.equals(id2)     //  which are .equals
+            );
   }
 }
