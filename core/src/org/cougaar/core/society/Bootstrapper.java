@@ -153,6 +153,7 @@ public class Bootstrapper
     
     try {
       BootstrapClassLoader cl = new BootstrapClassLoader(urls);
+      Thread.currentThread().setContextClassLoader(cl);
 
       Class realnode = cl.loadClass(classname);
       Class argl[] = new Class[1];
