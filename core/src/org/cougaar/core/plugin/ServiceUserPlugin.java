@@ -30,6 +30,7 @@ import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
+import java.util.Date;
 
 /**
  * Convenience base class for plugins that need to acquire services
@@ -43,8 +44,6 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   private boolean[] serviceAcquired;
 
   private boolean allServicesAcquired = false;
-
-  private Alarm timer;
 
   /**
    * Everybody needs a logger, so we provide it here.
@@ -94,7 +93,6 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * for a typical usage pattern.
    **/
   protected boolean acquireServices() {
-    cancelTimer();
     if (!allServicesAcquired) {
       allServicesAcquired = true; // Assume we will get them all
       ServiceBroker sb = getServiceBroker();
@@ -121,10 +119,96 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
         }
       }
       if (!allServicesAcquired) {
-        startTimer(1000L);
+        resetTimer(1000L);
       }
     }
     return allServicesAcquired;
+  }
+
+  /** A timer for recurrent events.  All access should be synchronized on timerLock **/
+  private Alarm timer = null;
+
+  /** Lock for accessing timer **/
+  private final Object timerLock = new Object();
+
+  /**
+   * Schedule a update wakeup after some interval of time
+   * @param delay how long to delay before the timer expires.
+   * @deprecated Use resetTimer(long) instead as a safer mechanism without so many race issues.
+   **/
+  protected void startTimer(long delay) {
+    synchronized (timerLock) {
+      if (timer != null && !timer.hasExpired()) return; // pending event - don't restart
+
+      //     if (logger.isDebugEnabled()) logger.debug("Starting timer " + delay);
+      if (getBlackboardService() == null && 
+          logger != null && 
+          logger.isWarnEnabled()) {
+        logger.warn(
+                    "Started service alarm before the blackboard service"+
+                    " is available");
+      }
+      timer = new SUPAlarm(delay);
+      getAlarmService().addRealTimeAlarm(timer);
+    }
+  }
+
+    
+  /**
+   * Schedule a update wakeup after some interval of time
+   * @param delay how long to delay before the timer expires.
+   **/
+  protected void resetTimer(long delay) {
+    synchronized (timerLock) {
+      Alarm old = timer;        // keep any old one around
+      if (old != null) {
+        old.cancel();           // cancel the old one
+      }
+      timer = new SUPAlarm(delay);
+      getAlarmService().addRealTimeAlarm(timer);
+    }
+  }
+
+  /**
+   * Cancel the timer.
+   **/
+  protected void cancelTimer() {
+    synchronized (timerLock) {
+      if (timer == null) return;
+      //     if (logger.isDebugEnabled()) logger.debug("Cancelling timer");
+      timer.cancel();
+      timer = null;
+    }
+  }
+
+  /** access the timer itself (if any) **/
+  protected Alarm getTimer() {
+    synchronized (timerLock) {
+      return timer;
+    }
+  }
+
+  /** When will (has) the timer expire **/
+  protected long getTimerExpirationTime() {
+    synchronized (timerLock) {
+      if (timer != null) {
+        return timer.getExpirationTime();
+      } else {
+        return 0;
+      }
+    }
+  }
+
+  /** Returns true IFF there is an unexpired timer.  
+   **/
+  protected boolean hasUnexpiredTimer() {
+    synchronized (timerLock) {
+      if (timer != null) {
+        return !timer.hasExpired();
+      } else {
+        return false;
+      }
+    }
   }
 
   /**
@@ -133,60 +217,44 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * else return true.
    **/
   protected boolean timerExpired() {
-    return timer != null && timer.hasExpired();
+    synchronized (timerLock) {
+      return timer != null && timer.hasExpired();
+    }
   }
 
-  /**
-   * Schedule a update wakeup after some interval of time
-   * @param delay how long to delay before the timer expires.
-   **/
-  protected void startTimer(final long delay) {
-    if (timer != null) return;  // update already scheduled
-//     if (logger.isDebugEnabled()) logger.debug("Starting timer " + delay);
-    if (getBlackboardService() == null && 
-        logger != null && 
-        logger.isWarnEnabled()) {
-      logger.warn(
-          "Started service alarm before the blackboard service"+
-          " is available");
+  private final class SUPAlarm implements Alarm {
+    private long expirationTime;
+    private boolean expired = false;
+
+    public SUPAlarm(long delay) {
+      expirationTime = System.currentTimeMillis() + delay;
     }
-    timer = new Alarm() {
-      long expirationTime = System.currentTimeMillis() + delay;
-      boolean expired = false;
-      public long getExpirationTime() {return expirationTime;}
-      public synchronized void expire() {
-        if (!expired) {
-          expired = true;
-          BlackboardService bb = getBlackboardService();
-          if (bb != null) {
-            bb.signalClientActivity();
-          } else {
-            if (logger != null && logger.isWarnEnabled()) {
-              logger.warn(
-                  "Alarm started "+delay+" millis ago has expired,"+
-                  " but the blackboard service is null.  Plugin "+
-                  " model state is "+getModelState());
-            }
+
+    public long getExpirationTime() {return expirationTime;}
+
+    public synchronized void expire() {
+      if (!expired) {
+        expired = true;
+        BlackboardService bb = getBlackboardService();
+        if (bb != null) {
+          bb.signalClientActivity();
+        } else {
+          if (logger != null && logger.isWarnEnabled()) {
+            logger.warn(
+                        "Alarm to trigger at "+(new Date(expirationTime))+" has expired,"+
+                        " but the blackboard service is null.  Plugin "+
+                        " model state is "+getModelState());
           }
         }
       }
-      public boolean hasExpired() { return expired; }
-      public synchronized boolean cancel() {
-        boolean was = expired;
-        expired=true;
-        return was;
-      }
-    };
-    getAlarmService().addRealTimeAlarm(timer);
+    }
+    public synchronized boolean hasExpired() { return expired; }
+    public synchronized boolean cancel() {
+      boolean was = expired;
+      expired=true;
+      return was;
+    }
   }
 
-  /**
-   * Cancel the timer.
-   **/
-  protected void cancelTimer() {
-    if (timer == null) return;
-//     if (logger.isDebugEnabled()) logger.debug("Cancelling timer");
-    timer.cancel();
-    timer = null;
-  }
+
 }
