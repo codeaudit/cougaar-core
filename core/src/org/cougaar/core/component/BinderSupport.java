@@ -18,28 +18,24 @@ import java.lang.reflect.*;
 public abstract class BinderSupport implements Binder
 {
   private ServiceBroker servicebroker;
-  private Container parentComponent;
-  private Component childComponent;
+  private ContainerAPI parent;
+  private Component child;
 
-  protected BinderSupport(ServiceBroker sb, Container parent, Component child) {
-    this.servicebroker = sb;
-    this.parentComponent = parent;
-    this.childComponent = child;
+  protected BinderSupport(ContainerAPI parent, Component child) {
+    this.servicebroker = parent.getChildServiceBroker();
+    this.parent = parent;
+    this.child = child;
   }
 
   public ServiceBroker getServiceBroker() { return servicebroker; }
   public void requestStop() { 
-    if (parentComponent == null) {
-      throw new IllegalArgumentException("Cannot stop this Component.");
-    } else {
-      parentComponent.remove(childComponent);
-    }
+    parent.remove(child);
   }
-  protected final Container getParentComponent() {
-    return parentComponent;
+  protected final ContainerAPI getContainer() {
+    return parent;
   }
-  protected final Component getChildComponent() {
-    return childComponent;
+  protected final Component getComponent() {
+    return child;
   }
 
   //
@@ -65,12 +61,12 @@ public abstract class BinderSupport implements Binder
    * child.initialize() method will call back into the services api.
    */
   protected void initializeChild() {
-    Class childClass = childComponent.getClass();
+    Class childClass = child.getClass();
 
     try {
       Method m = childClass.getMethod("setBindingSite", new Class[]{BindingSite.class});
       if (m != null) {          // use a non-throwing variation in the future
-        m.invoke(childComponent, new Object[]{this});
+        m.invoke(child, new Object[]{this});
       } 
     } catch (Exception e) {
       //e.printStackTrace();
@@ -101,10 +97,10 @@ public abstract class BinderSupport implements Binder
               if (s.endsWith(pname)) {
                 // ok: m is a "public setX(X)" method where X is a Service.
                 // Let's try getting the service...
-                Object service = servicebroker.getService(childComponent, p, null);
+                Object service = servicebroker.getService(child, p, null);
                 Object[] args = new Object[] { service };
                 try {
-                  m.invoke(childComponent, args);
+                  m.invoke(child, args);
                 } catch (InvocationTargetException ite) {
                   ite.printStackTrace();
                 }
@@ -121,7 +117,7 @@ public abstract class BinderSupport implements Binder
     // now call child.initialize, if there.
     try {
       Method init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
-      init.invoke(childComponent, new Object[] {this});
+      init.invoke(child, new Object[] {this});
       return;                  
       // bail out!
     } catch (Exception e) {
@@ -130,7 +126,7 @@ public abstract class BinderSupport implements Binder
 
     try {
       Method init = childClass.getMethod("initialize", null);
-      init.invoke(childComponent, new Object[] {});
+      init.invoke(child, new Object[] {});
     } catch (Exception e) {
       // no initialize!  strange, but maybe it doesn't need it.
     }

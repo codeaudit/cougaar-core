@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.StringTokenizer;
 import org.cougaar.core.component.Binder;
+import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Container;
@@ -19,7 +20,8 @@ import org.cougaar.core.society.rmi.RMIMessageTransport;
 import org.cougaar.util.CircularQueue;
 
 class MessageTransportServerImpl 
-    extends ContainerSupport
+  extends ContainerSupport
+  implements ContainerAPI
 {
 
     private String myId;
@@ -198,7 +200,12 @@ class MessageTransportServerImpl
 	// TO BE DONE
 	return null;
     }
-  
+  public ServiceBroker getChildServiceBroker() {
+	// TO BE DONE
+    return null;
+  }
+
+
     protected Class specifyChildBindingSite() {
 	return MessageTransportServerBindingSite.class;
     }
@@ -515,6 +522,10 @@ class MessageTransportServerImpl
 	watchingIncoming(m);
     }
 
+
+  public ContainerAPI getBinderFactoryProxy() {
+    return this;
+  }
 
 }
     

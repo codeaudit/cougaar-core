@@ -21,6 +21,10 @@ import java.lang.reflect.*;
 
 
 /** A container for Plugin Components.
+ * <p>
+ * A PluginManager expects all subcomponents to be bound with 
+ * implementations of PluginBinder.  In return, the PluginManager
+ * offers the PluginManagerForBinder to each PluginBinder.
  **/
 public class PluginManager 
   extends ContainerSupport
@@ -30,8 +34,8 @@ public class PluginManager
   ClusterImpl getAgent() { return agent; }
 
   public PluginManager() {
-    if (!loadComponent(new PluginBinderFactory())) {
-      throw new RuntimeException("Failed to load the PluginBinderFactory");
+    if (!loadComponent(new DefaultPluginBinderFactory())) {
+      throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
   }
 
@@ -40,8 +44,8 @@ public class PluginManager
    **/
   public PluginManager(ClusterImpl agent) {
     this.agent = agent;
-    if (!loadComponent(new PluginBinderFactory())) {
-      throw new RuntimeException("Failed to load the PluginBinderFactory");
+    if (!loadComponent(new DefaultPluginBinderFactory())) {
+      throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
 
     // add some services for the plugins.
@@ -55,6 +59,9 @@ public class PluginManager
 
     // scheduler for new plugins
     childServiceBroker.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
+
+    // placeholder for LDM Services
+    childServiceBroker.addService(LDMService.class, new LDMServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
@@ -71,8 +78,27 @@ public class PluginManager
     return PluginBindingSite.class;
   }
 
-  protected Object getBinderFactoryProxy() {
-    return this;
+  private PluginManagerForBinder containerProxy = 
+    new PluginManagerForBinder() {
+        public ServiceBroker getChildServiceBroker() {
+          return PluginManager.this.getChildServiceBroker();
+        }
+        public boolean remove(Object childComponent) {
+          return PluginManager.this.remove(childComponent);
+        }
+        public ClusterIdentifier getAgentIdentifier() {
+          return PluginManager.this.getAgentIdentifier();
+        }
+        public UIDServer getUIDServer() {
+          return PluginManager.this.getUIDServer();
+        }
+        public ConfigFinder getConfigFinder() {
+          return PluginManager.this.getConfigFinder();
+        }
+      };
+
+  protected ContainerAPI getBinderFactoryProxy() {
+    return containerProxy;
   }
 
   //

@@ -12,13 +12,15 @@ package org.cougaar.core.plugin;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.UIDServer;
+import org.cougaar.core.blackboard.*;
+import org.cougaar.core.cluster.*;
 
-/** The standard Binder api for Binders.  This is the interface
- * which the container may call on the Binder.
+/** This is the interface presented to a PluginBinder from the PluginManager.
  **/
-public interface PluginBinder
-  extends Binder
+public interface PluginManagerForBinder
+  extends ContainerAPI
 {
+  ClusterIdentifier getAgentIdentifier();
+  UIDServer getUIDServer();
+  ConfigFinder getConfigFinder();
 }

@@ -14,9 +14,9 @@ import java.lang.reflect.*;
 import org.cougaar.core.component.*;
 
 /**
- * A BinderFactory for binding domain Plugins.
+ * A simple BinderFactory for binding domain Plugins.
  **/
-public class PluginBinderFactory extends BinderFactorySupport
+public class DefaultPluginBinderFactory extends BinderFactorySupport
 {
 
   /** PluginBinderFactory always uses either PluginBinder or PluginAdapterBinder.
@@ -28,7 +28,7 @@ public class PluginBinderFactory extends BinderFactorySupport
     }
     else {
       //System.out.println(getClass().getName() + ".getBinderClass() returning vanilla PluginBinder "  + child);
-      return PluginBinder.class;
+      return DefaultPluginBinder.class;
     }
   }
   
@@ -47,11 +47,11 @@ public class PluginBinderFactory extends BinderFactorySupport
    * the child component or null.
    **/
   public Binder bindChild(Class binderClass, Object child) {
-    PluginManager pi = (PluginManager) getParentComponent();
+    PluginManagerForBinder pi = (PluginManagerForBinder) getParentComponent();
     try {
       Constructor constructor = binderClass.getConstructor(new Class[]{Object.class, Component.class});
       Binder binder = (Binder) constructor.newInstance(new Object[] {pi, child});
-      ((PluginBinder)binder).initialize();
+      ((DefaultPluginBinder)binder).initialize();
       return binder;
     } catch (Exception e) {
       e.printStackTrace();

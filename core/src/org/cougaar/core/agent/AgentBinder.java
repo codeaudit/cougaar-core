@@ -19,9 +19,7 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
   public AgentBinder(Object parentInterface, Component child) {
-    super(((AgentManager) parentInterface).getChildServiceBroker(), 
-          (AgentManager) parentInterface, 
-          child);
+    super((ContainerAPI) parentInterface, child);
   }
 
   /** package-private kickstart method for use by the AgentBinderFactory **/
@@ -30,10 +28,10 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
   }
 
   protected final Agent getAgent() {
-    return (Agent) getChildComponent();
+    return (Agent) getComponent();
   }
   protected final AgentManager getAgentManager() {
-    return (AgentManager)getParentComponent();
+    return (AgentManager)getContainer();
   }
 
 

@@ -28,7 +28,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /** The standard Binder for Plugins.
  **/
-public class PluginAdapterBinder extends PluginBinder
+public class PluginAdapterBinder extends DefaultPluginBinder
 {
 
   public PluginAdapterBinder(Object parentInterface, Component child) {
@@ -40,17 +40,19 @@ public class PluginAdapterBinder extends PluginBinder
   protected void initialize() {
     initializeChild(); 
 
-    Component child = getChildComponent();
+    Component child = getComponent();
     if (child instanceof PlugInServesCluster) { // old-style compatability until we do more porting
 
       PlugInServesCluster plugin = (PlugInServesCluster) child;
-      PluginManager parent = (PluginManager) getParentComponent();
+      PluginManagerForBinder parent = (PluginManagerForBinder) getContainer();
 
+      /*
       theLDM = parent.getLDM();
       theLDMF = theLDM.getFactory();
-      
+      */
       plugin.load(null); // hack - shouldn't have any argument at all any more
 
+      /*
       // this should get replaced with an LDM Service
       if (plugin instanceof PrototypeProvider) {
         parent.addPrototypeProvider((PrototypeProvider)plugin);
@@ -61,6 +63,8 @@ public class PluginAdapterBinder extends PluginBinder
       if (plugin instanceof LatePropertyProvider) {
         parent.addLatePropertyProvider((LatePropertyProvider)plugin);
       }
+      */
+
       setThreadingModel(createThreadingModel());
       startThreadingModel();
     }
@@ -69,6 +73,7 @@ public class PluginAdapterBinder extends PluginBinder
   // 
   // LDM access
   //
+  /*
   protected LDMServesPlugIn theLDM = null;
 
   public final LDMServesPlugIn getLDM() {
@@ -83,7 +88,7 @@ public class PluginAdapterBinder extends PluginBinder
   public final Factory getFactory(String s) {
     return theLDM.getFactory(s);
   }
-  
+  */
 
   protected final PlugInAdapter getPlugInAdapter() {
     return (PlugInAdapter)getPlugin();

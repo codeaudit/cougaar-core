@@ -1,5 +1,38 @@
 2001-07-18  Michael Thome  <mthome@bbn.com>
 
+	* PluginManager
+	Implement a real ContainerAPI proxy so that binders cannot
+	downcast PluginManager and gain expanded access to the manager.
+	Of particular concern were the set operations - e.g. without this,
+	a binder could explore the local component hierarchy freely.
+
+	* DefaultPluginBinderFactory
+	Renamed PluginBinderFactory to DefaultPluginBinderFactory to be
+	less judgmental.
+
+	* PluginAdapter, PluginAdapterBinder
+	Abstract out a placeholder LDM service for the real one to
+	simplify overly complex PluginBindingSite and some avoid some
+	back-door support for PluginAdapter.  This eliminates the last of
+	the direct calls into cluster from PluginAdapter and allows
+	fully-capable non-pluginadapter implementations.
+
+	* ContainerSupport
+	Make getBinderFactoryProxy abstract, forcing concrete classes to
+	implement it explicitly.  This makes the default behavior much
+	more likely to be secure. Matching updates in existing
+	containers. 
+
+	* ContainerAPI, Binder, etc
+	Binders now talk to the containing component via ContainerAPI.
+	This makes the interaction across this boundary much safer and
+	controllable.  It also sets the stage for filtering binders and
+	wrapping binders.  Various Binder implementations were updated to
+	match the new interface.
+
+	* BindingSite
+	No longer extends Service - not required and may confuse matters.
+
 	* ComponentDescription
 	Changed interepretation of insertion point slightly, added name
 	information. 
@@ -17,6 +50,7 @@
 	verbose mode.
 
 2001-06-15 Beth DePass <bdepass@bbn.com>
+	
 	* ClusterImpl, SharedPlugInManager, SharedThreadingService,
 	PlugInAdaper, etc
 	Move PlugIn shared threading to a service.  SharedPlugInManager

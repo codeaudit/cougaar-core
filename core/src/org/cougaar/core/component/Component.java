@@ -17,6 +17,8 @@ import java.util.*;
  * any number of additional (possibly mediated) client/server 
  * relationships.
  * <p>
+ * A component must implement the childAPI required by it's container.
+ * <p>
  * Construction of a component consists of the following steps:
  * 1. zero-argument constructor is called.
  * 2. if a ComponentDescription is being used to create the

@@ -30,6 +30,7 @@ import java.lang.reflect.*;
  **/
 public class AgentManager 
   extends ContainerSupport
+  implements ContainerAPI
 {
     public AgentManager() {
     if (!loadComponent(new AgentBinderFactory())) {
@@ -69,7 +70,7 @@ public class AgentManager
     return AgentBindingSite.class;
   }
 
-  protected Object getBinderFactoryProxy() {
+  protected ContainerAPI getBinderFactoryProxy() {
     return this;
   }
 

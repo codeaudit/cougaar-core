@@ -24,9 +24,13 @@ import java.net.URL;
  * Most Binder implementations will know
  * both the plugin (client) that they are "Binding" and the 
  * ServiceProvider for which they are implementing the BindingSite.
+ * <p>
+ * Binders must implement whatever Binder control interface required by the
+ * associated Container and implement or delegate a refinement of BindingSite
+ * to be called by the bound component.
  **/
 
-public interface Binder extends BindingSite 
+public interface Binder // extends BindingSite 
 {
 }
 

@@ -17,6 +17,12 @@ import java.util.*;
  * ComponentDescription instances, depending on the Container.
  * <p>
  * ContainingComponent is similar to BeanContext.
+ * <p>
+ * The Container will implement or delegate to an implementation of 
+ * a ContainerAPI callable by associated Binders (and BinderFactories).
+ * In turn, any Container may invoke a required BinderAPI on any of its
+ * associated Binders.
+ *
  * @see java.beans.beancontext.BeanContext
  **/
 public interface Container extends Component, Collection

@@ -4,23 +4,16 @@ import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ContainerAPI;
 
 public class MessageTransportServerBinder 
     extends BinderSupport
     implements MessageTransportServerBindingSite
 {
-    private Container container;
-
-    public MessageTransportServerBinder(Container container,
+    public MessageTransportServerBinder(Object container,
 					Component child)
     {
-	super(null, container, child);
-	this.container = container;
-    }
-
-    // not present yet (?) in BinderSupport
-    Container getContainer() {
-	return container;
+	super((ContainerAPI) container, child);
     }
 
     public void deliverMessage(Message m) {
@@ -41,15 +34,15 @@ public class MessageTransportServerBinder
     // Also allow downcalls from parent, but don't advertise this
     // method in the declared interface (not public)
     void routeMessage(Message m) {
-	((MessageTransport) getChildComponent()).routeMessage(m);
+	((MessageTransport) getComponent()).routeMessage(m);
     }
 
     void registerClient(MessageTransportClient client) {
-	((MessageTransport) getChildComponent()).registerClient(client);
+	((MessageTransport) getComponent()).registerClient(client);
     }
 
     boolean addressKnown(MessageAddress address) {
-	return ((MessageTransport) getChildComponent()).addressKnown(address);
+	return ((MessageTransport) getComponent()).addressKnown(address);
     }
 
 

@@ -15,7 +15,7 @@ import java.util.*;
  * (Container) to child Component relationship API, e.g. the API of a 
  * parent which a child may invoke.
  **/
-public interface BindingSite extends Service
+public interface BindingSite  // extends Service
 {
   //
   // service request API

@@ -263,12 +263,11 @@ public abstract class ContainerSupport
   }
 
   /** Specifies an object to use as the "parent" proxy object
-   * for otherwise unbound BinderFactory instances.  If not
-   * overridden, it just returns the container itself, which 
-   * requires a high degree of trust with all local BinderFactories.
+   * for otherwise unbound BinderFactory instances.
+   * This will be either be the Container itself (this) or a
+   * simple proxy for the container so that BinderFactory instances
+   * cannot downcast the object to get additional privileges.
    **/
-  protected Object getBinderFactoryProxy() {
-    return this;
-  }
+  abstract protected ContainerAPI getBinderFactoryProxy();
 
 }

@@ -52,6 +52,11 @@ import org.cougaar.util.StateModelException;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.UnaryPredicate;
 
+import org.cougaar.domain.planning.ldm.*;
+import org.cougaar.core.component.*;
+import org.cougaar.core.blackboard.*;
+import org.cougaar.core.cluster.*;
+
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
   implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, PluginBase
@@ -86,6 +91,14 @@ public abstract class PlugInAdapter
   //
   // extra services
   //
+
+  private LDMService ldmService = null;
+  public final void setLDMService(LDMService s) {
+    ldmService = s;
+  }
+  protected final LDMService getLDMService() {
+    return ldmService;
+  }
 
   // metrics service
 
@@ -260,8 +273,18 @@ public abstract class PlugInAdapter
   public void load(Object object) throws StateModelException {
     ((PluginAdapterBinder) getBindingSite()).setThreadingChoice(getThreadingChoice());
     super.load(object);
-    theLDM = ((PluginAdapterBinder) getBindingSite()).getLDM();
-    theLDMF = ((PluginAdapterBinder) getBindingSite()).getFactory();
+    theLDM = getLDMService().getLDM();
+    theLDMF = getLDMService().getFactory();
+
+    if (this instanceof PrototypeProvider) {
+      getLDMService().addPrototypeProvider((PrototypeProvider)this);
+    }
+    if (this instanceof PropertyProvider) {
+      getLDMService().addPropertyProvider((PropertyProvider)this);
+    }
+    if (this instanceof LatePropertyProvider) {
+      getLDMService().addLatePropertyProvider((LatePropertyProvider)this);
+    }
     
     //ServiceBroker sb = getBindingSite().getServiceBroker();
   }
@@ -601,19 +624,19 @@ public abstract class PlugInAdapter
   //
 
   protected final LDMServesPlugIn getLDM() {
-    return ((PluginAdapterBinder) getBindingSite()).getLDM();
+    return theLDM;
   }
 
   protected final RootFactory getFactory() {
-    return ((PluginAdapterBinder) getBindingSite()).getFactory();
+    return theLDMF;
   }
   /** @deprecated Use getFactory() */
   protected final RootFactory getLdmFactory() {
-    return ((PluginAdapterBinder) getBindingSite()).getFactory();
+    return getFactory();
   }
 
   protected final Factory getFactory(String s) {
-    return ((PluginAdapterBinder) getBindingSite()).getFactory(s);
+    return getLDMService().getFactory(s);
   }
   
   
@@ -690,17 +713,17 @@ public abstract class PlugInAdapter
       return PlugInAdapter.this.getCluster();
     }
     public LDMServesPlugIn getLDM() {
-      return ((PluginAdapterBinder) getBindingSite()).getLDM();
+      return getLDMService().getLDM();
     }
     public RootFactory getFactory() {
-      return ((PluginAdapterBinder) getBindingSite()).getFactory();
+      return getLDMService().getFactory();
     }
     /** @deprecated use getFactory() **/
     public RootFactory getLdmFactory() {
-      return ((PluginAdapterBinder) getBindingSite()).getFactory();
+      return getLDMService().getFactory();
     }
     public Factory getFactory(String s) {
-      return ((PluginAdapterBinder) getBindingSite()).getFactory(s);
+      return getLDMService().getFactory(s);
     }
     public ClusterIdentifier getClusterIdentifier() {
       return ((PluginAdapterBinder) getBindingSite()).getClusterIdentifier();
