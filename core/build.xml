@@ -1,0 +1,31 @@
+<project name="core" default="compile" basedir=".">
+
+<property name="build.xml" value="${basedir}/build/build_common.xml"/>
+
+<property name="module" value="core"/>
+
+<target name="compile">
+  <ant antfile="${build.xml}" target="compile"/>
+</target>
+
+<target name="jar">
+  <ant antfile="${build.xml}" target="jar"/>
+</target>
+
+<target name="clean">
+  <ant antfile="${build.xml}" target="clean"/>
+</target>
+
+<target name="compile.all">
+  <ant antfile="${build.xml}" target="compile.all"/>
+</target>
+
+<target name="jar.all">
+  <ant antfile="${build.xml}" target="jar.all"/>
+</target>
+
+<target name="clean.all">
+  <ant antfile="${build.xml}" target="clean.all"/>
+</target>
+
+</project>
