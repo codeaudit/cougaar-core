@@ -29,10 +29,14 @@ package org.cougaar.core.blackboard;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.cougaar.core.agent.service.MessageSwitchService;
@@ -204,9 +208,12 @@ final class Distributor {
   /** True if rehydration occurred at startup **/
   private boolean didRehydrate = false;
 
-  /** Envelopes that have been distributed during a
-   * persistence epoch. **/
-  private final List epochEnvelopes = new ArrayList();
+  /**
+   * Tuples that have been distributed during a persistence ecoch.
+   * This could use a regular equals-based map, but for persistence
+   * consistency we use an =='s based identity map.
+   **/
+  private final Map epochTuples = new IdentityHashMap();
 
   /** The message manager for this cluster **/
   private MessageManager myMessageManager = null;
@@ -449,7 +456,7 @@ final class Distributor {
         didRehydrate = true;
         postRehydrationEnvelopes = new ArrayList();
         postRehydrationEnvelopes.addAll(rr.undistributedEnvelopes);
-        epochEnvelopes.addAll(rr.undistributedEnvelopes);
+        addEpochEnvelopes(rr.undistributedEnvelopes);
       }
     } else {
       myMessageManager = new MessageManagerImpl(false);
@@ -868,7 +875,7 @@ final class Distributor {
       if (postRehydrationEnvelopes != null) {
         postRehydrationEnvelopes.addAll(outboxes);
       }
-      epochEnvelopes.addAll(outboxes);
+      addEpochEnvelopes(outboxes);
       if (!needToPersist && getMessageManager().needAdvanceEpoch()) {
         needToPersist = true;
       }
@@ -918,6 +925,102 @@ final class Distributor {
 
     return result;
   } // end of distribute()
+
+  private void addEpochEnvelopes(List envelopes) {
+    //epochEnvelopes.addAll(rr.undistributedEnvelopes);
+    for (int i = 0, n = envelopes.size(); i < n; i++) {
+      Envelope e = (Envelope) envelopes.get(i);
+      List tuples = e.getRawDeltas();
+      for (int j = 0, m = tuples.size(); j < m; j++) {
+        EnvelopeTuple tuple = (EnvelopeTuple) tuples.get(j);
+        addEpochTuple(tuple);
+      }
+    }
+  }
+
+  private void addEpochTuple(EnvelopeTuple tuple) {
+    Object o = tuple.getObject();
+    if (tuple.isBulk()) {
+      Collection c = (Collection) o;
+      for (Iterator iter = c.iterator(); iter.hasNext(); ) {
+        Object o2 = iter.next();
+        EnvelopeTuple oldTuple = (EnvelopeTuple)
+          epochTuples.get(o2);
+        if (oldTuple == null) {
+          // N + A => A (common)
+          epochTuples.put(o2, new AddEnvelopeTuple(o2));
+        } else {
+          // A + A => A (error?)
+          // C + A => C (error?)
+          // R + A => R (error?)
+        }
+      }
+    } else {
+      EnvelopeTuple oldTuple = (EnvelopeTuple)
+        epochTuples.get(o);
+      if (oldTuple == null) {
+        // N + A => A  (common, ~25%)
+        // N + C => C  (rare)
+        // N + R => R  (rare)
+        epochTuples.put(o, tuple); 
+      } else if (oldTuple.isAdd()) {
+        if (tuple.isRemove()) {
+          // A + R => N  (common, ~10%)
+          epochTuples.remove(o); 
+        } else {
+          // A + A => A  (error?)
+          // A + C => A  (common, ~60%)
+        }
+      } else if (oldTuple.isChange()) {
+        if (tuple.isAdd()) {
+          // C + A => C  (error?)
+        } else {
+          // C + C => C  (common, ~2%)
+          // C + R => R  (rare)
+          epochTuples.put(o, tuple); 
+        }
+      } else {
+        // R + A => R  (error?)
+        // R + C => R  (error?  probably a race)
+        // R + R => R  (error?)
+      }
+    }
+  }
+
+  private List getEpochEnvelopes() {
+    //return epochEnvelopes;
+    // create a list with a single envelope that contains all our
+    // epochTuples, where the list's "clear()" clears our tuple
+    // map for early GC.
+    final Envelope e = new Envelope();
+    e.getRawDeltas().addAll(epochTuples.values());
+    List ret = 
+      new AbstractList() {
+        private Envelope envelope = e;
+        public int size() {
+          return (envelope == null ? 0 : 1);
+        }
+        public Object get(int index) {
+          if (index != 0 || envelope == null) {
+            throw new IndexOutOfBoundsException(
+                "Index: "+index+", Size: "+size());
+          }
+          return envelope;
+        }
+        public void clear() {
+          if (envelope != null) {
+            envelope = null;
+            epochTuples.clear();
+          }
+        }
+      };
+    return ret;
+  }
+
+  private void clearEpochEnvelopes() {
+    //epochEnvelopes.clear();
+    epochTuples.clear();
+  }
 
   public void restartAgent(MessageAddress cid) {
     assert !Thread.holdsLock(distributorLock);
@@ -1041,7 +1144,9 @@ final class Distributor {
     assert transactionCount == 1 : transactionCount;
     assert persistFlags != 0 : persistFlags;
     nodeBusyService.setAgentBusy(true);
+    List epochEnvelopes;
     synchronized (distributorLock) {
+      epochEnvelopes = getEpochEnvelopes();
       for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
         Subscriber subscriber = (Subscriber) iter.next();
         if (subscriber.isReadyToPersist()) {
@@ -1062,7 +1167,7 @@ final class Distributor {
           quiescenceMonitor.getState());
     }
     synchronized (distributorLock) {
-      epochEnvelopes.clear();
+      clearEpochEnvelopes();
       subscriberStates.clear();
       needToPersist = false;
       lastPersist = System.currentTimeMillis();
