@@ -87,7 +87,7 @@ public abstract class ComponentPlugin
    **/
   public void setParameter(Object param) {
     if (param != null) {
-      parameters = (Vector) param;
+      parameters = (Collection) param;
     } else {
       parameters = new Vector(0);
     }
