@@ -403,12 +403,33 @@ public class Subscriber implements BlackboardService {
   private List idleEnvelopes = new ArrayList();        // Alternate list
   private Object inboxLock = new Object();             // For synchronized access to inboxes
 
-  /** Called by non-client methods to add an envelope to our inboxes */
+  /**
+   * Called by non-client methods to add an envelope to our inboxes.
+   * This is complicated because we wish to avoid holding envelopes
+   * when there is no possibility of their ever being used (no
+   * subscriptions). A simple test of the number of subscriptions is
+   * insufficient because, if a transaction is open, new subscriptions
+   * may be created that, in later transactions, need to receive the
+   * envelopes. So the test includes a test of transactions being
+   * open. We use transactionLock.tryGetBusyFlag() because we can't
+   * block and the fact that the lock is busy, is a sufficient
+   * indication that we must put the new envelopes into the inbox. It
+   * may turn out that the inbox did not need to be stuffed (because
+   * there will not be any subscriptions), but this is handled when
+   * the transaction is closed where the inbox is emptied if there are
+   * no subscriptions.
+   **/
   public void receiveEnvelopes(List envelopes) {
+    boolean signalActivity = false;
     synchronized (inboxLock) {
-      pendingEnvelopes.addAll(envelopes);
+      boolean notBusy = transactionLock.tryGetBusyFlag();
+      if (getSubscriptionCount() > 0 || !notBusy) {
+        pendingEnvelopes.addAll(envelopes);
+        signalActivity = true;
+      }
+      if (notBusy) transactionLock.freeBusyFlag();
     }
-    signalExternalActivity();
+    if (signalActivity) signalExternalActivity();
   }
 
   public boolean isBusy() {
@@ -802,8 +823,16 @@ public class Subscriber implements BlackboardService {
       } else {
         //System.err.println("Closed nested transaction.");
       }        
-      if (! transactionLock.freeBusyFlag()) {
-        throw new SubscriberException("Failed to close an owned transaction");
+      // If no subscriptions we will never process the inbox. Empty
+      // it to conserve memory instead of waiting for
+      // openTransaction
+      synchronized (inboxLock) {
+        if (getSubscriptionCount() == 0) {
+          pendingEnvelopes.clear();
+        }
+        if (! transactionLock.freeBusyFlag()) {
+          throw new SubscriberException("Failed to close an owned transaction");
+        }
       }
     } else {
       throw new SubscriberException("Attempt to close a non-open transaction");
@@ -1054,5 +1083,4 @@ public class Subscriber implements BlackboardService {
   public Subscriber getSubscriber() {
     return this;
   }
-
 }
