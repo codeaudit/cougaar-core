@@ -400,7 +400,7 @@ public class AEViewerServlet extends HttpServlet {
     // Sort the OperatingModePolicies
     List policies = (List) support.queryBlackboard(omPolicyPredicate);
     try {
-      Collections.sort(policies, omComparator);
+      Collections.sort(policies, ompComparator);
     } catch (ClassCastException e) {
       e.printStackTrace();
     }
