@@ -1,3 +1,63 @@
+2002-06-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/log/LoggingServiceWithPrefix.java:
+	Bug #1533 -- Identification of malfunctioning agents is hard.
+	Implementation of LoggingService that prefixes a string to every
+	log message. The current implementation wraps a LoggingService
+	with a version that adds a prefix.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	Bug #1540
+	Partial fix catches the exception and prints the name of the
+	operating mode. Does not identify the agent or the plays since
+	that information is not available without a significant rewrite.
+
+	* org/cougaar/core/blackboard/Subscriber.java:
+	Bug #1536 -- persistence files contain NotPersistable objects
+	Comment out debug code that can't work when NotPersistable objects
+	are actually persisted.
+
+	* org/cougaar/core/blackboard/Publishable.java:
+	Bug #1539 -- Publishable.isPersistable ignored
+	Expand documentation somewhat with an example.
+
+	* org/cougaar/core/adaptivity/OMCBase.java:
+	Bug #1540 -- Message could be more explanatory on setValue exception
+	Print OperatingMode name.
+
+2002-06-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/OperatingModeServiceProvider.java:
+	Bug #1517 -- late published OMs are not updated by AE
+	Add listener support. Listeners are publishChanged when operating
+	mode status changes.
+
+	* org/cougaar/core/adaptivity/OperatingModePolicyManager.java:
+	Bug #1430 -- Infinite loop in AE
+	Refine predicate to only accept InterAgentOperatingModePolicy
+	instances that have a source (are in the target blackboard).
+
+	* org/cougaar/core/adaptivity/LateOperatingModePlugin.java:
+	Bug #1517 -- late published OMs are not updated by AE
+	Plugin for testing that late published operating modes are
+	correctly updated by the AE.
+
+	* org/cougaar/core/adaptivity/ConditionServiceProvider.java:
+	Bug #1517
+	Synchronize access to listener list to avoid
+	ConcurrentModificationException.
+
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Bug #1517 -- late published OMs are not updated by AE
+	Create, subscribe to, and add OperatingModeService.Listener. Only
+	list for added operating modes. Update operating modes when a new
+	one is added.
+
+	* org/cougaar/core/service/OperatingModeService.java:
+	Bug #1517 -- late published OMs are not updated by AE
+	Add Listener interface so AE can listen to changes to the
+	operating mode service (adds).
+
 2002-06-18  Mike Thome  <mthome@ul020-dmz.ul.isotic.org>
 
 	* Subscriber
