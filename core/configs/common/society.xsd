@@ -115,7 +115,6 @@
         <xs:element name="facet" type="facetType"/>
       </xs:choice>
     </xs:sequence>
-    <xs:attribute name="order" type="xs:decimal" />
     <xs:attribute name="name" type="xs:string" use="required"/>
     <xs:attribute name="class" type="xs:string" use="optional"
         default="org.cougaar.core.agent.SimpleAgent"/>
@@ -126,7 +125,6 @@
     <xs:sequence>
       <xs:element name="argument" type="argumentType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute name="order" type="xs:decimal" />
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
     <xs:attribute name="priority" use="optional" default="COMPONENT">
@@ -149,9 +147,7 @@
   <!-- Type for component arguments: ordered strings -->
   <xs:complexType name="argumentType">
     <xs:simpleContent>
-      <xs:extension base="xs:string">
-        <xs:attribute name="order" type="xs:decimal" />
-      </xs:extension>
+      <xs:extension base="xs:string"/>
     </xs:simpleContent>
   </xs:complexType>
 

@@ -48,7 +48,8 @@ import javax.xml.parsers.ParserConfigurationException;
  * 
  * </pre>
  **/
-public class XMLComponentInitializerServiceProvider implements ServiceProvider {
+public class XMLComponentInitializerServiceProvider
+  implements ServiceProvider {
 
   private String filename;
   private String nodename;
@@ -58,26 +59,29 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
    * "allComponents" is a mapping of of the name of the parent component (String)
    *   to a HashMap.  There is one entry in here for each agent (including the node agent)
    * This HashMap is a mapping of insertion point container names (ie the  insertion
-   *   point truncated at the last '.') -- a String -- to a TreeSet. The tree set 
-   *   contains the list of components to be inserted at this container.
-   * This TreeSet is an ordered list of HashMaps. Each HashMap is wrapped in an OrderedThing
-   *   to accommodate its order. Each HashMap maps property names 
+   *   point truncated at the last '.') -- a String -- to a ArrayList. The list 
+   *   contains an ordered list of components to be inserted at this container.
+   * This ArrayList is an ordered list of HashMaps. Each HashMap maps property names 
    *   (String) like "insertionpoint" to String values. A special value in the HashMap is
-   *   "arguments" which maps to a TreeSet of strings (wrapped in OrderedThing objects)
+   *   "arguments" which maps to a ArrayList of strings (ordered)
    *   that are the component's arguments. 
    */
 
   private static String insertionPointContainer(String insertionPoint) {
     return insertionPoint.substring(0, insertionPoint.lastIndexOf('.'));
   }
-    
+
   public XMLComponentInitializerServiceProvider() {
     this.logger = Logging.getLogger(getClass());
 
     filename = System.getProperty("org.cougaar.society.file", "society.xml");
     nodename = System.getProperty("org.cougaar.node.name", "Node");
     if (logger.isShoutEnabled())
-      logger.shout("Will initialize node from XML file " + filename + ", creating node " + nodename);
+      logger.shout(
+        "Will initialize node from XML file "
+          + filename
+          + ", creating node "
+          + nodename);
 
     try {
       parseFile();
@@ -87,12 +91,16 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
   }
 
   private void parseFile()
-    throws FileNotFoundException, IOException, SAXException, ParserConfigurationException {
-      MyHandler handler = new MyHandler();
-      SAXParserFactory factory = SAXParserFactory.newInstance();
-      factory.setValidating(true);
-      factory.setNamespaceAware(true);
-      SAXParser saxParser = factory.newSAXParser();
+    throws
+      FileNotFoundException,
+      IOException,
+      SAXException,
+      ParserConfigurationException {
+    MyHandler handler = new MyHandler();
+    SAXParserFactory factory = SAXParserFactory.newInstance();
+    factory.setValidating(true);
+    factory.setNamespaceAware(true);
+    SAXParser saxParser = factory.newSAXParser();
 
     InputStream istr = ConfigFinder.getInstance().open(filename);
     if (istr == null) {
@@ -108,157 +116,163 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
   }
 
   public Object getService(
-			   ServiceBroker sb,
-			   Object requestor,
-			   Class serviceClass) {
+    ServiceBroker sb,
+    Object requestor,
+    Class serviceClass) {
     if (serviceClass != ComponentInitializerService.class) {
       throw new IllegalArgumentException(
-					 getClass() + " does not furnish " + serviceClass);
+        getClass() + " does not furnish " + serviceClass);
     }
     return new ComponentInitializerServiceImpl();
   }
 
   public void releaseService(
-			     ServiceBroker sb,
-			     Object requestor,
-			     Class serviceClass,
-			     Object service) {
+    ServiceBroker sb,
+    Object requestor,
+    Class serviceClass,
+    Object service) {
   }
 
   private class ComponentInitializerServiceImpl
     implements ComponentInitializerService {
 
-    private ComponentDescription[] noComponents =
-      new ComponentDescription[0];
+    private ComponentDescription[] noComponents = new ComponentDescription[0];
 
     /**
      * Get the descriptions of components with the named parent having
      * an insertion point below the given container insertion point.
      **/
     public ComponentDescription[] getComponentDescriptions(
-							   String parentName,
-							   String containerInsertionPoint)
+      String parentName,
+      String containerInsertionPoint)
       throws InitializerException {
 
-      if (logger.isInfoEnabled()) 
+      if (logger.isInfoEnabled())
         logger.info(
-		    "Looking for direct sub-components of "
-		    + parentName
-		    + " just below insertion point "
-		    + containerInsertionPoint);
+          "Looking for direct sub-components of "
+            + parentName
+            + " just below insertion point "
+            + containerInsertionPoint);
 
       ComponentDescription[] ret = noComponents;
       try {
-	HashMap byParent = (HashMap)allComponents.get(parentName);
-	if (byParent != null) {
-	  TreeSet byInsertionPoint = (TreeSet)byParent.get(containerInsertionPoint);
-	  if (byInsertionPoint != null) {
-	    ret = makeComponents(byInsertionPoint);
-	  }
-	}
+        HashMap byParent = (HashMap) allComponents.get(parentName);
+        if (byParent != null) {
+          ArrayList byInsertionPoint =
+            (ArrayList) byParent.get(containerInsertionPoint);
+          if (byInsertionPoint != null) {
+            ret = makeComponents(byInsertionPoint);
+          }
+        }
       } catch (Exception e) {
-	throw new InitializerException(
-				       "getComponentDescriptions("
-				       + parentName
-				       + ", "
-				       + containerInsertionPoint
-				       + ")",
-				       e);
+        throw new InitializerException(
+          "getComponentDescriptions("
+            + parentName
+            + ", "
+            + containerInsertionPoint
+            + ")",
+          e);
       }
-      if (logger.isInfoEnabled()) 
+      if (logger.isInfoEnabled())
         logger.info("Returning " + ret.length + " component descs");
+      if (logger.isDebugEnabled())
+        dump(ret);
       return ret;
     }
   }
   
-  private ComponentDescription[] makeComponents(Set components) {
+  private void dump(ComponentDescription[] comps) {
+    for (int i=0; i<comps.length; i++) {
+      StringBuffer output = new StringBuffer();
+      output.append("  COMP(");
+      output.append(i);
+      output.append("):");
+      output.append(comps[i].toString());
+      logger.debug(output.toString());
+    }
+  }
+
+  private ComponentDescription[] makeComponents(List components) {
     ComponentDescription[] ret = new ComponentDescription[components.size()];
     Iterator componentEnum = components.iterator();
     int i = 0;
     while (componentEnum.hasNext()) {
-      OrderedThing orderedComponent = (OrderedThing)componentEnum.next();
-      HashMap componentProps = (HashMap) orderedComponent.thing;
+      HashMap componentProps = (HashMap) componentEnum.next();
       String name = (String) componentProps.get("name");
       String classname = (String) componentProps.get("class");
       String priority = (String) componentProps.get("priority");
       String insertionPoint = (String) componentProps.get("insertionpoint");
       String order = (String) componentProps.get("order");
-      TreeSet args = (TreeSet) componentProps.get("arguments");
+      ArrayList args = (ArrayList) componentProps.get("arguments");
       Vector vParams = null;
       if ((args != null) && (args.size() > 0)) {
         vParams = new Vector(args.size());
         Iterator argsIter = args.iterator();
         while (argsIter.hasNext()) {
-          OrderedThing arg = (OrderedThing) argsIter.next();
-          vParams.addElement(arg.thing);
+          vParams.addElement(argsIter.next());
         }
       }
       ret[i++] =
-	makeComponentDesc(vParams, classname, priority, insertionPoint);
+        makeComponentDesc(vParams, classname, priority, insertionPoint);
     }
     return ret;
   }
 
   private ComponentDescription makeComponentDesc(
-						 Vector vParams,
-						 String classname,
-						 String priority,
-						 String insertionPoint) {
-    return new ComponentDescription(
-				    classname,
-				    insertionPoint,
-				    classname,
-				    null,
-				    //codebase
-				    vParams, //params
-				    null, //certificate
-				    null, //lease
-				    null, //policy
-				    ComponentDescription.parsePriority(priority));
+    Vector vParams,
+    String classname,
+    String priority,
+    String insertionPoint) {
+    return new ComponentDescription(classname, insertionPoint, classname, null,
+    //codebase
+    vParams, //params
+    null, //certificate
+    null, //lease
+    null, //policy
+    ComponentDescription.parsePriority(priority));
   }
-
-
-
-
 
   private class MyHandler extends DefaultHandler {
 
     boolean thisNode = false;
     Map currentComponent;
     String currentParent;
-    double currentComponentOrder;
-    double currentArgumentOrder;
     CharArrayWriter chars;
-    private final String stdPriority = ComponentDescription.priorityToString(ComponentDescription.PRIORITY_STANDARD);
+    private final String stdPriority =
+      ComponentDescription.priorityToString(
+        ComponentDescription.PRIORITY_STANDARD);
 
     public void startElement(
-			     String namespaceURI,
-			     String localName,
-			     String qName,
-			     Attributes atts)
+      String namespaceURI,
+      String localName,
+      String qName,
+      Attributes atts)
       throws SAXException {
       if (localName.equals("node")) {
-	String thisName = atts.getValue("name");
-	if (nodename.equals(thisName)) {
-	  if (logger.isDebugEnabled())
-	    logger.debug("started element for this node: " + thisName);
+        String thisName = atts.getValue("name");
+        if (nodename.equals(thisName)) {
+          if (logger.isDebugEnabled())
+            logger.debug("started element for this node: " + thisName);
           currentParent = thisName;
           HashMap nodeComponents = new HashMap();
-          allComponents.put(thisName, nodeComponents); // Space for node agent components
-          nodeComponents.put(insertionPointContainer(Agent.INSERTION_POINT), new TreeSet());
-	  thisNode = true;
-	} else {
+          allComponents.put(thisName, nodeComponents);
+          // Space for node agent components
+          nodeComponents.put(
+            insertionPointContainer(Agent.INSERTION_POINT),
+            new ArrayList());
+          thisNode = true;
+        } else {
           currentParent = null;
-	  thisNode = false;
-	}
+          thisNode = false;
+        }
       }
       if (!thisNode)
-	return;
+        return;
       if (localName.equals("agent")) {
-	
+
         String name = atts.getValue("name");
-	if (logger.isDebugEnabled())
-	  logger.debug("started element for agent " + name);
+        if (logger.isDebugEnabled())
+          logger.debug("started element for agent " + name);
         assert(allComponents.get(name) == null);
         currentParent = name;
         // make a new place for the agent's components
@@ -266,42 +280,42 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
         allComponents.put(name, byInsertionPoint);
 
         // Add this agent to the Node
-	Map currentAgent = new HashMap();
-	currentAgent.put("class", atts.getValue("class"));
+        Map currentAgent = new HashMap();
+        currentAgent.put("class", atts.getValue("class"));
         currentAgent.put("insertionpoint", Agent.INSERTION_POINT);
         currentAgent.put("priority", stdPriority);
-        TreeSet param = new TreeSet();
+        ArrayList param = new ArrayList();
         currentAgent.put("name", name);
-        param.add(new OrderedThing(0.0, name));
+        param.add(name);
         currentAgent.put("arguments", param);
-        byInsertionPoint = (Map)allComponents.get(nodename);
-        Set theNodesAgents = (Set)byInsertionPoint.get(insertionPointContainer(Agent.INSERTION_POINT));
-        theNodesAgents.add(new OrderedThing(0.0, currentAgent));
+        byInsertionPoint = (Map) allComponents.get(nodename);
+        List theNodesAgents =
+          (List) byInsertionPoint.get(
+            insertionPointContainer(Agent.INSERTION_POINT));
+        theNodesAgents.add(currentAgent);
       } else if (localName.equals("component")) {
-        
-	currentComponent = new HashMap();
-	currentComponentOrder =
-	  Double.parseDouble(atts.getValue("order"));
-	currentComponent.put("name", atts.getValue("name"));
-	currentComponent.put("class", atts.getValue("class"));
-	currentComponent.put("priority", atts.getValue("priority"));
+
+        currentComponent = new HashMap();
+        currentComponent.put("name", atts.getValue("name"));
+        currentComponent.put("class", atts.getValue("class"));
+        currentComponent.put("priority", atts.getValue("priority"));
         String insertionPoint = atts.getValue("insertionpoint");
         currentComponent.put("insertionpoint", insertionPoint);
-	currentComponent.put("order", atts.getValue("order"));
-        Map byInsertionPoint = (Map)allComponents.get(currentParent);
-        Set componentList = (Set)byInsertionPoint.get(insertionPointContainer(insertionPoint)); 
+        Map byInsertionPoint = (Map) allComponents.get(currentParent);
+        List componentList =
+          (List) byInsertionPoint.get(insertionPointContainer(insertionPoint));
         if (componentList == null) {
-          componentList = new TreeSet();
-          byInsertionPoint.put(insertionPointContainer(insertionPoint), componentList);
+          componentList = new ArrayList();
+          byInsertionPoint.put(
+            insertionPointContainer(insertionPoint),
+            componentList);
         }
-        componentList.add(new OrderedThing(currentComponentOrder, currentComponent));
-        
+        componentList.add(currentComponent);
+
       } else if (localName.equals("argument")) {
-	assert(currentComponent != null);
-	assert(chars == null);
-	currentArgumentOrder =
-	  Double.parseDouble(atts.getValue("order"));
-	chars = new CharArrayWriter();
+        assert(currentComponent != null);
+        assert(chars == null);
+        chars = new CharArrayWriter();
       }
 
     }
@@ -312,45 +326,39 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
     public void characters(char[] ch, int start, int length)
       throws SAXException {
       if (!thisNode)
-	return;
+        return;
       if (chars != null)
-	chars.write(ch, start, length);
+        chars.write(ch, start, length);
     }
 
     /**
      * @see org.xml.sax.ContentHandler#endElement(String, String, String)
      */
-    public void endElement(
-			   String namespaceURI,
-			   String localName,
-			   String qName)
+    public void endElement(String namespaceURI, String localName, String qName)
       throws SAXException {
       if (!thisNode)
-	return;
+        return;
       if (localName.equals("argument")) {
-	TreeSet argumentList =
-	  (TreeSet) currentComponent.get("arguments");
-	if (argumentList == null) {
-	  argumentList = new TreeSet();
-	  currentComponent.put("arguments", argumentList);
-	}
-	String argument = chars.toString().trim();
-	argumentList.add(
-			 new OrderedThing(currentArgumentOrder, argument));
-	chars = null;
-	currentArgumentOrder = -1;
+        ArrayList argumentList = (ArrayList) currentComponent.get("arguments");
+        if (argumentList == null) {
+          argumentList = new ArrayList();
+          currentComponent.put("arguments", argumentList);
+        }
+        String argument = chars.toString().trim();
+        argumentList.add(argument);
+        chars = null;
       } else if (localName.equals("component")) {
-	assert(currentComponent != null);
-	currentComponent = null;
+        assert(currentComponent != null);
+        currentComponent = null;
       } else if (localName.equals("agent")) {
         currentParent = nodename;
-	if (logger.isDebugEnabled())
-	  logger.debug("finished a agent");
+        if (logger.isDebugEnabled())
+          logger.debug("finished a agent");
       } else if (localName.equals("node")) {
-	thisNode = false;
+        thisNode = false;
         currentParent = null;
-	if (logger.isDebugEnabled())
-	  logger.debug("finished a node");
+        if (logger.isDebugEnabled())
+          logger.debug("finished a node");
       }
     }
 
@@ -370,29 +378,6 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
       super.warning(exception);
     }
 
-  }
-
-  private static class OrderedThing implements Comparable {
-    public OrderedThing(double order, Object thing) {
-      this.order = order;
-      this.thing = thing;
-    }
-    public double order;
-    public Object thing;
-    /**
-     * @see java.lang.Comparable#compareTo(Object)
-     */
-    public int compareTo(Object o) {
-      OrderedThing other = (OrderedThing) o;
-      if (this.order < other.order)
-	return -1;
-      if (this.order > other.order)
-	return 1;
-      // Can't let them be equal or they collide in the TreeSet
-      if (this.thing.hashCode() < other.thing.hashCode())
-        return -1;
-      return 1;
-    }
   }
 
 }
