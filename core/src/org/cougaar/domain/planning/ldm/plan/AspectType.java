@@ -75,14 +75,10 @@ public interface AspectType {
   /** The extent to which a task has been satisfactorily completed **/
   int READINESS = 12;
 
-  /** The last core-defined aspect type **/
-  int N_CORE_ASPECTS = 12;
-
   int _LAST_ASPECT = READINESS;
   int _ASPECT_COUNT = _LAST_ASPECT+1;
 
   int[] _STANDARD_ASPECTS = {0,1,2,3,4,5,6,7,8,9,10,11,12};
-  
   
   // extended AspectTypes that are NOT handled by default
   // AllocationResultAggregators or AllocationResultDistributors
@@ -92,6 +88,9 @@ public interface AspectType {
 
   /** The time at which a task should arrive at the POD **/
   int POD_DATE = 14;
+
+  /** The number of core-defined aspect types **/
+  int N_CORE_ASPECTS = 15;
 
   String[] ASPECT_STRINGS = {
     "START_TIME",
