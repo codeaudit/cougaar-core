@@ -21,16 +21,18 @@
 
 package org.cougaar.core.plugin.freeze;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.PluginBase;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
@@ -40,6 +42,50 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.ThreadListener;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This plugin implements the actual freezing of an agent. Freezing is
+ * accomplished by preventing the ThreadService from running certain
+ * classes of components. The relevant object is the so-called
+ * "consumer" of the ThreadService. For plugins, this is the plugin
+ * itself. For other uses of the ThreadService, the "consumer" may be
+ * different.
+ *
+ * Generally, all plugins except those involved in the freeze process
+ * are prevented from running, but this can be modified by rules
+ * specified as plugin parameters. The rules are applied in this
+ * order:
+ *
+ * "allow " + FreezePlugin.class.getName()
+ * first plugin parameter
+ * second plugin parameter
+ * etc.
+ * "deny " + PluginBase.class.getName()
+ *
+ * The form of the rule is one of the words, "deny" or "allow",
+ * followed by a space followed by the name of the class or interface
+ * that should be affected by the rule. The rule matches if it is
+ * legal to assign the consumer to a variable of the type named in the
+ * rule. This includes the class of the consumer itself, all
+ * interfaces implemented by the consumer or their superinterfaces,
+ * all superclasses of the consumer, and all interfaces implemented by
+ * any superclass or their superinterfaces.
+ *
+ * The first rule is built-in and cannot be overridden. It allows all
+ * the freeze plugins to run while frozen. This is obviously necessary
+ * to handle thawing a frozen society. The last rule is always added
+ * and prevents all plugins that extend PluginBase from running except
+ * those allowed by preceding rules. While it is possible to write a
+ * component that behaves as a plugin but does not extend PluginBase,
+ * this does not happen in practice.
+ *
+ * The effect of this final rule can be nullified by including rules
+ * (as plugin parameters) that specifically allow individual plugins.
+ * Indeed, the whole class of plugins extending PluginBase could be
+ * allowed. It is possible to prevent anything from being frozen in an
+ * agent by making the first plugin parameter be "allow
+ * java.lang.Object". Since every class extends java.lang.Object, this
+ * will allow every class to run.
+ **/
 public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
   private static class BadGuy {
     private Thread thread;
@@ -71,7 +117,7 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
   private boolean isFreezing = false;
   private ThreadListenerService threadListenerService;
   private ThreadControlService threadControlService;
-  private Set goodClasses = new HashSet();
+  private Rules rules = new Rules();
   private Set badGuys = new HashSet(); // Records the bad guys we have
                                        // seen enter the run state
                                        // that have not left the run
@@ -91,7 +137,7 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
       public boolean execute(Object o) {
         Schedulable schedulable = (Schedulable) o;
         Object consumer = schedulable.getConsumer();
-        return isGoodGuy(consumer);
+        return rules.allow(consumer);
       }
     };
 
@@ -106,14 +152,14 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
   public synchronized void threadQueued(Schedulable schedulable, Object consumer) {}
   public synchronized void threadDequeued(Schedulable schedulable, Object consumer) {}
   public synchronized void threadStarted(Schedulable schedulable, Object consumer) {
-//     if (logger.isDebugEnabled()) logger.debug("threadStarted: " + consumer);
-    if (!isGoodGuy(consumer)) {
+    if (logger.isDetailEnabled()) logger.detail("threadStarted: " + consumer);
+    if (!rules.allow(consumer)) {
       badGuys.add(new BadGuy(schedulable, Thread.currentThread()));
     }
   }
   public synchronized void threadStopped(Schedulable schedulable, Object consumer) {
-//     if (logger.isDebugEnabled()) logger.debug("threadStopped: " + consumer);
-    if (!isGoodGuy(consumer)) {
+    if (logger.isDetailEnabled()) logger.detail("threadStopped: " + consumer);
+    if (!rules.allow(consumer)) {
       Thread currentThread = Thread.currentThread();
       badGuys.remove(new BadGuy(schedulable, currentThread));
     }
@@ -129,26 +175,21 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
     threadControlService.setQualifier(null);
   }
 
-  private boolean isGoodGuy(Object consumer) {
-    if (goodClasses.contains(consumer.getClass())) return true;
-    if (consumer instanceof PluginBase) return false;
-    return true;
-  }
-
   public void setupSubscriptions() {
     super.setupSubscriptions();
+    rules.addAllowRule(FreezePlugin.class);
+    // Hope this is a List cause order is important.
     Collection params = getParameters();
     for (Iterator i = params.iterator(); i.hasNext(); ) {
-      String className = (String) i.next();
+      String ruleSpec = (String) i.next();
       try {
-        goodClasses.add(Class.forName(className));
+        rules.addRule(ruleSpec);
       } catch (Exception e) {
-        logger.error("Bad parameter: " + className, e);
+        logger.error("Bad parameter: " + ruleSpec, e);
       }
     }
-    goodClasses.add(FreezeTargetPlugin.class);
-    goodClasses.add(FreezeNodePlugin.class);
-    goodClasses.add(FreezeSocietyPlugin.class);
+    rules.addDenyRule(PluginBase.class);
+    if (logger.isInfoEnabled()) logger.info("rules=" + rules);
     ServiceBroker sb = getServiceBroker();
     threadControlService = (ThreadControlService)
       sb.getService(this, ThreadControlService.class, null);
@@ -170,12 +211,13 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
           logger.debug(relaySubscription.getRemovedCollection().size() + " removes");
         }
         if (isFrozen) {
+          if (logger.isDebugEnabled()) logger.debug("thawed");
           unsetThreadLimit();       // Unset thread limit
           isFrozen = false;
         }
       } else {
         if (!isFrozen) {
-          if (logger.isDebugEnabled()) logger.debug("freeze");
+          if (logger.isDebugEnabled()) logger.debug("freezing");
           setThreadLimit();
           isFrozen = true;
           isFreezing = true;
