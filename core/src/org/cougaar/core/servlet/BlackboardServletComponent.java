@@ -52,6 +52,8 @@ public class BlackboardServletComponent extends SimpleServletComponent {
     scheduler = ss;
   }
 
+  public SchedulerService getSchedulerService () { return scheduler; }
+
   /** just like the core, except I can create a servlet support subclass */
   protected SimpleServletSupport createSimpleServletSupport(Servlet servlet) {
     SimpleServletSupport support = super.createSimpleServletSupport(servlet);
