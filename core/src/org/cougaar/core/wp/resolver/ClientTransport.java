@@ -507,28 +507,72 @@ implements Component
       create = true;
     } else {
       Object sentObj = e.getObject();
-      if (sentObj == null ? query == null : sentObj.equals(query)) {
+      Object sentO = sentObj;
+      if (sentO instanceof NameTag) {
+        sentO = ((NameTag) sentO).getObject();
+      }
+      Object q = query;
+      if (q instanceof NameTag) {
+        q = ((NameTag) q).getObject();
+      }
+      if (sentO == null ? q == null : sentO.equals(q)) {
         // already sent?
       } else {
         if (lookup) {
-          if (query == null) {
-            // promote from validate to full-lookup
+          if (q == null) {
+            // promote from uid-based validate to full-lookup
             create = true;
-          } else if (query instanceof UID) {
-            // already sent a full-lookup
+          } else if (q instanceof UID) {
+            if (sentO == null) {
+              // already sent a full-lookup
+            } else {
+              // possible bug in cache manager, which is supposed to
+              // prevent unequal uid-based validate races.  The uids
+              // may have different owners, so we can't figure out
+              // the correct order by comparing uid counters.
+              if (logger.isErrorEnabled()) {
+                logger.error(
+                  "UID mismatch in WP uid-based lookup validation, "+
+                  "sentObj="+sentObj+", query="+query+", entry="+
+                  e.toString(now));
+              }
+            }
           } else {
             // invalid
           }
         } else {
-          Object q = query;
-          if (q instanceof NameTag) {
-            q = ((NameTag) q).getObject();
-          }
-          if (q instanceof UID) {
-            // already sent a full-renew
-          } else if (q instanceof Record) {
-            // promote from uid-renew to full-renew
-            create = true;
+          UID sentUID = 
+            (sentO instanceof UID ? ((UID) sentO) :
+             sentO instanceof Record ? ((Record) sentO).getUID() :
+             null);
+          UID qUID = 
+            (q instanceof UID ? ((UID) q) :
+             q instanceof Record ? ((Record) q).getUID() :
+             null);
+          if (sentUID != null &&
+              qUID != null &&
+              sentUID.getOwner().equals(qUID.getOwner())) {
+            if (sentUID.getId() < qUID.getId()) {
+              // send the query, since it has a more recent uid.
+              // Usually q is a full-renew that should replace an
+              // pending sentObj (either uid-renew or full-renew)
+              // that's now stale.
+              create = true;
+            } else if (
+                sentUID.getId() == qUID.getId() &&
+                sentO instanceof UID &&
+                q instanceof Record) {
+              // promote from uid-renew to full-renew.  This is
+              // necessary to handle a "lease-not-known" response
+              // while a uid-renew is pending.
+              create = true;
+            } else {
+              // ignore this query.  Usually the uids match, q is
+              // a uid-renew, and we're still waiting for the
+              // sentObj full-renew.  This also handles rare race
+              // conditions, where the order of multi-threaded queries
+              // passing through the lease manager is jumbled.
+            }
           } else {
             // invalid
           }
