@@ -21,10 +21,9 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.io.PrintWriter;
 import java.util.Iterator;
+import java.io.PrintWriter;
 import java.util.Set;
-
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -43,7 +42,9 @@ public class RemoteAgentServlet
 	super(sb);
     }
 
-    protected String   myPath() {
+
+
+    protected String myPath() {
 	return "/metrics/remote/agent";
     }
 
@@ -70,8 +71,8 @@ public class RemoteAgentServlet
 	out.print("<table border=1>\n");
 	out.print("<tr><b>");
 	out.print("<td><b>AGENTS</b></td>");
-	out.print("<td><b>Heard</b></td>");
-	out.print("<td><b>Spoke</b></td>");
+	out.print("<td><b>Spoke To</b></td>");
+	out.print("<td><b>Heard From</b></td>");
 	out.print("<td><b>Queue</b></td>");
 	out.print("<td><b>MsgTo</b></td>");
 	out.print("<td><b>MsgFrom</b></td>");
@@ -79,6 +80,7 @@ public class RemoteAgentServlet
 	out.print("<td><b>Mbps</b></td>");
 	out.print("</b></tr>");
 
+	long now = System.currentTimeMillis();
 	//Rows
 	Iterator itr = matches.iterator();
 	while (itr.hasNext()) {
@@ -94,26 +96,35 @@ public class RemoteAgentServlet
 						   "AvgQueueLength");
 	    if(queue ==null) 
 		queue= new MetricImpl(new Double(0.00), 0,"units","test");
+
+
 	    Metric heard = metricsService.getValue(agentPath+
-						   "HeardTime");
-	    if(heard ==null) 
+						   "LastHeard");
+	    if (heard ==null) {
 		heard = new MetricImpl(new Double(0.00), 0,"units","test");
+	    }
+
 	    Metric spoke = metricsService.getValue(agentPath+
-						   "SpokeTime");
-	    if(spoke ==null) 
+						   "LastSpoke");
+	    if (spoke ==null) {
 		spoke = new MetricImpl(new Double(0.00), 0,"units","test");
+	    } 
+
 	    Metric msgTo = metricsService.getValue(agentPath+
 						   "MsgTo");
-	    if(msgTo ==null) 
+	    if (msgTo ==null) 
 		msgTo = new MetricImpl(new Double(0.00), 0,"units","test");
+
 	    Metric msgFrom=metricsService.getValue(agentPath+
 						   "MsgFrom");
-	    if(msgFrom ==null) 
+	    if (msgFrom ==null) 
 		msgFrom = new MetricImpl(new Double(0.00), 0,"units","test");
+
 	    Metric mbps=metricsService.getValue(agentPath+
 						"Mbps");
-	    if(mbps ==null) 
+	    if (mbps ==null) 
 		mbps = new MetricImpl(new Double(0.00), 0,"units","test");
+
 
 
 	    //output Row

@@ -19,27 +19,29 @@
  * </copyright>
  */
 
-package org.cougaar.core.mts;
+package org.cougaar.core.qos.metrics;
 
-import java.io.Serializable;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.util.GenericStateModelAdapter;
 
-public interface MessageAttributes extends Serializable, AttributeConstants
+abstract public class QosComponent
+    extends GenericStateModelAdapter
+    implements Component
 {
- 
-    Object getAttribute(String attribute);
 
-    void setAttribute(String attribute, Object value);
-    void removeAttribute(String attribute);
-    void addValue(String attribute, Object value);
-    void pushValue(String attribute, Object value);
-    void removeValue(String attribute, Object value);
+    private BindingSite bindingSite;
+    private ServiceBroker sb;
 
-    void setLocalAttribute(String attribute, Object value);
-    void removeLocalAttribute(String attribute);
-    void addLocalValue(String attribute, Object value);
-    void pushLocalValue(String attribute, Object value);
-    void removeLocalValue(String attribute, Object value);
+    public final void setBindingSite(BindingSite bs) {
+	this.bindingSite = bs;
+	this.sb = bs.getServiceBroker();
+    }
 
-    MessageAttributes cloneAttributes();
+
+    public ServiceBroker getServiceBroker() {
+	return sb;
+    }
 
 }

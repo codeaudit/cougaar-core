@@ -39,6 +39,10 @@ public class MetricImpl implements Metric
 	this.provenance = provenance;
     }
 
+    public String toString() {
+	return "<" +rawValue+ ":" +credibility+ ">";
+    }
+    
     public String stringValue() {
 	return rawValue.toString();
     }

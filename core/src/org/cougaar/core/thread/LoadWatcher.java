@@ -22,6 +22,7 @@
 package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.qos.metrics.Metric;
@@ -90,8 +91,8 @@ public class LoadWatcher
 	    accumulate();
 	    ++outstanding;
 	    if (outstanding >10) 
-		System.err.println("*** Agent outstanding =" +total+ 
-				   " when rights given for " +name);
+		loggingService.debug("Agent outstanding =" +total+ 
+				     " when rights given for " +name);
 
 	}
 
@@ -99,7 +100,7 @@ public class LoadWatcher
 	    accumulate();
 	    --outstanding;
 	    if (outstanding < 0) 
-		System.err.println("*** Agent outstanding =" +total+ 
+		loggingService.debug("Agent outstanding =" +total+ 
 				   " when rights returned for " +name);
 	}
 
@@ -128,9 +129,11 @@ public class LoadWatcher
 
     private HashMap records = new HashMap();
     private MetricsUpdateService metricsUpdateService;
-
+    private LoggingService loggingService;
 
     public LoadWatcher(ServiceBroker sb) {
+	loggingService = (LoggingService)
+	    sb.getService(this, LoggingService.class, null);
 	metricsUpdateService = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
 	ThreadListenerService tls = (ThreadListenerService)
@@ -139,6 +142,7 @@ public class LoadWatcher
 	ThreadService ts = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
 	ts.schedule(new SnapShotter(), 5000, 1000);
+
     }
 
     ConsumerRecord findRecord(String name) {
@@ -176,7 +180,7 @@ public class LoadWatcher
 	rec.incrementOutstanding();
 	++total;
 	if (total >10)
-	    System.err.println("*** total outstanding =" +total+ 
+	    loggingService.debug("total outstanding =" +total+ 
 			       " when rights given for " +consumer);
     }
 		
@@ -185,7 +189,7 @@ public class LoadWatcher
 	rec.decrementOutstanding();
 	--total;
 	if (total < 0) 
-	    System.err.println("*** total outstanding =" +total+ 
+	    loggingService.debug("total outstanding =" +total+ 
 			       " when rights returnd for " +consumer);
    }
 

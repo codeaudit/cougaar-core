@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -18,28 +18,23 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+package org.cougaar.core.qos.metrics;
 
-package org.cougaar.core.mts;
 
-import java.io.Serializable;
+import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.BindingSite;
 
-public interface MessageAttributes extends Serializable, AttributeConstants
+public final class QosBinder 
+    extends BinderSupport
+    implements BindingSite
 {
- 
-    Object getAttribute(String attribute);
+    public QosBinder(BinderFactory bf, Object child) {
+	super(bf, child);
+    }
 
-    void setAttribute(String attribute, Object value);
-    void removeAttribute(String attribute);
-    void addValue(String attribute, Object value);
-    void pushValue(String attribute, Object value);
-    void removeValue(String attribute, Object value);
 
-    void setLocalAttribute(String attribute, Object value);
-    void removeLocalAttribute(String attribute);
-    void addLocalValue(String attribute, Object value);
-    void pushLocalValue(String attribute, Object value);
-    void removeLocalValue(String attribute, Object value);
-
-    MessageAttributes cloneAttributes();
-
+    protected final BindingSite getBinderProxy() {
+	return this;
+    }
 }

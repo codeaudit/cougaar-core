@@ -21,6 +21,7 @@
 
 package org.cougaar.core.qos.metrics;
 
+import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ContainerAPI;
@@ -56,6 +57,11 @@ public final class MetricsServiceProvider
     private MetricsUpdateService updater;
 
     public MetricsServiceProvider() {
+	BinderFactory bf = new QosBinderFactory();
+	if (!attachBinderFactory(bf)) {
+	    throw new RuntimeException("Failed to load the BinderFactory in MetricsServiceProvider");
+	}
+
     }
 
     public void load() {
@@ -63,6 +69,9 @@ public final class MetricsServiceProvider
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
+	NodeControlService ncs = (NodeControlService)
+	    sb.getService(this, NodeControlService.class, null);
+	ServiceBroker rootsb = ncs.getRootServiceBroker();
 	
 	// Make thread services for this layer
 	ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Metrics");
@@ -70,12 +79,12 @@ public final class MetricsServiceProvider
 
 	// Later these two instances will be out child components
 	Start = System.currentTimeMillis();
+
 	try {
 	    Class cl = Class.forName(UPDATER_IMPL_CLASS);
-	    Class[] parameters = { ServiceBroker.class };
-	    Object[] args = { sb };
-	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
-	    updater = (MetricsUpdateService) cons.newInstance(args);
+	    updater = (MetricsUpdateService) cl.newInstance();
+	    add(updater);
+	    rootsb.addService(MetricsUpdateService.class, this);
 	} catch (ClassNotFoundException cnf) {
 	    // qos jar not loaded
 	} catch (Exception ex) {
@@ -85,24 +94,14 @@ public final class MetricsServiceProvider
 
 	try {
 	    Class cl = Class.forName(RETRIEVER_IMPL_CLASS);
-	    Class[] parameters = 
-		{ ServiceBroker.class, MetricsUpdateService.class
-	    };
-	    Object[] args = { sb, updater };
-	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
-	    retriever = (MetricsService) cons.newInstance(args);
+	    retriever = (MetricsService) cl.newInstance();
+	    add(retriever);
+	    rootsb.addService(MetricsService.class, this);
 	} catch (ClassNotFoundException cnf) {
 	    // qos jar not loaded
 	} catch (Exception ex) {
 	    ex.printStackTrace();
 	}
-
-
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
-	ServiceBroker rootsb = ncs.getRootServiceBroker();
-	rootsb.addService(MetricsService.class, this);
-	rootsb.addService(MetricsUpdateService.class, this);
 
 	startSyscondFactory(sb);
 
