@@ -30,8 +30,8 @@ import org.cougaar.util.MoreMath;
  */
  
 public class AspectValue implements AspectType, Serializable, Cloneable {
-  protected int type;
-  protected double value;
+  protected transient int type;
+  protected transient double value;
 
   public AspectValue(int type, double value) {
     if (Double.isNaN(value))
@@ -191,6 +191,16 @@ public class AspectValue implements AspectType, Serializable, Cloneable {
     } else {
       return String.valueOf(aspectType);
     }
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.writeInt(type);
+    stream.writeDouble(value);
+  }
+
+  private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+    type = stream.readInt();
+    value = stream.readDouble();
   }
 
 }

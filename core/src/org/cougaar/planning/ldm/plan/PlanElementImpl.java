@@ -329,6 +329,7 @@ public abstract class PlanElementImpl
     if (stream instanceof org.cougaar.core.persist.PersistenceInputStream) {
         myAnnotation = (Annotation) stream.readObject();
     }
+    pcs = new PropertyChangeSupport(this);
   }
 
   public String toString() {
@@ -381,7 +382,7 @@ public abstract class PlanElementImpl
   }
 
   //dummy PropertyChangeSupport for the Jess Interpreter.
-  public PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+  public transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
   public void addPropertyChangeListener(PropertyChangeListener pcl) {
       pcs.addPropertyChangeListener(pcl);

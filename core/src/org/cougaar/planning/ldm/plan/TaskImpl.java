@@ -660,6 +660,8 @@ public class TaskImpl extends DirectiveImpl
       myPE = (PlanElement) stream.readObject();
     }
     preferences = (ArrayList) stream.readObject();
+
+    pcs = new PropertyChangeSupport(this);
   }
 
   /**
@@ -870,7 +872,7 @@ public class TaskImpl extends DirectiveImpl
 
 
   //dummy PropertyChangeSupport for the Jess Interpreter.
-  public PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+  public transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
   public void addPropertyChangeListener(PropertyChangeListener pcl) {
       pcs.addPropertyChangeListener(pcl);
