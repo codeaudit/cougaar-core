@@ -26,6 +26,8 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.relay.Relay;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * The Condition part of a remotely-controlled Condition. This is the
@@ -177,7 +179,15 @@ public class InterAgentCondition
    * if the new value differs from the current value.
    **/
   public int updateContent(Object content, Relay.Token token) {
-    if (token != owner) throw new IllegalArgumentException("Not owner");
+    if (token != owner) {
+      Logger logger = Logging.getLogger(getClass());
+      if (logger.isInfoEnabled()) {
+        logger.info(
+          "Ignoring \"Not owner\" bug in \"updateContent()\","+
+          " possibly a rehydration bug (token="+
+          token+", owner="+owner+")");
+      }
+    }
     if (content instanceof InterAgentOperatingMode) {
       InterAgentOperatingMode newMode = (InterAgentOperatingMode) content;
       if (getValue().compareTo(newMode.getValue()) != 0) {

@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * A remotely-controlled OperatingModePolicy. Allows a policy manager in one
@@ -155,7 +157,15 @@ public class InterAgentOperatingModePolicy
    * if the new value differs from the current value.
    **/
   public int updateContent(Object content, Relay.Token token) {
-    if (token != owner) throw new IllegalArgumentException("Not owner");
+    if (token != owner) {
+      Logger logger = Logging.getLogger(getClass());
+      if (logger.isInfoEnabled()) {
+        logger.info(
+          "Ignoring \"Not owner\" bug in \"updateContent()\","+
+          " possibly a rehydration bug (token="+
+          token+", owner="+owner+")");
+      }
+    }
     InterAgentOperatingModePolicy newOMP = (InterAgentOperatingModePolicy) content;
     // brute force, no brains
     setPolicyKernel(newOMP.getPolicyKernel());
