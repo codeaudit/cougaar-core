@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterContext;
@@ -47,14 +47,14 @@ import java.util.*;
  * of the FooImpl class.
  */
 public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
-  protected LDMServesPlugIn ldm;
+  protected LDMServesPlugin ldm;
   private ClusterIdentifier cid;
   private long count = 0;
   private HashMap IDHashMap;
   private ClassLoader ldmcl;
   private UIDServer myUIDServer;
   
-  public ClusterObjectFactoryImpl(LDMServesPlugIn ldm, ClusterIdentifier cluster) {
+  public ClusterObjectFactoryImpl(LDMServesPlugin ldm, ClusterIdentifier cluster) {
     this.ldm = ldm;
     myUIDServer = ((ClusterContext)ldm).getUIDServer();
     cid = cluster;
@@ -62,7 +62,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     IDHashMap = new HashMap(89);
   }
   
-  public LDMServesPlugIn getLDM() { return ldm; }
+  public LDMServesPlugin getLDM() { return ldm; }
 
   protected Class loadClass(String className) throws ClassNotFoundException {
     if (ldmcl == null) {

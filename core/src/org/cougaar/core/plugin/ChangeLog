@@ -21,20 +21,20 @@
 
 2001-08-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* PlugInAdapter.java:
+	* PluginAdapter.java:
 	Implement suspend/resume to call the threadingModel
 	suspend/resume. Unregister interest in the subscription watcher.
 
 2001-08-16  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* util/PlugInAdapter.java:
+	* util/PluginAdapter.java:
 	Modify suspend() and resume() for the SingleThread model to wait
 	for the thread to actually respond to the suspend or resume
 	request.
 
 2001-05-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* util/PlugInHelper.java:
+	* util/PluginHelper.java:
 	Update allocation results only when the change reports include a
 	PlanElementImpl.ReportedResultChangeReport instance. This should
 	be the only case in which it is necessary to update the estimated
@@ -50,7 +50,7 @@
 
 2001-04-06  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* util/PlugInHelper.java:
+	* util/PluginHelper.java:
 	Applies Bug #196
 	Use isEqual instead of == to compare allocation results. Reduces
 	extraneous plugin activation.
@@ -63,7 +63,7 @@
 
 2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* util/PlugInHelper.java:
+	* util/PluginHelper.java:
 	Applies to Bug #196
 	Use AllocationResultHelper for createEstimatedAllocationResult.
 	That code is now in AllocationResultHelper.
@@ -75,7 +75,7 @@
 
 1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
-	* PlugInAdapter
+	* PluginAdapter
 	Provide default implementation of
 	SubscriptionClient.getSubscriptionClientName of the form:
 	<classname>[<params>]. This simplifies adapting plugins to changes
@@ -83,16 +83,16 @@
 
 1999-02-10  Michael Thome  <mthome@bbn.com>
 
-	* EssentialPlugIn 
+	* EssentialPlugin 
 	Make various method protected and/or final.  Update subscription
 	methods to take/return Subscription instead of Collection.
 
-	* EssentialPlugInTest
+	* EssentialPluginTest
  	modernize
 	
 1999-05-11 Ben Levy <blevy@bbn.com>
 
 
-* SingleThreadedPlugIn
+* SingleThreadedPlugin
 Added wake up method signatures based on ALP scenario time and system time.
 No implementations yet!!!!

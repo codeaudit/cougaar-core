@@ -32,7 +32,7 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.SchedulerService;
 import org.cougaar.core.blackboard.SubscriptionWatcher;
 
-import org.cougaar.core.agent.ClusterServesPlugIn;
+import org.cougaar.core.agent.ClusterServesPlugin;
 import org.cougaar.core.agent.ClusterIdentifier;
 
 import org.cougaar.util.ConfigFinder;

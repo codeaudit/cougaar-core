@@ -23,7 +23,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 import org.cougaar.planning.ldm.plan.Allocation;
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * TriggerAction to make given allocation object
@@ -39,7 +39,7 @@ public class TriggerMakeStaleAction implements TriggerAction {
   }
 
   // Make given allocation object stale when fired
-  public void Perform(Object[] objects, PlugInDelegate pid) {
+  public void Perform(Object[] objects, PluginDelegate pid) {
     // Make my_allocation stale  (don't really need the passed in object array)
     my_allocation.setStale(true);
     pid.publishChange(my_allocation);

@@ -33,9 +33,9 @@ import org.cougaar.core.component.*;
  **/
 
 public class DemoControlServiceProvider implements ServiceProvider {
-  private ClusterServesPlugIn cluster;
+  private ClusterServesPlugin cluster;
 
-  public DemoControlServiceProvider(ClusterServesPlugIn cluster) {
+  public DemoControlServiceProvider(ClusterServesPlugin cluster) {
     this.cluster = cluster;
   }
 

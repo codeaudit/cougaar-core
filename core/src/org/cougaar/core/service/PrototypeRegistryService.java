@@ -40,7 +40,7 @@ public interface PrototypeRegistryService extends Service {
    * without having to make calls to PrototypeProvider.getPrototype(aTypeName).
    * Note that the lifespan of a prototype in the prototype registry may
    * be finite (or even zero!).
-   * Note: this method should be used only by PrototypeProvider LDM PlugIns.
+   * Note: this method should be used only by PrototypeProvider LDM Plugins.
    **/
   void cachePrototype(String aTypeName, Asset aPrototype);
 
@@ -82,7 +82,7 @@ public interface PrototypeRegistryService extends Service {
   Asset getPrototype(String aTypeName);
 
   /** Notify LDM of a newly created asset.  This is generally for the use
-   * of LDMPlugIns, but others may use it to request that propertygroups
+   * of LDMPlugins, but others may use it to request that propertygroups
    * of the new Asset be filled in from various data sources.
    **/
   void fillProperties(Asset anAsset);

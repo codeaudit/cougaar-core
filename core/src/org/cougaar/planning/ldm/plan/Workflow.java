@@ -108,7 +108,7 @@ public interface Workflow
   /** Should subtasks be rescinded by the infrastructure when the
    * expansion this workflow is attached to is rescinded?
    * Defaults to true.
-   * Set to false (meaning the PlugIn is responsible for rescinding or
+   * Set to false (meaning the Plugin is responsible for rescinding or
    * reattaching the workflow and its subtasks to an expansion and parent task)
    * by NewWorkflow.setIsPropagatingToSubtasks(isProp);
    * @return boolean 

@@ -34,7 +34,7 @@ import org.cougaar.core.domain.*;
 public interface LDMService 
   extends Service 
 {
-  LDMServesPlugIn getLDM();
+  LDMServesPlugin getLDM();
   RootFactory getFactory();
   Factory getFactory(String s);
 

@@ -25,7 +25,7 @@ import org.cougaar.core.blackboard.PrivilegedClaimant;
 
 /** Assessor interface.
  *  This is a marker interface for Assessor and Assessor like plugins
- *  ( to include the TriggerManagerPlugIn) that may rescind or change
+ *  ( to include the TriggerManagerPlugin) that may rescind or change
  *  logplan objects another plugin may have created.
  *
  * @author  ALPINE <alpine-software@bbn.com>

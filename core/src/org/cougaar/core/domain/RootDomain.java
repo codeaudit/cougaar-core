@@ -22,7 +22,7 @@
 package org.cougaar.core.domain;
 
 import java.util.*;
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.blackboard.LogPlan;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
@@ -42,7 +42,7 @@ public class RootDomain
   /**
    * construct an LDM factory to serve the specified LDM instance.
    **/
-  public Factory getFactory(LDMServesPlugIn ldm) {
+  public Factory getFactory(LDMServesPlugin ldm) {
     return new RootFactory(ldm, ldm.getClusterIdentifier());
   }
 

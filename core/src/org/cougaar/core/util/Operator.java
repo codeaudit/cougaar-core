@@ -41,7 +41,7 @@ import org.w3c.dom.Document;
  * </ul>
  * <p>
  * The comparison methods will be used for automated analysis, such as
- * the ability to generate <code>PlugIn</code> "contracts" of 
+ * the ability to generate <code>Plugin</code> "contracts" of 
  * publish/subscribe behavior.
  * <p>
  * <b>Note:</b> The default implementation of <code>Operator</code> 

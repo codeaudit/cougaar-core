@@ -41,7 +41,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
 
   public PrototypeRegistry() {}
 
-  /** set of PrototypeProvider LDM PlugIns **/
+  /** set of PrototypeProvider LDM Plugins **/
   // might want this to be prioritized lists
   private final List prototypeProviders = new ArrayList();
 
@@ -51,7 +51,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
     }
   }
 
-  /** set of PropertyProvider LDM PlugIns **/
+  /** set of PropertyProvider LDM Plugins **/
   private final List propertyProviders = new ArrayList();
   public void addPropertyProvider(PropertyProvider prov) {
     synchronized (propertyProviders) {

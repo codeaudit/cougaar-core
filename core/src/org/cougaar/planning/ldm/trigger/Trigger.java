@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * A Trigger is an object containing information indicating an action
@@ -58,7 +58,7 @@ public class Trigger implements java.io.Serializable {
   /**
    * Is this trigger fully filled in, and if so, is the monitor ready to run?
    */
-  public boolean ReadyToRun(PlugInDelegate pid) { 
+  public boolean ReadyToRun(PluginDelegate pid) { 
     // note don't worry if the tester is null, we could have a monitor and an action.
     if ( (my_monitor != null) &&  (my_action != null) 
       && (my_monitor.ReadyToRun(pid)) ) {
@@ -77,7 +77,7 @@ public class Trigger implements java.io.Serializable {
   /**
    * Run the trigger : if the condition exists on the objects, fire the action
    */
-  public void Execute(PlugInDelegate pid) {
+  public void Execute(PluginDelegate pid) {
     Object[] objects = my_monitor.getAssociatedObjects();
     if (my_tester != null) {
       if (my_tester.Test(objects)) {

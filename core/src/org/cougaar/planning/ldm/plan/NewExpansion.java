@@ -33,7 +33,7 @@ import java.util.List;
 
 public interface NewExpansion extends Expansion {
   
-  /** Called by an Expander PlugIn to get the latest copy of the allocationresults
+  /** Called by an Expander Plugin to get the latest copy of the allocationresults
    *  for each subtask.
    *  Information is stored in a List which contains a SubTaskResult for each subtask.  
    *  Each of the SubTaskResult objects contain the following information:

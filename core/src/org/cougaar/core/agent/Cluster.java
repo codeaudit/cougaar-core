@@ -33,14 +33,14 @@ import org.cougaar.core.blackboard.*;
  *
  * Actual Cluster implementation are likely to implement more standard
  * modules directly.  For example, org.cougaar.core.agent.ClusterImpl
- * also implements LDMServesPlugIn, ClusterContext, and IMessageTransport.
+ * also implements LDMServesPlugin, ClusterContext, and IMessageTransport.
  **/
 
 public interface Cluster extends ClusterStateModel,
   ClusterServesClusterManagement,
   ClusterServesMessageTransport,
   ClusterServesLogicProvider,
-  ClusterServesPlugIn
+  ClusterServesPlugin
 {
 }
 

@@ -63,8 +63,8 @@ public class DefaultPluginBinderFactory extends BinderFactorySupport
   {
     protected Object instantiateClass(Class cc) {
       Object o;
-      if (PlugIn.class.isAssignableFrom(cc)) {
-        o = new StatelessPlugInAdapter(getPurePlugIn(cc));
+      if (Plugin.class.isAssignableFrom(cc)) {
+        o = new StatelessPluginAdapter(getPurePlugin(cc));
       } else {
         o = super.instantiateClass(cc);
       }
@@ -76,14 +76,14 @@ public class DefaultPluginBinderFactory extends BinderFactorySupport
   // class hackery for old-style pure plugin caching
   //
 
-  private static final HashMap purePlugIns = new HashMap(11);
-  private static PlugIn getPurePlugIn(Class c) {
-    synchronized (purePlugIns) {
-      PlugIn plugin = (PlugIn)purePlugIns.get(c);
+  private static final HashMap purePlugins = new HashMap(11);
+  private static Plugin getPurePlugin(Class c) {
+    synchronized (purePlugins) {
+      Plugin plugin = (Plugin)purePlugins.get(c);
       if (plugin == null) {
         try {
-          plugin = (PlugIn) c.newInstance();
-          purePlugIns.put(c, plugin);
+          plugin = (Plugin) c.newInstance();
+          purePlugins.put(c, plugin);
         } catch (Exception e) {
           e.printStackTrace();
         }

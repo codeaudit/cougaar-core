@@ -98,7 +98,7 @@ import org.cougaar.core.plugin.PrototypeProvider;
 import org.cougaar.core.plugin.PropertyProvider;
 
 // domain and factory support
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.Domain;
 import org.cougaar.core.domain.DomainManager;
 import org.cougaar.core.service.DomainService;
@@ -131,7 +131,7 @@ import org.cougaar.core.persist.Persistence;
 import org.cougaar.util.PropertyParser;
 
 /**
- * Implementation of Agent which creates a PlugInManager and Blackboard and 
+ * Implementation of Agent which creates a PluginManager and Blackboard and 
  * provides basic services to Agent Components.
  * <p>
  * <pre>
@@ -156,7 +156,7 @@ import org.cougaar.util.PropertyParser;
  */
 public class ClusterImpl 
   extends Agent
-  implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
+  implements Cluster, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
   // services, in order of "load()"
   private MessageTransportService messenger;
@@ -200,12 +200,12 @@ public class ClusterImpl
   private static boolean idleVerbose = false; // don't be verbose
   private static long idleVerboseInterval = 60*1000L; // 1 minute
   private static long maxIdleInterval;
-  private static boolean usePlugInLoader = false;
+  private static boolean usePluginLoader = false;
   private static boolean showTraffic = true;
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
-    usePlugInLoader=PropertyParser.getBoolean("org.cougaar.core.agent.pluginloader", false);
+    usePluginLoader=PropertyParser.getBoolean("org.cougaar.core.agent.pluginloader", false);
     idleInterval=PropertyParser.getInt("org.cougaar.core.agent.idleInterval", 5000);
     maxIdleInterval = (idleInterval+(idleInterval/10));
     showTraffic=PropertyParser.getBoolean("org.cougaar.core.agent.showTraffic", true);
@@ -972,13 +972,13 @@ public class ClusterImpl
     return myClusterIdentity_;
   }
 
-  public LDMServesPlugIn getLDM() {
+  public LDMServesPlugin getLDM() {
     return this;
   }
 
   public ClassLoader getLDMClassLoader() {
-    if (usePlugInLoader) {
-      return PlugInLoader.getInstance().getClassLoader();
+    if (usePluginLoader) {
+      return PluginLoader.getInstance().getClassLoader();
     } else {
       ClassLoader cl = this.getClass().getClassLoader();
       if (cl == null) {
@@ -1161,7 +1161,7 @@ public class ClusterImpl
   }
 
   //
-  // COUGAAR Scenario Time management and support for PlugIns
+  // COUGAAR Scenario Time management and support for Plugins
   //
 
   // one timer per vm - conserve threads.

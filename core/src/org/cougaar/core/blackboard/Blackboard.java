@@ -326,7 +326,7 @@ public class Blackboard extends Subscriber
 
   private final List oneEnvelope = new ArrayList(1);
 
-  /** called by transaction close within the thread of PlugIns.  
+  /** called by transaction close within the thread of Plugins.  
    * Also called at the end of an LP pseudo-transaction, but
    * most of the logic here is disabled in that case.
    **/

@@ -28,10 +28,10 @@ package org.cougaar.util;
 public abstract class GenericStateModelAdapter
   implements GenericStateModel {
   
-  /** current reflection of PlugIn run state **/
+  /** current reflection of Plugin run state **/
   private int runState = UNINITIALIZED;
 
-  /** PlugIn State model accessor.
+  /** Plugin State model accessor.
    **/
   public final int getModelState() {
     return runState; 

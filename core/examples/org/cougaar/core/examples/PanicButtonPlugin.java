@@ -214,4 +214,4 @@ public class PanicButtonPlugin
     return myma;
   }
     
-} // end of PanicButtonPlugIn.java
+} // end of PanicButtonPlugin.java

@@ -31,9 +31,9 @@ import org.cougaar.core.component.*;
  **/
 
 public class AlarmServiceProvider implements ServiceProvider {
-  private ClusterServesPlugIn cluster;
+  private ClusterServesPlugin cluster;
 
-  public AlarmServiceProvider(ClusterServesPlugIn cluster) {
+  public AlarmServiceProvider(ClusterServesPlugin cluster) {
     this.cluster = cluster;
   }
 

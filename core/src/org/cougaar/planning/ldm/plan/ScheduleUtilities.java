@@ -292,7 +292,7 @@ public final class ScheduleUtilities {
 
 
 
-  //////////////// For UIPlugIns and ScheduleImpl internals ////////////
+  //////////////// For UIPlugins and ScheduleImpl internals ////////////
 
   /** combine two quantity schedules. **/
   public static final Schedule addSchedules(Schedule aSchedule, 

@@ -49,7 +49,7 @@
 
 2001-11-20  Michael Thome  <mthome@bbn.com>
 
-	* SharedThreading*, SharedPlugInManager
+	* SharedThreading*, SharedPluginManager
 	Dropped.  Fully replaced by SchedulerService - see below.
 
 2001-11-15  Ray Tomlinson  <RTomlinson@bbn.com>
@@ -156,7 +156,7 @@
 
 2001-11-07  Michael Thome  <mthome@bbn.com>
 
-	* PlugInAdapter
+	* PluginAdapter
 	Port to use SchedulerServiceProvider.
 
 	* ComponentPlugin
@@ -321,7 +321,7 @@
 	* org/cougaar/domain/planning/plugin/AssetDataReader.java (Repository):
 	The API of an asset data reader.
 
-	* org/cougaar/domain/planning/plugin/AssetDataPlugInBase.java (Repository):
+	* org/cougaar/domain/planning/plugin/AssetDataPluginBase.java (Repository):
 	Extensively revised to separate out the reader functions into a
 	separate class rather than a subclass. This allows the same plugin
 	to be used for both file-based and database-based asset reading.
@@ -337,7 +337,7 @@
 
 	* org/cougaar/domain/planning/plugin/AssetDataCallback.java (Repository):
 	This new interface defines the API of readers to be used by the
-	AssetDataPlugIn. It allows the reading of asset definitions (e.g.
+	AssetDataPlugin. It allows the reading of asset definitions (e.g.
 	Organizations) from various media.
 
 2001-09-25  Jim Winston  <jwinston@bbn.com>
@@ -385,17 +385,17 @@
 	A service provider implementation that creates InitializerServices
 	using a database.
 
-	* org/cougaar/domain/planning/plugin/AssetDataPlugInFile.java (Repository): 
-	File extension of AssetDataPlugInBase that reads the information
+	* org/cougaar/domain/planning/plugin/AssetDataPluginFile.java (Repository): 
+	File extension of AssetDataPluginBase that reads the information
 	from prototype-ini.dat files. This implements is equivalent to
-	AssetDataPlugIn.	
+	AssetDataPlugin.	
 
-	* org/cougaar/domain/planning/plugin/AssetDataPlugInDB.java (Repository): 
-	Database extension of AssetDataPlugInBase the reads the
+	* org/cougaar/domain/planning/plugin/AssetDataPluginDB.java (Repository): 
+	Database extension of AssetDataPluginBase the reads the
 	information from a database.	
 
-	* org/cougaar/domain/planning/plugin/AssetDataPlugInBase.java (Repository): 
-	Factored out the media independent part of AssetDataPlugIn.	
+	* org/cougaar/domain/planning/plugin/AssetDataPluginBase.java (Repository): 
+	Factored out the media independent part of AssetDataPlugin.	
 
 	* org/cougaar/util/DBProperties.java (Repository):
 	This class extends java.util.Properties and adds functions useful
@@ -481,7 +481,7 @@
 
 2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	* org/cougaar/domain/planning/ldm/DeletionPlugin.java:
 	Add optional parameters for archivingenabled and debug.
 	Expect and handle exceptions when asking for start time or end
 	time of tasks. An exception is thrown if the task has no such
@@ -566,12 +566,12 @@
 	serialization occurs.
 
 2001-08-21  Beth DePass <bdepass@bbn.com>
-	* ClusterImpl, ClusterServesPlugIn, PlugInAdapter
+	* ClusterImpl, ClusterServesPlugin, PluginAdapter
 	Remove old metrics code such as getMetricsSnapshot,
 	getMetrics.  Also remove code related to the MetricsHeartbeat
 	which pushed metrics data to a client. All code should now
 	utilize the various node and agent level metrics services.
-	PlugInAdapter has some remaining getMetricsSnapshot() methods
+	PluginAdapter has some remaining getMetricsSnapshot() methods
 	for backwards compatability that currenlty throw a Runtime
 	Exception when called.  
 
@@ -615,7 +615,7 @@
 
 2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
-	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	* org/cougaar/domain/planning/ldm/DeletionPlugin.java:
 	Redo DeletionSchedulePolicy using RuleParameters exclusively.
 	Explicit scheduled deletion times are LongRuleParameters that have
 	a name with a particular prefix. The rest of the name is the time
@@ -638,7 +638,7 @@
 
 2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
-	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	* org/cougaar/domain/planning/ldm/DeletionPlugin.java:
 	Add DeletionSchedulePolicy to control the timing of deletion
 	activity. This captures the former capability and extends it to
 	control the phasing of the activity -- e.g. weekly deletion occurs
@@ -734,7 +734,7 @@
 2001-07-23  Michael Thome  <mthome@bbn.com>
 
 	* GenericStateModel
-	load() no longer takes an argument.  PlugInAdapter keeps support
+	load() no longer takes an argument.  PluginAdapter keeps support
 	for one-argument load for backward compatability.
 
 	* BindingUtilities
@@ -895,14 +895,14 @@
 
 2001-06-15 Beth DePass <bdepass@bbn.com>
 	
-	* ClusterImpl, SharedPlugInManager, SharedThreadingService,
-	PlugInAdaper, etc
-	Move PlugIn shared threading to a service.  SharedPlugInManager
+	* ClusterImpl, SharedPluginManager, SharedThreadingService,
+	PluginAdaper, etc
+	Move Plugin shared threading to a service.  SharedPluginManager
 	now implements SharedThreadingService.
 	SharedThreadingServiceProvider
-	is responsible for creating a SharedPlugInManager for each
+	is responsible for creating a SharedPluginManager for each
 	cluster. There are no hooks to Shared Threading in Cluster or
-	PlugInManager now.
+	PluginManager now.
 
 
 2001-05-04  Michael Thome  <mthome@bbn.com>
@@ -1057,12 +1057,12 @@
 	
 2001-02-27  Michael Thome  <mthome@bbn.com>
 	
-	* SharedPlugInManager
+	* SharedPluginManager
 	Upped warning time to 2 minutes.  Changable via 
-	-Dorg.cougaar.core.cluster.SharedPlugInManager.warningTime=N where
+	-Dorg.cougaar.core.cluster.SharedPluginManager.warningTime=N where
 	N is milliseconds the plugin has to run before being suspect.
 	Also aded a control for dumping the stats file separate from
-	collection. -Dorg.cougaar.core.cluster.SharedPlugInManager.dumpStatistics=false
+	collection. -Dorg.cougaar.core.cluster.SharedPluginManager.dumpStatistics=false
 
 	* org.cougaar.util.PropertyParser
 	Finally created this utility for parsing out values of various
@@ -1091,20 +1091,20 @@
 
 2001-02-26  Michael Thome  <mthome@bbn.com>
 
-	* SharedPlugInManager
+	* SharedPluginManager
 	I just checked in some new facilities useful for debugging and
 	performance analysis.  The basic idea is to watch how simple
 	plugins are scheduled: we can watch how long "Shared Thread"
 	plugins take to execute and keep statistics.  We also watch to see
 	if plugins block or otherwise fail to return from execute(). 
 	
-	org.cougaar.core.agent.service.sharedthreading.SharedPlugInManager.statistics=false Set
+	org.cougaar.core.agent.service.sharedthreading.SharedPluginManager.statistics=false Set
 	it to true to get periodic dumps of plugin statistics to the file
 	<NODENAME>.statistics in the current directory.  Requires that the
 	watcher be enabled in order to actually get the output, but
 	perhaps some metrics display should get access to the info. 
 
-	org.cougaar.core.agent.service.sharedthreading.SharedPlugInManager.watching=true Set it
+	org.cougaar.core.agent.service.sharedthreading.SharedPluginManager.watching=true Set it
 	to false to disable the watcher (default is enabled). When enabled,
 	will complain whever it sees a plugin run or block for more than
 	15 seconds.  It will also cause the above statistics file(s) to be
@@ -1123,7 +1123,7 @@
 
 2001-02-15  Ray Tomlinson  <rtomlinson@bbn.com>
 
-	* DeletionPlugIn
+	* DeletionPlugin
 	Add DeletionPolicy for specifying deletion delay for classes of
 	Tasks. A DeletionPolicy has three RuleParameters: a
 	PredicateRuleParameter for selecting Tasks, a LongRuleParameter
@@ -1497,7 +1497,7 @@
 
 2000-08-15  Michael Thome  <mthome@bbn.com>
 
-	* QuerySubscription, PlugInAdapter, Subscriber, Distributor, ALPPlan
+	* QuerySubscription, PluginAdapter, Subscriber, Distributor, ALPPlan
 	Make query() avoid most subscription overhead.
 
 2000-08-10  Michael Thome  <mthome@bbn.com>
@@ -1666,7 +1666,7 @@
 	* alp.util.Stack
 	Removed.  Hasn't been used since pre-jdk1.2 days.
 
-	* ClusterServesPlugIn, ClusterImpl
+	* ClusterServesPlugin, ClusterImpl
 	Provide ConfigFinder instance to plugins for forward
 	compatability.  Current implementation just returns the
 	singleton. 
@@ -1743,9 +1743,9 @@
 	Workflows are no longer active subscription objects.
 	All active subscription removal logic that was in WorkflowImpl
 	(that is still valid) has been moved up to ExpansionImpl.
-	SimplePlugIn and the helper classes have been updated/added to
+	SimplePlugin and the helper classes have been updated/added to
 	to not call setispropagating as the default is now true.
-	SimplePlugIn and the helper classes have been updated/added to 
+	SimplePlugin and the helper classes have been updated/added to 
 	with publishAddExpansion(subscriber, planelement) which now publishes the
 	expansion planelement AND any subtasks on the workflow.
 
@@ -1797,10 +1797,10 @@
 	with preferences but no prepositional phrases and which had been
 	serialized.
 
-	* Simplified*PlugIn
-	deprecated.  Better to use SimplePlugIn et al.
+	* Simplified*Plugin
+	deprecated.  Better to use SimplePlugin et al.
 
-	* EssentialPlugIn
+	* EssentialPlugin
 	Removed. Ancient, easy to break, incomplete... gone.
 
 	* TaskImpl, PlanElementImpl
@@ -1849,7 +1849,7 @@
 	changereport collection.  They may need to provide different
 	information at some point.
 
-	* PlugInAdapter, PlugInDelegate
+	* PluginAdapter, PluginDelegate
 	Convenience methods for accessing the new Subscriber publishChange 
 	API.  While plugins could use the Subscriber methods themselves,
 	in practice, most will want to use the slightly-more-convenient
@@ -1914,7 +1914,7 @@
 	Base interface for "Future" PGs: PGs which are temporary
 	placeholders for the "real" PG values.  See examples for more
 	information. Use of futurePG accessors block until "finalized"
-	with a real value.  PlugIns emitting Future_PG instances must
+	with a real value.  Plugins emitting Future_PG instances must
 	have their own thread to prevent deadlocks.
 
 	* Null_PG
@@ -1958,7 +1958,7 @@
 
 2000-03-24  Michael Thome  <mthome@bbn.com>
 
-	* PlugIn*
+	* Plugin*
 	Add a nice little claim/unclaim feature to do the claiming
 	gruntwork for you. Remember to check the return value of claim in
 	case you happen not to have won the race.
@@ -1995,9 +1995,9 @@
 
 2000-03-10  Michael Thome  <mthome@bbn.com>
 
-	* alp.plugin.PlugIn, PlugInContext, et.al.
+	* alp.plugin.Plugin, PluginContext, et.al.
 	Full support for stateless plugins.  See documentation in
-	alp.plugin.PlugIn for information.	
+	alp.plugin.Plugin for information.	
 
 	* RoleSchedule, et.al.
 	Use Collections API, extends TimeSpanSet.
@@ -2067,7 +2067,7 @@
 
 2000-03-07  Michael Thome  <mthome@bbn.com>
 
-	* PlugInAdapter.query()
+	* PluginAdapter.query()
 	API for future light-weight query of LogPlan.
 
 	* UnaryPredicate
@@ -2134,7 +2134,7 @@
 	Moved ClusterMessage, AckDirectiveMessage, DirectiveMessage,
 	AdvanceClockMessage to alp.cluster.
 	
- 	Moved Add/RemovePlugIn to alp.plugin. 
+ 	Moved Add/RemovePlugin to alp.plugin. 
 
 	* alp.ldm.plan.Predicate
 	remove redundant class.
@@ -2153,7 +2153,7 @@
 
 2000-02-29  Michael Thome  <mthome@bbn.com>
 
-	* LDMServesClient, ClusterServesPlugIn
+	* LDMServesClient, ClusterServesPlugin
 	Extends from ClusterContext to reduce redundancy in method specs.
 	It would be nice to get rid of some of the extras in ClusterContext.
 
@@ -2290,9 +2290,9 @@
 
 2000-02-15  Michael Thome  <mthome@bbn.com>
 
-	* PlugInAdapter, *PlugIn
+	* PluginAdapter, *Plugin
 	All plugin classes can now select their threading model at load
-	time.  The whole API is in PlugInAdapter and all the basic
+	time.  The whole API is in PluginAdapter and all the basic
 	subclasses have be greatly simplified to take advantage by
 	choosing whichever threading model they wish.  Provisions are made 
 	to allow a plugin to implement its own threading model, but a
@@ -2305,7 +2305,7 @@
 
 2000-02-11  Ray Tomlinson  <rtomlinson@bbn.com>
 
-	* Expose the database connection through the ClusterServersPlugIn
+	* Expose the database connection through the ClusterServersPlugin
 	API so plugins can use the same database transaction as
 	persistence.
 
@@ -2383,7 +2383,7 @@
 
 2000-01-29  Michael Thome  <mthome@bbn.com>
 
-	* TriggerManagerPlugIn
+	* TriggerManagerPlugin
 	Adjust logic slightly. make it a fat plugin. 
 	Add alp.trigger.verbosity=0.  Set =2 to print progress notes.  
 	Add alp.trigger.minWait=1000 to set minimum wait pause time.
@@ -2591,7 +2591,7 @@
 	* alp.util.StringKey, alp.cluster.*Set
 	Use StringKey to avoid recomputing string hashCodes bazillions of times.
 
-	* SharedPlugInManager
+	* SharedPluginManager
 	Better scheduler: the more recently a plugin ran, the lower it's
 	priority in the queue.
 
@@ -2666,8 +2666,8 @@
 
 1999-11-30  Michael Thome  <mthome@bbn.com>
 
-	* SimplifiedFatPlugIn
-	New plugin base class like SimplifiedPlugIn except has a thread of 
+	* SimplifiedFatPlugin
+	New plugin base class like SimplifiedPlugin except has a thread of 
 	its own.
 
 	* ClusterImpl, AllocationImpl, AssetTransferImpl
@@ -2687,7 +2687,7 @@
 
 1999-11-29  Michael Thome  <mthome@bbn.com>
 
-	* SingleThreadedPlugIn, SharedPlugInManager
+	* SingleThreadedPlugin, SharedPluginManager
 	name Threads.
 
 	* ClusterImpl
@@ -2737,17 +2737,17 @@
 	Minor cleanup. Added alp.cluster.showTraffic=false to turn off the 
 	message sent/received characters (+/-).		
 
-	* TriggerManagerPlugIn
+	* TriggerManagerPlugin
 	Rewrite to clean up the control flow.  Simpler, uses the below
 	changes to be smarter about redundant alarms and proper time to
 	sleep. Never goes to sleep for less than 1sec, though it can still 
 	be wake()ed by logplan changes.
 
-	* PlugInAdapter.PlugInAlarm
-	Added a toString() method to PlugInAlarm so that the verbose modde 
+	* PluginAdapter.PluginAlarm
+	Added a toString() method to PluginAlarm so that the verbose modde 
 	of Timer is actually slightly useful.
 
-	* Alarm, PlugInAdapter, Timer, ScenarioTimer
+	* Alarm, PluginAdapter, Timer, ScenarioTimer
 	Added Alarm.cancel() method.
 
 	* TriggerTimeBasedMonitor
@@ -2759,7 +2759,7 @@
 	triggers that take a while to execute don't end up running
 	constantly. 
 
-	* PlugInAdapter
+	* PluginAdapter
 	New sanity checks on wake* calls.  Complains when the wake times
 	requested are already past.
 
@@ -2864,7 +2864,7 @@
 	* SchedulePredicate
 	Change to use longs instead of Dates.
 
-	* TriggerManagerPlugIn
+	* TriggerManagerPlugin
 	set minimum interval for timer-based triggers to 1000ms.
 
 	* TaskImpl, ScheduleElement
@@ -2951,7 +2951,7 @@
 	current cluster for the instance's prototype asset, we'll create
 	one, expose it to propertyproviders and cache it for later.
 
-	* PlugInAdapter
+	* PluginAdapter
 	Use RealTime alarms for RealTime variations of wake*.  The
 	previous wake* methods are still scenario time.  Timer needs for
 	throttling computation, batching, etc, should be better served by
@@ -2969,7 +2969,7 @@
 	Split Timer into two classes, one for realtime, the other for 
 	scenario time.
 
-	* ClusterImpl, ClusterServesPlugIn
+	* ClusterImpl, ClusterServesPlugin
 	Expose RealTime timers to plugins (and implement them).
 
 	* FDSRegistry
@@ -2993,8 +2993,8 @@
 
 1999-11-01  Michael Thome  <mthome@bbn.com>
 
-	* PlugInLoader
-	Replaced PlugInClassLoader with PlugInLoader.  PIL is a single
+	* PluginLoader
+	Replaced PluginClassLoader with PluginLoader.  PIL is a single
 	facility which uses URLClassLoader to extend the directories used
 	to load plugin classes to .../lib/*, .../plugins/* and
 	.../<product>/lib/* where "*" is any *.{jar,zip,plugin}.  This
@@ -3055,7 +3055,7 @@
 	Also cleaned house - removed some dead code, updated
 	documentation, adjusted system property use.
 	
-	* SharedPlugInManager
+	* SharedPluginManager
 	Try and catch errors.  Many JITs will remain trashed, however, so
 	you'll have to run interpreted if you get this.
 
@@ -3186,7 +3186,7 @@
 
 1999-09-27  Michael Thome  <mthome@bbn.com>
 
-	* PlugInClassLoader
+	* PluginClassLoader
 	Quiet warning (PLUGIN directory missing) since nobody, including
 	alpine, is building "correct" plugins. Also make it work properly
 	under windows, since zip entries do not get their names translated 
@@ -3290,7 +3290,7 @@
 	* ConfigFileFinder
 	removed deprecated locate(String).  Use an open method.
 
-	* PlugInAdapter
+	* PluginAdapter
 	removed deprecated getComponent().  Use getCluster().
 	removed deprecated wake(long).  Use wakeAfter(long).
 
@@ -3313,7 +3313,7 @@
 
 1999-09-17  Michael Thome  <mthome@bbn.com>
 
-	* DefaultPrototypeProviderPlugIn
+	* DefaultPrototypeProviderPlugin
 	disable it by not loading by default.  If someone needs it, it
 	can still be loaded in cluster config files.
 

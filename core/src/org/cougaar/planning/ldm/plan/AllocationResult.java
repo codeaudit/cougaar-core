@@ -228,7 +228,7 @@ public class AllocationResult
   /** @return boolean Represents whether or not the allocation 
    * was a success. If any Constraints were violated by the 
    * allocation, then the isSuccess() method returns false 
-   * and the PlugIn that created the subtask should
+   * and the Plugin that created the subtask should
    * recognize this event. The Expander may re-expand, change the 
    * Constraints or Preferences, or indicate failure to its superior. 
    * The AspectValues of a failed allocation may be set by the Allocator
@@ -388,7 +388,7 @@ public class AllocationResult
   /** @param success Represents whether or not the allocation 
    * was a success. If any Constraints were violated by the 
    * allocation, then the isSuccess() method returns false 
-   * and the PlugIn that created the subtask should
+   * and the Plugin that created the subtask should
    * recognize this event. The Expander may re-expand, change the 
    * Constraints or Preferences, or indicate failure to its superior. 
    */

@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 import org.cougaar.planning.ldm.plan.Task;
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * Trigger action to generate a new task when fired - abstract method
@@ -32,7 +32,7 @@ import org.cougaar.core.plugin.PlugInDelegate;
 public abstract class TriggerMakeTaskAction implements TriggerAction {
 
   // Provide TriggerAction method : publish generated task
-  public void Perform(Object[] objects, PlugInDelegate pid) {
+  public void Perform(Object[] objects, PluginDelegate pid) {
     Task task = GenerateTask(objects, pid);
     if (task != null) {
       pid.publishAdd(task);
@@ -41,10 +41,10 @@ public abstract class TriggerMakeTaskAction implements TriggerAction {
 
   /** Abstract method to generate a new task from the set of objects provided
     * @param objects  The objects to work from
-    * @param pid  The PlugInDelegate to use for things like getClusterObjectFactory.
+    * @param pid  The PluginDelegate to use for things like getClusterObjectFactory.
     * @return Task  The new task.
     */
-  public abstract Task GenerateTask(Object[] objects, PlugInDelegate pid);
+  public abstract Task GenerateTask(Object[] objects, PluginDelegate pid);
     
  
 

@@ -1,18 +1,18 @@
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
-	* SimpleSinkAllocatorPlugIn.java:
+	* SimpleSinkAllocatorPlugin.java:
 	Fix the package name.
 
-	* ReportCreatorPlugIn.java:
+	* ReportCreatorPlugin.java:
 	Fix the package name.
 
-	* MetricsComponentPlugIn.java:
+	* MetricsComponentPlugin.java:
 	Comment out all the code. This file depends on GLM and does not
 	belong in core. I don't know where it belongs.
 
-	* AssetCreationJdbcPlugIn.java:
+	* AssetCreationJdbcPlugin.java:
 	Fix the package name.
 
-	* AlertCreatorPlugIn.java:
+	* AlertCreatorPlugin.java:
 	Fix the package name.
 

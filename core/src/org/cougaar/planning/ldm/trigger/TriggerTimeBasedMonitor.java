@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 import java.util.List;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ public class TriggerTimeBasedMonitor implements TriggerMonitor {
   long my_last_ran;
   long my_msec_interval;
 
-  public TriggerTimeBasedMonitor(long msec_interval, Object[] objects, PlugInDelegate pid) 
+  public TriggerTimeBasedMonitor(long msec_interval, Object[] objects, PluginDelegate pid) 
   {
     my_objects = objects;
     my_msec_interval = msec_interval;
@@ -55,11 +55,11 @@ public class TriggerTimeBasedMonitor implements TriggerMonitor {
     return my_objects;
   }
 
-  public boolean ReadyToRun(PlugInDelegate pid) { 
+  public boolean ReadyToRun(PluginDelegate pid) { 
     return (System.currentTimeMillis() - my_last_ran) > my_msec_interval;
   }
 
-  public void IndicateRan(PlugInDelegate pid) { 
+  public void IndicateRan(PluginDelegate pid) { 
     my_last_ran = System.currentTimeMillis(); 
   }
 

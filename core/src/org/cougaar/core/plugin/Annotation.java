@@ -25,7 +25,7 @@ import java.io.Serializable;
 
 /** 
  * An Infrastructure-opaque type used for tagging various LDM objects 
- * with PlugIn-specific information.  The infrastructure will never copy
+ * with Plugin-specific information.  The infrastructure will never copy
  * or transmit Annotations between clusters, but will save them when 
  * persisting (hence the extends Serializable).
  *

@@ -111,7 +111,7 @@ public class Transaction {
    * keep track of the changing thread to avoid changing the object
    * simultaneously in different transactions. <p>
    *
-   * PlugIns must <em>never</em> call this or changes will not be propagated. <p>
+   * Plugins must <em>never</em> call this or changes will not be propagated. <p>
    *
    * The List returned (if any) may not be reused, as the infrastructure
    * can and will modify it for its purposes. <p>

@@ -32,8 +32,8 @@ import org.cougaar.util.Reflect;
 /**
  * String-based Object factory, using reflection and COUGAAR factories.
  * <p>
- * Pruned from <code>OrgRTDataPlugIn</code>'s parsing and reflective 
- * field setters.  <b>Needs work!</b>  OrtRTDataPlugIn should be
+ * Pruned from <code>OrgRTDataPlugin</code>'s parsing and reflective 
+ * field setters.  <b>Needs work!</b>  OrtRTDataPlugin should be
  * modifed to use this class!  Should support nesting of objects!
  * <p>
  * @see main() for sample usage

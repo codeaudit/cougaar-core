@@ -27,10 +27,10 @@ import java.util.*;
 
 /**
  * A provider of Asset Properties to the LDM.
- * @see org.cougaar.core.plugin.LDMPlugInServesLDM
+ * @see org.cougaar.core.plugin.LDMPluginServesLDM
  **/
 
-public interface LatePropertyProvider extends LDMPlugInServesLDM {
+public interface LatePropertyProvider extends LDMPluginServesLDM {
   /** Allows the LatePropertyProvider to specify the
    * classes of PropertyGroup for which it can provide values. <p>
    *

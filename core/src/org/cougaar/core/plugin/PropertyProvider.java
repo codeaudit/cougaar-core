@@ -26,10 +26,10 @@ import java.util.Enumeration;
 
 /**
  * A provider of Asset Properties to the LDM.
- * @see org.cougaar.core.plugin.LDMPlugInServesLDM
+ * @see org.cougaar.core.plugin.LDMPluginServesLDM
  **/
 
-public interface PropertyProvider extends LDMPlugInServesLDM {
+public interface PropertyProvider extends LDMPluginServesLDM {
   
   /** Notify provider about a newly created asset.
    *

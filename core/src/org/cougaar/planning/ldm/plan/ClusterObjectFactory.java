@@ -34,7 +34,7 @@ import java.util.Enumeration;
 import java.util.List;
 
 /**
- * Top-level Factory for Cluster Objects which can be created by PlugIns
+ * Top-level Factory for Cluster Objects which can be created by Plugins
  * of various sorts.
  * While we do not subset these interfaces at this time, one should
  * keep in mind that a given component may choose to both 
@@ -56,7 +56,7 @@ import java.util.List;
  *
  *
  *
- * @see org.cougaar.component.ComponentServesPlugIn
+ * @see org.cougaar.component.ComponentServesPlugin
  */
 public interface ClusterObjectFactory {
 	

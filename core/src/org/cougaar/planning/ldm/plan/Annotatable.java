@@ -49,7 +49,7 @@ public interface Annotatable
    * Only the creating plugin of an Annotatable object
    * should use this accessor.
    *
-   * PlugIns are encouraged but not required to only
+   * Plugins are encouraged but not required to only
    * set the annotation one.
    *
    * @see org.cougaar.core.plugin.Annotation

@@ -23,7 +23,7 @@
 package org.cougaar.planning.ldm.trigger;
 
 import org.cougaar.planning.ldm.plan.PlanElement;
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * Trigger action to rescind given Plan Element when fired
@@ -35,7 +35,7 @@ public class TriggerRescindAction implements TriggerAction {
 
   public TriggerRescindAction(PlanElement pe) { my_pe = pe; }
 
-  public void Perform(Object[] objects, PlugInDelegate pid) {
+  public void Perform(Object[] objects, PluginDelegate pid) {
     // publishRemove designated plan element  (we don't really need the objects)
     // make sure the PlanElement is not null
     if (my_pe != null) {

@@ -23,7 +23,7 @@
 package org.cougaar.planning.ldm.trigger;
 
 import org.cougaar.planning.ldm.plan.Alert;
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * A trigger action to generate an alert
@@ -32,7 +32,7 @@ import org.cougaar.core.plugin.PlugInDelegate;
 public abstract class TriggerAlertAction implements TriggerAction {
 
   // Action Perform method : Generate given 
-  public void Perform(Object[] objects, PlugInDelegate pid) {
+  public void Perform(Object[] objects, PluginDelegate pid) {
     Alert new_alert = GenerateAlert(objects, pid);
     if (new_alert != null) {
       pid.publishAdd(new_alert);
@@ -42,10 +42,10 @@ public abstract class TriggerAlertAction implements TriggerAction {
   /**
    * Abstract method to generate alert for given objects
    * @param objects The objects to work from
-   * @param pid  The PlugInDelegate to use for things like getClusterObjectFactory.
+   * @param pid  The PluginDelegate to use for things like getClusterObjectFactory.
    * @return Alert  The new alert. 
    */
-  public abstract Alert GenerateAlert(Object[] objects, PlugInDelegate pid);
+  public abstract Alert GenerateAlert(Object[] objects, PluginDelegate pid);
 
 
 }

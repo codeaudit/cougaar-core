@@ -50,7 +50,7 @@ public class LDMServiceProvider implements ServiceProvider
   }
 
   private class LDMServiceImpl implements LDMService {
-    public LDMServesPlugIn getLDM() {
+    public LDMServesPlugin getLDM() {
       return agent.getLDM();
     }
     public RootFactory getFactory() {

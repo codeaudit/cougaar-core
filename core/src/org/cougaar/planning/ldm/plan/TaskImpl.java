@@ -584,7 +584,7 @@ public class TaskImpl extends DirectiveImpl
 
   /**
    * This method sets the PlanElement associated with this Task.
-   * **Note to PlugIn developers: You do not need to call this method.
+   * **Note to Plugin developers: You do not need to call this method.
    * It is done automatically when PlanElement.setTask() is called.
    */
   public void privately_setPlanElement( PlanElement pe ) { 

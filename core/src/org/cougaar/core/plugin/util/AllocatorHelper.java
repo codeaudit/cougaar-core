@@ -59,7 +59,7 @@ public class AllocatorHelper {
      * estimated allocation results. If they are
      * different then the estimated value is set to the reported
      * value in both the cases.
-     * @deprecated use boolean PlugInHelper.updatePlanElement(PlanElement pe) instead, calling publishChange(pe) if updatePlanElement returns true
+     * @deprecated use boolean PluginHelper.updatePlanElement(PlanElement pe) instead, calling publishChange(pe) if updatePlanElement returns true
      */
     public static void updatePV ( PlanElement pe, CollectionSubscription sub ) {
 
@@ -77,7 +77,7 @@ public class AllocatorHelper {
     }
 
     /** Takes a subscription, gets the changed list and updates the changedList.
-     * @deprecated use PlugInHelper.updateAllocationResult(IncrementalSubscription sub) instead.
+     * @deprecated use PluginHelper.updateAllocationResult(IncrementalSubscription sub) instead.
      */
     public static void updateAllocationResult ( IncrementalSubscription sub ) {
 
@@ -123,7 +123,7 @@ public class AllocatorHelper {
     }
 
     /**
-     * @deprecated use PlugInHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
+     * @deprecated use PluginHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
      */
     public static AllocationResult createEstimatedAllocationResult(Task t, RootFactory ldmf) {
         return ExpanderHelper.createEstimatedAllocationResult(t, ldmf, 0.0);

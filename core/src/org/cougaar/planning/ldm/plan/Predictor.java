@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 import java.io.Serializable;
 
@@ -49,10 +49,10 @@ import java.io.Serializable;
 public interface Predictor extends Serializable {
     
   /** @param Task for_task
-   * @param PlugInDelegate plugin
+   * @param PluginDelegate plugin
    * @return AllocationResult A predictive result for the given task.
    * @see org.cougaar.planning.ldm.plan.AllocationResult
    **/
-  AllocationResult Predict(Task for_task, PlugInDelegate plugin);
+  AllocationResult Predict(Task for_task, PluginDelegate plugin);
     
 }

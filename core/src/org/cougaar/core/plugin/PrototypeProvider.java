@@ -26,15 +26,15 @@ import java.util.Enumeration;
 
 /**
  * A provider of prototype Assets to the LDM.
- * @see org.cougaar.core.plugin.LDMPlugInServesLDM
+ * @see org.cougaar.core.plugin.LDMPluginServesLDM
  * @author  ALPINE <alpine-software@bbn.com>
  **/
 
-public interface PrototypeProvider extends LDMPlugInServesLDM {
+public interface PrototypeProvider extends LDMPluginServesLDM {
   
   /** return the prototype Asset described by aTypeName.
-   * implementations should probably call LDMServesPlugIn.cachePrototype
-   * and LDMServesPlugIn.fillProperties if needed before returning.
+   * implementations should probably call LDMServesPlugin.cachePrototype
+   * and LDMServesPlugin.fillProperties if needed before returning.
    *
    * May return null if aTypeName is not something that the implementation
    * knows about.

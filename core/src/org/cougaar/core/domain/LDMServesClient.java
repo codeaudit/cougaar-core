@@ -29,7 +29,7 @@ import org.cougaar.core.agent.ClusterContext;
  * LDM instances can serve many different sorts of clients.
  * this api is the commonality.
  *
- * @see org.cougaar.core.domain.LDMServesPlugIn
+ * @see org.cougaar.core.domain.LDMServesPlugin
  * @see org.cougaar.core.agent.ClusterServesLogicProvider
  **/
 
@@ -54,7 +54,7 @@ public interface LDMServesClient
   RootFactory getLdmFactory();
 
   /** @return the classloader to be used for loading classes for the LDM.
-   * Domain PlugIns should not use this, as they will have been themselves
+   * Domain Plugins should not use this, as they will have been themselves
    * loaded by this ClassLoader.  Some infrastructure components which are
    * not loaded in the same way will require this for correct operation.
    **/

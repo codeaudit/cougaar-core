@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * A TriggerAction performs an action (presumed to be publishing changes
@@ -35,6 +35,6 @@ public interface TriggerAction extends java.io.Serializable {
    * @param objects  The objects to perform the action against.
    * @param pid  The plugin delegate to allow things like publish add/remove/change and getClusterObjectFactory
    */
-  void Perform(Object[] objects, PlugInDelegate pid);
+  void Perform(Object[] objects, PluginDelegate pid);
 
 }

@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 /** BulkEstimate Implementation
   * A BulkEstimate is similar to but not a subclass of PlanElement.
-  * A BulkEstimate allows for a PlugIn to specify a Task with a collection
+  * A BulkEstimate allows for a Plugin to specify a Task with a collection
   * of Preference sets and get back a collection of AllocationResults.
   * Each AllocationResult will represent the results of allocating the Task
   * with one of the Preference sets.

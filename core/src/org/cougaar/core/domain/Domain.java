@@ -23,7 +23,7 @@ package org.cougaar.core.domain;
 
 import java.util.Collection;
 
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
@@ -48,7 +48,7 @@ public interface Domain
   /**
    * construct an LDM factory to serve the specified LDM instance.
    **/
-  Factory getFactory(LDMServesPlugIn ldm);
+  Factory getFactory(LDMServesPlugin ldm);
 
   /** initialize Domain. Called once on a new instance immediately
    * after creating the Domain instance via the zero-argument constructor,

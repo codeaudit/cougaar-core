@@ -27,7 +27,7 @@ import org.cougaar.core.service.*;
 
 import org.cougaar.core.agent.*;
 
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 import java.util.HashMap;
@@ -36,13 +36,13 @@ public class DomainServiceImpl implements DomainService {
 
   private Domain rootDomain = null;
   private RootFactory myRootFactory = null;
-  private LDMServesPlugIn registryService;
+  private LDMServesPlugin registryService;
 
   //When cluster creates this service it will
   //pass a reference to it's PrototypeRegistryService in the form
   // of itself acting as LDMServesPlugin...
   //In the future these service may dynamically find each otehr
-  public DomainServiceImpl(LDMServesPlugIn registryService) {
+  public DomainServiceImpl(LDMServesPlugin registryService) {
     this.registryService = registryService;
     //get the domains set up
     DomainManager.initialize();

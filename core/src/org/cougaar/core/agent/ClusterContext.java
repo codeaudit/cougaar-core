@@ -28,7 +28,7 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.domain.Registry;
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
 import java.io.*;
@@ -46,12 +46,12 @@ public interface ClusterContext
   
   UIDServer getUIDServer();
 
-  LDMServesPlugIn getLDM();
+  LDMServesPlugin getLDM();
 
   final class DummyClusterContext implements ClusterContext {
     private static final ClusterIdentifier cid = new ClusterIdentifier("_Dummy");
     public ClusterIdentifier getClusterIdentifier() { return cid; }
     public UIDServer getUIDServer() { return null; }
-    public LDMServesPlugIn getLDM() { return null; }
+    public LDMServesPlugin getLDM() { return null; }
   }
 }

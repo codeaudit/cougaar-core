@@ -26,7 +26,7 @@ import org.cougaar.core.service.*;
 import org.cougaar.core.agent.*;
 
 /** Interface for Alp-time-based Alarms.  See
- * ClusterServesPlugIn.addAlarm(Alarm).
+ * ClusterServesPlugin.addAlarm(Alarm).
  **/
 
 public interface Alarm {

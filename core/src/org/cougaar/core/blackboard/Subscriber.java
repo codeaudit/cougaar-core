@@ -710,7 +710,7 @@ public class Subscriber implements BlackboardService {
    * lock).
    *
    * This is equivalent to the old (misnamed) tryLockSubscriber method
-   * in PlugInWrapper.
+   * in PluginWrapper.
    *
    * @return true IFF a transaction was opened.
    **/
@@ -872,7 +872,7 @@ public class Subscriber implements BlackboardService {
     _internalActivity = true;
     wakeSubscriptionWatchers(SubscriptionWatcher.INTERNAL);
   }
-  /** called when the client (PlugIn) requests that it be waked again.
+  /** called when the client (Plugin) requests that it be waked again.
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
    **/
@@ -997,7 +997,7 @@ public class Subscriber implements BlackboardService {
     return theClient.triggerEvent(event);
   }
   
-  //Leftover from PlugInAdapter - now in BlackboardService... may want to 
+  //Leftover from PluginAdapter - now in BlackboardService... may want to 
   //deprecate next release?
   public Subscriber getSubscriber() {
     return this;

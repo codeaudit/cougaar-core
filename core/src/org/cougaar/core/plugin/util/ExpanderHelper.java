@@ -57,7 +57,7 @@ public class ExpanderHelper {
   /**
    * Takes "a" subtask, generates a workflow for that subtask. This newly created
    * Expansion is wired properly and returned.
-   * @deprecated use PlugInHelper.wireExpansion(Task parent, NewTask subTask, RootFactory ldmf) instead
+   * @deprecated use PluginHelper.wireExpansion(Task parent, NewTask subTask, RootFactory ldmf) instead
    */
   public static Expansion wireExpansion(Task parent, NewTask subTask, RootFactory ldmf){
 
@@ -84,7 +84,7 @@ public class ExpanderHelper {
   /**
    * Takes a Vector of subtasks, generates a workflow for those subtasks. This newly created
    * Expansion is wired properly and returned.
-   * @deprecated use PlugInHelper.wireExpansion(Task parentTask, Vector subTasks, RootFactory ldmf) instead.
+   * @deprecated use PluginHelper.wireExpansion(Task parentTask, Vector subTasks, RootFactory ldmf) instead.
    */
   public static Expansion wireExpansion( Vector subTasks, RootFactory ldmf, Task parentTask, NewWorkflow wf ) {
     wf.setParentTask( parentTask );
@@ -110,7 +110,7 @@ public class ExpanderHelper {
   /** Publish a new Expansion and its subtasks.
    * e.g.
    *   publishAddExpansion(getSubscriber(), myExpansion);
-   * @deprecated use PlugInHelper.publishAddExpansion(Subscriber sub, PlanElement exp) instead
+   * @deprecated use PluginHelper.publishAddExpansion(Subscriber sub, PlanElement exp) instead
    **/
   public static void publishAddExpansion(Subscriber sub, PlanElement exp) {
     sub.publishAdd(exp);
@@ -123,7 +123,7 @@ public class ExpanderHelper {
 
 
   /** Takes a subscription, gets the changed list and updates the changedList.
-   * @deprecated use PlugInHelper.updateAllocationResult(IncrementalSubscription sub) instead
+   * @deprecated use PluginHelper.updateAllocationResult(IncrementalSubscription sub) instead
    */
   public static void updateAllocationResult ( IncrementalSubscription sub ) {
 
@@ -143,13 +143,13 @@ public class ExpanderHelper {
   }
 
     /**
-     * @deprecated use PlugInHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
+     * @deprecated use PluginHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
      */
     public static AllocationResult createEstimatedAllocationResult(Task t, RootFactory ldmFactory) {
       return createEstimatedAllocationResult(t, ldmFactory, 0.0);
     }
     /**
-     * @deprecated use PlugInHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
+     * @deprecated use PluginHelper.createEstimatedAllocationResult(Task t, RootFactory ldmf, double confrating, boolean success) instead
      */
     public static AllocationResult createEstimatedAllocationResult(Task t, RootFactory ldmFactory, double confrating) {
 	Enumeration preferences = t.getPreferences();

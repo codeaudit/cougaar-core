@@ -28,7 +28,7 @@ import java.util.Collection;
 
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.RootFactory;
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.asset.PropertyGroup;
 
@@ -125,12 +125,12 @@ public class XMLObjectFactory {
   public static Factory emptyLFactory;
   static {
     try {
-      emptyLFactory = new RootFactory(new emptyLDMServesPlugIn(), null);
+      emptyLFactory = new RootFactory(new emptyLDMServesPlugin(), null);
     } catch (RuntimeException e) {
       e.printStackTrace();
     }
   }
-  protected static class emptyLDMServesPlugIn implements LDMServesPlugIn {
+  protected static class emptyLDMServesPlugin implements LDMServesPlugin {
     public void throwError() {
       throw new RuntimeException("XMLObjectFactory empty Factory!");
     }
@@ -149,7 +149,7 @@ public class XMLObjectFactory {
       return this.getClass().getClassLoader();
     }
     public UIDServer getUIDServer() { return null; } // don't throw the exception
-    public LDMServesPlugIn getLDM() { throwError(); return null; }
+    public LDMServesPlugin getLDM() { throwError(); return null; }
   }
 
   /**

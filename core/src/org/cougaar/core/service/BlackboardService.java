@@ -147,10 +147,10 @@ public interface BlackboardService extends Service {
 
 
   //
-  // ScheduleablePlugIn API 
+  // ScheduleablePlugin API 
   //
 
-  /** called when the client (PlugIn) requests that it be waked again.
+  /** called when the client (Plugin) requests that it be waked again.
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
    **/

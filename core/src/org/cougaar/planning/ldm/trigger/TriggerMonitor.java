@@ -23,7 +23,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 
 /**
  * A TriggerMonitor determines a particular set of objects on which to
@@ -39,11 +39,11 @@ public interface TriggerMonitor extends java.io.Serializable {
     * @param pid  PluginDelegate that allows access to plugin level methods
     * @return boolean  Is the monitor ready to run yet? 
     **/
-  boolean ReadyToRun(PlugInDelegate pid);
+  boolean ReadyToRun(PluginDelegate pid);
   
   /** Preserve the fact that this trigger has run. 
     * @param pid  PluginDelegate that allows access to plugin level methods
     **/
-  void IndicateRan(PlugInDelegate pid);
+  void IndicateRan(PluginDelegate pid);
 
 }

@@ -73,7 +73,7 @@
 	resume) the shared plugin service provider. This effectively
 	suspends (and resumes) all the plugins using the shared scheduler.
 
-	* SharedPlugInManager.java:
+	* SharedPluginManager.java:
 	Implement suspend and resume methods. Suspend sets a flag, signals
 	the thread to wake up and waits for the thread to die. The thread
 	examines the flag on each iteration and if set, exits. Resume
@@ -89,7 +89,7 @@
 	* Subscriber.java:
 	Add persistNow() method permitting a plugin to insure that
 	persistence has been performed prior to taking action. Used by the
-	DeletionPlugIn to archive information that is about to be deleted.
+	DeletionPlugin to archive information that is about to be deleted.
 
 	* MessageManagerImpl.java:
 	Disable the advanceEpoch method when the message manager is not
@@ -242,7 +242,7 @@
 
 	* Subscriber
 	Use Claimable interface (see org.cougaar.core.clusterobject.Claimable) to
-	"claim" objects by the PlugIn which enters them into the logplan.
+	"claim" objects by the Plugin which enters them into the logplan.
 
 	Lazy outbox creation.
 

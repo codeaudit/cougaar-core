@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.trigger;
 
-import org.cougaar.core.plugin.PlugInDelegate;
+import org.cougaar.core.plugin.PluginDelegate;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 
 import java.util.List;
@@ -90,7 +90,7 @@ public class TriggerPredicateBasedMonitor implements TriggerMonitor {
     return assobjects.toArray();
   }
 
-  public boolean ReadyToRun(PlugInDelegate pid) { 
+  public boolean ReadyToRun(PluginDelegate pid) { 
     // Check if subscription has changes  (don't need pid for right now)
     if ( (my_subscription != null) && (my_subscription.hasChanged()) ) {
       return true;
@@ -98,7 +98,7 @@ public class TriggerPredicateBasedMonitor implements TriggerMonitor {
     return false;
   }
 
-  public void IndicateRan(PlugInDelegate pid) {
+  public void IndicateRan(PluginDelegate pid) {
     // Probably nothing to do in this case
   }
 

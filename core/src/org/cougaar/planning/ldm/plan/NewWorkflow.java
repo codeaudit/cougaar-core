@@ -97,7 +97,7 @@ public interface NewWorkflow
   /** Tells the infrastructure whether subtasks of the workflow
    * should be rescinded when the Expansion of the workflow is rescinded.
    * True means the infrastructure automatically performs the subtask rescinds.
-   * False means that the PlugIn is responsible for rescinding the subtasks
+   * False means that the Plugin is responsible for rescinding the subtasks
    * of the workflow or reattaching the workflow and its subtasks to 
    * a new parent task and its Expansion.  
    * @param isProp 

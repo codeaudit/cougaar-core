@@ -43,7 +43,7 @@ import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.blackboard.ChangeReport;
-import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.RootFactory;
 
@@ -292,12 +292,12 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
 
   // Keep track of the enclosing LDM so that we can resolve
   // late bindings and such.
-  private transient LDMServesPlugIn _ldm = null;
+  private transient LDMServesPlugin _ldm = null;
   
   /** Called by readObject and factory to tell an asset where it
    * is resident to allow such things as late binding of PGs.
    **/
-  public final void bindToLDM(LDMServesPlugIn ldm) {
+  public final void bindToLDM(LDMServesPlugin ldm) {
     _ldm = ldm;
   }
 
@@ -305,7 +305,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
    * This assigns a UID to the Asset and binds the instance to
    * the ldm.
    **/
-  public final void registerWithLDM(LDMServesPlugIn ldm) {
+  public final void registerWithLDM(LDMServesPlugin ldm) {
     setUID(ldm.getUIDServer().nextUID());
     bindToLDM(ldm);
   }
@@ -315,7 +315,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
    * though this method may be called to determine if the Asset is correctly
    * bound (e.g. to the current LDM).
    **/
-  public final LDMServesPlugIn getBoundLDM() {
+  public final LDMServesPlugin getBoundLDM() {
     return _ldm;
   }
 
@@ -391,7 +391,7 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     if (cs instanceof ClusterContextTable.MessageContext) {
       ClusterContextTable.MessageContext c = (ClusterContextTable.MessageContext)cs;
       ClusterContext cc = cs.getClusterContext();
-      LDMServesPlugIn ldm = cc.getLDM();
+      LDMServesPlugin ldm = cc.getLDM();
       bindToLDM(ldm);
 
       in.defaultReadObject();

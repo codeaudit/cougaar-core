@@ -65,7 +65,7 @@ public class RootFactory
    * @param ldm LDM object so that Factory can provide convenience aliases to 
    * prototype cache, etc.
    **/
-  public RootFactory( LDMServesPlugIn ldm, ClusterIdentifier cid ) {
+  public RootFactory( LDMServesPlugin ldm, ClusterIdentifier cid ) {
     super(ldm, cid);
     this.ldm = ldm;
 
@@ -193,7 +193,7 @@ public class RootFactory
    * (e.g. "NSN/1234567890123") either by looking up an existing
    * object or by creating one of the appropriate type.
    *
-   * Shorthand for LDMServesPlugIn.getPrototype(aTypeName);
+   * Shorthand for LDMServesPlugin.getPrototype(aTypeName);
    **/
   public final Asset getPrototype(String aTypeName) {
     return ldm.getPrototype(aTypeName);

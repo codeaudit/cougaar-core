@@ -24,7 +24,7 @@ package org.cougaar.core.blackboard;
 import org.cougaar.core.agent.*;
 
 /**
- * PlugIns and internal subscription clients which implement 
+ * Plugins and internal subscription clients which implement 
  * PrivilegedClaimant are allowed to manipulate logplan objects 
  * freely, effectively ignoring claims (without warnings, etc).
  * 
