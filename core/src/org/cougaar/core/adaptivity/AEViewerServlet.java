@@ -41,9 +41,7 @@ import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.NamingService;
 import org.cougaar.core.servlet.ComponentServlet;
-import org.cougaar.core.servlet.NSUtil;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
@@ -69,7 +67,6 @@ implements BlackboardClient
   private LoggingService logger = LoggingService.NULL;
   private BlackboardQueryService blackboardQuery;
   private BlackboardService blackboard;
-  private NamingService ns;
 
   private OMComparator omComparator = new OMComparator();
   private OMPComparator ompComparator = new OMPComparator();
@@ -118,10 +115,6 @@ implements BlackboardClient
     this.blackboard = blackboard;
   }
 
-  public void setNamingService(NamingService ns) {
-    this.ns = ns;
-  }
-
   public String getBlackboardClientName() {
     return getPath();
   }
@@ -131,11 +124,6 @@ implements BlackboardClient
   }
 
   public void unload() {
-    if (ns != null) {
-      serviceBroker.releaseService(
-          this, NamingService.class, ns);
-      ns = null;
-    }
     if (blackboard != null) {
       serviceBroker.releaseService(
           this, BlackboardService.class, blackboard);
@@ -365,7 +353,7 @@ implements BlackboardClient
 	      "<form name=\"myForm\" method=\"get\" "+
 	      "onSubmit=\"return mySubmit()\">\n"+
               "<input type=hidden name=\""+FRAME+"\" value=\""+AE_FRAME+"\">\n"+
-              "<input type=submit name=\"formSubmit\" value=\"Reload\">"+
+              "Select an agent above, <input type=submit name=\"formSubmit\" value=\"Reload\">"+
               "<br>\n</form>");
   }
 
