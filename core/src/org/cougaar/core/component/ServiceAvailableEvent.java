@@ -12,18 +12,12 @@ package org.cougaar.core.component;
 import java.util.*;
 
 /** ServiceAvailableEvent indicates that a new service is available
- * to clients of a ServiceBroker
+ * to clients of a ServiceBroker.
  * @see java.beans.beancontext.BeanContextServiceAvailableEvent
  **/
 public class ServiceAvailableEvent extends ServiceEvent {
-  private Class service;
-
   /** Construct a ServiceAvailableEvent **/
-  public ServiceAvailableEvent(ServiceBroker sb, Class service) {
-    super(sb);
-    this.service = service;
+  public ServiceAvailableEvent(ServiceBroker sb, Class addedService) {
+    super(sb, addedService);
   }
-
-  /** @return the binding site newly available **/
-  public final Class getService() { return service; }
 }

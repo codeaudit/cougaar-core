@@ -48,20 +48,22 @@ public class PluginManager
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
 
+    ServiceBroker sb = childServiceBroker;
+    //ServiceBroker sb = testsb; // test
     // add some services for the plugins.
-    childServiceBroker.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    childServiceBroker.addService(AlarmService.class, new AlarmServiceProvider(agent));
-    childServiceBroker.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    childServiceBroker.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
-    childServiceBroker.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
+    sb.addService(MetricsService.class, new MetricsServiceProvider(agent));
+    sb.addService(AlarmService.class, new AlarmServiceProvider(agent));
+    sb.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
+    sb.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    sb.addService(SharedThreadingService.class, new SharedThreadingServiceProvider(agent.getClusterIdentifier()));
     // hack service for demo control
-    childServiceBroker.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
+    sb.addService(DemoControlService.class, new DemoControlServiceProvider(agent));
 
     // scheduler for new plugins
-    childServiceBroker.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
+    sb.addService(SchedulerService.class, new SchedulerServiceProvider(agent));
 
     // placeholder for LDM Services
-    childServiceBroker.addService(LDMService.class, new LDMServiceProvider(agent));
+    sb.addService(LDMService.class, new LDMServiceProvider(agent));
   }
 
   protected ComponentFactory specifyComponentFactory() {
@@ -70,7 +72,14 @@ public class PluginManager
   protected String specifyContainmentPoint() {
     return "Node.AgentManager.Agent.PluginManager";
   }
+
+  //private ServiceBroker testsb;
   protected ServiceBroker specifyChildServiceBroker() {
+    //testsb=new PluginManagerServiceBroker();
+    //return new DelegatingServiceBroker(new PropagatingServiceBroker(testsb));
+
+    // We should really be doing something like:
+    //    return new PropagatingServiceBroker(getBindingSite().getServiceBroker());
     return new PluginManagerServiceBroker();
   }
 

@@ -102,7 +102,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
       serviceBroker.getService(this, SchedulerService.class, 
 			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (SchedulerService.class.equals(re.getRevokedService()))
+				  if (SchedulerService.class.equals(re.getService()))
 				    myScheduler = null;
 				}
 			      });
@@ -117,7 +117,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
       serviceBroker.getService(this, BlackboardService.class,
  			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (BlackboardService.class.equals(re.getRevokedService())) {
+				  if (BlackboardService.class.equals(re.getService())) {
 				    blackboard = null;
 				    watcher = null;
 				  }
@@ -128,7 +128,7 @@ public class ComponentPlugin implements PluginBase, BlackboardClient {
       serviceBroker.getService(this, AlarmService.class,
  			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (AlarmService.class.equals(re.getRevokedService())) {
+				  if (AlarmService.class.equals(re.getService())) {
 				    alarmService = null;
 				  }
 				}

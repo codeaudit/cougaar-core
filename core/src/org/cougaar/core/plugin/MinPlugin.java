@@ -51,7 +51,7 @@ public class MinPlugin implements PluginBase {
       myServiceBroker.getService(this, SchedulerService.class, 
 			    new ServiceRevokedListener() {
 				public void serviceRevoked(ServiceRevokedEvent re) {
-				  if (SchedulerService.class.equals(re.getRevokedService()))
+				  if (SchedulerService.class.equals(re.getService()))
 				    myScheduler = null;
 				}
 			      });

@@ -1,5 +1,10 @@
 2001-07-19  Michael Thome  <mthome@bbn.com>
 
+	* ServiceEvent, etc
+	Raised getService from concrete classes into ServiceEvent.
+	Cleaned up various servicebroker-related things to prepare the way
+	for service transitivity and safer binders.
+		
 	* DelegatingServiceBroker
 	ServiceBroker which delegates to another with no local storage,
 	useful as a base class for restricting access to clients.

@@ -16,15 +16,8 @@ import java.util.*;
  * @see java.beans.beancontext.BeanContextServiceRevokedEvent
  **/
 public class ServiceRevokedEvent extends ServiceEvent {
-  private Class revokedService;
-
   /** Construct a ServiceRevokedEvent **/
   ServiceRevokedEvent(ServiceBroker servicebroker, Class revokedService) {
-    super(servicebroker);
-    this.revokedService = revokedService;
+    super(servicebroker, revokedService);
   }
-
-  /** @return the revoked Service **/
-  public final Class getRevokedService() { return revokedService; }
-
 }

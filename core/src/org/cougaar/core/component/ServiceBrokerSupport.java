@@ -12,10 +12,11 @@ package org.cougaar.core.component;
 import java.util.*;
 
 /** Simple implementation of Cougaar component services layer.  
+ * No propagation, nothing fancy.
  * @see org.cougaar.core.component.ServiceBroker
  **/
 
-public abstract class ServiceBrokerSupport 
+public class ServiceBrokerSupport 
   implements ServiceBroker 
 {
   /** the current set of Listeners.  Elements are of type ServiceListener **/
@@ -146,7 +147,7 @@ public abstract class ServiceBrokerSupport
       if (service != null && srl != null) {
         addServiceListener(new ServiceRevokedListener() {
             public void serviceRevoked(ServiceRevokedEvent re) {
-              if (serviceClass.equals(re.getRevokedService()))
+              if (serviceClass.equals(re.getService()))
                 srl.serviceRevoked(re);
             }
           });
