@@ -427,7 +427,7 @@ abstract class DefaultComponents {
         "Node.AgentManager.Agent.Component",
         "org.cougaar.core.agent.DemoControl",
         null, null, null, null, null,
-        COMPONENT);
+        HIGH);
 
   // INTERNAL
  
