@@ -71,23 +71,25 @@ public class ScheduleImpl
 
   public synchronized long getStartTime() {
     TimeSpan ts = (TimeSpan) first();
-    return (ts == null)? MIN_VALUE : ts.getStartTime();
+    if (ts == null) {
+      throw new IndexOutOfBoundsException("Called getStartTime on an empty schedule");
+    }
+    return ts.getStartTime();
   }
 
   public synchronized Date getEndDate() {
-    TimeSpan ts = (TimeSpan) last();
-    if (ts == null) {
+    if (isEmpty()) {
       throw new IndexOutOfBoundsException("Called getEndDate on an empty schedule");
     }
     return new Date(getEndTime());
   }
 
   public synchronized long getEndTime() {
-    int l = size;
-    if (l == 0) return MAX_VALUE;
-
+    if (isEmpty()) {
+      throw new IndexOutOfBoundsException("Called getEndTime on an empty schedule");
+    }
     long max = MIN_VALUE;
-    for (int i = 0; i<l; i++) {
+    for (int i = 0; i < size; i++) {
       ScheduleElement se = (ScheduleElement) elementData[i];
       long end = se.getEndTime();
       if (end > max) max = end;
