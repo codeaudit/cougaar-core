@@ -36,6 +36,8 @@ import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.RelayLP;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -81,9 +83,26 @@ implements Component, Domain
     }
   }
 
+  private static class RootPlanServiceProvider implements ServiceProvider {
+    private static Service theInstance = new RootPlanImpl();
+    /* (non-Javadoc)
+     * @see org.cougaar.core.component.ServiceProvider#getService(org.cougaar.core.component.ServiceBroker, java.lang.Object, java.lang.Class)
+     */
+    public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
+      return theInstance;
+    }
+
+    /* (non-Javadoc)
+     * @see org.cougaar.core.component.ServiceProvider#releaseService(org.cougaar.core.component.ServiceBroker, java.lang.Object, java.lang.Class, java.lang.Object)
+     */
+    public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
+    }
+  }
+  
   public void load() {
     super.load();
-    rootplan = new RootPlanImpl();
+    sb.addService(RootPlan.class, new RootPlanServiceProvider());
+    rootplan = (RootPlan) sb.getService(this, RootPlan.class, null);
     relayLP = new RelayLP(rootplan, self);
     domainRegistryService = (DomainRegistryService)
       sb.getService(

@@ -29,6 +29,7 @@ package org.cougaar.core.domain;
 import org.cougaar.core.blackboard.BlackboardServesDomain;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
+import org.cougaar.core.component.Service;
 
 /**
  * The "root" plan provides blackboard access to {@link Domain}
@@ -38,8 +39,7 @@ import org.cougaar.core.util.UniqueObject;
  * This is the interface that most domains use to access the
  * blackboard.
  */
-public interface RootPlan
-extends BlackboardServesDomain, XPlan {
+public interface RootPlan extends BlackboardServesDomain, XPlan, Service {
 
   /** Find {@link UniqueObject}s using the {@link UID} as key */
   UniqueObject findUniqueObject(UID uid);
