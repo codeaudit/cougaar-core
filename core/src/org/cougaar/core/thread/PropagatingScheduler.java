@@ -63,11 +63,11 @@ public class PropagatingScheduler extends Scheduler
 	    // This is the root
 	    super.releaseRights(consumer);
 	} else {
-	    Scheduler parent = parent_node.getScheduler();
-	    parent.releaseRights(this);
 	    // In this simple scheduler, layers other than root always
 	    // give up the right at this point (root may hand it off).
 	    decrementRunCount(this);
+	    Scheduler parent = parent_node.getScheduler();
+	    parent.releaseRights(this);
 	}
    }
 
