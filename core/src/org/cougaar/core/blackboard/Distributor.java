@@ -639,14 +639,14 @@ public class Distributor {
 
   protected boolean timeToLazilyPersist() {
     long overdue = System.currentTimeMillis() - persistence.getPersistenceTime();
-    if (overdue > 0L) {
-      // This is a INFO-level logging statement, not an error.  It may be
-      // silenced in the future to avoid confusion.
-      //
-      // Persistence is due now, based on the time elapsed since the 
-      // prior persistence call.
-      System.out.println("Lazy persistence " + myName + " overdue by " + overdue);
-    } 
+//     if (overdue > 0L) {
+//       // This is a INFO-level logging statement, not an error.  It may be
+//       // silenced in the future to avoid confusion.
+//       //
+//       // Persistence is due now, based on the time elapsed since the 
+//       // prior persistence call.
+//       System.out.println("Lazy persistence " + myName + " overdue by " + overdue);
+//     } 
     return overdue > 0L;
   }
 
