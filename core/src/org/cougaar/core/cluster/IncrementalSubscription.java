@@ -48,8 +48,11 @@ public class IncrementalSubscription extends CollectionSubscription {
     return new Enumerator(myAddedSet);
   }
 
+  /** @return a possibly empty collection of objects added since 
+   * the last transaction. Will not return null.
+   **/
   public Collection getAddedCollection() {
-    return myAddedSet;
+    return (myAddedSet!=null)?myAddedSet:Collections.EMPTY_SET;
   }
 
   /** @return an list of the objects of the collection that have been removed.
@@ -62,8 +65,11 @@ public class IncrementalSubscription extends CollectionSubscription {
     return new Enumerator(myRemovedList);
   }
 
+  /** @return a possibly empty collection of objects removed 
+   * since the last transaction.  Will not return null.
+   **/
   public Collection getRemovedCollection() {
-    return myRemovedList;
+    return (myRemovedList!=null)?myRemovedList:Collections.EMPTY_LIST;
   }
 
   /** @return an list of the objects of the collection that have 
@@ -76,8 +82,11 @@ public class IncrementalSubscription extends CollectionSubscription {
     return new Enumerator(myChangedList);
   }
 
+  /** @return a possibly empty collection of objects marked as changed
+   * since the last transaction. Will not return null.
+   **/
   public Collection getChangedCollection() {
-    return myChangedList;
+    return (myChangedList!=null)?myChangedList:Collections.EMPTY_LIST;
   }
 
   /**

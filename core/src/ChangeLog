@@ -1,3 +1,9 @@
+2001-03-16  Michael Thome  <mthome@bbn.com>
+
+	* IncrementalSubscription
+	Changes get*Collection accessors to return empty collections
+	rather than nulls.  Bug 164.
+
 2001-03-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* PublishException -- et. al.
