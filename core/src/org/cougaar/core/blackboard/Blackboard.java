@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
-import javax.naming.event.EventContext;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
@@ -653,9 +652,6 @@ public class Blackboard extends Subscriber
 
   private CommunityService communityService;
   private boolean haveCommunityService = false;
-//   private NamingService namingService;
-  private CommunityChangeListener communityChangeListener;
-  private EventContext communityContext;
   private CacheClearer cacheClearer = new CacheClearer();
   private Object cacheClearerLock = new Object();
 
@@ -681,30 +677,6 @@ public class Blackboard extends Subscriber
     }
   }
 
-//   private class MyNamingListener implements NamespaceChangeListener, ObjectChangeListener {
-//     public void objectAdded(NamingEvent evt) {
-//       try {
-//         String name = evt.getNewBinding().getName();
-//         getCommunityContext().addNamingListener(name, EventContext.OBJECT_SCOPE, namingListener);
-//         if (logger.isDebugEnabled()) logger.debug("Blackboard installing NamingListener to added " + name);
-//       } catch (NamingException ne) {
-//         logger.error("Error installing naming listener", ne);
-//       }
-//       clearCache();
-//     }
-//     public void objectRemoved(NamingEvent evt) {
-//       clearCache();
-//     }
-//     public void objectRenamed(NamingEvent evt) {
-//       clearCache();
-//     }
-//     public void objectChanged(NamingEvent evt) {
-//       clearCache();
-//     }
-//     public void namingExceptionThrown(NamingExceptionEvent evt) {
-//     }
-//   }
-  
   private class MyCommunityChangeListener extends CommunityChangeAdapter {
     public void communityChanged(CommunityChangeEvent e) {
       if (logger.isDebugEnabled()) logger.debug(e.toString());
@@ -746,26 +718,6 @@ public class Blackboard extends Subscriber
     return new ArrayList(matches); // Return a copy to preserve cache integrity
   }
 
-//   private EventContext getCommunityContext() throws NamingException {
-//     synchronized (cache) {
-//       if (communityContext == null) {
-//         try {
-//           DirContext rootContext = (DirContext) namingService.getRootContext();
-//           communityContext = (EventContext)
-//             rootContext.lookup(CommunityService.COMMUNITIES_CONTEXT_NAME);
-//         } catch (NamingException ne) {
-//           throw ne;
-//         } catch (Exception e) {
-//           NamingException x = 
-//             new NamingException("Unable to access name-server");
-//           x.setRootCause(e);
-//           throw x;
-//         }
-//       }
-//       return communityContext;
-//     }
-//   } 
-    
   // get the CommunityService when possible 
   private CommunityService _myCommunityService = null;
 
