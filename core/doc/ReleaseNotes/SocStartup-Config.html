@@ -10,15 +10,16 @@
 
 <center>
 <h2>
-<b>COUGAAR Society Startup and Configuration: MB 6.6</b></h2></center>
+<b>COUGAAR Society Startup and Configuration: COUGAAR 7.0</b></h2></center>
 
 <h2>
 <b>Overview</b></h2>
-<font size=+0>To install MB 6.6, first unzip the "core-MB-&lt;builddate>.zip"
-file. It will create a top-level "cougaar-&lt;builddate>" directory and appropriate
-subdirectories. Then, unzip the alpine-MB-&lt;builddate>.zip, utility-MB-&lt;builddate>.zip,
-tutorial-MB-&lt;builddate>.zip and tools-MB-&lt;builddate>.zip files in
-the alp-&lt;builddate> directory. This unzip process will overlay the original
+<font size=+0>To install COUGAAR 7.0, first unzip the "core-&lt;builddate>.zip"
+file. It will create a top-level "alp-&lt;builddate>" directory and appropriate
+subdirectories. Then move the toolkit-&lt;builddate>.zip, planserver-&lt;builddate>.zip,
+glm-&lt;builddate>.zip, tutorial-&lt;builddate>.zip (optional) files to
+the alp-&lt;builddate> directory and unzip them there.
+This unzip process will overlay the original
 structure with the appropriate files and subdirectories. As with previous
 releases, the environment variable ALP_INSTALL_PATH should point to the
 alp-&lt;builddate> directory.</font>
@@ -43,16 +44,16 @@ and are located in the alp\lib directory:
 core.jar: COUGAAR core infrastructure</li>
 
 <li>
-alpine.jar: domain infrastructure support and ALPINE PlugIns</li>
+glm.jar: domain infrastructure support and Logistics Model PlugIns</li>
 
 <li>
-tools.jar: scalability and test tools</li>
-
-<li>
-utility.jar: contracts and gss</li>
+toolkit.jar: standalone utilities tools</li>
 
 <li>
 build.jar: code generators for COUGAAR software</li>
+
+<li>
+planserver.jar: tools for extracting, entering, and displaying information from COUGAAR</li>
 
 <li>
 xmlj_2_0_11.jar: XML parser</li>
@@ -79,18 +80,6 @@ web site</a> (HTTPS://www.alpine.bbn.com/) contains a list of freely available
 <td>Oracle JDBC Thin Drivers v8.0.4&nbsp;</td>
 
 <td><a href="http://technet.oracle.com/software/download.htm">http://technet.oracle.com/software/download.htm</a></td>
-</tr>
-
-<tr>
-<td>ECMA Fesi Interpreter</td>
-
-<td><a href="http://home.worldcom.ch/~jmlugrin/fesi/index.html">http://home.worldcom.ch/~jmlugrin/fesi/index.html</a></td>
-</tr>
-
-<tr>
-<td>JESS Interpreter</td>
-
-<td><a href="http://herzberg.ca.sandia.gov/jess/index.html">http://herzberg.ca.sandia.gov/jess/index.html</a></td>
 </tr>
 
 <tr>
@@ -178,7 +167,7 @@ rather than using "node.bat" to perform this function. All "node.bat" files
 should call these files.</li>
 
 <li>
-Execution of "Node.bat" and "Node.csh" requires passing the "node name"
+Execution of "Node.bat" and "Node" (csh) requires passing the "node name"
 as the first argument to these scripts, rather than coding them into the
 scripts. The node name argument must match the node name used for the &lt;nodename>.ini
 file.</li>
