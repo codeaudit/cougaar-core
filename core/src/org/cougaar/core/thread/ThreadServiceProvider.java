@@ -43,7 +43,11 @@ public final class ThreadServiceProvider implements ServiceProvider
 	    scheduler = new TimeSliceScheduler(listenerProxy);
 	else
 	    scheduler = new SimpleScheduler(listenerProxy);
-	proxy = new ThreadServiceProxy(sb, name, scheduler);
+
+	ThreadServiceProxy parent = (ThreadServiceProxy)
+	    sb.getService(this, ThreadService.class, null);
+
+	proxy = new ThreadServiceProxy(parent, scheduler, name);
     }
 
     public void provideServices(ServiceBroker sb) {

@@ -32,15 +32,15 @@ import java.util.TimerTask;
 final class ThreadServiceProxy 	implements ThreadService
 {
     private ControllablePool pool;
-    private ThreadGroup group;
     private TimerRunnable timer;
+    private ThreadGroup group;
     private Scheduler scheduler;
 
-    ThreadServiceProxy(ServiceBroker sb,  String name, 
-		       Scheduler scheduler) 
+    ThreadServiceProxy(ThreadServiceProxy parent,
+		       Scheduler scheduler,
+		       String name) 
     {
-	ThreadServiceProxy parent = (ThreadServiceProxy)
-	    sb.getService(this, ThreadService.class, null);
+	this.scheduler = scheduler;
 
 	if (parent == null) {
 	    group = new ThreadGroup(name);
@@ -49,7 +49,6 @@ final class ThreadServiceProxy 	implements ThreadService
 	    group = new ThreadGroup(parent.group, name);
 	}
 
-	this.scheduler = scheduler;
 	pool = new ControllablePool(group, scheduler);
 
 
