@@ -643,7 +643,7 @@ public class SimpleAgent
                                    null,
                                    null,
                                    null));
-
+    }
     // get blackboard service
     myBlackboardService = (BlackboardForAgent) 
       sb.getService(this, BlackboardForAgent.class, null);
