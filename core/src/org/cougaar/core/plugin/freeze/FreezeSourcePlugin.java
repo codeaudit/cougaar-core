@@ -44,6 +44,12 @@ import org.cougaar.util.UnaryPredicate;
  * through a hierarchy of such plugins until the plugin at the root of
  * the tree is reached. When the root determines that ice has been
  * acheived, that is reflected in the freeze control servlet
+ * 
+ * NOTE: This is part of the older mechanism for freezing the society.  The
+ * current mechanism uses FreezeServlet located on every agent in the society,
+ * and depends on some external process to tell all agents to freeze.  This older
+ * mechanism has not been removed so that people can continue to use a single servlet
+ * to freeze the entire society, but the FreezeServlet mechanism is preferred now.
  **/
 
 public abstract class FreezeSourcePlugin extends FreezePlugin {

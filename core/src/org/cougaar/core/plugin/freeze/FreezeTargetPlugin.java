@@ -84,6 +84,12 @@ import org.cougaar.util.UnaryPredicate;
  * agent by making the first plugin parameter be "allow
  * java.lang.Object". Since every class extends java.lang.Object, this
  * will allow every class to run.
+ * 
+ * NOTE: This is part of the older mechanism for freezing the society.  The
+ * current mechanism uses FreezeServlet located on every agent in the society,
+ * and depends on some external process to tell all agents to freeze.  This older
+ * mechanism has not been removed so that people can continue to use a single servlet
+ * to freeze the entire society, but the FreezeServlet mechanism is preferred now.
  **/
 public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
   private static class BadGuy {

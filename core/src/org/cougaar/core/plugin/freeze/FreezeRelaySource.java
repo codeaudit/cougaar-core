@@ -38,6 +38,13 @@ import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.SimpleUniqueObject;
 
+/**
+ * NOTE: This is part of the older mechanism for freezing the society.  The
+ * current mechanism uses FreezeServlet located on every agent in the society,
+ * and depends on some external process to tell all agents to freeze.  This older
+ * mechanism has not been removed so that people can continue to use a single servlet
+ * to freeze the entire society, but the FreezeServlet mechanism is preferred now.
+ */
 public class FreezeRelaySource
   extends SimpleUniqueObject
   implements Relay.Source, NotPersistable
