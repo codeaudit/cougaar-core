@@ -33,7 +33,7 @@ import org.cougaar.core.society.UID;
 
 /** Policy implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Policy.java,v 1.4 2001-04-05 19:27:23 mthome Exp $
+ * @version $Id: Policy.java,v 1.5 2001-08-13 15:50:49 tomlinso Exp $
  **/
 
 
@@ -75,6 +75,10 @@ public class Policy
   public void Add(RuleParameter rule_parameter) 
   {
     my_parameters.put(rule_parameter.getName(), rule_parameter);
+  }
+
+  public void Remove(String name) {
+    my_parameters.remove(name);
   }
 
   /**
