@@ -62,6 +62,27 @@ public class DeletionPlugIn extends SimplePlugIn {
     private Alarm alarm;
     private UnaryPredicate deletablePlanElementsPredicate;
 
+    private static java.io.PrintWriter logFile = null;
+
+    static {
+        try {
+            logFile =
+                new java.io.PrintWriter(new java.io.FileWriter("deletion.log"));
+        } catch (java.io.IOException e) {
+            System.err.println(e);
+        }
+    }
+
+    private void debug(String s) {
+        s = getClusterIdentifier() + ": " + s;
+        if (logFile != null) {
+            synchronized (logFile) {
+                logFile.println(s);
+            }
+        }
+        System.out.println(s);
+    }
+
     private class DeletablePlanElementsPredicate implements UnaryPredicate {
         public boolean execute(Object o) {
             if (o instanceof PlanElement) {
@@ -164,7 +185,7 @@ public class DeletionPlugIn extends SimplePlugIn {
      * logplan.
      **/
     public void execute() {
-//          System.out.println("DeletionPlugIn.execute()");
+        debug("DeletionPlugIn.execute()");
         if (alarm.hasExpired()) { // Time to make the donuts
             checkDeletablePlanElements();
             alarm = wakeAfter(deletionPeriod);
@@ -182,7 +203,7 @@ public class DeletionPlugIn extends SimplePlugIn {
      **/
     private void checkDeletablePlanElements() {
         Collection c = query(deletablePlanElementsPredicate);
-//          System.out.println("Found " + c.size() + " deletable PlanElements");
+        debug("Found " + c.size() + " deletable PlanElements");
         for (Iterator i = c.iterator(); i.hasNext(); ) {
             checkPlanElement((PlanElement) i.next());
         }
@@ -233,36 +254,36 @@ public class DeletionPlugIn extends SimplePlugIn {
 //      }
 
     private void delete(Task task) {
-        System.out.println("Deleting " + task);
+        debug("Deleting " + task);
         ((NewTask) task).setDeleted(true);  // Prevent LP from propagating deletion
         if (task instanceof MPTask) {
             // Delete multiple parent tasks
             MPTask mpTask =(MPTask) task;
-            System.out.println("Task is MPTask, deleting parents");
+            debug("Task is MPTask, deleting parents");
             for (Enumeration e = mpTask.getParentTasks(); e.hasMoreElements(); ) {
                 Task parent = (Task) e.nextElement();
                 delete(parent);    // ppe is always an Aggregation
             }
-            System.out.println("All parents deleted");
+            debug("All parents deleted");
         } else {
-            System.out.println("Checking parent");
+            debug("Checking parent");
             UID ptuid = task.getParentTaskUID();
             if (ptuid == null) {
-                System.out.println("Deleting root");
+                debug("Deleting root");
                 deleteRootTask(task);
             } else {
                 PlanElement ppe = peSet.findPlanElement(ptuid);
                 if (ppe == null) { // Parent is in another cluster
                                 // Nothing further to do
-                    System.out.println("Parent " + ptuid + " not found");
+                    debug("Parent " + ptuid + " not found");
                     deleteRootTask(task);
                 } else {
                     if (ppe instanceof Expansion) {
-                        System.out.println("Parent is expansion, deleting subtask");
+                        debug("Parent is expansion, deleting subtask");
                         deleteSubtask((Expansion) ppe, task);
                     } else {
-                        System.out.println("Parent is expansion, deleting subtask");
-                        System.out.println("Parent is other, propagating");
+                        debug("Parent is expansion, deleting subtask");
+                        debug("Parent is other, propagating");
                         delete(ppe.getTask()); // Not sure this is possible, but parallels "isDeleteAllowed"
                     }
                 }
@@ -305,10 +326,10 @@ public class DeletionPlugIn extends SimplePlugIn {
     private boolean isTimeToDelete(PlanElement pe) {
         long et = 0L;
         if (et == 0L) et = computeExpirationTime(pe);
-//  	System.out.println("Expiration time is " + new java.util.Date(et));
+//  	debug("Expiration time is " + new java.util.Date(et));
         boolean result = et == 0L || et < currentTimeMillis() - deletionDelay;
 //          if (result) {
-//              System.out.println("isTimeToDelete: " + new java.util.Date(et));
+//              debug("isTimeToDelete: " + new java.util.Date(et));
 //          }
         return result;
     }
