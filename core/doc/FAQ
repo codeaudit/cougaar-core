@@ -1,0 +1,44 @@
+COUGAAR Frequently Asked Questions
+
+Notes:
+- Questions are marked by "*", aswers follow.
+- The source and date annotates each answer.
+- This is really intended to be a temporary document, to be replaced
+with an automatic FAQ system at some point.
+
+* What are all those different AllocationResults for?
+
+[rtomlinson@bbn.com, 18 June 2001]
+There are three distinct allocation results plus the "reported result"
+which is computed from received and observed. I'll try to explain each.
+
+Estimated result -- This is the responsibility of plugin that created
+the plan element of which is a part. This is initially purely an
+estimate based on whatever information the plugin has available. As the
+reported result changes, the plugin updates this. Usually the update
+consists of copying the reported result to be the estimated result.
+
+Received result -- This is managed by the infrastructure and generally
+reflects the outcome of the downstream planning process. For example,
+the received result of an allocation to another organization is received
+from that other organization through a notification message. The
+received result for an expansion is computed by combining the estimated
+result from all the subtasks using an aggregator on the workflow of the
+expansion. Plugins should not directly look at the received result, but
+should use the reported result instead.
+
+Observed result -- This is the results from observing what has happened
+in the real world. You must be somehow executing the plan for observed
+results to exist. For demo purposes, the event generator generates
+reports that are turned into observed results. Observed results differ
+from received results because things don't always happen as planned. The
+received results reflect what the downstream planners planned to happen;
+the observed result are what actually did happen.
+
+Reported result -- This is the combination of Received and Observed
+results and contains all the aspects from the observed result and only
+those aspects from the received result that do not appear in the
+observed result. The reported result is almost always what a plugin
+should use. A plugin may use the existence of an observed result in some
+cases to know that there is no point in trying to replan a task when it
+has already been observed to have happened in a particular way.
