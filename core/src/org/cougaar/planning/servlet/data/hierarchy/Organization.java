@@ -37,7 +37,7 @@ import org.xml.sax.Attributes;
  * @since 1/24/01
  **/
 public class Organization
-  implements XMLable, DeXMLable, Serializable{
+  implements XMLable, DeXMLable, Serializable, Comparable{
   
   //Variables:
   ////////////
@@ -96,6 +96,22 @@ public class Organization
   public List getRelations () {
     return relations;
   }
+  public int compareTo (Object other) {
+    if (!(other instanceof Organization))
+      return 0;
+    int value = UID.compareTo (((Organization) other).UID);
+    return value;
+  }
+  public boolean equals (Object other) {
+    if (!(other instanceof Organization)) {
+      System.out.println ("ERROR ERROR ERROR comparing with non-org "+ other);
+      return false;
+    }
+    boolean value = UID.equals (((Organization) other).UID);
+    return value;
+  }
+  public String toString () { return UID; }
+
   //XMLable members:
   //----------------
   
@@ -192,7 +208,11 @@ public class Organization
     public int compareTo (Object other) {
       if (!(other instanceof OrgRelation))
 	return 0;
-      return org.compareTo(((OrgRelation) other).org);
+      int comp = org.compareTo(((OrgRelation) other).org);
+      if (comp == 0)
+	return relationName.compareTo(((OrgRelation) other).relationName);
+      else
+	return comp;
     }
     public boolean hasName () { return hasName; }
     public String  getName () { return relationName; }

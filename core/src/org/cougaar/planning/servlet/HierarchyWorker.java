@@ -38,14 +38,10 @@ import org.cougaar.planning.ldm.plan.Relationship;
 import org.cougaar.planning.ldm.plan.RelationshipSchedule;
 import org.cougaar.planning.ldm.plan.Role;
 
-// explicitly name ALP's org and transit's org by using the full package
-
 import org.cougaar.planning.servlet.data.hierarchy.HierarchyData;
 import org.cougaar.planning.servlet.data.hierarchy.Organization;
 import org.cougaar.planning.servlet.data.xml.XMLWriter;
 import org.cougaar.planning.servlet.data.xml.XMLable;
-
-//import org.cougaar.lib.planserver.*;
 
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.UnaryPredicate;
@@ -85,9 +81,7 @@ import org.cougaar.util.UnaryPredicate;
  *   ....
  * </Hierarchy>
  *
- * NOTE : A circular provider-customer hierarchy will make this servlet
- * hang if asked to recurse over it.  Perhaps in the future we'll make it more
- * robust to circular relationships.
+ * NOTE : If any agent hangs, the whole request will hang...
  * </pre>
  */
 public class HierarchyWorker
@@ -107,6 +101,7 @@ public class HierarchyWorker
 
   protected boolean recurse;
   protected boolean allRelationships;
+  protected Set visitedOrgs = new HashSet ();
   protected boolean testing = false;
   protected static final int AGENTS_IN_ROW = 10;
 
@@ -154,7 +149,8 @@ public class HierarchyWorker
     }
       
     // generate our response.
-    getHierarchy (response.getOutputStream(), request, support, format, recurse, allRelationships);
+    getHierarchy (response.getOutputStream(), request, support, format, recurse, 
+		  allRelationships, visitedOrgs);
 	  
     if (VERBOSE) {
       System.out.println("FINISHED hierarchy at "+support.getAgentIdentifier());
@@ -180,6 +176,16 @@ public class HierarchyWorker
     } else if (eq("allRelationships",name)) {
       if (eq("true", value))
 	allRelationships=true;
+    } else if (eq("visitedOrgs",name)) {
+      StringTokenizer tokenizer = new StringTokenizer (value,",");
+      while (tokenizer.hasMoreTokens ())
+	visitedOrgs.add (tokenizer.nextToken ());
+
+      if (VERBOSE)
+	System.out.println ("Visited Org List is " + visitedOrgs);
+    } else {
+      if (VERBOSE)
+	System.out.println ("NOTE : Ignoring parameter named " + name);
     }
   }
 
@@ -195,7 +201,8 @@ public class HierarchyWorker
    */
   protected void getHierarchy(OutputStream out, HttpServletRequest request, 
 			      SimpleServletSupport support,
-			      int format, boolean recurse, boolean allRelationships) {
+			      int format, boolean recurse, boolean allRelationships,
+			      Set visitedOrgs) {
     // get self org
     HasRelationships selfOrg = getSelfOrg(support);
     if (selfOrg == null) {
@@ -203,7 +210,7 @@ public class HierarchyWorker
     }
 
     // get hierarchy data
-    HierarchyData hd = getHierarchyData(request, support, selfOrg, recurse, allRelationships);
+    HierarchyData hd = getHierarchyData(request, support, selfOrg, recurse, allRelationships, visitedOrgs);
 
     writeResponse (hd, out, request, support, format, allRelationships);
   }
@@ -238,10 +245,12 @@ public class HierarchyWorker
 					   SimpleServletSupport support,
 					   HasRelationships selfOrg,
 					   boolean recurse,
-					   boolean allRelationships) {
+					   boolean allRelationships,
+					   Set visitedOrgs) {
     // create a "self" org
     String selfOrgName = 
       ((Asset)selfOrg).getClusterPG().getClusterIdentifier().toString();
+    visitedOrgs.add (selfOrgName);
     // build list of orgs
     HierarchyData hd = new HierarchyData();
     Organization toOrg = new Organization();
@@ -273,7 +282,7 @@ public class HierarchyWorker
     // add self org to hierarchy
     hd.addOrgData(toOrg);
 
-    if (VERBOSE)
+    if (VERBOSE && false)
       System.out.println ("getHierarchyData - " + selfOrgName + 
 			  " has these subs " + subordinates);
 
@@ -319,10 +328,11 @@ public class HierarchyWorker
       else if (!role.endsWith("Self")){
 	toOrg.addRelation(subOrgName, role);
       }
-      if ((recurse) &&
+      if (recurse &&
 	  (!(selfOrgName.equals(subOrgName))) && // don't recurse on yourself
 	  validAgents.contains(subOrgName) &&    // only on agents that were actually created
-	  validRole (role)) {                    // only on customers, subordinates, etc. 
+	  validRole (role) &&                    // only on customers, subordinates, etc. 
+	  !visitedOrgs.contains(subOrgName)) {   // only ones we haven't visited before
 	if (VERBOSE)                             // so we don't have circular paths
 	  System.out.println ("self " + selfOrgName + " sub " + subOrgName + " role " + role + 
 			      (validRole(role) ? " VALID " : " invalid"));
@@ -332,24 +342,33 @@ public class HierarchyWorker
 
     // if we are recursing, recurse on subordinates
     if (recurse) {
-      // add subordinate orgs to hierarchy
-      for (Iterator iter = recurseSubOrgSet.iterator(); 
-           iter.hasNext();
-           ) {
-        String subOrgName = (String)iter.next();
-        // fetch the sub's data
-
-	HierarchyData subHD = fetchForSubordinate(request, support, subOrgName, allRelationships);
-	// take Orgs from sub's hierarchy data
-	int nSubHD = ((subHD != null) ? subHD.numOrgs() : 0);
-	for (int i = 0; i < nSubHD; i++) {
-	  hd.addOrgData(subHD.getOrgDataAt(i));
-	}
-      }
+      visitedOrgs.addAll (recurseSubOrgSet);
+      recurseOnSubords (recurseSubOrgSet, request, support, allRelationships, visitedOrgs, hd);
     }
 
     // return list
     return hd;
+  }
+
+  protected void recurseOnSubords (Set recurseSubOrgSet,
+				   HttpServletRequest request,
+				   SimpleServletSupport support,
+				   boolean allRelationships, 
+				   Set visitedOrgs,
+				   HierarchyData hd) {
+    for (Iterator iter = recurseSubOrgSet.iterator(); 
+	 iter.hasNext();
+	 ) {
+      String subOrgName = (String)iter.next();
+      // fetch the sub's data
+
+      HierarchyData subHD = fetchForSubordinate(request, support, subOrgName, allRelationships, visitedOrgs);
+      // take Orgs from sub's hierarchy data
+      int nSubHD = ((subHD != null) ? subHD.numOrgs() : 0);
+      for (int i = 0; i < nSubHD; i++) {
+	hd.addOrgData(subHD.getOrgDataAt(i));
+      }
+    }
   }
 
   /** 
@@ -375,7 +394,8 @@ public class HierarchyWorker
   protected HierarchyData fetchForSubordinate(HttpServletRequest request, 
 					      SimpleServletSupport support,
 					      String subOrgName,
-					      boolean allRelationships) {
+					      boolean allRelationships,
+					      Set visitedOrgs) {
     try {
       // build URL for remote connection
       StringBuffer buf = new StringBuffer();
@@ -386,7 +406,12 @@ public class HierarchyWorker
       buf.append("/$");
       buf.append(subOrgName);
       buf.append(support.getPath());
-      buf.append("?data=true&recurse=true");
+      buf.append("?data=true&recurse=true&visitedOrgs=");
+      for (Iterator iter=visitedOrgs.iterator();iter.hasNext();) {
+	buf.append (iter.next ());
+	if (iter.hasNext())
+	  buf.append (",");
+      }
       if (allRelationships)
 	buf.append("&allRelationships=true");
 	
@@ -470,6 +495,7 @@ public class HierarchyWorker
 		     "<TABLE align=center border=0 cellPadding=1 cellSpacing=1>");
       boolean rowEnded = false;
       int k = 0;
+      data.sortOrgs ();
       for(;k<data.numOrgs();k++) {
 	Organization org = data.getOrgDataAt(k);
 	if ((k % AGENTS_IN_ROW) == 0) {

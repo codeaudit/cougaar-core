@@ -25,7 +25,10 @@ import org.cougaar.planning.servlet.data.xml.*;
 import java.io.Writer;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.ArrayList;
 
 import org.xml.sax.Attributes;
@@ -70,12 +73,17 @@ public class HierarchyData implements XMLable, DeXMLable, Serializable{
     return organizations.size();
   }
 
+  public void sortOrgs () {
+    Collections.sort (organizations);
+  }
+
   public Organization getOrgDataAt(int i){
     return (Organization)organizations.get(i);
   }
 
   public void addOrgData(Organization od){
-    organizations.add(od);
+    if (!organizations.contains(od))
+      organizations.add(od);
   }
 
   //XMLable members:
