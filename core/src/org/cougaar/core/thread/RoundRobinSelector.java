@@ -28,9 +28,13 @@ class RoundRobinSelector implements RightsSelector
     // Holds the next index of the round-robin selection.  A value of
     // -1 refers to the local queue, rather than any of the children.
     private int currentIndex = -1;
+    protected PropagatingScheduler scheduler;
 
-    private SchedulableObject checkNextPending(PropagatingScheduler scheduler,
-					       ArrayList children) 
+    public void setScheduler(PropagatingScheduler scheduler) {
+	this.scheduler = scheduler;
+    }
+
+    private SchedulableObject checkNextPending(ArrayList children) 
     {
 	SchedulableObject handoff = null;
 	if (currentIndex == -1) {
@@ -48,13 +52,13 @@ class RoundRobinSelector implements RightsSelector
 	return handoff;
     }
 
-    public SchedulableObject getNextPending(PropagatingScheduler scheduler) {
+    public SchedulableObject getNextPending() {
 	int initialIndex = currentIndex;
 	ArrayList children = scheduler.getTreeNode().getChildren();
 	SchedulableObject handoff = null;
 	// repeat-until
 	while (true) {
-	    handoff = checkNextPending(scheduler, children);
+	    handoff = checkNextPending(children);
 	    if (handoff != null) return handoff;
 	    if (currentIndex == initialIndex) break;
 	}

@@ -21,8 +21,35 @@
 
 package org.cougaar.core.thread;
 
-public interface RightsSelector
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.ThreadControlService;
+
+public class RootControlPlugin extends ComponentPlugin
 {
-    public void setScheduler(PropagatingScheduler scheduler);
-    public SchedulableObject getNextPending();
+    public RootControlPlugin() {
+	super();
+    }
+
+    public void load() {
+	super.load();
+
+	ServiceBroker sb = getServiceBroker();
+	NodeControlService ncs = (NodeControlService)
+	    sb.getService(this, NodeControlService.class, null);
+	sb = ncs.getRootServiceBroker();
+	RightsSelector selector = new PercentageLoadSelector(sb);
+	ThreadControlService tcs = (ThreadControlService)
+	    sb.getService(this, ThreadControlService.class, null);
+	tcs.setRightsSelector(selector);
+    }
+
+    protected void setupSubscriptions() {
+    }
+  
+    protected void execute() {
+	System.out.println("Never called");
+    }
+
 }

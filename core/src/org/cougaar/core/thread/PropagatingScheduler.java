@@ -33,11 +33,13 @@ public class PropagatingScheduler extends Scheduler
 
 	// Default selector
 	selector = new RoundRobinSelector();
+	selector.setScheduler(this);
     }
 
     
     public void setRightsSelector(RightsSelector selector) {
 	this.selector = selector;
+	selector.setScheduler(this);
     }
 
     boolean requestRights(Scheduler requestor) {
@@ -101,7 +103,7 @@ public class PropagatingScheduler extends Scheduler
     }
 
     SchedulableObject getNextPending() {
-	return selector.getNextPending(this);
+	return selector.getNextPending();
     }
 
 }
