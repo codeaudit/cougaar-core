@@ -1,3 +1,9 @@
+* 8.2.2
+New INI file format to support BinderFactory loading:
+  "insertionPoint = classname(Vector of Strings)"
+with backwards-compatibility for "cluster = " and "plugin = ".
+Node has been modified to load Components using ComponentDescriptions.
+
 * 8.2.1
 ComponentModel name change: org.cougaar.core.component.Services has
 been renamed ServiceBroker to better reflect the function of the
