@@ -656,8 +656,8 @@ extends AbstractMobilityPlugin
         } catch (MobilityException me) {
           throw me;
         } catch (Exception e) {
-          if (log.isErrorEnabled()) {
-            log.error(
+          if (RootMobilityPlugin.this.log.isErrorEnabled()) {
+            RootMobilityPlugin.this.log.error(
                 "Failed agent "+id+" move to node "+destNode, 
                 e);
           }
@@ -669,8 +669,8 @@ extends AbstractMobilityPlugin
           move.setStatus(AgentTransfer.SUCCESS_STATUS, null);
           publishChangeLater(move);
         } else {
-          if (log.isWarnEnabled()) {
-            log.warn(
+          if (RootMobilityPlugin.this.log.isWarnEnabled()) {
+            RootMobilityPlugin.this.log.warn(
                 "Unable to set move status for transfer "+
                 ((transfer != null) ? 
                  transfer.getUID().toString() : 
