@@ -81,15 +81,27 @@ abstract class DefaultComponents {
       l.add(NODE_BUSY);
       l.add(NODE_THREAD_SERVICE);
       l.add(MTS_SOCKET_FACTORY);
-      l.add(WHITE_PAGES_SERVICE);
+      if (PropertyParser.getBoolean("org.cougaar.core.load.wp", true)) {
+        l.add(WHITE_PAGES_SERVICE);
+      }
       if (PropertyParser.getBoolean("org.cougaar.core.load.wp.server", true)) {
         l.add(WHITE_PAGES_SERVER);
       }
-      l.add(QOS_METRICS_SERVICE);
+      if (Boolean.getBoolean("org.cougaar.metrics.trivial")) {
+        l.add(TRIVIAL_QOS_METRICS_SERVICE);
+      } else {
+        l.add(QOS_METRICS_SERVICE);
+      }
       l.add(NODE_METRICS);
-      l.add(MESSAGE_TRANSPORT_SERVICE);
+      if (Boolean.getBoolean("org.cougaar.core.mts.singlenode")) {
+        l.add(LOCAL_MESSAGE_TRANSPORT_SERVICE);
+      } else {
+        l.add(MESSAGE_TRANSPORT_SERVICE);
+      }
       l.add(TIME_SERVICES);
-      l.add(SERVLET_SERVICE);
+      if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
+        l.add(SERVLET_SERVICE);
+      }
     }
 
     l.add(TOPOLOGY);
@@ -108,17 +120,27 @@ abstract class DefaultComponents {
     l.addAll(findComponents(cds, BINDER));
 
     if (isNode) {
-      l.add(COMMUNITY_INITIALIZER_SERVICE);
-      l.add(ASSET_INITIALIZER_SERVICE);
+      if (PropertyParser.getBoolean("org.cougaar.core.load.community", true)) {
+        l.add(COMMUNITY_INITIALIZER_SERVICE);
+      }
+      if (PropertyParser.getBoolean("org.cougaar.core.load.planning", true)) {
+        l.add(ASSET_INITIALIZER_SERVICE);
+      }
     }
 
     l.add(THREAD_SERVICE);
     l.add(SCHEDULER_SERVICE);
-    l.add(PROTOTYPE_REGISTRY_SERVICE);
-    l.add(LDM_SERVICE);
-    l.add(LEAF_SERVLET_SERVICE);
+    if (PropertyParser.getBoolean("org.cougaar.core.load.planning", true)) {
+      l.add(PROTOTYPE_REGISTRY_SERVICE);
+      l.add(LDM_SERVICE);
+    }
+    if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
+      l.add(LEAF_SERVLET_SERVICE);
+    }
     l.add(DOMAIN_MANAGER);
-    l.add(COMMUNITY_SERVICE);
+    if (PropertyParser.getBoolean("org.cougaar.core.load.community", true)) {
+      l.add(COMMUNITY_SERVICE);
+    }
     l.add(BLACKBOARD_SERVICE);
 
     // COMPONENT
@@ -282,6 +304,14 @@ abstract class DefaultComponents {
         null, null, null, null, null,
         HIGH);
 
+  private static final ComponentDescription TRIVIAL_QOS_METRICS_SERVICE =
+    new ComponentDescription(
+        "org.cougaar.core.qos.metrics.MetricsServiceProvider",
+        "Node.AgentManager.Agent.MetricsServices",
+        "org.cougaar.core.qos.metrics.MetricsServiceProvider",
+        null, null, null, null, null,
+        HIGH);
+
   private static final ComponentDescription QOS_METRICS_SERVICE =
     new ComponentDescription(
         "org.cougaar.core.qos.rss.RSSMetricsServiceProvider",
@@ -295,6 +325,14 @@ abstract class DefaultComponents {
         "org.cougaar.core.node.NodeMetrics",
         "Node.AgentManager.Agent.Component",
         "org.cougaar.core.node.NodeMetrics",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription LOCAL_MESSAGE_TRANSPORT_SERVICE =
+    new ComponentDescription(
+        "org.cougaar.core.mts.singlenode.SingleNodeMTSProvider",
+        "Node.AgentManager.Agent.MessageTransport",
+        "org.cougaar.core.mts.singlenode.SingleNodeMTSProvider",
         null, null, null, null, null,
         HIGH);
 
