@@ -313,12 +313,14 @@ public class NamingEventContext extends NamingDirContext implements EventDirCont
       Binding oldBinding = evt.oldBinding;
       if (oldBinding != null && !oldBinding.isRelative()) {
         String name = oldBinding.getName();
+	// WARNING: Next line not currently jikes-compilable. Use javac with -source=1.4
         assert name.startsWith(myFullName);
         oldBinding = new Binding(name.substring(myFullName.length()), oldBinding.getObject());
       }
       Binding newBinding = evt.newBinding;
       if (newBinding != null && !newBinding.isRelative()) {
         String name = newBinding.getName();
+	// WARNING: Next line not currently jikes-compilable. Use javac with -source=1.4
         assert name.startsWith(myFullName);
         newBinding = new Binding(name.substring(myFullName.length()), newBinding.getObject());
       }
