@@ -1,3 +1,9 @@
+* MB 7.0.2
+
+Changed the third party charting software from Sitraka (was KLGroup) 
+jcchart400K.jar to an upgrade of jcchart451K.jar.   Enables Inventory GUI 
+improvements.  Cannot mix and match different builds of glm and core.
+
 * MB 7.0.1
 
 Default database connection information has been moved out of all
