@@ -85,7 +85,7 @@ import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
-import org.cougaar.util.log.LoggingServiceWithPrefix;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 
 /**
  * This persistence class is the base for several persistence
