@@ -52,8 +52,6 @@ public final class ScheduleUtilities {
    */
   public static Schedule computeNonOverlappingSchedule(Schedule aSchedule) {
     final Vector scheduleElements = new Vector();
-    final boolean isQuantity = aSchedule.getScheduleElementType().equals(ScheduleElementType.QUANTITY);
-
 
     class MyThunk implements Thunk {
       ScheduleElement pending = null;
@@ -157,12 +155,7 @@ public final class ScheduleUtilities {
     // create a new schedule with the new elements
     ScheduleImpl newsched = new ScheduleImpl();
     newsched.setScheduleType(aSchedule.getScheduleType());
-    if (isQuantity) {
-      newsched.setScheduleElementType(ScheduleElementType.QUANTITY);
-    } else {
-      newsched.setScheduleElementType(ScheduleElementType.RATE);
-    }
-
+    newsched.setScheduleElementType(aSchedule.getScheduleElementType());
     newsched.setScheduleElements(scheduleElements);
     
     return newsched;
