@@ -41,7 +41,11 @@ import java.beans.*;
 import java.lang.reflect.*;
 
 
-/** A container for Agent Components.
+/** A container for Agents.
+ * Although the AgentManager can hold Components other than Agents, the 
+ * default BinderFactory will only actually accept Agents and other Binders.
+ * If you want to load other sorts of components into AgentManager, you'll
+ * need to supply a Binder which knows how to bind your Component class.
  **/
 public class AgentManager 
   extends ContainerSupport
@@ -141,6 +145,14 @@ public class AgentManager
     public boolean remove(Object o) {return true; }
   }
 
+  public boolean add(Object o) {
+    try {
+      return super.add(o);
+    } catch (RuntimeException re) {
+      System.err.println("Failed to add "+o+" to "+this+":");
+      re.printStackTrace();
+    }
+  }
   //
   // Implement the "AgentContainer" API, primarily to support
   //   agent mobility
