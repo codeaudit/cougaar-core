@@ -61,6 +61,7 @@ implements Component
   private MessageAddress moveTargetNode;
 
   private MessageAddress localAgent;
+  private long localIncarnation;
   private MessageAddress localNode;
   private String localHost;
 
@@ -70,7 +71,44 @@ implements Component
 
   public void load() {
     super.load();
+    obtainServices();
+  }
 
+  public void start() {
+    super.start();
+    event("Started");
+  }
+
+  public void suspend() {
+    super.suspend();
+    if (moveTargetNode != null) {
+      event("Moving");
+    }
+  }
+
+  public void resume() {
+    super.resume();
+    if (moveTargetNode != null) {
+      event("NotMoved");
+      moveTargetNode = null;
+    }
+  }
+
+  public void stop() {
+    super.stop();
+    if (moveTargetNode == null) {
+      event("Stopped");
+    } else {
+      event("Moved");
+    }
+  }
+
+  public void unload() {
+    super.unload();
+    releaseServices();
+  }
+
+  private void obtainServices() {
     log = (LoggingService)
       sb.getService(
           this, LoggingService.class, null);
@@ -93,6 +131,15 @@ implements Component
       localAgent = ais.getMessageAddress();
       sb.releaseService(
           this, AgentIdentificationService.class, ais);
+    }
+
+    // local agent's incarnation
+    TopologyService ts = (TopologyService)
+      sb.getService(this, TopologyService.class, null);
+    if (ts != null) {
+      localIncarnation = ts.getIncarnationNumber();
+      sb.releaseService(
+          this, TopologyService.class, ts);
     }
 
     // local node
@@ -128,106 +175,47 @@ implements Component
     }
   }
 
-  public void start() {
-    super.start();
-
-    if (eventService != null &&
-        eventService.isEventEnabled()) {
-      eventService.event(
-          "AgentLifecycle("+"Started"+
-          ") Agent("+localAgent+
-          ") Node("+localNode+
-          ") Host("+localHost+
-          ")");
+  private void event(String cycle) {
+    if (eventService == null || !eventService.isEventEnabled()) {
+      return;
     }
-  }
-
-  public void suspend() {
-    super.suspend();
-
+    String tail;
     if (moveTargetNode == null) {
-      return;
-    }
-    if (eventService == null ||
-        !eventService.isEventEnabled()) {
-      return;
-    }
-    // record event
-    String moveTargetHost = "?";
-    try {
-      AddressEntry nodeEntry = 
-        wps.get(
-            moveTargetNode.getAddress(),
-            "topology",
-            10000); // wait at most 10 seconds
-      if (nodeEntry != null) {
-        moveTargetHost = nodeEntry.getURI().getHost();
+      tail = "";
+    } else {
+      String moveTargetHost = "?";
+      try {
+        AddressEntry nodeEntry = 
+          wps.get(
+              moveTargetNode.getAddress(),
+              "topology",
+              10000); // wait at most 10 seconds
+        if (nodeEntry != null) {
+          moveTargetHost = nodeEntry.getURI().getHost();
+        }
+      } catch (Exception e) {
+        if (log.isInfoEnabled()) {
+          log.info(
+              "Unable to get host for destination node "+
+              moveTargetNode,
+              e);
+        }
       }
-    } catch (Exception e) {
-      if (log.isInfoEnabled()) {
-        log.info(
-            "Unable to get host for destination node "+
-            moveTargetNode,
-            e);
-      }
+      tail =
+        " ToNode("+moveTargetNode+
+        ") ToHost("+moveTargetHost+
+        ")";
     }
     eventService.event(
-        "AgentLifecycle("+"Moving"+
+        "AgentLifecycle("+cycle+
         ") Agent("+localAgent+
         ") Node("+localNode+
         ") Host("+localHost+
-        ") ToNode("+moveTargetNode+
-        ") ToHost("+moveTargetHost+
-        ")");
+        ") Incarnation("+localIncarnation+
+        ")"+tail);
   }
 
-  public void resume() {
-    super.resume();
-
-    if (moveTargetNode == null) {
-      return;
-    }
-
-    if (eventService != null &&
-        eventService.isEventEnabled()) {
-      eventService.event(
-          "AgentLifecycle("+"NotMoved"+
-          ") Agent("+localAgent+
-          ") Node("+localNode+
-          ") Host("+localHost+
-          ") ToNode("+moveTargetNode+
-          ")");
-    }
-    moveTargetNode = null;
-  }
-
-  public void stop() {
-    super.stop();
-
-    if (eventService != null &&
-        eventService.isEventEnabled()) {
-      if (moveTargetNode == null) {
-        eventService.event(
-            "AgentLifecycle("+"Stopped"+
-            ") Agent("+localAgent+
-            ") Node("+localNode+
-            ") Host("+localHost+
-            ")");
-      } else {
-        eventService.event(
-            "AgentLifecycle("+"Moved"+
-            ") Agent("+localAgent+
-            ") Node("+localNode+
-            ") Host("+localHost+
-            ") ToNode("+moveTargetNode+
-            ")");
-      }
-    }
-  }
-
-  public void unload() {
-    super.unload();
-
+  private void releaseServices() {
     if (mns != null) {
       sb.releaseService(mnc, MobilityNotificationService.class, mns);
       mns = null;
