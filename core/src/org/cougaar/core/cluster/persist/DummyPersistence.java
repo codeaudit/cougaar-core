@@ -63,11 +63,16 @@ public class DummyPersistence extends BasePersistence implements Persistence {
   protected void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
   }
 
-  protected ObjectOutputStream openObjectOutputStream(int deltaNumber) throws IOException {
+  protected ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
+    throws IOException
+  {
     return new ObjectOutputStream(new ByteArrayOutputStream());
   }
 
-  protected void closeObjectOutputStream(SequenceNumbers retain, ObjectOutputStream currentOutput) {
+  protected void closeObjectOutputStream(SequenceNumbers retain,
+                                         ObjectOutputStream currentOutput,
+                                         boolean full)
+  {
     try {
       currentOutput.close();
     }
@@ -77,7 +82,7 @@ public class DummyPersistence extends BasePersistence implements Persistence {
   }
 
   protected void abortObjectOutputStream(SequenceNumbers retain, ObjectOutputStream currentOutput) {
-    closeObjectOutputStream(retain, currentOutput);
+    closeObjectOutputStream(retain, currentOutput, false);
   }
 
   protected ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {

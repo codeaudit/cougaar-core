@@ -67,7 +67,13 @@ import java.util.Calendar;
  * We store the deltas for each cluster in a separate table named
  * after the cluster: delta_<clustername>. The table has three columns:
  * seqno  -- has an INTEGER delta sequence number
- * active -- has a BOOLEAN indicating that the delta is still active
+ * active -- has a CHAR indicating the kind of delta stored
+ *           x -- full delta (all data)
+ *           t -- incremental delta
+ *           a -- archive delta (full but not active)
+ *           f -- inactive incremental
+ *   The above codes were selected for backward compatibility with the
+ *   former t/f meaning active was true/false
  * data   -- has a LONG RAW with the serialized data
  **/
 public class DatabasePersistence
@@ -102,7 +108,8 @@ public class DatabasePersistence
   }
 
   private PreparedStatement getSequenceNumbers;
-  private PreparedStatement putSequenceNumbers;
+  private PreparedStatement putSequenceNumbers1;
+  private PreparedStatement putSequenceNumbers2;
   private PreparedStatement storeDelta;
   private PreparedStatement getDelta;
   private PreparedStatement cleanDeltas;
@@ -142,10 +149,13 @@ public class DatabasePersistence
                          theConnection.getTransactionIsolation());
       getSequenceNumbers = theConnection.prepareStatement
         ("select count(seqno), min(seqno), max(seqno)+1 from " + deltaTable +
-         " where active ='t'");
-      putSequenceNumbers = theConnection.prepareStatement
+         " where active ='x' or active = 't'");
+      putSequenceNumbers1 = theConnection.prepareStatement
         ("update " + deltaTable +
-         " set active = 'f' where seqno < ? or seqno >= ?");
+         " set active = 'f' where active = 't' and (seqno < ? or seqno >= ?)");
+      putSequenceNumbers1 = theConnection.prepareStatement
+        ("update " + deltaTable +
+         " set active = 'a' where active = 'x' and (seqno < ? or seqno >= ?)");
       storeDelta = theConnection.prepareStatement
         ("insert into " + deltaTable +
          "(seqno, active, data) values (?, ?, ?)");
@@ -154,7 +164,7 @@ public class DatabasePersistence
          " where seqno = ?");
       cleanDeltas = theConnection.prepareStatement
         ("delete from " + deltaTable +
-         " where seqno >= ? and seqno < ?");
+         " where active = 'f' and seqno >= ? and seqno < ?");
       try {
         ResultSet rs = getSequenceNumbers.executeQuery();
         rs.close();
@@ -219,9 +229,12 @@ public class DatabasePersistence
 
   private void writeSequenceNumbers(SequenceNumbers sequenceNumbers) {
     try {
-      putSequenceNumbers.setInt(1, sequenceNumbers.first);
-      putSequenceNumbers.setInt(2, sequenceNumbers.current);
-      putSequenceNumbers.executeUpdate();
+      putSequenceNumbers1.setInt(1, sequenceNumbers.first);
+      putSequenceNumbers1.setInt(2, sequenceNumbers.current);
+      putSequenceNumbers1.executeUpdate();
+      putSequenceNumbers1.setInt(1, sequenceNumbers.first);
+      putSequenceNumbers1.setInt(2, sequenceNumbers.current);
+      putSequenceNumbers1.executeUpdate();
     }
     catch (SQLException e) {
       fatalException(e);
@@ -239,10 +252,10 @@ public class DatabasePersistence
     }
   }
 
-  private void writeDelta(int seqno, InputStream is, int length) {
+  private void writeDelta(int seqno, InputStream is, int length, boolean full) {
     try {
       storeDelta.setInt(1, seqno);
-      storeDelta.setString(2, "t");
+      storeDelta.setString(2, full ? "x" : "t");
       storeDelta.setBinaryStream(3, is, length);
       storeDelta.executeUpdate();
     }
@@ -253,10 +266,12 @@ public class DatabasePersistence
 
   private class MyOutputStream extends ByteArrayOutputStream {
     private int deltaNumber;
+    private boolean full;
 
-    public MyOutputStream(final int deltaNumber) {
+    public MyOutputStream(int deltaNumber, boolean ful) {
       super(8192);
       this.deltaNumber = deltaNumber;
+      this.full = full;
     }
 
     public void close() throws IOException {
@@ -279,7 +294,7 @@ public class DatabasePersistence
           return len;
         }
       };
-      writeDelta(deltaNumber, is, cnt);
+      writeDelta(deltaNumber, is, cnt, full);
       super.close();
       try {
         theConnection.commit();
@@ -291,19 +306,21 @@ public class DatabasePersistence
     }
   }
 
-  protected ObjectOutputStream openObjectOutputStream(final int deltaNumber)
+  protected ObjectOutputStream openObjectOutputStream(final int deltaNumber,
+                                                      final boolean full)
     throws IOException
   {
     getDatabaseConnection(this);
-    return new ObjectOutputStream(new MyOutputStream(deltaNumber));
+    return new ObjectOutputStream(new MyOutputStream(deltaNumber, full));
   }
 
   protected void closeObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput)
+                                         ObjectOutputStream currentOutput,
+                                         boolean full)
   {
     try {
-      writeSequenceNumbers(retainNumbers);
       currentOutput.close();
+      writeSequenceNumbers(retainNumbers);
     }
     catch (IOException e) {
       fatalException(e);
@@ -355,8 +372,7 @@ public class DatabasePersistence
   protected PrintWriter getHistoryWriter(int deltaNumber, String prefix)
     throws IOException
   {
-    String seq = "" + (100000+deltaNumber);
-    File historyFile = new File(persistenceDirectory, prefix + seq.substring(1));
+    File historyFile = new File(persistenceDirectory, prefix + formatDeltaNumber(deltaNumber));
     return new PrintWriter(new FileWriter(historyFile));
   }
 

@@ -40,6 +40,7 @@ public interface Persistence {
                    List allEpochEnvelopes,
                    List subscriberStates,
                    boolean returnBytes,
+                   boolean full,
                    MessageManager messageManager);
 
   /**

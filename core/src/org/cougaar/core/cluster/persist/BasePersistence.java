@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -117,14 +118,15 @@ public abstract class BasePersistence implements Persistence {
 
   protected abstract void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
 
-  protected abstract ObjectOutputStream openObjectOutputStream(int deltaNumber)
+  protected abstract ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
     throws IOException;
 
   protected abstract void abortObjectOutputStream(SequenceNumbers retainNumbers,
 						  ObjectOutputStream currentOutput);
 
   protected abstract void closeObjectOutputStream(SequenceNumbers retainNumbers,
-						  ObjectOutputStream currentOutput);
+						  ObjectOutputStream currentOutput,
+                                                  boolean full);
 
   protected abstract ObjectInputStream openObjectInputStream(int deltaNumber)
     throws IOException;
@@ -187,6 +189,7 @@ public abstract class BasePersistence implements Persistence {
 
   private SequenceNumbers sequenceNumbers = null;
   private SequenceNumbers cleanupSequenceNumbers = null;
+  private boolean archivingEnabled = true;
   private ObjectOutputStream currentOutput;
   private ClusterContext clusterContext;
   private Plan reality = null;
@@ -247,7 +250,8 @@ public abstract class BasePersistence implements Persistence {
                                   + rehydrateNumbers.toString());
               flushRehydrationLog();
             }
-            cleanupSequenceNumbers = new SequenceNumbers(rehydrateNumbers);
+            if (!archivingEnabled)
+              cleanupSequenceNumbers = new SequenceNumbers(rehydrateNumbers);
           }
           try {
             try {
@@ -446,7 +450,7 @@ public abstract class BasePersistence implements Persistence {
 //        PersistenceInputStream stream = new PersistenceInputStream(bytes);
       PersistenceInputStream stream = new PersistenceInputStream(currentInput);
       if (debug) {
-        history = getHistoryWriter(deltaNumber, "restore_");
+        history = getHistoryWriter(deltaNumber, "restore");
         writeHistoryHeader(history);
         stream.setHistoryWriter(history);
       }
@@ -652,6 +656,7 @@ public abstract class BasePersistence implements Persistence {
                         List undistributedEnvelopes,
                         List subscriberStates,
                         boolean returnBytes,
+                        boolean full,
                         MessageManager messageManager)
   {
     if (writeDisabled) return null;
@@ -663,14 +668,20 @@ public abstract class BasePersistence implements Persistence {
       try {
         objectsToPersist.clear();
         anyMarks(identityTable.iterator());
-        boolean full = returnBytes;
+        full |= returnBytes;
         if (sequenceNumbers.current - sequenceNumbers.first >= 10 && sequenceNumbers.current % 10 == 0) {
           full = true;
         }
         if (full) {
-          cleanupSequenceNumbers = new SequenceNumbers(sequenceNumbers);
-          sequenceNumbers.first = sequenceNumbers.current;
+          cleanupSequenceNumbers = 			// Cleanup the existing since the full replaces them
+            new SequenceNumbers(sequenceNumbers);
           System.out.println("Consolidating deltas " + cleanupSequenceNumbers);
+          if (archivingEnabled) {
+            cleanupSequenceNumbers.first++; // Don't clean up the base delta
+            if (cleanupSequenceNumbers.first == cleanupSequenceNumbers.current)
+              cleanupSequenceNumbers = null; // Nothing to cleanup
+          }
+          sequenceNumbers.first = sequenceNumbers.current;
         }
         if (sequenceNumbers.current == sequenceNumbers.first) {
           // First delta of this running
@@ -688,11 +699,11 @@ public abstract class BasePersistence implements Persistence {
         epochEnvelopes = copyAndRemoveNotPersistable(epochEnvelopes);
         undistributedEnvelopes = copyAndRemoveNotPersistable(undistributedEnvelopes);
         addEnvelopes(epochEnvelopes, true);
-        beginTransaction();
+        beginTransaction(full);
         try {
           PersistenceOutputStream stream = new PersistenceOutputStream();
           if (debug) {
-            history = getHistoryWriter(sequenceNumbers.current, "history_");
+            history = getHistoryWriter(sequenceNumbers.current, "history");
             writeHistoryHeader(history);
             stream.setHistoryWriter(history);
           }
@@ -761,7 +772,7 @@ public abstract class BasePersistence implements Persistence {
               history = null;
             }
           }
-          commitTransaction();
+          commitTransaction(full);
           if (needCleanup()) {
             doCleanup();
           }
@@ -785,6 +796,12 @@ public abstract class BasePersistence implements Persistence {
     new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
 
   private DateFormat rehydrationLogNameFormat;
+
+  private static DecimalFormat deltaFormat = new DecimalFormat("_00000");
+
+  public static String formatDeltaNumber(int deltaNumber) {
+    return deltaFormat.format(deltaNumber);
+  }
 
   private void writeHistoryHeader(PrintWriter history) {
     if (history != null) {
@@ -871,8 +888,8 @@ public abstract class BasePersistence implements Persistence {
 
   private PersistenceState uidServerState = null;
 
-  private void beginTransaction() throws IOException {
-    currentOutput = openObjectOutputStream(sequenceNumbers.current);
+  private void beginTransaction(boolean full) throws IOException {
+    currentOutput = openObjectOutputStream(sequenceNumbers.current, full);
   }
 
   private void rollbackTransaction() {
@@ -880,9 +897,9 @@ public abstract class BasePersistence implements Persistence {
     currentOutput = null;
   }
 
-  private void commitTransaction() {
+  private void commitTransaction(boolean full) {
     sequenceNumbers.current += 1;
-    closeObjectOutputStream(sequenceNumbers, currentOutput);
+    closeObjectOutputStream(sequenceNumbers, currentOutput, full);
     currentOutput = null;
   }
 }

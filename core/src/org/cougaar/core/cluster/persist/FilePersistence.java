@@ -86,9 +86,6 @@ public class FilePersistence extends BasePersistence implements Persistence {
 
   private File persistenceDirectory;
 
-  private File sequenceFile;
-  private File newSequenceFile;
-
   private FilePersistence(ClusterContext clusterContext) throws PersistenceException {
     super(clusterContext);
     String clusterName = clusterContext.getClusterIdentifier().getAddress();
@@ -100,28 +97,24 @@ public class FilePersistence extends BasePersistence implements Persistence {
     }
   }
 
-  private File getSequenceFile() {
-    if (sequenceFile == null) {
-      sequenceFile = new File(persistenceDirectory, "sequence");
-    }
-    return sequenceFile;
+  private File getSequenceFile(String suffix) {
+    return new File(persistenceDirectory, "sequence" + suffix);
   }
 
   private File getNewSequenceFile() {
-    if (newSequenceFile == null) {
-      newSequenceFile = new File(persistenceDirectory, "newSequence");
-    }
-    return newSequenceFile;
+    return new File(persistenceDirectory, "newSequence");
   }
 
   protected SequenceNumbers readSequenceNumbers() {
-    if (!getSequenceFile().exists() && getNewSequenceFile().exists()) {
-      getNewSequenceFile().renameTo(getSequenceFile());
+    File sequenceFile = getSequenceFile("");
+    File newSequenceFile = getNewSequenceFile();
+    if (!sequenceFile.exists() && newSequenceFile.exists()) {
+      newSequenceFile.renameTo(sequenceFile);
     }
-    if (getSequenceFile().exists()) {
-      print("Reading " + getSequenceFile());
+    if (sequenceFile.exists()) {
+      print("Reading " + sequenceFile);
       try {
-	DataInputStream sequenceStream = new DataInputStream(new FileInputStream(getSequenceFile()));
+	DataInputStream sequenceStream = new DataInputStream(new FileInputStream(sequenceFile));
 	try {
 	  int first = sequenceStream.readInt();
 	  int last = sequenceStream.readInt();
@@ -138,9 +131,11 @@ public class FilePersistence extends BasePersistence implements Persistence {
     return null;
   }
 
-  private void writeSequenceNumbers(SequenceNumbers sequenceNumbers) {
+  private void writeSequenceNumbers(SequenceNumbers sequenceNumbers, String suffix) {
     try {
-      FileOutputStream fileStream = new FileOutputStream(getNewSequenceFile());
+      File sequenceFile = getSequenceFile(suffix);
+      File newSequenceFile = getNewSequenceFile();
+      FileOutputStream fileStream = new FileOutputStream(newSequenceFile);
       DataOutputStream sequenceStream = new DataOutputStream(fileStream);
       try {
 	sequenceStream.writeInt(sequenceNumbers.first);
@@ -150,9 +145,9 @@ public class FilePersistence extends BasePersistence implements Persistence {
 	sequenceStream.flush();
         fileStream.getFD().sync();
         sequenceStream.close();
-	getSequenceFile().delete();
-	if (!getNewSequenceFile().renameTo(getSequenceFile())) {
-	  System.err.println("Failed to rename " + getNewSequenceFile() + " to " + getSequenceFile());
+	sequenceFile.delete();
+	if (!newSequenceFile.renameTo(sequenceFile)) {
+	  System.err.println("Failed to rename " + newSequenceFile + " to " + sequenceFile);
 	}
       }
     }
@@ -170,18 +165,20 @@ public class FilePersistence extends BasePersistence implements Persistence {
     }
   }
 
-  protected ObjectOutputStream openObjectOutputStream(int deltaNumber) throws IOException {
+  protected ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
     print("Persist to " + deltaFile);
     return new SafeObjectOutputFile(new FileOutputStream(deltaFile));
   }
 
   protected void closeObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput)
+                                         ObjectOutputStream currentOutput,
+                                         boolean full)
   {
     try {
       currentOutput.close();
-      writeSequenceNumbers(retainNumbers);
+      writeSequenceNumbers(retainNumbers, "");
+      if (full) writeSequenceNumbers(retainNumbers, formatDeltaNumber(retainNumbers.first));
     }
     catch (IOException e) {
       e.printStackTrace();
@@ -216,8 +213,7 @@ public class FilePersistence extends BasePersistence implements Persistence {
   }
 
   protected PrintWriter getHistoryWriter(int deltaNumber, String prefix) throws IOException {
-    String seq = "" + (100000+deltaNumber);
-    File historyFile = new File(persistenceDirectory, prefix + seq.substring(1));
+    File historyFile = new File(persistenceDirectory, prefix + formatDeltaNumber(deltaNumber));
     return new PrintWriter(new FileWriter(historyFile));
   }
 
@@ -229,7 +225,6 @@ public class FilePersistence extends BasePersistence implements Persistence {
   }
 
   private File getDeltaFile(int sequence) {
-    String seq = "" + (100000+sequence);
-    return new File(persistenceDirectory, "delta_" + seq.substring(1));
+    return new File(persistenceDirectory, "delta" + formatDeltaNumber(sequence));
   }
 }
