@@ -10,6 +10,10 @@
 
 package org.cougaar.core.society;
 
+import org.cougaar.core.qos.monitor.QosMonitorService;
+import org.cougaar.core.qos.monitor.QosMonitorServiceProvider;
+import org.cougaar.core.qos.monitor.ResourceMonitorService;
+
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportException;
 import org.cougaar.core.mts.MessageTransportService;
@@ -541,8 +545,11 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     sb.addService(NamingService.class,
                   new NamingServiceProvider(System.getProperties()));
 
+    initQos();
+
     // set up the message handler and register this Node
     initTransport();  
+
 
     registerExternalNodeController();
 
@@ -572,6 +579,15 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
   }
+
+
+  private void initQos() {
+    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider();
+    add(qmsp);
+    getServiceBroker().addService(QosMonitorService.class, qmsp);
+    getServiceBroker().addService(ResourceMonitorService.class, qmsp);
+  }
+
 
   // external controller for this node
   private ExternalNodeController eController;
