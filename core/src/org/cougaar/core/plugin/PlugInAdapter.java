@@ -326,6 +326,16 @@ public abstract class PlugInAdapter
   }
 
 
+  public void suspend() throws StateModelException {
+    super.suspend();
+    threadingModel.suspend();
+  }
+
+  public void resume() throws StateModelException {
+    super.resume();
+    threadingModel.resume();
+  }
+
   //
   // Customization of PlugInAdapter
   //
@@ -1148,6 +1158,10 @@ public abstract class PlugInAdapter
       setWaker(getBlackboardService().registerInterest());
     }
 
+    public void unload() {
+      getBlackboardService().unregisterInterest(getWaker());
+    }
+
     public synchronized void start() {
       if (state != STOPPED) throw new RuntimeException("Not stopped");
       state = RUNNING;
@@ -1213,5 +1227,8 @@ public abstract class PlugInAdapter
       waker = sw;
     }
 
+    public SubscriptionWatcher getWaker() {
+      return waker;
+    }
   }
 }
