@@ -226,6 +226,13 @@ implements AgentIdentityClient
    **/
   private MessageAddress myMessageAddress_;
 
+  /**
+   * All the parameters of this agent. The 0-th parameter is always a
+   * MessageAddress, the rest are unaltered from the initializer
+   * service.
+   **/
+  private List parameters;
+
   /** Alias for getMessageAddress, required by Agent superclass **/
   public MessageAddress getAgentIdentifier() {
     return this.getMessageAddress();
@@ -253,18 +260,22 @@ implements AgentIdentityClient
     MessageAddress cid = null;
     if (o instanceof MessageAddress) {
       cid = (MessageAddress) o;
+      parameters = Collections.singletonList(cid);
     } else if (o instanceof String) {
       cid = MessageAddress.getMessageAddress((String) o);
+      parameters = Collections.singletonList(cid);
     } else if (o instanceof List) {
-      List l = (List)o;
-      if (l.size() > 0) {
-        Object o1 = l.get(0);
+      parameters = (List) o;
+      System.out.println("parameters.size() = " + parameters.size());
+      if (parameters.size() > 0) {
+        Object o1 = parameters.get(0);
         if (o1 instanceof MessageAddress) {
           cid = (MessageAddress) o1;
         } else if (o1 instanceof String) {
           cid = MessageAddress.getMessageAddress((String) o1);
         }
       }
+      parameters.set(0, cid);
     }
     this.myMessageAddress_ = cid;
   }
@@ -559,7 +570,7 @@ implements AgentIdentityClient
           Agent.INSERTION_POINT + ".Persist",
           "org.cougaar.core.persist.PersistenceServiceComponent",
           null,
-          getMessageAddress(),
+          parameters,
           null,
           null,
           null,
@@ -577,20 +588,23 @@ implements AgentIdentityClient
           getPersistenceClient(), PersistenceServiceForAgent.class, null);
     persistenceService.rehydrate(persistenceObject);
     List rehydrationList = getRehydrationList(persistenceService);
+    persistenceData = null;     // Until proven otherwise
     if (rehydrationList != null && rehydrationList.size() > 0) {
-      persistenceData = (PersistenceData) rehydrationList.get(0);
+      PersistenceData pd = (PersistenceData) rehydrationList.get(0);
       // validate the state
       // verify state's agent id
-      if (!(getMessageAddress().equals(persistenceData.agentId))) {
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Load state contains incorrect agent address " +
-              persistenceData.agentId);
+      if (pd.parameters.size() < 1) {
+        log.error("Load state has no agent address, ignoring state");
+      } else {
+        MessageAddress agentId = (MessageAddress) pd.parameters.get(0);
+        if ((getMessageAddress().equals(agentId))) {
+          persistenceData = pd; // Looks good
+        } else {
+          log.error("Load state has incorrect agent address "
+                    + agentId
+                    + ", ignoring state");
         }
-        // continue anyways
       }
-    } else {
-      persistenceData = null;
     }
 
     // do the standard thing.
@@ -1194,7 +1208,7 @@ implements AgentIdentityClient
       // non-moving state capture
       persistenceData.identity = null;
     }
-    persistenceData.agentId = getMessageAddress();
+    persistenceData.parameters = parameters; // Includes MessageAddress
     persistenceData.mtsState = mtsState;
     List d = new ArrayList(1);
     d.add(persistenceData);
@@ -2081,7 +2095,7 @@ implements AgentIdentityClient
 
   private static class PersistenceData implements java.io.Serializable {
 
-    private MessageAddress agentId;
+    private List parameters;    // Parameters including agentId
     private TransferableIdentity identity;
     private ComponentDescriptions descs;
     private org.cougaar.core.mts.AgentState mtsState;
@@ -2091,7 +2105,7 @@ implements AgentIdentityClient
     public String toString() {
       return 
         "Agent "
-        + agentId
+        + parameters.get(0)
         + " state, identity "
         + identity
         + ", descs "
@@ -2105,7 +2119,7 @@ implements AgentIdentityClient
         + "]";
     }
 
-    private static final long serialVersionUID = 3109298128098682091L;
+    private static final long serialVersionUID = 3109298128098682092L;
   }
 
   //-----------------------------------------------------------------
