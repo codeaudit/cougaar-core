@@ -1,0 +1,141 @@
+<html><body>
+
+Simple inter-agent "ping" code, primarily intended for 
+infrastructure testing of message transport and agent mobility.
+<p>
+This is not mobility-specific per se, but is packaged within
+mobility to keep it separate from the rest of core.  The ping
+APIs are primiarily intended for testing.
+<p>
+See later in this document for 
+<a href="#tests">suggested tests</a> that use the ping
+support.
+<p>
+
+<hr>
+<a name="classes"/>
+<h2>Ping APIs and Plugin Usage</h2>
+<dl>
+<dt>
+<b>Ping</b>
+<dd>
+The interface for the ping data structure.
+<p>
+
+<dt>
+<b>PingImpl</b>
+<dd>
+The Relay-based implementation of the "Ping".  Any plugin can 
+create a PingImpl and publish it to the local blackboard.
+<p>
+
+<dt>
+<b>PingTimerPlugin</b>
+<dd>
+Required plugin for the ping iterations and timeouts to work.  It
+must be loaded into all agents that will create pings:<pre>
+  plugin = org.cougaar.core.mobility.ping.PingTimerPlugin(3000)
+</pre>
+where the "3000" is the time in milliseconds between ping checks.
+The minimum allowed value is 500 milliseconds.
+<p>
+
+<dt>
+<b>PingServlet <i>("/ping")</i></b>
+<dd>
+An optional servlet that can be used to display pings, remove
+existing pings, or add new pings.  The servlet is loaded with:
+<pre>
+  plugin = org.cougaar.core.mobility.ping.PingServlet
+</pre>
+A single plugin parameter can optionally be used to override
+the default "/ping" servlet path.
+<p>
+
+<dt>
+<b>PingAdderPlugin</b>
+<dd>
+An optional plugin that can be used to create pings at agent
+startup, which can be used in combination with the above "/ping"
+servlet.  <u>Multiple</u> PingAdderPlugins can be used in the same 
+agent to create complex message traffic patterns.  Each 
+PingAdderPlugin instance requires four plugin parameters:
+<dl>
+<dt><i>[+]startTime</i>
+<dd>The wait time after plugin creation to create the ping, 
+where:<br>
+a) 0 or negative indicates no wait<br>
+b) A system time in milliseconds, where a value less than the plugin 
+creation system time is turned into the current system time<br>
+c) "+time", meaning that many milliseconds after the plugin creation 
+time (e.g. +5000 for 5 seconds after startup)<br>
+<dt><i>timeoutMillis</i>
+<dd>The timeout limit for a ping, where:<br>
+a) 0 or negative means no time limit<br>
+b) A positive integer means milliseconds after each ping iteration 
+has started (e.g. 30000 for a maximum of 30 seconds per ping)<br>
+<dt><i>iterationLimit</i>
+<dd>The number of ping iterations, where:<br>
+a) 0 or negative for no limit<br>
+b) A positive integer for a specified number of iterations (e.g.
+10 for 10 iterations numbered 0 - 9).<br>
+<dt><i>target0 [, .. targetN]</i>
+<dd>
+At least one target agent must be specified, and it can't match the 
+local agent.  If multiple targets are specified, it acts as a Set.
+</dl>
+<p>
+<dl>
+Examples:
+<dt>
+<pre>
+  plugin = org.cougaar.core.mobility.ping.PingAdderPlugin(0, 0, 0, X)
+</pre>
+<dd>Create an infinite series of pings to agent X at startup, 
+with no timeout.
+<dt>
+<pre>
+  plugin = org.cougaar.core.mobility.ping.PingAdderPlugin(+20000, 30000, 5, X)
+</pre>
+<dd>Create a series of 5 pings to agent X at 20 seconds after 
+startup, and to wait at most 30 seconds for any ping to complete.
+</dl>
+<p>
+
+</dl>
+
+<p>
+<hr>
+<a name="tests"/>
+<h2>Suggested Tests</h2>
+<p>
+First, consider turning up the ping logging level by adding this 
+line to your "log.props":<pre>
+  log4j.category.org.cougaar.core.mobility.ping=INFO
+</pre>
+<p>
+Here are some suggested tests:
+<ol>
+<li>
+Create an endless stream of pings between agent "AgentA" on node 
+"NodeA" to agent "AgentB" on node "NodeB".  Examine the MTS metrics
+for message-counters and bandwidth consumption.
+</li><p>
+<li>
+Run the above test again.  Use the "/move" servlet to move AgentA 
+from NodeA to an empty node named "NodeC.  Verify that the pings 
+from AgentA to AgentB resume and the servlets are accessable.
+</li><p>
+<li>
+Run the above test agent but move the receiver, AgentB, instead of 
+moving AgentA.
+</li><p>
+<li>
+Create a ping from an AgentA on NodeA to a non-existent agent named 
+"AgentC".  Move AgentA to an empty node named "NodeC".  Once moved,
+launch NodeC with AgentC.  Verify that the previously unsendable 
+pings from AgentA to AgentC are now sent.
+</li>
+</ol>
+
+</body></html>
