@@ -106,7 +106,7 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
 
   public void setDefault(TimePhasedPropertyGroup defaultPG) {
     if (!validClass(defaultPG.getPrimaryClass())) {
-      System.out.println("PGClass: " + getPGClass() + " default arg " + 
+      System.err.println("PGClass: " + getPGClass() + " default arg " + 
                          defaultPG.getPrimaryClass());
       throw new ClassCastException();
     }
@@ -480,7 +480,7 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
   }
   
   private final class _Locked extends PropertyGroupSchedule 
-    implements LockedPGSchedule {
+    implements LockedPGSchedule, BeanInfo {
 
     // Kludge to work around bug in Jikes - explicitly store a ref to the outer class
     // since Jikes refuses to recognize PropertySchedule.this.
@@ -667,28 +667,43 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     }
 
 
+    // BeanInfo - delegate to myRealSchedule
+
     public PropertyDescriptor[] getPropertyDescriptors() {
-      return properties;
+      return myRealSchedule.getPropertyDescriptors();
+    }
+    
+    public BeanDescriptor getBeanDescriptor() {
+      return myRealSchedule.getBeanDescriptor();
+    }
+    
+    public int getDefaultPropertyIndex() {
+      return myRealSchedule.getDefaultPropertyIndex();
+    }
+  
+    public EventSetDescriptor[] getEventSetDescriptors() {
+      return myRealSchedule.getEventSetDescriptors();
+    }
+  
+    public int getDefaultEventIndex() {
+      return myRealSchedule.getDefaultEventIndex();
+    }
+  
+    public MethodDescriptor[] getMethodDescriptors() {
+      return myRealSchedule.getMethodDescriptors();
+    }
+  
+    public BeanInfo[] getAdditionalBeanInfo() {
+      return myRealSchedule.getAdditionalBeanInfo();
+    }
+  
+    public java.awt.Image getIcon(int iconKind) {
+      return myRealSchedule.getIcon(iconKind);
     }
 
     public Class getIntrospectionClass() {
-      return PropertyGroupSchedule.class;
+      return myRealSchedule.getIntrospectionClass();
     }
 
   }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
