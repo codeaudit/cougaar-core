@@ -200,13 +200,24 @@ extends BaseServletComponent
           "Unable to create Servlet instance: ", e);
     }
 
-    if (inst instanceof Servlet) {
-      this.servlet = (Servlet) inst;
-    } else {
+    if (inst instanceof Component) {
       this.comp = (Component) inst;
+      try {
+        Method m = cl.getMethod(
+            "setParameter",
+            new Class[]{Object.class});
+        m.invoke(comp, new Object[]{path});
+      } catch (NoSuchMethodException nsme) {
+        // ignore, support a couple broken clients
+      } catch (Exception e) {
+        throw new RuntimeException(
+            "Unable to setParameter("+path+")", e);
+      }
       BindingUtility.activate(inst, bindingSite, serviceBroker);
       return null;
     }
+
+    this.servlet = (Servlet) inst;
 
     // check for the support requirement
     Method supportMethod;
