@@ -147,7 +147,7 @@ public class AgentImpl extends Agent {
           null,  //certificate
           null,  //lease
           null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT);
+          ComponentDescription.PRIORITY_HIGH);
   }
   private String getBootstrapClass() {
     // FIXME add a system property

@@ -76,6 +76,7 @@ implements Component
   private PersistenceClient pc;
 
   private boolean foundDescs;
+  private List initialDescs;
 
   public void setBindingSite(BindingSite bs) {
     this.sb = bs.getServiceBroker();
@@ -106,6 +107,8 @@ implements Component
 
   public void start() {
     super.start();
+
+    initialDescs = null;
 
     // once loaded we revoke our service
     if (fclsp != null) {
@@ -240,41 +243,10 @@ implements Component
   }
 
   private Object captureState() {
-    if (log.isDetailEnabled()) {
-      log.detail("capturing component descriptions");
-    }
-
-    // get the child components
-    //
-    // Ideally we'd simply capture the component model, but if we're
-    // loading then we'd see a partial list.
-    //
-    // Loading the blackboard immediatly persists the component
-    // descriptions, to avoid reading the INI/XML files when the
-    // agent is rehydrated.  This persist must be done before loading
-    // the blackboard clients, since they may be active for quite
-    // some time and would block the node-level loading thread.
-    // However, the initial components are added to the hierarchy as
-    // they are loaded, so the component hierarchy at this point
-    // lacks the sub-blackboard components.  Here we preserve the
-    // initial component descriptions instead of recursing the
-    // partially-loaded component hierarchy.
-    if (getModelState() == GenericStateModel.LOADED) {
-      if (log.isWarnEnabled()) {
-        log.warn(
-            "Persisting while loading, capturing state anyways");
-      }
-    }
-
-    // active (started) or idle (suspended)
     if (log.isInfoEnabled()) {
-      log.info(
-          "Persisting while active, capturing the current"+
-          " component hierarchy");
+      log.info("Capturing component descriptions");
     }
-    List l = getComponentList();
-
-    return l;
+    return getComponentList();
   }
 
   private void register_persistence() {
@@ -389,6 +361,9 @@ implements Component
       log.debug("overrideComponentList("+l+")");
     }
 
+    // save for state capture while loading
+    initialDescs = l;
+
     AgentBootstrapService abs = (AgentBootstrapService)
       sb.getService(this, AgentBootstrapService.class, null);
     if (abs == null) {
@@ -402,6 +377,33 @@ implements Component
   }
 
   private List getComponentList() {
+    if (initialDescs != null) {
+      // actively loading, use override list
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Asked to \"getComponentList\" while loading,"+
+            " which would find a partially loaded model,"
+            " so instead return our initial component list["+
+            initialDescs.size()+"]");
+        if (log.isDebugEnabled()) {
+          log.debug(
+              "initialDescs["+initialDescs.size()+
+              "]="+initialDescs);
+        }
+      }
+      return initialDescs;
+    } 
+
+    if (getModelState() == GenericStateModel.LOADED &&
+        log.isErrorEnabled()) {
+      // this shouldn't happen, since during load we always
+      // save our override list
+      log.error(
+          "Attempting to capture model state while loading,"+
+          " initialDescs is null,"+
+          " this may find a partial configuration!");
+    }
+
     // get descriptions
     AgentComponentModelService acms = (AgentComponentModelService)
       sb.getService(this, AgentComponentModelService.class, null);
