@@ -240,34 +240,35 @@ public class DatabasePersistence
     }
   }
 
-  private class MyOutputStream
-    extends ByteArrayOutputStream
-  {
+  private class MyOutputStream extends ByteArrayOutputStream {
     private int deltaNumber;
+
     public MyOutputStream(final int deltaNumber) {
       super(8192);
       this.deltaNumber = deltaNumber;
     }
-    
+
     public void close() throws IOException {
+      final int cnt = count;
+      final byte[] bfr = buf;
       InputStream is = new InputStream() {
         int n = 0;
         public int read() {
-          if (n >= count) return -1;
-          return buf[n++];
+          if (n >= cnt) return -1;
+          return bfr[n++];
         }
         public int read(byte[] rbuf) {
           return read(rbuf, 0, rbuf.length);
         }
         public int read(byte[] rbuf, int offset, int len) {
-          len= Math.min(len, count - n);
+          len= Math.min(len, cnt - n);
           if (len == 0) return -1;
-          System.arraycopy(buf, n, rbuf, offset, len);
+          System.arraycopy(bfr, n, rbuf, offset, len);
           n += len;
           return len;
         }
       };
-      writeDelta(deltaNumber, is, count);
+      writeDelta(deltaNumber, is, cnt);
       super.close();
       try {
         theConnection.commit();
