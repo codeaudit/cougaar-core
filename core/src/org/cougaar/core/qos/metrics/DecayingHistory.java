@@ -51,7 +51,7 @@ public abstract class DecayingHistory
 	DecayingHistoryList(int column, int length) {
 	    this.column = column;
 	    this.length = length;
-	    period = Math.pow(length, column+1) + "SecAvg";
+	    period = Math.round(Math.pow(length, column+1)) + "SecAvg";
 	    index = 0;
 	    full = false;
 	}

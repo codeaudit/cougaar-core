@@ -72,6 +72,27 @@ public interface Constants
     String BYTES_OUT_100_SEC_AVG = "BytesOut100SecAvg";
     String BYTES_OUT_1000_SEC_AVG = "BytesOut1000SecAvg";
 
+
+    String MSG_FROM_1_SEC_AVG = "MsgFrom1SecAvg";
+    String MSG_FROM_10_SEC_AVG = "MsgFrom10SecAvg";
+    String MSG_FROM_100_SEC_AVG = "MsgFrom100SecAvg";
+    String MSG_FROM_1000_SEC_AVG = "MsgFrom1000SecAvg";
+
+    String MSG_TO_1_SEC_AVG = "MsgTo1SecAvg";
+    String MSG_TO_10_SEC_AVG = "MsgTo10SecAvg";
+    String MSG_TO_100_SEC_AVG = "MsgTo100SecAvg";
+    String MSG_TO_1000_SEC_AVG = "MsgTo1000SecAvg";
+
+    String BYTES_FROM_1_SEC_AVG = "BytesFrom1SecAvg";
+    String BYTES_FROM_10_SEC_AVG = "BytesFrom10SecAvg";
+    String BYTES_FROM_100_SEC_AVG = "BytesFrom100SecAvg";
+    String BYTES_FROM_1000_SEC_AVG = "BytesFrom1000SecAvg";
+
+    String BYTES_TO_1_SEC_AVG = "BytesTo1SecAvg";
+    String BYTES_TO_10_SEC_AVG = "BytesTo10SecAvg";
+    String BYTES_TO_100_SEC_AVG = "BytesTo100SecAvg";
+    String BYTES_TO_1000_SEC_AVG = "BytesTo1000SecAvg";
+
     String PERSIST_SIZE_LAST = "PersistSizeLast";
 
     // Credibility Spectrum: tries to unify many different notions of

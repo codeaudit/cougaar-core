@@ -25,6 +25,7 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.ThreadService;
 
 import java.util.HashMap;
@@ -43,6 +44,7 @@ public class AgentStatusRatePlugin
     private MetricsUpdateService metricsUpdate;
     private HashMap agentLocalHistories;
     private HashMap agentRemoteHistories;
+    private MessageAddress nodeID;
 
     public AgentStatusRatePlugin() {
 	super();
@@ -150,15 +152,15 @@ public class AgentStatusRatePlugin
 
 
     private void updateAgentMetric(MessageAddress agent,
-				   String lable,
+				   String label,
 				   String period,
 				   double value, 
 				   String units)
     {
-	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR +lable + period;
+	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR +label + period;
 	Metric metric = new MetricImpl(value,
 				       SECOND_MEAS_CREDIBILITY,
-				       "units",
+				       units,
 				       "AgentStatusRatePlugin");
 	metricsUpdate.updateValue(key, metric);
     }
@@ -166,12 +168,20 @@ public class AgentStatusRatePlugin
   
     
     private void updateFlowMetric(MessageAddress agent,
-				  String lable,
+				  String label,
 				  String period,
 				  double value, 
 				  String units)
     {
-	// JAZ To Do
+	String key = "Node" +KEY_SEPR+ nodeID
+	    +KEY_SEPR+ "Destination" +KEY_SEPR+
+	    agent  +KEY_SEPR +label + period;
+	
+	Metric metric = new MetricImpl(value,
+				       SECOND_MEAS_CREDIBILITY,
+				       units,
+				       "AgentStatusRatePlugin");
+	metricsUpdate.updateValue(key, metric);
 
     }
 
@@ -232,6 +242,10 @@ public class AgentStatusRatePlugin
 
 	metricsUpdate = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
+
+	NodeIdentificationService nis = (NodeIdentificationService)
+	    sb.getService(this, NodeIdentificationService.class, null);
+	nodeID = nis.getNodeIdentifier();
 
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {

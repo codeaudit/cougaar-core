@@ -89,11 +89,22 @@ public class RemoteAgentServlet
 	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
 	    String name = entry.getAgent();
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
+	    String destPath="Node("+nodeID+")"+PATH_SEPR+
+		"Destination("+name+")"+PATH_SEPR;
 	    // Get Metrics
 	    Metric eMJIPS = metricsService.getValue(agentPath+
 						    "EffectiveMJips");
 	    Metric queue = metricsService.getValue(agentPath+
 						   "AvgQueueLength");
+	    Metric msgTo = metricsService.getValue(destPath+
+						   MSG_TO_1_SEC_AVG);
+	    Metric msgFrom = metricsService.getValue(destPath+
+						   MSG_FROM_1_SEC_AVG);
+	    Metric bytesTo= metricsService.getValue(destPath+
+						       BYTES_TO_1_SEC_AVG);
+	    Metric bytesFrom = metricsService.getValue(destPath+
+						   BYTES_FROM_1_SEC_AVG);
+
 	    if(queue ==null) 
 		queue= new MetricImpl(new Double(0.00), 0,"units","test");
 
@@ -110,13 +121,9 @@ public class RemoteAgentServlet
 		spoke = new MetricImpl(new Double(0.00), 0,"units","test");
 	    } 
 
-	    Metric msgTo = metricsService.getValue(agentPath+
-						   "MsgTo");
 	    if (msgTo ==null) 
 		msgTo = new MetricImpl(new Double(0.00), 0,"units","test");
 
-	    Metric msgFrom=metricsService.getValue(agentPath+
-						   "MsgFrom");
 	    if (msgFrom ==null) 
 		msgFrom = new MetricImpl(new Double(0.00), 0,"units","test");
 
