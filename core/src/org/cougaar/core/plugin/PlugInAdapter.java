@@ -661,10 +661,10 @@ public abstract class PlugInAdapter
       return theBlackboard;
     }
     public Distributor getDistributor() {
-      return null;
+      throw new RuntimeException("Delegate.getDistributor() no longer allowed");
     }
     public ClusterServesPlugIn getCluster() {
-      return null;
+      return PlugInAdapter.this.getCluster();
     }
     public LDMServesPlugIn getLDM() {
       return getBindingSite().getLDM();
