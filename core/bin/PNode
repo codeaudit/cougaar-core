@@ -89,7 +89,7 @@ if ("$os" == "Linux") then
     #setenv JAVA_COMPILER javacomp
 endif
 
-set javaargs="-Dorg.cougaar.core.cluster.persistence.enable=true -Xbootclasspath:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar $osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS"
+set javaargs="-Dorg.cougaar.core.persistence.enable=true -Xbootclasspath:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar $osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS"
 
 if ($?COUGAAR_DEV_PATH) then
     echo java $javaargs org.cougaar.core.node.Node $args
