@@ -20,6 +20,7 @@
  */
 package org.cougaar.core.blackboard;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,10 +43,19 @@ public class TimestampSubscription
 extends Subscription 
 {
 
+  // if this timestamp subscription is not shared, this list
+  // buffers the removed entries until after the plugin 
+  // transaction completes.
+  //
+  // this list is locked by the transaction.
+  private final List removedList;
+
   // a map if (UID, TimestampEntry) pairs
   //
   // the map is locked to allow multiple reader threads to
-  // access the "get*(UID)" methods.
+  // access the "get*(UID)" methods.  Even if the subscription
+  // is not shared, it must be locked to allow distributor
+  // updates during a transaction.
   private final Map map;
 
   // the "apply(..)" timestamp from the transaction close time
@@ -56,13 +66,27 @@ extends Subscription
   private long time;
 
   /**
+   * Equivalent to<pre>
+   *   new TimestampSubscription(p, true)
+   * </pre>
+   */
+  public TimestampSubscription(UnaryPredicate p) {
+    this(p, true);
+  }
+
+  /**
    * @param p the predicate should only accept UniqueObjects; 
    *    all non-UniqueObjects and UniqueObjects with null UIDs 
    *    are ignored.
+   * @param isShared if true, removals are done immediately,
+   *    otherwise they are done at the end of the plugin's
+   *    transaction.
    */
-  public TimestampSubscription(UnaryPredicate p) {
+  public TimestampSubscription(
+      UnaryPredicate p, boolean isShared) {
     super(p);
     map = new HashMap(13);
+    removedList = (isShared ? null : new ArrayList(11));
   }
 
   //
@@ -150,11 +174,32 @@ extends Subscription
   }
 
   protected void privateRemove(Object o, boolean isVisible) {
+    if (removedList == null) {
+      removeEntry(o);     // remove immediately
+    } else {
+      removedList.add(o); // wait until transaction close
+    }
+  }
+
+  private void removeEntry(Object o) {
     if (o instanceof UniqueObject) {
       UID uid = ((UniqueObject) o).getUID();
-      // FIXME remove without a trace?
       synchronized (map) {
         map.remove(uid);
+      }
+    }
+  }
+
+  protected void resetChanges() {
+    super.resetChanges();
+    if (removedList != null) {
+      // process removals
+      int n = removedList.size();
+      if (n > 0) {
+        for (int i = 0; i < n; i++) {
+          removeEntry(removedList.get(i));
+        }
+        removedList.clear();
       }
     }
   }
