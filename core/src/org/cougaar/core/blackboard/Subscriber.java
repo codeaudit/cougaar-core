@@ -487,8 +487,6 @@ public class Subscriber implements BlackboardService {
    * Actual Changes to the collection only happen via this api.
    **/
   protected EnvelopeTuple clientAddedObject(Object o) {
-    checkTransactionOK("add", o);
-
     // attempt to claim the object
     claimObject(o);
 
@@ -500,8 +498,6 @@ public class Subscriber implements BlackboardService {
    * Actual Changes to the collection only happen via this api.
    **/
   protected EnvelopeTuple clientRemovedObject(Object o) {
-    checkTransactionOK("remove", o);
-
     // attempt to unclaim the object
     unclaimObject(o);
 
@@ -513,8 +509,6 @@ public class Subscriber implements BlackboardService {
    * Actual Changes to the collection only happen via this api.
    **/
   protected EnvelopeTuple clientChangedObject(Object o, List changes) {
-    checkTransactionOK("change", o);    
-
     return outbox.changeObject(o, changes);
   }
   
@@ -523,6 +517,8 @@ public class Subscriber implements BlackboardService {
    **/
 
   public final boolean publishAdd(Object o) {
+    checkTransactionOK("add", o);
+
     if (theDistributor.history != null) theDistributor.history.publishAdd(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).addingToLogPlan(this)) 
@@ -543,6 +539,8 @@ public class Subscriber implements BlackboardService {
    * Behavior is not defined if the object was not already a member of the plan.
    **/
   public final boolean publishRemove(Object o) {
+    checkTransactionOK("remove", o);
+
     if (theDistributor.history != null) theDistributor.history.publishRemove(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).removingFromLogPlan(this)) 
@@ -581,6 +579,8 @@ public class Subscriber implements BlackboardService {
    * @param changes a set of ChangeReport instances or null.
    **/
   public final boolean publishChange(Object o, Collection changes) {
+    checkTransactionOK("change", o);    
+
     if (theDistributor.history != null) theDistributor.history.publishChange(o);
     if (o instanceof ActiveSubscriptionObject ) {
       if (! ((ActiveSubscriptionObject)o).changingInLogPlan(this)) 

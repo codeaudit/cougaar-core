@@ -2,7 +2,7 @@
 
 	* org/cougaar/core/blackboard/Subscriber.java
 	Check for open transactions earlier in call chain, e.g. in
-	publish* rather than in client*Object.
+	publish* rather than in client*Object. bug 826.
 
 	* org/cougaar/core/node/INIParser.java, org/cougaar/core/node/DBInitializerServiceProvider.java
 	If no component arguments, leave ComponentDescription parameter
