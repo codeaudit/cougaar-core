@@ -61,7 +61,7 @@
   <xs:complexType name="hostType">
     <xs:sequence>
       <xs:choice maxOccurs="unbounded">
-        <xs:element name="attribute" type="attributeType"/>
+        <xs:element name="facet" type="facetType"/>
         <xs:element name="node" type="nodeType" minOccurs="0" maxOccurs="unbounded">
           <!-- Ensure that there are not two components with the same name in the node agent -->
           <xs:unique name="nodecomponents">
@@ -79,7 +79,7 @@
   <xs:complexType name="nodeType">
     <xs:sequence>
       <xs:choice maxOccurs="unbounded">
-        <xs:element name="attribute" type="attributeType"/>
+        <xs:element name="facet" type="facetType"/>
         <xs:element name="prog_parameter" type="xs:string"/>
         <xs:element name="env_parameter" type="xs:string"/>
         <xs:element name="class" type="xs:string"/>
@@ -97,11 +97,14 @@
     <xs:attribute name="name" type="xs:string" use="required"/>
   </xs:complexType>
 
-  <!-- Arbitrary attributes that can be added to an agent, node, or host  -->
-  <xs:complexType name="attributeType" mixed="true">
-      <xs:sequence>
-        <xs:any minOccurs="0"/>
-      </xs:sequence>
+  <!-- Arbitrary attributes that can be added to an agent, node, or host    -->
+  <!-- They can have any attributes and contain text (but not sub-elements) -->
+  <xs:complexType name="facetType" mixed="true">
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:anyAttribute processContents="lax"/>
+        </xs:extension>
+      </xs:simpleContent>
   </xs:complexType>
     
   <!-- Type for agents: a sequence of components and attributes -->
@@ -109,7 +112,7 @@
     <xs:sequence>
       <xs:choice maxOccurs="unbounded">
         <xs:element name="component" type="componentType"/>
-        <xs:element name="attribute" type="attributeType"/>
+        <xs:element name="facet" type="facetType"/>
       </xs:choice>
     </xs:sequence>
     <xs:attribute name="order" type="xs:decimal" />
