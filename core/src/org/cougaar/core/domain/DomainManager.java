@@ -66,6 +66,9 @@ public class DomainManager
 
   private final static boolean verbose = "true".equals(System.getProperty("org.cougaar.verbose","false"));
 
+  private final static String CONTAINMENT_POINT =  
+    "Node.AgentManager.Agent.DomainManager";
+
   private Object loadState = null;
   private HashSet xplans = new HashSet();
   private Blackboard blackboard = null;
@@ -287,7 +290,7 @@ public class DomainManager
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "Node.AgentManager.Agent.DomainManager";
+    return CONTAINMENT_POINT;
   }
 
   protected ClusterServesLogicProvider getClusterServesLogicProvider() {
