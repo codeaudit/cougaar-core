@@ -10,9 +10,9 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
+import org.cougaar.util.TimeSpan;
 import org.cougaar.domain.planning.ldm.plan.NewScheduleElement;
 import org.cougaar.domain.planning.ldm.plan.ScheduleElement;
-
 import java.util.Date;
 
 /**
@@ -23,8 +23,8 @@ import java.util.Date;
 public class ScheduleElementImpl 
   implements ScheduleElement, NewScheduleElement, java.io.Serializable
 {
-  protected long stime = 0;
-  protected long etime = 0;
+  protected long stime = TimeSpan.MIN_VALUE;
+  protected long etime = TimeSpan.MAX_VALUE;
 
   /** no-arg constructor */
   public ScheduleElementImpl () { }
@@ -105,6 +105,14 @@ public class ScheduleElementImpl
       throw new IllegalArgumentException("ScheduleElements must span a non-zero amount of time.");
   }
         
+  public void setStartEndTimes(long starttime, long endtime) {
+    stime = starttime;
+    etime = endtime;
+    if (etime<=stime)
+      throw new IllegalArgumentException("ScheduleElements must span a non-zero amount of time.");
+  }
+
+
   public String toString() {
     return "<"+getStartDate()+"-"+getEndDate()+">";
   }

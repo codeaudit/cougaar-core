@@ -16,7 +16,7 @@ import java.util.Date;
    * setter methods for building valid ScheduleElement objects.
    *
    * @author  ALPINE <alpine-software@bbn.com>
-   * @version $Id: NewScheduleElement.java,v 1.2 2001-04-05 19:27:17 mthome Exp $
+   * @version $Id: NewScheduleElement.java,v 1.3 2001-07-16 15:19:59 jwinston Exp $
    **/
  	 
 public interface NewScheduleElement extends ScheduleElement {
@@ -36,4 +36,11 @@ public interface NewScheduleElement extends ScheduleElement {
    * @param endtime Set End time for the time interval 
    **/
   void setEndTime(long endtime);
+
+  /** One shot setter
+   * @param starttime Set Start time for the time interval 
+   * @param endtime Set End time for the time interval. 
+   * Note that end time is the <em>open</em> end of the interval.
+   */
+  void setStartEndTimes(long starttime, long endtime);
 }

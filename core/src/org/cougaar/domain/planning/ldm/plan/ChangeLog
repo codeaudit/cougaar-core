@@ -1,3 +1,10 @@
+2001-07-16  Jim Winston  <jwinston@bbn.com>
+	* NewScheduleElement.java, ScheduleElementImpl.java
+	Bug #335
+	Added setStartEndTimes(long starttime, long endtime).
+	Changed default starttime to TimeSpan.MIN_VALUE and
+	endtime to TimeSpan.MAX_VALUE
+	
 2001-05-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* AllocationResult.java:
