@@ -1,3 +1,14 @@
+2001-11-15  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/DBProperties.java:
+	Add addQueryFile method so additional query files can be added.
+
+2001-11-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java:
+	Insure that the driver class is loaded for all queries not just
+	those using the main connection.
+
 2001-11-13  Michael Thome  <mthome@bbn.com>
 
 	* SecurityComponent, StandardSecurityComponent, Node
