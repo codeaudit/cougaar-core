@@ -25,9 +25,18 @@ class TimeSlice
 {
     long start;
     long end;
+    long run_start;
     boolean in_use;
+    TimeSlicePolicy owner;
+    TimeSlice parent;
 
-    TimeSlice() {
+    TimeSlice(TimeSlicePolicy owner) {
+	this.owner = owner;
+    }
+
+    TimeSlice(TimeSlicePolicy owner, TimeSlice parent) {
+	this.owner = owner;
+	this.parent = parent;
     }
 
     boolean isExpired() {

@@ -81,6 +81,6 @@ final class PolicyTreeNode
     }
 
     String getName() {
-	return scheduler.name;
+	return scheduler.getName();
     }
 }

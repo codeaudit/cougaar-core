@@ -24,6 +24,10 @@ package org.cougaar.core.thread;
 public class CougaarThread
 {
 
+    public static final boolean Debug = 
+	Boolean.getBoolean("org.cougaar.thread.debug");
+
+    
     public static void sleep(long millis) {
 	Thread thread = Thread.currentThread();
 	if (thread instanceof ControllableThread) {

@@ -73,6 +73,7 @@ final class ControllableThread extends ReusableThread
     protected void claim() {
 	// thread has started or restarted
 	super.claim();
+	if (slice != null) slice.run_start = System.currentTimeMillis();
 	pool.scheduler().threadClaimed(this);
     }
 
@@ -126,7 +127,8 @@ final class ControllableThread extends ReusableThread
 		}
 		pool.scheduler().resumeThread(this);
 		suspended = false;
-	    } 
+	    }
+	    if (slice != null) slice.run_start = System.currentTimeMillis();
 	}
     }
 

@@ -31,17 +31,20 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 {
     static final long DEFAULT_SLICE_DURATION = 10000; // better
 
-    int outstandingChildSliceCount;
-    TimeSlice[] timeSlices;
-    PolicyTreeNode treeNode;
-    String printString;
+    private int outstandingChildSliceCount;
+    private TimeSlice[] timeSlices;
+    private PolicyTreeNode treeNode;
+    private String printString;
 
     DefaultTimeSlicePolicy() {
 	outstandingChildSliceCount = 0;
     }
 
 
-
+    PolicyTreeNode treeNode() {
+	return treeNode;
+    }
+    
 
     public String toString() {
 	return printString;
@@ -51,9 +54,13 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	return treeNode.getName();
     }
 
+    String getPolicyID () {
+	return "DefaultTimeSlicePolicy";
+    }
+
     public void setTreeNode(PolicyTreeNode treeNode) {
 	this.treeNode = treeNode;
-	printString = "<" + getClass().getName() + " " + getName() + ">";
+	printString = "<" + getPolicyID() + " " + getName() + ">";
 	PolicyTreeNode parent = treeNode.getParent();
 
 	if (parent == null) {
@@ -62,7 +69,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 		treeNode.getScheduler().maxRunningThreadCount();
 	    timeSlices = new TimeSlice[maxRunningThreads];
 	    for (int i=0; i<maxRunningThreads; i++) {
-		timeSlices[i] = new TimeSlice();
+		timeSlices[i] = new TimeSlice(this);
 	    }
 	}
     }
@@ -84,10 +91,16 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     }
 
 
+    public void noteChangeOfOwnership(TimeSliceConsumer consumer,
+				      TimeSlice slice)
+    {
+	TimeSlicePolicy parent = treeNode.getParentPolicy();
+	if (parent != null) parent.noteChangeOfOwnership(this, slice);
+    }
 
     // Get a slice for a child.  This version passes the request all
     // the way to the root, which is the only owner of slices.
-    public synchronized TimeSlice getSlice(TimeSliceConsumer consumer) {
+    public TimeSlice getSlice(TimeSliceConsumer consumer) {
 	TimeSlicePolicy parent = treeNode.getParentPolicy();
 
 
@@ -107,11 +120,11 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	slice.end = end;
     }
 
-    TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
+    synchronized TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
 	int use_count = treeNode.getScheduler().runningThreadCount() +
 	    outstandingChildSliceCount;
 	if (use_count >= treeNode.getScheduler().maxRunningThreadCount()) {
-	    if (Scheduler.DebugThreads)
+	    if (CougaarThread.Debug)
 		System.out.println("No slices available from " 
 				   +this+
 				   " for " +consumer+
@@ -128,13 +141,13 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	    reinitializeSlice(slice);
 	    slice.in_use = true;
 		
-	    if (Scheduler.DebugThreads)
+	    if (CougaarThread.Debug)
 		System.out.println(this +
 				   " made a slice for " +consumer+
 				   "; " +outstandingChildSliceCount+
 				   " now outstanding");
 	} else {
-	    if (Scheduler.DebugThreads)
+	    if (CougaarThread.Debug)
 		System.out.println("use_count < running count but no slice available!");
 	}
 	
@@ -145,8 +158,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     // Release a slice from a child.  This version passes it all the
     // way to the root of the tree, which is the only owner of slices.
-    public synchronized void releaseSlice(TimeSliceConsumer consumer, 
-					  TimeSlice slice) 
+    public void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice) 
     {
 	TimeSlicePolicy parent = treeNode.getParentPolicy();
 	if (parent != null) {
@@ -158,13 +170,13 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
 
 
-    void releaseLocalSlice (TimeSliceConsumer consumer,
-				    TimeSlice slice) 
+    synchronized void releaseLocalSlice (TimeSliceConsumer consumer,
+					 TimeSlice slice) 
     {
 	// The root of the tree: notify everyone that slices may be
 	// available.
 	--outstandingChildSliceCount;
-	if (Scheduler.DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println(this +
 			       " released a slice from " +consumer+
 			       "; " +outstandingChildSliceCount+
@@ -179,7 +191,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     // Round-robin scheduling
     private int currentIndex = -1;
-    private TimeSliceConsumer getNextConsumer() {
+    private synchronized TimeSliceConsumer getNextConsumer() {
 	TimeSliceConsumer result = null;
 	ArrayList children = treeNode.getChildren();
 	if (currentIndex== -1) {
@@ -203,20 +215,22 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	while (true) {
 	    TimeSliceConsumer consumer = getNextConsumer();
 	    if (consumer.offerSlice(slice)) {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println(consumer + " accepted offer");
 		return true;
 	    } else {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println(consumer + " refused offer");
 	    }
 	    if (lastIndex == currentIndex) break;
 	}
 
-	if (Scheduler.DebugThreads)
-	    System.out.println("Marking " +slice+ " as available");
 
-	slice.in_use = false;
+	if (slice.owner == this) {
+	    if (CougaarThread.Debug)
+		System.out.println("Marking " +slice+ " as available");
+	    slice.in_use = false;
+	}
 	return false;
 
     }

@@ -40,8 +40,14 @@ public class PercentageLatencyPolicy
 	int count;
 
 	double distance(double grandTotal) {
-	    return
+	    double d =
 		(targetPercentage-totalTime/grandTotal)/targetPercentage;
+// 	    System.out.println(child+ 
+// 			       " distance=" +d+
+// 			       " count=" +count+
+// 			       " target=" +targetPercentage+
+// 			       " time=" +totalTime);
+	    return d;
 	}
 
     }
@@ -90,20 +96,6 @@ public class PercentageLatencyPolicy
 
     }
 
-    private static class SubSlice extends TimeSlice {
-	TimeSlice parent;
-	TimeSliceConsumer consumer;
-	
-	SubSlice(TimeSlice parent, 
-		 long expiration) 
-	{
-	    start = System.currentTimeMillis();
-	    end = Math.min(parent.end, start + expiration);
-	    this.parent = parent;
-	}
-	
-    }
-
     private Properties properties;
     private Comparator comparator;
     private HashMap records;
@@ -126,10 +118,22 @@ public class PercentageLatencyPolicy
 	
     }
 
+    String getPolicyID () {
+	return "PercentageLatencyPolicy";
+    }
+
+    private TimeSlice makeSubSlice(TimeSlice parent, long expiration) {
+	TimeSlice slice = new TimeSlice(this, parent);
+	slice.start = System.currentTimeMillis();
+	slice.end = Math.min(parent.end, slice.start + expiration);
+	return slice;
+    }
+
+
     private synchronized UsageRecord getUsageRecord(TimeSliceConsumer child) {
 	UsageRecord record = (UsageRecord) records.get(child);
 	if (record == null) {
-	    if (Scheduler.DebugThreads)
+	    if (CougaarThread.Debug)
 		System.out.println("Creating new UsageRecord for " +child);
 	    record = new UsageRecord();
 	    records.put(child, record);
@@ -142,39 +146,68 @@ public class PercentageLatencyPolicy
 
     private TreeSet rankChildren() {
 	TreeSet orderedChildren = new TreeSet(comparator);
-	Iterator itr = treeNode.getChildren().iterator();
+	Iterator itr = treeNode().getChildren().iterator();
 	PolicyTreeNode childTreeNode = null;
 	while (itr.hasNext()) {
 	    childTreeNode = (PolicyTreeNode) itr.next();
 	    orderedChildren.add(childTreeNode.getPolicy());
 	}
-	orderedChildren.add(treeNode.getScheduler());
+	orderedChildren.add(treeNode().getScheduler());
 	return orderedChildren;
     }
 
 
-    final private long DICE_SIZE = 250;
+
+    private void noteRelease(TimeSliceConsumer consumer,
+			     TimeSlice slice)
+    {
+	long elapsed = System.currentTimeMillis()-slice.run_start;
+	UsageRecord record = getUsageRecord(consumer);
+
+	record.totalTime += elapsed;
+	++record.count;
+	totalTime += elapsed;
+
+	// 	System.out.println(consumer+ 
+	// 			   " usage=" +record.totalTime+
+	// 			   " count=" +record.count+
+	// 			   " total=" +totalTime);
+
+    }
+
+    public void noteChangeOfOwnership(TimeSliceConsumer consumer,
+				      TimeSlice slice)
+    {
+	noteRelease(consumer, slice);
+	TimeSlicePolicy parent = treeNode().getParentPolicy();
+	if (parent != null) {
+	    parent.noteChangeOfOwnership(this, slice.parent);
+	}
+
+    }
+    
+    private final long DICE_SIZE = 250;
 
     public synchronized TimeSlice getSlice(TimeSliceConsumer consumer) 
     {
 	
 	TimeSlice slice = null;
 
-	if (Scheduler.DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println(this+ " getting slice for " +consumer);
 
 	if (isRoot())
 	    slice = getLocalSlice(this);
 	else
-	    slice = treeNode.getParentPolicy().getSlice(this);
+	    slice = treeNode().getParentPolicy().getSlice(this);
 
 	if (slice == null) {
-	    if(Scheduler.DebugThreads)
+	    if(CougaarThread.Debug)
 		System.out.println("No slice available");
 	    return null;
 	}
 
-	SubSlice piece = new SubSlice(slice, DICE_SIZE);
+	TimeSlice piece = makeSubSlice(slice, DICE_SIZE);
 	piece.in_use = true;
 
 	TreeSet kids = rankChildren();
@@ -182,18 +215,16 @@ public class PercentageLatencyPolicy
 	while (itr.hasNext()) {
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
 	    if (kid == consumer) {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println("Giving slice to preferred consumer " +
 				       kid);
-		piece.consumer = consumer;
 		return piece;
 	    } else if (kid.offerSlice(piece)) {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println("Giving slice to " + kid);
-		piece.consumer = kid;
 		return null;
 	    } else {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println("Not giving slice to " + kid);
 	    }
 	}
@@ -206,41 +237,36 @@ public class PercentageLatencyPolicy
     public synchronized void releaseSlice(TimeSliceConsumer consumer, 
 					  TimeSlice slice) 
     {
-	if (!(slice instanceof SubSlice) ) {
-	    System.err.println(slice + " is not a SubSlice");
+	if (slice.owner != this) {
+	    System.err.println(this+ " asked to release a slice owned by " 
+				+slice.owner);
+	    Thread.dumpStack();
 	    return;
 	}
 
-	long elapsed = System.currentTimeMillis()-slice.start;
-	SubSlice piece = (SubSlice) slice;
-	TimeSlice whole = piece.parent;
-	UsageRecord record = getUsageRecord(piece.consumer);
+	if (CougaarThread.Debug)
+	    System.out.println("Releasing slice from " +consumer);
 
 
-	if (Scheduler.DebugThreads)
-	    System.out.println("Releasing slice from " +consumer+
-			       " (" +piece.consumer+ ")");
+	noteRelease(consumer, slice);
 
-
-	record.totalTime += elapsed;
-	++record.count;
-	totalTime += elapsed;
+	TimeSlice whole = slice.parent;
 
 	// If the slice is now expired, or if no one wants it right
 	// now, give it back.  This must always operate on the full
 	// slice, as given by our parent, not on the locally created
-	// SubSlice.
+	// subslice.
 	if (whole.isExpired() || !offerSlice(whole)) {
 	    if (isRoot())
 		releaseLocalSlice(this, whole);
 	    else
-		treeNode.getParentPolicy().releaseSlice(this, whole);
+		treeNode().getParentPolicy().releaseSlice(this, whole);
 	}
     }
 
-    public boolean offerSlice(TimeSlice slice) 
+    public synchronized boolean offerSlice(TimeSlice slice) 
     {
-	SubSlice piece = new SubSlice(slice, DICE_SIZE);
+	TimeSlice piece = makeSubSlice(slice, DICE_SIZE);
 	piece.in_use = true;
 
 	TreeSet kids = rankChildren();
@@ -248,13 +274,11 @@ public class PercentageLatencyPolicy
 	while (itr.hasNext()) {	
 	    TimeSliceConsumer kid = (TimeSliceConsumer) itr.next();
 	    if (kid.offerSlice(piece)) {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println("Slice accepted by " + kid);
-		piece.consumer = kid;
-		piece.start = System.currentTimeMillis();
 		return true;
 	    } else {
-		if (Scheduler.DebugThreads)
+		if (CougaarThread.Debug)
 		    System.out.println("Slice refused by " + kid);
 	    }
 	}

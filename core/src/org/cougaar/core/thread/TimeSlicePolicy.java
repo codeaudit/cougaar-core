@@ -31,5 +31,5 @@ public interface TimeSlicePolicy extends TimeSliceConsumer
 
     TimeSlice getSlice(TimeSliceConsumer consumer);
     void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice);
-
+    void noteChangeOfOwnership(TimeSliceConsumer consumer, TimeSlice slice);
 }

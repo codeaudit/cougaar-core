@@ -30,19 +30,19 @@ final class SimpleScheduler extends Scheduler
 
 
     private boolean canStartThread() {
-	return runningThreadCount < maxRunningThreads;
+	return runningThreadCount() < maxRunningThreadCount();
     }
 
 
     private void runNextThread() {
-	((ControllableThread)pendingThreads.next()).start();
+	nextPendingThread().start();
     }
 
 
 
     void changedMaxRunningThreadCount() {
 	// Maybe we can run some pending threads
-	while (canStartThread() && !pendingThreads.isEmpty()) {
+	while (canStartThread() && pendingThreadCount() > 0) {
 	    runNextThread();
 	}
     }
@@ -51,9 +51,7 @@ final class SimpleScheduler extends Scheduler
     // Called when a thread is about to end
     void threadReclaimed(ControllableThread thread) {
 	super.threadReclaimed(thread);
-	synchronized (this) {
-	    if (!pendingThreads.isEmpty()) runNextThread();
-	}
+	if (pendingThreadCount() > 0) runNextThread();
     }
 
 
@@ -62,21 +60,19 @@ final class SimpleScheduler extends Scheduler
     // a thread wants to yield (as opposed to suspend).
     boolean maybeYieldThread(ControllableThread thread) {
 	ControllableThread candidate = null;
-	synchronized (this) {
-	    if (pendingThreads.isEmpty()) {
-		// No point yielding since no pending threads
-		return false;
-	    }
-
-	    candidate = (ControllableThread) pendingThreads.next(thread);
-	    if (candidate == thread) {
-		// No better-or-equal thread on the queue.
-		return false;
-	    }
-
-	    // We found a thread to yield to. 
-	    threadSuspended(thread);
+	if (pendingThreadCount() == 0) {
+	    // No point yielding since no pending threads
+	    return false;
 	}
+
+	candidate = nextPendingThread(thread);
+	if (candidate == thread) {
+	    // No better-or-equal thread on the queue.
+	    return false;
+	}
+
+	// We found a thread to yield to. 
+	threadSuspended(thread);
 
 	candidate.start();
 	return true;
@@ -85,16 +81,16 @@ final class SimpleScheduler extends Scheduler
 
 
     // Called when a thread is about to suspend.
-    synchronized void suspendThread(ControllableThread thread) {
+    void suspendThread(ControllableThread thread) {
 	super.suspendThread(thread);
-	if (!pendingThreads.isEmpty()) runNextThread();
+	if (pendingThreadCount() > 0) runNextThread();
     }
 
 
 
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
-    synchronized boolean maybeResumeThread(ControllableThread thread) {
+    boolean maybeResumeThread(ControllableThread thread) {
 	if (canStartThread()) {
 	    resumeThread(thread);
 	    return true;
@@ -107,7 +103,7 @@ final class SimpleScheduler extends Scheduler
 
  
 
-    synchronized void startOrQueue(ControllableThread thread) {
+    void startOrQueue(ControllableThread thread) {
 	if (canStartThread()) {
 	    thread.thread_start();
 	} else {

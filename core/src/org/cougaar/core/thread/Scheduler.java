@@ -30,20 +30,17 @@ import java.util.Comparator;
 abstract class Scheduler 
     implements ThreadControlService, TimeSliceConsumer
 {
-    static final String MaxRunningCountProp =
+    private static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
-    static final int MaxRunningCountDefault = 100;
+    private static final int MaxRunningCountDefault = 100;
 
-    static final boolean DebugThreads = 
-	Boolean.getBoolean("org.cougaar.thread.debug");
-
-    DynamicSortedQueue pendingThreads;
-    int maxRunningThreads;
-    int runningThreadCount = 0;
-    ThreadListenerProxy listenerProxy;
-    String name;
-    String printName;
-    PolicyTreeNode treeNode;
+    private DynamicSortedQueue pendingThreads;
+    private int maxRunningThreads;
+    private int runningThreadCount = 0;
+    private ThreadListenerProxy listenerProxy;
+    private String name;
+    private String printName;
+    private PolicyTreeNode treeNode;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -131,6 +128,16 @@ abstract class Scheduler
     }
 
 
+    synchronized ControllableThread nextPendingThread() {
+	return (ControllableThread)pendingThreads.next();
+    }
+
+
+    synchronized ControllableThread nextPendingThread(ControllableThread thrd)
+    {
+	return (ControllableThread)pendingThreads.next(thrd);
+    }
+
     TimeSlicePolicy getPolicy() {
 	return treeNode.getPolicy();
     }
@@ -143,7 +150,11 @@ abstract class Scheduler
 	getPolicy().releaseSlice(this, slice);
     }
 
-    void addPendingThread(ControllableThread thread) 
+    void noteChangeOfOwnership(TimeSlice slice) {
+	getPolicy().noteChangeOfOwnership(this, slice);
+    }
+
+    synchronized void addPendingThread(ControllableThread thread) 
     {
 	thread.stamp();
 	listenerProxy.notifyPending(thread);
@@ -157,7 +168,7 @@ abstract class Scheduler
     // when the thread actually starts running.
     void threadStarting(ControllableThread thread) {
 	synchronized (this) { ++runningThreadCount; }
-	if (DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println("Started " +thread+
 			       ", count=" +runningThreadCount);
     }
@@ -170,7 +181,7 @@ abstract class Scheduler
     // Called within the thread itself as the last thing it does.
     void threadReclaimed(ControllableThread thread) {
 	synchronized (this) { --runningThreadCount; }
-	if (DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println("Ended " +thread+ 
 			       ", count=" +runningThreadCount);
 	listenerProxy.notifyEnd(thread);
@@ -178,14 +189,14 @@ abstract class Scheduler
 
     void threadResumed(ControllableThread thread) {
 	synchronized (this) { ++runningThreadCount; }
-	if (DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println("Resumed " +thread+
 			       ", count=" +runningThreadCount);
     }
 
     void threadSuspended(ControllableThread thread) {
 	synchronized (this) { --runningThreadCount; }
-	if (DebugThreads)
+	if (CougaarThread.Debug)
 	    System.out.println("Suspended " +thread+
 			       ", count=" +runningThreadCount);
     }
