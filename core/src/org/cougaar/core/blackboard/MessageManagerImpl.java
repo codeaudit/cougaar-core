@@ -39,9 +39,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
+import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.util.StringUtility;
 
 class MessageManagerImpl implements MessageManager, Serializable {
@@ -59,7 +59,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
   /** The agent's mts **/
   private transient MessageAddress self;
-  private transient IntraAgentMessageTransportService iamts;
+  private transient MessageSwitchService msgSwitch;
 
   private transient String clusterNameForLog;
 
@@ -298,7 +298,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     public void send(long now) {
-      iamts.sendMessage(getMessage());
+      msgSwitch.sendMessage(getMessage());
       long nextRetransmission =
         now + retransmitSchedule[Math.min(nTries++, retransmitSchedule.length - 1)];
       setTimestamp(nextRetransmission);
@@ -370,9 +370,9 @@ class MessageManagerImpl implements MessageManager, Serializable {
     USE_MESSAGE_MANAGER = enable;
   }
 
-  public void start(IntraAgentMessageTransportService iamts, boolean didRehydrate) {
-    self = iamts.getMessageAddress();
-    this.iamts = iamts;
+  public void start(MessageSwitchService msgSwitch, boolean didRehydrate) {
+    self = msgSwitch.getMessageAddress();
+    this.msgSwitch = msgSwitch;
     String clusterName = self.getAddress();
     clusterNameForLog = "               ".substring(Math.min(14, clusterName.length())) + clusterName + " ";
     if (debug) {
@@ -515,7 +515,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       }
     } else {
       while (messages.hasNext()) {
-        iamts.sendMessage((DirectiveMessage) messages.next());
+        msgSwitch.sendMessage((DirectiveMessage) messages.next());
       }
     }
   }
@@ -783,7 +783,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
         for (Iterator iter = acksToSend.iterator(); iter.hasNext(); ) {
           AckDirectiveMessage ack = (AckDirectiveMessage) iter.next();
           if (debug) printMessage("SAck", ack);
-          iamts.sendMessage(ack);
+          msgSwitch.sendMessage(ack);
         }
         acksToSend.clear();
       }

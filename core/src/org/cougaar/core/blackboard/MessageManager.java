@@ -22,7 +22,7 @@
 package org.cougaar.core.blackboard;
 
 import java.util.Iterator;
-import org.cougaar.core.service.IntraAgentMessageTransportService;
+import org.cougaar.core.agent.service.MessageSwitchService;
 
 public interface MessageManager {
   int OK      = 0;
@@ -37,7 +37,7 @@ public interface MessageManager {
    * inactive until this method is called because it does know know
    * the identity of the cluster it is in.
    **/
-  void start(IntraAgentMessageTransportService iamts, boolean didRehydrate);
+  void start(MessageSwitchService msgSwitch, boolean didRehydrate);
   /**
    * Stop the message manager, halting any internal activity.
    **/

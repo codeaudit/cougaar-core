@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimerTask;
 import javax.naming.Binding;
+import javax.naming.NameClassPair;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -268,10 +269,36 @@ implements Component {
   // removed pending/stale support
 
   // ns callback:
+  private void handleInit(List allKeys) {
+    int n = (allKeys == null ? 0 : allKeys.size());
+    if (log.isDebugEnabled()) { 
+      log.debug("handleInit["+n+"]("+allKeys+")");
+    }
+    for (int i = 0; i < n; i++) {
+      String ki = (String) allKeys.get(i);
+      addKey(ki);
+    }
+  }
   private void handleAdd(String key) {
     if (log.isDebugEnabled()) { 
       log.debug("handleAdd("+key+")");
     }
+    addKey(key);
+  }
+  private void handleChange(String key) {
+    if (log.isDebugEnabled()) { 
+      log.debug("handleChange("+key+")");
+    }
+    addKey(key);
+  }
+  private void handleRemove(String key) {
+    if (log.isDebugEnabled()) { 
+      log.debug("handleRemove("+key+")");
+    }
+    removeKey(key);
+  }
+
+  private void addKey(String key) {
     String name = extractName(key);
     synchronized (cache) {
       CacheEntry ce = (CacheEntry) cache.get(name);
@@ -283,25 +310,7 @@ implements Component {
       ce.keys.add(key);
     }
   }
-  private void handleChange(String key) {
-    if (log.isDebugEnabled()) { 
-      log.debug("handleChange("+key+")");
-    }
-    String name = extractName(key);
-    synchronized (cache) {
-      CacheEntry ce = (CacheEntry) cache.get(name);
-      if (ce == null) {
-        ce = new CacheEntry();
-        cache.put(name, ce);
-      }
-      ce.isStale = true;
-      ce.keys.add(key); // likely noop
-    }
-  }
-  private void handleRemove(String key) {
-    if (log.isDebugEnabled()) { 
-      log.debug("handleRemove("+key+")");
-    }
+  private void removeKey(String key) {
     String name = extractName(key);
     synchronized (cache) {
       CacheEntry ce = (CacheEntry) cache.get(name);
@@ -816,6 +825,13 @@ implements Component {
           if (wpListener != null) {
             wpContext.addNamingListener(
                 "", EventContext.SUBTREE_SCOPE, wpListener);
+            NamingEnumeration en = wpContext.list("");
+            List allKeys = new ArrayList();
+            while (en.hasMore()) {
+              NameClassPair ncp = (NameClassPair) en.next();
+              allKeys.add(ncp.getName());
+            }
+            handleInit(allKeys);
           }
         } catch (NamingException ne) {
           throw ne;

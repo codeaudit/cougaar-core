@@ -23,6 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.List;
 import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ContainerAPI;
@@ -33,7 +34,6 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.service.BlackboardMetricsService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
-import org.cougaar.core.service.IntraAgentMessageTransportService;
 
 /** The standard Blackboard Component implementation.
  * For now it just looks like a container but doesn't
@@ -49,7 +49,7 @@ public class StandardBlackboard
   private Blackboard bb = null;
   private Distributor d = null;
 
-  private IntraAgentMessageTransportService iamts;
+  private MessageSwitchService msgSwitch;
 
   private BlackboardForAgentServiceProvider bbAgentSP;
   private BlackboardServiceProvider bbSP;
@@ -73,22 +73,19 @@ public class StandardBlackboard
     }
   }
 
-  public void setIntraAgentMessageTransportService(
-      IntraAgentMessageTransportService iamts) {
-    this.iamts = iamts;
-  }
-
   public void load() {
     super.load();
 
-    if (iamts == null) {
+    msgSwitch = (MessageSwitchService)
+      sb.getService(this, MessageSwitchService.class, null);
+    if (msgSwitch == null) {
       throw new RuntimeException(
-          "Unable to obtain intra-agent MTS, which is required for the"+
-          " blackboard to send messages!");
+          "Unable to obtain MessageSwitchService, which is required"+
+          " for the blackboard to send messages!");
     }
 
     // create blackboard with optional prior-state
-    bb = new Blackboard(iamts, sb, loadState);
+    bb = new Blackboard(msgSwitch, sb, loadState);
     loadState = null;
 
     bb.init();
@@ -119,10 +116,10 @@ public class StandardBlackboard
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
 
     bb.stop();
-    if (iamts != null) {
+    if (msgSwitch != null) {
       sb.releaseService(
-          this, IntraAgentMessageTransportService.class, iamts);
-      iamts = null;
+          this, MessageSwitchService.class, msgSwitch);
+      msgSwitch = null;
     }
   }
 
@@ -178,7 +175,7 @@ public class StandardBlackboard
         throw new RuntimeException("Illegal attempt to revoke a "+this+".");
       }
     }
-    // might be better for blackboard to be a messagetransport client, eh?
+    // might be better for blackboard to be a message switch handler, eh?
     public void receiveMessages(List messages) {
       blackboard.getDistributor().receiveMessages(messages);
     }

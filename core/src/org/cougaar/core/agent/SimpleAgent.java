@@ -24,6 +24,8 @@ package org.cougaar.core.agent;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.ref.WeakReference;
+import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -68,7 +70,6 @@ import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
-import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.service.NamingService;
@@ -79,6 +80,10 @@ import org.cougaar.core.service.identity.AgentIdentityClient;
 import org.cougaar.core.service.identity.AgentIdentityService;
 import org.cougaar.core.service.identity.CrlReason;
 import org.cougaar.core.service.identity.TransferableIdentity;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Application;
+import org.cougaar.core.service.wp.Cert;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
 
@@ -157,6 +162,8 @@ public class SimpleAgent
 
   private AgentIdentityService myAgentIdService;
 
+  private WhitePagesService whitePagesService;
+
   private TopologyReaderService myTopologyReaderService;
   private TopologyWriterService myTopologyWriterService;
 
@@ -180,10 +187,10 @@ public class SimpleAgent
   // to detect the restart of remote agents, which requires a
   // resync beteen this agent and the restarted agent.
   private boolean needsRestart = true;
-  private final Map restartIncarnationMap = new HashMap();
+  private final Map incarnationMap = new HashMap();
 
   // properties
-  private static final boolean VERBOSE_RESTART = false;
+  private static final boolean VERBOSE_RESTART = true;//false;
   private static final long RESTART_CHECK_INTERVAL = 43000L;
   private static final boolean showTraffic;
   private static final boolean isQuiet;
@@ -327,18 +334,6 @@ public class SimpleAgent
             "org.cougaar.core.agent.service.containment.AgentContainmentServiceComponent",
             null,
             (new AgentContainmentAdapter(this)), // access into *this* container
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-
-      // share our mts with the blackboard
-      l.add(new ComponentDescription(
-            getMessageAddress()+"IntraMTS",
-            Agent.INSERTION_POINT + ".IntraMTS",
-            "org.cougaar.core.agent.service.iamts.IntraAgentMessageTransportServiceComponent",
-            null,
-            (new IntraAgentMTSAdapter(this)), // access to *this* agent's mts + addr
             null,
             null,
             null,
@@ -580,41 +575,9 @@ public class SimpleAgent
           e);
     }
 
-    myTopologyReaderService = (TopologyReaderService) 
-      sb.getService(this, TopologyReaderService.class, null);
-    myTopologyWriterService = (TopologyWriterService) 
-      sb.getService(this, TopologyWriterService.class, null);
+    loadRestartChecker();
 
-    // register in the topology
-    if (log.isInfoEnabled()) {
-      log.info("Updating topology entry to \"active\"");
-    }
-    int topologyType = 
-      ((getMessageAddress().equals(localNode)) ?
-       (TopologyEntry.NODE_AGENT_TYPE) :
-       (TopologyEntry.AGENT_TYPE));
-    moveId = System.currentTimeMillis();
-    if (agentState != null) {
-      // resume the prior incarnation number
-      incarnation = agentState.incarnation;
-      long priorMoveId = agentState.moveId;
-      myTopologyWriterService.updateAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.ACTIVE,
-          priorMoveId);
-    } else {
-      // create a new or restarted agent entry
-      incarnation = System.currentTimeMillis();
-      myTopologyWriterService.createAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.ACTIVE);
-    }
+    loadTopology();
 
     // add our address to our VM's cluster table
     if (log.isDebugEnabled()) {
@@ -727,8 +690,6 @@ public class SimpleAgent
     startQueueHandler();
 
     // do restart reconciliation if necessary
-    restart();
-
     startRestartChecker();
 
     // register for mobility
@@ -772,32 +733,9 @@ public class SimpleAgent
       log.info("Suspending scheduler");
     }
 
-    // FIXME bug 989: cancel all alarms
+    suspendRestartChecker();
 
-    stopRestartChecker();
-
-    // update the topology 
-    if (moveTargetNode != null) {
-      if (log.isInfoEnabled()) {
-        log.info("Updating topology entry to \"moving\"");
-      }
-      int topologyType = 
-        ((getMessageAddress().equals(localNode)) ?
-         (TopologyEntry.NODE_AGENT_TYPE) :
-         (TopologyEntry.AGENT_TYPE));
-      myTopologyWriterService.updateAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.MOVING,
-          moveId);
-    } else {
-      if (log.isInfoEnabled()) {
-        log.info("Removing topology entry");
-      }
-      myTopologyWriterService.removeAgent(getIdentifier());
-    }
+    suspendTopology();
 
     // shutdown the MTS
     if (log.isInfoEnabled()) {
@@ -920,23 +858,7 @@ public class SimpleAgent
         messenger.registerClient(mtsClientAdapter);
       }
 
-      // move failed, re-aquire the topology entry
-      if (log.isInfoEnabled()) {
-        log.info("Updating topology entry to \"active\"");
-      }
-      int topologyType = 
-        ((getMessageAddress().equals(localNode)) ?
-         (TopologyEntry.NODE_AGENT_TYPE) :
-         (TopologyEntry.AGENT_TYPE));
-      long priorMoveId = moveId;
-      ++moveId;
-      myTopologyWriterService.updateAgent(
-          getIdentifier(),
-          topologyType,
-          incarnation,
-          moveId,
-          TopologyEntry.ACTIVE,
-          priorMoveId);
+      restartTopology();
 
       if (log.isInfoEnabled()) {
         log.info("Resuming message transport");
@@ -953,7 +875,7 @@ public class SimpleAgent
         sendMessage(cmi);
       }
 
-      startRestartChecker();
+      restartRestartChecker();
 
       // FIXME bug 989: resume alarm service
 
@@ -1075,14 +997,9 @@ public class SimpleAgent
     }
     ClusterContextTable.removeContext(getMessageAddress());
 
-    // FIXME topology entry set to MOVING in "suspend()", need to
-    // safely clear the entry without overwriting if the move was
-    // successful.
+    unloadTopology();
 
-    sb.releaseService(
-        this, TopologyWriterService.class, myTopologyWriterService);
-    sb.releaseService(
-        this, TopologyReaderService.class, myTopologyReaderService);
+    unloadRestartChecker();
 
     if (log.isInfoEnabled()) {
       log.info("Unloaded");
@@ -1167,7 +1084,7 @@ public class SimpleAgent
        (Collections.EMPTY_LIST));
 
     // get remote incarnations
-    Object restartState = getRestartState();
+    RestartState restartState = getRestartState();
 
     if (moveTargetNode != null) {
       // moving, get transferrable identity
@@ -1190,8 +1107,6 @@ public class SimpleAgent
     AgentState result = 
       new AgentState(
           getMessageAddress(),
-          incarnation,
-          moveId,
           mobileIdentity,
           tuples,
 	  mtsState,
@@ -1249,6 +1164,10 @@ public class SimpleAgent
   public MessageAddress getMessageAddress() {
     return myMessageAddress_;
   }
+
+  //-----------------------------------------------------------------
+  // message switch
+  //-----------------------------------------------------------------
 
   /** MessageSwitch is a MessageHandler which calls an ordered 
    * list of other MessageHandler instances in order until 
@@ -1308,13 +1227,20 @@ public class SimpleAgent
     rawMessageSwitch.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof ClusterMessage) {
-            checkClusterInfo((MessageAddress) ((ClusterMessage) message).getSource());
+            MessageAddress orig = message.getOriginator();
+            receivedMessageFrom(orig);
           }
-
-          if (showTraffic) showProgress("-");
           return false;         // don't ever consume it
         }
       });
+    if (showTraffic) {
+      rawMessageSwitch.addMessageHandler(new MessageHandler() {
+          public boolean handleMessage(Message message) {
+            showProgress("-");
+            return false;         // don't ever consume it
+          }
+        });
+    }
     rawMessageSwitch.addMessageHandler(new MessageHandler() {
         public boolean handleMessage(Message message) {
           if (message instanceof AdvanceClockMessage) {
@@ -1394,47 +1320,242 @@ public class SimpleAgent
     }
   }
 
-  /**
-   * 
-   **/
-  private boolean updateIncarnation(MessageAddress agentId) {
-    Long oldIncarnation = 
-      (Long) restartIncarnationMap.get(agentId);
-    if (oldIncarnation != null) {
-      String agentName = agentId.getAddress();
-      long newNumber = 
-        myTopologyReaderService.getIncarnationForAgent(agentName);
-      Long newIncarnation = new Long(newNumber);
-      restartIncarnationMap.put(agentId, newIncarnation);
-      long oldNumber = oldIncarnation.longValue();
-      if (VERBOSE_RESTART && log.isDebugEnabled()) {
-        log.debug(
-            "Update agent "+agentId+
-            " incarnation from "+oldIncarnation+
-            " to "+newIncarnation);
-      }
-      return oldNumber != 0L && oldNumber != newNumber;
+  //-----------------------------------------------------------------
+  // topology
+  //-----------------------------------------------------------------
+
+  private final void loadTopology() {
+    ServiceBroker sb = getServiceBroker();
+
+    myTopologyReaderService = (TopologyReaderService) 
+      sb.getService(this, TopologyReaderService.class, null);
+    myTopologyWriterService = (TopologyWriterService) 
+      sb.getService(this, TopologyWriterService.class, null);
+
+    // register in the topology
+    if (log.isInfoEnabled()) {
+      log.info("Updating topology entry to \"active\"");
     }
-    return false;
+    int topologyType = 
+      ((getMessageAddress().equals(localNode)) ?
+       (TopologyEntry.NODE_AGENT_TYPE) :
+       (TopologyEntry.AGENT_TYPE));
+    if (agentState != null) {
+      // resume the prior incarnation number
+      long priorMoveId = agentState.restartState.moveId;
+      myTopologyWriterService.updateAgent(
+          getIdentifier(),
+          topologyType,
+          incarnation,
+          moveId,
+          TopologyEntry.ACTIVE,
+          priorMoveId);
+    } else {
+      // create a new or restarted agent entry
+      myTopologyWriterService.createAgent(
+          getIdentifier(),
+          topologyType,
+          incarnation,
+          moveId,
+          TopologyEntry.ACTIVE);
+    }
   }
 
-  private Object getRestartState() {
-    synchronized (restartIncarnationMap) {
-      return new HashMap(restartIncarnationMap);
+  private final void suspendTopology() {
+    // update the topology 
+    if (moveTargetNode != null) {
+      if (log.isInfoEnabled()) {
+        log.info("Updating topology entry to \"moving\"");
+      }
+      int topologyType = 
+        ((getMessageAddress().equals(localNode)) ?
+         (TopologyEntry.NODE_AGENT_TYPE) :
+         (TopologyEntry.AGENT_TYPE));
+      myTopologyWriterService.updateAgent(
+          getIdentifier(),
+          topologyType,
+          incarnation,
+          moveId,
+          TopologyEntry.MOVING,
+          moveId);
+    } else {
+      if (log.isInfoEnabled()) {
+        log.info("Removing topology entry");
+      }
+      myTopologyWriterService.removeAgent(getIdentifier());
     }
   }
 
-  private void setRestartState(Object o) {
-    if (o != null) {
-      needsRestart = false;
-      Map m = (Map) o;
-      synchronized (restartIncarnationMap) {
-        restartIncarnationMap.putAll(m);
-      }
+  private final void restartTopology() {
+    // move failed, re-aquire the topology entry
+    if (log.isInfoEnabled()) {
+      log.info("Updating topology entry to \"active\"");
+    }
+    int topologyType = 
+      ((getMessageAddress().equals(localNode)) ?
+       (TopologyEntry.NODE_AGENT_TYPE) :
+       (TopologyEntry.AGENT_TYPE));
+    long priorMoveId = moveId;
+    ++moveId;
+    myTopologyWriterService.updateAgent(
+        getIdentifier(),
+        topologyType,
+        incarnation,
+        moveId,
+        TopologyEntry.ACTIVE,
+        priorMoveId);
+  }
+
+  private final void unloadTopology() {
+    // FIXME topology entry set to MOVING in "suspend()", need to
+    // safely clear the entry without overwriting if the move was
+    // successful.
+    ServiceBroker sb = getServiceBroker();
+    sb.releaseService(
+        this, TopologyWriterService.class, myTopologyWriterService);
+    sb.releaseService(
+        this, TopologyReaderService.class, myTopologyReaderService);
+  }
+
+  //-----------------------------------------------------------------
+  // restart checker
+  //-----------------------------------------------------------------
+
+  /** call when a message is received */
+  private void receivedMessageFrom(MessageAddress originator) {
+    recordAddress(originator);
+  }
+  
+  /** call when a message is sent */
+  private void sentMessageTo(MessageAddress target) {
+    recordAddress(target);
+  }
+
+  private void loadRestartChecker() {
+    ServiceBroker sb = getServiceBroker();
+
+    whitePagesService = (WhitePagesService) 
+      sb.getService(this, WhitePagesService.class, null);
+
+    try {
+      bindRestart();
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to load restart checker", e);
     }
   }
 
   private void startRestartChecker() {
+    restart();
+    startRestartTimer();
+  }
+
+  private void suspendRestartChecker() {
+    stopRestartTimer();
+  }
+
+  private void restartRestartChecker() {
+    startRestartTimer();
+  }
+
+  private void stopRestartChecker() {
+    stopRestartTimer();
+  }
+
+  private void unloadRestartChecker() {
+    ServiceBroker sb = getServiceBroker();
+    sb.releaseService(
+        this, WhitePagesService.class, whitePagesService);
+  }
+
+  private RestartState getRestartState() {
+    Map m;
+    synchronized (incarnationMap) {
+      m = new HashMap(incarnationMap);
+    }
+    return new RestartState(
+        getMessageAddress(),
+        incarnation,
+        moveId,
+        m);
+  }
+
+  private void setRestartState(RestartState rs) {
+    if (rs != null) {
+      needsRestart = false;
+      incarnation = rs.incarnation;
+      synchronized (incarnationMap) {
+        incarnationMap.putAll(
+            rs.incarnationMap);
+      }
+      // ignore moveId, maybe use someday
+    }
+  }
+
+  private void bindRestart() throws Exception {
+    // register WP version numbers
+    if (log.isInfoEnabled()) {
+      log.info("Updating white pages");
+    }
+    if (incarnation == 0) {
+      incarnation = System.currentTimeMillis();
+    }
+    moveId = System.currentTimeMillis();
+    // ignore prior moveId
+    URI versionURI = 
+      URI.create("version:///"+incarnation+"/"+moveId);
+    AddressEntry versionEntry = 
+      new AddressEntry(
+          getIdentifier(),
+          Application.getApplication("topology"),
+          versionURI,
+          Cert.NULL,
+          Long.MAX_VALUE);
+    whitePagesService.rebind(versionEntry);
+
+    // register WP node location
+    InetAddress localAddr = InetAddress.getLocalHost();
+    String localHost = localAddr.getHostName();
+    URI nodeURI = 
+      URI.create("node://"+localHost+"/"+localNode.getAddress());
+    AddressEntry nodeEntry = 
+      new AddressEntry(
+          getIdentifier(),
+          Application.getApplication("topology"),
+          nodeURI,
+          Cert.NULL,
+          Long.MAX_VALUE);
+    whitePagesService.rebind(nodeEntry);
+  }
+
+  /**
+   * Get the latest incarnation number for the specified agent.
+   *
+   * @return -1 if the WP lacks a version entry for the agent
+   */
+  private long lookupCurrentIncarnation(
+      MessageAddress agentId) throws Exception {
+    AddressEntry versionEntry = 
+      whitePagesService.get(
+          agentId.getAddress(),
+          Application.getApplication("topology"),
+          "version");
+    if (versionEntry == null) {
+      return -1;
+    }
+    URI uri = versionEntry.getAddress();
+    try {
+      String p = uri.getRawPath();
+      int i = p.indexOf('/', 1);
+      String s = p.substring(1, i);
+      return Long.parseLong(s);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Malformed incarnation uri: "+uri, e);
+    }
+  }
+
+  private void startRestartTimer() {
     if (restartTimer == null) {
       restartTimer = new Timer();
       TimerTask tTask = 
@@ -1450,7 +1571,7 @@ public class SimpleAgent
     }
   }
 
-  private void stopRestartChecker() {
+  private void stopRestartTimer() {
     if (restartTimer != null) {
       restartTimer.cancel();
       // note: If timer is running now then blackboard.restartAgent
@@ -1461,59 +1582,94 @@ public class SimpleAgent
   }
 
   /**
-   * Called periodically to check for restarted agents. ClusterInfo
-   * has an entry for every agent that we have communicated with. The
-   * value is the last known incarnation number of the agent.
-   *
+   * Periodically called to check remote agent restarts.
+   * <p>
+   * The incarnation map has an entry for every agent that we have
+   * communicated with.  The value is the last known incarnation number
+   * of the agent.
+   * <p>
    * The first time we check restarts, we have ourself restarted so we
    * proceed to verify our state against _all_ the other agents. We do
    * this because we have no record with whom we have been in
-   * communication. In this case, we enumerate all the agents in the
-   * nameserver and "restart" against all of them. Messages will be
-   * sent only to those agents for which we have any directives
-   * in common. The sending of those messages will
-   * add entries to the restart incarnation map. So after doing a restart 
+   * communication. In this case, we notify the blackboard, which will
+   * instruct the domains to reconcile the objects in the local
+   * blackboard.  Messages will be sent only to those agents for which
+   * we have communicated with.  The sending of those messages will add
+   * entries to the restart incarnation map. So after doing a restart 
    * with an agent if there is an entry in the map for that agent, we set
    * the saved incarnation number to the current value for that agent.
-   * This avoids repeating the restart later. If the current
-   * incarnation number differs, the agent must have restarted so we
-   * initiate the restart reconciliation process.
-   *
-   * On subsequent checks we only check agents listed in 
-   * restartIncarnationMap.
-   **/
+   * This avoids repeating the restart later. If the current incarnation
+   * number differs, the agent must have restarted so we initiate the
+   * restart reconciliation process.
+   */
   private void checkRestarts() {
     if (VERBOSE_RESTART && log.isDebugEnabled()) {
       log.debug("Check restarts");
     }
-    List restartAgentIds = new ArrayList();
-    synchronized (restartIncarnationMap) {
+    // snapshot the incarnation map
+    Map restartMap;
+    synchronized (incarnationMap) {
+      if (incarnationMap.isEmpty()) {
+        return; // nothing to do
+      }
+      restartMap = new HashMap(incarnationMap);
+    }
+    // get the latest incarnations from the white pages
+    List reconcileList = null;
+    for (Iterator iter = restartMap.entrySet().iterator();
+        iter.hasNext();
+        ) {
+      Map.Entry me = (Map.Entry) iter.next();
+      MessageAddress agentId = (MessageAddress) me.getKey();
+      long cachedInc = ((Long) me.getValue()).longValue();
+      long currentInc;
       try {
-        for (Iterator i = restartIncarnationMap.keySet().iterator(); i.hasNext(); ) {
-          MessageAddress agentId = (MessageAddress) i.next();
-          if (updateIncarnation(agentId)) {
-            restartAgentIds.add(agentId);
-          }
-        }
-      } catch (Exception ne) {
+        currentInc = lookupCurrentIncarnation(agentId);
+      } catch (Exception e) {
         if (log.isInfoEnabled()) {
-          log.info("Failed restart check", ne);
+          log.info("Failed restart check for "+agentId, e);
+        }
+        // pretend that it hasn't changed; we'll pick it
+        // up the next time around
+        currentInc = cachedInc;
+      }
+      if (VERBOSE_RESTART && log.isDebugEnabled()) {
+        log.debug(
+            "Update agent "+agentId+
+            " incarnation from "+cachedInc+
+            " to "+currentInc);
+      }
+      if (currentInc > 0 && currentInc != cachedInc) {
+        Long l = new Long(currentInc);
+        synchronized (incarnationMap) {
+          incarnationMap.put(agentId, l);
+        }
+        if (cachedInc > 0) {
+          // must reconcile with this agent
+          if (reconcileList == null) {
+            reconcileList = new ArrayList();
+          }
+          reconcileList.add(agentId);
         }
       }
     }
-    for (Iterator i = restartAgentIds.iterator(); i.hasNext(); ) {
-      MessageAddress agentId = (MessageAddress) i.next();
+    // reconcile with any agent (that we've communicated with) that
+    // has a new incarnation number
+    int n = (reconcileList == null ? 0 : reconcileList.size());
+    for (int i = 0; i < n; i++) {
+      MessageAddress agentId = (MessageAddress) reconcileList.get(i);
       if (log.isInfoEnabled()) {
         log.info(
             "Detected (re)start of agent "+agentId+
             ", synchronizing blackboards");
       }
-      // blackboard expects cluster-ids
-      MessageAddress cid = (MessageAddress) agentId;
-      myBlackboardService.restartAgent(cid);
+      myBlackboardService.restartAgent(agentId);
     }
   }
 
+  /**
+   * The local agent has restarted.
+   */
   private void restart() {
     if (!(needsRestart)) {
       if (log.isInfoEnabled()) {
@@ -1536,7 +1692,7 @@ public class SimpleAgent
     }
   }
 
-  /**
+  /*
    * Insure that we are tracking incarnations number for the agent at
    * a given address. If the specified agent is not in the restart
    * incarnation map it means we have never before communicated with that 
@@ -1544,33 +1700,58 @@ public class SimpleAgent
    * both cases, it is ok to store the special "unknown incarnation" marker
    * because we do not want to detect any restart.
    **/
-  private void checkClusterInfo(MessageAddress agentId) {
-    if (VERBOSE_RESTART && log.isDebugEnabled()) {
-      log.debug("Checking restart table for "+agentId);
-    }
-    // only include cluster-id message addresses in restart checking
-    if (agentId instanceof MessageAddress) {
-      synchronized (restartIncarnationMap) {
-        if (restartIncarnationMap.get(agentId) == null) {
-          if (VERBOSE_RESTART && log.isDebugEnabled()) {
-            log.debug("Adding "+agentId+" to restart table");
-          }
-          restartIncarnationMap.put(agentId, new Long(0L));
+  private void recordAddress(MessageAddress agentId) {
+    // only include agent addresses in restart checking
+    synchronized (incarnationMap) {
+      if (incarnationMap.get(agentId) == null) {
+        if (VERBOSE_RESTART && log.isDebugEnabled()) {
+          log.debug("Adding "+agentId+" to restart table");
         }
-      }
-    } else {
-      if (VERBOSE_RESTART && log.isDebugEnabled()) {
-        log.debug(
-            "Ignoring message address "+
-            ((agentId != null) ? agentId.getClass().getName() : "null"));
+        incarnationMap.put(agentId, new Long(0L));
       }
     }
   }
 
+  private static class RestartState implements java.io.Serializable {
+
+    private final MessageAddress agentId;
+    private final long incarnation;
+    private final long moveId;
+    private final Map incarnationMap;
+
+    public RestartState(
+        MessageAddress agentId,
+        long incarnation,
+        long moveId,
+        Map incarnationMap) {
+      this.agentId = agentId;
+      this.incarnation = incarnation;
+      this.moveId = moveId;
+      this.incarnationMap = incarnationMap;
+      if ((agentId == null) ||
+          (incarnationMap == null)) {
+        throw new IllegalArgumentException("null param");
+      }
+    }
+
+    public String toString() {
+      return 
+        "Agent "+agentId+
+        ", incarnation "+incarnation+
+        ", moveId "+moveId;
+    }
+
+    private static final long serialVersionUID = 1273891827367182983L;
+  }
+
+  //-----------------------------------------------------------------
+  // message switch + queue handler
+  //-----------------------------------------------------------------
+ 
   // required by the interface - ClusterMessage should really go away. Ugh.
   private void sendMessage(Message message)
   {
-    checkClusterInfo(message.getTarget());
+    sentMessageTo(message.getTarget());
     if (showTraffic) showProgress("+");
     try {
       if (messenger == null) {
@@ -1698,6 +1879,10 @@ public class SimpleAgent
     }
   }
 
+  //-----------------------------------------------------------------
+  // clock services
+  //-----------------------------------------------------------------
+
   /**
    * Adapter for agent internal access.
    * <p>
@@ -1721,21 +1906,6 @@ public class SimpleAgent
       }
       public SimpleAgent getAgent() {
         return sa;
-      }
-    }
-
-  // share our mts with the blackboard
-  private static class IntraAgentMTSAdapter
-    extends InternalAdapter
-    implements IntraAgentMessageTransportService {
-      public IntraAgentMTSAdapter(SimpleAgent sa) {
-        super(sa);
-      }
-      public MessageAddress getMessageAddress() {
-        return getAgent().getMessageAddress();
-      }
-      public void sendMessage(Message message) {
-        getAgent().sendMessage(message);
       }
     }
 
@@ -1856,7 +2026,7 @@ public class SimpleAgent
         sendAdvanceClockMessage(acm);
       }
       private void sendAdvanceClockMessage(AdvanceClockMessage acm) {
-        // switch to iamts?
+        // use MessageSwitchService?
         getAgent().sendMessage(acm);
       }
     }
@@ -1927,29 +2097,27 @@ public class SimpleAgent
     }
   }
 
+  //-----------------------------------------------------------------
+  // state object
+  //-----------------------------------------------------------------
+
   private static class AgentState implements java.io.Serializable {
 
     private final MessageAddress agentId;
-    private final long incarnation;
-    private final long moveId;
     private final TransferableIdentity identity;
     private final List tuples;  // List<StateTuple>
       private final org.cougaar.core.mts.AgentState mtsState;
     private final List unsentMessages; // List<ClusterMessage>
-    private final Object restartState; // Map<MessageAddress><Long>
+    private final RestartState restartState;
 
     public AgentState(
         MessageAddress agentId,
-        long incarnation,
-        long moveId,
         TransferableIdentity identity,
         List tuples,
 	org.cougaar.core.mts.AgentState mtsState,
         List unsentMessages,
-        Object restartState) {
+        RestartState restartState) {
       this.agentId = agentId;
-      this.incarnation = incarnation;
-      this.moveId = moveId;
       this.identity = identity;
       this.tuples = tuples;
       this.mtsState = mtsState;
@@ -1964,8 +2132,7 @@ public class SimpleAgent
 
     public String toString() {
       return 
-        "Agent "+agentId+" state, incarnation "+incarnation+
-        ", moveId "+moveId+", identity "+identity+
+        "Agent "+agentId+" state, identity "+identity+
         ", tuples["+tuples.size()+
         "], mtsState "+(mtsState != null)+
 	", unsentMessages["+unsentMessages.size()+
@@ -1974,6 +2141,10 @@ public class SimpleAgent
 
     private static final long serialVersionUID = 3109298128098682091L;
   }
+
+  //-----------------------------------------------------------------
+  // message transport requestor
+  //-----------------------------------------------------------------
 
   private class MessageTransportClientAdapter implements MessageTransportClient {
     public void receiveMessage(Message message) {
@@ -1984,6 +2155,10 @@ public class SimpleAgent
       return SimpleAgent.this.getMessageAddress();
     }
   }
+
+  //-----------------------------------------------------------------
+  // message switch
+  //-----------------------------------------------------------------
 
   // implement the MessageSwitch Service
   private class MessageSwitchServiceProvider implements ServiceProvider {

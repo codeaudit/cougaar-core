@@ -42,21 +42,32 @@ public abstract class WhitePagesService implements Service {
   // no-timeout variations:
   //
 
+  /** @see Request.Get */
   public final AddressEntry[] get(String name) throws Exception {
     return get(name, 0);
   }
+  /** @see #get(String,Application,String,long) */
+  public final AddressEntry get(
+      String name, Application app, String scheme) throws Exception {
+    return get(name, app, scheme, 0);
+  }
+  /** @see Request.List */
   public final Set list(String suffix) throws Exception {
     return list(suffix, 0);
   }
+  /** @see Request.Refresh */
   public final AddressEntry refresh(AddressEntry ae) throws Exception {
     return refresh(ae, 0);
   }
+  /** @see Request.Bind */
   public final void bind(AddressEntry ae) throws Exception {
     bind(ae, 0);
   }
+  /** @see Request.Rebind */
   public final void rebind(AddressEntry ae) throws Exception {
     rebind(ae, 0);
   }
+  /** @see Request.Unbind */
   public final void unbind(AddressEntry ae) throws Exception {
     unbind(ae, 0);
   }
@@ -92,6 +103,32 @@ public abstract class WhitePagesService implements Service {
     } else {
       throw new TimeoutException(false);
     }
+  }
+
+  /**
+   * Utility method that calls "get(name, timeout)" and returns the
+   * first entry with the specified application and scheme.
+   */
+  public final AddressEntry get(
+      String name,
+      Application app,
+      String scheme,
+      long timeout) throws Exception {
+    if (name == null || app == null || scheme == null) {
+      throw new IllegalArgumentException("Null parameter");
+    }
+    AddressEntry[] a = get(name, timeout);
+    int n = (a == null ? 0 : a.length);
+    for (int i = 0; i < n; i++) {
+      AddressEntry ae = a[i];
+      if (ae != null &&
+          name.equals(ae.getName()) &&
+          app.equals(ae.getApplication()) &&
+          scheme.equals(ae.getAddress().getScheme())) {
+        return ae;
+      }
+    }
+    return null;
   }
 
   public final Set list(String suffix, long timeout) throws Exception {

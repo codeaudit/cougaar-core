@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.Vector;
 import javax.naming.event.EventContext;
 import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
@@ -47,7 +48,6 @@ import org.cougaar.core.persist.PersistenceException;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DomainForBlackboardService;
-import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.community.CommunityChangeAdapter;
 import org.cougaar.core.service.community.CommunityChangeEvent;
@@ -171,10 +171,10 @@ public class Blackboard extends Subscriber
   };
 
   public Blackboard(
-      IntraAgentMessageTransportService iamts, ServiceBroker sb, Object state) {
+      MessageSwitchService msgSwitch, ServiceBroker sb, Object state) {
     myServiceBroker = sb;
-    self = iamts.getMessageAddress();
-    myDistributor = createDistributor(iamts, state);
+    self = msgSwitch.getMessageAddress();
+    myDistributor = createDistributor(msgSwitch, state);
     setClientDistributor((BlackboardClient) this, myDistributor);
     setName("<blackboard>");
     logger = (LoggingService)
@@ -607,13 +607,14 @@ public class Blackboard extends Subscriber
   // Distributor
   //
   private Distributor createDistributor(
-      IntraAgentMessageTransportService iamts,
+      MessageSwitchService msgSwitch,
       Object state) {
     Distributor d = new Distributor(this, self.getAddress());
     Persistence persistence = createPersistence();
-    boolean lazyPersistence = System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
+    boolean lazyPersistence = 
+      System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
     d.setPersistence(persistence, lazyPersistence);
-    d.start(iamts, state);       // iamts, state
+    d.start(msgSwitch, state);       // msgSwitch, state
 
     return d;
   }
