@@ -67,6 +67,10 @@ import org.cougaar.util.ReusableThread;
  *      nameserver interaction to the fastest values.  Activates
  *      useLocalDelivery, useNodeDelivery, useNodeRedirect and disables 
  *      useServerProxies.
+ * org.cougaar.message.decacheFailureLimit=0 : number of consecutive message failures 
+ *	required to trigger a nameserver recache.  If '0', an existing address
+ *	will never be dropped - this will prevent clusters from moving between
+ *	hosts.
  *
  * Note: Only uses secure messaging on non-local messages.
  * 
