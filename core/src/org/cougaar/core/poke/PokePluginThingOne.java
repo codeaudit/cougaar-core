@@ -10,7 +10,7 @@
 
 package org.cougaar.core.poke;
 
-import org.cougaar.core.component.*;
+import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.cluster.IncrementalSubscription;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.util.UnaryPredicate;
@@ -21,7 +21,7 @@ import java.util.Iterator;
 /**
  * A really dumb plugin that writes and reads a string to/from the blackboard
  **/
-public class PokePluginThingOne extends PokePlugin {
+public class PokePluginThingOne extends ComponentPlugin {
 
   private String me = null;
 

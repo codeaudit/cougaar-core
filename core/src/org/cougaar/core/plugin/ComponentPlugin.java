@@ -8,14 +8,19 @@
  * </copyright>
  */
 
-package org.cougaar.core.poke;
+package org.cougaar.core.plugin;
 
-import org.cougaar.core.component.*;
-import org.cougaar.core.plugin.PluginBase;
+
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedEvent;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.Trigger;
+
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.blackboard.BlackboardService;
 import org.cougaar.core.cluster.AlarmService;
-import org.cougaar.core.plugin.PluginBindingSite;
+import org.cougaar.core.cluster.SchedulerService;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 
 import java.util.Collection;
@@ -29,7 +34,7 @@ import java.util.Iterator;
  * Use it as a base class. Make a derived class simply by overriding 
  * setupSubscriptions() and execute()
  **/
-public class PokePlugin implements PluginBase, BlackboardClient {
+public class ComponentPlugin implements PluginBase, BlackboardClient {
 
   // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;
@@ -42,7 +47,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
   private ThinWatcher watcher = null;
   private Collection parameters = null;
 
-  public PokePlugin() { }
+  public ComponentPlugin() { }
 
   /**
    *  somewhat bogus BlackboardClient implementation
@@ -84,7 +89,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
    * Found by introspection
    **/
   public void setBindingSite(BindingSite bs) {
-    System.out.println("PokePlugin.setBindingSite() " + toString() );
+    //System.out.println("ComponentPlugin.setBindingSite() " + toString() );
     if (bs instanceof PluginBindingSite) {
       pluginBindingSite = (PluginBindingSite)bs;
     } else {
@@ -134,7 +139,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
     if (blackboard != null) {
       blackboard.registerInterest(watcher);
     } else {
-      System.out.println("PokePlugin:setBindingSite() !!No Blackboard - oh my");
+      System.out.println("ComponentPlugin:setBindingSite() !!No Blackboard - oh my");
     }
 
   }
@@ -157,7 +162,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
    * PM expects this, and fails if it isn't here.
    **/
   public void setParameter(Object param) {
-    System.out.println("PokePlugin.setParameter()");
+    //System.out.println("ComponentPlugin.setParameter()");
     if (param != null) {
       if (param instanceof Collection) {
 	parameters = (Collection) param;
@@ -181,7 +186,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
    **/
   protected class PluginCallback implements Trigger {
     public void trigger() {
-      System.out.println("PluginCallback.trigger()");
+      //System.out.println("PluginCallback.trigger()");
       if (!primed) {
 	precycle();
       }
@@ -228,7 +233,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
     public void signalNotify(int event) {
       // This seems to get called even though my subscriptions haven't changed. Why?
       super.signalNotify(event);
-      System.out.println("ThinWatcher.signalNotify(" + event + ")");
+      //System.out.println("ThinWatcher.signalNotify(" + event + ")");
       // ask the scheduler to run us again.
       if (schedulerProd != null) {
 	readyToRun = true;

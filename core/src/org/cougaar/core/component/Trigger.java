@@ -8,9 +8,8 @@
  * </copyright>
  */
 
-package org.cougaar.core.poke;
+package org.cougaar.core.component;
 
-import org.cougaar.core.component.*;
 
 /**
  * callback interface. 

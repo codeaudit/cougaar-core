@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.poke;
+package org.cougaar.core.cluster;
 
 import org.cougaar.core.component.ServiceProvider;
 import java.util.Collections;
@@ -16,7 +16,8 @@ import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.Trigger;
 import org.cougaar.core.cluster.ClusterImpl;
 
 /**

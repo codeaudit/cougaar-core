@@ -14,8 +14,6 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.*;
-import org.cougaar.core.poke.SchedulerService;
-import org.cougaar.core.poke.SchedulerServiceProvider;
 import org.cougaar.core.society.MessageTransportServer;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import java.beans.*;

@@ -8,11 +8,16 @@
  * </copyright>
  */
 
-package org.cougaar.core.poke;
+package org.cougaar.core.plugin;
 
-import org.cougaar.core.component.*;
-import org.cougaar.core.plugin.PluginBase;
-import org.cougaar.core.plugin.PluginBindingSite;
+import org.cougaar.core.cluster.SchedulerService;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedEvent;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.Trigger;
+
+
 
 /**
  * Minimal plugin. It uses the SchedulerService for a shared thread, but otherwise does nothing

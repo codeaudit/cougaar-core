@@ -8,14 +8,15 @@
  * </copyright>
  */
 
-package org.cougaar.core.poke;
+package org.cougaar.core.cluster;
 
-import org.cougaar.core.component.*;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.component.Trigger;
 
 /**
  * Schedules plugins. Tells them to run by poking them
  */
-public interface SchedulerService {
+public interface SchedulerService extends Service {
 
   /**
    * Tells Scheduler to handle scheduling this object
