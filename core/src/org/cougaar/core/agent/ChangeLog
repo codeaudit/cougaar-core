@@ -1,3 +1,9 @@
+2003-04-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimpleAgent.java:
+	Bug #2856 -- Components not loaded when agent is restarted in XML-configured society
+	Add info logging during rehydration from persistence data about component restoration.
+
 2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleAgent.java: 

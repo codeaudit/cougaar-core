@@ -307,8 +307,12 @@ implements AgentIdentityClient
    **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
     if (persistenceData != null) {
+
       // get descriptions from mobile state
       ComponentDescriptions descs = persistenceData.descs;
+      if (log.isInfoEnabled()) {
+        log.info("Restoring components from persistenceData");
+      }
       // fix tuples where the desc.getParameter is an 
       // "InternalAdapter", since these are pointers into *this*
       // agent.  This is required for agent mobility to work.
@@ -337,6 +341,10 @@ implements AgentIdentityClient
         }
       }
       return descs;
+    } else {
+      if (log.isInfoEnabled()) {
+        log.info("No persistenceData");
+      }
     }
 
     String cname = getIdentifier();
@@ -604,7 +612,15 @@ implements AgentIdentityClient
     persistenceService.rehydrate(persistenceObject);
     List rehydrationList = getRehydrationList(persistenceService);
     persistenceData = null;     // Until proven otherwise
-    if (rehydrationList != null && rehydrationList.size() > 0) {
+    if (rehydrationList == null) {
+      if (log.isInfoEnabled()) {
+        log.info("No rehydrationList");
+      }
+    } else if (rehydrationList.size() == 0) {
+      if (log.isInfoEnabled()) {
+        log.info("Empty rehydrationList");
+      }
+    } else {
       PersistenceData pd = (PersistenceData) rehydrationList.get(0);
       // validate the state
       // verify state's agent id
@@ -614,6 +630,9 @@ implements AgentIdentityClient
         MessageAddress agentId = (MessageAddress) pd.parameters.get(0);
         if ((getMessageAddress().equals(agentId))) {
           persistenceData = pd; // Looks good
+          if (log.isInfoEnabled()) {
+            log.info("persistenceData found");
+          }
         } else {
           log.error("Load state has incorrect agent address "
                     + agentId
