@@ -93,8 +93,12 @@ public class AgentLoadLoggerPlugin
 	out.print(formattedValue);
     }
 
+    private long relativeTimeMillis() {
+	return System.currentTimeMillis()-start;
+    }
+
     private void dump() {
-	out.print(MetricsServiceProvider.relativeTimeMillis()/1000.0);
+	out.print(relativeTimeMillis()/1000.0);
 	Iterator itr = agents.iterator();
 	while (itr.hasNext()) {
 	    String name = (String) itr.next();

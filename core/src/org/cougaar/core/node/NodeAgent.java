@@ -256,8 +256,8 @@ extends SimpleAgent
     List threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
-    threadServiceParams.add("BestEffortAbsCapacity=30");
-    threadServiceParams.add("WillBlockAbsCapacity=300");
+    threadServiceParams.add("BestEffortAbsCapacity=300");
+    threadServiceParams.add("WillBlockAbsCapacity=30");
     threadServiceParams.add("CpuIntenseAbsCapacity=2");
     threadServiceParams.add("WellBehavedAbsCapacity=2");
     add(new ComponentDescription(
@@ -305,10 +305,16 @@ extends SimpleAgent
             null)); //policy
     }
 
+    String metrics_provider_class = 
+	Boolean.getBoolean("org.cougaar.metrics.trivial")
+	? 
+	"org.cougaar.core.qos.metrics.MetricsServiceProvider"
+	:
+	"org.cougaar.core.qos.rss.RSSMetricsServiceProvider";
     add(new ComponentDescription(
           (getIdentifier()+"MetricsServices"),
           Agent.INSERTION_POINT + ".MetricsServices",
-          "org.cougaar.core.qos.metrics.MetricsServiceProvider",
+          metrics_provider_class,
           null,  //codebase
           null,  //parameters
           null,  //certificate
