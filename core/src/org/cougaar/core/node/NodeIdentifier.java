@@ -40,6 +40,15 @@ public final class NodeIdentifier extends MessageAddress {
     cacheNodeIdentifier(address, this);
   }
 
+  public NodeIdentifier(MessageAttributes attrs) {
+      super(attrs);
+  }
+
+  public NodeIdentifier(MessageAttributes attrs, String address) {
+    super(attrs, address);
+    cacheNodeIdentifier(address, this);
+  }
+
   public String toString() {
     return getAddress();
   }

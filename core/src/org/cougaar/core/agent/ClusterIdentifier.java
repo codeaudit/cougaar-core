@@ -24,6 +24,7 @@ package org.cougaar.core.agent;
 import org.cougaar.core.blackboard.*;
 
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageAttributes;
 
 import java.io.*;
 
@@ -43,6 +44,16 @@ public class ClusterIdentifier extends MessageAddress {
     super(address);
     cacheClusterIdentifier(address, this);
   }
+
+  public ClusterIdentifier(MessageAttributes attrs) {
+      super(attrs);
+  }
+
+  public ClusterIdentifier(MessageAttributes attrs, String address) {
+    super(attrs, address);
+    cacheClusterIdentifier(address, this);
+  }
+
 
   public String toString() {
     return getAddress();
