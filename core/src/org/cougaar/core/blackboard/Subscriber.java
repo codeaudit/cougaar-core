@@ -430,24 +430,12 @@ public class Subscriber {
     boolean signalActivity = false;
     synchronized (inboxLock) {
       boolean notBusy = transactionLock.tryGetBusyFlag();
-      if (getSubscriptionCount() > 0 || !notBusy) {
-	if (!notBusy && watchers.isEmpty() && getSubscriptionCount() == 0) {
-	  // This is the case of bug 3328 I believe. That is, we're about to distribute the envelopes,
-	  // but there is nothing to cause this subscriber to ever get them
-	  // Log the subscriber name & # tuples (size of problem)
-	  if (logger.isInfoEnabled()) {
-	    int envs = envelopes.size();
-	    int tuples = 0;
-	    for (int i = 0; i < envs; i++) {
-	      Envelope env = (Envelope) envelopes.get(i);
-	      tuples += env.size();
-	    }
-	    logger.info(this + ".receiveEnvelopes - bug 3328 - getting  " + envs + " envelopes with a total of " + tuples + " tuples, but have no subscriptions. May never go away! Previous pendingEnvelopes size: " + pendingEnvelopes.size());
-	  }
-	}
+      if (getSubscriptionCount() > 0 || (watchers.size() > 0 && !notBusy)) {
         pendingEnvelopes.addAll(envelopes);
         if (envelopeQuiescenceRequired) inboxAllowsQuiescence = false;
         signalActivity = true;
+      } else if (logger.isWarnEnabled() && getSubscriptionCount() == 0 && !notBusy && watchers.size() == 0) {
+	logger.warn(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
       }
       if (notBusy) transactionLock.freeBusyFlag();
     }
