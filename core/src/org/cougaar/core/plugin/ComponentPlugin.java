@@ -53,17 +53,17 @@ public class ComponentPlugin
   private PluginBindingSite pluginBindingSite = null;
   private ServiceBroker serviceBroker = null;
   private ThinWatcher watcher = null;
-	//private Collection parameters = null;
-	private Vector parameters = null;
+  private Collection parameters = null;
+  //private Vector parameters = null;
 		
-		public ComponentPlugin() { }   
-
+  public ComponentPlugin() { }   
+  
   /**
    * BlackboardClient implementation 
    * BlackboardService access requires the requestor to implement BlackboardClient
    **/
   protected String blackboardClientName = null;
- 
+  
   public String getBlackboardClientName() {
     if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
@@ -82,8 +82,8 @@ public class ComponentPlugin
     }
     return blackboardClientName;
   }
-
-
+  
+  
   public long currentTimeMillis() {
     if (alarmService != null)
       return alarmService.currentTimeMillis();
@@ -201,14 +201,15 @@ public class ComponentPlugin
    * If they haven't been set, will return null.
    * Should be set between plugin construction and initialization.
    **/
-		/* public Collection getParameters() {        
+  public Collection getParameters() {        
     return parameters;
   }
-		*/
-
+	      
+  /*
 		public Vector getParameters() {
 				return parameters;
 		}
+  */
 
  /** let subclasses get ahold of the cluster without having to catch it at
    * load time.  May throw a runtime exception if the plugin hasn't been 
@@ -221,9 +222,9 @@ public class ComponentPlugin
 		 return ((PluginBindingSite) getBindingSite()).getConfigFinder();
 	}
 
-		public ClusterServesPlugIn getCluster() {
-      return ComponentPlugin.this.getCluster();
-    }
+		//public ClusterServesPlugIn getCluster() {
+		//return ComponentPlugin.this.getCluster();
+    //}
 		
 		
 			protected ClusterIdentifier getClusterIdentifier() { 
