@@ -42,6 +42,7 @@ import org.cougaar.core.service.SchedulerService;
 import org.cougaar.util.SyncTriggerModelImpl;
 import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
+import org.cougaar.core.service.SuicideService;
 
 /**
  * Standard base-class for Components that watch the Blackboard for 
@@ -190,6 +191,9 @@ public abstract class BlackboardClientComponent
     tm.trigger();
   }
 
+  private SuicideService ss;
+  public void setSuicideService(SuicideService ss) { this.ss = ss; }
+
   //
   // implement GenericStateModel:
   //
@@ -315,8 +319,7 @@ public abstract class BlackboardClientComponent
       // batch in their subscription addedLists
       execute();                // MIK: I don't like this!!!
     } catch (Throwable t) {
-      System.err.println("Error: Uncaught exception in "+this+": "+t);
-      t.printStackTrace();
+      if (ss != null) ss.die(agentId, t);
     } finally {
       blackboard.closeTransaction();
     }
@@ -330,8 +333,7 @@ public abstract class BlackboardClientComponent
         execute();
       }
     } catch (Throwable t) {
-      System.err.println("Error: Uncaught exception in "+this+": "+t);
-      t.printStackTrace();
+      if (ss != null) ss.die(agentId, t);
     } finally {
       blackboard.closeTransaction();
     }
