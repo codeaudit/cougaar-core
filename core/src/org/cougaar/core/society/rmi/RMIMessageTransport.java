@@ -67,7 +67,7 @@ import org.cougaar.util.ReusableThread;
  *      nameserver interaction to the fastest values.  Activates
  *      useLocalDelivery, useNodeDelivery, useNodeRedirect and disables 
  *      useServerProxies.
- * org.cougaar.message.decacheFailureLimit=0 : number of consecutive message failures 
+ * org.cougaar.message.decacheFailureLimit=3 : number of consecutive message failures 
  *	required to trigger a nameserver recache.  If '0', an existing address
  *	will never be dropped - this will prevent clusters from moving between
  *	hosts.
@@ -89,7 +89,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   private static int fallbackCount = 30;
 
   /** decache address on message sends after this many failures, if 0, doesn't decache **/
-  private static int decacheFailureLimit = 0;
+  private static int decacheFailureLimit = 3;
 
   /** retry interval while in fallback mode **/
   private static long fallbackRetryInterval = 30000L;
