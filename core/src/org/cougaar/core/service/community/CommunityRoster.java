@@ -1,12 +1,12 @@
 /*
  * <copyright>
- *  Copyright 2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 Mobile Intelligence Corp
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -18,7 +18,6 @@
  *  PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
-
 package org.cougaar.core.service.community;
 
 import java.util.Collection;
@@ -26,6 +25,7 @@ import java.util.Collection;
 /** CommunityRoster Interface
   * A CommunityRoster identifies the agents that are currently the member
   * of a specified community.
+  * @deprecated Use org.cougaar.core.service.community.Community
   **/
 
 public interface CommunityRoster {
@@ -50,7 +50,7 @@ public interface CommunityRoster {
   /**
    * Returns a Collection of MessageAddresss identifying the agents that are
    * currently community members.
-   * @return Collection of Agent MessageAddresss
+   * @return Collection of Agent MessageAddresses
    */
   Collection getMemberAgents();
 
