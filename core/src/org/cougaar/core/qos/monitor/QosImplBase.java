@@ -49,7 +49,7 @@ class QosImplBase
 		System.err.println("### Can't find AgentStatusService");
 	    } else {
 		statusService = (AgentStatusService) svc;
-		System.out.println("%%% Got AgentStatusService!");
+		// System.out.println("%%% Got AgentStatusService!");
 	    }
 	}
     }
