@@ -11,6 +11,7 @@
 package org.cougaar.util.log.log4j;
 
 import java.util.Map;
+import java.util.Properties;
 
 import org.cougaar.util.log.*;
 
@@ -24,8 +25,12 @@ import org.cougaar.util.log.*;
  */
 public class Log4jLoggerFactory extends LoggerFactory {
 
-  public void configure(Map env) {
-    Initializer.configure(env);
+  public void configure(Properties props) {
+    Initializer.configure(props);
+  }
+
+  public void configure(Map m) {
+    Initializer.configure(m);
   }
 
   public Logger createLogger(Object requestor) {

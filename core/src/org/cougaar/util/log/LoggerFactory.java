@@ -11,6 +11,7 @@
 package org.cougaar.util.log;
 
 import java.util.Map;
+import java.util.Properties;
 
 /** 
  * Factory to create Logger and LoggerController instances.
@@ -34,12 +35,21 @@ public abstract class LoggerFactory {
   }
 
   /**
+   * @see #configure(Map)
+   */
+  public abstract void configure(Properties props);
+
+  /**
    * Configure the factory, which sets the initial
    * logging configuration (levels, destinations, etc).
    * <p>
    * This must be called prior to other "create*" methods.
+   * <p>
+   * Currently only "log4j" properties are used.  See
+   * <a href="http://jakarta.apache.org/log4j/docs/manual.html">
+   * the log4j manual</a> for details.
    */
-  public abstract void configure(Map env);
+  public abstract void configure(Map m);
 
   public abstract Logger createLogger(Object requestor);
 
