@@ -15,6 +15,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.*;
 import org.cougaar.core.society.*;
+import org.cougaar.core.mts.MessageTransportService;
 
 import java.beans.*;
 import java.lang.reflect.*;
@@ -129,6 +130,32 @@ public class AgentManager
      return true;
   }
 
+  private static void debugState(Object state, String path) {
+    if (state instanceof ComponentDescription[]) {
+      ComponentDescription[] descs = 
+	(ComponentDescription[])state;
+      for (int i = 0; i < descs.length; i++) {
+	ComponentDescription di = descs[i];
+	String prefix = path+"["+i+" / "+descs.length+"]";
+        if (di == null) {
+	  System.out.println(
+			     prefix+": null");
+	} else {
+	  System.out.println(
+			     prefix+": "+
+			     di.getInsertionPoint()+" = "+
+			     di.getClassname()+" "+
+			     di.getParameter());
+	  if (di.getState() != null) {
+	    debugState(di.getState(), prefix);
+	  }
+	}
+      }
+    } else {
+      System.out.println(path+" non-CD[] "+state);
+    }
+  }
+
   /**
    * Support Node-issued agent mobility requests.
    * <p>
@@ -139,17 +166,84 @@ public class AgentManager
       ClusterIdentifier agentID,
       NodeIdentifier nodeID) {
 
+    // check parameters, security, etc
+    if ((agentID == null) ||
+	(nodeID == null)) {
+      // error
+      return;
+    }
+
     // lookup the agent on this node
+    ClusterServesClusterManagement agent = null;
+    Iterator iter = super.iterator();
+    while (true) {
+      if (!(iter.hasNext())) {
+	// no such agent?
+	return;
+      }
+      Object oi = iter.next();
+      if (oi instanceof ClusterServesClusterManagement) {
+	ClusterServesClusterManagement ci =
+	  (ClusterServesClusterManagement)oi;
+	ClusterIdentifier cid =	ci.getClusterIdentifier();
+	if (agentID.equals(cid)) {
+	  // found our agent
+	  agent = ci;
+	  break;
+	}
+      }
+    }
 
     // suspend the agent's activity, prepare for state capture
 
     // recursively gather the agent state
+    Object state = 
+      ((agent instanceof StateObject) ?
+       ((StateObject)agent).getState() :
+       null);
+
+    System.out.println("state is: "+state);
+    debugState(state, "");
 
     // create a ComponentDescription for the agent, set it's state
+    Vector param = new Vector(1);
+    param.add(agentID.toString());
+    ComponentDescription cd =
+      new ComponentDescription(
+			       "org.cougaar.core.cluster.ClusterImpl",
+			       "Node.AgentManager.Agent",
+			       "org.cougaar.core.cluster.ClusterImpl",
+			       null,
+			       param,
+			       null, // certificate
+			       null, // lease
+			       null, // policy
+			       state);
 
     // create an ADD ComponentMessage with the ComponentDescription
+    ComponentMessage addMsg =
+      new ComponentMessage(
+        new NodeIdentifier(bindingSite.getIdentifier()),
+        nodeID,
+        ComponentMessage.ADD,
+        cd);
+
+    // get the message transport
+    MessageTransportService mts = (MessageTransportService)
+      getServiceBroker().getService(
+				    this,
+				    MessageTransportService.class,
+				    null);
+    if (mts == null) {
+      // error!  we should have requested this earlier...
+      System.err.println("Unable to get MessageTransport for mobility message");
+      return;
+    }
 
     // send message to destination node
+    mts.sendMessage(addMsg);
+
+    // wait for add acknowledgement -- postponed to 8.6+
 
     // destroy the original agent on this node
 

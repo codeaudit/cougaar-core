@@ -30,7 +30,7 @@ import java.net.URL;
  * to be called by the bound component.
  **/
 
-public interface Binder // extends BindingSite 
+public interface Binder extends StateObject // extends BindingSite 
 {
   /** initilize the Binder and the component tree below **/
   void initialize();

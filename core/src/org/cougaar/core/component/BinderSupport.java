@@ -121,4 +121,18 @@ public abstract class BinderSupport
   public void start() {
     child.start();
   }
+
+  public Object getState() {
+    if (child instanceof StateObject) {
+      return ((StateObject)child).getState();
+    } else {
+      return null;
+    }
+  }
+
+  public void setState(Object state) {
+    if (child instanceof StateObject) {
+      ((StateObject)child).setState(state);
+    }
+  }
 }

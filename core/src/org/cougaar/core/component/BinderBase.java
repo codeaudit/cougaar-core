@@ -61,6 +61,9 @@ public abstract class BinderBase
   public abstract void load();
   public abstract void start();
 
+  public abstract Object getState();
+  public abstract void setState(Object state);
+
   public String toString() {
     String s = this.getClass().toString();
     int i = s.lastIndexOf(".");

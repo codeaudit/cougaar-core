@@ -10,7 +10,7 @@
 package org.cougaar.core.component;
 
 /** 
- * A <code>Component</code> that contains internal state.
+ * An <code>Object</code> that contains internal state.
  * <p>
  * Component mobility and persistence requires the saving and
  * restoration of internal Component state.  The typical lifecycle
@@ -26,11 +26,12 @@ package org.cougaar.core.component;
  * All <code>Container</code>s are StateComponents because (minimally)
  * they contain a tree of child Components.
  * <p>
+ * <code>Binder</code>s act as proxies for the child state-saving.
+ * <p>
  * This interface might be removed in the future and replaced
  * with reflective method-lookup, similar to <code>BindingUtility</code>.
  */
-public interface StateComponent 
-  extends Component
+public interface StateObject
 {
 
   /**

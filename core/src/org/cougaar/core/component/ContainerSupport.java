@@ -230,6 +230,70 @@ public abstract class ContainerSupport
     }
   }
 
+  /* getState()recurses through the boundcomponents binders from the Agent level, 
+   * returning a huge array of the Component's ComponentDescription. Pass-through 
+   * code implemented in Binder. 
+   * blackboard and scheduler override getState() to handle their states.
+   
+   parent recurses down through binders of bound components
+   iterate through arraylist of boundcomponents
+   get the next one
+   get state of next one - recursive call 
+   if null, stop
+   
+   in binder: getstate() adds to component description
+   
+   */
+
+  public Object getState() {
+    
+    synchronized (boundComponents) {
+      int l = boundComponents.size();
+      ComponentDescription[] descs = new ComponentDescription[l];
+      for (int i=0; i<l; i++) {
+	Object p = boundComponents.get(i);
+	if (p instanceof BoundComponent) {
+	  BoundComponent bc = (BoundComponent)p;
+	  Binder b = bc.getBinder();
+	  Object comp = bc.getComponent();
+	  if (comp instanceof ComponentDescription) {
+	    ComponentDescription cd = (ComponentDescription)comp;
+	    Object state = b.getState();
+            ComponentDescription dupCD = 
+	      new ComponentDescription(
+				       cd.getName(),
+				       cd.getInsertionPoint(),
+				       cd.getClassname(),
+				       cd.getCodebase(),
+				       cd.getParameter(),
+				       cd.getCertificate(),
+				       cd.getLeaseRequested(),
+				       cd.getPolicy(),
+				       state);
+	    descs[i] = dupCD;
+          } else {
+	    // error?
+          }
+	} else {
+          // error?
+	}
+      }
+      return descs;
+    } 
+  }
+
+  public void setState(Object state) {
+    if (state instanceof ComponentDescription[]) {
+      ComponentDescription[] descs = 
+	(ComponentDescription[])state;
+      for (int i = 0; i < descs.length; i++) {
+        add(descs[i]);
+      }
+    } else {
+      // error?
+    }
+  }
+  
   /**  These BinderFactories
    * are used to generate the primary containment
    * binders for the child components.  If the child
@@ -274,6 +338,13 @@ public abstract class ContainerSupport
         //System.err.println("setting Binder for "+c);
         BindingUtility.setBindingSite(b, getContainerProxy());
         BindingUtility.setServices(b, getServiceBroker());
+        //System.err.println("Setting Binder state for "+c);
+	if (c instanceof ComponentDescription) {
+	  Object state = ((ComponentDescription)c).getState();
+          if (state != null) {
+	    b.setState(state);
+	  }
+	}
         //System.err.println("Initializing Binder for "+c);
         BindingUtility.initialize(b);
         // done

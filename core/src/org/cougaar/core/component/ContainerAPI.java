@@ -23,5 +23,10 @@ public interface ContainerAPI
   extends BindingSite
 {
   /** Remove the component (presumably the child) from the container **/
-  boolean remove(Object childComponent);
+   boolean remove(Object childComponent);
+
+  /** getState() and setState() methods required to pass through Binder **/
+  //ComponentDescription[] getState();
+
+  //void setState(Object o);
 }

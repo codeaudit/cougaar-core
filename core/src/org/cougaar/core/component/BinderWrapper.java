@@ -78,5 +78,10 @@ public abstract class BinderWrapper
   public void start() {
     child.start();
   }
-
+  public Object getState() {
+    return child.getState();
+  }
+  public void setState(Object state) {
+    child.setState(state);
+  }
 }
