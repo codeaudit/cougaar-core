@@ -24,6 +24,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import org.cougaar.core.adaptivity.OMCRangeList;
 
 /**
  * PersistencePlugin defines the API that media-specific persistence
@@ -56,6 +57,32 @@ public interface PersistencePlugin {
      * as an argument in the constructor.
      **/
     String getName();
+
+    /**
+     * Gets the names of all media-specific controls. The names of
+     * these controls must not conflict with the
+     * (@link BasePersistence#getMediaControlNames names that all
+     * media plugins have}.
+     * @return an array of the names of the controls for this media
+     * plugin.
+     **/
+    String[] getControlNames();
+
+    /**
+     * Gets the list of allowed ranges for values of the named
+     * control. Values supplied to {@link #setControl} are guaranteed
+     * to be in the specified ranges.
+     * @return the list or allowed ranges.
+     **/
+    OMCRangeList getControlValues(String controlName);
+
+    /**
+     * Set value of a particular control. Values are guaranteed to be
+     * in the ranges specified by {@link #getControlValues}
+     * @param controlName the name of the control
+     * @param newValue the new value of the control
+     **/
+    void setControl(String controlName, Comparable newValue);
 
     /**
      * Read the specified set of sequence numbers. These numbers
