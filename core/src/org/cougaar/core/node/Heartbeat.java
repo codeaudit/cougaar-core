@@ -26,6 +26,9 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 
@@ -73,7 +76,7 @@ public final class Heartbeat
   private static long lastHeartbeat = 0L;
   private static long idleTime = 0L;
 
-  private Thread thread = null;
+  private Schedulable schedulable;
 
   /** Only node can construct a Heartbeat **/
   Heartbeat() {
@@ -82,17 +85,22 @@ public final class Heartbeat
   }
 
 
-  synchronized void start() {
-    if (thread != null) throw new RuntimeException("Attempted to restart Heartbeat!");
+  synchronized void start(ServiceBroker sb) {
+    if (schedulable != null) throw new RuntimeException("Attempted to restart Heartbeat!");
 
-    thread = new Thread(new Beater(), "Heartbeat");
-    thread.setPriority(Thread.MIN_PRIORITY);
-    thread.start();
+    ThreadService tsvc = (ThreadService)
+	sb.getService(this, ThreadService.class, null);
+    //Want this thread to be lowest priority, i.e. run only after
+    // every thing else has run. With the thread lanes, the best we can do
+    // is run in the default pool.
+    schedulable = tsvc.getThread(this, new Beater(), "Heartbeat");
+    schedulable.schedule(idleInterval);
+    sb.releaseService(this, ThreadService.class, tsvc);
   }
   
   synchronized void stop() throws SecurityException {
-    if (thread == null) throw new RuntimeException("Attempted to stop a stopped Heartbeat!");
-    thread.interrupt();
+    if (schedulable == null) throw new RuntimeException("Attempted to stop a stopped Heartbeat!");
+    schedulable.cancel();
   }
 
   private class Beater implements Runnable {
@@ -101,38 +109,42 @@ public final class Heartbeat
       firstTime = System.currentTimeMillis();
       lastVerboseTime = firstTime;
 
+      showProgress(".");
       // if heartbeat actually gets to run at least every 5.5 seconds,
-      // we'll consider the VM idle.
-      while (true) {
-        try {
-          Thread.sleep(idleInterval); // sleep for (at least) 5s
-        } catch (InterruptedException ie) {
-          Thread.interrupted();
-          return;               // exit
-        }
-        showProgress(".");
-        long t = System.currentTimeMillis();
-        if (lastHeartbeat!=0) {
+      // we'll consider the VM idle. 
+
+      //TBD: The logic of this test assumes that this schedulable will
+      // be run only after all other work has completed. This is not
+      // the case with a thread service thread which does not have low
+      // priority.  A better test would be to query the thread control
+      // service for the "load average" There seems to be no client
+      // for idle time, so we will leave the old logic in place as
+      // documenation for when this functionality will be revisited
+      long t = System.currentTimeMillis();
+      if (lastHeartbeat!=0) {
           long delta = t-lastHeartbeat;
           if (delta <= maxIdleInterval) {
-            // we're pretty much idle
-            idleTime += delta;
+	      // we're pretty much idle
+	      idleTime += delta;
           } else {
-            idleTime = 0;
+	      idleTime = 0;
           }
-        }
-        lastHeartbeat = t;
-        
-        if (idleVerbose) {
+      }
+      lastHeartbeat = t;
+      
+      if (idleVerbose) {
           long delta = t-lastVerboseTime;
           if (delta >= idleVerboseInterval) {
-            showProgress("("+Long.toString(((t-firstTime)+500)/1000)+")");
-            lastVerboseTime=t;
+	      showProgress("("+Long.toString(((t-firstTime)+500)/1000)+")");
+	      lastVerboseTime=t;
           }
-        }
       }
+      schedulable.schedule(idleInterval);
     }
   }
+
+
+
 
   private static void showProgress(String p) {
     Logging.printDot(p);

@@ -28,6 +28,7 @@ package org.cougaar.core.node;
 
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.PropertyParser;
 
@@ -52,14 +53,17 @@ implements Component
         true);
 
   private Heartbeat heartbeat;
+  private ServiceBroker sb;
 
-  public void setBindingSite(BindingSite bs) {}
+  public void setBindingSite(BindingSite bs) {
+      sb = bs.getServiceBroker();
+  }
 
   public void load() {
     super.load();
     if (isHeartbeatOn) {
       heartbeat = new Heartbeat();
-      heartbeat.start();
+      heartbeat.start(sb);
     }
   }
 
