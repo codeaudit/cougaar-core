@@ -76,7 +76,8 @@ public class RootDomain
     l.add(new RemoteClusterAllocationLP(logplan, cluster));
     l.add(new PreferenceChangeLP(logplan, cluster));
     l.add(new RescindLP(logplan, cluster));
-
+    // error detection LP
+    l.add(new ComplainingLP(logplan, cluster));
 
     // should be done by expander plugins now
     //l.add(new WorkflowAllocationLP(logplan, cluster));

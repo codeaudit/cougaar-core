@@ -1,3 +1,11 @@
+2001-01-26  Michael Thome  <mthome@bbn.com>
+
+	* Added ComplainingLP
+	Error checking LP complains about problematic LogPlan changes
+	such as publishChanging an object which isn't in the plan.  Since
+	LPs are applied after subscription changes, they cannot do things
+	like check for redundant adds or removes - sigh.
+
 2001-01-19  Michael Thome  <mthome@bbn.com>
 
 	* org.cougaar.util.Parameters
