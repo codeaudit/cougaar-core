@@ -113,7 +113,11 @@ public class ReservationManager {
         if (logger != null && logger.isInfoEnabled()) {
           logger.info("waitFor " + delay + " for " + firstItem);
         }
-        wait(delay);
+        if (delay <= 0) {
+          wait();               // Must be committed, wait for release
+        } else {
+          wait(delay);          // Uncommitted, wait for timeout or release.
+        }
         if (logger != null && logger.isInfoEnabled()) {
           logger.info("waitFor wait finished");
         }
