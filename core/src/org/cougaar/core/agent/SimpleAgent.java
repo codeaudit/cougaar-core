@@ -1999,10 +1999,13 @@ public class SimpleAgent
 
   private class MessageSwitchServiceImpl implements MessageSwitchService {
     public void sendMessage(Message m) {
-      (SimpleAgent.this).sendMessage(m);
+      SimpleAgent.this.sendMessage(m);
     }
     public void addMessageHandler(MessageHandler mh) {
-      (SimpleAgent.this).getMessageSwitch().addMessageHandler(mh);
+      SimpleAgent.this.getMessageSwitch().addMessageHandler(mh);
+    }
+    public MessageAddress getMessageAddress() {
+      return SimpleAgent.this.getMessageAddress();
     }
   }
 
