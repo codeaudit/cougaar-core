@@ -143,8 +143,7 @@ public class XMLComponentInitializerServiceProvider
     factory.setNamespaceAware(true);
     SAXParser saxParser = factory.newSAXParser();
 
-    // Uncomment the following line when we go back to xerces2 again - bug 2823
-    //    saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+    saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
     
     InputStream istr = ConfigFinder.getInstance().open(filename);
     if (istr == null) {
