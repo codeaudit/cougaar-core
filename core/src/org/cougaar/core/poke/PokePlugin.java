@@ -15,11 +15,9 @@ import org.cougaar.core.plugin.PluginBase;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.blackboard.BlackboardService;
 import org.cougaar.core.plugin.PluginBindingSite;
-import org.cougaar.core.cluster.IncrementalSubscription;
 import org.cougaar.core.cluster.SubscriptionWatcher;
-import org.cougaar.core.cluster.Subscription;
-import org.cougaar.util.UnaryPredicate;
 
+import java.util.Collection;
 import java.util.Iterator;
 
 /**
@@ -35,16 +33,35 @@ public class PokePlugin implements PluginBase, BlackboardClient {
   protected boolean primed = false;
   private PluginBindingSite pluginBindingSite = null;
   private SubscriptionWatcher watcher = null;
-  private final String myName = "SlimShady";
+  private Collection parameters = null;
 
   public PokePlugin() { }
 
   /**
-   *  Totally bogus BlackboardClient implementation
+   *  somewhat bogus BlackboardClient implementation
    **/
+  protected String blackboardClientName = null;
+
   public String getBlackboardClientName() {
-    return myName;
+    if (blackboardClientName == null) {
+      StringBuffer buf = new StringBuffer();
+      buf.append(getClass().getName());
+      if (parameters != null) {
+	buf.append("[");
+	String sep = "";
+	for (Iterator params = parameters.iterator(); params.hasNext(); ) {
+	  buf.append(sep);
+	  buf.append(params.next().toString());
+	  sep = ",";
+	}
+	buf.append("]");
+      }
+      blackboardClientName = buf.substring(0);
+    }
+    return blackboardClientName;
   }
+
+
   public long currentTimeMillis() {
     return System.currentTimeMillis();
   }
@@ -57,6 +74,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
    * Found by introspection
    **/
   public void setBindingSite(BindingSite bs) {
+    System.out.println("PokePlugin.setBindingSite() " + toString() );
     if (bs instanceof PluginBindingSite) {
       pluginBindingSite = (PluginBindingSite)bs;
     } else {
@@ -102,6 +120,10 @@ public class PokePlugin implements PluginBase, BlackboardClient {
 
   }
 
+  protected PluginBindingSite getBindingSite() {
+    return pluginBindingSite;
+  }
+
 
   /**
    * Found by introspection by BinderSupport
@@ -113,11 +135,28 @@ public class PokePlugin implements PluginBase, BlackboardClient {
   }
 
   /**
-   * Found by introspection by PluginManager
+   * Found by introspection by ComponentFactory
    * PM expects this, and fails if it isn't here.
    **/
   public void setParameter(Object param) {
+    System.out.println("PokePlugin.setParameter()");
+    if (param != null) {
+      if (param instanceof Collection) {
+	parameters = (Collection) param;
+      } else {
+	System.err.println("Warning: "+this+" initialized with non-collection parameter "+param);
+      }
+    }
   }
+
+  /** get any Plugin parameters passed by the plugin instantiator.
+   * If they haven't been set, will return null.
+   * Should be set between plugin construction and initialization.
+   **/
+  public Collection getParameters() {
+    return parameters;
+  }
+
 
   /**
    * This is the scheduler's hook into me
@@ -134,42 +173,33 @@ public class PokePlugin implements PluginBase, BlackboardClient {
     }
   }
 
-  private final UnaryPredicate stringPred = 
-    new UnaryPredicate() {
-	public boolean execute(Object o) {
-	  if (o instanceof String) 
-	    return true;
-	  return false;
-	}
-      };
-  
-  private IncrementalSubscription stringSubscription = null;
-
   protected void precycle() {
-    // set up stuff 
-    System.out.println("PokePlugin.precycle()");
+    blackboard.openTransaction();
+    setupSubscriptions();
+    blackboard.closeTransaction();
     primed = true;
-
-    if (blackboard != null) {
-      blackboard.openTransaction();
-      blackboard.publishAdd("A scribble on the blackboard");
-      stringSubscription = (IncrementalSubscription) blackboard.subscribe(stringPred);
-      blackboard.closeTransaction();
-    }
   }
 
   protected void cycle() {
-    System.out.println("PokePlugin.cycle()");
-    readyToRun = false;
-
     // do stuff
+    readyToRun = false;
     blackboard.openTransaction();
-    if (stringSubscription.hasChanged()) {
-      for (Iterator it = stringSubscription.iterator(); it.hasNext();) {
-	System.out.println("PokePlugin.cycle() - found on blackoard: " + it.next());
-      }
-    }
+    execute();
     blackboard.closeTransaction();
+  }
+
+  /**
+   * override me
+   **/
+  protected void setupSubscriptions() {}
+
+  /**
+   * override me
+   **/
+  protected void execute() {}
+
+  public String toString() {
+    return getBlackboardClientName();
   }
 
   protected class ThinWatcher extends SubscriptionWatcher {
@@ -177,6 +207,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
      */
     public void signalNotify(int event) {
       super.signalNotify(event);
+      System.out.println("ThinWatcher.signalNotify(" + event + ")");
       // ask the scheduler to run us again.
       if (schedulerProd != null) {
 	readyToRun = true;

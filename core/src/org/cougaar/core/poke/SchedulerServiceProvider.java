@@ -11,9 +11,11 @@
 package org.cougaar.core.poke;
 
 import org.cougaar.core.component.ServiceProvider;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.cougaar.core.component.*;
 
@@ -22,7 +24,8 @@ public class SchedulerServiceProvider // Should this be called SchedulerServiceP
 {
 
   private HashMap clients = new HashMap(13);
-  private HashSet runThese = new HashSet(13);
+  private ArrayList runThese = new ArrayList(13);
+  //private Set wrapper = Collections.synchronizedSet(runThese);
 
   public SchedulerServiceProvider() {}
 
@@ -47,6 +50,7 @@ public class SchedulerServiceProvider // Should this be called SchedulerServiceP
   }
 
   public void setPokable(Component comp, Pokable pc) {
+    System.out.println("SchedulerServiceProvider.register(" + comp.toString() + ")");
     // stuff this in a hashtable.
     clients.put(comp, pc);
 
@@ -100,12 +104,12 @@ public class SchedulerServiceProvider // Should this be called SchedulerServiceP
     public void run() {
       while (true) {
 	waitForActivity();
-	synchronized(runThese) {
-	  for (Iterator it = runThese.iterator(); it.hasNext();) {
-	    Pokable pc = (Pokable)it.next();
-	    pc.poke();
-	    it.remove();
-	  }
+	//make copy to prevent concurrent modification error. (I couldn't figure out the synchronization)
+	ArrayList pokables = new ArrayList(runThese);
+	runThese.clear();
+	for (Iterator it = pokables.iterator(); it.hasNext();) {
+	  Pokable pc = (Pokable)it.next();
+	  pc.poke();
 	}
       }
     }
