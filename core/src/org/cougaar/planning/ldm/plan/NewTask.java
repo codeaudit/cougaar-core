@@ -40,8 +40,11 @@ import org.cougaar.core.plugin.Annotation;
  * instructing a subordinate or service provider
  * to plan and eventually accomplish a task.
  * A the general form of a task is:
- * Verb <DirectObject> {PrepositionalPhrase} per <Schedule> per <Constraints>
- *
+ * Verb <em>DirectObject</em> {<em>PrepositionalPhrase<em>}* per <em>Schedule</em> per <em>Constraints</em>
+ * <p>
+ * Note that these accessors are only well defined with respect to threading and 
+ * Blackboard transactions prior to the close of the transaction in which the 
+ * Task is added.
  **/
 	
 public interface NewTask extends Task, NewDirective
@@ -91,7 +94,9 @@ public interface NewTask extends Task, NewDirective
 
 		
   /** 
-   * Sets the prepositional phrase (note singularity) of the Task.  
+   * Makes the parameter the single prepositional phrase
+   * of the task.  Any previously-set prepositional phrases
+   * are dropped. <p>
    * A PrepositionalPhrase object contains a String
    * representation of the preposition (from, to, with, etc.) 
    * and an object representing the indirect object. The indirect
@@ -102,9 +107,33 @@ public interface NewTask extends Task, NewDirective
    * the PrepositionalPhrase is "from UnitC".
    * @param aPrepPhrase - The Prep Phrase of the Task.
    **/
-			
+  void setPrepositionalPhrases(PrepositionalPhrase aPrepPhrase);
+
+  /** 
+   * Makes the parameter the single prepositional phrase
+   * of the task.  Any previously-set prepositional phrases
+   * are dropped. <p>
+   * A PrepositionalPhrase object contains a String
+   * representation of the preposition (from, to, with, etc.) 
+   * and an object representing the indirect object. The indirect
+   * object can be an Asset (or AssetGroup), a Location (or two) or
+   * a Capabiltiy.
+   * For example, in the task
+   * "UnitA requisitions commodityB from UnitC"...
+   * the PrepositionalPhrase is "from UnitC".
+   * @param aPrepPhrase - The Prep Phrase of the Task.
+   * @deprecated Use setPrepositionalPhrases(PrepositionalPhrase) or addPrepositionalPhrase(PrepositionalPhrase) instead.
+   **/
   void setPrepositionalPhrase(PrepositionalPhrase aPrepPhrase);
 		
+  /** 
+   * Adds a PrepositionalPhrase to the existing set of 
+   * PrepositionalPhrases of the task - an existing PrepositionalPhrases
+   * with the same Preposition will be replaced.
+   * @param aPrepPhrase - The Prep Phrase of the Task.
+   **/
+  void addPrepositionalPhrase(PrepositionalPhrase aPrepPhrase);
+
   /**
    * The setVerb method sets the verb of the Task.
    * For example, in the Task "fuel vehicles...", the

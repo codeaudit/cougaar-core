@@ -176,8 +176,18 @@ public class TaskImpl extends DirectiveImpl
    * Set the prepositional phrase (note singularity)
    * Note that any previous values will be dropped 
    * @param aPrepPhrase 
+   * @deprecated Use setPrepositionalPhrases(PrepositionalPhrase) or addPrepositionalPhrase(PrepositionalPhrase) instead.
    */
   public void setPrepositionalPhrase(PrepositionalPhrase aPrepPhrase) {
+    setPrepositionalPhrases(aPrepPhrase);
+  }
+
+  /**
+   * Set the prepositional phrase (note singularity)
+   * Note that any previous values will be dropped 
+   * @param aPrepPhrase 
+   */
+  public void setPrepositionalPhrases(PrepositionalPhrase aPrepPhrase) {
     if (phrases == null)
       phrases = new ArrayList(1);
     else
@@ -187,6 +197,36 @@ public class TaskImpl extends DirectiveImpl
 
     Transaction.noteChangeReport(this,new Task.PrepositionChangeReport());
     phrases.add(aPrepPhrase);
+    decacheTS();
+  }
+
+  /**
+   * Adds a PrepositionalPhrase to the list of PrepositionalPhrases.
+   * @param aPrepPhrase 
+   */
+  public void addPrepositionalPhrase(PrepositionalPhrase aPrepPhrase) {
+    if (aPrepPhrase == null) 
+      throw new IllegalArgumentException("addPrepositionalPhrase requires a non-null argument.");
+
+    if (phrases == null)
+      phrases = new ArrayList(1);
+
+    String prep = aPrepPhrase.getPreposition();
+
+    boolean found = false;
+    for (ListIterator it = phrases.listIterator(); it.hasNext(); ) {
+      PrepositionalPhrase pp = (PrepositionalPhrase) it.next();
+      if (prep.equals(pp.getPreposition())) {
+        found = true;
+        it.set(aPrepPhrase);
+        break;
+      }
+    }
+    if (!found) {
+      phrases.add(aPrepPhrase);
+    }
+
+    Transaction.noteChangeReport(this,new Task.PrepositionChangeReport());
     decacheTS();
   }
 
