@@ -257,4 +257,118 @@ public interface BlackboardService extends Service {
 
   /** Hook to allow access to Blackboard persistence mechanism **/
   Persistence getPersistence();
+
+  /** BlackboardService.Delegate is an instantiable convenience class which may be
+   * used by Binder writers to bind BlackboardService, either as a simple
+   * protective indirection layer, or as the base class for more complex behavior.
+   * This implementation merely passes through all requests to a constructor
+   * specified delegate.
+   **/
+  class Delegate implements BlackboardService {
+    private final BlackboardService bs;
+    public Delegate(BlackboardService bs) {
+      this.bs = bs;
+    }
+    public Subscriber getSubscriber() { 
+      return bs.getSubscriber();
+    }
+    public Subscription subscribe(UnaryPredicate isMember) { 
+      return bs.subscribe(isMember); 
+    }
+    public Subscription subscribe(UnaryPredicate isMember, Collection realCollection) {
+      return bs.subscribe(isMember, realCollection);
+    }
+    public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
+      return bs.subscribe(isMember, isIncremental);
+    }
+    public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
+      return bs.subscribe(isMember, realCollection, isIncremental);
+    }
+    public Subscription subscribe(Subscription subscription) {
+      return bs.subscribe(subscription);
+    }
+    public Collection query(UnaryPredicate isMember) {
+      return bs.query(isMember);
+    }
+    public void unsubscribe(Subscription subscription) {
+      bs.unsubscribe(subscription);
+    }
+    public int getSubscriptionCount() {
+      return bs.getSubscriptionCount();
+    }
+    public int getSubscriptionSize() {
+      return bs.getSubscriptionSize();
+    }
+    public int getPublishAddedCount() {
+      return bs.getPublishAddedCount();
+    }
+    public int getPublishChangedCount() {
+      return bs.getPublishChangedCount();
+    }
+    public int getPublishRemovedCount() {
+      return bs.getPublishRemovedCount();
+    }
+    public boolean haveCollectionsChanged() {
+      return bs.haveCollectionsChanged();
+    }
+    public void publishAdd(Object o) {
+      bs.publishAdd(o);
+    }
+    public void publishRemove(Object o) {
+      bs.publishRemove(o);
+    }
+    public void publishChange(Object o) {
+      bs.publishChange(o);
+    }
+    public void publishChange(Object o, Collection changes) {
+      bs.publishChange(o,changes);
+    }
+    public void openTransaction() {
+      bs.openTransaction();
+    }
+    public boolean tryOpenTransaction() {
+      return bs.tryOpenTransaction();
+    }
+    public void closeTransaction() throws SubscriberException {
+      bs.closeTransaction();
+    }
+    public void closeTransactionDontReset() throws SubscriberException {
+      bs.closeTransactionDontReset();
+    }
+    /** @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+     **/
+    public void closeTransaction(boolean resetp) throws SubscriberException {
+      bs.closeTransaction(resetp);
+    }
+    public boolean isTransactionOpen() {
+      return bs.isTransactionOpen();
+    }
+    public void signalClientActivity() {
+      bs.signalClientActivity();
+    }
+    public SubscriptionWatcher registerInterest(SubscriptionWatcher w) {
+      return bs.registerInterest(w);
+    }
+    public SubscriptionWatcher registerInterest() {
+      return bs.registerInterest();
+    }
+    public void unregisterInterest(SubscriptionWatcher w) throws SubscriberException {
+      bs.unregisterInterest(w);
+    }
+    public void setShouldBePersisted(boolean value) {
+      bs.setShouldBePersisted(value);
+    }
+    public boolean shouldBePersisted() {
+      return bs.shouldBePersisted();
+    }
+    public void persistNow() throws org.cougaar.core.persist.PersistenceNotEnabledException {
+      bs.persistNow();
+    }
+    public boolean didRehydrate() {
+      return bs.didRehydrate();
+    }
+    public Persistence getPersistence() {
+      return bs.getPersistence();
+    }
+  }
 }
