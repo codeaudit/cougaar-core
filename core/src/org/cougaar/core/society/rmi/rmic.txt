@@ -1,5 +1,0 @@
-rmic -v1.2 -keepgenerated org.cougaar.core.society.rmi.NSImpl
-mv org/cougaar/core/society/rmi/NSImpl_Stub.java NSImpl_Stub.java
-rmic -v1.2 -keepgenerated org.cougaar.core.society.rmi.MTImpl
-mv org/cougaar/core/society/rmi/MTImpl_Stub.java MTImpl_Stub.java
-rm -rf org

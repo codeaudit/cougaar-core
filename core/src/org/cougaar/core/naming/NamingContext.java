@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import java.rmi.RemoteException;
 
@@ -18,16 +18,16 @@ import java.util.*;
 
 import org.cougaar.core.society.NameServer;
 
-public class RMIContext implements Context {
+public class NamingContext implements Context {
   protected Hashtable myEnv;
   protected NS myNS;
   protected NameServer.Directory myDirectory;
   protected String myDirectoryName;
-  protected final static NameParser myParser = new RMINameParser();
+  protected final static NameParser myParser = new NamingParser();
 
-  protected String myClassName = RMIContext.class.getName();  
+  protected String myClassName = NamingContext.class.getName();  
 
-  RMIContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
+  public NamingContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
     myEnv = (inEnv != null) ? (Hashtable)(inEnv.clone()) : null;
     myNS = ns;
     myDirectory = directory;
@@ -39,28 +39,6 @@ public class RMIContext implements Context {
 
   public NameServer.Directory getDirectory() {
     return myDirectory;
-  }
-
-
-  /**
-   * Utility method for processing composite/compound name.
-   * @param name The non-null composite or compound name to process.
-   * @return The non-null string name in this namespace to be processed.
-   */
-  protected Name getMyComponents(Name name) throws NamingException {
-    if (name instanceof CompositeName) {
-      /*
-      if (name.size() > 1) {
-        throw new InvalidNameException(name.toString() +
-                                       " has more components than namespace can handle");
-      }
-      */
-      // Turn component that belongs to us into compound name
-      return myParser.parse(name.toString());
-    } else {
-      // Already parsed
-      return name;
-    }
   }
   
   public Object lookup(String name) throws NamingException {
@@ -482,12 +460,32 @@ public class RMIContext implements Context {
   public void close() throws NamingException {
   }
 
+
   protected Context cloneCtx() {
-    return new RMIContext(myNS, myDirectory, myEnv);
+    return new NamingContext(myNS, myDirectory, myEnv);
   }
 
   protected Context createContext(NameServer.Directory dir) {
-    return new RMIContext(myNS, dir, myEnv);
+    return new NamingContext(myNS, dir, myEnv);
+  }
+
+  /**
+   * Utility method for processing composite/compound name.
+   * @param name The non-null composite or compound name to process.
+   * @return The non-null string name in this namespace to be processed.
+   */
+  protected Name getMyComponents(Name name) throws NamingException {
+    if (name instanceof CompositeName) {
+      /* As it turns out '/' is hard coded as the separator for components of
+       * CompositeNames. Since we're using '/' as the CompoundName separator, we
+       * can't recognize tell the difference between the two. Since we don't support
+       * multiple component CompositeNames, we'll just assume that we don't have any.
+       */
+      return myParser.parse(name.toString());
+    } else {
+      // Already parsed
+      return name;
+    }
   }
 
 

@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import javax.naming.NameParser;
 import javax.naming.Name;
@@ -17,7 +17,7 @@ import javax.naming.NamingException;
 import java.util.Properties;
 
 
-public class RMINameParser implements NameParser {
+public class NamingParser implements NameParser {
 
   private static final Properties syntax = new Properties();
   static {

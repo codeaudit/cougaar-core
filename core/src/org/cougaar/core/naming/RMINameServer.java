@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import org.cougaar.core.society.NameServer;
 import org.cougaar.core.society.Communications;
@@ -317,7 +317,7 @@ public class RMINameServer implements NameServer, InitialContextFactory {
 
   public Context getInitialContext(Hashtable env) {
     try {
-      return new RMIDirContext(getNS(), getNS().getRoot(), env);
+      return new NamingDirContext(getNS(), getNS().getRoot(), env);
     } catch (RemoteException re) {
       if (verbosity>1) System.err.println(" Failed:");
       if (verbosity>0) {

@@ -5,7 +5,6 @@ import javax.naming.NamingException;
 import javax.naming.Context;
 import javax.naming.directory.InitialDirContext;
 import org.cougaar.core.component.*;
-import org.cougaar.core.society.rmi.RMINameServer;
 
 public class NamingServiceProvider implements ServiceProvider {
     private Hashtable env;

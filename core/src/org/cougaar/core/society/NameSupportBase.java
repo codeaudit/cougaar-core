@@ -11,7 +11,6 @@
 package org.cougaar.core.society;
 
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.society.rmi.RMINameServer;
 
 import java.rmi.RemoteException;
 
@@ -38,3 +37,4 @@ public abstract class NameSupportBase implements NameSupport {
     public abstract Object lookupAddressInNameServer(MessageAddress address, 
                                                      String transportType);
 }
+

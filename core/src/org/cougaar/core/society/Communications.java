@@ -16,7 +16,7 @@ import java.lang.reflect.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.ConfigFileFinder;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.society.rmi.RMINameServer;
+import org.cougaar.core.naming.RMINameServer;
 import java.util.*;
 import java.net.*;
 

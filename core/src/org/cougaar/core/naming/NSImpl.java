@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
@@ -564,17 +564,23 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       }
 
       System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " keys =");
-      for (Iterator a = foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); a.hasNext();){
+      for (Iterator a = 
+             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+           a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
       System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " values =");
-      for (Iterator a = foo.values(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); a.hasNext();){
+      for (Iterator a = 
+             foo.values(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+           a.hasNext();){
         System.out.println("\t"+a.next());
       }
 
       System.out.println(NS.DirSeparator + "clusters" + NS.DirSeparator + " entries =");
-      for (Iterator a = foo.entrySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); a.hasNext();){
+      for (Iterator a =
+             foo.entrySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+           a.hasNext();){
         Map.Entry entry = (Map.Entry) a.next();
         System.out.println("\t"+entry.getKey()+ " " + entry.getValue());
       }

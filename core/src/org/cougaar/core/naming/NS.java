@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -17,7 +17,7 @@ import java.util.*;
 
 import org.cougaar.core.society.NameServer;
   
-/** actual RMI remote interface for RMI Nameserver objects.
+/** actual remote interface for NameServer objects.
  **/
 
 public interface NS extends Remote {

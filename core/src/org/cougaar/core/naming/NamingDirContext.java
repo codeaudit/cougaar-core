@@ -8,7 +8,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.society.rmi;
+package org.cougaar.core.naming;
 
 import java.rmi.RemoteException;
 
@@ -19,21 +19,21 @@ import java.util.*;
 
 import org.cougaar.core.society.NameServer;
 
-public class RMIDirContext extends RMIContext implements DirContext {
-  protected final static NameParser myParser = new RMINameParser();
+public class NamingDirContext extends NamingContext implements DirContext {
+  protected final static NameParser myParser = new NamingParser();
   
-  RMIDirContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
+  protected NamingDirContext(NS ns, NameServer.Directory directory, Hashtable inEnv) {
     super(ns, directory, inEnv);
 
-    myClassName = RMIDirContext.class.getName();
+    myClassName = NamingDirContext.class.getName();
   }
 
   protected Context cloneContext() {
-    return new RMIDirContext(myNS, myDirectory, myEnv);
+    return new NamingDirContext(myNS, myDirectory, myEnv);
   }
 
   protected Context createContext(NameServer.Directory dir) {
-    return new RMIDirContext(myNS, dir, myEnv);
+    return new NamingDirContext(myNS, dir, myEnv);
   }
 
 
@@ -249,7 +249,7 @@ public class RMIDirContext extends RMIContext implements DirContext {
     super.unbind(name);
   }
   
-  // Override RMIContext version to account for attributes
+  // Override NamingContext version to account for attributes
   public void bind(Name name, Object obj) throws NamingException {
     bind(name, obj, new BasicAttributes());
   }
@@ -309,7 +309,7 @@ public class RMIDirContext extends RMIContext implements DirContext {
     }
   }
   
-  // Override RMIContext version to account for attributes
+  // Override NamingContext version to account for attributes
   public void rebind(Name name, Object obj) throws NamingException {
     rebind(name, obj, new BasicAttributes());
   }
@@ -881,13 +881,14 @@ public class RMIDirContext extends RMIContext implements DirContext {
 
     try {
       NS ns = new NSImpl();
-      DirContext ctx = new RMIDirContext(ns, NSImpl.ROOT, new Hashtable());
-      
-      DirContext a = ctx.createSubcontext("a", 
-                                          new BasicAttributes("fact", "the letter A"));
-      DirContext b = ctx.createSubcontext("b",
-                                          new BasicAttributes("fact", "the letter B"));
-      Context c = b.createSubcontext("c");
+      DirContext ctx = new NamingDirContext(ns, NSImpl.ROOT, new Hashtable());
+      Attributes attributes = new BasicAttributes("fact", "the letter A");
+
+      DirContext a = ctx.createSubcontext("a", new BasicAttributes("fact", "the letter A"));
+      attributes.get("fact").add("the letter b");
+      DirContext b = ctx.createSubcontext("b", attributes);
+      attributes.put("chocolate", "merckens");
+      Context c = b.createSubcontext("c", attributes);
 
       System.out.println("c's full name: " + c.getNameInNamespace());
       System.out.println("attributes of a: " + ctx.getAttributes("a"));
@@ -899,13 +900,13 @@ public class RMIDirContext extends RMIContext implements DirContext {
         System.out.println("\t" + enum.next());
       }
       
-      System.out.println("search: " );
+      System.out.println("search1: " );
       enum = ctx.search("", new BasicAttributes("fact", "the letter A"));
       while (enum.hasMore()) {
         System.out.println(enum.next());
       }
 
-      System.out.println("search: " );
+      System.out.println("search2: " );
       enum = ctx.search("", new BasicAttributes("fact", "the letter B"));
       while (enum.hasMore()) {
         System.out.println(enum.next());

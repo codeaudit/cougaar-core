@@ -11,7 +11,7 @@
 package org.cougaar.core.society;
 
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.society.rmi.RMINameServer;
+import org.cougaar.core.naming.RMINameServer;
 
 import java.rmi.RemoteException;
 

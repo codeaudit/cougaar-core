@@ -1,10 +1,19 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
+
 package org.cougaar.core.naming;
 
 import java.util.Hashtable;
 import javax.naming.*;
 import javax.naming.directory.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.society.rmi.RMINameServer;
 
 public class NSLS {
     public static void main(String[] args) {
@@ -48,3 +57,10 @@ public class NSLS {
         }
     }
 }
+
+
+
+
+
+
+
