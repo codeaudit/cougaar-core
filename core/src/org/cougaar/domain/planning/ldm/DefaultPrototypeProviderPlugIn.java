@@ -55,11 +55,9 @@ public class DefaultPrototypeProviderPlugIn
 {
     
     RootFactory theFactory = null;  
-		//	LDMServesPlugIn theLDM = null;
     DomainService domainService = null;
     PrototypeRegistryService protregService = null;
     UIDService uidService = null;
-    UID anID;
     
     public DefaultPrototypeProviderPlugIn() {}
     
@@ -100,7 +98,6 @@ public class DefaultPrototypeProviderPlugIn
 				}
 	    //use the services
 	    theFactory = domainService.getFactory();
-      //anID = uidService.nextUID();
 			
     preloadPrototypes();
 		}
@@ -167,10 +164,10 @@ public class DefaultPrototypeProviderPlugIn
       protregService.cachePrototype(name, proto);
 
 			// here test out UIDService 
-			anID = uidService.nextUID();
+			UID anID = uidService.nextUID();
 			long num = anID.getId();
-			System.out.println("NEXT UID MADE IS: " + name + " " + num);
-			System.out.println("cluster id = " + uidService.getClusterIdentifier());
+			//System.out.println("NEXT UID MADE IS: " + name + " " + num);
+			//System.out.println("cluster id = " + uidService.getClusterIdentifier());
     } catch (Exception e) {
       // cannot really throw any of these exceptions.
     }
@@ -188,8 +185,6 @@ public class DefaultPrototypeProviderPlugIn
 		 Asset proto = theFactory.createPrototype(cl, typeid);
 		 
 		 protregService.cachePrototype(typeid, proto);
-    //* getLDM().cachePrototype(typeid, proto);
-     System.out.println("making prototype: " + cl);
     return proto;
  }
   
@@ -198,7 +193,6 @@ public class DefaultPrototypeProviderPlugIn
     submitAbstract("Ammunition");
     submitAbstract("SpareParts");
     submitAbstract("Consumable");
-
     submitAbstract("Repairable");
     submitAbstract("StrategicTransportation");
     submitAbstract("GSMaintenance");
