@@ -270,12 +270,18 @@ public abstract class PlugInAdapter
   /** Component Model <em>AND</em> GenericStateModel initialization **/
   public void initialize() {
     super.initialize();         // uninitialized->unloaded (defined in GSMAdapter)
-    load(null);                 // unloaded->loaded
   }
 
   public void load() throws StateModelException {
-    setThreadingChoice(getThreadingChoice()); // choose the threading model
     super.load();
+    load(null);
+  }
+
+  /** Load the plugin.  No longer pays any attention to the passed object,
+   * as it will now always be null.
+   **/
+  public void load(Object object) {
+    setThreadingChoice(getThreadingChoice()); // choose the threading model
     theLDM = getLDMService().getLDM();
     theLDMF = getLDMService().getFactory();
 
@@ -293,14 +299,6 @@ public abstract class PlugInAdapter
 
     // fire up the threading model
     setThreadingModel(createThreadingModel());
-    // invoke the backward-compatability method
-    load(null);
-  }
-
-  /** Load the plugin.  No longer pays any attention to the passed object,
-   * as it will now always be null.
-   **/
-  public void load(Object object) {
   }
 
   /** */
