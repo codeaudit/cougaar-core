@@ -1,3 +1,25 @@
+2002-07-08  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/PlayHelper.java:
+	bug # 1604 -- Intermittent adaptivity engine cpu sucking
+	A debug print loop in the PlayHelper enumerates the operating
+	modes for which there is no play. However, if debugging is off,
+	the loop never terminates because it never calls iterator.next().
+	If debugging is on, it works (sly little devil).
+	The test has been moved outside the loop.
+
+2002-07-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/mts/NameSupportImpl.java:
+	Bug #1592 -- Exception if try to get agents list early in start up
+	Classic race where multiple MTS instances are simultaneously
+	trying to create the subcontext. The second exception is
+	unavoidable and innocuous and should be ignored. If creating the
+	subcontext fails, assume it was because another MTS created it
+	after we did the lookup, but before our attempt to create. Do a
+	second lookup to get the subcontext created by the other MTS. If
+	the second lookup  fails, punt! 
+
 2002-07-01  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/relay/RelayLP.java:
