@@ -434,8 +434,8 @@ public class Subscriber {
         pendingEnvelopes.addAll(envelopes);
         if (envelopeQuiescenceRequired) inboxAllowsQuiescence = false;
         signalActivity = true;
-      } else if (logger.isWarnEnabled() && getSubscriptionCount() == 0 && !notBusy && watchers.size() == 0) {
-	logger.warn(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
+      } else if (logger.isInfoEnabled() && getSubscriptionCount() == 0 && !notBusy && watchers.size() == 0) {
+	logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
       }
       if (notBusy) transactionLock.freeBusyFlag();
     }
