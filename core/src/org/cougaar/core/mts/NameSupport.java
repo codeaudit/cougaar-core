@@ -8,10 +8,10 @@
  * </copyright>
  */
 
-package org.cougaar.core.society;
+package org.cougaar.core.mts;
 
-import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.naming.NS;
+import org.cougaar.core.society.MessageAddress;
 
 import java.rmi.RemoteException;
 
@@ -26,6 +26,10 @@ public interface NameSupport {
     void registerAgentInNameServer(Object proxy, 
                                    MessageTransportClient client, 
                                    String transportType);
+
+    void unregisterAgentInNameServer(Object proxy, 
+				     MessageTransportClient client, 
+				     String transportType);
 
     void registerNodeInNameServer(Object proxy, String transportType);
 

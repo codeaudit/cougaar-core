@@ -18,8 +18,8 @@ import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.naming.NamingService;
-import org.cougaar.core.society.NameSupport;
-import org.cougaar.core.society.NewNameSupport;
+import org.cougaar.core.mts.NameSupport;
+import org.cougaar.core.mts.NameSupportImpl;
 
 import java.lang.reflect.Constructor;
 
@@ -39,7 +39,7 @@ public class QosMonitorServiceProvider
     private NameSupport createNameSupport(String id) {
         ServiceBroker sb = getServiceBroker();
         if (sb == null) throw new RuntimeException("No service broker");
-        return new NewNameSupport(id, (NamingService)
+        return new NameSupportImpl(id, (NamingService)
                                   sb.getService(this, NamingService.class, null));
     }
 

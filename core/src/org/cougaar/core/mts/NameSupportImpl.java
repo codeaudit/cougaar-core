@@ -8,10 +8,11 @@
  * </copyright>
  */
 
-package org.cougaar.core.society;
+package org.cougaar.core.mts;
 
-import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.naming.NamingService;
+
 import javax.naming.NamingException;
 import javax.naming.Name;
 import javax.naming.directory.DirContext;
@@ -20,12 +21,18 @@ import javax.naming.directory.BasicAttributes;
 /**
  * This is utility class which hides the grimy details of dealing with
  * NameServers from the rest of the message transport subsystem.  */
-public class NewNameSupport extends NameSupportBase implements NameSupport {
+public class NameSupportImpl implements NameSupport 
+{
     private NamingService namingService;
-    
-    public NewNameSupport(String id, NamingService namingService) {
-        super(id);
+    private MessageAddress myNodeAddress;
+
+    public NameSupportImpl(String id, NamingService namingService) {
+	myNodeAddress = new MessageAddress(id+"(Node)");
         this.namingService = namingService;
+    }
+
+    public MessageAddress  getNodeMessageAddress() {
+	return myNodeAddress;
     }
 
     private final void _registerWithSociety(String key, Object proxy) 
@@ -46,7 +53,10 @@ public class NewNameSupport extends NameSupportBase implements NameSupport {
                 throw new NamingException(e.toString());
             }
         }
-        ctx.rebind(name, proxy, new BasicAttributes());
+	if (proxy != null) 
+	    ctx.rebind(name, proxy, new BasicAttributes());
+	else
+	    ctx.unbind(name);
     }
 
     public void registerAgentInNameServer(Object proxy, 
@@ -60,6 +70,22 @@ public class NewNameSupport extends NameSupportBase implements NameSupport {
 	} catch (Exception e) {
 	    System.err.println("Failed to add Client "+ addr + 
 			       " to NameServer for transport" + transportType);
+	    e.printStackTrace();
+	}
+    }
+
+    public void unregisterAgentInNameServer(Object proxy, 
+					    MessageTransportClient client, 
+					    String transportType)
+    {	
+	MessageAddress addr = client.getMessageAddress();
+	try {
+	    String key = CLUSTERDIR + addr + transportType;
+	    _registerWithSociety(key, null);
+	} catch (Exception e) {
+	    System.err.println("Failed to remove Client "+ addr + 
+			       " from NameServer for transport" + 
+			       transportType);
 	    e.printStackTrace();
 	}
     }
@@ -79,6 +105,12 @@ public class NewNameSupport extends NameSupportBase implements NameSupport {
 					    String transportType)
     {
 	MessageAddress addr = address;
+
+	// This is not really a 'for' loop, it's a 2-pass lookup.  If
+	// a MessageAddress is returned on the first pass, that
+	// address is used for the second pass lookup.  This scheme is
+	// what allows a single MTImpl (on the Node) to receive
+	// messages for several Agents  (all the Agents in the Node).
 	for (int count=0; count<2; count++) {
 	    String key = CLUSTERDIR + addr.getAddress() + transportType ;
 	    try {
