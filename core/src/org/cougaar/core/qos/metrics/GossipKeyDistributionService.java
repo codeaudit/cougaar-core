@@ -25,7 +25,7 @@ import org.cougaar.core.component.Service;
 
 public interface GossipKeyDistributionService extends Service
 {
-    public void addKey(String key);
+    public void addKey(String key, int propagationDistance);
     public void removeKey(String key);
 }
 

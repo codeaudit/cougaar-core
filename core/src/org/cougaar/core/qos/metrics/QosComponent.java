@@ -22,13 +22,11 @@
 package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.util.GenericStateModelAdapter;
 
 abstract public class QosComponent
-    extends GenericStateModelAdapter
-    implements Component
+    extends ParameterizedComponent
 {
 
     private BindingSite bindingSite;
