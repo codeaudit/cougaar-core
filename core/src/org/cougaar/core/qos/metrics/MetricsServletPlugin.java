@@ -43,6 +43,7 @@ public class MetricsServletPlugin extends ComponentPlugin
 	new RemoteAgentServlet(sb);
 	new NodeResourcesServlet(sb);
 	new MetricQueryServlet(sb);
+	new MetricsWriterServlet(sb);
     }
 
     protected void setupSubscriptions() {
