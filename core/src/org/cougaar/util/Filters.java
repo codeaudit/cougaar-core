@@ -31,6 +31,7 @@ public final class Filters {
    **/
   public static Collection filter(Collection c, UnaryPredicate p) {
     ArrayList subset = null;
+    
     for (Iterator i = c.iterator(); i.hasNext(); ) {
       Object element = i.next();
       if (p.execute(element)) {

@@ -107,7 +107,7 @@ public class ScheduleImpl
   }
    
   public synchronized Collection filter(UnaryPredicate predicate) {
-    return Filters.filter(protectedIterator(), predicate);
+    return Filters.filter(this, predicate);
   }
 
   
@@ -233,10 +233,10 @@ public class ScheduleImpl
    *  @deprecated Get a copy of the Schedule before iterating
    */
   public synchronized Iterator iterator() {
-    UnsupportedOperationException uae = 
-      new UnsupportedOperationException("ScheduleImpl.iterator()." +
-                                        " Returning an iterator over a copy of this Schedule");
-    uae.printStackTrace();
+    Throwable throwable = 
+      new Throwable("Returning an iterator over a copy of this Schedule." + 
+                    " Stack trace is included so that calling code can be modified");
+    throwable.printStackTrace();
     
     ArrayList copy = new ArrayList(this);
     return copy.iterator();
@@ -265,10 +265,10 @@ public class ScheduleImpl
    *  @deprecated Get a copy of the Schedule before calling subList
    */
   public synchronized List subList(int fromIndex, int toIndex) {
-    UnsupportedOperationException uae = 
-      new UnsupportedOperationException("ScheduleImpl.subList(int fromIndex, int toIndex)" +
-                                        " Returning an subList over a copy of this Schedule");
-    uae.printStackTrace();
+    Throwable throwable = 
+      new Throwable("Returning an subList over a copy of this Schedule." +
+                    " Stack trace is included so that calling code can be modified");
+    throwable.printStackTrace();
 
     ArrayList copy = new ArrayList(this);
     return copy.subList(fromIndex, toIndex);
@@ -331,6 +331,8 @@ public class ScheduleImpl
     return (ScheduleElement)elementData[i];
   }
 
+  // Offered as an aid to extenders who want to get their hands on an
+  // iterator.
   protected Iterator protectedIterator() {
     return super.iterator();
   }
@@ -356,30 +358,43 @@ public class ScheduleImpl
       newElement.etime = end;
       return newElement;
     }
+
+    public String toString() {
+      return "<value:" + myValue + " " + stime + "-" + etime + ">";
+    }
   }   
 
   public static void main(String []args) {
-    TestScheduleElementImpl lsei = new TestScheduleElementImpl(2.0);
-    lsei.setEndTime(TimeSpan.MAX_VALUE - 100000);
-
     Vector vector = new Vector();
-    vector.add(new TestScheduleElementImpl(3.0));
+
+    TestScheduleElementImpl lsei = new TestScheduleElementImpl(2.0);
+    lsei.setEndTime(10);
+    vector.add(lsei);
+    
+    lsei = new TestScheduleElementImpl(3.0);
+    lsei.setEndTime(100000);
     vector.add(lsei);
 
     ScheduleImpl lsSchedule = new ScheduleImpl();
-    lsSchedule.add(new TestScheduleElementImpl(4));
+    lsei = new TestScheduleElementImpl(4.0);
+    lsei.setEndTime(200);
+    lsei.setStartTime(5);
+    lsSchedule.add(lsei);
 
     ScheduleImpl schedule1 = new ScheduleImpl(vector);
-    System.out.println(schedule1);
+    System.out.println("Schedule1: " + schedule1);
 
     ScheduleImpl schedule2 = new ScheduleImpl(lsSchedule);
-    System.out.println(schedule2);
+    System.out.println("Schedule2: " + schedule2);
 
     schedule2.addAll(schedule1);
-    System.out.println(schedule1);
+    System.out.println("Schedule2 after adding Schedule1: " + schedule2);
 
-    ScheduleUtilities.subtractSchedules(schedule2, schedule1);
-    System.out.println(schedule1);
+    Schedule schedule3 = 
+      ScheduleUtilities.subtractSchedules(schedule2, schedule2);
+    System.out.println("Schedule3 (Schedule2 - Schedule2): "+ schedule3);
+
+    schedule3.iterator();
 
     schedule2.setScheduleElements(vector);
     schedule2.addAll(1, vector);

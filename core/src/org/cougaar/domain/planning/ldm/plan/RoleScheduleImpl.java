@@ -84,7 +84,7 @@ public class RoleScheduleImpl
   }
 
   public synchronized Collection getEqualAspectValues(final int aspect, final double value) {
-    return Filters.filter(this, new UnaryPredicate() {
+    return filter(new UnaryPredicate() {
         public boolean execute(Object obj) {
           AllocationResult ar = ((PlanElement)obj).getEstimatedResult();
           if (ar != null) {
@@ -96,7 +96,7 @@ public class RoleScheduleImpl
   }
   
   public synchronized Collection getMatchingRoleElements(final Role aRole) {
-    return Filters.filter(this, new UnaryPredicate() {
+    return filter(new UnaryPredicate() {
         public boolean execute (Object obj) {
           if (obj instanceof Allocation) {
             Role disrole = ((Allocation)obj).getRole();
@@ -145,7 +145,8 @@ public class RoleScheduleImpl
     * @param elementsToAdd  A set of roleschedule elements (planelements) to add
     * @see org.cougaar.domain.planning.ldm.plan.AspectType
     **/
-  public double addAspectValues(Collection elementsToAdd, int aspecttype) {
+  public double addAspectValues(Collection elementsToAdd, 
+                                       int aspecttype) {
     double acc = 0.0;
     for (Iterator i = elementsToAdd.iterator(); i.hasNext(); ) {
       PlanElement anElement = (PlanElement)i.next();

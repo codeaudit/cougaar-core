@@ -65,7 +65,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
   }
 
 
-  public void setHasRelationships(HasRelationships hasRelationships) {
+  public synchronized void setHasRelationships(HasRelationships hasRelationships) {
     if (!isEmpty()) {
       throw new IllegalArgumentException("RelationshipScheduleImpl.setHasRelationships() can only be called on an empty schedule"); 
     }
@@ -73,7 +73,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
     myHasRelationships = hasRelationships;
   }
     
-  public boolean isAppropriateScheduleElement(Object o) {
+  public synchronized boolean isAppropriateScheduleElement(Object o) {
     if (!super.isAppropriateScheduleElement(o)) {
       return false;
     }
@@ -97,7 +97,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    * which pass the specified UnaryPredicate
    **/
   public synchronized Collection getMatchingRelationships(UnaryPredicate predicate) {
-    return Filters.filter(protectedIterator(), predicate);
+    return filter(predicate);
   }
 
   /** getMatchingRelationships - return all Relationships which contain the
@@ -109,7 +109,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    **/
   public synchronized Collection getMatchingRelationships(final Role role) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
+    return filter(new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return schedule.getOtherRole(relationship).equals(role);
@@ -130,7 +130,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
                                                           final long startTime, 
                                                           final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
+    return filter( new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).equals(role)) &&
@@ -171,7 +171,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
                                                           final long startTime, 
                                                           final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
+    return filter( new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).equals(role)) &&
@@ -216,7 +216,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
                                                           final long startTime, 
                                                           final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
+    return filter( new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOther(relationship).equals(other)) &&
@@ -255,7 +255,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
                                                           final long startTime, 
                                                           final long endTime) {
     final RelationshipScheduleImpl schedule = this;
-    return Filters.filter(protectedIterator(),  new UnaryPredicate() {
+    return filter( new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((schedule.getOtherRole(relationship).getName().endsWith(roleSuffix)) &&
@@ -291,7 +291,7 @@ public class RelationshipScheduleImpl extends ScheduleImpl
    **/
   public synchronized Collection getMatchingRelationships(final long startTime, 
                                                           final long endTime) {
-    return Filters.filter(protectedIterator(), new UnaryPredicate() {
+    return filter(new UnaryPredicate() {
       public boolean execute(Object obj) {
         Relationship relationship = (Relationship)obj;
         return ((relationship.getStartTime() < endTime) &&

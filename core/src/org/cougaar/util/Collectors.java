@@ -21,16 +21,17 @@ public final class Collectors {
 
   /** apply the Thunk to each element of the collection. **/
   public static void apply(Thunk t, Collection c) {
+    for (Iterator i = c.iterator(); i.hasNext();) {
+      t.apply(i.next());
+    }
+  }
+
+  /** apply the Thunk to each element of the list. **/
+  public static void apply(Thunk t, List l) {
     // optimize for List
-    if (c instanceof List) {
-      int listSize = c.size();
-      for (int index = 0; index < listSize; index++) {
-        t.apply(((List) c).get(index));
-      }
-    } else {
-      for (Iterator i = c.iterator(); i.hasNext();) {
-        t.apply(i.next());
-      }
+    int listSize = l.size();
+    for (int index = 0; index < listSize; index++) {
+      t.apply(l.get(index));
     }
   }
 

@@ -43,6 +43,7 @@ public final class ScheduleUtilities {
     final Vector scheduleElements = new Vector();
     final boolean isQuantity = aSchedule.getScheduleElementType().equals(ScheduleElementType.QUANTITY);
 
+
     class MyThunk implements Thunk {
       ScheduleElement pending = null;
 
@@ -129,15 +130,18 @@ public final class ScheduleUtilities {
       private ScheduleElement createElement(long start, long end, ScheduleElement e1, ScheduleElement e2) {
         
         double acc = ((ScheduleElementWithValue) e1).getValue();
-        if (e2 != null)
+        if (e2 != null) {
           acc += ((ScheduleElementWithValue) e2).getValue();
+         }
         return ((ScheduleElementWithValue)e1).newElement(start,end,acc);
       }
     };
     MyThunk thunk = new MyThunk();
 
-    aSchedule.applyThunkToScheduleElements(thunk);
-    thunk.finish();            // finish up the pushedback elements
+    synchronized (aSchedule) {
+      aSchedule.applyThunkToScheduleElements(thunk);
+      thunk.finish();            // finish up the pushedback elements
+    }
 
     // create a new schedule with the new elements
     ScheduleImpl newsched = new ScheduleImpl();
@@ -174,22 +178,19 @@ public final class ScheduleUtilities {
     double quantity = 0;
     long startTime = 0;
     long endTime = 0;
-    Vector minimalScheduleElements = new Vector();
-    Enumeration allelements = aSchedule.getAllScheduleElements();
-    Vector scheduleElements = new Vector();
-    while (allelements.hasMoreElements()) {
-      ScheduleElement se = (ScheduleElement) allelements.nextElement();
-      scheduleElements.add(se);
-    }
+    ArrayList minimalScheduleElements = new ArrayList();
+
+    ArrayList scheduleElements = new ArrayList(aSchedule);
         
     if (scheduleElements.size() > 0) {
-      ScheduleElementWithValue s = (ScheduleElementWithValue)scheduleElements.elementAt(0);
+      ScheduleElementWithValue s = 
+        (ScheduleElementWithValue) scheduleElements.get(0);
       startTime = s.getStartTime();
       endTime = s.getEndTime();
       currentQuantity = s.getValue();
     
       for (int i = 1; i < scheduleElements.size(); i++) {
-        s = (ScheduleElementWithValue)scheduleElements.elementAt(i);
+        s = (ScheduleElementWithValue) scheduleElements.get(i);
         if (s.getStartTime() > (endTime+1000) ||
             s.getValue() != currentQuantity) {
           minimalScheduleElements.add(s.newElement(startTime, endTime, currentQuantity));
@@ -223,7 +224,8 @@ public final class ScheduleUtilities {
   public static double sumElements(Collection aSet) {
     if (aSet == null) return 0.0;
     double quantity = 0;
-    for (Iterator i = aSet.iterator(); i.hasNext(); ) {
+
+    for (Iterator i = new ArrayList(aSet).iterator(); i.hasNext(); ) {
       ScheduleElementWithValue s = (ScheduleElementWithValue)i.next();
       quantity += s.getValue();
     }
@@ -236,24 +238,28 @@ public final class ScheduleUtilities {
 
   /** Utility to select ScheduleElements which overlap with a specific time **/
   public void selectElementsAtTime(Schedule s, final Thunk t, final long d) {
-    s.applyThunkToScheduleElements(new Thunk() {
+    synchronized (s) {
+      s.applyThunkToScheduleElements(new Thunk() {
         public void apply(Object o) {
           ScheduleElement se = (ScheduleElement) o;
           if (d>=se.getStartTime() && d<se.getEndTime())
             t.apply(o);
         }
       });
+    }
   }
 
   /** Utility to select ScheduleElements which overlap with a time span **/
   public void selectElementsOverlappingSpan(Schedule s, final Thunk t, final long startt, final long endt) {
-    s.applyThunkToScheduleElements(new Thunk() {
+    synchronized (s) {
+      s.applyThunkToScheduleElements(new Thunk() {
         public void apply(Object o) {
           ScheduleElement se = (ScheduleElement) o;
           if (se.getStartTime()<endt && se.getEndTime()>startt)
             t.apply(o);
         }
       });
+    }
   }
   
   /** Utility to select ScheduleElements which overlap with a time span **/
@@ -263,13 +269,15 @@ public final class ScheduleUtilities {
 
   /** Utility to select ScheduleElements which enclose (or equal) a time span **/
   public void selectElementsEnclosingSpan(Schedule s, final Thunk t, final long startt, final long endt) {
-    s.applyThunkToScheduleElements(new Thunk() {
+    synchronized (s) {
+      s.applyThunkToScheduleElements(new Thunk() {
         public void apply(Object o) {
           ScheduleElement se = (ScheduleElement) o;
           if (se.getStartTime()>=startt && se.getEndTime()<=endt)
             t.apply(o);
         }
       });
+    }
   }
 
   /** Utility to select ScheduleElements which enclose (or equal) a time span **/    
@@ -294,32 +302,68 @@ public final class ScheduleUtilities {
                                                  Schedule bSchedule) {
     Schedule tmp = new ScheduleImpl(aSchedule);
 
-    boolean list = (bSchedule instanceof List);
-    int index = 0;
-    Iterator iterator = null;
-
-    // Walk Schedule as a List if possible
-    if (!list) {
-      iterator = bSchedule.iterator();
-    } 
-
-    ScheduleElementWithValue e; 
-    boolean done = false;
-
-    while (!done) {
-      if (list) {
-        e = (ScheduleElementWithValue) (((List) bSchedule).get(index++));
-        done = (index == bSchedule.size());
-      } else {
-        e = (ScheduleElementWithValue) iterator.next();
-        done = !(iterator.hasNext());
+    synchronized (bSchedule) {
+      for (Iterator iterator = new ScheduleUtilitiesIterator(bSchedule); 
+           iterator.hasNext();) {
+        ScheduleElementWithValue e = (ScheduleElementWithValue) iterator.next();
+        ScheduleElementWithValue n = e.newElement(e.getStartTime(),
+                                                  e.getEndTime(),
+                                                  -e.getValue());
+        tmp.add(n);
       }
-      ScheduleElementWithValue n = e.newElement(e.getStartTime(),
-                                                e.getEndTime(),
-                                                -e.getValue());
-      tmp.add(n);
     }
 
     return simplifySchedule(tmp);
   }
+
+  //Convenience class - uses Iterator for Collection, List.get(int) for
+  //List.
+  private static class ScheduleUtilitiesIterator implements Iterator {
+    Collection myCollection;
+    Iterator myIterator;
+    int myIndex;
+
+    public ScheduleUtilitiesIterator(Collection c){
+      myCollection = c;
+      
+      if (c instanceof List) {
+        myIndex = 0;
+        myIterator = null;
+      } else {
+        myIndex = -1;
+        myIterator = c.iterator();
+      }
+    }
+
+    public boolean hasNext() {
+      if (myCollection instanceof List) {
+        return myIndex < myCollection.size();
+      } else {
+        return myIterator.hasNext();
+      }
+    }
+
+    public Object next() {
+      if (myCollection instanceof List) {
+        return ((List) myCollection).get(myIndex++);
+      } else {
+        return myIterator.next();
+      }
+    }
+
+    public void remove() {
+      if (myCollection instanceof List) {
+        ((List) myCollection).remove(myIndex);
+      } else {
+        myIterator.remove();
+      }
+    }
+  }
 }
+
+
+
+
+
+
+
