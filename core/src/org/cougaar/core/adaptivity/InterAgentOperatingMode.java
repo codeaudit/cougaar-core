@@ -46,8 +46,9 @@ public class InterAgentOperatingMode
   extends OperatingModeImpl
   implements Relay.Source, UniqueObject, java.io.Serializable 
 {
-  // FIXME this shouldn't be transient!
-  private transient Set targets = Collections.EMPTY_SET;
+  // this can't be transient like other relays, cause not storing
+  // target separately
+  private Set targets = Collections.EMPTY_SET;
   private UID uid;
 
   // Constructors

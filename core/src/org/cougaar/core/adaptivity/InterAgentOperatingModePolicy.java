@@ -47,7 +47,9 @@ public class InterAgentOperatingModePolicy
   extends OperatingModePolicy
   implements Relay.Source, Relay.Target, java.io.Serializable
 {
-  private transient Set targets = Collections.EMPTY_SET;
+  // this can't be transient like other relays, cause not storing
+  // target separately
+  private Set targets = Collections.EMPTY_SET;
   protected MessageAddress source;
   protected Relay.Token owner;
 
