@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.component;
+package org.cougaar.util;
 
 /**
  * Generic callback interface.
@@ -27,7 +27,6 @@ package org.cougaar.core.component;
  * This is similar to <code>Runnable</code>, but is typically used 
  * as an API to <i>request</i> a run.
  * <p>
- * <b>NOTE: this should be moved to "org.cougaar.util"</b>
  */
 public interface Trigger {
 

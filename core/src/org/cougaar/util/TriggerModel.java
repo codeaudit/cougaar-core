@@ -21,7 +21,6 @@
 
 package org.cougaar.util;
 
-// soon to move to "org.cougaar.util.Trigger":
 import org.cougaar.util.Trigger;
 
 /**
