@@ -23,20 +23,18 @@ package org.cougaar.core.node;
 
 import org.cougaar.core.security.*;
 import org.cougaar.core.service.*;
-
 import org.cougaar.core.mts.*;
+
+import org.cougaar.core.thread.ThreadServiceProvider;
 
 import org.cougaar.core.qos.monitor.QosMonitorService;
 import org.cougaar.core.qos.monitor.QosMonitorServiceProvider;
-import org.cougaar.core.qos.monitor.ResourceMonitorService;
+import org.cougaar.core.qos.metrics.MetricsService;
+import org.cougaar.core.qos.metrics.MetricsServiceProvider;
 
-import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportException;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.service.MessageStatisticsService;
-import org.cougaar.core.mts.MessageTransportServiceProvider;
 import org.cougaar.core.service.MessageWatcherService;
-import org.cougaar.core.mts.AgentStatusService;
 
 import org.cougaar.core.agent.ClusterServesClusterManagement;
 import org.cougaar.core.naming.NamingServiceProvider;
@@ -588,9 +586,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
           "Failed to load the AgentManagerBinderFactory in Node");
     }
 
-    agentManager = new AgentManager();
-    super.add(agentManager);
-  
     {
       //String smn = System.getProperty(SecurityComponent.SMC_PROP);
       String smn = System.getProperty(SecurityComponent.SMC_PROP, "org.cougaar.core.security.StandardSecurityComponent");
@@ -623,6 +618,13 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
 
     ServiceBroker sb = getServiceBroker();
 
+    ThreadServiceProvider tsp = new ThreadServiceProvider(sb, "Node " + name);
+    tsp.provideServices(sb);
+
+
+    agentManager = new AgentManager();
+    super.add(agentManager);
+  
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
     
@@ -636,6 +638,11 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     sb.addService(LoggingControlService.class,
 		  loggingServiceProvider);
     
+
+
+    sb.addService(MetricsService.class, new MetricsServiceProvider());
+
+
     //add the vm metrics
     sb.addService(NodeMetricsService.class,
                   new NodeMetricsServiceProvider(new NodeMetricsProxy()));
@@ -652,6 +659,7 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     ComponentDescription[] agentDescs =
       is.getComponentDescriptions(name, "Node.AgentManager");
     sb.releaseService(this, InitializerService.class, is);
+
 
     // Set up MTS and QOS service provides.
     //
@@ -735,7 +743,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name, mtsp);
     add(qmsp);
     getServiceBroker().addService(QosMonitorService.class, qmsp);
-    getServiceBroker().addService(ResourceMonitorService.class, qmsp);
   }
 
 

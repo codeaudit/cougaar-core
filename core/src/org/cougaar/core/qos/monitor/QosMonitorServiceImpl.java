@@ -26,6 +26,7 @@ import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.mts.MessageAddress;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
@@ -34,8 +35,12 @@ public class QosMonitorServiceImpl
     extends QosImplBase
     implements QosMonitorService
 {
+    private HashMap nodes, hosts;
+
     QosMonitorServiceImpl(NameSupport nameSupport, ServiceBroker sb) {
 	super(nameSupport, sb);
+	nodes = new HashMap();
+	hosts = new HashMap();
     }
 
     public int lookupAgentStatus(MessageAddress agentAddress) {
@@ -94,5 +99,88 @@ public class QosMonitorServiceImpl
 	else 
 	    return lookupAgentStatus(agentAddress);
     }
+
+
+
+    // The rest used to be in ResourceMonitorService
+
+
+    public String lookupHostForAgent(MessageAddress agentAddress) {
+	Attributes match = 
+	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
+	String attr = NameSupport.HOST_ATTR;
+	Iterator result = nameSupport.lookupInTopology(match, attr);
+	String host = null;
+	int count = 0;
+	while (result.hasNext()) {
+	    count++;
+	    host = (String) result.next();
+	}
+	if (count == 0) {
+	    return null;
+	} else if (count == 1) {
+	    hosts.put(agentAddress, host);
+	    return host;
+	} else {
+	    // more than one match!
+	    throw new RuntimeException("### More than one match for " +
+				       agentAddress);
+	}
+    }
+
+
+    public String lookupNodeForAgent(MessageAddress agentAddress) {
+	Attributes match = 
+	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
+	String attr = NameSupport.NODE_ATTR;
+	Iterator result = nameSupport.lookupInTopology(match, attr);
+	String node = null;
+	int count = 0;
+	while (result.hasNext()) {
+	    count++;
+	    node = (String) result.next();
+	}
+	if (count == 0) {
+	    return null;
+	} else if (count == 1) {
+	    nodes.put(agentAddress, node);
+	    return node;
+	} else {
+	    // more than one match!
+	    throw new RuntimeException("### More than one match for " +
+				       agentAddress);
+	}
+    }
+
+    
+    public String getNodeForAgent(MessageAddress agentAddress) {
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+	String node = (String) nodes.get(agentAddress);
+	if (node != null &&
+	    state.status == AgentStatusService.ACTIVE &&
+	    since <= STALE_TIME) {
+	    return node;
+	} else {
+	    return lookupNodeForAgent(agentAddress);
+	}
+    }
+
+    public String getHostForAgent(MessageAddress agentAddress) {
+	AgentStatusService.AgentState state = getAgentState(agentAddress);
+	long now = System.currentTimeMillis();
+	long since = now-state.timestamp;
+	String host = (String) hosts.get(agentAddress);
+	if (host != null &&
+	    state.status == AgentStatusService.ACTIVE &&
+	    since <= STALE_TIME) {
+	    return host;
+	} else {
+	    return lookupHostForAgent(agentAddress);
+	}
+    }
+
+
 }
 

@@ -40,8 +40,10 @@ public class QosMonitorServiceProvider
     implements ContainerAPI, ServiceProvider
 {
 
+    private static final String SCFAC_CLASSNAME =
+	"org.cougaar.lib.mquo.SyscondFactory";
+
     private QosMonitorService qms;
-    private ResourceMonitorService rms;
     private ContainerAPI owner;
     private NameSupport nameSupport;
     private String id;
@@ -59,36 +61,29 @@ public class QosMonitorServiceProvider
 	ServiceBroker sb = owner.getServiceBroker();
 	nameSupport = 
 	    (NameSupport) sb.getService(this, NameSupport.class, null);
+
+	// Make the SyscondFactory here if the class is available
+	try {
+	    Class scfac_class = Class.forName(SCFAC_CLASSNAME);
+	    Class[] types = { NameSupport.class, ServiceBroker.class };
+	    Object[] args = { nameSupport, sb };
+	    Constructor cons = scfac_class.getConstructor(types);
+	    cons.newInstance(args);
+	} catch (ClassNotFoundException cnf) {
+	    // This means the quo jar isn't loaded
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+	}
+
         super.initialize();
     }
+
 
     private synchronized QosMonitorService findOrMakeQMS(ServiceBroker sb) {
 	if (qms == null) qms = new QosMonitorServiceImpl(nameSupport, sb);
 	return qms;
     }
 
-    private synchronized ResourceMonitorService findOrMakeRMS(ServiceBroker sb)
-    {
-	if (rms != null) {
-	    return rms;
-	} else {
-	    try {
-		Class rss_class = Class.forName("org.cougaar.core.qos.quo.RSSLink");
-		Class[] types = { NameSupport.class, ServiceBroker.class };
-		Object[] args = { nameSupport, sb };
-		Constructor cons = rss_class.getConstructor(types);
-		rms = (ResourceMonitorService) cons.newInstance(args);
-	    } catch (Exception ex) {
-		// RSS not loaded
-		LoggingService ls = (LoggingService)
-		    sb.getService(this, LoggingService.class, null);
-		if (ls != null)
-		    ls.warn("No RSS, using default ResourceMonitorService");
-		rms = new ResourceMonitorServiceImpl(nameSupport, sb);
-	    }
-	    return rms;
-	}
-    }
 
     public Object getService(ServiceBroker sb, 
 			     Object requestor, 
@@ -96,8 +91,6 @@ public class QosMonitorServiceProvider
     {
 	if (serviceClass == QosMonitorService.class) {
 	    return findOrMakeQMS(owner.getServiceBroker());
-	} else if (serviceClass == ResourceMonitorService.class) {
-	    return findOrMakeRMS(owner.getServiceBroker());
 	} else {
 	    return null;
 	}
