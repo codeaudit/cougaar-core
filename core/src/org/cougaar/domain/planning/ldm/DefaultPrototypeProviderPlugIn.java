@@ -50,63 +50,62 @@ import org.cougaar.core.society.UID;
  **/
 
 public class DefaultPrototypeProviderPlugIn 
-    extends ComponentPlugin
-    implements PrototypeProvider 
+  extends ComponentPlugin
+  implements PrototypeProvider 
 {
+  
+  RootFactory theFactory = null;  
+  DomainService domainService = null;
+  PrototypeRegistryService protregService = null;
+  UIDService uidService = null;
+  UID anID;
+  
+  public DefaultPrototypeProviderPlugIn() {}
+  
+  protected void setupSubscriptions() {
+  
+    // get the domain service  	
+    if (theFactory == null) {
+      domainService = (DomainService) getBindingSite().getServiceBroker().getService(
+					       this, DomainService.class,
+				          new ServiceRevokedListener() {
+				   public void serviceRevoked(ServiceRevokedEvent re) {
+				  	   theFactory = null;
+			  		 }
+			            });
+      
+      // get the registry service  	
+      protregService = (PrototypeRegistryService) getBindingSite().getServiceBroker().getService(
+    				       this, PrototypeRegistryService.class,
+        				 new ServiceRevokedListener() {
+			  	     public void serviceRevoked(ServiceRevokedEvent re) {
+				      theFactory = null;
+       				     }
+				   });
+      
+      // get the UIDService   	
+      uidService = (UIDService) getBindingSite().getServiceBroker().getService(
+						   this, UIDService.class,
+					          new ServiceRevokedListener() {
+	   			   public void serviceRevoked(ServiceRevokedEvent re) {								     theFactory = null;
+					   }
+       				 });
+      
+      
+      
+    }
+    //use the services
+    theFactory = domainService.getFactory();
+    //anID = uidService.nextUID();
     
-    RootFactory theFactory = null;  
-    DomainService domainService = null;
-    PrototypeRegistryService protregService = null;
-    UIDService uidService = null;
-    
-    public DefaultPrototypeProviderPlugIn() {}
-    
-    protected void setupSubscriptions() {
-	
-	
-	
-				// get the domain service  	
-				if (theFactory == null) {
-						domainService = (DomainService) getBindingSite().getServiceBroker().getService(
-				 																					 this, DomainService.class,
-																								 new ServiceRevokedListener() {
-	 										          						 public void serviceRevoked(ServiceRevokedEvent re) {
-																						 theFactory = null;
-		 			                                 }
-																			});
-	    
-				 // get the registry service  	
-						 protregService = (PrototypeRegistryService) getBindingSite().getServiceBroker().getService(
-																										this, PrototypeRegistryService.class,
-																									new ServiceRevokedListener() {
-																	 						public void serviceRevoked(ServiceRevokedEvent re) {
-																 							theFactory = null;
-											 										}
-																		});
-	  
-				// get the UIDService   	
-						 uidService = (UIDService) getBindingSite().getServiceBroker().getService(
-																										this, UIDService.class,
-																									new ServiceRevokedListener() {
-																	 						public void serviceRevoked(ServiceRevokedEvent re) {
-																 							theFactory = null;
-											 										}
-																		});
-	  
-
-
-				}
-	    //use the services
-	    theFactory = domainService.getFactory();
-			
     preloadPrototypes();
-		}
-   
+  }
+  
   // no subscriptions, so we'll never actually be run.
   protected void execute() {}
-
-		
-	 public Asset getPrototype(String typename, Class hint) {
+  
+  
+  public Asset getPrototype(String typename, Class hint) {
     // I was going to handle OPlan here, but OPlan isn't an Asset!
     try {
       // try some dynamic prototypes (for backward compatibility)
@@ -147,14 +146,14 @@ public class DefaultPrototypeProviderPlugIn
         return makeProto(typename, "Organization");
       }
       
-
+      
     } catch (Exception e) {
       // cannot really throw any of these exceptions.
     }
     return null;
   }
 		
-
+  
   private void submitAbstract(String name) {
     try {
       Asset proto = makeProto(name, "AbstractAsset");
@@ -162,37 +161,39 @@ public class DefaultPrototypeProviderPlugIn
       tip.setTypeIdentification(name);
       tip.setNomenclature(name);
       protregService.cachePrototype(name, proto);
-
-			// here test out UIDService 
-			UID anID = uidService.nextUID();
-			long num = anID.getId();
-			//System.out.println("NEXT UID MADE IS: " + name + " " + num);
-			//System.out.println("cluster id = " + uidService.getClusterIdentifier());
+      
+      // here test out UIDService 
+      anID = uidService.nextUID();
+      //System.out.println(anID);
+      //     System.out.println("cluster id = " + uidService.getClusterIdentifier());
     } catch (Exception e) {
       // cannot really throw any of these exceptions.
     }
   }
-
-
+  
+  
   /*
    * modified makeProto to make prototypes with under the 'root' domain  and
-	 * register prototypes via the PrototypeRegistry 
+   * register prototypes via the PrototypeRegistry 
    * make a prototype and an instance asset,  then test property groups 
-	 */
- private Asset makeProto(String typeid, String cl) {
-     
-		 // create a prototype - register with registry service
-		 Asset proto = theFactory.createPrototype(cl, typeid);
-		 
-		 protregService.cachePrototype(typeid, proto);
+   */
+  private Asset makeProto(String typeid, String cl) {
+    
+    // create a prototype - register with registry service
+    Asset proto = theFactory.createPrototype(cl, typeid);
+  
+    protregService.cachePrototype(typeid, proto);
+    //* getLDM().cachePrototype(typeid, proto);
+    System.out.println("making prototype: " + cl);
     return proto;
- }
+  }
   
   private void preloadPrototypes() {
     submitAbstract("Subordinates");
     submitAbstract("Ammunition");
     submitAbstract("SpareParts");
     submitAbstract("Consumable");
+
     submitAbstract("Repairable");
     submitAbstract("StrategicTransportation");
     submitAbstract("GSMaintenance");
