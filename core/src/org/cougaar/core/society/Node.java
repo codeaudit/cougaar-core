@@ -48,7 +48,7 @@ import java.io.Serializable;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -71,6 +71,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import java.beans.Beans;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.core.security.bootstrap.SystemProperties;
 
 /**
  * This class is responsible for creating and maintaining a Node in the alp
@@ -130,11 +131,17 @@ import org.cougaar.util.PropertyParser;
  * @property org.cougaar.name.server.port
  *   Only used by Node to transfer a command-line "-port X" to
  *   the corresponding <em>org.cougaar.name.server.port=X</em> property.
+ * @property org.cougaar.core.security.manager
+ *   The name of the class to use as a security domain manager.  If not supplied,
+ *   will run without one.
+ *  
  * </pre>
  */
 public class Node extends ContainerSupport
 implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
+  public final static String SMC_PROP = "org.cougaar.core.security.manager";
+
   private NodeIdentifier myNodeIdentity_ = null;
 
   public String getIdentifier() {
@@ -567,33 +574,63 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     agentManager = new AgentManager();
     super.add(agentManager);
   
+    // UGH!  Couldn't we abstract this a little!
+    Object guard = null;
+    // SAFE
+    String dmId = System.getProperty(SMC_PROP);
+    if (dmId == null) {
+      //System.err.println("System property org.cougaar.security.manager not set.\nProceeding without Guard!");
+    } else {
+      System.err.println("Starting Guard");
+      try {
+        Class gc = Class.forName("SAFE.Guard.NodeGuard");
+        Class pbc = Class.forName("org.cougaar.core.security.policy.PolicyBootstrapper");
+        //Class pbc = Class.forName("com.nai.security.PolicyBootstrapper");
+        Constructor gcc = gc.getConstructor(
+                                            new Class[] {
+                                              String.class, String.class,
+                                              String.class, pbc
+                                            });
+        System.out.println("Creating Guard.");
+        guard = gcc.newInstance(
+                                new Object[] { name, name, dmId, pbc.newInstance() });
+        
+        System.out.println("Initializing Guard.");
+        Method ginit = guard.getClass().getMethod("initialize", new Class[] {});
+        ginit.invoke(guard, new Object[] {});
+      } catch (Exception e) {
+        System.err.println("ERROR: while loading NodeGuard: " + e);
+      }
+    }
+
     ServiceBroker sb = getServiceBroker();
 
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
     
     sb.addService(NamingService.class,
-                  new NamingServiceProvider(System.getProperties()));
+                  new NamingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("javax.naming.")));
 
     LoggingServiceProvider loggingServiceProvider = 
-      new LoggingServiceProvider(System.getProperties());
+      new LoggingServiceProvider(SystemProperties.getSystemPropertiesWithPrefix("org.cougaar.core.logging."));
     sb.addService(LoggingService.class,
 		  loggingServiceProvider);
     sb.addService(LoggingControlService.class,
 		  loggingServiceProvider);
-
+    
     //add the vm metrics
     sb.addService(NodeMetricsService.class,
                   new NodeMetricsServiceProvider(new NodeMetricsProxy()));
 
     ServiceProvider sp;
-    if (filename != null)
+    if (filename != null) {
       sp = new FileInitializerServiceProvider();
-    else 
+    } else {
       sp = new DBInitializerServiceProvider(experimentId);
+    }
     sb.addService(InitializerService.class, sp);
-    InitializerService is = (InitializerService) sb.getService(
-        this, InitializerService.class, null);
+    InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
+
     ComponentDescription[] agentDescs =
       is.getComponentDescriptions(name, "Node.AgentManager");
     sb.releaseService(this, InitializerService.class, is);
@@ -603,6 +640,20 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     // NB: The order is important for now - MTS *must* be created
     // first.
     initTransport();  
+
+    // if we have a guard, give it a handle to the message transport
+    if (guard != null) {
+      try {
+        Method gsmt = guard.getClass()
+          .getMethod("setMessageTransport", new Class[] { MessageTransportService.class });
+        gsmt.invoke(guard, new Object[] { theMessenger } );
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.exit(0);
+      }
+    }
+
+    // start Qos
     initQos();
 
     // register for external control by the AppServer

@@ -26,6 +26,7 @@ import java.io.*;
 import java.lang.reflect.*;
 
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.core.security.bootstrap.SystemProperties;
 
 /**
  * Manage a per-VM set of Domain instances.
@@ -138,7 +139,8 @@ public final class DomainManager
   }
 
   private static void initializeFromProperties() {
-    Properties props = System.getProperties();
+    //Properties props = System.getProperties();
+    Properties props = SystemProperties.getSystemPropertiesWithPrefix(PREFIX);
     for (Enumeration names = props.propertyNames(); names.hasMoreElements(); ) {
       String key = (String) names.nextElement();
       if (key.startsWith(PREFIX)) {
