@@ -298,6 +298,16 @@ public class WorkflowImpl
     }
   }
 
+  /** @param constraint the constraint to be removed. */
+  public void removeConstraint(Constraint constraint) {
+    if (constraint != null) {
+      constraints.removeElement(constraint);
+    } else {
+      //buzzz... wrong answer - tried to pass in a null!
+      throw new IllegalArgumentException("Workflow.removeConstraint(): illegal null argument");
+    }
+  }
+
   /**
    * Returns first constraint for which the constraining event is
    * defined and constrained event is undefined or violated with

@@ -83,8 +83,12 @@ public class ConstraintImpl
   }
 
   public void setConstrainingTask(Task task) {
-    if (isAbsolute) throw new RuntimeException("Constraint is absolute");
-    if (theConstrainingTask != null)  throw new RuntimeException("Constraining task already set");
+    if (task == null) {
+      if (theConstrainingTask == null) throw new RuntimeException("Constraining task already null");
+    } else {
+      if (isAbsolute) throw new RuntimeException("Constraint is absolute");
+      if (theConstrainingTask != null)  throw new RuntimeException("Constraining task already set");
+    }
     theConstrainingTask = task;
   }
 
@@ -98,7 +102,6 @@ public class ConstraintImpl
    **/
 		
   public Task getConstrainingTask() {
-    if (isAbsolute) throw new RuntimeException("Constraint is absolute");
     return theConstrainingTask;
   }
 
@@ -129,7 +132,11 @@ public class ConstraintImpl
   }
 
   public void setConstrainedTask(Task task) {
-    if (theConstrainedTask != null)  throw new RuntimeException("Constrained task already set");
+    if (task == null) {
+      if (theConstrainedTask == null)  throw new RuntimeException("Constrained task already set");
+    } else {
+      if (theConstrainedTask != null)  throw new RuntimeException("Constrained task already set");
+    }
     theConstrainedTask = task;
   }
 

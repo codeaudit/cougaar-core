@@ -66,6 +66,13 @@ public interface NewWorkflow
   	
   void addConstraint(Constraint newConstraint);
 
+  /** removeConstraint allows you to remove a Constraint from a Workflow.
+   * <PRE> myworkflow.removeConstraint(constraint); </PRE>
+   * @param constraint  - Constraint to remove
+   **/
+  	
+  void removeConstraint(Constraint constraint);
+
   
   /** sets a specific compute algorithm to use while computing the aggregated
    * allocation results of the workflow.  If this method is not called, the 
