@@ -42,6 +42,7 @@ import org.cougaar.core.agent.ClusterServesClusterManagement;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.service.NamingService;
+import org.cougaar.core.topology.*;
 
 import org.cougaar.bootstrap.SystemProperties;
 
@@ -294,6 +295,35 @@ public class NodeAgent
     } catch (java.io.IOException ioe) {
       throw new Error("Couldn't initialize LoggingService "+ioe);
     }
+
+    ComponentDescription topologyWriterSCDesc = 
+      new ComponentDescription(
+          (getIdentifier()+"TopologyWriter"),
+          "Node.AgentManager.Agent.Topology",
+          "org.cougaar.core.topology.TopologyWriterServiceComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    super.add(topologyWriterSCDesc);
+
+    ComponentDescription topologyReaderSCDesc = 
+      new ComponentDescription(
+          (getIdentifier()+"TopologyReader"),
+          "Node.AgentManager.Agent.Topology",
+          "org.cougaar.core.topology.TopologyReaderServiceComponent",
+          null,  //codebase
+          null,  //parameters
+          null,  //certificate
+          null,  //lease
+          null); //policy
+    super.add(topologyReaderSCDesc);
+    
+    TopologyWriterService tws = (TopologyWriterService)
+      rootsb.getService(this, TopologyWriterService.class, null);
+    long incarnation = System.currentTimeMillis();
+    tws.createAgent(getIdentifier(), incarnation, 0L, TopologyEntry.ACTIVE);
 
     MetricsServiceProvider msp = new MetricsServiceProvider(rootsb, nodeIdentifier);
     rootsb.addService(MetricsService.class, msp);

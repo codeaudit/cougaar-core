@@ -47,10 +47,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import javax.naming.directory.DirContext;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.NameClassPair;
+import java.util.Set;
 
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.GenericStateModel;
@@ -86,6 +83,11 @@ import org.cougaar.core.agent.service.mobility.MobilityDispatchServiceProvider;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.blackboard.BlackboardServiceProvider;
+
+// topology support
+import org.cougaar.core.service.TopologyEntry;
+import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.TopologyWriterService;
 
 // message-transport support
 import org.cougaar.core.service.MessageStatisticsService;
@@ -165,7 +167,16 @@ public class SimpleAgent
   extends Agent
   implements Cluster, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
-  // state from "setState(..)", used within "load()"
+  // incarnation for this agent, which is incremented every time
+  // this agent restarts but not when the agent moves.
+  private long incarnation;
+
+  // move identity of this agent, which is incremented every time this
+  // agent moves.
+  private long moveId;
+
+  // state for this agent if it is arriving from a move
+  // this is set in "setState(..)" and used within "load()"
   private Object loadState;
   
   // state from "suspend()", used within "getState()"
@@ -177,6 +188,9 @@ public class SimpleAgent
 
   private AgentContainmentServiceProvider myAgentContainmentServiceProvider;
       
+  private TopologyReaderService myTopologyReaderService;
+  private TopologyWriterService myTopologyWriterService;
+
   private MessageTransportService messenger;
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
@@ -204,13 +218,10 @@ public class SimpleAgent
 
   private NamingService myNamingService;
 
-  private Map clusterInfo = new HashMap();
-  private static final String TOPOLOGY_CONTEXT_NAME =
-    org.cougaar.core.mts.NameSupport.TOPOLOGY_DIR;
-  private static final String INCARNATION_ATTRIBUTE_NAME =
-    org.cougaar.core.mts.NameSupport.INCARNATION_ATTR;
-  private static final String[] incarnationAttributes =
-  {INCARNATION_ATTRIBUTE_NAME};
+  // map of agent name to most recently observed incarnation, used
+  // to detect the restart of remote agents, which requires a
+  // resync beteen this agent and the restarted agent.
+  private Map restartIncarnationMap = new HashMap();
 
   // properties
   private static long RESTART_CHECK_INTERVAL = 43000L;
@@ -370,6 +381,34 @@ public class SimpleAgent
         AgentContainmentService.class,
         myAgentContainmentServiceProvider);
 
+    myTopologyReaderService = (TopologyReaderService) 
+      sb.getService(this, TopologyReaderService.class, null);
+    myTopologyWriterService = (TopologyWriterService) 
+      sb.getService(this, TopologyWriterService.class, null);
+
+    // register in the topology
+    moveId = System.currentTimeMillis();
+    if (loadState instanceof AgentState) {
+      AgentState agentState = (AgentState) loadState;
+      // resume the prior incarnation number
+      incarnation = agentState.incarnation;
+      long priorMoveId = agentState.moveId;
+      myTopologyWriterService.updateAgent(
+          getIdentifier(),
+          incarnation,
+          moveId,
+          TopologyEntry.ACTIVE,
+          priorMoveId);
+    } else {
+      // create a new or restarted agent entry
+      incarnation = System.currentTimeMillis();
+      myTopologyWriterService.createAgent(
+          getIdentifier(),
+          incarnation,
+          moveId,
+          TopologyEntry.ACTIVE);
+    }
+
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) 
       sb.getService(this, MessageTransportService.class, null);
@@ -483,7 +522,7 @@ public class SimpleAgent
   protected void loadComponentPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
 
-    if (loadState instanceof AgentState) {
+    if (loadState != null) {
       // use the existing state
       AgentState agentState = (AgentState) loadState;
       this.loadState = null;
@@ -632,6 +671,14 @@ public class SimpleAgent
 
     stopRestartChecker();
 
+    // notify the topology that this agent is moving
+    myTopologyWriterService.updateAgent(
+        getIdentifier(),
+        incarnation,
+        moveId,
+        TopologyEntry.MOVING,
+        moveId);
+    
     if (messenger != null) {
       messenger.unregisterClient(SimpleAgent.this);
     }
@@ -653,12 +700,23 @@ public class SimpleAgent
   public void resume() {
     super.resume();
 
+    // FIXME for now, re-register MTS prior to topology
     if (messenger == null) {
       messenger = (MessageTransportService) 
         getServiceBroker().getService(
             this, MessageTransportService.class, null);
       messenger.registerClient(this);
     }
+
+    // move failed, re-aquire the topology entry
+    long priorMoveId = moveId;
+    ++moveId;
+    myTopologyWriterService.updateAgent(
+        getIdentifier(),
+        incarnation,
+        moveId,
+        TopologyEntry.ACTIVE,
+        priorMoveId);
 
     startQueueHandler();
 
@@ -767,6 +825,15 @@ public class SimpleAgent
 
     sb.releaseService(this, DomainService.class, myDomainService);
 
+    // FIXME topology entry set to MOVING in "suspend()", need to
+    // safely clear the entry without overwriting if the move was
+    // successful.
+
+    sb.releaseService(
+        this, TopologyWriterService.class, myTopologyWriterService);
+    sb.releaseService(
+        this, TopologyReaderService.class, myTopologyReaderService);
+
     if ((log != null) && (log != LoggingService.NULL)) {
       sb.releaseService(this, LoggingService.class, log);
       log = null;
@@ -834,6 +901,8 @@ public class SimpleAgent
     AgentState result = 
       new AgentState(
           getMessageAddress(),
+          incarnation,
+          moveId,
           tuples,
           uMsgs);
 
@@ -1014,23 +1083,17 @@ public class SimpleAgent
   /**
    * 
    **/
-  private boolean updateIncarnation(DirContext topologyContext,
-                                    MessageAddress cid)
-    throws NamingException
-  {
-    Long oldIncarnation = (Long) clusterInfo.get(cid);
+  private boolean updateIncarnation(String agentName) {
+    Long oldIncarnation = (Long) restartIncarnationMap.get(agentName);
     if (oldIncarnation != null) {
-      String av = (String)
-        topologyContext.getAttributes(cid.toString(), incarnationAttributes)
-        .get(INCARNATION_ATTRIBUTE_NAME)
-        .get();
-      Long newIncarnation = new Long(av);
-      clusterInfo.put(cid, newIncarnation);
-//        System.out.println("  " + cid
+      long newNumber = 
+        myTopologyReaderService.getIncarnationForAgent(agentName);
+      Long newIncarnation = new Long(newNumber);
+      restartIncarnationMap.put(agentName, newIncarnation);
+//        System.out.println("  " + agentName
 //                           + ": oldIncarnation=" + oldIncarnation
 //                           + ", newIncarnation=" + newIncarnation);
       long oldNumber = oldIncarnation.longValue();
-      long newNumber = newIncarnation.longValue();
       return oldNumber != 0L && oldNumber != newNumber;
     }
     return false;
@@ -1074,35 +1137,34 @@ public class SimpleAgent
    * nameserver and "restart" against all of them. Messages will be
    * sent only to those agents for which we have any tasks, assets,
    * transferables, etc. in common. The sending of those messages will
-   * add entries to clusterInfo. So after doing a restart with an
-   * agent if there is an entry in clusterInfo for that agent, we set
+   * add entries to the restart incarnation map. So after doing a restart 
+   * with an agent if there is an entry in the map for that agent, we set
    * the saved incarnation number to the current value for that agent.
    * This avoids repeating the restart later. If the current
    * incarnation number differs, the agent must have restarted so we
    * initiate the restart reconciliation process.
    *
-   * On subsequent checks we only check agents listed in clusterInfo.
+   * On subsequent checks we only check agents listed in 
+   * restartIncarnationMap.
    **/
   private void checkRestarts() {
 //      System.out.println("checkRestarts");
-    List restartAgents = new ArrayList();
-    synchronized (clusterInfo) {
+    List restartAgentNames = new ArrayList();
+    synchronized (restartIncarnationMap) {
       try {
-        DirContext topologyContext =
-          (DirContext) myNamingService.getRootContext().lookup(TOPOLOGY_CONTEXT_NAME);
-        for (Iterator i = clusterInfo.keySet().iterator(); i.hasNext(); ) {
-          ClusterIdentifier cid = (ClusterIdentifier) i.next();
-          if (updateIncarnation(topologyContext, cid)) {
-            restartAgents.add(cid);
+        for (Iterator i = restartIncarnationMap.keySet().iterator(); i.hasNext(); ) {
+          String si = (String) i.next();
+          if (updateIncarnation(si)) {
+            restartAgentNames.add(si);
           }
         }
-        topologyContext.close();
       } catch (Exception ne) {
 //        ne.printStackTrace();
       }
     }
-    for (Iterator i = restartAgents.iterator(); i.hasNext(); ) {
-      ClusterIdentifier cid = (ClusterIdentifier) i.next();
+    for (Iterator i = restartAgentNames.iterator(); i.hasNext(); ) {
+      String si = (String) i.next();
+      ClusterIdentifier cid = ClusterIdentifier.getClusterIdentifier(si);
       System.out.println("Restart " + getAgentIdentifier() + " w.r.t. " + cid);
       myBlackboardService.restartAgent(cid);
     }
@@ -1111,19 +1173,22 @@ public class SimpleAgent
   private void restart() {
 //      System.out.println("restart");
     try {
-      DirContext topologyContext =
-        (DirContext) myNamingService.getRootContext().lookup(TOPOLOGY_CONTEXT_NAME);
-      for (NamingEnumeration e = topologyContext.list(""); e.hasMore(); ) {
-        NameClassPair ncp = (NameClassPair) e.next();
-        if (ncp.getClassName().equals(ClusterIdentifier.class.getName())) {
-          ClusterIdentifier cid = (ClusterIdentifier) topologyContext.lookup(ncp.getName());
+      Set allAgentNames = 
+        myTopologyReaderService.getAll(
+            TopologyReaderService.AGENT);
+      int n = ((allAgentNames != null) ? allAgentNames.size() : 0);
+      if (n > 0) {
+        Iterator iter = allAgentNames.iterator();
+        for (int i = 0; i < n; i++) {
+          String si = (String) iter.next();
+          ClusterIdentifier cid = 
+            ClusterIdentifier.getClusterIdentifier(si);
           myBlackboardService.restartAgent(cid);
-          synchronized(clusterInfo) {
-            updateIncarnation(topologyContext, cid);
+          synchronized (restartIncarnationMap) {
+            updateIncarnation(si);
           }
         }
       }
-      topologyContext.close();
     } catch (Exception ne) {
 //      ne.printStackTrace();
     }
@@ -1131,19 +1196,19 @@ public class SimpleAgent
 
   /**
    * Insure that we are tracking incarnations number for the agent at
-   * a given address. If the specified agent is not in the clusterInfo
-   * it means we have never before communicated with that agent or we
-   * have just restarted and are sending restart messages. In both
-   * cases, it is ok to store the special "unknown incarnation" marker
+   * a given address. If the specified agent is not in the restart
+   * incarnation map it means we have never before communicated with that 
+   * agent or we have just restarted and are sending restart messages. In 
+   * both cases, it is ok to store the special "unknown incarnation" marker
    * because we do not want to detect any restart.
    **/
   private void checkClusterInfo(MessageAddress cid) {
 //      System.out.println("Checking " + cid);
     if (cid instanceof ClusterIdentifier) {
-      synchronized (clusterInfo) {
-        if (clusterInfo.get(cid) == null) {
+      synchronized (restartIncarnationMap) {
+        if (restartIncarnationMap.get(cid) == null) {
 //            System.out.println("Adding " + cid);
-          clusterInfo.put(cid, new Long(0L));
+          restartIncarnationMap.put(cid, new Long(0L));
         }
       }
     } else {
@@ -1510,14 +1575,20 @@ public class SimpleAgent
   private static class AgentState implements java.io.Serializable {
 
     private final MessageAddress agentAddr;
+    private final long incarnation;
+    private final long moveId;
     private final List tuples;  // List<StateTuple>
     private final List unsentMessages; // List<ClusterMessage>
 
     public AgentState(
         MessageAddress agentAddr,
+        long incarnation,
+        long moveId,
         List tuples,
         List unsentMessages) {
       this.agentAddr = agentAddr;
+      this.incarnation = incarnation;
+      this.moveId = moveId;
       this.tuples = tuples;
       this.unsentMessages = unsentMessages;
       if ((agentAddr == null) ||
@@ -1529,7 +1600,8 @@ public class SimpleAgent
 
     public String toString() {
       return 
-        "Agent "+agentAddr+" state, tuples["+tuples.size()+
+        "Agent "+agentAddr+" state, incarnation "+incarnation+
+        ", moveId "+moveId+", tuples["+tuples.size()+
         "], unsentMessages["+unsentMessages.size()+
         "]";
     }

@@ -26,16 +26,30 @@ import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.mts.MessageAddress;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttributes;
 
+/**
+ * <b>NOTE:</b> This implementation has been deprecated and now 
+ * returns empty responses for all queries.
+ */
 public class QosMonitorServiceImpl 
     extends QosImplBase
     implements QosMonitorService
 {
     private HashMap nodes, hosts;
+
+    // these have all been removed from the NameSupport API,
+    // and are here just to hint at the old implementation:
+    private static final String OLD_AGENT_ATTR  = "Agent";
+    private static final String OLD_NODE_ATTR   = "Node";
+    private static final String OLD_HOST_ATTR   = "Host";
+    private static final String OLD_STATUS_ATTR = "Status";
+    private static final String OLD_REGISTERED_STATUS = "Registered";
+    private static final String OLD_UNREGISTERED_STATUS = "Unregistered";
 
     QosMonitorServiceImpl(NameSupport nameSupport, ServiceBroker sb) {
 	super(nameSupport, sb);
@@ -43,12 +57,17 @@ public class QosMonitorServiceImpl
 	hosts = new HashMap();
     }
 
+    private Iterator lookupInTopology(Attributes match, String attribute) {
+      return Collections.EMPTY_LIST.iterator();
+	//return nameSupport.lookupInTopology(match, attr);
+    }
+
     public int lookupAgentStatus(MessageAddress agentAddress) {
 
 	Attributes match = 
-	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
-	String attr = NameSupport.STATUS_ATTR;
-	Iterator result = nameSupport.lookupInTopology(match, attr);
+	    new BasicAttributes(OLD_AGENT_ATTR, agentAddress);
+	String attr = OLD_STATUS_ATTR;
+	Iterator result = lookupInTopology(match, attr);
 	int status = -1;
 	int count = 0;
 	while (result.hasNext()) {
@@ -56,9 +75,9 @@ public class QosMonitorServiceImpl
 	    String status_string = (String) result.next();
 	    if (status_string == null)
 		status = UNKNOWN;
-	    else if (status_string.equals(NameSupport.REGISTERED_STATUS))
+	    else if (status_string.equals(OLD_REGISTERED_STATUS))
 		status = ACTIVE;
-	    else if (status_string.equals(NameSupport.UNREGISTERED_STATUS))
+	    else if (status_string.equals(OLD_UNREGISTERED_STATUS))
 		status = MOVING;
 	    else
 		status = UNKNOWN;
@@ -107,9 +126,9 @@ public class QosMonitorServiceImpl
 
     public String lookupHostForNode(String nodeName) {
 	Attributes match = 
-	    new BasicAttributes(NameSupport.NODE_ATTR, nodeName);
-	String attr = NameSupport.HOST_ATTR;
-	Iterator result = nameSupport.lookupInTopology(match, attr);
+	    new BasicAttributes(OLD_NODE_ATTR, nodeName);
+	String attr = OLD_HOST_ATTR;
+	Iterator result = lookupInTopology(match, attr);
 	if (result.hasNext()) {
 	    return (String) result.next();
 	} else {
@@ -119,9 +138,9 @@ public class QosMonitorServiceImpl
 
     public String lookupHostForAgent(MessageAddress agentAddress) {
 	Attributes match = 
-	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
-	String attr = NameSupport.HOST_ATTR;
-	Iterator result = nameSupport.lookupInTopology(match, attr);
+	    new BasicAttributes(OLD_AGENT_ATTR, agentAddress);
+	String attr = OLD_HOST_ATTR;
+	Iterator result = lookupInTopology(match, attr);
 	String host = null;
 	int count = 0;
 	while (result.hasNext()) {
@@ -143,9 +162,9 @@ public class QosMonitorServiceImpl
 
     public String lookupNodeForAgent(MessageAddress agentAddress) {
 	Attributes match = 
-	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
-	String attr = NameSupport.NODE_ATTR;
-	Iterator result = nameSupport.lookupInTopology(match, attr);
+	    new BasicAttributes(OLD_AGENT_ATTR, agentAddress);
+	String attr = OLD_NODE_ATTR;
+	Iterator result = lookupInTopology(match, attr);
 	String node = null;
 	int count = 0;
 	while (result.hasNext()) {

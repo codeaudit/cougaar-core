@@ -24,6 +24,11 @@ package org.cougaar.core.qos.monitor;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * @deprecated topology-related queries are now handled by
+ *    the TopologyReaderService, and MTS-related queries
+ *    will be handled by future MTS-specific service (TBA)
+ */
 public interface QosMonitorService extends Service
 {
     int UNKNOWN = 0;
