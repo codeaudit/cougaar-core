@@ -28,7 +28,7 @@ public class SearchStringParser {
     private static final String NOT = "!";
     private static final String SPACE = " ";
     private static final String TAB = "\t";
-    private static final String SEPS = LP + RP + AND + OR + NOT + SPACE + TAB;
+    private static final String SEPS = LP + RP + AND + OR + NOT;
 
     private StringTokenizer tokens;
     private String token;
@@ -72,7 +72,7 @@ public class SearchStringParser {
             do {
                 if (!tokens.hasMoreTokens()) throw new ParseException("premature end");
                 token = tokens.nextToken();
-            } while (SPACE.equals(token) || TAB.equals(token));
+            } while (token != null && token.trim().equals(""));
         }
         return token;
     }

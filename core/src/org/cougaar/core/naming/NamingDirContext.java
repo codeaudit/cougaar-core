@@ -260,41 +260,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     throw new NotContextException(name + " cannot be listed");
   }
 
-  // Override unbind() to deal with attributes
-  // destroySubcontext() already uses unbind() so we just need to
-  // override unbind() to affect both unbind() and destroySubcontext().
-  public void unbind(Name name) throws NamingException {
-    if (name.isEmpty()) {
-      throw new InvalidNameException("Cannot unbind empty name");
-    }
-
-    // Sigh .... would like to use getNSObject but name may be in a sub context
-    // so use lookup to make sure that we find the object.
-    try {
-      if (lookup(name) instanceof Context) {
-        throw new OperationNotSupportedException("Use destroySubContext to remove a Context.");
-      }
-    } catch (NameNotFoundException nnfe) {
-      // Object doesn't  so we can stop now 
-      return;
-    }
-
-    try {
-      // Get attributes that belong to name
-      Attributes attrs = getAttributes(name);
-      
-      // Remove those attributes
-      if (attrs.size() != 0) {
-        modifyAttributes(name, DirContext.REMOVE_ATTRIBUTE, attrs);
-      }
-    } catch (NamingException e) {
-      e.printStackTrace();
-    }
-    
-    // Remove from namespace
-    super.unbind(name);
-  }
-  
   // Override NamingContext version to account for attributes
   public void bind(Name name, Object obj) throws NamingException {
     bind(name, obj, new BasicAttributes());
@@ -311,7 +276,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    */
   public void bind(Name name, Object obj, Attributes attrs)
     throws NamingException {
-    System.out.println("Attempt to bind :" + name + " in " + myDirectory.getPath()); 
+    System.out.println("Attempt to bind: " + name + " in " + myDirectory.getPath()); 
     if (name.isEmpty()) {
       throw new InvalidNameException("Cannot bind empty name");
     }
@@ -1399,12 +1364,4 @@ public class NamingDirContext extends NamingContext implements DirContext {
 
     System.exit(0);
   }
-
 }
-
-
-
-
-
-
-

@@ -197,6 +197,10 @@ public class NamingContext implements Context {
   }
   
   public void unbind(Name name) throws NamingException {
+    unbind1(name, false);
+  }
+
+  protected void unbind1(Name name, boolean allowContext) throws NamingException {
     if (name.isEmpty()) {
       throw new InvalidNameException("Can not unbind empty name");
     }
@@ -207,7 +211,7 @@ public class NamingContext implements Context {
     
     // Remove object from internal data structure
     if (nm.size() == 1) {
-      if (getNSObject(getDirectory(), atom) instanceof Context) {
+      if (!allowContext && getNSObject(getDirectory(), atom) instanceof Context) {
         throw new OperationNotSupportedException("Can not unbind Context. Use destroySubContext instead.");
       }
         
@@ -347,8 +351,8 @@ public class NamingContext implements Context {
     }
     
     // Simplistic implementation: not checking for nonempty context first
-    // Use same implementation as unbind
-    unbind(name);
+    // Use same implementation as unbind, but allow context
+    unbind1(name, true);
   }
   
   public Context createSubcontext(String name) throws NamingException {
@@ -464,7 +468,8 @@ public class NamingContext implements Context {
   
   public String getNameInNamespace() throws NamingException {
     try {
-      return getNS().fullName(getDirectory(), "");
+      String fullname = getNS().fullName(getDirectory(), "");
+      return fullname.substring(1, fullname.length() - 1);
     } catch (RemoteException re) {
       re.printStackTrace();
       return null;
