@@ -2,11 +2,11 @@
  * <copyright>
  *  Copyright 1997-2001 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -33,7 +33,7 @@ import java.security.cert.*;
 /**
  * A bootstrapping launcher, in particular, for a node.
  * <p>
- * Figures out right classpath, creates a new classloader and 
+ * Figures out right classpath, creates a new classloader and
  * then invokes the usual static main method on the specified class
  * (using the new classloader).
  * <p>
@@ -48,7 +48,7 @@ import java.security.cert.*;
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
  *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
- *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
+ *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin}
  * </pre>
  * <p>
  * As an added bonus, Bootstrapper may be run as an application
@@ -57,24 +57,24 @@ import java.security.cert.*;
  * along as a String array as the single argument to the class.
  * The class must provide a public static launch(String[]) or
  * main(String[]) method (searched for in that order).
- * 
+ *
  * The Boostrapper's classloader will not load any classes which
- * start with "java.", "javax.", "sun.", "com.sun." or "net.jini.".  This 
+ * start with "java.", "javax.", "sun.", "com.sun." or "net.jini.".  This
  * list may be extended by supplying a -Dorg.cougaar.core.society.bootstrapper.exclusions=foo.:bar.
- * System property.  The value of the property should be a list of 
+ * System property.  The value of the property should be a list of
  * package prefixes separated by colon (":") characters.
  * <p>
- * A common problem is the attempt to use "patch" jar files to repair a few 
+ * A common problem is the attempt to use "patch" jar files to repair a few
  * classes of some much larger archive.  There are two problems with this
  * use pattern: (1) the order that Bootstrapper will find jar files in a
  * directory is undefined - there is no guarantee that the patch will take
  * precedence over the original.  Also, (2) classloaders will refuse to
  * load classes of a given package from multiple jar files - if the patch jar
  * does not contain the whole package, the classloader will likely be
- * unable to load the rest of the classes.  Both problems tend to 
+ * unable to load the rest of the classes.  Both problems tend to
  * crop up when you can least afford this confusion.
  * <p>
- * The System property <em>org.cougaar.core.society.bootstrapper.loud</em> 
+ * The System property <em>org.cougaar.core.society.bootstrapper.loud</em>
  * controls debugging output of the bootstrapping classloader.  When set to
  * "true" will output the list of jar/zip files used to load classes (in order).
  * When set to "shout" will additionally print the location of the jar/zip file
@@ -126,7 +126,7 @@ public class Bootstrapper
    * Search the likely spots for jar files and classpaths,
    * create a new classloader, and then invoke the named class
    * using the new classloader.
-   * 
+   *
    * We will attempt first to invoke classname.launch(String[]) and
    * then classname.main(String []).
    **/
@@ -153,7 +153,7 @@ public class Bootstrapper
 
     accumulateJars(l,new File(base,"sys"));
     URL urls[] = (URL[]) l.toArray(new URL[l.size()]);
-    
+
     try {
       BootstrapClassLoader cl = new BootstrapClassLoader(urls);
       Thread.currentThread().setContextClassLoader(cl);
@@ -204,12 +204,27 @@ public class Bootstrapper
         String n = (String) files.get(i);
         if (!isJar(n) && !n.endsWith("/")) {
           n = n+"/";
+          n = canonical(n); // Convert n to a canonical path, if possible
         }
         l.add(newURL(n));
       } catch (Exception e) {
         e.printStackTrace();
       }
     }
+  }
+
+  static String canonical(String filename) {
+    String ret = filename;
+    if (!filename.startsWith("file:")) {
+      File f = new File (filename);
+      try {
+        ret = f.getCanonicalPath() + File.separator;
+      } catch (IOException ioe) {
+        // file must not exist...
+      }
+    }
+//    System.out.println(filename+" CHANGED  to "+ret);
+    return ret;
   }
 
   static final boolean isJar(String n) {
@@ -255,7 +270,7 @@ public class Bootstrapper
   }
 
   /** Use slightly different rules for class loading:
-   * Prefer classes loaded via this loader rather than 
+   * Prefer classes loaded via this loader rather than
    * the parent.
    **/
 
@@ -305,7 +320,7 @@ public class Bootstrapper
       // First, check if the class has already been loaded
       Class c = findLoadedClass(name);
       if (c == null) {
-        // make sure not to use this classloader to load 
+        // make sure not to use this classloader to load
         // java.*.  We patch java.io. to support persistence, so it
         // may be in our jar files, yet those classes must absolutely
         // be loaded by the same loader as the rest of core java.
