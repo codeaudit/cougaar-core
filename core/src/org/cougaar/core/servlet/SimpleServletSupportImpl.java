@@ -28,14 +28,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import javax.naming.Binding;
-import javax.naming.NamingEnumeration;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.NamingService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -53,7 +48,6 @@ implements SimpleServletSupport
   protected String path;
   protected MessageAddress agentId;
   protected BlackboardQueryService blackboardQuery;
-  protected NamingService ns;
   protected LoggingService log;
 
   protected String encAgentName;
@@ -61,21 +55,18 @@ implements SimpleServletSupport
   public SimpleServletSupportImpl(
       String path,
       MessageAddress agentId,
-      BlackboardQueryService blackboardQuery,
-      NamingService ns) {
-    this(path, agentId, blackboardQuery, ns, null);
+      BlackboardQueryService blackboardQuery) {
+    this(path, agentId, blackboardQuery, null);
   }
 
   public SimpleServletSupportImpl(
       String path,
       MessageAddress agentId,
       BlackboardQueryService blackboardQuery,
-      NamingService ns,
       LoggingService log) {
     this.path = path;
     this.agentId = agentId;
     this.blackboardQuery = blackboardQuery;
-    this.ns = ns;
     this.log = 
       ((log != null) ? log :  LoggingService.NULL);
     // cache:
@@ -100,14 +91,6 @@ implements SimpleServletSupport
 
   public LoggingService getLog() {
     return log;
-  }
-
-  public List getAllEncodedAgentNames() {
-    return NSUtil.getAllEncodedAgentNames(ns);
-  }
-
-  public List getAllEncodedAgentNames(List toList) {
-    return NSUtil.getAllEncodedAgentNames(ns, toList);
   }
 
   // maybe add a "getAllAgentIdentifiers()"

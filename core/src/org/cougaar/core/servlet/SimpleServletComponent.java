@@ -32,7 +32,6 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.NamingService;
 
 /**
  * Component that loads a <code>Servlet</code> and provides
@@ -98,7 +97,6 @@ extends BaseServletComponent
   // Services for our SimpleServletSupport use
   //
   protected BlackboardQueryService blackboardQuery;
-  protected NamingService ns;
   protected LoggingService log;
 
 
@@ -253,17 +251,6 @@ extends BaseServletComponent
           "Unable to obtain blackboard query service");
     }
 
-    // get the naming service (for "listAgentNames")
-    ns = (NamingService)
-      serviceBroker.getService(
-          servlet,
-          NamingService.class,
-          null);
-    if (ns == null) {
-      throw new RuntimeException(
-          "Unable to obtain naming service");
-    }
-
     // get the logging service (for "getLogger")
     log = (LoggingService)
       serviceBroker.getService(
@@ -277,7 +264,7 @@ extends BaseServletComponent
     // create a new "SimpleServletSupport" instance
     return
       new SimpleServletSupportImpl(
-        path, agentId, blackboardQuery, ns, log);
+        path, agentId, blackboardQuery, log);
   }
 
   public void unload() {
@@ -289,11 +276,6 @@ extends BaseServletComponent
         serviceBroker.releaseService(
             servlet, LoggingService.class, log);
         log = null;
-      }
-      if (ns != null) {
-        serviceBroker.releaseService(
-            servlet, NamingService.class, ns);
-        ns = null;
       }
       if (blackboardQuery != null) {
         serviceBroker.releaseService(

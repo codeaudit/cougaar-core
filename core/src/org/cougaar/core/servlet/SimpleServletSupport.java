@@ -124,22 +124,6 @@ public interface SimpleServletSupport {
   LoggingService getLog();
 
   /**
-   * Equivalent to 
-   * <tt>getAllEncodedAgentNames(new ArrayList())</tt>.
-   */
-  List getAllEncodedAgentNames();
-
-  /**
-   * Fill the given <tt>toList</tt> with all the 
-   * <code>String</code> encoded Agent names in the society.
-   * <p>
-   * This includes both local and remote Agent names.
-   *
-   * @see #getEncodedAgentName
-   */
-  List getAllEncodedAgentNames(List toList);
-
-  /**
    * Utility method to encode an Agent name -- 
    * equivalent to <tt>java.net.URLEncoder.encode(name)</tt>.
    *

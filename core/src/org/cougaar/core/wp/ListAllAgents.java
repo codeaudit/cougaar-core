@@ -21,9 +21,13 @@
 
 package org.cougaar.core.wp;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import org.cougaar.core.service.wp.WhitePagesService;
 
@@ -39,6 +43,27 @@ public class ListAllAgents {
     Set toSet = new HashSet();
     recurse(toSet, wps, ".", 0);
     return toSet;
+  }
+
+  /**
+   * URLEncode and sort a set of Strings.
+   * <p>
+   * @deprecated only for "listAllAgents" use
+   */
+  public static List encodeAndSort(Set s) {
+    // URLEncode the names and sort
+    ArrayList l = new ArrayList(s.size());
+    for (Iterator iter = s.iterator(); iter.hasNext(); ) {
+      String tmp = (String) iter.next();
+      try {
+        tmp = URLEncoder.encode(tmp, "UTF-8");
+      } catch (UnsupportedEncodingException uee) {
+        throw new RuntimeException("No UTF-8?", uee);
+      }
+      l.add(tmp);
+    }
+    Collections.sort(l);
+    return l;
   }
 
   // recursive!
