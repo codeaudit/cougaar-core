@@ -1,3 +1,17 @@
+2003-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* freeze/FreezeTargetPlugin.java:
+	Synchronize checkStopped method to avoid
+	ConcurrentModificationException
+
+	* freeze/FreezeSourcePlugin.java:
+	Set the unfrozen agents list to all agents when starting a freeze
+	in case there are no agents. Otherwise, no response will be sent.
+
+	* freeze/FreezeSocietyPlugin.java:
+	Changes to support debugging Deletion. Added current execution
+	time display and a field for specifying the execution rate.
+
 2003-03-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* freeze/FreezeNodePlugin.java: 
