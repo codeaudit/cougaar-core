@@ -142,7 +142,7 @@ public class PlaybookManager
     try {
       Reader is = new InputStreamReader(getConfigFinder().open(playFileName));
       try {
-        Parser p = new Parser(new StreamTokenizer(is));
+        Parser p = new Parser(is, logger);
         Play[] plays = p.parsePlays();
         playbook.setPlays(plays);
         fireListeners();

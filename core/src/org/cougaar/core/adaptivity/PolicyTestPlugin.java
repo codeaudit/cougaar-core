@@ -54,7 +54,7 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
     try {
       Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
       try {
-        Parser p = new Parser(new StreamTokenizer(is));
+        Parser p = new Parser(is, logger);
         policies = p.parseOperatingModePolicies();
       } finally {
         is.close();
@@ -86,7 +86,7 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
   }
 
   private void setPolicies() {
-    if (constrained) {
+    if (true || constrained) {
       if (logger.isInfoEnabled()) logger.info("Adding threatcon policy");
       for (int i = 0; i < policies.length; i++) {
         playbookConstrainService.constrain(policies[i]);

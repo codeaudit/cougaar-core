@@ -52,7 +52,7 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
     try {
       Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
       try {
-        Parser p = new Parser(new StreamTokenizer(is));
+        Parser p = new Parser(is, logger);
         policies = p.parseOperatingModePolicies();
       } finally {
         is.close();

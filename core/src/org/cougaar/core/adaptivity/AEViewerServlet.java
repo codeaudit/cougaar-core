@@ -93,7 +93,7 @@ public class AEViewerServlet extends HttpServlet {
 	StringReader reader = new StringReader(policyString);
 	OperatingModePolicy[] policies = null;
 	try {
-	  Parser parser = new Parser(new StreamTokenizer(reader));
+	  Parser parser = new Parser(reader, support.getLog());
 	  policies = parser.parseOperatingModePolicies();
 	} catch (java.io.IOException ioe) {
 	  ioe.printStackTrace();

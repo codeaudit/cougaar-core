@@ -61,7 +61,7 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     try {
       Reader r = new InputStreamReader(getConfigFinder().open(policyFileName));
       try {
-        Parser p = new Parser(new StreamTokenizer(r));
+        Parser p = new Parser(r, logger);
         tempPolicies = p.parseOperatingModePolicies();
       } finally {
         r.close();
