@@ -43,14 +43,50 @@ import org.cougaar.util.UnaryPredicate;
 /**
  * @author RTomlinson
  *
- * To change the template for this generated type comment go to
- * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
+ * How to Configure the DeletionPlugin.
+ * 
+ * The DeletionPlugin runs according to a prescribed schedule to find
+ * Deletable objects on the blackboard and delete them if they are ready
+ * to be deleted. These actions are controlled by a
+ * DelectionSchedulePolicy and one or more DeletionPolicy objects on the
+ * blackboard. The DeletionPlugin guarantees that there is always a
+ * DefaultDeletionPolicy present by creating on at startup (or restart)
+ * if there is not one already present.
+ * 
+ * DeletionSchedulePolicy
+ * 
+ * The deletion schedule is characterized primarily by a period (how
+ * often) and a phase (at what time of day). The public interface of the
+ * standard DeletionSchedulePolicy allows all aspects of the schedule to
+ * be altered including adding specific times for deletion to occur. The
+ * current DeletionPlugin implementation insures that exactly one
+ * DeletionSchedulePolicy exists on the blackboard creating one if
+ * necessary and deleting extraneous ones. If an existing policy is
+ * found, it is left as is. Subclasses could choose to insure that the
+ * periodic schedule parameters agree with the values specified as plugin
+ * parameters.
+ * 
+ * DefaultDeletionPolicy
+ * 
+ * The DeletionPlugin also guarantees that there is exactly one default
+ * DeletionPolicy on the blackboard. If there are none, one is created
+ * using plugin parameters. If there are multiples (should never happen),
+ * extras are deleted.
+ * 
+ * DeletionPlugin Parameters
+ * 
+ * The DeletionPlug accepts four named parameters as follows:
+ * deletionDelay=<long default 15 days>
+ * deletionPeriod=<long default 7 days>
+ * deletionPhase=<long 0 (midnight)>
+ * archivingEnabled=<boolean>
+ * 
+ * The archivingEnable parameter causes a persistence snapshot to be
+ * taken for archiving purposes prior to doing deletions.
+ * 
  */
 public class DeletionPlugin extends ComponentPlugin {
 
-  /* (non-Javadoc)
-   * @see org.cougaar.planning.plugin.legacy.SimplePlugin#setupSubscriptions()
-   */
   protected void setupSubscriptions() {
     long deletionDelay = DEFAULT_DELETION_DELAY;
     long deletionPeriod = DEFAULT_DELETION_PERIOD;
@@ -74,7 +110,7 @@ public class DeletionPlugin extends ComponentPlugin {
       (CollectionSubscription) blackboard.subscribe(
 						    deletionPolicyPredicate,
 						    false);
-    checkDeletionPolicies(deletionDelay);
+    checkDefaultDeletionPolicy(deletionDelay);
     deletionSchedulePolicies =
       (CollectionSubscription) blackboard.subscribe(
 						    deletionSchedulePolicyPredicate,
@@ -143,10 +179,10 @@ public class DeletionPlugin extends ComponentPlugin {
     deletionTimeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
   protected static UnaryPredicate truePredicate = new UnaryPredicate() {
-      public boolean execute(Object o) {
-	return true;
-      }
-    };
+    public boolean execute(Object o) {
+      return true;
+    }
+  };
   
   private static UnaryPredicate deletablePredicate =
     new UnaryPredicate() {
@@ -292,18 +328,19 @@ public class DeletionPlugin extends ComponentPlugin {
   }
 
   /**
-   * Check to see if the default policy is present and matches the
+   * Check to see if the DefaultDeletionPolicy is present and matches the
    * current deletionDelay, If a DefaultDeletionPolicy is found for
    * which the deletionDelay does not match the current deletionDelay,
    * it is removed. If no DefaultDeletionPolicy having the correct
    * deletionDelay is found, a new one created and added.
    **/
-  protected void checkDeletionPolicies(long deletionDelay) {
+  private void checkDefaultDeletionPolicy(long deletionDelay) {
     for (Iterator i = deletionPolicies.iterator(); i.hasNext();) {
       DeletionPolicy policy = (DeletionPolicy) i.next();
-      if (policy instanceof SimpleDeletionPolicy) {
-        if (policy.getDeletionDelay() == deletionDelay)
+      if (SimpleDeletionPolicy.isDefaultDeletionPolicy(policy)) {
+        if (policy.getDeletionDelay() == deletionDelay) {
           return; // ok
+        }
         blackboard.publishRemove(policy);
       }
     }
@@ -318,20 +355,22 @@ public class DeletionPlugin extends ComponentPlugin {
 
   /**
    * Check to see if the default schedule policy is present. If a
-   * DeletionSchedulePolicy is found then its periodic deletion
-   * parameters are set. If no DeletionSchedulePolicy is found, a
-   * new one created and added. If multiple schedule policies are
-   * found, all but one is deleted.
+   * DeletionSchedulePolicy is found then it is left as is. If no
+   * DeletionSchedulePolicy is found, a new one created and added.
+   * If multiple schedule policies are found, all but one is deleted.
+   * Subclasses may wish to set the periodic schedule parameters to
+   * match the specified values, but the base implementation only uses
+   * the values if a new policy must be created.
    **/
   protected void checkDeletionSchedulePolicies(
-					       long deletionPeriod,
-					       long deletionPhase) {
+    long deletionPeriod,
+    long deletionPhase) {
     for (Iterator i = deletionSchedulePolicies.iterator(); i.hasNext();) {
       DeletionSchedulePolicy policy = (DeletionSchedulePolicy) i.next();
       if (theDeletionSchedulePolicy == null) {
-        policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
         theDeletionSchedulePolicy = policy;
       } else {
+        // Remove extraneous policies
         blackboard.publishRemove(policy);
       }
     }
@@ -359,10 +398,15 @@ public class DeletionPlugin extends ComponentPlugin {
   protected void setAlarm() {
     long now = currentTimeMillis();
     long nextAlarm = theDeletionSchedulePolicy.getNextDeletionTime(now);
-    long delay = nextAlarm - now;
     if (logger.isDebugEnabled())
-      logger.debug("Make the donuts in " + delay + "msec.");
-    alarm = createAlarm(delay);
+      logger.debug("Make the donuts in " + (nextAlarm - now) + "msec.");
+    alarm = createAlarm(nextAlarm - now);
+    getAlarmService().addAlarm(alarm);
   }
 
+  private static class DefaultDeletionPolicy extends SimpleDeletionPolicy {
+    DefaultDeletionPolicy(long deletionDelay) {
+      super(deletionDelay);
+    }
+  }
 }

@@ -21,6 +21,12 @@ public class SimpleDeletionPolicy implements DeletionPolicy {
   private long deletionDelay;
   private int priority;
 
+  private static class DefaultDeletionPolicyPredicate implements UnaryPredicate {
+    public boolean execute(Object o) {
+      return true;
+    }
+  };
+
   public SimpleDeletionPolicy(
     String name,
     UnaryPredicate predicate,
@@ -30,6 +36,30 @@ public class SimpleDeletionPolicy implements DeletionPolicy {
     setPredicate(predicate);
     setDeletionDelay(deletionDelay);
     setPriority(priority);
+  }
+  
+  /**
+   * Package access constructor create a default policy (having NO_PRIORITY
+   * priority).
+   * @param deletionDelay
+   */
+  SimpleDeletionPolicy(long deletionDelay) {
+    this(
+      "Default deletion policy",
+      new DefaultDeletionPolicyPredicate(),
+      deletionDelay,
+      NO_PRIORITY);
+  }
+  
+  public static boolean isDefaultDeletionPolicy(DeletionPolicy policy) {
+    if (policy instanceof SimpleDeletionPolicy) {
+      return ((SimpleDeletionPolicy) policy).isDefaultDeletionPolicy();
+    }
+    return false;
+  }
+
+  private boolean isDefaultDeletionPolicy() {
+    return getPredicate() instanceof DefaultDeletionPolicyPredicate;
   }
 
   protected void setName(String name) {
@@ -49,6 +79,10 @@ public class SimpleDeletionPolicy implements DeletionPolicy {
   }
 
   protected void setPriority(int priority) {
+    if (priority < MIN_PRIORITY
+      && !this.isDefaultDeletionPolicy()) {
+      throw new IllegalArgumentException("Invalid priority");
+    }
     this.priority = priority;
   }
 
