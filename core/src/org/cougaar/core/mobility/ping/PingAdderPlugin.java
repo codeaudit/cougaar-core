@@ -336,7 +336,10 @@ extends ComponentPlugin
     public synchronized void expire() {
       if (!expired) {
         expired = true;
-        getBlackboardService().signalClientActivity();
+        {
+          org.cougaar.core.service.BlackboardService bbs = getBlackboardService();
+          if (bbs != null) bbs.signalClientActivity();
+        }
       }
     }
     public boolean hasExpired() { 
