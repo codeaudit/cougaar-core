@@ -10,19 +10,29 @@
 
 package org.cougaar.domain.planning.ldm;
 
+import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
 
 import java.util.HashMap;
 
 public class DomainServiceImpl implements DomainService {
-  public DomainServiceImpl() { }
 
-  // set up the root domain, especially the root factory.
-  private Domain rootDomain = DomainManager.find("root");
-  // this was LDMServesPlugIn 
-  // MUST FIX BEFORE WE CONNECT THIS!!!!
-  //private RootFactory myRootFactory = (RootFactory) rootDomain.getFactory(this);
-  private RootFactory myRootFactory = (RootFactory) rootDomain.getFactory(null);
+  private Domain rootDomain = null;
+  private RootFactory myRootFactory = null;
+  private LDMServesPlugIn registryService;
+
+  //When cluster creates this service it will
+  //pass a reference to it's PrototypeRegistryService in the form
+  // of itself acting as LDMServesPlugin...
+  //In the future these service may dynamically find each otehr
+  public DomainServiceImpl(LDMServesPlugIn registryService) {
+    this.registryService = registryService;
+    //get the domains set up
+    DomainManager.initialize();
+    // set up the root domain, especially the root factory.
+    this.rootDomain = DomainManager.find("root");
+    this.myRootFactory = (RootFactory) rootDomain.getFactory(registryService);
+ }
 
   /**
    * Answer with a reference to the Factory
@@ -30,8 +40,7 @@ public class DomainServiceImpl implements DomainService {
    * per Cluster instance.  Hence, ClusterManagment will always provide
    * plugins with access to the ClusterObjectFactory
    **/
-  public ClusterObjectFactory getClusterObjectFactory()
-  {
+  public ClusterObjectFactory getClusterObjectFactory() {
     return myRootFactory;
   }
 
@@ -70,10 +79,7 @@ public class DomainServiceImpl implements DomainService {
 
       f = (Factory) domainFactories.get(d); // check the domain factories set first
       if (f == null) {
-        // In this case the this was an LDMServesPlugIn 
-        // MUST FIX THIS WHEN WE CONNECT THIS UP
-        //f = d.getFactory(this);   // create a new factory
-        f = d.getFactory(null);   // create a new factory
+        f = d.getFactory(registryService);   // create a new factory
         if (f == null) return null; // failed to create the factory
         domainFactories.put(d, f);
       }
@@ -83,3 +89,4 @@ public class DomainServiceImpl implements DomainService {
   }
 
 }  
+
