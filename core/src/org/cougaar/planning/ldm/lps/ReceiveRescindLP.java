@@ -21,14 +21,18 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.blackboard.*;
 
-import org.cougaar.planning.ldm.plan.*;
 import org.cougaar.core.agent.*;
+import org.cougaar.core.blackboard.*;
 import org.cougaar.core.domain.LogPlanLogicProvider;
 import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.plan.*;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
+
 import java.util.*;
 
 import org.cougaar.planning.ldm.plan.TaskImpl;
@@ -45,6 +49,7 @@ import org.cougaar.planning.ldm.plan.TaskImpl;
 
 public class ReceiveRescindLP extends LogPlanLogicProvider implements MessageLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ReceiveRescindLP.class);
 
   public ReceiveRescindLP(LogPlanServesLogicProvider logplan,
                           ClusterServesLogicProvider cluster) {
@@ -72,7 +77,9 @@ public class ReceiveRescindLP extends LogPlanLogicProvider implements MessageLog
     if (t != null) {
       logplan.remove(t);
     } else {
-      //System.err.println("Couldn't find task to rescind: " + tuid);
+      if (logger.isDebugEnabled()) {
+	logger.debug("Couldn't find task to rescind: " + tuid);
+      }
       logplan.add(new RescindLP.DeferredRescind(tr));
     }
   }

@@ -58,6 +58,9 @@ import org.cougaar.util.Enumerator;
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 
 import java.util.*;
 
@@ -76,6 +79,8 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       this.tr = tr;
     }
   }
+
+  private static Logger logger = Logging.getLogger(RescindLP.class);
     
   //private List conflictlist = new ArrayList();
 
@@ -111,7 +116,9 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
   private void planElementAdded(PlanElement pe) {
     Task task = pe.getTask();
     if (logplan.findTask(task) == null) {
-//        System.out.println("Removing added planelement [task not found in the logplan] for " + task + " as " + pe);
+      if (logger.isDebugEnabled()) {
+	logger.debug("Removing added planelement [task not found in the logplan] for " + task + " as " + pe);
+      }
       removePlanElement(pe, true);
     }
   }
@@ -155,7 +162,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     } else if (pe instanceof Disposition) {
       // do nothing since its the end of the line
     } else {
-      System.err.println("Unknown planelement "+pe);
+      logger.error("Unknown planelement "+pe);
       Thread.dumpStack();
     }
   }
@@ -205,8 +212,8 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     //Remove info from local assets
     Asset localAsset = logplan.findAsset(at.getAsset());
     if (localAsset == null) {
-      System.err.println("RescindLP: rescinded transferred asset - " + 
-                         at.getAsset() + " - not found in logplan.");
+      logger.error("Rescinded transferred asset - " + 
+		   at.getAsset() + " - not found in logplan.");
       return;
     }
 
@@ -225,8 +232,8 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       
       HasRelationships localAssignee = (HasRelationships)logplan.findAsset(at.getAssignee());
       if (localAssignee == null) {
-        System.err.println("RescindLP: rescinded assignee - " + 
-                           at.getAssignee() + " - not found in logplan.");
+        logger.error("Rescinded assignee - " + 
+		     at.getAssignee() + " - not found in logplan.");
         return;
       }
 
@@ -346,7 +353,9 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       */
     }
     if (rsasset != null) {
-      //System.err.println("\n RESCIND REMOVEPERS called for: " + rsasset);
+      if (logger.isDebugEnabled()) {
+	logger.debug("\n RESCIND REMOVEPERS called for: " + rsasset);
+      }
       /*
       RoleScheduleImpl rsi = (RoleScheduleImpl) rsasset.getRoleSchedule();
       // if the pe had a conflict re-check the roleschedule
@@ -355,7 +364,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
       }
       */
     } else {
-      System.err.println("\n WARNING could not remove rescinded planelement");
+      logger.warn("\n Could not remove rescinded planelement");
     }
   }
   

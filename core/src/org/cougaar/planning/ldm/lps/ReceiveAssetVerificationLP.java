@@ -45,6 +45,8 @@ import org.cougaar.planning.ldm.plan.Schedule;
 import org.cougaar.planning.ldm.plan.ScheduleElement;
 
 import org.cougaar.core.util.UID;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 import org.cougaar.util.TimeSpan;
 
@@ -59,6 +61,8 @@ public class ReceiveAssetVerificationLP
   extends LogPlanLogicProvider
   implements MessageLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ReceiveAssetVerificationLP.class);
+
   public ReceiveAssetVerificationLP(LogPlanServesLogicProvider logplan,
                                     ClusterServesLogicProvider cluster) {
     super(logplan, cluster);
@@ -188,11 +192,10 @@ public class ReceiveAssetVerificationLP
             itemIDB.equals(assigneeID)) &&
           !(itemIDA.equals(assigneeID) &&
             itemIDB.equals(assetID))) {
-        System.err.println("ReceiveAssetVerificationLP: schedule element - " 
-                           + verify + 
-                           " does not match asset - " +
-                           av.getAsset() + " - and assignee - " + 
-                           av.getAssignee()); 
+        logger.error("Schedule element - " + verify + 
+		     " does not match asset - " +
+		     av.getAsset() + " - and assignee - " + 
+		     av.getAssignee()); 
         continue;
       }
       

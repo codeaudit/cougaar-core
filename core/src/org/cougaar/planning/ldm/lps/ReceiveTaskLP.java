@@ -33,6 +33,9 @@ import org.cougaar.planning.ldm.plan.Preference;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 import java.util.Collection;
 
 /**
@@ -46,6 +49,7 @@ import java.util.Collection;
 
 public class ReceiveTaskLP extends LogPlanLogicProvider implements MessageLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ReceiveTaskLP.class);
 
   public ReceiveTaskLP(LogPlanServesLogicProvider logplan,
                        ClusterServesLogicProvider cluster) {
@@ -72,7 +76,7 @@ public class ReceiveTaskLP extends LogPlanLogicProvider implements MessageLogicP
         Task existingTask = logplan.findTask(tsk);
         if (existingTask == null) {
           // only add if it isn't already there.
-          //System.err.print("!");
+	  //System.err.print("!");
           logplan.add(tsk);
         } else if (tsk == existingTask) {
           logplan.change(existingTask, changes);
@@ -90,7 +94,7 @@ public class ReceiveTaskLP extends LogPlanLogicProvider implements MessageLogicP
           }
         }
       } catch (SubscriberException se) {
-        System.err.println("Could not add Task to LogPlan: "+tsk);
+        logger.error("Could not add Task to LogPlan: "+tsk);
         se.printStackTrace();
       }
     }

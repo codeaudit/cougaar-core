@@ -54,6 +54,9 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 
 import java.util.Enumeration;
 import java.util.Collection;
@@ -69,6 +72,8 @@ public class NotificationLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
+  private static Logger logger = Logging.getLogger(NotificationLP.class);
+
   private final ClusterIdentifier self;
 
   public NotificationLP(LogPlanServesLogicProvider logplan,
@@ -115,7 +120,10 @@ public class NotificationLP
   private void checkValues(PlanElement pe, Collection changes) {
     Task task = pe.getTask();
 
-    //System.err.println( "\n" + cid + ": task = " + task );
+    if (logger.isDebugEnabled()) {
+      logger.debug("\n" + self + ": task = " + task );
+    }
+
     ((PEforCollections)pe).setNotification(false);
     if (task instanceof MPTask) {
       TaskScoreTable resultsbytask = ((MPTask)task).getComposition().calculateDistribution();
@@ -151,7 +159,11 @@ public class NotificationLP
       nn.setAllocationResult(ar);
       // set the UID of the child task for Expansion aggregation change purposes
       nn.setChildTaskUID(t.getUID());
-      if (ptuid == null) System.out.println("***DebugNotification-LP: pt is null");
+      if (ptuid == null) {
+	logger.error("createNotification: parent task UID is null for task " +
+		     t);
+      }
+
       ClusterIdentifier newDest = t.getSource();
       //ClusterIdentifier newDest = pt.getDestination();
       ClusterIdentifier newSource = self;

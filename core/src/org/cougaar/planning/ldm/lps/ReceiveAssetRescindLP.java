@@ -48,6 +48,9 @@ import org.cougaar.util.Enumerator;
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 
 
 /**
@@ -57,6 +60,7 @@ import org.cougaar.util.UnaryPredicate;
 public class ReceiveAssetRescindLP
   extends LogPlanLogicProvider implements MessageLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ReceiveAssetRescindLP.class);
 
   public ReceiveAssetRescindLP(LogPlanServesLogicProvider logplan,
                                ClusterServesLogicProvider cluster) {
@@ -81,15 +85,15 @@ public class ReceiveAssetRescindLP
   private void receiveAssetRescind(AssetRescind ar) {
     Asset localAsset = logplan.findAsset(ar.getAsset());
     if (localAsset == null) {
-      System.err.println("ReceiveAssetRescindLP: rescinded asset - " + 
-                         ar.getAsset() + " - not found in logplan.");
+      logger.error("Rescinded asset - " + ar.getAsset() + 
+		   " - not found in logplan.");
       return;
     }
 
     Asset localAssignee = logplan.findAsset(ar.getRescindee());
     if (localAssignee == null) {
-      System.err.println("ReceiveAssetRescindLP: assignee - " + 
-                         ar.getRescindee() + " - not found in logplan.");
+      logger.error("Assignee asset - " + 
+		   ar.getRescindee() + " - not found in logplan.");
       return;
     }
 

@@ -34,6 +34,9 @@ import org.cougaar.util.UnaryPredicate;
 
 import java.util.*;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 /** Watch the LogPlan and complain when obvious errors and 
  * other suspicious patterns are detected.  
  * <p>
@@ -57,7 +60,10 @@ public class ComplainingLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ComplainingLP.class);
+
   private final static String levelPROP = "org.cougaar.planning.ldm.lps.ComplainingLP.level";
+
   private static int level = 2;
 
   private final static int levelQUIET = 0;
@@ -109,7 +115,7 @@ public class ComplainingLP
     }
   }
   private void complain(String complaint, Object obj) {
-    System.err.println("Warning: "+cid+" ComplainingLP observed "+complaint);
+    logger.warn("Warning: "+cid+" ComplainingLP observed "+complaint);
     PublishHistory history = logplan.getHistory();
     if (history != null) history.dumpStacks(obj);
   }

@@ -67,7 +67,7 @@ import org.cougaar.util.log.Logging;
 
 public class ReceiveAssetLP extends LogPlanLogicProvider 
   implements MessageLogicProvider {
-  private static Logger logger = Logging.getLogger(AssetTransferLP.class);
+  private static Logger logger = Logging.getLogger(ReceiveAssetLP.class);
 
   private static TimeSpan ETERNITY = new MutableTimeSpan();
 

@@ -132,7 +132,9 @@ public class ReceiveNotificationLP
     if (pe != null) {
       propagateNotification(logplan, pe, tuid, result, childuid, changes);
     } else {
-      //System.out.println("Received notification about unknown task: "+tuid);
+      if (logger.isDebugEnabled()) {
+	logger.debug("Received notification about unknown task: "+tuid);
+      }
     }
   }
 

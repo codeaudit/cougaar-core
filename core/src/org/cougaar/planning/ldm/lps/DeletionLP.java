@@ -34,9 +34,12 @@ import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.core.util.UID;
 
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 import java.util.Enumeration;
 import java.util.Collection;
+
 
 /** RescindLogicProvider class provides the logic to capture 
  * rescinded PlanElements (removed from collection)
@@ -49,6 +52,8 @@ public class DeletionLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider
 {
+  private static Logger logger = Logging.getLogger(DeletionLP.class);
+
   private ClusterIdentifier cid;
 
   public DeletionLP(LogPlanServesLogicProvider logplan,
@@ -77,7 +82,10 @@ public class DeletionLP
               nd.setPlan(task.getPlan());
               nd.setSource(cid);
               nd.setDestination(dst);
-//                System.out.println(cid + ": sendDeletion to " + dst + " for task " + ptuid);
+	      if (logger.isDebugEnabled()) {
+		logger.debug(cid + ": sendDeletion to " + dst + " for task " + ptuid);
+	      }
+
               logplan.sendDirective(nd);
             }
           }
