@@ -139,7 +139,7 @@ import java.beans.Beans;
  * </pre>
  */
 public class Node extends ContainerSupport
-implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
+implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
   private NodeIdentifier myNodeIdentity_ = null;
 
@@ -180,6 +180,8 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
       launch(args);
     }
   }
+
+  
 
   static public void launch(String[] args) {
     // display the version info
@@ -501,6 +503,19 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI
     return new NodeProxy();
   }
 
+  public void serviceRevoked(ServiceRevokedEvent e) {}; 
+
+  public void addStreamToRootLogging(OutputStream logStream) {
+      ServiceBroker sb = getServiceBroker();
+      LoggingControlService lcs=(LoggingControlService)sb.getService(this,LoggingControlService.class,this);
+      lcs.addOutputType("root",lcs.STREAM,logStream);
+  }
+
+public boolean removeStreamFromRootLogging(OutputStream logStream) {
+      ServiceBroker sb = getServiceBroker();
+      LoggingControlService lcs=(LoggingControlService)sb.getService(this,LoggingControlService.class,this);
+      return lcs.removeOutputType("root",lcs.STREAM,logStream);
+  }
 
   /**
    *   @return String the string object containing the local DNS name
