@@ -28,13 +28,15 @@ database server. <a href="http://www.postgreSQL.org/">http://www.postgreSQL.org/
 
 <tr>
 <td>
-NetComponents.jar
+crimson.jar
 </td>
 <td>
-?
+1.1.3
 </td>
 <td>
-<a href="http://www.savarese.org/oro/software/NetComponents.html">http://www.savarese.org/oro/software/NetComponents.html</a>
+Standards-based implementation of JAXP: just the crimson.jar part.
+	  Will eventually be superseded by xerces2.
+<a href="xml.apache.org/crimson/">http://xml.apache.org/crimson/</a>
 </td>
 </tr>
 
@@ -43,11 +45,11 @@ NetComponents.jar
 quoSumo.jar
 </td>
 <td>
-?
+n/a
 </td>
 <td>
-couggaar is the distribution point for this jar.  It contains all the classes
-required to run quo, qos.
+Cougaar is the distribution point for this jar.  It contains all the classes
+required to run quo, qos. 
 </td>
 </tr>
 
@@ -56,7 +58,7 @@ required to run quo, qos.
 activation.jar
 </td>
 <td>
-?
+1.0.1
 </td>
 <td>
 Java Activation Framework (JAF)
@@ -94,14 +96,14 @@ mainline.  Check the CSMART tree for changes.
 
 <tr>
 <td>
-j2ee.jar
+ejb.jar
 </td>
 <td>
-1.3
+1.1
 </td>
 <td>
-Java2 Enterprise Edition
-<a href="http://java.sun.com/j2ee/">http://java.sun.com/j2ee/</a>
+Final release of ejb
+<a href="http://java.sun.com/products/ejb/index.html">http://java.sun.com/products/ejb/index.html</a>
 </td>
 </tr>
 
@@ -160,6 +162,21 @@ jce1_2-do.jar
 
 <tr>
 <td>
+jdbc2_0-stdext.jar
+</td>
+<td>
+2.0
+</td>
+<td>
+JDBC standard extensions (javax.sql) unbundled from j2ee.  Will be
+	  incorporated into jdk1.4.
+<a href="http://java.sun.com/products/jdbc/index.html">http://java.sun.com/products/jdbc/index.html</a>
+</td>
+</tr>
+
+
+<tr>
+<td>
 jess50.jar
 </td>
 <td>
@@ -176,10 +193,10 @@ Java Expert System Shell
 jms.jar
 </td>
 <td>
-?
+1.0.2b
 </td>
 <td>
-Java Message Service API
+Java Message Service API.
 <a href="http://java.sun.com/products/jms/">http://java.sun.com/products/jms/</a>
 </td>
 </tr>
@@ -199,13 +216,14 @@ JPython
 
 <tr>
 <td>
-jsdk.jar
+servlet.jar
 </td>
 <td>
-?
+3.2.3
 </td>
 <td>
-Java Servlet Development kit (now Jakarta Tomcat)
+Java Servlet Development kit (now Jakarta Tomcat).  Includes Java
+	  Servlet 2.2 and JSP 1.1 specifications.
 <a href="http://jakarta.apache.org/tomcat/index.html">http://jakarta.apache.org/tomcat/index.html</a>
 </td>
 </tr>
@@ -240,9 +258,10 @@ log4j.jar
 mail.jar
 </td>
 <td>
-?
+1.2
 </td>
 <td>
+Java Mail API with all providers.
 <a href="http://java.sun.com/products/javamail/">http://java.sun.com/products/javamail/</a>
 </td>
 </tr>
@@ -252,11 +271,11 @@ mail.jar
 mm-mysql-2.jar
 </td>
 <td>
-2.0.3
+2.0.7
 </td>
 <td>
 (required for runtime only)
-<a href="http://sourceforge.net/projects/mmmysql/">http://sourceforge.net/projects/mmmysql/</a>
+<a href="http://mmmysql.sourceforge.net/">http://mmmysql.sourceforge.net/</a>
 </td>
 </tr>
 
@@ -304,11 +323,11 @@ Partnet driver.
 silk.jar
 </td>
 <td>
-?
+4.0.18
 </td>
 <td>
 SILK/JScheme
-<a href="http://www.cs.brandeis.edu/silk/jscheme/index.html">http://www.cs.brandeis.edu/silk/jscheme/index.html</a>
+<a href="http://sourceforge.net/projects/silk/">http://sourceforge.net/projects/silk/</a>
 </td>
 </tr>
 
@@ -329,9 +348,10 @@ vgj.jar
 xalan.jar
 </td>
 <td>
-?
+2.2.D11
 </td>
 <td>
+Currently also requires xalanj1compat.jar.
 <a href="http://xml.apache.org/xalan-j/index.html">http://xml.apache.org/xalan-j/index.html</a>
 </td>
 </tr>
@@ -341,10 +361,11 @@ xalan.jar
 xerces.jar
 </td>
 <td>
-3.1.1
+1.4.3
 </td>
 <td>
-<a href="http://xml.apache.org/xerces2-j/index.html">http://xml.apache.org/xerces2-j/index.html</a>
+Apache xerces-j version 1.
+<a href="http://xml.apache.org/xerces-j/index.html">http://xml.apache.org/xerces-j/index.html</a>
 </td>
 </tr>
 
@@ -353,10 +374,10 @@ xerces.jar
 xmlparserv2.jar
 </td>
 <td>
-version (For Oracle 9i?)
+Oracle 9i?
 </td>
 <td>
-oracle's xml parser
+Oracle's xml parser - will be deprecated in favor of xerces.
 <a href="http://otn.oracle.com/software/content.html ">http://otn.oracle.com/software/content.html </a>
 (select "Oracle XML for Java")
 </td>
