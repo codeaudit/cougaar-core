@@ -78,8 +78,6 @@ public abstract class MetricsCondition implements Condition {
     Metric testMetric = getMetric();
     if (testMetric == null) {
       throw new IllegalArgumentException("Metric has no value:" + metricsPath);
-    } else {
-      System.out.println(this + " = " + getValue());
     }
   }
 
