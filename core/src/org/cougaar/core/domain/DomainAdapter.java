@@ -59,23 +59,9 @@ public abstract class DomainAdapter
 
   private String myDomainName;
 
-  /** 
-   * Expecting a List containing one non-null String that
-   * will be used as the domain name.
-   */
-  public void setParameter(Object o) {
-    myDomainName = (String) (((List) o).get(0));
-    if (myDomainName == null) {
-      throw new IllegalArgumentException("Null domain name");
-    }
-    // is this necessary?
-    myDomainName = myDomainName.intern();
-  }
 
   /** returns the Domain name **/
-  public String getDomainName() {
-    return myDomainName;
-  }
+  public abstract String getDomainName();
 
   public void setBindingSite(BindingSite bindingSite) {
     if (bindingSite instanceof DomainBindingSite) {
@@ -170,6 +156,28 @@ public abstract class DomainAdapter
           e.printStackTrace();
         }
       }
+    }
+  }
+
+  /** 
+   * setParameter - Should only be used by the binding utilities when 
+   * loading a domain from a ComponentDescription. Used as a sanity check
+   * to ensure that the specified domain name matches the domain name for
+   * the class.
+   *
+   * @param Object Expecting a List containing one non-null String that 
+   * specifies the domainName. 
+   */
+  public void setParameter(Object o) {
+    String domainName = (String) (((List) o).get(0));
+    if (domainName == null) {
+      throw new IllegalArgumentException("Null domain name");
+    }
+    
+    if (domainName != getDomainName()) { 
+      myLoggingService.error("Invalid Domain name parameter - " +
+                             " specified " + domainName + 
+                             " should be " + getDomainName());
     }
   }
 
