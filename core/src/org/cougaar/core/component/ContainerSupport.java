@@ -249,7 +249,7 @@ public abstract class ContainerSupport
     synchronized (binderFactories) {
       if (binderFactories.size()>0) return null;
 
-      return new BinderFactoryBinder(getBinderFactoryProxy(), c);
+      return new BinderFactoryBinder(getContainerProxy(), c);
     }
   }
 
@@ -268,6 +268,6 @@ public abstract class ContainerSupport
    * simple proxy for the container so that BinderFactory instances
    * cannot downcast the object to get additional privileges.
    **/
-  abstract protected ContainerAPI getBinderFactoryProxy();
+  abstract protected ContainerAPI getContainerProxy();
 
 }

@@ -523,7 +523,7 @@ class MessageTransportServerImpl
     }
 
 
-  public ContainerAPI getBinderFactoryProxy() {
+  public ContainerAPI getContainerProxy() {
     return this;
   }
 

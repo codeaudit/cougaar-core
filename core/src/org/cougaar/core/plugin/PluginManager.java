@@ -97,7 +97,7 @@ public class PluginManager
         }
       };
 
-  protected ContainerAPI getBinderFactoryProxy() {
+  protected ContainerAPI getContainerProxy() {
     return containerProxy;
   }
 

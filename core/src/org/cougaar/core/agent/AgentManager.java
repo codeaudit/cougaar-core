@@ -70,7 +70,7 @@ public class AgentManager
     return AgentBindingSite.class;
   }
 
-  protected ContainerAPI getBinderFactoryProxy() {
+  protected ContainerAPI getContainerProxy() {
     return this;
   }
 

@@ -18,7 +18,7 @@
 	fully-capable non-pluginadapter implementations.
 
 	* ContainerSupport
-	Make getBinderFactoryProxy abstract, forcing concrete classes to
+	Make getContainerProxy abstract, forcing concrete classes to
 	implement it explicitly.  This makes the default behavior much
 	more likely to be secure. Matching updates in existing
 	containers. 
