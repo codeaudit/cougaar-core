@@ -35,8 +35,10 @@ import org.cougaar.util.log.Logging;
 
 class ThreadPool 
 {
-
+    
     static final class PooledThread extends Thread {
+	private static final long MAX_CONTINUATION_TIME = 100;
+
 	private SchedulableObject schedulable;
 
 	private boolean in_use = false;
@@ -44,8 +46,6 @@ class ThreadPool
 	/** reference to our thread pool so we can return when we die **/
 	private ThreadPool pool;
   
-	/** our runnable object, or null if we haven't been assigned one **/
-	private Runnable runnable = null;
   
 	/** Has this thread already be actually started yet?
 	 * access needs to be guarded by runLock.
@@ -60,11 +60,8 @@ class ThreadPool
 	 **/
 	private Object runLock = new Object();
 
-	private long start_time;
+	private long start_time; // per schedulable run
 
-	private void setRunnable(Runnable r) {
-	    runnable = r;
-	}
 
 	SchedulableObject getSchedulable() {
 	    return schedulable;
@@ -83,23 +80,49 @@ class ThreadPool
 	}
 
 	public final void run() {
+	    SchedulableObject last_schedulable = null;
 	    while (true) {
 		synchronized (runLock) {
-		    claim();
-		    if (runnable != null) {
+		    long continuation_start = System.currentTimeMillis();
+		    int continuation_count = 0;
+		    while (schedulable != null) {
+			start_time = System.currentTimeMillis();
+			continuation_count++;
+			if (pool.logger.isInfoEnabled() &&
+			    continuation_count % 50 == 0)
+			    pool.logger.info(this +" continuation count = "+
+					     continuation_count);
+			    
+			    
+			last_schedulable = schedulable;
+			claim();
 			try {
-			    runnable.run();
+			    schedulable.run();
 			} catch (Throwable any_ex) {
-			    pool.logger.error("Uncaught exception in pooled thread ("+runnable+")", any_ex);
+			    pool.logger.error("Uncaught exception in pooled thread ("
+					      +schedulable+")", 
+					      any_ex);
+			}
+
+			isRunning = false;
+			long elapsed = System.currentTimeMillis() - 
+			    continuation_start;
+			if (elapsed < MAX_CONTINUATION_TIME) {
+			    schedulable = reclaim(true);
+			} else {
+			    if (pool.logger.isInfoEnabled())
+				pool.logger.info(this +
+						 "Ending continuation, count = " 
+						 +continuation_count);
+
+			    reclaim(false);
+			    schedulable = null; // exit continuation
 			}
 		    }
 
-		    runnable = null;
-		    isRunning = false;
-		    reclaim();
-		    Reclaimer.push(schedulable);
-		    
-		    schedulable = null;
+		    in_use = false; // thread is now reusable
+		    Reclaimer.push(last_schedulable); // release rights
+
 		    try {
 			runLock.wait();       // suspend
 		    } catch (InterruptedException ie) {}
@@ -111,15 +134,13 @@ class ThreadPool
 	    throw new RuntimeException("You can't call start() on a PooledThread");
 	}
 
-	void start(SchedulableObject schedulable) 
+	void start_running() 
 	    throws IllegalThreadStateException 
 	{
 	    synchronized (runLock) {
 		if (isRunning) 
 		    throw new IllegalThreadStateException("PooledThread already started: "+
 							  schedulable);
-		this.schedulable = schedulable;
-		start_time = System.currentTimeMillis();
 		isRunning = true;
 
 		if (!isStarted) {
@@ -131,10 +152,16 @@ class ThreadPool
 	    }
 	}
 
-	private void reclaim() {
-	    schedulable.reclaim();
-	    if (pool.logger.isInfoEnabled()) setName( "Reclaimed");
-	    in_use = false;
+	private SchedulableObject reclaim(boolean reuse) {
+	    SchedulableObject new_schedulable = schedulable.reclaim(reuse);
+	    if (pool.logger.isInfoEnabled()) {
+		if (new_schedulable != null) {
+		    setName(new_schedulable.getName());
+		} else {
+		    setName( "Reclaimed");
+		}
+	    }
+	    return new_schedulable;
 	}
     }
     
@@ -190,7 +217,7 @@ class ThreadPool
 	return group;
     }
 
-    PooledThread getThread(Runnable runnable, String name) {
+    PooledThread getThread(SchedulableObject schedulable, String name) {
 	PooledThread thread = null;
 	PooledThread candidate = null;
 
@@ -201,10 +228,12 @@ class ThreadPool
 		    thread = constructReusableThread();
 		    pool[i] = thread;
 		    thread.in_use = true;
+		    thread.schedulable = schedulable;
 		    break;
 		} else if (!candidate.in_use) {
 		    thread = candidate;
 		    thread.in_use = true;
+		    thread.schedulable = schedulable;
 		    break;
 		}
 	    }
@@ -217,6 +246,7 @@ class ThreadPool
 		    if (!candidate.in_use) {
 			thread = candidate;
 			thread.in_use = true;
+			thread.schedulable = schedulable;
 			break;
 		    }
 		}
@@ -224,6 +254,7 @@ class ThreadPool
 		    // None in the list either. Make one and add it,
 		    thread = constructReusableThread();
 		    thread.in_use = true;
+		    thread.schedulable = schedulable;
 		    list_pool.add(thread);
                 }
 	    }
@@ -234,7 +265,6 @@ class ThreadPool
 	    throw new RuntimeException("Exceeded ThreadPool max");
 	}
 
-	thread.setRunnable(runnable);
 	if (logger.isInfoEnabled()) thread.setName(name);
 
 	return thread;

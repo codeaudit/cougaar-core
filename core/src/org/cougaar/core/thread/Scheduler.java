@@ -257,8 +257,16 @@ public class Scheduler
     }
 
     // Called within the thread itself as the last thing it does.
-    void threadReclaimed(SchedulableObject thread) {
+    SchedulableObject threadReclaimed(SchedulableObject thread,
+				      boolean reuse)
+    {
 	listenerProxy.notifyEnd(thread);
+	if (reuse) 
+	    synchronized(this) {
+		return (SchedulableObject) pendingThreads.next();
+	    }
+	else
+	    return null;
     }
 
 
@@ -278,7 +286,7 @@ public class Scheduler
 	}
     }
 
-    void decrementRunCount(Scheduler consumer, SchedulableObject thread) {
+    void decrementRunCount(Scheduler consumer) {
 	synchronized (this) {
 	    --runningThreadCount;
 	    if (runningThreadCount < 0) {
@@ -324,10 +332,10 @@ public class Scheduler
 	return false;
     }
 
-    synchronized void releaseRights(Scheduler consumer, SchedulableObject thread) {
+    synchronized void releaseRights(Scheduler consumer) {
 	// If the max has recently decreased it may be lower than the
 	// running count.  In that case don't do a handoff.
-	decrementRunCount(consumer, thread);
+	decrementRunCount(consumer);
 	SchedulableObject handoff = null;
 
 	if (runningThreadCount < maxRunningThreads) {

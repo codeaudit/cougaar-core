@@ -26,6 +26,9 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -57,6 +60,11 @@ final class SchedulableObject implements Schedulable
         this.pool = treeNode.getPool(lane);
         this.scheduler = treeNode.getScheduler(lane);
         this.runnable = runnable;
+	if (runnable == null) {
+	    Logger logger = Logging.getLogger(this);
+	    if (logger.isWarnEnabled())
+		logger.warn(consumer + " gave a null Runnable");
+	}
         if (name == null)
             this.name =  pool.generateName();
         else
@@ -65,6 +73,11 @@ final class SchedulableObject implements Schedulable
 	this.start_count = 0;
     }
 
+
+    void run()
+    {
+	runnable.run();
+    }
 
     public int getLane()
     {
@@ -143,34 +156,41 @@ final class SchedulableObject implements Schedulable
 
 
 
-    void reclaim() {
+    SchedulableObject reclaim(boolean reuse) {
         // Notify listeners
+	boolean restart = false;
         synchronized (this) { 
             thread = null;
+	    restart = --start_count > 0;
         }
-        scheduler.threadReclaimed(this);
-    }
-
-    // Callback from the Reclaimer.
-    void reclaimNotify() {
-        scheduler.releaseRights(scheduler, this);
 
 	// If start_count > 1, start() was called while the
 	// Schedulable was running.  Now that it's finished,  start it
 	// again. 
-	boolean restart = false;
-	synchronized (this) {
-	    restart = --start_count > 0;
-	}
         if (restart) Starter.push(this);
+        return scheduler.threadReclaimed(this, reuse);
+    }
+
+    // Callback from the Reclaimer.
+    void reclaimNotify() {
+        scheduler.releaseRights(scheduler);
+
+// 	// If start_count > 1, start() was called while the
+// 	// Schedulable was running.  Now that it's finished,  start it
+// 	// again. 
+// 	boolean restart = false;
+// 	synchronized (this) {
+// 	    restart = --start_count > 0;
+// 	}
+//         if (restart) Starter.push(this);
     }
 
     void thread_start() {
         synchronized (this) {
             start_count = 1; // forget any extra intervening start() calls
             queued = false;
-            thread = pool.getThread(runnable, name);
-            thread.start(this);
+            thread = pool.getThread(this, name);
+            thread.start_running();
         }
     }
 
