@@ -41,8 +41,6 @@ import org.cougaar.planning.ldm.asset.PropertyGroupFactory;
 import org.cougaar.planning.ldm.asset.TypeIdentificationPG;
 import org.cougaar.planning.ldm.asset.TypeIdentificationPGImpl;
 
-import org.cougaar.core.domain.Registry;
-
 /**
  *   This is the class that is responsible for generating a LDM object 
  * based upon a Data Dictionary string 
