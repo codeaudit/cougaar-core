@@ -120,7 +120,7 @@ public class AssetAssignmentImpl extends DirectiveImpl
       toAssetDescr = assigneeAsset.toString();
 
 
-    return "<AssetAssignment "+assetDescr+", "+ scheduleDescr + 
+    return "<AssetAssignment of " + assetDescr+", " + scheduleDescr + 
       " to " + toAssetDescr + ">" + super.toString();
   }
 
