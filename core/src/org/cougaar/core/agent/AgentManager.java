@@ -91,102 +91,6 @@ public class AgentManager
   
   public void requestStop() { }
 
- /**
-  * Add a cluster
-  */
-  public boolean add(Object obj) {
-    //System.err.print("AgentManager adding Cluster");
-
-    if (!(super.add(obj))) {
-      // unable to add
-      return false;
-    }
-
-    // send the Agent an "initialized" message
-    //
-    // maybe we can replace this with a more direct API?
-
-    Agent agent;
-    if ((obj instanceof ComponentDescription) ||
-        (obj instanceof StateTuple)) {
-      // get the description
-      ComponentDescription desc;
-      if (obj instanceof ComponentDescription) {
-        desc = (ComponentDescription)obj;
-      } else {
-        desc = ((StateTuple)obj).getComponentDescription();
-      }
-      if (!("Node.AgentManager.Agent".equals(desc.getInsertionPoint()))) {
-        return true;
-      }
-      // use the description to find the AgentBinder that we just 
-      //   added -- is there a better way to do this?
-      AgentBinder agentBinder = null;
-      for (Iterator iter = super.boundComponents.iterator(); ;) {
-        if (!(iter.hasNext())) {
-          // unable to find our own child?
-          return false;
-        }
-        Object oi = iter.next();
-        if (!(oi instanceof BoundComponent)) {
-          continue;
-        }
-        BoundComponent bci = (BoundComponent)oi;
-        Object cmpi = bci.getComponent();
-        if (!(desc.equals(cmpi))) {
-          continue;
-        }
-        Binder bi = bci.getBinder();
-        if (bi instanceof AgentBinder) {
-          agentBinder = (AgentBinder)bi;
-          break;
-        }
-      }
-
-      // get the Cluster itself -- this is a hack!
-      agent = agentBinder.getAgent();
-    } else if (obj instanceof Agent) {
-      agent = (Agent)obj;
-    } else {
-      // unable to hookup?
-      return false;
-    }
-
-    // get the Cluster itself -- this is a hack!
-    if (!(agent instanceof ClusterServesClusterManagement)) {
-      return false;
-    }
-    ClusterServesClusterManagement cluster = 
-      (ClusterServesClusterManagement)agent;
-
-    //System.out.println("Cluster: "+cluster);
-
-    // hookup the Cluster
-    return hookupCluster(cluster);
-  }
-
-  private boolean hookupCluster(ClusterServesClusterManagement cluster) {
-     ClusterIdentifier cid = cluster.getClusterIdentifier();
-     String cname = cid.toString();
-     // tell the cluster to proceed.
-     try {
-       ClusterInitializedMessage m = new ClusterInitializedMessage();
-       m.setOriginator(cid);
-       m.setTarget(cid);
-       cluster.receiveMessage(m);
-
-       // register cluster with Node's ExternalNodeActionListener
-       getBindingSite().registerCluster(cluster);
-
-     } catch (Exception e) {
-       System.err.println("\nUnable to initialize and register cluster["+cluster+"]  "+e);
-       e.printStackTrace();
-     }
-     
-     // if we are all the way to this point return true
-     return true;
-  }
-
   /**
    * Recursively print the result of "agent.getState()".
    * <p>
@@ -398,6 +302,14 @@ public class AgentManager
     return getBindingSite().getName();
   }
 
+  private void registerAgent(Agent agent) {
+    if (agent instanceof ClusterServesClusterManagement) {
+      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
+    } else {
+      System.err.println("Warning: attempted to registerAgent of non-cluster.");
+    }
+  }
+
 
   //
   // support classes
@@ -417,7 +329,8 @@ public class AgentManager
                                              BindingSite {
 
     public String getName() {return AgentManager.this.getName(); }
-    
+    public void registerAgent(Agent agent) { AgentManager.this.registerAgent(agent); }
+
     // BindingSite
     public ServiceBroker getServiceBroker() {
       return AgentManager.this.getServiceBroker();

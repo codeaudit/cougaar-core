@@ -429,6 +429,13 @@ public class ClusterImpl
     }
 
     super.start();
+
+    // start the message queue
+    startQueueHandler();
+
+    // register with node - temporary hack.
+    getBindingSite().registerAgent(this);
+
   }
 
 
@@ -653,12 +660,8 @@ public class ClusterImpl
               "Unsupported ComponentMessage: "+message);
         }
       } else if (message instanceof ClusterMessage) {
-        if (message instanceof ClusterInitializedMessage ) {
-          receiveClusterInitializedMessage((ClusterInitializedMessage) message);
-        } else {
-          // internal message queue
-          getQueueHandler().addMessage((ClusterMessage)message);
-        }
+        // internal message queue
+        getQueueHandler().addMessage((ClusterMessage)message);
       } else {
         System.err.println("\n"+this+": Received unhandled Message: "+message);
       }
@@ -667,11 +670,6 @@ public class ClusterImpl
       e.printStackTrace();
     }
   }
-
-  void receiveClusterInitializedMessage(ClusterInitializedMessage cim) {
-    startQueueHandler();
-  }
-
 
   /** Receiver for in-band messages (queued by QueueHandler)
    */

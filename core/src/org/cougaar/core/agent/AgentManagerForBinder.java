@@ -27,7 +27,6 @@ import org.cougaar.core.component.*;
 /** This is the interface presented to an AgentBinder from the AgentManager.
  **/
 public interface AgentManagerForBinder
-  extends ContainerAPI
+  extends AgentBindingSite, ContainerAPI
 {
-  String getName();
 }

@@ -1,3 +1,10 @@
+2001-09-05  Michael Thome  <mthome@bbn.com>
+
+	* ClusterImpl, AgentBinder, AgentBindingSite, AgentManager, AgentManagerForBinder
+	Make Agent fully responsible for hoooking itself up correctly,
+	rather than AgentManager doing it.  As a side effect, this allows
+	the use of combining Binders (e.g. "wrapping" binders) of Agents.
+
 2001-09-05  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NSImpl.java:

@@ -23,6 +23,7 @@ package org.cougaar.core.agent;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
+import org.cougaar.core.agent.*;
 
 /** The standard Binder for Agents.
  **/
@@ -52,5 +53,5 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
   }
 
   public String getName() {return getAgentManager().getName(); }
-
+  public void registerAgent(Agent agent) { getAgentManager().registerAgent(agent); }
 }
