@@ -44,7 +44,6 @@ import java.security.cert.*;
  * <pre>
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
- *  $CLASSPATH
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
  *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
@@ -59,7 +58,7 @@ import java.security.cert.*;
  * main(String[]) method (searched for in that order).
  *
  * The Boostrapper's classloader will not load any classes which
- * start with "java.", "javax.", "sun.", "com.sun." or "net.jini.".  This
+ * start with "java.". This
  * list may be extended by supplying a -Dorg.cougaar.core.society.bootstrapper.exclusions=foo.:bar.
  * System property.  The value of the property should be a list of
  * package prefixes separated by colon (":") characters.
@@ -142,7 +141,9 @@ public class Bootstrapper
     String base = System.getProperty("org.cougaar.install.path");
 
     accumulateClasspath(l, System.getProperty("org.cougaar.class.path"));
-    accumulateClasspath(l, System.getProperty("java.class.path"));
+    // no longer accumulate classpath
+    //accumulateClasspath(l, System.getProperty("java.class.path"));
+    // we'll defer to system's classpath if we don't find it anywhere
     accumulateJars(l, new File(base,"lib"));
     accumulateJars(l, new File(base,"plugins"));
 
@@ -277,11 +278,12 @@ public class Bootstrapper
   static class BootstrapClassLoader extends URLClassLoader {
     private static final List exclusions = new ArrayList();
     static {
-      exclusions.add("java.");
-      exclusions.add("javax.");
-      exclusions.add("com.sun.");
-      exclusions.add("sun.");
-      exclusions.add("net.jini.");
+      exclusions.add("java.");  // avoids javaiopatch.jar
+      // let base do it instead
+      //exclusions.add("javax.");
+      //exclusions.add("com.sun.");
+      //exclusions.add("sun.");
+      //exclusions.add("net.jini.");
       String s = System.getProperty("org.cougaar.bootstrapper.exclusions");
       if (s != null) {
         List extras = explode(s, ':');

@@ -1,3 +1,11 @@
+2001-11-07  Michael Thome  <mthome@bbn.com>
+
+	* org.cougaar.core.society.Bootstrapper
+	Changed rules for the bootstrap classloader to avoid the whole
+	package-prefix exclusion-list mess.  Essentially, the classloader
+	will attempt to load classes from "discovered" jars and then defer
+	to the system classloader to try to find everything else.
+
 2001-11-02  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBProperties.java (Repository): Remove dbspec
