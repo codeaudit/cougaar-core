@@ -198,6 +198,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             String componentClass = getNonNullString(rs, 2, query);
             String componentId = getNonNullString(rs, 3, query);
             String insertionPoint = getNonNullString(rs, 4, query);
+            String priority = getNonNullString(rs, 5, query);
             Statement stmt2 = conn.createStatement();
             substitutions.put(":component_id:", componentId);
             String query2 = dbp.getQuery("queryComponentParams",  substitutions);
@@ -217,7 +218,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
                                        vParams,
                                        null,  // certificate
                                        null,  // lease
-                                       null); // policy
+                                       null, // policy
+                                       ComponentDescription.parsePriority(priority));
             componentDescriptions.add(desc);
             rs2.close();
             stmt2.close();
@@ -230,6 +232,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             for (int i = 0; i < result.length; i++) {
               StringBuffer buf = new StringBuffer();
               buf.append(result[i].getInsertionPoint());
+              if(result[i].getPriority() != ComponentDescription.PRIORITY_STANDARD) {
+                buf.append("(");
+                buf.append(ComponentDescription.priorityToString(result[i].getPriority()));
+                buf.append(") ");
+
+              }
               buf.append("=");
               buf.append(result[i].getClassname());
               Vector params = (Vector) result[i].getParameter();
