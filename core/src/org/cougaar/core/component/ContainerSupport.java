@@ -77,7 +77,6 @@ public abstract class ContainerSupport
     if (childServiceBroker != null) {
       throw new IllegalArgumentException("ServiceBroker already set");
     }
-    System.err.println("Setting ServiceBroker of "+this+" to "+sb);
     childServiceBroker = sb;
   }
 
