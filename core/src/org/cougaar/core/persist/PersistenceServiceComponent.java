@@ -97,14 +97,20 @@ import org.cougaar.util.log.Logging;
  * values from later versions of the objects.  
  *
  * @property org.cougaar.core.persistence.class
- * Specify the
- * persistence classes to be used. The value consists of one or more
- * elements separated by commas. Each element specifies one
- * persistence plugin and consists of the name of the class of the
- * plugin, its name, and zero or more parameters all separated by
- * colons. The interpretation of the parameters depends on the plugin
- * so see the documentation of the individual plugin classes for
- * details.
+ * Specify the persistence classes to be used (if persistence is enabled).
+ * The value consists of one or more elements separated by commas,
+ * where element specifies a persistence class name and zero
+ * or more semi-colon-separated parameters for that class.
+ * For example, the default persistence class is:<br>
+ * &nbsp;&nbsp;-Dorg.cougaar.core.persist.class=org.cougaar.core.persist.FilePersistence\;P<br>
+ * Here is another example:<br>
+ * &nbsp;&nbsp;-Dorg.cougaar.core.persist.class=org.cougaar.core.persist.DummyPersistence\;dummy<br>
+ * Multiple classes can be specified with the "," separator, e.g.:<br>
+ * &nbsp;&nbsp;-Dorg.cougaar.core.persist.class=Alpha\;a1\;a2\;a3,Beta\;b1\;b2<br>
+ * where class Alpha is passed [a1, a2, a3] and Beta is passed [b1, b2].<br>
+ * The interpretation of the parameters depends on the persistence
+ * class, so see the documentation of the individual plugin classes
+ * for details.
  *
  * @property org.cougaar.core.persistence.archivingDisabled
  * Set true
