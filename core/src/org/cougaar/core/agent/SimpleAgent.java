@@ -72,7 +72,6 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.TopologyEntry; // inlined
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.TopologyWriterService;
@@ -180,8 +179,6 @@ public class SimpleAgent
   private ServiceProvider myMessageSwitchSP;
 
   private BlackboardForAgent myBlackboardService;
-
-  private NamingService myNamingService;
 
   // map of agent name to most recently observed incarnation, used
   // to detect the restart of remote agents, which requires a
@@ -656,13 +653,6 @@ public class SimpleAgent
       sb.getService(this, BlackboardForAgent.class, null);
     if (myBlackboardService == null) {
       throw new RuntimeException("Couldn't get BlackboardForAgent!");
-    }
-
-    // get naming service
-    myNamingService = (NamingService) 
-      sb.getService(this, NamingService.class, null);
-    if (myNamingService == null) {
-      throw new RuntimeException("Couldn't get NamingService!");
     }
   }
 
