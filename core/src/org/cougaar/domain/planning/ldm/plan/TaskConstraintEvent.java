@@ -101,4 +101,12 @@ public abstract class TaskConstraintEvent implements SettableConstraintEvent
     Preference pref = new PreferenceImpl(event, sf);
     task.setPreference(pref);
   }
+  /**
+   * setValue sets the aspect value. To be used on a Constrained task
+   * to set the aspect value to a value that will satisfy constraints
+   **/
+  public void setValue(double value) {
+    setValue(value, Constraint.COINCIDENT, 0.0);
+  }
+
 }

@@ -1,11 +1,11 @@
-/** New interface as part of new Constraint API 
+/** New interface as part of new Constraint API
  * containing setValue method to adjust aspect value
  * of constrained task
  **/
 
 package org.cougaar.domain.planning.ldm.plan;
 
-public interface SettableConstraintEvent 
+public interface SettableConstraintEvent
 	extends ConstraintEvent
 {
   /**
@@ -21,4 +21,10 @@ public interface SettableConstraintEvent
    * side always has a failing score.
    **/
   void setValue(double value, int constraintOrder, double slope);
+  /**
+   * Sets (preferences for) the aspect value needed to satisfy the
+   * constraint placed on the task of this event.
+   * @param value the constraining value
+   **/
+  void setValue(double value);
 }
