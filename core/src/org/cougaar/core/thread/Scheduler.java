@@ -195,8 +195,7 @@ public class Scheduler
     synchronized void decrementRunCount(Scheduler consumer) {
 	--runningThreadCount;
 	if (runningThreadCount < 0) {
-	    if (getTreeNode().getParent() == null ||
-		CougaarThread.Debug)
+	    if (getTreeNode().getParent() == null || CougaarThread.Debug)
 		System.err.println("Thread account oddity: " +this+ 
 				   " thread count is " +
 				   runningThreadCount);
@@ -238,7 +237,7 @@ public class Scheduler
 	decrementRunCount(consumer);
 	SchedulableObject handoff = null;
 
-	if (runningThreadCount <= maxRunningThreads) {
+	if (runningThreadCount < maxRunningThreads) {
 	    handoff = getNextPending();
 	    if (handoff != null) handoff.thread_start();
 	} else {
