@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashSet;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 
@@ -89,22 +90,25 @@ class QuiescenceState {
   }
 
   public boolean isQuiescent() {
-    return nonQuiescenceCount == 0;
+    return blockers.isEmpty();
   }
 
-  public void setQuiescent(boolean isQuiescent) {
+  public void setQuiescent(boolean isQuiescent, String requestor) {
     if (isQuiescent) {
-      nonQuiescenceCount--;
+      removeBlocker(requestor);
       if (logger.isDetailEnabled()) {
-        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
-      } else if (nonQuiescenceCount == 0 && logger.isDebugEnabled()) {
+        logger.detail("nonQuiescentCount is " + blockers.size() + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
+	if (! blockers.isEmpty())
+	  logger.detail(me + " Blockers: " + getBlockersString());
+      } else if (blockers.isEmpty() && logger.isDebugEnabled()) {
         logger.debug(me + " is quiescent");
       }
     } else {
-      nonQuiescenceCount++;
+      addBlocker(requestor);
       if (logger.isDetailEnabled()) {
-        logger.detail("nonQuiescenceCount is " + nonQuiescenceCount + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
-      } else if (nonQuiescenceCount == 1 && logger.isDebugEnabled()) {
+        logger.detail("nonQuiescentCount is " + blockers.size() + " for " + (enabled ? "" : "disabled ") + (isAlive ? "" : "dead ") + me);
+	logger.detail(me + " Blockers: " + getBlockersString());
+      } else if (! blockers.isEmpty() && logger.isDebugEnabled()) {
         logger.debug(me + " is not quiescent");
       }
     }
@@ -151,9 +155,30 @@ class QuiescenceState {
     return oldMap;
   }
 
+
+  private boolean addBlocker(String blocker) {
+    // if not already in blockers list, add it.
+    // If we added it, return true. Else false.
+    return blockers.add(blocker);
+  }
+
+  private boolean removeBlocker(String blocker) {
+    // if present, remove blocker. Return true if removed
+    return blockers.remove(blocker);
+  }
+
+  public String getBlockersString() {
+    // Iterate thru blocker list, producing a String
+    return blockers.toString();
+  }
+
+  // RFE 3760: Add a Collection of Strings - blockers of quiescence.
+  // FIXME: Synchronize this object? Or where?
+  private Set blockers = new HashSet();
+
   private Map incomingMessageNumbers = new HashMap(13);
   private Map outgoingMessageNumbers = new HashMap(13);
-  private int nonQuiescenceCount = 0;
+  //  private int nonQuiescenceCount = 0;
   private MessageAddress me;
   private boolean enabled = false;
   private Logger logger;

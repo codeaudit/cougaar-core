@@ -240,8 +240,8 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     checkQuiescence();
   }
 
-  private synchronized void setQuiescent(QuiescenceState quiescenceState, boolean isAgentQuiescent) {
-    quiescenceState.setQuiescent(isAgentQuiescent);
+  private synchronized void setQuiescent(QuiescenceState quiescenceState, boolean isAgentQuiescent, String blocker) {
+    quiescenceState.setQuiescent(isAgentQuiescent, blocker);
     if (isAgentQuiescent && quiescenceState.isEnabled() && quiescenceState.isAlive()) {
       checkQuiescence();
     } else if (quiescenceState.isEnabled() && quiescenceState.isAlive()) {
@@ -506,12 +506,13 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * agent is quiescent.
      **/
     public void setQuiescentState() {
+      // RFE 3760: Remove this requestor from qState's list of blockers
       if (isQuiescent) return;
       if (logger.isDebugEnabled()) {
         logger.debug("setQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
       }
       isQuiescent = true;
-      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true);
+      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, true, requestorName);
     }
 
     /**
@@ -519,13 +520,15 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      **/
     public void clearQuiescentState() {
       if (quiescenceState == null) {
-        throw new RuntimeException("AgentIdentificationService has not be set");
+        throw new RuntimeException("AgentIdentificationService has not been set.");
       }
-      if (!isQuiescent) return;
+      // RFE 3760: Add this requestor to qState's list of blockers
+      // [Commented this out so can track all blockers of quiescence...]
+      //      if (!isQuiescent) return;
       if (logger.isDebugEnabled()) {
         logger.debug("clearQuiescentState for " + requestorName + " of " + quiescenceState.getAgentName());
       }
-      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false);
+      QuiescenceReportServiceProvider.this.setQuiescent(quiescenceState, false, requestorName);
       isQuiescent = false;
     }
   }
@@ -615,5 +618,16 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
 
     // Other options: list message numbers? 
+
+    // RFE 3760: List blockers of an agents quiescence (return a String)
+    // FIXME: Synchronize something?
+    public String getAgentQuiescenceBlockers(MessageAddress agentAddress) {
+      if (agentAddress == null)
+	return "";
+      QuiescenceState qState = accessQuiescenceState(agentAddress);
+      if (qState == null)
+	return "";
+      return qState.getBlockersString();
+    }
   }
 }

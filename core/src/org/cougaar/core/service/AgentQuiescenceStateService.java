@@ -74,5 +74,11 @@ public interface AgentQuiescenceStateService extends Service {
    **/
   void setAgentDead(MessageAddress agentAddress);
   
+  /**
+   * Show the QuiescenceService clients that are blocking quiescence for this agent, if any
+   * @param agentAddress The Agent whose quiescence blockers to show
+   **/
+  String getAgentQuiescenceBlockers(MessageAddress agentAddress);
+
   // Other options: list message numbers? 
 }

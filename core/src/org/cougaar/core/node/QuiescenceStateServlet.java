@@ -204,7 +204,7 @@ public class QuiescenceStateServlet extends ComponentServlet {
         "<form name=\"f\" method=\"GET\" action=\""+
         sreq.getRequestURI()+
         "\">\n"+
-	"<tr><th>Agent</th><th>Quiescent?</th><th>Enabled?</th><th>Dead?</th><th>Mark as Dead</th></tr>\n");
+	"<tr><th>Agent</th><th>Quiescent?</th><th>Blockers</th><th>Enabled?</th><th>Dead?</th><th>Mark as Dead</th></tr>\n");
       // loop over Message addresses
       for (int i = 0; i < agents.length; i++) {
 	printRowHTML(agents[i]);
@@ -217,6 +217,7 @@ public class QuiescenceStateServlet extends ComponentServlet {
       out.println(
 		  "<tr><td>" + agent + "</td>"+
                   getColumn(aqs.isAgentQuiescent(agent), true)+
+		  "<td>" + aqs.getAgentQuiescenceBlockers(agent) + "</td>" + 
                   getColumn(aqs.isAgentEnabled(agent), true)+
                   getColumn(!aqs.isAgentAlive(agent), false)+
 		  "<td>" + (aqs.isAgentAlive(agent) ? getButton(agent) : "Already Dead") + "</td></tr>\n");
@@ -227,7 +228,7 @@ public class QuiescenceStateServlet extends ComponentServlet {
       out.println(
 		  "  <agent name=\'" + agent + "\' quiescent=\'" + aqs.isAgentQuiescent(agent) + "\' "+
 		  "enabled=\'" + aqs.isAgentEnabled(agent) + "\' "+
-		  "dead=\'" + ! aqs.isAgentAlive(agent) + "\'/>");
+		  "dead=\'" + ! aqs.isAgentAlive(agent) + "\'" + (aqs.isAgentQuiescent(agent) ? "" : "blockers=\'" + aqs.getAgentQuiescenceBlockers(agent) + "\'") + "/>");
     }
 
     // Color-coded boolean column
