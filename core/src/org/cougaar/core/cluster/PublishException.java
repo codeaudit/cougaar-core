@@ -21,6 +21,14 @@
 
 package org.cougaar.core.cluster;
 
+/**
+ * An extension of IllegalArgumentException for capturing additional
+ * information about an apparently erroneous publish operation. It
+ * records certain facts to assist the Blackboard in providing a more
+ * detailed explanation of the error including the stack of a previous
+ * operation with which the current publish operation seems to be in
+ * conflict.
+ **/
 public class PublishException extends IllegalArgumentException {
     public PublishStack priorStack;
     public boolean priorStackUnavailable;
