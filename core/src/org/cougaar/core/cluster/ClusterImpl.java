@@ -31,7 +31,7 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 
 import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.MetricsSnapshot;
+//import org.cougaar.core.cluster.MetricsSnapshot;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 import org.cougaar.core.cluster.LogicProvider;
 import org.cougaar.core.cluster.Subscriber;
@@ -142,10 +142,6 @@ import java.beans.Beans;
  * org.cougaar.core.cluster.heartbeat : a low-priority thread runs and prints
  *  a '.' every few seconds when nothing else much is going on.
  *  This is a one-per-vm function.  Default true.
- * org.cougaar.core.cluster.metrics : should message traffic metrics be measures and metrics info
- *  be sent to an external metrics display.
- * org.cougaar.core.cluster.metricsInterval : milliseconds between sending of metrics info to
- *  metrics display.  If <= 0, no such messages will be sent.
  * org.cougaar.core.cluster.idleInterval : how long between idle detection and heartbeat cycles (prints '.');
  * org.cougaar.core.cluster.idle.verbose : if true, will print elapsed time (seconds) since
  *   cluster start every idle.interval millis.
@@ -169,8 +165,8 @@ public class ClusterImpl extends Agent
   private SchedulerServiceProvider schedulerServiceProvider;
 
   private static boolean isHeartbeatOn = true;
-  private static boolean isMetricsHeartbeatOn = false;
-  private static int metricsInterval = 2500; // how often send to metrics display
+  //  private static boolean isMetricsHeartbeatOn = false;
+  //  private static int metricsInterval = 2500; // how often send to metrics display
   private static int idleInterval = 5*1000;
   private static boolean idleVerbose = false; // don't be verbose
   private static long idleVerboseInterval = 60*1000L; // 1 minute
@@ -182,9 +178,9 @@ public class ClusterImpl extends Agent
   static {
     Properties props = System.getProperties();
     isHeartbeatOn=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.heartbeat", "true"))). booleanValue();
-    isMetricsHeartbeatOn=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.metrics", "false"))).booleanValue();
+    //    isMetricsHeartbeatOn=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.metrics", "false"))).booleanValue();
     usePlugInLoader=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.pluginloader", "false"))).booleanValue();
-    metricsInterval=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.metricsInterval", "2500"))).intValue();
+    //    metricsInterval=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.metricsInterval", "2500"))).intValue();
     idleInterval=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.idleInterval", "5000"))).intValue();
     maxIdleInterval = (idleInterval+(idleInterval/10));
 
@@ -423,7 +419,7 @@ public class ClusterImpl extends Agent
     //for backwards compatability
     myDomainService = (DomainService) sb.getService(this, DomainService.class, null);
     //add metric service - impl will probably be moved from ClusterImpl
-    sb.addService(MetricsService.class, new MetricsServiceProvider(this));
+    //    sb.addService(MetricsService.class, new MetricsServiceProvider(this));
     // add alarm service
     sb.addService(AlarmService.class, new AlarmServiceProvider(this));
     // add older plugin style shared threading
@@ -551,16 +547,16 @@ public class ClusterImpl extends Agent
   public void start() throws StateModelException {
 
     // activate the metrics watcher before we register
-    if (isMetricsHeartbeatOn) getMessageWatcher();
+    //    if (isMetricsHeartbeatOn) getMessageWatcher();
 
     if (isHeartbeatOn) {
       startHeartbeat();
     }
 
-    if (isMetricsHeartbeatOn) {
-      startMetricsHeartbeat();
-      metricsOn = true;
-    }
+    //    if (isMetricsHeartbeatOn) {
+    //startMetricsHeartbeat();
+    //metricsOn = true;
+    //}
 
     super.start();
   }
@@ -894,71 +890,87 @@ public class ClusterImpl extends Agent
     return this;
   }
 
-  /**
-   * @return a new filled in <code>MetricsSnapshot</code>
-   * @deprecated use #getMetricsSnapshot(MetricsSnapshot ms) and reuse the object
-   */
-  public MetricsSnapshot getMetricsSnapshot() {
-    return getMetricsSnapshot(new MetricsSnapshot(), true);
-  }
+//   /**
+//    * @deprecated use various metrics services - this currently returns an
+//    * empty metrics snapshot object.
+//    * @see org.cougaar.core.blackboard.BlackboardMetricsService
+//    * @see org.cougaar.core.mts.MessageStatisticsService
+//    * @see org.cougaar.core.mts.MessageWatcherService
+//    * @see org.cougaar.core.society.NodeMetricsService
+//    * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+//    */
+//   public MetricsSnapshot getMetricsSnapshot() {
+//     //return getMetricsSnapshot(new MetricsSnapshot(), true);
+//     return new MetricsSnapshot();
+//   }
 
-  public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
-    if (ms == null)
-      ms = new MetricsSnapshot();
-    ms.clusterName = getClusterIdentifier().cleanToString();
-    ms.nodeName = getBindingSite().getName();
-    ms.time = System.currentTimeMillis();
+//   /**
+//    * @deprecated use various metrics services - this currently returns the
+//    * unmodified MetricsSnapshot object that was passed in as an argument.
+//    * @see org.cougaar.core.blackboard.BlackboardMetricsService
+//    * @see org.cougaar.core.mts.MessageStatisticsService
+//    * @see org.cougaar.core.mts.MessageWatcherService
+//    * @see org.cougaar.core.society.NodeMetricsService
+//    * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+//    */
+//   public MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
+//     if (ms == null)
+//       ms = new MetricsSnapshot();
+//     return ms;
+//     ms.clusterName = getClusterIdentifier().cleanToString();
+//     ms.nodeName = getBindingSite().getName();
+//     ms.time = System.currentTimeMillis();
 
-    // message transport stuff
-    MessageWatcher mw = getMessageWatcher();
-    ms.directivesIn = mw.directivesIn;
-    ms.directivesOut = mw.directivesOut;
-    ms.notificationsIn = mw.notificationsIn;
-    ms.notificationsOut = mw.notificationsOut;
+//     // message transport stuff
+//     MessageWatcher mw = getMessageWatcher();
+//     ms.directivesIn = mw.directivesIn;
+//     ms.directivesOut = mw.directivesOut;
+//     ms.notificationsIn = mw.notificationsIn;
+//     ms.notificationsOut = mw.notificationsOut;
 
-    // Message Statistics stuff
-    MessageStatistics.Statistics mstats = getMessageStatistics(resetMsgStats);
-    if (mstats != null) {
-      ms.averageMessageQueueLength = mstats.averageMessageQueueLength;
-      ms.totalMessageBytes = mstats.totalMessageBytes;
-      ms.totalMessageCount = mstats.totalMessageCount;
-    }
+//     // Message Statistics stuff
+//     MessageStatistics.Statistics mstats = getMessageStatistics(resetMsgStats);
+//     if (mstats != null) {
+//       ms.averageMessageQueueLength = mstats.averageMessageQueueLength;
+//       ms.totalMessageBytes = mstats.totalMessageBytes;
+//       ms.totalMessageCount = mstats.totalMessageCount;
+//     }
     
-    // logplan stuff
-    if (myLogPlan != null) {
-      ms.assets = myLogPlan.getAssetCount();
-      ms.planelements = myLogPlan.getPlanElementCount();
-      ms.tasks = myLogPlan.getTaskCount();
-      ms.workflows = myLogPlan.getWorkflowCount();
-    }
+//     // logplan stuff
+//     if (myLogPlan != null) {
+//       ms.assets = myLogPlan.getAssetCount();
+//       ms.planelements = myLogPlan.getPlanElementCount();
+//       ms.tasks = myLogPlan.getTaskCount();
+//       ms.workflows = myLogPlan.getWorkflowCount();
+//     }
 
-    // cluster metrics
-    //must now get this through its child components - until its hooked up return 1
-    //ms.pluginCount = pluginManager.size();
-    ms.pluginCount = 1;
-    //no longer works from cluster as the sharedpluginmanager
-    //is now a service
-    //ms.thinPluginCount = getSharedPlugInManager().size();
-    //grab these from the PrototypeRegistryService
+//     // cluster metrics
+//     //must now get this through its child components - until its hooked up return 1
+//     //ms.pluginCount = pluginManager.size();
+//     ms.pluginCount = 1;
+//     //no longer works from cluster as the sharedpluginmanager
+//     //is now a service
+//     //ms.thinPluginCount = getSharedPlugInManager().size();
+//     //grab these from the PrototypeRegistryService
     
-    ms.prototypeProviderCount = getPrototypeRegistryService().getPrototypeProviderCount();
-    ms.propertyProviderCount = getPrototypeRegistryService().getPropertyProviderCount();
-    ms.cachedPrototypeCount = getPrototypeRegistryService().getCachedPrototypeCount();
+//     ms.prototypeProviderCount = getPrototypeRegistryService().getPrototypeProviderCount();
+//     ms.propertyProviderCount = getPrototypeRegistryService().getPropertyProviderCount();
+//     ms.cachedPrototypeCount = getPrototypeRegistryService().getCachedPrototypeCount();
 
-    // vm stuff
-    ms.idleTime = getIdleTime();
+//     // vm stuff
+//     ms.idleTime = getIdleTime();
 
-    // do a gc to ensure get accurate results.
-    // Note this means that if you call this method frequently, you'll hurt
-    // your performance with all these garbage collects
-    Runtime.getRuntime().gc();
+//     // do a gc to ensure get accurate results.
+//     // Note this means that if you call this method frequently, you'll hurt
+//     // your performance with all these garbage collects
+//     Runtime.getRuntime().gc();
     
-    ms.freeMemory = Runtime.getRuntime().freeMemory();
-    ms.totalMemory = Runtime.getRuntime().totalMemory();
-    ms.threadCount = Thread.currentThread().getThreadGroup().activeCount();
+//     ms.freeMemory = Runtime.getRuntime().freeMemory();
+//     ms.totalMemory = Runtime.getRuntime().totalMemory();
+//     ms.threadCount = Thread.currentThread().getThreadGroup().activeCount();
 
-    return ms;
-  }
+//     return ms;
+//   }
 
   public ClassLoader getLDMClassLoader() {
     if (usePlugInLoader) {
@@ -1115,121 +1127,121 @@ public class ClusterImpl extends Agent
   }
 
 
-  /** Send a status to metrics display every n seconds
-   * consisting of a count of messages in/out and a 
-   * count of the logplan elements.  Only if org.cougaar.core.cluster.metrics is true.
-   **/
-  private class MetricsHeartbeat extends Thread {
-    private boolean keepRunning = true;
-    private boolean checked = false;  // Stop checking once our address is known
-    public MetricsHeartbeat() {
-      super("MetricsHeartbeat");
-    }
+//   /** Send a status to metrics display every n seconds
+//    * consisting of a count of messages in/out and a 
+//    * count of the logplan elements.  Only if org.cougaar.core.cluster.metrics is true.
+//    **/
+//   private class MetricsHeartbeat extends Thread {
+//     private boolean keepRunning = true;
+//     private boolean checked = false;  // Stop checking once our address is known
+//     public MetricsHeartbeat() {
+//       super("MetricsHeartbeat");
+//     }
 
-    public synchronized void halt() {
-      if (keepRunning) {
-        keepRunning = false;
-        interrupt();
-        try {
-          join();
-        } catch (InterruptedException ie) {
-        }
-      }
-    }
+//     public synchronized void halt() {
+//       if (keepRunning) {
+//         keepRunning = false;
+//         interrupt();
+//         try {
+//           join();
+//         } catch (InterruptedException ie) {
+//         }
+//       }
+//     }
 
-    public void run() {
-      synchronized (this) {
-        while (keepRunning) {
-          try {
-            Thread.sleep(metricsInterval); // sleep for (at least) this time
-          } catch (InterruptedException ie) {}
-          if (messenger != null) {
-            if (checked || messenger.addressKnown(metricsAddress)) {
-              checked = true;
-              // Send metrics info.  Get logplan cnts from logplan, pass it along
-              int assetcnt = myLogPlan.getAssetCount();
-              int planelemcnt = myLogPlan.getPlanElementCount();
-              int taskcnt = myLogPlan.getTaskCount();
-              int workflowcnt = myLogPlan.getWorkflowCount();
-              // turn off metrics heartbeat after first failed metrics message
+//     public void run() {
+//       synchronized (this) {
+//         while (keepRunning) {
+//           try {
+//             Thread.sleep(metricsInterval); // sleep for (at least) this time
+//           } catch (InterruptedException ie) {}
+//           if (messenger != null) {
+//             if (checked || messenger.addressKnown(metricsAddress)) {
+//               checked = true;
+//               // Send metrics info.  Get logplan cnts from logplan, pass it along
+//               int assetcnt = myLogPlan.getAssetCount();
+//               int planelemcnt = myLogPlan.getPlanElementCount();
+//               int taskcnt = myLogPlan.getTaskCount();
+//               int workflowcnt = myLogPlan.getWorkflowCount();
+//               // turn off metrics heartbeat after first failed metrics message
               
-              MessageWatcher mw = getMessageWatcher();
-              Message mm = new MetricsMessage(getMessageAddress(), metricsAddress,
-                                              System.currentTimeMillis(),
-                                              mw.directivesIn, mw.directivesOut,
-                                              mw.notificationsIn, mw.notificationsOut,
-                                              assetcnt, planelemcnt,
-                                              taskcnt, workflowcnt);
-              messenger.sendMessage(mm);
-            } else {
-              isMetricsHeartbeatOn = false;
-              keepRunning = false;
-            }
-          }
-        }
-      }
-    }
-  }
+//               MessageWatcher mw = getMessageWatcher();
+//               Message mm = new MetricsMessage(getMessageAddress(), metricsAddress,
+//                                               System.currentTimeMillis(),
+//                                               mw.directivesIn, mw.directivesOut,
+//                                               mw.notificationsIn, mw.notificationsOut,
+//                                               assetcnt, planelemcnt,
+//                                               taskcnt, workflowcnt);
+//               messenger.sendMessage(mm);
+//             } else {
+//               isMetricsHeartbeatOn = false;
+//               keepRunning = false;
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  public static MessageAddress metricsAddress = new MessageAddress("metrics");
+//   public static MessageAddress metricsAddress = new MessageAddress("metrics");
 
-  protected MessageWatcher _messageWatcher = null;
+//   protected MessageWatcher _messageWatcher = null;
 
-  private MessageWatcher getMessageWatcher() {
-    if (_messageWatcher == null)
-      watcherService.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
-    return _messageWatcher;
-  }
+//   private MessageWatcher getMessageWatcher() {
+//     if (_messageWatcher == null)
+//       watcherService.addMessageTransportWatcher(_messageWatcher = new MessageWatcher());
+//     return _messageWatcher;
+//   }
 
-  class MessageWatcher implements MessageTransportWatcher {
-    MessageAddress me;
+//   class MessageWatcher implements MessageTransportWatcher {
+//     MessageAddress me;
 
-    int directivesIn = 0;
-    int directivesOut = 0;
-    int notificationsIn = 0;
-    int notificationsOut = 0;
+//     int directivesIn = 0;
+//     int directivesOut = 0;
+//     int notificationsIn = 0;
+//     int notificationsOut = 0;
     
-    public MessageWatcher() {
-      me = getClusterIdentifier();
-    }
+//     public MessageWatcher() {
+//       me = getClusterIdentifier();
+//     }
 
-    public void messageSent(Message m) {
-      if (m.getOriginator().equals(me)) {
-        if (m instanceof DirectiveMessage) {
-          Directive[] directives = ((DirectiveMessage)m).getDirectives();
-          for (int i = 0; i < directives.length; i++) {
-            if (directives[i] instanceof Notification)
-              notificationsOut++;
-            else
-              directivesOut++;
-          }
-        }
-      }
-    }
-    public void messageReceived(Message m) {
-      if (m.getTarget().equals(me)) {
-        if (m instanceof DirectiveMessage) {
-          Directive[] directives = ((DirectiveMessage)m).getDirectives();
-          for (int i = 0; i < directives.length; i++) {
-            if (directives[i] instanceof Notification)
-              notificationsIn++;
-            else
-              directivesIn++;
-          }
-        }
-      }
-    }
-  }
+//     public void messageSent(Message m) {
+//       if (m.getOriginator().equals(me)) {
+//         if (m instanceof DirectiveMessage) {
+//           Directive[] directives = ((DirectiveMessage)m).getDirectives();
+//           for (int i = 0; i < directives.length; i++) {
+//             if (directives[i] instanceof Notification)
+//               notificationsOut++;
+//             else
+//               directivesOut++;
+//           }
+//         }
+//       }
+//     }
+//     public void messageReceived(Message m) {
+//       if (m.getTarget().equals(me)) {
+//         if (m instanceof DirectiveMessage) {
+//           Directive[] directives = ((DirectiveMessage)m).getDirectives();
+//           for (int i = 0; i < directives.length; i++) {
+//             if (directives[i] instanceof Notification)
+//               notificationsIn++;
+//             else
+//               directivesIn++;
+//           }
+//         }
+//       }
+//     }
+//   }
 
-  private MetricsHeartbeat metricsheartbeat = null;
+//   private MetricsHeartbeat metricsheartbeat = null;
 
-  private void startMetricsHeartbeat() {
-    if (metricsheartbeat == null) {
-      metricsheartbeat = new MetricsHeartbeat();
-      metricsheartbeat.setPriority(Thread.MAX_PRIORITY);
-      metricsheartbeat.start();
-    }
-  }
+//   private void startMetricsHeartbeat() {
+//     if (metricsheartbeat == null) {
+//       metricsheartbeat = new MetricsHeartbeat();
+//       metricsheartbeat.setPriority(Thread.MAX_PRIORITY);
+//       metricsheartbeat.start();
+//     }
+//   }
 
   //
   // COUGAAR Scenario Time management and support for PlugIns
@@ -1354,46 +1366,46 @@ public class ClusterImpl extends Agent
 
   ///////////////////////////////
 
-  /*******************************************
-   * Methods Added for Society Mangement Piece for MB 5.1.2
-   ********************************************/
-  public MetricsMessage getMetrics() {
-    int assetcnt = myLogPlan.getAssetCount();
-    int planelemcnt = myLogPlan.getPlanElementCount();
-    int taskcnt = myLogPlan.getTaskCount();
-    int workflowcnt = myLogPlan.getWorkflowCount();
-    MetricsMessage mm = null;
-    if (metricsOn) {
-      MessageWatcher mw = getMessageWatcher();
-      mm = new MetricsMessage(null, null,
-                              System.currentTimeMillis(),
-                              mw.directivesIn, mw.directivesOut,
-                              mw.notificationsIn, mw.notificationsOut,
-                              assetcnt, planelemcnt,
-                              taskcnt, workflowcnt);
-    } else {
-      mm = new MetricsMessage(null, null, System.currentTimeMillis(),0,0,0,0,0,0,0,0);
-    }
-    return mm;
-  }
+//   /*******************************************
+//    * Methods Added for Society Mangement Piece for MB 5.1.2
+//    ********************************************/
+//   public MetricsMessage getMetrics() {
+//     int assetcnt = myLogPlan.getAssetCount();
+//     int planelemcnt = myLogPlan.getPlanElementCount();
+//     int taskcnt = myLogPlan.getTaskCount();
+//     int workflowcnt = myLogPlan.getWorkflowCount();
+//     MetricsMessage mm = null;
+//     if (metricsOn) {
+//       MessageWatcher mw = getMessageWatcher();
+//       mm = new MetricsMessage(null, null,
+//                               System.currentTimeMillis(),
+//                               mw.directivesIn, mw.directivesOut,
+//                               mw.notificationsIn, mw.notificationsOut,
+//                               assetcnt, planelemcnt,
+//                               taskcnt, workflowcnt);
+//     } else {
+//       mm = new MetricsMessage(null, null, System.currentTimeMillis(),0,0,0,0,0,0,0,0);
+//     }
+//     return mm;
+//   }
 
-  public boolean isMetricsOn() {
-    return metricsOn;
-  }
+//   public boolean isMetricsOn() {
+//     return metricsOn;
+//   }
 
-  private boolean metricsOn = false;
+//   private boolean metricsOn = false;
 
-  public void startMetrics()
-  {
-    getMessageWatcher();        // Create if necessary
-    startMetricsHeartbeat();
-    metricsOn = true;
-  }
+//   public void startMetrics()
+//   {
+//     getMessageWatcher();        // Create if necessary
+//     startMetricsHeartbeat();
+//     metricsOn = true;
+//   }
   
-  public void stopMetrics()
-  {
-    metricsOn = false;
-  }
+//   public void stopMetrics()
+//   {
+//     metricsOn = false;
+//   }
 
   private static int _progressCount = 0;
   private static Object _progressLock = new Object();

@@ -133,7 +133,7 @@ public interface ClusterServesPlugIn
    * for planning, nor will there ever be via this method.
    * @deprecated
    **/
-  MetricsSnapshot getMetricsSnapshot();
+  //  MetricsSnapshot getMetricsSnapshot();
 
   /**
    * Return a snapshot of gathered cluster metrics.
@@ -144,7 +144,7 @@ public interface ClusterServesPlugIn
    * @param resetMsgStats a <bode>boolean</code> whether to reset the message transport counters
    * @return a <code>MetricsSnapshot</code> with the new values
    **/
-  MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);
+  //MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);
 
   /**
    * Cluster-wide database support that can be integrated with persistence
