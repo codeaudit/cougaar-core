@@ -19,9 +19,10 @@ public interface LoggingService extends Service {
 
   int DEBUG   = 1;
   int INFO    = 2;
-  int WARNING = 3;
-  int ERROR   = 4;
-  int FATAL   = 5;
+  int LEGACY  = 3;
+  int WARNING = 4;
+  int ERROR   = 5;
+  int FATAL   = 6;
 
   void debug(String s);
   void debug(String s, Exception e);

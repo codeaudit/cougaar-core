@@ -93,8 +93,21 @@ public class LoggingServiceProvider implements ServiceProvider {
 	log4jCategory.debug(sourceClass+"."+sourceMethod+": "+s); 
     }
     public void debug(String s, Exception e, String sourceClass, String sourceMethod) {
-      if (isDebugEnabled()) 
-	log4jCategory.debug(sourceClass+"."+sourceMethod+": "+s,e); 
+      if (isDebugEnabled()) {
+	if (e == null) {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.debug(s); 
+	  } else {
+	    log4jCategory.debug(sourceClass+"."+sourceMethod+": "+s);
+	  }
+	} else {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.debug(s,e);
+	  } else {
+	    log4jCategory.debug(sourceClass+"."+sourceMethod+": "+s,e); 
+	  }
+	}
+      }
     }
 
     public void info(String s) { log4jCategory.info(s); }
@@ -104,8 +117,21 @@ public class LoggingServiceProvider implements ServiceProvider {
 	log4jCategory.info(sourceClass+"."+sourceMethod+": "+s); 
     }
     public void info(String s, Exception e, String sourceClass, String sourceMethod) {
-      if (isInfoEnabled()) 
-	log4jCategory.info(sourceClass+"."+sourceMethod+": "+s,e); 
+      if (isInfoEnabled()) {
+	if (e == null) {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.info(s); 
+	  } else {
+	    log4jCategory.info(sourceClass+"."+sourceMethod+": "+s);
+	  }
+	} else {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.info(s,e);
+	  } else {
+	    log4jCategory.info(sourceClass+"."+sourceMethod+": "+s,e); 
+	  }
+	}
+      }
     }
 
     public void warning(String s) { log4jCategory.warn(s); }
@@ -115,8 +141,21 @@ public class LoggingServiceProvider implements ServiceProvider {
 	log4jCategory.warn(sourceClass+"."+sourceMethod+": "+s); 
     }
     public void warning(String s, Exception e, String sourceClass, String sourceMethod) {
-      if (isWarningEnabled()) 
-	log4jCategory.warn(sourceClass+"."+sourceMethod+": "+s,e); 
+      if (isWarningEnabled()) {
+	if (e == null) {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.warn(s); 
+	  } else {
+	    log4jCategory.warn(sourceClass+"."+sourceMethod+": "+s);
+	  }
+	} else {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.warn(s,e);
+	  } else {
+	    log4jCategory.warn(sourceClass+"."+sourceMethod+": "+s,e); 
+	  }
+	}
+      }
     }
 
     public void error(String s) { log4jCategory.error(s); }
@@ -125,7 +164,19 @@ public class LoggingServiceProvider implements ServiceProvider {
       log4jCategory.error(sourceClass+"."+sourceMethod+": "+s); 
     }
     public void error(String s, Exception e, String sourceClass, String sourceMethod) {
-      log4jCategory.error(sourceClass+"."+sourceMethod+": "+s,e); 
+      if (e == null) {
+	if (sourceClass == null || sourceMethod == null) {
+	  log4jCategory.error(s); 
+	} else {
+	  log4jCategory.error(sourceClass+"."+sourceMethod+": "+s);
+	}
+      } else {
+	if (sourceClass == null || sourceMethod == null) {
+	  log4jCategory.error(s,e);
+	} else {
+	  log4jCategory.error(sourceClass+"."+sourceMethod+": "+s,e); 
+	}
+      }
     }
 
     public void fatal(String s) { log4jCategory.fatal(s); }
@@ -134,7 +185,19 @@ public class LoggingServiceProvider implements ServiceProvider {
       log4jCategory.fatal(sourceClass+"."+sourceMethod+": "+s); 
     }
     public void fatal(String s, Exception e, String sourceClass, String sourceMethod) {
-      log4jCategory.fatal(sourceClass+"."+sourceMethod+": "+s,e); 
+      if (e == null) {
+	if (sourceClass == null || sourceMethod == null) {
+	  log4jCategory.fatal(s); 
+	} else {
+	  log4jCategory.fatal(sourceClass+"."+sourceMethod+": "+s);
+	}
+      } else {
+	if (sourceClass == null || sourceMethod == null) {
+	  log4jCategory.fatal(s,e);
+	} else {
+	  log4jCategory.fatal(sourceClass+"."+sourceMethod+": "+s,e); 
+	}
+      }
     }
    
     /* These exist as checks you can put around logging messages to avoid costly String creations */
@@ -153,8 +216,22 @@ public class LoggingServiceProvider implements ServiceProvider {
 	log4jCategory.log(convertIntToPriority(level),sourceClass+"."+sourceMethod+": "+s); 
     }
     public void log(int level, String s, Exception e, String sourceClass, String sourceMethod) {
-      if (level > WARNING || log4jCategory.isEnabledFor(convertIntToPriority(level))) 
-	log4jCategory.log(convertIntToPriority(level),sourceClass+"."+sourceMethod+": "+s,e); 
+      if (level > WARNING || log4jCategory.isEnabledFor(convertIntToPriority(level))) { 
+	Priority p = convertIntToPriority(level);
+	if (e == null) {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.log(p,s); 
+	  } else {
+	    log4jCategory.log(p,sourceClass+"."+sourceMethod+": "+s);
+	  }
+	} else {
+	  if (sourceClass == null || sourceMethod == null) {
+	    log4jCategory.log(p,s,e);
+	  } else {
+	    log4jCategory.log(p,sourceClass+"."+sourceMethod+": "+s,e); 
+	  }
+	}
+      }
     }
 
     /* if condition is true then this will be logged as an Error (default) otherwise it will be ignored*/
