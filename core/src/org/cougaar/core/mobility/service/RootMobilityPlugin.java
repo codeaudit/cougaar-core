@@ -345,12 +345,16 @@ extends AbstractMobilityPlugin
       String errorMsg = null;
       synchronized (entries) {
         AgentEntry ae = (AgentEntry) entries.get(id);
+        boolean isNew = false;
         if (ae == null) {
+          isNew = true;
           ae = new AgentEntry(id);
+          entries.put(id, ae);
         }
         if (ae.pendingAction != AgentEntry.NONE) {
           // agent is leaving this node?
-          errorMsg = "Unable to accept remote agent "+id+
+          errorMsg = 
+            "Unable to accept remote agent "+id+
             ", a move is already in progress: "+ae;
         } else if (ae.isRegistered) {
           // already moving or adding the agent?
@@ -360,6 +364,27 @@ extends AbstractMobilityPlugin
         } else {
           ae.pendingAction = AgentEntry.MOVE_ARRIVAL;
           ae.control = control;
+          if (log.isDebugEnabled()) {
+            if (isNew) {
+              log.debug(
+                  "Created new entry for agent "+id+
+                  " move arrival"+
+                  " (oid: "+
+                  System.identityHashCode(ae)+
+                  "): "+ae);
+            } else {
+              log.debug(
+                 "Updated entry for agent "+id+
+                  " move arrival"+
+                  " (oid: "+
+                  System.identityHashCode(ae)+
+                  "): "+ae+
+                  ", description "+
+                  objectCompare(ae.desc, ae.desc)+
+                  ", agent "+
+                  objectCompare(ae.agent, ae.agent));
+            }
+          }
         }
       }
 
@@ -559,11 +584,36 @@ extends AbstractMobilityPlugin
           throw new RuntimeException(
               "Agent "+id+" is already registered on node "+
               nodeId+": "+ae);
+        } else {
+          // must be moving
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "Registered agent "+id+" on node "+
+                nodeId+", which already had an entry"+
+                " (oid: "+
+                System.identityHashCode(ae)+
+                "): "+ae+
+                ", the description "+
+                objectCompare(ae.desc, desc)+
+                " and agent "+
+                objectCompare(ae.agent, agent));
+          }
         }
-        // must be moving
       } else {
         ae = new AgentEntry(id);
         entries.put(id, ae);
+        if (log.isDebugEnabled()) {
+          log.debug(
+              "Registered agent "+id+" on node "+
+              nodeId+", which is a new entry"+
+              " (oid: "+
+              System.identityHashCode(ae)+
+              "): "+ae+
+              ", the description "+
+              objectCompare(null, desc)+
+              " and agent "+
+              objectCompare(null, agent));
+        }
       }
       ae.desc = desc;
       ae.agent = agent;
@@ -596,12 +646,73 @@ extends AbstractMobilityPlugin
         if (ae.pendingAction == AgentEntry.NONE) {
           // no longer needed
           entries.remove(id);
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "Unregistered agent "+id+
+                " on node "+nodeId+
+                ", removed entry"+
+                " (oid: "+
+                System.identityHashCode(ae)+
+                "): "+ae);
+          }
         } else {
           // agent is unloading as part of move,
           // keep the entry in case the move fails
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "Unregistered agent "+id+
+                " on node "+nodeId+
+                ", keeping the entry"+
+                " (oid: "+
+                System.identityHashCode(ae)+
+                "): "+ae);
+          }
         }
       }
     }
+  }
+
+  private static String objectCompare(Object a, Object b) {
+    if (a == b) {
+      return 
+        "is identical ("+
+        (a != null ?
+         ("oid: "+
+          System.identityHashCode(a)) : 
+         "null")+
+        ") "+
+        a;
+    }
+    if (a != null && a.equals(b)) {
+      return
+        "is equivalent from prior "+
+        (a != null ?
+         ("(oid: "+
+          System.identityHashCode(a)+
+          ") "+
+          a) :
+         "null")+
+        " to new "+
+        "(oid: "+
+        System.identityHashCode(b)+
+        ") "+
+        b;
+    }
+    return
+        "has changed from prior "+
+        (a != null ?
+         ("(oid: "+
+          System.identityHashCode(a)+
+          ") "+
+          a) :
+         "null")+
+        " to new "+
+        (b != null ?
+         ("(oid: "+
+          System.identityHashCode(b)+
+          ") "+
+          b) :
+         "null");
   }
 
   private interface Queueable extends Runnable {
@@ -651,18 +762,62 @@ extends AbstractMobilityPlugin
       final List pendingTuples) {
     if (r2 instanceof DispatchRemoteHandler) {
       // leave the entry, we're waiting for the response.
+      if (log.isDebugEnabled()) {
+        synchronized (entries) {
+          AgentEntry ae = (AgentEntry) entries.get(id);
+          log.debug(
+              "Completed move action <dispatch> "+
+              r2+
+              " for agent "+id+
+              " on node "+nodeId+
+              ", keeping the move entry"+
+              " (oid: "+
+              System.identityHashCode(ae)+
+              "): "+ae);
+        }
+      }
     } else {
       // remove moving flag
       synchronized (entries) {
         AgentEntry ae = (AgentEntry) entries.get(id);
         if (ae == null) {
           // aborted handler?
+          if (log.isDebugEnabled()) {
+            log.debug(
+                "Completed move action "+
+                r2+
+                " for agent "+id+
+                " on node "+nodeId+
+                ", but the entry is null");
+          }
         } else {
           ae.pendingAction = AgentEntry.NONE;
           if (!(ae.isRegistered)) {
             entries.remove(id);
+            if (log.isDebugEnabled()) {
+              log.debug(
+                  "Completed move action "+
+                  r2+
+                  " for agent "+id+
+                  " on node "+nodeId+
+                  ", removed entry"+
+                  " (oid: "+
+                  System.identityHashCode(ae)+
+                  "): "+ae);
+            }
           } else {
             // keep in table for future moves
+            if (log.isDebugEnabled()) {
+              log.debug(
+                  "Completed move action "+
+                  r2+
+                  " for agent "+id+
+                  " on node "+nodeId+
+                  ", keeping the entry "+
+                  " (oid: "+
+                  System.identityHashCode(ae)+
+                  "): "+ae);
+            }
           }
         }
       }
@@ -728,11 +883,28 @@ extends AbstractMobilityPlugin
       this.id = id;
     }
 
+    public String getPendingActionAsString() {
+      switch (pendingAction) {
+        case NONE:         return "none";
+        case ADD:          return "add";
+        case REMOVE:       return "remove";
+        case MOVE_DEPART:  return "move_depart";
+        case MOVE_ARRIVAL: return "move_arrival";
+        case MOVE_CONFIRM: return "move_confirm";
+        default:           return "?";
+      }
+    }
+
     public String toString() {
       return 
         "control request for agent "+id+
+        ", state is <"+
+        (isRegistered ? "" :"not ")+
+        "registered + "+
+        getPendingActionAsString()+
+        ">"+
         ((control != null) ? 
-         (" with ticket "+ control.getAbstractTicket()) :
+         (", with ticket "+ control.getAbstractTicket()) :
          "");
     }
   }
