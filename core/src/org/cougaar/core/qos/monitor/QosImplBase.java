@@ -33,7 +33,7 @@ class QosImplBase
 
     private ServiceBroker sb;
     private AgentStatusService statusService;
-    NameSupport nameSupport;
+    protected NameSupport nameSupport;
 
     QosImplBase(NameSupport nameSupport, ServiceBroker sb) {
 	this.sb = sb;
