@@ -39,6 +39,8 @@ public class LoadWatcher
     private static final String UNITS = "cpusec/sec";
     private static final double CREDIBILITY = SECOND_MEAS_CREDIBILITY;
 
+    private int total;
+
     private class ConsumerRecord {
 	String name;
 	String key;
@@ -70,10 +72,10 @@ public class LoadWatcher
 	}	
 	
 	synchronized void snapshot() {
-	    long now = System.currentTimeMillis();
+	    accumulate();
 	    rate = (accumulator-snapshot_accumulator)/
-		(now-snapshot_timestamp);
-	    snapshot_timestamp = now;
+		(timestamp-snapshot_timestamp);
+	    snapshot_timestamp = timestamp;
 	    snapshot_accumulator = accumulator;
 	    // System.out.println(name+ " rate=" +rate);
  	    Metric metric = new MetricImpl(new Double(rate),
@@ -83,6 +85,23 @@ public class LoadWatcher
  	    metricsUpdateService.updateValue(key, THREAD_SENSOR, metric);
 	}
 
+
+	synchronized void incrementOutstanding() {
+	    accumulate();
+	    ++outstanding;
+	    if (outstanding >10) 
+		System.err.println("*** Agent outstanding =" +total+ 
+				   " when rights given for " +name);
+
+	}
+
+	synchronized void decrementOutstanding() {
+	    accumulate();
+	    --outstanding;
+	    if (outstanding < 0) 
+		System.err.println("*** Agent outstanding =" +total+ 
+				   " when rights returned for " +name);
+	}
 
 	synchronized void accumulate() {
 	    long now = System.currentTimeMillis();
@@ -152,16 +171,22 @@ public class LoadWatcher
     {
     }
 
-    public void rightGiven(String consumer) {
+    public synchronized void rightGiven(String consumer) {
 	ConsumerRecord rec = findRecord(consumer);
-	rec.accumulate();
-	++rec.outstanding;
+	rec.incrementOutstanding();
+	++total;
+	if (total >10)
+	    System.err.println("*** total outstanding =" +total+ 
+			       " when rights given for " +consumer);
     }
 		
-    public void rightReturned(String consumer) {
+    public synchronized void rightReturned(String consumer) {
 	ConsumerRecord rec = findRecord(consumer);
-	rec.accumulate();
-	--rec.outstanding;
+	rec.decrementOutstanding();
+	--total;
+	if (total < 0) 
+	    System.err.println("*** total outstanding =" +total+ 
+			       " when rights returnd for " +consumer);
    }
 
 

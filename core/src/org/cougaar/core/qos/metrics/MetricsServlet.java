@@ -39,6 +39,10 @@ import org.cougaar.core.servlet.ServletService;
 public class MetricsServlet extends HttpServlet implements Constants
 {
     private final String myPath = "/qosmetrics";
+    private final String ignoreColor = "<font color=\"#999999\">";
+    private final String normalColor = "<font color=\"#000000\">";
+    private final String highlightColor = "<font color=\"#cc00cc\">";
+    private final String endColor = "</font>";
 
     private TopologyReaderService topologyService;
     private MetricsService metricsService;
@@ -77,6 +81,17 @@ public class MetricsServlet extends HttpServlet implements Constants
 	formatter = new DecimalFormat("00.00");
     }
 
+    private String loadColor(double value) {
+	    if (value == 0) return ignoreColor;
+	    if (value < 1.0 ) return  normalColor;
+	    return  highlightColor;
+    }
+
+    private String credColor(double value) {
+	    if (value == SECOND_MEAS_CREDIBILITY ) return ignoreColor;
+	    return  highlightColor;
+    }
+
     private void dumpTable(PrintWriter out) {
 	Set matches = null;
 	try {
@@ -101,14 +116,18 @@ public class MetricsServlet extends HttpServlet implements Constants
 		+PATH_SEPR+ ONE_SEC_LOAD_AVG;
 	    Metric metric = metricsService.getValue(path);
 	    double value = metric.doubleValue();
+	    double cred = metric.getCredibility();
+	      
 	    String formattedValue = formatter.format(value);
-	    out.print("<tr><td>");
+	    out.print("<tr><td><b>");
 	    out.print(name);
-	    out.print("</td><td>");
+	    out.print(" </b></td><td>");
+	    out.print(loadColor(value));
 	    out.print(formattedValue);
-	    out.print("</td><td>");
-	    out.print(metric.getCredibility());
-	    out.print("</td></tr>\n");
+	    out.print("</font></td><td>");
+	    out.print(credColor(cred));
+	    out.print(cred);
+	    out.print("</font></td></tr>\n");
 
 	}
 	out.print("</table>");
@@ -126,7 +145,6 @@ public class MetricsServlet extends HttpServlet implements Constants
 	     Integer.parseInt(refresh) :
 	     0);
 
-	// write as CSV
 	response.setContentType("text/html");
 	PrintWriter out = response.getWriter();
 
@@ -136,16 +154,19 @@ public class MetricsServlet extends HttpServlet implements Constants
 	    out.print(refreshSeconds);
 	    out.print("\">");
 	}
-	out.print("<TITLE>Node ");
+	out.print("<TITLE> Agent Load for Node ");
 	out.print(nodeID);
-	out.print(" agent load</TITLE></HEAD><body>");
+	out.print("</TITLE></HEAD><body>");
+	out.print("<H1> Agent Load for Node ");
+	out.print(nodeID);
+	out.print("</H1>");
 
 	out.print("Date: ");
 	out.print(new java.util.Date());
 
-	out.print("<br>RefreshSeconds: ");
-	out.print(refreshSeconds);
 	dumpTable(out);
+	out.print("<p><p><br>RefreshSeconds: ");
+	out.print(refreshSeconds);
 	out.print("</body></html>\n");
 
 	out.close();
