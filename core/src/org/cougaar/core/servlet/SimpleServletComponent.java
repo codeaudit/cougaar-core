@@ -31,6 +31,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.*;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
@@ -113,20 +114,13 @@ extends BaseServletComponent
     super();
   }
 
-  /**
-   * Save our binding info during initialization.
-   */
-  public void setBindingSite(BindingSite bindingSite) {
-    super.setBindingSite(bindingSite);
-
-    // kludge until a "AgentIdentificationService" is created
-    if (bindingSite instanceof org.cougaar.core.plugin.PluginBindingSite) {
-      org.cougaar.core.plugin.PluginBindingSite pbs =
-        (org.cougaar.core.plugin.PluginBindingSite) bindingSite;
-      this.agentId = pbs.getAgentIdentifier();
+  public final void setAgentIdentificationService(AgentIdentificationService ais) {
+    MessageAddress an;
+    if ((ais != null) &&
+        ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
+      this.agentId = (MessageAddress) an;
     } else {
-      throw new RuntimeException(
-          "Unable to get AgentId from bindingSite: "+bindingSite);
+      // FIXME: Log something?
     }
   }
 
