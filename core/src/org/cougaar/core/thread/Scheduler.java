@@ -144,59 +144,49 @@ public class Scheduler
 
 
     void threadDequeued(SchedulableObject thread) {
-	if (CougaarThread.Debug)
-	    System.out.println(" Dequeued " +thread+
-			       " run count=" +runningThreadCount+
-			       " queue count=" +pendingThreads.size());
+	if (CougaarThread.Debug) System.err.println("### " +this+ " dequeue ");
 	listenerProxy.notifyDequeued(thread);
     }
 
     // Called within the thread itself as the first thing it does.
     void threadClaimed(SchedulableObject thread) {
-	if (CougaarThread.Debug)
-	    System.out.println(" Started " +thread+
-			       " run count=" +runningThreadCount+
-			       " queue count=" +pendingThreads.size());
+	if (CougaarThread.Debug) System.err.println("### " +this+ " claim");
 	listenerProxy.notifyStart(thread);
     }
 
     // Called within the thread itself as the last thing it does.
     void threadReclaimed(SchedulableObject thread) {
-	if (CougaarThread.Debug)
-	    System.out.println(" Ended " +thread+ 
-			       " run count=" +runningThreadCount+
-			       " queue count=" +pendingThreads.size());
+	
+	if (CougaarThread.Debug) System.err.println("### " +this+ " reclaim");
 	listenerProxy.notifyEnd(thread);
     }
 
 
     // Suspend/Resume "hints" -- not used yet.
     void threadResumed(SchedulableObject thread) {
-	if (CougaarThread.Debug)
-	    System.out.println(" Resumed " +thread+
-			       " run count=" +runningThreadCount+
-			       " queue count=" +pendingThreads.size());
     }
 
     void threadSuspended(SchedulableObject thread) {
-	if (CougaarThread.Debug)
-	    System.out.println(" Suspended " +thread+
-			       " run count=" +runningThreadCount+
-			       " queue count=" +pendingThreads.size());
     }
 
 
 
     synchronized void incrementRunCount(Scheduler consumer) {
+	if (CougaarThread.Debug)
+	    System.err.println("### incrementing " +this+ " on behalf of "
+			       +consumer);
 	++runningThreadCount;
 	listenerProxy.notifyRightGiven(consumer);
     }
 
     synchronized void decrementRunCount(Scheduler consumer) {
+	if (CougaarThread.Debug)
+	    System.err.println("### decrementing " +this+ " on behalf of "
+			       +consumer);
 	--runningThreadCount;
 	if (runningThreadCount < 0) {
 	    if (getTreeNode().getParent() == null || CougaarThread.Debug)
-		System.err.println("Thread account oddity: " +this+ 
+		System.err.println("### " +this+ 
 				   " thread count is " +
 				   runningThreadCount);
 	}
