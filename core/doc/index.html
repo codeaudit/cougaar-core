@@ -72,6 +72,9 @@ New component architecture APIs&nbsp;</li>
 
 <li>
 APIs and implementations of PluginBinder, MessageTransportBinder and BlackboardService</li>
+
+<li>
+Dynamic Components</li>
 </blockquote>
 Build 8.0 is a major release of COUGAAR. Essential differences between
 7.2 and 8.0 include:&nbsp;
@@ -88,11 +91,14 @@ Additional patches.</li>
 For additional details, please review the following documentation:
 <ul>
 <li>
-<a href="CHANGES">CHANGES</a> and doc/details</li>
-
-<li>
 <a href="ComponentModel/ComponentModel_Index.html">Component Model</a>
 docs</li>
+
+<li>
+<a href="ComponentModel/DynamicComponents.html">Dynamic Component </a>docs</li>
+
+<li>
+<a href="CHANGES">CHANGES</a> and doc/details</li>
 
 <li>
 core/doc/Javadoc</li>
@@ -260,18 +266,7 @@ General Development&nbsp;</h3>
 
 <h3>
 User Interface Development&nbsp;</h3>
-
-<ul>
-<li>
-<a href="ui/help.html">COUGAAR UI LogPlanServer Services&nbsp;</a></li>
-
-<li>
-<a href="ui/pspdevguide.html">PlanServiceProvider Developer's Guide</a></li>
-
-<li>
-<a href="ui/StandardUIServices.html">Standard UI Services</a></li>
-</ul>
-
+Please refer to the UI design doc.&nbsp; For general PSP help, see: <a href="ui/PSPServices.html">PSPServices</a>.
 <h2>
 <a NAME="future"></a>Future Releases</h2>
 There will be further releases as we address system enhancements and deficiencies.
@@ -285,15 +280,14 @@ can be submitted through the <a href="HTTPS://www.alpine.bbn.com/">ALPINE</a>
 or <a href="http://www.cougaar.org">COUGAAR</a> websites.&nbsp;
 <h2>
 <a NAME="bugs"></a>Known bugs and other issues</h2>
+
 <ul>
 <li>
-The NodeServer module (server.jar) does not currently work as an
-executable jar file because of an unresolved dependency on core.jar.
-Until this is fixed, an appserver instance will have to have a
-specified classpath which includes core.jar.
-</li>
+The NodeServer module (server.jar) does not currently work as an executable
+jar file because of an unresolved dependency on core.jar. Until this is
+fixed, an appserver instance will have to have a specified classpath which
+includes core.jar.</li>
 </ul>
-
 None known.&nbsp;</td>
 </tr>
 </table>

@@ -1,0 +1,40 @@
+<HTML><HEAD><TITLE>PSP Help</TITLE></HEAD><BODY>
+<UL>
+<H2>PSP Services</H2>
+</UL>
+<P>
+<UL>
+<LI>/$NAME/...  Refer to a cluster by name
+</UL>
+<UL>
+<LI><a href="?VERSION">?VERSION</a>
+<UL>
+<LI>displays basic machine information (host, port, OS, ALP-build, JVM, etc)
+</UL></UL><UL>
+<LI><a href="?LIST">?LIST</a>
+<UL>
+<LI>Returns an HTML list of all PSPs currently registered
+</UL></UL><UL>
+<LI><a href="?LOAD">?LOAD</a>?PSP_PATH=Path?CLASSNAME=JName?LOADER=URL
+<UL>
+<LI>Path: logical PSP location at this server (must end with .PSP)
+<LI>JName:  Java class name of 'Plan Service Provider'
+<LI>URL: Class is loaded from this URL (optional -- default uses server’s classpath)
+</UL></UL><UL>
+<LI><a href="?UNLOAD">?UNLOAD</a>?PSP_PATH=Path?CONFIRM_UNLOAD=Confirm
+<UL>
+<LI>Path: logical PSP location at this server (must end with .PSP)
+<LI>Confirm: Use "Yes", otherwise the user is prompted for a yes/no value
+</UL></UL><UL>
+<LI><a href="?ECHO">?ECHO</a>
+<UL>
+<LI>reflects browser's incoming HTTP as an HTML document
+</UL></UL><UL>
+<LI>?FILE?DOCUMENT=PATH
+<UL>
+<LI>it can refer to sub-directories only (no access to parent directories)
+</UL></UL><UL>
+<LI><a href="?HELP">?HELP</a>
+<UL>
+<LI>returns this document</UL></UL></P>
+</BODY></HTML>

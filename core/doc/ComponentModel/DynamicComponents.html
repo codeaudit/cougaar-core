@@ -1,0 +1,100 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="Author" content="Beth DePass">
+   <meta name="GENERATOR" content="Mozilla/4.72 [en] (WinNT; I) [Netscape]">
+   <title>DynamicComponents</title>
+</head>
+<body>
+Dynamic Components:
+<p>The initial API for the dynamic creation and mobilitity of Components
+has
+<br>been created.&nbsp; In particular, a new "ComponentMessage" was created
+which
+<br>allows one to specify:
+<br>&nbsp; - an operation: Add / Remove / Suspend / Resume / Reload
+<br>&nbsp; - the MessageAddress where this command is to be sent
+<br>&nbsp; - the ComponentDescription of the Component to Add/Remove/etc
+<br>The ComponentDescription can specify an optional "parameter", which
+will
+<br>allow mobile components to specify their "state" prior to movement.&nbsp;
+Other
+<br>higher-level Messages may be created in a future release, such as a
+<br>"MoveComponentMessage" and atomic-transaction/security support.
+<p>Currently only Nodes and Clusters are MessageTargets, so one can only
+<br>send these message to Nodes (to add/remove/etc a Cluster) and to Clusters
+<br>(to add/remove/etc a Plugin).&nbsp; Plugins will be provided a MessageTransport
+<br>service which will allow Plugins to create and send these messages.
+<p>For the initial implementation only the addition of new Clusters and
+Plugins
+<br>is supported until the requisite Container support is provided in the
+<br>infrastructure (namely Node and ClusterImpl).&nbsp; Developers can
+create and
+<br>send any ComponentMessage, but for now non-"add" ComponentMessages
+will
+<br>generate a warning and be ignored.
+<br>&nbsp;
+<p>Console/Server redesign:
+<p>The remote creation and management of Nodes, i.e. the "NodeServer" and
+it's
+<br>GUI "Console", have been redesigned:
+<br>&nbsp; - Separated RMI code from client (Console)
+<br>&nbsp; - Created a simple three-interface API for console developers,
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; with all RMI-specific code in the "rmi"
+package
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (details in the package-level javadocs:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "cougaar/server/src/org/cougaar/tools/server/index.html")
+<br>&nbsp; - Renamed RMI-specific code to follow easier-to-understand
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; naming conventions (details in the package-level
+javadocs:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "cougaar/server/src/org/cougaar/tools/server/rmi/index.html").
+<br>&nbsp; - Added Node registration back to the server, which allows the
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; client (Console) to directly contact
+the Node
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (e.g. ask the Node for a List of all
+it's ClusterIdentifiers)
+<br>&nbsp; - Added a "listener" pattern for the client (Console) to receive
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; notification of events within the Node
+<br>&nbsp; - Refactored Console to be a simple example of a server-client
+--
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; in the future it should be removed from
+this package.
+<br>These modifications will allow for a more powerful Console to be created
+with
+<br>greater control over the Nodes.&nbsp; These modifications also required
+the
+<br>addition
+<br>of three core "ExternalNode*" classes to
+<br>"cougaar/core/src/org/cougaar/core/society" and the modification of
+Node to
+<br>create and register an RMI "hook" for the remote server.&nbsp; For
+the typical
+<br>command-line Node invocation these modifications are disabled.
+<br>&nbsp;
+<p>Dynamic PSP load/unload:
+<p>The PSP "?LOAD" and "?UNLOAD" capability has been enhanced.&nbsp; These
+<br>PSP-services
+<br>now produce better HTTP interfaces for browsers, and the URL parameters
+have
+<br>been renamed for easier use:
+<br>&nbsp; ?LOAD?PSP_PATH=Path?CLASSNAME=JName?LOADER=URL
+<br>&nbsp;&nbsp;&nbsp;&nbsp; - Path: logical PSP location at this server
+(must end with .PSP)
+<br>&nbsp;&nbsp;&nbsp;&nbsp; - JName: Java class name of 'Plan Service
+Provider'
+<br>&nbsp;&nbsp;&nbsp;&nbsp; - URL: Class is loaded from this URL (optional
+-- default uses
+<br>server’s classpath)
+<br>&nbsp; ?UNLOAD?PSP_PATH=Path?CONFIRM_UNLOAD=Confirm
+<br>&nbsp;&nbsp;&nbsp;&nbsp; - Path: logical PSP location at this server
+(must end with .PSP)
+<br>&nbsp;&nbsp;&nbsp;&nbsp; - Confirm: Use "Yes", otherwise the user is
+prompted for a yes/no value
+<br>The "?LOADER" parameter of the PSP "?LOAD" now correctly loads PSP
+from remote
+<br>URL locations.
+<br>&nbsp;
+<br>&nbsp;
+</body>
+</html>
