@@ -1255,6 +1255,12 @@ extends HttpServlet
         "      document.myForm."+
         ITEM_UID+
         ".value = encAgent + uid\n"+
+        "    } else if (uid != document.myForm."+
+        ITEM_UID+
+        ".value) {\n"+
+        "      document.myForm."+
+        ITEM_UID+
+        ".value = uid\n"+
         "    }\n"+
         "  } else {\n"+
         "    document.myForm.target=\"tablesFrame\"\n"+
