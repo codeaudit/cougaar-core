@@ -129,7 +129,7 @@
     <xs:attribute name="order" type="xs:decimal" />
     <xs:attribute name="name" type="xs:string" />
     <xs:attribute name="class" type="xs:string" />
-    <xs:attribute name="priority" use="optional" default="STANDARD">
+    <xs:attribute name="priority" use="optional" default="COMPONENT">
       <xs:simpleType>
         <xs:restriction base="xs:string">
           <xs:enumeration value="HIGH"/>
@@ -142,16 +142,8 @@
       </xs:simpleType>
     </xs:attribute>
     <xs:attribute name="insertionpoint" use="optional" 
-	default="Node.AgentManager.Agent.PluginManager.Plugin">
-      <xs:simpleType>
-        <xs:restriction base="xs:string">
-          <xs:enumeration value="Node.AgentManager.Agent.PluginManager.Plugin"/>
-          <xs:enumeration value="Node.AgentManager.Agent.PluginManager.Binder"/>
-          <xs:enumeration value="Node.AgentManager.Agent.SecurityComponent"/>
-          <xs:enumeration value="Node.AgentManager.Binder"/>
-        </xs:restriction>
-      </xs:simpleType>
-    </xs:attribute>
+	default="Node.AgentManager.Agent.PluginManager.Plugin"
+	type="xs:string"/>
   </xs:complexType>
 
   <!-- Type for component arguments: ordered strings -->
