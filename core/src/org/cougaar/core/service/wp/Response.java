@@ -157,7 +157,7 @@ public abstract class Response implements Callback, Serializable {
     }
   }
 
-  public final void setResult(Object r, long ttl) {
+  public final boolean setResult(Object r, long ttl) {
     if (r == null) {
       r = getDefaultResult();
     }
@@ -166,17 +166,15 @@ public abstract class Response implements Callback, Serializable {
       if (result != null) {
         if (r == TIMEOUT || result == TIMEOUT) {
           // okay, ignored timeout
-          return;
+          return true;
         }
-        throw new RuntimeException(
-            "Result already set to "+result+
-            ", won't replace with "+r);
+        return false;
       }
       this.result = r;
       this.ttl = ttl;
       lock.notifyAll();
       if (callbacks == null) {
-        return;
+        return true;
       }
       s = callbacks;
       callbacks = null;
@@ -185,6 +183,7 @@ public abstract class Response implements Callback, Serializable {
       Callback c = (Callback) iter.next();
       c.execute(this);
     }
+    return true;
   }
 
   protected abstract Object getDefaultResult();

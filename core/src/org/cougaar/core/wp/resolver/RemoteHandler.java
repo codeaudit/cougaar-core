@@ -155,7 +155,7 @@ extends HandlerBase
     enqueueOut(req);
     // we can't answer it now, but our message receive handler
     // will eventually set the result.
-    return res;
+    return null;
   }
 
   private void enqueueOut(Request req) {
@@ -203,14 +203,20 @@ extends HandlerBase
     }
 
     // empty the outQueue
-    synchronized (outQueue) {
-      if (!outQueue.isEmpty()) {
-        runTmp.addAll(outQueue);
-        outQueue.clear();
+    if (messageSwitchService == null) {
+      // reschedule for later...
+      if (logger.isDetailEnabled()) {
+        logger.detail("waiting for message switch service");
+      }
+    } else {
+      synchronized (outQueue) {
+        if (!outQueue.isEmpty()) {
+          runTmp.addAll(outQueue);
+          outQueue.clear();
+        }
       }
     }
     if (!runTmp.isEmpty()) {
-      // send messages
       List notSent = null;
       for (int i = 0, n = runTmp.size(); i < n; i++) {
         Request req = (Request) runTmp.get(i);
@@ -236,8 +242,8 @@ extends HandlerBase
   }
 
   private void receive(WPAnswer wpa) {
-    if (logger.isInfoEnabled()) {
-      logger.info("Receive answer "+wpa);
+    if (logger.isDetailEnabled()) {
+      logger.detail("Receive answer "+wpa);
     }
     // extract message contents
     long ttl = wpa.getTTL();
@@ -253,13 +259,8 @@ extends HandlerBase
   }
 
   private boolean send(Request req) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Resolver send wp request: "+req);
-    }
-
-    if (messageSwitchService == null) {
-      // reschedule for later...
-      return false;
+    if (logger.isDetailEnabled()) {
+      logger.detail("send wp request: "+req);
     }
 
     // select the target
@@ -274,8 +275,8 @@ extends HandlerBase
       new WPQuery(agentId, target, req);
 
     // send the message
-    if (logger.isInfoEnabled()) {
-      logger.info("send: \t"+wpm);
+    if (logger.isDetailEnabled()) {
+      logger.detail("send: \t"+wpm);
     }
     messageSwitchService.sendMessage(wpm);
     // it's on its way...
@@ -318,8 +319,8 @@ extends HandlerBase
     }
     if (rootAE != null) {
       rootName = rootAE.getURI().getHost();
-      if (logger.isDebugEnabled()) {
-        logger.debug(
+      if (logger.isDetailEnabled()) {
+        logger.detail(
             "Extracted root name \""+rootName+
             "\" from entry "+rootAE);
       }

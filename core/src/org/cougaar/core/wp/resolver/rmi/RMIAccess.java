@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.bootstrap;
+package org.cougaar.core.wp.resolver.rmi;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

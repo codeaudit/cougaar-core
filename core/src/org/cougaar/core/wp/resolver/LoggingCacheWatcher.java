@@ -39,23 +39,23 @@ implements LRUExpireMap.Watcher {
 
   public void noteExpire(
       Object key, Object value, long putTime, long expireTime) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(
+    if (logger.isDetailEnabled()) {
+      logger.detail(
           "Removing expired "+
           format(key, value, putTime, expireTime));
     }
   }
   public void noteEvict(
       Object key, Object value, long putTime, long expireTime) {
-    if (logger.isInfoEnabled()) {
-      logger.info(
+    if (logger.isDebugEnabled()) {
+      logger.debug(
           "Evicting LRU "+
           format(key, value, putTime, expireTime));
     }
   }
   public void noteTrim(int nfreed, int origSize) {
-    if (nfreed > 0 && logger.isInfoEnabled()) {
-      logger.info("Cache trim expired "+nfreed+" of "+origSize);
+    if (nfreed > 0 && logger.isDebugEnabled()) {
+      logger.debug("Cache trim expired "+nfreed+" of "+origSize);
     }
   }
   private static final String format(

@@ -43,8 +43,6 @@ import org.cougaar.core.service.wp.Request;
 import org.cougaar.core.service.wp.Response;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.WhitePages; // inlined
-import org.cougaar.core.wp.WhitePagesMessage;
-import org.cougaar.core.wp.resolver.bootstrap.Bootstrap; // inlined
 
 /**
  * This is the client-side white pages resolver, which includes
@@ -101,7 +99,7 @@ extends ContainerSupport
   protected ComponentDescriptions findInitialComponentDescriptions() {
     List l = new ArrayList();
 
-    // add defaults
+    // add defaults -- order is very important!
     l.add(new ComponentDescription(
             "CacheEntries",
             INSERTION_POINT+".CacheEntries",
@@ -123,19 +121,9 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_COMPONENT));
     l.add(new ComponentDescription(
-            "Boot",
-            Bootstrap.INSERTION_POINT,
-            "org.cougaar.core.wp.resolver.bootstrap.Bootstrap",
-            null,
-            null,
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
-    l.add(new ComponentDescription(
-            "Batch",
-            INSERTION_POINT+".Batch",
-            "org.cougaar.core.wp.resolver.BatchHandler",
+            "RMIBoot",
+            INSERTION_POINT+".RMIBoot",
+            "org.cougaar.core.wp.resolver.rmi.RMIBootstrapLookup",
             null,
             null,
             null,
@@ -148,6 +136,16 @@ extends ContainerSupport
             "org.cougaar.core.wp.resolver.LeaseHandler",
             null,
             "",
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_COMPONENT));
+    l.add(new ComponentDescription(
+            "Config",
+            INSERTION_POINT+".Config",
+            "org.cougaar.core.wp.resolver.ConfigReader",
+            null,
+            null,
             null,
             null,
             null,
@@ -257,8 +255,8 @@ extends ContainerSupport
   }
 
   private Response mySubmit(Request req) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Resolver intercept wp request: "+req);
+    if (logger.isDetailEnabled()) {
+      logger.detail("Resolver intercept wp request: "+req);
     }
     Response origRes = req.createResponse();
     Response res = origRes;
@@ -268,34 +266,22 @@ extends ContainerSupport
       Handler h = (Handler) iter.next();
       res = h.submit(res);
       if (res == null || res.isAvailable()) {
-        if (logger.isDebugEnabled()) {
+        if (logger.isDetailEnabled()) {
           // get class name
           String id = h.getClass().getName();
           int idx = id.lastIndexOf('.');
           if (idx > 0) {
             id = id.substring(idx+1);
           }
-          logger.debug(id+" handled "+res);
+          logger.detail(id+" handled "+res);
         }
         return origRes;
       }
     }
-    // must be in the remote handler's outQueue
-    if (logger.isDebugEnabled()) {
-      logger.debug("Sending request to root wp");
+    if (logger.isErrorEnabled()) {
+      logger.error("Unhandled request: "+req);
     }
     return origRes;
-  }
-
-  private boolean myHandleMessage(Message m) {
-    if (!(m instanceof WhitePagesMessage)) {
-      return false;
-    }
-    WhitePagesMessage wpm = (WhitePagesMessage) m;
-    if (logger.isDebugEnabled()) {
-      logger.debug("Handle white pages message: "+wpm);
-    }
-    return false;
   }
 
   private void myExecute(Request req, Object result, long ttl) {

@@ -21,9 +21,12 @@
 
 package org.cougaar.core.wp.resolver;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
@@ -39,6 +42,9 @@ import org.cougaar.core.wp.Timestamp;
 public class LeaseHandler 
 extends HandlerBase 
 {
+  // see CacheEntriesHandler workaround + bug 2837 + bug 2839
+  private static final boolean UPGRADE_GET_TO_GETALL = false;
+
   private LeaserConfig config;
 
   private WhitePagesService wps;
@@ -63,53 +69,131 @@ extends HandlerBase
   protected Response mySubmit(Response res) {
     // watch for bind/unbind
     Request req = res.getRequest();
-    Object ret;
-    if (req instanceof Request.Bind) {
-      Request.Bind rb = (Request.Bind) req;
-      AddressEntry ae = rb.getAddressEntry();
-      if (rb.isRenewal()) {
-        // this had better be our timer!
-        //
-        // we could make sure by some tricks, e.g. use a custom
-        // private Request.Bind subclass.
-        if (logger.isDebugEnabled()) {
-          logger.debug("leaser ignore self: "+res);
-        }
-        ret = null;
-      } else {
-        ret = bind(ae);
+    if (req instanceof Request.Get) {
+      if (!UPGRADE_GET_TO_GETALL) {
+        handle(res, (Request.Get) req);
       }
+      return null;
+    } else if (req instanceof Request.Bind) {
+      return handle(res, (Request.Bind) req);
     } else if (req instanceof Request.Unbind) {
-      Request.Unbind ru = (Request.Unbind) req;
-      AddressEntry ae = ru.getAddressEntry();
-      ret = unbind(ae);
+      return handle(res, (Request.Unbind) req);
     } else {
-      ret = null;
+      return res;
     }
-    if (ret != null) {
-      // okay, we know it's not bound
-      res.setResult(ret, -1);
-    }
-    return res;
   }
 
-  private Object bind(AddressEntry ae) {
-    Object ret = null;
-    String n = ae.getName();
+  /**
+   * Handle some known bootstrapping bugs.
+   * <p>
+   * Bug 2837:<br>
+   * The MTS blocks on the version lookup in SendLinkImpl's
+   * constructor, during the MTS load.  The fix is to move the
+   * version info out of the WP.
+   * <p>
+   * Bug 2838:<br>
+   * The MTS blocks on the link "cost" selection for local agents,
+   * since * the RMI/CORBA/etc links must resolve their WP entry to
+   * estimate their cost.  The fix is to stop the cost comparison
+   * when loopback returns zero cost.  This may still break if
+   * loopback is disabled, and would require a change to the
+   * WP semantics:<pre>
+   *    If a "bind" is in progress, should a local "get" show the
+   *    unacknowledged bind or should it wait until the server
+   *    acknowledges the bind?
+   * </pre>
+   * <p>
+   * check for a pending bind and pretend that it went
+   * through.
+   * <p>
+   * The cache sends a separate "getAll", so we can
+   * throw away the "get".
+   */
+  private void handle(Response res, Request.Get req) {
+    String name = req.getName();
+    String type = req.getType();
+    if (name.endsWith("(MTS)") &&
+        "version".equals(type)) {
+      // bug 2837
+      if (logger.isInfoEnabled()) {
+        logger.info(
+            "Bug 2837, cancelling bogus MTS version lookup "+req+
+            " for the mts-internal name \""+name+"\"");
+      }
+      res.setResult(null, 1000);
+    } else {
+      synchronized (leases) {
+        Map m = (Map) leases.get(name);
+        Lease lease = (m == null ? null : (Lease) m.get(type));
+        if (lease != null) {
+          AddressEntry pendingAE = lease.findBind(type);
+          if (pendingAE != null) {
+            if (type.equals("version")) {
+              // bug 2837
+              if (logger.isInfoEnabled()) {
+                logger.info(
+                    "Bug 2837, short-cutting local version lookup "+req+
+                    " for the pending bind "+pendingAE);
+              }
+            } else if (name.equals(agentId.getAddress())) {
+              // bug 2839
+              if (logger.isInfoEnabled()) {
+                logger.info(
+                    "Bug 2839, short-cutting "+type+" lookup "+req+
+                    " for the pending bind "+pendingAE);
+              }
+            } else {
+              if (logger.isWarnEnabled()) {
+                logger.warn(
+                    "Short-cutting white pages "+req+
+                    " that matches a local in-progress (bind "+
+                    pendingAE+")");
+              }
+            }
+            res.setResult(pendingAE, 1000);
+          }
+        }
+      }
+    }
+  }
+
+  private Response handle(Response res, Request.Bind req) {
+    if (req.hasOption(Request.CACHE_ONLY)) {
+      // bind hints stop here
+      res.setResult(new Long(Long.MAX_VALUE), -1);
+      return res;
+    }
+
+    if (req.isRenewal()) {
+      // this had better be our timer!
+      //
+      // we could make sure by some tricks, e.g. use a custom
+      // private Request.Bind subclass.
+      if (logger.isDetailEnabled()) {
+        logger.detail("leaser ignore self: "+res);
+      }
+      return res;
+    }
+
+    long activeExpire = -1;
+    Response ret = res;
+    AddressEntry ae = req.getAddressEntry();
+    String name = ae.getName();
     String type = ae.getType();
     synchronized (leases) {
-      Map m = (Map) leases.get(n);
+      Map m = (Map) leases.get(name);
       Lease lease = null;
       if (m == null) {
         // new lease
         m = new HashMap(5);
-        leases.put(n, m);
+        leases.put(name, m);
       } else {
         lease = (Lease) m.get(type);
       }
       if (lease == null) {
         // new bind-pending lease
         lease = new Lease(ae);
+        lease.addResponse(res);
         m.put(type, lease);
         if (logger.isInfoEnabled()) {
           logger.info("Binding new lease: "+lease);
@@ -120,40 +204,70 @@ extends HandlerBase
           // exact match for in-progress or active lease
           if (lease.isBound()) {
             // the lease is active, so we know the status
-            ret = new Long(lease.getExpirationTime());
+            activeExpire = lease.getExpirationTime();
+            if (logger.isDetailEnabled()) {
+              logger.detail("lease already active: "+lease);
+            }
           } else {
             // already in progress, we don't know the
-            // status yet, so pass down to the
-            // batch-layer.  This might race but it's
-            // harmless
+            // status yet, so batch with our pending request.
+            lease.addResponse(res);
+            if (logger.isDetailEnabled()) {
+              logger.detail("lease bind in progress: "+lease);
+            }
+            // batched here
+            ret = null;
           }
         } else {
           // cancel old lease, initiate a new one
           //
-          // note that the old renewal may be in progress,
-          // but we'll catch that case in the execute handling
+          // note that a pending bind may be in progress, so we
+          // must fail them.
           //
-          // recycle lease, set bind time to now
+          // create a new lease
           if (logger.isInfoEnabled()) {
             logger.info(
                 "Binding replacement entry "+ae+
                 " for current lease "+lease);
           }
-          lease.recycle(ae);
+          // fail the old responses
+          int n = lease.numResponses();
+          if (n > 0) {
+            for (int i = 0; i < n; i++) {
+              Response oldRes = lease.getResponse(i);
+              // pretend that the pending entry is accepted
+              oldRes.setResult(ae, -1);
+            }
+          }
+          // create a new lease and replace the old one
+          Lease newLease = new Lease(ae);
+          newLease.addResponse(res);
+          m.put(type, newLease);
         }
       }
     }
+    if (activeExpire > 0) {
+      // lease already bound
+      res.setResult(new Long(activeExpire), -1);
+    }
     return ret;
   }
+  
+  private Response handle(Response res, Request.Unbind req) {
+    // unbind hints stop here
+    if (req.hasOption(Request.CACHE_ONLY)) {
+      res.setResult(Boolean.TRUE, -1);
+      return res;
+    }
 
-  private Object unbind(AddressEntry ae) {
-    String n = ae.getName();
+    AddressEntry ae = req.getAddressEntry();
+    String name = ae.getName();
     String type = ae.getType();
     boolean wasBound;
     synchronized (leases) {
       // remove matching lease
       wasBound = false;
-      Map m = (Map) leases.get(n);
+      Map m = (Map) leases.get(name);
       if (m != null) {
         Lease l = (Lease) m.get(type);
         if (l != null) {
@@ -162,7 +276,7 @@ extends HandlerBase
             // found exact match
             wasBound = true;
             if (m.size() == 1) {
-              leases.remove(n);
+              leases.remove(name);
             } else {
               m.remove(type);
             }
@@ -170,16 +284,16 @@ extends HandlerBase
         }
       }
     }
-    if (wasBound) {
-      // we bound this, so we must send the unbind
-      return null;
-    } else {
+
+    if (!wasBound) {
       // it's not bound from the local lease's point of view
       //
       // if it's bound in the server without our knowledge,
       // the lease expiration will unbind it for us
-      return Boolean.TRUE;
+      res.setResult(Boolean.TRUE, -1);
     }
+
+    return res;
   }
 
   protected void myExecute(Request req, Object result, long ttl) {
@@ -188,69 +302,100 @@ extends HandlerBase
       // will make it work
       return;
     }
-    // should we check that we actually sent a "bind"
-    // request?  let's trust the server...
     Request.Bind rb = (Request.Bind) req;
     AddressEntry ae = rb.getAddressEntry();
-    boolean overWrite = rb.isOverWrite();
     boolean renewal = rb.isRenewal();
+    boolean overWrite = rb.isOverWrite();
+    String name = ae.getName();
+    String type = ae.getType();
+
+    long expireTime;
+    boolean success;
     if (result instanceof Long) {
-      long expireTime = ((Long) result).longValue();
+      expireTime = ((Long) result).longValue();
+      success = true;
+    } else {
+      expireTime = -1;
+      success = false;
+    }
+
+    if (success) {
+      if (renewal) {
+        if (logger.isDebugEnabled()) {
+          logger.debug(
+              "Lease renewed that expires at "+
+              Timestamp.toString(expireTime)+
+              " for entry "+ae);
+        }
+      } else {
+        if (logger.isInfoEnabled()) {
+          logger.info(
+              "Established lease ("+
+              (overWrite ? "re" : "")+
+              "bind) that expires at "+
+              Timestamp.toString(expireTime)+
+              " for entry "+ae);
+        }
+      } 
+    } else {
       if (logger.isInfoEnabled()) {
         logger.info(
-            "Lease "+
-            (renewal ?
-             "renewed" :
-             ("created ("+
-              (overWrite ? "re" : "")+
-              "bind)"))+
-            " that expires at "+
-            Timestamp.toString(expireTime)+
-            " for entry "+ae);
+            "Failed lease ("+
+            (overWrite ? "re" : "")+
+            "bind), request="+req+
+            ", result="+result);
       }
-      bound(ae, renewal, expireTime);
-    } else {
-      // failure?
-      //
-      // FIXME tell the agent suicide watch
-      if (logger.isErrorEnabled()) {
-        logger.error(
-            "Lost lease "+
-            (renewal ? 
-             "renewal" : 
-             ("creation ("+
-             (overWrite ? "re" : "")+
-             "bind)"))+
-            "!  req="+req+
-            " entry="+ae+
-            " ttl="+Timestamp.toString(ttl)+
-            " result="+result);
-      }
-      unbind(ae);
     }
-  }
 
-  private void bound(
-      AddressEntry ae, boolean renewal, long expireTime) {
-    String n = ae.getName();
-    String type = ae.getType();
     synchronized (leases) {
-      Map m = (Map) leases.get(n);
+      Map m = (Map) leases.get(name);
       Lease lease = null;
       if (m != null) {
         lease = (Lease) m.get(type);
       }
       if (lease != null && 
           ae.equals(lease.getAddressEntry())) {
-        // good, we've created a new lease or
-        // renewed an existing lease
-        long now = System.currentTimeMillis();
-        renewed(lease, now, expireTime);
-        if (logger.isDebugEnabled()) {
-          logger.debug(
-              (renewal ? "Renewed" : "Established")+
-              " lease="+lease);
+        // we're expecting this bind-ack
+        if (success) {
+          // good, we've created a new lease or
+          // renewed an existing lease
+          long now = System.currentTimeMillis();
+          renewed(lease, now, expireTime);
+          if (logger.isDebugEnabled()) {
+            logger.debug(
+                (renewal ? "Renewed" : "Established")+
+                " lease="+lease);
+          }
+        } else {
+          // we failed to bind
+          m.remove(type);
+          if (m.isEmpty()) {
+            leases.remove(name);
+          }
+          if (renewal) {
+            if (logger.isWarnEnabled()) {
+              logger.warn(
+                  "Lost lease renewal!  request="+req+
+                  " ttl="+Timestamp.toString(ttl)+
+                  " result="+result);
+            }
+
+            // FIXME tell agent suicide watcher?
+
+          } else {
+            if (logger.isInfoEnabled()) {
+              logger.info(
+                  "Lost lease creation ("+
+                  (overWrite ? "re" : "")+
+                  "bind)!  request="+req+
+                  " ttl="+Timestamp.toString(ttl)+
+                  " result="+result);
+            }
+          }
         }
+
+        // tell the clients
+        lease.setResults(result);
       } else {
         // we must ignore this response
         if (!renewal ||
@@ -262,8 +407,8 @@ extends HandlerBase
           //
           // In any case, we don't want this binding, so ignore
           // it.
-          if (logger.isDebugEnabled()) {
-            logger.debug(
+          if (logger.isInfoEnabled()) {
+            logger.info(
                 "Ignoring late bind-"+
                 (renewal ? "renewal" : "ack")+
                 " for wrong entry="+ae+
@@ -298,9 +443,10 @@ extends HandlerBase
   private void renewLeases() {
     synchronized (leases) {
       long now = System.currentTimeMillis();
-      if (logger.isInfoEnabled()) {
-        logger.info(
-            "renewLeases now="+now+
+      if (logger.isDebugEnabled()) {
+        logger.debug(
+            "Check for lease renewal"+
+            ", now="+now+
             ", leases["+leases.size()+"]");
       }
       for (Iterator nameIter = leases.values().iterator();
@@ -312,18 +458,12 @@ extends HandlerBase
             ) {
           Lease lease = (Lease) typeIter.next();
           boolean renewNow = shouldRenew(lease, now);
-          if (logger.isDebugEnabled()) {
-            logger.debug(
-                (renewNow ? "renew" : "skip")+
-                " now="+now+", lease="+
-                lease);
-          }
           if (renewNow) {
             Request.Bind rb = new Request.Bind(
-                false, 0, lease.ae, false, true);
-            if (logger.isInfoEnabled()) {
-              logger.info(
-                  "Renew lease that will expire at "+
+                Request.NONE, lease.ae, false, true);
+            if (logger.isDebugEnabled()) {
+              logger.debug(
+                  "Renewing lease that will expire at "+
                   Timestamp.toString(lease.expireTime)+
                   ": "+lease+
                   ", renewRatio: "+config.renewRatio+
@@ -331,6 +471,13 @@ extends HandlerBase
                   config.checkLeasesPeriod);
             }
             wps.submit(rb);
+          } else {
+            if (logger.isDetailEnabled()) {
+              logger.detail(
+                  "skipping lease rewal"+
+                  ", now="+now+", lease="+
+                  lease);
+            }
           }
         }
       }
@@ -366,8 +513,8 @@ extends HandlerBase
     // adjust for timer period
     renewalTime -= config.checkLeasesPeriod;
     boolean ret = (renewalTime < now);
-    if (logger.isDebugEnabled()) {
-      logger.debug(
+    if (logger.isDetailEnabled()) {
+      logger.detail(
           "shouldRenew ret="+ret+
           " lease="+lease+
           " renewalTime="+
@@ -386,6 +533,7 @@ extends HandlerBase
   }
 
   private void renewed(Lease lease, long now, long expTime) {
+    // set our timestamps
     if (lease.sendTime > 0) {
       long tripTime = now - lease.sendTime;
       // soften this by averaging
@@ -403,6 +551,7 @@ extends HandlerBase
     }
     lease.boundTime = now;
     lease.expireTime = expTime;
+    /** set the result for all pending responses */
   }
 
   /** config options, soon to be parameters/props */
@@ -426,15 +575,28 @@ extends HandlerBase
   }
 
   static class Lease {
-    public AddressEntry ae;
-    public long bindTime;
+
+    private static final List NO_RESPONSES = Collections.EMPTY_LIST;
+
+    public final AddressEntry ae;
+    public final long bindTime;
     public long boundTime;
     public long sendTime;
     public long roundTripTime;
     public long expireTime;
+
+    private List responses = NO_RESPONSES;
+
     public Lease(AddressEntry ae) {
-      recycle(ae);
+      long now = System.currentTimeMillis();
+      this.ae = ae;
+      bindTime = now;
+      boundTime = 0;
+      sendTime = now;
+      roundTripTime = 0;
+      expireTime = 0;
     }
+
     public AddressEntry getAddressEntry() {
       return ae;
     }
@@ -444,15 +606,59 @@ extends HandlerBase
     public long getExpirationTime() {
       return expireTime;
     }
-    public void recycle(AddressEntry ae) {
-      long now = System.currentTimeMillis();
-      this.ae = ae;
-      bindTime = now;
-      boundTime = 0;
-      sendTime = now;
-      roundTripTime = 0;
-      expireTime = 0;
+
+    public int numResponses() {
+      return responses.size();
     }
+    /** find a pending bind with the matching entry type */
+    public AddressEntry findBind(String type) {
+      AddressEntry pendingAE = null;
+      for (int i = 0, n = numResponses(); i < n; i++) {
+        Response res = getResponse(i);
+        Request req = res.getRequest();
+        if (req instanceof Request.Bind) {
+          Request.Bind breq = (Request.Bind) req;
+          AddressEntry bae = breq.getAddressEntry();
+          if (type.equals(bae.getType())) {
+            pendingAE = bae;
+            break;
+          }
+        }
+      }
+      return pendingAE;
+    }
+    public void addResponse(Response res) {
+      if (res == null) {
+        throw new IllegalArgumentException("Null res");
+      }
+      if (isBound()) {
+        throw new IllegalStateException(
+            "Lease is already bound, not expecting responses: "+
+            this);
+      }
+      if (responses == NO_RESPONSES) {
+        responses = new ArrayList(3);
+      }
+      responses.add(res);
+    }
+    public Response getResponse(int index) {
+      return (Response) responses.get(index);
+    }
+    /** set the result for all pending responses */
+    public void setResults(Object obj) {
+      int n = numResponses();
+      if (n > 0) {
+        for (int i = 0; i < n; i++) {
+          Response res = getResponse(i);
+          res.setResult(obj, -1);
+        }
+        clearResponses();
+      }
+    }
+    public void clearResponses() {
+      responses = NO_RESPONSES;
+    }
+
     public String toString() {
       long now = System.currentTimeMillis();
       return 
@@ -467,6 +673,7 @@ extends HandlerBase
         " roundTripTime="+roundTripTime+
         " expireTime="+
         Timestamp.toString(expireTime,now)+
+        " pending["+responses.size()+"]="+responses+
         ")";
     }
   }

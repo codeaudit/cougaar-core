@@ -63,6 +63,13 @@ public class RootAuthority
 extends GenericStateModelAdapter
 implements Component
 {
+  // cache successes for 1.5 minutes:
+  private static final String DEFAULT_SUCCESS_TTD =  "90000";
+  // cache failures for  0.5 minutes:
+  private static final String DEFAULT_FAIL_TTD    =  "30000";
+  // leases expire after 4.0 minutes:
+  private static final String DEFAULT_EXPIRE_TTD  = "240000";
+
   private ServiceBroker sb;
 
   private RootConfig config;
@@ -149,7 +156,6 @@ implements Component
     Scheduled expireRunner =
       new Scheduled() {
         public void run(SchedulableWrapper thread) {
-          // assert (thread == expireThread);
           expireLeases(thread);
         }
       };
@@ -239,8 +245,8 @@ implements Component
 
   private boolean myHandleMessage(Message m) {
     if (!(m instanceof WhitePagesMessage)) {
-      if (logger.isInfoEnabled()) {
-        logger.info("ignore: \t"+m);
+      if (logger.isDetailEnabled()) {
+        logger.detail("ignore: \t"+m);
       }
       return false;
     }
@@ -275,8 +281,8 @@ implements Component
   }
 
   private void receive(WPQuery wpq) {
-    if (logger.isInfoEnabled()) {
-      logger.info("Receive "+wpq);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Receive "+wpq);
     }
     WPAnswer ret;
     try {
@@ -288,8 +294,8 @@ implements Component
       }
       return;
     }
-    if (logger.isInfoEnabled()) {
-      logger.info("Send    "+ret);
+    if (logger.isDebugEnabled()) {
+      logger.debug("Send    "+ret);
     }
     messageSwitchService.sendMessage(ret);
   }
@@ -389,8 +395,8 @@ implements Component
           }
         }
         if (m.isEmpty()) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Expire all leases for "+n);
+          if (logger.isDetailEnabled()) {
+            logger.detail("Expire all leases for "+n);
           }
           leases.remove(n);
           m = null;
@@ -574,8 +580,8 @@ implements Component
             // put the lease back in?
           }
           if (m.isEmpty()) {
-            if (logger.isDebugEnabled()) {
-              logger.debug("Unbinding all leases for "+n);
+            if (logger.isDetailEnabled()) {
+              logger.detail("Unbinding all leases for "+n);
             }
             leases.remove(n);
           }
@@ -586,6 +592,7 @@ implements Component
   }
 
   protected void expireLeases(SchedulableWrapper thread) {
+    // assert (thread == expireThread);
     expireLeases();
     // run me again later
     thread.schedule(config.checkExpirePeriod);
@@ -614,8 +621,8 @@ implements Component
             }
             typeIter.remove();
           } else {
-            if (logger.isDebugEnabled()) {
-              logger.debug("Keep lease "+lease);
+            if (logger.isDetailEnabled()) {
+              logger.detail("Keep lease "+lease);
             }
           }
         }
@@ -640,17 +647,17 @@ implements Component
         Long.parseLong(
             System.getProperty(
               "org.cougaar.core.wp.server.successTTD",
-              "40000"));
+              DEFAULT_SUCCESS_TTD));
       failTTD =
         Long.parseLong(
             System.getProperty(
               "org.cougaar.core.wp.server.failTTD",
-              "20000"));
+              DEFAULT_FAIL_TTD));
       expireTTD =
         Long.parseLong(
             System.getProperty(
               "org.cougaar.core.wp.server.expireTTD",
-              "120000"));
+              DEFAULT_EXPIRE_TTD));
     }
   }
 

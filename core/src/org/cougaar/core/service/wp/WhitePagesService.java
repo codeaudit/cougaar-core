@@ -82,9 +82,17 @@ public abstract class WhitePagesService implements Service {
   public final void rebind(AddressEntry ae) throws Exception {
     rebind(ae, 0);
   }
+  /** @see Request.Bind */
+  public final void hint(AddressEntry ae) throws Exception {
+    hint(ae, 0);
+  }
   /** @see Request.Unbind */
   public final void unbind(AddressEntry ae) throws Exception {
     unbind(ae, 0);
+  }
+  /** @see Request.Unbind */
+  public final void unhint(AddressEntry ae) throws Exception {
+    unhint(ae, 0);
   }
 
   // 
@@ -94,101 +102,156 @@ public abstract class WhitePagesService implements Service {
   /** @see Request.Get */
   public final void get(
       String name, String type, Callback callback) throws Exception {
-    submit(new Request.Get(true, 0, name, type), callback);
+    submit(new Request.Get(Request.NONE, name, type), callback);
   }
   /** @see Request.GetAll */
   public final void getAll(String name, Callback callback) throws Exception {
-    submit(new Request.GetAll(true, 0, name), callback);
+    submit(new Request.GetAll(Request.NONE, name), callback);
   }
   /** @see Request.List */
   public final void list(String suffix, Callback callback) throws Exception {
-    submit(new Request.List(true, 0, suffix), callback);
+    submit(new Request.List(Request.NONE, suffix), callback);
   }
   /** @see Request.Get */
   public final void refresh(
       String name, String type, Callback callback) throws Exception {
-    submit(new Request.Get(false, 0, name, type), callback);
+    submit(new Request.Get(Request.BYPASS_CACHE, name, type), callback);
   }
   /** @see Request.Bind */
   public final void bind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Bind(false, 0, ae, false, false), callback);
+    submit(new Request.Bind(Request.NONE, ae, false, false), callback);
   }
   /** @see Request.Bind */
   public final void rebind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Bind(false, 0, ae, true, false), callback);
+    submit(new Request.Bind(Request.NONE, ae, true, false), callback);
   }
-  /** @see Request.Rebind */
+  /** @see Request.Bind */
+  public final void hint(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Bind(Request.CACHE_ONLY, ae, true, false), callback);
+  }
+  /** @see Request.Unbind */
   public final void unbind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Unbind(false, 0, ae), callback);
+    submit(new Request.Unbind(Request.NONE, ae), callback);
+  }
+  /** @see Request.Unbind */
+  public final void unhint(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Unbind(Request.CACHE_ONLY, ae), callback);
   }
 
   //
   // timeout variations:
   //
 
-  public static final class TimeoutException extends Exception {
-    private final boolean b;
-    public TimeoutException(boolean b) {
-      super("Timeout on "+(b ? "Request" : "Response"));
-      this.b = b;
+  public static final class TimeoutException 
+    extends InterruptedException {
+      private final boolean b;
+      public TimeoutException(boolean b) {
+        super("Timeout on "+(b ? "Request" : "Response"));
+        this.b = b;
+      }
+      /**
+       * @return true if the Request timeout was too short, else
+       * return false if the wait for the Response was too short.
+       */
+      public boolean isRequestTimeout() { return b; }
     }
-    /**
-     * @return true if the Request timeout was too short, else
-     * return false if the wait for the Response was too short.
-     */
-    public boolean isRequestTimeout() { return b; }
-  }
 
   /** @see Request.Get */
   public final AddressEntry get(
       String name, String type,
       long timeout) throws Exception {
-    Request.Get req = 
-      new Request.Get(true, timeout, name, type);
-    Response.Get res = (Response.Get) assertSubmit(req);
+    int options = Request.NONE;
+    if (timeout < 0) {
+      options |= Request.CACHE_ONLY;
+      timeout = 0;
+    }
+    Request.Get req = new Request.Get(options, name, type);
+    Response.Get res = (Response.Get) assertSubmit(req, timeout);
     return res.getAddressEntry();
   }
   /** @see Request.GetAll */
   public final Map getAll(String name, long timeout) throws Exception {
-    Request.GetAll req = new Request.GetAll(true, timeout, name);
-    Response.GetAll res = (Response.GetAll) assertSubmit(req);
+    int options = Request.NONE;
+    if (timeout < 0) {
+      options |= Request.CACHE_ONLY;
+      timeout = 0;
+    }
+    Request.GetAll req = new Request.GetAll(options, name);
+    Response.GetAll res = (Response.GetAll) assertSubmit(req, timeout);
     return res.getAddressEntries();
   }
   /** @see Request.List */
   public final Set list(String suffix, long timeout) throws Exception {
-    Request.List req = new Request.List(true, timeout, suffix);
-    Response.List res = (Response.List) assertSubmit(req);
+    int options = Request.NONE;
+    if (timeout < 0) {
+      options |= Request.CACHE_ONLY;
+      timeout = 0;
+    }
+    Request.List req = new Request.List(options, suffix);
+    Response.List res = (Response.List) assertSubmit(req, timeout);
     return res.getNames();
   }
   /** @see Request.Get */
   public final AddressEntry refresh(
       String name, String type,
       long timeout) throws Exception {
-    Request.Get req = new Request.Get(
-        false, timeout, name, type);
-    Response.Get res = (Response.Get) assertSubmit(req);
+    int options = Request.BYPASS_CACHE;
+    if (timeout < 0) {
+      options |= Request.CACHE_ONLY;
+      timeout = 0;
+    }
+    Request.Get req = new Request.Get(options, name, type);
+    Response.Get res = (Response.Get) assertSubmit(req, timeout);
     return res.getAddressEntry();
   }
   /** @see Request.Bind */
   public final void bind(AddressEntry ae, long timeout) throws Exception {
-    Request.Bind req = new Request.Bind(false, timeout, ae, false, false);
-    Response.Bind res = (Response.Bind) assertSubmit(req);
+    if (timeout < 0) {
+      throw new IllegalArgumentException("Negative bind timeout");
+    }
+    Request.Bind req = new Request.Bind(Request.NONE, ae, false, false);
+    Response.Bind res = (Response.Bind) assertSubmit(req, timeout);
     if (!res.didBind()) {
       throw new RuntimeException("Bind failed: "+res);
     }
   }
   /** @see Request.Bind */
   public final void rebind(AddressEntry ae, long timeout) throws Exception {
-    Request.Bind req = new Request.Bind(false, timeout, ae, true, false);
-    Response.Bind res = (Response.Bind) assertSubmit(req);
+    if (timeout < 0) {
+      throw new IllegalArgumentException("Negative rebind timeout");
+    }
+    Request.Bind req = new Request.Bind(Request.NONE, ae, true, false);
+    Response.Bind res = (Response.Bind) assertSubmit(req, timeout);
     if (!res.didBind()) {
       throw new RuntimeException("Rebind failed: "+res);
     }
   }
+  /** @see Request.Bind */
+  public final void hint(AddressEntry ae, long timeout) throws Exception {
+    if (timeout < 0) {
+      timeout = 0; // timeout doesn't really apply here...
+    }
+    Request.Bind req = new Request.Bind(Request.CACHE_ONLY, ae, true, false);
+    Response.Bind res = (Response.Bind) assertSubmit(req, timeout);
+    if (!res.didBind()) {
+      throw new RuntimeException("Hint failed: "+res);
+    }
+  }
   /** @see Request.Unbind */
   public final void unbind(AddressEntry ae, long timeout) throws Exception {
-    Request.Unbind req = new Request.Unbind(false, timeout, ae);
-    Response.Unbind res = (Response.Unbind) assertSubmit(req);
+    if (timeout < 0) {
+      throw new IllegalArgumentException("Negative unbind timeout");
+    }
+    Request.Unbind req = new Request.Unbind(Request.NONE, ae);
+    Response.Unbind res = (Response.Unbind) assertSubmit(req, timeout);
+  }
+  /** @see Request.Unbind */
+  public final void unhint(AddressEntry ae, long timeout) throws Exception {
+    if (timeout < 0) {
+      timeout = 0; // timeout doesn't really apply here...
+    }
+    Request.Unbind req = new Request.Unbind(Request.CACHE_ONLY, ae);
+    Response.Unbind res = (Response.Unbind) assertSubmit(req, timeout);
   }
 
   /**
@@ -196,8 +259,8 @@ public abstract class WhitePagesService implements Service {
    * within the request's timeout and successful, otherwise throw
    * an exception.
    */
-  public final Response assertSubmit(Request req) throws Exception {
-    long timeout = req.getTimeout();
+  public final Response assertSubmit(
+      Request req, long timeout) throws Exception {
     Response res = submit(req);
     if (res.waitForIsAvailable(timeout)) {
       if (res.isSuccess()) {
@@ -252,8 +315,8 @@ public abstract class WhitePagesService implements Service {
    *   }
    * </pre>
    * <p>
-   * An example "callback" usage is:<pre>
-   *    Request req = new Request.GetAll("foo");
+   * An example "callback" usage:<pre>
+   *    Request req = new Request.GetAll(Request.NONE, "foo");
    *    Response r = wps.submit(req);
    *    Callback callback = new Callback() {
    *      public void execute(Response res) {
@@ -273,7 +336,7 @@ public abstract class WhitePagesService implements Service {
    * </pre>
    * <p>
    * An example blocking "poll" usage is:<pre>
-   *    Request req = new Request.GetAll("foo");
+   *    Request req = new Request.GetAll(Request.NONE, "foo");
    *    Response res = wps.submit(req);
    *    // wait at most 5 seconds
    *    if (res.waitForIsAvailable(5000)) {

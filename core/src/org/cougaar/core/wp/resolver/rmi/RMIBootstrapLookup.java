@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.bootstrap;
+package org.cougaar.core.wp.resolver.rmi;
 
 import java.net.URI;
 import java.rmi.ConnectException;
@@ -34,6 +34,7 @@ import org.cougaar.core.mts.SocketFactory;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.Timestamp;
+import org.cougaar.core.wp.resolver.BootstrapLookupBase;
 
 /**
  * RMI-specific implementation of a bootstrap lookup.
@@ -69,13 +70,13 @@ import org.cougaar.core.wp.Timestamp;
  * For now this happens to use the same SocketFactory implementation
  * as the MTS.
  *
- * @property org.cougaar.core.wp.resolver.bootstrap.rmi.useSSL
+ * @property org.cougaar.core.wp.resolver.rmi.useSSL
  *   Boolean-valued property which controls whether or not ssl is used
  *   in communication to the RMI registry.  Defaults to 'false'.
  *
  * @property org.cougaar.core.naming.useSSL
  *   Backwards compatibility for the
- *   "org.cougaar.core.wp.resolver.bootstrap.rmi.useSSL"
+ *   "org.cougaar.core.wp.resolver.rmi.useSSL"
  *   system property.
  */
 public class RMIBootstrapLookup
@@ -90,7 +91,7 @@ extends BootstrapLookupBase
   private static final long DELAY_FOR_LOOKUP = 
     Long.parseLong(
         System.getProperty(
-          "org.cougaar.core.wp.resolver.bootstrap.rmi.lookup",
+          "org.cougaar.core.wp.resolver.rmi.lookup",
           "30000"));
 
   // pause between alias re-lookup if we find a conflicting
@@ -98,26 +99,26 @@ extends BootstrapLookupBase
   private static final long DELAY_FOR_RETRY_ALIAS = 
     Long.parseLong(
         System.getProperty(
-          "org.cougaar.core.wp.resolver.bootstrap.rmi.retryAlias",
-          "120000"));
+          "org.cougaar.core.wp.resolver.rmi.retryAlias",
+          "180000"));
 
   // pause between verification of successful lookups
   private static final long DELAY_FOR_VERIFY =
     Long.parseLong(
         System.getProperty(
-          "org.cougaar.core.wp.resolver.bootstrap.rmi.verify",
-          "120000"));
+          "org.cougaar.core.wp.resolver.rmi.verify",
+          "180000"));
 
   // if an alias is created, and a subsequent verification
   // fails, should we allow a new alias name?
   private static final String ALLOW_ALIAS_CHANGE_PROP =
-    "org.cougaar.core.wp.resolver.bootstrap.rmi.allowAliasChange";
+    "org.cougaar.core.wp.resolver.rmi.allowAliasChange";
   private static final boolean ALLOW_ALIAS_CHANGE =
     "true".equals(System.getProperty(
           ALLOW_ALIAS_CHANGE_PROP, "true"));
 
   private static final String USE_SSL_PROP =
-    "org.cougaar.core.wp.resolver.bootstrap.rmi.useSSL";
+    "org.cougaar.core.wp.resolver.rmi.useSSL";
   private static final String OLD_USE_SSL_PROP =
     "org.cougaar.core.naming.useSSL";
 
@@ -164,7 +165,7 @@ extends BootstrapLookupBase
     String type = entry.getType();
     String scheme = entry.getURI().getScheme();
     return
-      (("-RMI".equals(type) || "-RMISSL".equals(type)) &&
+      (("-RMI".equals(type) || "-SSLRMI".equals(type)) &&
        "rmi".equals(scheme));
   }
 
@@ -215,8 +216,11 @@ extends BootstrapLookupBase
             logger.info(
                 "Unable to lookup"+
                 (shouldBind ? "/create" : "")+
-                " rmi registry on "+host+":"+port+
-                ", will attempt another lookup at "+
+                " rmi registry on "+host+":"+port+", "+
+                ((shouldBind && bindEntry == null) ?
+                 ("waiting for a local bind(name="+id+
+                 ", type=(-RMI|-SSLRMI)) or for a timer at ") :
+                 ("will attempt another lookup at "))+
                 Timestamp.toString(delay,now));
           }
           logger.printDot("!");
@@ -307,12 +311,21 @@ extends BootstrapLookupBase
             logger.debug("Found existing registry: "+r);
           }
         } catch (Exception e) {
-          if (logger.isDebugEnabled()) {
-            logger.debug(
-                "Unable to access registry on "+host+":"+port+" ("+
-                (e instanceof java.rmi.ConnectException ?
-                 "possibly doesn't exist" :
-                 "unknown exception")+")", e);
+          String eMsg = e.getMessage();
+          if (e instanceof java.rmi.ConnectException &&
+              eMsg != null &&
+              eMsg.startsWith("Connection refused")) {
+            if (logger.isDebugEnabled()) {
+              logger.debug(
+                  "Unable to access registry on "+host+":"+port+
+                  " (possibly doesn't exist)", e);
+            }
+          } else {
+            if (logger.isInfoEnabled()) {
+              logger.info(
+                  "Unable to access registry on "+host+":"+port+
+                  " (unknown exception)", e);
+            }
           }
           if (r == null && autoStart && isLocalHost(host)) {
             if (logger.isDebugEnabled()) {
@@ -321,17 +334,31 @@ extends BootstrapLookupBase
             try {
               r = LocateRegistry.createRegistry(port, rsf, rsf);
             } catch (Exception e2) {
-              if (logger.isErrorEnabled()) {
-                boolean isMultipleRegistryBug =
-                  ((e2 instanceof ExportException) &&
-                   "internal error: ObjID already in use".equals(
-                     e2.getMessage()));
-                logger.error(
-                    "Unable to create RMI registry on "+host+":"+port+
-                    (isMultipleRegistryBug ?
-                     ", is another RMI registry running"+
-                     " on this JVM (Sun bug 4267864)" :
-                     ""), e2);
+              String e2Msg = e2.getMessage();
+              if (e2 instanceof java.rmi.server.ExportException &&
+                  e2Msg != null &&
+                  e2Msg.startsWith("Port already in use")) {
+                if (logger.isInfoEnabled()) {
+                  logger.info(
+                      "Unable to create registry on "+host+":"+port+
+                      " (possibly another local Node raced ahead and"+
+                      " created it and we'll find it later)",
+                      e2);
+                }
+                // we'll try again later...
+              } else {
+                if (logger.isErrorEnabled()) {
+                  boolean isMultipleRegistryBug =
+                    (e2 instanceof ExportException &&
+                     e2Msg != null &&
+                     e2Msg.equals("internal error: ObjID already in use"));
+                  logger.error(
+                      "Unable to create RMI registry on "+host+":"+port+
+                      (isMultipleRegistryBug ?
+                       ", is another RMI registry running"+
+                       " on this JVM (Sun bug 4267864)" :
+                       ""), e2);
+                }
               }
             }
           }
@@ -429,14 +456,14 @@ extends BootstrapLookupBase
 
       public String toString() {
         return
-          "RMILookupTimer {"+
+          "(rmi_bootstrap "+
           super.toString()+
-          "\n  shouldBind: "+
+          ", shouldBind="+
           (setShouldBind ?
            (shouldBind ? "true" : "false") :
            "not_set") +
-          "\n  rmiAccess: "+rmiAccess+
-          "\n}";
+          ", rmiAccess="+rmiAccess+
+          ")";
       }
     }
 }

@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.bootstrap;
+package org.cougaar.core.wp.resolver;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -36,6 +36,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.GenericStateModelAdapter;
 
@@ -55,9 +56,9 @@ implements Component
     "org.cougaar.name.server.port";
 
   private ServiceBroker sb;
-  private LoggingService logger = LoggingService.NULL;
+  private LoggingService logger;
   private AgentIdentificationService agentIdService;
-  private TableService tableService;
+  private WhitePagesService wps;
 
   private String agentName;
 
@@ -68,36 +69,30 @@ implements Component
     this.sb = bs.getServiceBroker();
   }
 
-  public void setLoggingService(LoggingService ls) {
-    logger = (ls == null ? LoggingService.NULL : ls);
-  }
-
-  public void setAgentIdentificationService(
-      AgentIdentificationService ais) {
-    this.agentIdService = ais;
-    if (ais != null) {
-      this.agentName = ais.getMessageAddress().getAddress();
-    }
-  }
-
-  public void setTableService(TableService ts) {
-    this.tableService =  ts;
-  }
-
   public void load() {
     super.load();
 
+    logger = (LoggingService) sb.getService(
+        this, LoggingService.class, null);
+    agentIdService = (AgentIdentificationService) sb.getService(
+        this, AgentIdentificationService.class, null);
+    wps = (WhitePagesService) sb.getService(
+        this, WhitePagesService.class, null);
+
+    agentName = agentIdService.getMessageAddress().getAddress();
+
+    // do all our work
     readConfig();
 
-    sb.releaseService(this, TableService.class, tableService);
-    tableService = null;
-
+    if (wps != null) {
+      sb.releaseService(this, WhitePagesService.class, wps);
+      wps = null;
+    }
     if (agentIdService != null) {
       sb.releaseService(
           this, AgentIdentificationService.class, agentIdService);
       agentIdService = null;
     }
-
     if (logger != LoggingService.NULL) {
       sb.releaseService(this, LoggingService.class, logger);
       logger = null;
@@ -118,7 +113,14 @@ implements Component
     if (logger.isInfoEnabled()) {
       logger.info("Add bootstrap entry: "+ae);
     }
-    tableService.add(ae);
+    try {
+      wps.hint(ae);
+    } catch (Exception e) {
+      if (logger.isErrorEnabled()) {
+        logger.error(
+            "Unable to add bootstrap hint: "+ae, e);
+      }
+    }
   }
 
   private void parse(String line) {

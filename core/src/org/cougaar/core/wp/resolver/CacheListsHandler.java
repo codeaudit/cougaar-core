@@ -21,7 +21,12 @@
 
 package org.cougaar.core.wp.resolver;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.Request;
@@ -43,14 +48,19 @@ extends HandlerBase
   private final Object lock = new Object();
 
   // Map<String, Response.List.Result>
-  private LRUExpireMap lists;
+  private LRUExpireMap cache;
+
+  // map request to queued responses
+  // name -> MissEntry
+  // Map<String, MissEntry>
+  private final Map misses = new HashMap(13);
 
   public void setParameter(Object o) {
     this.config = new CacheListsConfig(o);
   }
 
   public void load() {
-    lists = new LRUExpireMap(
+    cache = new LRUExpireMap(
         new MyCacheConfig(),              // my config
         new LoggingCacheWatcher(logger)); // my logger
 
@@ -64,20 +74,13 @@ extends HandlerBase
   /** @return true if handled by the cached */
   protected Response mySubmit(Response res) {
     Request req = res.getRequest();
-    if (!(req instanceof Request.List)) {
-      // ignore -- we only handle lists
+    if (req instanceof Request.List) {
+      synchronized (lock) {
+        return fetch(res, (Request.List) req);
+      }
+    } else {
       return res;
     }
-    boolean bypass = !req.useCache();
-    String suffix = ((Request.List) req).getSuffix();
-
-    Object ret = fetch(suffix, bypass);
-    boolean isHit = (ret != null);
-    if (isHit) {
-      // found cached value
-      res.setResult(ret, -1);
-    }
-    return res;
   }
 
   protected void myExecute(
@@ -94,17 +97,63 @@ extends HandlerBase
   // look in the cache:
   //
 
-  private Set fetch(String suffix, boolean bypass) {
-    Set names;
-    synchronized (lock) {
-      names = (Set) lists.get(suffix, bypass);
+  private Response fetch(Response res, Request.List req) {
+    String suffix = req.getSuffix();
+    boolean bypass = req.hasOption(Request.BYPASS_CACHE);
+
+    // check the cache
+    Set names = (Set) cache.get(suffix, bypass);
+    if (names != null) {
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "Cache HIT for list(suffix="+
+            suffix+", bypass="+bypass+")");
+      }
+      res.setResult(names, -1);
+      return res;
     }
-    if (logger.isDebugEnabled()) {
-      logger.debug(
-          "Cache "+(names == null ? "MISS" : "HIT")+
-          " for (suffix="+suffix+", bypass="+bypass+")");
+
+    // no "list" hints
+
+    // check for cache-only
+    if (req.hasOption(Request.CACHE_ONLY)) {
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "Cache MISS (CACHE_ONLY) for list(suffix="+
+            suffix+", bypass="+bypass+")");
+      }
+      res.setResult(null, -1);
+      return res;
     }
-    return names;
+
+    MissEntry me = (MissEntry) misses.get(suffix);
+    if (me == null) {
+      me = new MissEntry();
+      misses.put(suffix, me);
+    }
+
+    // check for an already pending "list" request
+    //
+    // we send the first "list" ourselves, so we only
+    // need to see if the pending list is non-empty
+    boolean alreadyPending = (me.numResponses() > 0);
+
+    // must add this response (first or not)
+    me.addResponse(res);
+
+    if (logger.isDetailEnabled()) {
+      logger.detail(
+          "Cache MISS ("+
+          (alreadyPending ? "PENDING" : "SENDING")+
+          ") for list(suffix="+
+          suffix+", bypass="+bypass+")");
+    }
+
+    if (alreadyPending) {
+      return null;
+    }
+
+    return res;
   }
 
   //
@@ -115,13 +164,13 @@ extends HandlerBase
       String suffix,
       Object result,
       long ttl) {
-    // examine ttl
+    // fix ttl
     long now = System.currentTimeMillis();
     long maxTTL = now + config.maxTTD;
     if (maxTTL < ttl) {
       // reduce ttl if too long
-      if (logger.isInfoEnabled()) {
-        logger.info(
+      if (logger.isDebugEnabled()) {
+        logger.debug(
             "Reduce ttl from "+
             Timestamp.toString(ttl,now)+
             " to "+
@@ -129,40 +178,43 @@ extends HandlerBase
       }
       ttl = maxTTL;
     }
-    if (ttl < now) {
-      // ignore expired update
-      if (logger.isInfoEnabled()) {
-        logger.info(
-            "Ignoring expired update (ttl="+
-            Timestamp.toString(ttl,now)+
-            " < now="+
-            now+"), suffix="+
-            suffix+", result="+
-            result);
-      }
-      return;
-    }
 
-    if (result instanceof Set) {
-      Set names = (Set) result; // immutable?
-      listed(suffix, names, ttl);
-    } else if (result == null) {
-      Set names = Collections.EMPTY_SET;
-      listed(suffix, names, ttl);
-    } else {
-      // failure?
-    }
+    listed(suffix, result, ttl);
   }
 
-  private void listed(String suffix, Set names, long ttl) {
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          "Caching list(suffix="+suffix+
-          ", ttl="+Timestamp.toString(ttl)+
-          ", names="+names+")");
+  private void listed(String suffix, Object result, long ttl) {
+    Set names;
+    if (result instanceof Set) {
+      names = (Set) result; // immutable?
+    } else if (result == null) {
+      names = Collections.EMPTY_SET;
+    } else {
+      // failure?
+      names = null;
     }
+
     synchronized (lock) {
-      lists.put(suffix, names, ttl);
+      if (names != null) {
+        if (logger.isDebugEnabled()) {
+          logger.debug(
+              "Caching listed(suffix="+suffix+
+              ", ttl="+Timestamp.toString(ttl)+
+              ", names="+names+")");
+        }
+        cache.put(suffix, names, ttl);
+      }
+
+      MissEntry me = (MissEntry) misses.remove(suffix);
+      if (me != null) {
+        if (me.numResponses() > 0) {
+          if (logger.isDebugEnabled()) {
+            logger.debug(
+                "Setted pending listed(suffix="+suffix+
+                ", result="+result+") for "+me);
+          }
+          me.setResults(result);
+        }
+      }
     }
   }
 
@@ -175,7 +227,23 @@ extends HandlerBase
   // this is optional, since the LRU will clean
   private void cleanCache() {
     synchronized (lock) {
-      lists.trim();
+      cache.trim();
+
+      // might as well debug our misses-table on the timer thread
+      if (logger.isDebugEnabled()) {
+        String s = "";
+        s += "##### pending list requests ###############################";
+        s += "table["+misses.size()+"]: ";
+        for (Iterator iter = misses.entrySet().iterator(); iter.hasNext(); ) {
+          Map.Entry x = (Map.Entry) iter.next();
+          String name = (String) x.getKey();
+          MissEntry me = (MissEntry) x.getValue();
+          s += "  "+name+":";
+          s += "     "+me;
+        }
+        s += "###########################################################";
+        logger.debug(s);
+      }
     }
   }
 
@@ -220,4 +288,63 @@ extends HandlerBase
         return config.minBypass;
       }
     }
+
+  /** used for pending cache misses */
+  private static class MissEntry {
+
+    private static List NO_RESPONSES = Collections.EMPTY_LIST;
+
+    // List<Response>
+    private List responses = NO_RESPONSES;
+    private long firstResponseTime = 0;
+
+    public int numResponses() {
+      return responses.size();
+    }
+    public Response getResponse(int index) {
+      return (Response) responses.get(index);
+    }
+    public long getFirstResponseTime() {
+      return firstResponseTime;
+    }
+    public void addResponse(Response res) {
+      if (res == null) {
+        throw new IllegalArgumentException("Null res");
+      }
+      if (responses == NO_RESPONSES) {
+        responses = new ArrayList(3);
+        firstResponseTime = System.currentTimeMillis();
+      }
+      responses.add(res);
+    }
+    public void removeResponse(int index) {
+      if (responses.remove(index) != null) {
+        if (responses.isEmpty()) {
+          responses = NO_RESPONSES;
+          firstResponseTime = 0;
+        }
+      }
+    }
+    /** set the result for all pending responses */
+    public void setResults(Object obj) {
+      int n = numResponses();
+      if (n > 0) {
+        for (int i = 0; i < n; i++) {
+          Response res = getResponse(i);
+          res.setResult(obj, -1);
+        }
+        responses = NO_RESPONSES;
+        firstResponseTime = 0;
+      }
+    }
+
+    public String toString() {
+      return 
+        "(miss-entry"+
+        " responses["+responses.size()+"]="+responses+
+        " firstResponseTime="+
+        Timestamp.toString(firstResponseTime)+
+        ")";
+    }
+  }
 }

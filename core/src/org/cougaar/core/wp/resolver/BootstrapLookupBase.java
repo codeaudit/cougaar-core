@@ -19,7 +19,7 @@
  * </copyright>
  */
 
-package org.cougaar.core.wp.resolver.bootstrap;
+package org.cougaar.core.wp.resolver;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -27,17 +27,17 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.SchedulableWrapper;
 import org.cougaar.core.wp.Timestamp;
-import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component is a base class for bootstrap components
@@ -45,82 +45,41 @@ import org.cougaar.util.GenericStateModelAdapter;
  * <p>
  * The jobs include:
  * <ul>
- *   <li>Resolve bootstrap registry URLs to resolved entries
+ *   <li>Resolve bootstrap registry URLs to resolved "hint" entries
  *       by looking in external registries</li><p>
  *   <li>Watch for local binds that should be passed to
  *       external registries.</li><p>
- *   <li>Create alias entries for bootstrap entries that have
+ *   <li>Create alias "hint" entries for bootstrap entries that have
  *       (name != path) values, which is used to find the first
  *       agent that registers.</li><p>
  * </ul>
  */
 public abstract class BootstrapLookupBase
-extends GenericStateModelAdapter
-implements Component
+extends HandlerBase
 {
-  protected ServiceBroker sb;
-  protected LoggingService logger = LoggingService.NULL;
-  protected AgentIdentificationService agentIdService;
-  protected ThreadService threadService;
-  protected TableService tableService;
+  protected WhitePagesService wps;
 
   protected String agentName;
 
-  protected final TableService.Watcher watcher =
-    createWatcher();
+  // Map<String, LookupTimer>
+  protected final Map table = new HashMap();
 
-  public void setBindingSite(BindingSite bs) {
-    this.sb = bs.getServiceBroker();
-  }
-
-  public void setLoggingService(LoggingService ls) {
-    logger = (ls == null ? LoggingService.NULL : ls);
-  }
-
-  public void setAgentIdentificationService(
-      AgentIdentificationService ais) {
-    this.agentIdService = ais;
-    if (ais != null) {
-      this.agentName = ais.getMessageAddress().getAddress();
-    }
-  }
-
-  public void setThreadService(ThreadService ts) {
-    this.threadService =  ts;
-  }
-
-  public void setTableService(TableService ts) {
-    this.tableService =  ts;
+  public void setWhitePagesService(WhitePagesService wps) {
+    this.wps = wps;
   }
 
   public void load() {
+    agentName = agentId.getAddress();
+
     super.load();
-    tableService.register(watcher);
   }
 
   public void unload() {
     super.unload();
 
-    if (tableService != null) {
-      tableService.unregister(watcher);
-      sb.releaseService(this, TableService.class, tableService);
-      tableService = null;
-    }
-
-    if (threadService != null) {
-      sb.releaseService(this, ThreadService.class, threadService);
-      threadService = null;
-    }
-
-    if (agentIdService != null) {
-      sb.releaseService(
-          this, AgentIdentificationService.class, agentIdService);
-      agentIdService = null;
-    }
-
-    if (logger != LoggingService.NULL) {
-      sb.releaseService(this, LoggingService.class, logger);
-      logger = null;
+    if (wps != null) {
+      sb.releaseService(this, WhitePagesService.class, wps);
+      wps = null;
     }
   }
 
@@ -185,11 +144,105 @@ implements Component
    */
   protected abstract boolean allowAliasChange();
 
-  /**
-   * Create our Bootstrap/WP watcher.
-   */
-  protected TableService.Watcher createWatcher() {
-    return new LookupManagementWatcher();
+  protected Response mySubmit(Response res) {
+    Request req = res.getRequest();
+    if (req instanceof Request.Bind) {
+      Request.Bind rb = (Request.Bind) req;
+      AddressEntry ae = rb.getAddressEntry();
+      if (req.hasOption(Request.CACHE_ONLY)) {
+        hint(ae);
+      } else {
+        if (rb.isRenewal()) {
+          // ignore
+        } else if (rb.isOverWrite()) {
+          rebind(ae);
+        } else {
+          bind(ae);
+        }
+      }
+    } else if (req instanceof Request.Unbind) {
+      Request.Unbind ub = (Request.Unbind) req;
+      AddressEntry ae = ub.getAddressEntry();
+      if (req.hasOption(Request.CACHE_ONLY)) {
+        unhint(ae);
+      } else {
+        unbind(ae);
+      }
+    } else {
+      // ignore
+    }
+    return res;
+  }
+
+  protected void myExecute(
+      Request req, Object result, long ttl) {
+    // ignore (?)
+  }
+
+  protected void hint(AddressEntry bootEntry) {
+    if (!isBootEntry(bootEntry)) {
+      return;
+    }
+    URI uri = bootEntry.getURI();
+    String id = uri.getPath().substring(1);
+    if (id.equals("*")) {
+      // wildcard race for binding, use node name
+      id = agentName;
+    }
+    synchronized (table) {
+      LookupTimer f = (LookupTimer) table.get(id);
+      if (f != null) {
+        f.destroy();
+      }
+      f = createLookupTimer(bootEntry);
+      table.put(id, f);
+    }
+  }
+
+  protected void unhint(AddressEntry bootEntry) {
+    if (!isBootEntry(bootEntry)) {
+      return;
+    }
+    String id = bootEntry.getURI().getPath().substring(1);
+    if (id.equals("*")) {
+      id = agentName;
+    }
+    synchronized (table) {
+      LookupTimer f = (LookupTimer) table.remove(id);
+      if (f != null) {
+        f.destroy();
+      }
+    }
+  }
+
+  protected void bind(AddressEntry bindEntry) {
+    if (!isBindEntry(bindEntry)) {
+      return;
+    }
+    String name = bindEntry.getName();
+    synchronized (table) {
+      LookupTimer f = (LookupTimer) table.get(name);
+      if (f != null) {
+        f.bind(bindEntry);
+      }
+    }
+  }
+
+  protected void rebind(AddressEntry bindEntry) {
+    bind(bindEntry);
+  }
+
+  protected void unbind(AddressEntry bindEntry) {
+    if (!isBindEntry(bindEntry)) {
+      return;
+    }
+    String name = bindEntry.getName();
+    synchronized (table) {
+      LookupTimer f = (LookupTimer) table.get(name);
+      if (f != null) {
+        f.unbind(bindEntry);
+      }
+    }
   }
 
   /** Generic utility method to check if a host is localhost */
@@ -209,91 +262,6 @@ implements Component
     }
     return false;
   }
-
-  /**
-   * A table service watcher that creates and controls the
-   * LookupTimers.
-   */
-  protected class LookupManagementWatcher
-    implements TableService.BindWatcher, TableService.TableWatcher {
-
-      // Map<String, LookupTimer>
-      protected final Map table = new HashMap();
-
-      public void init(List bootEntries) {
-        int n = (bootEntries == null ? 0 : bootEntries.size());
-        for (int i = 0; i < n; i++) {
-          AddressEntry bootEntry = (AddressEntry) bootEntries.get(i);
-          added(bootEntry);
-        }
-      }
-
-      public void added(AddressEntry bootEntry) {
-        if (!isBootEntry(bootEntry)) {
-          return;
-        }
-        URI uri = bootEntry.getURI();
-        String id = uri.getPath().substring(1);
-        if (id.equals("*")) {
-          // wildcard race for binding, use node name
-          id = agentName;
-        }
-        synchronized (table) {
-          LookupTimer f = (LookupTimer) table.get(id);
-          if (f != null) {
-            f.destroy();
-          }
-          f = createLookupTimer(bootEntry);
-          table.put(id, f);
-        }
-      }
-
-      public void removed(AddressEntry bootEntry) {
-        if (!isBootEntry(bootEntry)) {
-          return;
-        }
-        String id = bootEntry.getURI().getPath().substring(1);
-        if (id.equals("*")) {
-          id = agentName;
-        }
-        synchronized (table) {
-          LookupTimer f = (LookupTimer) table.remove(id);
-          if (f != null) {
-            f.destroy();
-          }
-        }
-      }
-
-      public void bind(AddressEntry bindEntry) {
-        if (!isBindEntry(bindEntry)) {
-          return;
-        }
-        String name = bindEntry.getName();
-        synchronized (table) {
-          LookupTimer f = (LookupTimer) table.get(name);
-          if (f != null) {
-            f.bind(bindEntry);
-          }
-        }
-      }
-
-      public void rebind(AddressEntry bindEntry) {
-        bind(bindEntry);
-      }
-
-      public void unbind(AddressEntry bindEntry) {
-        if (!isBindEntry(bindEntry)) {
-          return;
-        }
-        String name = bindEntry.getName();
-        synchronized (table) {
-          LookupTimer f = (LookupTimer) table.get(name);
-          if (f != null) {
-            f.unbind(bindEntry);
-          }
-        }
-      }
-    }
 
   /**
    * This manages the lookup and verification for a single
@@ -483,8 +451,8 @@ implements Component
       }
 
       public void run() {
-        if (logger.isDebugEnabled()) {
-          logger.debug("Running "+this);
+        if (logger.isDetailEnabled()) {
+          logger.detail("Running "+this);
         }
 
         // get the queued bind/unbind
@@ -533,8 +501,8 @@ implements Component
           thread.schedule(t);
         }
 
-        if (logger.isDebugEnabled()) {
-          logger.debug("Ran "+this);
+        if (logger.isDetailEnabled()) {
+          logger.detail("Ran "+this);
         }
       }
 
@@ -599,11 +567,30 @@ implements Component
 
         // register in table service
         if (!newFound.equals(bindEntry)) {
-          tableService.add(newFound);
+          try {
+            wps.hint(newFound);
+          } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+              logger.error(
+                  "Unable to create hint for found "+newFound+
+                  ", which doesn't match the local "+bindEntry,
+                  e);
+            }
+            // FIXME
+          }
         }
         if ((allowAliasChange() || aliasId == null) &&
             newAlias != null) {
-          tableService.add(newAlias);
+          try {
+            wps.hint(newAlias);
+          } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+              logger.error(
+                  "Unable to create alias hint for "+newAlias,
+                  e);
+            }
+            // FIXME
+          }
         }
 
         // transition state
@@ -653,10 +640,10 @@ implements Component
           long delay = getDelayForVerify();
           // enhancement idea: should be back off on a series
           // of successes?
-          if (logger.isInfoEnabled()) {
+          if (logger.isDebugEnabled()) {
             long now = System.currentTimeMillis();
             long verifyTime=now+delay;
-            logger.info(
+            logger.debug(
                 "Verified that the bootstrap "+
                 bootEntry+" still matches the found "+
                 foundEntry+", will verify again at "+
@@ -676,10 +663,24 @@ implements Component
         // remove bootstrap
         if (allowAliasChange() &&
             aliasEntry != null) {
-          tableService.remove(aliasEntry);
+          try {
+            wps.unhint(aliasEntry);
+          } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+              logger.error(
+                  "Unable to remove alias hint: "+aliasEntry, e);
+            }
+          }
         }
         if (foundEntry != null) {
-          tableService.remove(foundEntry);
+          try {
+            wps.unhint(foundEntry);
+          } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+              logger.error(
+                  "Unable to remove found hint: "+foundEntry, e);
+            }
+          }
         }
 
         foundEntry = null;
@@ -704,15 +705,13 @@ implements Component
 
       public String toString() {
         return
-          "LookupTimer {"+
-          "\n  oid: "+System.identityHashCode(this)+
-          "\n  id: "+id+
-          "\n  boot: "+bootEntry+
-          "\n  state: "+state+
-          "\n  found: "+foundEntry+
-          "\n  alias: "+aliasEntry+
-          "\n  aliasId: "+aliasId+
-          "\n}";
+          " oid="+System.identityHashCode(this)+
+          ", id="+id+
+          ", boot="+bootEntry+
+          ", state="+state+
+          ", found="+foundEntry+
+          ", alias="+aliasEntry+
+          ", aliasId="+aliasId;
       }
     }
 }

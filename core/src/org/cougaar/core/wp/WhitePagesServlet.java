@@ -243,6 +243,10 @@ public class WhitePagesServlet extends ComponentServlet {
     private void performRequest() {
       try {
         Request req = null;
+        int options = 
+          (useCache ?
+           Request.NONE :
+           Request.BYPASS_CACHE);
         if ("recursive_dump".equals(action)) {
           String suffix = (name == null ? "." : name);
           if (suffix.startsWith(".")) {
@@ -264,19 +268,19 @@ public class WhitePagesServlet extends ComponentServlet {
             out.println(
                 "<font color=\"red\">Please specify a type</font>");
           } else {
-            req = new Request.Get(useCache, timeout, name, type);
+            req = new Request.Get(options, name, type);
           }
         } else if ("getAll".equals(action)) {
           if (name == null) {
             out.println(
                 "<font color=\"red\">Please specify a name</font>");
           } else {
-            req = new Request.GetAll(useCache, timeout, name);
+            req = new Request.GetAll(options, name);
           }
         } else if ("list".equals(action)) {
           String tmp = (name == null ? "." : name);
           if (tmp.startsWith(".")) {
-            req = new Request.List(useCache, timeout, tmp);
+            req = new Request.List(options, tmp);
           } else {
             out.println(
                 "<font color=\"red\">List suffix must start"+
@@ -288,12 +292,12 @@ public class WhitePagesServlet extends ComponentServlet {
           boolean overWrite = "rebind".equals(action);
           AddressEntry ae = parseEntry();
           if (ae != null) {
-            req = new Request.Bind(false, timeout, ae, overWrite, false);
+            req = new Request.Bind(Request.NONE, ae, overWrite, false);
           }
         } else if ("unbind".equals(action)) {
           AddressEntry ae = parseEntry();
           if (ae != null) {
-            req = new Request.Unbind(false, timeout, ae);
+            req = new Request.Unbind(Request.NONE, ae);
           }
         } else if (action != null) {
           out.println(
@@ -433,15 +437,16 @@ public class WhitePagesServlet extends ComponentServlet {
         };
         res.addCallback(c);
         out.println("Submitted asynchronous request");
-        return;
+      } else {
+        try {
+          res.waitForIsAvailable(timeout);
+        } catch (InterruptedException ie) {
+          out.println(
+              "<p><font color=\"red\">Interruped: "+
+              ie+"</font><p>");
+        }
+        print(res);
       }
-      try {
-        res.waitForIsAvailable(req.getTimeout());
-      } catch (InterruptedException ie) {
-        out.println(
-            "<font color=\"red\">Interruped</font>");
-      }
-      print(res);
     }
 
     private void print(Response res) {

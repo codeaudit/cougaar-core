@@ -31,68 +31,52 @@ import java.io.Serializable;
  */
 public abstract class Request implements Serializable {
 
-  private final long timeout;
-  private final boolean useCache;
-
-  private Request(boolean useCache, long timeout) {
-    this.useCache = useCache;
-    this.timeout = timeout;
-  }
+  /**
+   * The options flag to indicate no options.
+   */
+  public static final int NONE = 0;
 
   /**
-   * Returns false if this request would prefer to bypass the
-   * cache.
+   * Flag to bypass the cache for "get", "getAll", and "list"
+   * requests.
    * <p>
-   * Always false for the "*bind" operations.
+   * This should only be enabled if the client has detected a
+   * <b>strong</b> out-of-band hint that the entry is stale, such
+   * as a lost network connection to a URI returned by a prior
+   * "get" request.
    * <p>
-   * For "get", "getAll", and "list" the server is free to ignore
-   * this flag and return a cached value.  This should only be
-   * set to false if the client has detected a <b>strong</b>
-   * out-of-band hint that the entry is stale, such as a lost
-   * network connection to the entry's URI.
-   * <p>
-   * This field is ignored when comparing "equals()".
+   * The cache is free to ignore this request if it has just fetched
+   * the value -- the minimum entry TTL for a bypass is a cache
+   * configuration option.
    */
-  public final boolean useCache() {
-    return useCache;
-  }
+  public static final int BYPASS_CACHE = (1<<0);
 
   /**
-   * The timeout indicates the maximum time in milliseconds
-   * for the <i>resolver</i> action.
+   * Flag to limit the operation to the local cache.
    * <p>
-   * The valid timeout values are:</ul>
-   *   <li>positive:<br>
-   *       Maximum resolver time in milliseconds.  If the
-   *       resolver takes longer than this time, it may
-   *       continue the request in the background for future
-   *       caching use.
-   *   </li>
-   *   <li>zero:<br>
-   *       No timeout.
-   *   </li>
-   *   <li>negative:<br>
-   *       Check the cache, but don't initiate a remote request
-   *       if the entry is not in the cache.  This is only
-   *       valid for the "get" and "list" operations.
-   *   </li>
-   * </ul>
+   * For "get", "getAll", and "list", a CACHE_ONLY flag limits the
+   * lookup to the local cache.  If the result is not in the cache
+   * then the result will be set to the default value as defined
+   * below.
    * <p>
-   * Note that this can be different than the Response
-   * "waitForIsAvailable(long timeout)", which is a timeout
-   * for the response.  This is only useful if you have multiple
-   * threads waiting for a response, e.g.<pre>
-   *    - generate request with 10 minute timeout
-   *    - thread A wants a response in 5 seconds
-   *    - thread B is willing to wait forever (max = 10 minutes)
-   * </pre>
-   * <p>
-   * This field is ignored when comparing "equals()".
-   * <p>
-   * @return milliseconds
+   * For "bind", this can be used to bootstrap entries into the local
+   * (client-side) "get" table.  This can be used for both the local
+   * agents and remote agents discovered through non-WP mechanisms.
+   * If a future "get" request is not in the cache, then the hints
+   * are checked and will be used if present.  A hint can be removed
+   * with an "unbind-hint".
    */
-  public final long getTimeout() { 
-    return timeout;
+  public static final int CACHE_ONLY   = (1<<1);
+  // todo: recurse, authority-only, etc
+
+  private final int options;
+
+  private Request(int options) {
+    this.options = options;
+  }
+
+  public final boolean hasOption(int mask) {
+    return ((options & mask) != 0);
   }
 
   /**
@@ -103,8 +87,8 @@ public abstract class Request implements Serializable {
   public String toString() {
     return 
       " oid="+System.identityHashCode(this)+
-      " timeout="+getTimeout()+
-      " useCache="+useCache()+
+      " bypassCache="+hasOption(BYPASS_CACHE)+
+      " cacheOnly="+hasOption(CACHE_ONLY)+
       ")";
   }
 
@@ -113,22 +97,23 @@ public abstract class Request implements Serializable {
    *
    * @see Request.GetAll get all entries with a given name
    */
-  public static class Get extends Request {
+  public static final class Get extends Request {
     private final String name;
     private final String type;
     private transient int _hc;
     public Get(
-        boolean useCache, long timeout,
-        String name, String type) {
-      super(useCache, timeout);
+        int options,
+        String name,
+        String type) {
+      super(options);
       this.name = name;
       this.type = type;
       if (name==null || type==null) {
         throw new IllegalArgumentException("Null parameter");
       }
     }
-    public final String getName() { return name; }
-    public final String getType() { return type; }
+    public String getName() { return name; }
+    public String getType() { return type; }
     public Response createResponse() {
       return new Response.Get(this);
     }
@@ -156,7 +141,7 @@ public abstract class Request implements Serializable {
     public String toString() {
       return 
         "("+
-        (useCache() ? "get" : "refresh")+
+        (hasOption(BYPASS_CACHE) ? "refresh" : "get")+
         " name="+getName()+
         " type="+getType()+
         super.toString();
@@ -168,18 +153,18 @@ public abstract class Request implements Serializable {
    *
    * @see Request.Get do a specific (name, type) lookup
    */
-  public static class GetAll extends Request {
+  public static final class GetAll extends Request {
     private final String name;
     public GetAll(
-        boolean useCache, long timeout,
+        int options,
         String name) {
-      super(useCache, timeout);
+      super(options);
       this.name = name;
       if (name == null) {
         throw new IllegalArgumentException("null name");
       }
     }
-    public final String getName() { 
+    public String getName() { 
       return name;
     }
     public Response createResponse() {
@@ -200,7 +185,7 @@ public abstract class Request implements Serializable {
     public String toString() {
       return 
         "("+
-        (useCache() ? "getAll" : "refreshAll")+
+        (hasOption(BYPASS_CACHE) ? "refreshAll" : "getAll")+
         " name="+getName()+
         super.toString();
     }
@@ -239,12 +224,12 @@ public abstract class Request implements Serializable {
    * <p>
    * This is similar to a DNS zone transfer (AXFR) limited to depth=1.
    */
-  public static class List extends Request {
+  public static final class List extends Request {
     private final String suffix;
     public List(
-        boolean useCache, long timeout,
+        int options,
         String suffix) {
-      super(useCache, timeout);
+      super(options);
       String suf = suffix;
       // must start with '.'
       int len = (suf == null ? 0 : suf.length());
@@ -258,7 +243,7 @@ public abstract class Request implements Serializable {
       }
       this.suffix = suf;
     }
-    public final String getSuffix() { 
+    public String getSuffix() { 
       return suffix;
     }
     public Response createResponse() {
@@ -279,52 +264,56 @@ public abstract class Request implements Serializable {
     public String toString() {
       return
         "("+
-        (useCache() ? "list" : "relist")+
+        (hasOption(BYPASS_CACHE) ? "relist" : "list")+
         " suffix="+getSuffix()+
         super.toString();
     }
   }
 
   /**
-   * Bind a new entry, or rebind an existing entry if the
-   * overwrite flag is false.
+   * Bind a new entry, or rebind an existing entry if the overwrite
+   * flag is false.
    * <p>
-   * The renewal flag is for the infrastructure's use, for
-   * renewing bind leases.
+   * See the above notes on the CACHE_ONLY flag for binding
+   * client-side bootstrap "hints".
+   * <p>
+   * The renewal flag is for the infrastructure's use, for renewing
+   * bind leases.
    */
-  public static class Bind extends Request {
+  public static final class Bind extends Request {
+
     private final AddressEntry ae;
     private final boolean overWrite;
     private final boolean renewal;
+
     public Bind(
-        boolean useCache,
-        long timeout,
+        int options,
         AddressEntry ae,
         boolean overWrite,
         boolean renewal) {
-      super(useCache, timeout);
+      super(options);
       this.ae = ae;
       this.overWrite = overWrite;
       this.renewal = renewal;
-      if (useCache) {
+      if (hasOption(BYPASS_CACHE)) {
         throw new IllegalArgumentException(
-            "Bind must have \"useCache\" set to false");
+            "Bind can't \"BYPASS_CACHE\"");
       }
       if (ae == null) {
         throw new IllegalArgumentException("Null entry");
       }
-      if (renewal && overWrite) {
+      if (renewal && (overWrite || hasOption(CACHE_ONLY))) {
         throw new IllegalArgumentException(
-            "Renewal implies non-overwrite");
+            "Renewal implies non-overwrite and non-cache-only");
       }
     }
-    public final AddressEntry getAddressEntry() { 
+    public AddressEntry getAddressEntry() { 
       return ae;
     }
-    public final boolean isOverWrite() {
+    public boolean isOverWrite() {
       return overWrite;
     }
-    public final boolean isRenewal() {
+    public boolean isRenewal() {
       return renewal;
     }
     public Response createResponse() {
@@ -345,17 +334,17 @@ public abstract class Request implements Serializable {
     }
     public int hashCode() {
       return 
-        (ae.hashCode() +
-         (overWrite ? 1 : 2)+
+        (ae.hashCode() + 
+         (overWrite ? 1 : 2) +
          (renewal ? 3 : 4));
     }
     public String toString() {
       return 
         "("+
-        (isOverWrite() ?
-         "rebind" :
-         (isRenewal() ?
-          "renew" : "bind"))+
+        (hasOption(CACHE_ONLY) ? "hint_" : "")+
+        (isOverWrite() ? "rebind" :
+         isRenewal() ? "renew" :
+         "bind")+
         " entry="+getAddressEntry()+
         super.toString();
     }
@@ -364,26 +353,26 @@ public abstract class Request implements Serializable {
   /**
    * Destroy the binding for the specified entry.
    * <p>
-   * The client must pass the current value for the
-   * bound entry.
+   * The client must pass the current value for the bound entry.
    */
-  public static class Unbind extends Request {
+  public static final class Unbind extends Request {
     private final AddressEntry ae;
     public Unbind(
-        boolean useCache,
-        long timeout,
+        int options,
         AddressEntry ae) {
-      super(useCache, timeout);
+      super(options);
       this.ae = ae;
-      if (useCache) {
+      if (hasOption(BYPASS_CACHE)) {
         throw new IllegalArgumentException(
-            "Bind must have \"useCache\" set to false");
+            "Unbind can't \"BYPASS_CACHE\"");
       }
       if (ae == null) {
         throw new IllegalArgumentException("Null entry");
       }
     }
-    public final AddressEntry getAddressEntry() { return ae; }
+    public AddressEntry getAddressEntry() {
+      return ae;
+    }
     public Response createResponse() {
       return new Response.Unbind(this);
     }
@@ -402,7 +391,8 @@ public abstract class Request implements Serializable {
     }
     public String toString() {
       return 
-        "(unbind"+
+        "("+
+        (hasOption(CACHE_ONLY) ? "unhint" : "unbind")+
         " entry="+getAddressEntry()+
         super.toString();
     }
