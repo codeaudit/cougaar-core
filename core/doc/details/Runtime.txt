@@ -1,4 +1,4 @@
-ALP Infrastructure Runtime glossary and discussion
+COUGAAR Infrastructure Runtime glossary and discussion
 
 Symbols output during execution:
 	'.'	"heartbeat" indicates that the VM (Node) is relatively 

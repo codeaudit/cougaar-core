@@ -48,7 +48,7 @@ nomenclature.unique=true;
 alternate_item_identification.unique=true
 
 [ClusterPG]
-doc=An asset that is represented by an ALP Cluster
+doc=An asset that is represented by an COUGAAR Cluster
 slots=org.cougaar.core.cluster.ClusterIdentifier cluster_identifier, \
 	Predictor predictor
 cluster_identifier.doc=The ClusterIdentifier for adressing this asset.

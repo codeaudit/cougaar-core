@@ -1,6 +1,6 @@
 - - - - - List of machine generated PropertyGroups - - - - -
 * ClusterPG
-An asset that is represented by an ALP Cluster
+An asset that is represented by an COUGAAR Cluster
     org.cougaar.core.cluster.ClusterIdentifier ClusterIdentifier;	//The ClusterIdentifier for adressing this asset.
     Predictor Predictor;	//Predictor (if any) for the Cluster
 * ItemIdentificationPG

@@ -136,7 +136,7 @@ public class ClusterImpl
 {
   private Distributor myDistributor = null;
 
-  private ALPPlan myALPPlan = null;
+  private Whiteboard myWhiteboard = null;
   private LogPlan myLogPlan = null;
 
   private MessageTransportServer messenger = null;
@@ -314,18 +314,18 @@ public class ClusterImpl
     Domain rootDomain = DomainManager.find("root");
     myRootFactory = (RootFactory) rootDomain.getFactory(this);
 
-    // set up ALPPlan and LogicProviders
+    // set up Whiteboard and LogicProviders
     try {
-      myALPPlan = new ALPPlan(getDistributor(), this);
-      getDistributor().setALPPlan(myALPPlan);
+      myWhiteboard = new Whiteboard(getDistributor(), this);
+      getDistributor().setWhiteboard(myWhiteboard);
 
       Collection domains = DomainManager.values();
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
         Domain d = (Domain) i.next();
 
         // add all the domain-specific logic providers
-        XPlanServesALPPlan xPlan = d.createXPlan(myALPPlan.getXPlans());
-        myALPPlan.addXPlan(xPlan);
+        XPlanServesWhiteboard xPlan = d.createXPlan(myWhiteboard.getXPlans());
+        myWhiteboard.addXPlan(xPlan);
         if (d == rootDomain) {
           myLogPlan = (LogPlan) xPlan;
         }
@@ -334,7 +334,7 @@ public class ClusterImpl
           for (Iterator li = lps.iterator(); li.hasNext(); ) {
             Object lo = li.next();
             if (lo instanceof LogicProvider) {
-              myALPPlan.addLogicProvider((LogicProvider) lo);
+              myWhiteboard.addLogicProvider((LogicProvider) lo);
             } else {
               System.err.println("Domain "+d+" requested loading of a non LogicProvider "+lo+" (Ignored).");
             }
@@ -344,9 +344,9 @@ public class ClusterImpl
 
       // specialLPs
       if (isMetricsHeartbeatOn) {
-        myALPPlan.addLogicProvider(new MetricsLP(myLogPlan, this));
+        myWhiteboard.addLogicProvider(new MetricsLP(myLogPlan, this));
       }
-      myALPPlan.init();
+      myWhiteboard.init();
 
     } catch (Exception e) { 
       synchronized (System.err) {
@@ -990,7 +990,7 @@ public class ClusterImpl
   /** implement a low-priority heartbeat function which
    * just prints '.'s every few seconds when nothing else
    * is happening.
-   * deactivated by -Dalp.cluster.heartbeat=false
+   * deactivated by -Dorg.cougaar.core.cluster.heartbeat=false
    **/
   private class Heartbeat implements Runnable {
     private long firstTime;
@@ -1159,7 +1159,7 @@ public class ClusterImpl
   }
 
   //
-  // ALP Scenario Time management and support for PlugIns
+  // COUGAAR Scenario Time management and support for PlugIns
   //
 
   // one timer per vm - conserve threads.
@@ -1182,7 +1182,7 @@ public class ClusterImpl
   }
 
  /**
-  * This method sets the ALP scenario time to a specific time
+  * This method sets the COUGAAR scenario time to a specific time
   * in the future.  
   * @param time milliseconds in java time.
   * @param running should the clock continue to run after setting the time?
@@ -1192,7 +1192,7 @@ public class ClusterImpl
   }
 	
  /**
-  * This method sets the ALP scenario time to a specific rate.
+  * This method sets the COUGAAR scenario time to a specific rate.
   * @param newRate the new rate. Execution time advance at the new rate after a brief delay
   **/
   public void setTimeRate(double newRate) {
@@ -1200,7 +1200,7 @@ public class ClusterImpl
   }
 	
   /**
-   * This method advances the ALP scenario time a period of time
+   * This method advances the COUGAAR scenario time a period of time
    * in the future, leaving the clock stopped.
    * equivalent to advanceTime(timePeriod, false);
    **/
@@ -1209,7 +1209,7 @@ public class ClusterImpl
   }
 
   /**
-   * This method advances the ALP scenario time a period of time
+   * This method advances the COUGAAR scenario time a period of time
    * in the future.
    * @param timePeriod Milliseconds to advance the scenario clock.
    * @param running should the clock continue to run after setting.
@@ -1219,7 +1219,7 @@ public class ClusterImpl
   }
 
   /**
-   * This method advances the ALP scenario time a period of time
+   * This method advances the COUGAAR scenario time a period of time
    * leaving the clock running at a new rate.
    * @param timePeriod Milliseconds to advance the scenario clock.
    * @param newRate the new rate
@@ -1259,7 +1259,7 @@ public class ClusterImpl
   }
 
   /**
-   * This method gets the current ALP scenario time. 
+   * This method gets the current COUGAAR scenario time. 
    * The returned time is in milliseconds.
    **/
   public long currentTimeMillis( ){

@@ -20,7 +20,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.core.society.UID;
 import org.cougaar.core.society.UniqueObject;
 
-public interface LogPlanServesLogicProvider extends ALPPlanServesLogicProvider
+public interface LogPlanServesLogicProvider extends WhiteboardServesLogicProvider
 {
   /** Apply predicate against the entire "LogPlan".
    * User provided predicate

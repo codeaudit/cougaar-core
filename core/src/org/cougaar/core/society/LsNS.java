@@ -21,7 +21,7 @@ import org.cougaar.util.*;
 
 import java.net.*;
 
-/** List the entire contents of an ALP Nameserver.
+/** List the entire contents of an COUGAAR Nameserver.
  * Expects the usual configuration options, but also takes an optional
  * nameserver spec as a first argument (host:port:lpport)
  * example: java org.cougaar.core.society.LsNS draught:8888:5555

@@ -1,6 +1,6 @@
 @ECHO OFF
 
-set LIBPATHS=%ALP_INSTALL_PATH%\lib\core.jar
+set LIBPATHS=%COUGAAR_INSTALL_PATH%\lib\core.jar
 
-set ALP3RDPARTY=d:\opt\alp-jars
+set COUGAAR3RDPARTY=d:\opt\alp-jars
 

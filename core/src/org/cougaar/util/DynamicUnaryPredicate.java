@@ -14,7 +14,7 @@ package org.cougaar.util;
 /** 
  * DynamicUnaryPredicate marks a UnaryPredicate as testing
  * for mutable features of objects.  Implementing this
- * as opposed to UnaryPredicate is a hint to the ALP subscription
+ * as opposed to UnaryPredicate is a hint to the COUGAAR subscription
  * mechanism that it needs to do more expensive processing to
  * detect changes in subscription membership.
  */

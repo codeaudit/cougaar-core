@@ -71,7 +71,7 @@ public class MetricsSnapshot implements Serializable {
   public long freeMemory = 0L;
   /** Runtime.totalMemory() at snapshot time (VM). **/
   public long totalMemory = 0L;
-  /** number of active Threads in the main ALP threadgroup **/
+  /** number of active Threads in the main COUGAAR threadgroup **/
   public int threadCount = 0;
 
   public String toString() {

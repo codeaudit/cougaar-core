@@ -8,12 +8,12 @@ following order:
 	<product>/lib/
 	$CLASSPATH
 
-All are relative to the value of ALP_INSTALL_PATH.
+All are relative to the value of COUGAAR_INSTALL_PATH.
 
 None of these need to be in your classpath, though the current install 
 puts core jar in lib.
 
 To recap: CLASSPATH should be something like:
-	$ALP_INSTALL_PATH/lib/core.jar
+	$COUGAAR_INSTALL_PATH/lib/core.jar
 Nothing else should be needed.
 

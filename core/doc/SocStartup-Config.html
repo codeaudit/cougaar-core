@@ -22,9 +22,9 @@ glm-&lt;builddate>.zip, tutorial-&lt;builddate>.zip (optional) files to
 the alp-&lt;builddate> directory and unzip them there.
 This unzip process will overlay the original
 structure with the appropriate files and subdirectories. As with previous
-releases, the environment variable ALP_INSTALL_PATH should point to the
+releases, the environment variable COUGAAR_INSTALL_PATH should point to the
 alp-&lt;builddate> directory.</font>
-<p>To verify correct installation of the ALP software, a small but non-trivial
+<p>To verify correct installation of the COUGAAR software, a small but non-trivial
 test society relying only on ALPINE PlugIns is included in "alpine\configs\minitestconfig."
 This society is configured to run in a single node on a single computer.
 This configuration can be modified as required for PlugIn testing.&nbsp;
@@ -138,7 +138,7 @@ behavior and minimize placing environment variables in the Node.bat or
 Node.csh files.</li>
 
 <li>
-The environment variable ALP_INSTALL_PATH must point to the installation
+The environment variable COUGAAR_INSTALL_PATH must point to the installation
 directory "alp-&lt;builddate>." This is used to set the (java) system
 property org.cougaar.install.path which must 
 point to the same directory. These variables will allow the infrastructure
@@ -147,7 +147,7 @@ and PlugIns to find the necessary "jar" files (lib) and data files
 
 <li>
 For system testing in a single node configuration, "serialization" of COUGAAR
-objects can be forced by setting the alp.message.alwaysSerialize system
+objects can be forced by setting the org.cougaar.core.message.alwaysSerialize system
 property to true. This feature cannot be used in a multiple node scenario
 and should be false.</li>
 
@@ -155,7 +155,7 @@ and should be false.</li>
 Please note that the Node.bat/csh files are only present in the cougaar/bin
 directory. They have been removed from all configuration directories to
 encourage use of a single version in a standard location. We suggest adding
-%ALP_INSTALL_PATH%\bin to your PATH environment variable.</li>
+%COUGAAR_INSTALL_PATH%\bin to your PATH environment variable.</li>
 
 <li>
 Although we have not tested all society configurations on all types of
@@ -177,7 +177,7 @@ file.</li>
 <li>
 To find initialization files (e.g., clustername-prototype-ini.dat and OPlan.ini),
 the infrastructure will first look in the local directory and then look
-in the {$ALP_INSTALL_PATH}\configs\common.</li>
+in the {$COUGAAR_INSTALL_PATH}\configs\common.</li>
 </ol>
 
 <p><br><b>Table 1: Environment variables and system properties used to
@@ -196,7 +196,7 @@ control COUGAAR system behavior</b>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">ALP_INSTALL_PATH</td>
+<td VALIGN=TOP WIDTH="22%">COUGAAR_INSTALL_PATH</td>
 
 <td VALIGN=TOP WIDTH="20%">Environment Variable</td>
 
@@ -216,7 +216,7 @@ control COUGAAR system behavior</b>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.message.alwaysSerialize</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.core.message.alwaysSerialize</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
@@ -227,7 +227,7 @@ Only usable in single node configurations</td>
 </tr>
 
 <tr>
-<td>alp.enforceTransactions</td>
+<td>org.cougaar.core.cluster.enforceTransactions</td>
 
 <td>Java System Property</td>
 
@@ -238,7 +238,7 @@ transaction boundaries&nbsp;</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.message.retryInterval</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.core.message.retryInterval</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
@@ -248,7 +248,7 @@ transaction boundaries&nbsp;</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.message.retryMaxCount</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.core.message.retryMaxCount</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 

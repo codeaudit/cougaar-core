@@ -25,7 +25,7 @@ import org.cougaar.util.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/** implementation of the generic ALP NameServer using RMI.
+/** implementation of the generic COUGAAR NameServer using RMI.
  * Looks for a NS remote at the alpreg.ini-specified location and
  * dispatches to it.
  *

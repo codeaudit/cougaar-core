@@ -27,7 +27,7 @@ import java.io.*;
 import org.cougaar.core.society.Message;
 
 /**
- * XML-based Object factory, using reflection and ALP factories.  Also
+ * XML-based Object factory, using reflection and COUGAAR factories.  Also
  * uses StringObjectFactory.
  * <p>
  * The usage is best seen by example:

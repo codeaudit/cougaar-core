@@ -56,7 +56,7 @@ public interface ClusterServesPlugIn
   public void schedulePlugIn(ScheduleablePlugIn plugin);
 
   /**
-   * This method sets the ALP scenario time to a specific time
+   * This method sets the COUGAAR scenario time to a specific time
    * in the future, leaving the clock stopped.
    * Time is in milliseconds.
    * Equivalent to setTime(time, false);
@@ -79,7 +79,7 @@ public interface ClusterServesPlugIn
   void setTimeRate(double newRate);
 
   /**
-   * This method advances the ALP scenario time a period of time
+   * This method advances the COUGAAR scenario time a period of time
    * in the future, leaving the clock stopped.
    * Time is in milliseconds.
    * Equivalent to advanceTime(timePeriod, false);
@@ -112,7 +112,7 @@ public interface ClusterServesPlugIn
   double getExecutionRate();
 
   /**
-   * This method gets the current ALP scenario time. 
+   * This method gets the current COUGAAR scenario time. 
    * The returned time is in milliseconds.
    **/
   long currentTimeMillis( );

@@ -66,7 +66,7 @@ public class MessageAddress implements Externalizable {
   }
 
   /** @return the object address part of a URL describing the entity on
-   * the ALP society's pseudo-web.  e.g. the URL of an entity could be 
+   * the COUGAAR society's pseudo-web.  e.g. the URL of an entity could be 
    * contstructed with something like protocol+"://"+host+":"+port+"/"+getAddress()+"/";
    **/
   public String toAddress() {

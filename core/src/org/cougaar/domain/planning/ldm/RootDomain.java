@@ -13,8 +13,8 @@ package org.cougaar.domain.planning.ldm;
 import java.util.*;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.cluster.LogPlan;
-import org.cougaar.core.cluster.XPlanServesALPPlan;
-import org.cougaar.core.cluster.ALPPlanServesLogicProvider;
+import org.cougaar.core.cluster.XPlanServesWhiteboard;
+import org.cougaar.core.cluster.WhiteboardServesLogicProvider;
 import org.cougaar.core.cluster.LogPlanServesLogicProvider;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 
@@ -22,7 +22,7 @@ import org.cougaar.domain.planning.ldm.lps.*;
 
 /**
  * This is the "root" or infrastructure domain, defining the
- * objects and behavior shared by all ALP-based systems.
+ * objects and behavior shared by all COUGAAR-based systems.
  **/
 
 public class RootDomain 
@@ -41,9 +41,9 @@ public class RootDomain
   public void initialize() {
   }
 
-  public XPlanServesALPPlan createXPlan(Collection existingXPlans) {
+  public XPlanServesWhiteboard createXPlan(Collection existingXPlans) {
     for (Iterator plans = existingXPlans.iterator(); plans.hasNext(); ) {
-      XPlanServesALPPlan xPlan = (XPlanServesALPPlan) plans.next();
+      XPlanServesWhiteboard xPlan = (XPlanServesWhiteboard) plans.next();
       if (xPlan instanceof LogPlan) return xPlan;
     }
     return new LogPlan();
@@ -53,7 +53,7 @@ public class RootDomain
    * Create new Domain-specific LogicProviders for loading into the LogPlan.
    * @return a Collection of the LogicProvider instances or null.
    **/
-  public Collection createLogicProviders(ALPPlanServesLogicProvider alpplan, 
+  public Collection createLogicProviders(WhiteboardServesLogicProvider alpplan, 
                                          ClusterServesLogicProvider cluster) 
   {
     ArrayList l = new ArrayList(14); // don't let this be too small.

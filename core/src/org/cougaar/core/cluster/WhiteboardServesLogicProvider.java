@@ -17,12 +17,12 @@ import java.util.Collection;
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.core.society.UID;
 
-public interface ALPPlanServesLogicProvider
+public interface WhiteboardServesLogicProvider
 {
-  /** Apply predicate against the entire "ALPPlan".
+  /** Apply predicate against the entire "Whiteboard".
    * User provided predicate
    **/
-  Enumeration searchALPPlan(UnaryPredicate predicate);
+  Enumeration searchWhiteboard(UnaryPredicate predicate);
 
   /** Add Object to the LogPlan Collection
    * (All subscribers will be notified)

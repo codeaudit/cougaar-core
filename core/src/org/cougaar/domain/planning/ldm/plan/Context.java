@@ -21,7 +21,7 @@ import java.io.Serializable;
  * transferred between clusters.  Instances should be small and 
  * relatively self-contained.
  *
- * Example: in the ALP domain, the Context of a task will
+ * Example: in the COUGAAR domain, the Context of a task will
  * be an object which describes zero or more OPlans (e.g. their
  * UIDs or Names).
  *

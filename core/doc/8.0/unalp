@@ -1,19 +1,32 @@
 #!/usr/bin/perl
 # -*- Perl -*-
 
-# removes various references to alp
-
-die("Do not run this script - it should not be applied at this time");
+# removes various references to alp from a checked-out cvs repository
+# for example, the main COUGAAR repository was updated with:
+#  find . -type f -print | /tmp/unalp | & tee /tmp/changes.txt
+# it does *not* commit the changes, so you get plenty of chance to examine
+# the results before risking your source tree.
 
 $tmp = "/tmp/unalp.$$";
 $total = 0;
 $renamed = 0;
 $change=0;
 
+@deleted;
+@added;
+
 while (<>) {
   chop;
   $file = $_;
-  if (/core\/doc\/7\.0/ || /ChangeLog/ || /CHANGES/ ) {
+  if (/core\/doc\/7\.0/ || 
+      /ChangeLog/ ||
+      /CHANGES/ ||
+      /CVS/ ||
+      /\.jar/ ||
+      /\.zip/ ||
+      /\.gif/ ||
+      /\.jpg/
+     ) {
     next;
   }
 
@@ -31,13 +44,6 @@ while (<>) {
     $changed++;
     $total += $found;
     $new = &hack($file);
-    if ($new eq $file) {
-      print "$new\n";
-    } else {
-      print "$new (renamed $file)\n";
-      $renamed++;
-    }
-
     # copy changes back changes
     unlink($file);
     open(IN, "<$tmp");
@@ -47,7 +53,26 @@ while (<>) {
     }
     close(OUT);
     close(IN);
+
+    if ($new eq $file) {
+      print "$file: $found changes\n";
+    } else {
+      print "$file renamed to $new: $found changes\n";
+      $renamed++;
+    }
+
+    if (! ($new eq $file)) {
+      push @deleted, $file;
+      push @added, $new;
+    }
   }
+}
+
+if ($renamed > 0) {
+  $deletes = join(" ",@deleted);
+  system("cvs delete $deletes");
+  $adds = join(" ",@added);
+  system("cvs add $adds");
 }
 
 print "Total lines changed = $total\n";
@@ -78,7 +103,6 @@ sub hack {
   s/ALPYellow/CougaarYellow/g && $found++;
   s/ALPGreen/CougaarGreen/g && $found++;
   s/ALPPlan/Whiteboard/g && $found++;
-  
 
   # GLM classes
   s/ALPDomain/GLMDomain/g && $found++;
@@ -94,6 +118,16 @@ sub hack {
 
   # Server
   s/ALPServer/NodeServer/g && $found++;
+
+  # PSPs
+  s/ALPInventory/Inventory/g && $found++;
+  s/ALPINVENTORY/INVENTORY/g && $found++;
+  s/AlpMap/Map/g && $found++;
+  s/ALPMAP/MAP/g && $found++;
+
+  # misc
+  s/ALPSchedule/CSchedule/g && $found++;
+  s/ALP /COUGAAR /g && $found++;
 
   # some documentation fixes
   s/ ALP / COUGAAR /g && $found++;
@@ -128,4 +162,3 @@ sub hack {
 
   return $_;
 }
-  

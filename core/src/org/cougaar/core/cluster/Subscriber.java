@@ -121,11 +121,11 @@ public class Subscriber {
                 if (currentClient != null) {
                   thisPublisher = currentClient.getSubscriptionClientName();
                 }
-                if (envelope instanceof ALPPlan.PlanEnvelope) {
+                if (envelope instanceof Whiteboard.PlanEnvelope) {
                   if (thisPublisher == null) {
-                    thisPublisher = "ALPPlan";
+                    thisPublisher = "Whiteboard";
                   } else {
-                    thisPublisher = "ALPPlan after " + thisPublisher;
+                    thisPublisher = "Whiteboard after " + thisPublisher;
                   }
                 } else if (thisPublisher == null) {
                   thisPublisher = "Unknown";
@@ -288,7 +288,7 @@ public class Subscriber {
     return subscription;
   }
     
-  /** lightweight query of ALPPlan **/
+  /** lightweight query of Whiteboard **/
   public final Collection query(UnaryPredicate isMember) {
     QuerySubscription s = new QuerySubscription(isMember);
     s.setSubscriber(this);      // shouldn't really be needed
@@ -297,7 +297,7 @@ public class Subscriber {
   }
 
   final void checkTransactionOK(String methodname, Object arg) {
-    if (this instanceof ALPPlan) return;               // No check for ALPPlan
+    if (this instanceof Whiteboard) return;               // No check for Whiteboard
     if (!isMyTransaction()) {
       synchronized (System.err) {
         if (arg != null) { methodname = methodname+"("+arg+")"; }

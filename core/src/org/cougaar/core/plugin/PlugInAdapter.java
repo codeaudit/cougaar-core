@@ -311,7 +311,7 @@ public abstract class PlugInAdapter
   }
 
   /** Convenience method to specify given time to stimulate plugin.
-   * (based on ALP scenario time). 
+   * (based on COUGAAR scenario time). 
    * Note that this facility is not appropriate to use for 
    * load-balancing purposes, as scenario time is discontinuous
    * and may even stop.
@@ -330,7 +330,7 @@ public abstract class PlugInAdapter
   };
 
   /** Convenience method to specify period of time to wait before
-   * stimulating plugin (based on ALP scenario time).
+   * stimulating plugin (based on COUGAAR scenario time).
    * Note that this facility is not appropriate to use for 
    * load-balancing purposes, as scenario time is discontinuous
    * and may even stop.
@@ -388,7 +388,7 @@ public abstract class PlugInAdapter
     return theCluster.currentTimeMillis();
   }
 
-  /** what is the current (ALP) time as a Date object?
+  /** what is the current (COUGAAR) time as a Date object?
    * Note: currentTimeMillis() is preferred, as it gives
    * more control over timezone, calendar, etc.
    * Note that this facility is not appropriate to use for 

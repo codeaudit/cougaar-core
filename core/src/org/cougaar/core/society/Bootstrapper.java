@@ -31,12 +31,12 @@ import java.security.cert.*;
  * have to maintain many different script files.
  *
  * The following locations are examined, in order:
- *  -Dalp.class.path=...	(like a classpath)
+ *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $CLASSPATH
- *  $ALP_INSTALL_PATH/lib/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/plugins/*.{jar,zip,plugin}
- *  -Dalp.system.path=whatever/*.{jar,zip,plugin}
- *  $ALP_INSTALL_PATH/sys/*.{jar,zip,plugin} 
+ *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
+ *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
+ *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
+ *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
  *
  * As an added bonus, Bootstrapper may be run as an application
  * which takes the fully-qualified class name of the class to run
@@ -47,7 +47,7 @@ import java.security.cert.*;
  * 
  * The Boostrapper's classloader will not load any classes which
  * start with "java.", "javax.", "sun.", "com.sun." or "net.jini.".  This 
- * list may be extended by supplying a -Dalp.bootstrapper.exclusions=foo.:bar.
+ * list may be extended by supplying a -Dorg.cougaar.core.society.bootstrapper.exclusions=foo.:bar.
  * System property.  The value of the property should be a list of 
  * package prefixes separated by colon (":") characters.
  **/

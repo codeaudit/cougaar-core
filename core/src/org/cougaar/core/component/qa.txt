@@ -2,7 +2,7 @@
 >* Could you be more specific about the BlackboardBindingSite API? Are you
 >talking about some of the methods of the PlugInAdapter class (subscribe,
 >publishAdd, publishRemove, publishChange...) or some functions deeper in the
->infrastructure (ALPPlan or LogPlan methods...)?
+>infrastructure (Whiteboard or LogPlan methods...)?
 
 The BlackboardBindingSite interface is exactly the publish and
 subscribe API (with transactions).  Deeper infrastructure stuff must
@@ -20,8 +20,8 @@ be private, as it is in ALP.
 
 The interactions between Distributer and *Plan classes are unrelated
 to the BlackboardBindingSite api.  IMO, the Blackboard *is* the
-combination of Distributer and ALPPlan.  The interactions between
-LogicProviders and ALPPlan (e.g. XPlans) should be governed by a
+combination of Distributer and Whiteboard.  The interactions between
+LogicProviders and Whiteboard (e.g. XPlans) should be governed by a
 different service which should not be available to Plugins.
 
 A given binder gets at most two chances to influence the outcome of a
@@ -44,7 +44,7 @@ the plugins, via their associated BlackboardBinders.
 
 Yes - the BlackboardBindingSite is the publish/subscribe API.  The
 distributer is just one part of the Blackboard, though there are
-(potentially) binders between the ALPPlan and XPlans/LPs.
+(potentially) binders between the Whiteboard and XPlans/LPs.
 
 >* I think SecurityBindingSite is too generic. In fact, most of the binders
 >offer security mechanims. What about CryptoBindingSite? There might be
@@ -104,7 +104,7 @@ to a suite of mini services might have some advantages.
 >elements, the bug occurs, and the exception is caught in the execute method
 >of the SimplePlugIn class. The PlugIn is terminated. Do published elements
 >and their relationships still exist in the Log Plan?
->*       What are ALPPlan subscriptions and how do they relate to PlugIn
+>*       What are Whiteboard subscriptions and how do they relate to PlugIn
 >subscriptions?
 >*       When a PlugIn publishes something in the log plan, is there always
 >an object stored in the log plan, or can the object be moved directly to

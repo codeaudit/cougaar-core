@@ -19,7 +19,7 @@ import org.cougaar.util.StringUtility;
 import org.cougaar.util.Reflect;
 
 /**
- * String-based Object factory, using reflection and ALP factories.
+ * String-based Object factory, using reflection and COUGAAR factories.
  * <p>
  * Pruned from <code>OrgRTDataPlugIn</code>'s parsing and reflective 
  * field setters.  <b>Needs work!</b>  OrtRTDataPlugIn should be
@@ -290,7 +290,7 @@ public class StringObjectFactory {
     // and some java.util
     classes.put("Collection", Collection.class);
     classes.put("List", List.class);
-    // ALP-specific stuff will be looked for
+    // COUGAAR-specific stuff will be looked for
 
     methods = new HashMap(13);
   }

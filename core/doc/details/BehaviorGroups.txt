@@ -27,7 +27,7 @@ ways:
 	If this is done, neither the New<Whatever> interface nor the
 	<Whatever>Impl implementation will have delegate getters or setters.
 	The default of .auto is false.  Specification of .auto=true
-	will give essentially identical behavior to the ALP 6.2 release.
+	will give essentially identical behavior to the COUGAAR 6.2 release.
 
 Example:
 

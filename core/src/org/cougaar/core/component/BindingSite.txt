@@ -28,7 +28,7 @@ DatabaseBindingSite
 	general access to databases.  Offers connection pooling,
 	retries, etc in addition to giving (controlled) access to
 	databases for components which do not have permission to
-	access databases directly.  ALP only offers this service
+	access databases directly.  COUGAAR only offers this service
 	through a global object DBConnectionPool.
 	
 SecurityBindingSite
@@ -45,7 +45,7 @@ ThreadingBindingSite
 PSPBindingSite
 	Provides access to HTML, XML, etc services and protocols for
 	PSP-like components - that is allows communication with the 
-	outside world, including humans.  ALP integrates this
+	outside world, including humans.  COUGAAR integrates this
 	functionality with the PSP base classes.
 	
 NamespaceBindingSite

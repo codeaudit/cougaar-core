@@ -13,12 +13,12 @@ package org.cougaar.domain.planning.ldm;
 import java.util.Collection;
 
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.core.cluster.ALPPlanServesLogicProvider;
-import org.cougaar.core.cluster.XPlanServesALPPlan;
+import org.cougaar.core.cluster.WhiteboardServesLogicProvider;
+import org.cougaar.core.cluster.XPlanServesWhiteboard;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 
 /**
- * Describe an ALP "Pluggable Domain Package" which consists of
+ * Describe an COUGAAR "Pluggable Domain Package" which consists of
  * a set of domain-specific LDM objects as represented by a 
  * Factory class, and a set of LogicProviders.
  *
@@ -43,8 +43,8 @@ public interface Domain
    * Create new Domain-specific LogicProviders for loading into the LogPlan.
    * @return a Collection of the LogicProvider instances or null.
    **/
-  Collection createLogicProviders(ALPPlanServesLogicProvider logplan, 
+  Collection createLogicProviders(WhiteboardServesLogicProvider logplan, 
                                   ClusterServesLogicProvider cluster);
 
-  XPlanServesALPPlan createXPlan(java.util.Collection existingXPlans);
+  XPlanServesWhiteboard createXPlan(java.util.Collection existingXPlans);
 }

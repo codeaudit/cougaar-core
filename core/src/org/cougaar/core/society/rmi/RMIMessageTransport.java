@@ -177,7 +177,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   private NameServer nameserver;
   private MessageAddress myAddress;
 
-  private class ALPSocketFactory extends RMISocketFactory {
+  private class CougaarSocketFactory extends RMISocketFactory {
     private class MySocket extends Socket {
       MySocket(String host, int port) throws IOException, UnknownHostException {
         super(host, port);
@@ -201,11 +201,11 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     synchronized (getClass()) {
       if (keepStatistics) {
         try {
-          if (RMISocketFactory.getSocketFactory() instanceof ALPSocketFactory) {
+          if (RMISocketFactory.getSocketFactory() instanceof CougaarSocketFactory) {
             throw new RuntimeException("Multiple RMIMessageTransport instances");
           } else {
-            System.out.println("Installing ALPSocketFactory");
-            RMISocketFactory.setSocketFactory(new ALPSocketFactory());
+            System.out.println("Installing CougaarSocketFactory");
+            RMISocketFactory.setSocketFactory(new CougaarSocketFactory());
           }
         } catch (IOException ioe) {
           System.err.println(ioe);

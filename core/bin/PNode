@@ -1,37 +1,37 @@
 #!/bin/csh -f
 
 # Environment variables
-# ALP_INSTALL_PATH = the head of the alp install.
-# ALP3RDPARTY = a directory containing 3rd party jar files
+# COUGAAR_INSTALL_PATH = the head of the alp install.
+# COUGAAR3RDPARTY = a directory containing 3rd party jar files
 #
-# ALP bootstrapping classpath will be:
-#  $ALP_DEV_PATH	if defined
-#  $ALP_INSTALL_PATH/lib/core.jar
+# COUGAAR bootstrapping classpath will be:
+#  $COUGAAR_DEV_PATH	if defined
+#  $COUGAAR_INSTALL_PATH/lib/core.jar
 #
 # once running, jar files will be searched for in (in order):
-#  -Dalp.class.path 	like classpath
+#  -Dorg.cougaar.class.path 	like classpath
 #  $CLASSPATH		(alp bootstrapping path from above)
-#  $ALP_INSTALL_PATH/lib/*
-#  $ALP_INSTALL_PATH/plugins/*
-#  -Dalp.system.path=$ALP3RDPARTY
-#  $ALP_INSTALL_PATH/sys/*
+#  $COUGAAR_INSTALL_PATH/lib/*
+#  $COUGAAR_INSTALL_PATH/plugins/*
+#  -Dorg.cougaar.system.path=$COUGAAR3RDPARTY
+#  $COUGAAR_INSTALL_PATH/sys/*
 #
 
-# set ALP_INSTALL_PATH=/alpine/demo98
-if (! $?ALP3RDPARTY) then
-    setenv ALP3RDPARTY /opt/alp-jars
+# set COUGAAR_INSTALL_PATH=/alpine/demo98
+if (! $?COUGAAR3RDPARTY) then
+    setenv COUGAAR3RDPARTY /opt/alp-jars
 endif
 
-set LIBPATHS=$ALP_INSTALL_PATH/lib/core.jar
-if ($?ALP_DEV_PATH) then
-    set LIBPATHS = "${ALP_DEV_PATH}:$LIBPATHS"
+set LIBPATHS=$COUGAAR_INSTALL_PATH/lib/core.jar
+if ($?COUGAAR_DEV_PATH) then
+    set LIBPATHS = "${COUGAAR_DEV_PATH}:$LIBPATHS"
 endif
 
 # domains are now usually defined by the config file LDMDomains.ini.
 # But you may still use properties if you wish.
-#set MYDOMAINS="-Dalp.domain.alp=org.cougaar.domain.glm.ALPDomain"
+#set MYDOMAINS="-Dorg.cougaar.domain.alp=org.cougaar.domain.glm.GLMDomain"
 set MYDOMAINS=""
-set MYPROPERTIES="$MYDOMAINS -Dalp.install.path=$ALP_INSTALL_PATH -Duser.timezone=GMT"
+set MYPROPERTIES="$MYDOMAINS -Dorg.cougaar.install.path=$COUGAAR_INSTALL_PATH -Duser.timezone=GMT"
 set MYMEMORY=""
 
 set node = $argv[1]
@@ -69,9 +69,9 @@ if ("$os" == "Linux") then
     #setenv JAVA_COMPILER javacomp
 endif
 
-set javaargs="-Dalp.persistence.enable=true -Xbootclasspath:$ALP_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar $osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS"
+set javaargs="-Dorg.cougaar.core.cluster.persistence.enable=true -Xbootclasspath:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar $osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS"
 
-if ($?ALP_DEV_PATH) then
+if ($?COUGAAR_DEV_PATH) then
     echo java $javaargs org.cougaar.core.society.Node $args
 endif
 

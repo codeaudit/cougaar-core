@@ -10,6 +10,6 @@
 
 package org.cougaar.core.cluster;
 
-public interface XPlanServesALPPlan extends ALPPlanServesLogicProvider {
-  void setupSubscriptions(ALPPlan alpPlan);
+public interface XPlanServesWhiteboard extends WhiteboardServesLogicProvider {
+  void setupSubscriptions(Whiteboard alpPlan);
 }

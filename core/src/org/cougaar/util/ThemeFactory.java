@@ -32,13 +32,13 @@ import javax.swing.plaf.metal.MetalTheme;
  * @see javax.swing.plaf.metal.MetalTheme
  */
 public class ThemeFactory {
-  static private final Color myALPRed = new Color(255, 75, 75);
-  static private final Color myALPYellow = new Color(250, 250, 25);
-  static private final Color myALPGreen = new Color(50, 205, 50);
+  static private final Color myCougaarRed = new Color(255, 75, 75);
+  static private final Color myCougaarYellow = new Color(250, 250, 25);
+  static private final Color myCougaarGreen = new Color(50, 205, 50);
 
-  static public final String ALP_RED_KEY = "ALPRed";
-  static public final String ALP_YELLOW_KEY = "ALPYellow";
-  static public final String ALP_GREEN_KEY = "ALPGreen";
+  static public final String COUGAAR_RED_KEY = "CougaarRed";
+  static public final String COUGAAR_YELLOW_KEY = "CougaarYellow";
+  static public final String COUGAAR_GREEN_KEY = "CougaarGreen";
 
   /**
    * Use for demo
@@ -76,9 +76,9 @@ public class ThemeFactory {
       UIManager.setLookAndFeel(new MetalLookAndFeel());
 
       UIDefaults defaults = UIManager.getDefaults();
-      defaults.put(ALP_RED_KEY, getALPRed());
-      defaults.put(ALP_YELLOW_KEY, getALPYellow());
-      defaults.put(ALP_GREEN_KEY, getALPGreen());
+      defaults.put(COUGAAR_RED_KEY, getCougaarRed());
+      defaults.put(COUGAAR_YELLOW_KEY, getCougaarYellow());
+      defaults.put(COUGAAR_GREEN_KEY, getCougaarGreen());
 
       // BOZO for sun - List font is not surfaced in MetalLookAndFeel
       defaults.put("List.font", myCurrentMetalTheme.getUserTextFont());
@@ -90,30 +90,30 @@ public class ThemeFactory {
   }
 
   /**
-   * getALPRed - returns the canonical ALP red
+   * getCougaarRed - returns the canonical COUGAAR red
    *
-   * @return Color - ALP red.
+   * @return Color - COUGAAR red.
    */
-  static public Color getALPRed() {
-    return myALPRed;
+  static public Color getCougaarRed() {
+    return myCougaarRed;
   }
 
   /**
-   * getALPYellow - returns the canonical ALP yellow
+   * getCougaarYellow - returns the canonical COUGAAR yellow
    *
-   * @return Color - ALP yellow
+   * @return Color - COUGAAR yellow
    */
-  static public Color getALPYellow() {
-    return myALPYellow;
+  static public Color getCougaarYellow() {
+    return myCougaarYellow;
   }
 
   /**
-   * getALPGreen - returns the canonical ALP green
+   * getCougaarGreen - returns the canonical COUGAAR green
    *
-   * @return Color - ALP green.
+   * @return Color - COUGAAR green.
    */
-  static public Color getALPGreen() {
-    return myALPGreen;
+  static public Color getCougaarGreen() {
+    return myCougaarGreen;
   }
 
 }

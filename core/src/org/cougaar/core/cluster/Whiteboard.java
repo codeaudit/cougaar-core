@@ -6,9 +6,9 @@ import org.cougaar.util.UnaryPredicate;
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.domain.planning.ldm.plan.Plan;
 
-public class ALPPlan extends Subscriber
+public class Whiteboard extends Subscriber
   implements
-  ALPPlanServesLogicProvider,
+  WhiteboardServesLogicProvider,
   SubscriptionClient,
   PrivilegedClaimant
 {
@@ -75,13 +75,13 @@ public class ALPPlan extends Subscriber
     }
   };
 
-  public ALPPlan(Distributor d, ClusterServesLogicProvider cluster) {
+  public Whiteboard(Distributor d, ClusterServesLogicProvider cluster) {
     setClientDistributor((SubscriptionClient)this, d);
     myCluster = cluster;
     myDistributor = d;
   }
 
-  public void addXPlan(XPlanServesALPPlan xPlan) {
+  public void addXPlan(XPlanServesWhiteboard xPlan) {
     if (xPlans.contains(xPlan)) return;
     xPlans.add(xPlan);
   }
@@ -110,7 +110,7 @@ public class ALPPlan extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("ALPPlan.alpPlanObjects.add object already published: " + o.toString(),
+        throw new PublishException("Whiteboard.alpPlanObjects.add object already published: " + o.toString(),
                                    priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior publisher: "));
@@ -124,7 +124,7 @@ public class ALPPlan extends Subscriber
         if (stacks != null) {
           priorStack = (PublishStack) stacks.get(o);
         }
-        throw new PublishException("ALPPlan.alpPlanObjects.remove object not published: " + o.toString(),
+        throw new PublishException("Whiteboard.alpPlanObjects.remove object not published: " + o.toString(),
                                    priorStack, stacks != null);
       } else if (stacks != null) {
         stacks.put(o, new PublishStack("Prior remover: "));
@@ -139,7 +139,7 @@ public class ALPPlan extends Subscriber
       subscribe(alpPlanObjects);
 
       for (Iterator plans = xPlans.iterator(); plans.hasNext(); ) {
-        XPlanServesALPPlan xPlan = (XPlanServesALPPlan) plans.next();
+        XPlanServesWhiteboard xPlan = (XPlanServesWhiteboard) plans.next();
         xPlan.setupSubscriptions(this);
       }
       setReadyToPersist();
@@ -161,7 +161,7 @@ public class ALPPlan extends Subscriber
       }
     }
     catch (Exception ex) {
-      System.err.println("Caught exception while in ALPPlan.init(): " + ex);
+      System.err.println("Caught exception while in Whiteboard.init(): " + ex);
       ex.printStackTrace();
     }
   }
@@ -240,7 +240,7 @@ public class ALPPlan extends Subscriber
     publishChange(o, changes);
   }
 
-  public Enumeration searchALPPlan(UnaryPredicate predicate) {
+  public Enumeration searchWhiteboard(UnaryPredicate predicate) {
     Vector vec = new Vector();
 
     for (Iterator i = alpPlanObjects.getCollection().iterator(); i.hasNext(); ) {
@@ -252,7 +252,7 @@ public class ALPPlan extends Subscriber
     return vec.elements();
   }
 
-  public int countALPPlan(UnaryPredicate predicate) {
+  public int countWhiteboard(UnaryPredicate predicate) {
     int c = 0;
     for (Iterator i = alpPlanObjects.getCollection().iterator(); i.hasNext(); ) {
       Object o = i.next();
@@ -351,7 +351,7 @@ public class ALPPlan extends Subscriber
   }
 
   public void restart(ClusterIdentifier cid) {
-    System.out.println("ALPPlan restart " + cid);
+    System.out.println("Whiteboard restart " + cid);
     for (int i = 0, n = restartLPs.size(); i < n; i++) {
       RestartLogicProvider p = (RestartLogicProvider) restartLPs.get(i);
       try {

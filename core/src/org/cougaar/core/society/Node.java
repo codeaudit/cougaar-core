@@ -61,8 +61,8 @@ import java.beans.Beans;
 **/
 public class Node implements ArgTableIfc, ClusterManagementServesCluster
 {
-  public static int ALPPortNo;
-  public static String ALPAddress = "127.0.0.1";
+  public static int NSPortNo;
+  public static String NSHost = "127.0.0.1";
   //protected MgmtLP mgmtLP;
 
   static boolean alwaysSerialize = false;
@@ -404,14 +404,14 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   /**
    *   Returns name of computer platform as an String version of an IPAddress
    *   <p><PRE>
-   *   PRE CONDITION:   ALP server started
+   *   PRE CONDITION:   COUGAAR server started
    *   POST CONDITION:  address located and returned
    *   INVARIANCE:
    *   </PRE>
    *   @return String the network name for the platform as a string
    */
   public String findAddress() {
-    return ALPAddress;
+    return NSHost;
   }
 
 
