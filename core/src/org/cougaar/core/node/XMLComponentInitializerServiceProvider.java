@@ -236,17 +236,18 @@ public class XMLComponentInitializerServiceProvider
         }
       }
       ret[i++] =
-        makeComponentDesc(vParams, classname, priority, insertionPoint);
+        makeComponentDesc(name, vParams, classname, priority, insertionPoint);
     }
     return ret;
   }
 
   private ComponentDescription makeComponentDesc(
+						 String name,
     Vector vParams,
     String classname,
     String priority,
     String insertionPoint) {
-    return new ComponentDescription(classname, insertionPoint, classname, null,
+    return new ComponentDescription(name, insertionPoint, classname, null,
     //codebase
     vParams, //params
     null, //certificate
