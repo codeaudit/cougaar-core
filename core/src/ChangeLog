@@ -1,3 +1,16 @@
+2001-07-19  Michael Thome  <mthome@bbn.com>
+
+	* DefaultPluginBinderFactory, DefaultPluginBinder, PluginAdapter
+	Drop need for PluginAdapterBinder.  Still need to port
+	PluginAdapter's threading to new model.
+
+	* BinderSupport
+	make getBinderProxy() abstract to force binders to decide how much
+	protection is appropriate.
+
+	* AgentBinder, MessageTransportBinder
+	define simple, low-quality getBinderProxy() methods
+
 2001-07-18  Michael Thome  <mthome@bbn.com>
 
 	* PluginManager

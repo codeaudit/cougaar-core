@@ -34,6 +34,10 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
     return (AgentManager)getContainer();
   }
 
+  protected final BindingSite getBinderProxy() {
+    // horribly unsecure! Means that the component has full access to the binder.
+    return (BindingSite) this;
+  }
 
   //public ConfigFinder getConfigFinder() {
   //  return getPluginManager().getConfigFinder();
@@ -42,6 +46,5 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
   public String toString() {
     return getAgent() + "'s AgentBinder";
   }
-
 
 }

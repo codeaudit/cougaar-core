@@ -271,7 +271,7 @@ public abstract class PlugInAdapter
    * as it will now always be null.
    **/
   public void load(Object object) throws StateModelException {
-    ((PluginAdapterBinder) getBindingSite()).setThreadingChoice(getThreadingChoice());
+    setThreadingChoice(getThreadingChoice()); // choose the threading model
     super.load(object);
     theLDM = getLDMService().getLDM();
     theLDMF = getLDMService().getFactory();
@@ -287,6 +287,10 @@ public abstract class PlugInAdapter
     }
     
     //ServiceBroker sb = getBindingSite().getServiceBroker();
+
+    // fire up the threading model
+    setThreadingModel(createThreadingModel());
+    startThreadingModel();
   }
 
   /** */
@@ -369,7 +373,7 @@ public abstract class PlugInAdapter
 
   private ClusterServesPlugIn dummyCluster = new ClusterServesPlugIn() {
       // real ones
-      public ConfigFinder getConfigFinder() { return ((PluginAdapterBinder) getBindingSite()).getConfigFinder(); }
+      public ConfigFinder getConfigFinder() { return ((PluginBindingSite) getBindingSite()).getConfigFinder(); }
       public ClusterIdentifier getClusterIdentifier() { return PlugInAdapter.this.getClusterIdentifier();}
       public UIDServer getUIDServer() { return PlugInAdapter.this.getUIDServer(); }
       public LDMServesPlugIn getLDM() { return PlugInAdapter.this.getLDM(); }
@@ -403,7 +407,7 @@ public abstract class PlugInAdapter
     };
 
   protected ConfigFinder getConfigFinder() {
-    return ((PluginAdapterBinder) getBindingSite()).getConfigFinder();
+    return ((PluginBindingSite) getBindingSite()).getConfigFinder();
   }
 
   // 
@@ -644,12 +648,15 @@ public abstract class PlugInAdapter
   // cluster
   // 
 
+  protected final ClusterIdentifier getAgentIdentifier() {
+    return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
+  }
   protected final ClusterIdentifier getClusterIdentifier() {
-    return ((PluginAdapterBinder) getBindingSite()).getClusterIdentifier();
+    return getAgentIdentifier();
   }
 
   protected final UIDServer getUIDServer() {
-    return ((PluginAdapterBinder) getBindingSite()).getUIDServer();
+    return ((PluginBindingSite) getBindingSite()).getUIDServer();
   }
 
   //
@@ -726,7 +733,7 @@ public abstract class PlugInAdapter
       return getLDMService().getFactory(s);
     }
     public ClusterIdentifier getClusterIdentifier() {
-      return ((PluginAdapterBinder) getBindingSite()).getClusterIdentifier();
+      return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
     }
     public MetricsSnapshot getMetricsSnapshot() {
       return getMetricsService().getMetricsSnapshot();
@@ -854,55 +861,15 @@ public abstract class PlugInAdapter
   // threading model
   //
 
-  //dropped
-  //protected final Threading getThreadingModel() { 
-  //  return null;
-  //}
-  
-
-  // keep these here for 
-  public final static int UNSPECIFIED_THREAD = PluginAdapterBinder.UNSPECIFIED_THREAD;
-  public final static int NO_THREAD = PluginAdapterBinder.NO_THREAD;
-  public final static int SHARED_THREAD = PluginAdapterBinder.SHARED_THREAD;
-  public final static int SINGLE_THREAD = PluginAdapterBinder.SINGLE_THREAD;
-  public final static int ONESHOT_THREAD = PluginAdapterBinder.ONESHOT_THREAD;
-
-  private int threadingChoice = UNSPECIFIED_THREAD;
-
-  /** Set the current choice of threading model.  Will have no effect if
-   * the threading model has already been acted on.
-   * @deprecated better to call PluginBindingSite.setThreadingChoice
-   **/
-  protected final void setThreadingChoice(int m) {
-    threadingChoice = m;
-  }
-
-  /** Set the current choice of threading model.  Will have no effect if
-   * the threading model has already been acted on.
-   * @deprecated call PluginBindingSite.setThreadingChoice(m) instead.
-   **/
-  protected final void chooseThreadingModel(int m) {
-    threadingChoice = m;
-  }
-
-  /** @return the current choice of threading model.  **/
-  protected final int getThreadingChoice() {
-    return threadingChoice;
-  }
-
-  // /** return the default threading model for this class.
-  //  * @deprecated ignored
-  //  **/
-  // protected final int getDefaultThreadingChoice() {
-  //   return SHARED_THREAD;
-  // }
-
-
   /** called from PluginBinder **/
   public void plugin_prerun() {
-    BlackboardClient.current.set(this);
-    prerun();
-    BlackboardClient.current.set(null);
+    try {
+      start(); // just in case..
+      BlackboardClient.current.set(this);
+      prerun();
+    } finally {
+      BlackboardClient.current.set(null);
+    }
   }
 
   /** override to define prerun behavior **/
@@ -910,13 +877,17 @@ public abstract class PlugInAdapter
 
   /** called from PluginBinder **/
   public void plugin_cycle() {
-    BlackboardClient.current.set(this);
-    cycle();
-    BlackboardClient.current.set(null);
+    try {
+      BlackboardClient.current.set(this);
+      cycle();
+    } finally {
+      BlackboardClient.current.set(null);
+    }
   }
 
   /** override to define cycle behavior **/
   protected  void cycle() { }
+
 
   // 
   // compatability methods
@@ -954,4 +925,260 @@ public abstract class PlugInAdapter
   }
 
 
+  //
+  // threading model support
+  // 
+
+  private Threading threadingModel = null;
+  
+  protected final void setThreadingModel(Threading t) {
+    threadingModel = t;
+  }
+
+  protected final Threading getThreadingModel() { 
+    return threadingModel;
+  }
+  
+  public final static int UNSPECIFIED_THREAD = -1;
+  public final static int NO_THREAD = 0;
+  public final static int SHARED_THREAD = 1;
+  public final static int SINGLE_THREAD = 2;
+  public final static int ONESHOT_THREAD = 3;
+
+  private int threadingChoice = UNSPECIFIED_THREAD;
+
+  /** Set the current choice of threading model.  Will have no effect if
+   * the threading model has already been acted on.
+   **/
+  protected final void setThreadingChoice(int m) {
+    if (threadingModel != null) 
+      throw new IllegalArgumentException("Too late to select threading model.");
+    threadingChoice = m;
+  }
+
+  /** Set the current choice of threading model.  Will have no effect if
+   * the threading model has already been acted on.
+   * @deprecated call PluginBindingSite.setThreadingChoice(m) instead.
+   **/
+  protected final void chooseThreadingModel(int m) {
+    setThreadingChoice(m);
+  }
+
+  /** @return the current choice of threading model.  **/
+  protected final int getThreadingChoice() {
+    return threadingChoice;
+  }
+
+  /** create a Threading model object as specified by the plugin.
+   * The default implementation creates a Threading object
+   * based on the value of threadingChoice.
+   * The default choice is to use a SharedThreading model, which
+   * shares thread of execution with others of the same sort in
+   * the cluster.
+   * Most plugins can ignore this altogether.  Most that
+   * want to select different behavior should
+   * call chooseThreadingModel() in their constructer.
+   * PlugIns which implement their own threading model
+   * will need to override createThreadingModel.
+   * createThreadingModel is called late in PluginBinder.load(). 
+   * if an extending plugin class wishes to examine or alter
+   * the threading model object, it will be available only when 
+   * PluginBinder.load() returns, which is usually called by
+   * the extending plugin classes overriding load() method.
+   * The constructed Threading object is initialized by
+   * PluginBinder.start().
+   **/
+  protected Threading createThreadingModel() {
+    Threading t;
+    switch (getThreadingChoice()) {
+    case NO_THREAD:
+      t = new NoThreading();
+      break;
+    case SHARED_THREAD: 
+      t = new SharedThreading();
+      break;
+    case SINGLE_THREAD:
+      t = new SingleThreading();
+      break;
+    case ONESHOT_THREAD:
+      t = new OneShotThreading();
+      break;
+    default:
+      throw new RuntimeException("Invalid Threading model "+getThreadingChoice());
+    }
+    return t;
+  }
+
+  public void startThreadingModel() {
+    try {
+      threadingModel.initialize();
+      threadingModel.load(null);
+      threadingModel.start();
+    } catch (RuntimeException e) {
+      System.err.println("Caught exception during threadingModel initialization: "+e);
+      e.printStackTrace();
+    }
+  }
+
+
+  protected abstract class Threading implements GenericStateModel {
+    public void initialize() {}
+    /** the argument passed to load is a ClusterServesPlugIn **/
+    public void load(Object o) {}
+    public void start() {}
+    public void suspend() {}
+    public void resume() {}
+    public void stop() {}
+    public void halt() {}
+    public void unload() {}
+    public int getState() { 
+      return UNINITIALIZED; 
+    }
+    public String toString() {
+      return getAgentIdentifier()+"/"+PlugInAdapter.this;
+    }
+  }
+
+  /** up to the class to implement what it needs **/
+  protected class NoThreading extends Threading {
+  }
+    
+  /** prerun only: cycle will never be called. **/
+  protected class OneShotThreading extends Threading {
+    public OneShotThreading() {}
+    public void start() {
+      plugin_prerun();
+    }
+  }
+
+  /** shares a Thread with other SharedThreading plugins in the same cluster **/
+  protected class SharedThreading extends Threading implements ScheduleablePlugIn  {
+    public void start() {
+      getSharedThreadingService().registerPlugIn(this);
+      plugin_prerun();
+    }
+
+    //
+    // implementation of ScheduleablePlugIn API 
+    //
+
+    public void addExternalActivityWatcher(SubscriptionWatcher watcher) { 
+     getBlackboardService().registerInterest(watcher);
+    }
+
+    public final void externalCycle(boolean wasExplicit) {
+      setAwakened(wasExplicit);
+      plugin_cycle();
+    }
+
+  }
+
+  /** has its own Thread **/
+  protected class SingleThreading extends Threading implements Runnable {
+    /** a reference to personal Thread which each PlugIn runs in **/
+    private Thread myThread = null;
+    /** our subscription watcher **/
+    private SubscriptionWatcher waker = null;
+    
+    public SingleThreading() {}
+
+    private int priority = Thread.NORM_PRIORITY;
+
+    /** plugins and subclasses may set the Thread priority to 
+     * a value lower than standard.  Requests to raise the priority
+     * are ignored as are all requests after start()
+     * Note that the default priority is one level below the
+     * usual java priority - that is one level below where the
+     * infrastructure runs.
+     **/
+    public void setPriority(int newPriority) {
+      if (newPriority<priority) {
+        priority = newPriority;
+      }
+    }
+    
+    private boolean isYielding = true;
+
+    /** If isYielding is true, the plugin will force a thread yield
+     * after each call to cycle().  This is on by default since plugins
+     * generally need reaction from infrastructure and other plugins
+     * to progress.
+     * This may be set at any time, even though the effect is only periodic.
+     * Most plugins would want to (re)set this value at initialization.
+     **/
+    public void setIsYielding(boolean v) {
+      isYielding = v;
+    }
+
+    public void load(Object object) {
+      setWaker(getBlackboardService().registerInterest());
+    }
+
+    public void start() {
+      myThread = new Thread(this, "Plugin/"+getAgentIdentifier()+"/"+PlugInAdapter.this);
+      myThread.setPriority(priority);
+      myThread.start();
+    }
+
+    private boolean suspendRequest = false;
+    public void suspend() { 
+      if (myThread != null) {
+        suspendRequest = true;
+        signalStateChange();
+      }
+    }
+
+    private boolean resumeRequest = false;
+    public void resume() {  
+      if (myThread != null) {
+        resumeRequest = true;
+        signalStateChange();
+      }
+    }
+    private boolean stopRequest = false;
+    public void stop() {
+      if (myThread != null) {
+        stopRequest = true;
+        signalStateChange();
+      }
+    }
+
+    private void signalStateChange() {
+      if (waker != null) {
+        waker.signalNotify(waker.INTERNAL);
+      }
+    }
+
+    private boolean isRunning = true;
+    private boolean isActive = true;
+    public final void run() {
+      plugin_prerun();                 // plugin first time through
+      while (isRunning) {
+	boolean xwakep = waker.waitForSignal();
+	setAwakened(xwakep);
+        if (suspendRequest) {
+          suspendRequest = false;
+          isActive = false;
+        }
+        if (resumeRequest) {
+          resumeRequest = false;
+          isActive = true;
+        }
+        if (stopRequest) {
+          stopRequest = false;
+          isRunning = false;
+          isActive = false;
+        }
+        if (isActive) {
+          plugin_cycle();                // do work
+          if (isYielding)
+            Thread.yield();
+        }
+      }
+    }
+    public void setWaker(SubscriptionWatcher sw) {
+      waker = sw;
+    }
+
+  }
 }

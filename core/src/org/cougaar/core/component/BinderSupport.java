@@ -38,6 +38,13 @@ public abstract class BinderSupport implements Binder
     return child;
   }
 
+  /** Defines a pass-through insulation layer to ensure that the plugin cannot 
+   * downcast the BindingSite to the Binder and gain control via introspection
+   * and/or knowledge of the Binder class.  This is neccessary when Binders do
+   * not have private channels of communication to the Container.
+   **/
+  protected abstract BindingSite getBinderProxy();
+
   //
   // child services initialization
   //
@@ -63,10 +70,11 @@ public abstract class BinderSupport implements Binder
   protected void initializeChild() {
     Class childClass = child.getClass();
 
+    BindingSite proxy = getBinderProxy();
     try {
       Method m = childClass.getMethod("setBindingSite", new Class[]{BindingSite.class});
       if (m != null) {          // use a non-throwing variation in the future
-        m.invoke(child, new Object[]{this});
+        m.invoke(child, new Object[]{proxy});
       } 
     } catch (Exception e) {
       //e.printStackTrace();
@@ -117,7 +125,7 @@ public abstract class BinderSupport implements Binder
     // now call child.initialize, if there.
     try {
       Method init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
-      init.invoke(child, new Object[] {this});
+      init.invoke(child, new Object[] {proxy});
       return;                  
       // bail out!
     } catch (Exception e) {

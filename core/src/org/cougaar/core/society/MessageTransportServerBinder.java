@@ -5,6 +5,7 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.BindingSite;
 
 public class MessageTransportServerBinder 
     extends BinderSupport
@@ -45,5 +46,9 @@ public class MessageTransportServerBinder
 	return ((MessageTransport) getComponent()).addressKnown(address);
     }
 
+  protected final BindingSite getBinderProxy() {
+    // horribly unsecure! Means that the component has full access to the binder.
+    return (BindingSite) this;
+  }
 
 }

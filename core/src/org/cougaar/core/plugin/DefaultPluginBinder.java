@@ -14,12 +14,13 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.core.cluster.UIDServer;
+import java.lang.reflect.*;
 
 /** The standard Binder for Plugins.
  **/
 public class DefaultPluginBinder 
   extends BinderSupport 
-  implements PluginBinder, PluginBindingSite
+  implements PluginBinder
 {
   /** All subclasses must implement a matching constructor. **/
   public DefaultPluginBinder(Object parentInterface, Component child) {
@@ -30,6 +31,13 @@ public class DefaultPluginBinder
   /** package-private kickstart method for use by the PluginBinderFactory **/
   protected void initialize() {
     initializeChild();          // set up initial services
+
+    // see if we need to run in compatability mode...
+    Component child = getComponent();
+    if (child instanceof PlugInServesCluster) { // old-style compatability until we do more porting
+      PlugInServesCluster plugin = (PlugInServesCluster) child;
+      plugin.load(null); // argument is ignored now
+    }
   }
 
   protected final PluginBase getPlugin() {
@@ -39,25 +47,40 @@ public class DefaultPluginBinder
     return (PluginManagerForBinder)getContainer();
   }
 
-
-  //
-  // cluster  
-  // 
-
-  public final ClusterIdentifier getAgentIdentifier() {
-    return getPluginManager().getAgentIdentifier();
+  protected BindingSite getBinderProxy() {
+    return new PluginBindingSiteImpl();
   }
 
-  public final UIDServer getUIDServer() {
-    return getPluginManager().getUIDServer();
+  /** Implement the binding site delegate **/
+  protected class PluginBindingSiteImpl implements PluginBindingSite {
+    public final ServiceBroker getServiceBroker() {
+      return DefaultPluginBinder.this.getServiceBroker();
+    }
+    public final void requestStop() {
+      DefaultPluginBinder.this.requestStop();
+    }
+    public final ClusterIdentifier getAgentIdentifier() {
+      return getPluginManager().getAgentIdentifier();
+    }
+    public final UIDServer getUIDServer() {
+      return getPluginManager().getUIDServer();
+    }
+    public final ConfigFinder getConfigFinder() {
+      return getPluginManager().getConfigFinder();
+    }
+    public String toString() {
+      return "Proxy for "+(DefaultPluginBinder.this.toString());
+    }
   }
 
-  public ConfigFinder getConfigFinder() {
-    return getPluginManager().getConfigFinder();
-  }
 
   public String toString() {
-    return getPlugin() + "'s PluginBinder";
+    return (this.getClass().toString())+"/"+getPlugin();
+  }
+
+  /** useful shorthand for binder functions **/
+  protected final ClusterIdentifier getAgentIdentifier() {
+    return getPluginManager().getAgentIdentifier();
   }
 
 
