@@ -23,31 +23,42 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
-final class PolicyTreeNode
+final class TreeNode
 {
     private TimeSlicePolicy policy;
-    private PolicyTreeNode parent;
+    private TreeNode parent;
     private ArrayList children;
     private Scheduler scheduler;
+    private ThreadGroup group;
+    private ControllablePool pool;
 
-    PolicyTreeNode(TimeSlicePolicy policy, 
-		   Scheduler scheduler,
-		   PolicyTreeNode parent) 
+    TreeNode(Scheduler scheduler, ThreadServiceProxy parentService) 
     {
 	children = new ArrayList();
 	this.scheduler = scheduler;
 	scheduler.setTreeNode(this);
+	setPolicy(new DefaultTimeSlicePolicy());
 	setPolicy(policy);
+	TreeNode parent = 
+	    parentService == null ? null : parentService.getTreeNode();
 	setParent(parent);
+	
+	if (parent == null) {
+	    group = new ThreadGroup(getName());
+	} else {
+	    group = new ThreadGroup(parent.group, getName());
+	}
+	
+	pool = new ControllablePool(group, scheduler);
     }
 
 
-    void setParent(PolicyTreeNode parent) {
+    void setParent(TreeNode parent) {
 	this.parent = parent;
 	if (parent != null) parent.addChild(this);
     }
 
-    PolicyTreeNode getParent() {
+    TreeNode getParent() {
 	return parent;
     }
 
@@ -58,7 +69,7 @@ final class PolicyTreeNode
 	    return parent.getPolicy();
     }
 
-    void addChild(PolicyTreeNode child) {
+    void addChild(TreeNode child) {
 	children.add(child);
     }
 
@@ -82,5 +93,13 @@ final class PolicyTreeNode
 
     String getName() {
 	return scheduler.getName();
+    }
+
+    ControllablePool getPool() {
+	return pool;
+    }
+
+    ThreadGroup getGroup() {
+	return group;
     }
 }

@@ -33,37 +33,26 @@ final class ThreadServiceProxy 	implements ThreadService
 {
     private ControllablePool pool;
     private TimerRunnable timer;
-    private ThreadGroup group;
-    private Scheduler scheduler;
-    private PolicyTreeNode node;
+    private TreeNode treeNode;
 
-    ThreadServiceProxy(ThreadServiceProxy parent,
-		       Scheduler scheduler,
-		       String name) 
+    ThreadServiceProxy(TreeNode treeNode) 
     {
-	this.scheduler = scheduler;
-	TimeSlicePolicy policy = new DefaultTimeSlicePolicy();
-	node =  new PolicyTreeNode(policy, scheduler, 
-				   parent == null ? null : parent.node);
-
-	if (parent == null) {
-	    group = new ThreadGroup(name);
-	} else {
-	    group = new ThreadGroup(parent.group, name);
-	}
-
-	pool = new ControllablePool(group, scheduler);
-
-
-	timer = new TimerRunnable(this);
+	this.treeNode = treeNode;
+	this.pool = treeNode.getPool();
+	this.timer = new TimerRunnable(this);
 
 	// Use a special Thread for the timer
-	Thread thread = new Thread(group, timer, name+"Timer");
+	Thread thread = new Thread(treeNode.getGroup(), timer, 
+				   treeNode.getName()+"Timer");
 	thread.setDaemon(true);
 	thread.start();
     }
 
 
+
+    TreeNode getTreeNode() {
+	return treeNode;
+    }
 
 
     private Thread consumeThread(Thread thread,  Object consumer) {

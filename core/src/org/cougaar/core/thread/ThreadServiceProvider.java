@@ -23,10 +23,10 @@ package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
+
 
 /**
  * The ServiceProvider for ThreadService and ThreadControlService.
@@ -40,16 +40,26 @@ public final class ThreadServiceProvider implements ServiceProvider
 	
     public ThreadServiceProvider(ServiceBroker sb, String name) {
 	this.name = name;
+	ThreadService parent =(ThreadService) 
+	    sb.getService(this, ThreadService.class, null);
+	makeProxies(parent);
+    }
+
+    public ThreadServiceProvider(ThreadService parent, String name) {
+	this.name = name;
+	makeProxies(parent);
+    }
+
+    private void makeProxies(ThreadService parent) {
 	listenerProxy = new ThreadListenerProxy();
 	if (Boolean.getBoolean("org.cougaar.thread.timeslice"))
 	    scheduler = new TimeSliceScheduler(listenerProxy, name);
 	else
 	    scheduler = new SimpleScheduler(listenerProxy, name);
 
-	ThreadServiceProxy parent = (ThreadServiceProxy)
-	    sb.getService(this, ThreadService.class, null);
-
-	proxy = new ThreadServiceProxy(parent, scheduler, name);
+	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;
+	TreeNode node = new TreeNode(scheduler, parentProxy);
+	proxy = new ThreadServiceProxy(node);
     }
 
     public void provideServices(ServiceBroker sb) {

@@ -32,6 +32,6 @@ public interface TimeSlicePolicy extends TimeSliceConsumer
     boolean offerSlice(TimeSlice slice);
     void noteChangeOfOwnership(TimeSliceConsumer consumer, TimeSlice slice);
 
-    void setTreeNode(PolicyTreeNode node);
+    void setTreeNode(TreeNode node);
     void setMaxRunningThreadCount(int count);
 }

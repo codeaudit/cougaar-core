@@ -42,7 +42,7 @@ abstract class Scheduler
     private ThreadListenerProxy listenerProxy;
     private String name;
     private String printName;
-    private PolicyTreeNode treeNode;
+    private TreeNode treeNode;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -79,7 +79,7 @@ abstract class Scheduler
     }
 
 
-    void setTreeNode(PolicyTreeNode treeNode) {
+    void setTreeNode(TreeNode treeNode) {
 	this.treeNode = treeNode;
     }
 

@@ -144,12 +144,15 @@ public class PercentageLatencyPolicy
 	return record;
     }
 
+
+    // Generate a new TreeSet everytime.  Ridiculously inefficient but
+    // easy to write...
     private TreeSet rankChildren() {
 	TreeSet orderedChildren = new TreeSet(comparator);
 	Iterator itr = treeNode().getChildren().iterator();
-	PolicyTreeNode childTreeNode = null;
+	TreeNode childTreeNode = null;
 	while (itr.hasNext()) {
-	    childTreeNode = (PolicyTreeNode) itr.next();
+	    childTreeNode = (TreeNode) itr.next();
 	    orderedChildren.add(childTreeNode.getPolicy());
 	}
 	orderedChildren.add(treeNode().getScheduler());

@@ -33,7 +33,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     private int outstandingChildSliceCount;
     private ArrayList timeSlices;
-    private PolicyTreeNode treeNode;
+    private TreeNode treeNode;
     private String printString;
 
     DefaultTimeSlicePolicy() {
@@ -41,7 +41,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
     }
 
 
-    PolicyTreeNode treeNode() {
+    TreeNode treeNode() {
 	return treeNode;
     }
     
@@ -62,10 +62,10 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	makeSlices(count);
     }
 
-    public void setTreeNode(PolicyTreeNode treeNode) {
+    public void setTreeNode(TreeNode treeNode) {
 	this.treeNode = treeNode;
 	printString = "<" + getPolicyID() + " " + getName() + ">";
-	PolicyTreeNode parent = treeNode.getParent();
+	TreeNode parent = treeNode.getParent();
 
 	if (parent == null) {
 	    // Root policy, make some shares
@@ -217,7 +217,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	    result = treeNode.getScheduler();	
 	    currentIndex = children.size() == 0 ? -1 : 0;
 	} else {
-	   PolicyTreeNode child =(PolicyTreeNode) children.get(currentIndex++);
+	   TreeNode child =(TreeNode) children.get(currentIndex++);
 	   result = child.getPolicy();
 	   if (currentIndex == children.size()) currentIndex = -1;
 	}
