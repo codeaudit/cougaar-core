@@ -1,0 +1,89 @@
+<HTML>
+<HEAD>
+<title> Message Transport 8.4 Release Notes</title>
+</HEAD>
+<body>
+<h2>Message Transport 8.4 Release Notes</h2>
+<p>
+<h3>Overview:</h3>
+
+The Cougaar Message Transport has been dramatically refactored for
+Release 8.3 and 8.4. The problem addressed is that several independent groups
+will be adding features and adaptive code to the Message Transport 
+Release 8.4. Also at runtime, a Cougaar society needs to pick and
+choose between these features, based on policies and resource
+status. The message transport features to be added include: Dependability
+(OBJS), Security (NAI), Performance (BBN QuO), and  Dynamic Agents (BBN
+CSMART).
+
+<p> 
+<h3>Extending the Message Transport Service:</h3>
+
+Message Transport Design Notes have been moved to the Ultralog
+Developers Guild.
+
+<h3>Running an Aspect for your Message Transport:</h3> 
+
+The Node script must be modified to enable the new Message Transport
+Aspects,Link Protocols, and debugging.
+<p><p>
+To specify which Aspects to load, set the Java system
+property <b>org.cougaar.message.transport.aspects </b> (See
+AspectSupportImpl.java). The following Aspects are always loaded: Watcher,
+Multicast, and AgentStatus.
+<p>
+COUGAAR_JAVA_ARGS="-Dorg.cougaar.message.transport.aspects=org.cougaar.core.mts.TraceAspect,org.cougaar.core.mts.StatisticsAspect"
+<p> 
+Dynamically loadable Aspects included in Cougaar 8.4 are:
+(from org.cougaar.core.mts package) 
+<ul>
+<li>
+<b>SecurityAspect</b> enables message signing. This is used as an example of how
+to hook-in message-level security.
+<li>
+<b>SerializationAspect</b> forces loopback link protocol to serialize
+all messages. This is used to test if messages sending objects that
+can be serialized
+<li>
+<b>StatisticsAspect</b>collects message transport statistics. This is
+used by the metric services PSP.
+<li>
+<b>TraceAspect</b>prints out messages as they move through the message
+transport stations. This is used for debugging the message transport.
+</ul>
+
+Additional aspects from the org.cougaar.lib.quo package.
+QuoCougaar.jar must be on the 3rd party class path.
+<ul>
+<li>
+<b>QuoProxy</b> will pre-serialize or compress messages based on the
+bandwidth between nodes.
+</ul>
+<h3>Loading Link Protocols</h3>
+To specify which Link Protocols to load, set the Java system
+property <b>org.cougaar.message.protocol.classes </b>(See
+LinkProtocolFactory.java). If no Link Protocols are specified, the RMI
+and LoopBack protocols are loaded by default.
+<p>
+COUGAAR_JAVA_ARGS="-Dorg.cougaar.message.protocol.classes=org.cougaar.core.mts.eRMILinkProtocol,org.cougaar.core.mts.LoopbackLinkProtocol"
+<p>
+Dynamically loadable Link Protocols included in Cougaar 8.4 are:
+(from org.cougaar.core.mts package) 
+<ul>
+<li>
+<b>LoopbackLinkProtocol</b> sends messages between agents on the same node,
+without serializing the message or its objects.
+<li>
+<b>RMILinkProtocol</b> uses RMI to transport message between remote nodes.
+</ul>
+<h3>Turning on Debugging</h3>
+To specify the level of Message Transport debugging, set the Java
+system property <b> org.cougaar.message.transport.debug </b> (see mts.Debug.java).
+<p>
+COUGAAR_JAVA_ARGS="-Dorg.cougaar.message.transport.debug=aspects,security"
+<p>
+The debug options are: aspects, flush, multicast, security, service,
+statistics, and  watcher.
+
+</body>
+</HTML>
