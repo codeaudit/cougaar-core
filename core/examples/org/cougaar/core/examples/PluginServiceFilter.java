@@ -71,9 +71,9 @@ public class PluginServiceFilter
       }
       // here's where we catch the service request for Blackboard and proxy the
       // returned service.  See FilteringServiceBroker for more options.
-      protected Object getServiceProxy(Object service, Class serviceClass) {
+      protected Object getServiceProxy(Object service, Class serviceClass, Object client) {
         if (service instanceof BlackboardService) {
-          return new BlackboardServiceProxy((BlackboardService) service, getChildBinder());
+          return new BlackboardServiceProxy((BlackboardService) service, client);
         } 
         return null;
       }

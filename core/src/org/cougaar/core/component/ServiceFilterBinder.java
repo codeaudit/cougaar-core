@@ -141,7 +141,7 @@ public abstract class ServiceFilterBinder
         Object service = super.getService(rc, serviceClass, srl);
         if (service == null) return null;
 
-        Object serviceProxy = getServiceProxy(service, serviceClass);
+        Object serviceProxy = getServiceProxy(service, serviceClass, rc);
         Object rs = (serviceProxy != null)?serviceProxy:service;
         
         synchronized (serviceTuples) {
@@ -170,8 +170,11 @@ public abstract class ServiceFilterBinder
      * implementation passed back to the client component.
      * A return value of null is interpreted as "no proxy".
      * This implementation always returns null.
+     * @param client is the client object passed up to the real service broker.  
+     * This is usually the requestor, but may be a proxy for the requestor if
+     * getClientProxy was exercised.
      **/
-    protected Object getServiceProxy(Object service, Class serviceClass) {
+    protected Object getServiceProxy(Object service, Class serviceClass, Object client) {
       return null;
     }
 
