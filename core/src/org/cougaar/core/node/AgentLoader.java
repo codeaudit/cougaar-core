@@ -92,7 +92,8 @@ implements Component
 
   private RegisterAgentServiceProvider rasp;
 
-  private boolean addedAgents;
+  private boolean addingAgents;
+  private List initialDescs;
 
   private final Set activeAgentAddrs = new HashSet();
 
@@ -196,8 +197,6 @@ implements Component
     }
 
     addAgents(agentDescs);
-
-    addedAgents = true;
   }
 
   public void unload() {
@@ -307,6 +306,10 @@ implements Component
     if (log.isDebugEnabled()) {
       log.debug("Adding "+cdcs.size()+" agents: "+cdcs);
     }
+
+    addingAgents = true;
+    initialDescs = cdcs;
+
     for (int i = 0, n = cdcs.size(); i < n; i++) {
       ComponentDescription cd = (ComponentDescription)
         cdcs.get(i);
@@ -319,15 +322,26 @@ implements Component
         break;
       }
     }
+
+    addingAgents = true;
+    initialDescs = null;
   }
 
   private Object captureState() {
-    if (!addedAgents) {
-      // FIXME hold onto rehydrated agentDescs?
-      if (log.isWarnEnabled()) {
-        log.warn("Still loading, delaying captureState until active");
+    if (addingAgents) {
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Asked to \"captureState\" while loading,"+
+            " which would find a partially list of agents,"+
+            " so instead return our initial agent list["+
+            initialDescs.size()+"]");
+        if (log.isDebugEnabled()) {
+          log.debug(
+              "initialDescs["+initialDescs.size()+
+              "]="+initialDescs);
+        }
       }
-      return null;
+      return initialDescs;
     }
 
     // FIXME replace with just the agent addrs?
@@ -377,7 +391,7 @@ implements Component
   }
 
   private void persistNow() {
-    if (!addedAgents) {
+    if (addingAgents) {
       if (log.isInfoEnabled()) {
         log.info("Still loading, delaying persistNow until active");
       }
