@@ -59,10 +59,10 @@ import org.cougaar.core.cluster.ClusterImpl;
  * 15 seconds.  It will also cause the above statistics file(s) to be
  * (re)generated approximately every two minutes.  The watcher is one
  * thread per vm, so it isn't too expensive.
- * @property org.cougaar.core.cluster.SchedulerService.staticScheduler=false
- * Set to true to do shared-thread scheduling over the whole node/vm rather than 
+ * @property org.cougaar.core.cluster.SchedulerService.staticScheduler=true
+ * When true does shared-thread scheduling over the whole node/vm rather than 
  * per-agent.  Uses the MultiScheduler instead of SimpleScheduler to support
- * multiple worker threads.
+ * multiple worker threads.  Set to false to get the pre-8.6.1 scheduler behavior.
  * @property org.cougaar.core.cluster.SchedulerService.schedulerThreads=4
  * The number of threads to use as workers for the MultiScheduler - these
  * threads are shared among all scheduled components in the node.
