@@ -28,9 +28,12 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StreamTokenizer;
 
+import java.util.Comparator;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Iterator;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -56,6 +59,9 @@ public class AEViewerServlet extends HttpServlet {
   public static final String VALUE = "value";
 
   private BlackboardServletSupport support;
+
+  private OMComparator omComparator = new OMComparator();
+  private OMPComparator ompComparator = new OMPComparator();
 
   private static UnaryPredicate conditionPredicate = 
     new UnaryPredicate() { 
@@ -252,14 +258,7 @@ public class AEViewerServlet extends HttpServlet {
 
     writeAgentSelector(out);
 
-    out.println("<h2><CENTER>Conditions</CENTER></h2><br>" );
-    Collection conditions = support.queryBlackboard(conditionPredicate);
-    out.print("<UL>");
-    for (Iterator it = conditions.iterator(); it.hasNext();) {
-      out.print("<LI>");
-      out.println(it.next().toString());
-    }
-    out.println("</UL>");
+    writeConditions(out);
     
     out.println("<h2><CENTER>Operating Modes</CENTER></h2>" );
     writeOMTable(out);
@@ -312,13 +311,40 @@ public class AEViewerServlet extends HttpServlet {
   }
 
   /**
+   * Creates a sorted HTML list of the conditions in the blackboard
+   **/
+  private void writeConditions(PrintWriter out) {
+    out.println("<h2><CENTER>Conditions</CENTER></h2><br>" );
+    Collection conditions = support.queryBlackboard(conditionPredicate);
+
+    // Sort the Conditions. Is there a better way of doing this?
+    TreeSet sortedConditions = new TreeSet();
+    for (Iterator it = conditions.iterator(); it.hasNext();) {
+      sortedConditions.add(it.next().toString());
+    }
+    out.print("<UL>");
+    for (Iterator it = sortedConditions.iterator(); it.hasNext();) {
+      out.print("<LI>");
+      out.println(it.next().toString());
+    }
+    out.println("</UL>");
+  }
+
+  /**
    * Create a HTML table with a form in each row for editing a policy
    */
   private void writeOMTable(PrintWriter out) {
     out.println ("<table>");
     out.println("<tr><th>OperatingMode Name</th><th>Valid Values</th><th>Value</th></tr>");
 
-    Collection oms = support.queryBlackboard(omPredicate);
+    // Sort the OperatingModes
+    List oms = (List) support.queryBlackboard(omPredicate);
+    try {
+      Collections.sort(oms, omComparator);
+    } catch (ClassCastException e) {
+      e.printStackTrace();
+    }
+				 
     for (Iterator it = oms.iterator(); it.hasNext();) {
       
       out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
@@ -370,7 +396,15 @@ public class AEViewerServlet extends HttpServlet {
   private void writePolicyTable(PrintWriter out) {
     out.println ("<table>\n");
     out.println("<tr><th>Name</th><th>Authority</th><th>UID</th><th>Kernel</th></tr>");
-    Collection policies = support.queryBlackboard(omPolicyPredicate);
+
+    // Sort the OperatingModePolicies
+    List policies = (List) support.queryBlackboard(omPolicyPredicate);
+    try {
+      Collections.sort(policies, omComparator);
+    } catch (ClassCastException e) {
+      e.printStackTrace();
+    }
+
     for (Iterator it = policies.iterator(); it.hasNext();) {
       
       out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
@@ -445,4 +479,56 @@ public class AEViewerServlet extends HttpServlet {
       return false;
     }
   }
+
+  private class OMComparator implements Comparator {
+
+    // alphabetical sort
+    public int compare(Object o1, Object o2) {
+      if ((o1 instanceof OperatingMode) &&
+	  (o2 instanceof OperatingMode)) {
+	OperatingMode om1 = (OperatingMode) o1;
+	OperatingMode om2 = (OperatingMode) o2;
+	
+	String om1Name = om1.getName();
+	String om2Name = om2.getName();
+      
+	return om1Name.compareTo(om2Name);
+      } 
+      throw new ClassCastException("Expecting OperatingMode");
+    }
+
+    public boolean equals(Object other) {
+      if (other instanceof OMComparator) {
+	return true;
+      }
+      return false;
+    }
+  }
+
+
+  private class OMPComparator implements Comparator {
+
+    // alphabetical sort
+    public int compare(Object o1, Object o2) {
+      if ((o1 instanceof OperatingModePolicy) &&
+	  (o2 instanceof OperatingModePolicy)) {
+	OperatingModePolicy omp1 = (OperatingModePolicy) o1;
+	OperatingModePolicy omp2 = (OperatingModePolicy) o2;
+	
+	String omp1Name = omp1.getName();
+	String omp2Name = omp2.getName();
+      
+	return omp1Name.compareTo(omp2Name);
+      } 
+      throw new ClassCastException("Expecting OperatingModePolicy");
+    }
+
+    public boolean equals(Object other) {
+      if (other instanceof OMComparator) {
+	return true;
+      }
+      return false;
+    }
+  }
 }
+
