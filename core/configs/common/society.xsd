@@ -51,7 +51,10 @@
   <!-- (A sequence of hosts)              -->
   <xs:complexType name="societyType">
     <xs:sequence>
-      <xs:element name="host" type="hostType" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element name="facet" type="facetType"/>
+        <xs:element name="host" type="hostType" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:choice>
     </xs:sequence>
     <xs:attribute name="name" type="xs:string" use="required"/>
   </xs:complexType>
@@ -90,7 +93,7 @@
             <xs:selector xpath="component"/>
             <xs:field xpath="@name"/>
           </xs:unique>
-	</xs:element>
+        </xs:element>
         <xs:element name="component" type="componentType"/>
       </xs:choice>
     </xs:sequence>
@@ -100,11 +103,11 @@
   <!-- Arbitrary attributes that can be added to an agent, node, or host    -->
   <!-- They can have any attributes and contain text (but not sub-elements) -->
   <xs:complexType name="facetType" mixed="true">
-      <xs:simpleContent>
-        <xs:extension base="xs:string">
-          <xs:anyAttribute processContents="lax"/>
-        </xs:extension>
-      </xs:simpleContent>
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:anyAttribute processContents="lax"/>
+      </xs:extension>
+    </xs:simpleContent>
   </xs:complexType>
     
   <!-- Type for agents: a sequence of components and attributes -->
@@ -117,7 +120,7 @@
     </xs:sequence>
     <xs:attribute name="name" type="xs:string" use="required"/>
     <xs:attribute name="class" type="xs:string" use="optional"
-        default="org.cougaar.core.agent.SimpleAgent"/>
+      default="org.cougaar.core.agent.SimpleAgent"/>
   </xs:complexType>
 
   <!-- Type for components: attributes and arguments -->
@@ -125,8 +128,8 @@
     <xs:sequence>
       <xs:element name="argument" type="argumentType" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
-    <xs:attribute name="name" type="xs:string" />
-    <xs:attribute name="class" type="xs:string" />
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="class" type="xs:string"/>
     <xs:attribute name="priority" use="optional" default="COMPONENT">
       <xs:simpleType>
         <xs:restriction base="xs:string">
@@ -139,9 +142,9 @@
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
-    <xs:attribute name="insertionpoint" use="optional" 
-	default="Node.AgentManager.Agent.PluginManager.Plugin"
-	type="xs:string"/>
+    <xs:attribute name="insertionpoint" use="optional"
+      default="Node.AgentManager.Agent.PluginManager.Plugin"
+      type="xs:string"/>
   </xs:complexType>
 
   <!-- Type for component arguments: ordered strings -->
