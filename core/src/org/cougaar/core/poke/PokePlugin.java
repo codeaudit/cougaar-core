@@ -14,6 +14,7 @@ import org.cougaar.core.component.*;
 import org.cougaar.core.plugin.PluginBase;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.cluster.AlarmService;
 import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.core.cluster.SubscriptionWatcher;
 
@@ -35,6 +36,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
   protected SchedulerService myScheduler = null;
   protected Pokable schedulerProd = null;
   protected BlackboardService blackboard = null;
+  protected AlarmService alarmService = null;
   protected boolean primed = false;
   private PluginBindingSite pluginBindingSite = null;
   private ThinWatcher watcher = null;
@@ -68,7 +70,10 @@ public class PokePlugin implements PluginBase, BlackboardClient {
 
 
   public long currentTimeMillis() {
-    return System.currentTimeMillis();
+    if (alarmService != null)
+      return alarmService.currentTimeMillis();
+    else
+      return System.currentTimeMillis();
   }
 
   public boolean triggerEvent(Object event) {
@@ -114,6 +119,17 @@ public class PokePlugin implements PluginBase, BlackboardClient {
 				  }
 				}
 			      });
+
+    alarmService = (AlarmService)
+      myServiceBroker.getService(this, AlarmService.class,
+ 			    new ServiceRevokedListener() {
+				public void serviceRevoked(ServiceRevokedEvent re) {
+				  if (AlarmService.class.equals(re.getRevokedService())) {
+				    alarmService = null;
+				  }
+				}
+			      });
+
 
     // someone to watch over me
     watcher = new ThinWatcher();
