@@ -1,5 +1,16 @@
+* MB 8.0
+
+JDK 1.3 support.
+
+* MB 7.2
+
+Minor patches.  Released as a separate supported build as the basis
+for Alpine's 2001 demo branch line (branch tag "V7_2").
+
 * MB 7.0.2
 
+Minor Patches.  Released as a separate supported build because of
+patch buildup.
 
 * MB 7.0.1
 
