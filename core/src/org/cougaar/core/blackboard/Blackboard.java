@@ -203,6 +203,8 @@ public class Blackboard extends Subscriber
   }
 
   public void stop() {
+    // FIXME: Stop the cacheClearer thread
+    // This for bug 3704
     myDistributor = null;
   }
 
@@ -934,11 +936,19 @@ public class Blackboard extends Subscriber
           changes.addAll(changedCommunities);
           changedCommunities.clear();
         } // end of synch block
+	
+	if (myDistributor == null) {
+	  // Blackboard was stopped?
+	  if (logger != null && logger.isInfoEnabled())
+	    logger.info("ABA Cache clearer dropping received changes cause Distributor is null -- assuming Blackboard is stopping");
+	  thread = null;
+	  return;
+	}
 
 	// Process the community changes
         myDistributor.invokeABAChangeLPs(changes);
         changes.clear();
-      } // end of whie loop
+      } // end of while loop
     } // end of run method
   }
 
