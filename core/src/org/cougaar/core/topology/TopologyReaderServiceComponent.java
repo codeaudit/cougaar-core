@@ -687,7 +687,7 @@ implements Component
           CacheKey cacheKey = new CacheKey(CacheKey.SEARCHAGENT_SS, new Object[] {agent, single_attr});
           if (cache.containsKey(cacheKey)) {
             if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
-            return (Attributes) cache.get(cacheKey);
+            return cache.get(cacheKey);
           }
           if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
           Object ret;
