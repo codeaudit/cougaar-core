@@ -26,16 +26,19 @@ public final class UID
   /** No argument constructor is only for use by serialization! **/
   public UID() {}
 
-  /** @deprecated Use UID(String key, long id); **/
+  /** @deprecated Use toUID(String) or UID(String, long) **/
   public UID(String uid) {
+    // duplicate some of "toUID(String)"
     int l = uid.indexOf('/');
-    if (l == -1) 
-      throw new IllegalArgumentException("String \""+uid+"\" is not a valid UID pattern");
+    if (l == -1)
+      throw new IllegalArgumentException(
+          "String \""+uid+"\" is not a valid UID pattern");
     owner = uid.substring(0,l).intern();
     try {
       id = Long.parseLong(uid.substring(l+1));
     } catch (NumberFormatException ex) {
-      throw new IllegalArgumentException("String \""+uid+"\" is not a valid UID pattern");
+      throw new IllegalArgumentException(
+          "String \""+uid+"\" is not a valid UID pattern");
     }
     _hc = computeHashCode(owner,id);
   }
@@ -94,9 +97,41 @@ public final class UID
     return _hc;
   }
   
+  /**
+   * Convert a UID into a String.
+   * <p>
+   * One should <u>not</u> assume a readable format for
+   * this String, or that it has a guaranteed format!
+   *
+   * @see #toUID(String)
+   */
   public String toString() {
     /* Ugh! but we really don't want to keep these around! */
     return owner+"/"+id;
+  }
+
+  /**
+   * Parse the given String into a UID.
+   * <p>
+   * The String's format should match <tt>UID.toString()</tt>.
+   * <p>
+   * There is no guarantee that this UID will be valid or
+   * has been assigned to an Object in the society.
+   *
+   * @see #toString()
+   */
+  public static UID toUID(String uid) {
+    String tOwner;
+    long tId;
+    try {
+      int l = uid.indexOf('/');
+      tOwner = uid.substring(0,l);
+      tId = Long.parseLong(uid.substring(l+1));
+    } catch (NumberFormatException ex) {
+      throw new IllegalArgumentException(
+          "String \""+uid+"\" is not a valid UID pattern");
+    }
+    return new UID(tOwner, tId);
   }
 
   // for user interface, follow beans pattern
