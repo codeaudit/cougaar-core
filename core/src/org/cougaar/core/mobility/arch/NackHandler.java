@@ -21,6 +21,7 @@
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.util.GenericStateModel;
+import org.cougaar.core.mobility.MoveTicket;
 
 /**
  * Received a NACK response fromthe destination node.
@@ -50,7 +51,7 @@ public class NackHandler extends AbstractHandler {
     if (log.isInfoEnabled()) {
       log.info(
           "Handling failed move of agent "+id+
-          " to node "+ticket.getDestinationNode());
+          " to node "+((MoveTicket)ticket).getDestinationNode());
     }
 
     // agent is suspended -- let's resume it.

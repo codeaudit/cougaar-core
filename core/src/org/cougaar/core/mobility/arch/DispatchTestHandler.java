@@ -28,6 +28,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.GenericStateModel;
+import org.cougaar.core.mobility.MoveTicket;
 
 /**
  * The agent is already at the ticket's destination, but
@@ -141,13 +142,13 @@ public class DispatchTestHandler extends AbstractHandler {
     }
 
     // check for restart
-    if (!(ticket.isForceRestart())) {
+    if (!(((MoveTicket)ticket).isForceRestart())) {
       throw new MobilityException(
           "Test dispatch on a non force-restart?");
     }
 
     // check for local destination
-    MessageAddress destNode = ticket.getDestinationNode();
+    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
     if ((destNode != null) &&
         (!(destNode.equals(nodeId)))) {
       throw new MobilityException(
@@ -155,7 +156,7 @@ public class DispatchTestHandler extends AbstractHandler {
     }
 
     // check agent assertion
-    MessageAddress mobileAgent = ticket.getMobileAgent();
+    MessageAddress mobileAgent = ((MoveTicket)ticket).getMobileAgent();
     if ((mobileAgent != null) &&
         (!(mobileAgent.equals(id)))) {
       throw new MobilityException(
@@ -164,7 +165,7 @@ public class DispatchTestHandler extends AbstractHandler {
     }
 
     // check origin assertion
-    MessageAddress originNode = ticket.getOriginNode();
+    MessageAddress originNode = ((MoveTicket)ticket).getOriginNode();
     if ((originNode != null) &&
         (!(originNode.equals(nodeId)))) {
       throw new MobilityException(

@@ -29,10 +29,8 @@ import org.cougaar.core.mts.MessageAddress;
  * A ticket is immutable.
  */
 public abstract class AbstractTicket implements java.io.Serializable {
-
- 
+  
   public AbstractTicket() {
   }
-
-
+  
 }

@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceInputStream;
 import org.cougaar.core.persist.PersistenceOutputStream;
@@ -51,7 +51,7 @@ implements AgentTransfer, Relay.Source, Relay.Target, XMLizable, Serializable {
   private final UID ownerUID;
   private final MessageAddress source;
   private final MessageAddress target;
-  private final Ticket ticket;
+  private final AbstractTicket ticket;
   // NOTE transient!
   private transient StateTuple state;
   private TransferStatus transferStatus;
@@ -63,7 +63,7 @@ implements AgentTransfer, Relay.Source, Relay.Target, XMLizable, Serializable {
       UID ownerUID,
       MessageAddress source,
       MessageAddress target,
-      Ticket ticket,
+      AbstractTicket ticket,
       StateTuple state) {
     this.uid = uid;
     this.ownerUID = ownerUID;
@@ -100,7 +100,7 @@ implements AgentTransfer, Relay.Source, Relay.Target, XMLizable, Serializable {
     return target;
   }
 
-  public Ticket getTicket() {
+  public AbstractTicket getTicket() {
     return ticket;
   }
 

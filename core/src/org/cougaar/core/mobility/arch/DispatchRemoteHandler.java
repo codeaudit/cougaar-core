@@ -26,6 +26,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.GenericStateModel;
+import org.cougaar.core.mobility.MoveTicket;
 
 /**
  * The agent should be moved to a remote node.
@@ -60,7 +61,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
       if (log.isInfoEnabled()) {
         log.info(
             "Begin remote transfer of agent "+id+" from "+
-            nodeId+" to "+ticket.getDestinationNode());
+            nodeId+" to "+((MoveTicket)ticket).getDestinationNode());
       }
 
       checkTicket();
@@ -124,7 +125,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
 
     // check for non-local destination
-    MessageAddress destNode = ticket.getDestinationNode();
+    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
     if ((destNode == null) ||
         (destNode.equals(nodeId))) {
       throw new InternalError(
@@ -132,7 +133,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
 
     // check agent assertion
-    MessageAddress mobileAgent = ticket.getMobileAgent();
+    MessageAddress mobileAgent = ((MoveTicket)ticket).getMobileAgent();
     if ((mobileAgent != null) &&
         (!(mobileAgent.equals(id)))) {
       throw new MobilityException(
@@ -141,7 +142,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
 
     // check origin assertion
-    MessageAddress originNode = ticket.getOriginNode();
+    MessageAddress originNode = ((MoveTicket)ticket).getOriginNode();
     if ((originNode != null) &&
         (!(originNode.equals(nodeId)))) {
       throw new MobilityException(

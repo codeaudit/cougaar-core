@@ -46,7 +46,7 @@ import org.cougaar.util.*;
  *       by this plugin</li>
  *   <li>All AgentMoves created by this agent are assumed to
  *       be created by this plugin, unless the move's "ownerUID"
- *       is null.</li>
+ *       is null.</li> 
  * </ul>
  */
 public class RedirectMovePlugin 
@@ -184,7 +184,7 @@ extends ComponentPlugin
 
     // redirect to our parent node
 
-    Ticket ticket = inMove.getTicket();
+    MoveTicket ticket = inMove.getTicket();
 
     if (log.isInfoEnabled()) {
       log.info(
@@ -209,6 +209,8 @@ extends ComponentPlugin
       return;
     }
 
+    // FIXME - only supports moves 
+    
     // expand the ticket
     boolean anyMissing = false;
     MessageAddress moveA = ticket.getMobileAgent();
@@ -226,9 +228,9 @@ extends ComponentPlugin
       anyMissing = true;
       destN = nodeId;
     }
-    Ticket fullTicket = ticket;
+    MoveTicket fullTicket = ticket;
     if (anyMissing) {
-      fullTicket = new Ticket(
+      fullTicket = new MoveTicket(
           ticket.getIdentifier(),
           moveA,
           origN,

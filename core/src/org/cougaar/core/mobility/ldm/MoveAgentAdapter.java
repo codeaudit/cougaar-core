@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Set;
 import java.util.Collections;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceInputStream;
 import org.cougaar.core.persist.PersistenceOutputStream;
@@ -52,7 +52,7 @@ implements MoveAgent, XMLizable {
       UID ownerUID,
       MessageAddress source,
       MessageAddress target,
-      Ticket ticket) {
+      MoveTicket ticket) {
     super(uid, ownerUID, source, target, ticket);
   }
 
@@ -60,7 +60,7 @@ implements MoveAgent, XMLizable {
       UID uid,
       MessageAddress source,
       MessageAddress target,
-      Ticket ticket) {
+      MoveTicket ticket) {
     super(uid, null, source, target, ticket);
   }
 

@@ -21,7 +21,8 @@
 package org.cougaar.core.mobility.service;
 
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.arch.MobilitySupport;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -37,14 +38,13 @@ implements MobilitySupport
 
   protected final MessageAddress id;
   protected final MessageAddress nodeId;
-  protected final Ticket ticket;
-
+  protected final AbstractTicket ticket;
   protected final LoggingService log;
 
   public AbstractMobilitySupport(
       MessageAddress id,
       MessageAddress nodeId,
-      Ticket ticket,
+      AbstractTicket ticket,
       LoggingService log) {
     this.id = id;
     this.nodeId = nodeId;
@@ -66,7 +66,7 @@ implements MobilitySupport
     return nodeId;
   }
 
-  public Ticket getTicket() {
+  public AbstractTicket getTicket() {
     return ticket;
   }
 

@@ -21,7 +21,7 @@
 package org.cougaar.core.mobility.ldm;
 
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
@@ -74,7 +74,7 @@ public interface AgentTransfer extends UniqueObject {
    * The addresses specified in the ticket are not 
    * null.
    */
-  Ticket getTicket();
+  AbstractTicket getTicket();
 
   /**
    * Get the agent state.

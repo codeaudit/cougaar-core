@@ -42,7 +42,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.BlackboardClient;
 
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.ldm.MoveAgent;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 
@@ -237,13 +237,13 @@ implements BlackboardClient
     }
     Object ticketId =
       mobilityFactory.createTicketIdentifier();
-    Ticket ticket = 
-      new Ticket(
-          ticketId,
-          mobileAgentAddr,
-          originNodeAddr,
-          destNodeAddr,
-          isForceRestart);
+    MoveTicket ticket = 
+      new MoveTicket(
+		 ticketId,
+		 mobileAgentAddr,
+		 originNodeAddr,
+		 destNodeAddr,
+		 isForceRestart);
     MoveAgent ma = mobilityFactory.createMoveAgent(ticket);
     try {
       blackboard.openTransaction();

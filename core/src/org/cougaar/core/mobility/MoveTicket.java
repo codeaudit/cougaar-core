@@ -36,11 +36,11 @@ public class MoveTicket extends AbstractTicket implements java.io.Serializable {
   private final MessageAddress origNode;
   private final MessageAddress destNode;
   private final boolean forceRestart;
-
+  
   // FIXME maybe add "timeout" here
   // FIXME maybe add "clone" here + clone name
   // FIXME maybe add security tags here
-
+  
   public MoveTicket(
       Object id,
       MessageAddress mobileAgent,
@@ -103,14 +103,14 @@ public class MoveTicket extends AbstractTicket implements java.io.Serializable {
   public MessageAddress getDestinationNode() {
     return destNode;
   }
-
+  
   /**
    * If true, force the agent to be restarted even if the agent 
    * is already on the destination node.
    * <p>
    * If false then a move of an agent already at the destination 
    * will reply with a trivial success.  In practice one would 
-   * typically set this to <b>false</b> for performance reasons.
+   * tyically set this to <b>false</b> for performance reasons.
    * <p>
    * The "force reload" capability is primarily designed to test
    * the agent-side mobility requirements without actually 

@@ -23,7 +23,7 @@ package org.cougaar.core.mobility.ldm;
 
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.AbstractTicket;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
@@ -84,7 +84,7 @@ public interface AgentMove extends AgentControl {
    */
   AbstractTicket getAbstractTicket();
 
-  Ticket getTicket();
+  MoveTicket getTicket();
   
   /**
    * Get the move status code, which is one of the above

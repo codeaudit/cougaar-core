@@ -23,7 +23,8 @@ package org.cougaar.core.mobility.ldm;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentifier;
 import org.cougaar.core.service.UIDService;
@@ -52,7 +53,7 @@ class MobilityFactoryImpl implements MobilityFactory {
     return new TicketIdentifier(uid);
   }
 
-  public MoveAgent createMoveAgent(Ticket ticket) {
+  public MoveAgent createMoveAgent(MoveTicket ticket) {
     Object tid = ticket.getIdentifier();
     if (!(tid instanceof TicketIdentifier)) {
       throw new IllegalArgumentException(
@@ -77,7 +78,7 @@ class MobilityFactoryImpl implements MobilityFactory {
 
   public AgentMove createAgentMove(
       UID ownerUID,
-      Ticket ticket) {
+      MoveTicket ticket) {
     MessageAddress target = ticket.getMobileAgent();
     if ((target == null) ||
         (target.equals(agentId))) {
@@ -97,7 +98,7 @@ class MobilityFactoryImpl implements MobilityFactory {
   public AgentMove createAgentMove(
       UID ownerUID,
       MessageAddress target,
-      Ticket ticket) {
+      MoveTicket ticket) {
     MessageAddress source = agentId;
     // bug 1325
     source = makeCID(source);
@@ -109,17 +110,20 @@ class MobilityFactoryImpl implements MobilityFactory {
   }
 
   public AgentTransfer createAgentTransfer(
-      UID ownerUID,
-      Ticket ticket,
-      StateTuple state) {
+					   UID ownerUID,
+					   AbstractTicket ticket,
+					   StateTuple state) {
     if (!(agentId.equals(nodeId))) {
       throw new RuntimeException(
-          "Only the node ("+nodeId+
-          ") can create agent transfers, not child agent ("+
-          agentId+")");
+				 "Only the node ("+nodeId+
+				 ") can create agent transfers, not child agent ("+
+				 agentId+")");
     }
+    
+    // FIXME - only set up for move tickets
+    
     MessageAddress source = agentId;
-    MessageAddress target = ticket.getDestinationNode();
+    MessageAddress target = ((MoveTicket)ticket).getDestinationNode();
     if (target == null) {
       target = nodeId;
     }
@@ -129,10 +133,11 @@ class MobilityFactoryImpl implements MobilityFactory {
     //
     UID uid = uidService.nextUID();
     return new AgentTransferImpl(
-        uid, ownerUID, source, target, ticket, state);
+				 uid, ownerUID, source, target, ticket, state);
+    
   }
-
-  // FIXME RelayLP bug 1325!
+  
+    // FIXME RelayLP bug 1325!
   private static MessageAddress makeCID(MessageAddress a) {
     if ((a instanceof NodeIdentifier) ||
         (MessageAddress.class == a.getClass())) {

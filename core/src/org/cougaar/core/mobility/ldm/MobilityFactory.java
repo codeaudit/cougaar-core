@@ -22,7 +22,8 @@ package org.cougaar.core.mobility.ldm;
 
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
@@ -53,7 +54,7 @@ public interface MobilityFactory extends Factory {
    */
   AgentMove createAgentMove(
       UID ownerUID,
-      Ticket ticket);
+      MoveTicket ticket);
 
   /**
    * Create a request that an agent be moved, which
@@ -70,7 +71,7 @@ public interface MobilityFactory extends Factory {
   AgentMove createAgentMove(
       UID ownerUID,
       MessageAddress target,
-      Ticket ticket);
+      MoveTicket ticket);
 
 
   // old API
@@ -87,7 +88,7 @@ public interface MobilityFactory extends Factory {
    *
    * @see AgentMove new API
    */
-  MoveAgent createMoveAgent(Ticket ticket);
+  MoveAgent createMoveAgent(MoveTicket ticket);
 
 
   // the rest is for the infrastructure:
@@ -99,7 +100,7 @@ public interface MobilityFactory extends Factory {
    */
   AgentTransfer createAgentTransfer(
       UID ownerUID,
-      Ticket ticket,
+      AbstractTicket ticket,
       StateTuple state);
 
 }

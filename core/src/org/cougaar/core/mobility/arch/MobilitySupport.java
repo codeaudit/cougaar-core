@@ -21,7 +21,7 @@
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
@@ -41,7 +41,7 @@ public interface MobilitySupport {
   /** id of this node. */
   MessageAddress getNodeId();
 
-  Ticket getTicket();
+  AbstractTicket getTicket();
 
   // message-sender
 

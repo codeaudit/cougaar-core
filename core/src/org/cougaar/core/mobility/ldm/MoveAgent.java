@@ -22,6 +22,7 @@
 package org.cougaar.core.mobility.ldm;
 
 import java.io.Serializable;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
@@ -56,7 +57,7 @@ public interface MoveAgent extends UniqueObject {
    * 
    * @see Ticket
    */
-  Ticket getTicket();
+  MoveTicket getTicket();
 
   // maybe add "abort" here
 

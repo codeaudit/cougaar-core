@@ -23,6 +23,7 @@ package org.cougaar.core.mobility.arch;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mobility.MoveTicket;
 
 /**
  * The agent is already at the ticket's destination.
@@ -80,13 +81,13 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
 
     // check for non-restart
-    if (ticket.isForceRestart()) {
+    if (((MoveTicket)ticket).isForceRestart()) {
       throw new MobilityException(
           "Noop dispatch on a force-restart?");
     }
 
     // check for local
-    MessageAddress destNode = ticket.getDestinationNode();
+    MessageAddress destNode = ((MoveTicket)ticket).getDestinationNode();
     if ((destNode != null) &&
         (!(destNode.equals(nodeId)))) {
       throw new MobilityException(
@@ -94,7 +95,7 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
 
     // check agent assertion
-    MessageAddress mobileAgent = ticket.getMobileAgent();
+    MessageAddress mobileAgent = ((MoveTicket)ticket).getMobileAgent();
     if ((mobileAgent != null) &&
         (!(mobileAgent.equals(id)))) {
       throw new MobilityException(
@@ -103,7 +104,7 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
 
     // check origin assertion
-    MessageAddress originNode = ticket.getOriginNode();
+    MessageAddress originNode = ((MoveTicket)ticket).getOriginNode();
     if ((originNode != null) &&
         (!(originNode.equals(nodeId)))) {
       throw new MobilityException(

@@ -39,9 +39,10 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MobileAgentService;
 import org.cougaar.core.mobility.MobilityException;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.arch.*;
-import org.cougaar.core.mobility.ldm.AgentMove;
+//import org.cougaar.core.mobility.ldm.AgentMove;
+import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.AgentTransfer;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.Message;
@@ -73,30 +74,31 @@ import org.cougaar.util.UnaryPredicate;
  * mobility.
  */
 public abstract class AbstractMobilityPlugin 
-extends ComponentPlugin 
+  extends ComponentPlugin 
 {
 
-  private static final UnaryPredicate MOVE_PRED =
+  private static final UnaryPredicate CONTROL_PRED =
     new UnaryPredicate() {
-      public boolean execute(Object o) {
-        return (o instanceof AgentMove);
-      }
-    };
-
+	public boolean execute(Object o) {
+	  return (o instanceof AgentControl);
+	}
+      };
+  
   private static final UnaryPredicate TRANSFER_PRED =
     new UnaryPredicate() {
-      public boolean execute(Object o) {
-        return (o instanceof AgentTransfer);
-      }
-    };
-
+	public boolean execute(Object o) {
+	  return (o instanceof AgentTransfer);
+	}
+      };
+  
 
   protected MessageAddress agentId;
   protected MessageAddress nodeId;
   protected boolean isNode;
 
-  private IncrementalSubscription moveSub;
-
+  //private IncrementalSubscription moveSub;
+  private IncrementalSubscription controlSub;
+  
   protected LoggingService log;
 
   private MobilityFactory mobilityFactory;
@@ -281,10 +283,10 @@ extends ComponentPlugin
   }
 
   protected void setupSubscriptions() {
-    // subscribe to move requests that we'll execute
-    moveSub = (IncrementalSubscription)
-      blackboard.subscribe(MOVE_PRED);
-
+    // subscribe to control requests that we'll execute
+     controlSub = (IncrementalSubscription)
+       blackboard.subscribe(CONTROL_PRED);
+    
     if (isNode) {
       // subscribe to transfers that we'll generate
       transferSub = (IncrementalSubscription)
@@ -331,47 +333,47 @@ extends ComponentPlugin
       }
     }
 
-    // watch move requests
-    if (moveSub.hasChanged()) {
+    // watch control requests
+    if(controlSub.hasChanged()) {
       // adds
-      Enumeration en = moveSub.getAddedList();
+      Enumeration en = controlSub.getAddedList();
       while (en.hasMoreElements()) {
-        AgentMove move = (AgentMove) en.nextElement();
-        addedAgentMove(move);
+        AgentControl control = (AgentControl) en.nextElement();
+        addedAgentControl(control);
       }
       // changes
-      en = moveSub.getChangedList();
+      en = controlSub.getChangedList();
       while (en.hasMoreElements()) {
-        AgentMove move = (AgentMove) en.nextElement();
-        changedAgentMove(move);
+        AgentControl control = (AgentControl) en.nextElement();
+        changedAgentControl(control);
       }
       // removes
-      en = moveSub.getRemovedList();
+      en = controlSub.getRemovedList();
       while (en.hasMoreElements()) {
-        AgentMove move = (AgentMove) en.nextElement();
-        removedAgentMove(move);
+        AgentControl control = (AgentControl) en.nextElement();
+        removedAgentControl(control);
       }
     }
   }
 
-  protected AgentMove findAgentMove(UID moveUID) {
-    return (AgentMove) query(moveSub, moveUID);
+  protected AgentControl findAgentControl(UID controlUID) {
+    return (AgentControl) query(controlSub, controlUID);
   }
 
 
-  /** move request for a local agent. */
-  protected abstract void addedAgentMove(AgentMove move);
+  /** control request for a local agent. */
+  protected abstract void addedAgentControl(AgentControl control);
 
-  /** a move was changed. */
-  protected abstract void changedAgentMove(AgentMove move);
+  /** a control was changed. */
+  protected abstract void changedAgentControl(AgentControl control);
 
-  /** a move was removed. */
-  protected abstract void removedAgentMove(AgentMove move);
+  /** a control was removed. */
+  protected abstract void removedAgentControl(AgentControl control);
 
-  /** arrival of a moved agent. */
+  /** arrival of a controled agent. */
   protected abstract void addedAgentTransfer(AgentTransfer transfer);
 
-  /** response to a move of a local agent. */
+  /** response to a control of a local agent. */
   protected abstract void changedAgentTransfer(AgentTransfer transfer);
 
   /** removal of either the source-side or target-side transfer */
@@ -399,8 +401,8 @@ extends ComponentPlugin
   }
 
   protected AgentTransfer createAgentTransfer(
-      UID moveUID,
-      Ticket ticket,
+      UID controlUID,
+      AbstractTicket ticket,
       StateTuple state) {
     if (mobilityFactory == null) {
       throw new RuntimeException(
@@ -409,7 +411,7 @@ extends ComponentPlugin
     }
     return
       mobilityFactory.createAgentTransfer(
-          moveUID,
+          controlUID,
           ticket,
           state);
   }
