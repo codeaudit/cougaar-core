@@ -1,3 +1,21 @@
+2003-04-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* freeze/Rules.java:
+	Bug #2771 -- Freeze rules cannot force non-plugins to freeze
+	A small class for holding freeze rules and applying them to a
+	prospective ThreadService consumer to determine whether the
+	consumer should be allowed to run or denied from running.
+
+	* freeze/FreezeTargetPlugin.java:
+	Bug #2771 -- Freeze rules cannot force non-plugins to freeze
+	Generalize rule implementation to include both deny and allow
+	rules and treat plugin parameters as a list of rules of the form:
+	{allow,deny} <classname>
+	An initial rule applied before any rules specified as plugin
+	params allows all freeze plugins to run.
+	A final rule applied after all rules specified as plugin params
+	denies running all plugins (extensions of PluginBase class).
+
 2003-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* freeze/FreezeTargetPlugin.java:
