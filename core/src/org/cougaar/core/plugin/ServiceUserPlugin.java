@@ -30,6 +30,8 @@ import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
+
 import java.util.Date;
 
 /**
@@ -148,9 +150,28 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
                     "Started service alarm before the blackboard service"+
                     " is available");
       }
-      timer = new SUPAlarm(delay);
+      timer = createAlarm(delay);
       getAlarmService().addRealTimeAlarm(timer);
     }
+  }
+
+  private Alarm createAlarm(long delay) {
+    return new PluginAlarm(delay) {
+      public BlackboardService getBlackboardService() {
+        if (blackboard == null) {
+          if (logger != null && logger.isWarnEnabled()) {
+            logger.warn(
+              "Alarm to trigger at "
+                + (new Date(getExpirationTime()))
+                + " has expired,"
+                + " but the blackboard service is null.  Plugin "
+                + " model state is "
+                + getModelState());
+          }
+        }
+        return blackboard;
+      }
+    };
   }
 
     
@@ -164,7 +185,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
       if (old != null) {
         old.cancel();           // cancel the old one
       }
-      timer = new SUPAlarm(delay);
+      timer = createAlarm(delay);
       getAlarmService().addRealTimeAlarm(timer);
     }
   }
@@ -221,40 +242,5 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
       return timer != null && timer.hasExpired();
     }
   }
-
-  private final class SUPAlarm implements Alarm {
-    private long expirationTime;
-    private boolean expired = false;
-
-    public SUPAlarm(long delay) {
-      expirationTime = System.currentTimeMillis() + delay;
-    }
-
-    public long getExpirationTime() {return expirationTime;}
-
-    public synchronized void expire() {
-      if (!expired) {
-        expired = true;
-        BlackboardService bb = getBlackboardService();
-        if (bb != null) {
-          bb.signalClientActivity();
-        } else {
-          if (logger != null && logger.isWarnEnabled()) {
-            logger.warn(
-                        "Alarm to trigger at "+(new Date(expirationTime))+" has expired,"+
-                        " but the blackboard service is null.  Plugin "+
-                        " model state is "+getModelState());
-          }
-        }
-      }
-    }
-    public synchronized boolean hasExpired() { return expired; }
-    public synchronized boolean cancel() {
-      boolean was = expired;
-      expired=true;
-      return was;
-    }
-  }
-
 
 }
