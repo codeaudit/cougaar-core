@@ -25,11 +25,6 @@ import java.util.List;
 
 import org.cougaar.core.domain.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.EnvelopeTuple;
-
 import org.cougaar.core.component.Service;
 
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
@@ -56,15 +51,6 @@ public interface DomainService extends Service {
 
   /** return a list of all domain-specific factories **/
   List getFactories();
-
-  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
-  void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
-                                    boolean persistenceEnv);
-  /** invoke MessageLogicProviders across all currently loaded domains **/
-  void invokeMessageLogicProviders(DirectiveMessage message);
-
-  /** invoke RestartLogicProviders across all currently loaded domains **/
-  void invokeRestartLogicProviders(ClusterIdentifier cid);
 }  
 
 

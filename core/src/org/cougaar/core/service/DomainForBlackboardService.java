@@ -21,7 +21,11 @@
 
 package org.cougaar.core.service;
 
+import org.cougaar.core.agent.ClusterIdentifier;
+
 import org.cougaar.core.blackboard.Blackboard;
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.blackboard.EnvelopeTuple;
 
 import org.cougaar.core.component.Service;
 
@@ -31,6 +35,15 @@ public interface DomainForBlackboardService extends DomainService {
 
   /** invoke delayed LP actions on the domain's XPlans **/
   void invokeDelayedLPActions();
+
+  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
+                                    boolean persistenceEnv);
+  /** invoke MessageLogicProviders across all currently loaded domains **/
+  void invokeMessageLogicProviders(DirectiveMessage message);
+
+  /** invoke RestartLogicProviders across all currently loaded domains **/
+  void invokeRestartLogicProviders(ClusterIdentifier cid);
 }  
 
 
