@@ -1,3 +1,9 @@
+2001-08-16  Todd Wright <twright@bbn.com>
+
+        * Node, AgentManager, Agent, PluginManager, etc
+        Initial support for AgentMobility, including support
+        for recursive Agent suspend and state-gathering.
+
 2001-08-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
