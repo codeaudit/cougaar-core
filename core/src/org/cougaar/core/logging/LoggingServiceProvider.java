@@ -32,10 +32,14 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.LoggerControllerProxy;
 import org.cougaar.util.log.LoggerFactory;
 import org.cougaar.util.log.LoggerProxy;
+
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * This LoggingServiceProvider is a ServiceProvider which provides
@@ -66,25 +70,17 @@ import org.cougaar.util.log.LoggerProxy;
  * @see org.cougaar.util.log.log4j.Log4jLoggerFactory
  */
 public class LoggingServiceProvider implements ServiceProvider {
-  private final LoggerFactory lf;
-
   /**
    * Create a LoggingServiceProvider and set the default logging
    * levels.
    */
-  public LoggingServiceProvider() 
-  {
-    lf = LoggerFactory.getInstance();
-  }
+  public LoggingServiceProvider() { }
 
   /**
    * @param props Ignored. Retained for backwards compatability.
    * @deprecated Use the no-argument constructor.
    */
-  public LoggingServiceProvider(Properties props) 
-  {
-    lf = LoggerFactory.getInstance();
-  }
+  public LoggingServiceProvider(Properties props) { }
 
   /**
    * Used to obtain either LoggingService or LoggingControlService.
@@ -100,11 +96,9 @@ public class LoggingServiceProvider implements ServiceProvider {
       Object requestor,
       Class serviceClass) {
     if (LoggingService.class.isAssignableFrom(serviceClass)) {
-      Logger l = lf.createLogger(requestor);
-      return new LoggingServiceImpl(l);
+      return getLoggingService(requestor);
     } else if (LoggingControlService.class.isAssignableFrom(serviceClass)) {
-      String name = requestor.getClass().getName();
-      LoggerController lc = lf.createLoggerController(name);
+      LoggerController lc = Logging.getLoggerController(requestor);
       return new LoggingControlServiceImpl(lc);
     } else {
       return null;
@@ -131,6 +125,24 @@ public class LoggingServiceProvider implements ServiceProvider {
       Class serviceClass,
       Object service) {
   }
+
+  /** The cache for getLogger() **/
+  private static Map loggerCache = new WeakHashMap(11);
+
+  LoggingService getLoggingService(Object requestor) {
+    String key = Logging.getKey(requestor);
+    LoggingService ls;
+    synchronized (loggerCache) {
+      ls = (LoggingService) loggerCache.get(key);
+      if (ls == null) {
+        ls = new LoggingServiceImpl(Logging.getLogger(key));
+        // new String(key) keeps the entry GCable
+        loggerCache.put(new String(key),ls);
+      }
+    }
+    return ls;
+  }
+
 
   private static class LoggingServiceImpl
     extends LoggerProxy
