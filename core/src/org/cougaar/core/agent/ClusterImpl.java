@@ -125,7 +125,7 @@ import org.cougaar.core.agent.AdvanceClockMessage;
 import org.cougaar.core.agent.service.alarm.Alarm;
 
 // Persistence
-import org.cougaar.core.persist.DatabasePersistence;
+//  import org.cougaar.core.persist.DatabasePersistence;
 import org.cougaar.core.persist.Persistence;
 
 import org.cougaar.util.PropertyParser;
@@ -844,6 +844,9 @@ public class ClusterImpl
     return getDomainService().getFactory(domainname);
   }
 
+  /**
+   * 
+   **/
   private boolean updateIncarnation(DirContext topologyContext,
                                     ClusterIdentifier cid)
     throws NamingException
@@ -859,7 +862,9 @@ public class ClusterImpl
 //        System.out.println("  " + cid
 //                           + ": oldIncarnation=" + oldIncarnation
 //                           + ", newIncarnation=" + newIncarnation);
-      return !newIncarnation.equals(oldIncarnation);
+      long oldNumber = oldIncarnation.longValue();
+      long newNumber = newIncarnation.longValue();
+      return oldNumber != 0L && oldNumber != newNumber;
     }
     return false;
   }
@@ -905,6 +910,7 @@ public class ClusterImpl
     }
     for (Iterator i = restartAgents.iterator(); i.hasNext(); ) {
       ClusterIdentifier cid = (ClusterIdentifier) i.next();
+      System.out.println("Restart " + getAgentIdentifier() + " w.r.t. " + cid);
       myBlackboardService.restartAgent(cid);
     }
   }
@@ -930,6 +936,14 @@ public class ClusterImpl
     }
   }
 
+  /**
+   * Insure that we are tracking incarnations number for the agent at
+   * a given address. If the specified agent is not in the clusterInfo
+   * it means we have never before communicated with that agent or we
+   * have just restarted and are sending restart messages. In both
+   * cases, it is ok to store the special "unknown incarnation" marker
+   * because we do not want to detect any restart.
+   **/
   private void checkClusterInfo(MessageAddress cid) {
 //      System.out.println("Checking " + cid);
     if (cid instanceof ClusterIdentifier) {
@@ -947,7 +961,7 @@ public class ClusterImpl
   public void sendMessage(ClusterMessage message)
   {
     checkClusterInfo(message.getDestination());
-	showProgress("+");
+    showProgress("+");
     try {
       if (messenger == null) {
         throw new RuntimeException("MessageTransport unavailable. Message dropped.");
