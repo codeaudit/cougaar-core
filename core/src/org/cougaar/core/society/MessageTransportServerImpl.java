@@ -194,7 +194,7 @@ class MessageTransportServerImpl
 	return "messagetransportservice.messagetransport";
     }
 
-    protected ServiceBroker specifyChildContext() {
+    protected ServiceBroker specifyChildServiceBroker() {
 	// TO BE DONE
 	return null;
     }

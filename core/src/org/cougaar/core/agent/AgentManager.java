@@ -46,12 +46,12 @@ public class AgentManager
     }
 
     // add some services for the agents (clusters).
-    //childContext.addService(MetricsService.class, new MetricsServiceProvider(agent));
-    //childContext.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
-    //childContext.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
-    //childContext.addService(UIDService.class, new UIDServiceProvider(clustercontext));
-    childContext.addService(PrototypeRegistryService.class, new PrototypeRegistryServiceProvider());
-    childContext.addService(DomainService.class, new DomainServiceProvider());
+    //childServiceBroker.addService(MetricsService.class, new MetricsServiceProvider(agent));
+    //childServiceBroker.addService(BlackboardService.class, new BlackboardServiceProvider(agent.getDistributor()) );
+    //childServiceBroker.addService(MessageTransportServer.class, new MessageTransportServiceProvider(agent));
+    //childServiceBroker.addService(UIDService.class, new UIDServiceProvider(clustercontext));
+    childServiceBroker.addService(PrototypeRegistryService.class, new PrototypeRegistryServiceProvider());
+    childServiceBroker.addService(DomainService.class, new DomainServiceProvider());
     
   }
 
@@ -61,7 +61,7 @@ public class AgentManager
   protected String specifyContainmentPoint() {
     return "agent";
   }
-  protected ServiceBroker specifyChildContext() {
+  protected ServiceBroker specifyChildServiceBroker() {
     return new AgentServiceBroker();
   }
 
@@ -81,8 +81,8 @@ public class AgentManager
    * should use package protection to give access only to AgentBinderSupport,
    * but makes it public for use by Test example.
    **/
-  public final ServiceBroker getChildContext() {
-    return childContext;
+  public final ServiceBroker getChildServiceBroker() {
+    return childServiceBroker;
   }
 
   //

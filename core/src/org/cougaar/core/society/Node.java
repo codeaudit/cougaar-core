@@ -872,8 +872,9 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
         addCM.setOperation(ComponentMessage.ADD);
         ComponentDescription desc = 
           new ComponentDescription(
-              "agent.plugin",
-              piName,
+              piName, // name
+              "Node.AgentManager.Agent.PluginManager.Plugin",
+              piName,           // class
               null,     // codebase
               piParams,
               null,     // certificate

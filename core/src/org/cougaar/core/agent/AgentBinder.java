@@ -19,7 +19,7 @@ public class AgentBinder extends BinderSupport implements AgentBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
   public AgentBinder(Object parentInterface, Component child) {
-    super(((AgentManager) parentInterface).getChildContext(), 
+    super(((AgentManager) parentInterface).getChildServiceBroker(), 
           (AgentManager) parentInterface, 
           child);
   }
