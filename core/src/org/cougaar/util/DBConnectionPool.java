@@ -363,7 +363,7 @@ public class DBConnectionPool {
 	if (closed) return;
         closed = true;
         try {
-	  if (supportsTransactions) c.commit();
+	  if (supportsTransactions && !c.getAutoCommit()) c.commit();
 	  synchronized (statements) {
 	    while (statements.size() > 0) {
 	      PoolStatement statement = (PoolStatement) statements.get(0);
