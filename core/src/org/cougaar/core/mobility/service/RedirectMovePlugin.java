@@ -295,8 +295,8 @@ extends ComponentPlugin
         inControlUID);
     if (inControl == null) {
       // already removed?
-      if (log.isWarnEnabled()) {
-        log.warn(
+      if (log.isInfoEnabled()) {
+        log.info(
             "Agent "+agentId+" control completed with status "+
             outControl.getStatusCodeAsString()+
             ", but the original control request "+inControlUID+
@@ -307,8 +307,8 @@ extends ComponentPlugin
 
     if (inControl.getStatusCode() != AgentControl.NONE) {
       // already removed?
-      if (log.isWarnEnabled()) {
-        log.warn(
+      if (log.isInfoEnabled()) {
+        log.info(
             "Agent "+agentId+" control completed with status "+
             outControl.getStatusCodeAsString()+
             ", but the original control request "+
