@@ -10,7 +10,16 @@
 
 package org.cougaar.domain.planning.ldm;
 
+import org.cougaar.domain.planning.ldm.policy.Policy;
+import org.cougaar.domain.planning.ldm.policy.RuleParameter;
+import org.cougaar.domain.planning.ldm.policy.PredicateRuleParameter;
+import org.cougaar.domain.planning.ldm.policy.IntegerRuleParameter;
+import org.cougaar.domain.planning.ldm.policy.LongRuleParameter;
+import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
@@ -19,6 +28,7 @@ import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.PlanElementSet;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.cluster.CollectionSubscription;
 import org.cougaar.core.plugin.SimplePlugIn;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.Asset;
@@ -51,21 +61,147 @@ import org.cougaar.core.society.UID;
  **/
 
 public class DeletionPlugIn extends SimplePlugIn {
+    /**
+       Inner class for specifying deletion policy. A deletion policy
+       has one IntegerRuleParameter call "deletionDays" specifying the
+       number of days after the end time of a Task before deletion is
+       allowed. Qualified tasks are specified by the predicate of the
+       policy. A DeletionPolicy also has a priority and policies are
+       applied in descending priority order. Integer.MIN_VALUE is the
+       lowest priority and Integer.MAX_VALUE is the highest. Usually,
+       priority doesn't matter and priority should be zero for that
+       case,
+     **/
+    public static class DeletionPolicy extends Policy {
+        // Cached parameter values
+        private UnaryPredicate thePredicate;
+        private long theDeletionDelay;
+        private int thePriority;
+        public static final String PREDICATE_PARAM = "predicate";
+        public static final String DELETION_DELAY_PARAM = "deletionDelay";
+        public static final String PRIORITY_PARAM = "priority";
+
+        protected static final long NO_DELETION_DELAY = Long.MIN_VALUE;
+        protected static final int NO_PRIORITY = Integer.MIN_VALUE;
+        protected static final int MIN_PRIORITY = Integer.MIN_VALUE + 1;
+
+        public DeletionPolicy() {
+        }
+        public void init(UnaryPredicate aPredicate, long deletionDelay) {
+            init(null, aPredicate, deletionDelay, 0);
+        }
+        public void init(UnaryPredicate aPredicate, long deletionDelay, int priority) {
+            init(null, aPredicate, deletionDelay, priority);
+        }
+        public void init(String aName, UnaryPredicate aPredicate, long deletionDelay) {
+            init(aName, aPredicate, deletionDelay, 0);
+        }
+        public void init(String aName, UnaryPredicate aPredicate,
+                         long deletionDelay, int priority)
+        {
+            setName(aName);
+            try {
+                Add(new PredicateRuleParameter(PREDICATE_PARAM, aPredicate));
+                Add(new IntegerRuleParameter(PRIORITY_PARAM,
+                                             priority, priority, priority));
+                Add(new LongRuleParameter(DELETION_DELAY_PARAM,
+                                          deletionDelay, deletionDelay, deletionDelay));
+            } catch (RuleParameterIllegalValueException e) {
+                // No way this should happen because x <= x <= x is never false;
+                e.printStackTrace();
+            }
+        }
+        public void Add(RuleParameter param) {
+            clearCache();
+            super.Add(param);
+        }
+        public void clearCache() {
+            thePredicate = null;
+            theDeletionDelay = NO_DELETION_DELAY;
+            thePriority = NO_PRIORITY;
+        }
+        public UnaryPredicate getPredicate() {
+            if (thePredicate == null) {
+                PredicateRuleParameter prp = (PredicateRuleParameter) Lookup(PREDICATE_PARAM);
+                thePredicate = prp.getPredicate();
+            }
+            return thePredicate;
+        }
+        public void setDeletionDelay(long deletionDelay) {
+            try {
+                theDeletionDelay = deletionDelay;
+                Replace(new LongRuleParameter(DELETION_DELAY_PARAM,
+                                              deletionDelay, deletionDelay, deletionDelay));
+            } catch (RuleParameterIllegalValueException e) {
+                // No way this should happen because x <= x <= x is never false;
+                e.printStackTrace();
+            }
+        }
+        public long getDeletionDelay() {
+            if (theDeletionDelay == NO_DELETION_DELAY) {
+                theDeletionDelay = ((LongRuleParameter) Lookup(DELETION_DELAY_PARAM)).longValue();
+            }
+            return theDeletionDelay;
+        }
+        public int getPriority() {
+            if (thePriority == NO_PRIORITY) {
+                thePriority = ((IntegerRuleParameter) Lookup(PRIORITY_PARAM)).intValue();
+            }
+            return thePriority;
+        }
+    }
+
+    private static UnaryPredicate truePredicate = new UnaryPredicate() {
+        public boolean execute(Object o) {
+            return true;
+        }
+    };
+
+    public static class DefaultDeletionPolicy extends DeletionPolicy {
+        public DefaultDeletionPolicy() {
+            init("Default Deletion Policy", truePredicate, DEFAULT_DELETION_DELAY,
+                  MIN_PRIORITY);
+        }
+    }
+
     private static final int DELETION_DELAY_PARAM  = 0;
     private static final int DELETION_PERIOD_PARAM = 1;
 
     // Default times are to check every week and delete tasks older than 15 days
-    private static final long DEFAULT_DELETION_PERIOD =  7 * 86400000L;
-    private static final long DEFAULT_DELETION_DELAY  = 15 * 86400000L;
+    private static final long DEFAULT_DELETION_PERIOD =  1 * 86400000L;
+    private static final long DEFAULT_DELETION_DELAY  =  2 * 86400000L;
 
     private static final long subscriptionExpirationTime = 10L * 60L * 1000L;
 
     private long deletionPeriod = DEFAULT_DELETION_PERIOD;
-    private long deletionDelay = DEFAULT_DELETION_DELAY;
     private Alarm alarm;
     private int wakeCount = 0;
     private long now;           // The current execution time
     private UnaryPredicate deletablePlanElementsPredicate;
+    private UnaryPredicate deletionPolicyPredicate = new UnaryPredicate() {
+        public boolean execute(Object o) {
+            return o instanceof DeletionPolicy;
+        }
+    };
+    SortedSet deletionPolicySet = new TreeSet(new Comparator() {
+        public int compare(Object o1, Object o2) {
+            DeletionPolicy p1 = (DeletionPolicy) o1;
+            DeletionPolicy p2 = (DeletionPolicy) o2;
+            int diff = p1.getPriority() - p2.getPriority();
+            if (diff != 0) return diff;
+            String n1 = p1.getName();
+            String n2= p2.getName();
+            if (n1 != n2) {
+                if (n1 == null) return -1;
+                if (n2 == null) return +1;
+                diff = n1.compareTo(n2);
+                if (diff != 0) return diff;
+            }
+            return o1.hashCode() - o2.hashCode();
+        }
+    });
+
+    private CollectionSubscription deletionPolicies;
 
     private static java.io.PrintWriter logFile = null;
     private static final boolean DEBUG = false;
@@ -125,6 +261,7 @@ public class DeletionPlugIn extends SimplePlugIn {
      * deletion activities and the deletion time margin.
      **/
     protected void setupSubscriptions() {
+        long deletionDelay = DEFAULT_DELETION_DELAY;
         List params = getParameters();
         switch (params.size()) {
         default:
@@ -134,6 +271,8 @@ public class DeletionPlugIn extends SimplePlugIn {
             deletionDelay = parseInterval((String) params.get(DELETION_DELAY_PARAM));
         case 0:
         }
+        deletionPolicies = (CollectionSubscription) subscribe(deletionPolicyPredicate, false);
+        checkDeletionPolicies(deletionDelay);
         alarm = wakeAfter(deletionPeriod);
         getSubscriber().setShouldBePersisted(false); // All subscriptions are created as needed
         deletablePlanElementsPredicate = new DeletablePlanElementsPredicate();
@@ -204,6 +343,28 @@ public class DeletionPlugIn extends SimplePlugIn {
             }
         }
         peSet.checkAlarm();
+    }
+
+    /**
+       Check to see if the default policy is present and matches the
+       current deletionDelay, If a DefaultDeletionPolicy is found for
+       which the deletionDelay does not match the current
+       deletionDelay, it is removed. If no DefaultDeletionPolicy
+       having the correct deletionDelay is found, a new one created
+       and added.
+     **/
+    private void checkDeletionPolicies(long deletionDelay) {
+        for (Iterator i = deletionPolicies.iterator(); i.hasNext(); ) {
+            DeletionPolicy policy = (DeletionPolicy) i.next();
+            if (policy instanceof DefaultDeletionPolicy) {
+                if (policy.getDeletionDelay() == deletionDelay) return; // ok
+                publishRemove(policy);
+            }
+        }
+        DefaultDeletionPolicy policy =
+            (DefaultDeletionPolicy) theLDMF.newPolicy(DefaultDeletionPolicy.class.getName());
+        policy.setDeletionDelay(deletionDelay);
+        publishAdd(policy);
     }
 
     /**
@@ -404,10 +565,9 @@ public class DeletionPlugIn extends SimplePlugIn {
     }
 
     private boolean isTimeToDelete(PlanElement pe) {
-        long et = 0L;
-        if (et == 0L) et = computeExpirationTime(pe);
+        long et = computeExpirationTime(pe);
 //  	if (DEBUG) debug("Expiration time is " + new java.util.Date(et));
-        boolean result = et == 0L || et < now - deletionDelay;
+        boolean result = et == 0L || et < now;
 //          if (result) {
 //              if (DEBUG) debug("isTimeToDelete: " + new java.util.Date(et));
 //          }
@@ -416,14 +576,18 @@ public class DeletionPlugIn extends SimplePlugIn {
 
     private long computeExpirationTime(PlanElement pe) {
         double et;
+        Task task = pe.getTask();
         et = PlugInHelper.getEndTime(pe.getEstimatedResult());
-        if (!Double.isNaN(et)) return (long) et;
-        et = PlugInHelper.getEndTime(pe.getTask());
-        if (!Double.isNaN(et)) return (long) et;
-        et = PlugInHelper.getStartTime(pe.getEstimatedResult());
-        if (!Double.isNaN(et)) return (long) et;
-        et = PlugInHelper.getStartTime(pe.getTask());
-        if (!Double.isNaN(et)) return (long) et;
-        return 0L;
+        if (Double.isNaN(et)) et = PlugInHelper.getEndTime(task);
+        if (Double.isNaN(et)) et = PlugInHelper.getStartTime(pe.getEstimatedResult());
+        if (Double.isNaN(et)) et = PlugInHelper.getStartTime(task);
+        if (Double.isNaN(et)) return 0L;
+        for (Iterator i = deletionPolicies.iterator(); i.hasNext(); ) {
+            DeletionPolicy policy = (DeletionPolicy) i.next();
+            if (policy.getPredicate().execute(task)) {
+                return ((long) et) + policy.getDeletionDelay();
+            }
+        }
+        return 0L; // Should not get here; DefaultDeletionPolicy should always apply
     }
 }
