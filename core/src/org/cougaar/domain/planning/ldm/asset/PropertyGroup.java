@@ -37,14 +37,6 @@ public interface PropertyGroup extends Serializable, Cloneable {
    **/
   PropertyGroup copy();
 
-  /** returns the string name of the main property interface for this 
-   * property group.  Probably not needed in the current ALP system,
-   * so may be deprecated in a future version.
-   *
-   * @deprecated
-   **/
-  String getImmutableClass();
-
   /** returns the class of the main property interface for this 
    * property group.  
    **/
