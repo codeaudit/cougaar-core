@@ -281,7 +281,7 @@ extends HandlerBase
         Long.parseLong(
             System.getProperty(
               "org.cougaar.core.wp.resolver.cacheLists.maxTTD",
-              "60000"));
+              "600000"));
       minBypass =
         Long.parseLong(
             System.getProperty(
@@ -291,7 +291,7 @@ extends HandlerBase
         Integer.parseInt(
             System.getProperty(
               "org.cougaar.core.wp.resolver.cacheLists.maxSize",
-              "100"));
+              "200"));
     }
   }
 
