@@ -10,12 +10,12 @@ public final class MTImpl_Stub
     private static final long serialVersionUID = 2;
     
     private static java.lang.reflect.Method $method_getMessageAddress_0;
-    private static java.lang.reflect.Method $method_receiveMessage_1;
+    private static java.lang.reflect.Method $method_rerouteMessage_1;
     
     static {
 	try {
 	    $method_getMessageAddress_0 = org.cougaar.core.society.rmi.MT.class.getMethod("getMessageAddress", new java.lang.Class[] {});
-	    $method_receiveMessage_1 = org.cougaar.core.society.rmi.MT.class.getMethod("receiveMessage", new java.lang.Class[] {org.cougaar.core.society.Message.class});
+	    $method_rerouteMessage_1 = org.cougaar.core.society.rmi.MT.class.getMethod("rerouteMessage", new java.lang.Class[] {org.cougaar.core.society.Message.class});
 	} catch (java.lang.NoSuchMethodException e) {
 	    throw new java.lang.NoSuchMethodError(
 		"stub class initialization failed");
@@ -45,12 +45,12 @@ public final class MTImpl_Stub
 	}
     }
     
-    // implementation of receiveMessage(Message)
-    public void receiveMessage(org.cougaar.core.society.Message $param_Message_1)
+    // implementation of rerouteMessage(Message)
+    public void rerouteMessage(org.cougaar.core.society.Message $param_Message_1)
 	throws java.rmi.RemoteException
     {
 	try {
-	    ref.invoke(this, $method_receiveMessage_1, new java.lang.Object[] {$param_Message_1}, -2674303520185462339L);
+	    ref.invoke(this, $method_rerouteMessage_1, new java.lang.Object[] {$param_Message_1}, -4741386825613829822L);
 	} catch (java.lang.RuntimeException e) {
 	    throw e;
 	} catch (java.rmi.RemoteException e) {
