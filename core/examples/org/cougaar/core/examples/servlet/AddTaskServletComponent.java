@@ -44,13 +44,14 @@ implements BlackboardClient
   private DomainService ds;
   private RootFactory rootFactory;
 
-  public void load() {
-    // FIXME need AgentIdentificationService
-    org.cougaar.core.plugin.PluginBindingSite pbs =
-      (org.cougaar.core.plugin.PluginBindingSite) bindingSite;
-    this.agentId = pbs.getAgentIdentifier();
-
-    super.load();
+  public final void setAgentIdentificationService(AgentIdentificationService ais) {
+    MessageAddress an;
+    if ((ais != null) &&
+        ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
+      this.agentId = (MessageAddress) an;
+    } else {
+      // FIXME: Log something?
+    }
   }
 
   protected String getPath() {
