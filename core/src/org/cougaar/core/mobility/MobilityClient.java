@@ -31,7 +31,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * Client API for the MobilityService. 
+ * Service requestor API for the {@link MobilityService}.
  */
 public interface MobilityClient
 extends Service, GenericStateModel {

@@ -35,7 +35,9 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * The agent should be moved to a remote node.
+ * Handle a request to send an agent to a remote node. 
+ * <p>
+ * This does half the work, since the ack/nack will be pending. 
  */
 public class DispatchRemoteHandler extends AbstractHandler {
 

@@ -38,14 +38,17 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.util.UnaryPredicate;
 
-/*
- * Example plugin to demonstrate how one would add agents to a node
- * by first creating an AddTicket and using the MobilitySupport to create an
- * AgentControl request, the object through which all adds/moves/removes are 
- * recognized by the mobility API and handled correctly and securely.
- *
- * Also shows how one would subscribe to the changed AgentControl objects and 
- * their status. 
+/**
+ * This component is an example plugin demonstrating how to use an
+ * {@link AgentControl} to add an agent to the local node.
+ * <p>
+ * First create an AddTicket and use the MobilitySupport to create an
+ * AgentControl request, the object through which all
+ * adds/moves/removes are recognized by the mobility API and handled
+ * correctly and securely.
+ * <p>
+ * This plugin also shows how one would subscribe to the changed
+ * AgentControl objects and their status. 
  */
 public class AddAgentExamplePlugin extends ComponentPlugin {
   

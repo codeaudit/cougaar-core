@@ -29,10 +29,7 @@ package org.cougaar.core.mobility;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A ticket specifies the destination node and other parameters
- * of agent movement.
- * <p>
- * A ticket is immutable.
+ * A ticket requesting agent removal.
  */
 public final class RemoveTicket extends AbstractTicket implements java.io.Serializable {
 

@@ -39,7 +39,13 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.UIDService;
 
 /**
- * The mobility domain just has a factory, with no LPs.
+ * This component is the mobility domain, which just has the
+ * {@link MobilityFactory} and no {@link 
+ * org.cougaar.core.domain.LogicProvider}s.
+ * <p>
+ * The original idea was to add security by restricting access to
+ * the {@link MobilityFactory}, which is required to create a
+ * {@link AgentControl}.
  */
 public class MobilityDomain extends DomainAdapter {
 

@@ -1,33 +1,29 @@
-<html><head>
-<title>Agent mobility support</title>
-</head><body>
-<h2>Agent mobility support</h2>
+<body>
+This package contains the <a href="http://cougaar.org">Cougaar</a>
+agent mobility support.
 <p>
-Agent mobility is divided into two primary pieces:<ol>
+The mobility infrastructure is loaded into the node agent by the
+{@link org.cougaar.core.mobility.service.RootMobilityPlugin}, which
+requires the {@link org.cougaar.core.mobility.ldm.MobilityDomain}'s
+{@link org.cougaar.core.mobility.ldm.MobilityFactory}.  Agents
+register with the {@link org.cougaar.core.mobility.MobilityService}
+as {@link org.cougaar.core.mobility.MobilityClient}s
+to be told when they are moved, which requires them to
+suspend and capture their persistence state.  {@link
+org.cougaar.core.mobility.service.RootMobilityPlugin}s
+in the source and target nodes communicate through {@link
+org.cougaar.core.relay.Relay}s to transmit the agent and make sure
+it is started on the target node before being removed from the
+source node.
 <p>
-<li>
-The infrastructure's services and implementation.  This
-includes the low-level "MobilityDispatchService" and 
-"MobilityListenerService" APIs, and only allows a 
-component within an agent to request <i>its own</i>
-agent to move.
-</li>
-<p>
-<li>
-The simplified "MoveAgent" API for plugin use.  This
-includes the "MoveAgent" data structure, the 
-"mobility" domain and factory to create this data
-structure, and the "MoveAgentPlugin" to process the
-MoveAgent objects.  The MoveAgentPlugin uses the
-low-level infrastructure services to perform the 
-move.  A Relay is used to transfer the request to
-the to-be-moved agent.
-<p>
-The MoveAgent API is analagous to a Task-based API,
-where the move "Ticket" is transferred between the
+Plugins request agent mobility by interact with the {@link
+org.cougaar.core.mobility.service.RootMobilityPlugin} through
+blackboard {@link org.cougaar.core.mobility.ldm.AgentControl} objects
+that specify the requested {@link org.cougaar.core.mobility.Ticket}
+command, such as a {@link org.cougaar.core.mobility.MoveTicket}
+to move an agent.  Additional tickets exist for adding and removing
 agents.
-</li>
 <p>
-</ol>
-
-</body></html>
+For more detail, see the
+<a href="http://docs.cougaar.org">Cougaar Developers' Guide</a>.
+</body>

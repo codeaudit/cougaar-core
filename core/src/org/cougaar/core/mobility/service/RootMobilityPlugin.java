@@ -59,8 +59,8 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * A node-agent plugin that handles AgentControl objects
- * where the target is the local node.
+ * This component coordinates agent mobility and handles agent
+ * add/remove requests.
  */
 public class RootMobilityPlugin 
 extends AbstractMobilityPlugin

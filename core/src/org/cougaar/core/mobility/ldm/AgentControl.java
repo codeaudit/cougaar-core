@@ -32,7 +32,8 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
 /**
- * Request an agent management operation, as defined in the ticket.
+ * Request an agent management operation, as defined in the
+ * {@link #getAbstractTicket()}.
  * <p>
  * Abstract tickets allow add / remove / move of agents.
  *

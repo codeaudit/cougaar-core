@@ -61,17 +61,11 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Base class for root (node-level) agent mobility plugin.
+ * This component is a base class for the node agent's {@link
+ * RootMobilityPlugin}.
  * <p>
- * This plugin is loaded into all agents, both for
- * node-agents and regular leaf-agents.
- * <p>
- * In leaf-agents this plugin simply proxies AgentMove 
- * requests to the agent's parent node.  Most of the code
- * is turned off.
- * <p>
- * In node-agents this plugin coordinates agent 
- * mobility.
+ * This component does nothing if it is loaded into regular non-node
+ * agents.
  */
 public abstract class AbstractMobilityPlugin 
   extends ComponentPlugin 

@@ -49,9 +49,9 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * The "RedirectMovePlugin" runs in leaf (non node-agent) agents
- * and redirects control requests (AgentControl) to the parent
- * node of this agent.
+ * This component is an optional agent plugin to redirect mobility
+ * requests ({@link AgentControl}s) from a regular agent to its
+ * node agent.
  * <p>
  * Note: this plugin assumes<ul>
  *   <li>All AgentControls targetted to this agent will be redirected

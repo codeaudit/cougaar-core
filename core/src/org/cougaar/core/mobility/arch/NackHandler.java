@@ -29,7 +29,7 @@ package org.cougaar.core.mobility.arch;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * Received a NACK response fromthe destination node.
+ * Handle a failed move response from the target node.
  */
 public class NackHandler extends AbstractHandler {
 

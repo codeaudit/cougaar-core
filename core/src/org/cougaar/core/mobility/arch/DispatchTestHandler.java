@@ -42,8 +42,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**
- * The agent is already at the ticket's destination, but
- * we want to test the agent restart anyways.
+ * Handle a request to restart the agent on the local node, cycling
+ * it as if it was moved. 
  */
 public class DispatchTestHandler extends AbstractHandler {
 

@@ -33,7 +33,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 
 /**
- * Package-private factory implementation.
+ * Package-private {@link MobilityFactory} implementation.
  */
 class MobilityFactoryImpl implements MobilityFactory {
 

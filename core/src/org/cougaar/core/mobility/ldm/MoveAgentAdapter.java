@@ -32,7 +32,7 @@ import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
 
 /**
- * Package-private implementation of MoveAgent.
+ * Package-private implementation of {@link MoveAgent}.
  * <p>
  * Backwards compatibility for the old MoveAgent API.
  */

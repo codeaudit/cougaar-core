@@ -32,7 +32,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Received a TRANSFER request on the destination node.
+ * Handle a request to accept a mobile agent at the target node. 
  */
 public class ArrivalHandler extends AbstractHandler {
 

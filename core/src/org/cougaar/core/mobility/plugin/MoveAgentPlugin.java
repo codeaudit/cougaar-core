@@ -30,11 +30,8 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Replaced by the RedirectMovePlugin.
- * <p>
- * This plugin does nothing.
- *
- * @deprecated
+ * @deprecated replaced by the {@link 
+ * org.cougaar.core.mobility.service.RedirectMovePlugin}
  */
 public class MoveAgentPlugin 
 extends ComponentPlugin 

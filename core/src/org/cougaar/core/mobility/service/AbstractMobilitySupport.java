@@ -33,7 +33,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Base class for mobility-support class.
+ * Implementation of the {@link MobilitySupport} interface. 
  */
 abstract class AbstractMobilitySupport
 implements MobilitySupport 

@@ -33,7 +33,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
 /**
- * Factory to create MoveAgent objects.
+ * A {@link Factory} for creating {@link AgentControl} objects.
  */
 public interface MobilityFactory extends Factory {
 

@@ -28,14 +28,16 @@ package org.cougaar.core.mobility;
 
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * Backwards-compatibility for {@link MoveTicket}.
+ */
 public class Ticket extends MoveTicket {
-  
   public Ticket(
-		    Object id,
-		    MessageAddress mobileAgent,
-		    MessageAddress origNode,
-		    MessageAddress destNode,
-		    boolean forceRestart) {
+      Object id,
+      MessageAddress mobileAgent,
+      MessageAddress origNode,
+      MessageAddress destNode,
+      boolean forceRestart) {
     super(id, mobileAgent, origNode, destNode, forceRestart);
   }
 }

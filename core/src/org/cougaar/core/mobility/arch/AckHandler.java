@@ -29,6 +29,7 @@ package org.cougaar.core.mobility.arch;
 import org.cougaar.util.GenericStateModel;
 
 /**
+ * Handle an acknowledged move. 
  */
 public class AckHandler extends AbstractHandler {
 

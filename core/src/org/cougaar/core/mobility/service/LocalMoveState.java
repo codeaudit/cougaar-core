@@ -28,8 +28,9 @@ package org.cougaar.core.mobility.service;
 
 
 /**
- * A simple interface for DispatchTestHandler to set
- * the agent state before adding the agent.
+ * Agent state holder for the {@link
+ * org.cougaar.core.mobility.arch.DispatchTestHandler} to use before
+ * adding the agent.
  */
 public class LocalMoveState {
   // package-private

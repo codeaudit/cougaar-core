@@ -29,7 +29,10 @@ package org.cougaar.core.mobility;
 import org.cougaar.core.component.Service;
 
 /**
- * Service client must implement {@link MobilityClient}.
+ * This service is used by the agent to register with the node's
+ * mobility infrastructure.
+ * <p>
+ * The service requestor must implement {@link MobilityClient}.
  */
 public interface MobilityService extends Service {
 

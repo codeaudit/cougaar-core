@@ -32,7 +32,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
 /**
- * Required support to the mobility handlers.
+ * Support interface for mobility handlers.
  */
 public interface MobilitySupport {
 

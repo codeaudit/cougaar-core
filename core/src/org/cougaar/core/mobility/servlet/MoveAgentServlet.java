@@ -56,8 +56,9 @@ import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * Servlet that allows the client to add a "AgentControl"
- * object to the blackboard.
+ * Servlet that allows the client to add {@link AgentControl} objects
+ * to the blackboard and monitor their progress, such as agent
+ * mobility.
  * <p>
  * The path of the servlet is "/move".
  * <p>

@@ -28,14 +28,9 @@ package org.cougaar.core.mobility;
 
 
 /**
- * A ticket specifies the destination node and other parameters
- * of agent movement.
- * <p>
- * A ticket is immutable.
+ * A ticket describes an agent control request, such as an agent
+ * move.
  */
 public abstract class AbstractTicket implements java.io.Serializable {
-  
-  public AbstractTicket() {
-  }
-  
+  public AbstractTicket() {}
 }

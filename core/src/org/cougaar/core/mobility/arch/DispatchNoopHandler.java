@@ -30,10 +30,8 @@ import org.cougaar.core.mobility.MobilityException;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * The agent is already at the ticket's destination.
- * <p>
- * We perform a trivial "no-op" move by telling the
- * agent that it arrived.
+ * Handle a trivial request for move of an agent that's already at
+ * the target node.
  */
 public class DispatchNoopHandler extends AbstractHandler {
 

@@ -38,9 +38,8 @@ import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
 
 /**
- * Package-private implementation of AgentControl.
- * <p>
- * This uses a Relay.
+ * Package-private implementation of {@link AgentControl} using
+ * {@link Relay}s.
  */
 class AgentControlImpl 
 implements AgentControl, Relay.Source, Relay.Target, Serializable {
