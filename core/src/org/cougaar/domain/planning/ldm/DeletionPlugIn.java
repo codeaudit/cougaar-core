@@ -30,6 +30,7 @@ import org.cougaar.domain.planning.ldm.plan.NewConstraint;
 import org.cougaar.domain.planning.ldm.plan.Constraint;
 import org.cougaar.domain.planning.ldm.plan.Task;
 import org.cougaar.domain.planning.ldm.plan.MPTask;
+import org.cougaar.domain.glm.plugins.TaskUtils;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.SingleElementEnumeration;
 import org.cougaar.core.society.UID;
@@ -62,7 +63,7 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
         public boolean execute(Object o) {
             if (o instanceof PlanElement) {
                 PlanElement pe = (PlanElement) o;
-                if (isTimeToDelete(pe.getTask())) {
+                if (isTimeToDelete(pe)) {
                     if (pe instanceof Allocation) {
                         Allocation alloc = (Allocation) pe;
                         Asset asset = alloc.getAsset();
@@ -201,7 +202,7 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
 //          }
         System.out.println("pe=" + pe);
         System.out.println("task=" + task);
-        if (isTimeToDelete(task)) {
+        if (isTimeToDelete(pe)) {
             System.out.println("Deleting " + task.getUID());
             Enumeration e;
             if (task instanceof MPTask) {
@@ -267,23 +268,23 @@ public abstract class DeletionPlugIn extends SimplePlugIn {
         publishRemove(task);  // Rely on RescindLP to propagate the deletion
     }
 
-    private boolean isTimeToDelete(Task task) {
+    private boolean isTimeToDelete(PlanElement pe) {
         long et = 0L;
-// not yet implemented         et = task.getExpirationTime();
-        if (et == 0L) et = computeExpirationTime(task);
+        if (et == 0L) et = computeExpirationTime(pe);
 	System.out.println("Expiration time is " + new java.util.Date(et));
         return et == 0L || et < currentTimeMillis() - deletionDelay;
     }
 
-    private long computeExpirationTime(Task task) {
-        double et = task.getPreferredValue(AspectType.END_TIME);
-        if (Double.isNaN(et)) {
-            et = task.getPreferredValue(AspectType.START_TIME);
-            if (Double.isNaN(et)) {
-                // Tasks w/o times expire immediately
-                return currentTimeMillis() - deletionDelay;
-            }
-        }
-        return (long) et;
+    private long computeExpirationTime(PlanElement pe) {
+        double et;
+        et = TaskUtils.getStartTime(pe.getEstimatedResult());
+        if (!Double.isNaN(et)) return (long) et;
+        et = TaskUtils.getEndTime(pe.getTask());
+        if (!Double.isNaN(et)) return (long) et;
+        et = TaskUtils.getStartTime(pe.getEstimatedResult());
+        if (!Double.isNaN(et)) return (long) et;
+        et = TaskUtils.getStartTime(pe.getTask());
+        if (!Double.isNaN(et)) return (long) et;
+        return 0L;
     }
 }
