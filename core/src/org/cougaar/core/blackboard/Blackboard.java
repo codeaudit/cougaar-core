@@ -513,15 +513,14 @@ public class Blackboard extends Subscriber
     return new DestinationKey(dest, attrs);
   }
 
-  private final HashMap directivesByDestination = new HashMap(89);
-  
   /*
    * Builds up hashmap of arrays of directives for each agent, <code>MessageAddress</code>.
    * Modified to handle destinations of <code>AttributeBasedAddress</code>es, so that these are 
    * sent properly as well. 
    */
   public void appendMessagesToSend(List messages) {
-    
+    HashMap directivesByDestination = new HashMap(89);
+
     // FIXME - prefill cache of aba roles to addresses here, instead of building up a cache
     // fillCache();
     
@@ -554,7 +553,7 @@ public class Blackboard extends Subscriber
           Object key = getDirectiveKeyOfDestination(agentAddress);
 	  dirs = (ArrayList)directivesByDestination.get(key);
 	  if (dirs == null) {
-	    dirs = new ArrayList();
+	    dirs = new ArrayList(1);
 	    directivesByDestination.put(key, dirs); 
 	  }
 	  dirs.add(dir);
@@ -568,7 +567,7 @@ public class Blackboard extends Subscriber
         Object key = getDirectiveKeyOfDestination(dest);
 	dirs = (ArrayList) directivesByDestination.get(key);
 	if (dirs == null) {
-	  dirs = new ArrayList();
+	  dirs = new ArrayList(1);
 	  directivesByDestination.put(key, dirs);
 	}
 	dirs.add(dir);	
@@ -592,6 +591,7 @@ public class Blackboard extends Subscriber
         dirs.clear();
       }
     }
+    directivesByDestination.clear(); // maybe help gc a bit.
     sendQueue.clear();
   }
 
@@ -843,6 +843,7 @@ public class Blackboard extends Subscriber
       if (logger.isDebugEnabled()) {
         logger.debug("lookupABA: " + aba + "->" + matches);
       }
+      matches=Collections.unmodifiableCollection(matches);
       synchronized (cache) {
         ABATranslationImpl abaTranslation = (ABATranslationImpl) cache.get(aba);
         if (abaTranslation == null) {
@@ -853,7 +854,7 @@ public class Blackboard extends Subscriber
         }
       }
     }
-    return new ArrayList(matches); // Return a copy to preserve cache integrity
+    return matches;             // matches is unmodifiable - no need to copy it
   }
 
   // get the CommunityService when possible 
@@ -866,7 +867,7 @@ public class Blackboard extends Subscriber
       _myCommunityService = (CommunityService)
         myServiceBroker.getService(this, CommunityService.class, null);
       if (_myCommunityService == null) {
-        getLogger().warn(
+        logger.warn(
             "Warning: Blackboard had no CommunityService -"+
             " will fall back to dynamic service lookup."+
             "  Risk of Deadlock!", new Throwable());
@@ -874,10 +875,6 @@ public class Blackboard extends Subscriber
       _myCommunityService.addListener(new MyCommunityChangeListener());
       return _myCommunityService;
     }
-  }
-
-  private Logger getLogger() {
-    return Logging.getLogger(Blackboard.class);
   }
 
   /*
@@ -898,7 +895,8 @@ public class Blackboard extends Subscriber
       return Collections.EMPTY_SET;
     }
     Collection matches = cs.search(communitySpec, filter);
-    List cis = new ArrayList(matches.size());
+    // MIK - do we really need to copy this?.  No, but we're also filtering for MAs
+    List cis = new ArrayList(matches.size()); 
     for (Iterator i = matches.iterator(); i.hasNext(); ) {
       Object o = i.next();
       if (o instanceof MessageAddress) {
