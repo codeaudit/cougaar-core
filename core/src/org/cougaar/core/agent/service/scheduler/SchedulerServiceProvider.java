@@ -349,10 +349,10 @@ class SchedulerServiceProvider
 
     void scheduleClient(Trigger client) {
       synchronized (runnables) {
-        if (true) { // (!runnables.contains(client))
+	//        if (!runnables.contains(client)) {
           runnables.add(client);
           runnables.notifyAll();
-        }
+	  //        }
       }
     }
 
