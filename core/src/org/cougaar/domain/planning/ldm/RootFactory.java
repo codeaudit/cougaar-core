@@ -251,6 +251,17 @@ public class RootFactory
     return proto;
   }
 
+ /** convenience routine for creating prototype assets.
+   * does a createAsset followed by setting the TypeIdentification
+   * to the specified string.
+   **/
+  public final Asset createPrototype(Class assetclass, String typeid) {
+    Asset proto = createAsset(assetclass);
+    NewTypeIdentificationPG tip = (NewTypeIdentificationPG)proto.getTypeIdentificationPG();
+    tip.setTypeIdentification(typeid);
+    return proto;
+  }
+
 
   /** convenience routine for creating prototype assets.
    * does a createAsset followed by setting the TypeIdentification
