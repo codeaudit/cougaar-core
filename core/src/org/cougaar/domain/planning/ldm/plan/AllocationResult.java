@@ -154,7 +154,6 @@ public class AllocationResult
   private void setRollup(int[] aspects, double[] result) {
     AspectValue[] avs = new AspectValue[aspects.length];
     for (int i = 0; i < avs.length; i++) {
-      if (aspects[i] == 14) throw new IllegalArgumentException("Creating AspectValue for DEMANDRATE");
       avs[i] = new AspectValue(aspects[i], result[i]);
     }
     setAspectValueResults(avs);
