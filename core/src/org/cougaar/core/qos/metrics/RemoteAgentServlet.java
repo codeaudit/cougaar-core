@@ -45,7 +45,7 @@ public class RemoteAgentServlet
 
 
     protected String myPath() {
-	return "/metrics/remote/agent";
+	return "/metrics/remote/agents";
     }
 
     protected String myTitle () {

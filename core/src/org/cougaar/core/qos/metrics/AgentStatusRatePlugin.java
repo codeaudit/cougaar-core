@@ -57,11 +57,7 @@ public class AgentStatusRatePlugin
 
 
     private static final String[] Periods = 
-    {  
-       MSG_IN_10_SEC_AVG,
-       MSG_IN_100_SEC_AVG,
-       MSG_IN_1000_SEC_AVG
-    };
+    {  "10SecAvg","100SecAvg","1000SecAvg"};
 
     private class AgentHistory implements DecayingHistory.Callback {
 	DecayingHistory history;
@@ -74,7 +70,7 @@ public class AgentStatusRatePlugin
 	}
 
 	public void newAdditionLast(Object nowRaw, Object lastRaw) {
-	    handleNewAddition(agent, MSG_IN_1_SEC_AVG,  nowRaw, lastRaw);
+	    handleNewAddition(agent, "1SecAvg",  nowRaw, lastRaw);
 	}
 
 
@@ -92,6 +88,90 @@ public class AgentStatusRatePlugin
 	else
 	    return new AgentHistory(agent);
     }
+
+
+    private void updateMetric(MessageAddress agent,
+			      String lable,
+			      String period,
+			      double value, 
+			      String units)
+    {
+	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR +lable + period;
+	Metric metric = new MetricImpl(value,
+				      SECOND_MEAS_CREDIBILITY,
+				      "units",
+				      "AgentStatusRatePlugin");
+	metricsUpdate.updateValue(key, metric);
+    }
+
+  
+    private void handleNewAddition(MessageAddress agent,
+				   String period,
+				   Object nowRaw, 
+				   Object lastRaw) 
+    {
+	SnapShot now = (SnapShot) nowRaw;
+	SnapShot last = (SnapShot) lastRaw;
+	updateMetric(agent,"MsgIn",period, msgInRate(now,last),"msg/sec");
+	updateMetric(agent,"MsgOut",period, msgOutRate(now,last),"msg/sec");
+	updateMetric(agent,"BytesIn",period, bytesInRate(now,last),
+		     "bytes/sec");
+	updateMetric(agent,"BytesOut",period, bytesOutRate(now,last),
+		     "bytes/sec");
+
+    }
+    
+
+    private double deltaSec(SnapShot now, SnapShot last) {
+	return (now.timestamp - last.timestamp)/1000.0;
+    }
+
+    private double msgInRate(SnapShot now, SnapShot last) {
+	double deltaT=  deltaSec(now,last);
+	if (deltaT > 0) {
+	    return (now.state.receivedCount - last.state.receivedCount)/deltaT;
+	}
+	else return 0.0;
+    }
+
+    private double msgOutRate(SnapShot now, SnapShot last) {
+	double deltaT=  deltaSec(now,last);
+	if (deltaT > 0) {
+	    return (now.state.deliveredCount - last.state.deliveredCount)
+		/deltaT;
+	}
+	else return 0.0;
+    }
+
+    private double bytesOutRate(SnapShot now, SnapShot last) {
+	double deltaT=  deltaSec(now,last);
+	if (deltaT > 0) {
+	    return (now.state.deliveredBytes - last.state.deliveredBytes)
+		/deltaT;
+	}
+	else return 0.0;
+    }
+
+    private double bytesInRate(SnapShot now, SnapShot last) {
+	double deltaT=  deltaSec(now,last);
+	if (deltaT > 0) {
+	    return (now.state.receivedBytes - last.state.receivedBytes)
+		/deltaT;
+	}
+	else return 0.0;
+    }
+
+
+
+    protected  AgentStatusService.AgentState getState(MessageAddress agent)
+    {
+       	AgentStatusService.AgentState state = null;
+	if (agentStatusService!=null) {
+	    state = agentStatusService.getLocalAgentState(agent);
+	}
+	return state;
+    }
+
 
     public void load() {
 	super.load();
@@ -123,53 +203,11 @@ public class AgentStatusRatePlugin
     }
 
 
-
-
-    private void handleNewAddition(MessageAddress agent,
-				   String period,
-				   Object nowRaw, 
-				   Object lastRaw) 
-    {
-	SnapShot now = (SnapShot) nowRaw;
-	SnapShot last = (SnapShot) lastRaw;	
-	String key = "Agent" +KEY_SEPR+ agent  +KEY_SEPR+ period;
-	Metric value = new MetricImpl(msgInRate(now,last),
-				      SECOND_MEAS_CREDIBILITY,
-				      "msg/sec",
-				      "AgentStatusRatePlugin");
-	metricsUpdate.updateValue(key, value);
-    }
-    
-    private double msgInRate(SnapShot now, SnapShot last) {
-	double deltaT=  deltaTime(now,last)/1000.0;
-	if (deltaT > 0) {
-	    return (now.state.receivedCount - last.state.receivedCount)/deltaT;
-	}
-	else return 0.0;
-    }
-
-    private long deltaTime(SnapShot now, SnapShot last) {
-	return now.timestamp - last.timestamp;
-    }
-
-    protected  AgentStatusService.AgentState getState(MessageAddress agent)
-    {
-       	AgentStatusService.AgentState state = null;
-	if (agentStatusService!=null) {
-	    state = agentStatusService.getLocalAgentState(agent);
-	}
-	return state;
-    }
-
-    // poller
-    //   getState
-    //   add it to history
-
     protected void setupSubscriptions() {
     }
   
     protected void execute() {
-	//System.out.println("Executed MetricsServletPlugin");
+	//System.out.println("Executed AgentStatusRatePlugin");
     }
 
 }

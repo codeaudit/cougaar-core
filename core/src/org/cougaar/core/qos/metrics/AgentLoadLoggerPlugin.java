@@ -96,7 +96,7 @@ public class AgentLoadLoggerPlugin
     }
 
     private void dumpAgentData(String name) {
-	String path  ="Agent(" +name+ ")" +PATH_SEPR+ ONE_SEC_LOAD_AVG;	
+	String path  ="Agent(" +name+ ")" +PATH_SEPR+ CPU_LOAD_AVG_1_SEC_AVG;	
 	Metric metric = metricsService.getValue(path);
 	double value = metric.doubleValue();
 	String formattedValue = formatter.format(value);

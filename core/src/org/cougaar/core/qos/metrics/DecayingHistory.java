@@ -69,7 +69,7 @@ public class DecayingHistory
 	    boolean shift = ++index == length;
 	    if (shift) {
 		DecayingHistoryList next = getList(column+1);
-		next.add(last, new_elt);
+		if (next != null) next.add(last, new_elt);
 		full = true;
 		index = 0;
 	    } 

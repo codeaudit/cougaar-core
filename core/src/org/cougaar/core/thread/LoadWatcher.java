@@ -55,10 +55,10 @@ public class LoadWatcher
 	    this.name = extractObjectName(name);
 	    if (this.name.startsWith("Service"))
 	    key = this.name
-		+KEY_SEPR+ "OneSecondLoadAvg";
+		+KEY_SEPR+ CPU_LOAD_AVG_1_SEC_AVG;
 		else
 	    key = "Agent" +KEY_SEPR+ this.name
-		+KEY_SEPR+ "OneSecondLoadAvg";
+		+KEY_SEPR+ CPU_LOAD_AVG_1_SEC_AVG;
 	}
 
 

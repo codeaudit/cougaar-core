@@ -42,12 +42,37 @@ public interface Constants
      */
     String THREAD_SENSOR = "COUGAAR_THREAD";
 
-    String ONE_SEC_LOAD_AVG = "OneSecondLoadAvg";
+    String CPU_LOAD_AVG_1_SEC_AVG = "CPULoadAvg1SecAvg";
+    String CPU_LOAD_AVG_10_SEC_AVG = "CPULoadAvg10SecAvg";
+    String CPU_LOAD_AVG_100_SEC_AVG = "CPULoadAvg100SecAvg";
+    String CPU_LOAD_AVG_1000_SEC_AVG = "CPULoadAvg1000SecAvg";
+
+    String CPU_LOAD_JIPS_1_SEC_AVG = "CPULoadJips1SecAvg";
+    String CPU_LOAD_JIPS_10_SEC_AVG = "CPULoadJips10SecAvg";
+    String CPU_LOAD_JIPS_100_SEC_AVG = "CPULoadJips100SecAvg";
+    String CPU_LOAD_JIPS_1000_SEC_AVG = "CPULoadJips1000SecAvg";
+
     String MSG_IN_1_SEC_AVG = "MsgIn1SecAvg";
     String MSG_IN_10_SEC_AVG = "MsgIn10SecAvg";
     String MSG_IN_100_SEC_AVG = "MsgIn100SecAvg";
     String MSG_IN_1000_SEC_AVG = "MsgIn1000SecAvg";
 
+    String MSG_OUT_1_SEC_AVG = "MsgOut1SecAvg";
+    String MSG_OUT_10_SEC_AVG = "MsgOut10SecAvg";
+    String MSG_OUT_100_SEC_AVG = "MsgOut100SecAvg";
+    String MSG_OUT_1000_SEC_AVG = "MsgOut1000SecAvg";
+
+    String BYTES_IN_1_SEC_AVG = "BytesIn1SecAvg";
+    String BYTES_IN_10_SEC_AVG = "BytesIn10SecAvg";
+    String BYTES_IN_100_SEC_AVG = "BytesIn100SecAvg";
+    String BYTES_IN_1000_SEC_AVG = "BytesIn1000SecAvg";
+
+    String BYTES_OUT_1_SEC_AVG = "BytesOut1SecAvg";
+    String BYTES_OUT_10_SEC_AVG = "BytesOut10SecAvg";
+    String BYTES_OUT_100_SEC_AVG = "BytesOut100SecAvg";
+    String BYTES_OUT_1000_SEC_AVG = "BytesOut1000SecAvg";
+
+    String PERSIST_SIZE_LAST = "PersistSizeLast";
 
     // Credibility Spectrum: tries to unify many different notions of
     // credibility into a common metric. The Credibility "Calculus" is
