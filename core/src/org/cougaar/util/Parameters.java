@@ -63,33 +63,6 @@ public class Parameters {
     } catch (IOException e) {
       //e.printStackTrace();
     }
-
-    // @deprecated
-    // check .alprc to avoid confusion
-    try {
-      File f = new File(home+File.separator+".alprc");
-      if (f.exists()) {
-        System.err.println("Warning: \""+f+"\" will be ignored in the future.  Use .cougaarrc instead.");
-        parseParameterStream(f.toString(), new FileInputStream(f));
-        found=true;
-      } 
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
-   // @deprecated
-   // check for .alprc in config path.
-    try {
-      InputStream in = ConfigFinder.getInstance().open(".alprc");
-      if (in != null) {
-        System.err.println("Warning: Found an \".alprc\" in ConfigPath.  Please use cougaar.rc instead.");
-        parseParameterStream("ConfigPath/.alprc", in);
-        found=true;
-      }
-    } catch (IOException e) {
-      // be quiet
-      //e.printStackTrace();
-    }
     if (!found) {
       System.err.println("Warning: Found no source for Parameters - Expected to find .cougaarrc or ConfigPath/cougaar.rc");
     }
@@ -179,7 +152,7 @@ public class Parameters {
    * If no parameter is found and no defval is supplied, will return null.
    * The places looked at to find values are (in order):
    *  the extra argument map (if supplied)
-   *  the static parameter map (supplied by ConfigFinder/.alprc);
+   *  the static parameter map (supplied by ConfigFinder/.cougaarrc);
    *  the System properties
    *  any default value.
    **/
