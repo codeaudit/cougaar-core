@@ -31,6 +31,7 @@ import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.log4j.DetailPriority;
 import org.cougaar.util.log.log4j.ShoutPriority;
 
 /**
@@ -145,6 +146,8 @@ public class LoggingConfigServlet extends BaseServletComponent {
           "/> to "+
           "<select name=\"level\">"+
           "<option"+
+          (isetlevel == Logger.DETAIL ? " selected" : "")+">DETAIL</option>"+
+          "<option"+
           (isetlevel == Logger.DEBUG ? " selected" : "")+">DEBUG</option>"+
           "<option "+
           (isetlevel == Logger.INFO ? " selected" : "")+">INFO</option>"+
@@ -167,6 +170,7 @@ public class LoggingConfigServlet extends BaseServletComponent {
 
   private String convertIntToString(int level) {
     switch (level) {
+      case Logger.DETAIL: return "DETAIL";
       case Logger.DEBUG: return "DEBUG";
       case Logger.INFO:  return "INFO";
       case Logger.WARN:  return "WARN";
@@ -180,6 +184,8 @@ public class LoggingConfigServlet extends BaseServletComponent {
   private int convertStringToInt(String s) {
     if (s == null) {
       return -1;
+    } else if (s.equalsIgnoreCase("DETAIL")) {
+      return Logger.DETAIL;
     } else if (s.equalsIgnoreCase("DEBUG")) {
       return Logger.DEBUG;
     } else if (s.equalsIgnoreCase("INFO")) {
@@ -217,6 +223,10 @@ public class LoggingConfigServlet extends BaseServletComponent {
   static final Priority SHOUT = 
     ShoutPriority.toPriority("SHOUT", null);
 
+  // hack:
+  static final Priority DETAIL = 
+    DetailPriority.toPriority("DETAIL", null);
+
   // log4j private
   private Category getCategory(String name) {
     return
@@ -251,6 +261,7 @@ public class LoggingConfigServlet extends BaseServletComponent {
   // log4j private
   private Priority convertIntToPriority(int level) {
     switch (level) {
+    case Logger.DETAIL : return DETAIL;
     case Logger.DEBUG : return Priority.DEBUG;
     case Logger.INFO  : return Priority.INFO;
     case Logger.WARN  : return Priority.WARN;
@@ -272,7 +283,9 @@ public class LoggingConfigServlet extends BaseServletComponent {
       default: 
         if (level.equals(SHOUT)) {
           return Logger.SHOUT;
-        }
+        } else if (level.equals(DETAIL)) {
+	  return Logger.DETAIL;
+	}
         return 0;
     }
   }
