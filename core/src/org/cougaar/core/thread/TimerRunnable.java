@@ -1,6 +1,5 @@
 package org.cougaar.core.thread;
 
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 
 import java.util.ArrayList;
@@ -46,9 +45,6 @@ public class TimerRunnable implements Runnable
 	    if (fixedRate && (period > 0)) {
 		nextrun = System.currentTimeMillis()+period;
 	    }
-	    if (loggingService.isDebugEnabled())
-		loggingService.debug("Running TimerWrapper at " +
-				     System.currentTimeMillis());
 	    task.run();
 	    if (period == -1) {
 		cancelled = true;
@@ -70,14 +66,11 @@ public class TimerRunnable implements Runnable
     private ArrayList tasks;
     private Object lock;
     private ThreadService threadService;
-    private LoggingService loggingService;
 
-    public TimerRunnable(ThreadService threadService,
-			 LoggingService loggingService)
+    public TimerRunnable(ThreadService threadService)
     {
 	tasks = new ArrayList();
 	lock = new Object();
-	this.loggingService = loggingService;
 	this.threadService = threadService;
     }
 

@@ -26,6 +26,6 @@ import org.cougaar.core.thread.ThreadListener;
 
 public interface ThreadListenerService extends Service
 {
-    void addListener(ThreadService svc, ThreadListener listener);
-    void removeListener(ThreadService svc,ThreadListener listener);
+    void addListener(ThreadListener listener);
+    void removeListener(ThreadListener listener);
 }

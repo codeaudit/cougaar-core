@@ -28,14 +28,14 @@ import java.util.Comparator;
 public interface ThreadControlService extends Service
 {
     // General
-    void setMaxRunningThreadCount(ThreadService proxy, int count);
-    void setQueueComparator(ThreadService proxy, Comparator comparator);
+    void setMaxRunningThreadCount(int count);
+    void setQueueComparator(Comparator comparator);
 
     // Status
-    int runningThreadCount(ThreadService proxy);
-    int pendingThreadCount(ThreadService proxy);
-    int activeThreadCount(ThreadService proxy);
-    int maxRunningThreadCount(ThreadService proxy);
+    int runningThreadCount();
+    int pendingThreadCount();
+    int activeThreadCount();
+    int maxRunningThreadCount();
 
 
 }

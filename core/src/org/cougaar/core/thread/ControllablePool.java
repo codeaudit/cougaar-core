@@ -21,19 +21,43 @@
 
 package org.cougaar.core.thread;
 
-class TimeSlice
-{
-    long start;
-    long end;
-    boolean in_use;
+import org.cougaar.util.ReusableThreadPool;
+import org.cougaar.util.ReusableThread;
+import org.cougaar.util.PropertyParser;
 
-    TimeSlice(long start, long end) {
-	this.start = start;
-	this.end = end;
+/**
+ * A special kind of ReusableThreadPool which makes
+ * ControllableThreads.
+ */
+final class ControllablePool extends ReusableThreadPool 
+{
+
+    private static final String InitialPoolSizeProp =
+	"org.cougaar.thread.poolsize.initial";
+    private static final int InitialPoolSizeDefault = 32;
+    private static final String MaxPoolSizeProp =
+	"org.cougaar.thread.poolsize.max";
+    private static final int MaxPoolSizeDefault = 64;
+
+
+    private Scheduler scheduler;
+
+    ControllablePool(ThreadGroup group, Scheduler scheduler)  {
+	super(group, 
+	      PropertyParser.getInt(InitialPoolSizeProp, 
+				    InitialPoolSizeDefault),
+	      PropertyParser.getInt(MaxPoolSizeProp, 
+				    MaxPoolSizeDefault));
+	this.scheduler = scheduler;
     }
 
-    boolean isExpired() {
-	return System.currentTimeMillis() >= end;
+    protected ReusableThread constructReusableThread() {
+	return  new ControllableThread(this);
+    }
+
+    Scheduler scheduler() {
+	return scheduler;
     }
 
 }
+
