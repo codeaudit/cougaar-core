@@ -22,6 +22,7 @@
 package org.cougaar.core.mobility.ldm;
 
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
@@ -81,8 +82,10 @@ public interface AgentMove extends AgentControl {
    * The addresses specified in the ticket are not 
    * null.
    */
-  Ticket getTicket();
+  AbstractTicket getAbstractTicket();
 
+  Ticket getTicket();
+  
   /**
    * Get the move status code, which is one of the above
    * "*_STATUS" constants.

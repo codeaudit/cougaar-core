@@ -22,15 +22,17 @@
 package org.cougaar.core.mobility.ldm;
 
 import java.io.Serializable;
-import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
-/*
- * AgentAdd, AgentMove, and AgentRemove are implemented here. 
- * Now AgentMove is subclassed to maintain api. 
+/**
+ * Request an agent management operation, as defined in the ticket.
+ * <p>
+ * Abstract tickets allow add / remove / move of agents.
+ *
+ * @see MoveAgent backwards compatible API for agent mobility.
  */
 public interface AgentControl extends UniqueObject {
   
@@ -54,21 +56,20 @@ public interface AgentControl extends UniqueObject {
   
   /**
    * Get the optional UID of the object that "owns" this 
-   * move request, which is used by the infrastructure
-   * to mark redirected move requests.
+   * agent control request.
    */
   UID getOwnerUID();
   
   /**
-   * Get the agent that created this move request.
+   * Get the agent that created this request.
    */
   MessageAddress getSource();
   
   /**
-   * Get the agent that should perform the move.
+   * Get the agent that should perform the operation.
    * <p>
-   * Typically this is either the mobile agent itself or
-   * the node containing the mobile agent.  This must
+   * For agent mobility this should be eithe the mobile agent itself
+   * or the node containing the mobile agent.  This must
    * agree with the ticket.
    * <p>
    * Note that the behavior is different depending upon
@@ -106,6 +107,5 @@ public interface AgentControl extends UniqueObject {
    * For infrastructure use only!  Set the status.
    */
   void setStatus(int statusCode, Throwable stack);
- 
-  //Object updateResponse(MessageAddress t, int response);
+
 }

@@ -26,7 +26,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.Collections;
-import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceInputStream;
@@ -210,7 +209,7 @@ class AgentControlImpl
 
   public String toString() {
     return 
-      "Agent add request "+uid+
+      "Agent control request "+uid+
       " owned by "+ownerUID+
       " and ticket ("+ticket+
       ") with source "+source+
