@@ -114,6 +114,9 @@ extends GenericStateModelAdapter implements Component {
       try {
         String s = (component==null)?"anonymous":(component.toString());
         log.fatal("Suicide from "+s, error);
+	StateDumpService sds = (StateDumpService)
+	    rootsb.getService(this, StateDumpService.class, null);
+	if (sds != null) sds.dumpState();
       } finally {
         if (SuicideService.isSuicideEnabled) {
           System.exit(SuicideService.EXIT_CODE);
