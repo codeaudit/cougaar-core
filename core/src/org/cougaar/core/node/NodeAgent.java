@@ -102,8 +102,6 @@ import org.cougaar.core.mts.*;
 
 import org.cougaar.core.thread.ThreadServiceProvider;
 
-import org.cougaar.core.qos.monitor.QosMonitorService;
-import org.cougaar.core.qos.monitor.QosMonitorServiceProvider;
 import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.qos.metrics.MetricsServiceProvider;
@@ -370,7 +368,7 @@ public class NodeAgent
     }
 
 
-    // Set up MTS and QOS service provides.
+    // Set up MTS service provides.
     //
     // NB: The order is important for now - MTS *must* be created
     // first.
@@ -541,15 +539,8 @@ public class NodeAgent
     //System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
 
-    initQos(rootsb, mtsp, id);
   }
 
-  private void initQos (ServiceBroker rootsb, MessageTransportServiceProvider mtsp, NodeIdentifier id) {
-    String name = id.toString();
-    QosMonitorServiceProvider qmsp = new QosMonitorServiceProvider(name, mtsp);
-    add(qmsp);
-    rootsb.addService(QosMonitorService.class, qmsp);
-  }
 
   private class MTSClient implements MessageTransportClient {
     public void receiveMessage(Message message) {
