@@ -33,11 +33,32 @@ public class BlackboardServiceProvider implements ServiceProvider {
   }
   
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-   return new Subscriber( (BlackboardClient)requestor, distributor );
+    if (serviceClass == BlackboardService.class) {
+      return new Subscriber( (BlackboardClient)requestor, distributor );
+    } else if (serviceClass == BlackboardMetricsService.class) {
+      return getBlackboardMetricsService();
+    } else {
+      throw new IllegalArgumentException("BlackboardServiceProvider does not provide a service for: "+
+                                         serviceClass);
+    }
   }
 
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
     // ?? each client will get its own subscriber - how can we clean them up??
+  }
+
+  // blackboard metrics
+  private BlackboardMetricsService bbmetrics = null;
+
+  // only need one instance of this service.
+  private BlackboardMetricsService getBlackboardMetricsService() {
+    if (bbmetrics != null) {
+      return bbmetrics;
+    } else {
+      //create one
+      bbmetrics = new BlackboardMetricsServiceImpl(distributor);
+      return bbmetrics;
+    }
   }
   
 }
