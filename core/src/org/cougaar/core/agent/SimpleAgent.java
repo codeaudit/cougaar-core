@@ -41,6 +41,7 @@ import org.cougaar.core.blackboard.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -76,6 +77,10 @@ import org.cougaar.core.mts.MessageStatistics;
 
 // cluster context registration
 import org.cougaar.core.agent.ClusterContext;
+
+// mobility support
+import org.cougaar.core.mobility.MobilityDispatchService;
+import org.cougaar.core.agent.service.mobility.MobilityDispatchServiceProvider;
 
 // blackboard support
 import org.cougaar.core.blackboard.BlackboardForAgent;
@@ -166,6 +171,9 @@ public class SimpleAgent
   private MessageTransportService messenger;
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
+
+  private MobilityDispatchServiceProvider myMDSP;
+  private MobilityDispatchService nodeMDS;
 
   private UIDServiceProvider myUIDServiceProvider;
   private UIDService myUIDService;
@@ -356,6 +364,11 @@ public class SimpleAgent
       sb.getService(
           this, MessageWatcherService.class, null);
 
+    // override node-level mobility service
+    nodeMDS = (MobilityDispatchService) 
+      sb.getService(this, MobilityDispatchService.class, null);
+    myMDSP = new MobilityDispatchServiceProvider(this, nodeMDS);
+    sb.addService(MobilityDispatchService.class, myMDSP);
 
     // set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
@@ -436,7 +449,7 @@ public class SimpleAgent
                                                     );
       sb.addService(LDMService.class, myLDMServiceProvider);
     }
-
+ 
     // transit the state.
     super.load();
 
@@ -450,6 +463,7 @@ public class SimpleAgent
         add(agentState.children[i]);
       }
     } else {
+
       String enableServlets = 
         System.getProperty("org.cougaar.core.servlet.enable");
       if ((enableServlets == null) ||
@@ -656,6 +670,9 @@ public class SimpleAgent
 
     sb.releaseService(this, UIDService.class, myUIDService);
     sb.revokeService(UIDService.class, myUIDServiceProvider);
+
+    sb.revokeService(MobilityDispatchService.class, myMDSP);
+    sb.releaseService(this, MobilityDispatchService.class, nodeMDS);
 
     sb.revokeService(
         AgentContainmentService.class, 

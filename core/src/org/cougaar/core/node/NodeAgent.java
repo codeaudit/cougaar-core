@@ -119,6 +119,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
 
+import org.cougaar.core.mobility.service.MobilityMessage;
+import org.cougaar.core.mobility.service.RootMobilityComponent;
 
 import org.cougaar.core.component.*;
 
@@ -163,6 +165,7 @@ public class NodeAgent
   /** A reference to the MessageTransportService containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
 
+  private RootMobilityComponent agentMobility;
 
   /** @param asb An unproxied reference to the top-level ServiceBroker so that we can 
    * add global services.
@@ -359,6 +362,20 @@ public class NodeAgent
                                 null); //policy
     super.add(ntcdesc);         // let a ComponentLoadFailure pass through
 
+    // node-level agent mobility service provider
+    List mobilityParams = new ArrayList(2);
+    mobilityParams.add(theMessenger);
+    mobilityParams.add(agentManager);
+    // FIXME would use desc-based "add", but we need a pointer
+    // to the component for later message-passing.
+    //
+    // for now we'll directly add the component
+    this.agentMobility = 
+      new RootMobilityComponent(
+          mobilityParams);
+    super.add(agentMobility);
+    agentMobility.provideServices(rootsb);
+
     String enableServlets = 
       System.getProperty("org.cougaar.core.servlet.enable");
     if ((enableServlets == null) ||
@@ -507,7 +524,17 @@ public class NodeAgent
           throw new UnsupportedOperationException(
             "Unsupported ComponentMessage: "+m);
         }
+      } else if (m instanceof MobilityMessage) {
+        if (agentMobility != null) {
+          agentMobility.receiveMessage(m);
+        } else {
+          throw new RuntimeException(
+              "Agent mobility disabled in node "+getIdentifier());
+        }
       } else if (m instanceof AgentManagementMessage) {
+        // this is the old mobility support -- it will be
+        // removed in release 9.3
+        //
         // run in a separate thread (in case the source is local)
         Runnable r = new Runnable() {
           public void run() {

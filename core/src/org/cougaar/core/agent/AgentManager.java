@@ -45,7 +45,7 @@ import java.lang.reflect.*;
  **/
 public class AgentManager 
   extends ContainerSupport
-  implements ContainerAPI
+  implements ContainerAPI, AgentContainer
 {
   public AgentManager() {
     if (!attachBinderFactory(new AgentBinderFactory())) {
@@ -99,6 +99,155 @@ public class AgentManager
 
   public void requestStop() { }
 
+  public String getName() {
+    return getBindingSite().getName();
+  }
+
+  private void registerAgent(Agent agent) {
+    if (agent instanceof ClusterServesClusterManagement) {
+      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
+    } else {
+      System.err.println("Warning: attempted to registerAgent of non-cluster.");
+    }
+  }
+
+  //
+  // support classes
+  //
+
+  private static class AgentManagerServiceBroker 
+    extends PropagatingServiceBroker
+    {
+      public AgentManagerServiceBroker(BindingSite bs) {
+        super(bs);
+      }
+    }
+
+  private class AgentManagerProxy 
+    implements AgentManagerForBinder, 
+  ClusterManagementServesCluster, 
+  BindingSite {
+
+    public String getName() {return AgentManager.this.getName(); }
+    public void registerAgent(Agent agent) { 
+      AgentManager.this.registerAgent(agent); 
+    }
+
+    // BindingSite
+    public ServiceBroker getServiceBroker() {
+      return AgentManager.this.getServiceBroker();
+    }
+    public void requestStop() {}
+    public boolean remove(Object o) {return true; }
+  }
+
+  //
+  // Implement the "AgentContainer" API, primarily to support
+  //   agent mobility
+  //
+
+  public void addAgent(MessageAddress agentId, StateTuple tuple) {
+    // FIXME cleanup this code
+    //
+    // first check that the agent isn't already loaded
+    Iterator iter = super.boundComponents.iterator();
+    while (iter.hasNext()) {
+      Object oi = iter.next();
+      if (!(oi instanceof BoundComponent)) {
+        continue;
+      }
+      BoundComponent bc = (BoundComponent)oi;
+      Binder b = bc.getBinder();
+      if (!(b instanceof AgentBinder)) {
+        continue;
+      }
+      Agent a = ((AgentBinder)b).getAgent();
+      if ((a != null) &&
+          (agentId.equals(a.getAgentIdentifier()))) {
+        // agent already exists
+        throw new RuntimeException(
+            "Agent "+agentId+" already exists");
+      }
+    }
+    
+    // add the agent
+    if (!(super.add(tuple))) {
+      throw new RuntimeException(
+          "Agent "+agentId+" returned \"false\"");
+    }
+  }
+
+  // NOTE: assumes that "agent.unload()" has been called.
+  public void removeAgent(MessageAddress agentId) {
+    // FIXME cleanup this code
+    //
+    // find the agent in the set of children
+    Iterator iter = super.boundComponents.iterator();
+    while (iter.hasNext()) {
+      Object oi = iter.next();
+      if (!(oi instanceof BoundComponent)) {
+        continue;
+      }
+      BoundComponent bc = (BoundComponent)oi;
+      Binder b = bc.getBinder();
+      if (!(b instanceof AgentBinder)) {
+        continue;
+      }
+      Agent a = ((AgentBinder)b).getAgent();
+      if ((a != null) &&
+          (agentId.equals(a.getAgentIdentifier()))) {
+        // remove the agent
+        iter.remove();
+        return;
+      }
+    }
+    // no such agent
+    throw new RuntimeException(
+        "Agent "+agentId+" is not loaded");
+  }
+
+  public ComponentDescription getAgentDescription(MessageAddress agentId) {
+    // FIXME cleanup this code
+    Iterator iter = super.boundComponents.iterator();
+    while (iter.hasNext()) {
+      Object oi = iter.next();
+      if (!(oi instanceof BoundComponent)) {
+        continue;
+      }
+      BoundComponent bc = (BoundComponent)oi;
+      Binder b = bc.getBinder();
+      if (!(b instanceof AgentBinder)) {
+        continue;
+      }
+      Agent a = ((AgentBinder)b).getAgent();
+      if ((a != null) &&
+          (agentId.equals(a.getAgentIdentifier()))) {
+        Object cmp = bc.getComponent();
+        if (cmp instanceof ComponentDescription) {
+          // found the description
+          return (ComponentDescription) cmp;
+        } else {
+          // description not known
+          return null;
+        }
+      }
+    }
+    // no such agent
+    return null;
+  }
+
+
+
+  //
+  //
+  // All the code below will soon (9.3) be replaced by the
+  // new agent-mobility implementation, which now uses
+  // node-level and agent-level components.
+  //
+  //
+
+
+
   /**
    * Support Node-issued agent mobility requests.
    * <p>
@@ -128,15 +277,26 @@ public class AgentManager
     stubAM.cloneAgent(agentID, nodeID, cloneAgentID, cloneBlackboard);
   }
 
-  public String getName() {
-    return getBindingSite().getName();
-  }
-
-  private void registerAgent(Agent agent) {
-    if (agent instanceof ClusterServesClusterManagement) {
-      getBindingSite().registerCluster((ClusterServesClusterManagement) agent);
-    } else {
-      System.err.println("Warning: attempted to registerAgent of non-cluster.");
+  /**
+   * For use by <tt>findAgent(..)</tt>.
+   */
+  private static class AgentEntry {
+    private final ComponentDescription desc;
+    private final Agent agent;
+    public AgentEntry(
+        ComponentDescription desc,
+        Agent agent) {
+      this.desc = desc;
+      this.agent = agent;
+      if ((desc == null) || (agent == null)) {
+        throw new NullPointerException();
+      }
+    }
+    public ComponentDescription getComponentDescription() {
+      return desc;
+    }
+    public Agent getAgent() {
+      return agent;
     }
   }
 
@@ -200,59 +360,6 @@ public class AgentManager
       }
     }
     return false;
-  }
-
-  //
-  // support classes
-  //
-
-  private static class AgentManagerServiceBroker 
-    extends PropagatingServiceBroker
-    {
-      public AgentManagerServiceBroker(BindingSite bs) {
-        super(bs);
-      }
-    }
-
-  private class AgentManagerProxy 
-    implements AgentManagerForBinder, 
-  ClusterManagementServesCluster, 
-  BindingSite {
-
-    public String getName() {return AgentManager.this.getName(); }
-    public void registerAgent(Agent agent) { 
-      AgentManager.this.registerAgent(agent); 
-    }
-
-    // BindingSite
-    public ServiceBroker getServiceBroker() {
-      return AgentManager.this.getServiceBroker();
-    }
-    public void requestStop() {}
-    public boolean remove(Object o) {return true; }
-  }
-
-  /**
-   * For use by <tt>findAgent(..)</tt>.
-   */
-  private static class AgentEntry {
-    private final ComponentDescription desc;
-    private final Agent agent;
-    public AgentEntry(
-        ComponentDescription desc,
-        Agent agent) {
-      this.desc = desc;
-      this.agent = agent;
-      if ((desc == null) || (agent == null)) {
-        throw new NullPointerException();
-      }
-    }
-    public ComponentDescription getComponentDescription() {
-      return desc;
-    }
-    public Agent getAgent() {
-      return agent;
-    }
   }
 
   /**
