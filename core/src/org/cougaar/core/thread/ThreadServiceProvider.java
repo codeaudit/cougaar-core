@@ -37,7 +37,11 @@ public final class ThreadServiceProvider implements ServiceProvider
     private Scheduler scheduler;
     private ThreadServiceProxy proxy;
     private String name;
-	
+
+    /**
+     * Create a new set of thread services. Deduce the parent by
+     * asking the ServiceBroker.
+     */
     public ThreadServiceProvider(ServiceBroker sb, String name) {
 	this.name = name;
 	ThreadService parent =(ThreadService) 
@@ -45,6 +49,10 @@ public final class ThreadServiceProvider implements ServiceProvider
 	makeProxies(parent);
     }
 
+    /**
+     * Create a new set of thread services.  The parent is provided
+     * explicitly.  No one uses this yet; it may go away.
+     */
     public ThreadServiceProvider(ThreadService parent, String name) {
 	this.name = name;
 	makeProxies(parent);
