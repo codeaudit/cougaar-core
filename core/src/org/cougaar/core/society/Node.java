@@ -652,82 +652,14 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
       e.printStackTrace();
     }
   }
-
-//   /**
-//    * Create a Cluster from a ComponentDescription.
-//    * <p>
-//    * This should be moved into the future "AgentManager".
-//    */
-//   protected ClusterServesClusterManagement createCluster(
-//       ComponentDescription desc) {
-
-//     // check the cluster classname
-//     String clusterClassname = desc.getClassname();
-
-//     // load an instance of the cluster
-//     //
-//     // FIXME use the "desc.getCodebase()" and other arguments
-//     ClusterServesClusterManagement cluster;
-//     try {
-//       Class clusterClass = Class.forName(clusterClassname);
-//       Object clusterInstance = clusterClass.newInstance();
-//       if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
-//         throw new ClassNotFoundException();
-//       }
-//       cluster = (ClusterServesClusterManagement)clusterInstance;
-//     } catch (Exception e) {
-//       e.printStackTrace();
-//       throw new IllegalArgumentException(
-//           "Unable to load agent class: \""+clusterClassname+"\"");
-//     }
-
-//     // the parameter should be the cluster name
-//     String clusterid;
-//     try {
-//       clusterid = (String)((List)desc.getParameter()).get(0);
-//     } catch (Exception e) {
-//       clusterid = null;
-//     }
-//     if (clusterid == null) {
-//       throw new IllegalArgumentException(
-//           "Agent specification lacks a String \"name\" parameter");
-//     }
-   
-//     // set the ClusterId
-//     ClusterIdentifier cid = new ClusterIdentifier(clusterid);
-//     cluster.setClusterIdentifier(cid);
-
-//     //move the cluster to the intialized state
-//     BindingUtility.activate(cluster,new NodeProxy(), null);
-//     if (cluster.getState() != GenericStateModel.ACTIVE) {
-//       System.err.println("Cluster "+cluster+" is not Active!");
-//     }
-
-//     return cluster;
-//   }
   
-  private class NodeProxy implements NodeForBinder, BindingSite {
-    // ClusterManagementServesCluster
-    public void sendMessage(Message message) throws MessageTransportException {
-      Node.this.sendMessage(message);
-    }
-    public MessageTransportServer getMessageTransportServer() {
-      return Node.this.getMessageTransportServer(); 
-    }
-    public String getName() {return Node.this.getName(); }
-    public String getIdentifier() {
-      return Node.this.getIdentifier();
-    }
-    public boolean remove(Object o) {return true;}
-    // BindingSite
-    public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }
-    public void requestStop() {}
-    // extra pieces
-    public void registerCluster(ClusterServesClusterManagement cluster) {
-      Node.this.registerCluster(cluster);
-    }
-  }
+ 
 
+  // Need this so that when the AgentManager creates a cluster, the cluster
+  // gets properly hooked up with the externalnodeactionlistener and
+  // gets put into the Node's running list of clusters.
+  // This is an artifact of moving the cluster creation to AgentManager and
+  // should probably be cleanup up further.
   private void registerCluster(ClusterServesClusterManagement cluster) {
     // get the (optional) external listener
     ExternalNodeActionListener eListener;
@@ -768,129 +700,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     add(descs);
   }
  
-//   /**
-//    * Add Clusters and their child Components (Plugins, etc) to this Node.
-//    * <p>
-//    * Note that this is a bulk operation, since the loading process is:<ol>
-//    *   <li>Create the empty clusters</li>
-//    *   <li>Add the Plugins and initialize the clusters</li>
-//    * </ol>
-//    * <p>
-//    * This should be moved into the future "AgentManager".
-//    */
-//   protected void add(ComponentDescription[] descs) {
-
-//     int nDescs = ((descs != null) ? descs.length : 0);
-
-//     System.err.print("Creating Clusters:");
-//     List clusters = new ArrayList(nDescs);
-//     for (int i = 0; i < nDescs; i++) {
-//       try {
-//         ComponentDescription desc = descs[i];
-//         String insertionPoint = desc.getInsertionPoint();
-//         if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
-//           // fix to support non-agent components
-//           throw new IllegalArgumentException(
-//               "Currently only agent ADD is supported, not "+
-//               insertionPoint);
-//         }
-//         ClusterServesClusterManagement cluster = createCluster(desc);
-//         ClusterIdentifier cid = cluster.getClusterIdentifier();
-//         String cname = cid.toString();
-//         System.err.print("\n\t"+cname);
-//         clusters.add(cluster);
-//       } catch (Exception e) {
-//         System.err.println(
-//             "\nUnable to load cluster["+i+"]: "+e);
-//         e.printStackTrace();
-//       }
-//     }
-
-//     System.err.print("\nLoading Plugins:");
-//     int nClusters = clusters.size();
-//     for (int i = 0; i < nClusters; i++) {
-//       try {
-//         ClusterServesClusterManagement cluster = 
-//           (ClusterServesClusterManagement)clusters.get(i);
-//         ClusterIdentifier cid = cluster.getClusterIdentifier();
-//         String cname = cid.toString();
-//         // read from file
-//         System.err.print("\n\t"+cname);
-//         // parse the cluster properties
-//         // currently assume ".ini" files
-//         InputStream in = getConfigFinder().open(cname+".ini");
-//         ComponentDescription[] cDescs = 
-//           INIParser.parse(in, "Node.AgentManager.Agent");
-
-//         // add the plugins and other cluster components
-//         //
-//         // FIXME could benefit from a bulk-add message
-//         for (int j = 0; j < cDescs.length; j++) {
-//           ComponentMessage addCM = 
-//             new ComponentMessage(
-//                 cid,
-//                 cid,
-//                 ComponentMessage.ADD,
-//                 cDescs[j]);
-//           // bypass the message system to initialize the cluster
-//           cluster.receiveMessage(addCM);
-//         }
-
-//         // tell the cluster to proceed.
-//         ClusterInitializedMessage m = new ClusterInitializedMessage();
-//         m.setOriginator(cid);
-//         m.setTarget(cid);
-//         cluster.receiveMessage(m);
-//       } catch (Exception e) {
-//         System.err.println(
-//             "\nUnable to add cluster["+i+"] child omponents: "+e);
-//         e.printStackTrace();
-//         clusters.set(i, null);
-//       }
-//     }
-
-//     System.err.println("\nPlugins Loaded.");
-
-//     // save these clusters as children of the node
-//     addClusters(clusters);
-
-//     // get the (optional) external listener
-//     ExternalNodeActionListener eListener;
-//     try {
-//       eListener =
-//         ((eController != null) ? 
-//          eController.getExternalNodeActionListener() :
-//          null);
-//     } catch (Exception e) {
-//       eListener = null;
-//     }
-
-//     // notify the listener
-//     if (eListener != null) {
-//       int n = clusters.size();
-//       for (int i = 0; i < n; i++) {
-//         ClusterServesClusterManagement ci = 
-//           (ClusterServesClusterManagement)clusters.get(i);
-//         if (ci != null) {
-//           ClusterIdentifier ciId = ci.getClusterIdentifier();
-//           try {
-//             eListener.handleClusterAdd(eController, ciId);
-//           } catch (Exception e) {
-//             // lost listener?  should we kill this Node?
-//             System.err.println(
-//                 "Lost connection to external listener? "+e.getMessage());
-//             try {
-//               eController.setExternalNodeActionListener(null);
-//             } catch (Exception e2) {
-//             }
-//             break;
-//           }
-//         }
-//       }
-//     }
-//   }
-
-
   /**
    * Add Clusters and their child Components (Plugins, etc) to this Node.
    * <p>
@@ -907,6 +716,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     for (int i = 0; i < nDescs; i++) {
       try {
         ComponentDescription desc = descs[i];
+        //Let the agentmanager create the cluster
         agentManager.add(desc);
       } catch (Exception e) {
         System.err.println("Exception creating clusters: " + e);
@@ -1018,6 +828,30 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   // 
   //support classes
   //
+
+  // Children's view of the parent component Node - as accessed through 
+  // the NodeForBinder interface.  Keeps the actual Node safe.
+  private class NodeProxy implements NodeForBinder, BindingSite {
+    // ClusterManagementServesCluster
+    public void sendMessage(Message message) throws MessageTransportException {
+      Node.this.sendMessage(message);
+    }
+    public MessageTransportServer getMessageTransportServer() {
+      return Node.this.getMessageTransportServer(); 
+    }
+    public String getName() {return Node.this.getName(); }
+    public String getIdentifier() {
+      return Node.this.getIdentifier();
+    }
+    public boolean remove(Object o) {return true;}
+    // BindingSite
+    public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }
+    public void requestStop() {}
+    // extra pieces
+    public void registerCluster(ClusterServesClusterManagement cluster) {
+      Node.this.registerCluster(cluster);
+    }
+  }
 
   private static class NodeServiceBroker extends ServiceBrokerSupport {}
 
