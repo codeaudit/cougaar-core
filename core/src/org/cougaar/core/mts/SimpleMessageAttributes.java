@@ -278,6 +278,7 @@ public class SimpleMessageAttributes
     synchronized (map) {
       Object old = map.get(attribute);
       if (old == null) {
+	// Given attribute wasnt on the message. NOOP
       } else if (old instanceof ArrayList) {
         ((ArrayList) old).remove(value);
       } else if (value.equals(old)) {
