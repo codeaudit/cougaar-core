@@ -136,8 +136,7 @@ public class Subscriber {
   }
 
   public void persistNow() throws PersistenceNotEnabledException {
-    boolean inTransaction =
-      transactionLock.getBusyFlagOwner() == Thread.currentThread();
+    boolean inTransaction = (transactionLock.getBusyFlagOwner() == Thread.currentThread());
     if (inTransaction) closeTransaction();
     theDistributor.persistNow();
     if (inTransaction) openTransaction();
@@ -262,21 +261,21 @@ public class Subscriber {
   private int publishChangedCount;
   private int publishRemovedCount;
 
+  // now unused
   public int getSubscriptionCount() {
-    synchronized (subscriptions) {
-      return subscriptions.size();
-    }
+    // synchronized (subscriptions) {}
+    return subscriptions.size();
   }
   
+  // unused?
   public int getSubscriptionSize() {
     int size = 0;
-    synchronized (subscriptions) {
-      int l = subscriptions.size();
-      for (int i = 0; i < l; i++) {
-        Object s = subscriptions.get(i);
-        if (s instanceof CollectionSubscription) {
-          size += ((CollectionSubscription)s).size();
-        }
+    // synchronized (subscriptions) {} 
+    int l = subscriptions.size();
+    for (int i = 0; i < l; i++) {
+      Object s = subscriptions.get(i);
+      if (s instanceof CollectionSubscription) {
+        size += ((CollectionSubscription)s).size();
       }
     }
     return size;
@@ -477,21 +476,23 @@ public class Subscriber {
    **/
   public void receiveEnvelopes(List envelopes, boolean envelopeQuiescenceRequired) {
     boolean signalActivity = false;
-    synchronized (watchers) { // I dislike nested locks, but we need to be sure nobody is adding watchers...
-      synchronized (inboxLock) {
-        boolean notBusy = transactionLock.tryGetBusyFlag();
-        boolean hasWatchers = !watchers.isEmpty();
-        if (getSubscriptionCount() > 0 || (hasWatchers && !notBusy)) {
-          pendingEnvelopes.addAll(envelopes);
-          if (envelopeQuiescenceRequired) { inboxAllowsQuiescence = false; }
-          signalActivity = true;
-        } else {
-          if (logger.isInfoEnabled() && getSubscriptionCount() == 0 && !notBusy && !hasWatchers) {
-            logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
-          }
+    synchronized (inboxLock) {
+      boolean notBusy = transactionLock.tryGetBusyFlag(); 
+      // if notBusy, then the client isn't running (and wont) until we're done.
+      // if !notBusy, then the client IS running so we need to dump the envelopes
+      //  in regardless (because it might add a watcher or subscription
+      boolean hasWatchers; synchronized (watchers) { hasWatchers = !watchers.isEmpty(); }
+      boolean hasSubscriptions = !subscriptions.isEmpty();
+      if (hasSubscriptions || (hasWatchers && !notBusy)) {
+        pendingEnvelopes.addAll(envelopes);
+        if (envelopeQuiescenceRequired) { inboxAllowsQuiescence = false; }
+        signalActivity = true;
+      } else {
+        if (logger.isInfoEnabled() && !hasSubscriptions && !notBusy && !hasWatchers) {
+          logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
         }
-        if (notBusy) transactionLock.freeBusyFlag();
       }
+      if (notBusy) transactionLock.freeBusyFlag();
     }
     if (signalActivity) signalExternalActivity();
   }
