@@ -31,17 +31,17 @@ import org.cougaar.domain.planning.Constants;
 
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
-import org.cougaar.domain.planning.ldm.asset.CommunityPGImpl;
 import org.cougaar.domain.planning.ldm.asset.ItemIdentificationPGImpl;
 import org.cougaar.domain.planning.ldm.asset.NewClusterPG;
-import org.cougaar.domain.planning.ldm.asset.NewCommunityPG;
 import org.cougaar.domain.planning.ldm.asset.NewItemIdentificationPG;
 import org.cougaar.domain.planning.ldm.asset.NewPropertyGroup;
 import org.cougaar.domain.planning.ldm.asset.NewRelationshipPG;
-import org.cougaar.domain.planning.ldm.asset.RelationshipBG;
+import org.cougaar.domain.planning.ldm.asset.NewTimePhasedPropertyGroup;
 import org.cougaar.domain.planning.ldm.asset.NewTypeIdentificationPG;
 import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 import org.cougaar.domain.planning.ldm.asset.PropertyGroupSchedule;
+import org.cougaar.domain.planning.ldm.asset.RelationshipBG;
+import org.cougaar.domain.planning.ldm.asset.TimePhasedPropertyGroup;
 
 import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.plan.HasRelationships;
@@ -263,10 +263,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
     }
     return saved;
   }
-  
 
-   
-	
   private void publish(Object o) {
     publishAdd(o);
   }
@@ -329,7 +326,9 @@ public class AssetDataPlugIn extends SimplePlugIn {
           } else {
             // if The token you read is not one of the valid
             // choices from above
-            System.err.println("AssetDataPlugIn Incorrect token: " + dataItem);
+            System.err.println("AssetDataPlugIn Incorrect token: " + 
+                               dataItem);
+            throw new RuntimeException("Format error in \""+filename+"\".");
           }
         } else {
           System.out.println("ttype: " + tokens.ttype + " sval: " + tokens.sval);
@@ -382,8 +381,31 @@ public class AssetDataPlugIn extends SimplePlugIn {
 
       try {
         if (cl.isInterface()) {
-          // interface means try the COF
-          return parseWithCOF(cl, arg);
+          if (TimeSpan.class.isAssignableFrom(cl)) {
+            Vector svs =  org.cougaar.util.StringUtility.parseCSV(arg);
+            long startTime = getDefaultStartTime();
+            long endTime = getDefaultEndTime();
+            for (Enumeration sp = svs.elements(); sp.hasMoreElements();) {
+              String ss = (String) sp.nextElement();
+
+              int eq = ss.indexOf('=');
+              String slotname = ss.substring(0, eq);
+              String vspec = ss.substring(eq+1);
+              try {
+                long time  = myDateFormat.parse(vspec).getTime();
+                if (slotname.equals("startTime")) {
+                  startTime = time;
+                } else if (slotname.equals("endTime")) {
+                  endTime = time;
+                }
+              } catch (java.text.ParseException pe) {
+              }
+            }
+            return new TrivialTimeSpan(startTime, endTime);
+          } else {
+            // interface means try the COF
+            return parseWithCOF(cl, arg);
+          }
         } else {
           Class ac = getArgClass(cl);
           Object[] args = {arg};
@@ -425,6 +447,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
                                          {Short.TYPE, Short.class},
                                          {Byte.TYPE, Byte.class},
                                          {Character.TYPE, Character.class}};
+
                                      
   private static Class getArgClass(Class c) {
     if (! c.isPrimitive()) return c;
@@ -543,8 +566,11 @@ public class AssetDataPlugIn extends SimplePlugIn {
     String propertyName = prop.substring(1, prop.length()-1);
     if (asset != null) {
       NewPropertyGroup property = null;
+      boolean timePhased = false;
       try {
-	property = (NewPropertyGroup)getFactory().createPropertyGroup(propertyName);
+	property = 
+          (NewPropertyGroup)getFactory().createPropertyGroup(propertyName);
+        timePhased = (property instanceof TimePhasedPropertyGroup);
       } catch (Exception e) {
 	System.err.println("AssetDataPlugIn: Unrecognized keyword for a prototype-ini file: [" + propertyName + "]");
       }
@@ -561,8 +587,17 @@ public class AssetDataPlugIn extends SimplePlugIn {
 	    // Call appropriate setters for the slots of the property
             Object arg = parseExpr(dataType, tokens.sval);
 
-            createAndCallSetter(property, propName, "set" + member, 
-                                getType(dataType), arg);
+            // Support specific to TimePhasedPropertyGroups
+            if ((timePhased) &&
+                (member.equals("TimeSpan"))) {
+              TimeSpan timeSpan = (TimeSpan) arg;
+              ((NewTimePhasedPropertyGroup) property).setTimeSpan(timeSpan.getStartTime(),
+                                                   timeSpan.getEndTime());
+            } else {
+              Object [] args = new Object[] {arg};
+              createAndCallSetter(property, propName, "set" + member, 
+                                  getType(dataType), args);
+            }
 	    newVal = tokens.nextToken();
 	    member = tokens.sval;
 	  } else {
@@ -583,6 +618,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
           } */
       } catch (Exception e) {
         e.printStackTrace();
+        throw new RuntimeException("AssetDataPlugIn: unable to parse " + 
+                                   getFileName(getClusterIdentifier().getAddress()));
       }
     } else {
       System.err.println("AssetDataPlugIn Error: asset is null");
@@ -607,10 +644,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
           long start = getDefaultStartTime();
           long end = getDefaultEndTime();
           
-          System.out.println("Parsing new relationship");
           for (int i = 0; i < 6; i++) {
-            System.out.println("Token: " + tokens.sval + " newVal: " + newVal);
-
             if ((tokens.sval.length()) > 0  &&
                 (tokens.sval.substring(0,1).equals("["))) {
               throw new RuntimeException("Unexpected character: " + 
@@ -638,16 +672,18 @@ public class AssetDataPlugIn extends SimplePlugIn {
               try {
                 start = myDateFormat.parse(tokens.sval).getTime();
               } catch (java.text.ParseException pe) {
-                System.out.println("Unable to parse: " + tokens.sval);
-                pe.printStackTrace();
+                System.out.println("Unable to parse: " + tokens.sval + 
+                                   ". Start time defaulting to " + 
+                                   getDefaultStartTime());
               }
 
             case 5:
               try {
                 end = myDateFormat.parse(tokens.sval).getTime();
               } catch (java.text.ParseException pe) {
-                System.out.println("Unable to parse: " + tokens.sval);
-                pe.printStackTrace();
+                System.out.println("Unable to parse: " + tokens.sval + 
+                                   ". End time defaulting to " + 
+                                   getDefaultEndTime());
               }
 
               break;
@@ -753,6 +789,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
     // and some java.util
     classes.put("Collection", Collection.class);
     classes.put("List", List.class);
+    classes.put("TimeSpan", TimeSpan.class);
+                                           
     // COUGAAR-specific stuff will be looked for
   }
 
@@ -780,9 +818,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
    * Creates and calls the appropriate "setter" method for the classInstance
    * which is of type className.
    */
-  protected void createAndCallSetter(Object classInstance, String className, String setterName, String type, Object value) {
+  protected void createAndCallSetter(Object classInstance, String className, String setterName, String type, Object []arguments) {
     Class parameters[] = new Class[1];
-    Object arguments[] = new Object[] {value};
     
     try {
       parameters[0] = findClass(type);
@@ -791,7 +828,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
       Method meth = findMethod(propertyClass, setterName, parameters);
       meth.invoke(classInstance, arguments);
     } catch (Exception e) {
-      System.err.println("AssetDataPlugIn Exception: createAndCallSetter("+classInstance.getClass().getName()+", "+className+", "+setterName+", "+type+", "+value+" : " + e);
+      System.err.println("AssetDataPlugIn Exception: createAndCallSetter("+classInstance.getClass().getName()+", "+className+", "+setterName+", "+type+", "+arguments+" : " + e);
       e.printStackTrace();
     }
   }
@@ -836,4 +873,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
   }
 
 }
+
+
+
 
