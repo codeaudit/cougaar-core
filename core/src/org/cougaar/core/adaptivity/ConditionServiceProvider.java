@@ -23,6 +23,7 @@ package org.cougaar.core.adaptivity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.KeyedSet;
-import org.cougaar.util.ReadOnlySet;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -83,7 +83,7 @@ public class ConditionServiceProvider
 
     public Set getAllConditionNames() {
       synchronized (smSet) {
-        return new ReadOnlySet(smSet.keySet());
+        return Collections.unmodifiableSet(smSet.keySet());
       }
     }
 
