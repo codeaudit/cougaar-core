@@ -17,8 +17,14 @@ import org.apache.log4j.FileAppender;
 import org.cougaar.core.component.*;
 import java.util.Enumeration;
 
-/** a Service for controlling logging
- **/
+/*
+ ** a Service for controlling logging
+ **
+ **
+ ** An implemenation of a LoggingOutputType (See {@link LoggingOutputType}).
+ ** Used by LoggingControlService @see LoggingControlService#getOutputTypes.
+ **
+ */
 
 public class LoggingProviderOutputTypeImpl implements LoggingOutputType {
 
@@ -37,6 +43,9 @@ public class LoggingProviderOutputTypeImpl implements LoggingOutputType {
       loggingLevel = aLoggingLevel;
     }
     
+    /*
+     ** constructor takes a Log4j Appender for deriving information
+     */
     public LoggingProviderOutputTypeImpl(String aNodeName,
 					 int    aLoggingLevel,
 					 Appender appender) {
@@ -58,10 +67,36 @@ public class LoggingProviderOutputTypeImpl implements LoggingOutputType {
 	    throw new RuntimeException("Unknown Appender type");
 	}
     }
-    
+
+
+    /** 
+     ** @return The node name string for this output/device
+     **/
+
     public String getNode() {return nodeName;}
+
+    /** 
+     ** @return The output type this one output at the node above.
+     ** could be one of many.  See {@link LoggingControlService} either
+     ** CONSOLE,STREAM, or FILE.
+     **/
+
     public int getOutputType() {return outputType;}
+
+    /** 
+     ** @return The device related string for this output type.
+     ** empty string for CONSOLE, path/filename for FILE, and identifier
+     ** for a STREAM.
+     **/
+
     public String getOutputDevice() {return outputDevice;}
+
+    /** 
+     **   @return The logging level for this particular node.  Is the same
+     **   for every other output at this node.   Node-wide variable.
+     **   See {@link LoggingService} for values (DEBUG,INFO,LEGACY,WARNING,
+     **   ERROR, and FATAL).
+     **/
     public int getLoggingLevel() {return loggingLevel;}
     
 }

@@ -405,6 +405,15 @@ public class LoggingServiceProvider implements ServiceProvider {
   
   private class LoggingControlServiceImpl implements LoggingControlService {
 
+    /**
+     ** For a given Node, what output logging level is the node set to.
+     ** @param node - string name of the place in the heirarchy the 
+     ** user wishes to query about what the logging level is set to.
+     ** @return The level number corresponding to DEBUG,INFO,WARNING,ERROR,
+     ** FATAL {@see LoggingService}
+     ** 
+     **/
+
     public int getLoggingLevel(String node) {
 	if(node.equals("root")) {
 	    return convertPriorityToInt(Category.getRoot().getChainedPriority());
@@ -412,6 +421,17 @@ public class LoggingServiceProvider implements ServiceProvider {
 	    return convertPriorityToInt(Category.getInstance(node).getChainedPriority());
 	}
     }
+
+    /**
+     ** Set the logging level for a given node - a node does not necessarily
+     ** have to have an output type, but it makes more sense.
+     ** @param node - String name of place in heirarchy to set the logging 
+     ** level of.
+     ** @param level - The level number corresponding to DEBUG,INFO,
+     ** WARNING,ERROR, and FATAL (@see LoggingService)
+     **
+     **/
+
     public void setLoggingLevel(String node, int level) {
 	if(node.equals("root")) {
 	    Category.getRoot().setPriority(convertIntToPriority(level));
@@ -420,6 +440,14 @@ public class LoggingServiceProvider implements ServiceProvider {
 	    Category.getInstance(node).setPriority(convertIntToPriority(level));
 	}
     }
+
+    /**
+     **
+     ** Get all the logging nodes in the heirarchy that have some form
+     ** of logging output on them.
+     **
+     ** @return Enumeration of all the logging nodes (Strings).
+     **/
 
     public Enumeration getAllLoggingNodes() {
 	HashSet s = new HashSet();
@@ -440,7 +468,15 @@ public class LoggingServiceProvider implements ServiceProvider {
 	}	
 	return (new Vector(s)).elements();
     }
-
+      
+      /**
+       ** For a given node in the heirarcy get all the logging output types 
+       ** for that node.  You could have both a console, and two logging files
+       ** a given node for example.
+       **
+       ** return an array of {@link LoggingOutputType} representing all 
+       ** the various logging outputs at this node.
+       **/
       public LoggingOutputType[] getOutputTypes(String node) {
 	  Enumeration appenders=null;
 	  int loggingLevel;
@@ -474,12 +510,44 @@ public class LoggingServiceProvider implements ServiceProvider {
 	  return lots;      
       }
 
-    public void addOutputType(String node, int outputType) {
-      Category.getInstance(node).addAppender(convertIntToAppender(outputType,null));
-    }
+    /**
+     ** Add a logging output type at a particular node in the heirarchy
+     **
+     ** @param node - the node in the heirarchy to attach this output type.
+     ** @param outputType - The output type either CONSOLE,FILE, or STREAM. See
+     ** constants above.
+     ** @param outputDevice - The device associated with the particular output 
+     ** type being added.  Null for Console, filename for FILE, the actual 
+     ** output stream object for STREAM.
+     **
+     **/
+
     public void addOutputType(String node, int outputType, Object outputDevice) {
       Category.getInstance(node).addAppender(convertIntToAppender(outputType,outputDevice));
     }
+
+   /**
+     ** Add a logging console output type at a particular node in the heirarchy
+     **
+     ** @param node - the node in the heirarchy to attach this console logging output.
+     **/
+    public void addConsole(String node) {
+      Category.getInstance(node).addAppender(convertIntToAppender(CONSOLE,null));
+    }
+
+    /**
+     ** Remove a logging output type known at a particular node 
+     ** in the heirarchy
+     **
+     ** @param node - the node in the heirarchy this existing output type 
+     ** should be removed from.
+     ** @param outputType - The output type either CONSOLE,FILE, or STREAM of
+     ** logging output to be removed. See constants above.
+     ** @param outputDevice - The device associated with the particular output 
+     ** type being removed.  Null for Console, filename for FILE, the actual 
+     ** output stream object for STREAM.
+     **
+     **/
 
    public boolean removeOutputType(String node, int outputType, Object outputDevice) {
        String deviceString=null;
@@ -492,6 +560,22 @@ public class LoggingServiceProvider implements ServiceProvider {
        
        return removeOutputType(node,outputType, deviceString);
    }
+
+    /**
+     ** Remove a logging output type known at a particular node 
+     ** in the heirarchy.  Method is ususually used in conjunction
+     ** with {@link LoggingControlService#getOutputTypes()} to 
+     ** iterate through list to remove items.
+     **
+     ** @param node - the node in the heirarchy this existing output type 
+     ** should be removed from.
+     ** @param outputType - The output type either CONSOLE,FILE, or STREAM of
+     ** logging output to be removed. See constants above.
+     ** @param outputDevice - The device associated with the particular output 
+     ** type being removed.  Null for Console, filename for FILE, 
+     ** the String identifier name associated with the output stream. 
+     **
+     **/
 
    public boolean removeOutputType(String node, int outputType, String outputDevice) {
 	Category cat = Category.getInstance(node);
@@ -520,6 +604,17 @@ public class LoggingServiceProvider implements ServiceProvider {
 	}
 	
    }
+
+      /**
+       ** Helper function to convert the interfaces outputType (See 
+       ** {@link LoggingControlService}) into a log4j equivilent
+       ** Appender class.
+       **
+       ** @param outputType - The input type CONSOLE, FILE, or STREAM
+       ** from {@link LoggingControlService.CONSOLE LoggingControlService}
+       ** @return The log 4j Appender class corresponding to the CONSOLE
+       **
+       **/
 	
       private Class convertIntToAppenderType(int outputType) {
 	switch (outputType) {
@@ -534,6 +629,17 @@ public class LoggingServiceProvider implements ServiceProvider {
 	}
     }
 
+      /**
+       ** Helper function to convert outputType and device into the 
+       ** actual appropriate Appender, used for adding output types.
+       **
+       **
+       ** @param outputType - The output type either CONSOLE,FILE, or 
+       ** STREAM of logging output to be removed. 
+       ** See {@link LoggingControlService}.
+       ** @param outputDevice - The device associated with the 
+       ** particular APPENDER.
+       **/
     private Appender convertIntToAppender(int outputType, Object outputDevice) {
       switch (outputType) {
       case LoggingControlService.CONSOLE: return new ConsoleAppender(new SimpleLayout());
