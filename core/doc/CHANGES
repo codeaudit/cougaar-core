@@ -19,9 +19,9 @@ glm/src/org/cougaar/domain/glm/util/GLMAsset.java -> AssetUtil.java
 glm/src/org/cougaar/domain/mlm/ui/views/ALPConsumer.java -> MLMConsumer.java
 glm/src/org/cougaar/domain/mlm/ui/producers/ALPProducer.java -> MLMProducer.java
 glm/src/org/cougaar/domain/mlm/ui/producers/ThreadedALPProducer.java -> ThreadedMLMProducer.java
-core/src/org/cougaar/core/cluster/ALPPlanServesLogicProvider.java -> WhiteboardServesLogicProvider.java
-core/src/org/cougaar/core/cluster/XPlanServesALPPlan.java -> XPlanServesWhiteboard.java
-core/src/org/cougaar/core/cluster/ALPPlan.java -> Whiteboard.java
+core/src/org/cougaar/core/cluster/ALPPlanServesLogicProvider.java -> BlackboardServesLogicProvider.java
+core/src/org/cougaar/core/cluster/XPlanServesALPPlan.java -> XPlanServesBlackboard.java
+core/src/org/cougaar/core/cluster/ALPPlan.java -> Blackboard.java
 server/src/org/cougaar/tools/server/ALPServer.java -> NodeServer.java
 server/src/org/cougaar/tools/server/RemoteALPServer.java -> RemoteNodeServer.java
 server/src/org/cougaar/tools/server/RemoteALPServerImpl.java -> RemoteNodeServerImpl.java
