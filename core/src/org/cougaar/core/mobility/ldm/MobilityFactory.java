@@ -65,14 +65,14 @@ public interface MobilityFactory extends Factory {
 
   /**
    * Create an agent move request -- this has been
-   * replaced by the "AgentMove" APIs, but is still
+   * replaced by the "AgentControl" APIs, but is still
    * supported.
    * 
    * @param ticket must have a ticket identifier that
    *    was created by the "createTicketIdentifier()"
    *    method.
    *
-   * @see AgentMove new API
+   * @see AgentControl new API
    */
   MoveAgent createMoveAgent(Ticket ticket);
 

@@ -31,10 +31,10 @@ import org.cougaar.core.util.UniqueObject;
  * A request that an agent be moved from its current node 
  * to a different node.
  * <p>
- * This has been replaced by the "AgentMove" API, but 
+ * This has been replaced by the "AgentControl" API, but 
  * there's no rush to switch to the new API.
  *
- * @see AgentMove
+ * @see AgentControl
  */
 public interface MoveAgent extends UniqueObject {
 
