@@ -249,7 +249,6 @@ class SchedulerServiceProvider
     extends SchedulerBase 
   {
     private ThreadService threadService;
-    private LoggingService log;
 
     /**
      * Maps client Triggers to Worker instances
@@ -258,7 +257,6 @@ class SchedulerServiceProvider
 
     NormalScheduler(ThreadService threadService, LoggingService log) {
       this.threadService = threadService;
-      this.log = log;
     }
 
     void addClient(Trigger client, Object requestor) {
@@ -413,8 +411,7 @@ class SchedulerServiceProvider
       extends WorkerBase
       implements Runnable
     {
-      private int id;
-      Worker(int i) { id = i; }
+      Worker(int i) { }
       public void run() {
 	while (true) {
           Trigger t;

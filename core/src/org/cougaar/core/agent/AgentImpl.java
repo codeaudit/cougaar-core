@@ -210,7 +210,6 @@ public class AgentImpl extends Agent {
 
   private ServiceProvider add_agent_component_list_service(
       final List l) {
-    final AgentImpl agent = this;
     Class clazz = AgentBootstrapService.class;
     Service service =
       new AgentBootstrapService() {

@@ -39,7 +39,6 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.UIDService;
@@ -74,7 +73,6 @@ implements Component
   private ServiceBroker rootsb;
 
   private LoggingService logger;
-  private MessageAddress agentId;
   private ThreadService threadService;
   private UIDService uidService;
   private ModifyService modifyService;
@@ -130,12 +128,6 @@ implements Component
 
     configure(null);
 
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
-
     // register for lookups
     modifyService = (ModifyService)
       sb.getService(
@@ -179,7 +171,6 @@ implements Component
       bundleSB.revokeService(BundleService.class, bundleSP);
       bundleSP = null;
     }
-    ServiceBroker bundleSB = (rootsb == null ? sb : rootsb);
     if (leaseSP != null) {
       sb.revokeService(LeaseService.class, leaseSP);
       leaseSP = null;
@@ -674,7 +665,7 @@ implements Component
       if (!matchesLease(name, uid, lease, "success")) {
         return;
       }
-      responses = leaseSuccess(lease, name, uid, baseTime, ttd);
+      responses = leaseSuccess(lease, baseTime, ttd);
       if (responses == null || responses.isEmpty()) {
         return;
       }
@@ -688,8 +679,6 @@ implements Component
 
   private List leaseSuccess(
       ActiveLease lease,
-      String name,
-      UID uid,
       long baseTime,
       long ttd) {
 
@@ -1127,7 +1116,7 @@ implements Component
       }
       private class BundleServiceImpl 
         implements BundleService {
-          private final Client client;
+          protected final Client client;
           public BundleServiceImpl(Client client) {
             this.client = client;
           }

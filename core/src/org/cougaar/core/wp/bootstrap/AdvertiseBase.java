@@ -85,7 +85,7 @@ implements Component
         AdvertiseBase.this.change(name, bundle);
       }
       public void remove(String name, Bundle bundle) {
-        AdvertiseBase.this.remove(name, bundle);
+        AdvertiseBase.this.remove(name);
       }
     };
 
@@ -164,7 +164,7 @@ implements Component
   private void change(String name, Bundle bundle) {
     update(name, bundle);
   }
-  private void remove(String name, Bundle bundle) {
+  private void remove(String name) {
     update(name, null);
   }
 

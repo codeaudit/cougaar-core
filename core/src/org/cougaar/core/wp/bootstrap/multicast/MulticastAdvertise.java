@@ -290,9 +290,8 @@ extends AdvertiseBase
       //(Cougaar-ARP reply-to=HOST:PORT)
 
       if (log.isInfoEnabled()) {
-        URI uri = bootEntry.getURI();
         log.info(
-            "Reading query "+
+            "Reading query to "+bootEntry.getURI()+": "+
             new String(bytes, offset, length));
       }
 
@@ -300,7 +299,6 @@ extends AdvertiseBase
           bytes, offset, length);
 
       // parse query
-      Map newFound = null; 
       try {
         BufferedReader br = 
           new BufferedReader(new InputStreamReader(is));

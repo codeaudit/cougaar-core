@@ -356,7 +356,6 @@ implements Component
     Iterator iter = entries.entrySet().iterator();
     for (int i = 0; i < n; i++) {
       Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
       Entry e = (Entry) me.getValue();
       MessageAddress addr = e.getMessageAddress();
       if (logger.isDebugEnabled()) {
@@ -459,7 +458,7 @@ implements Component
     }
   }
 
-  private MessageAddress select(boolean lookup, String name) {
+  private MessageAddress select() {
     // select the entry with the min score
     synchronized (lock) {
       long now = System.currentTimeMillis();
@@ -795,7 +794,7 @@ implements Component
           return SelectManager.this.contains(addr);
         }
         public MessageAddress select(boolean lookup, String name) {
-          return SelectManager.this.select(lookup, name);
+          return SelectManager.this.select();
         }
         public void update(
             MessageAddress addr, long duration, boolean timeout) {

@@ -38,8 +38,6 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
@@ -101,7 +99,6 @@ implements Component
 
   private ServiceBroker sb;
   private LoggingService logger;
-  private MessageAddress agentId;
   private ThreadService threadService;
 
   private LookupService lookupService;
@@ -175,12 +172,6 @@ implements Component
     configure(null);
 
     cache = new LRUMap(config.maxSize);
-
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
 
     // register for lookups
     lookupService = (LookupService)
@@ -298,7 +289,7 @@ implements Component
         hint(res, ae, overwrite);
       } else {
         boolean renewal = r.isRenewal();
-        bind(res, ae, renewal, overwrite);
+        bind(ae, renewal);
       }
     } else if (req instanceof Request.Unbind) {
       Request.Unbind r = (Request.Unbind) req;
@@ -306,7 +297,7 @@ implements Component
       if (cacheOnly) {
         unhint(res, ae);
       } else {
-        unbind(res, ae);
+        unbind(ae);
       }
     } else {
       throw new IllegalArgumentException("Unknown action");
@@ -414,10 +405,8 @@ implements Component
   }
 
   private void bind(
-      Response res,
       AddressEntry ae,
-      boolean renewal,
-      boolean overwrite) {
+      boolean renewal) {
     String name = ae.getName();
 
     // flush the cache entry if it conflicts with the
@@ -590,7 +579,7 @@ implements Component
     // it stops at the lease manager
   }
 
-  private void unbind(Response res, AddressEntry ae) {
+  private void unbind(AddressEntry ae) {
     String name = ae.getName();
 
     // clear cache entry, just in case

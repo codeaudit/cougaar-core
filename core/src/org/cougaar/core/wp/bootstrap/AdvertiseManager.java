@@ -252,7 +252,7 @@ implements Component
       }
       private class AdvertiseServiceImpl 
         implements AdvertiseService {
-          private final Client client;
+          protected final Client client;
           public AdvertiseServiceImpl(Client client) {
             this.client = client;
           }

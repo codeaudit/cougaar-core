@@ -113,10 +113,8 @@ public class BlackboardServiceProvider implements ServiceProvider {
   private final class BlackboardQueryServiceImpl 
     implements BlackboardQueryService 
   {
-    // keep the requestor around just in case...
-    private final Object requestor;  
     private BlackboardQueryServiceImpl(Object requestor) {
-      this.requestor = requestor;
+      // ignore the requestor (for now).
     }
     public final Collection query(UnaryPredicate isMember) {
       QuerySubscription qs = new QuerySubscription(isMember);

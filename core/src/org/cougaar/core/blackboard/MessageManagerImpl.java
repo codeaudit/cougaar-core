@@ -283,7 +283,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
    * should next be sent.
    */
   private class TimestampedMessage implements Comparable, java.io.Serializable {
-    private transient long timestamp = System.currentTimeMillis();
+    protected transient long timestamp = System.currentTimeMillis();
     private transient int nTries = 0;
 
     protected transient DirectiveMessage theMessage;

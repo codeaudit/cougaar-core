@@ -34,7 +34,6 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AgentQuiescenceStateService;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.QuiescenceReportForDistributorService;
 import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -51,7 +50,6 @@ implements Component
   private ServiceBroker sb;
   private ServiceBroker rootsb;
 
-  private LoggingService log;
   private QuiescenceReportService quiescenceReportService;
 
   private MessageAddress localAgent = null;
@@ -64,9 +62,6 @@ implements Component
 
   public void load() {
     super.load();
-
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
 
     AgentContainer agentContainer;
 

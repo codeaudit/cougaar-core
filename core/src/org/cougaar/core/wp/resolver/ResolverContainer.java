@@ -48,17 +48,13 @@ extends ContainerSupport
 
   private LoggingService logger;
   private MessageAddress agentId;
-  private AgentIdentificationService agentIdService;
 
   public void setLoggingService(LoggingService logger) {
     this.logger = logger;
   }
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
-    this.agentIdService = ais;
-    if (ais == null) {
-      // Revocation
-    } else {
+    if (ais != null) {
       this.agentId = ais.getMessageAddress();
     }
   }

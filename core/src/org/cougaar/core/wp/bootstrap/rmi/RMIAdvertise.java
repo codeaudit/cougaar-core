@@ -139,8 +139,9 @@ extends AdvertiseBase
     public void start() {
       String name = bootEntry.getName();
       URI uri = bootEntry.getURI();
-      String host = uri.getHost();
       int port = uri.getPort();
+
+      // assert Util.isLocalHost(uri.getHost());
 
       // create registry
       RMISocketFactory rsf = getRMISocketFactory();

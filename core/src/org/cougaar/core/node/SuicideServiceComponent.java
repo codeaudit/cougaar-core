@@ -51,7 +51,6 @@ extends GenericStateModelAdapter implements Component {
   private static final Logger log = Logging.getLogger(SuicideService.class);
 
   private ServiceBroker rootsb;
-  private NodeControlService ncs;
 
   private ServiceProvider ssp;
   private SuicideService ssi;
@@ -60,8 +59,7 @@ extends GenericStateModelAdapter implements Component {
   private SuicideMonitor monitor;
 
   public void setNodeControlService(NodeControlService ncs) { 
-    this.ncs = ncs; 
-    rootsb = (ncs == null)?null:ncs.getRootServiceBroker();
+    rootsb = (ncs == null ? null : ncs.getRootServiceBroker());
   }
 
   public void load() {

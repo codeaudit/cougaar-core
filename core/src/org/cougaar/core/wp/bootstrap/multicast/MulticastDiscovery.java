@@ -342,6 +342,12 @@ extends DiscoveryBase
         int port = Integer.parseInt(sport);
 
         // record this host:port?
+        if (log.isInfoEnabled()) {
+          URI uri = bootEntry.getURI();
+          log.info(
+              "Reply to "+uri.getHost()+":"+uri.getPort()+
+              " is from "+host+":"+port);
+        }
 
         newFound = Bundle.decodeAll(br);
 

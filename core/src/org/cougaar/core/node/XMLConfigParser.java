@@ -77,10 +77,6 @@ import org.xml.sax.ContentHandler;
  */ 
 public final class XMLConfigParser {
 
-  // backwards compatibility for the wp server:
-  private static final boolean DISABLE_IMPLICIT_WP_SERVER = 
-    Boolean.getBoolean("org.cougaar.core.load.wp.server");
-
   // xsl options:
 
   private static final boolean VALIDATE =

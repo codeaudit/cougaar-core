@@ -60,7 +60,7 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
     extends Message
     implements SecureMessage 
     {
-      private Message m;
+      protected Message m;
 
       private DummySecureMessage(Message m) {
         super(m.getOriginator(), m.getTarget());

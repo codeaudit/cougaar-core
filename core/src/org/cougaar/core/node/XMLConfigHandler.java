@@ -352,7 +352,7 @@ public class XMLConfigHandler extends DefaultHandler {
     throws SAXException {
     if (currentComponent.isEmpty()) {
       throw new RuntimeException(
-          "Argument not in component!");
+          "Argument ("+atts+") not in component!");
     }
     if (inArgument) {
       throw new RuntimeException(
@@ -381,18 +381,6 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // utility methods:
-
-  private static String insertionPointContainer(String insertionPoint) {
-    int i = 
-      (insertionPoint == null ? 
-       -1 :
-       insertionPoint.lastIndexOf('.'));
-    if (i < 0) {
-      throw new RuntimeException(
-          "insertionpoint \""+insertionPoint+"\" lacks '.'");
-    }
-    return insertionPoint.substring(0, i);
-  }
 
   private static ComponentDescription makeComponentDesc(
       Map componentProps) {

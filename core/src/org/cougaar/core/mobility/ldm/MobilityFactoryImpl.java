@@ -38,7 +38,6 @@ import org.cougaar.core.util.UID;
 class MobilityFactoryImpl implements MobilityFactory {
 
   private UIDService uidService;
-  private MessageAddress nodeId;
   private MessageAddress agentId;
 
   public MobilityFactoryImpl(
@@ -46,7 +45,6 @@ class MobilityFactoryImpl implements MobilityFactory {
       MessageAddress nodeId,
       MessageAddress agentId) {
     this.uidService = uidService;
-    this.nodeId = nodeId;
     this.agentId = agentId;
   }
 

@@ -65,7 +65,6 @@ public class PlayHelper {
   private Set iaompRemoves = new HashSet();
   private LoggingService logger;
   private OperatingModeService operatingModeService;
-  private ConditionService conditionService;
   private BlackboardService blackboard;
   private UIDService uidService;
   private Map smMap;
@@ -79,7 +78,6 @@ public class PlayHelper {
   {
     logger = ls;
     operatingModeService = oms;
-    conditionService = sms;
     blackboard = bb;
     uidService = us;
     smMap = smm;

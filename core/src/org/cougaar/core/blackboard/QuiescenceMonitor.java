@@ -71,9 +71,9 @@ class QuiescenceMonitor {
       incomingMessageNumbers = imn;
       isQuiescent = isQ;
     }
-    private Map outgoingMessageNumbers;
-    private Map incomingMessageNumbers;
-    private boolean isQuiescent;
+    protected Map outgoingMessageNumbers;
+    protected Map incomingMessageNumbers;
+    protected boolean isQuiescent;
   }
   private Map outgoingMessageNumbers = new HashMap();
   private Map incomingMessageNumbers = new HashMap();

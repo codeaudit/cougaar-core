@@ -33,11 +33,8 @@ import java.util.Set;
 import java.text.DecimalFormat;
 
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.NodeControlService;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
@@ -48,14 +45,11 @@ public class AgentLoadTracePlugin
     implements Constants
 {
     private LoggingService loggingService = null;    
-    private AgentContainer agentContainer;
     private MetricsService metricsService;
-    private String node;
     private DecimalFormat formatter = new DecimalFormat("###,#00.0#");
     private boolean first_time = true;
     private ArrayList agents;
     private long start;
-    private Schedulable schedulable;
     private static final int BASE_PERIOD = 10; //10SecAVG
     private AgentStatusService agentStatusService=null; 
     
@@ -128,7 +122,7 @@ public class AgentLoadTracePlugin
 	Metric msgOut = metricsService.getValue(agentPath
 						+MSG_OUT+
 						"(" +_10_SEC_AVG+")");
-	double msgOutV = msgIn.doubleValue();
+	double msgOutV = msgOut.doubleValue();
 
 	Metric bytesIn = metricsService.getValue(agentPath
 						 +BYTES_IN+
@@ -176,19 +170,8 @@ public class AgentLoadTracePlugin
 
 	ServiceBroker sb = getServiceBroker();
 
-	NodeControlService ncs = (NodeControlService)
-            sb.getService(this, NodeControlService.class, null);
-        if (ncs != null) {
-            agentContainer = ncs.getRootContainer();
-            sb.releaseService(this, NodeControlService.class, ncs);
-        }
-
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
-
-	NodeIdentificationService nis = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
- 	node = nis.getMessageAddress().toString();
 
 	loggingService = (LoggingService)
 	    sb.getService(this, LoggingService.class, null);
@@ -214,7 +197,9 @@ public class AgentLoadTracePlugin
      * node, or null if that information is not available.
      */
     protected final Set getLocalAgents() {
-	//try getting agents from agentstatus service instead
+        // instead of asking the NodeControlService's AgentContainer for:
+        //   agentContainer.getAgentAddresses()
+	// we try getting agents from agentstatus service
 	if(agentStatusService == null) {
 	    if(loggingService.isDebugEnabled())
 		loggingService.debug("No LocalAgents from AgentStatusService");
@@ -222,13 +207,6 @@ public class AgentLoadTracePlugin
 	} else {
 	    return agentStatusService.getLocalAgents();
 	}
-	/*
-        if (agentContainer == null) {
-            return null;
-        } else {
-            return agentContainer.getAgentAddresses();
-        }
-	*/
     }
 
     protected void setupSubscriptions() {

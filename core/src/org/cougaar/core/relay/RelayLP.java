@@ -308,7 +308,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
-  private void changeTarget(Relay.Target rt, Object cont, RelayDirective dir, Collection changes) {
+  private void changeTarget(Relay.Target rt, Object cont, Collection changes) {
     int flags = rt.updateContent(cont, token);
     if ((flags & Relay.CONTENT_CHANGE) != 0) {
       Collection c;
@@ -332,7 +332,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
       // Unusual. Treat as change
-      changeTarget(rt, dir.getContent(), dir, Collections.EMPTY_SET);
+      changeTarget(rt, dir.getContent(), Collections.EMPTY_SET);
     }
   }
 
@@ -342,7 +342,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
       // Unusual. Treat as add.
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
-      changeTarget(rt, dir.getContent(), dir, changes);
+      changeTarget(rt, dir.getContent(), changes);
     }
   }
 

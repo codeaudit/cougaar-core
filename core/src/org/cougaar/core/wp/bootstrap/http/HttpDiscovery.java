@@ -53,12 +53,7 @@ import org.cougaar.core.wp.bootstrap.DiscoveryBase;
 public class HttpDiscovery
 extends DiscoveryBase
 {
-  private static final String DATA_CONTENT_TYPE = 
-    "application/x-java-serialized-object";
-
   private static final String DEFAULT_PATH = "/$~/wp_bootstrap";
-
-  private String defaultPath = DEFAULT_PATH;
 
   private static final long MIN_DELAY = 
     Long.parseLong(
@@ -85,16 +80,6 @@ extends DiscoveryBase
         removePoller(getBootEntry(b));
       }
     };
-
-  public void setParameter(Object o) {
-    List l;
-    Object p;
-    if ((o instanceof List) &&
-        (!(l = (List) o).isEmpty()) &&
-        ((p = l.get(0)) instanceof String)) {
-      defaultPath = (String) p;
-    }
-  }
 
   public void load() {
     super.load();
@@ -157,7 +142,6 @@ extends DiscoveryBase
     }
 
     protected Map lookup() {
-      String name = bootEntry.getName();
       URI uri = bootEntry.getURI();
 
       URLConnection uc;
@@ -194,7 +178,6 @@ extends DiscoveryBase
             return null;
           }
         }
-        String ct = uc.getContentType();
         InputStream is = uc.getInputStream();
         newFound = Bundle.decodeAll(is);
       } catch (Exception e) {

@@ -473,7 +473,7 @@ implements Component
     }
     private class ServersServiceImpl
       implements ServersService {
-        private final Client client;
+        protected final Client client;
         public ServersServiceImpl(Client client) {
           this.client = client;
         }
@@ -512,7 +512,7 @@ implements Component
       }
     }
     private class DiscoveryServiceImpl implements DiscoveryService {
-      private final Client client;
+      protected final Client client;
       private final Map m = new HashMap(3);
       public DiscoveryServiceImpl(Client client) {
         this.client = client;

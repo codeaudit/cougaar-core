@@ -225,8 +225,8 @@ public class RehydrateTest {
     Object state = null;
     Persistence persistence = BlackboardPersistence.find(sb);
     PersistenceEnvelope rehydrationEnvelope = new PersistenceEnvelope();
-    RehydrationResult rr =
-      persistence.rehydrate(rehydrationEnvelope, state);
+    // ignore the returned "RehydrateResult", we only want the envelope
+    persistence.rehydrate(rehydrationEnvelope, state);
     return rehydrationEnvelope;
   }
 

@@ -67,7 +67,7 @@ public abstract class ServiceProviderBase implements ServiceProvider {
     unregister(si.client);
   }
   protected abstract class MyServiceImpl implements Service {
-    private final Object client;
+    protected final Object client;
     public MyServiceImpl(Object client) {
       this.client = client;
     }

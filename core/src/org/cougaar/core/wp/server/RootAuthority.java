@@ -39,7 +39,6 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.UIDService;
@@ -77,7 +76,6 @@ implements Component
 
   private ServiceBroker sb;
   private LoggingService logger;
-  private MessageAddress agentId;
   private ThreadService threadService;
   private UIDService uidService;
   private WhitePagesProtectionService protectS;
@@ -135,12 +133,6 @@ implements Component
     if (logger.isDebugEnabled()) {
       logger.debug("Loading server root authority");
     }
-
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
 
     protectS = (WhitePagesProtectionService)
       sb.getService(this, WhitePagesProtectionService.class, null);
@@ -448,7 +440,7 @@ implements Component
       logger.detail(
           "lookup (name="+name+
           " query="+query+
-          ") returning "+answer);
+          " now="+now+") returning "+answer);
     }
 
     return answer;
@@ -687,7 +679,7 @@ implements Component
          null);
       Forward fwd = new Forward(lease, record);
       // to all
-      forwardLater(name, fwd, now);
+      forwardLater(name, fwd);
     }
 
     return answer;
@@ -970,8 +962,7 @@ implements Component
    */
   private void forwardLater(
       String name,
-      Forward fwd,
-      long now) {
+      Forward fwd) {
     // assert (Thread.holdsLock(lock));
 
     // if the queue already contains a forward with the same uid

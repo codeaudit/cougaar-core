@@ -267,6 +267,10 @@ extends AbstractMobilityPlugin
   private void add_add(
       AgentControl control,
       AddTicket addTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("add_add("+control+", "+addTicket+")");
+    }
+
     MessageAddress id = addTicket.getMobileAgent();
     MessageAddress destNode = addTicket.getDestinationNode();
     ComponentDescription desc = addTicket.getComponentDescription();
@@ -296,15 +300,25 @@ extends AbstractMobilityPlugin
   private void change_add(
       AgentControl control,
       AddTicket addTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("change_add("+control+", "+addTicket+")");
+    }
   }
   private void remove_add(
       AgentControl control,
       AddTicket addTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("remove_add("+control+", "+addTicket+")");
+    }
   }
 
   private void add_remove(
       AgentControl control,
       RemoveTicket removeTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("add_remove("+control+", "+removeTicket+")");
+    }
+
     // handle remove
     MessageAddress id = removeTicket.getMobileAgent();
     MessageAddress destNode = removeTicket.getDestinationNode();
@@ -329,15 +343,25 @@ extends AbstractMobilityPlugin
   private void change_remove(
       AgentControl control,
       RemoveTicket removeTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("change_remove("+control+", "+removeTicket+")");
+    }
   }
   private void remove_remove(
       AgentControl control,
       RemoveTicket removeTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("remove_remove("+control+", "+removeTicket+")");
+    }
   }
 
   private void add_move(
       AgentControl control,
       MoveTicket moveTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("add_move("+control+", "+moveTicket+")");
+    }
+
     MessageAddress id = moveTicket.getMobileAgent();
     MessageAddress origNode = moveTicket.getOriginNode();
     MessageAddress destNode = moveTicket.getDestinationNode();
@@ -517,15 +541,25 @@ extends AbstractMobilityPlugin
   private void change_move(
       AgentControl control,
       MoveTicket moveTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("change_move("+control+", "+moveTicket+")");
+    }
   }
   private void remove_move(
       AgentControl control,
       MoveTicket moveTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("remove_move("+control+", "+moveTicket+")");
+    }
   }
 
   private void add_transfer(
       AgentControl control,
       TransferTicket transferTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("add_transfer("+control+", "+transferTicket+")");
+    }
+
     MoveTicket moveTicket = transferTicket.getMoveTicket();
 
     MessageAddress destNode = moveTicket.getDestinationNode();
@@ -635,6 +669,10 @@ extends AbstractMobilityPlugin
   private void change_transfer(
       AgentControl control,
       TransferTicket transferTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("change_transfer("+control+", "+transferTicket+")");
+    }
+
     MoveTicket moveTicket = transferTicket.getMoveTicket();
 
     MessageAddress id = moveTicket.getMobileAgent();
@@ -760,6 +798,9 @@ extends AbstractMobilityPlugin
   private void remove_transfer(
       AgentControl control,
       TransferTicket transferTicket) {
+    if (log.isDetailEnabled()) {
+      log.detail("remove_transfer("+control+", "+transferTicket+")");
+    }
   }
 
   //

@@ -26,7 +26,6 @@
 
 package org.cougaar.core.wp.resolver;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,22 +161,6 @@ extends TransportBase
   // periodic check for late message acks
   private long checkDeadlinesTime;
   private Schedulable checkDeadlinesThread;
-
-  //
-  // input (receive from WP server):
-  //
-
-  private Schedulable receiveThread;
-
-  // received messages
-  //
-  // List<WPAnswer>
-  private final List receiveQueue = new ArrayList();
-
-  // temporary list for use within "receiveNow()"
-  //
-  // List<Object>
-  private final List receiveTmp = new ArrayList();
 
   //
   // statistics
@@ -1111,19 +1094,6 @@ extends TransportBase
     logger.debug("lookup, "+agentId+", "+stats(true).getStats());
     logger.debug("modify, "+agentId+", "+stats(false).getStats());
 
-    synchronized (receiveQueue) {
-      String s = "";
-      s += "\n##### client transport input queue ########################";
-      int n = receiveQueue.size();
-      s += "\nreceive["+n+"]: ";
-      for (int i = 0; i < n; i++) {
-        WPAnswer wpa = (WPAnswer) receiveQueue.get(i);
-        s += "\n   "+wpa;
-      }
-      s += "\n###########################################################";
-      logger.debug(s);
-    }
-
     String currentServers = selectService.toString();
     synchronized (myLock) {
       String s = "";
@@ -1310,7 +1280,6 @@ extends TransportBase
         if (wpa == null) {
           return;
         }
-        boolean lookup = (wpa.getAction() == WPAnswer.LOOKUP);
         Map m = wpa.getMap();
         receiveNow(m);
       }
