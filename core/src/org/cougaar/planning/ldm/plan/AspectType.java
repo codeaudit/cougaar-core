@@ -80,6 +80,12 @@ public interface AspectType {
 
   int[] _STANDARD_ASPECTS = {0,1,2,3,4,5,6,7,8,9,10,11,12};
   
+  /** Commonly-used aspect types: START_TIME, END_TIME, COST, QUANTITY **/
+  int[] CommonAspects = { START_TIME, END_TIME, COST, QUANTITY };
+
+  /** Time Aspects: START_TIME, END_TIME **/
+  int[] TimeAspects = { START_TIME, END_TIME };
+
   // extended AspectTypes that are NOT handled by default
   // AllocationResultAggregators or AllocationResultDistributors
   

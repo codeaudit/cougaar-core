@@ -78,7 +78,8 @@ public class TaskImpl extends DirectiveImpl
   private boolean deleted = false;// Set to true when deletion occurs
   private transient Set observableAspects;
   // initialize with one slot = -1 in case its never filled in.
-  private int[] auxqtypes = {-1};
+  private static final int[] emptyAuxQTypes = {-1};
+  private int[] auxqtypes = emptyAuxQTypes;
 
   public ClusterIdentifier getOwner() { return source; }
   public UID getUID() { return uid; }
