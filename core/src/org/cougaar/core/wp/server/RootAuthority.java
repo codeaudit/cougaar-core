@@ -94,7 +94,7 @@ implements Component
 
   private final Object lock = new Object();
 
-  private final DirEntry rootDir = new DirEntry(null);
+  private DirEntry rootDir;
 
   private final Map forwardQueue = new HashMap();
 
@@ -820,12 +820,17 @@ implements Component
     // assert (suffix.startsWith("."));
     // assert (suffix.equals(".") || !suffix.endsWith("."));
 
+    if (rootDir == null) {
+      UID uid = uidService.nextUID();
+      rootDir = new DirEntry(uid);
+    }
+    DirEntry dir = rootDir;
+
     if (isRoot) {
-      return rootDir;
+      return dir;
     }
 
     // subdir, possibly deep
-    DirEntry dir = rootDir;
     int i = suffix.lastIndexOf('.');
     while (true) {
       String s = suffix.substring(i);
@@ -1057,18 +1062,20 @@ implements Component
     synchronized (lock) {
       long now = System.currentTimeMillis();
 
+      DirEntry dir = findDir(".");
+
       if (logger.isDetailEnabled()) {
         StringBuffer buf = new StringBuffer();
         buf.append(
             "##### server entries ##############################");
-        rootDir.append(buf, ".", "\n  ", now);
+        dir.append(buf, ".", "\n  ", now);
         buf.append(
             "\n"+
             "###################################################");
         logger.detail(buf.toString());
       }
 
-      expireLeases(".", rootDir, now);
+      expireLeases(".", dir, now);
     }
 
     // run me again later
@@ -1130,11 +1137,18 @@ implements Component
     private UID uid;
 
     public Entry(UID uid) {
+      _setUID(uid);
+    }
+
+    private void _setUID(UID uid) {
+      if (uid == null) {
+        throw new IllegalArgumentException("null uid");
+      }
       this.uid = uid;
     }
 
     public void setUID(UID uid) {
-      this.uid = uid;
+      _setUID(uid);
     }
     public UID getUID() {
       return uid;
