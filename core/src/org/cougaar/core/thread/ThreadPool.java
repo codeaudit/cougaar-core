@@ -92,7 +92,13 @@ class ThreadPool
 	    while (true) {
 		synchronized (runLock) {
 		    claim();
-		    if (runnable != null) runnable.run();
+		    if (runnable != null) {
+			try {
+			    runnable.run();
+			} catch (Throwable any_ex) {
+			    pool.logger.error("Uncaught exception in pooled thread", any_ex);
+			}
+		    }
 
 		    runnable = null;
 		    isRunning = false;
