@@ -99,7 +99,9 @@ public class AggregateAssetAdapter extends Asset  {
     AggregateAssetAdapter oaa = (AggregateAssetAdapter) o;
     if (myAsset != null && !(myAsset.equals(oaa.getAsset()))) return false;
     if (thequantity != oaa.getQuantity()) return false;
-    if (!(getItemIdentificationPG().getItemIdentification().equals(oaa.getItemIdentificationPG().getItemIdentification()))) return false;
+    if ((getItemIdentificationPG() != null && oaa.getItemIdentificationPG() != null) &&
+	(!(getItemIdentificationPG().getItemIdentification().equals(oaa.getItemIdentificationPG().getItemIdentification())))) 
+	return false;
     return true;
   }
 }
