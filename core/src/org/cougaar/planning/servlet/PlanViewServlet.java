@@ -226,19 +226,13 @@ extends HttpServlet
             } else if (name.equalsIgnoreCase(VERB)) {
               verbFilter = value;
             } else if (name.equalsIgnoreCase(LIMIT)) {
-              limit = 
-                ((value != null) ? 
-                 value.equalsIgnoreCase("true") : 
-                 true);
+              limit = "true".equalsIgnoreCase(value);
             } else if (name.equalsIgnoreCase(PREDICATE)) {
               pred = value;
             } else if (name.equalsIgnoreCase(PREDICATE_STYLE)) {
               predStyle = value;
             } else if (name.equalsIgnoreCase(PREDICATE_DEBUG)) {
-              predDebug = 
-                ((value != null) ?  
-                 value.equalsIgnoreCase("true") : 
-                 true);
+              predDebug = "true".equalsIgnoreCase(value);
             }
           }
         };
@@ -3219,7 +3213,8 @@ extends HttpServlet
         if (limit > 0) {
           out.print(
               "&"+
-              LIMIT);
+              LIMIT+
+              "=true");
           flags |= _FLAG_LIMIT;
         }
         if (verb != null) {
@@ -3322,7 +3317,8 @@ extends HttpServlet
         if (limit > 0) {
           out.print(
               "&"+
-              LIMIT);
+              LIMIT+
+              "=true");
           flags |= _FLAG_LIMIT;
         }
         if (verbose) {
@@ -3391,7 +3387,8 @@ extends HttpServlet
         if (limit > 0) {
           out.print(
               "&"+
-              LIMIT);
+              LIMIT+
+              "=true");
           flags |= _FLAG_LIMIT;
         }
         if (verbose) {
@@ -3460,7 +3457,8 @@ extends HttpServlet
         if (limit > 0) {
           out.print(
               "&"+
-              LIMIT);
+              LIMIT+
+              "=true");
           flags |= _FLAG_LIMIT;
         }
         if (verbose) {
