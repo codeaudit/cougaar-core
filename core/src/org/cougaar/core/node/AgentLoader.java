@@ -327,15 +327,13 @@ implements Component
   private Object captureState() {
     if (addingAgents) {
       if (log.isInfoEnabled()) {
+        int n = (initialDescs == null ? 0 : initialDescs.size());
         log.info(
             "Asked to \"captureState\" while loading,"+
-            " which would find a partially list of agents,"+
-            " so instead return our initial agent list["+
-            initialDescs.size()+"]");
+            " which would find a partial list of agents,"+
+            " so instead return our initial agent list["+n+"]");
         if (log.isDebugEnabled()) {
-          log.debug(
-              "initialDescs["+initialDescs.size()+
-              "]="+initialDescs);
+          log.debug("initialDescs["+n+"]="+initialDescs);
         }
       }
       return initialDescs;
