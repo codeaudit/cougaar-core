@@ -21,8 +21,9 @@
  
 package org.cougaar.core.persist;
 
-import java.io.*;
-import java.util.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.blackboard.Envelope;
@@ -60,39 +61,25 @@ public class DummyPersistence
   public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
   }
 
-  public ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
+  public OutputStream openOutputStream(int deltaNumber, boolean full)
     throws IOException
   {
-    return new ObjectOutputStream(new ByteArrayOutputStream());
+    return null;                // Null means don't write output
   }
 
-  public void closeObjectOutputStream(SequenceNumbers retain,
-                                      ObjectOutputStream currentOutput,
-                                      boolean full)
+  public void finishOutputStream(SequenceNumbers retain,
+                                 boolean full)
   {
-    try {
-      currentOutput.close();
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception closing output stream", e);
-    }
   }
 
-  public void abortObjectOutputStream(SequenceNumbers retain, ObjectOutputStream currentOutput) {
-    closeObjectOutputStream(retain, currentOutput, false);
+  public void abortOutputStream(SequenceNumbers retain) {
   }
 
-  public ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
+  public InputStream openInputStream(int deltaNumber) throws IOException {
     throw new IOException("No dummy input");
   }
 
-  public void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
-    try {
-      currentInput.close();
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception closing input stream", e);
-    }
+  public void finishInputStream(int deltaNumber) {
   }
 
   public void deleteOldPersistence() {

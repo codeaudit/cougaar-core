@@ -84,6 +84,7 @@ public abstract class CompletionPlugin extends ServiceUserPlugin {
       if (relay.persistenceNeeded()) {
         setPersistenceNeeded();
         relay.resetPersistenceNeeded();
+        blackboard.publishChange(relay);
       }
     }
   }

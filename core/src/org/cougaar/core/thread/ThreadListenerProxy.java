@@ -38,7 +38,7 @@ final class ThreadListenerProxy implements ThreadListenerService
     }
 		    
     synchronized void notifyQueued(SchedulableObject schedulable) {
-	Object consumer = schedulable.consumer();
+	Object consumer = schedulable.getConsumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
@@ -47,7 +47,7 @@ final class ThreadListenerProxy implements ThreadListenerService
     }
 
     synchronized void notifyDequeued(SchedulableObject schedulable) {
-	Object consumer = schedulable.consumer();
+	Object consumer = schedulable.getConsumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
@@ -56,7 +56,7 @@ final class ThreadListenerProxy implements ThreadListenerService
     }
 
     synchronized void notifyStart(SchedulableObject schedulable) {
-	Object consumer = schedulable.consumer();
+	Object consumer = schedulable.getConsumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();
@@ -65,7 +65,7 @@ final class ThreadListenerProxy implements ThreadListenerService
     }
 
     synchronized void notifyEnd(SchedulableObject schedulable) {
-	Object consumer = schedulable.consumer();
+	Object consumer = schedulable.getConsumer();
 	Iterator itr = listeners.iterator();
 	while (itr.hasNext()) {
 	    ThreadListener listener = (ThreadListener) itr.next();

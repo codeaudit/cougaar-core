@@ -21,6 +21,8 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.util.UnaryPredicate;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -44,6 +46,19 @@ public class DynamicSortedQueue
 	this.comparator = comparator;
     }
 
+
+    public ArrayList filter(UnaryPredicate predicate) {
+	ArrayList result = new ArrayList();
+	Iterator itr = store.iterator();
+	while (itr.hasNext()) {
+	    Object candidate = itr.next();
+	    if (!predicate.execute(candidate)) {
+		result.add(candidate);
+		itr.remove();
+	    }
+	}
+	return result;
+    }
 
     public String toString() {
 	return "<DQ[" +store.size()+ "] " +store.toString()+ ">";

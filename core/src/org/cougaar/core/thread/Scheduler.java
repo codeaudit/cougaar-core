@@ -23,11 +23,18 @@ package org.cougaar.core.thread;
 
 import org.cougaar.core.qos.metrics.MetricsServiceProvider;
 import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.UnaryPredicate;
 
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -56,12 +63,15 @@ public class Scheduler
     private static final int MaxRunningCountDefault = 30;
 
     private DynamicSortedQueue pendingThreads;
+    private ArrayList disqualified = new ArrayList();
+    private UnaryPredicate qualifier;
     private ThreadListenerProxy listenerProxy;
     private String name;
     private String printName;
     private TreeNode treeNode;
     private int maxRunningThreads;
     private int runningThreadCount = 0;
+    protected Logger logger;
     protected int rightsRequestCount = 0;
 
     private Comparator timeComparator =
@@ -71,8 +81,8 @@ public class Scheduler
 		}
 
 		public int compare (Object x, Object y) {
-		    long t1 = ((SchedulableObject) x).timestamp();
-		    long t2 = ((SchedulableObject) y).timestamp();
+		    long t1 = ((SchedulableObject) x).getTimestamp();
+		    long t2 = ((SchedulableObject) y).getTimestamp();
 		    if (t1 < t2)
 			return -1;
 		    else if (t1 > t2)
@@ -94,6 +104,11 @@ public class Scheduler
 	printName = "<Scheduler " +name+ ">";
     }
 
+
+    private synchronized Logger getLogger() {
+	if (logger == null) logger = Logging.getLogger(getClass().getName());
+	return logger;
+    }
 
     public void setRightsSelector(RightsSelector selector) {
 	// error? no-op?
@@ -121,7 +136,10 @@ public class Scheduler
     // ThreadControlService 
     public synchronized void setQueueComparator(Comparator comparator)
     {
-	pendingThreads.setComparator(comparator);
+	if (comparator != null) 
+	    pendingThreads.setComparator(comparator);
+	else
+	    pendingThreads.setComparator(timeComparator);
     }
 
 
@@ -129,15 +147,15 @@ public class Scheduler
 	return maxRunningThreads;
     }
 
-    public synchronized int pendingThreadCount() {
+    public int pendingThreadCount() {
 	return pendingThreads.size();
     }
 
-    public synchronized int runningThreadCount() {
+    public int runningThreadCount() {
 	return runningThreadCount;
     }
 
-
+    // synchronize to keep the two addends consistent
     public synchronized int activeThreadCount() {
 	return runningThreadCount + pendingThreads.size();
     }
@@ -151,7 +169,7 @@ public class Scheduler
     {
 	synchronized (this) {
 	    if (pendingThreads.contains(thread)) return;
-	    thread.notifyPending();
+	    thread.setQueued(true);
 	    pendingThreads.add(thread);
 	}
 	listenerProxy.notifyQueued(thread);
@@ -315,9 +333,67 @@ public class Scheduler
 	}
     }
 
+
+
+
+    private boolean qualified(Schedulable thread) {
+	return qualifier == null || qualifier.execute(thread);
+    }
+
+    public boolean setQualifier(UnaryPredicate predicate) {
+	if (predicate == null) {
+            List requeue;
+	    synchronized (this) {
+                qualifier = null;
+                requeue = new ArrayList(disqualified);
+                disqualified.clear();
+                // start-or-queue any previosly disqualified items
+            }
+	    Logger logger = getLogger();
+	    if (logger.isDebugEnabled())
+		logger.debug("Restoring " + requeue.size() + 
+			     " previously disqualified threads");
+            Iterator itr = requeue.iterator();
+            while (itr.hasNext()) {
+                SchedulableObject sched = (SchedulableObject) itr.next();
+                Starter.push(sched);
+            }
+            return true;
+	} else if (qualifier == null) {
+	    synchronized (this) {
+                qualifier = predicate;
+                List bad = pendingThreads.filter(predicate);
+                // move any disqualified items on the queue to the
+                // disqualified list
+                for (Iterator i = bad.iterator(); i.hasNext(); ) {
+                    SchedulableObject thread = (SchedulableObject) i.next();
+                    disqualify(thread);
+                }
+                return true;
+            }
+	} else {
+	    Logger logger = getLogger();
+	    if (logger.isErrorEnabled())
+		logger.error("Qualifier is already set");
+	    return false;
+	}
+    }
+
+
+    private void disqualify(SchedulableObject sched) {
+	sched.setDisqualified(true);
+	if (!disqualified.contains(sched)) disqualified.add(sched);
+    }
+
+	    
+
     void startOrQueue(SchedulableObject thread) {
 	// If the queue isn't empty, queue this one too.
 	synchronized (this) {
+	    if (!qualified(thread)) {
+		disqualify(thread);
+		return;
+	    }
 	    if (pendingThreadCount() > 0) {
 		addPendingThread(thread);
 		return;

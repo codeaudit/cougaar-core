@@ -157,7 +157,9 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     nt.setDirectObject(task.getDirectObject());
     nt.setPrepositionalPhrases(task.getPrepositionalPhrases());
     // no workflow
-    nt.setPreferences(task.getPreferences());
+    synchronized (task) {
+      nt.setPreferences(task.getPreferences());
+    }
     nt.setPriority(task.getPriority());
     nt.setPlan(task.getPlan());
     nt.setAuxiliaryQueryTypes(task.getAuxiliaryQueryTypes());

@@ -26,4 +26,5 @@ public interface Schedulable
     void start();
     int getState();
     boolean cancel();
+    Object getConsumer();
 }

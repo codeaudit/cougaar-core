@@ -1,3 +1,97 @@
+2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionTargetPlugin.java:
+	Bug #2083 -- Completion plugins should ignore tasks past the end of level 2 planning
+	Code tweak to avoid NPE trying to create tasksPredicate. The
+	predicate creation must be delayed until there is a ServiceBroker
+	available. Use lazy evaluation.
+
+2002-08-20  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionTargetPlugin.java:
+	Bug #2083 -- Completion plugins should ignore tasks past the end of level 2 planning
+	Expose the task selection predicate to subclasses for tailoring.
+	Provide a variable having the current scenario time.
+
+	* CompletionSocietyPlugin.java: 
+	* CompletionEventInsertion-recipe.sql:
+	Adjust timers slightly. Expose servlet settable time constants,
+	too.
+
+2002-08-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionInsertion-recipe.sql:
+	CSMART Recipe for normal completion plugin insertion.
+
+	* HowTo.txt:
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Document changes made for bug 2034. Describe recipe.
+
+	* CompletionEventInsertion-recipe.sql:
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Set INITIAL_TIME_ADVANCE_DELAY and NORMAL_TIME_ADVANCE_DELAY to
+	larger than default values.
+
+	* CompletionSocietyPlugin.java:
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Add servlet-settable parameters to the list of plugin parameters
+	so they can be initialized without the servlet.
+
+2002-08-15  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionEventInsertion-recipe.sql:
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	CSMART recipe for inserting completion plugins with parameters
+	suitable for running under stress and generating completion
+	events.
+
+	* CompletionTargetPlugin.java: 
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Make time constants settable through plugin parameters to
+	accomodate more leisurely updating of information required when
+	under stress.
+	Parameters are:
+	SLEEP_INTERVAL=<long> time between completion checks
+	ACTIVITY_DELAY=<long> time between checks for recent publish
+	activity
+
+	* CompletionSourcePlugin.java: 
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Make time constants settable through plugin parameters to
+	accomodate more leisurely updating of information required when
+	under stress.
+	UPDATE_INTERVAL=<long> sets interval between update cycles
+	LONG_CHECK_TARGETS_INTERVAL=<long> sets interval between checks of
+	topology to detect new nodes/agents after initialization.
+	SHORT_CHECK_TARGETS_INTERVAL=<long> sets interval between checks of
+	topology to detect new nodes/agents during initialization. Should
+	be shorter to be more responsive to expected changes.
+
+	* CompletionSocietyPlugin.java: 
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Generate CougaarEvent when completion is achieved and lost.
+	Make time constants settable through plugin parameters to
+	accomodate more leisurely updating of information required when
+	under stress.
+	Parameters (in addition to the parameters of
+	CompletionSourcePlugin) are:
+	DO_PERSISTENCE=false to suppress persistence snapshot on
+	completion.
+
+	* CompletionPlugin.java: 
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Add missing publishChange after changing relay when persisting.
+	Avoids waiting for next periodic update for propagating the
+	change.
+
+	* CompletionNodePlugin.java:
+	Bug #2034 -- Add CougaarEvent generation to CompletionPlugin
+	Respond instantly to new relays for more reliabl detection of the
+	worst laggard.
+	Make time constants settable through plugin parameters to
+	accomodate more leisurely updating of information required when
+	under stress. 
+
 2002-07-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* CompletionSourcePlugin.java: 

@@ -132,12 +132,18 @@ public class LoadWatcher
 	    // Can't get the specific max, so no applicable test
 	}
 
-	synchronized void decrementOutstanding() {
+	synchronized boolean decrementOutstanding() {
+	    // The given consumer Scheduler may have running threads when
+	    // this listener starts listening.  When those threads stop,
+	    // the count will go negative.  Ignore those.
+	    if (outstanding == 0) return false;
+
 	    accumulate();
 	    --outstanding;
 	    if (outstanding < 0) 
 		loggingService.debug("Agent outstanding =" +outstanding+ 
 				   " when rights returned for " +name);
+	    return true;
 	}
 
 	synchronized void accumulate() {
@@ -183,16 +189,11 @@ public class LoadWatcher
 	    sb.getService(this, MetricsUpdateService.class, null);
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
-	ThreadListenerService tls = (ThreadListenerService)
-	    sb.getService(this, ThreadListenerService.class, null);
-	tls.addListener(this);
-
-	ThreadService ts = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
-	ts.schedule(new HistoryPoller(), 5000, 1000);
 
 	controlService = (ThreadControlService)
 	    sb.getService(this, ThreadControlService.class, null);
+
+
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
@@ -205,6 +206,17 @@ public class LoadWatcher
 	path = "Node(" +my_node+ ")" +PATH_SEPR+ "Count";
 	m = metricsService.getValue(path);
 	number_of_cpus = m.intValue();
+
+
+	// Don't start listening for callbacks until everything's
+	// ready.
+	ThreadListenerService tls = (ThreadListenerService)
+	    sb.getService(this, ThreadListenerService.class, null);
+	tls.addListener(this);
+
+	ThreadService ts = (ThreadService)
+	    sb.getService(this, ThreadService.class, null);
+	ts.schedule(new HistoryPoller(), 5000, 1000);
     }
 
 
@@ -256,11 +268,16 @@ public class LoadWatcher
 		
     public synchronized void rightReturned(String consumer) {
 	ConsumerRecord rec = findRecord(consumer);
-	rec.decrementOutstanding();
-	--total;
+
+	// The given consumer Scheduler may have running threads when
+	// this listener starts listening.  When those threads stop,
+	// the count will go negative.  Ignore those.
+	if (rec.decrementOutstanding()) --total;
+
+	// Sanity check
 	if (total < 0) 
 	    loggingService.debug("total outstanding =" +total+ 
-			       " when rights returnd for " +consumer);
+				 " when rights returnd for " +consumer);
    }
 
 

@@ -24,9 +24,11 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 import org.cougaar.util.PropertyParser;
 
-public class ThreadPool 
+class ThreadPool 
 {
 
     private static ThreadPool SharedPool;
@@ -39,7 +41,7 @@ public class ThreadPool
 
 
 
-    static class PooledThread extends Thread {
+    static final class PooledThread extends Thread {
 	private SchedulableObject schedulable;
 
 	private boolean in_use = false;
@@ -63,11 +65,8 @@ public class ThreadPool
 	 **/
 	private Object runLock = new Object();
 
-	public void setRunnable(Runnable r) {
+	private void setRunnable(Runnable r) {
 	    runnable = r;
-	}
-	protected Runnable getRunnable() {
-	    return runnable;
 	}
 
 	SchedulableObject getSchedulable() {
@@ -75,8 +74,8 @@ public class ThreadPool
 	}
 
 	/** The only constructor. **/
-	public PooledThread(ThreadPool p) {
-	    super(p.getThreadGroup(), null, "PooledThread");
+	private PooledThread(ThreadPool p, String name) {
+	    super(p.getThreadGroup(), null, name);
 	    setDaemon(true);
 	    pool = p;
 	}
@@ -90,13 +89,14 @@ public class ThreadPool
 	    while (true) {
 		synchronized (runLock) {
 		    claim();
-		    Runnable r = getRunnable();
-		    if (r != null)
-			r.run();
-		    isRunning = false;
+		    if (runnable != null) runnable.run();
 
+		    runnable = null;
+		    isRunning = false;
 		    reclaim();
 		    Reclaimer.push(schedulable);
+		    
+		    schedulable = null;
 		    try {
 			runLock.wait();       // suspend
 		    } catch (InterruptedException ie) {}
@@ -108,7 +108,9 @@ public class ThreadPool
 	    throw new RuntimeException("You can't call start() on a PooledThread");
 	}
 
-	public void start(SchedulableObject schedulable) throws IllegalThreadStateException {
+	void start(SchedulableObject schedulable) 
+	    throws IllegalThreadStateException 
+	{
 	    synchronized (runLock) {
 		if (isRunning) 
 		    throw new IllegalThreadStateException("PooledThread already started: "+
@@ -127,7 +129,7 @@ public class ThreadPool
 
 	private void reclaim() {
 	    schedulable.reclaim();
-	    setName( "Reclaimed " + getName());
+	    if (pool.logger.isInfoEnabled()) setName( "Reclaimed");
 	    in_use = false;
 	}
     }
@@ -172,21 +174,24 @@ public class ThreadPool
     /** the actual pool **/
     private PooledThread pool[];
     private ArrayList extra;
+    private Logger logger;
+    private int index = 0;
 
-    public ThreadPool() {
+    ThreadPool() {
 	this(defaultInitialPoolSize, defaultMaximumPoolSize);
     }
 
-    public ThreadPool(ThreadGroup group) {
+    ThreadPool(ThreadGroup group) {
 	this(group, defaultInitialPoolSize, defaultMaximumPoolSize);
     }
 
-    public ThreadPool(int initial, int maximum) {
+    ThreadPool(int initial, int maximum) {
 	this(Thread.currentThread().getThreadGroup(), initial, maximum);
     }
 
-    public ThreadPool(ThreadGroup group, int initial, int maximum) {
+    ThreadPool(ThreadGroup group, int initial, int maximum) {
 	this.group = group;
+	logger = Logging.getLogger(getClass().getName());
 	if (initial > maximum) initial = maximum;
 	maximumSize = maximum;
 	pool = new PooledThread[maximum];
@@ -195,23 +200,15 @@ public class ThreadPool
     }
 
 
-    public ThreadGroup getThreadGroup() {
+    private synchronized String nextName() {
+	return "CougaarPooledThread-" + (index++);
+    }
+
+    ThreadGroup getThreadGroup() {
 	return group;
     }
 
-    public PooledThread getThread() {
-	return getThread(null, "PooledThread");
-    }
-
-    public PooledThread getThread(String name) {
-	return getThread(null, name);
-    }
-
-    public PooledThread getThread(Runnable runnable) {
-	return getThread(runnable, "PooledThread");    
-    }
-  
-    public PooledThread getThread(Runnable runnable, String name) {
+    PooledThread getThread(Runnable runnable, String name) {
 	PooledThread thread = null;
 
 	synchronized (this) {
@@ -256,16 +253,30 @@ public class ThreadPool
 	}
 
 	thread.setRunnable(runnable);
-	thread.setName(name);
+	if (logger.isInfoEnabled()) thread.setName(name);
 
 	return thread;
     }
   
     /** actually construct a new PooledThread **/
-    protected PooledThread constructReusableThread() {
-	return new PooledThread(this);
+    PooledThread constructReusableThread() {
+	// If info logging is enabled the thread's name will get set
+	// when it's run, so it can start out empty.
+	String name = "";
+	if (!logger.isInfoEnabled()) name = nextName();
+	return new PooledThread(this, name);
     }
 
+
+    String generateName() {
+	// Generate a name for a Schedulable.  If info logging is
+	// enabled the name won't be used anywhere, so just return
+	// null.  Otherwise make a unique one.
+	if (logger.isInfoEnabled()) 
+	    return nextName();
+	else
+	    return null;
+    }
 
 
 }

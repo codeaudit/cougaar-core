@@ -54,6 +54,8 @@ import org.cougaar.util.Enumerator;
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 
 /**
@@ -65,6 +67,7 @@ import org.cougaar.util.UnaryPredicate;
 
 public class ReceiveAssetLP extends LogPlanLogicProvider 
   implements MessageLogicProvider {
+  private static Logger logger = Logging.getLogger(AssetTransferLP.class);
 
   private static TimeSpan ETERNITY = new MutableTimeSpan();
 
@@ -81,6 +84,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
   {
     if (dir instanceof AssetAssignment) {
       AssetAssignment aa  = (AssetAssignment)dir;
+      if (logger.isDebugEnabled()) logger.debug("Received " + aa);
       receiveAssetAssignment(aa);
     }
   }
@@ -95,8 +99,8 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     Asset assigneeL = logplan.findAsset(assigneeT); // local assignee instance
     
     if (assigneeL == null) {
-      System.err.println("ReceiveAssetLP: Unable to find receiving asset " + 
-                         assigneeT + " in "+cluster);
+      logger.error("ReceiveAssetLP: Unable to find receiving asset " + 
+                   assigneeT + " in "+cluster);
       return;
     }
     Asset assignee = assigneeL;
@@ -165,15 +169,14 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
           } else if (next instanceof PropertyGroupSchedule) {
             assetL.addOtherPropertyGroupSchedule((PropertyGroupSchedule) next);
           } else {
-            System.err.println("ReceiveAssetLP: unrecognized property type - " + 
-                               next + " - on transferred asset " + assetL);
+            logger.error("ReceiveAssetLP: unrecognized property type - " + 
+                         next + " - on transferred asset " + assetL);
           }
         }
       }
     } else {
       if (aa.isUpdate() || aa.isRepeat()) {
-        System.err.println("Received Update Asset Transfer, but cannot find original "+
-                           aa);
+        logger.error("Received Update Asset Transfer, but cannot find original "+ aa);
       } 
     }
 

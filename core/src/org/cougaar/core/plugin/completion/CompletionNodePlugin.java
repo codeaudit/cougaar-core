@@ -21,6 +21,7 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -40,6 +41,7 @@ import org.cougaar.core.service.TopologyReaderService;
 public class CompletionNodePlugin extends CompletionSourcePlugin {
   private IncrementalSubscription targetRelaySubscription;
   private Map filters = new WeakHashMap();
+  private Laggard worstLaggard = null;
 
   public void setupSubscriptions() {
     targetRelaySubscription = (IncrementalSubscription)
@@ -50,6 +52,18 @@ public class CompletionNodePlugin extends CompletionSourcePlugin {
   public void execute() {
     if (targetRelaySubscription.hasChanged()) {
       checkPersistenceNeeded(targetRelaySubscription);
+      if (logger.isDebugEnabled()) {
+        Collection newRelays = targetRelaySubscription.getAddedCollection();
+        if (!newRelays.isEmpty()) {
+          for (Iterator i = newRelays.iterator(); i.hasNext(); ) {
+            CompletionRelay relay = (CompletionRelay) i.next();
+            logger.debug("New target: " + relay.getSource());
+            if (worstLaggard != null) {
+              sendResponseLaggard(relay, worstLaggard);
+            }
+          }
+        }
+      }
     }
     super.execute();
   }
@@ -58,10 +72,22 @@ public class CompletionNodePlugin extends CompletionSourcePlugin {
     return topologyReaderService
       .getChildrenOnParent(TopologyReaderService.AGENT,
                            TopologyReaderService.NODE,
-                           getClusterIdentifier().toString());
+                           getAgentIdentifier().toString());
+  }
+
+  private void sendResponseLaggard(CompletionRelay relay, Laggard newLaggard) {
+    if (logger.isDebugEnabled()) {
+      logger.debug("Send response to "
+                   + relay.getSource()
+                   + ": "
+                   + newLaggard);
+    }
+    relay.setResponseLaggard(newLaggard);
+    blackboard.publishChange(relay);
   }
 
   protected void handleNewLaggard(Laggard newLaggard) {
+    worstLaggard = newLaggard;
     if (targetRelaySubscription.size() > 0) {
       for (Iterator i = targetRelaySubscription.iterator(); i.hasNext(); ) {
         CompletionRelay relay = (CompletionRelay) i.next();
@@ -71,13 +97,9 @@ public class CompletionNodePlugin extends CompletionSourcePlugin {
           filters.put(relay, filter);
         }
         if (filter.filter(newLaggard)) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("setResponseLaggard " + newLaggard);
-          }
-          relay.setResponseLaggard(newLaggard);
-          blackboard.publishChange(relay);
+          sendResponseLaggard(relay, newLaggard);
         } else {
-          if (logger.isDebugEnabled()) logger.debug("No response ");
+          if (logger.isDebugEnabled()) logger.debug("No new response to " + relay.getSource());
         }
       }
     } else {

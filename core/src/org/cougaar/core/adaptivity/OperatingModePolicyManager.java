@@ -58,7 +58,7 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
             if (o instanceof InterAgentOperatingModePolicy) {
               InterAgentOperatingModePolicy iaomp =
                 (InterAgentOperatingModePolicy) o;
-              if (iaomp.getSource() == null) return false;
+              return iaomp.appliesToThisAgent();
             }
 	    return true;
 	  }

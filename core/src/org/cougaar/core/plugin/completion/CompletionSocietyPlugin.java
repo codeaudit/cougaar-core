@@ -21,21 +21,24 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.lang.reflect.Constructor;
-import java.io.PrintWriter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Set;
-import java.util.Iterator;
-import java.util.TreeMap;
-import java.util.SortedMap;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.servlet.ServletService;
+import org.cougaar.util.CougaarEvent;
+import org.cougaar.util.CougaarEventType;
 
 /**
  * This plugin gathers and integrates completion information from
@@ -59,10 +62,15 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   private static final long DEFAULT_TIME_STEP = 86400000L;
   private static final Class[] stringArgType = {String.class};
 
-
   private long NORMAL_TIME_ADVANCE_DELAY = DEFAULT_NORMAL_TIME_ADVANCE_DELAY;
   private long INITIAL_TIME_ADVANCE_DELAY = DEFAULT_INITIAL_TIME_ADVANCE_DELAY;
   private long ADVANCE_TIME_ADVANCE_DELAY = DEFAULT_ADVANCE_TIME_ADVANCE_DELAY;
+
+  private static final String NORMAL_TIME_ADVANCE_DELAY_KEY = "NORMAL_TIME_ADVANCE_DELAY=";
+  private static final String INITIAL_TIME_ADVANCE_DELAY_KEY = "INITIAL_TIME_ADVANCE_DELAY=";
+  private static final String ADVANCE_TIME_ADVANCE_DELAY_KEY = "ADVANCE_TIME_ADVANCE_DELAY=";
+  private static final String DO_PERSISTENCE_KEY = "DO_PERSISTENCE=";
+  private boolean DO_PERSISTENCE = true;
   private long TIME_STEP = DEFAULT_TIME_STEP;
   private int advancementSteps = 0;
   private int refreshInterval = 0;
@@ -91,12 +99,55 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
 
   private int nextCompletionAction = 0;
 
+  private boolean planningComplete = false;
+
   private LaggardFilter filter = new LaggardFilter();
 
   private ServletService servletService = null;
 
   public CompletionSocietyPlugin() {
     super(requiredServices);
+  }
+
+  public void setupSubscriptions() {
+    Collection params = getParameters();
+    for (Iterator i = params.iterator(); i.hasNext(); ) {
+      String param = (String) i.next();
+      if (param.startsWith(ADVANCE_TIME_ADVANCE_DELAY_KEY)) {
+        ADVANCE_TIME_ADVANCE_DELAY =
+          Long.parseLong(param.substring(ADVANCE_TIME_ADVANCE_DELAY_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + ADVANCE_TIME_ADVANCE_DELAY_KEY
+                                                + ADVANCE_TIME_ADVANCE_DELAY);
+        continue;
+      }
+      if (param.startsWith(NORMAL_TIME_ADVANCE_DELAY_KEY)) {
+        NORMAL_TIME_ADVANCE_DELAY =
+          Long.parseLong(param.substring(NORMAL_TIME_ADVANCE_DELAY_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + NORMAL_TIME_ADVANCE_DELAY_KEY
+                                                + NORMAL_TIME_ADVANCE_DELAY);
+        continue;
+      }
+      if (param.startsWith(INITIAL_TIME_ADVANCE_DELAY_KEY)) {
+        INITIAL_TIME_ADVANCE_DELAY =
+          Long.parseLong(param.substring(INITIAL_TIME_ADVANCE_DELAY_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + INITIAL_TIME_ADVANCE_DELAY_KEY
+                                                + INITIAL_TIME_ADVANCE_DELAY);
+        continue;
+      }
+      if (param.startsWith(DO_PERSISTENCE_KEY)) {
+        DO_PERSISTENCE =
+          !param.substring(DO_PERSISTENCE_KEY.length())
+          .equalsIgnoreCase("false");
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + DO_PERSISTENCE_KEY
+                                                + DO_PERSISTENCE);
+        continue;
+      }
+    }
+    super.setupSubscriptions();
   }
 
   protected boolean haveServices() {
@@ -160,13 +211,6 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
    * first time advance.
    **/
   protected void checkTimeAdvance(boolean haveLaggard) {
-    if (advancementSteps <= 0) {
-      if (persistenceNeeded) {
-        setPersistenceNeeded();
-        persistenceNeeded = false;
-      }
-      return;
-    }
     long demoNow = alarmService.currentTimeMillis();
     if (tomorrow == Long.MIN_VALUE) {
       tomorrow = (demoNow / TIME_STEP) * TIME_STEP; // Beginning of today
@@ -181,6 +225,19 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
       if (timeToGo > 0) {
         if (logger.isDebugEnabled()) logger.debug(timeToGo + " left");
       } else {
+        if (advancementSteps <= 0) {
+          if (persistenceNeeded) {
+            if (DO_PERSISTENCE) {
+              setPersistenceNeeded();
+            }
+            persistenceNeeded = false;
+          }
+          if (!planningComplete) {
+            CougaarEvent.postEvent(CougaarEventType.STATUS, "Planning Complete");
+            planningComplete = true;
+          }
+          return;
+        }
         long newTomorrow = ((demoNow / TIME_STEP) + 1) * TIME_STEP;
         advancementSteps -= (int) ((newTomorrow - tomorrow) / TIME_STEP);
         tomorrow = newTomorrow;
@@ -204,6 +261,10 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
         }
         timeToAdvanceTime = now + ADVANCE_TIME_ADVANCE_DELAY;
       }
+    }
+    if (planningComplete) {
+      CougaarEvent.postEvent(CougaarEventType.STATUS, "Planning Active");
+      planningComplete = false;
     }
   }
 

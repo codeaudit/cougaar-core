@@ -141,20 +141,21 @@ public class PlaybookManager
     Iterator iter = getParameters().iterator();
     if (!iter.hasNext()) {
       logger.error("Missing playbook file name.");
-    }
-    String playFileName = iter.next().toString();
-    try {
-      Reader is = new InputStreamReader(getConfigFinder().open(playFileName));
+    } else {
+      String playFileName = iter.next().toString();
       try {
-        Parser p = new Parser(is, logger);
-        Play[] plays = p.parsePlays();
-        playbook.setPlays(plays);
-        fireListeners();
-      } finally {
-        is.close();
+        Reader is = new InputStreamReader(getConfigFinder().open(playFileName));
+        try {
+          Parser p = new Parser(is, logger);
+          Play[] plays = p.parsePlays();
+          playbook.setPlays(plays);
+          fireListeners();
+        } finally {
+          is.close();
+        }
+      } catch (Exception e) {
+        logger.error("Error parsing play file", e);
       }
-    } catch (Exception e) {
-      logger.error("Error parsing play file", e);
     }
   }
 

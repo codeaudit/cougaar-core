@@ -120,10 +120,12 @@ public class AllocationResultHelper {
 
     private AspectValue[] getAspectValuesOfTask(Task task) {
         List avs = new ArrayList();
-        for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ) {
-            Preference pref = (Preference) e.nextElement();
-            AspectValue best = pref.getScoringFunction().getBest().getAspectValue();
-            avs.add(best.clone());
+        synchronized (task) {
+            for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ) {
+                Preference pref = (Preference) e.nextElement();
+                AspectValue best = pref.getScoringFunction().getBest().getAspectValue();
+                avs.add(best.clone());
+            }
         }
         return (AspectValue[]) avs.toArray(new AspectValue[avs.size()]);
     }
@@ -162,12 +164,14 @@ public class AllocationResultHelper {
 
     private boolean isSuccess(AspectValue[] ru) {
         int ix = 0;
-        for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ix++) {
-            Preference pref = (Preference) e.nextElement();
-            ScoringFunction sf = pref.getScoringFunction();
-            AspectValue av = ru[ix];
-            double thisScore = sf.getScore(av);
-            if (thisScore >= ScoringFunction.HIGH_THRESHOLD) return false;
+        synchronized (task) {
+            for (Enumeration e = task.getPreferences(); e.hasMoreElements(); ix++) {
+                Preference pref = (Preference) e.nextElement();
+                ScoringFunction sf = pref.getScoringFunction();
+                AspectValue av = ru[ix];
+                double thisScore = sf.getScore(av);
+                if (thisScore >= ScoringFunction.HIGH_THRESHOLD) return false;
+            }
         }
         return true;
     }

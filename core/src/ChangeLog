@@ -19,6 +19,118 @@
 	the queried agent, including cougaar build information when
 	available.
 
+2002-09-06  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/PlaybookManager.java:
+	Bug #2207 -- PlaybookManager throws NoSuchElementException when an
+	a playbook isn't specified.
+	Check for missing playbook file name and log an error instead of
+	the exception.
+
+	* org/cougaar/core/adaptivity/OperatingModeServiceProvider.java:
+	Bug #2235 -- Concurrent modification when iterating all OperatingMode
+	names.
+	getAllOperatingModeNames tried to return a safe Set of operating
+	mode names, but used ReadOnlySet which is only a wrapper for the
+	original set. A copy is needed to divorce the result given to the
+	client from the keySet of the operating mode map which will
+	continue to change as operating modes are added.
+
+	* org/cougaar/core/adaptivity/PlayHelper.java: 
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Bug #2221 -- Adaptivity Engine should not log errors for missing
+	operating modes
+	Missing OperatingModes produce no complaint.
+	Missing Conditions are printed only after running for awhile (one
+	minute). The delay can be altered providing the plugin with a
+	single long parameter giving milliseconds to delay. 
+
+2002-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/planning/ldm/lps/ReceiveAssetLP.java: 
+	* org/cougaar/planning/ldm/lps/AssetTransferLP.java:
+	Bug #2203 -- asset transfer errros
+	Add additional DEBUG level logging to help debug this problem.
+
+2002-08-29  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/planning/servlet/CompletionServlet.java: 
+	Bug #2159 -- Extend completion servlet to report on all agents
+	simultaneously.
+	Add viewType url parameter with various values including:
+	viewAllAgents to present a page containing all agents.
+	viewAgentSmall to present a tiny page summarizing one agent.
+	viewTitle to present a page containing an arbitrary title to be
+	placed inside a frame when presenting all agents using frames
+	(necessary for Netscape 4 and less).
+	viewMoreLink tp present a page containing a link for continuation
+	of a page of more agents.
+	Shows a bunch of IFRAMES for Mozilla/5, MSIE 5, MSIE 6 browsers.
+	Uses frames for all others. Mozilla, netscape 6, and IE 5 and 6
+	work better than others.
+
+	* org/cougaar/planning/servlet/CompletionServlet.java: 
+	Bug #2160 -- Completion servlet table view should show task verb
+	Add a table column for the task verb.
+	
+	* org/cougaar/planning/servlet/data/completion/AbstractTask.java:
+	Bug #2160 -- Completion servlet table view should show task verb
+	Add slot and accessors for a verb.
+
+2002-08-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingEventContext.java:
+	Use Logger for error messages.
+
+	* org/cougaar/core/naming/NSCallbackImpl.java:
+	Bug #2154 -- NSCallbackImpls are using the default socket factory
+	Get and use org.cougaar.core.mts.SocketFactory instance to enable SSL.
+
+	* org/cougaar/core/mts/SocketFactory.java: Bug #2157 --
+	SocketFactory is missing equals method so remote references are
+	not equal.
+	Add equals method. Factories are equal if they both do or do not
+	use SSL and both do or do not use aspects.
+
+2002-08-27  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Bug #2147 -- ConcurrentModificationException when registering Topology service
+	Ye Olde enumerate callbacks while new callbacks are being added
+	bugge. Copy the callbacks out into an array first.
+
+2002-08-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/planning/ldm/lps/RemoteClusterAllocationLP.java: 
+	Bug #2102 -- concurrent mod exception in Univ Allocator during rehydration
+	This LP enumerates task preferences but didn't synchronize the task first.
+
+2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/topology/TopologyReaderServiceComponent.java:
+	Bug #2106 -- long delay propagating incarnation number
+	Add additional debug logging to try to pinpoint what is happening.
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #2088 -- Rehydration may erroneously resurrect deleted remote tasks
+	Check for null and avoid NPE. Null means there is no current
+	translation for the ABA in the cache. This is somewhat anomalous
+	because it means a relay was not sent using this ABA yet there is
+	a relay on the blackboard using that ABA. I hope this means that
+	the Relay was about to be sent, but the LP hadn't not yet been
+	invoked. The fix will cause the RelayLP to do nothing. If my hope
+	is fulfilled, the Relay will be sent when the LP is invoked
+	normally.
+
+2002-08-02  Todd Wright <twright@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+        Bug #1847, "After persistence, no servlet response"
+        Altered distributor locking to prevent deadlock between message
+        delivery and persistence.  Cleaned up the code to make the locking
+        and transaction-counting strategy clearer.  Added lots of
+        assertions.  Ported distributor file-log to use the logger.
+
 2002-07-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Distributor.java:

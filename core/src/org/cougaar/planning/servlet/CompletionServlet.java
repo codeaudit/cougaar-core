@@ -25,6 +25,7 @@ package org.cougaar.planning.servlet;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.text.DecimalFormat;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -64,8 +65,8 @@ extends HttpServlet
       HttpServletResponse response) throws IOException, ServletException
   {
     // create a new "Completor" context per request
-    Completor ct = new Completor(support);
-    ct.execute(request, response);    
+    Completor ct = new Completor(support, request, response);
+    ct.execute();    
   }
 
 
@@ -74,8 +75,8 @@ extends HttpServlet
       HttpServletResponse response) throws IOException, ServletException
   {
     // create a new "Completor" context per request
-    Completor ct = new Completor(support);
-    ct.execute(request, response);  
+    Completor ct = new Completor(support, request, response);
+    ct.execute();  
   }
 
   /** 
@@ -97,6 +98,8 @@ extends HttpServlet
     // this makes it clear that Completor only uses
     // the "support" from the outer class.
     private SimpleServletSupport support;
+    private HttpServletRequest request;
+    private HttpServletResponse response;
 
     // writer from the request for HTML output
     private PrintWriter out;
@@ -104,13 +107,17 @@ extends HttpServlet
     // base url
     private String baseURL;
 
-    public Completor(SimpleServletSupport support) {
+    public Completor(SimpleServletSupport support,
+                     HttpServletRequest request, 
+                     HttpServletResponse response)
+    {
       this.support = support;
+      this.request = request;
+      this.response = response;
       format = FORMAT_HTML;
     }         
 
-    public void execute(HttpServletRequest request, 
-        HttpServletResponse response) throws IOException, ServletException 
+    public void execute() throws IOException, ServletException 
     {
       // save the absolute address
       this.baseURL =   
@@ -155,6 +162,23 @@ extends HttpServlet
 
       // visit the URL parameters
       ServletUtil.parseParams(vis, request);
+      String viewType = request.getParameter("viewType");
+      if ("viewAllAgents".equals(viewType)) {
+        viewAllAgents();
+        return;
+      }
+      if ("viewTitle".equals(viewType)) {
+        viewTitle();
+        return;
+      }
+      if ("viewAgentSmall".equals(viewType)) {
+        viewAgentSmall();
+        return;
+      }
+      if ("viewMoreLink".equals(viewType)) {
+        viewMoreLink();
+        return;
+      }
 
       // get result
       CompletionData result = getCompletionData();
@@ -186,7 +210,217 @@ extends HttpServlet
       } catch (IOException e) {
         e.printStackTrace();
       }
-    } 
+    }
+
+    private static String[] iframeBrowsers = {
+      "mozilla/5",
+      "msie 5",
+      "msie 6"
+    };
+
+    private static final int MAX_AGENT_FRAMES = 17;
+
+    private void viewMoreLink() throws IOException {
+      response.setContentType("text/html");
+      out = response.getWriter();
+      format = FORMAT_HTML;     // Force html format
+      out.print
+        ("<html>\n" +
+         "<head>\n" +
+         "<title>Completion of More Agents</title>\n" +
+         "</head>\n");
+      out.println("<body>");
+      String firstAgent = request.getParameter("firstAgent");
+      if (firstAgent != null) {
+        out.println("<A href=\"completion?viewType=viewAllAgents&firstAgent=" + firstAgent + "\" + target=\"_top\">");
+        out.println("<h2><center>More Agents</h2></center>");
+        out.println("</A>");
+      }
+      out.println("</body>");
+      out.println("</html>");
+    }
+
+    private void viewTitle() throws IOException {
+      String title = request.getParameter("title");
+      response.setContentType("text/html");
+      out = response.getWriter();
+      format = FORMAT_HTML;     // Force html format
+      out.print
+        ("<html>\n" +
+         "<head>\n" +
+         "<title>" + title + "</title>\n" +
+         "</head>\n");
+      out.println("<body>");
+      out.println("<h2><center>" + title + "</h2></center>");
+      out.println("</body>");
+      out.println("</html>");
+    }
+
+    // Output a page showing summary info for all agents
+    private void viewAllAgents() throws IOException {
+      response.setContentType("text/html");
+      out = response.getWriter();
+      format = FORMAT_HTML;     // Force html format
+      List agents = support.getAllEncodedAgentNames();
+      out.print
+        ("<html>\n" +
+         "<head>\n" +
+         "<title>Completion of All Agents</title>\n" +
+         "</head>\n");
+      boolean use_iframes = false;
+      String browser = request.getHeader("user-agent").toLowerCase();
+      if (browser != null) {
+        for (int i = 0; i < iframeBrowsers.length; i++) {
+          if (browser.indexOf(iframeBrowsers[i]) >= 0) {
+            use_iframes = true;
+            break;
+          }
+        }
+      }
+      if (use_iframes) {
+        out.println("<body>");
+        out.println("<h2><center>Completion of All Agents</h2></center>");
+        for (int i = 0, n = agents.size(); i < n; i++) {
+          int col = i % 3;
+          String agentName = (String) agents.get(i);
+          out.println("<iframe src=\"/$" + agentName + "/completion?viewType=viewAgentSmall\" scrolling=\"no\" width=300 height=90>" + agentName + "</iframe>");
+          out.println("</td>");
+        }
+        out.println("</body>");
+      } else {
+        int totalAgents = agents.size();
+        int nagents = totalAgents;
+        String firstAgent = request.getParameter("firstAgent");
+        int agent0 = 0;
+        boolean needMore = false;
+        String title = "All Agents";
+        if (firstAgent != null) {
+          try {
+            agent0 = Integer.parseInt(firstAgent);
+            if (agent0 < 0) {
+              agent0 = 0;
+            } else if (agent0 >= nagents) {
+              agent0 = nagents - MAX_AGENT_FRAMES;
+            }
+            nagents -= agent0;
+          } catch (Exception e) {
+          }
+        }
+        if (nagents > MAX_AGENT_FRAMES) {
+          needMore = true;
+          nagents = MAX_AGENT_FRAMES;
+        }
+        if (agent0 > 0 || nagents < totalAgents) {
+          title =
+            "Agents+" + ((String) agents.get(agent0)) +
+            "+Through+" + ((String) agents.get(agent0 + nagents - 1));
+        }
+        int nrows = (nagents + 2 + (needMore ? 1 : 0)) / 3;
+        out.print("<frameset rows=\"40");
+        for (int row = 0; row < nrows; row++) {
+          out.print(",100");
+        }
+        out.println("\">");
+        out.println("  <frame src=\"completion?viewType=viewTitle&title=Completion+of+" + title + "\" scrolling=\"no\">");
+        for (int row = 0; row < nrows; row++) {
+          out.println("  <frameset cols=\"300,300,300\">");
+          for (int col = 0; col < 3; col++) {
+            int agentn = agent0 + row * 3 + col;
+            if (agentn < agent0 + nagents) {
+              String agentName = (String) agents.get(agentn);
+              out.println("    <frame src=\"/$" + agentName + "/completion?viewType=viewAgentSmall\" scrolling=\"no\">");
+            } else if (agentn == agent0 + nagents && needMore) {
+              out.println("    <frame src=\"completion?viewType=viewMoreLink&firstAgent=" + (agent0 + MAX_AGENT_FRAMES) + "\" scrolling=\"no\">");
+            }
+          }
+          out.println("  </frameset>");
+        }
+        out.println("</frameset>");
+      }
+      out.println("<html>");
+    }
+
+    // Output a small page showing summary info for one agent
+    private void viewAgentSmall() throws IOException {
+      response.setContentType("text/html");
+      out = response.getWriter();
+      format = FORMAT_HTML;     // Force html format
+      String agent = support.getEncodedAgentName();
+      CompletionData result = getCompletionData();
+      int nTasks = result.getNumberOfTasks();
+      int nUnplannedTasks = result.getNumberOfUnplannedTasks();
+      int nPlannedTasks = (nTasks - nUnplannedTasks);
+      double percentPlannedTasks =
+        ((nTasks > 0) ? 
+         (1.0 * nPlannedTasks) / nTasks :
+         0.0);
+      int nUnestimatedTasks = result.getNumberOfUnestimatedTasks();
+      int nEstimatedTasks = (nPlannedTasks - nUnestimatedTasks);
+      double percentEstimatedTasks =
+        ((nPlannedTasks > 0) ? 
+         (1.0 * nEstimatedTasks) / nPlannedTasks :
+         0.0);
+      int nFailedTasks = result.getNumberOfFailedTasks();
+      int nSuccessfulTasks = (nEstimatedTasks - nFailedTasks);
+      double percentSuccessfulTasks =
+        ((nEstimatedTasks > 0) ? 
+         (1.0 * nSuccessfulTasks) / nEstimatedTasks :
+         0.0);
+      int nUnconfidentTasks = result.getNumberOfUnconfidentTasks();
+      int nFullConfidenceTasks = (nSuccessfulTasks - nUnconfidentTasks);
+      double percentFullConfidenceTasks =
+        ((nSuccessfulTasks > 0) ? 
+         (1.0 * nFullConfidenceTasks) / nSuccessfulTasks :
+         0.0);
+      String bgcolor, fgcolor, lncolor;
+      if (percentPlannedTasks < 0.89 ||
+          percentSuccessfulTasks < 0.89 ||
+          percentFullConfidenceTasks < 0.89) {
+        bgcolor = "#aa0000";
+        fgcolor = "#ffffff";
+        lncolor = "#ffff00";
+      } else if (percentPlannedTasks < 0.99 ||
+                 percentSuccessfulTasks < 0.99 ||
+                 percentFullConfidenceTasks < 0.99) {
+        bgcolor = "#ffff00";
+        fgcolor = "#000000";
+        lncolor = "#0000ff";
+      } else {
+        bgcolor = "white";
+        fgcolor = "black";
+        lncolor = "#0000ff";
+      }
+      out.println("<html>");
+      out.println("<head>");
+      out.println("</head>");
+      out.println("<body bgcolor=\"" + bgcolor + "\" text=\"" + fgcolor + "\" vlink=\"" + lncolor + "\" link=\"" + lncolor + "\">");
+      out.print("<pre><a href=\"/$" + agent + "/completion\" target=\"_top\">");
+      out.println(formatLabel(agent + " Tasks:") + "</a>" + formatInteger(nTasks));
+      out.println(formatLabel("Planned:")        + formatInteger(nPlannedTasks)        + "(" + formatPercent(percentPlannedTasks)        + ")");
+      out.println(formatLabel("Successful:")     + formatInteger(nSuccessfulTasks)     + "(" + formatPercent(percentSuccessfulTasks)     + ")");
+      out.println(formatLabel("Completed:")      + formatInteger(nFullConfidenceTasks) + "(" + formatPercent(percentFullConfidenceTasks) + ")</pre>");
+      out.println("</body>");
+      out.println("</html>");
+    }
+
+    private static String formatLabel(String lbl) {
+      int nchars = lbl.length();
+      if (nchars > 24) return lbl;
+      return lbl + "                        ".substring(nchars);
+    }
+
+    private static String formatInteger(int n) {
+      return formatInteger(n, 5);
+    }
+
+    private static String formatInteger(int n, int w) {
+      String r = String.valueOf(n);
+      return "        ".substring(0, w - r.length()) + r;
+    }
+
+    private static String formatPercent(double percent) {
+      return formatInteger((int) (percent * 100.0), 3) + "%";
+    }
 
     // startsWithIgnoreCase
     private static final boolean eq(String a, String b) {
@@ -361,6 +595,8 @@ extends HttpServlet
       }
       // set plan element
       toAbsTask.setPlanElement(getPlanElement(task.getPlanElement()));
+      // set verb
+      toAbsTask.setVerb(task.getVerb().toString());
     }
 
     /**
@@ -582,8 +818,8 @@ extends HttpServlet
         out.print(
             (result.getNumberOfTasks() - 
              result.getNumberOfFullySuccessfulTasks()));
-        out.print(
-            " lines)</a>\n");
+        out.println(" lines)</a><br>");
+        out.println("<a href=\"completion?viewType=viewAllAgents\">Show all agents</a>");
       }
     }
 
@@ -608,6 +844,7 @@ extends HttpServlet
           "<th></th>"+
           "<th>UID</th>"+
           "<th>ParentUID</th>"+
+          "<th>Verb</th>"+
           "<th>Confidence</th>"+
           "<th>PlanElement</th>"+
           "</tr>\n");
@@ -650,6 +887,8 @@ extends HttpServlet
       if (pUidURL != null) {
         out.print("</a>");
       }
+      out.print("</td><td>");
+      out.print(at.getVerb());
       out.print("</td><td>");
       double conf = at.getConfidence();
       out.print(

@@ -22,13 +22,14 @@
 package org.cougaar.core.plugin.completion;
 
 import java.util.Collection;
-// import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.ChangeReport;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.planning.ldm.plan.AllocationResult;
@@ -49,40 +50,42 @@ import org.cougaar.util.UnaryPredicate;
  **/
 
 public class CompletionTargetPlugin extends CompletionPlugin {
-  private static final long SLEEP_INTERVAL = 5000L;
-  private static final long ACTIVITY_DELAY = 600000;
+  private static final long NORMAL_SLEEP_INTERVAL = 5000L;
+  private static final long NORMAL_ACTIVITY_DELAY = 600000;
+  private static final String SLEEP_INTERVAL_KEY = "SLEEP_INTERVAL=";
+  private static final String ACTIVITY_DELAY_KEY = "ACTIVITY_DELAY=";
+  private long SLEEP_INTERVAL = NORMAL_SLEEP_INTERVAL;
+  private long ACTIVITY_DELAY = NORMAL_ACTIVITY_DELAY;
+  private ChangeReport myChangeReport = new ChangeReport() {};
+  private Set myChangeReports = Collections.singleton(myChangeReport);
+  private Set changedRelays = new HashSet();
   private static final Class[] requiredServices = {};
-  private Set ignoredVerbs = new HashSet();
+  protected Set ignoredVerbs = new HashSet();
   private IncrementalSubscription relaySubscription;
   private IncrementalSubscription activitySubscription;
-  private long now;             // Time of current execute()
+  protected long now;           // Time of current execute()
+  protected long scenarioNow;   // Scenario time of current execute()
   private long lastActivity;    // Time of last activity
   private double cpuConsumption = 0.0;
   private double taskCompletion = 0.0;
   private boolean updateTaskCompletionPending = true;
   private boolean debug = false;
   private Map filters = new WeakHashMap();
-  private UnaryPredicate tasksPredicate =
-    new UnaryPredicate() {
-      public boolean execute(Object o) {
-        if (o instanceof Task) {
-          Task task = (Task) o;
-          if (ignoredVerbs.contains(task.getVerb())) return false;
-          return true;
+  protected UnaryPredicate createTasksPredicate() {
+    return new UnaryPredicate() {
+        public boolean execute(Object o) {
+          if (o instanceof Task) {
+            Task task = (Task) o;
+            if (ignoredVerbs.contains(task.getVerb())) return false;
+            return true;
+          }
+          return false;
         }
-        return false;
-      }
-    };
-  private UnaryPredicate pePredicate =
-    new UnaryPredicate() {
-      public boolean execute(Object o) {
-        if (o instanceof PlanElement) {
-          PlanElement pe = (PlanElement) o;
-          return tasksPredicate.execute(pe.getTask());
-        }
-        return false;
-      }
-    };
+      };
+  }
+
+  private UnaryPredicate tasksPredicate;;
+
   private static UnaryPredicate activityPredicate =
     new UnaryPredicate() {
       public boolean execute(Object o) {
@@ -135,6 +138,24 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   }
 
   public void setupSubscriptions() {
+    Collection params = getParameters();
+    for (Iterator i = params.iterator(); i.hasNext(); ) {
+      String param = (String) i.next();
+      if (param.startsWith(SLEEP_INTERVAL_KEY)) {
+        SLEEP_INTERVAL = Long.parseLong(param.substring(SLEEP_INTERVAL_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + SLEEP_INTERVAL_KEY
+                                                + SLEEP_INTERVAL);
+        continue;
+      }
+      if (param.startsWith(ACTIVITY_DELAY_KEY)) {
+        ACTIVITY_DELAY = Long.parseLong(param.substring(ACTIVITY_DELAY_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + ACTIVITY_DELAY_KEY
+                                                + ACTIVITY_DELAY);
+        continue;
+      }
+    }
     debug = true;//getClusterIdentifier().toString().equals("47-FSB");
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
@@ -147,14 +168,28 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   public void execute() {
     processSubscriptions();
     if (relaySubscription.hasChanged()) {
-      checkPersistenceNeeded(relaySubscription);
-      processSubscriptions();
+      changedRelays.clear();
+      changedRelays.addAll(relaySubscription.getAddedCollection());
+      Collection changes = relaySubscription.getChangedCollection();
+      if (changes.size() > 0) {
+        for (Iterator i = changes.iterator(); i.hasNext(); ) {
+          CompletionRelay relay = (CompletionRelay) i.next();
+          Set changeReports = relaySubscription.getChangeReports(relay);
+          if (changeReports == null || !changeReports.equals(myChangeReports)) {
+            changedRelays.add(relay);
+          }
+        }
+      }
+      if (changedRelays.size() > 0) {
+        checkPersistenceNeeded(changedRelays);
+      }
     }
   }
 
   private void processSubscriptions() {
     boolean timerExpired = timerExpired();
     now = System.currentTimeMillis();
+    scenarioNow = getAlarmService().currentTimeMillis();
     if (activitySubscription.hasChanged()) {
       lastActivity = now;
       updateTaskCompletionPending = true; // Activity has changed task completion
@@ -167,7 +202,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       cancelTimer();
       startTimer(SLEEP_INTERVAL);
     }
-    respondToRelays();
+    maybeRespondToRelays();
   }
 
   protected void setPersistenceNeeded() {
@@ -187,6 +222,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   }
 
   private void updateTaskCompletion() {
+    if (tasksPredicate == null) tasksPredicate = createTasksPredicate();
     Collection tasks = blackboard.query(tasksPredicate);
     completionCounter.init();
     if (tasks.size() > 0) {
@@ -223,30 +259,30 @@ public class CompletionTargetPlugin extends CompletionPlugin {
     boolean isLaggard = cpuConsumed || tasksIncomplete;
     if (filter.filter(isLaggard, now)) {
       Laggard newLaggard =
-        new Laggard(getClusterIdentifier(), taskCompletion, cpuConsumption, isLaggard);
+        new Laggard(getAgentIdentifier(), taskCompletion, cpuConsumption, isLaggard);
       filter.setOldLaggard(newLaggard);
       return newLaggard;
     }
     return null;
   }
 
-  private void respondToRelays() {
+  private void maybeRespondToRelays() {
     if (debug && logger.isDebugEnabled() && relaySubscription.size() == 0) {
-      logger.debug("No relays to respond to");
       return;
     }
     for (Iterator relays = relaySubscription.iterator(); relays.hasNext(); ) {
       CompletionRelay relay = (CompletionRelay) relays.next();
-      if (debug && logger.isDebugEnabled()) {
-        logger.debug("Responding to " + relay.getSource());
-      }
       Laggard newLaggard = createLaggard(relay);
       if (newLaggard != null) {
-        if (logger.isDebugEnabled()) logger.debug("setResponseLaggard " + newLaggard);
+        if (logger.isDebugEnabled())
+          logger.debug("Send response to "
+                       + relay.getSource() +
+                       ": "
+                       + newLaggard);
         relay.setResponseLaggard(newLaggard);
-        blackboard.publishChange(relay);
+        blackboard.publishChange(relay, myChangeReports);
       } else {
-        if (logger.isDebugEnabled()) logger.debug("no response laggard ");
+//         if (logger.isDebugEnabled()) logger.debug("No new response to " + relay.getSource());
       }
     }
   }

@@ -437,8 +437,9 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     if (newName != null) {
       newBinding =  new Binding(dirMap.getFullName(newName), newValue, false);
     }
-    for (Iterator i = target.getCallbacks().iterator(); i.hasNext(); ) {
-      NSCallback.Id cbid = (NSCallback.Id) i.next();
+    Object[] cbs = target.getCallbacks().toArray();
+    for (int i = 0; i < cbs.length; i++) {
+      NSCallback.Id cbid = (NSCallback.Id) cbs[i];
       NSNamingEvent evt = new NSNamingEvent(cbid, type, newBinding, oldBinding);
       callbackQueue.add(evt);
     }

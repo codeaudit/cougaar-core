@@ -1,3 +1,20 @@
+2002-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AssetAssignmentImpl.java:
+	Bug #2203 -- asset transfer errros
+	Include the assignment kind (NEW, UPDATE, REPEAT) in toString to make
+	logging useful.
+
+2002-08-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TaskImpl.java:
+	Bug #2102 -- concurrent mod exception in Univ Allocator during rehydration
+	Add a check in getPreferences for the caller having not
+	synchronized the task. If not synchronized, log a debug message
+	and return a BackedEnumeration instead of an ordinary Enumeration
+	backed by the preferences collection. Copying the collection is
+	expensive and should be avoided by synchronizing the task in the caller.
+
 2002-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* AllocationResult.java:
@@ -5,6 +22,40 @@
 	after rehydration
 	Add readObject and call clearMemos to properly initialize
 	transient variables.
+
+2002-08-20  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AspectRate.java:
+	Bug #2013 -- Universal Allocator sporadically failing at HNS
+	AspectRate.equals had parameter type of AspectRate rather than
+	Object so it did not match the signature of the equality
+	comparison used by the StrictValueScoringFunction. Instead the
+	base class (AspectValue) equals method was used comparing the type
+	and (double) value. A second bug wherein the setValue method did
+	not call super.setValue() caused the (double) value in AspectValue
+	to not be update resulting in inequality.
+
+2002-08-06  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TaskImpl.java:
+	Bug #1901 -- Deadlock (?) in persistence
+	Allow for null prepositional phrase lists. Apparently there are some.
+
+2002-08-05  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TaskImpl.java:
+	Bug #1901 -- Deadlock (?) in persistence
+	Apparently Tasks can have prepositional phrases that refer
+	(possibly indirectly) to other tasks having prepositional phrases
+	referring back to the first task. When such tasks are serialized
+	in multiple threads  (e.g. persistence and message transport), the
+	tasks may be encountered in opposite order. Because serialization
+	of an ArrayList synchronizes on the list, this constitutes a
+	deadlock with each thread holding one lock while waiting for the
+	other lock to be freed.
+	Fix by copying the ArrayList into an array and serializing that
+	instead. The ArrayList is reconstituted from the array during
+	deserialization.
 
 2002-07-23  Ray Tomlinson  <RTomlinson@bbn.com>
 

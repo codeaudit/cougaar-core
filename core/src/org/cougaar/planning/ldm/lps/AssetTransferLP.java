@@ -54,6 +54,8 @@ import org.cougaar.util.Enumerator;
 import org.cougaar.util.MutableTimeSpan;
 import org.cougaar.util.TimeSpan;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 import java.util.*;
 
@@ -68,6 +70,7 @@ public class AssetTransferLP
   extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
+  private static Logger logger = Logging.getLogger(AssetTransferLP.class);
   private static TimeSpan ETERNITY = new MutableTimeSpan();
   private final ClusterIdentifier self;
 
@@ -114,7 +117,10 @@ public class AssetTransferLP
                               sendRelationships);
       if (assetassign != null) {
         // Give the AssetAssignment to the logplan for transmission
+        if (logger.isDebugEnabled()) logger.debug("Sending " + assetassign);
         logplan.sendDirective(assetassign);
+      } else {
+        if (logger.isDebugEnabled()) logger.debug("Not sending AssetAssignment for " + at);
       }
     }
   }
@@ -205,7 +211,7 @@ public class AssetTransferLP
         }
       } else {
         // BOZO - we have not tested transferring non-org assets
-        System.err.println("AssetTransferLP - unable to verify transfer of " +
+        logger.error("AssetTransferLP - unable to verify transfer of " +
                            asset + "\n.");
       }
         
@@ -282,7 +288,7 @@ public class AssetTransferLP
         // Verify that all relationships are with the receiver
         if (!(relationship.getA().equals(at.getAssignee())) &&
             !(relationship.getB().equals(at.getAssignee()))) {
-          System.err.println("AssetTransferLP: Relationships on the " + 
+          logger.error("AssetTransferLP: Relationships on the " + 
                              " AssetTransfer must be limited to the " + 
                              " transferring and receiving asset.\n" + 
                              "Dropping relationship " + relationship + 
@@ -318,12 +324,12 @@ public class AssetTransferLP
   private boolean updateLocalAssets(AssetTransfer at, byte kind, Schedule aaSchedule) {
     Asset localTransferringAsset = logplan.findAsset(at.getAsset());
     if (localTransferringAsset == null) {
-      System.err.println("AssetTransferLP: unable to process AssetTransfer - " + 
+      logger.error("AssetTransferLP: unable to process AssetTransfer - " + 
                          at.getAsset() + " - transferring to " + 
                          at.getAssignee()+ " - is not local to this cluster.");
       return false;
     } else if (localTransferringAsset == at.getAsset()) {
-      System.err.println("AssetTransferLP: Assets in AssetTransfer must be " +
+      logger.error("AssetTransferLP: Assets in AssetTransfer must be " +
                          " clones. AssetTransfer - " + at.getUID() + 
                          " - references assets in the log plan.");
     }
@@ -340,7 +346,7 @@ public class AssetTransferLP
         receivingAsset = localReceivingAsset;
 
       if (localReceivingAsset == at.getAssignee()) {
-        System.err.println("AssetTransferLP: Assets in AssetTransfer must be " +
+        logger.error("AssetTransferLP: Assets in AssetTransfer must be " +
                            " clones. AssetTransfer - " + at.getUID() + 
                            " - references assets in the log plan.");
       }

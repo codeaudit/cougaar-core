@@ -52,6 +52,7 @@ public abstract class AbstractTask
   protected String parentUID_url;
   protected double confidence;
   protected String planElement;
+  protected String verb;
   
   //Constructors:
   ///////////////
@@ -89,6 +90,10 @@ public abstract class AbstractTask
   public void setPlanElement(String planElement) { 
     this.planElement = planElement;
   }
+
+  public void setVerb(String verb) {
+    this.verb = verb;
+  }
   
   //Getters:
   //////////
@@ -116,7 +121,11 @@ public abstract class AbstractTask
   public String getPlanElement() {
     return planElement;
   }
-  
+
+  public String getVerb() {
+    return verb;
+  }
+
   //XMLable members:
   //----------------
   

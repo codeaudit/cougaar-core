@@ -150,7 +150,7 @@ public class PlayHelper {
    * constraints that were added or removed from iaompMap. The action
    * is implied by whether or not the iaompMap has the named iaomp.
    **/
-  public void updateOperatingModes(Play[] plays, Map iaompMap, Set iaompChanges) {
+  public void updateOperatingModes(Play[] plays, Map iaompMap, Set iaompChanges, List missingConditions) {
     if (logger.isDebugEnabled()) logger.debug("updateOperatingModes " + plays.length + " plays");
 
     /* run the plays - that is, do the comparisons in the "If" parts
@@ -190,9 +190,7 @@ public class PlayHelper {
         if (logger.isDebugEnabled()) {
           logger.debug(iae.getMessage() + " in play: " + play, iae);
         } else if (iae instanceof MissingConditionException) {
-          if (logger.isWarnEnabled()) {
-            logger.warn(iae.getMessage() + " in play: " + play);
-          }
+          missingConditions.add(iae.getMessage() + " in play: " + play);
         } else {
           logger.error(iae.getMessage() + " in play: " + play);
         }

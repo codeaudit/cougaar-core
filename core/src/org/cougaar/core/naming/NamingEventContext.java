@@ -45,6 +45,7 @@ public class NamingEventContext extends NamingDirContext implements EventDirCont
     new SearchControls(SearchControls.OBJECT_SCOPE, 0, 0, new String[0], false, false);
   private static SearchControls SUBTREE_CTLS =
     new SearchControls(SearchControls.SUBTREE_SCOPE, 0, 0, new String[0], false, false);
+  private static Logger logger = Logging.getLogger(NamingEventContext.class);
   private static Filter TRUE_FILTER =
     new Filter() {
       public boolean match(Attributes a) {
@@ -307,7 +308,7 @@ public class NamingEventContext extends NamingDirContext implements EventDirCont
       NSCallback.Id cbid = evt.getCallbackId();
       NamingListener l = getListener(cbid);
       if (l == null) {
-        System.out.println("No listener found for " + cbid);
+        if (logger.isWarnEnabled()) logger.warn("No listener found for " + cbid);
         continue;
       }
       Binding oldBinding = evt.oldBinding;
@@ -317,7 +318,7 @@ public class NamingEventContext extends NamingDirContext implements EventDirCont
         try {
           nsObj = NamingManager.getObjectInstance(nsObj, null, null, myEnv);
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error("Exception getting name server object", e);
         }
 	// WARNING: Next line not currently jikes-compilable. Use javac with -source=1.4
         assert name.startsWith(myFullName);
@@ -330,7 +331,7 @@ public class NamingEventContext extends NamingDirContext implements EventDirCont
         try {
           nsObj = NamingManager.getObjectInstance(nsObj, null, null, myEnv);
         } catch (Exception e) {
-          e.printStackTrace();
+          logger.error("Exception getting name server object", e);
         }
 	// WARNING: Next line not currently jikes-compilable. Use javac with -source=1.4
         assert name.startsWith(myFullName);

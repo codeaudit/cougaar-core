@@ -22,23 +22,15 @@ package org.cougaar.core.persist;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.CharArrayWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
-import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -138,7 +130,7 @@ public class BasePersistence
   private static final String PERSISTENCE_SIGNING_CONTROL_NAME = "signing";
   private static final String PERSISTENCE_CONSOLIDATION_PERIOD_NAME = "consolidationPeriod";
   private static final long MIN_PERSISTENCE_INTERVAL = 5000L;
-  private static final long MAX_PERSISTENCE_INTERVAL = 3600000L;
+  private static final long MAX_PERSISTENCE_INTERVAL = 1200000L; // 20 minutes max
   private static final String DEFAULT_PERSISTENCE_ENCRYPTION = "OFF";
   private static final String DEFAULT_PERSISTENCE_SIGNING = "OFF";
   private static final String DUMMY_MEDIA_NAME = "dummy";
@@ -228,16 +220,21 @@ public class BasePersistence
   private static class PersistenceKeyEnvelope implements DataProtectionKeyEnvelope {
     PersistencePlugin ppi;
     int deltaNumber;
+    DataProtectionKey theKey = null;
 
     public PersistenceKeyEnvelope(PersistencePlugin ppi, int deltaNumber) {
       this.deltaNumber = deltaNumber;
       this.ppi = ppi;
     }
     public void setDataProtectionKey(DataProtectionKey aKey) throws IOException {
+      theKey = aKey;
       ppi.storeDataProtectionKey(deltaNumber, aKey);
     }
     public DataProtectionKey getDataProtectionKey() throws IOException {
-      return ppi.retrieveDataProtectionKey(deltaNumber);
+      if (theKey == null) {
+        theKey = ppi.retrieveDataProtectionKey(deltaNumber);
+      }
+      return theKey;
     }
   }
 
@@ -410,7 +407,6 @@ public class BasePersistence
       throw e;
     }
     catch (Exception e) {
-      e.printStackTrace();
       throw new PersistenceException(e);
     }
   }
@@ -461,7 +457,7 @@ public class BasePersistence
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
       if (logger.isInfoEnabled()) logger.info("No DataProtectionService Available.");
-//       dataProtectionService = new DataProtectionServiceStub();
+      dataProtectionService = new DataProtectionServiceStub();
     } else {
       if (logger.isInfoEnabled()) logger.info("DataProtectionService is "
                                               + dataProtectionService.getClass().getName());
@@ -524,7 +520,7 @@ public class BasePersistence
         if (Boolean.getBoolean("org.cougaar.core.persistence.clear")
             || pObject != null) {
           if (logger.isInfoEnabled()) {
-            print("Clearing old persistence data");
+            logger.info("Clearing old persistence data");
           }
           for (Iterator i = plugins.values().iterator(); i.hasNext(); ) {
             PersistencePluginInfo p = (PersistencePluginInfo) i.next();
@@ -627,10 +623,15 @@ public class BasePersistence
                   }
                 }
               }
-              print(rehydrationSubscriberStates.size() + " subscribers");
+              logger.debug(rehydrationSubscriberStates.size() + " subscribers");
             }
 
-            clusterContext.getUIDServer().setPersistenceState(uidServerState);
+            if (uidServerState != null) {
+              // For some reason this is sometimes null. Avoid NPE.
+              // Restoring uidServerState is not essential and could
+              // be eliminated entirely.
+              clusterContext.getUIDServer().setPersistenceState(uidServerState);
+            }
 
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
               PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
@@ -638,7 +639,7 @@ public class BasePersistence
               if (obj instanceof PlanElement) {
                 PlanElement pe = (PlanElement) obj;
                 if (logger.isDebugEnabled()) {
-                  print("Rehydrated " + pAssoc);
+                  logger.debug("Rehydrated " + pAssoc);
                 }
                 TaskImpl task = (TaskImpl) pe.getTask();
                 if (task != null) {
@@ -646,13 +647,13 @@ public class BasePersistence
                   if (taskPE != pe) {
                     if (taskPE != null) {
                       if (logger.isDebugEnabled()) {
-                        print("Bogus plan element for task: " + hc(task));
+                        logger.debug("Bogus plan element for task: " + hc(task));
                       }
                       task.privately_resetPlanElement();
                     }
                     task.privately_setPlanElement(pe); // These links can get severed during rehydration
                     if (logger.isDebugEnabled()) {
-                      print("Fixing " + pAssoc.getActive() + ": " + hc(task) + " to " + hc(pe));
+                      logger.debug("Fixing " + pAssoc.getActive() + ": " + hc(task) + " to " + hc(pe));
                     }
                   }
                 }
@@ -670,9 +671,9 @@ public class BasePersistence
                       Task subtask = (Task) enum.nextElement();
                       PlanElement subtaskPE = subtask.getPlanElement();
                       if (subtaskPE == null) {
-                        print("Subtask " + subtask.getUID() + " not disposed");
+                        logger.debug("Subtask " + subtask.getUID() + " not disposed");
                       } else {
-                        print("Subtask " + subtask.getUID() + " disposed " + hc(subtaskPE));
+                        logger.debug("Subtask " + subtask.getUID() + " disposed " + hc(subtaskPE));
                       }
                     }
                   }
@@ -682,10 +683,9 @@ public class BasePersistence
               }
             }
             clusterContext.getUIDServer().setPersistenceState(uidServerState);
-          }
-          catch (Exception e) {
-            e.printStackTrace();
-            System.exit(13);
+          } catch (Exception e) {
+            logger.error("Error during rehydration", e);
+            result = null;
           }
 
         }
@@ -796,15 +796,17 @@ public class BasePersistence
   private RehydrationResult rehydrateOneDelta(PersistencePlugin ppi, int deltaNumber, boolean lastDelta)
     throws IOException, ClassNotFoundException
   {
-    ObjectInputStream ois = ppi.openObjectInputStream(deltaNumber);
+    InputStream is = ppi.openInputStream(deltaNumber);
     if (dataProtectionService != null) {
       PersistenceKeyEnvelope keyEnvelope = new PersistenceKeyEnvelope(ppi, deltaNumber);
-      ois = new ObjectInputStream(dataProtectionService.getInputStream(keyEnvelope, ois));
+      is = dataProtectionService.getInputStream(keyEnvelope, is);
     }
+    ObjectInputStream ois = new ObjectInputStream(is);
     try {
       return rehydrateFromStream(ois, deltaNumber, lastDelta);
     } finally {
-      ppi.closeObjectInputStream(deltaNumber, ois);
+      ois.close();
+      ppi.finishInputStream(deltaNumber);
     }
   }
 
@@ -827,7 +829,7 @@ public class BasePersistence
 
       int length = currentInput.readInt();
       if (logger.isDebugEnabled()) {
-        print("Reading " + length + " objects");
+        logger.debug("Reading " + length + " objects");
       }
       PersistenceReference[][] referenceArrays = new PersistenceReference[length][];
       for (int i = 0; i < length; i++) {
@@ -900,7 +902,7 @@ public class BasePersistence
           PersistenceSubscriberState pSubscriber = (PersistenceSubscriberState) subscribers.next();
           if (pSubscriber.isSameSubscriberAs(subscriber)) {
             if (logger.isDebugEnabled()) {
-              print("Found " + pSubscriber);
+              logger.debug("Found " + pSubscriber);
             }
             return pSubscriber;
           }
@@ -1170,92 +1172,82 @@ public class BasePersistence
         addEnvelopes(epochEnvelopes, true);
         beginTransaction(full);
         try {
-          PersistenceOutputStream stream = new PersistenceOutputStream(logger);
-          if (logger.isDebugEnabled()) {
-            writeHistoryHeader();
-          }
-          stream.setClusterContext(clusterContext);
-          stream.setIdentityTable(identityTable);
-          synchronized (vmPersistLock) {
+          if (currentOutput == null && !returnBytes) {
+            // Only doing dummy persistence
+          } else {
+            PersistenceOutputStream stream = new PersistenceOutputStream(logger);
+            PersistenceReference[][] referenceArrays;
+            PersistMetadata meta = new PersistMetadata();
+            if (logger.isDebugEnabled()) {
+              writeHistoryHeader();
+            }
+            stream.setClusterContext(clusterContext);
+            stream.setIdentityTable(identityTable);
+            // One agent at a time to avoid inter-agent deadlock due to shared objects
             try {
-              int nObjects = objectsToPersist.size();
-              PersistenceReference[][] referenceArrays = new PersistenceReference[nObjects][];
-              for (int i = 0; i < nObjects; i++) {
-                PersistenceAssociation pAssoc =
-                  (PersistenceAssociation) objectsToPersist.get(i);
+              synchronized (vmPersistLock) {
+                int nObjects = objectsToPersist.size();
+                referenceArrays = new PersistenceReference[nObjects][];
+                for (int i = 0; i < nObjects; i++) {
+                  PersistenceAssociation pAssoc =
+                    (PersistenceAssociation) objectsToPersist.get(i);
+                  if (logger.isDebugEnabled()) {
+                    logger.debug("Persisting " + pAssoc);
+                  }
+                  referenceArrays[i] = stream.writeAssociation(pAssoc);
+                }
+                stream.writeObject(undistributedEnvelopes);
                 if (logger.isDebugEnabled()) {
-                  print("Persisting " + pAssoc);
+                  logger.debug("Writing " + subscriberStates.size() + " subscriber states");
                 }
-                referenceArrays[i] = stream.writeAssociation(pAssoc);
-              }
-              stream.writeObject(undistributedEnvelopes);
-              if (logger.isDebugEnabled()) {
-                print("Writing " + subscriberStates.size() + " subscriber states");
-              }
-              stream.writeInt(subscriberStates.size());
-              for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
-                PersistenceSubscriberState ss = (PersistenceSubscriberState) iter.next();
-                ss.pendingEnvelopes = copyAndRemoveNotPersistable(ss.pendingEnvelopes);
-                ss.transactionEnvelopes = copyAndRemoveNotPersistable(ss.transactionEnvelopes);
-                if (logger.isDebugEnabled()) {
-                  print("Writing " + ss);
+                stream.writeInt(subscriberStates.size());
+                for (Iterator iter = subscriberStates.iterator(); iter.hasNext(); ) {
+                  PersistenceSubscriberState ss = (PersistenceSubscriberState) iter.next();
+                  ss.pendingEnvelopes = copyAndRemoveNotPersistable(ss.pendingEnvelopes);
+                  ss.transactionEnvelopes = copyAndRemoveNotPersistable(ss.transactionEnvelopes);
+                  if (logger.isDebugEnabled()) {
+                    logger.debug("Writing " + ss);
+                  }
+                  stream.writeObject(ss);
                 }
-                stream.writeObject(ss);
-              }
-              clearMarks(objectsToPersist.iterator());
-              stream.writeObject(messageManager);
-              ObjectOutputStream[] streams;
-              ByteArrayOutputStream returnByteStream = null;
-              if (returnBytes) {
-                returnByteStream = new ByteArrayOutputStream();
-                streams = new ObjectOutputStream[] {
-                  new ObjectOutputStream(returnByteStream),
-                  currentOutput,
-                };
-              } else {
-                streams = new ObjectOutputStream[] {
-                  currentOutput
-                };
-              }
-              PersistMetadata meta = new PersistMetadata();
-              meta.setUIDServerState(clusterContext.getUIDServer()
-                                     .getPersistenceState());
-              for (int j = 0; j < streams.length; j++) {
-                streams[j].writeInt(identityTable.getNextId());
-                streams[j].writeObject(meta);
-                streams[j].writeInt(referenceArrays.length);
-                for (int i = 0; i < referenceArrays.length; i++) {
-                  streams[j].writeObject(referenceArrays[i]);
-                }
-                stream.writeBytes(streams[j]);
-                streams[j].flush();
-              }
-              if (returnBytes) {
-                result = new PersistenceObject("Persistence state "
-                                               + sequenceNumbers.current,
-                                               returnByteStream.toByteArray());
-              }
-            }
-            finally {
+                stream.writeObject(messageManager);
+                bytesSerialized = stream.size();
+                meta.setUIDServerState(clusterContext.getUIDServer()
+                                       .getPersistenceState());
+              } // Ok to let other agents persist while we write out our data
+            } finally {
               stream.close();
+            } // End of stream protection try-catch
+            if (returnBytes) {
+              ByteArrayOutputStream returnByteStream = new ByteArrayOutputStream();
+              ObjectOutputStream returnOutput = new ObjectOutputStream(returnByteStream);
+              writeFinalOutput(returnOutput, meta, referenceArrays, stream);
+              returnOutput.close();
+              result = new PersistenceObject("Persistence state "
+                                             + sequenceNumbers.current,
+                                             returnByteStream.toByteArray());
             }
-          }
-          bytesSerialized = stream.size();
+            if (currentOutput != null) {
+              writeFinalOutput(currentOutput, meta, referenceArrays, stream);
+              currentOutput.close();
+            }
+          } // End of non-dummy persistence
+          clearMarks(objectsToPersist.iterator());
           commitTransaction(full);
+          System.err.print("P");
           if (currentPersistPluginInfo.cleanupSequenceNumbers != null) {
             currentPersistPluginInfo.ppi.cleanupOldDeltas(currentPersistPluginInfo.cleanupSequenceNumbers);
             currentPersistPluginInfo.cleanupSequenceNumbers = null;
           }
-        }
-        catch (Exception e) {
-          e.printStackTrace();
+        } catch (Exception e) { // Transaction protection
           rollbackTransaction();
+          System.err.print("X");
+          throw e;
         }
         objectsThatMightGoAway.clear();
-        System.err.print("P");
       }
       catch (Exception e) {
-        e.printStackTrace();
+        logger.error("Error writing persistence snapshot", e);
       }
     }
     if (bytesSerialized > 0 && logger.isInfoEnabled()) {
@@ -1266,6 +1258,22 @@ public class BasePersistence
                   + ", real=" + (finishTime - startTime));
     }
     return result;
+  }
+
+  private void writeFinalOutput(ObjectOutputStream s,
+                                PersistMetadata meta,
+                                PersistenceReference[][] referenceArrays,
+                                PersistenceOutputStream stream)
+    throws IOException
+  {
+    s.writeInt(identityTable.getNextId());
+    s.writeObject(meta);
+    s.writeInt(referenceArrays.length);
+    for (int i = 0; i < referenceArrays.length; i++) {
+      s.writeObject(referenceArrays[i]);
+    }
+    stream.writeBytes(s);
+    s.flush();
   }
 
   /** The format of timestamps in the log **/
@@ -1296,14 +1304,6 @@ public class BasePersistence
 
   public LoggingService getLoggingService() {
     return logger;
-  }
-
-  public void print(String message) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(message);
-    }
-//      String clusterName = clusterContext.getClusterIdentifier().getAddress();
-//      System.out.println(clusterName + " -- " + message);
   }
 
   static String getObjectName(Object o) {
@@ -1340,24 +1340,27 @@ public class BasePersistence
 
   private void beginTransaction(boolean full) throws IOException {
     int deltaNumber = sequenceNumbers.current;
-    currentOutput = currentPersistPluginInfo.ppi.openObjectOutputStream(deltaNumber, full);
-    if (dataProtectionService != null) {
-      PersistenceKeyEnvelope keyEnvelope =
-        new PersistenceKeyEnvelope(currentPersistPluginInfo.ppi, deltaNumber);
-      currentOutput =
-        new ObjectOutputStream(dataProtectionService
-                               .getOutputStream(keyEnvelope, currentOutput));
+    OutputStream os = currentPersistPluginInfo.ppi.openOutputStream(deltaNumber, full);
+    if (os != null) {
+      if (dataProtectionService != null) {
+        PersistenceKeyEnvelope keyEnvelope =
+          new PersistenceKeyEnvelope(currentPersistPluginInfo.ppi, deltaNumber);
+        os = dataProtectionService.getOutputStream(keyEnvelope, os);
+      }
+      currentOutput = new ObjectOutputStream(os);
+    } else {
+      currentOutput = null;
     }
   }
 
   private void rollbackTransaction() {
-    currentPersistPluginInfo.ppi.abortObjectOutputStream(sequenceNumbers, currentOutput);
+    currentPersistPluginInfo.ppi.abortOutputStream(sequenceNumbers);
     currentOutput = null;
   }
 
   private void commitTransaction(boolean full) {
     sequenceNumbers.current += 1;
-    currentPersistPluginInfo.ppi.closeObjectOutputStream(sequenceNumbers, currentOutput, full);
+    currentPersistPluginInfo.ppi.finishOutputStream(sequenceNumbers, full);
     currentOutput = null;
   }
 

@@ -21,14 +21,17 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.Iterator;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
 
@@ -38,8 +41,24 @@ public class RemoteAgentServlet
     implements Constants
 {
 
+    private static String localHost;
+
+    static {
+	try {
+	    InetAddress localAddr = InetAddress.getLocalHost();
+	    localHost = localAddr.getHostAddress();
+	} catch (java.net.UnknownHostException uhe) {
+	    localHost = "127.0.0.1";
+	}
+    }
+
+    private AgentStatusService agentStatusService; 
+
     public RemoteAgentServlet(ServiceBroker sb) {
 	super(sb);
+
+	agentStatusService = (AgentStatusService)
+	    sb.getService(this, AgentStatusService.class, null);
     }
 
 
@@ -52,19 +71,18 @@ public class RemoteAgentServlet
 	return "Remote Agent Status for Node " + nodeID;
     }
 
+    private String canonicalizeAddress(String hostname) {
+	try {
+	    InetAddress addr = InetAddress.getByName(hostname);
+	    return addr.getHostAddress();
+	} catch (java.net.UnknownHostException uhe) {
+	    return hostname;
+	}
+    }
+
     protected void outputPage(PrintWriter out) {
 	// Get list of All Agents in society
-	Set matches = null;
-	try {
-	    matches = topologyService.getAllEntries(null,  // Agent
-						    null,  // Node
-						    null,  // Host
-						    null,  // Site
-						    null); // Enclave
-	} catch (Exception ex) {
-	    // Node hasn't finished initializing yet
-	    return;
-	}
+	Set matches = agentStatusService.getRemoteAgents();
 	if (matches == null) return;
 
 	//Header Row
@@ -77,33 +95,72 @@ public class RemoteAgentServlet
 	out.print("<td><b>MsgTo</b></td>");
 	out.print("<td><b>MsgFrom</b></td>");
 	out.print("<td><b>eMJIPS</b></td>");
-	out.print("<td><b>Mbps</b></td>");
+	out.print("<td><b>mMbps</b></td>");
+	out.print("<td><b>eMbps</b></td>");
 	out.print("</b></tr>");
 
 	long now = System.currentTimeMillis();
 	//Rows
 	Iterator itr = matches.iterator();
 	while (itr.hasNext()) {
-	    // Get Agent
-	    TopologyEntry entry = (TopologyEntry) itr.next();
-	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
-	    String name = entry.getAgent();
+	    MessageAddress agent = (MessageAddress) itr.next();
+	    String name = agent.getAddress();
+
+	    // Hack!  Skip the MTS internal pseudo Agent.
+	    if (name.endsWith("(MTS)")) continue;
+
+
+	    // Warning: Agents or Nodes whose names include parens or
+	    // commas will confuse the RSS parser. Fix this in RSS.
+		
+
+	    AgentStatusService.AgentState state = 
+		agentStatusService.getRemoteAgentState(agent);
+	    String agentHost = null;
+	    try {
+		agentHost =
+		    topologyService.getParentForChild(TopologyReaderService.HOST, 
+						      TopologyReaderService.AGENT, 
+						      name);
+		agentHost = canonicalizeAddress(agentHost);
+	    } catch (Exception ex1) {
+	    }
+	    
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
 	    String destPath="Node("+nodeID+")"+PATH_SEPR+
 		"Destination("+name+")"+PATH_SEPR;
+	    String ipFlowPath="IpFlow(" +localHost+ "," +agentHost+ ")"
+		+PATH_SEPR;
 	    // Get Metrics
 	    Metric eMJIPS = metricsService.getValue(agentPath+
 						    "EffectiveMJips");
-	    Metric queue = metricsService.getValue(agentPath+
-						   "AvgQueueLength");
+
+	    int qLength = 0;
+	    double qCredibility = NO_CREDIBILITY;
+	    String qProvenance = "none";
+	    if (state != null) {
+		qLength = state.queueLength;
+		qCredibility = SECOND_MEAS_CREDIBILITY;
+		qProvenance = "AgentStatusService";
+	    }
+
+	    Metric queue = new MetricImpl(new Integer(qLength), 
+					  qCredibility,
+					  "none",
+					  qProvenance);
+
 	    Metric msgTo = metricsService.getValue(destPath+
-						   MSG_TO_1_SEC_AVG);
+						   MSG_TO_10_SEC_AVG);
 	    Metric msgFrom = metricsService.getValue(destPath+
-						   MSG_FROM_1_SEC_AVG);
+						   MSG_FROM_10_SEC_AVG);
 	    Metric bytesTo= metricsService.getValue(destPath+
-						       BYTES_TO_1_SEC_AVG);
+						       BYTES_TO_10_SEC_AVG);
 	    Metric bytesFrom = metricsService.getValue(destPath+
-						   BYTES_FROM_1_SEC_AVG);
+						   BYTES_FROM_10_SEC_AVG);
+	    Metric eMbps = metricsService.getValue(ipFlowPath+
+						   "CapacityUnused");
+	    Metric mMbps = metricsService.getValue(ipFlowPath+
+						   "CapacityMax");
 
 	    if(queue ==null) 
 		queue= new MetricImpl(new Double(0.00), 0,"units","test");
@@ -127,10 +184,11 @@ public class RemoteAgentServlet
 	    if (msgFrom ==null) 
 		msgFrom = new MetricImpl(new Double(0.00), 0,"units","test");
 
-	    Metric mbps=metricsService.getValue(agentPath+
-						"Mbps");
-	    if (mbps ==null) 
-		mbps = new MetricImpl(new Double(0.00), 0,"units","test");
+	    if (eMbps ==null) 
+		eMbps = new MetricImpl(new Double(0.00), 0,"units","test");
+
+	    if (mMbps ==null) 
+		mMbps = new MetricImpl(new Double(0.00), 0,"units","test");
 
 
 
@@ -144,7 +202,8 @@ public class RemoteAgentServlet
 	    out.print(Color.valueTable(msgTo, 0.0, 1.0, true, f4_2));
 	    out.print(Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2));
 	    out.print(Color.valueTable(eMJIPS, 10.0, 400.0, false, f3_0));
-	    out.print(Color.valueTable(mbps, 0.0, 0.10, false, f6_3));
+	    out.print(Color.valueTable(mMbps, 0.0, 0.10, false, f6_3));
+	    out.print(Color.valueTable(eMbps, 0.0, 0.10, false, f6_3));
 	    out.print("</tr>\n");
 	}
 	out.print("</table>");

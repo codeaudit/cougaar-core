@@ -36,7 +36,7 @@ import org.cougaar.core.util.UID;
  **/
 public class InterAgentOperatingModePolicy
   extends OperatingModePolicy
-  implements Relay.Source, Relay.Target, java.io.Serializable 
+  implements Relay.Source, Relay.Target, java.io.Serializable
 {
   private transient Set targets = Collections.EMPTY_SET;
   protected MessageAddress source;
@@ -81,6 +81,17 @@ public class InterAgentOperatingModePolicy
     targets = Collections.singleton(targetAddress);
   }
 
+  /**
+   * appliesToThisAgent - return true if InterAgentOperatingModePolicy applies to 
+   * this Agent.
+   * Default behaviour is to assume that InterAgentOperatingModePolicy does not
+   * apply to the originating Agent.
+   */
+  public boolean appliesToThisAgent() {
+    // Policy only valid is it did not originate here
+    return (getSource() != null);
+  }
+  
   // Relay.Source interface
   /**
    * Get all the addresses of the target agents to which this Relay

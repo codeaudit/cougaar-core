@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Collection;
 import java.util.Set;
+import java.util.HashSet;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;
@@ -36,7 +37,6 @@ import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.KeyedSet;
-import org.cougaar.util.ReadOnlySet;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.Thunk;
 import org.cougaar.util.Collectors;
@@ -93,7 +93,7 @@ public class OperatingModeServiceProvider
     }
     public Set getAllOperatingModeNames() {
       synchronized (omSet) {
-        return new ReadOnlySet(omSet.keySet());
+        return new HashSet(omSet.keySet());
       }
     }
   }

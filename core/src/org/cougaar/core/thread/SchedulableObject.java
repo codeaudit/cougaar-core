@@ -34,6 +34,7 @@ final class SchedulableObject implements Schedulable
     private boolean restart;
     private boolean cancelled;
     private boolean queued;
+    private boolean disqualified;
 
     SchedulableObject(TreeNode treeNode, 
 		      Runnable runnable, 
@@ -43,7 +44,10 @@ final class SchedulableObject implements Schedulable
 	this.pool = treeNode.getPool();
 	this.scheduler = treeNode.getScheduler();
 	this.runnable = runnable;
-	this.name = name;
+	if (name == null)
+	    this.name =  pool.generateName();
+	else
+	    this.name = name;
 	this.consumer = consumer;
     }
 
@@ -56,16 +60,30 @@ final class SchedulableObject implements Schedulable
 	return "<Schedulable " +name+ " for " +consumer+ ">";
     }
 
-    long timestamp() {
+    long getTimestamp() {
 	return timestamp;
     }
 
-    void notifyPending() {
-	queued = true;
-	timestamp = System.currentTimeMillis();
+    void setQueued(boolean flag) {
+	queued = flag;
+	if (flag) timestamp = System.currentTimeMillis();
     }
 
-    Object consumer() {
+    boolean isQueued() {
+	return queued;
+    }
+
+
+    boolean isDisqualified() {
+	return disqualified;
+    }
+
+    void setDisqualified(boolean flag) {
+	disqualified = flag;
+	if (flag) queued = false;
+    }
+
+    public Object getConsumer() {
 	return consumer;
     }
 
@@ -121,6 +139,7 @@ final class SchedulableObject implements Schedulable
 
 
     public synchronized int getState() {
+	// Later add a 'disqualified' state
 	if (queued)
 	    return CougaarThread.THREAD_PENDING;
 	else if (thread != null)

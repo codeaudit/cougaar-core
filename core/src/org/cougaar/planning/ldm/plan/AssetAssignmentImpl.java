@@ -129,10 +129,16 @@ public class AssetAssignmentImpl extends DirectiveImpl
     String toAssetDescr = "(Null AssigneeAsset)";
     if (assigneeAsset != null) 
       toAssetDescr = assigneeAsset.toString();
-
+    String kind;
+    switch (_kind) {
+    case UPDATE: kind = "UPDATE"; break;
+    case NEW: kind = "NEW"; break;
+    case REPEAT: kind = "REPEAT"; break;
+    default: kind = "BOGUS";
+    }
 
     return "<AssetAssignment of " + assetDescr+", " + scheduleDescr + 
-      " to " + toAssetDescr + ">" + super.toString();
+      " " + kind + " " + toAssetDescr + ">" + super.toString();
   }
 
 

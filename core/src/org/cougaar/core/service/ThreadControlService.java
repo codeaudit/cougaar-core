@@ -23,6 +23,7 @@ package org.cougaar.core.service;
 
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.RightsSelector;
+import org.cougaar.util.UnaryPredicate;
 
 import java.util.Comparator;
 
@@ -32,6 +33,7 @@ public interface ThreadControlService extends Service
     void setMaxRunningThreadCount(int count);
     void setQueueComparator(Comparator comparator);
     void setRightsSelector(RightsSelector selector);
+    boolean setQualifier(UnaryPredicate predicate);
 
     // Status
     int runningThreadCount();

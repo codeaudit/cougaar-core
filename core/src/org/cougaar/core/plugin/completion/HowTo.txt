@@ -15,9 +15,11 @@ point. Increasing the times reduces the chance of premature completion
 actions at the expense of slower operation. The parameters are
 summarized at the end of this note.
 
-The completion plugins are designed to work only in an unstressed
-environment. Running them under stress is pointless and will only
-cause grief.
+The default configuration of the completion plugins are designed to
+work only in an unstressed environment. Running them under stress is
+pointless and will only cause grief. However, by changing timer
+settings, operation under higher levels of stress is possible. See the
+"Detecting Completion During Assessment" section below.
 
 Creating Persistence Snapshots
 
@@ -88,7 +90,7 @@ directories must be cleared and the relevant zip/tar files unpacked
 into them. Then the society can be started (without any of the
 completion plugins) and subjected to unimaginable torture.
 
-Parameters
+Servlet Parameters
 
 Scenario Time -- the scenario time when the servlet was last update.
 Click the Refresh button to get an updated value.
@@ -120,3 +122,33 @@ changes the operation of the CompletionSocietyPlugin.
 
 Refresh -- Simply reloads the page. Nothing is posted.
 
+Detecting Completion During Assessment
+
+The completion plugins may be used in situations where the goal is not
+to advance time, but is to merely detect the completion of the
+planning activity. In this case, it is necessary to use less
+aggressive timing parameters so that the completion detection does not
+contribute to the overall message and cpu load and to avoid premature
+completion detect when under stress.
+
+The completion plugins detect the completion or lack of completion at
+every agent and feed that information back to a central agent (NCA).
+The detection and feedback process can be significantly delayed in the
+face of various kinds of stress. It is important that premature
+decisions not be made since it is possible for information that would
+change the decision to still be in transit or not even detected, yet.
+
+The parameters responsible for avoiding premature completion detects
+are INITIAL_TIME_ADVANCE_DELAY and NORMAL_TIME_ADVANCE_DELAY. These
+correspond to the servlet settable parameters with similar names
+above. The former is used on the very first time advance and the
+latter is used all subsequent time advances. Values should be chosen
+long enough to allow decisions in the agents to be made and the
+information propagated back to NCA. The Completion Event Insertion
+recipe sets these parameters to 180000 and 120000 milliseconds
+respectively.
+
+The other important parameter is the UPDATE_INTERVAL. UPDATE_INTERVAL
+determines the time between completion computations. The Completion
+Event Insertion recipe sets this time for both the node and agent
+plugins to 30 seconds.

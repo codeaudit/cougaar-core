@@ -1,3 +1,36 @@
+2002-08-26  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/AllocationResultHelper.java:
+	Bug #2102 -- concurrent mod exception in Univ Allocator during rehydration
+	This bug is more pervasive than just the Univ Allocator and could
+	occur in any plugin that calls Task.getPreferences() without
+	synchronizing the task first. The AllocationResultHelper is used
+	by several plugins (including the UniversalAllocatorPlugin) and
+	failed to synchronize the task.
+
+2002-08-13  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* freeze/readme.txt:
+	Bug #2019 -- society freeze capability
+	Description of how freeze works and how to use.
+
+	* freeze/FreezeTargetPlugin.java: 
+	* freeze/FreezeSourcePlugin.java: 
+	* freeze/FreezeSocietyPlugin.java: 
+	* freeze/FreezeRelayTarget.java: 
+	* freeze/FreezePlugin.java: 
+	* freeze/FreezeNodePlugin.java:
+	Bug #2019 -- society freeze capability
+	Plugins to propagate "freeze" from a servlet at NCA down to all
+	agents and response back up to the servlet. Uses new feature of
+	ThreadControlService to set a predicate that selects which threads
+	are allowed to run. The default predicate for freezing plugins is
+	any component extending PluginAdapter or ComponentPlugin except
+	for the three Freeze*Plugins. Parameters of FreezeTargetPlugin
+	name additional plugin classes that are allowed to run while
+	frozen. Note that most servlets are allowed to run since they are
+	not plugins or don't use the plugin thread.
+
 2002-07-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* util/AllocationResultHelper.java:

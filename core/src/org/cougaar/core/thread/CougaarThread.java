@@ -29,6 +29,7 @@ public class CougaarThread
     public static final int THREAD_SUSPENDED = 1;
     public static final int THREAD_PENDING = 2;
     public static final int THREAD_DORMANT = 3;
+    public static final int THREAD_DISQUALIFIED = 4;
 
     public static final boolean Debug = 
 	Boolean.getBoolean("org.cougaar.thread.debug");

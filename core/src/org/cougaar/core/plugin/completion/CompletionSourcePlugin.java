@@ -21,6 +21,7 @@
 
 package org.cougaar.core.plugin.completion;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,10 +51,16 @@ import org.cougaar.core.service.UIDService;
 public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private static final double TASK_COMPLETION_THRESHOLD = 0.99;
   private static final double CPU_CONSUMPTION_THRESHOLD = 0.95;
-  private static final long UPDATE_INTERVAL = 5000L;
-  private static final long LONG_CHECK_TARGETS_INTERVAL = 120000L;
-  private static final long SHORT_CHECK_TARGETS_INTERVAL = 15000L;
+  private static final long NORMAL_UPDATE_INTERVAL = 5000L;
+  private static final long NORMAL_LONG_CHECK_TARGETS_INTERVAL = 120000L;
+  private static final long NORMAL_SHORT_CHECK_TARGETS_INTERVAL = 15000L;
+  private static final String UPDATE_INTERVAL_KEY = "UPDATE_INTERVAL=";
+  private static final String LONG_CHECK_TARGETS_INTERVAL_KEY = "LONG_CHECK_TARGETS_INTERVAL=";
+  private static final String SHORT_CHECK_TARGETS_INTERVAL_KEY = "SHORT_CHECK_TARGETS_INTERVAL=";
   private static final int SHORT_CHECK_TARGETS_MAX = 5;
+  private long UPDATE_INTERVAL = NORMAL_UPDATE_INTERVAL;
+  private long LONG_CHECK_TARGETS_INTERVAL = NORMAL_LONG_CHECK_TARGETS_INTERVAL;
+  private long SHORT_CHECK_TARGETS_INTERVAL = NORMAL_SHORT_CHECK_TARGETS_INTERVAL;
   private static final Class[] requiredServices = {
     UIDService.class,
     TopologyReaderService.class,
@@ -70,6 +77,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private long nextUpdateTime = now;		// Time to check for new laggards
   private int shortCheckTargetsCount = 0;
   private CompletionRelay relay;                // The relay we sent
+  private Laggard selfLaggard = null;
 
   private static Class[] concatRequiredServices(Class[] a1, Class[] a2) {
     Class[] result = new Class[a1.length + a2.length];
@@ -116,8 +124,34 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   }
 
   public void setupSubscriptions() {
+    Collection params = getParameters();
+    for (Iterator i = params.iterator(); i.hasNext(); ) {
+      String param = (String) i.next();
+      if (param.startsWith(UPDATE_INTERVAL_KEY)) {
+        UPDATE_INTERVAL = Long.parseLong(param.substring(UPDATE_INTERVAL_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + UPDATE_INTERVAL_KEY
+                                                + UPDATE_INTERVAL);
+        continue;
+      }
+      if (param.startsWith(LONG_CHECK_TARGETS_INTERVAL_KEY)) {
+        LONG_CHECK_TARGETS_INTERVAL = Long.parseLong(param.substring(LONG_CHECK_TARGETS_INTERVAL_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + LONG_CHECK_TARGETS_INTERVAL_KEY
+                                                + LONG_CHECK_TARGETS_INTERVAL);
+        continue;
+      }
+      if (param.startsWith(SHORT_CHECK_TARGETS_INTERVAL_KEY)) {
+        SHORT_CHECK_TARGETS_INTERVAL = Long.parseLong(param.substring(SHORT_CHECK_TARGETS_INTERVAL_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + SHORT_CHECK_TARGETS_INTERVAL_KEY
+                                                + SHORT_CHECK_TARGETS_INTERVAL);
+        continue;
+      }
+    }
     if (haveServices()) {
       checkTargets();
+      checkSelfLaggard(true);
       startTimer(SHORT_CHECK_TARGETS_INTERVAL);
     }
   }
@@ -129,6 +163,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
         now = System.currentTimeMillis();
         if (now > nextCheckTargetsTime) {
           if (checkTargets()) {
+            checkSelfLaggard(true);
             shortCheckTargetsCount = 0; // Reset and start over
             nextCheckTargetsTime = now + SHORT_CHECK_TARGETS_INTERVAL;
           } else if (shortCheckTargetsCount < SHORT_CHECK_TARGETS_MAX) {
@@ -138,10 +173,17 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
             nextCheckTargetsTime = now + LONG_CHECK_TARGETS_INTERVAL;
           }
         } else if (shortCheckTargetsCount >= SHORT_CHECK_TARGETS_MAX) {
+          checkSelfLaggard(false);
           checkLaggards();
         }
         startTimer(UPDATE_INTERVAL);
       }
+    }
+  }
+  private void checkSelfLaggard(boolean isLaggard) {
+    if (selfLaggard == null || selfLaggard.isLaggard() != isLaggard) {
+      selfLaggard = new Laggard(getAgentIdentifier(), 1.0, isLaggard ? 1.0 : 0.0, isLaggard);
+      if (isLaggard) handleNewLaggard(selfLaggard);
     }
   }
 
@@ -155,7 +197,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
    * @return true if a new relay was published (suppresses laggard checking)
    **/
   private boolean checkTargets() {
-    ClusterIdentifier me = getClusterIdentifier();
+    ClusterIdentifier me = getAgentIdentifier();
     Set names = getTargetNames();
     Set targets = new HashSet(names.size());
     for (Iterator i = names.iterator(); i.hasNext(); ) {
@@ -192,6 +234,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
       }
       handleNewLaggard(newLaggard);
     } else {
+      handleNewLaggard(selfLaggard);
       if (logger.isDebugEnabled()) {
         logger.debug("Waiting for relay responses");
       }

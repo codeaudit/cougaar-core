@@ -47,6 +47,8 @@ import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
  * according to the prevailing {@link Condition}s.
  **/
 public class AdaptivityEngine extends ServiceUserPlugin {
+  private static final long MISSING_CONDITION_DELAY = 60000;
+
   /**
    * A listener that listens to itself. It responds true when it is
    * itself the object of a subscription change.
@@ -105,6 +107,11 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   private Set romcChanges = new HashSet();
 
   private Play[] plays;
+
+  private List missingConditions = new ArrayList();
+
+  private long missingConditionTime =
+    System.currentTimeMillis() + MISSING_CONDITION_DELAY;
 
   private Listener playbookListener = new Listener();
 
@@ -175,6 +182,20 @@ public class AdaptivityEngine extends ServiceUserPlugin {
    * reduce chaotic behavior.
    **/
   public void setupSubscriptions() {
+    Iterator iter = getParameters().iterator();
+    if (iter.hasNext()) {
+      String param = (String) iter.next();
+      try {
+        long missingConditionDelay = Long.parseLong(param);
+        if (missingConditionDelay >= 5000L) {
+          missingConditionTime = System.currentTimeMillis() + missingConditionDelay;
+        } else {
+          logger.error("Bogus missing condition delay is less than 5000");
+        }
+      } catch (Exception e) {
+        logger.error("Error parsing missing condition delay", e);
+      }
+    }
     playbookListenerSubscription = blackboard.subscribe(playbookListener);
     conditionListenerSubscription = blackboard.subscribe(conditionListener);
     operatingModeListenerSubscription = blackboard.subscribe(operatingModeListener);
@@ -210,11 +231,26 @@ public class AdaptivityEngine extends ServiceUserPlugin {
         getConditions();
         if (debug) logger.debug("got " + smMap.size() + " conditions");
       } else if (operatingModeListenerSubscription.hasChanged()) {
+      } else if (timerExpired()) {
+        if (debug) logger.debug("missing condition timer expired");
       } else {
         if (debug) logger.debug("nothing changed");
       }
       if (debug) logger.debug("updateOperatingModes");
       updateOperatingModes();
+      if (missingConditions.size() > 0 && logger.isWarnEnabled()) {
+        long timeLeft = missingConditionTime - System.currentTimeMillis();
+        if (timeLeft <= 0L) {
+          for (Iterator i = missingConditions.iterator(); i.hasNext(); ) {
+            String msg = (String) i.next();
+            logger.warn(msg);
+          }
+          missingConditions.clear();
+        } else {
+          cancelTimer();
+          startTimer(timeLeft);
+        }
+      }
     }
   }
 
@@ -247,7 +283,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
    **/
   private void updateOperatingModes() {
     tempROMCMap.putAll(romcMap);
-    helper.updateOperatingModes(plays, romcMap, romcChanges);
+    missingConditions.clear();
+    helper.updateOperatingModes(plays, romcMap, romcChanges, missingConditions);
     for (Iterator i = romcChanges.iterator(); i.hasNext(); ) {
       String operatingModeName = (String) i.next();
       if (romcMap.containsKey(operatingModeName)) {

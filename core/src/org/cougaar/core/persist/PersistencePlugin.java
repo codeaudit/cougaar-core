@@ -20,8 +20,8 @@
  */
 package org.cougaar.core.persist;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import org.cougaar.core.adaptivity.OMCRangeList;
@@ -109,7 +109,7 @@ public interface PersistencePlugin {
     void cleanupOldDeltas(SequenceNumbers cleanupNumbers);
 
     /**
-     * Open an ObjectOutputStream onto which a persistence delta can
+     * Open an OutputStream onto which a persistence delta can
      * be written. The stream returned should be relatively
      * non-blocking since it is possible for the entire agent to be
      * blocked waiting for completion. Implementations that may block
@@ -121,58 +121,45 @@ public interface PersistencePlugin {
      * complete state dump and does not depend on any earlier deltas.
      * It may be useful to distinctively mark such deltas.
      **/
-    ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
+    OutputStream openOutputStream(int deltaNumber, boolean full)
         throws IOException;
 
     /**
-     * Abort output. The partially written stream should be discarded
-     * and artifacts of its existence eliminated. Later, a write of
-     * the same delta may be attempted probably with different data.
+     * Clean up after output was aborted.
      * Called in response to an exception during the writing of the
      * current stream.
      * @param retainNumbers the numbers of the deltas excluding the
      * one just written that comprise a complete rehydration set.
      * Subsequent calls to readSequenceNumbers should return these
      * values.
-     * @param currentOutput always the most recently opened stream
-     * provided as a convenience so it need not be retained.
      **/
-    void abortObjectOutputStream(SequenceNumbers retainNumbers,
-                                 ObjectOutputStream currentOutput);
+    void abortOutputStream(SequenceNumbers retainNumbers);
 
     /**
-     * Close the output stream. Should reliably terminate the writing
-     * of the stream. Implementations should attempt to insure that
-     * the written data will not be lost, but the non-blocking
-     * requirement above must be taken into consideration.
+     * Clean up after closing the output stream.
      * @param retainNumbers the numbers of the deltas including the
      * one just written that comprise a complete rehydration set.
      * Subsequent calls to readSequenceNumbers should return these
      * values.
-     * @param currentOutput always the most recently opened stream
-     * provided as a convenience so it need not be retained.
      **/
-    void closeObjectOutputStream(SequenceNumbers retainNumbers,
-                                 ObjectOutputStream currentOutput,
-                                 boolean full);
+    void finishOutputStream(SequenceNumbers retainNumbers, boolean full);
 
     /**
-     * Open an ObjectInputStream from which a persistence delta can be
+     * Open an InputStream from which a persistence delta can be
      * read.
      * @param deltaNumber the number of the delta to be opened
      **/
-    ObjectInputStream openObjectInputStream(int deltaNumber)
+    InputStream openInputStream(int deltaNumber)
         throws IOException;
 
     /**
-     * Close the ObjectInputStream.
+     * Clean up after closing the input stream
      * @param deltaNumber the number of the delta being closed.
      * Provided as a convenience to the method
-     * @param currentInput the ObjectInputStream being closed.
+     * @param currentInput the InputStream being closed.
      * Provided as a convenience to the method.
      **/
-    void closeObjectInputStream(int deltaNumber,
-                                ObjectInputStream currentInput);
+    void finishInputStream(int deltaNumber);
 
     /**
      * Clean out all old persistence information. Intended only as a

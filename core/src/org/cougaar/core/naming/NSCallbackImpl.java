@@ -30,10 +30,14 @@ import javax.naming.*;
 import javax.naming.event.*;
 import javax.naming.directory.*;
 import javax.naming.spi.*;
+import org.cougaar.core.mts.SocketFactory;
 
 class NSCallbackImpl extends UnicastRemoteObject implements NSCallback {
   NamingEventContext context;
   public NSCallbackImpl(NamingEventContext context) throws RemoteException {
+    super(0, 
+	  SocketFactory.getNameServiceSocketFactory(), 
+	  SocketFactory.getNameServiceSocketFactory());
     this.context = context;
   }
   public void dispatch(List events) throws RemoteException {

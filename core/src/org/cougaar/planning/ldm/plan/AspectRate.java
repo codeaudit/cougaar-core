@@ -79,6 +79,7 @@ public class AspectRate extends AspectValue {
     } else {
       throw new IllegalArgumentException("Unknown rate class: " + rateClass);
     }
+    super.setValue(newValue);
   }
    
   /** 
@@ -101,7 +102,7 @@ public class AspectRate extends AspectValue {
   }
 */
 
-  public boolean equals(AspectValue v) {
+  public boolean equals(Object v) {
     if (!(v instanceof AspectRate)) {
       return false;
     } 

@@ -197,58 +197,38 @@ public abstract class FilePersistenceBase
     }
   }
 
-  public ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full) throws IOException {
+  public OutputStream openOutputStream(int deltaNumber, boolean full) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
     LoggingService ls = pps.getLoggingService();
     if (ls.isDebugEnabled()) {
       ls.debug("Persist to " + deltaFile);
     }
-    return new ObjectOutputStream(openFileOutputStream(deltaFile));
+    return openFileOutputStream(deltaFile);
   }
 
-  public void closeObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput,
-                                         boolean full)
+  public void finishOutputStream(SequenceNumbers retainNumbers,
+                                boolean full)
   {
-    try {
-      currentOutput.close();
-      writeSequenceNumbers(retainNumbers, "");
-      if (full) writeSequenceNumbers(retainNumbers,
-                                     BasePersistence.formatDeltaNumber(retainNumbers.first));
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception closing persistence output stream", e);
-    }
+    writeSequenceNumbers(retainNumbers, "");
+    if (full) writeSequenceNumbers(retainNumbers,
+                                   BasePersistence.formatDeltaNumber(retainNumbers.first));
   }
 
-  public void abortObjectOutputStream(SequenceNumbers retainNumbers,
-                                      ObjectOutputStream currentOutput)
+  public void abortOutputStream(SequenceNumbers retainNumbers)
   {
-    try {
-      currentOutput.close();
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception aborting persistence output stream", e);
-    }
     getDeltaFile(retainNumbers.current).delete();
   }
 
-  public ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
+  public InputStream openInputStream(int deltaNumber) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
     LoggingService ls = pps.getLoggingService();
     if (ls.isDebugEnabled()) {
       ls.debug("rehydrate " + deltaFile);
     }
-    return new ObjectInputStream(openFileInputStream(deltaFile));
+    return openFileInputStream(deltaFile);
   }
 
-  public void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
-    try {
-      currentInput.close();
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception closing persistence input stream", e);
-    }
+  public void finishInputStream(int deltaNumber) {
   }
 
   public void deleteOldPersistence() {

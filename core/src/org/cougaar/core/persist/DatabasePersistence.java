@@ -36,8 +36,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.sql.Connection;
@@ -341,35 +339,27 @@ public class DatabasePersistence
     }
   }
 
-  public ObjectOutputStream openObjectOutputStream(final int deltaNumber,
-                                                      final boolean full)
+  public OutputStream openOutputStream(final int deltaNumber,
+                                       final boolean full)
     throws IOException
   {
     getDatabaseConnection(this);
-    return new ObjectOutputStream(new MyOutputStream(deltaNumber, full));
+    return new MyOutputStream(deltaNumber, full);
   }
 
-  public void closeObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput,
-                                         boolean full)
+  public void finishOutputStream(SequenceNumbers retainNumbers,
+                                 boolean full)
   {
-    try {
-      currentOutput.close();
-      writeSequenceNumbers(retainNumbers);
-    }
-    catch (IOException e) {
-      fatalException(e);
-    }
+    writeSequenceNumbers(retainNumbers);
   }
 
-  public void abortObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput)
+  public void abortOutputStream(SequenceNumbers retainNumbers)
   {
     // Nothing to do since we haven't written to the db yet
     // We just abandon the streams.
   }
 
-  public ObjectInputStream openObjectInputStream(int deltaNumber)
+  public InputStream openInputStream(int deltaNumber)
     throws IOException
   {
     try {
@@ -377,8 +367,7 @@ public class DatabasePersistence
       final ResultSet rs = getDelta.executeQuery();
       try {
         if (rs.next()) {
-          InputStream theStream = new ByteArrayInputStream(rs.getBytes(1));
-          return new ObjectInputStream(theStream);
+          return new ByteArrayInputStream(rs.getBytes(1));
         } else {
           throw new SQLException("Delta not found");
         }
@@ -393,15 +382,9 @@ public class DatabasePersistence
     }
   }
 
-  public void closeObjectInputStream(int deltaNumber,
-                                        ObjectInputStream currentInput)
+  public void finishInputStream(int deltaNumber)
   {
-    try {
-      currentInput.close();
-    }
-    catch (IOException e) {
-      pps.getLoggingService().error("Exception closing input stream", e);
-    }
+    // Nothing to do, just quietly abandon the input stream
   }
 
   public void deleteOldPersistence() {

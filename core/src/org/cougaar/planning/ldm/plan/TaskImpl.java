@@ -60,6 +60,8 @@ import org.cougaar.core.plugin.Annotation;
 public class TaskImpl extends DirectiveImpl
   implements Task, NewTask, Cloneable, XMLizable, ActiveSubscriptionObject, java.io.Serializable
 {
+  private static Logger logger = Logging.getLogger(TaskImpl.class);
+
   private Verb verb;
   private transient Asset directObject;  // changed to transient : Persistence
   private transient ArrayList phrases = null; // changed to transient : Persistence
@@ -259,17 +261,39 @@ public class TaskImpl extends DirectiveImpl
     //decacheTS();   // no need since toString doesnt use parent
   }
   
-  /** get the preferences on this task.
+  /**
+   * Get the preferences on this task. We assume that if the caller
+   * has synchronized the task that he will enumerate the preferences
+   * safely so we return an ordinary Enumberation. Otherwise, we
+   * return an Enumeration backed by a copy of the preferences to
+   * avoid ConcurrentModificationExceptions. With debug logging turned
+   * on, callers that haven't synchronized the tasks are printed the
+   * first time they getPreferences.
    * @return Enumeration{Preference}
    **/
-  public synchronized Enumeration getPreferences() {
-    if (preferences != null && preferences.size()  > 0) {
-      // if we need extra protection...
-      //return new BackedEnumerator(preferences);
-      // else
-      return new Enumerator(preferences);
-    } else {
-      return Empty.enumeration;
+  private static Set badCallers = new HashSet();
+  public Enumeration getPreferences() {
+    boolean useBackedEnumerator = !Thread.holdsLock(this);
+    if (useBackedEnumerator && logger.isDebugEnabled()) {
+      Throwable t = new Throwable();
+      StackTraceElement caller = t.getStackTrace()[1];
+      synchronized (badCallers) {
+        if (badCallers.add(caller)) {
+          logger.debug("Unsafe call to Task.getPreferences from " + caller);
+        }
+      }
+    }
+    synchronized (this) {
+      if (preferences != null && preferences.size()  > 0) {
+        // if we need extra protection...
+        if (useBackedEnumerator) {
+          return new BackedEnumerator(preferences);
+        } else{
+          return new Enumerator(preferences);
+        }
+      } else {
+        return Empty.enumeration;
+      }
     }
   }
   
@@ -578,7 +602,26 @@ public class TaskImpl extends DirectiveImpl
     return ts;
   }
  
-        
+  public static void writeArrayList(ObjectOutputStream s, ArrayList l)
+    throws IOException
+  {
+    Object[] objects = (l == null) ? null : l.toArray();
+    // Write out element count
+    s.writeObject(objects);
+  }
+
+  public static ArrayList readArrayList(ObjectInputStream s)
+    throws IOException, ClassNotFoundException
+  {
+    Object[] objects = (Object[]) s.readObject();
+    if (objects == null) return null;
+    ArrayList l = new ArrayList(objects.length);
+    for (int i = 0; i < objects.length; i++) {
+      l.add(objects[i]);
+    }
+    return l;
+  }
+
   /** serialize tasks making certain that references to other tasks and
    * workflows are appropriately proxied.
    */
@@ -586,7 +629,7 @@ public class TaskImpl extends DirectiveImpl
     stream.defaultWriteObject();
 
     stream.writeObject(directObject);
-    stream.writeObject(phrases);
+    writeArrayList(stream, phrases);
     stream.writeObject(workflow);
     if (stream instanceof org.cougaar.core.persist.PersistenceOutputStream) {
       stream.writeObject(myAnnotation);
@@ -603,7 +646,7 @@ public class TaskImpl extends DirectiveImpl
   private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
     stream.defaultReadObject();
     directObject = (Asset) stream.readObject();
-    phrases = (ArrayList) stream.readObject();
+    phrases = readArrayList(stream);
     workflow = (Workflow) stream.readObject();
     if (stream instanceof org.cougaar.core.persist.PersistenceInputStream) {
       myAnnotation = (Annotation) stream.readObject();
@@ -794,11 +837,10 @@ public class TaskImpl extends DirectiveImpl
     if (wf != null) {
       for (Enumeration tasks = wf.getTasks(); tasks.hasMoreElements(); ) {
         if (tasks.nextElement() == this) {
-          Logger log = LoggerFactory.getInstance().createLogger(getClass());
-          if (log.isDebugEnabled()) {
-            log.debug("Illegal publishRemove subtask still in a workflow: " + this, new Throwable());
-          } else if (log.isWarnEnabled()) {
-            log.warn("Illegal publishRemove subtask still in a workflow: " + this);
+          if (logger.isDebugEnabled()) {
+            logger.debug("Illegal publishRemove subtask still in a workflow: " + this, new Throwable());
+          } else if (logger.isWarnEnabled()) {
+            logger.warn("Illegal publishRemove subtask still in a workflow: " + this);
           }
           wf.removeTask(this);
         }
