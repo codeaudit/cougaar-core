@@ -32,12 +32,15 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
 import org.cougaar.util.log.*;
@@ -74,6 +77,14 @@ import org.cougaar.util.PropertyParser;
  *    (-Dorg.cougaar.society.xsl.checkXML) or specified
  *    (-Dorg.cougaar.society.xsl.default.file).  Defaults to
  *    "make_society.xsl".
+ * @property org.cougaar.society.xsl.param.*
+ *    XSL parameters passed to the xml-stylesheet or default XSL
+ *    stylesheet, where the above system property prefix is
+ *    removed.  For example, if a system property is:
+ *       -Dorg.cougaar.society.xsl.param.foo=bar
+ *    then the parameter "foo=bar" will be passed to the XSL
+ *    file's optional parameter:
+ *       &lt;xsl:param name="foo"&gt;my_default&lt;/xsl:param&gt;
  * </pre>
  **/
 public class XMLComponentInitializerServiceProvider
@@ -104,6 +115,9 @@ public class XMLComponentInitializerServiceProvider
         "org.cougaar.society.xsl.dynamic.file",
         "make_society.xsl");
 
+  private static final String XSL_PARAM_PROP_PREFIX =
+    "org.cougaar.society.xsl.param.";
+
   // could make this a soft reference, since we can always
   // reparse our xml file
   private final ComponentInitializerService serviceImpl;
@@ -128,21 +142,28 @@ public class XMLComponentInitializerServiceProvider
           " that specifies the local node's name");
     }
 
-    // for backwards compatibility we need the wpserver parameter.
-    //
-    // We could add other -D options here, e.g.
-    //   Properties props = 
-    //     SystemProperties.getSystemPropertiesWithPrefix(
-    //       "org.cougaar.society.xsl.param");
-    //   Map m = <convert props to map> 
-    // However, this would probably just complicate the config.
-    Map default_xsl_params =
-      Collections.singletonMap(
-          "wpserver",
-          System.getProperty(
-            "org.cougaar.core.load.wp.server",
-            "true"));
+    // find all "-Dorg.cougaar.society.xsl.param.*" system properties
+    Map default_xsl_params = new HashMap();
+    Properties props =
+      SystemProperties.getSystemPropertiesWithPrefix(
+          XSL_PARAM_PROP_PREFIX);
+    for (Enumeration en = props.propertyNames();
+        en.hasMoreElements();
+        ) {
+      String name = (String) en.nextElement();
+      String key = name.substring(XSL_PARAM_PROP_PREFIX.length());
+      String value = props.getProperty(name);
+      default_xsl_params.put(key, value);
+    }
+    // backwards compatibility for the wp server:
+    if (!default_xsl_params.containsKey("wpserver") &&
+        !PropertyParser.getBoolean(
+          "org.cougaar.core.load.wp.server",
+          true)) {
+      default_xsl_params.put("wpserver", "false");
+    }
 
+    // for now we don't pass our params to the dynamic XSL template
     Map dynamic_xsl_params = null;
 
     Logger logger = Logging.getLogger(getClass());
@@ -180,7 +201,7 @@ public class XMLComponentInitializerServiceProvider
           e);
     }
 
-    // agents fully initialized
+    // agents map fully initialized
 
     if (agents.isEmpty()) {
       throw new RuntimeException(
