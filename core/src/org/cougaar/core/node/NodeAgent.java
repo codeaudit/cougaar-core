@@ -84,6 +84,10 @@ import org.cougaar.util.log.Logging;
  *   a '.' every few seconds when nothing else much is going on.
  *   This is a one-per-vm function.  Default <em>true</em>.
  *
+ * @property org.cougaar.core.load.wp
+ *   If enabled, the node will load the WhitePagesService
+ *   component.  See bug 2522.  Default <em>true</em>
+ *
  * @property org.cougaar.core.load.community
  *   If enabled, the node will load the CommunityService
  *   component.  See bug 2522.  Default <em>true</em>
@@ -109,6 +113,7 @@ public class NodeAgent
   private MessageAddress nodeIdentifier = null;
 
   private static final boolean isHeartbeatOn;
+  private static final boolean isWPEnabled;
   private static final boolean isCommunityEnabled;
   private static final boolean isPlanningEnabled;
   private static final boolean isServletEnabled;
@@ -117,6 +122,7 @@ public class NodeAgent
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
+    isWPEnabled=PropertyParser.getBoolean("org.cougaar.core.load.wp", true);
     isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
     isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
@@ -228,6 +234,18 @@ public class NodeAgent
             SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
     } catch (NamingException ne) {
       throw new Error("Couldn't initialize NamingService ", ne);
+    }
+
+    if (isWPEnabled) {
+      add(new ComponentDescription(
+            (getIdentifier()+"WhitePages"),
+            Agent.INSERTION_POINT + ".WP",
+            "org.cougaar.core.naming.JNDIWhitePagesServiceComponent",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null)); //policy
     }
 
     add(new ComponentDescription(
