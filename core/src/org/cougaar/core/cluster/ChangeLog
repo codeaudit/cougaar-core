@@ -1,3 +1,15 @@
+2001-08-31  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Blackboard.java:
+	Add system property org.cougaar.core.cluster.persistence.sequence
+	used when org.cougaar.core.cluster.persistence.disableWrite is
+	true. It specifies the archive number to be used in rehydrating
+	the society. The form of the value is "_nnnnn" which is the suffix
+	on the sequence file to be used. When executing in really time, the
+	relevant suffix is the one on the sequence file having the date
+	desired. If running in non-real time. The correspondence must be
+	established manually.
+
 2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Distributor.java:

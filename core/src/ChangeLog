@@ -1,3 +1,14 @@
+2001-09-05  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Remove debug printlns.
+
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Remove debug printlns.
+
+	* org/cougaar/core/naming/NSLS.java:
+	Print attributes of naming service entries, too.
+
 2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:

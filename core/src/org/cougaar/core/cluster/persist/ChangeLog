@@ -1,3 +1,16 @@
+2001-08-31  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Persistence.java: 
+	* FilePersistence.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java: 
+	* BasePersistence.java:
+	Add suffix argument to disableWrite and readSequenceNumbers
+	methods to allow arbitrary archive to be specified from the
+	command line. In the case of DatabasePersistence, the suffix is
+	parsed into its numeric value and used to query for the correct
+	archive delta.
+
 2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Persistence.java: 
