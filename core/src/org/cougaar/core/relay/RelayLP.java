@@ -91,27 +91,45 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     Object obj = o.getObject();
     if (obj instanceof Relay) { // Quick test for Target or Source
       if (changes != null && changes.contains(MarkerReport.INSTANCE)) {
-        return;                 // Ignore changes containing our MarkerReport
+	// Ignore changes containing our MarkerReport
+	// This avoids looping
+        return;                 
       }
       if (obj instanceof Relay.Target) {
         Relay.Target rt = (Relay.Target) obj;
+	// Only changes are significant at a Target
+	// The target is sending a response back to the source
         if (o.isChange()) {
-          localResponse(rt, changes); // Only changes are significant at a Target
+          localResponse(rt, changes);
         }
       }
+
+      // Note no else -- so something both a Target and a Relay
+      // will run through all of these
+
       if (obj instanceof Relay.Source) {
         Relay.Source rs = (Relay.Source) obj;
         if (o.isAdd()) {
+	  // New relay to be sent to targets.
+	  // Note that a Relay.Target just published at Dest that's also
+	  // a Relay.Source would get in here -- so must have the MarkerReport
           localAdd(rs);
         } else if (o.isChange()) {
+	  // New relay content or targets list
+	  // Note that a Relay.Target just changed at Dest that's also
+	  // a Relay.Source would get in here -- so must have the MarkerReport
           localChange(rs, changes);
         } else if (o.isRemove()) {
+	  // Remove the relay from the Targets
+	  // Note that a Relay.Target just changed at Dest that's also
+	  // a Relay.Source would get in here -- so must have the MarkerReport
           localRemove(rs);
         }
       }
     }
   }
 
+  // New Relay.Source added. Only called from LP.execute()
   private void localAdd(Relay.Source rs) {
     Set targets = rs.getTargets();
     if (targets == null) return;
@@ -119,14 +137,19 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     localAdd(rs, targets);
   }
 
+  // Propogate the new Relay to each listed target
+  // Called from above localAdd and from abaChange when an aba expands
+  // to new targets.
   private void localAdd(Relay.Source rs, Set targets) {
+    // If this were also a target, we could check that this agent
+    // is the source. That might help break looping
     boolean gotContent = false;
     Object content = null;
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
       if (target == null) {
         // Ignore nulls.
-      } else if (target.equals(self)) {
+      } else if (target.getPrimary().equals(self)) {
         // Never send to self.  Likely an error.
       } else {
         if (!gotContent) {
@@ -143,8 +166,11 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
    * to the targets.
    */
   private void localChange(Relay.Source rs, Collection changes) {
+    // called from changeTarget, receiveResponse, and LP.execute
     Set targets = rs.getTargets();
     Collection oldTargets = null;
+    // Get the oldtargets mentioned in the _first_ RelayChangeReport 
+    // (if there are many, later ones are ignored)
     if (changes != null) {
       for (Iterator i = changes.iterator(); i.hasNext(); ) {
         Object o = i.next();
@@ -157,6 +183,10 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
         }
       }
     }
+
+    // If we got targets from a ChangeReport above, winnow that
+    // down to targets no longer in the targets list.
+    // Tell each such agent to remove this Relay
     if (oldTargets != null) {
       if (targets != null) oldTargets.removeAll(targets);
       UID uid = rs.getUID();
@@ -180,33 +210,41 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
       MessageAddress target = (MessageAddress) i.next();
       if (target == null) {
         // Ignore nulls.
-      } else if (target.equals(self)) {
+      } else if (target.getPrimary().equals(self)) {
         // Never send to self.  Likely an error.
       } else {
         if (!gotContent) {
           gotContent = true;
           content = rs.getContent();
         }
+	// This target could be an ABA that includes this agent, right?
         sendChange(rs, target, content, changes);
       }
     }
   }
 
+  // Local Relay.Source was publishRemoved
+  // Called from lp.execute
   private void localRemove(Relay.Source rs) {
     Set targets = rs.getTargets();
     if (targets == null) return;
     if (targets.isEmpty()) return; // No targets
+    // Again, if this is also a Relay.Target, could check that this is 
+    // really the source
     localRemove(rs.getUID(), targets);
   }
 
+  // Propogate removal of relay to each target
+  // called from above, ie lp.execute, and from abaChange
   private void localRemove(UID uid, Set targets) {
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
       if (target == null) {
         // Ignore nulls.
-      } else if (target.equals(self)) {
+      } else if (target.getPrimary().equals(self)) {
         // Never send to self.  Likely an error.
       } else {
+	// Again, what if the target is an ABA that includes this agent?
         sendRemove(uid, target);
       }
     }
@@ -217,9 +255,10 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
    * to the source
    */
   private void localResponse(Relay.Target rt, Collection changes) {
+  // called from changeTarget, receiveResponse, LP.execute
     MessageAddress source = rt.getSource();
     if (source == null) return; // No source
-    if (self.equals(source)) return; // BOGUS source must be elsewhere. Ignore.
+    if (self.equals(source.getPrimary())) return; // BOGUS source must be elsewhere. Ignore.
 
     Object resp = rt.getResponse();
     // cancel if response is null
@@ -228,6 +267,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     sendResponse(rt, source, resp, changes);
   }
 
+  // Send directive to given target Agent to add this Relay
+  // called from localAdd and resend
   private void sendAdd(Relay.Source rs, MessageAddress target, Object content) {
     RelayDirective.Add dir = 
       new RelayDirective.Add(rs.getUID(), content, rs.getTargetFactory());
@@ -236,6 +277,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     rootplan.sendDirective(dir);
   }
 
+  // Send directive to given target Agent of change to this Relay
+  // called from localChange
   private void sendChange(
       Relay.Source rs, MessageAddress target, Object content, Collection c) {
     RelayDirective.Change dir =
@@ -245,6 +288,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     rootplan.sendDirective(dir, c);
   }
 
+  // Send directive to given target agent to remove this Relay
+  // called from localChange, localRemove, receiveResponse 
   private void sendRemove(UID uid, MessageAddress target) {
     RelayDirective.Remove dir = new RelayDirective.Remove(uid);
     dir.setSource(self);
@@ -252,6 +297,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     rootplan.sendDirective(dir);
   }
 
+  // Send directive back to the Source of Response from this Target
+  // called from sendVerification, addTarget, localResponse
   private void sendResponse(
       Relay.Target rt, MessageAddress source, Object resp, Collection c) {
     RelayDirective.Response dir = new RelayDirective.Response(rt.getUID(), resp);
@@ -260,6 +307,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     rootplan.sendDirective(dir, c);
   }
 
+  // Resend latest (possibly null) response from this target to the source
+  // called from verify
   private void sendVerification(Relay.Target rt, MessageAddress source) {
     Object resp = rt.getResponse();
     // Send even if null response
@@ -267,10 +316,11 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   }
 
   // MessageLogicProvider implementation
-
   public void execute(Directive dir, Collection changes) {
-    if (dir instanceof RelayDirective) { // Quick test for one of ours
-      if (self.equals(dir.getSource())) return;
+    if (dir instanceof RelayDirective) { 
+      // Quick test for one of ours
+      if (self.equals(dir.getSource().getPrimary())) return;
+
       if (dir instanceof RelayDirective.Change) {
         receiveChange((RelayDirective.Change) dir, changes);
         return;
@@ -290,6 +340,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
+  // called from receiveAdd and receiveChange
+  // In the target agent, add the Relay.Target (which may also implement Relay.Source)
   private void addTarget(Relay.TargetFactory tf, Object cont, RelayDirective dir) {
     Relay.Target rt;
     if (tf != null) {
@@ -301,6 +353,10 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
       return;
     }
     if (rt == null) return;     // Target should not exist here
+    // Add the target. Note that if it is also a source,
+    // this LP will wake up again, and try to send the relay
+    // to all the targets.
+    /// FIXME: This is a place to block relaying. Add a Marker report?
     rootplan.add(rt);
     // Check for immediate response due to arrival
     Object resp = rt.getResponse();
@@ -309,7 +365,11 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
+  // called from receiveAdd and receiveChange
   private void changeTarget(Relay.Target rt, Object cont, Collection changes) {
+    // Branch on the change type flag.
+    // If the content changed, then mark the taret as changed,
+    // but in such a way that this LP won't run again
     int flags = rt.updateContent(cont, token);
     if ((flags & Relay.CONTENT_CHANGE) != 0) {
       Collection c;
@@ -319,16 +379,37 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
         c = new ArrayList(changes);
         c.add(MarkerReport.INSTANCE);
       }
+      // Note the MarkerReport is on this change,
+      // so the LP will not think the Response changed
+      // and needs to flow back
       rootplan.change(rt, c);
+      // FIXME: What is this for?!!
+      // Note I made localChange bail if this is not the Source
+      // Presumably this is for chaining. It means that if a content
+      // change comes in to this agent, and the local Target is also
+      // a source, we can let this LP pretend the change
+      // was local, and propogate it to the listed targets
+      // FIXME!!
       if (rt instanceof Relay.Source) localChange((Relay.Source) rt, changes);
     }
+
+    // If we (also) changed the response on the relay,
+    // send that reponse to the source if possible
+    // -- but I don't see how or why an incoming directive would say that
     if ((flags & Relay.RESPONSE_CHANGE) != 0) {
+      // Note localResponse does nothing if this is the source (correctly)
       localResponse(rt, Collections.EMPTY_SET);
     }
   }
 
+  // called from lp.execute when get an incoming add directive
   private void receiveAdd(RelayDirective.Add dir) {
-    Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
+    UniqueObject uo = rootplan.findUniqueObject(dir.getUID());
+    if (! (uo instanceof Relay.Target) && uo != null) {
+      logger.error(self + ".receiveAdd RelayDirective.Add expected to find a Target on the BBoard, found: " + uo + " for Directive " + dir + ", source " + dir.getSource());
+      return;
+    }
+    Relay.Target rt = (Relay.Target)uo;
     if (rt == null) {
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
@@ -337,16 +418,20 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
+  // Receive a change from remote Source at this Target
+  // called only from incoming directive to lp.execute
   private void receiveChange(RelayDirective.Change dir, Collection changes) {
     Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
     if (rt == null) {
       // Unusual. Treat as add.
       addTarget(dir.getTargetFactory(), dir.getContent(), dir);
     } else {
+      // What if this is the source?
       changeTarget(rt, dir.getContent(), changes);
     }
   }
 
+  // called only from lp.execute when get a directive to remove this relay
   private void receiveRemove(RelayDirective.Remove dir) {
     Relay.Target rt = (Relay.Target) rootplan.findUniqueObject(dir.getUID());
     if (rt == null) {
@@ -356,6 +441,7 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
+  // called only from lp.execute
   private void receiveResponse(RelayDirective.Response dir, Collection changes) {
     UniqueObject uo = rootplan.findUniqueObject(dir.getUID());
     MessageAddress target = dir.getSource();
@@ -376,6 +462,8 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     } else {
       Object resp = dir.getResponse();
       if (resp != null) {
+	// Have a response. If the response changed, must locally 
+	// publishChange the relay, but don't loop and resend the relay.
         int flags = rs.updateResponse(target, resp);
         if ((flags & Relay.RESPONSE_CHANGE) != 0) {
           Collection c;
@@ -385,10 +473,30 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
             c = new ArrayList(changes);
           }
           c.add(MarkerReport.INSTANCE);
+	  // FIXME: Must I require that this Relay.Source in fact originated
+	  // on the local agent before doing a publishChange?
+	  // FIXME: Should dir.getDestination().getPrimary().equals(self)?
+	  // And if this is also a target, should its source be this
+	  // agent, or not necessarily? If I was trying to chain Relays,
+	  // then The source field on a relay.target need not be the place
+	  // that originated the relay.source implementation - which
+	  // will be local... I'm confused
           rootplan.change(rs, c);
+
+	  // Note that localResponse will do nothing
+	  // if this is the Source for this target. 
+	  // This says that a downstream target
+	  // told us they changed their response. If this is downstream
+	  // of someone else, then send the response further upstream
           if (rs instanceof Relay.Target) localResponse((Relay.Target) rs, changes);
         }
+
+	// If (also) the content of the relay is different (from the source)
+	// then this lets us send the changes downstream maybe? But
+	// we just got the info from downstream?
+	// Or is this to check the targets list?
         if ((flags & Relay.CONTENT_CHANGE) != 0) {
+	  // localChange requires that this is the Source as well
           localChange(rs, Collections.EMPTY_SET);
         }
       }
@@ -412,13 +520,19 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
         return o instanceof Relay;
       }
     };
+
+    // Loop over all Relays on the Blackboard
     Enumeration en = rootplan.searchBlackboard(pred);
     while (en.hasMoreElements()) {
       Relay r = (Relay) en.nextElement();
+      // Resend all Relay.Sources
       if (r instanceof Relay.Source) {
         Relay.Source rs = (Relay.Source) r;
+	// What if it's also a target?
         resend(rs, cid);
       }
+
+      // And for Targets, send back a verify to the source
       if (r instanceof Relay.Target) {
         Relay.Target rt = (Relay.Target) r;
         verify(rt, cid);
@@ -429,19 +543,23 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
     }
   }
 
+  // When someone is restarting, resend all Relays
   private void resend(Relay.Source rs, MessageAddress t) {
     Set targets = rs.getTargets();
     if (targets == null) return; // Not really a source
     if (targets.isEmpty()) return;
-    boolean gotContent = false;
+
+    boolean gotContent = false; // Only grab the content once
     Object content = null;
+
+    // For each target
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
       if (target == null) {
         // Ignore nulls.
-      } else if (target.equals(self)) {
+      } else if (target.getPrimary().equals(self)) {
         // Don't send to ourself.  Likely an error.
-      } else if (t != null && !target.equals(t)) { 
+      } else if (t != null && !target.getPrimary().equals(t.getPrimary())) { 
         // Only resend to the specified address.
       } else {
         if (!gotContent) {
@@ -453,18 +571,32 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
             self+": Resend"+(t==null?"*":"")+
             " to "+target+": "+rs.getUID());
         }
+	
+	// FIXME: Check that we're not sending to an ABA that includes this agent?
+
+	// Caller ensures that Relay.Sources here
+	// really originated here
+	// Re-send that Relay as though it were new
         sendAdd(rs, target, content);
       }
     }
   }
 
+  // Given address is restarting (or null). If it's the source
+  // of the given relay or null and the relay didn't start here,
+  // then send a verification
   private void verify(Relay.Target rt, MessageAddress s) {
     MessageAddress source = rt.getSource();
     if (source == null) return;
-    if (source.equals(self)) {
+    if (source.getPrimary().equals(self)) {
       // Don't send to ourself.  Likely an error.
+      return;
     } else {
-      if (s == null || source.equals(s)) {
+
+      // Sends a verification back to the source
+      // if the given address is null or the source address,
+      // ie if the source restarted or we did
+      if (s == null || source.getPrimary().equals(s.getPrimary())) {
 	if (logger.isInfoEnabled()) {
           logger.info(
             self+": Verify"+(s==null?"*":"")+
@@ -479,10 +611,35 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
   private static final UnaryPredicate relaySourcePred =
     new UnaryPredicate() {
       public boolean execute(Object o) {
+	// FIXME: Somehow require it really is a source from here?
         return o instanceof Relay.Source;
       }
     };
 
+  // Implement ABAChangeLogicProvider.
+
+  // Can get called from DomainAdapter.invokeABAChangeLogicProviders and from RootDomain.invokeABAChangeLogicProviders
+  // Distributor/Blackboard does one call - on the DomainService (ie DomainManager)
+  // DomainManager loops over the domains (so RootDomain)
+  // RootDomain is just an alternate implementation to DomainAdapter
+  // So really this is all happening from the cacheClearer thread in the
+  // Blackboard, inside some locks in the Distributor
+
+  // Basically, this means that some ABA memberships (may have?) changed
+  // So we need to go through all Relay sources, look at the
+  // target lists, and if one is an ABA, get the translation,
+  // figure out what additions or removals there are. Send
+  // those adds/removes as necessary.
+
+  // Note that when the Relay is initially published,
+  // no effort is made to translate the ABA
+
+  // If we didn't change that the source really started here,
+  // then we'd get some relays that didn't start here and all targets
+  // of the relay would each try to send a remove/add to the
+  // changed members - duplicative at least. The only other
+  // way around this is if the targets had an empty targets list (via
+  // making it transient or a clever target factory).
   public void abaChange(Set communities) {
     if (logger.isDebugEnabled()) logger.debug(self+": abaChange");
     Enumeration en = rootplan.searchBlackboard(relaySourcePred);
