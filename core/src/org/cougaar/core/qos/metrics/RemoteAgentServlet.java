@@ -88,17 +88,18 @@ public class RemoteAgentServlet
 
 	//Header Row
 	out.print("<table border=1>\n");
-	out.print("<tr><b>");
-	out.print("<td><b>AGENTS</b></td>");
-	out.print("<td><b>Spoke To</b></td>");
-	out.print("<td><b>Heard From</b></td>");
-	out.print("<td><b>Queue</b></td>");
-	out.print("<td><b>MsgTo</b></td>");
-	out.print("<td><b>MsgFrom</b></td>");
-	out.print("<td><b>eMJIPS</b></td>");
-	out.print("<td><b>mMbps</b></td>");
-	out.print("<td><b>eMbps</b></td>");
-	out.print("</b></tr>");
+	out.print("<tr>");
+	out.print("<th>AGENTS</th>");
+	out.print("<th>Spoke To</th>");
+	out.print("<th>Heard From</th>");
+	out.print("<th>Spoke Err</th>");
+	out.print("<th>Queue</th>");
+	out.print("<th>MsgTo</th>");
+	out.print("<th>MsgFrom</th>");
+	out.print("<th>eMJIPS</th>");
+	out.print("<th>mMbps</th>");
+	out.print("<th>eMbps</th>");
+	out.print("</tr>");
 
 	long now = System.currentTimeMillis();
 	//Rows
@@ -181,6 +182,12 @@ public class RemoteAgentServlet
 		spoke = new MetricImpl(new Double(0.00), 0,"units","test");
 	    } 
 
+	    Metric error = metricsService.getValue(agentPath+
+						   "LastSpokeError");
+	    if (error ==null) {
+		error = new MetricImpl(new Double(0.00), 0,"units","test");
+	    } 
+
 	    if (msgTo ==null) 
 		msgTo = new MetricImpl(new Double(0.00), 0,"units","test");
 
@@ -201,6 +208,7 @@ public class RemoteAgentServlet
 	    out.print(" </b></td>");
 	    out.print(Color.valueTable(spoke, 0.0, 30.0, true, f3_0));
 	    out.print(Color.valueTable(heard, 0.0, 30.0, true, f3_0));
+	    out.print(Color.valueTable(error, 0.0, 30.0, true, f3_0));
 	    out.print(Color.valueTable(queue, 0.0, 1.0, true,  f4_2));
 	    out.print(Color.valueTable(msgTo, 0.0, 1.0, true, f4_2));
 	    out.print(Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2));
