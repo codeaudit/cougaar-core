@@ -22,7 +22,6 @@
 package org.cougaar.core.service;
 
 import org.cougaar.core.component.Service;
-import org.cougaar.core.thread.TimeSlicePolicy;
 
 import java.util.Comparator;
 
@@ -32,8 +31,6 @@ public interface ThreadControlService extends Service
     void setMaxRunningThreadCount(int count);
     void setQueueComparator(Comparator comparator);
     
-    // TimeSlice management
-    void setTimeSlicePolicy(TimeSlicePolicy policy);
 
     // Status
     int runningThreadCount();

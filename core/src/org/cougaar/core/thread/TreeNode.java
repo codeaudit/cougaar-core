@@ -25,7 +25,6 @@ import java.util.ArrayList;
 
 final class TreeNode
 {
-    private TimeSlicePolicy policy;
     private TreeNode parent;
     private ArrayList children;
     private Scheduler scheduler;
@@ -37,7 +36,6 @@ final class TreeNode
 	children = new ArrayList();
 	this.scheduler = scheduler;
 	scheduler.setTreeNode(this);
-	setPolicy(new DefaultTimeSlicePolicy());
 	TreeNode parent = 
 	    parentService == null ? null : parentService.getTreeNode();
 	setParent(parent);
@@ -61,12 +59,6 @@ final class TreeNode
 	return parent;
     }
 
-    TimeSlicePolicy getParentPolicy() {
-	if (parent == null)
-	    return null;
-	else
-	    return parent.getPolicy();
-    }
 
     void addChild(TreeNode child) {
 	children.add(child);
@@ -77,14 +69,7 @@ final class TreeNode
     }
 
 
-    void setPolicy(TimeSlicePolicy policy) {
-	this.policy = policy;
-	policy.setTreeNode(this);
-    }
 
-    TimeSlicePolicy getPolicy() {
-	return policy;
-    }
 
     Scheduler getScheduler() {
 	return scheduler;

@@ -24,7 +24,7 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
-public class SimplePropagatingScheduler extends SimpleScheduler
+public class SimplePropagatingScheduler extends Scheduler
 {
     public SimplePropagatingScheduler(ThreadListenerProxy listenerProxy, 
 				      String name)
@@ -33,32 +33,59 @@ public class SimplePropagatingScheduler extends SimpleScheduler
     }
 
     
-    boolean requestRights(SimpleScheduler requestor) {
+    boolean requestRights(Scheduler requestor) {
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
 	    return super.requestRights(requestor);
 	} else {
-	    SimpleScheduler parent = (SimpleScheduler) 
-		parent_node.getScheduler();
-	    return parent.requestRights(this);
+	    Scheduler parent = parent_node.getScheduler();
+	    boolean ok = parent.requestRights(this);
+	    // If our parent gave us a right, increase our local count
+	    if (ok) ++runningThreadCount;
+	    return ok;
 	}
     }
 
     
-    void releaseRights(SimpleScheduler consumer) { 
+    void releaseRights(Scheduler consumer) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
 	    super.releaseRights(consumer);
 	} else {
-	    SimpleScheduler parent = (SimpleScheduler) 
-		parent_node.getScheduler();
+	    Scheduler parent = parent_node.getScheduler();
 	    parent.releaseRights(this);
+	    // In this simple scheduler, layers other than root always
+	    // give up the right at this point (root may hand it off).
+	    --runningThreadCount;
 	}
    }
 
 
+    // The maxRunningThreads instance variable is irrelevant except at
+    // the root scheduler.
+    public void setMaxRunningThreadCount(int count) {
+	TreeNode parent_node = getTreeNode().getParent();
+	if (parent_node == null) {
+	    // This is the root
+	    super.setMaxRunningThreadCount(count);
+	} else {
+	    Scheduler parent = parent_node.getScheduler();
+	    parent.setMaxRunningThreadCount(count);
+	}
+    }
+
+    public int maxRunningThreadCount() {
+	TreeNode parent_node = getTreeNode().getParent();
+	if (parent_node == null) {
+	    // This is the root
+	    return super.maxRunningThreadCount();
+	} else {
+	    Scheduler parent = parent_node.getScheduler();
+	    return parent.maxRunningThreadCount();
+	}
+    }
 
 
     // Holds the next index of the round-robin selection.  A value of
@@ -73,9 +100,11 @@ public class SimplePropagatingScheduler extends SimpleScheduler
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
 	    if (currentIndex == children.size()) currentIndex = -1;
-	    SimpleScheduler child = (SimpleScheduler) 
-		child_node.getScheduler();
+	    Scheduler child = child_node.getScheduler();
 	    handoff = child.getNextPending();
+	    // We're the parent of the Scheduler to which the handoff
+	    // is given.  Increase the local count.
+	    if (handoff != null) ++runningThreadCount;
 	}
 	return handoff;
     }

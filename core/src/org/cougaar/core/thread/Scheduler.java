@@ -27,8 +27,8 @@ import org.cougaar.util.PropertyParser;
 import java.util.Comparator;
 
 
-abstract class Scheduler 
-    implements ThreadControlService, TimeSliceConsumer
+public class Scheduler 
+    implements ThreadControlService
 {
     private static final String MaxRunningCountProp =
 	"org.cougaar.thread.running.max";
@@ -41,7 +41,9 @@ abstract class Scheduler
     private String name;
     private String printName;
     private TreeNode treeNode;
-    protected int maxRunningThreads;
+    private int maxRunningThreads;
+
+    // protected for now
     protected int runningThreadCount = 0;
 
     private Comparator timeComparator =
@@ -64,7 +66,7 @@ abstract class Scheduler
 
 
 
-    Scheduler(ThreadListenerProxy listenerProxy, String  name) {
+    public Scheduler(ThreadListenerProxy listenerProxy, String  name) {
 	pendingThreads = new DynamicSortedQueue(timeComparator);
 	maxRunningThreads = 
 	    PropertyParser.getInt(MaxRunningCountProp, 
@@ -89,11 +91,9 @@ abstract class Scheduler
     }
 
 
-    // TimeSliceConsumer
-    public String getName() {
+    String getName() {
 	return name;
     }
-
 
     // ThreadControlService 
     public synchronized void setQueueComparator(Comparator comparator)
@@ -101,16 +101,6 @@ abstract class Scheduler
 	pendingThreads.setComparator(comparator);
     }
 
-    public synchronized void setTimeSlicePolicy(TimeSlicePolicy policy)
-    {
-	treeNode.setPolicy(policy);
-    }
-
-    public synchronized void setMaxRunningThreadCount(int count) {
-	maxRunningThreads = count;
-	treeNode.getPolicy().setMaxRunningThreadCount(count);
-	changedMaxRunningThreadCount();
-    }
 
     public int maxRunningThreadCount() {
 	return maxRunningThreads;
@@ -131,9 +121,6 @@ abstract class Scheduler
 
 
 
-    public boolean offerSlice(TimeSlice slice) {
-	return false;
-    }
 
 
     synchronized SchedulableObject nextPendingThread() {
@@ -146,21 +133,8 @@ abstract class Scheduler
 	return (SchedulableObject)pendingThreads.next(thrd);
     }
 
-    TimeSlicePolicy getPolicy() {
-	return treeNode.getPolicy();
-    }
 
-    TimeSlice getSlice() {
-	return getPolicy().getSlice(this);
-    }
 
-    void releaseSlice(TimeSlice slice) {
-	getPolicy().releaseSlice(this, slice);
-    }
-
-    void noteChangeOfOwnership(TimeSlice slice) {
-	getPolicy().noteChangeOfOwnership(this, slice);
-    }
 
     synchronized void addPendingThread(SchedulableObject thread) 
     {
@@ -178,18 +152,12 @@ abstract class Scheduler
 
 
 
-    // Called when a request has been made to start the thread (from
-    // some other thread).  The count needs to be adjusted here, not
-    // when the thread actually starts running.
-    void threadStarting(SchedulableObject thread) {
+    // Called within the thread itself as the first thing it does.
+    void threadClaimed(SchedulableObject thread) {
 	if (CougaarThread.Debug)
 	    System.out.println(" Started " +thread+
 			       " run count=" +runningThreadCount+
 			       " queue count=" +pendingThreads.size());
-    }
-
-    // Called within the thread itself as the first thing it does.
-    void threadClaimed(SchedulableObject thread) {
 	listenerProxy.notifyStart(thread);
     }
 
@@ -200,8 +168,11 @@ abstract class Scheduler
 			       " run count=" +runningThreadCount+
 			       " queue count=" +pendingThreads.size());
 	listenerProxy.notifyEnd(thread);
+	releaseRights(this);
     }
 
+
+    // Suspend/Resume "hints" -- not used yet.
     void threadResumed(SchedulableObject thread) {
 	if (CougaarThread.Debug)
 	    System.out.println(" Resumed " +thread+
@@ -217,33 +188,70 @@ abstract class Scheduler
     }
 
 
-    // Called when a thread is about to suspend.
-    synchronized void suspendThread(SchedulableObject thread) {
-	threadSuspended(thread);
+
+
+
+    SchedulableObject getNextPending() {
+	SchedulableObject thread = nextPendingThread();
+	if (thread != null) ++runningThreadCount;
+	return thread;
     }
 
 
-    // Called when a thread is about to resume
-    synchronized void resumeThread(SchedulableObject thread) {
-	threadResumed(thread);
+    synchronized boolean requestRights(Scheduler requestor) {
+	if (maxRunningThreads < 0 || runningThreadCount < maxRunningThreads) {
+	    ++runningThreadCount;
+	    return true;
+	}
+	return false;
     }
 
+    synchronized void releaseRights(Scheduler consumer) {
+	// If the max has recently decreased it may be lower than the
+	// running count.  In that case don't do a handoff.
+	--runningThreadCount;
+	SchedulableObject handoff = null;
 
-
-
-    // A silly and useless bit of extra complexity that no one wants
-    // or needs.
-    void changedMaxRunningThreadCount() {
+	if (runningThreadCount <= maxRunningThreads) {
+	    handoff = getNextPending();
+	    if (handoff != null) handoff.thread_start();
+	} else {
+	    System.err.println("Decreased thread count prevented handoff " 
+			       +runningThreadCount+ ">" 
+			       +maxRunningThreads);
+	}
     }
 
-    // Yield only if there's a candidate to yield to.  Called when
-    // a thread wants to yield (as opposed to suspend).
-    abstract boolean maybeYieldThread(SchedulableObject thread);
+    public void setMaxRunningThreadCount(int count) {
+	int additionalThreads = count - maxRunningThreads;
+	maxRunningThreads = count;
+	for (int i=0; i<additionalThreads; i++) {
+	    SchedulableObject schedulable = null;
+	    synchronized (this) {
+		schedulable = getNextPending();
+	    }
+	    if (schedulable == null) return;
+	    System.err.println("Increased thread count let me start one!");
+	    schedulable.thread_start();
+	}
+    }
 
-    // Try to resume a suspended or yielded thread, queuing
-    // otherwise.
-    abstract boolean maybeResumeThread(SchedulableObject thread);
+    void startOrQueue(SchedulableObject thread) {
+	// If the queue isn't empty, queue this one too.
+	synchronized (this) {
+	    if (pendingThreadCount() > 0) {
+		addPendingThread(thread);
+		return;
+	    }
+	}
 
-    abstract void startOrQueue(SchedulableObject thread);
+	boolean can_run = requestRights(this);
+	if (can_run) {
+	    thread.thread_start();
+	} else {
+	    addPendingThread(thread);
+	}
+    }
+    
 
 }

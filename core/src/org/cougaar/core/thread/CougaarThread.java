@@ -43,25 +43,5 @@ public class CougaarThread
 		    
     }
 
-    public static void sleep(long millis) {
-	SchedulableObject sched =  getSchedulableObject();
-	if (sched != null)  sched.suspend(millis);
-    }
-
-
-    public static void yield() {
-	SchedulableObject sched =  getSchedulableObject();
-	if (sched != null)  sched.yield(null);
-    }
-
-    public static void wait(Object lock, long millis) {
-	SchedulableObject sched =  getSchedulableObject();
-	if (sched != null)  sched.wait(lock, millis);
-    }
-
-    public static void wait(Object lock) {
-	SchedulableObject sched =  getSchedulableObject();
-	if (sched != null)  sched.wait(lock);
-    }
 
 }

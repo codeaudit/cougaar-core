@@ -32,17 +32,18 @@ import java.util.TimerTask;
  */
 final class ThreadServiceProxy 	implements ThreadService
 {
-    private ThreadPool pool;
     private Timer timer;
     private TreeNode treeNode;
 
     ThreadServiceProxy(TreeNode treeNode) 
     {
 	this.treeNode = treeNode;
-	this.pool = treeNode.getPool();
-	this.timer = new Timer(true);
     }
 
+    private synchronized Timer timer() {
+	if (timer == null) timer = new Timer(true);
+	return timer;
+    }
 
 
     TreeNode getTreeNode() {
@@ -53,37 +54,33 @@ final class ThreadServiceProxy 	implements ThreadService
 
 
     public Schedulable getThread(Object consumer, Runnable runnable) {
-	return new SchedulableObject(pool, treeNode.getScheduler(),
-				     runnable, 
-				     null, consumer);
+	return new SchedulableObject(treeNode, runnable, null, consumer);
     }
 
     public Schedulable getThread(Object consumer, 
 				 Runnable runnable, 
 				 String name) 
     {
-	return new SchedulableObject(pool, treeNode.getScheduler(),
-				     runnable, 
-				     name, consumer);
+	return new SchedulableObject(treeNode, runnable, name, consumer);
     }
 
 
 
 
     public void schedule(TimerTask task, long delay) {
-	timer.schedule(task, delay);
+	timer().schedule(task, delay);
     }
 
 
     public void schedule(TimerTask task, long delay, long interval) {
-	timer.schedule(task, delay, interval);
+	timer().schedule(task, delay, interval);
     }
 
     public void scheduleAtFixedRate(TimerTask task, 
 				    long delay, 
 				    long interval)
     {
-	timer.scheduleAtFixedRate(task, delay, interval);
+	timer().scheduleAtFixedRate(task, delay, interval);
     }
 
 

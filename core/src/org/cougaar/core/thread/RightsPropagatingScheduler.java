@@ -24,7 +24,7 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
-public class RightsPropagatingScheduler extends SimpleScheduler
+public class RightsPropagatingScheduler extends Scheduler
 {
     private static final long MaxTime = 20; // ms
     private int ownedRights = 0;
@@ -38,7 +38,7 @@ public class RightsPropagatingScheduler extends SimpleScheduler
     }
 
     
-    boolean requestRights(SimpleScheduler requestor) {
+    boolean requestRights(Scheduler requestor) {
 	TreeNode parent_node = getTreeNode().getParent();
 	boolean result;
 	if (parent_node == null) {
@@ -47,8 +47,7 @@ public class RightsPropagatingScheduler extends SimpleScheduler
 	} else if (ownedRights > 0) {
 	    return false;
 	} else {
-	    SimpleScheduler parent = (SimpleScheduler) 
-		parent_node.getScheduler();
+	    Scheduler parent = parent_node.getScheduler();
 	    result = parent.requestRights(this);
 	}
 	synchronized (this) { if (result) ++ownedRights; }
@@ -56,7 +55,7 @@ public class RightsPropagatingScheduler extends SimpleScheduler
     }
 
     
-    void releaseRights(SimpleScheduler consumer) { 
+    void releaseRights(Scheduler consumer) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
@@ -71,16 +70,15 @@ public class RightsPropagatingScheduler extends SimpleScheduler
 	}
    }
 
-    private void releaseToParent(SimpleScheduler consumer) {
+    private void releaseToParent(Scheduler consumer) {
 	TreeNode parent_node = getTreeNode().getParent();
-	SimpleScheduler parent = (SimpleScheduler) 
-	    parent_node.getScheduler();
+	Scheduler parent = parent_node.getScheduler();
 	parent.releaseRights(this);
 	lastReleaseTime = System.currentTimeMillis();
 	synchronized (this) { --ownedRights; }
     }
 
-    private synchronized void offerRights(SimpleScheduler consumer) {
+    private synchronized void offerRights(Scheduler consumer) {
 	SchedulableObject handoff = getNextPending();
 	if (handoff != null) {
 	    handoff.thread_start();
@@ -105,8 +103,7 @@ public class RightsPropagatingScheduler extends SimpleScheduler
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
 	    if (currentIndex == children.size()) currentIndex = -1;
-	    SimpleScheduler child = (SimpleScheduler) 
-		child_node.getScheduler();
+	    Scheduler child = child_node.getScheduler();
 	    handoff = child.getNextPending();
 	}
 	return handoff;

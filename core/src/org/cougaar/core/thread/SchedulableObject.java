@@ -26,11 +26,8 @@ final class SchedulableObject implements Schedulable
 {
     private long timestamp;
     private Object consumer;
-    private boolean suspended;
-    private Object suspendLock;
     private ThreadPool pool;
     private Scheduler scheduler;
-    private TimeSlice slice;
     private ThreadPool.PooledThread thread;
     private Runnable runnable;
     private String name;
@@ -38,15 +35,13 @@ final class SchedulableObject implements Schedulable
     private boolean cancelled;
     private boolean queued;
 
-    SchedulableObject(ThreadPool pool, 
-		      Scheduler scheduler,
+    SchedulableObject(TreeNode treeNode, 
 		      Runnable runnable, 
 		      String name,
 		      Object consumer) 
     {
-	this.suspendLock = new Object();
-	this.pool = pool;
-	this.scheduler = scheduler;
+	this.pool = treeNode.getPool();
+	this.scheduler = treeNode.getScheduler();
 	this.runnable = runnable;
 	this.name = name;
 	this.consumer = consumer;
@@ -71,14 +66,6 @@ final class SchedulableObject implements Schedulable
     }
 
 
-    TimeSlice slice() {
-	return slice;
-    }
-
-    void slice(TimeSlice slice) {
-	this.slice = slice;
-    }
-
 
     void claim() {
 	// thread has started or restarted
@@ -86,58 +73,6 @@ final class SchedulableObject implements Schedulable
     }
 
 
-    // The argument is only here to avoid overriding yield(),
-    void yield(Object ignore) {
-	boolean yielded = scheduler.maybeYieldThread(this);
-	if (yielded) attemptResume();
-    }
-
-    // Must be called from a block that's synchronized on lock.
-    void wait(Object lock, long millis) {
-	scheduler.suspendThread(this);
-	try { lock.wait(millis); }
-	catch (InterruptedException ex) {}
-	attemptResume();
-    }
-
-    // Must be called from a block that's synchronized on lock.
-    void wait(Object lock) {
-	scheduler.suspendThread(this);
-	try { lock.wait(); }
-	catch (InterruptedException ex) {}
-	attemptResume();
-    }
-
-
-    void suspend(long millis) {
-	scheduler.suspendThread(this);
-	try { thread.sleep(millis); }
-	catch (InterruptedException ex) {}
-	attemptResume();
-    }
-
-
-
-    private void attemptResume() {
-	suspended = true;
-	synchronized (suspendLock) {
-	    suspended = !scheduler.maybeResumeThread(this);
-	    if (suspended) {
-		// Couldn't be resumed - requeued instead
-		while (true) {
-		    try {
-			// When the thread is pulled off the
-			// queue, a notify will wake up this wait.
-			suspendLock.wait();
-			break;
-		    } catch (InterruptedException ex) {
-		    }
-		}
-		scheduler.resumeThread(this);
-		suspended = false;
-	    }
-	}
-    }
 
 
     void reclaim() {
@@ -157,12 +92,7 @@ final class SchedulableObject implements Schedulable
     }
 
     void thread_start() {
-	scheduler.threadStarting(this);
 	synchronized (this) {
-	    if (slice == null && scheduler instanceof TimeSliceScheduler) {
-		System.err.println("\nStarting " +this+ " without a slice!");
-		Thread.dumpStack();
-	    }
 	    restart = false;
 	    queued = false;
 	    restart = false;
@@ -173,13 +103,6 @@ final class SchedulableObject implements Schedulable
 
     public void start() {
 
-	if (suspended) {
-	    synchronized (suspendLock) {
-		suspendLock.notify();
-		return;
-	    }
-	}
-	
 	synchronized (this) {
 	    if (cancelled) return;
 	    if (thread != null) {
@@ -196,9 +119,7 @@ final class SchedulableObject implements Schedulable
 
 
     public synchronized int getState() {
-	if (suspended) 
-	    return CougaarThread.THREAD_SUSPENDED;
-	else if (queued)
+	if (queued)
 	    return CougaarThread.THREAD_PENDING;
 	else if (thread != null)
 	    return CougaarThread.THREAD_RUNNING;
@@ -211,9 +132,7 @@ final class SchedulableObject implements Schedulable
 	    cancelled = true;
 	    restart = false;
 	    if (thread != null) {
-		// Currently running.  Do we need to do anything
-		// special if it's suspended?
-		if (suspended) thread.interrupt();
+		// Currently running. 
 		return false;
 	    } 
 	    if (queued) scheduler.dequeue(this);
