@@ -99,6 +99,8 @@ public class CommunityConfigUtils {
    * Uses standard cougaar.rc to connect to DB server.
    */
   public static Collection getCommunityConfigsFromDB(String entityName, Map substitutions) {
+    Collection ret = new Vector();
+    Connection conn = null;
     try {
       DBProperties dbp = DBProperties.readQueryFile(QUERY_FILE);
       String dbStyle = dbp.getDBType();
@@ -108,12 +110,20 @@ public class CommunityConfigUtils {
       String password = dbp.getProperty("password");
       String query1 = dbp.getQuery("queryCommunityEntityAttributes", substitutions);
       String query2 = dbp.getQuery("queryCommunityAttributes", substitutions);
-      Connection conn = DBConnectionPool.getConnection(database, username, password);
-      return getParentCommunities(conn, entityName, query1, query2);
+      conn = DBConnectionPool.getConnection(database, username, password);
+      // Must close the connection when done
+      ret = getParentCommunities(conn, entityName, query1, query2);
     } catch(Exception e) {
+      // FIXME: Use static logger
       e.printStackTrace();
+    } finally {
+      if (conn != null) {
+	try {
+	  conn.close();
+	} catch (SQLException e) {}
+      }
     }
-    return new Vector();
+    return ret;
   }
 
   /**
@@ -149,6 +159,15 @@ public class CommunityConfigUtils {
         if (!attr.contains(attrValue)) attr.add(attrValue);
       }
     }
+
+    // Close the result set and the statement
+    try {
+      rs.close();
+    } catch (SQLException e) {}
+    try {
+      s.close();
+    } catch (SQLException e) {}
+
     return attrs;
   }
 
@@ -182,6 +201,15 @@ public class CommunityConfigUtils {
         addEntityAttribute(configMap, communityName, entityName, rs.getString(3), rs.getString(4));
       }
     }
+
+    // Close the result set and the statement
+    try {
+      rs.close();
+    } catch (SQLException e) {}
+    try {
+      s.close();
+    } catch (SQLException e) {}
+
     return configMap.values();
   }
 
