@@ -66,8 +66,7 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
           KeyRing.getCert(getOriginator().getAddress());
         if (cert == null) {
           System.err.println("\nWarning: Dropping message, No public certificate for Origin \""+
-                             getOriginator().getAddress()+"\": "+secret.getObject()+
-                             );
+                             getOriginator().getAddress()+"\": "+secret.getObject());
           return (Message) secret.getObject();
         }
         if (verify(secret, cert)) {
