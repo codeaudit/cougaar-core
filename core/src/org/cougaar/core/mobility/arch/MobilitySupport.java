@@ -21,7 +21,7 @@
 
 package org.cougaar.core.mobility.arch;
 
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
@@ -45,7 +45,7 @@ public interface MobilitySupport {
 
   // message-sender
 
-  void sendTransfer(StateTuple tuple);
+  void sendTransfer(ComponentDescription desc, Object state);
 
   void sendAck();
 
@@ -54,7 +54,7 @@ public interface MobilitySupport {
   // agent-container
 
   /** add an agent with the above "getId()" and given state. */
-  void addAgent(StateTuple tuple);
+  void addAgent(ComponentDescription desc);
 
   /** remove the agent with the above "getId()". */
   void removeAgent();

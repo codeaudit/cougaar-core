@@ -22,13 +22,12 @@
 package org.cougaar.core.blackboard;
 
 import java.util.List;
-
-import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.service.BlackboardMetricsService;
@@ -130,9 +129,7 @@ implements Component
     }
     public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
       if (serviceClass == BlackboardForAgent.class) {
-        if (requestor instanceof Agent) {
-          return new BlackboardForAgentImpl(blackboard);
-        }
+        return new BlackboardForAgentImpl(blackboard);
       }
       return null;
     }

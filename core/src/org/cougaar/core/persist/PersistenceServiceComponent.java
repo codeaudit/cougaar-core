@@ -28,6 +28,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
@@ -40,18 +41,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.blackboard.BulkEnvelopeTuple;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
+import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.core.service.DataProtectionKeyEnvelope;
 import org.cougaar.core.service.DataProtectionService;
@@ -159,7 +163,6 @@ public class PersistenceServiceComponent
   private int PERSISTENCE_CONSOLIDATION_PERIOD =
     Integer.getInteger(PERSISTENCE_CONSOLIDATION_PERIOD_PROP,
                        PERSISTENCE_CONSOLIDATION_PERIOD_DFLT).intValue();
-  private String[] pluginClasses = PERSISTENCE_CLASSES_DFLT;
 
   private static class RehydrationSet {
     PersistencePlugin ppi;
@@ -284,7 +287,8 @@ public class PersistenceServiceComponent
   }
 
   private String getAgentName() {
-    return getMessageAddress().toString();
+    MessageAddress addr = getMessageAddress();
+    return (addr == null ? "null" : addr.toString());
   }
 
   public class PersistenceControlServiceImpl
@@ -366,32 +370,55 @@ public class PersistenceServiceComponent
    * prefix). Many of the values in this list will contain commas and
    * this must be quoted with backslash or quotes.
    **/
-  private void getParametersFromProperties(String agentName, List params) {
-    String pname = PERSISTENCE_PARAMETERS_PROP + "." + agentName;
+  private static List getParametersFromProperties(MessageAddress agentId) {
+    List ret = new ArrayList();
+    String pname = PERSISTENCE_PARAMETERS_PROP + "." + agentId;
     String pvalue = System.getProperty(pname);
     if (pvalue != null) {
       String[] ps = CSVUtility.parse(pvalue);
       for (int i = 0; i < ps.length; i++) {
-        params.add(PERSISTENCE_PROP_PREFIX + ps[i]);
+        ret.add(PERSISTENCE_PROP_PREFIX + ps[i]);
       }
+    }
+    return ret;
+  }
+
+  /**
+   * Optional persistence parameters for this agent
+   */
+  public void setParameter(Object o) {
+    if (o instanceof List) {
+      params.addAll((List) o);
+    } else {
+      throw new IllegalArgumentException("Illegal parameter " + o);
     }
   }
 
-  public void setParameter(Object o) {
-    List params;
-    if (o instanceof MessageAddress) {
-      params = new ArrayList();
-      params.add(o);
-    } else if (!(o instanceof List)) {
-      throw new IllegalArgumentException("Illegal parameter " + o);
-    } else {
-      params = (List) o;
+  /**
+   * Load
+   */
+  public void load() {
+    super.load();
+
+    // Get our local agent's address
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    if (ais != null) {
+      agentId = ais.getMessageAddress();
+      sb.releaseService(
+          this, AgentIdentificationService.class, ais);
     }
-    agentId = (MessageAddress) params.get(0);
-    getParametersFromProperties(agentId.toString(), params);
+
+    // Create our logger
+    logger = Logging.getLogger(this.getClass());
+    logger = new LoggingServiceWithPrefix(logger, getAgentName() + ": ");
+
+    // Add persistence parameters defined by system properties
+    params.addAll(getParametersFromProperties(agentId));
+
     // Set agent-wide persistence defaults
-    List plugins = new ArrayList();
-    for (int i = 1, n = params.size(); i < n; i++) {
+    List overridePluginClasses = new ArrayList();
+    for (int i = 0, n = params.size(); i < n; i++) {
       String fullParam = (String) params.get(i);
       if (!fullParam.startsWith(PERSISTENCE_PROP_PREFIX)) continue; // Not mine
       String param = fullParam.substring(PERSISTENCE_PROP_PREFIX.length());
@@ -417,28 +444,20 @@ public class PersistenceServiceComponent
         }
         if (param.startsWith(PERSISTENCE_CLASS_PREFIX)) {
           String plugin = param.substring(PERSISTENCE_CLASS_PREFIX.length());
-          plugins.add(plugin);
+          overridePluginClasses.add(plugin);
           continue;
         }
       } catch (Exception e) {
-        // No logger yet.
-        Logging.getLogger(getClass()).error("Error parsing parameter: " + fullParam);
+        logger.error("Error parsing parameter: " + fullParam);
       }
     }
-    if (plugins.size() > 0) {
+    String[] pluginClasses = PERSISTENCE_CLASSES_DFLT;
+    if (overridePluginClasses.size() > 0) {
       // Replace default with specific classes
-      pluginClasses = new String[plugins.size()];
-      pluginClasses = (String[]) plugins.toArray(pluginClasses);
+      pluginClasses = new String[overridePluginClasses.size()];
+      pluginClasses = (String[]) overridePluginClasses.toArray(pluginClasses);
     }
-  }
 
-  /**
-   * Initialize
-   **/
-  public void load() {
-    super.load();
-    logger = Logging.getLogger(this.getClass());
-    logger = new LoggingServiceWithPrefix(logger, getAgentName() + ": ");
     identityTable = new IdentityTable(logger);
     registerServices(sb);
     try {
@@ -520,6 +539,7 @@ public class PersistenceServiceComponent
   private IdentityTable identityTable;
   private SequenceNumbers sequenceNumbers = null;
   private ObjectOutputStream currentOutput;
+  private List params = new ArrayList();
   private MessageAddress agentId;
   private List associationsToPersist = new ArrayList();
   private boolean previousPersistFailed = false;
@@ -1469,6 +1489,7 @@ public class PersistenceServiceComponent
             PersistenceServiceImpl impl = (PersistenceServiceImpl) svc;
             clients.remove(impl.clientId);
           }
+          return;
         }
         throw new IllegalArgumentException("Unknown service class");
       }

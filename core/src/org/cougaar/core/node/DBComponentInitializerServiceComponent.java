@@ -25,6 +25,7 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
@@ -38,6 +39,7 @@ public class DBComponentInitializerServiceComponent
 extends GenericStateModelAdapter
 implements Component
 {
+  private static final String EXPTID_PROP = "org.cougaar.experiment.id";
 
   private ServiceBroker sb;
   private ServiceProvider theInitSP;
@@ -62,7 +64,7 @@ implements Component
     // This allows someone to provide their own component to provide
     // the asset initializer service in their configuration
     DBInitializerService dbInit;
-    String experimentId = System.getProperty(Node.EXPTID_PROP);
+    String experimentId = System.getProperty(EXPTID_PROP);
     if (sb.hasService(DBInitializerService.class)) {
       // already have DBInitializer service!
       //
@@ -79,7 +81,7 @@ implements Component
         log.info(
             "Not loading the DBInitializer service"+
             ", missing system property -D"+
-            Node.EXPTID_PROP);
+            EXPTID_PROP);
       }
       dbInit = null;
     } else {
@@ -87,7 +89,7 @@ implements Component
         log.info(
             "Creating a new DBInitializer service"+
             ", using system property -D"+
-            Node.EXPTID_PROP+"="+experimentId);
+            EXPTID_PROP+"="+experimentId);
       }
       try {
         dbInit = new DBInitializerServiceImpl(experimentId);

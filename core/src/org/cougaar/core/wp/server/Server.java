@@ -21,18 +21,21 @@
 
 package org.cougaar.core.wp.server;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-
-import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * This is the server-side white pages server, which includes
@@ -50,13 +53,6 @@ extends ContainerSupport
 {
   public static final String INSERTION_POINT = 
     Agent.INSERTION_POINT + ".WPServer";
-
-  private LoggingService logger;
-  private MessageAddress agentId;
-
-  public void setLoggingService(LoggingService logger) {
-    this.logger = logger;
-  }
 
   protected String specifyContainmentPoint() {
     return INSERTION_POINT;
@@ -87,55 +83,35 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_COMPONENT));
 
-    // read config
     ServiceBroker sb = getServiceBroker();
+
+    // find our local agent
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    MessageAddress localAgent = ais.getMessageAddress();
+    sb.releaseService(this, AgentIdentificationService.class, ais);
+
+    // read config
     ComponentInitializerService cis = (ComponentInitializerService)
       sb.getService(this, ComponentInitializerService.class, null);
     try {
       ComponentDescription[] descs =
         cis.getComponentDescriptions(
-            agentId.toString(),
+            localAgent.toString(),
             specifyContainmentPoint());
       int n = (descs == null ? 0 : descs.length);
       for (int i = 0; i < n; i++) {
         l.add(descs[i]);
       }
     } catch (ComponentInitializerService.InitializerException cise) {
+      Logger logger = Logging.getLogger(Server.class);
       if (logger.isInfoEnabled()) {
-        logger.info("\nUnable to add "+agentId+"'s components", cise);
+        logger.info("\nUnable to add "+localAgent+"'s components", cise);
       }
     } finally {
       sb.releaseService(this, ComponentInitializerService.class, cis);
     }
 
     return new ComponentDescriptions(l);
-  }
-
-  public void load() {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Loading server");
-    }
-
-    ServiceBroker sb = getServiceBroker();
-
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
-
-    super.load();
-  }
-
-  public void unload() {
-    super.unload();
-
-    // release services
-    ServiceBroker sb = getServiceBroker();
-    if (logger != null) {
-      sb.releaseService(
-          this, LoggingService.class, logger);
-      logger = null;
-    }
   }
 }

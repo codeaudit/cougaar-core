@@ -21,7 +21,7 @@
 
 package org.cougaar.core.mobility.service;
 
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.arch.MobilitySupport;
 import org.cougaar.core.mts.MessageAddress;
@@ -72,7 +72,7 @@ implements MobilitySupport
 
   // agent-container
 
-  public abstract void addAgent(StateTuple tuple);
+  public abstract void addAgent(ComponentDescription desc);
 
   public abstract void removeAgent();
 

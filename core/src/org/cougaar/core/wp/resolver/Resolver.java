@@ -21,15 +21,17 @@
 
 package org.cougaar.core.wp.resolver;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-
-import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
@@ -60,8 +62,7 @@ extends ContainerSupport
     Agent.INSERTION_POINT + ".WPClient";
 
   private ServiceBroker rootsb;
-  private LoggingService logger;
-  private MessageAddress agentId;
+  private LoggingService log;
 
   private CacheService cacheService;
   private LeaseService leaseService;
@@ -77,8 +78,8 @@ extends ContainerSupport
     rootsb = (ncs == null ? null : ncs.getRootServiceBroker());
   }
 
-  public void setLoggingService(LoggingService logger) {
-    this.logger = logger;
+  public void setLoggingService(LoggingService log) {
+    this.log = log;
   }
 
   protected String specifyContainmentPoint() {
@@ -90,8 +91,8 @@ extends ContainerSupport
 
     // add defaults -- order is very important!
     l.add(new ComponentDescription(
-            "ServerPool",
-            INSERTION_POINT+".ServerPool",
+            "org.cougaar.core.wp.resolver.SelectManager",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.SelectManager",
             null,
             "",
@@ -100,8 +101,8 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
-            "ClientTransport",
-            INSERTION_POINT+".ClientTransport",
+            "org.cougaar.core.wp.resolver.ClientTransport",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.ClientTransport",
             null,
             "",
@@ -110,8 +111,8 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
-            "Lease",
-            INSERTION_POINT+".Lease",
+            "org.cougaar.core.wp.resolver.LeaseManager",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.LeaseManager",
             null,
             "",
@@ -120,8 +121,8 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
-            "Cache",
-            INSERTION_POINT+".Cache",
+            "org.cougaar.core.wp.resolver.CacheManager",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.CacheManager",
             null,
             "",
@@ -130,8 +131,8 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_INTERNAL));
     l.add(new ComponentDescription(
-            "RMIBoot",
-            INSERTION_POINT+".RMIBoot",
+            "org.cougaar.core.wp.resolver.rmi.RMIBootstrapLookup",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.rmi.RMIBootstrapLookup",
             null,
             null,
@@ -140,8 +141,8 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_COMPONENT));
     l.add(new ComponentDescription(
-            "Config",
-            INSERTION_POINT+".Config",
+            "org.cougaar.core.wp.resolver.ConfigLoader",
+            INSERTION_POINT+".Component",
             "org.cougaar.core.wp.resolver.ConfigLoader",
             null,
             null,
@@ -150,22 +151,29 @@ extends ContainerSupport
             null,
             ComponentDescription.PRIORITY_COMPONENT));
 
-    // read config
     ServiceBroker sb = getServiceBroker();
+
+    // find our local agent
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    MessageAddress localAgent = ais.getMessageAddress();
+    sb.releaseService(this, AgentIdentificationService.class, ais);
+
+    // read config
     ComponentInitializerService cis = (ComponentInitializerService)
       sb.getService(this, ComponentInitializerService.class, null);
     try {
       ComponentDescription[] descs =
         cis.getComponentDescriptions(
-            agentId.toString(),
+            localAgent.toString(),
             specifyContainmentPoint());
       int n = (descs == null ? 0 : descs.length);
       for (int i = 0; i < n; i++) {
         l.add(descs[i]);
       }
     } catch (ComponentInitializerService.InitializerException cise) {
-      if (logger.isInfoEnabled()) {
-        logger.info("\nUnable to add "+agentId+"'s components", cise);
+      if (log.isInfoEnabled()) {
+        log.info("\nUnable to add "+localAgent+"'s components", cise);
       }
     } finally {
       sb.releaseService(this, ComponentInitializerService.class, cis);
@@ -175,17 +183,11 @@ extends ContainerSupport
   }
 
   public void load() {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Loading resolver");
+    if (log.isDebugEnabled()) {
+      log.debug("Loading resolver");
     }
 
     ServiceBroker sb = getServiceBroker();
-
-    // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = ais.getMessageAddress();
-    sb.releaseService(this, AgentIdentificationService.class, ais);
 
     ServiceBroker csb = getChildServiceBroker();
 
@@ -199,8 +201,8 @@ extends ContainerSupport
     // are now in place.
     rootsb.addService(WhitePagesService.class, whitePagesSP);
 
-    if (logger.isInfoEnabled()) {
-      logger.info("Loaded white pages resolver");
+    if (log.isInfoEnabled()) {
+      log.info("Loaded white pages resolver");
     }
   }
 
@@ -265,32 +267,11 @@ extends ContainerSupport
 
     ServiceBroker sb = getServiceBroker();
 
-    if (logger != null) {
+    if (log != null) {
       sb.releaseService(
-          this, LoggingService.class, logger);
-      logger = null;
+          this, LoggingService.class, log);
+      log = null;
     }
-  }
-
-  private Response submit(Request req, String agent) {
-    if (logger.isDetailEnabled()) {
-      logger.detail("Resolver intercept wp request: "+req);
-    }
-    Response res = req.createResponse();
-
-    cacheService.submit(res);
-
-    boolean bind = 
-      (req instanceof Request.Bind ||
-       req instanceof Request.Unbind);
-    if (bind || req instanceof Request.Flush) {
-      tellObservers(req);
-    }
-
-    if (bind) {
-      leaseService.submit(res, agent);
-    }
-    return res;
   }
 
   private void register(BindObserverService.Client bosc) {
@@ -312,31 +293,52 @@ extends ContainerSupport
     implements ServiceProvider {
       public Object getService(
           ServiceBroker sb, Object requestor, Class serviceClass) {
-        if (!WhitePagesService.class.isAssignableFrom(serviceClass)) {
+        if (WhitePagesService.class.isAssignableFrom(serviceClass)) {
+          String agent =
+            ((requestor instanceof ResolverClient) ?
+             ((ResolverClient) requestor).getAgent() :
+             null); // assume it's our node-agent
+          return new WhitePagesS(agent);
+        } else {
           return null;
         }
-        String s;
-        if (requestor instanceof ResolverClient) {
-          s = ((ResolverClient) requestor).getAgent();
-        } else {
-          s = null; // assume it's our node-agent
-        }
-        final String agent = s;
-        if (logger.isDetailEnabled()) {
-          logger.detail(
-              "giving root WP (agent="+agent+") to "+requestor);
-        }
-        return new WhitePagesService() {
-          public Response submit(Request req) {
-            return Resolver.this.submit(req, agent);
-          }
-        };
       }
       public void releaseService(
           ServiceBroker sb, Object requestor,
           Class serviceClass, Object service) {
       }
     }
+  private class WhitePagesS
+    extends WhitePagesService {
+
+      private final String agent;
+
+      public WhitePagesS(String agent) {
+        this.agent = agent;
+      }
+
+      public Response submit(Request req) {
+        if (log.isDetailEnabled()) {
+          log.detail("Resolver intercept wp request: "+req);
+        }
+        Response res = req.createResponse();
+
+        cacheService.submit(res);
+
+        boolean bind = 
+          (req instanceof Request.Bind ||
+           req instanceof Request.Unbind);
+        if (bind || req instanceof Request.Flush) {
+          tellObservers(req);
+        }
+
+        if (bind) {
+          leaseService.submit(res, agent);
+        }
+        return res;
+      }
+    }
+
 
   private class BindObserverSP 
     implements ServiceProvider {

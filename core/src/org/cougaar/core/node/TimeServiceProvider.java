@@ -21,13 +21,12 @@
 
 package org.cougaar.core.node;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
-import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.agent.service.alarm.RealTimer;
@@ -65,24 +64,20 @@ class TimeServiceProvider
 
   // implement ServiceProvider
   public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
-    if (requestor instanceof Agent) {
-      if (serviceClass == NaturalTimeService.class) {
-        Object s = new NaturalTimeServiceImpl(requestor);
-        synchronized (services) { 
-          services.add(s);
-        }
-        return s;
-      } else if (serviceClass == RealTimeService.class) {
-        Object s = new RealTimeServiceImpl(requestor);
-        synchronized (services) { 
-          services.add(s);
-        }
-        return s;
-      } else {
-        throw new IllegalArgumentException("Can only provide NaturalTimeService and RealTimeService!");
+    if (serviceClass == NaturalTimeService.class) {
+      Object s = new NaturalTimeServiceImpl(requestor);
+      synchronized (services) { 
+        services.add(s);
       }
+      return s;
+    } else if (serviceClass == RealTimeService.class) {
+      Object s = new RealTimeServiceImpl(requestor);
+      synchronized (services) { 
+        services.add(s);
+      }
+      return s;
     } else {
-      throw new IllegalArgumentException("Only Agents may request NaturalTimeService and RealTimeService!");
+      throw new IllegalArgumentException("Can only provide NaturalTimeService and RealTimeService!");
     }
   }
 

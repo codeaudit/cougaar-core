@@ -1,0 +1,429 @@
+/*
+ * <copyright>
+ *  Copyright 1997-2003 BBNT Solutions, LLC
+ *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the Cougaar Open Source License as published by
+ *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
+ * 
+ *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
+ *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
+ *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT
+ *  ANY WARRANTIES AS TO NON-INFRINGEMENT.  IN NO EVENT SHALL COPYRIGHT
+ *  HOLDER BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT OR CONSEQUENTIAL
+ *  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE OF DATA OR PROFITS,
+ *  TORTIOUS CONDUCT, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ *  PERFORMANCE OF THE COUGAAR SOFTWARE.
+ * </copyright>
+ */
+
+package org.cougaar.core.node;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.cougaar.core.agent.AgentContainer;
+import org.cougaar.core.blackboard.BlackboardForAgent;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.persist.PersistenceClient;
+import org.cougaar.core.persist.PersistenceIdentity;
+import org.cougaar.core.persist.PersistenceService;
+import org.cougaar.core.persist.RehydrationData;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.GenericStateModelAdapter;
+
+/**
+ * The AgentLoader adds the initial set of agents into
+ * the node and persists the names of dynamically added/removed
+ * agents.
+ *
+ * @property org.cougaar.core.node.ignoreRehydratedAgentList
+ *   Ignore the list of agents from the rehydrated state of the
+ *   NodeAgent, if any. Defaults to false. Set to true to disable
+ *   this feature and always use the list of agents from the
+ *   ComponentInitializerService.
+ */
+public final class AgentLoader
+extends GenericStateModelAdapter
+implements Component
+{
+
+  public static final String IGNORE_REHYDRATED_AGENT_LIST_PROP =
+    "org.cougaar.core.node.ignoreRehydratedAgentList";
+
+  private static final boolean ignoreRehydratedAgentDescs =
+    Boolean.getBoolean(IGNORE_REHYDRATED_AGENT_LIST_PROP);
+
+  private ServiceBroker sb;
+
+  private LoggingService log;
+
+  private ServiceBroker rootsb;
+  private AgentContainer agentContainer;
+
+  private MessageAddress localAgent;
+
+  private PersistenceService ps;
+  private PersistenceClient pc;
+
+  private BlackboardForAgent bb;
+
+  private RegisterAgentServiceProvider rasp;
+
+  private boolean addedAgents;
+
+  private final Set activeAgentAddrs = new HashSet();
+
+  public void setBindingSite(BindingSite bs) {
+    this.sb = bs.getServiceBroker();
+  }
+
+  public void setParameter(Object o) {
+    // maybe override ignoreRehydratedAgentDescs
+  }
+
+  /**
+   * Add Agents and their child Components (Plugins, etc) to this Node.
+   * <p>
+   * This first checks the persistence snapshot to resume the agents
+   * that were running.  If there is no snapshot (or it has been
+   * disabled) then the component initializer service is used, which
+   * reads the list of agents from the configuration files (INI/XML/DB).
+   * <p>
+   * Note that the agents are added in bulk, which loads them in
+   * sequence in our thread.
+   */
+  public void load() {
+    super.load();
+
+    log = (LoggingService)
+      sb.getService(this, LoggingService.class, null);
+
+    NodeControlService ncs = (NodeControlService)
+      sb.getService(this, NodeControlService.class, null);
+    if (ncs == null) {
+      throw new RuntimeException("Unable to obtain NodeControlService");
+    }
+    rootsb = ncs.getRootServiceBroker();
+    agentContainer = ncs.getRootContainer();
+    sb.releaseService(this, NodeControlService.class, ncs);
+
+    localAgent = find_local_agent();
+
+    register_persistence();
+
+    bb = (BlackboardForAgent)
+      sb.getService(this, BlackboardForAgent.class, null);
+    if (bb == null) {
+      throw new RuntimeException(
+          "Unable to obtain BlackboardForAgent");
+    }
+
+    // advertise our agent add/remove listener
+    rasp = new RegisterAgentServiceProvider();
+    rootsb.addService(RegisterAgentService.class, rasp);
+
+    ComponentDescription[] agentDescs = null;
+
+    // rehydrate list of agent descriptions
+    Object o = rehydrate();
+    if (o instanceof List) {
+      List l = (List) o;
+      agentDescs = (ComponentDescription[]) 
+        l.toArray(
+            new ComponentDescription[l.size()]);
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Persistence snapshot contains a list of "+
+            agentDescs.length+" agents");
+      }
+    }
+    o = null;
+
+    if (agentDescs != null && ignoreRehydratedAgentDescs) {
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Ignoring rehydrated list of "+
+            agentDescs.length + " agents");
+      }
+      agentDescs = null;
+    }
+
+    // Look for agents in the ComponentInitializerService
+    if (agentDescs == null) {
+      agentDescs = readAgentsFromConfig();
+    }
+
+    addAgents(agentDescs);
+
+    addedAgents = true;
+  }
+
+  public void unload() {
+    super.unload();
+
+    if (rasp != null) {
+      rootsb.revokeService(RegisterAgentService.class, rasp);
+      rasp = null;
+    }
+
+    if (bb != null) {
+      sb.releaseService(this, BlackboardForAgent.class, bb);
+      bb = null;
+    }
+
+    unregister_persistence();
+  }
+
+  private MessageAddress find_local_agent() {
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    if (ais == null) {
+      return null;
+    }
+    MessageAddress ret = ais.getMessageAddress();
+    sb.releaseService(
+        this, AgentIdentificationService.class, ais);
+    return ret;
+  }
+  
+  private ComponentDescription[] readAgentsFromConfig() {
+    ComponentDescription[] agentDescs = null;
+
+    try {
+      ComponentInitializerService cis = (ComponentInitializerService) 
+        sb.getService(
+            this, ComponentInitializerService.class, null);
+      if (log.isInfoEnabled()) {
+        log.info("Asking component initializer service for agents");
+      }
+      // get the agents - this gives _anything_ below AgentManager,
+      // so must extract out just the .Agent's later
+      agentDescs =
+        cis.getComponentDescriptions(
+            localAgent.getAddress(),
+            "Node.AgentManager");
+      sb.releaseService(this, ComponentInitializerService.class, cis);
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Using ComponentInitializerService list of " +
+            agentDescs.length + " agents");
+      }
+    } catch (Exception e) {
+      throw new Error(
+          "Couldn't initialize list of agents from"+
+          " ComponentInitializerService ", e);
+    }
+
+    if (agentDescs == null) {
+      if (log.isWarnEnabled()) {
+        log.warn("Null list of agents");
+      }
+      agentDescs = new ComponentDescription[0];
+    }
+
+    return agentDescs;
+  }
+
+  private void addAgents(ComponentDescription[] agentDescs) {
+    ComponentDescriptions cds = new ComponentDescriptions(agentDescs);
+    List cdcs = 
+      cds.extractInsertionPointComponent(
+          "Node.AgentManager.Agent");
+    if (log.isDebugEnabled()) {
+      log.debug("Adding "+cdcs.size()+" agents: "+cdcs);
+    }
+    for (int i = 0, n = cdcs.size(); i < n; i++) {
+      ComponentDescription cd = (ComponentDescription)
+        cdcs.get(i);
+      try {
+        agentContainer.add(cd);
+      } catch (Exception e) {
+        log.error(
+            "Unable to add agent "+cd.getParameter()+
+            ", not loading agents: "+cdcs.subList(i, n));
+        break;
+      }
+    }
+  }
+
+  private Object captureState() {
+    if (!addedAgents) {
+      // FIXME hold onto rehydrated agentDescs?
+      if (log.isWarnEnabled()) {
+        log.warn("Still loading, delaying captureState until active");
+      }
+      return null;
+    }
+
+    // FIXME replace with just the agent addrs?
+    //
+    // this should be possible once there's a fixed agent 
+    // class and agent parameters are limited to the addr.
+
+    // get the map of (addr -> desc)
+    Map agents = agentContainer.getAgents();
+    // remove ourselves
+    agents.remove(localAgent); 
+    // convert to desc list
+    List ret = new ArrayList(agents.values()); 
+
+    return ret;
+  }
+
+  private void register_persistence() {
+    // get persistence
+    pc = 
+      new PersistenceClient() {
+        public PersistenceIdentity getPersistenceIdentity() {
+          String id = getClass().getName();
+          return new PersistenceIdentity(id);
+        }
+        public List getPersistenceData() {
+          Object o = captureState();
+          // must return mutable list!
+          List l = new ArrayList(1);
+          l.add(o);
+          return l;
+        }
+      };
+    ps = 
+      (PersistenceService)
+      sb.getService(
+          pc, PersistenceService.class, null);
+  }
+
+  private void unregister_persistence() {
+    if (ps != null) {
+      sb.releaseService(
+          pc, PersistenceService.class, ps);
+      ps = null;
+      pc = null;
+    }
+  }
+
+  private void persistNow() {
+    if (!addedAgents) {
+      if (log.isInfoEnabled()) {
+        log.info("Still loading, delaying persistNow until active");
+      }
+      return;
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Asking our blackboard to persist, to trigger a"+
+          " full node-agent snapshot that will contain the"+
+          " modified list of agents running on this node");
+    }
+    bb.persistNow();
+    if (log.isInfoEnabled()) {
+      log.info("Completed persistNow()");
+    }
+  }
+
+  private Object rehydrate() {
+    RehydrationData rd = ps.getRehydrationData();
+    if (rd == null) {
+      if (log.isInfoEnabled()) {
+        log.info("No rehydration data found");
+      }
+      return null;
+    }
+
+    // extract our ComponentDescriptions
+    List l = rd.getObjects();
+    rd = null;
+    int lsize = (l == null ? 0 : l.size());
+    if (lsize < 1) {
+      if (log.isInfoEnabled()) {
+        log.info("Invalid rehydration list? "+l);
+      }
+      return null;
+    }
+    Object o = l.get(0);
+    if (o == null) {
+      if (log.isInfoEnabled()) {
+        log.info("Null rehydration state?");
+      }
+      return null;
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info("Found rehydrated state");
+      if (log.isDetailEnabled()) {
+        log.detail("state is "+o);
+      }
+    }
+
+    return o;
+  }
+
+  private void add(MessageAddress addr) {
+    if (localAgent.equals(addr)) {
+      // ignore self
+      return;
+    }
+
+    boolean changed;
+    synchronized (activeAgentAddrs) {
+      changed = activeAgentAddrs.add(addr);
+    }
+
+    if (changed) {
+      persistNow();
+    }
+  }
+
+  private void remove(MessageAddress addr) {
+    boolean changed;
+    synchronized (activeAgentAddrs) {
+      changed = activeAgentAddrs.remove(addr);
+    }
+
+    if (changed) {
+      persistNow();
+    }
+  }
+
+  private class RegisterAgentServiceProvider 
+    implements ServiceProvider {
+
+      private final RegisterAgentService myService =
+        new RegisterAgentService() {
+          public void addAgent(MessageAddress addr) {
+            add(addr);
+          }
+          public void removeAgent(MessageAddress addr) {
+            remove(addr);
+          }
+        };
+
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (serviceClass == RegisterAgentService.class) {
+          return myService;
+        } else {
+          throw new IllegalArgumentException(
+              "Can only provide RegisterAgentService!");
+        }
+      }
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+      }
+    }
+}

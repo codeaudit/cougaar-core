@@ -25,8 +25,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.persist.PersistenceInputStream;
@@ -40,12 +39,15 @@ extends AbstractTicket
 implements Serializable {
 
   private final MoveTicket moveTicket;
-  private StateTuple state;
+  private final ComponentDescription desc;
+  private Object state;
 
   public TransferTicket(
       MoveTicket moveTicket,
-      StateTuple state) {
+      ComponentDescription desc,
+      Object state) {
     this.moveTicket = moveTicket;
+    this.desc = desc;
     this.state = state;
   }
 
@@ -53,11 +55,15 @@ implements Serializable {
     return moveTicket;
   }
 
-  public StateTuple getStateTuple() {
+  public ComponentDescription getComponentDescription() {
+    return desc;
+  }
+
+  public Object getState() {
     return state;
   }
 
-  public void clearStateTuple() {
+  public void clearState() {
     // force GC
     state = null;
   }
@@ -76,7 +82,7 @@ implements Serializable {
       stream.defaultReadObject();
       if (stream instanceof PersistenceInputStream) {
       } else {
-        state = (StateTuple) stream.readObject();
+        state = stream.readObject();
       }
     }
 

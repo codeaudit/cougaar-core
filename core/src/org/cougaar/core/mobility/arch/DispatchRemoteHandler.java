@@ -22,10 +22,11 @@
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.StateObject;
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mobility.MobilityClient;
 import org.cougaar.core.mobility.MobilityException;
+import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**
@@ -35,13 +36,13 @@ public class DispatchRemoteHandler extends AbstractHandler {
 
   private GenericStateModel model;
   private ComponentDescription desc;
-  private StateObject stateProvider;
+  private MobilityClient stateProvider;
 
   public DispatchRemoteHandler(
       MobilitySupport support,
       GenericStateModel model,
       ComponentDescription desc,
-      StateObject stateProvider) {
+      MobilityClient stateProvider) {
     super(support);
     this.model = model;
     this.desc = desc;
@@ -54,7 +55,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
 
   private void dispatchRemote() {
 
-    StateTuple tuple;
+    Object state;
     boolean didSuspend = false;
     try {
 
@@ -72,9 +73,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
       suspendAgent();
       didSuspend = true;
 
-      Object state = getAgentState();
-
-      tuple = new StateTuple(desc, state);
+      state = getAgentState();
 
     } catch (Exception e) {
 
@@ -96,9 +95,11 @@ public class DispatchRemoteHandler extends AbstractHandler {
 
     try {
 
-      sendTransfer(tuple);
+      sendTransfer(desc, state);
+      state = null; 
 
     } catch (Exception e) {
+      state = null; 
 
       // not sure if the message was sent...
       //

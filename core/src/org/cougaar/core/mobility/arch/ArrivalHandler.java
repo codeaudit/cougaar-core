@@ -21,20 +21,23 @@
 
 package org.cougaar.core.mobility.arch;
 
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * Received a TRANSFER request on the destination node.
  */
 public class ArrivalHandler extends AbstractHandler {
 
-  private StateTuple tuple;
+  private ComponentDescription desc;
 
   public ArrivalHandler(
       MobilitySupport support,
-      StateTuple tuple) {
+      ComponentDescription desc) {
     super(support);
-    this.tuple = tuple;
+    this.desc = desc;
   }
 
   public void run() {
@@ -57,7 +60,7 @@ public class ArrivalHandler extends AbstractHandler {
 
     try {
 
-      addAgent(tuple);
+      addAgent(desc);
 
     } catch (Exception e) {
 
@@ -98,11 +101,11 @@ public class ArrivalHandler extends AbstractHandler {
 
   }
 
-  protected void addAgent(StateTuple tuple) {
+  protected void addAgent(ComponentDescription desc) {
     if (log.isInfoEnabled()) {
       log.info("Add   agent "+id);
     }
-    super.addAgent(tuple);
+    super.addAgent(desc);
     if (log.isInfoEnabled()) {
       log.info("Added agent "+id);
     }

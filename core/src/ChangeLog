@@ -1,3 +1,9 @@
+2004-02-13  Todd Wright  <twright@bbn.com>
+
+        Bug #2522 -- Refactored SimpleAgent and NodeAgent into a base
+        "AgentImpl", where all components are loaded through
+        ComponentDescriptions.
+
 2003-09-04  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Blackboard.java: 

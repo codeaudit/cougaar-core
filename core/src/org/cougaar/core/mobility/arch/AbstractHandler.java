@@ -21,7 +21,7 @@
 
 package org.cougaar.core.mobility.arch;
 
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
@@ -51,8 +51,10 @@ public abstract class AbstractHandler implements Runnable {
 
   // msg-sender
 
-  protected void sendTransfer(StateTuple tuple) {
-    support.sendTransfer(tuple);
+  protected void sendTransfer(
+      ComponentDescription desc,
+      Object state) {
+    support.sendTransfer(desc, state);
   }
 
   protected void sendAck() {
@@ -65,8 +67,8 @@ public abstract class AbstractHandler implements Runnable {
 
   // agent-container
 
-  protected void addAgent(StateTuple tuple) {
-    support.addAgent(tuple);
+  protected void addAgent(ComponentDescription desc) {
+    support.addAgent(desc);
   }
 
   protected void removeAgent() {

@@ -26,15 +26,18 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-
-import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.mobility.MobileAgentService;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.mobility.AbstractTicket;
+import org.cougaar.core.mobility.MobilityClient;
+import org.cougaar.core.mobility.MobilityService;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.MessageAddress;
@@ -42,6 +45,7 @@ import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
@@ -95,7 +99,7 @@ public abstract class AbstractMobilityPlugin
   private ServiceBroker nodeSB;
   protected AgentContainer agentContainer;
 
-  private MobileAgentServiceProviderImpl mobileAgentSP;
+  private MobilityServiceProviderImpl mobileAgentSP;
 
   private final List todo = new ArrayList(5);
 
@@ -213,8 +217,8 @@ public abstract class AbstractMobilityPlugin
 
       // advertise our mobility service
       if (mobileAgentSP == null) {
-        this.mobileAgentSP = new MobileAgentServiceProviderImpl();
-        nodeSB.addService(MobileAgentService.class, mobileAgentSP);
+        this.mobileAgentSP = new MobilityServiceProviderImpl();
+        nodeSB.addService(MobilityService.class, mobileAgentSP);
 
         if (log.isDebugEnabled()) {
           log.debug("Created mobile agent registry service for "+nodeId);
@@ -232,7 +236,7 @@ public abstract class AbstractMobilityPlugin
   public void unload() {
     if (isNode) {
       if (mobileAgentSP != null) {
-        nodeSB.revokeService(MobileAgentService.class, mobileAgentSP);
+        nodeSB.revokeService(MobilityService.class, mobileAgentSP);
         mobileAgentSP = null;
       }
       if (whitePagesService != null) {
@@ -317,7 +321,7 @@ public abstract class AbstractMobilityPlugin
   protected abstract void registerAgent(
       MessageAddress id, 
       ComponentDescription desc, 
-      Agent agent);
+      MobilityClient agent);
 
   /** an agent unregisters itself from the local mobility registry. */
   protected abstract void unregisterAgent(
@@ -392,12 +396,12 @@ public abstract class AbstractMobilityPlugin
     }
   }
   
-  private class MobileAgentServiceProviderImpl
+  private class MobilityServiceProviderImpl
   implements ServiceProvider {
 
     // single dummy service instance
-    private final MobileAgentService SINGLE_SERVICE_INSTANCE =
-      new MobileAgentService() {
+    private final MobilityService SINGLE_SERVICE_INSTANCE =
+      new MobilityService() {
       };
 
     public Object getService(
@@ -405,16 +409,16 @@ public abstract class AbstractMobilityPlugin
         Object requestor, 
         Class serviceClass) {
       // check service class
-      if (serviceClass != MobileAgentService.class) {
+      if (serviceClass != MobilityService.class) {
         throw new IllegalArgumentException(
             "Unsupported service "+serviceClass);
       }
       // assert that the requestor is an agent
-      if (!(requestor instanceof Agent)) {
+      if (!(requestor instanceof MobilityClient)) {
         throw new RuntimeException(
-            "Expecting an Agent requestor, not "+requestor);
+            "Expecting a MobilityClient requestor, not "+requestor);
       }
-      Agent agent = (Agent) requestor;
+      MobilityClient agent = (MobilityClient) requestor;
       MessageAddress id = agent.getAgentIdentifier();
 
       // get the agent's description from its container
@@ -446,7 +450,7 @@ public abstract class AbstractMobilityPlugin
         throw new IllegalArgumentException(
             "Wrong service instance "+service);
       }
-      Agent agent = (Agent) requestor;
+      MobilityClient agent = (MobilityClient) requestor;
       MessageAddress id = agent.getAgentIdentifier();
       unregisterAgent(id);
     }

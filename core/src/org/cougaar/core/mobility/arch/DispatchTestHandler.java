@@ -23,14 +23,17 @@ package org.cougaar.core.mobility.arch;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
+import java.io.OutputStream;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.StateObject;
-import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.mobility.MobilityClient;
 import org.cougaar.core.mobility.MobilityException;
+import org.cougaar.core.mobility.MoveTicket;
+import org.cougaar.core.mobility.service.LocalMoveState;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel;
 
 /**
@@ -41,17 +44,20 @@ public class DispatchTestHandler extends AbstractHandler {
 
   private GenericStateModel model;
   private ComponentDescription desc;
-  private StateObject stateProvider;
+  private MobilityClient stateProvider;
+  private LocalMoveState localMoveState;
 
   public DispatchTestHandler(
       MobilitySupport support,
       GenericStateModel model,
       ComponentDescription desc,
-      StateObject stateProvider) {
+      MobilityClient stateProvider,
+      LocalMoveState localMoveState) {
     super(support);
     this.model = model;
     this.desc = desc;
     this.stateProvider = stateProvider;
+    this.localMoveState = localMoveState;
   }
 
   public void run() {
@@ -60,7 +66,7 @@ public class DispatchTestHandler extends AbstractHandler {
 
   private void dispatchTest() {
 
-    StateTuple tuple;
+    Object state;
     boolean didSuspend = false;
     try {
 
@@ -77,10 +83,8 @@ public class DispatchTestHandler extends AbstractHandler {
       suspendAgent();
       didSuspend = true;
 
-      Object state = getAgentState();
-      tuple = new StateTuple(desc, state);
-
-      tuple = forceSerialize(tuple);
+      state = getAgentState();
+      state = testSerial(state, "state");
 
     } catch (Exception e) {
       // obtaining the state shouldn't mangle the agent, so we'll
@@ -113,8 +117,11 @@ public class DispatchTestHandler extends AbstractHandler {
       return;
     }
 
+    localMoveState.setState(state);
+    state = null;
+
     try {
-      addAgent(tuple);
+      addAgent(desc);
 
       onArrival();
     } catch (Exception e) {
@@ -234,11 +241,11 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
-  protected void addAgent(StateTuple tuple) {
+  protected void addAgent(ComponentDescription desc) {
     if (log.isInfoEnabled()) {
       log.info("Add       agent "+id);
     }
-    super.addAgent(tuple);
+    super.addAgent(desc);
     if (log.isInfoEnabled()) {
       log.info("Added     agent "+id);
     }
@@ -254,63 +261,37 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
-  private StateTuple forceSerialize(StateTuple tuple) {
-
-    ComponentDescription odesc = tuple.getComponentDescription();
-
-    ComponentDescription ndesc;
+  private Object testSerial(Object o, String type) {
     try {
-      ndesc = (ComponentDescription) testSerial(odesc, " desc");
+      if (log.isInfoEnabled()) {
+        log.info("Serialize    "+type+" of agent "+id);
+      }
+      ByteArrayOutputStream bos = new ByteArrayOutputStream();
+      ObjectOutputStream os = new ObjectOutputStream(bos);
+      os.writeObject(o);
+      os.flush();
+      if (log.isInfoEnabled()) {
+        log.info("Serialized   "+type+" of agent "+id);
+      }
+      o = null;
+      if (log.isInfoEnabled()) {
+        log.info("Deserialize  "+type+" of agent "+id);
+      }
+      byte[] b = bos.toByteArray();
+      ByteArrayInputStream bis = new ByteArrayInputStream(b);
+      ObjectInputStream is = new ObjectInputStream(bis);
+      Object newO = is.readObject();
+      if (log.isInfoEnabled()) {
+        log.info("Deserialized "+type+" of agent "+id);
+      }
+      return newO;
     } catch (Exception e) {
       throw new MobilityException(
-            "Serialize/Deserialize (description) test on agent "+
-            id+
-            " description failed, will attempt resume",
-            e);
+          "Serialize/Deserialize ("+type+") test on agent "+
+          id+
+          " description failed, will attempt resume",
+          e);
     }
-
-    Object state = tuple.getState();
-    if (state == null) {
-      return new StateTuple(ndesc, null);
-    }
-
-    Object nstate;
-    try {
-      nstate = testSerial(state, "state");
-    } catch (Exception e) {
-      throw new MobilityException(
-            "Serialize/Deserialize (state) test on agent "+
-            id+
-            " state failed, will attempt resume",
-            e);
-    }
-
-    return new StateTuple(ndesc, nstate);
-  }
-
-  private Object testSerial(Object o, String type) throws Exception {
-    if (log.isInfoEnabled()) {
-      log.info("Serialize    "+type+" of agent "+id);
-    }
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutputStream os = new ObjectOutputStream(bos);
-    os.writeObject(o);
-    os.flush();
-    if (log.isInfoEnabled()) {
-      log.info("Serialized   "+type+" of agent "+id);
-    }
-    o = null;
-    if (log.isInfoEnabled()) {
-      log.info("Deserialize  "+type+" of agent "+id);
-    }
-    byte[] b = bos.toByteArray();
-    ByteArrayInputStream bis = new ByteArrayInputStream(b);
-    ObjectInputStream is = new ObjectInputStream(bis);
-    Object newO = is.readObject();
-    if (log.isInfoEnabled()) {
-      log.info("Deserialized "+type+" of agent "+id);
-    }
-    return newO;
   }
 
   public String toString() {

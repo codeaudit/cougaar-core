@@ -21,15 +21,15 @@
 
 package org.cougaar.core.node;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-
+import java.util.Set;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -79,7 +79,15 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
                            Class serviceClass)
   {
     if (serviceClass == QuiescenceReportService.class) {
-      return new QuiescenceReportServiceImpl(requestor.toString());
+      if (requestor instanceof MessageAddress) {
+        // special case, just for node-agent!
+        MessageAddress addr = (MessageAddress) requestor;
+        addr = addr.getPrimary(); // drop MessageAttributes
+        return new QuiescenceReportServiceImpl(addr);
+      } else {
+        String name = requestor.toString();
+        return new QuiescenceReportServiceImpl(name);
+      }
     }
     if (serviceClass == QuiescenceReportForDistributorService.class) {
       return new QuiescenceReportForDistributorServiceImpl(requestor.toString());
@@ -94,11 +102,6 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       QuiescenceReportService quiescenceReportService = (QuiescenceReportService) service;
       quiescenceReportService.setQuiescentState();
     }
-  }
-
-  // Used by NodeAgent to create an instance for a specific agent address.
-  QuiescenceReportService createQuiescenceReportService(MessageAddress agent) {
-    return new QuiescenceReportServiceImpl(agent.getPrimary()); // drop MessageAttributes
   }
 
   private static void setMessageMap(MessageAddress me, Map messageNumbers, Map newMap) {

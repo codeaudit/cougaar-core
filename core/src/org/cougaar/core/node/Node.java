@@ -28,24 +28,20 @@ import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.net.InetAddress;
 import java.net.URL;
-import java.net.UnknownHostException;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-
 import org.cougaar.bootstrap.Bootstrapper;
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.ComponentDescription;
@@ -53,11 +49,10 @@ import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.Configuration;
 import org.cougaar.util.PropertyParser;
-import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * The Node is the root component of the
@@ -111,26 +106,12 @@ import org.cougaar.util.log.Logger;
  * @property org.cougaar.security.certificate
  *   The path of the <em>org.cougaar.install.path</em> for finding
  *   the <em>org.cougaar.validate.jars</em> certificates.
- *
- * @property org.cougaar.core.node.ignoreRehydratedAgentList
- *   Ignore the list of agents from the rehydrated state of the
- *   NodeAgent, if any. Defaults to false. Set to true to disable
- *   this feature and always use the list of agents from the
- *   ComponentInitializerService.
  * </pre>
  */
 public class Node
 extends ContainerSupport
 {
   public static final String INSERTION_POINT = "Node";
-  public static final String FILENAME_PROP = "org.cougaar.filename";
-  public static final String EXPTID_PROP = "org.cougaar.experiment.id";
-  public static final String INITIALIZER_PROP = 
-    "org.cougaar.core.node.InitializationComponent";
-  public static final String IGNORE_REHYDRATED_AGENT_LIST_PROP =
-    "org.cougaar.core.node.ignoreRehydratedAgentList";
-  public static final String NODE_AGENT_CLASSNAME_PROPERTY =
-    "org.cougaar.core.node.classname";
 
   /**
    * Node entry point.
@@ -173,7 +154,7 @@ extends ContainerSupport
     // check for valid plugin jars
     maybeValidateJars();
 
-    // create root service broker and binding site
+    // create the root service broker and binding site
     final ServiceBroker rootsb = 
       new ServiceBrokerSupport() {
       };
@@ -189,11 +170,13 @@ extends ContainerSupport
     // try block to ensure we catch all exceptions and exit gracefully
     try {
       Node myNode = new Node();
+      // this will call our "load()" method
       BindingUtility.activate(myNode, rootbs, rootsb);
       // done with our job... quietly finish.
     } catch (Throwable e) {
       System.out.println(
-          "Caught an exception at the highest try block.  Exception is: " +
+          "Caught an exception at the highest try block."+
+          "  Exception is: " +
           e );
       e.printStackTrace();
     }
@@ -233,7 +216,8 @@ extends ContainerSupport
         if (sepIdx < 0) {
           System.setProperty(argi.substring(2), "");
         } else {
-          System.setProperty(argi.substring(2, sepIdx), argi.substring(sepIdx+1));
+          System.setProperty(
+              argi.substring(2, sepIdx), argi.substring(sepIdx+1));
         }
       } else if (argi.equals("-n")) {
         // old "-n node" pattern
@@ -241,9 +225,10 @@ extends ContainerSupport
         System.setProperty("org.cougaar.node.name", name);
         Logger logger = Logging.getLogger(Node.class);
         if (logger.isInfoEnabled()) {
-          logger.info( "Set node name to "+name+
-                       "\nThe command line format \"-n "+name+"\" has been deprecated"+
-                       "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
+          logger.info(
+              "Set node name to "+name+
+              "\nThe command line format \"-n "+name+"\" has been deprecated"+
+              "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
         }
       } else if (argi.equals("-c")) {
         // ignore
@@ -348,134 +333,17 @@ extends ContainerSupport
   public void load() {
     super.load();
 
-    // get the node name
-    String name = System.getProperty("org.cougaar.node.name");
-    if (name == null) {
-      try {
-        name = InetAddress.getLocalHost().getHostName();
-      } catch (UnknownHostException uhe) {
-      }
-      if (name == null) {
-        throw new IllegalArgumentException("Node name not specified");
-      }
-    }
-    MessageAddress nid = MessageAddress.getMessageAddress(name);
-
-    // sb is our service broker (for *all* agents)
-    ServiceBroker sb = getServiceBroker();
-
-    // we need to make this available here so others can get it.
-    sb.addService(NodeIdentificationService.class,
-		  new NodeIdentificationServiceProvider(nid));
-
-    // we need the initializerservice so that AgentManager can load external binders
-    // This will use the CSMART DB (advertising the DBInitializerService)
-    // if the experiment_id system property was set, and some other
-    // initializer was not selected.
-    // Otherwise, INI files are used (and no DBInitializerService is provided)
-    // however, users may specify, for example, an XML initializer
-    ComponentDescription compInitDesc = 
-      new ComponentDescription(
-          "component-init",
-          Node.INSERTION_POINT+".Init",
-          getInitializerComponentName(),
+    // add the agent manager, which loads the node-agent
+    add(new ComponentDescription(
+          "org.cougaar.core.agent.AgentManager",
+          "Node.Component",
+          "org.cougaar.core.agent.AgentManager",
           null,  //codebase
           null,  //params
           null,  //certificate
           null,  //lease
           null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
-    add(compInitDesc);
-
-    //
-    // construct the NodeAgent and hook it in.
-    // 
-
-    // create the AgentManager on our own for now
-    AgentManager agentManager = new AgentManager();
-    add(agentManager);
-
-    //
-    // construct the NodeAgent and then hand off control
-    // 
-    List naParams = new ArrayList(4);
-    naParams.add(nid);
-    naParams.add(sb);
-    naParams.add(agentManager);
-    naParams.add(
-        Boolean.valueOf(
-          System.getProperty(IGNORE_REHYDRATED_AGENT_LIST_PROP)));
-    String naClass = System.getProperty(
-        NODE_AGENT_CLASSNAME_PROPERTY,
-        NodeAgent.class.getName());
-    ComponentDescription naDesc = 
-      new ComponentDescription(
-          name,
-          Agent.INSERTION_POINT,
-          naClass,
-          null,  //codebase
-          naParams,
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
-    agentManager.add(naDesc);
-
-    // may need to wait for the NodeAgent to come all the way up.
-  }
-
-  // Select the ComponentInitializer to use
-  private String getInitializerComponentName() {
-    String component = System.getProperty(INITIALIZER_PROP);
-
-    if (component == null) {
-      component = getOldComponentString();
-      System.setProperty(INITIALIZER_PROP, component);
-    }
-
-    // If full class name not specified, intuit it
-    if (component.indexOf(".") < 0) {
-      // Build up the name, full name was not specified.
-      component = 
-        "org.cougaar.core.node." +
-        component +
-        "ComponentInitializerServiceComponent";
-    }
-    Logger logger = Logging.getLogger(Node.class);
-    if (logger.isInfoEnabled()) {
-      logger.info( "Will intialize components from " + component);
-    }
-    return component;
-  }
-
-  // Figure out whether to use Files or CSMART DB for Component initalization
-  // if not explicitly specified with -D argument
-  private String getOldComponentString() {
-    String filename = System.getProperty(FILENAME_PROP);
-    String expt = System.getProperty(EXPTID_PROP);
-    Logger logger = Logging.getLogger(Node.class);
-    if ((filename == null) && (expt == null)) {
-      // use the default "name.ini"
-      if (logger.isWarnEnabled()) {
-        logger.warn("Got no filename or experimentId! Using default File");
-      }
-      return "File";
-    }
-    if (filename == null) {
-      // use the experiment ID to read from the DB
-      if (logger.isWarnEnabled()) {
-        logger.warn("Got no filename, using exptID " + expt);
-      }
-      return "DB";
-    }
-    if (expt == null) {
-      // use the filename provided
-      if (logger.isWarnEnabled()) {
-        logger.warn("Got no exptID, using given filename " + filename);
-      }
-    }
-
-    return "File";
+          ComponentDescription.PRIORITY_HIGH));
   }
 
   private static void printVersion(boolean fullFormat) {
@@ -500,9 +368,10 @@ extends ContainerSupport
 
     Logger logger = Logging.getLogger(Node.class);
     if (logger.isInfoEnabled()) {
-      logger.info("COUGAAR "+version+" "+buildTime+
-        " "+repositoryTag+" "+repositoryModified+
-        " "+repositoryTime);
+      logger.info(
+          "COUGAAR "+version+" "+buildTime+
+          " "+repositoryTag+" "+repositoryModified+
+          " "+repositoryTime);
     }
 
     if (!(fullFormat)) {

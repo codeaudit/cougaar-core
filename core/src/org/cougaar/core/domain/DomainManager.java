@@ -25,16 +25,18 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-
 import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.agent.Agent;
+import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -43,12 +45,14 @@ import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 
 /**
@@ -628,7 +632,7 @@ extends ContainerSupport
     ComponentDescription desc = 
       new ComponentDescription(
           domainName,
-          containmentPrefix+"Domain",
+          CONTAINMENT_POINT+".Domain",
           className,
           null,  // codebase
           parameter,

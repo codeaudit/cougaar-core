@@ -23,17 +23,18 @@ package org.cougaar.core.mobility.servlet;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
-
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.cougaar.core.blackboard.BlackboardClient;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.domain.Factory;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.AddTicket;
 import org.cougaar.core.mobility.MoveTicket;
@@ -513,7 +514,6 @@ implements BlackboardClient
             "  enableOp(sop != \""+MOVE_OP_VALUE+"\");\n"+
             "}\n"+
             "function enableOp(b) {\n"+
-            "  document.f.originNode.value=(b?'N/A':'');\n"+
             "  document.f.originNode.disabled=b;\n"+
             "  document.f.isForceRestart.disabled=b;\n"+
             "}\n"+

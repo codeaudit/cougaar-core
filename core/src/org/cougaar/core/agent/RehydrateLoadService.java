@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 2001-2003 BBNT Solutions, LLC
+ *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  * 
  *  This program is free software; you can redistribute it and/or modify
@@ -19,25 +19,20 @@
  * </copyright>
  */
 
-package org.cougaar.core.mobility;
+package org.cougaar.core.agent;
 
 import org.cougaar.core.component.Service;
 
 /**
- * Service client must be an <b>Agent</b>.
+ * This service is used by the agent rehydration components
+ * to signal rehydration from a persistence snapshot, which
+ * must occur after the agent identity is acquired.
  * <p>
- * The client may optionally have this method, which
- * will be called via reflection:<pre>
- *   void onDispatch(MessageAddress destinationNode);
- * </pre>
- * This lets the agent know that it will be moved.
+ * This service is only available during the agent "load()". 
+ *
+ * @see RehydrateEarly 
+ * @see RehydrateLate
  */
-public interface MobileAgentService extends Service {
-
-  // Nothing for now.
-  //
-  // Access to this service registers the agent for
-  // mobility, and release of the service unregisters
-  // the agent.
-
+public interface RehydrateLoadService extends Service {
+  void rehydrate();
 }
