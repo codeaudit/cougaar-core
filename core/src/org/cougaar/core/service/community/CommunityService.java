@@ -1,6 +1,6 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 Mobile Intelligence Corp
+ *  Copyright 1997-2002 Mobile Intelligence Corp
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ import java.util.*;
  */
 public interface CommunityService extends Service {
 
-  public final static String COMMUNITIES_CONTEXT_NAME = "Communities";
+  String COMMUNITIES_CONTEXT_NAME = "Communities";
 
 
   /**

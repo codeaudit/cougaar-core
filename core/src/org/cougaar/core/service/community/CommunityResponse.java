@@ -1,5 +1,8 @@
 /*
  * <copyright>
+ *  Copyright 1997-2002 Mobile Intelligence Corp
+ *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
@@ -32,11 +35,11 @@ import org.cougaar.core.blackboard.Publishable;
 public interface CommunityResponse extends Publishable {
 
   // Result codes
-  public static final int ERROR   = 0;
-  public static final int SUCCESS = 1;
-  public static final int FAIL    = 2;
-  public static final int GRANT   = 3;
-  public static final int DENY    = 4;
+  int ERROR   = 0;
+  int SUCCESS = 1;
+  int FAIL    = 2;
+  int GRANT   = 3;
+  int DENY    = 4;
 
 
   /**
