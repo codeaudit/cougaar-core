@@ -191,7 +191,7 @@ public class NodeAgent
     ComponentDescription defaultAgentIdCDesc = 
       new ComponentDescription(
           (getIdentifier()+"DefaultAgentIdentity"),
-          "Node.AgentManager.Agent.Identity",
+          Agent.INSERTION_POINT + ".Identity",
           "org.cougaar.core.node.DefaultAgentIdentityComponent",
           null,  //codebase
           null,  //parameters
@@ -217,7 +217,7 @@ public class NodeAgent
     ComponentDescription threadServiceDesc = 
       new ComponentDescription(
           (getIdentifier()+"Threads"),
-          "Node.AgentManager.Agent.Threads",
+          Agent.INSERTION_POINT + ".Threads",
           "org.cougaar.core.thread.ThreadServiceProvider",
           null,  //codebase
           threadServiceParams,  //parameters
@@ -239,7 +239,7 @@ public class NodeAgent
     ComponentDescription topologyWriterSCDesc = 
       new ComponentDescription(
           (getIdentifier()+"TopologyWriter"),
-          "Node.AgentManager.Agent.Topology",
+          Agent.INSERTION_POINT + ".Topology",
           "org.cougaar.core.topology.TopologyWriterServiceComponent",
           null,  //codebase
           null,  //parameters
@@ -251,7 +251,7 @@ public class NodeAgent
     ComponentDescription topologyReaderSCDesc = 
       new ComponentDescription(
           (getIdentifier()+"TopologyReader"),
-          "Node.AgentManager.Agent.Topology",
+          Agent.INSERTION_POINT + ".Topology",
           "org.cougaar.core.topology.TopologyReaderServiceComponent",
           null,  //codebase
           null,  //parameters
@@ -264,7 +264,7 @@ public class NodeAgent
     ComponentDescription mspdesc = 
       new ComponentDescription(
           msp,
-          "Node.AgentManager.Agent.MetricsServices",
+          Agent.INSERTION_POINT + ".MetricsServices",
           "org.cougaar.core.qos.metrics.MetricsServiceProvider",
           null,  //codebase
           null,  //parameters
@@ -281,9 +281,12 @@ public class NodeAgent
     try {
       InitializerService is = (InitializerService) 
         rootsb.getService(this, InitializerService.class, null);
-      // get the agents
+      if (logger.isInfoEnabled())
+	logger.info("NodeAgent(" + nodeName + ").loadInternal about to ask for agents");
+      // get the agents - this gives _anything_ below AgentManager,
+      // so must extract out just the .Agent's later (done in addAgents)
       agentDescs =
-        is.getComponentDescriptions(nodeName, "Node.AgentManager.Agent");
+        is.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
       rootsb.releaseService(this, InitializerService.class, is);
     } catch (Exception e) {
       throw new Error("Couldn't initialize NodeAgent from InitializerService ", e);
@@ -298,7 +301,7 @@ public class NodeAgent
     ComponentDescription mtsdesc = 
       new ComponentDescription(
           mts,
-          "Node.AgentManager.Agent.MessageTransport",
+          Agent.INSERTION_POINT + ".MessageTransport",
           "org.cougaar.core.mts.MessageTransportServiceProvider",
           null,  //codebase
           null,  //parameters
@@ -316,7 +319,7 @@ public class NodeAgent
     ComponentDescription ntcdesc = 
       new ComponentDescription(
           ntc,
-          "Node.AgentManager.Agent.NodeTrust",
+          Agent.INSERTION_POINT + ".NodeTrust",
           "org.cougaar.core.node.NodeTrustComponent",
           null,  //codebase
           null,  //parameters
@@ -333,7 +336,7 @@ public class NodeAgent
       ComponentDescription nsscDesc = 
         new ComponentDescription(
             (getIdentifier()+"ServletService"),
-            "Node.AgentManager.Agent.NodeServletService",
+            Agent.INSERTION_POINT + ".NodeServletService",
             "org.cougaar.lib.web.service.RootServletServiceComponent",
             null,  //codebase
             null,  //parameters
@@ -429,8 +432,11 @@ public class NodeAgent
    * <p>
    */
   protected void addAgents(ComponentDescription[] descs) {
+    if (logger.isDebugEnabled())
+      logger.debug(nodeName + ":AgentManager.addAgents got list of length " + descs.length);
     ComponentDescriptions cds = new ComponentDescriptions(descs);
-    List cdcs = cds.extractInsertionPointComponent("Node.AgentManager.Agent");
+    List cdcs = cds.extractInsertionPointComponent(Agent.INSERTION_POINT);
+    //logger.debug(nodeName + ":AgentManager.addAgents after extraction by ins pt have " + cdcs.size());
     try {
       agentManager.addAll(cdcs);
     } catch (RuntimeException re) {
@@ -522,7 +528,7 @@ public class NodeAgent
           //
           // for now we do this work-around:
           String ip = cd.getInsertionPoint();
-          if (!("Node.AgentManager.Agent".equals(ip))) {
+          if (!(Agent.INSERTION_POINT.equals(ip))) {
             throw new UnsupportedOperationException(
                 "Only Agent ADD supported for now, not "+ip);
           }
