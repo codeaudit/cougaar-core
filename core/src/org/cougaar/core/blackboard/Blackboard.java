@@ -34,6 +34,7 @@ import org.cougaar.core.persist.PersistenceException;
 
 import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.core.service.DomainForBlackboardService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 
 import org.cougaar.planning.ldm.plan.Directive;
@@ -634,17 +635,25 @@ public class Blackboard extends Subscriber
     String roleName = aba.getAttributeType();
     //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
 
-    try {
-      CommunityService cs =
-        (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
-      String communitySpec = getCommunitySpec(aba);
-      String filter = "(" + roleName + "=" + roleValue + ")";
-      Collection matches = cs.search(communitySpec, filter);
-      for (Iterator it = matches.iterator(); it.hasNext();) {
-        cis.add((ClusterIdentifier)it.next());
+    CommunityService cs =
+      (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
+    
+    if (cs == null) {
+      LoggingService logger = 
+        (LoggingService) myServiceBroker.getService(this, LoggingService.class, null);
+      if (logger == null) {
+        logger = LoggingService.NULL;
       }
-    } catch (Exception e) {
-      e.printStackTrace();
+      
+      logger.error("Couldn't get CommunityService: " + aba + " unresolved.");
+      return cis;
+    }
+    
+    String communitySpec = getCommunitySpec(aba);
+    String filter = "(" + roleName + "=" + roleValue + ")";
+    Collection matches = cs.search(communitySpec, filter);
+    for (Iterator it = matches.iterator(); it.hasNext();) {
+      cis.add((ClusterIdentifier)it.next());
     }
 
     cacheByRole(roleValue, cis);
