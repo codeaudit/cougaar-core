@@ -1,3 +1,9 @@
+2001-07-16  Michael Thome  <mthome@bbn.com>
+
+	* ConfigFinder
+	Allow -Dorg.cougaar.core.util.ConfigFinder.verbose=true to enable
+	verbose mode.
+
 2001-06-15 Beth DePass <bdepass@bbn.com>
 	* ClusterImpl, SharedPlugInManager, SharedThreadingService,
 	PlugInAdaper, etc
