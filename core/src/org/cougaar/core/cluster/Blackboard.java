@@ -67,6 +67,7 @@ public class Blackboard extends Subscriber
     return tup;
   }
 
+  /** invoked via client*Object while executing an LP **/
   private final boolean consumeTuple(EnvelopeTuple tup) {
     boolean somethingFired = false;
     synchronized (subscriptions) {
@@ -75,6 +76,7 @@ public class Blackboard extends Subscriber
         somethingFired |= tup.applyToSubscription(subscription, true);
       }
     }
+    // recurses
     callLogicProviders(tup, false);
     return somethingFired;
   }
@@ -95,6 +97,9 @@ public class Blackboard extends Subscriber
   public void addXPlan(XPlanServesBlackboard xPlan) {
     if (xPlans.contains(xPlan)) return;
     xPlans.add(xPlan);
+    if (xPlan instanceof SupportsDelayedLPActions) {
+      dlaPlans.add(xPlan);
+    }
   }
 
   public Collection getXPlans() {
@@ -285,26 +290,30 @@ public class Blackboard extends Subscriber
    * resulting from handling the messages is returned.
    **/
   public final Envelope receiveMessages(List msgs) {
-    try {
-      startTransaction();
-      for (Iterator iter = msgs.iterator(); iter.hasNext(); ) {
-        DirectiveMessage msg = (DirectiveMessage) iter.next();
-        applyMessageAgainstLogicProviders(msg);
-      }
-
-      checkUnpostedChangeReports();
-      // There really should not be any change tracking subscriptions, at
-      // least not in the base classes!!!  MT
-      resetSubscriptionChanges(); // clear change tracking subscriptions
-
-      return privateGetPublishedChanges();
-    } finally {
-      stopTransaction();
+    //try {
+    //  startTransaction();
+    for (Iterator iter = msgs.iterator(); iter.hasNext(); ) {
+      DirectiveMessage msg = (DirectiveMessage) iter.next();
+      applyMessageAgainstLogicProviders(msg);
     }
+
+    checkUnpostedChangeReports();
+    // There really should not be any change tracking subscriptions, at
+    // least not in the base classes!!!  MT
+    resetSubscriptionChanges(); // clear change tracking subscriptions
+    
+    return privateGetPublishedChanges();
+    //} finally {
+    //  stopTransaction();
+    //}
   }
 
   private final List oneEnvelope = new ArrayList(1);
 
+  /** called by transaction close within the thread of PlugIns.  
+   * Also called at the end of an LP pseudo-transaction, but
+   * most of the logic here is disabled in that case.
+   **/
   public final Envelope receiveEnvelope(Envelope envelope) {
     oneEnvelope.add(envelope);
     super.receiveEnvelopes(oneEnvelope); // Move to our inbox
@@ -417,18 +426,9 @@ public class Blackboard extends Subscriber
     }
   }
 
-  private void applyTuplesAgainstLogicProviders(Iterator eTuples, boolean isPersistenceEnvelope) {
-    while( eTuples.hasNext() ) {
-      EnvelopeTuple tuple = (EnvelopeTuple)eTuples.next();
-      try {
-        callLogicProviders(tuple, isPersistenceEnvelope);
-      } catch (Exception e) {
-        System.err.println("Caught "+e+" while running logic providers.");
-        e.printStackTrace();
-      }
-    }
-  }
-
+  /** called by receiveEnvelope (on behalf of a plugin) and consumeTuple (on behalf of
+   * an LP).
+   **/
   private void callLogicProviders(EnvelopeTuple obj, boolean isPersistenceEnvelope) {
     Collection changes = null;
     if (obj instanceof ChangeEnvelopeTuple) {
@@ -458,4 +458,18 @@ public class Blackboard extends Subscriber
   public PublishHistory getHistory() {
     return myDistributor.history;
   }
+
+  // support delayed LP actions
+  private ArrayList dlaPlans = new ArrayList(1);
+
+  Envelope executeDelayedLPActions() {
+    int l = dlaPlans.size();
+    for (int i=0; i<l; i++) {
+      SupportsDelayedLPActions p = (SupportsDelayedLPActions) dlaPlans.get(i);
+      p.executeDelayedLPActions();
+    }
+
+    return privateGetPublishedChanges();
+  }
+
 }
