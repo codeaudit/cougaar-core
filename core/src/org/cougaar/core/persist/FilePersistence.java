@@ -25,11 +25,11 @@ import java.io.FileInputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.util.*;
 
 import org.cougaar.core.agent.ClusterContext;
@@ -37,6 +37,7 @@ import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.planning.ldm.plan.Plan;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -49,29 +50,14 @@ import java.lang.reflect.Modifier;
  * @property org.cougaar.core.persistence.path Specifies the directory in which persistence
  * snapshots should be saved.  If this is a relative path, it the base will be the value or org.cougaar.install.path.
  */
-public class FilePersistence extends BasePersistence implements Persistence {
-  static File persistenceRoot;
+public class FilePersistence implements PersistencePlugin {
+  protected PersistencePluginSupport pps;
 
-  static {
-    File installDirectory = new File(System.getProperty("org.cougaar.install.path", "/tmp"));
-    persistenceRoot = new File(installDirectory, System.getProperty("org.cougaar.core.persistence.path", "P"));
-    if (!persistenceRoot.isDirectory()) {
-      if (!persistenceRoot.mkdirs()) {
-	System.err.println("Not a directory: " + persistenceRoot);
-	System.exit(-1);
-      }
-    }
-  }
-
-  public static Persistence find(final ClusterContext clusterContext)
-    throws PersistenceException {
-    return BasePersistence.findOrCreate(clusterContext, new PersistenceCreator() {
-      public BasePersistence create() throws PersistenceException {
-	return new FilePersistence(clusterContext);
-      }
-    });
-  }
-
+  /**
+   * Wrap a FileOutputStream to prove safe close semantics. Explicitly
+   * sync the file descriptor on close() to insure the file has been
+   * completely written to the disk.
+   **/
   private static class SafeObjectOutputFile extends ObjectOutputStream {
     private FileOutputStream fileOutputStream;
 
@@ -90,12 +76,24 @@ public class FilePersistence extends BasePersistence implements Persistence {
 
   private File persistenceDirectory;
 
-  private FilePersistence(ClusterContext clusterContext) throws PersistenceException {
-    super(clusterContext);
-    String clusterName = clusterContext.getClusterIdentifier().getAddress();
+  public void init(PersistencePluginSupport pps) throws PersistenceException {
+    this.pps = pps;
+    String clusterName = pps.getClusterIdentifier().getAddress();
+    File installDirectory =
+      new File(System.getProperty("org.cougaar.install.path", "/tmp"));
+    File persistenceRoot =
+      new File(installDirectory,
+               System.getProperty("org.cougaar.core.persistence.path", "P"));
+    if (!persistenceRoot.isDirectory()) {
+      if (!persistenceRoot.mkdirs()) {
+	pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
+        throw new PersistenceException("Persistence root unavailable");
+      }
+    }
     persistenceDirectory = new File(persistenceRoot, clusterName);
     if (!persistenceDirectory.isDirectory()) {
       if (!persistenceDirectory.mkdirs()) {
+	pps.getLoggingService().fatal("Not a directory: " + persistenceDirectory);
 	throw new PersistenceException("Not a directory: " + persistenceDirectory);
       }
     }
@@ -109,30 +107,54 @@ public class FilePersistence extends BasePersistence implements Persistence {
     return new File(persistenceDirectory, "newSequence" + suffix);
   }
 
-  protected SequenceNumbers readSequenceNumbers(String suffix) {
-    File sequenceFile = getSequenceFile(suffix);
-    File newSequenceFile = getNewSequenceFile(suffix);
-    if (!sequenceFile.exists() && newSequenceFile.exists()) {
-      newSequenceFile.renameTo(sequenceFile);
+  public SequenceNumbers[] readSequenceNumbers(final String suffix) {
+    LoggingService ls = pps.getLoggingService();
+    FilenameFilter filter;
+    if (suffix.equals("")) {
+      filter = new FilenameFilter() {
+        public boolean accept(File dir, String path) {
+          return (path.startsWith("newSequence") || path.startsWith("sequence"));
+        }
+      };
+    } else {
+      filter = new FilenameFilter() {
+        public boolean accept(File dir, String path) {
+          return (path.endsWith(suffix)
+                  && (path.startsWith("newSequence") || path.startsWith("sequence")));
+        }
+      };
     }
-    if (sequenceFile.exists()) {
-      print("Reading " + sequenceFile);
+    String[] names = persistenceDirectory.list(filter);
+    List result = new ArrayList(names.length);
+    File sequenceFile;
+    for (int i = 0; i < names.length; i++) {
+      if (names[i].startsWith("newSequence")) {
+        File newSequenceFile = new File(names[i]);
+        sequenceFile = new File("sequence" + names[i].substring("newSequence".length()));
+        newSequenceFile.renameTo(sequenceFile);
+      } else {
+        sequenceFile = new File(names[i]);
+      }
+      if (ls.isDebugEnabled()) {
+        ls.debug("Reading " + sequenceFile);
+      }
       try {
 	DataInputStream sequenceStream = new DataInputStream(new FileInputStream(sequenceFile));
 	try {
 	  int first = sequenceStream.readInt();
 	  int last = sequenceStream.readInt();
-	  return new SequenceNumbers(first, last);
+          long timestamp = sequenceFile.lastModified();
+	  result.add(new SequenceNumbers(first, last, timestamp));
 	}
 	finally {
 	  sequenceStream.close();
 	}
       }
       catch (IOException e) {
-	e.printStackTrace();
+	ls.error("Error reading " + sequenceFile, e);
       }
     }
-    return null;
+    return (SequenceNumbers[]) result.toArray(new SequenceNumbers[result.size()]);
   }
 
   private void writeSequenceNumbers(SequenceNumbers sequenceNumbers, String suffix) {
@@ -151,77 +173,79 @@ public class FilePersistence extends BasePersistence implements Persistence {
         sequenceStream.close();
 	sequenceFile.delete();
 	if (!newSequenceFile.renameTo(sequenceFile)) {
-	  System.err.println("Failed to rename " + newSequenceFile + " to " + sequenceFile);
+	  pps.getLoggingService().error("Failed to rename " + newSequenceFile + " to " + sequenceFile);
 	}
       }
     }
     catch (Exception e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception writing sequenceFile", e);
     }
   }
 
-  protected void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
+  public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
     for (int deltaNumber = cleanupNumbers.first; deltaNumber < cleanupNumbers.current; deltaNumber++) {
       File deltaFile = getDeltaFile(deltaNumber);
       if (!deltaFile.delete()) {
-	System.err.println("Failed to delete " + deltaFile);
+	pps.getLoggingService().error("Failed to delete " + deltaFile);
       }
     }
   }
 
-  protected ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full) throws IOException {
+  public ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
-    print("Persist to " + deltaFile);
+    LoggingService ls = pps.getLoggingService();
+    if (ls.isDebugEnabled()) {
+      ls.debug("Persist to " + deltaFile);
+    }
     return new SafeObjectOutputFile(new FileOutputStream(deltaFile));
   }
 
-  protected void closeObjectOutputStream(SequenceNumbers retainNumbers,
+  public void closeObjectOutputStream(SequenceNumbers retainNumbers,
                                          ObjectOutputStream currentOutput,
                                          boolean full)
   {
     try {
       currentOutput.close();
       writeSequenceNumbers(retainNumbers, "");
-      if (full) writeSequenceNumbers(retainNumbers, formatDeltaNumber(retainNumbers.first));
+      if (full) writeSequenceNumbers(retainNumbers,
+                                     BasePersistence.formatDeltaNumber(retainNumbers.first));
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception closing persistence output stream", e);
     }
   }
 
-  protected void abortObjectOutputStream(SequenceNumbers retainNumbers,
-                                         ObjectOutputStream currentOutput)
+  public void abortObjectOutputStream(SequenceNumbers retainNumbers,
+                                      ObjectOutputStream currentOutput)
   {
     try {
       currentOutput.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception aborting persistence output stream", e);
     }
     getDeltaFile(retainNumbers.current).delete();
   }
 
-  protected ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
+  public ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
     File deltaFile = getDeltaFile(deltaNumber);
-    print("rehydrate " + deltaFile);
+    LoggingService ls = pps.getLoggingService();
+    if (ls.isDebugEnabled()) {
+      ls.debug("rehydrate " + deltaFile);
+    }
     return new ObjectInputStream(new FileInputStream(deltaFile));
   }
 
-  protected void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
+  public void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
     try {
       currentInput.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception closing persistence input stream", e);
     }
   }
 
-  protected PrintWriter getHistoryWriter(int deltaNumber, String prefix) throws IOException {
-    File historyFile = new File(persistenceDirectory, prefix + formatDeltaNumber(deltaNumber));
-    return new PrintWriter(new FileWriter(historyFile));
-  }
-
-  protected void deleteOldPersistence() {
+  public void deleteOldPersistence() {
     File[] files = persistenceDirectory.listFiles();
     for (int i = 0; i < files.length; i++) {
       files[i].delete();
@@ -229,7 +253,8 @@ public class FilePersistence extends BasePersistence implements Persistence {
   }
 
   private File getDeltaFile(int sequence) {
-    return new File(persistenceDirectory, "delta" + formatDeltaNumber(sequence));
+    return new File(persistenceDirectory,
+                    "delta" + BasePersistence.formatDeltaNumber(sequence));
   }
 
   public java.sql.Connection getDatabaseConnection(Object locker) {

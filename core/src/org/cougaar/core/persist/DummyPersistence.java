@@ -37,72 +37,60 @@ import org.cougaar.planning.ldm.plan.Plan;
  * of the work of doing persistence, but discards the results. This is
  * only used for performance testing.
  **/
-public class DummyPersistence extends BasePersistence implements Persistence {
+public class DummyPersistence implements PersistencePlugin {
 
-  public static Persistence find(final ClusterContext clusterContext)
-    throws PersistenceException {
-    return BasePersistence.findOrCreate(clusterContext, new PersistenceCreator() {
-      public BasePersistence create() throws PersistenceException {
-	return new DummyPersistence(clusterContext);
-      }
-    });
+  private PersistencePluginSupport pps;
+
+  public void init(PersistencePluginSupport pps) throws PersistenceException {
+    this.pps = pps;
   }
 
-  private DummyPersistence(ClusterContext clusterContext) throws PersistenceException {
-    super(clusterContext);
-    String clusterName = clusterContext.getClusterIdentifier().getAddress();
+  public SequenceNumbers[] readSequenceNumbers(String suffix) {
+    return new SequenceNumbers[0];
   }
 
-  protected SequenceNumbers readSequenceNumbers(String suffix) {
-    return null;
+  public void writeSequenceNumbers(SequenceNumbers sequenceNumbers) {
   }
 
-  protected void writeSequenceNumbers(SequenceNumbers sequenceNumbers) {
+  public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
   }
 
-  protected void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
-  }
-
-  protected ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
+  public ObjectOutputStream openObjectOutputStream(int deltaNumber, boolean full)
     throws IOException
   {
     return new ObjectOutputStream(new ByteArrayOutputStream());
   }
 
-  protected void closeObjectOutputStream(SequenceNumbers retain,
-                                         ObjectOutputStream currentOutput,
-                                         boolean full)
+  public void closeObjectOutputStream(SequenceNumbers retain,
+                                      ObjectOutputStream currentOutput,
+                                      boolean full)
   {
     try {
       currentOutput.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception closing output stream", e);
     }
   }
 
-  protected void abortObjectOutputStream(SequenceNumbers retain, ObjectOutputStream currentOutput) {
+  public void abortObjectOutputStream(SequenceNumbers retain, ObjectOutputStream currentOutput) {
     closeObjectOutputStream(retain, currentOutput, false);
   }
 
-  protected ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
+  public ObjectInputStream openObjectInputStream(int deltaNumber) throws IOException {
     throw new IOException("No dummy input");
   }
 
-  protected void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
+  public void closeObjectInputStream(int deltaNumber, ObjectInputStream currentInput) {
     try {
       currentInput.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception closing input stream", e);
     }
   }
 
-  protected void deleteOldPersistence() {
-  }
-
-  protected PrintWriter getHistoryWriter(int deltaNumber, String prefix) throws IOException {
-    return null;
+  public void deleteOldPersistence() {
   }
 
   public java.sql.Connection getDatabaseConnection(Object locker) {

@@ -25,6 +25,7 @@ import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.planning.ldm.plan.Plan;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -35,7 +36,6 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -57,11 +57,13 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Array;
 import java.sql.CallableStatement;
-import java.util.HashMap;
-import java.util.Enumeration;
-import java.util.Vector;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.math.BigDecimal;
 import java.io.Reader;
 
@@ -85,10 +87,7 @@ import java.io.Reader;
  * @property org.cougaar.core.persistence.database.password Specify the database password to use for DatabasePersistence.
  * @property org.cougaar.core.persistence.database.driver Specify the database driver to use for DatabasePersistence.
  **/
-public class DatabasePersistence
-  extends BasePersistence
-  implements Persistence
-{
+public class DatabasePersistence implements PersistencePlugin {
   // Codes used in the active column. Chosen for backward compatibility
   private static final String INCREMENTAL = "'t'";
   private static final String FULL        = "'x'";
@@ -104,25 +103,11 @@ public class DatabasePersistence
   String databaseDriver =
     System.getProperty("org.cougaar.core.persistence.database.driver");
 
+  private PersistencePluginSupport pps;
   private Connection theConnection;
-
   private DatabaseMetaData theMetaData;
-
-  private File persistenceDirectory;
-
-
-  public static Persistence find(final ClusterContext clusterContext)
-    throws PersistenceException
-  {
-    return BasePersistence.findOrCreate(clusterContext,
-                                        new PersistenceCreator() {
-      public BasePersistence create() throws PersistenceException {
-	return new DatabasePersistence(clusterContext);
-      }
-    });
-  }
-
   private PreparedStatement getSequenceNumbers;
+  private PreparedStatement getArchiveSequenceNumbers;
   private PreparedStatement putSequenceNumbers1;
   private PreparedStatement putSequenceNumbers2;
   private PreparedStatement storeDelta;
@@ -131,18 +116,13 @@ public class DatabasePersistence
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
-  private DatabasePersistence(ClusterContext clusterContext)
+  public void init(PersistencePluginSupport pps)
     throws PersistenceException
   {
-    super(clusterContext);
-    String clusterName = clusterContext.getClusterIdentifier().getAddress().replace('-', '_');
+    String clusterName = pps.getClusterIdentifier().getAddress().replace('-', '_');
+    LoggingService ls = pps.getLoggingService();
+    this.pps = pps;
     deltaTable = "delta_" + clusterName;
-    persistenceDirectory = new File(FilePersistence.persistenceRoot, clusterName);
-    if (!persistenceDirectory.isDirectory()) {
-      if (!persistenceDirectory.mkdirs()) {
-	throw new PersistenceException("Not a directory: " + persistenceDirectory);
-      }
-    }
     if (databaseDriver != null) {
       try {
         Class.forName(databaseDriver);
@@ -159,13 +139,16 @@ public class DatabasePersistence
       if (theMetaData.supportsTransactions()) {
         theConnection.setAutoCommit(false);
       } else {
-        System.err.println("Warning!!!! Persistence Database does not support transactions");
+        ls.error("Warning!!!! Persistence Database does not support transactions");
       }
-//        System.out.println("Database transaction isolation is " +
-//                           theConnection.getTransactionIsolation());
+      ls.debug("Database transaction isolation is " +
+               theConnection.getTransactionIsolation());
       getSequenceNumbers = theConnection.prepareStatement
-        ("select count(seqno), min(seqno), max(seqno)+1 from " + deltaTable +
+        ("select count(seqno), min(seqno), max(seqno)+1, max(timestamp) from " + deltaTable +
          " where active =" + FULL + " or active = " + INCREMENTAL);
+      getArchiveSequenceNumbers = theConnection.prepareStatement
+        ("select seqno, timestamp from " + deltaTable +
+         " where active =" + ARCHIVE);
       putSequenceNumbers1 = theConnection.prepareStatement
         ("update " + deltaTable +
          " set active = " + INACTIVE + " where active = " + INCREMENTAL + " and (seqno < ? or seqno >= ?)");
@@ -174,17 +157,17 @@ public class DatabasePersistence
          " set active = " + ARCHIVE + " where active = " + FULL + " and (seqno < ? or seqno >= ?)");
       storeDelta = theConnection.prepareStatement
         ("insert into " + deltaTable +
-         "(seqno, active, data) values (?, ?, ?)");
+         "(seqno, active, timestamp, data) values (?, ?, ?, ?)");
       getDelta = theConnection.prepareStatement
         ("select data from " + deltaTable +
          " where seqno = ?");
       checkDelta = theConnection.prepareStatement
-        ("select count(*) from " + deltaTable +
+        ("select timestamp from " + deltaTable +
          " where seqno = ? and (active = " + FULL + ") or (active = " + ARCHIVE + ")");
       cleanDeltas = theConnection.prepareStatement
         ("delete from " + deltaTable +
          " where "
-         + (archivingEnabled
+         + (pps.archivingEnabled()
             ? ("active = " + INACTIVE)
             : ("active in (" + INACTIVE + "," + ARCHIVE + ")"))
          + " and seqno >= ? and seqno < ?");
@@ -197,13 +180,13 @@ public class DatabasePersistence
       }
     }
     catch (SQLException e) {
-      System.err.println("Persistence connection error");
-      System.err.println("     URL: " + databaseURL);
-      System.err.println("    User: " + databaseUser);
-      System.err.println("Password: " + databasePassword);
-      System.err.println(" Drivers:");
+      ls.error("Persistence connection error");
+      ls.error("     URL: " + databaseURL);
+      ls.error("    User: " + databaseUser);
+      ls.error("Password: " + databasePassword);
+      ls.error(" Drivers:");
       for (Enumeration drivers = DriverManager.getDrivers(); drivers.hasMoreElements(); ) {
-        System.err.println("     " + drivers.nextElement().getClass().getName());
+        ls.error("     " + drivers.nextElement().getClass().getName());
       }
       fatalException(e);
     }
@@ -220,12 +203,12 @@ public class DatabasePersistence
       + " data "
       + longBinaryDef
       + ")";
-    System.out.println("Creating table: " + qry);
+    pps.getLoggingService().info("Creating table: " + qry);
     Statement stmt = theConnection.createStatement();
     stmt.executeUpdate(qry);
   }
 
-  protected SequenceNumbers readSequenceNumbers(String suffix) {
+  public SequenceNumbers[] readSequenceNumbers(String suffix) {
     if (!suffix.equals("")) {
       if (suffix.startsWith("_")) suffix = suffix.substring(1);
       try {
@@ -233,32 +216,43 @@ public class DatabasePersistence
         checkDelta.setInt(1, deltaNumber);
         ResultSet rs = checkDelta.executeQuery();
         if (!rs.next()) throw new IllegalArgumentException("Delta " + deltaNumber + " does not exist");
-        return new SequenceNumbers(deltaNumber, deltaNumber + 1);
+        long timestamp = rs.getLong(1);
+        return new SequenceNumbers[] {new SequenceNumbers(deltaNumber, deltaNumber + 1, timestamp)};
       } catch (Exception e) {
         fatalException(e);
       }
     }
     try {
+      List results = new ArrayList();
       ResultSet rs = getSequenceNumbers.executeQuery();
       try {
         if (rs.next()) {
           int count = rs.getInt(1);
-          if (count == 0) return null;
-          int first = rs.getInt(2);
-          int last = rs.getInt(3);
-          SequenceNumbers result = new SequenceNumbers(first, last);
-          return result;
-        } else {
-          return null;
+          if (count >= 0) {
+            int first = rs.getInt(2);
+            int last = rs.getInt(3);
+            long timestamp = rs.getLong(4);
+            results.add(new SequenceNumbers(first, last, timestamp));
+          }
         }
-      }
-      finally {
+      } finally {
         rs.close();
       }
+      rs = getArchiveSequenceNumbers.executeQuery();
+      try {
+        while (rs.next()) {
+          int seqno = rs.getInt(1);
+          long timestamp = rs.getLong(2);
+          results.add(new SequenceNumbers(seqno, seqno + 1, timestamp));
+        }
+      } finally {
+        rs.close();
+      }
+      return (SequenceNumbers[]) results.toArray(new SequenceNumbers[results.size()]);
     }
     catch (SQLException e) {
       fatalException(e);
-      return null;
+      return new SequenceNumbers[0];
     }
   }
 
@@ -276,7 +270,7 @@ public class DatabasePersistence
     }
   }
 
-  protected void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
+  public void cleanupOldDeltas(SequenceNumbers cleanupNumbers) {
     try {
       cleanDeltas.setInt(1, cleanupNumbers.first);
       cleanDeltas.setInt(2, cleanupNumbers.current);
@@ -291,7 +285,8 @@ public class DatabasePersistence
     try {
       storeDelta.setInt(1, seqno);
       storeDelta.setString(2, full ? "x" : "t");
-      storeDelta.setBinaryStream(3, is, length);
+      storeDelta.setLong(3, System.currentTimeMillis());
+      storeDelta.setBinaryStream(4, is, length);
       storeDelta.executeUpdate();
     }
     catch (SQLException e) {
@@ -341,7 +336,7 @@ public class DatabasePersistence
     }
   }
 
-  protected ObjectOutputStream openObjectOutputStream(final int deltaNumber,
+  public ObjectOutputStream openObjectOutputStream(final int deltaNumber,
                                                       final boolean full)
     throws IOException
   {
@@ -349,7 +344,7 @@ public class DatabasePersistence
     return new ObjectOutputStream(new MyOutputStream(deltaNumber, full));
   }
 
-  protected void closeObjectOutputStream(SequenceNumbers retainNumbers,
+  public void closeObjectOutputStream(SequenceNumbers retainNumbers,
                                          ObjectOutputStream currentOutput,
                                          boolean full)
   {
@@ -362,14 +357,14 @@ public class DatabasePersistence
     }
   }
 
-  protected void abortObjectOutputStream(SequenceNumbers retainNumbers,
+  public void abortObjectOutputStream(SequenceNumbers retainNumbers,
                                          ObjectOutputStream currentOutput)
   {
     // Nothing to do since we haven't written to the db yet
     // We just abandon the streams.
   }
 
-  protected ObjectInputStream openObjectInputStream(int deltaNumber)
+  public ObjectInputStream openObjectInputStream(int deltaNumber)
     throws IOException
   {
     try {
@@ -393,25 +388,18 @@ public class DatabasePersistence
     }
   }
 
-  protected void closeObjectInputStream(int deltaNumber,
+  public void closeObjectInputStream(int deltaNumber,
                                         ObjectInputStream currentInput)
   {
     try {
       currentInput.close();
     }
     catch (IOException e) {
-      e.printStackTrace();
+      pps.getLoggingService().error("Exception closing input stream", e);
     }
   }
 
-  protected PrintWriter getHistoryWriter(int deltaNumber, String prefix)
-    throws IOException
-  {
-    File historyFile = new File(persistenceDirectory, prefix + formatDeltaNumber(deltaNumber));
-    return new PrintWriter(new FileWriter(historyFile));
-  }
-
-  protected void deleteOldPersistence() {
+  public void deleteOldPersistence() {
     try {
       Statement stmt = theConnection.createStatement();
       stmt.executeUpdate("delete from " + deltaTable);
@@ -422,8 +410,7 @@ public class DatabasePersistence
   }
 
   private void fatalException(Exception e) {
-    System.err.println("Fatal database persistence exception: " + e);
-    e.printStackTrace();
+    pps.getLoggingService().fatal("Fatal database persistence exception", e);
     System.exit(13);
   }
 
@@ -953,7 +940,9 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         thePreparedStatement.setAsciiStream(arg0, arg1, arg2);
       }
-      /** @deprecated in the original **/
+      /**
+       * @deprecated in the original
+       **/
       public void setUnicodeStream(int arg0, java.io.InputStream arg1, int arg2) throws java.sql.SQLException {
         if (!active) throw new SQLException("getDatabaseConnection not called");
         throw new java.sql.SQLException("Method not supported");
@@ -1008,7 +997,9 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return ( theCallableStatement.getArray( i ) );
       }
-      /** @deprecated in the original **/
+      /**
+       * @deprecated in the original
+       **/
       public java.math.BigDecimal getBigDecimal(int paramIndex)  throws java.sql.SQLException {
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return ( theCallableStatement.getBigDecimal( paramIndex ) );
