@@ -22,7 +22,11 @@
 package org.cougaar.util;
 
 /** 
- * Base (java) exception for StateModel-specific exception classes.
+ * Thrown by GenericStateModel state transition methods when transition
+ * is not possible, usually because the ending state cannot be reached
+ * directly from the starting state.  E.g. start() will throw a StateModelException
+ * if the starting state of the component is not LOADED.
+ * @see org.cougaar.util.GenericStateModel
  **/
 
 public class StateModelException extends RuntimeException {

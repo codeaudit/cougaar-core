@@ -20,6 +20,13 @@
  */
 package org.cougaar.domain.planning.ldm.measure;
 
+/**
+ * Thrown by Measure class methods when some argument 
+ * specifies a unit of measure which is illegal.
+ * E.g. Mass.newMass(42.0,-1) will always throw UnknownUnitException
+ * because -1 is never a legal unit of measure.
+ *
+ **/
 public class UnknownUnitException extends RuntimeException{
   public UnknownUnitException() {
     super() ;

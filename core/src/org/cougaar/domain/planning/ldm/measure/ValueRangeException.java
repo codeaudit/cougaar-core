@@ -22,6 +22,12 @@
 
 package org.cougaar.domain.planning.ldm.measure;
 
+/**
+ * Thrown by Measure class methods when a concrete Measure value is outside a
+ * the defined range of the Measure.  E.g. Latitude.newDegrees(100.0) will throw
+ * ValueRangeException because 100.0 degress is not a valid Latitude.
+ **/
+
 public class ValueRangeException extends RuntimeException {
 
   public ValueRangeException() {

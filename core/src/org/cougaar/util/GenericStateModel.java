@@ -44,7 +44,7 @@ public interface GenericStateModel {
 
   /** Initialize.  Transition object from undefined to UNLOADED state.
    * Treat initialize() as an extended constructor.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to UNLOADED because initial state wasn't UNITIALIZED.
    **/
 
   void initialize() throws StateModelException;
@@ -54,14 +54,14 @@ public interface GenericStateModel {
    * After initialize and before load, an object in notified about its
    * parents, services, etc.  After load, it should be ready to run (but not 
    * actually running). 
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to LOADED because initial state wasn't UNLOADED.
    **/
 
   void load() throws StateModelException;
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to ACTIVE because initial state wasn't LOADED.
    **/
 
   void start() throws StateModelException;
@@ -70,35 +70,35 @@ public interface GenericStateModel {
    *  be cleanly resumed or the object can be unloaded.
    *  Called object should transition from the ACTIVE state to
    *  the IDLE state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to IDLE because initial state wasn't ACTIVE.
    **/
 
   void suspend() throws StateModelException;
 
   /** Called object should transition from the IDLE state back to
    *  the ACTIVE state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to ACTIVE because initial state wasn't IDLE.
    **/
 
   void resume() throws StateModelException;
 
   /** Called object should transition from the IDLE state
    *  to the LOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to LOADED because initial state wasn't IDLE.
    **/
 
   void stop() throws StateModelException;
 
-  /**  Called object should transition from ACTIVE or SERVING state
+  /**  Called object should transition from ACTIVE state
    *   to the LOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to LOADED because initial state wasn't ACTIVE.
    **/
 
   void halt() throws StateModelException;
 
   /** Called object should perform any cleanup operations and transition
    *  to the UNLOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
+   *  @exception org.cougaar.util.StateModelException Cannot transition to UNLOADED because initial state wasn't LOADED.
    **/
 
   void unload() throws StateModelException;
