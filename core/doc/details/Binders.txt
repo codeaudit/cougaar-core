@@ -1,0 +1,35 @@
+Advanced Binder topics
+
+- - - - - BinderWrappers
+
+A BinderWrapper is a Binder which is inserted between a Binder and the
+associated Container.  It can provide an additional layer of insulation
+and/or management functions.  There may be any number of
+BinderWrappers between a Container and the primary Binder of a child
+component.   
+
+One use of a BinderWrapper is as a Service "filter" - a layer which
+intercepts requests for services, and can choose to mediate access
+(by vetoing requests which might otherwise be allowed), proxy the
+actual service (by auditing and/or managing per-method-call access to
+the service API), proxy the client (by auditing and/or managing
+per-method-callback access to the client from the service), or adapt
+one service request to another.  All but the last of these functions
+(Service adaptation) can be performed by extending the new base class
+ServiceFilter. 
+
+ServiceFilter is a BinderFactory suitable for loading in a
+"cluster.ini" file which implements the basic functions of a service
+filter binder.  Implementors will define or override methods and
+provide additional classes to tune the behavior of the class to their
+own use.  A concrete extension of this may be found in the core
+examples tree (distributed in core-dev.jar), in
+examples/org/cougaar/core/examples/PluginServiceFilter.java. 
+
+PluginServiceFilter is a simple ServiceFilter which audits
+BlackboardService subscription requests by printing a line of text
+for each such event.  It properly nests between the PluginManager and
+the base DefaultPluginBinder and will coexist with other
+BinderWrappers.
+
+
