@@ -28,6 +28,7 @@ package org.cougaar.core.agent;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -38,17 +39,16 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
 import org.cougaar.core.persist.RehydrationData;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.IncarnationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.Callback;
-import org.cougaar.core.service.wp.Response;
-import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -62,14 +62,11 @@ public final class Reconcile
 extends GenericStateModelAdapter
 implements Component
 {
-
-  private static final boolean VERBOSE_RESTART = true;//false;
-  private static final long RESTART_CHECK_INTERVAL = 43000L;
-
   private ServiceBroker sb;
 
   private LoggingService log;
-  private WhitePagesService wps;
+  private MessageAddress localAgent;
+  private IncarnationService incarnationService;
 
   private PersistenceService ps;
   private PersistenceClient pc;
@@ -79,39 +76,14 @@ implements Component
 
   private BlackboardForAgent bb;
 
-  private Schedulable restartTimer;
+  private Schedulable reconcileThread;
+  private final List reconcileTmp = new ArrayList();
 
-  // map of agent name to most recently observed incarnation, used
-  // to detect the restart of remote agents, which requires a
-  // resync beteen this agent and the restarted agent.
-  private final Map incarnationMap = new HashMap();
+  private final List queue = new ArrayList();
+  private boolean active;
 
-    private final Map callbackMap = new HashMap();
-
-
-    private class BlockingWPCallback implements Callback {
-	AddressEntry entry;
-	boolean completed;
-	
-	BlockingWPCallback()
-	{
-	    completed = false;
-	}
-	
-	public void execute(Response response) 
-	{
-	    completed = true;
-	    if (response.isSuccess()) {
-		if (log.isInfoEnabled()) {
-		    log.info("WP Response: "+response);
-		}
-		entry = ((Response.Get) response).getAddressEntry();
-	    } else {
-		log.error("WP Error: "+response);
-	    }
-	}
-    }
-
+  private final IncarnationService.Callback cb =
+    new ReconcileCallback();
 
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
@@ -120,58 +92,89 @@ implements Component
   public void load() {
     super.load();
 
+    localAgent = find_local_agent();
+
     log = (LoggingService)
       sb.getService(this, LoggingService.class, null);
+    String prefix = localAgent+": ";
+    log = LoggingServiceWithPrefix.add(log, prefix);
 
-    // get wp
-    wps = (WhitePagesService) 
-      sb.getService(this, WhitePagesService.class, null);
-    if (wps == null) {
+    // get incarnation service
+    incarnationService = (IncarnationService) 
+      sb.getService(this, IncarnationService.class, null);
+    if (incarnationService == null) {
       throw new RuntimeException(
-          "Unable to obtain WhitePagesService");
+          "Unable to obtain IncarnationService");
     }
+
+    // create queue thread
+    Runnable reconcileRunner = 
+      new Runnable() {
+        public void run() {
+          reconcileNow();
+        }
+      };
+    ThreadService threadService = (ThreadService)
+      sb.getService(this, ThreadService.class, null);
+    reconcileThread = threadService.getThread(
+        this, reconcileRunner, "Reconciler");
+    sb.releaseService(this, ThreadService.class, threadService);
 
     register_persistence();
 
-    // get mobile state
+    // get mobile state, to make sure we don't miss a reconcile
+    // and avoid unnecessary reconciles
     Object o = rehydrate();
     if (o instanceof Map) {
-      Map m = (Map) o;
-      synchronized (incarnationMap) {
-        incarnationMap.putAll(m);
-      }
+      resubscribe((Map) o);
     }
     o = null;
 
+    // create "recordAddress" access
     rawsp = new ReconcileAddressWatcherServiceProvider();
     sb.addService(ReconcileAddressWatcherService.class, rawsp);
 
+    // create "enableReconcile" to enable reconcile processing
+    // once the agent has loaded, and "disableReconcile" to
+    // disable reconciles when the agent is persisting or unloading.
     resp = new ReconcileEnablerServiceProvider();
     sb.addService(ReconcileEnablerService.class, resp);
+  }
+
+  private MessageAddress find_local_agent() {
+    AgentIdentificationService ais = (AgentIdentificationService)
+      sb.getService(this, AgentIdentificationService.class, null);
+    if (ais == null) {
+      return null;
+    }
+    MessageAddress ret = ais.getMessageAddress();
+    sb.releaseService(
+        this, AgentIdentificationService.class, ais);
+    return ret;
   }
 
   public void start() {
     super.start();
     // called later via ReconcileEnablerService:
-    //startRestartTimer();
+    //enableReconcile();
   }
 
   public void suspend() {
     super.suspend();
     // called earlier via ReconcileEnablerService:
-    //stopRestartTimer();
+    //disableReconcile();
   }
 
   public void resume() {
     super.resume();
     // called later via ReconcileEnablerService:
-    //startRestartTimer();
+    //enableReconcile();
   }
 
   public void stop() {
     super.stop();
     // called earlier via ReconcileEnablerService:
-    //stopRestartTimer();
+    //disableReconcile();
   }
 
   public void unload() {
@@ -188,10 +191,11 @@ implements Component
 
     unregister_persistence();
 
-    if (wps != null) {
+    if (incarnationService != null) {
+      // release service, unsubscribes our callbacks:
       sb.releaseService(
-          this, WhitePagesService.class, wps);
-      wps = null;
+          this, IncarnationService.class, incarnationService);
+      incarnationService = null;
     }
   }
 
@@ -203,11 +207,39 @@ implements Component
       return null;
     }
 
-    Map m;
-    synchronized (incarnationMap) {
-      m = new HashMap(incarnationMap);
+    synchronized (queue) {
+      if (active && log.isErrorEnabled()) {
+        log.error("Attempting to captureState while active!");
+      }
     }
-    return m;
+
+    // capture our Map<agentId, Long> state
+    //
+    // TODO: our active flag is false, so we won't reconcile while
+    // we're capturing our state.  However, we don't actually lockout
+    // the incarnationChanged callbacks, so there's a small risk that
+    // our queue is not empty, meaning that we'd miss a reconcile,
+    // but we'd rather not block the incarnationService. 
+    Map ret;
+    // get Map<agentId, Set<Callback>>
+    Map subs = incarnationService.getSubscriptions();
+    if (subs == null || subs.isEmpty()) {
+      ret = Collections.EMPTY_MAP;
+    } else {
+      // for all agentIds, get our inc
+      ret = new HashMap(subs.size());
+      for (Iterator iter = subs.keySet().iterator();
+          iter.hasNext();
+          ) {
+        MessageAddress agentId = (MessageAddress) iter.next();
+        long inc = incarnationService.getIncarnation(agentId, cb);
+        ret.put(agentId, new Long(inc));
+      }
+    }
+    if (log.isDebugEnabled()) {
+      log.debug("Captured state["+ret.size()+"]: "+ret);
+    }
+    return ret;
   }
 
   private void register_persistence() {
@@ -277,205 +309,127 @@ implements Component
     return o;
   }
 
-  /*
-   * Ensure that we are tracking incarnations number for the agent at
-   * a given address. If the specified agent is not in the restart
-   * incarnation map it means we have never before communicated with that 
-   * agent or we have just restarted and are sending restart messages. In 
-   * both cases, it is ok to store the special "unknown incarnation" marker
-   * because we do not want to detect any restart.
-   */
-  private void recordAddress(MessageAddress agentId) {
-    // only include agent addresses in restart checking
-    synchronized (incarnationMap) {
-      if (incarnationMap.get(agentId) == null) {
-        if (VERBOSE_RESTART && log.isDebugEnabled()) {
-          log.debug("Adding "+agentId+" to restart table");
+  private void resubscribe(Map m) {
+    if (m == null || m.isEmpty()) {
+      return;
+    }
+    for (Iterator iter = m.entrySet().iterator();
+        iter.hasNext();
+        ) {
+      Map.Entry me = (Map.Entry) iter.next();
+      MessageAddress agentId = (MessageAddress) me.getKey();
+      Long l = (Long) me.getValue();
+      long inc = l.longValue();
+      boolean b = incarnationService.subscribe(agentId, cb, inc);
+      if (b) {
+        if (log.isDebugEnabled()) {
+          log.debug("rehydarte-recordAddress("+agentId+", "+inc+")");
         }
-        incarnationMap.put(agentId, new Long(0L));
+      } else {
+        if (log.isWarnEnabled()) {
+          log.warn(
+              "subscribe("+agentId+", "+cb+", "+inc+
+              ") returned false");
+        }
       }
     }
   }
 
-  /**
-   * Get the latest incarnation number for the specified agent.
-   *
-   * @return -1 if the WP lacks a version entry for the agent
-   */
-    private long lookupCurrentIncarnation(MessageAddress agentId) 
-    {
-	AddressEntry entry;
-	BlockingWPCallback callback;
-
-	callback = (BlockingWPCallback) callbackMap.get(agentId);
-	    
-	if (callback == null) {
-	    // No pending callback yet.
-	    callback = new BlockingWPCallback();
-	    wps.get(agentId.getAddress(), "version", callback);
-	    if (callback.completed) {
-		// cache hit
-		entry = callback.entry;
-	    } else {
-		// No cache hit.  Remember the callback.
-		callbackMap.put(agentId, callback);
-		return -1;
-	    }
-	} else if (!callback.completed) {
-	    // Pending callback not completed yet
-	    return -1;
-	} else {
-	    // Pending callback completed
-	    entry = callback.entry;
-	    callbackMap.remove(agentId);
-	}
-
-	if (entry != null) {
-	    // If it gets here, the entry is available
-	    String path = entry.getURI().getPath();
-	    int end = path.indexOf('/', 1);
-	    String incn_str = path.substring(1, end);
-	    return Long.parseLong(incn_str);
-	} else {
-	    // log this?
-	    // Return error code
-	    return -1;
-	}
-
-
+  private void recordAddress(MessageAddress agentId) {
+    if (incarnationService.subscribe(agentId, cb) &&
+        log.isDebugEnabled()) {
+      log.debug("recordAddress("+agentId+")");
     }
-
-  private void startRestartTimer() {
-    if (restartTimer != null) {
-      return;
-    }
-
-    bb = (BlackboardForAgent)
-      sb.getService(this, BlackboardForAgent.class, null);
-    if (bb == null) {
-      throw new RuntimeException(
-          "Unable to obtain BlackboardForAgent");
-    }
-
-    Runnable taskBody = 
-      new Runnable() {
-        public void run() {
-          checkRestarts();
-        }
-      };
-    ThreadService threadService = (ThreadService)
-      sb.getService(this, ThreadService.class, null);
-    restartTimer = threadService.getThread(this, taskBody, "Reconciler");
-    sb.releaseService(this, ThreadService.class, threadService);
-
-    restartTimer.schedule(
-        RESTART_CHECK_INTERVAL,
-        RESTART_CHECK_INTERVAL);
   }
 
-  private void stopRestartTimer() {
-    if (restartTimer == null) {
-      return;
+  private void enableReconcile() {
+    if (bb == null) {
+      bb = (BlackboardForAgent)
+        sb.getService(this, BlackboardForAgent.class, null);
+      if (bb == null) {
+        throw new RuntimeException(
+            "Unable to obtain BlackboardForAgent");
+      }
+    }
+
+    synchronized (queue) {
+      if (active) {
+        return;
+      }
+      active = true;
+      if (log.isDebugEnabled()) {
+        log.debug("Enabled");
+      }
+      if (!queue.isEmpty()) {
+        reconcileThread.start();
+      }
+    }
+  }
+
+  private void disableReconcile() {
+    synchronized (queue) {
+      if (!active) {
+        return;
+      }
+      active = false;
+      if (log.isDebugEnabled()) {
+        log.debug("Disabled");
+      }
     }
 
     if (bb != null) {
       sb.releaseService(this, BlackboardForAgent.class, bb);
       bb = null;
     }
-
-    restartTimer.cancelTimer();
-    restartTimer = null;
   }
 
-    private boolean doReconcile(MessageAddress agentId,
-				long cachedInc,
-				long currentInc)
-    {
-      if (VERBOSE_RESTART && log.isDebugEnabled()) {
-        log.debug(
-            "Update agent "+agentId+
-            " incarnation from "+cachedInc+
-            " to "+currentInc);
+  private void reconcileLater(MessageAddress agentId) {
+    synchronized (queue) {
+      queue.add(agentId);
+      if (active) {
+        reconcileThread.start();
       }
-      if (currentInc > 0 && currentInc != cachedInc) {
-        Long l = new Long(currentInc);
-        synchronized (incarnationMap) {
-          incarnationMap.put(agentId, l);
-        }
-        if (cachedInc > 0) {
-	  return true;
-        }
-      }
-      return false;
-    }
-
-
-  /**
-   * Periodically called to check remote agent restarts.
-   * <p>
-   * The incarnation map has an entry for every agent that we have
-   * communicated with.  The value is the last known incarnation number
-   * of the agent.
-   * <p>
-   * The first time we check restarts, we have ourself restarted so we
-   * proceed to verify our state against _all_ the other agents. We do
-   * this because we have no record with whom we have been in
-   * communication. In this case, we notify the blackboard, which will
-   * instruct the domains to reconcile the objects in the local
-   * blackboard.  Messages will be sent only to those agents for which
-   * we have communicated with.  The sending of those messages will add
-   * entries to the restart incarnation map. So after doing a restart 
-   * with an agent if there is an entry in the map for that agent, we set
-   * the saved incarnation number to the current value for that agent.
-   * This avoids repeating the restart later. If the current incarnation
-   * number differs, the agent must have restarted so we initiate the
-   * restart reconciliation process.
-   */
-  private void checkRestarts() {
-    if (VERBOSE_RESTART && log.isDebugEnabled()) {
-      log.debug("Check restarts");
-    }
-    // snapshot the incarnation map
-    Map restartMap;
-    synchronized (incarnationMap) {
-      if (incarnationMap.isEmpty()) {
-        return; // nothing to do
-      }
-      restartMap = new HashMap(incarnationMap);
-    }
-    // get the latest incarnations from the white pages
-    List reconcileList = null;
-    for (Iterator iter = restartMap.entrySet().iterator();
-        iter.hasNext();
-        ) {
-	Map.Entry me = (Map.Entry) iter.next();
-	MessageAddress agentId = (MessageAddress) me.getKey();
-	long cachedInc = ((Long) me.getValue()).longValue();
-	long currentInc;
-	boolean must_reconcile;
-	currentInc = lookupCurrentIncarnation(agentId);
-	must_reconcile = doReconcile(agentId, cachedInc, currentInc);
-	if (must_reconcile) {
-	    // must reconcile with this agent
-	    if (reconcileList == null) {
-		reconcileList = new ArrayList();
-	    }
-	    reconcileList.add(agentId);
-	}
-    }
-    // reconcile with any agent (that we've communicated with) that
-    // has a new incarnation number
-    int n = (reconcileList == null ? 0 : reconcileList.size());
-    for (int i = 0; i < n; i++) {
-      MessageAddress agentId = (MessageAddress) reconcileList.get(i);
-      if (log.isInfoEnabled()) {
-        log.info(
-            "Detected (re)start of agent "+agentId+
-            ", synchronizing blackboards");
-      }
-      bb.restartAgent(agentId);
     }
   }
+
+  private void reconcileNow() {
+    synchronized (queue) {
+      if (!active || queue.isEmpty()) {
+        return;
+      }
+      reconcileTmp.addAll(queue);
+      queue.clear();
+    }
+    for (int i = 0, n = reconcileTmp.size(); i < n; i++) {
+      MessageAddress agentId = (MessageAddress) reconcileTmp.get(i);
+      reconcileNow(agentId);
+    }
+    reconcileTmp.clear();
+  }
+
+  private void reconcileNow(MessageAddress agentId) {
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Detected (re)start of agent "+agentId+
+          ", synchronizing blackboards");
+    }
+    bb.restartAgent(agentId);
+  }
+
+  private class ReconcileCallback
+    implements IncarnationService.Callback, Comparable {
+      public void incarnationChanged(MessageAddress addr, long inc) {
+        // this could block, so run it in a separate thread
+        Reconcile.this.reconcileLater(addr);
+      }
+      public int compareTo(Object o) {
+        // make me last, so MTS links are reset before I reconcile!
+        return (o instanceof ReconcileCallback ?  0 : -1);
+      }
+      public String toString() {
+        return "(reconcile for "+localAgent+")";
+      }
+    }
 
   private final class ReconcileAddressWatcherServiceProvider
     implements ServiceProvider {
@@ -510,10 +464,10 @@ implements Component
       public ReconcileEnablerServiceProvider() {
         res = new ReconcileEnablerService() {
           public void startTimer() {
-            startRestartTimer();
+            enableReconcile();
           }
           public void stopTimer() {
-            stopRestartTimer();
+            disableReconcile();
           }
         };
       }
