@@ -21,14 +21,18 @@
 
 package org.cougaar.core.plugin.freeze;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.component.Container;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -40,6 +44,23 @@ import org.cougaar.util.UnaryPredicate;
 
 public class FreezeNodePlugin extends FreezeSourcePlugin {
   private IncrementalSubscription relaySubscription;
+  private AgentContainer agentContainer;
+
+  public void load() {
+    super.load();
+
+    NodeControlService ncs = (NodeControlService)
+      getServiceBroker().getService(
+          this, NodeControlService.class, null);
+    if (ncs != null) {
+      Container c = ncs.getRootContainer();
+      if (c instanceof AgentContainer) {
+        agentContainer = (AgentContainer) c;
+      }
+      getServiceBroker().releaseService(
+          this, NodeControlService.class, ncs);
+    }
+  }
 
   public void setupSubscriptions() {
     super.setupSubscriptions();
@@ -70,10 +91,26 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
    * @return the names of agents in this node
    **/
   protected Set getTargetNames() {
-    return topologyReaderService
-      .getChildrenOnParent(TopologyReaderService.AGENT,
-                           TopologyReaderService.NODE,
-                           getMessageAddress().toString());
+    // get local agent addresses
+    Set addrs;
+    if (agentContainer == null) {
+      if (logger.isErrorEnabled()) {
+        logger.error(
+            "Unable to list local agents on node "+
+            getMessageAddress());
+      }
+      addrs = Collections.EMPTY_SET;
+    } else {
+      addrs = agentContainer.getAgentAddresses();
+    }
+    // flatten to names, which the parent then converts back.
+    // we could fix parent to ask for "getTargetAddresses()"
+    Set names = new HashSet(addrs.size());
+    for (Iterator i = addrs.iterator(); i.hasNext(); ) {
+      MessageAddress a = (MessageAddress) i.next();
+      names.add(a.getAddress());
+    }
+    return names;
   }
 
   /**

@@ -23,6 +23,7 @@ package org.cougaar.core.plugin.freeze;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.Set;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
@@ -34,7 +35,8 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.wp.ListAllNodes;
 
 /**
  * This plugin initiates a society-wide freeze for assessment
@@ -42,7 +44,16 @@ import org.cougaar.core.service.TopologyReaderService;
 
 public class FreezeSocietyPlugin extends FreezeSourcePlugin {
   private ServletService servletService = null;
+  private WhitePagesService wps = null;
   protected String status = "Running";
+
+  public void load() {
+    super.load();
+
+    wps = (WhitePagesService)
+      getServiceBroker().getService(
+          this, WhitePagesService.class, null);
+  }
 
   public void setupSubscriptions() {
     super.setupSubscriptions();
@@ -65,7 +76,16 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
   }
 
   protected Set getTargetNames() {
-    return topologyReaderService.getAll(TopologyReaderService.NODE);
+    Set names;
+    try {
+      names = ListAllNodes.listAllNodes(wps); // not scalable!
+    } catch (Exception e) {
+      if (logger.isErrorEnabled()) {
+        logger.error("Unable to list all node names", e);
+      }
+      names = Collections.EMPTY_SET;
+    }
+    return names;
   }
 
   private class FreezeControlServlet extends HttpServlet {

@@ -30,7 +30,6 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.TopologyReaderService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
@@ -46,7 +45,6 @@ import org.cougaar.util.UnaryPredicate;
  **/
 
 public abstract class FreezeSourcePlugin extends FreezePlugin {
-  protected TopologyReaderService topologyReaderService;
   protected UIDService uidService;
   private Subscription relaySubscription;
   private FreezeRelaySource relay; // The relay we sent
@@ -55,7 +53,6 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
     if (uidService != null) {
       ServiceBroker sb = getServiceBroker();
       sb.releaseService(this, UIDService.class, uidService);
-      sb.releaseService(this, TopologyReaderService.class, topologyReaderService);
       uidService = null;
     }
     super.unload();
@@ -66,8 +63,6 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
     ServiceBroker sb = getServiceBroker();
     uidService = (UIDService)
       sb.getService(this, UIDService.class, null);
-    topologyReaderService = (TopologyReaderService)
-      sb.getService(this, TopologyReaderService.class, null);
     relaySubscription = blackboard.subscribe(sourceRelayPredicate);
   }
 
