@@ -54,7 +54,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     super(0, 
 	  SocketFactory.getNameServiceSocketFactory(), 
 	  SocketFactory.getNameServiceSocketFactory());
-    putDirMap((NSDirKey) ROOT, new NSDirMap(ROOT_NAME));
+    putDirectory((NSDirKey) ROOT, new NSDirMap(ROOT_NAME));
   }
 
   public NSKey getRoot() {
@@ -89,80 +89,82 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       throw new InvalidNameException("Can not specify empty Context name");
     }
 
-    synchronized (mapOfMaps) {
-      // Don't want any other thread modifying mapOfMaps while we're creating
-      // the directory.
-      NSDirMap dirMap = getDirectory(dirKey);
-      if (dirMap == null) {
-        throw new NameNotFoundException("No context found for NSKey - " + 
-                                        dirKey);
-      }
+    // Don't be tempted to synchronize mapOfMaps here. It's not
+    // necessary and will deadlock. The "bad" thing that can happen is
+    // that the directory of which we are creating a subdirectory
+    // might be deleted. This possibility is precluded because the
+    // destroySubDirectory method cannot be entered due to
+    // synchronization on the server.
+    NSDirMap dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
       
-      synchronized (dirMap) {
-        NSObjectAndAttributes nsObj = 
-          (NSObjectAndAttributes) dirMap.get(subDirName);
+    synchronized (dirMap) {
+      NSObjectAndAttributes nsObj = 
+        (NSObjectAndAttributes) dirMap.get(subDirName);
 
-        if (nsObj != null) {
-          throw new NameAlreadyBoundException(fullName(dirKey, subDirName)  +
-                                              " already exists.");
-        }
-
-        String subDirPath = fullName(dirKey, subDirName);
-        NSDirMap subDirMap = new NSDirMap(subDirPath, attributes);
-        putDirMap(subDirMap.getKey(), subDirMap);
-        
-        nsObj = new NSObjectAndAttributes(subDirMap.getKey(), null);
-        dirMap.put(subDirName, nsObj);
-        return subDirMap.getKey();
+      if (nsObj != null) {
+        throw new NameAlreadyBoundException(fullName(dirKey, subDirName)  +
+                                            " already exists.");
       }
+
+      String subDirPath = fullName(dirKey, subDirName);
+      NSDirMap subDirMap = new NSDirMap(subDirPath, attributes);
+      putDirectory(subDirMap.getKey(), subDirMap);
+        
+      nsObj = new NSObjectAndAttributes(subDirMap.getKey(), null);
+      dirMap.put(subDirName, nsObj);
+      return subDirMap.getKey();
     }
   }
 
-  synchronized public void destroySubDirectory(NSKey dirKey, String subDirName) 
+  public synchronized void destroySubDirectory(NSKey dirKey, String subDirName) 
     throws ContextNotEmptyException, NameNotFoundException, NamingException {
     if ((subDirName == null) || (subDirName.equals(""))) {
       throw new InvalidNameException("Can not specify empty SubContext name");
     }
+    // Don't be tempted to synchronize mapOfMaps here. It's not
+    // necessary and will deadlock. The "bad" things that can happen
+    // are that operations within the subdirectory being deleted will
+    // return results that are no longer valid, but that is not
+    // distinguishable from previously returned results that will also
+    // become invalid once the directory has been removed.
+    NSDirMap dirMap = getDirectory(dirKey);
+    if (dirMap == null) {
+      throw new NameNotFoundException("No context found for NSKey - " + 
+                                      dirKey);
+    }
+      
+    synchronized (dirMap) {
+      NSObjectAndAttributes nsObj = 
+        (NSObjectAndAttributes) dirMap.get(subDirName);
 
-    synchronized (mapOfMaps) {
-      // Don't leave any chance of someone getting a hold of the SubContext
-      // while we're in the process of deleting.
-      NSDirMap dirMap = getDirectory(dirKey);
-      if (dirMap == null) {
-        throw new NameNotFoundException("No context found for NSKey - " + 
-                                        dirKey);
+      if (nsObj == null) {
+        // No error if sub dir doesn't exist
+        return;
       }
-      
-      
-      synchronized (dirMap) {
-        NSObjectAndAttributes nsObj = 
-          (NSObjectAndAttributes) dirMap.get(subDirName);
         
-        if (nsObj == null) {
-          // No error if sub dir doesn't exist
-          return;
-        }
+      if (!(nsObj.getObject() instanceof NSKey)) {
+        throw new NotContextException(fullName(dirKey, subDirName) + 
+                                      " is not a Context.");
+      }
         
-        if (!(nsObj.getObject() instanceof NSKey)) {
-          throw new NotContextException(fullName(dirKey, subDirName) + 
-                                         " is not a Context.");
-        }
+      NSKey subDirKey = (NSKey) nsObj.getObject();
+      NSDirMap subDirMap = getDirectory(subDirKey);
         
-        NSKey subDirKey = (NSKey) nsObj.getObject();
-        NSDirMap subDirMap = getDirectory(subDirKey);
-        
-        if (subDirMap != null) {
-          synchronized (subDirMap) {
-            if (subDirMap.size() != 0) {
-              throw new ContextNotEmptyException(subDirMap.getFullPath() + 
-                                                 " is not empty.");
-            }
-            mapOfMaps.remove(subDirKey);
+      if (subDirMap != null) {
+        synchronized (subDirMap) {
+          if (subDirMap.size() != 0) {
+            throw new ContextNotEmptyException(subDirMap.getFullPath() + 
+                                               " is not empty.");
           }
+          removeDirectory(subDirKey);
         }
+      }
         
-        dirMap.remove(subDirName);
-      } 
+      dirMap.remove(subDirName);
     }
   }
   
@@ -522,19 +524,25 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
   private NSDirMap getDirectory(NSKey dirKey) {
     synchronized (mapOfMaps) {
-      NSDirMap currentMap = getDirMap(dirKey);
-      return currentMap;
-    }
-  }
-        
-  private NSDirMap getDirMap(NSKey dirKey) {
-    synchronized (mapOfMaps) {
       return (NSDirMap) mapOfMaps.get(dirKey);
     }
   }
 
+  private void removeDirectory(NSKey dirKey) {
+    synchronized (mapOfMaps) {
+      mapOfMaps.remove(dirKey);
+    }
+  }
+
+
+  private void putDirectory(NSDirKey dirKey, NSDirMap dirMap) {
+    synchronized (mapOfMaps) {
+      mapOfMaps.put(dirKey, dirMap);
+    }
+  }
+
   private Collection getDirAttributes(NSKey dirKey) {
-    NSDirMap dirMap = getDirMap(dirKey);
+    NSDirMap dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
@@ -546,18 +554,12 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   private void putDirAttributes(NSKey dirKey, Collection attributes) {
-    NSDirMap dirMap = getDirMap(dirKey);
+    NSDirMap dirMap = getDirectory(dirKey);
 
     if (dirMap != null) {
       synchronized (dirMap) {
         dirMap.setAttributes(attributes);
       }
-    }
-  }
-
-  private void putDirMap(NSDirKey dirKey, NSDirMap dirMap) {
-    synchronized (mapOfMaps) {
-      mapOfMaps.put(dirKey, dirMap);
     }
   }
 
