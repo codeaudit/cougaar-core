@@ -636,10 +636,17 @@ public class Blackboard extends Subscriber
     }
   }
   
-  // object tracker for distributor use
+  /**
+   * If {@link ActiveSubscrptionObject#deferCommit} is enabled, this
+   * class tracks objects that would be modified by an {@link
+   * ActiveSubscriptionObject} at publish time and logs a warning
+   * if they are accessed before the transaction close time.
+   * <p>
+   * For details, see bug 3663.
+   */
   private final static ObjectTracker tracker = new ObjectTracker();
-  static final ObjectTracker getTracker() { return tracker; }
-  static class ObjectTracker {
+  public static final ObjectTracker getTracker() { return tracker; }
+  public static class ObjectTracker {
     private final static Logger log = Logging.getLogger(ObjectTracker.class);
     private static final Set globalSet = new HashSet(11);
     private final ThreadLocal localSet = new ThreadLocal() {
