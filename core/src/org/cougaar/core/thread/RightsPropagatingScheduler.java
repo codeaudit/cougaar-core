@@ -24,25 +24,35 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
-public class SimplePropagatingScheduler extends SimpleScheduler
+public class RightsPropagatingScheduler extends SimpleScheduler
 {
-    public SimplePropagatingScheduler(ThreadListenerProxy listenerProxy, 
+    private static final long MaxTime = 20; // ms
+    private int ownedRights = 0;
+    private long lastReleaseTime = 0;
+
+    public RightsPropagatingScheduler(ThreadListenerProxy listenerProxy, 
 				      String name)
     {
 	super(listenerProxy, name);
+	System.out.println("RightsPropagatingScheduler");
     }
 
     
     boolean requestRights(SimpleScheduler requestor) {
 	TreeNode parent_node = getTreeNode().getParent();
+	boolean result;
 	if (parent_node == null) {
 	    // This is the root
-	    return super.requestRights(requestor);
+	    result = super.requestRights(requestor);
+	} else if (ownedRights > 0) {
+	    return false;
 	} else {
 	    SimpleScheduler parent = (SimpleScheduler) 
 		parent_node.getScheduler();
-	    return parent.requestRights(this);
+	    result = parent.requestRights(this);
 	}
+	synchronized (this) { if (result) ++ownedRights; }
+	return result;
     }
 
     
@@ -52,17 +62,39 @@ public class SimplePropagatingScheduler extends SimpleScheduler
 	    // This is the root
 	    super.releaseRights(consumer);
 	} else {
-	    SimpleScheduler parent = (SimpleScheduler) 
-		parent_node.getScheduler();
-	    parent.releaseRights(this);
+	    long now = System.currentTimeMillis();
+	    if (now - lastReleaseTime > MaxTime) {
+		releaseToParent(consumer);
+	    } else {
+		offerRights(consumer);
+	    }
 	}
    }
+
+    private void releaseToParent(SimpleScheduler consumer) {
+	TreeNode parent_node = getTreeNode().getParent();
+	SimpleScheduler parent = (SimpleScheduler) 
+	    parent_node.getScheduler();
+	parent.releaseRights(this);
+	lastReleaseTime = System.currentTimeMillis();
+	synchronized (this) { --ownedRights; }
+    }
+
+    private synchronized void offerRights(SimpleScheduler consumer) {
+	SchedulableObject handoff = getNextPending();
+	if (handoff != null) {
+	    handoff.thread_start();
+	} else {
+	    releaseToParent(consumer);
+	}
+    }
 
 
 
 
     // Holds the next index of the round-robin selection.  A value of
-    // -1 refers to the local queue, rather than any of the children.
+    // -1 refers to the local queue, a value >= 0 refers to the
+    // corresponding child.
     private int currentIndex = -1;
 
     private SchedulableObject checkNextPending(ArrayList children) {

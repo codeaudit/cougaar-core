@@ -21,6 +21,8 @@
 
 package org.cougaar.core.thread;
 
+import java.lang.reflect.Constructor;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.ThreadService;
@@ -33,6 +35,9 @@ import org.cougaar.core.service.ThreadListenerService;
  */
 public final class ThreadServiceProvider implements ServiceProvider 
 {
+    private static final String SCHEDULER_CLASS_PROPERTY = 
+	"org.cougaar.thread.scheduler";
+
     private ThreadListenerProxy listenerProxy;
     private Scheduler scheduler;
     private ThreadServiceProxy proxy;
@@ -60,10 +65,22 @@ public final class ThreadServiceProvider implements ServiceProvider
 
     private void makeProxies(ThreadService parent) {
 	listenerProxy = new ThreadListenerProxy();
-	if (Boolean.getBoolean("org.cougaar.thread.timeslice"))
+
+	Class[] formals = { ThreadListenerProxy.class, String.class};
+	Object[] actuals = { listenerProxy, name};
+	String classname = System.getProperty(SCHEDULER_CLASS_PROPERTY);
+	if (classname != null) {
+	    try {
+		Class s_class = Class.forName(classname);
+		Constructor cons = s_class.getConstructor(formals);
+		scheduler = (Scheduler) cons.newInstance(actuals);
+	    } catch (Exception ex) {
+		ex.printStackTrace();
+	    }
+	}
+	if (scheduler == null) {
 	    scheduler = new SimplePropagatingScheduler(listenerProxy, name);
-	else
-	    scheduler = new SimpleScheduler(listenerProxy, name);
+	}
 
 	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;
 	TreeNode node = new TreeNode(scheduler, parentProxy);

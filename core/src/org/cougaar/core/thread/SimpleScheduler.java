@@ -109,6 +109,14 @@ class SimpleScheduler extends Scheduler
  
 
     void startOrQueue(SchedulableObject thread) {
+	// If the queue isn't empty, queue this one too.
+	synchronized (this) {
+	    if (pendingThreadCount() > 0) {
+		addPendingThread(thread);
+		return;
+	    }
+	}
+
 	boolean can_run = requestRights(this);
 	if (can_run) {
 	    thread.thread_start();
