@@ -21,22 +21,35 @@
 
 package org.cougaar.core.naming;
 
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
-import java.util.List;
+import org.cougaar.core.mts.SocketFactory;
 
-class NSCallbackImpl extends UnicastRemoteObject implements NSCallback {
-  NamingEventContext context;
-  public NSCallbackImpl(NamingEventContext context) throws RemoteException {
-    super(0, 
-	  NamingServiceSocketFactory.getNameServiceSocketFactory(), 
-	  NamingServiceSocketFactory.getNameServiceSocketFactory());
-    this.context = context;
-  }
-  public void dispatch(List events) throws RemoteException {
-    context.dispatch(events);
-  }
-  public String getIdString() {
-    return "NSCallback(" + context.toString() + ")";
+/**
+ * Static factory to get the the NamingService's SocketFactory.
+ *
+ * @property org.cougaar.core.naming.useSSL
+ * Boolean-valued property which controls whether or not ssl is used
+ * in communication to the NameServer.  Defaults to 'false'.
+ */
+public final class NamingServiceSocketFactory {
+
+  // NamingService hooks
+  private final static String NS_USE_SSL_PROP = 
+    "org.cougaar.core.naming.useSSL";
+  private final static String NS_USE_SSL_DFLT = "false";
+  private final static boolean NS_UseSSL =
+    System.getProperty(NS_USE_SSL_PROP, NS_USE_SSL_DFLT).equals("true");
+
+  private static SocketFactory nsInstance;
+
+  private NamingServiceSocketFactory() { }
+
+  /**
+   * Get the NamingService socket factory.
+   */
+  public synchronized static SocketFactory getNameServiceSocketFactory() {
+    if (nsInstance == null) {
+      nsInstance = new SocketFactory(NS_UseSSL, false);
+    }
+    return nsInstance;
   }
 }

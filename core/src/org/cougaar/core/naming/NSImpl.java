@@ -24,7 +24,6 @@ package org.cougaar.core.naming;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.rmi.RemoteException;
-import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,7 +43,6 @@ import javax.naming.NotContextException;
 import javax.naming.OperationNotSupportedException;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.event.NamingEvent; // inlined
-import org.cougaar.core.mts.SocketFactory;
 import org.cougaar.util.CircularQueue;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerFactory;
@@ -72,8 +70,8 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
   public NSImpl() throws RemoteException {
     super(0, 
-	  SocketFactory.getNameServiceSocketFactory(), 
-	  SocketFactory.getNameServiceSocketFactory());
+	  NamingServiceSocketFactory.getNameServiceSocketFactory(), 
+	  NamingServiceSocketFactory.getNameServiceSocketFactory());
     logger = LoggerFactory.getInstance().createLogger(getClass());
     putDirectory((NSDirKey) ROOT, new NSDirMap(ROOT_NAME, null));
     callbackQueue.start();

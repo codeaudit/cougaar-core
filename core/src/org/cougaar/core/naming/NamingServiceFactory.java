@@ -28,7 +28,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMIServerSocketFactory;
 import java.util.Hashtable;
 import javax.naming.Binding;
 import javax.naming.Context;
@@ -117,7 +116,8 @@ public class NamingServiceFactory implements InitialContextFactory {
     if (ns == null) {           // Has this been set yet?
       int port = Communications.getPort();
       String addr = Communications.getFdsAddress();
-      SocketFactory nsf = SocketFactory.getNameServiceSocketFactory();
+      SocketFactory nsf =
+        NamingServiceSocketFactory.getNameServiceSocketFactory();
       String url = "//" + addr + ":" + port + "/NameService";
       if (verbosity > 0) System.err.print("Attempting to contact " + url + ": ");
       // First we have to locate (or become) the registry
