@@ -1317,7 +1317,7 @@ extends HttpServlet
         "Consult your browser's help pages..\n"+
         "<p><p><p>\n"+
         "</noscript>\n"+
-        "<form name=\"myForm\" method=\"post\" onSubmit=\"return mySubmit()\">\n"+
+        "<form name=\"myForm\" method=\"get\" onSubmit=\"return mySubmit()\">\n"+
         "<input type=\"hidden\" name=\""+
         MODE+
         "\" value=\"fromJavaScript\">\n"+
@@ -1728,7 +1728,7 @@ extends HttpServlet
           "Consult your browser's help pages..\n"+
           "<p><p><p>\n"+
           "</noscript>\n"+
-          "<form name=\"myForm\" method=\"post\" "+
+          "<form name=\"myForm\" method=\"get\" "+
           "target=\"predResults\" onSubmit=\"return mySubmit()\">\n"+
           "Search cluster <select name=\"formAgent\">\n");
       // lookup all known cluster names
