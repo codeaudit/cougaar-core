@@ -30,7 +30,7 @@ import org.cougaar.tools.server.*;
 import org.cougaar.tools.server.system.ProcessStatus;
 
 /*
- * Starts up an empty node on a host from a passed-in directive. 
+ * Starts up an empty node process on localhost from a (future)passed-in directive. 
  */
 
 public class RestartPlugin extends ComponentPlugin {
