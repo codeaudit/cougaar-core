@@ -31,6 +31,7 @@ import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
+import org.cougaar.util.log.*;
 
 import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.core.service.DomainForBlackboardService;
@@ -630,6 +631,25 @@ public class Blackboard extends Subscriber
     }
   } 
     
+  // get the CommunityService when possible 
+  private CommunityService _myCommunityService = null;
+  public void setCommunityService(CommunityService ns) {
+    _myCommunityService = ns;
+  }
+  private CommunityService getCommunityService() {
+    if (_myCommunityService != null) {
+      return _myCommunityService;
+    } else {
+      getLogger().warn("Warning: Blackboard had no CommunityService - will fall back to dynamic service lookup.  Risk of Deadlock!", new Throwable());
+      _myCommunityService = (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
+      return _myCommunityService;
+    }
+  }
+
+  private Logger getLogger() {
+    return Logging.getLogger(Blackboard.class);
+  }
+
   /*
    * Querries NameServer and returns a list of all agentnames matching the aba's
    * String role value. Adds new list to the aba cache. 
@@ -641,17 +661,10 @@ public class Blackboard extends Subscriber
     String roleName = aba.getAttributeType();
     //System.out.println("Looking up ABA " + roleName + " = " + roleValue + " in NameServer.");
 
-    CommunityService cs =
-      (CommunityService)myServiceBroker.getService(this, CommunityService.class, null);
+    CommunityService cs = getCommunityService();
     
     if (cs == null) {
-      LoggingService logger = 
-        (LoggingService) myServiceBroker.getService(this, LoggingService.class, null);
-      if (logger == null) {
-        logger = LoggingService.NULL;
-      }
-      
-      logger.error("Couldn't get CommunityService: " + aba + " unresolved.");
+      getLogger().error("Couldn't get CommunityService: " + aba + " unresolved.");
       return cis;
     }
     
