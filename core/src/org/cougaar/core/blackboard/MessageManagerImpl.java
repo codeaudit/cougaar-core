@@ -662,7 +662,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       if (debug) printMessage("RAck", theAck);
       AgentInfo info = getAgentInfo(theAck.getSource());
       if (info != null) {
-        boolean restarted = false;;
+        boolean restarted = false;
         if (info.getRestarted()) {
           info.setRestarted(false);
           restarted = true;
