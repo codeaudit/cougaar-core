@@ -1,3 +1,12 @@
+2002-03-19  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/log/log4j/Log4jLoggerFactory.java:
+	Use Class.getName() instead of Class.toString() in constructing
+	the name of the category of a logger. JDK1.4 has gratuitously
+	changed the value returned from Class.toString() to include the
+	word "class " before the name of the class. The getName() method
+	is more correct in any case.
+
 2002-03-11  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Blackboard.java: 
