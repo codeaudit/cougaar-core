@@ -124,7 +124,7 @@ public class PipedMessageTransport extends MessageTransportClassic
 	    Message m = (Message) it.next();
 	    if (ca.equals(m.getTarget())) {
 		//System.err.print("v");
-		routeMessage(m);
+		forwardMessage(m);
 		if (isLogging) log("ReQ", m.toString());
 		it.remove();
 	    }

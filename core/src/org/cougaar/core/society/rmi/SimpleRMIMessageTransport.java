@@ -1,5 +1,6 @@
 package org.cougaar.core.society.rmi;
 
+import org.cougaar.core.society.DestinationLink;
 import org.cougaar.core.society.Message;
 import org.cougaar.core.society.MessageAddress;
 import org.cougaar.core.society.MessageTransport;
@@ -10,7 +11,9 @@ import org.cougaar.core.society.NameSupport;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 
-public class SimpleRMIMessageTransport extends MessageTransport
+public class SimpleRMIMessageTransport 
+    extends MessageTransport
+    implements DestinationLink
 {
     private static final String TRANSPORT_TYPE = "/simpleRMI";
     
@@ -46,6 +49,10 @@ public class SimpleRMIMessageTransport extends MessageTransport
     }
 
 
+    public DestinationLink getDestinationLink(MessageAddress address) {
+	return this;
+    }
+
 
     /** Override or wrap to generate a different proxy for a client object **/
     protected Object generateServerSideProxy(MessageAddress clientAddress) 
@@ -68,8 +75,12 @@ public class SimpleRMIMessageTransport extends MessageTransport
 	}
     }
 
+    public int cost (Message message) {
+	return 1000;
+    }
 
-    public void routeMessage(Message message) {
+
+    public void forwardMessage(Message message) {
 	MessageAddress target = message.getTarget();
 	MT remote = (MT) remotes.get(target);
 	if (remote == null) {

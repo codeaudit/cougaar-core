@@ -1,5 +1,6 @@
 package org.cougaar.core.society;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,7 @@ public class LinkSender implements Runnable
     private MessageTransportRegistry registry;
     private Thread thread;
     private DestinationQueue queue;
+    private ArrayList destinationLinks;
 
     protected LinkSender(String name, 
 			 MessageAddress destination, 
@@ -22,45 +24,56 @@ public class LinkSender implements Runnable
 	this.queue = queue;
 	this.transportFactory = transportFactory;
 	this.registry = registry;
+
+	// cache DestinationLinks, per transport
+	destinationLinks = new ArrayList();
+	getDestinationLinks();
+
 	thread = new Thread(this, name);
 	thread.start();
     }
 
 
-    protected MessageTransport selectTransport(Message message) {
-	String prop = "org.cougaar.message.transportClass";
-	String defaultTransportClass = System.getProperty(prop);
-	MessageTransportClient client = registry.findLocalClient(destination);
-	if (client != null) {
-	    return transportFactory.getLoopbackTransport();
-	} else if (defaultTransportClass == null) {
-	    return transportFactory.getDefaultTransport();
-	} else {
-	    return selectPreferredTransport(defaultTransportClass);
-	}
-    }
 
-    protected MessageTransport selectPreferredTransport(String preferredClassname) 
+
+    private void getDestinationLinks() 
     {
+	String prop = "org.cougaar.message.transportClass";
+	String preferredClassname = System.getProperty(prop);
 	Class preferredClass = null;
-	try {
-	    preferredClass = Class.forName(preferredClassname);
-	} catch (ClassNotFoundException ex) {
-	    ex.printStackTrace();
-	    return transportFactory.getDefaultTransport();
+	if (preferredClassname != null) {
+	    try {
+		preferredClass = Class.forName(preferredClassname);
+	    } catch (ClassNotFoundException ex) {
+		System.err.println(ex);
+	    }
 	}
 
-	// Simple matcher: take the first acceptable one
+	// ignore org.cougaar.message.transportClass for now
+
 	Iterator itr = transportFactory.getTransports().iterator();
+	DestinationLink link;
 	while (itr.hasNext()) {
 	    MessageTransport tpt = (MessageTransport) itr.next();
 	    Class tpt_class = tpt.getClass();
-	    if (preferredClass.isAssignableFrom(tpt_class)) {
-		return tpt;
-		// return (MessageTransportServerBinder) pair.getValue();
+	    link = tpt.getDestinationLink(destination);
+	    destinationLinks.add(link);
+	}
+    }
+
+    protected DestinationLink findCheapestLink(Message message) {
+	int min_cost = -1;
+	DestinationLink cheapest = null;
+	Iterator itr = destinationLinks.iterator();
+	while (itr.hasNext()) {
+	    DestinationLink link = (DestinationLink) itr.next();
+	    int cost = link.cost(message);
+	    if (cheapest == null || cost < min_cost) {
+		cheapest = link;
+		min_cost = cost;
 	    }
 	}
-	return transportFactory.getDefaultTransport();
+	return cheapest;
     }
 
     public void run() {
@@ -74,12 +87,8 @@ public class LinkSender implements Runnable
 		message = (Message) queue.next();
 	    }
 	    if (message != null) {
-		MessageTransport transport = selectTransport(message);
-		if (transport != null) {
-		    transport.routeMessage(message);
-		} else {
-		    System.err.println("No transport for " + message);
-		}
+		DestinationLink link = findCheapestLink(message);
+		link.forwardMessage(message);
 	    }
 	}
     }

@@ -20,7 +20,9 @@ import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.cluster.ClusterContext;
 import java.io.*;
 
-public abstract class MessageTransportClassic extends MessageTransport
+public abstract class MessageTransportClassic 
+    extends MessageTransport
+    implements DestinationLink
 {
 
   /** are we logging? **/
@@ -51,7 +53,16 @@ public abstract class MessageTransportClassic extends MessageTransport
 
   protected abstract void sendMessageToSociety(Message m);
 
-    public void routeMessage(Message message) {
+     public DestinationLink getDestinationLink(MessageAddress address) {
+	return this;
+    }
+
+  
+    public int cost (Message message) {
+	return 1000;
+    }
+
+    public void forwardMessage(Message message) {
 	sendMessageToSociety(message);
     }
 
