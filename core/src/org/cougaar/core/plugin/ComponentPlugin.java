@@ -54,10 +54,11 @@ public class ComponentPlugin
   public ComponentPlugin() { }
 
   /**
-   *  somewhat bogus BlackboardClient implementation
+   * BlackboardClient implementation 
+   * BlackboardService access requires the requestor to implement BlackboardClient
    **/
   protected String blackboardClientName = null;
-
+ 
   public String getBlackboardClientName() {
     if (blackboardClientName == null) {
       StringBuffer buf = new StringBuffer();
@@ -148,16 +149,26 @@ public class ComponentPlugin
     }
 
   }
-
+  /**
+   * accessor for my bindingsite - interface to by binder
+   **/
   protected PluginBindingSite getBindingSite() {
     return pluginBindingSite;
   }
 
-
+  /** 
+   * accessor for my servicebroker - use this to request services 
+   **/
   protected ServiceBroker getServiceBroker() {
     return serviceBroker;
   }
 
+  /**
+   * accessor for the blackboard service
+   **/
+  protected BlackboardService getBlackboardService() {
+    return blackboard;
+  }
 
   /**
    * Found by introspection by BinderSupport
@@ -246,7 +257,7 @@ public class ComponentPlugin
     /** Override this method so we don't have to do a wait()
      */
     public void signalNotify(int event) {
-      // This seems to get called even though my subscriptions haven't changed. Why?
+      // gets called frequently as the blackboard objects change
       super.signalNotify(event);
       
       // ask the scheduler to run us again.
