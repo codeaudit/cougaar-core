@@ -47,20 +47,20 @@ public interface ClusterServesClocks  {
    * <em>Only UI Plugins controlling the demonstration should use
    * this method.</em>
   **/
-  void setTime(long time);
+  void setSocietyTime(long time);
 
   /** General form of setTime, allowing the clock to be left running.
    * <em>Only UI Plugins controlling the demonstration should use
    * this method.</em>
    **/
-  void setTime(long time, boolean leaveRunning);
+  void setSocietyTime(long time, boolean leaveRunning);
 
   /**
    * Changes the rate at which execution time advances. There is no
    * discontinuity in the value of execution time; it flows smoothly
    * from the current rate to the new rate.
    **/
-  void setTimeRate(double newRate);
+  void setSocietyTimeRate(double newRate);
 
   /**
    * This method advances the COUGAAR scenario time a period of time
@@ -70,25 +70,32 @@ public interface ClusterServesClocks  {
    * <em>Only UI Plugins controlling the demonstration should use
    * this method.</em>
    **/
-  void advanceTime(long timePeriod);
+  void advanceSocietyTime(long timePeriod);
 
   /** General form of advanceTime, allowing the clock to be left running.
    * <em>Only UI Plugins controlling the demonstration should use
    * this method.</em>
    **/
-  void advanceTime(long timePeriod, boolean leaveRunning);
+  void advanceSocietyTime(long timePeriod, boolean leaveRunning);
 
   /** General form of advanceTime, allowing the clock to be left running at a new rate.
    * <em>Only UI Plugins controlling the demonstration should use
    * this method.</em>
    **/
-  void advanceTime(long timePeriod, double newRate);
+  void advanceSocietyTime(long timePeriod, double newRate);
 
   /**
    * Set a series of time parameter changes. The number of such
    * changes is limited. See ExecutionTimer.create() for details.
    **/
-  void advanceTime(ExecutionTimer.Change[] changes);
+  void advanceSocietyTime(ExecutionTimer.Change[] changes);
+
+  /** General form of advanceNodeTime, allowing the clock to be left running at a new rate.
+   * <em>Only UI Plugins controlling the demonstration should use
+   * this method.</em>
+   * This affects the time on this node only.
+   **/
+  void advanceNodeTime(long timePeriod, double newRate);
 
   /**
    * Get the current execution time rate.

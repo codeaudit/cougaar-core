@@ -29,12 +29,22 @@ import org.cougaar.core.component.Service;
  **/
 
 public interface DemoControlService extends Service {
-  void setTime(long time);
-  void setTime(long time, boolean foo);
-  void setTimeRate(double rate);
-  void advanceTime(long period);
-  void advanceTime(long period, boolean foo);
-  void advanceTime(long period, double rate);
-  void advanceTime(ExecutionTimer.Change[] changes);
+  /**
+   * These all send remote AdvanceClockMessage messages
+   * to the whole society (ie the old way)
+   */
+  void setSocietyTime(long time);
+  void setSocietyTime(long time, boolean foo);
+  void setSocietyTimeRate(double rate);
+  void advanceSocietyTime(long period);
+  void advanceSocietyTime(long period, boolean foo);
+  void advanceSocietyTime(long period, double rate);
+  void advanceSocietyTime(ExecutionTimer.Change[] changes);
+  
+  /**
+   * These all send remote AdvanceClockMessage messages
+   * to the whole society (ie the old way)
+   */
+  void advanceNodeTime(long period, double rate);
   double getExecutionRate();
 }

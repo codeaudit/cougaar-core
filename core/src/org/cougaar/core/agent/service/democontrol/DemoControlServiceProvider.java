@@ -49,13 +49,18 @@ public class DemoControlServiceProvider implements ServiceProvider {
   }
 
   private final class DemoControlServiceImpl implements DemoControlService {
-    public void setTime(long time) { agentClock.setTime(time); }
-    public void setTime(long time, boolean foo) {agentClock.setTime(time,foo);}
-    public void setTimeRate(double rate) {agentClock.setTimeRate(rate); }
-    public void advanceTime(long period) {agentClock.advanceTime(period); }
-    public void advanceTime(long period, boolean foo) {agentClock.advanceTime(period,foo); }
-    public void advanceTime(long period, double rate) {agentClock.advanceTime(period,rate); }
-    public void advanceTime(ExecutionTimer.Change[] changes) {agentClock.advanceTime(changes); }
+    public void setSocietyTime(long time) { agentClock.setSocietyTime(time); }
+    public void setSocietyTime(long time, boolean foo) {agentClock.setSocietyTime(time,foo);}
+    public void setSocietyTimeRate(double rate) {agentClock.setSocietyTimeRate(rate); }
+    public void advanceSocietyTime(long period) {agentClock.advanceSocietyTime(period); }
+    public void advanceSocietyTime(long period, boolean foo) {agentClock.advanceSocietyTime(period,foo); }
+    public void advanceSocietyTime(long period, double rate) {agentClock.advanceSocietyTime(period,rate); }
+    public void advanceSocietyTime(ExecutionTimer.Change[] changes) {agentClock.advanceSocietyTime(changes); }
     public double getExecutionRate() { return agentClock.getExecutionRate(); }
+
+    public void advanceNodeTime(long period, double rate) {
+      agentClock.advanceNodeTime(period, rate);
+    }
+
   }
 }

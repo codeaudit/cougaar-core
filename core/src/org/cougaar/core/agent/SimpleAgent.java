@@ -2002,14 +2002,16 @@ implements AgentIdentityClient
       // demo service:
       private void die() { throw new UnsupportedOperationException(); }
       public MessageAddress getMessageAddress() { die(); return null; }
-      public void setTime(long time) { die(); }
-      public void setTime(long time, boolean leaveRunning) { die(); }
-      public void setTimeRate(double newRate) { die(); }
-      public void advanceTime(long timePeriod) { die(); }
-      public void advanceTime(long timePeriod, boolean leaveRunning) { die(); }
-      public void advanceTime(long timePeriod, double newRate) { die(); }
-      public void advanceTime(ExecutionTimer.Change[] changes) { die(); }
+      public void setSocietyTime(long time) { die(); }
+      public void setSocietyTime(long time, boolean leaveRunning) { die(); }
+      public void setSocietyTimeRate(double newRate) { die(); }
+      public void advanceSocietyTime(long timePeriod) { die(); }
+      public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
+      public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
+      public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
       public double getExecutionRate() { die(); return -1; }
+      public void advanceNodeTime(long timePeriod, double newRate) {die();}
+
     }
 
   // alarm clock view of this agent
@@ -2028,31 +2030,31 @@ implements AgentIdentityClient
       public MessageAddress getMessageAddress() {
         return getAgent().getMessageAddress();
       }
-      public void setTime(long time) {
+      public void setSocietyTime(long time) {
         sendAdvanceClockMessage(
             time, true, 0.0, false, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void setTime(long time, boolean running) {
+      public void setSocietyTime(long time, boolean running) {
         sendAdvanceClockMessage(
             time, true, 0.0, running, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void setTimeRate(double newRate) {
+      public void setSocietyTimeRate(double newRate) {
         sendAdvanceClockMessage(
             0L, false, newRate, false, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void advanceTime(long timePeriod){
+      public void advanceSocietyTime(long timePeriod){
         sendAdvanceClockMessage(
             timePeriod, false, 0.0, false, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void advanceTime(long timePeriod, boolean running){
+      public void advanceSocietyTime(long timePeriod, boolean running){
         sendAdvanceClockMessage(
             timePeriod, false, 0.0, running, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void advanceTime(long timePeriod, double newRate){
+      public void advanceSocietyTime(long timePeriod, double newRate){
         sendAdvanceClockMessage(
             timePeriod, false, newRate, false, NaturalTimeService.DEFAULT_CHANGE_DELAY);
       }
-      public void advanceTime(ExecutionTimer.Change[] changes) {
+      public void advanceSocietyTime(ExecutionTimer.Change[] changes) {
         ExecutionTimer.Parameters[] params = getAgent().xTimer.createParameters(changes);
         for (int i = 0; i < params.length; i++) {
           sendAdvanceClockMessage(params[i]);
@@ -2084,6 +2086,18 @@ implements AgentIdentityClient
         // use MessageSwitchService?
         getAgent().sendMessage(acm);
       }
+      public void advanceNodeTime(long timePeriod, double newRate) {
+        ExecutionTimer.Parameters newParameters =
+          getAgent().xTimer.createParameters(
+            timePeriod,
+            false, // millisIsAbsolute,
+            newRate,
+            false, // forceRunning,
+            NaturalTimeService.DEFAULT_CHANGE_DELAY);
+            
+        getAgent().xTimer.setParameters(newParameters);
+      }
+
     }
 
   /**

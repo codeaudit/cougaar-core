@@ -89,7 +89,7 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
 
   private synchronized void setRate(double newRate) {
     this.newRate = newRate;
-    demoControlService.setTimeRate(newRate);
+    demoControlService.setSocietyTimeRate(newRate);
   }
 
   protected synchronized void thaw() {
