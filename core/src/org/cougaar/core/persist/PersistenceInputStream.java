@@ -144,8 +144,12 @@ public class PersistenceInputStream extends ObjectInputStream {
     return pAssoc;
   }
 
-  /* 
-  private static Object callAllocateNewObject(Class clazz, Class serializableClazz) 
+  // Use reflection to avoid calling super.newInstanceFromDesc. Don't want to
+  // force installation of javaiopatch.jar for compilation if persistence not 
+  // involved.
+  private static Method _ano = null;
+  private static Object _anoLock = new Object();
+  private static Object callNewInstanceFromDesc(ObjectInputStream stream, ObjectStreamClass desc) 
     throws InstantiationException, IllegalAccessException
   {
     Method m;
@@ -153,9 +157,9 @@ public class PersistenceInputStream extends ObjectInputStream {
       if ((m = _ano) == null) {
         try {
           Class c = ObjectInputStream.class;
-          Class[] argp = new Class[] {Class.class, Class.class};
-          m = c.getDeclaredMethod("allocateNewObject",argp);
-          _ano=m;
+          Class[] argp = new Class[] {ObjectStreamClass.class};
+          m = c.getDeclaredMethod("real_newInstanceFromDesc", argp);
+          _ano = m;
         } catch (Exception e) {
           e.printStackTrace();
           System.err.println("javaiopatch is not installed properly!");
@@ -164,8 +168,8 @@ public class PersistenceInputStream extends ObjectInputStream {
       }
     }
     try {
-      Object[] args= new Object[]{clazz,serializableClazz};
-      return m.invoke(null, args);
+      Object[] args= new Object[]{desc};
+      return m.invoke(stream, args);
     } catch (Exception e) {
       e.printStackTrace();
       if (e instanceof InvocationTargetException) {
@@ -181,7 +185,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       throw new RuntimeException("javaiopatch not installed");
     }
   }
-  */
+
 
   /**
    * Allocate an object to be filled in from the serialized
@@ -198,7 +202,7 @@ public class PersistenceInputStream extends ObjectInputStream {
    * @return the object to be filled in.
    */
   protected Object newInstanceFromDesc(ObjectStreamClass desc) 
-    throws InstantiationException, java.lang.reflect.InvocationTargetException  {
+    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException  {
     Class clazz = desc.forClass();
     if (references != null &&
 	clazz != PersistenceReference.class &&
@@ -208,7 +212,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       if (reference != null) {
 	PersistenceAssociation pAssoc = identityTable.get(reference);
 	if (pAssoc == null) {
-	  Object object = super.newInstanceFromDesc(desc);
+	  Object object = callNewInstanceFromDesc(this, desc);
 	  pAssoc = identityTable.create(object, reference);
 	  print("Allocating " + BasePersistence.getObjectName(object) + " @ " + reference);
 	  return object;
@@ -219,13 +223,13 @@ public class PersistenceInputStream extends ObjectInputStream {
 	print("Overwriting " + BasePersistence.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
-        Object result =   super.newInstanceFromDesc(desc);
+        Object result = callNewInstanceFromDesc(this, desc);
         print("Allocating " + (nextReadIndex-1) + " " +
               BasePersistence.getObjectName(result));
         return result;
       }
     }
-    Object result = super.newInstanceFromDesc(desc);
+    Object result = callNewInstanceFromDesc(this, desc);
     print("Allocating " + BasePersistence.getObjectName(result));
     return result;
   }
