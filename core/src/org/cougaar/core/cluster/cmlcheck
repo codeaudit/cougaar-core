@@ -1,0 +1,38 @@
+#!/bin/csh -f
+#
+# Quick analysis of a set of cml files.
+# Once all of your society's .cml files are in the current
+# directory, run this script.  A perfect run has outQ+ == deliv.
+#
+
+set all="/tmp/$$.cml"
+cat *.cml > $all
+set out1 = `grep outQ+ $all | wc -l`
+set out2 = `grep outQ- $all | wc -l`
+set dom = `grep DOM $all | wc -l`
+set lookup = `grep lookup $all | wc -l`
+set before = `grep before $all | wc -l`
+set sent = `grep sent $all | wc -l`
+set error = `grep error $all | wc -l`
+set retry = `grep retry $all | wc -l`
+set in0 = `grep inQ0 $all | wc -l`
+set in1 = `grep inQ+ $all | wc -l`
+set in2 = `grep inQ- $all | wc -l`
+set deliv = `grep deliv $all | wc -l`
+set fail = `grep Fail $all | wc -l`
+
+rm $all
+
+echo outQ+ $out1
+echo outQ- $out2
+echo DOM $dom
+echo lookup $lookup
+echo before $before
+echo sent $sent
+echo error $error
+echo retry $retry
+echo inQ0 $in0
+echo inQ+ $in1
+echo inQ- $in2
+echo deliv $deliv
+echo Fail $fail

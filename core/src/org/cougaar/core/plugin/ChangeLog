@@ -1,0 +1,23 @@
+1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* PlugInAdapter
+	Provide default implementation of
+	SubscriptionClient.getSubscriptionClientName of the form:
+	<classname>[<params>]. This simplifies adapting plugins to changes
+	made for persistence.
+
+1999-02-10  Michael Thome  <mthome@bbn.com>
+
+	* EssentialPlugIn 
+	Make various method protected and/or final.  Update subscription
+	methods to take/return Subscription instead of Collection.
+
+	* EssentialPlugInTest
+ 	modernize
+	
+1999-05-11 Ben Levy <blevy@bbn.com>
+
+
+* SingleThreadedPlugIn
+Added wake up method signatures based on ALP scenario time and system time.
+No implementations yet!!!!

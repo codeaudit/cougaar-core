@@ -1,0 +1,129 @@
+1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Added changes to support persistence:
+	* Subscriber
+	  Does not push outbox envelopes to Distributor.
+	  Saves inboxes of transactions.
+	* Distributor
+	  Pulls envelopes from Subscriber along with inboxes
+	  of uncompleted transactions.
+	  Envelopes are always distributed by the Distributor; no
+	  exceptions.
+	* SubscriptionClient
+	  Added getSubscriptionClientName so persisted inboxes can be
+	  matched up with the proper subscriptions.
+	* Envelope
+	  Make Serializable so they can be persisted.
+	  Remove originator. It's not needed and is hard to recreate
+	  during rehydration.
+
+1999-07-13  Beth DePass <bdepass@bbn.com>
+
+  * Subscriber add in execution monitoring - commitment date checks to
+  publishAdd and publishChange.
+
+1999-02-10  Michael Thome  <mthome@bbn.com>
+
+	* SubscriptionClient remove now unused wake() method from
+	interface. 
+
+	* Distributor, DistributorTest Move Distributor point test
+	code into its own file.
+
+1999-02-08  Michael Thome  <mthome@bbn.com>
+
+	* LogPlan, *LP, LogicProvider, etal. Unify the LogicProviders so
+	that "message" flavors of LPs are executed by the LogPlan rather 
+	than in the thread of the Cluster.  This simplifies the logic and
+	makes the LP code slightly faster.
+
+	* Subscriber, et.al. Subscribers now only wake up on subscription
+	activity or on explicit wake requests.
+
+1999-02-05  Michael Thome  <mthome@bbn.com>
+
+	* Subscriber Split wakeSubscriptionWatchers functionality into
+	three methods: 
+	  signalExternalActivity(); // distributer passed new info
+	  signalInternalActivity(); // plugin made changes to collections
+	  signalClientActivity();   // plugin asked to be (re)awakened
+	All callers updated to use the correct ones.
+
+1999-02-03  Beth DePass <bdepass@bbn.com>
+	* RescindLP
+	Remove rescinded Allocation and AssetTransfer PlanElements
+	from the respective Asset's RoleSchedule.
+  
+	* AssetTransferLp
+	Minor cleanup
+  
+	* ReceiveAssetLP
+	Move to using RoleSchedule object for available schedule setting.
+
+1999-02-03  Michael Thome  <mthome@bbn.com>
+
+	* Persistence*
+	New Subscriber, Envelope to support Persistence plugins.
+	Persistence rehydrations are quiet - that is, they do not modify
+	delta lists.
+
+	* Subscriber
+	Use Claimable interface (see org.cougaar.core.clusterobject.Claimable) to
+	"claim" objects by the PlugIn which enters them into the logplan.
+
+	Lazy outbox creation.
+
+	Plugin-defined Envelope (outbox) class.
+
+	* RemoteClusterAllocationLP
+	Rewrite to correctly re-send messages from persisted PlanElements.
+
+	* ReceiveTaskLP
+	Stable behavior when receiving multiple copies of the same task.
+
+	* Various
+	use internal method to set the destination cluster of sent
+	messages to prevent complaints from new code to prevent
+	mis-directed messages.
+
+	Better toString()
+
+	* IncrementalSubscription
+	Reduce consing for users of deltas lists.  Only cons new lists
+	when the old lists were non-empty.
+
+	* EnvelopeParseLP
+	add isBulkEnvelopeTuple(Object)
+
+	* DummyCCAdapter
+	Proper transaction handling until the class is removed.
+
+1999-01-15  Michael Thome  <mthome@bbn.com>
+
+	* org.cougaar.core.cluster.*
+	Merge Subscription with ContainerWrapper with the intent of making
+	Subscription the primary class. ContainerWrapper and subclasses
+	have been made into deprecated interfaces implemented by the new
+	classes.  The deprecated interfaces will be deleted early 1999.
+
+	subscribe() returns Subscription rather than Collection.
+
+	rename Subscription.getRealContainer() to be
+	Subscription.getContainer(), deprecating old name.
+
+	Revamp subscribe so that a Subscription may be passed as an
+	argument.  See Subscriber.Subscribe(Subscription) documentation
+	for details. This, in theory, allows plugins to write their own,
+	though it is a dangerous proposition right now... perhaps careful
+	finals would help.
+
+
+1999-05-11 Richard Lazarus
+
+* Added accessors to get, set, and advance ALP scenario time
+
+	
+
+
+	
+	

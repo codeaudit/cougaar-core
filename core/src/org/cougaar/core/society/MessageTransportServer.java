@@ -1,0 +1,50 @@
+/*
+ * <copyright>
+ *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ *  Raytheon Systems Company (RSC) Consortium).
+ *  This software to be used only in accordance with the
+ *  COUGAAR licence agreement.
+ * </copyright>
+ */
+
+package org.cougaar.core.society;
+
+import java.io.*;
+
+import org.cougaar.core.cluster.ClusterContext;
+
+/**
+ * Abstract MessageTransport layer for Society interaction.
+ *
+ **/
+
+public interface MessageTransportServer {
+
+  /** Ask MessageTransport to deliver a message (asynchronously).
+   * message.getTarget() names the destination.
+   **/
+
+  void sendMessage(Message m);
+
+  /** register a client with MessageTransport.  A client
+   * is any object which can receive Messages directed to it
+   * as the Target of a message.
+   **/
+  void registerClient(MessageTransportClient client);
+
+  /**
+   * add a MessageTransportWatcher to the server.
+   **/
+  void addMessageTransportWatcher(MessageTransportWatcher watcher);
+
+  /**
+   * the name of the entity that this MessageTransport represents.
+   * Will usually be the name of a node.
+   **/
+  String getIdentifier();
+
+  /** @return true IFF the MessageAddress is known to the nameserver **/
+  boolean addressKnown(MessageAddress a);
+}
+

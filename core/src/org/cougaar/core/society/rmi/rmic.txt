@@ -1,0 +1,2 @@
+rmic -keepgenerated org.cougaar.core.society.rmi.NSImpl
+rmic -keepgenerated org.cougaar.core.society.rmi.MTImpl

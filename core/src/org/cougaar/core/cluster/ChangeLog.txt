@@ -1,0 +1,6 @@
+
+1999-05-11 Richard Lazarus <rlazarus@bbn.com>
+
+* Added stub implementations for get, set, and advance of 
+ALP scenario time. Need real implementations for MB 5.2!!!!! 
+The method getALPTIme() returns system time.

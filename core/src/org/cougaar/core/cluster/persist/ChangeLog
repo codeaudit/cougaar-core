@@ -1,0 +1,32 @@
+1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* ChangeLog -- created
+
+	* Persistence.java Persistence interface.
+
+	* FilePersistence.java Implementation of Persistence using files.
+
+	* IdentityTable.java Augmented Hashtable to maintain
+	correspondence between persisted objects and indentifying
+	integers.
+
+	* NonPersistable.java Marker interface for objects that should not
+	be persisted.
+
+	* NotPersistableException.java Exception thrown by attempts to
+	persist objects that can't be persisted.
+
+	* PersistenceAssociation.java Associates a reference int and a
+	persistable object.
+
+	* PersistenceInputStream.java ObjectInputStream subclass to
+	implement persistence.
+
+	* PersistenceOutputStream.java ObjectOutputStream subclass to
+	implement persistence.
+	
+	* PersistenceReference.java Replacement for previously persisted
+	objects.
+
+	* PersistenceSubscriberState.java Named container for the inbox	of
+	a Subscriber.
