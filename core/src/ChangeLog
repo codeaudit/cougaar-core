@@ -1,5 +1,12 @@
 2001-02-27  Michael Thome  <mthome@bbn.com>
 	
+	* SharedPlugInManager
+	Upped warning time to 2 minutes.  Changable via 
+	-Dorg.cougaar.core.cluster.SharedPlugInManager.warningTime=N where
+	N is milliseconds the plugin has to run before being suspect.
+	Also aded a control for dumping the stats file separate from
+	collection. -Dorg.cougaar.core.cluster.SharedPlugInManager.dumpStatistics=false
+
 	* org.cougaar.util.PropertyParser
 	Finally created this utility for parsing out values of various
 	types from java.util.Properties.  By default, takes from System

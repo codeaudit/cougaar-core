@@ -1,13 +1,12 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Copyright 1997-2001 Defense Advanced Research Projects
  *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  *  Raytheon Systems Company (RSC) Consortium).
  *  This software to be used only in accordance with the
  *  COUGAAR licence agreement.
  * </copyright>
  */
-
 
 package org.cougaar.core.cluster;
 
@@ -17,24 +16,61 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.GenericStateModel;
+import org.cougaar.util.PropertyParser;
 
 import java.util.*;
 import java.io.*;
 
+/** Manager (really a Scheduler) for lightweight plugins.
+ * <p>
+ * Debugging and behavior parameters: The basic idea is to watch how simple
+ * plugins are scheduled: we can watch how long "Shared Thread"
+ * plugins take to execute and keep statistics.  We also watch to see
+ * if plugins block or otherwise fail to return from execute(). 
+ * <p>
+ * org.cougaar.core.cluster.SharedPlugInManager.statistics=false Set
+ * it to true to collect plugin statistics.
+ * <p>
+ * org.cougaar.core.cluster.SharedPlugInManager.dumpStatistics=false Set
+ * it to true to get periodic dumps of plugin statistics to the file
+ * NODENAME.statistics in the current directory. 
+ * <p>
+ * org.cougaar.core.cluster.SharedPlugInManager.watching=true Set it
+ * to false to disable the watcher (default is enabled). When enabled,
+ * will complain whever it sees a plugin run or block for more than
+ * 15 seconds.  It will also cause the above statistics file(s) to be
+ * (re)generated approximately every two minutes.  The watcher is one
+ * thread per vm, so it isn't too expensive.
+ * <p>
+ **/
 class SharedPlugInManager {
   
-  static boolean keepingStatistics;
-  static boolean isWatching;
+  /** Should we keep statistics on plugin runtimes? **/
+  static boolean keepingStatistics = false;
+
+  /** Should we dump the stats periodically? **/
+  static boolean dumpingStatistics = false;
+
+  /** Should we watch for blocked plugins? **/
+  static boolean isWatching = true;
+
+  /** how long a plugin runs before we complain when watching **/
+  static long warningTime = 120*1000L; 
+
   static {
-    keepingStatistics = System.getProperty("org.cougaar.core.cluster.SharedPlugInManager.statistics","false").equals("true");
-    isWatching = System.getProperty("org.cougaar.core.cluster.SharedPlugInManager.watching","true").equals("true");
+    String p = "org.cougaar.core.cluster.SharedPlugInManager.";
+    keepingStatistics = PropertyParser.getBoolean(p+"statistics", keepingStatistics);
+    dumpingStatistics = PropertyParser.getBoolean(p+"dumpStatistics", dumpingStatistics);
+    if (dumpingStatistics) keepingStatistics=true;
+    isWatching = PropertyParser.getBoolean(p+"watching", isWatching);
+    warningTime = PropertyParser.getLong(p+"warningTime", warningTime);
   }
 
   protected ClusterIdentifier cid;
 
   public SharedPlugInManager(ClusterIdentifier cid) {
     this.cid = cid;
-    if (isWatching)
+    if (isWatching || dumpingStatistics)
       getWatcher().register(this);
   }
 
@@ -193,9 +229,6 @@ class SharedPlugInManager {
     private ScheduleablePlugIn currentPlugin = null;
     private long t0 = 0; 
 
-    /** warn if a plugin takes longer than this number of millis in an execute cycle **/
-    private static final long warningTime = 10*1000L;
-
     private void runPlugin(ScheduleablePlugIn plugin, ThinWatcher watcher) {
       //if (plugin.getState() == GenericStateModel.ACTIVE) {}
 
@@ -292,10 +325,10 @@ class SharedPlugInManager {
           Thread.sleep(10*1000L); // sleep for a 10 seconds at a time
           long now = System.currentTimeMillis();
 
-          check();
+          if (isWatching) check();
 
           // no more often then every two minutes
-          if (keepingStatistics && (now-reportTime) >= 120*1000L) {
+          if (dumpingStatistics && keepingStatistics && (now-reportTime) >= 120*1000L) {
             reportTime = now;
             report();
           }
