@@ -109,9 +109,6 @@ public class ReceiveAssetRescindLP
                                            Asset asset,
                                            Asset assignee) {
 
-    String assetID = 
-      asset.getItemIdentificationPG().getItemIdentification();
-
     RelationshipSchedule assetRelationshipSchedule = 
       ((HasRelationships) asset).getRelationshipSchedule();
 

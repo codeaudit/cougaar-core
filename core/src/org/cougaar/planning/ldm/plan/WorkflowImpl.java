@@ -335,7 +335,6 @@ public class WorkflowImpl
 
   public Constraint getNextPendingConstraint()
   {
-    Vector violations = getViolatedConstraintsVector(true);
     for (int i = 0; i < constraints.size(); i++) {
       Constraint c = (Constraint) constraints.elementAt(i);
       if (isConstraintPendingOrViolated(c)) return c;

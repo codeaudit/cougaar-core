@@ -109,7 +109,6 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
       public boolean execute(Object o) {
         if (o instanceof Allocation) {
           Allocation alloc = (Allocation) o;
-          Task task = alloc.getTask();
           Asset asset = alloc.getAsset();
           ClusterPG cpg = asset.getClusterPG();
           if (cpg == null) return false;

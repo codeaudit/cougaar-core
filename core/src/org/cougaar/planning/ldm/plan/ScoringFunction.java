@@ -754,7 +754,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
 
     public AspectScorePoint getMaxInRange(AspectValue lowerbound, AspectValue upperbound){
-      AspectScorePoint asp = null;
+      //AspectScorePoint asp = null;
       double ubScore = getScore(upperbound);
       double lbScore = getScore(lowerbound);
 

@@ -412,7 +412,6 @@ public class RelationshipScheduleImpl extends ScheduleImpl
   
   public static void main(String []args) {
     int uidNum = 0;
-    UID uid;
 
     TestAsset testAsset0 = new TestAsset();
     testAsset0.setUID(new UID("testAsset",uidNum));

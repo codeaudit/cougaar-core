@@ -109,9 +109,6 @@ public class ReceiveAssetVerificationLP
                                             Asset localAsset) {
     NewSchedule rescindSchedule = null;
     
-    String assetID = av.getAsset().getItemIdentificationPG().getItemIdentification();
-    String assigneeID = av.getAssignee().getItemIdentificationPG().getItemIdentification();
-
     Schedule availSchedule = localAsset.getRoleSchedule().getAvailableSchedule();
 
     if (availSchedule == null) {
@@ -169,7 +166,7 @@ public class ReceiveAssetVerificationLP
   private Schedule getUnmatchedRelationships(AssetVerification av, 
                                              HasRelationships localAsset) {
     NewSchedule rescindSchedule = null;
-    HasRelationships asset = (HasRelationships)av.getAsset();
+    //HasRelationships asset = (HasRelationships)av.getAsset();
     HasRelationships assignee = (HasRelationships)av.getAssignee();
     
     Collection localRelationships = 

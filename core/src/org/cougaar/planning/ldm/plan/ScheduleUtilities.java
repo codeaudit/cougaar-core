@@ -180,7 +180,6 @@ public final class ScheduleUtilities {
                                          "a Schedule with ScheduleElementWithValues!");
     }
     double currentQuantity = 0;
-    double quantity = 0;
     long startTime = 0;
     long endTime = 0;
     ArrayList minimalScheduleElements = new ArrayList();

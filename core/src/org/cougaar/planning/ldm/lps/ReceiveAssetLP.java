@@ -202,10 +202,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
                                   RelationshipSchedule transferringSchedule,
                                   RelationshipSchedule receivingSchedule) {
     Asset transferring = (Asset)transferringSchedule.getHasRelationships();
-    String transferringID = transferring.getItemIdentificationPG().getItemIdentification();
-
     Asset receiving = (Asset)receivingSchedule.getHasRelationships();
-    String receivingID = receiving.getItemIdentificationPG().getItemIdentification();
 
     Collection localRelationships = convertToRelationships(aa,
                                                            transferring,

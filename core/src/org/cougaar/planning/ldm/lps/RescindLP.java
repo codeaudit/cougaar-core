@@ -285,7 +285,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
         (NewSchedule)((Asset)localAsset).getRoleSchedule().getAvailableSchedule();
       final Asset assignee = at.getAssignee();
       synchronized (assetAvailSchedule) {
-        final Asset asset = (Asset)localAsset;
+        //final Asset asset = (Asset)localAsset;
         Collection assignedAvailSchedule = assetAvailSchedule.filter(new UnaryPredicate() {
           public boolean execute(Object o) {
             return ((o instanceof AssignedAvailabilityElement) &&
@@ -300,7 +300,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     
           Iterator localIterator = assignedAvailSchedule.iterator();
       
-          boolean found = false;
+          //boolean found = false;
           while (localIterator.hasNext()) {
             ScheduleElement localAvailability = 
               (ScheduleElement)localIterator.next();
@@ -347,11 +347,13 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     }
     if (rsasset != null) {
       //System.err.println("\n RESCIND REMOVEPERS called for: " + rsasset);
+      /*
       RoleScheduleImpl rsi = (RoleScheduleImpl) rsasset.getRoleSchedule();
       // if the pe had a conflict re-check the roleschedule
-      //if (conflict) {
-      //  checkConflictFlags(pe, rsi);
-      //}
+      if (conflict) {
+        checkConflictFlags(pe, rsi);
+      }
+      */
     } else {
       System.err.println("\n WARNING could not remove rescinded planelement");
     }
