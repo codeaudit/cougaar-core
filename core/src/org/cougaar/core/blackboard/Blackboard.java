@@ -585,7 +585,7 @@ public class Blackboard extends Subscriber
   }
 
   protected Persistence createPersistence(ClusterServesLogicProvider cluster) {
-    if (System.getProperty("org.cougaar.core.persistence.enable", "true").equals("false"))
+    if (System.getProperty("org.cougaar.core.persistence.enable", "false").equals("false"))
       return null;		// Disable persistence for now
     try {
       Persistence result = BasePersistence.find(cluster, myServiceBroker);
