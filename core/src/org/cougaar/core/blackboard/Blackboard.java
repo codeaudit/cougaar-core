@@ -636,8 +636,6 @@ public class Blackboard extends Subscriber
   // AttributeBasedAddress to ABATranslation cache
   private Map cache = new HashMap(89);
 
-  private CommunityService communityService;
-  private boolean haveCommunityService = false;
   private CacheClearer cacheClearer = new CacheClearer();
   private Object cacheClearerLock = new Object();
 
