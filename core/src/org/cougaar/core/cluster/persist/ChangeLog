@@ -1,3 +1,15 @@
+2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Persistence.java: 
+	* FilePersistence.java: 
+	* DummyPersistence.java: 
+	* DatabasePersistence.java: 
+	* BasePersistence.java:
+	Change interface to permit full versus incremental persistence.
+	Retain full persistence deltas for archiving. Also make an extra
+	copy of the sequence file for each full delta. This facilitates
+	returning to archived data.
+
 2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:

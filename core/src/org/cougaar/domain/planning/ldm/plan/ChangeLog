@@ -1,3 +1,10 @@
+2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AllocationResult.java:
+	Fix bug in constructor for merging two allocation results (e.g.
+	received + observed). The old code left nulls in the rollup result
+	array leading to NPE later.
+
 2001-07-16  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* AggregationImpl.java

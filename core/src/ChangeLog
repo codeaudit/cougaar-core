@@ -1,3 +1,11 @@
+2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/DeletionPlugIn.java:
+	Add optional parameters for archivingenabled and debug.
+	Expect and handle exceptions when asking for start time or end
+	time of tasks. An exception is thrown if the task has no such
+	preference.
+
 2001-08-27  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NamingContext.java:

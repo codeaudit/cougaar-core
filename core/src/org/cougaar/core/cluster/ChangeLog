@@ -1,3 +1,11 @@
+2001-08-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* Distributor.java:
+	Work-around bug of persisted state containing recently deleted
+	objects by persisting, gc'ing, and persisting again. Also, pass
+	argument to persist specifying whether full or incremental
+	persistence is desired.
+
 2001-08-17  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ClusterImpl.java:
