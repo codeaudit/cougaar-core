@@ -92,6 +92,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       public boolean execute(Object o) {
         if (o instanceof Task) return true;
         if (o instanceof PlanElement) return true;
+        return false;
       }
     };
 
@@ -137,7 +138,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
     activitySubscription = (IncrementalSubscription)
-      blackboard.subscribe(activityPredicate, new SieveCollection(), true);
+      blackboard.subscribe(activityPredicate, new AmnesiaCollection(), true);
     lastActivity = System.currentTimeMillis();
     startTimer(SLEEP_INTERVAL);
   }

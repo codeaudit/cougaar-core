@@ -65,7 +65,7 @@ public abstract class CompletionPlugin extends ServiceUserPlugin {
    * AbstractCollection base class. We implement the minimum required
    * for a mutable Collection.
    **/
-  protected class SieveCollection extends AbstractCollection {
+  protected class AmnesiaCollection extends AbstractCollection {
     public Iterator iterator() {
       return EmptyIterator.iterator();
     }
