@@ -11,6 +11,7 @@
 package org.cougaar.domain.planning.ldm.plan;
 
 import java.util.Date;
+import java.text.SimpleDateFormat;
 
 /** An AspectValue that deals with Time
  * Note that longValue() will return the time in milliseconds.
@@ -49,5 +50,17 @@ public class TimeAspectValue extends AspectValue {
   
   public Object clone() {
     return new TimeAspectValue(type, (long) value);
+  }
+
+  private static SimpleDateFormat dateTimeFormat =
+    new SimpleDateFormat("MM/dd/yy HH:mm:ss.SSS z");
+
+  private static Date formatDate = new Date();
+
+  public String toString() {
+    synchronized (formatDate) {
+      formatDate.setTime((long) value);
+      return dateTimeFormat.format(formatDate) + "[" + type + "]";
+    }
   }
 }
