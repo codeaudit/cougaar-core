@@ -140,11 +140,36 @@ public final class ClusterContextTable {
   /** Convenient shortcut for a safe enterContext - exitContext pair **/
   public static final void withMessageContext(MessageAddress ma, MessageAddress from, MessageAddress to, 
                                               Runnable thunk) {
-    ClusterContext cc = findContext(ma);
+    ClusterContext cc = getClusterContext();
     if (cc == null) {
-      throw new IllegalArgumentException("Address \""+ma+"\" is not an Agent on this node.");
+      cc = findContext(ma);
+      if (cc != null) {
+        // normal case for 99% of the time
+        withContextState(new MessageContext(cc, from, to), thunk);
+      } else {
+        // target is not on this node
+        //
+        // This is likely due to a race between remote MTS routing and
+        // local agent removal for mobility (bug 1316).  The remote MTS
+        // will catch this exception and re-route the message.
+        throw new IllegalArgumentException(
+            "Address \""+ma+"\" is not an Agent on this node.");
+      }
     } else {
-      withContextState(new MessageContext(cc, from, to), thunk);
+      MessageAddress oldMA = cc.getClusterIdentifier();
+      if ((ma != null) ? ma.equals(oldMA) : (oldMA == null)) {
+        // valid nesting, but rare in practice
+        withContextState(new MessageContext(cc, from, to), thunk);
+      } else {
+        // unusual nested context, use the dummy context since its
+        // not valid for the nested message to access a different agent
+        //
+        // In agent mobility this occurs when the node transfers agent
+        // state that contains unsent messages (bug 1629 + bug 1634).
+        // When the agent is created it will sent these nested messages
+        // itself.
+        withEmptyClusterContext(thunk);
+      }
     }
   }
 
