@@ -44,7 +44,7 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
     public Message unsecureMessage(SecureMessage m) {
 	if (m instanceof DummySecureMessage) {
 	    System.err.print("}");
-	    return ((DummySecureMessage)m).getMessage();
+	    return ((DummySecureMessage)m).getContents();
 	} else {
 	    return null;
 	}
@@ -55,10 +55,6 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
 	extends MessageEnvelope
 	implements SecureMessage 
     {
-	private Message getMessage() { 
-	    return getContents();
-	}
-
 	private DummySecureMessage(Message m) {
 	    super(m, m.getOriginator(), m.getTarget());
 	}

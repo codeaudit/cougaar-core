@@ -37,7 +37,7 @@ abstract public class MessageEnvelope extends Message
     }
 
     // Security issue?
-    protected Message getContents() {
+    public Message getContents() {
 	return contents;
     }
 
