@@ -239,9 +239,12 @@ extends HandlerBase
       // already sent our "getAll"
       alreadyPending = (me.numResponses() > 0);
     } else {
-      // look for the specific type
+      // look for the specific type or a "getAll"
       alreadyPending = (me.containsGet(type));
     }
+
+    // must add this response (pending or not)
+    me.addResponse(res);
 
     if (logger.isDetailEnabled()) {
       logger.detail(
@@ -254,9 +257,6 @@ extends HandlerBase
     if (alreadyPending) {
       return null;
     }
-
-    // add a new pending response
-    me.addResponse(res);
 
     // queue for separate "getAll" submit
     getAllQueue.add(name);
@@ -314,6 +314,9 @@ extends HandlerBase
     // due to a "get" upgrade
     boolean alreadyPending = me.containsGetAll();
 
+    // must add this response (pending or not)
+    me.addResponse(res);
+
     if (logger.isDetailEnabled()) {
       logger.detail(
           "Cache MISS ("+
@@ -325,9 +328,6 @@ extends HandlerBase
     if (alreadyPending) {
       return null;
     }
-
-    // add a new pending response
-    me.addResponse(res);
 
     // send out to the remote WP
     return res;
@@ -716,7 +716,10 @@ extends HandlerBase
       for (int i = 0, n = numResponses(); i < n; i++) {
         Response res = getResponse(i);
         Request req = res.getRequest();
-        if (req instanceof Request.Get) {
+        if (req instanceof Request.GetAll) {
+          isPending = true;
+          break;
+        } else if (req instanceof Request.Get) {
           Request.Get greq = (Request.Get) req;
           if (type.equals(greq.getType())) {
             isPending = true;
