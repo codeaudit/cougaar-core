@@ -1,3 +1,29 @@
+2003-03-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/Parser.java:
+	Add quoted names to support MetricsCondition names.
+
+	* org/cougaar/core/adaptivity/OMCRangeList.java:
+	Add some useful constants for various ranges and add constructors
+	for single ranges.
+
+	* org/cougaar/core/adaptivity/MetricsCondition.java:
+	Implements the Condition interface for metrics service values.
+
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	New feature to directly included Measurements made with the
+	MetricsService as Conditions in Adaptivity Engine plays.
+	Conditions may be named as follows:
+	   metrics:<type>:<metrics path>
+	where <type> is one of double, long, integer, string or boolean
+	and specifies how to access the Metric from the MetricsService.
+	The type of the resultant Condition matches except that boolean
+	leads to an Integer having a value of 0 or 1 (Boolean is not
+	Comparable and cannot be a Condition value).
+	<metrics path> is a standard metric name as defined by the
+	MetricsService using a StandardVariableEvaluator.
+	Metrics condition names must be quoted due to the embedded colons.
+
 2003-02-13  Todd Wright  <twright@bbn.com>
 
 	* SimpleAgent, NodeAgent, topology
