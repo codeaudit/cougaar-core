@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,10 +66,6 @@ import org.cougaar.util.GenericStateModelAdapter;
 /**
  * JDNI implementation of the WhitePagesService, backed by the
  * NamingService.
- * <p>
- * Load into the node agent:<pre>
- *   plugin = org.cougaar.core.naming.JNDIWhitePagesServiceComponent
- * </pre>
  */
 public final class JNDIWhitePagesServiceComponent
 extends GenericStateModelAdapter
@@ -84,22 +81,17 @@ implements Component {
   private EventDirContext wpContext;
   private final NamingListener wpListener = new WPListener();
   private static final String WP_DIR="WP";
-  private static final String NAME_ATTR="NAME";
-  private static final String APP_ATTR ="APP";
-  private static final String URI_ATTR ="URI";
-  private static final String CERT_ATTR="CERT";
-  private static final String TTL_ATTR ="TTL";
 
   private WhitePagesService wpS;
   private WhitePagesServiceProvider wpSP;
 
-  // map from  (name -> Request.Get.Response)
+  // map from  (name -> CacheEntry)
   private final Map cache = new HashMap();
-  // special entry for "getAll"
-  private CacheEntry cacheAllEntry = null;
-  private final List queuePending = new ArrayList();
+
+  private final Set cacheWaiters = new HashSet(13);
+  private final List queuePending = new ArrayList(13);
   private Schedulable queueThread;
-  private final List queueResponses = new ArrayList();
+  private final Map queueResponses = new HashMap(13);
 
   public void setBindingSite(BindingSite bs) {
     //this.sb = bs.getServiceBroker();
@@ -190,7 +182,6 @@ implements Component {
   private class WhitePagesServiceImpl extends WhitePagesService {
     public Response submit(Request req) {
       Response res = req.createResponse();
-      // res.setResult(submitNow(req));
       submitLater(res);
       return res;
     }
@@ -199,96 +190,34 @@ implements Component {
   // ------------------------------------------------------------------------
   // non-cache non-queued actions:
 
-  private Object submitNow(Request req) {
-    Object ret;
-    try {
-      if (req instanceof Request.Get) {
-        String name = ((Request.Get)req).getName();
-        ret = getNow(name);
-      } else if (req instanceof Request.GetAll) {
-        ret = getAllNow();
-      } else if (req instanceof Request.Refresh) {
-        AddressEntry ae = ((Request.Refresh)req).getOldEntry();
-        ret = refreshNow(ae);
-        if (ret == null) {
-          ret = Response.Refresh.NULL;
-        }
-      } else if (req instanceof Request.Bind) {
-        AddressEntry ae = ((Request.Bind)req).getAddressEntry();
-        bindNow(ae);
-        ret = ae;
-      } else if (req instanceof Request.Rebind) {
-        AddressEntry ae = ((Request.Rebind)req).getAddressEntry();
-        rebindNow(ae);
-        ret = ae;
-      } else if (req instanceof Request.Unbind) {
-        AddressEntry ae = ((Request.Unbind)req).getAddressEntry();
-        unbindNow(ae);
-        ret = ae;
-      } else {
-        throw new IllegalArgumentException(
-            "Invalid request class: "+
-            (req==null?"null":req.getClass().getName()));
-      }
-    } catch (Exception e) {
-      ret = e;
+  private Set filterNames(Set names, String suffix) {
+    int n = (names == null ? 0 : names.size());
+    if (n == 0) {
+      return Collections.EMPTY_SET;
     }
-    return ret;
-  }
-
-  private AddressEntry[] getNow(String name) throws Exception {
-    Attributes match = new BasicAttributes();
-    if (name != null) {
-      match.put(NAME_ATTR, name);
+    // assert (suffix.charAt(0) == '.');
+    String suf = suffix;
+    int lsuf = suf.length();
+    if (".".equals(suf)) {
+      // root
+      suf = "";
+      lsuf--;
     }
-    List allAts = fetchAll(match);
-    AddressEntry[] ret;
-    int n = (allAts==null?0:allAts.size());
-    if (n <= 0) {
-      ret = AddressEntry.EMPTY_ARRAY;
-    } else {
-      ret = new AddressEntry[n];
-      long now = System.currentTimeMillis();
-      int j = 0;
-      for (int i = 0; i < n; i++) {
-        Attributes ats = (Attributes) allAts.get(i);
-        AddressEntry ae = createAddressEntry(ats);
-        if (ae.getTTL() > now) {
-          ret[j++]=ae;
-        }
-      }
-      if (j < n) {
-        // some expired
-        if (j == 0) {
-          ret = AddressEntry.EMPTY_ARRAY;
-        } else {
-          AddressEntry[] x = new AddressEntry[j];
-          System.arraycopy(ret, 0, x, 0, j);
-          ret = x;
-        }
-      }
-    }
-    return ret;
-  }
-
-  private AddressEntry[] getAllNow() throws Exception {
-    return getNow(null);
-  }
-
-  private AddressEntry refreshNow(AddressEntry ae) throws Exception {
-    Application app = ae.getApplication();
-    String scheme = ae.getAddress().getScheme();
-    AddressEntry[] a = getNow(ae.getName()); // lazy!
-    int n = (a==null?0:a.length);
-    AddressEntry ret = null;
+    Set ret = new HashSet();
+    Iterator iter = names.iterator();
     for (int i = 0; i < n; i++) {
-      AddressEntry ai = a[i];
-      if (ai.getApplication().equals(app) &&
-          ai.getAddress().getScheme().equals(scheme)) {
-        if (ai.getTTL() >= System.currentTimeMillis()) {
-          ret = ai;
+      String name = (String) iter.next();
+      String tmp = null;
+      if (name.endsWith(suf)) {
+        int tailIdx = (name.length()-lsuf);
+        int sep = name.lastIndexOf('.', tailIdx-1);
+        tmp = name;
+        if (sep > 0) {
+          tmp = name.substring(sep);
         }
-        break;
+      }
+      if (tmp != null) {
+        ret.add(tmp);
       }
     }
     return ret;
@@ -302,8 +231,7 @@ implements Component {
           ae.getTTL()+" < "+now+")");
     }
     String key = createKey(ae);
-    Attributes ats = createAttributes(ae);
-    register(key, ats);
+    nsBind(key, ae);
   }
 
   private void rebindNow(AddressEntry ae) throws Exception {
@@ -313,13 +241,14 @@ implements Component {
           "TTL is less than current time ("+
           ae.getTTL()+" < "+now+")");
     }
-    bindNow(ae);
+    String key = createKey(ae);
+    nsRebind(key, ae);
   }
 
   private void unbindNow(AddressEntry ae) throws Exception {
     // ignore TTL
     String key = createKey(ae);
-    unregister(key);
+    nsUnbind(key);
   }
 
   // ------------------------------------------------------------------------
@@ -332,55 +261,161 @@ implements Component {
   // ------------------------------------------------------------------------
   // ugly cache
   //
-  // only caches "get" and "getAll"
+  // only caches "get" and "list"
   // "refresh" is handled as a "get" (still hits cache!)
   // don't cache "*bind", but correctly clears cache
   //
   // removed pending/stale support
 
   // ns callback:
-  private void dirtyName(String name) {
+  private void handleAdd(String key) {
+    if (log.isDebugEnabled()) { 
+      log.debug("handleAdd("+key+")");
+    }
+    String name = extractName(key);
     synchronized (cache) {
-      if (log.isDebugEnabled()) { 
-        log.debug("dirtyName("+name+")");
+      CacheEntry ce = (CacheEntry) cache.get(name);
+      if (ce == null) {
+        ce = new CacheEntry();
+        cache.put(name, ce);
       }
-      cache.remove(name);
-      cacheAllEntry = null;
+      ce.isStale = true;
+      ce.keys.add(key);
+    }
+  }
+  private void handleChange(String key) {
+    if (log.isDebugEnabled()) { 
+      log.debug("handleChange("+key+")");
+    }
+    String name = extractName(key);
+    synchronized (cache) {
+      CacheEntry ce = (CacheEntry) cache.get(name);
+      if (ce == null) {
+        ce = new CacheEntry();
+        cache.put(name, ce);
+      }
+      ce.isStale = true;
+      ce.keys.add(key); // likely noop
+    }
+  }
+  private void handleRemove(String key) {
+    if (log.isDebugEnabled()) { 
+      log.debug("handleRemove("+key+")");
+    }
+    String name = extractName(key);
+    synchronized (cache) {
+      CacheEntry ce = (CacheEntry) cache.get(name);
+      if (ce != null) {
+        ce.isStale = true;
+        ce.keys.remove(key);
+        if (ce.keys.isEmpty()) {
+          cache.remove(name);
+        }
+      }
     }
   }
 
-  private void submitCached(Response res) {
-    Request req = res.getRequest();
-    long timeout = req.getTimeout();
+  private void submitCached(final Response res) {
+    final Request req = res.getRequest();
+    final long timeout = req.getTimeout();
     if (timeout < 0) {
       throw new IllegalArgumentException("Negative timeout: "+timeout);
     }
-    CacheEntry entry;
+
     if (req instanceof Request.Get) {
       // "get"
       String name = ((Request.Get) req).getName();
+      Object ret;
       synchronized (cache) {
-        entry = (CacheEntry) cache.get(name);
-        if (entry == null) {
-          entry = new CacheEntry(req);
-          cache.put(name, entry);
+        CacheEntry ce = (CacheEntry) cache.get(name);
+        if (ce == null) {
+          // not listed
+          ret = AddressEntry.EMPTY_ARRAY;
+        } else if (!ce.isStale) {
+          // already cached
+          List l = ce.entries;
+          int n = l.size();
+          AddressEntry[] a = new AddressEntry[n];
+          for (int i = 0; i < n; i++) {
+            a[i] = (AddressEntry) l.get(i);
+          }
+          ret = a;
+        } else {
+          // must fetch
+          ret = null;
         }
       }
-      submitCached(entry, res);
-    } else if (req instanceof Request.GetAll) {
-      // "getAll"
-      synchronized (cache) {
-        if (cacheAllEntry == null) {
-          cacheAllEntry = new CacheEntry(req);
+      if (ret != null) {
+        if (log.isDebugEnabled()) { 
+          log.debug("HIT "+res+" "+ret);
         }
-        entry = cacheAllEntry;
+        res.setResult(ret);
+        return;
       }
-      submitCached(entry, res);
-    } else if (req instanceof Request.Refresh) {
+      // wrap timeout response to allow removal
+      final Object qe;
+      if (req.getTimeout() <= 0) {
+        qe = res;
+      } else {
+        qe = new WrappedResponse(res);
+      }
+      boolean mustQueue;
+      synchronized (cacheWaiters) {
+        // issue a big "fetch-all" to update the cache
+        mustQueue = cacheWaiters.isEmpty();
+        cacheWaiters.add(qe);
+      }
+      if (mustQueue) {
+        fetchLater(null);
+      }
+      if (timeout > 0) {
+        TimerTask timerTask = new TimerTask() {
+          public void run() {
+            synchronized (cacheWaiters) {
+              cacheWaiters.remove(qe);
+            }
+            if (log.isDebugEnabled()) { 
+              log.debug("TIMEOUT "+res+" "+this);
+            }
+            res.setResult(Response.TIMEOUT);
+          }
+          public String toString() {
+            return 
+              "(timer oid="+System.identityHashCode(this)+
+              " sched="+scheduledExecutionTime()+
+              " timeout="+timeout+" qe="+qe+")";
+          }
+        };
+        if (log.isDebugEnabled()) {
+          log.debug("Schedule "+timerTask);
+        }
+        threadService.schedule(timerTask, timeout);
+      }
+      return;
+    }
+
+    if (req instanceof Request.List) {
+      // "list"
+      Set ret;
+      String suffix = ((Request.List) req).getSuffix();
+      synchronized (cache) {
+        ret = filterNames(cache.keySet(), suffix);
+      }
+      if (log.isDebugEnabled()) { 
+        log.debug("LIST "+suffix+" ["+ret.size()+"]");
+      }
+      res.setResult(ret);
+      return;
+    } 
+
+    if (req instanceof Request.Refresh) {
       // special case using "get"
       refreshCached((Response.Refresh) res);
-    } else {
-      // *bind
+      return;
+    }
+
+    {
+      // must be a *bind
       AddressEntry ae;
       if (req instanceof Request.Bind) {
         ae = ((Request.Bind) req).getAddressEntry();
@@ -393,12 +428,29 @@ implements Component {
             "Unexpected type: "+
             (req == null ? "null" : req.getClass().getName()));
       }
-      // invalidate cache entry
-      synchronized (cache) {
-        cache.remove(ae.getName());
+      // optional: invalidate cache entry before NS update?
+      // we'll let the callback do this
+      fetchLater(res);
+      if (timeout > 0) {
+        TimerTask timerTask = new TimerTask() {
+          public void run() {
+            res.setResult(Response.TIMEOUT);
+            if (log.isDebugEnabled()) {
+              log.debug("TIMEOUT "+res+" "+this);
+            }
+          }
+          public String toString() {
+            return 
+              "(timer oid="+System.identityHashCode(this)+
+              " sched="+scheduledExecutionTime()+
+              " timeout="+timeout+")";
+          }
+        };
+        if (log.isDebugEnabled()) {
+          log.debug("Scheduled "+timerTask);
+        }
+        threadService.schedule(timerTask, timeout);
       }
-      // not cached, use a dummy entry
-      submitCached((new CacheEntry(req)), res);
     }
   }
 
@@ -437,109 +489,7 @@ implements Component {
     };
     Response getRes = getReq.createResponse();
     getRes.addCallback(getC);
-    submitCached(getRes); // lazy!
-  }
-
-  /** @return Request or Throwable */
-  private void submitCached(
-      final CacheEntry entry,
-      final Response res) {
-    Request req = entry.req;
-    boolean isFirst;
-    final Object qe;
-    synchronized (entry) {
-      // check for already fetched value
-      Object value = entry.value;
-      if (value != null) {
-        // check TTL
-        boolean isOkay = true;
-        if (value instanceof AddressEntry) {
-          long ttl = ((AddressEntry) value).getTTL();
-          if (ttl < System.currentTimeMillis()) {
-            isOkay = false;
-          }
-        } else if (value instanceof AddressEntry[]) {
-          AddressEntry[] a = (AddressEntry[]) value;
-          int n = a.length;
-          if (n > 0) {
-            long now = System.currentTimeMillis();
-            for (int i = 0; i < n; i++) {
-              long ttl = a[i].getTTL();
-              if (ttl < now) {
-                isOkay = false;
-                break;
-              }
-            }
-          }
-        }
-        if (isOkay) {
-          if (log.isDebugEnabled()) {
-            log.debug("HIT "+req+" "+entry);
-          }
-          res.setResult(value);
-          return;
-        } else {
-          if (log.isDebugEnabled()) {
-            log.debug("MISS <expired> "+req+" "+entry);
-          }
-          entry.value = null;
-        }
-      }
-      // wrap timeout response to allow removal
-      if (req.getTimeout() <= 0) {
-        qe = res;
-      } else {
-        qe = new WrappedResponse(res);
-      }
-      isFirst = entry.responses.isEmpty();
-      entry.responses.add(qe);
-    }
-
-    if (isFirst) {
-      if (log.isDebugEnabled()) {
-        log.debug("MISS <new> "+req+" "+entry);
-      }
-      fetchLater(entry);
-    } else {
-      if (log.isDebugEnabled()) {
-        log.debug("MISS <queued> "+req+" "+entry);
-      }
-    }
-
-    final long timeout = req.getTimeout();
-    if (timeout > 0) {
-      TimerTask timerTask = new TimerTask() {
-        public void run() {
-          synchronized (entry) {
-            if (log.isDebugEnabled()) {
-              log.debug("Timeout "+this);
-            }
-            boolean b = entry.responses.remove(qe);
-            if (log.isDebugEnabled()) {
-              log.debug("Timeout removed "+this);
-            }
-            res.setResult(Response.TIMEOUT);
-            if (log.isDebugEnabled()) {
-              log.debug("Timeout set res timeout "+res);
-            }
-          }
-        }
-        public String toString() {
-          return 
-            "(timer oid="+System.identityHashCode(this)+
-            " sched="+scheduledExecutionTime()+
-            " timeout="+timeout+" entry="+entry+
-            " qe="+qe+")";
-        }
-      };
-      if (log.isDebugEnabled()) {
-        long now = System.currentTimeMillis();
-        log.debug(
-            "Scheduled timeout (now="+now+" + t="+timeout+" == "+
-            (now+timeout)+") "+timerTask);
-      }
-      threadService.schedule(timerTask, timeout);
-    }
+    submitCached(getRes);
   }
 
   private static class WrappedResponse {
@@ -552,61 +502,146 @@ implements Component {
     }
   }
 
-  private void fetchNow(CacheEntry entry) {
+  private void fetchNow(Response res) {
     if (log.isDebugEnabled()) {
-      log.debug("Starting fetch "+entry);
+      log.debug("Starting fetch "+res);
     }
-    // IDEA: return if entry.responses.isEmpty()?
-    Object value = submitNow(entry.req);
-    // assert value TTL >= now
-    synchronized (entry) {
-      entry.value = value;
-      if (log.isDebugEnabled()) {
-        log.debug("Set value "+entry);
+    if (res == null) {
+      // fetch all due to "get"
+      Map fullMap = new HashMap();
+      Exception e = null;
+      // IDEA: return if cacheWaiters.isEmpty()?
+      try {
+        fetchAll(fullMap);
+      } catch (Exception x) {
+        e = x;
       }
-      if (entry.responses.isEmpty()) {
-        if (log.isDebugEnabled()) {
-          log.debug("No responses to set");
+      synchronized (cacheWaiters) {
+        Iterator iter = cacheWaiters.iterator();
+        for (int i = 0, n = cacheWaiters.size(); i < n; i++) {
+          Object oi = iter.next();
+          queueResponses.put(oi, e);
         }
-        return;
+        cacheWaiters.clear();
       }
-      queueResponses.addAll(entry.responses);
-      entry.responses.clear();
+      if (e == null) {
+        synchronized (cache) {
+          // update entire cache
+          //
+          // clear cache -- FIXME is this safe?  suppose a
+          // callback "handleAdd" occurs just after the 
+          // "fetchAll"?  TODO maybe fix later...
+          cache.clear();
+          Iterator fullMapIter = fullMap.entrySet().iterator();
+          for (int i = 0, n = fullMap.size(); i < n; i++) {
+            Map.Entry me = (Map.Entry) fullMapIter.next();
+            String key = (String) me.getKey();
+            AddressEntry ae = (AddressEntry) me.getValue();
+            String name = ae.getName();
+            CacheEntry ce = (CacheEntry) cache.get(name);
+            if (ce == null) {
+              ce = new CacheEntry();
+              cache.put(name, ce);
+            }
+            ce.keys.add(key);
+            ce.isStale = false;
+            ce.entries.add(ae);
+          }
+          // prepare responses
+          Iterator qrIter = queueResponses.entrySet().iterator();
+          for (int i = 0, n = queueResponses.size(); i < n; i++) {
+            Map.Entry me = (Map.Entry) qrIter.next();
+            Object o = me.getKey();
+            Response ri;
+            if (o instanceof WrappedResponse) {
+              ri = ((WrappedResponse) o).res;
+            } else {
+              ri = (Response) o;
+            }
+            Request.Get req = (Request.Get) ri.getRequest();
+            String name = req.getName();
+            CacheEntry ce = (CacheEntry) cache.get(name);
+            Object val;
+            if (ce == null) {
+              val = AddressEntry.EMPTY_ARRAY;
+            } else {
+              // at this point we ignore the stale flag
+              List l = ce.entries;
+              int m = l.size();
+              AddressEntry[] a = new AddressEntry[m];
+              for (int j = 0; j < m; j++) {
+                a[j] = (AddressEntry) l.get(j);
+              }
+              val = a;
+            }
+            me.setValue(val);
+          }
+        }
+      }
+      // IDEA: do this in a separate thread?
+      Iterator qrIter = queueResponses.entrySet().iterator();
+      for (int i = 0, n = queueResponses.size(); i < n; i++) {
+        Map.Entry me = (Map.Entry) qrIter.next();
+        Object o = me.getKey();
+        Response ri;
+        if (o instanceof WrappedResponse) {
+          ri = ((WrappedResponse) o).res;
+        } else {
+          ri = (Response) o;
+        }
+        Object val = me.getValue();
+        if (log.isDebugEnabled()) {
+          log.debug("MISS "+ri+" "+val);
+        }
+        ri.setResult(val);
+      }
+      queueResponses.clear();
+      return;
+    } 
+
+    {
+      // must be a *bind
+      Request req = res.getRequest();
+      Object val;
+      AddressEntry ae;
+      try {
+        if (req instanceof Request.Bind) {
+          ae = ((Request.Bind)req).getAddressEntry();
+          bindNow(ae);
+        } else if (req instanceof Request.Rebind) {
+          ae = ((Request.Rebind)req).getAddressEntry();
+          rebindNow(ae);
+        } else if (req instanceof Request.Unbind) {
+          ae = ((Request.Unbind)req).getAddressEntry();
+          unbindNow(ae);
+        } else {
+          throw new InternalError(
+              "Invalid request class: "+
+              (req==null?"null":req.getClass().getName()));
+        }
+        val = ae;
+      } catch (Exception e) {
+        val = e;
+      }
+      // IDEA: do this in a separate thread?
       if (log.isDebugEnabled()) {
-        log.debug("Will set "+queueResponses.size()+" responses");
+        log.debug("MISS "+res+" "+val);
       }
+      res.setResult(val);
     }
-    // IDEA: do this in a separate thread?
-    for (int i = 0, n = queueResponses.size(); i < n; i++) {
-      Object o = queueResponses.get(i);
-      Response ri;
-      if (o instanceof WrappedResponse) {
-        ri = ((WrappedResponse) o).res;
-      } else {
-        ri = (Response) o;
-      }
-      if (log.isDebugEnabled()) {
-        log.debug("Setting result["+i+" / "+n+"]: "+ri);
-      }
-      ri.setResult(value);
-    }
-    if (log.isDebugEnabled()) {
-      log.debug("Cleaning temporary responses list");
-    }
-    queueResponses.clear();
   }
 
   // fetch-later queue
 
-  private void fetchLater(CacheEntry entry) {
+  private void fetchLater(Response res) {
     synchronized (queuePending) {
       if (log.isDebugEnabled()) {
-        log.debug("Locked fetchLater("+entry+"), adding entry");
+        log.debug("Locked fetchLater("+res+"), adding entry");
       }
-      queuePending.add(entry);
+      queuePending.add(res);
       if (log.isDebugEnabled()) {
         log.debug(
-            "Unlocking fetchLater("+entry+")");
+            "Unlocking fetchLater("+res+")");
       }
     }
     queueThread.start();
@@ -618,8 +653,45 @@ implements Component {
       log.debug("Starting queue fetcher thread");
     }
     Runnable fetchRunner = new Runnable() {
-      private final List tmp = new ArrayList();
+      private final Object lock = new Object();
+      private Thread lockOwner = null;
       public void run() {
+        // This outer lock shouldn't be necessary, but debugging has
+        // shown the "ThreadService.start()" to not guarantee a
+        // single-threaded run behavior.
+        synchronized (lock) {
+          Thread myThread = Thread.currentThread();
+          if (lockOwner != null) {
+            if (log.isInfoEnabled()) {
+              log.info(
+                  "Multiple simultaneous queue runners?"+
+                  " Current thread: "+myThread+
+                  " Lock owned by: "+lockOwner);
+            }
+            do {
+              try {
+                lock.wait();
+              } catch (Exception e) {
+                if (log.isErrorEnabled()) {
+                  log.error(null, e);
+                }
+              }
+            } while (lockOwner != null);
+          }
+          lockOwner = myThread;
+        }
+        try {
+          syncRun();
+        } finally {
+          synchronized (lock) {
+            lockOwner = null;
+            lock.notifyAll();
+          }
+        }
+      }
+
+      private final List tmp = new ArrayList();
+      private void syncRun() {
         synchronized (queuePending) {
           if (log.isDebugEnabled()) {
             log.debug(
@@ -630,8 +702,8 @@ implements Component {
           queuePending.clear();
         }
         for (int i = 0, n = tmp.size(); i < n; i++) {
-          CacheEntry entry = (CacheEntry) tmp.get(i);
-          fetchNow(entry);
+          Response res = (Response) tmp.get(i);
+          fetchNow(res);
         }
         tmp.clear();
       }
@@ -649,21 +721,15 @@ implements Component {
   }
 
   private static final class CacheEntry {
-    public final Request req;
-    public Object value;
-    public final Set responses = new HashSet(13);
-    public CacheEntry(Request req) {
-      this.req = req;
-    }
+    // set of String keys (name#app#scheme)
+    // mutable, access under cache lock
+    public final Set keys = new HashSet(13);
+    // true if the entries are stale
+    public boolean isStale = true;
+    // fetched entries, immutable but maybe stale
+    public final List entries = new ArrayList();
     public String toString() {
-      synchronized (this) {
-        return 
-          "(entry"+
-          " oid="+System.identityHashCode(this)+
-          " req="+req+
-          " val="+value+
-          " res["+responses.size()+"]="+responses+")";
-      }
+      return "(keys="+keys+" stale="+isStale+" entries="+entries+")";
     }
   }
 
@@ -674,32 +740,6 @@ implements Component {
 
   // ------------------------------------------------------------------------
   // JNDI WP representation:
-
-  private Attributes createAttributes(AddressEntry ae) {
-    Attributes ats = new BasicAttributes();
-    ats.put(NAME_ATTR, ae.getName());
-    ats.put(APP_ATTR,  ae.getApplication());
-    ats.put(URI_ATTR,  ae.getAddress());
-    ats.put(CERT_ATTR, ae.getCert());
-    ats.put(TTL_ATTR,  Long.toString(ae.getTTL()));
-    return ats;
-  }
-
-  private AddressEntry createAddressEntry(Attributes ats) {
-    String name = (String) getAttribute(ats,NAME_ATTR);
-    Application app = (Application) getAttribute(ats,APP_ATTR);
-    URI uri  = (URI) getAttribute(ats,URI_ATTR);
-    Cert cert = (Cert) getAttribute(ats,CERT_ATTR);
-    long ttl  = Long.parseLong((String) getAttribute(ats,TTL_ATTR));
-    return new AddressEntry(name,app,uri,cert,ttl);
-  }
-
-  private void dirtyCache(String key) {
-    String name = extractName(key);
-    if (name != null) {
-      dirtyName(name);
-    }
-  }
 
   private String createKey(AddressEntry ae) {
     String name = ae.getName();
@@ -734,93 +774,32 @@ implements Component {
   // ------------------------------------------------------------------------
   // JNDI guts:
 
-  private List fetchAll(Attributes match) {
-    List ret;
-    try {
-      NamingEnumeration e =
-        getWPContext().search(
-            "",
-            match,
-            null);
-      if (!(e.hasMore())) {
-        ret = Collections.EMPTY_LIST;
-      } else {
-        ret = new ArrayList(13);
-        do {
-          SearchResult result = (SearchResult) e.next();
-          if (result != null) {
-            Attributes ats = result.getAttributes();
-            if (ats != null) {
-              ret.add(ats);
-            }
-          }
-        } while (e.hasMore());
-      }
-    } catch (NamingException e) {
-      if (log.isDebugEnabled()) {
-        log.debug("Unable to fetchAll("+match+")", e);
-      }
-      throw new RuntimeException(
-          "Unable to access name server", e);
+  private void fetchAll(Map toMap) throws Exception {
+    // this looks bad, but our NamingService impl is
+    // a client-side filter anyways...
+    DirContext ctx = getWPContext();
+    NamingEnumeration e = ctx.listBindings("");
+    while (e.hasMore()) {
+      Binding b = (Binding) e.next();
+      toMap.put(b.getName(), b.getObject());
     }
-    return ret;
+  }
+  
+  private void nsBind(
+      String name, Object obj) throws NamingException {
+    DirContext ctx = getWPContext();
+    ctx.bind(name, obj, new BasicAttributes());
   }
 
-  private void unregister(String name) throws NamingException {
+  private void nsRebind(
+      String name, Object obj) throws NamingException {
+    DirContext ctx = getWPContext();
+    ctx.rebind(name, obj, new BasicAttributes());
+  }
+
+  private void nsUnbind(String name) throws NamingException {
     DirContext ctx = getWPContext();
     ctx.unbind(name);
-  }
-
-  private void register(
-      String name, Attributes ats) throws NamingException {
-    DirContext ctx = getWPContext();
-    ctx.rebind(name, "ignored", ats);
-  }
-
-  // util:
-  private Object getAttribute(Attributes ats, String id) {
-    return getAttributeValue(ats, id, true);
-  }
-  private Object getAttributeValue(Attributes ats, String id) {
-    return getAttributeValue(ats, id, false);
-  }
-  private Object getAttributeValue(
-      Attributes ats, String id, boolean confirm) {
-    if (ats == null) {
-      if (confirm) {
-        throw new RuntimeException(
-            "Null attributes set");
-      } else {
-        return null;
-      }
-    }
-    Attribute at = ats.get(id);
-    if (at == null) {
-      if (confirm) {
-        throw new RuntimeException(
-            "Unknown attribute \""+id+"\"");
-      } else {
-        return null;
-      }
-    }
-    Object val;
-    try {
-      val = at.get();
-    } catch (NamingException ne) {
-      throw new RuntimeException(
-          "Unable to get value for attribute \""+id+"\"",
-          ne);
-    }
-    if (val == null) {
-      if (confirm) {
-        throw new RuntimeException(
-            "Null value for attribute \""+id+"\"");
-      } else {
-        return null;
-      }
-
-    }
-    return val;
   }
 
   private EventDirContext getWPContext() throws NamingException {
@@ -866,21 +845,21 @@ implements Component {
           log.error("Error installing naming listener", ne);
           return;
         }
-        dirtyCache(key);
+        handleAdd(key);
       }
       public void objectRemoved(NamingEvent evt) {
         String key = evt.getOldBinding().getName();
-        dirtyCache(key);
+        handleRemove(key);
       }
       public void objectRenamed(NamingEvent evt) {
         /*
            String key = evt.getNewBinding().getName();
-           dirtyCache(key);
+           handleRename(key);
          */
       }
       public void objectChanged(NamingEvent evt) {
         String key = evt.getNewBinding().getName();
-        dirtyCache(key);
+        handleChange(key);
       }
       public void namingExceptionThrown(NamingExceptionEvent evt) {
       }

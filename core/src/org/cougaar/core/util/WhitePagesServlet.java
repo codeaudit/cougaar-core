@@ -33,6 +33,8 @@ import org.cougaar.util.GenericStateModelAdapter;
 import java.net.URI;
 import java.io.*;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * An option servlet for viewing and altering the white pages.
@@ -40,9 +42,15 @@ import java.util.Date;
  * Load into any agent:<pre>
  *   plugin = org.cougaar.core.util.WhitePagesServlet(/wp)
  * </pre>
+ * <p>
+ * FIXME: document URL parameters.
+ * <p>
  * Maybe repackage this to a new home...
  */
 public class WhitePagesServlet extends ComponentServlet {
+
+  // default "getAll" depth-first recursion limit
+  private static final int DEFAULT_LIMIT = 3;
 
   private LoggingService log;
   private WhitePagesService wps;
@@ -70,11 +78,14 @@ public class WhitePagesServlet extends ComponentServlet {
     private final LoggingService log;
     private final WhitePagesService wps;
 
+    private HttpServletRequest sreq;
     private PrintWriter out;
 
     private String action;
     private String s_timeout;
+    private long timeout;
     private boolean async;
+    private String s_limit;
     private String name;
     private String scheme;
     private String addr;
@@ -97,24 +108,29 @@ public class WhitePagesServlet extends ComponentServlet {
         HttpServletResponse sres) throws IOException
       //, ServletException 
     {
+      this.sreq = sreq;
       this.out = sres.getWriter();
-      parseParams(sreq);
+      parseParams();
       printHeader();
-      printForm(sreq);
+      printForm();
       performRequest();
       printFooter();
     }
 
-    private void parseParams(HttpServletRequest sreq) {
-      action = param(sreq, "action");
-      s_timeout = param(sreq, "timeout");
-      async = "true".equals(param(sreq, "async"));
-      name = param(sreq, "name");
-      scheme = param(sreq, "scheme");
-      addr = param(sreq, "addr");
-      s_app = param(sreq, "app");
-      rel_ttl = (!"false".equals(param(sreq, "rel_ttl")));
-      s_ttl = param(sreq, "ttl");
+    private void parseParams() {
+      action = param("action");
+      s_timeout = param("timeout");
+      if (s_timeout != null) {
+        timeout = Long.parseLong(s_timeout);
+      }
+      async = "true".equals(param("async"));
+      s_limit = param("limit");
+      name = param("name");
+      scheme = param("scheme");
+      addr = param("addr");
+      s_app = param("app");
+      rel_ttl = (!"false".equals(param("rel_ttl")));
+      s_ttl = param("ttl");
       now = System.currentTimeMillis();
     }
 
@@ -128,20 +144,20 @@ public class WhitePagesServlet extends ComponentServlet {
           "function selectOp() {\n"+
           "  var i = document.f.action.selectedIndex;\n"+
           "  var s = document.f.action.options[i].text;\n"+
-          "  var noName = (s == \"getAll\");\n"+
-          "  var noApp  = (s == \"get\" || s == \"getAll\");\n"+
+          "  var noLimit = (s != \"getAll\");\n"+
+          "  var noApp  = (s == \"get\" || s == \"getAll\" || s == \"list\");\n"+
           "  var noSch  = noApp;\n"+
           "  var noAddr = (s != \"bind\" && s != \"rebind\");\n"+
           "  var noCert = noAddr;\n"+
           "  var noRTTL = noCert;\n"+
           "  var noTTL  = noRTTL;\n"+
-          "  disable(noName, document.f.name)\n"+
-          "  disable(noApp,  document.f.app)\n"+
-          "  disable(noSch,  document.f.scheme)\n"+
-          "  disable(noAddr, document.f.addr)\n"+
-          "  disable(noCert, document.f.cert)\n"+
-          "  disable(noRTTL, document.f.rel_ttl)\n"+
-          "  disable(noTTL,  document.f.ttl)\n"+
+          "  disable(noLimit, document.f.limit)\n"+
+          "  disable(noApp,   document.f.app)\n"+
+          "  disable(noSch,   document.f.scheme)\n"+
+          "  disable(noAddr,  document.f.addr)\n"+
+          "  disable(noCert,  document.f.cert)\n"+
+          "  disable(noRTTL,  document.f.rel_ttl)\n"+
+          "  disable(noTTL,   document.f.ttl)\n"+
           "}\n"+
         "function disable(b, txt) {\n"+
         "  txt.disabled=b;\n"+
@@ -159,7 +175,7 @@ public class WhitePagesServlet extends ComponentServlet {
         "<p>");
     }
 
-    private void printForm(HttpServletRequest sreq) {
+    private void printForm() {
       out.println(
         "<table border=1>\n"+
         "<form name=\"f\" method=\"GET\" action=\""+
@@ -180,6 +196,7 @@ public class WhitePagesServlet extends ComponentServlet {
         "<select name=\"action\" onChange=\"selectOp()\">\n"+
         option("get", action)+
         option("getAll", action)+
+        option("list", action)+
         option("refresh", action)+
         option("bind", action)+
         option("rebind", action)+
@@ -189,6 +206,12 @@ public class WhitePagesServlet extends ComponentServlet {
         "<tr><td>Timeout</td><td>"+
         input("timeout", s_timeout)+
         "</td></tr>\n"+
+        "<tr><td>Recursion limit</td><td>\n"+
+        input("limit", s_limit, 4)+
+        "&nbsp;<i>(&lt; 0 is none, default is "+
+        DEFAULT_LIMIT+
+        ")</i>"+
+        "</td><tr>\n"+
         "<tr><td>Entry</td><td>\n"+
         "<table border=1>\n"+
         "<tr><td>Name</td><td>"+
@@ -225,11 +248,7 @@ public class WhitePagesServlet extends ComponentServlet {
     }
 
     private void performRequest() {
-      long timeout = 0;
       try {
-        if (s_timeout != null) {
-          timeout = Long.parseLong(s_timeout);
-        }
         Request req = null;
         if ("get".equals(action)) {
           if (name == null) {
@@ -239,7 +258,15 @@ public class WhitePagesServlet extends ComponentServlet {
             req = new Request.Get(name, timeout);
           }
         } else if ("getAll".equals(action)) {
-          req = new Request.GetAll(timeout);
+          String suffix = (name == null ? "." : name);
+          int limit = DEFAULT_LIMIT;
+          if (s_limit != null) {
+            limit = Integer.parseInt(s_limit);
+          }
+          submitGetAll(suffix, limit);
+        } else if ("list".equals(action)) {
+          String tmp = (name == null ? "" : name);
+          req = new Request.List(tmp, timeout);
         } else if ("refresh".equals(action)) {
           AddressEntry ae = parseEntry();
           if (ae != null) {
@@ -276,7 +303,7 @@ public class WhitePagesServlet extends ComponentServlet {
       out.println("</body></html>");
     }
 
-    private static String param(HttpServletRequest sreq, String n) {
+    private String param(String n) {
       String s = sreq.getParameter(n);
       if (s==null || s.length()==0) {
         s = null;
@@ -324,6 +351,77 @@ public class WhitePagesServlet extends ComponentServlet {
       return ae;
     }
 
+    private void submitGetAll(
+        String suffix, int limit) throws Exception {
+      out.println("<p><hr><p>");
+      if (wps == null) {
+        out.println(
+            "<font color=\"red\">No WhitePagesService?</font>");
+        return;
+      }
+      out.println(
+          "<table border=1>\n"+
+          "<tr><th colspan=3>Response</th></tr>\n"+
+          "<tr><td colspan=2>Action</td><td>"+
+          action+
+          "</td></tr>\n"+
+          "<tr><td colspan=2>Timeout</td><td>"+
+          (s_timeout == null ? "" : s_timeout)+
+          "</td></tr>");
+      recurseGetAll(suffix, 0, limit);
+      out.println("</table>");
+    }
+
+    // recursive!
+    private int recurseGetAll(
+        String suffix, int idx, int limit) throws Exception {
+      int newIdx = idx;
+      if (limit == 0) {
+        ++newIdx;
+        out.println(
+            "<tr>"+
+            "<td align=right>"+newIdx+"</td>"+
+            "<td><a href=\""+
+            sreq.getRequestURI()+
+            "?action=getAll"+
+            "&name="+suffix+
+            (s_timeout == null ? "" : ("&timeout="+s_timeout))+
+            (s_limit == null ? "" : ("&limit="+s_limit))+
+            "\">"+suffix+"</a></td>"+
+            "</tr>");
+        return newIdx;
+      }
+      Set names = wps.list(suffix, timeout);
+      int n = (names == null ? 0 : names.size());
+      if (n <= 0) {
+        ++newIdx;
+        out.println(
+            "<tr>"+
+            "<td align=right>"+newIdx+"</td>"+
+            "<td>None listed for \""+suffix+"\"</td>"+
+            "</tr>");
+        return newIdx;
+      }
+      Iterator iter = names.iterator();
+      for (int i = 0; i < n; i++) {
+        String s = (String) iter.next();
+        if (s == null) {
+        } else if (s.length() > 0 && s.charAt(0) == '.') {
+          newIdx = recurseGetAll(s, newIdx, (limit - 1));
+        } else {
+          AddressEntry[] a = wps.get(s, timeout);
+          ++newIdx;
+          out.print(
+              "<tr>"+
+              "<td align=right>"+newIdx+"</td>"+
+              "<td>");
+          print(a);
+          out.println("</td></tr>");
+        }
+      }
+      return newIdx;
+    }
+
     private void submit(Request req) {
       out.println("<p><hr><p>");
       if (wps == null) {
@@ -362,37 +460,64 @@ public class WhitePagesServlet extends ComponentServlet {
           "<tr><td>Timeout</td><td>"+
           Long.toString(req.getTimeout())+
           "</td></tr>\n");
-      boolean isGet = (req instanceof Request.Get);
-      if (isGet || (req instanceof Request.GetAll)) {
-        String name =
-          (isGet ?
-           (((Request.Get) req).getName()) :
-           null);
-        if (isGet) {
-          out.println(
-              "<tr><td>Name</td><td>"+
-              name+
-              "</td></tr>");
-        }
-        out.print("<tr><td>");
+      if (req instanceof Request.Get) {
+        String name = ((Request.Get) req).getName();
+        out.print(
+            "<tr><td>Name</td><td>"+
+            name+
+            "</td></tr>\n<tr><td>");
         if (!res.isAvailable()) {
           out.println("Not available yet");
         } else if (res.isSuccess()) {
           AddressEntry[] a =
-            (isGet ?
-             (((Response.Get) res).getAddressEntries()) :
-             (((Response.GetAll) res).getAddressEntries()));
-          int n = (a==null ? 0 : a.length);
-          out.println(
-              "AddressEntries["+
-              n+"]</td><td>");
+            ((Response.Get) res).getAddressEntries();
+          print(a);
+        } else if (res.isTimeout()) {
+          out.print("Timeout");
+        } else {
+          print(res.getException());
+        }
+      } else if (req instanceof Request.List) {
+        Request.List r = (Request.List) req;
+        String suffix = ((Request.List) req).getSuffix();
+        out.print(
+            "<tr><td>Suffix</td><td>"+
+            "<a href=\""+
+            sreq.getRequestURI()+
+            "?action=list&name="+
+            suffix+"\">"+suffix+"</a>"+
+            "</td></tr>\n<tr><td>");
+        if (!res.isAvailable()) {
+          out.println("Not available yet");
+        } else if (res.isSuccess()) {
+          Set names = ((Response.List) res).getNames();
+          int n = (names==null ? 0 : names.size());
+          out.println("Names["+n+"]</td><td>");
           if (n <= 0) {
             out.print("&nbsp;");
           } else {
             out.println("<ol>\n<li>");
             int i = 0;
+            Iterator iter = names.iterator();
             while (true) {
-              print(a[i]);
+              String ni = (String) iter.next();
+              if (ni == null) {
+                out.print("<i>null?</i>");
+              } else if (ni.length() == 0) {
+                out.print("<i>empty?</i>");
+              } else if (ni.charAt(0) != '.') {
+                out.print(
+                    "<a href=\""+
+                    sreq.getRequestURI()+
+                    "?action=get&name="+
+                    ni+"\">"+ni+"</a>");
+              } else {
+                out.print(
+                    "<a href=\""+
+                    sreq.getRequestURI()+
+                    "?action=list&name="+
+                    ni+"\">"+ni+"</a>");
+              }
               if (++i >= n) break;
               out.println("</li>\n<li>");
             } while (++i < n);
@@ -403,7 +528,6 @@ public class WhitePagesServlet extends ComponentServlet {
         } else {
           print(res.getException());
         }
-        out.println("</td></tr>\n</table>");
       } else if (req instanceof Request.Refresh) {
         Request.Refresh r = (Request.Refresh) req;
         out.print("<tr><td>Old Entry</td><td>");
@@ -426,7 +550,6 @@ public class WhitePagesServlet extends ComponentServlet {
         } else {
           print(res.getException());
         }
-        out.println("</td></tr>\n</table>");
       } else {
         AddressEntry ae;
         if (req instanceof Request.Bind) {
@@ -455,6 +578,25 @@ public class WhitePagesServlet extends ComponentServlet {
         }
       }
       out.println("</td></tr>\n</table>");
+    }
+
+    private void print(AddressEntry[] a) {
+      int n = (a==null ? 0 : a.length);
+      out.println(
+          "AddressEntries["+
+          n+"]</td><td>");
+      if (n <= 0) {
+        out.print("&nbsp;");
+      } else {
+        out.println("<ol>\n<li>");
+        int i = 0;
+        while (true) {
+          print(a[i]);
+          if (++i >= n) break;
+          out.println("</li>\n<li>");
+        } while (++i < n);
+        out.println("</ol>");
+      }
     }
 
     private void print(AddressEntry ae) {

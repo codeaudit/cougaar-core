@@ -237,23 +237,20 @@ public abstract class Response implements Serializable {
   }
 
   /**
-   * Get all entries for all names at this level in the
-   * naming hierarchy.
-   * <p>
-   * This presents scalability concerns, so use with caution.
+   * List response.
    */
-  public static class GetAll extends Response {
-    public GetAll(Request q) {
-      this((Request.GetAll) q);
+  public static class List extends Response {
+    public List(Request q) {
+      this((Request.List) q);
     }
-    public GetAll(Request.GetAll q) {
+    public List(Request.List q) {
       super(q);
     }
-    public AddressEntry[] getAddressEntries() { 
+    public Set getNames() { 
       Object r = getResult();
       return
-        (r instanceof AddressEntry[]) ?
-        ((AddressEntry[]) r) :
+        (r instanceof Set) ?
+        ((Set) r) :
         null;
     }
   }

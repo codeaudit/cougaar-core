@@ -21,6 +21,7 @@
 
 package org.cougaar.core.service.wp;
 
+import java.util.Set;
 import org.cougaar.core.component.Service;
 
 /**
@@ -44,8 +45,8 @@ public abstract class WhitePagesService implements Service {
   public final AddressEntry[] get(String name) throws Exception {
     return get(name, 0);
   }
-  public final AddressEntry[] getAll() throws Exception {
-    return getAll(0);
+  public final Set list(String suffix) throws Exception {
+    return list(suffix, 0);
   }
   public final AddressEntry refresh(AddressEntry ae) throws Exception {
     return refresh(ae, 0);
@@ -93,12 +94,12 @@ public abstract class WhitePagesService implements Service {
     }
   }
 
-  public final AddressEntry[] getAll(long timeout) throws Exception {
-    Request.GetAll req = new Request.GetAll(timeout);
-    Response.GetAll res = (Response.GetAll) submit(req);
+  public final Set list(String suffix, long timeout) throws Exception {
+    Request.List req = new Request.List(suffix, timeout);
+    Response.List res = (Response.List) submit(req);
     if (res.waitForIsAvailable(timeout)) {
       if (res.isSuccess()) {
-        return res.getAddressEntries();
+        return res.getNames();
       } else if (res.isTimeout()) {
         throw new TimeoutException(true);
       } else {
@@ -180,14 +181,13 @@ public abstract class WhitePagesService implements Service {
    * utility methods, such as:<pre>
    *   try {
    *     AddressEntry[] a = wps.get("foo");
-   *     System.out.println("get-foo: "+a);
+   *     System.out.println("got foo: "+a);
    *   } catch (Exception e) {
    *     System.out.println("failed: "+e);
    *   }
    * </pre>
    * <p>
-   * An example "polling" usage is:
-   * <pre>
+   * An example "polling" usage is:<pre>
    *    Request req = new Request.Get("foo");
    *    Response res = wps.submit(req);
    *    while (!res.isAvailable()) {
@@ -199,8 +199,7 @@ public abstract class WhitePagesService implements Service {
    *    System.out.println(getRes);
    * </pre>
    * <p>
-   * An example "callback" usage is:
-   * <pre>
+   * An example "callback" usage is:<pre>
    *    Response r = yps.submitQuery(q);
    *    Callback callback = new Callback() {
    *      public void execute(Response res) {
@@ -214,8 +213,7 @@ public abstract class WhitePagesService implements Service {
    *    // keep going, or optionally wait for the callback
    * </pre>
    * <p>
-   * One can also mix the polling and callback styles:
-   * <pre>
+   * One can also mix the polling and callback styles:<pre>
    *    Request.Get req = new Request.Get("foo");
    *    Response.Get res = (Response.Get) wps.submit(req);
    *    if (res.waitForIsAvailable(5000)) {

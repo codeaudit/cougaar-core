@@ -68,6 +68,9 @@ public abstract class Request implements Serializable {
 
   /**
    * Get all entries associated with the given name.
+   *
+   * @see Get.Refresh do a specific (name, app, scheme) lookup,
+   *   or update an existing entry.
    */
   public static class Get extends Request {
     private final String name;
@@ -93,23 +96,67 @@ public abstract class Request implements Serializable {
   }
 
   /**
-   * Get all entries for all names at this level in the
-   * naming hierarchy.
+   * List the name of all direct children with the given suffix.
    * <p>
-   * This presents scalability concerns, so use with caution.
+   * The suffix must start with '.'.  For names other than '.',
+   * trailing '.'s will be ignored (e.g. ".x." is the same as
+   * ".x").
+   * <p>
+   * The name space is separated by using the "." character, just
+   * like internet host names (RFC 952).  All children of a name
+   * must have a matching suffix, and only the direct (first-level)
+   * children will be listed.
+   * <p>
+   * For example, given:<pre>
+   *    list(".foo.com")
+   * </pre>the result may look like be:<pre>
+   *    { "www.foo.com", ".bar.foo.com" }
+   * </pre>where "www.foo.com" is an entry, and ".bar.foo.com" is a
+   * suffix for one or more child entries.  If there were entries
+   * for both "www.foo.com" and subchild "test.www.foo.com", then both
+   * would be listed:<pre>
+   *    { "www.foo.com", ".www.foo.com", ".bar.foo.com" }
+   * </pre>Note that listing ".foo.com" will not list the second
+   * level children, such as "test.www.foo.com".  The client must
+   * do the <i>(non-scalable)</i> depth traversal itself.
+   * <p>
+   * The precise regex pattern is:<pre>
+   *     new java.util.regex.Pattern(
+   *       "^\.?[^\.]+" +
+   *       suffix +
+   *       "$");</pre>
+   * <p>
+   * This is somewhat like a the DNS zone transfer (AXFR) limited to
+   * depth=1.
    */
-  public static class GetAll extends Request {
-    public GetAll() {
-      this(0);
+  public static class List extends Request {
+    private final String suffix;
+    public List(String suffix) {
+      this(suffix, 0);
     }
-    public GetAll(long timeout) {
+    public List(String suffix, long timeout) {
       super(timeout);
+      String suf = suffix;
+      // must start with '.'
+      int len = (suf == null ? 0 : suf.length());
+      if (len == 0 || suf.charAt(0) != '.') {
+        throw new IllegalArgumentException(
+            "Suffix must start with '.': "+suf);
+      }
+      // trim tail '.'s
+      while (--len > 0 && suf.charAt(len) == '.') {
+        suf = suf.substring(0, len);
+      }
+      this.suffix = suf;
+    }
+    public final String getSuffix() { 
+      return suffix;
     }
     public Response createResponse() {
-      return new Response.GetAll(this);
+      return new Response.List(this);
     }
     public String toString() {
-      return "(getAll"+super.toString();
+      return "(list suffix="+getSuffix()+super.toString();
     }
   }
 
@@ -133,8 +180,8 @@ public abstract class Request implements Serializable {
    * to either be null or have a TTL in the future.
    * <p>
    * This is typically only used if the client has detected a
-   * strong out-of-band hint that the entry is stale, such as a
-   * lost network connection to the entry's address.
+   * <b>strong</b> out-of-band hint that the entry is stale, such
+   * as a lost network connection to the entry's URI.
    */
   public static class Refresh extends Request {
     private final AddressEntry oa;

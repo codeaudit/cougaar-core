@@ -42,7 +42,7 @@ extends HttpServlet
 implements Component {
 
   // default state model (no multiple inheritence!):
-  private static final GenericStateModel gsm = 
+  private final GenericStateModel gsm = 
     new GenericStateModelAdapter() {};
 
   // path parameter:

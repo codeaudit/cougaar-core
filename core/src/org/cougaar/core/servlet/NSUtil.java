@@ -40,43 +40,23 @@ public abstract class NSUtil {
       NamingService ns, List toList) {
     toList.clear();
 
-    // FIXME abstract away this naming-service use!
-    //
-    // here we find all Servlet-server names, which
-    // (for now) are the encoded Agent names.  this is 
-    // equal-to or a subset-of the list of all Agent names.
-    //
-    // should add a "ServerQueryService" to provide
-    // this lookup, plus a flag in this registry
-    // to distinguish between Agent and other (future)
-    // root names (e.g. Node-level Servlets, etc).
-    // additionally should consider caching...
-    //
-    // for now this is tolerable:
+    // FIXME replace with WhitePagesService!!!
     try {
       javax.naming.directory.DirContext d = 
         ns.getRootContext(); 
-      d = (javax.naming.directory.DirContext) 
-        d.lookup("WEBSERVERS");
+      d = (javax.naming.directory.DirContext) d.lookup("WP");
       javax.naming.NamingEnumeration en = d.listBindings("");
+      Set set = new HashSet();
       while (en.hasMoreElements()) {
         javax.naming.Binding binding =  
           (javax.naming.Binding) en.nextElement();
-        //
-        // This strangeness keeps us from having a dependency on 
-        // the "webserver" package, which is compiled after core.jar
-        //
-        Object o = binding.getObject();
-        java.lang.reflect.Method m = o.getClass().getMethod("getName", new Class[0]);
-        toList.add(m.invoke(o, new Object[0]));
-	/*
-        // This is what the code above should be....
-        org.cougaar.lib.web.arch.root.GlobalEntry entry = 
-          (org.cougaar.lib.web.arch.root.GlobalEntry)binding.getObject();
-        toList.add(entry.getName());
-	*/
-        
+        org.cougaar.core.service.wp.AddressEntry ae = 
+          (org.cougaar.core.service.wp.AddressEntry) 
+          binding.getObject();
+        String name = java.net.URLEncoder.encode(ae.getName());
+        set.add(name);
       }
+      toList.addAll(set);
       Collections.sort(toList);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
