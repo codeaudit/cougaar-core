@@ -1,3 +1,16 @@
+2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #2827 -- NPE in CachedCommunityServiceImpl
+	A missing lock allowed one thread to set a variable to null while
+	another thread was testing and using the variable. Added the lock.
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Remove use of disableWrite method. PersistenceServiceComponent is
+	now a component and can be parameterized directly without the help
+	of the Blackboard component.
+
 2003-04-07  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/node/Heartbeat.java:
