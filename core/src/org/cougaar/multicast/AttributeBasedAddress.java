@@ -118,7 +118,7 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
 
   protected String getAddressString() {
     if (_as == null) {
-      _as = myCommunityName + ":" + myAttributeType + "=" + myAttributeValue.intern();
+      _as = myCommunityName + ":" + myAttributeType + "=" + myAttributeValue;
     } 
     return _as;
   }
