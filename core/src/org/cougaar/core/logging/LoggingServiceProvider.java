@@ -56,11 +56,6 @@ public class LoggingServiceProvider implements ServiceProvider {
   /**
    * Create a LoggingServiceProvider and set the default logging
    * levels.
-   *
-   * @param props "org.cougaar.core.logging." system properties
-   *    to configure the logger.  In particular,
-   *    "org.cougaar.core.logging.config.filename=STRING"
-   *    will read properties from a file.
    */
   public LoggingServiceProvider() 
   {
@@ -73,7 +68,6 @@ public class LoggingServiceProvider implements ServiceProvider {
    */
   public LoggingServiceProvider(Properties props) 
   {
-    Thread.dumpStack();
     lf = LoggerFactory.getInstance();
   }
 
