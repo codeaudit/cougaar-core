@@ -78,6 +78,68 @@ public interface TopologyReaderService extends Service {
   int ENCLAVE = (1 << (3+3));
 
   /**
+   * Set the timeout for future topology read requests.
+   * <p>
+   * The valid timeout values are:<ul>
+   *   <li>
+   *   Negative (<i>the default</i>) indicates that the client 
+   *   wishes to wait as long as it takes for future topology 
+   *   requests to complete.
+   *   </li><p>
+   *   <li>
+   *   Zero indicates that future requests should quickly check the 
+   *   cache, but not force a fetch if the response is not already 
+   *   cached.
+   *   </li><p>
+   *   <li>
+   *   Positive indicates the time in milliseconds to wait for the 
+   *   future topology requests.
+   *   </li><p>
+   * </ul>
+   * <p>
+   * If a timeout occurs (millis &gt;= 0) then the "useStale" option 
+   * below controls the behavior, which is to either return a stale 
+   * response or throw a runtime exception of type
+   *   <code>TopologyReaderService.TimeoutException</code>.
+   *
+   * @see #setUseStale(boolean)
+   */
+  void setTimeout(long millis);
+
+  /**
+   * @see #setTimeout(long)
+   */
+  long getTimeout();
+
+  /**
+   * Set the future behavior for topology requests that takes longer
+   * than the timeout.
+   * <p>
+   * If the timeout is negative (<i>the default</i>) then the 
+   * "useStale" option is disabled.
+   * <p>
+   * If "useStale" is true (<i>the default</i>) then a topology 
+   * request that takes longer than the timeout limit will return 
+   * the most recent stale value.  If there is no stale value then 
+   * the behavior is as if "useStale" is false, as defined below.
+   * <p>
+   * If "useStale" is false then a topology request that takes 
+   * longer than the timeout limit will throw a runtime exception
+   * of type 
+   *   <code>TopologyReaderService.TimeoutException</code>.
+   * The exception captures the stale value if the client wishes 
+   * to use it.
+   *
+   * @see #setTimeout(long)
+   */
+  void setUseStale(boolean useStale);
+
+  /**
+   * @see #setUseStale(boolean)
+   */
+  boolean getUseStale();
+
+  /**
    * Get the parent name for the specified child type
    * and child name.
    * <p>
@@ -200,5 +262,24 @@ public interface TopologyReaderService extends Service {
       String site, 
       String enclave);
   long lookupIncarnationForAgent(String agent);
+
+  /**
+   * A TimeoutException is thrown if a topology request exceeds 
+   * the timeout limit and either:<pre>
+   *   a) "useStale" is false, or
+   *   b) there is no stale value
+   * </pre>.
+   * <p>
+   * The client can catch this exception and repeat their
+   * request using the stale value (iff "hasStale()" is true).
+   * The request must be <u>exactly</u> the same as the
+   * timed-out request, otherwise an exception will be
+   * thrown.
+   */
+  abstract class TimeoutException 
+    extends RuntimeException {
+      public abstract boolean hasStale();
+      public abstract TopologyReaderService withStale();
+    };
 
 }

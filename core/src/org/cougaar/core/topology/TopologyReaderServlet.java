@@ -299,6 +299,13 @@ extends BaseServletComponent
       // see ARG_PARAMS
       public String[] args;
 
+      // timeouts
+      public static final String TIMEOUT_PARAM = "timeout";
+      public long timeout;
+
+      public static final String USE_STALE_PARAM = "useStale";
+      public boolean useStale;
+
       // add QoS options?  for now we'll assume "get*".
 
       // worker constructor:
@@ -370,6 +377,13 @@ extends BaseServletComponent
             args[i] = URLDecoder.decode(si, "UTF-8");
           }
         }
+        // get timeout
+        String stimeout = request.getParameter(TIMEOUT_PARAM);
+        timeout = 
+          (stimeout != null ?  Long.parseLong(stimeout) : -1);
+        String suseStale = request.getParameter(USE_STALE_PARAM);
+        useStale = 
+          (suseStale != null ? "true".equals(suseStale) : true);
       }
       
       private int parseType(String s) {
@@ -386,10 +400,50 @@ extends BaseServletComponent
       }
 
       private Object invokeMethod() {
+        // set the timeout preferences on our topology request.
+        //
+        // we should lock the service, since multiple simultaneous
+        // topology servlet requests could overwrite their timeout
+        // preferences.  The downside is that a non-timed request
+        // would block a simulateous timed request, which defeats
+        // the purpose of this timer...
+        //
+        // this servlet's timeout option is *not documented*
+        // and only here for testing.  Let's error on the side
+        // of safety and not lock the timeout preference 
+        // changes.
+        Object ret;
+        if (timeout == -1 && useStale) {
+          // typical wait-forever behavior
+          ret = timedInvokeMethod(topologyReaderService);
+        } else {
+          // don't lock, simply overwrite the preferences
+          topologyReaderService.setTimeout(timeout);
+          topologyReaderService.setUseStale(useStale);
+          try {
+            ret = timedInvokeMethod(topologyReaderService);
+          } catch (TopologyReaderService.TimeoutException te) {
+            if (te.hasStale()) {
+              ret = timedInvokeMethod(te.withStale());
+            } else {
+              throw new MyIllegalArgumentException(
+                  "No stale value available");
+            }
+          } finally {
+            // put things back
+            topologyReaderService.setTimeout(-1);
+            topologyReaderService.setUseStale(true);
+          }
+        }
+        return ret;
+      }
+
+      private Object timedInvokeMethod(TopologyReaderService trs) {
         // could use reflection, but raises security issues
         //
         // here I'll do the equivalent:
         // could use a map for faster lookup.
+        //
         if (method == null) {
           throw new MyIllegalArgumentException(
               "Null method name");
@@ -399,7 +453,7 @@ extends BaseServletComponent
                 "Must specify a \""+TYPE_PARAM+
                 "\" parameter");
           }
-          return topologyReaderService.getAll(type);
+          return trs.getAll(type);
         } else if (method.equals("get")) {
           if (parentType < 0) {
             throw new MyIllegalArgumentException(
@@ -426,13 +480,13 @@ extends BaseServletComponent
           }
           if (isFor) {
             return 
-              topologyReaderService.getParentForChild(
+              trs.getParentForChild(
                   parentType,
                   childType,
                   name);
           } else {
             return
-              topologyReaderService.getChildrenOnParent(
+              trs.getChildrenOnParent(
                   childType,
                   parentType,
                   name);
@@ -443,14 +497,14 @@ extends BaseServletComponent
                 "Must specify a \""+NAME_PARAM+
                 "\" parameter");
           }
-          return topologyReaderService.getEntryForAgent(
+          return trs.getEntryForAgent(
               name);
         } else if (method.equals("entries")) {
           if (args != null) {
-            return topologyReaderService.getAllEntries(
+            return trs.getAllEntries(
                 args[0], args[1], args[2], args[3], args[4]);
           } else {
-            return topologyReaderService.getAllEntries(
+            return trs.getAllEntries(
                 null, null, null, null, null);
           }
         } else {
