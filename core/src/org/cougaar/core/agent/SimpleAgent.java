@@ -1717,12 +1717,14 @@ implements AgentIdentityClient
     whitePagesService = (WhitePagesService) 
       csb.getService(this, WhitePagesService.class, null);
 
-    try {
-      bindRestart();
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to load restart checker", e);
+    if (incarnation == 0) {
+      incarnation = System.currentTimeMillis();
     }
+    moveId = System.currentTimeMillis();
+    // ignore prior moveId
+
+    updateVersion(true);
+    updateTopology(true);
   }
 
   private void startRestartChecker() {
@@ -1743,6 +1745,9 @@ implements AgentIdentityClient
   }
 
   private void unloadRestartChecker() {
+    updateTopology(false);
+    updateVersion(false);
+
     ServiceBroker csb = getChildServiceBroker();
     csb.releaseService(
         this, WhitePagesService.class, whitePagesService);
@@ -1772,47 +1777,82 @@ implements AgentIdentityClient
     }
   }
 
-  private void bindRestart() throws Exception {
+  private Callback newCallback() {
+    // should really pay attention
     final LoggingService ls = log;
-    Callback callback = new Callback() {
-        public void execute(Response res) {
-          if (res.isSuccess()) {
-            if (ls.isInfoEnabled()) {
-              ls.info("WP Response: "+res);
-            }
-          } else {
-            ls.error("WP Error: "+res);
+    return new Callback() {
+      public void execute(Response res) {
+        if (res.isSuccess()) {
+          if (ls.isInfoEnabled()) {
+            ls.info("WP Response: "+res);
           }
+        } else {
+          ls.error("WP Error: "+res);
         }
-      };
+      }
+    };
+  }
 
-    // register WP version numbers
+  private void updateTopology(boolean bind) {
+    // register WP topology
     if (log.isInfoEnabled()) {
-      log.info("Updating white pages");
+      log.info("Updating white pages topology data");
     }
-    if (incarnation == 0) {
-      incarnation = System.currentTimeMillis();
-    }
-    moveId = System.currentTimeMillis();
-    // ignore prior moveId
-    URI versionURI = 
-      URI.create("version:///"+incarnation+"/"+moveId);
-    AddressEntry versionEntry = 
-      AddressEntry.getAddressEntry(
-          getIdentifier(),
-          "version",
-          versionURI);
-    whitePagesService.rebind(versionEntry, callback); // should really pay attention
-
-    // register WP node location
-    URI nodeURI = 
-      URI.create("node://"+localHost+"/"+localNode.getAddress());
-    AddressEntry nodeEntry = 
-      AddressEntry.getAddressEntry(
+    AddressEntry nodeEntry;
+    try {
+      URI nodeURI = 
+        URI.create("node://"+localHost+"/"+localNode.getAddress());
+      nodeEntry = 
+        AddressEntry.getAddressEntry(
           getIdentifier(),
           "topology",
           nodeURI);
-    whitePagesService.rebind(nodeEntry, callback); // really should pay attention
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to create version entry", e);
+    }
+
+    try {
+      if (bind) {
+        whitePagesService.rebind(nodeEntry, newCallback());
+      } else {
+        whitePagesService.unbind(nodeEntry, newCallback());
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to update white pages", e);
+    }
+  }
+
+  private void updateVersion(boolean bind) {
+    // register WP version numbers
+    if (log.isInfoEnabled()) {
+      log.info("Updating white pages version data");
+    }
+    AddressEntry versionEntry;
+    try {
+      URI versionURI = 
+        URI.create("version:///"+incarnation+"/"+moveId);
+      versionEntry = 
+        AddressEntry.getAddressEntry(
+          getIdentifier(),
+          "version",
+          versionURI);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to create version entry", e);
+    }
+
+    try {
+      if (bind) {
+        whitePagesService.rebind(versionEntry, newCallback());
+      } else {
+        whitePagesService.unbind(versionEntry, newCallback());
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Unable to update white pages", e);
+    }
   }
 
   /**

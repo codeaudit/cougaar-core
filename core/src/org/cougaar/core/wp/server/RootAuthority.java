@@ -549,6 +549,13 @@ implements Component
         // new version
         //
         // accept the replacement record
+      } else if (
+        queryVersion == 0 &&
+        (queryData == null ||
+         (queryData instanceof Map &&
+          ((Map) queryData).isEmpty())) &&
+        uid.compareTo(queryUID) < 0) {
+        // accept full unbind
       } else {
         // old version
         Object reason = 
