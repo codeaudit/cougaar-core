@@ -32,8 +32,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
-import org.cougaar.util.PropertyParser;
+import org.cougaar.util.GC;
 
 /**
  * Identifies all objects that have been (or are about to be written
@@ -57,7 +56,8 @@ class IdentityTable {
     /**
      * Strangely enough, ArrayLists cannot be resized; this extension
      * adds setSize(). 
-     * @param newSize the new size.  */
+     * @param newSize the new size.  
+     */
     public void setSize(int newSize) {
       while (this.size() < newSize) {
 	this.add(null);
@@ -114,45 +114,7 @@ class IdentityTable {
   public void setRehydrationCollection(Collection list) {
     rehydrationCollection = list;
     if (list == null) {
-      maybeGC();
-    }
-  }
-
-
-  /** Static logger for maybeGC **/
-  private static Logger _logger = Logging.getLogger(IdentityTable.class);
-
-  /** lock for GC timer **/
-  private static final Object gcLock = new Object();
-
-  /** when did we last do a GC, guarded by gcLock **/
-  private static long gcTime = 0L;
-
-  private static final long minGCInterval = 
-    PropertyParser.getLong("org.cougaar.core.persistence.IdentityTable.minGCInterval", 3000000L);
-
-  /** Maybe invoke System.gc, if it has been minGCInterval since
-   * the last time we did so.
-   *
-   * @property org.cougaar.core.persistence.IdentityTable.minGCInterval
-   * Minimum number of milliseconds between IdentityTable-directed gcs.
-   * Defaults to 3000000 (5 minutes).  Other GCs do not count.
-   **/
-  protected static final void maybeGC() {
-    long now = System.currentTimeMillis();
-    synchronized (gcLock) {
-      if ((gcTime != 0L) &&
-          ((now-gcTime)<minGCInterval)) {
-        return;
-      } 
-
-      System.gc();
-
-      long tend = System.currentTimeMillis();
-      gcTime = tend;
-      if (_logger.isWarnEnabled()) {
-        _logger.warn("IdentityTable.gc() ran for "+(tend-now)+" millis");
-      }
+      GC.gc();
     }
   }
 

@@ -68,6 +68,7 @@ import org.cougaar.core.service.DataProtectionServiceClient;
 import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.util.CSVUtility;
+import org.cougaar.util.GC;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.log.Logger;
@@ -1178,7 +1179,7 @@ public class PersistenceServiceComponent
 	Map clientData = getClientData();
 	if (full) {
 	  // If full dump, garbage collect unreferenced objects
-	  System.gc();
+          GC.gc();
 	  for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
 	    PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
 	    if (!pAssoc.isMarked()) {
