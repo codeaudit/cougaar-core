@@ -1,5 +1,9 @@
 2003-02-04  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/service/DataProtectionService.java:
+	Fix comment said BlackboardProtectionService instead of
+	DataProtectionService.
+
 	* org/cougaar/core/adaptivity/ConditionServiceProvider.java:
 	Use Collections.unmodifiableSet instead of ReadOnlySet
 
