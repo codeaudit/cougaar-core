@@ -153,15 +153,21 @@ public class ServiceBrokerSupport
       if (sp == null) return null; // bail
 
       service = sp.getService(this, requestor, serviceClass);
-
-       // if we're going to succeed and they passed a revoked listener...
-      if (service != null && srl != null) {
-        addServiceListener(new ServiceRevokedListener() {
-            public void serviceRevoked(ServiceRevokedEvent re) {
-              if (serviceClass.equals(re.getService()))
-                srl.serviceRevoked(re);
-            }
-          });
+      if (service != null) {
+        if (! serviceClass.isAssignableFrom(service.getClass())) {
+          throw new ClassCastException("ServiceProvider "+sp+
+                                       " returned a Service ("+service+
+                                       ") which is not an instance of "+serviceClass);
+        }
+        // if we're going to succeed and they passed a revoked listener...
+        if (srl != null) {
+          addServiceListener(new ServiceRevokedListener() {
+              public void serviceRevoked(ServiceRevokedEvent re) {
+                if (serviceClass.equals(re.getService()))
+                  srl.serviceRevoked(re);
+              }
+            });
+        }
       }
       
       return service;

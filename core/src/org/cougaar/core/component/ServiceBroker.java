@@ -49,6 +49,10 @@ public interface ServiceBroker {
 
   /** get an instance of the requested service from a service provider associated
    * with this context.
+   * May return null (if no provider found) and various RuntimeExceptions may be
+   * thrown by the associated ServiceProvider.  The ServiceBroker itself may
+   * throw ClassCastException if the ServiceProvider returns a non-null 
+   * service object which is not an instance of the requested serviceClass.
    **/
   Object getService(Object requestor, Class serviceClass, ServiceRevokedListener srl);
 
