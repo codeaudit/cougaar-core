@@ -55,8 +55,7 @@ extends HttpServlet
 {
   private SimpleServletSupport support;
 
-  public CompletionServlet(SimpleServletSupport support) {
-    super();
+  public void setSimpleServletSupport(SimpleServletSupport support) {
     this.support = support;
   }
 
