@@ -28,6 +28,7 @@ package org.cougaar.core.wp.bootstrap;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.security.cert.Certificate;
@@ -39,6 +40,7 @@ import java.util.regex.Pattern;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.util.UID;
+import sun.misc.BASE64Decoder;
 
 /**
  * Decode Bundles and Certs from encoded Strings.
@@ -70,6 +72,11 @@ public final class BundleDecoder {
 
   private static final Pattern P1 = Pattern.compile(S1);
   private static final Pattern P2 = Pattern.compile(S2);
+
+  private static final String BEGIN_CERT =
+    "-----BEGIN CERTIFICATE-----\n";
+  private static final String END_CERT =
+    "\n-----END CERTIFICATE-----";
 
   private BundleDecoder() {}
 
@@ -150,32 +157,35 @@ public final class BundleDecoder {
     }
     String id = scert.substring(0, i);
     String v = scert.substring(i+1);
-    if (id.equalsIgnoreCase("Indirect")) {
-      String q;
-      try {
-        q = URLDecoder.decode(v, "UTF-8");
-      } catch (Exception e) {
-        throw new RuntimeException(
-            "Unable to decodeCert("+scert+") query \""+v+"\"", e);
-      }
-      return new Cert.Indirect(q);
-    }
-    if (!id.equalsIgnoreCase("Direct")) {
-      throw new RuntimeException(
-          "Encoded cert \""+scert+"\" specifies invalid type \""+
-          id+", not \"Direct\" or \"Indirect\"");
-    }
-    Certificate c;
     try {
-      byte[] ba = v.getBytes(); // specify charsetName?
-      ByteArrayInputStream is = new ByteArrayInputStream(ba);
-      String cftype = "X.509"; // make a parameter?
-      CertificateFactory cf = CertificateFactory.getInstance(cftype);
-      c = cf.generateCertificate(is);
+      if (id.equalsIgnoreCase("Indirect")) {
+        String q = URLDecoder.decode(v, "UTF-8");
+        return new Cert.Indirect(q);
+      }
+      if (id.equalsIgnoreCase("Direct")) {
+        if (!v.startsWith(BEGIN_CERT)) {
+          v = BEGIN_CERT + v;
+        }
+        if (!v.endsWith(END_CERT)) {
+          v += END_CERT;
+        }
+        byte[] ba = v.getBytes(); // specify charsetName?
+        ByteArrayInputStream is = new ByteArrayInputStream(ba);
+        String cftype = "X.509"; // make a parameter?
+        CertificateFactory cf = CertificateFactory.getInstance(cftype);
+        Certificate c = cf.generateCertificate(is);
+        return new Cert.Direct(c);
+      }
+      if (id.equalsIgnoreCase("Object")) {
+        byte[] ba = (new BASE64Decoder()).decodeBuffer(v);
+        ByteArrayInputStream is = new ByteArrayInputStream(ba);
+        ObjectInputStream ois = new ObjectInputStream(is);
+        return (Cert) ois.readObject();
+      }
+      throw new RuntimeException("Unknown type: "+id);
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to decodeCert("+scert+")", e);
     }
-    return new Cert.Direct(c);
   }
 }

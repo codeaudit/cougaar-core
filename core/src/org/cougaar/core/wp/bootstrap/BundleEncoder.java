@@ -26,6 +26,8 @@
 
 package org.cougaar.core.wp.bootstrap;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.security.cert.Certificate;
@@ -93,26 +95,29 @@ public final class BundleEncoder {
     if (cert.equals(Cert.PROXY)) {
       return "PROXY";
     }
-    if (cert instanceof Cert.Indirect) {
-      String q = ((Cert.Indirect) cert).getQuery();
-      String v;
-      try {
-        v = URLEncoder.encode(q, "UTF-8");
-      } catch (Exception e) {
-        throw new RuntimeException(
-            "Unable to encodeCert("+cert+") query \""+q+"\"", e);
-      }
-      return "Indirect:"+v;
-    }
-    Certificate c = ((Cert.Direct) cert).getCertificate();
-    String v;
     try {
-      byte[] ba = c.getEncoded();
-      v = (new BASE64Encoder()).encode(ba);
+      if (cert instanceof Cert.Indirect) {
+        String q = ((Cert.Indirect) cert).getQuery();
+        String v = URLEncoder.encode(q, "UTF-8");
+        return "Indirect:"+v;
+      }
+      if (cert instanceof Cert.Direct) {
+        Certificate c = ((Cert.Direct) cert).getCertificate();
+        byte[] ba = c.getEncoded();
+        String v = (new BASE64Encoder()).encode(ba);
+        return "Direct:"+v;
+      }
+      // a custom cert type -- serialize it!
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream oos = new ObjectOutputStream(baos);
+      oos.writeObject(cert);
+      oos.flush();
+      byte[] ba = baos.toByteArray();
+      String v = (new BASE64Encoder()).encode(ba);
+      return "Object:"+v;
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to encodeCert("+cert+")", e);
     }
-    return "Direct:"+v;
   }
 }
