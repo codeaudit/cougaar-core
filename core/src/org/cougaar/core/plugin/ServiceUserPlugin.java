@@ -150,13 +150,13 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
                     "Started service alarm before the blackboard service"+
                     " is available");
       }
-      timer = createAlarm(delay);
+      timer = createAlarm(System.currentTimeMillis()+delay);
       getAlarmService().addRealTimeAlarm(timer);
     }
   }
 
-  private Alarm createAlarm(long delay) {
-    return new PluginAlarm(delay) {
+  private Alarm createAlarm(long time) {
+    return new PluginAlarm(time) {
       public BlackboardService getBlackboardService() {
         if (blackboard == null) {
           if (logger != null && logger.isWarnEnabled()) {
@@ -185,7 +185,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
       if (old != null) {
         old.cancel();           // cancel the old one
       }
-      timer = createAlarm(delay);
+      timer = createAlarm(System.currentTimeMillis()+delay);
       getAlarmService().addRealTimeAlarm(timer);
     }
   }

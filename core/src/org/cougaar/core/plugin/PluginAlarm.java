@@ -41,8 +41,8 @@ public abstract class PluginAlarm implements Alarm {
    * Construct an alarm to expire
    * @param delay
    */
-  public PluginAlarm(long delay) {
-    expirationTime = System.currentTimeMillis() + delay;
+  public PluginAlarm(long time) {
+    expirationTime = time;
   }
 
   public long getExpirationTime() {
