@@ -57,7 +57,7 @@ public class QosMonitorServiceProvider
     }
 
     private synchronized QosMonitorService findOrMakeQMS() {
-	if (qms == null) qms = new QosMonitorServiceImpl();
+	if (qms == null) qms = new QosMonitorServiceImpl(nameSupport);
 	return qms;
     }
 

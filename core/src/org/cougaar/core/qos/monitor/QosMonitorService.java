@@ -26,13 +26,23 @@ import org.cougaar.core.society.MessageAddress;
 
 public interface QosMonitorService extends Service
 {
-    public static final int NOT_CREATED = 0;
-    public static final int ACTIVE = 1;
-    public static final int MOVING = 2;
-    public static final int RESTARTED = 3;
-    public static final int MISSING = 4;
-    public static final int UNKNOWN = 5;
-
+    public static final int UNKNOWN = 0;
+    public static final int NOT_CREATED = 1;
+    public static final int ACTIVE = 2;
+    public static final int MOVING = 3;
+    public static final int RESTARTED = 4;
+    public static final int MISSING = 5;
+    public static final int FAILING = 6;
+    
+    /**
+     * Uses the naming service to determine the status of an Agent
+     */
     public int getAgentStatus(MessageAddress agentAddress);
+
+    // public int getAgentCommStatus(MessageAddress agentAddress);
+
+    // public double getExpectedCommLatancyToAgent(MessageAddress agentAddress);
+    
+
 }
 
