@@ -18,29 +18,15 @@
  * PERFORMANCE OF THE COUGAAR SOFTWARE.
  * </copyright>
  */
+
 package org.cougaar.core.adaptivity;
 
-import org.cougaar.core.util.UniqueObject;
 
-interface Policy extends UniqueObject {
+public class PolicyKernel extends PlayBase {
 
-  /**
-   * The name of the policy
-   */
-  String getName();
-
-
-  /**
-   * The originator of the policy 
-   */
-  String getAuthority();
-
-  /** 
-   * The immediate source of this policy. That is, one who
-   * forwarded the policy to this agent.
-   *
-   * Redundant. See Relay.Target
-   */
-  //String getSource();
-
+  public PolicyKernel(ConstrainingClause ifClause,
+		      ConstraintPhrase[] omConstraints) {
+    super(ifClause, omConstraints);
+  }
+  
 }

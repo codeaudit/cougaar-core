@@ -20,6 +20,8 @@
  */
 package org.cougaar.core.adaptivity;
 
+import org.cougaar.core.util.UID;
+
 /** 
  * OperatingModePolicy specifies constraints on values of Operating
  * modes. It consists of an if clause expressing the conditions under
@@ -32,7 +34,12 @@ package org.cougaar.core.adaptivity;
   *     (encription > 128) && (encryption < 512).
   */
 
-public class OperatingModePolicy extends PlayBase implements Policy  {
+public class OperatingModePolicy implements Policy  {
+
+  private UID uid;
+  private String policyName;
+  private String authority;
+  private PolicyKernel policy;
 
   /**
    * Constructor 
@@ -41,19 +48,76 @@ public class OperatingModePolicy extends PlayBase implements Policy  {
    */
   public OperatingModePolicy (ConstrainingClause ifClause, 
 			      ConstraintPhrase[] omConstraints) {
-    super(ifClause, omConstraints);
+    policy = new PolicyKernel(ifClause, omConstraints);
   }
   
+  public OperatingModePolicy (String policyName,
+			      ConstrainingClause ifClause, 
+			      ConstraintPhrase[] omConstraints) {
+    this(ifClause, omConstraints);
+    this.policyName = policyName;
+  }
+
+  public OperatingModePolicy (String policyName,
+			      ConstrainingClause ifClause, 
+			      ConstraintPhrase[] omConstraints,
+			      String authority) {
+    this(policyName, ifClause, omConstraints);
+    this.authority = authority;
+  }
+
   /**
    * Returns the originator or creator (authority) of the policy. This
    * is part of the implementation of the Policy interface.
    * @return the name of the authority
    **/
-  public String getAuthority() { return ""; }
+  public String getAuthority() { return authority; }
   
-   /**
-   * Returns the sender of the policy; the agent that sent it to you.
-   * @return the (name of) the sender of the policy.
-   */
-  public String getSource() { return "";}
+  public void setAuthority(String authority) {
+    if (authority != null) throw new RuntimeException("Attempt to change Policy Authority");
+    this.authority = authority;
+  }
+
+  public String getName() {
+    return policyName;
+  }
+
+  public void setName(String name) {
+    if (policyName != null) throw new RuntimeException("Attempt to change Policy Name");
+    policyName = name;
+  }
+
+  // UniqueObject interface
+  public UID getUID() {
+    return uid;
+  }
+
+  /**
+   * Set the UID (unique identifier) of this UniqueObject. Used only
+   * during initialization.
+   * @param uid the UID to be given to this
+   **/
+  public void setUID(UID uid) {
+    if (uid != null) throw new RuntimeException("Attempt to change UID");
+    this.uid = uid;
+  }
+
+  public PolicyKernel getPolicyKernel() {
+    return policy;
+  }
+
+  protected void setPolicyKernel (PolicyKernel pk) {
+    policy = pk;
+  }
+
+
+  /* convenience methods */
+  public ConstrainingClause getIfClause() {
+    return policy.getIfClause();
+  }
+
+  public ConstraintPhrase[] getOperatingModeConstraints() {
+    return policy.getOperatingModeConstraints();
+  }
+  
 }
