@@ -17,6 +17,7 @@ import java.util.Vector;
 import org.cougaar.core.cluster.*;
 
 import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.domain.planning.ldm.asset.LocalPG;
 import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 
 import org.cougaar.domain.planning.ldm.plan.AssetAssignment;
@@ -134,8 +135,11 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
       for (Iterator pgIterator = transferredPGs.iterator();
            pgIterator.hasNext();) {
         PropertyGroup transferredPG = (PropertyGroup) pgIterator.next();
-
-        assetL.addOtherPropertyGroup(transferredPG);
+        
+        //Don't propagate LocalPGs
+        if (!(transferredPG instanceof LocalPG)) {
+          assetL.addOtherPropertyGroup(transferredPG);
+        }
       }
     } else {
       if (aa.isUpdate() || aa.isRepeat()) {

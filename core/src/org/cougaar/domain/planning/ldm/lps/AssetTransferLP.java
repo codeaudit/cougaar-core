@@ -468,9 +468,7 @@ public class AssetTransferLP
   // are no dangling references to other organizations.
   private void clearSchedule(Asset asset) {
     if (related(asset)) {
-      RelationshipSchedule relationshipSchedule = 
-        ((HasRelationships )asset).getRelationshipSchedule();
-      relationshipSchedule = null;
+      ((HasRelationships ) asset).setRelationshipSchedule(null);
     }
 
     if (asset.getRoleSchedule() != null) {
