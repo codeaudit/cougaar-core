@@ -28,16 +28,17 @@ package org.cougaar.core.mts;
 
 import java.io.FilterInputStream;
 import java.io.InputStream;
+import java.io.IOException;
 
+/**
+ * Filtered {@link InputStream} used by security.
+ */
 public abstract class ProtectedInputStream extends FilterInputStream
 {
+  public ProtectedInputStream(InputStream stream) {
+    super(stream);
+  }
 
-    public ProtectedInputStream(InputStream stream) {
-	super(stream);
-    }
-
-    public abstract void finishInput(MessageAttributes attributes) 
-	throws java.io.IOException;
-
-
+  public abstract void finishInput(MessageAttributes attributes) 
+    throws IOException;
 }

@@ -41,9 +41,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * The default, and for now only, implementation of Router.  The
- * <strong>routeMesageMethod</strong> finds the DestinationQueue for
- * each message's target, and enqueues the outgoing message there.  */
+ * The message router implementation.
+ * <p>
+ * The {@link #routeMessage} method finds the {@link
+ * MessageTransportClient} for each message's target and
+ * delivers the message.  If the client doesn't exist, the
+ * message is buffered until the client registers.
+ */
 final class SingleNodeRouterImpl
 {
     private LoggingService loggingService;
@@ -52,8 +56,7 @@ final class SingleNodeRouterImpl
     private HashMap waitingMsgs; 
     String agentID; 
 
-    public SingleNodeRouterImpl(ServiceBroker sb)
-    {
+    public SingleNodeRouterImpl(ServiceBroker sb) {
 	clients = new HashMap();
 	waitingMsgs = new HashMap();
 	
@@ -61,7 +64,10 @@ final class SingleNodeRouterImpl
 	    sb.getService(this, LoggingService.class, null);
     }
     
-    /** Find destination agent's receiving queue then deliver the message to the client**/
+    /**
+     * Find destination agent's receiving queue then deliver the
+     * message to the client
+     */
     public void routeMessage(Message message) {
 	MessageAddress dest = message.getTarget();
 	MessageTransportClient dest_client = (MessageTransportClient)
@@ -82,9 +88,8 @@ final class SingleNodeRouterImpl
     }
     
         
-    /** invokes the clients receiveMessage() **/
-    public synchronized void deliverMessage(Message message, MessageTransportClient client)
-    {
+    /** invokes the clients receiveMessage() */
+    public synchronized void deliverMessage(Message message, MessageTransportClient client) {
 	try {
 	    client.receiveMessage(message);
 	} catch (Throwable th) {

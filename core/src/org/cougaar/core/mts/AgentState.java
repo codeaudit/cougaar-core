@@ -26,9 +26,11 @@
 
 package org.cougaar.core.mts;
 
-
+/**
+ * An agents messaging state, used both by the {@link
+ * AgentStatusService} and to capture a mobile agent's unsent
+ * message state.
+ */
 public interface AgentState extends Attributes
 {
- 
-
 }

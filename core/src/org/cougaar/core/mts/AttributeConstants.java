@@ -26,33 +26,35 @@
 
 package org.cougaar.core.mts;
 
-
+/**
+ * Message attribute key/value constants.
+ */
 public interface AttributeConstants
 {
-    String IS_STREAMING_ATTRIBUTE = "IsStreaming";
-    String ENCRYPTED_SOCKET_ATTRIBUTE = "EncryptedSocket";
+  String IS_STREAMING_ATTRIBUTE = "IsStreaming";
+  String ENCRYPTED_SOCKET_ATTRIBUTE = "EncryptedSocket";
 
-    String DELIVERY_ATTRIBUTE = "DeliveryStatus";
-    String DELIVERY_STATUS_DELIVERED = "Delivered";
-    String DELIVERY_STATUS_CLIENT_ERROR = 
-	"ClientException";
-    String DELIVERY_STATUS_DROPPED_DUPLICATE = 
-	"DroppedDuplicate";
-    String DELIVERY_STATUS_HELD = "Held";
-    String DELIVERY_STATUS_STORE_AND_FORWARD  =
-	"Store&Forward";
-    String DELIVERY_STATUS_BEST_EFFORT = "BestEffort";
-    String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion";
+  String DELIVERY_ATTRIBUTE = "DeliveryStatus";
+  String DELIVERY_STATUS_DELIVERED = "Delivered";
+  String DELIVERY_STATUS_CLIENT_ERROR = 
+    "ClientException";
+  String DELIVERY_STATUS_DROPPED_DUPLICATE = 
+    "DroppedDuplicate";
+  String DELIVERY_STATUS_HELD = "Held";
+  String DELIVERY_STATUS_STORE_AND_FORWARD  =
+    "Store&Forward";
+  String DELIVERY_STATUS_BEST_EFFORT = "BestEffort";
+  String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion";
 
-    String MESSAGE_BYTES_ATTRIBUTE = "MessageBytes";
-    String HEADER_BYTES_ATTRIBUTE = "HeaderBytes";
-    String SENT_BYTES_ATTRIBUTE = "SentBytes";
-    String RECEIVED_BYTES_ATTRIBUTE = "ReceivedBytes";
+  String MESSAGE_BYTES_ATTRIBUTE = "MessageBytes";
+  String HEADER_BYTES_ATTRIBUTE = "HeaderBytes";
+  String SENT_BYTES_ATTRIBUTE = "SentBytes";
+  String RECEIVED_BYTES_ATTRIBUTE = "ReceivedBytes";
 
-    String INCARNATION_ATTRIBUTE = "AgentIncarnationNumber";
+  String INCARNATION_ATTRIBUTE = "AgentIncarnationNumber";
 
   String DELIVERY_STATUS_DROPPED = "Dropped";
-  
+
   // System clock when the client sent the message
   String MESSAGE_SEND_TIME_ATTRIBUTE = "MessageSendTime";
 

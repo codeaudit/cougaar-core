@@ -36,65 +36,66 @@ import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * Baseline implementation class of a single-node
- * MessageTransportService. Consists of of only a registry, a router,
- * and wp service loading. 
+ * This component is a baseline implementation of a single-node
+ * {@link MessageTransportService}.
+ * <p>
+ * Consists of only a registry, a router, and wp service loading. 
  */
 public final class SingleNodeMTSProvider 
     extends GenericStateModelAdapter
     implements Component, ServiceProvider
 {
-    private final static String NOT_A_CLIENT =
-	"Requestor is not a MessageTransportClient";
-    
-    private ServiceBroker sb;
-    protected LoggingService loggingService;
-    private SingleNodeMTSProxy proxy;
+  private final static String NOT_A_CLIENT =
+    "Requestor is not a MessageTransportClient";
 
-    public void setServiceBroker(ServiceBroker sb) {
-      this.sb = sb;
+  private ServiceBroker sb;
+  protected LoggingService loggingService;
+  private SingleNodeMTSProxy proxy;
+
+  public void setServiceBroker(ServiceBroker sb) {
+    this.sb = sb;
+  }
+
+  // does all loading of services
+  public void load() {
+    super.load();
+
+    loggingService = 
+      (LoggingService) sb.getService(this, LoggingService.class, null);
+
+    // Make router
+    SingleNodeRouterImpl router = new SingleNodeRouterImpl(sb);
+
+    // Make proxy
+    proxy = new SingleNodeMTSProxy(router);
+
+    NodeControlService ncs = (NodeControlService)
+      sb.getService(this, NodeControlService.class, null);
+
+    ServiceBroker rootsb = ncs.getRootServiceBroker();
+    rootsb.addService(MessageTransportService.class, this);
+  }
+
+  // ServiceProvider
+  public Object getService(
+      ServiceBroker sb, 
+      Object requestor, 
+      Class serviceClass) {
+    if (serviceClass == MessageTransportService.class) {
+      if (requestor instanceof MessageTransportClient) {
+        return proxy;
+      } else {
+        throw new IllegalArgumentException(NOT_A_CLIENT);
+      }
+    } else {
+      return null;
     }
+  }
 
-    // does all loading of services
-    public void load() {
-	super.load();
-
-	loggingService = 
-	    (LoggingService) sb.getService(this, LoggingService.class, null);
-
-	// Make router
-	SingleNodeRouterImpl router = new SingleNodeRouterImpl(sb);
-	
-	// Make proxy
-	proxy = new SingleNodeMTSProxy(router);
-
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
-	
-	ServiceBroker rootsb = ncs.getRootServiceBroker();
-	rootsb.addService(MessageTransportService.class, this);
-    }
-
-    // ServiceProvider
-    public Object getService(ServiceBroker sb, 
-			     Object requestor, 
-			     Class serviceClass) 
-    {
-	if (serviceClass == MessageTransportService.class) {
-	    if (requestor instanceof MessageTransportClient) {
-		return proxy;
-	    } else {
-		throw new IllegalArgumentException(NOT_A_CLIENT);
-	    }
-	} else {
-	    return null;
-	}
-    }
-    
-    public void releaseService(ServiceBroker sb, 
-			       Object requestor, 
-			       Class serviceClass, 
-			       Object service)
-    {
-    }
+  public void releaseService(
+      ServiceBroker sb, 
+      Object requestor, 
+      Class serviceClass, 
+      Object service) {
+  }
 }

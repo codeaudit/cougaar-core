@@ -29,9 +29,12 @@ package org.cougaar.core.mts;
 
 /**
  * A marker class for multicasting messages.
+ * <p> 
+ * Will likely be deprecated in the future, to be replaced
+ * with an enhanced implementation.
+ * <p> 
  * Used by constant addresses in MessageAddress.
- **/
-
+ */
 public class MulticastMessageAddress 
   extends SimpleMessageAddress 
 {

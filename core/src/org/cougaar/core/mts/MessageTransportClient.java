@@ -28,23 +28,26 @@ package org.cougaar.core.mts;
 
 
 /**
- * Abstract MessageTransport layer for Society interaction.
- *
- **/
-
+ * Required service requestor API for the {@link
+ * org.cougaar.core.service.MessageTransportService}.
+ */
 public interface MessageTransportClient {
 
-  /** Receive a message, presumably from a MessageTransportServer.
-   * message.getTarget() should generally be our MessageAddress.
-   **/
-
+  /**
+   * Receive a message from an agent.
+   * <p> 
+   * The <code>message.getTarget()</code> will match the client's
+   * {@link #getMessageAddress}.
+   */
   void receiveMessage(Message message);
 
-  /** @return this client's MessageAddress. */
+  /** @return this client's immutable MessageAddress. */
   MessageAddress getMessageAddress();
 
-  /** @return this client's incarnation number */
+  /**
+   * @return this client's immutable incarnation number, which is
+   * increased every time the agent restarts (excluding agent
+   * mobility). 
+   */
   long getIncarnationNumber();
-
 }
-

@@ -40,87 +40,87 @@ import org.cougaar.core.component.ServiceBroker;
 /**
  * Base Single-Node implementation of MessageTransportService.  It
  * does almost nothing by itself - its work is accomplished by
- * redirecting calls to the corresponding registry.  */
+ * redirecting calls to the corresponding registry.
+ */
 public class SingleNodeMTSProxy 
     implements MessageTransportService
 {
-    private SingleNodeRouterImpl router;
-    
-    public SingleNodeMTSProxy(SingleNodeRouterImpl router) 
-    {
-	this.router = router;
-    }
+  private SingleNodeRouterImpl router;
 
-    void release() {
-	router.release();
-	router = null;
-    }
-    
+  public SingleNodeMTSProxy(SingleNodeRouterImpl router) {
+    this.router = router;
+  }
 
-    /**
-     * Checks malformed message, if ok, 
-     * -registers message,  
-     * -puts in receiving agent's queue.
-     */
-    public void sendMessage(Message rawMessage) {	
-	if (router.okToSend(rawMessage)) router.routeMessage(rawMessage);	
-    }
-    
-    /**
-     * Wait for all queued messages for our client to be either
-     * delivered or dropped. 
-     * @return the list of dropped messages, which could be null.
-     */
-    public synchronized ArrayList flushMessages() {
-	ArrayList droppedMessages = new ArrayList();
-	/** No more
-	   link.flushMessages(droppedMessages);
-	ArrayList rawMessages = new ArrayList(droppedMessages.size());
-	Iterator itr = droppedMessages.iterator();
-	while (itr.hasNext()) {
-	    AttributedMessage m = (AttributedMessage) itr.next();
-	    rawMessages.add(m.getRawMessage());
-	    }
-	
-	return rawMessages;
-	*/
-	return droppedMessages;
-    }
-    
-    
-
-    public AgentState getAgentState() {
-	return null;
-    }
+  void release() {
+    router.release();
+    router = null;
+  }
 
 
-    /**
-     * Adds client to SingleNodeMTSRegistry 
-     */
-    public synchronized void registerClient(MessageTransportClient client) {
-	// Should throw an exception of client != this.client
-	router.registerClient(client);
-    }
+  /**
+   * Checks malformed message, if ok, 
+   * -registers message,  
+   * -puts in receiving agent's queue.
+   */
+  public void sendMessage(Message rawMessage) {	
+    if (router.okToSend(rawMessage)) router.routeMessage(rawMessage);	
+  }
+
+  /**
+   * Wait for all queued messages for our client to be either
+   * delivered or dropped. 
+   * @return the list of dropped messages, which could be null.
+   */
+  public synchronized ArrayList flushMessages() {
+    ArrayList droppedMessages = new ArrayList();
+    /* // no more
+      link.flushMessages(droppedMessages);
+      ArrayList rawMessages = new ArrayList(droppedMessages.size());
+      Iterator itr = droppedMessages.iterator();
+      while (itr.hasNext()) {
+      AttributedMessage m = (AttributedMessage) itr.next();
+      rawMessages.add(m.getRawMessage());
+      }
+
+      return rawMessages;
+      */
+    return droppedMessages;
+  }
 
 
-    /**
-     * Redirects the request to the MessageTransportRegistry. */
-    public synchronized void unregisterClient(MessageTransportClient client) {
-	// Should throw an exception of client != this.client
-	router.unregisterClient(client);
-    }
-    
-   
-    /**
-     * Redirects the request to the MessageTransportRegistry. */
-    public String getIdentifier() {
-	return router.getIdentifier();
-    }
-    
-    /**
-     * Redirects the request to the MessageTransportRegistry. */
-    public boolean addressKnown(MessageAddress a) {
-	return router.addressKnown(a);
-    }
+
+  public AgentState getAgentState() {
+    return null;
+  }
+
+
+  /**
+   * Adds client to SingleNodeMTSRegistry 
+   */
+  public synchronized void registerClient(MessageTransportClient client) {
+    // Should throw an exception of client != this.client
+    router.registerClient(client);
+  }
+
+
+  /**
+   * Redirects the request to the MessageTransportRegistry. */
+  public synchronized void unregisterClient(MessageTransportClient client) {
+    // Should throw an exception of client != this.client
+    router.unregisterClient(client);
+  }
+
+
+  /**
+   * Redirects the request to the MessageTransportRegistry. */
+  public String getIdentifier() {
+    return router.getIdentifier();
+  }
+
+  /**
+   * Redirects the request to the MessageTransportRegistry. */
+  public boolean addressKnown(MessageAddress a) {
+    return router.addressKnown(a);
+  }
 }
 

@@ -28,20 +28,25 @@ package org.cougaar.core.mts;
 
 import org.cougaar.core.node.SecureMessage;
 
+/**
+ * Security API to encode and decode messages.
+ */
 public interface MessageSecurityManager {
-  /** Returns a message which has been cryptologically secured.
+  /**
+   * Returns a message which has been cryptologically secured.
    * Implementations may destructively modify the original message
    * in order to actually send the original message.
    * @return a SecureMessage marked Message
-   **/
+   */
   Message secureMessage(Message m);
 
-  /** reverse the transform that secureMessage does, using whatever
+  /**
+   * Reverse the transform that secureMessage does, using whatever
    * techniques are needed to verify the integrity and source of the 
    * message.
    * @return the unsecured message iff validated.  Will return null if
    * validation fails.
-   **/
+   */
   Message unsecureMessage(SecureMessage m);
 
 

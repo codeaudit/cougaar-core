@@ -28,67 +28,65 @@ package org.cougaar.core.mts;
 
 
 /**
- * Abstract MessageStatistics layer for Society interaction.
- * Used for Scalability testing.
- **/
-
+ * Message transport statistics API. 
+ */
 public interface MessageStatistics {
   int[] BIN_SIZES = 
   {
-      0,
-      100,
-      200,
-      500,
-      1000,
-      2000,
-      5000,
-      10000,
-      20000,
-      50000,
-      100000,
-      200000,
-      500000,
-      1000000,
-      2000000,
-      5000000,
-      10000000,
+    0,
+    100,
+    200,
+    500,
+    1000,
+    2000,
+    5000,
+    10000,
+    20000,
+    50000,
+    100000,
+    200000,
+    500000,
+    1000000,
+    2000000,
+    5000000,
+    10000000,
   };
 
   int NBINS = BIN_SIZES.length;
 
+  /** {@link MessageStatistics} data */
   class Statistics {
-      public double averageMessageQueueLength;
-      public long totalSentMessageBytes;
-      public long totalSentHeaderBytes;
-      public long totalSentAckBytes;    //Acks sent for msgs received
-      public long totalSentMessageCount;
-      public long totalRecvMessageBytes;
-      public long totalRecvHeaderBytes;
-      public long totalRecvAckBytes;     //Acks received for msgs sent
-      public long totalRecvMessageCount;
+    public double averageMessageQueueLength;
+    public long totalSentMessageBytes;
+    public long totalSentHeaderBytes;
+    public long totalSentAckBytes;    //Acks sent for msgs received
+    public long totalSentMessageCount;
+    public long totalRecvMessageBytes;
+    public long totalRecvHeaderBytes;
+    public long totalRecvAckBytes;     //Acks received for msgs sent
+    public long totalRecvMessageCount;
 
+    public long[] histogram = new long[NBINS];
 
-      public long[] histogram = new long[NBINS];
+    public Statistics(double amql, 
+        long tsmb, long tshb, long tsab, long tsmc, 
+        long trmb, long trhb, long trab, long trmc, 
+        long[] h) {
+      averageMessageQueueLength = amql;
+      totalSentMessageBytes = tsmb;
+      totalSentHeaderBytes=tshb;
+      totalSentAckBytes=tsab;
+      totalSentMessageCount = tsmc;
+      totalRecvMessageBytes = trmb;
+      totalRecvHeaderBytes=trhb;
+      totalRecvAckBytes=trab;
+      totalRecvMessageCount = trmc;
 
-      public Statistics(double amql, 
-			long tsmb, long tshb, long tsab, long tsmc, 
-			long trmb, long trhb, long trab, long trmc, 
-			long[] h) {
-	  averageMessageQueueLength = amql;
-	  totalSentMessageBytes = tsmb;
-	  totalSentHeaderBytes=tshb;
-	  totalSentAckBytes=tsab;
-	  totalSentMessageCount = tsmc;
-	  totalRecvMessageBytes = trmb;
-	  totalRecvHeaderBytes=trhb;
-	  totalRecvAckBytes=trab;
-	  totalRecvMessageCount = trmc;
-
-	  if (h != null) {
-	      System.arraycopy(h, 0, histogram, 0, NBINS);
-	  }
+      if (h != null) {
+        System.arraycopy(h, 0, histogram, 0, NBINS);
       }
+    }
   }
-      
+
   Statistics getMessageStatistics(boolean reset);
 }

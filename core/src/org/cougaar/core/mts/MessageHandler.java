@@ -26,14 +26,17 @@
 
 package org.cougaar.core.mts;
 
-/** Abstract consumer of Messages API. 
- **/
+/**
+ * Message delivery callback for {@link
+ * org.cougaar.core.agent.service.MessageSwitchService} handlers.
+ */
 public interface MessageHandler {
-  /** Called to handle a specific message.  Will return true
-   * if and only if the message was actually handled and further processing of the
-   * message is not required.
+  /**
+   * Called to handle a specific message.  Will return true
+   * if and only if the message was actually handled and further
+   * processing of the message is not required.
    *
    * @return true IFF the Message was consumed.
-   **/
+   */
   boolean handleMessage(Message m);
 }

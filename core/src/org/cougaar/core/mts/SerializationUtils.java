@@ -28,37 +28,39 @@ package org.cougaar.core.mts;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+/**
+ * Utility methods for serializing objects to/from byte arrays.
+ */
 public class SerializationUtils
 {
-
-    public static byte[] toByteArray(Object data) 
-	throws java.io.IOException
+  public static byte[] toByteArray(Object data) 
+    throws IOException
     {
-	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	ObjectOutputStream oos = null;
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream oos = null;
 
-	oos = new ObjectOutputStream(baos);
-	oos.writeObject(data);
-	oos.close();
-	return baos.toByteArray();
+      oos = new ObjectOutputStream(baos);
+      oos.writeObject(data);
+      oos.close();
+      return baos.toByteArray();
     }
 
 
-    public static Object fromByteArray(byte[] data) 
-	throws java.io.IOException, ClassNotFoundException
+  public static Object fromByteArray(byte[] data) 
+    throws IOException, ClassNotFoundException
     {
-	ByteArrayInputStream bais = new ByteArrayInputStream(data);
-	ObjectInputStream ois = null;
-	Object udata = null;
+      ByteArrayInputStream bais = new ByteArrayInputStream(data);
+      ObjectInputStream ois = null;
+      Object udata = null;
 
-	ois = new ObjectInputStream(bais);
-	udata = ois.readObject();
-	
-	ois.close();
-	return udata;
+      ois = new ObjectInputStream(bais);
+      udata = ois.readObject();
+
+      ois.close();
+      return udata;
     }
-
 }

@@ -30,48 +30,52 @@ import java.util.Set;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * This service is used by the metrics service to monitor agent
+ * messaging activity.
+ */
 public interface AgentStatusService extends Service
 {
-    int UNKNOWN = 0;
-    int UNREGISTERED = 1;
-    int UNREACHABLE = 2;
-    int ACTIVE = 3;
+  int UNKNOWN = 0;
+  int UNREGISTERED = 1;
+  int UNREACHABLE = 2;
+  int ACTIVE = 3;
 
-    class AgentState {
-	public long timestamp;
-	public int status;
-	public int queueLength;
-	public int receivedCount;
-	public long receivedBytes;
-	public int lastReceivedBytes;
-	public int sendCount;
-      	public int deliveredCount;
-	public long deliveredBytes;
-	public int lastDeliveredBytes;
-	public long deliveredLatencySum;
-	public int lastDeliveredLatency;
-	public double averageDeliveredLatency;
-	public int unregisteredNameCount;
-	public int nameLookupFailureCount;
-	public int commFailureCount;
-	public int misdeliveredMessageCount;
-	public String lastLinkProtocolTried;
-	public String lastLinkProtocolSuccess;
-	public long lastHeardFrom;
-	public long lastSentTo;
-	public long lastFailedSend;
-    }
+  /** {@link AgentStatusService} state object */
+  class AgentState {
+    public long timestamp;
+    public int status;
+    public int queueLength;
+    public int receivedCount;
+    public long receivedBytes;
+    public int lastReceivedBytes;
+    public int sendCount;
+    public int deliveredCount;
+    public long deliveredBytes;
+    public int lastDeliveredBytes;
+    public long deliveredLatencySum;
+    public int lastDeliveredLatency;
+    public double averageDeliveredLatency;
+    public int unregisteredNameCount;
+    public int nameLookupFailureCount;
+    public int commFailureCount;
+    public int misdeliveredMessageCount;
+    public String lastLinkProtocolTried;
+    public String lastLinkProtocolSuccess;
+    public long lastHeardFrom;
+    public long lastSentTo;
+    public long lastFailedSend;
+  }
 
-    AgentState getRemoteAgentState(MessageAddress address);
-    AgentState getLocalAgentState(MessageAddress address);
+  AgentState getRemoteAgentState(MessageAddress address);
+  AgentState getLocalAgentState(MessageAddress address);
 
-    Set getLocalAgents();
-    Set getRemoteAgents();
+  Set getLocalAgents();
+  Set getRemoteAgents();
 
-    /**
-     * @deprecated Use {@link #getRemoteAgentState}
-     */
-    AgentState getAgentState(MessageAddress address);
+  /**
+   * @deprecated Use {@link #getRemoteAgentState}
+   */
+  AgentState getAgentState(MessageAddress address);
 
 }
-

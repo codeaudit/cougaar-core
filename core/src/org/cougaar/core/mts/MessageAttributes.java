@@ -26,9 +26,9 @@
 
 package org.cougaar.core.mts;
 
-
+/**
+ * Message attributes are just {@link Attributes}.
+ */
 public interface MessageAttributes extends Attributes
 {
- 
-
 }

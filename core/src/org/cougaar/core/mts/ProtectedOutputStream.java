@@ -27,17 +27,18 @@
 package org.cougaar.core.mts;
 
 import java.io.FilterOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Filtered {@link OutputStream} used by security.
+ */
 public abstract class ProtectedOutputStream extends FilterOutputStream
 {
+  public ProtectedOutputStream(OutputStream stream) {
+    super(stream);
+  }
 
-    public ProtectedOutputStream(OutputStream stream) {
-	super(stream);
-    }
-
-    public abstract void finishOutput(MessageAttributes attributes) 
-	throws java.io.IOException;
-
-
+  public abstract void finishOutput(MessageAttributes attributes) 
+    throws IOException;
 }

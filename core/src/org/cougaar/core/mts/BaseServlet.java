@@ -36,76 +36,78 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.ServletService;
 
+/**
+ * Basic {@link javax.servlet.Servlet} with a refresh URL-parameter.
+ */
 public abstract class BaseServlet extends HttpServlet 
 {
-    private MessageAddress nodeID;
+  private MessageAddress nodeID;
 
-    public BaseServlet(ServiceBroker sb) {
-	ServletService servletService = (ServletService)
-	    sb.getService(this, ServletService.class, null);
-	if (servletService == null) {
-	    throw new RuntimeException("Unable to obtain ServletService");
-	}
-
-	NodeIdentificationService node_id_svc = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
- 	nodeID = node_id_svc.getMessageAddress();
-	
-
-	// register our servlet
-	try {
-	    servletService.register(getPath(), this);
-	} catch (Exception e) {
-	    throw new RuntimeException("Unable to register servlet at path <"
-				       +getPath()+ ">: " +e.getMessage());
-	}
-
-    }
-    protected abstract String getPath();
-    protected abstract String getTitle();
-    protected abstract void printPage(HttpServletRequest request,
-				      PrintWriter out);
-
-
-    public MessageAddress getNodeID() {
-	return nodeID;
+  public BaseServlet(ServiceBroker sb) {
+    ServletService servletService = (ServletService)
+      sb.getService(this, ServletService.class, null);
+    if (servletService == null) {
+      throw new RuntimeException("Unable to obtain ServletService");
     }
 
-    public void doGet(HttpServletRequest request,
-		      HttpServletResponse response) 
-	throws java.io.IOException 
+    NodeIdentificationService node_id_svc = (NodeIdentificationService)
+      sb.getService(this, NodeIdentificationService.class, null);
+    nodeID = node_id_svc.getMessageAddress();
+
+
+    // register our servlet
+    try {
+      servletService.register(getPath(), this);
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to register servlet at path <"
+          +getPath()+ ">: " +e.getMessage());
+    }
+  }
+
+  protected abstract String getPath();
+  protected abstract String getTitle();
+  protected abstract void printPage(HttpServletRequest request,
+      PrintWriter out);
+
+
+  public MessageAddress getNodeID() {
+    return nodeID;
+  }
+
+  public void doGet(HttpServletRequest request,
+      HttpServletResponse response) 
+    throws java.io.IOException 
     {
+      String refresh = request.getParameter("refresh");
+      int refreshSeconds = 
+        ((refresh != null) ?
+         Integer.parseInt(refresh) :
+         0);
 
-	String refresh = request.getParameter("refresh");
-	int refreshSeconds = 
-	    ((refresh != null) ?
-	     Integer.parseInt(refresh) :
-	     0);
+      response.setContentType("text/html");
+      PrintWriter out = response.getWriter();
 
-	response.setContentType("text/html");
-	PrintWriter out = response.getWriter();
+      out.print("<html><HEAD>");
+      if (refreshSeconds > 0) {
+        out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
+        out.print(refreshSeconds);
+        out.print("\">");
+      }
+      out.print("<TITLE>");
+      out.print(getTitle());
+      out.print("</TITLE></HEAD><body><H1>");
+      out.print(getTitle());
+      out.print("</H1>");
 
-	out.print("<html><HEAD>");
-	if (refreshSeconds > 0) {
-	    out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
-	    out.print(refreshSeconds);
-	    out.print("\">");
-	}
-	out.print("<TITLE>");
-	out.print(getTitle());
-	out.print("</TITLE></HEAD><body><H1>");
-	out.print(getTitle());
-	out.print("</H1>");
+      out.print("Date: ");
+      out.print(new java.util.Date()+"\n");
 
-	out.print("Date: ");
-	out.print(new java.util.Date()+"\n");
-	
-	printPage(request,out);
-	out.print("<p><p><br>RefreshSeconds: ");	
-	out.print(refreshSeconds);
+      printPage(request,out);
+      out.print("<p><p><br>RefreshSeconds: ");	
+      out.print(refreshSeconds);
 
-	out.print("</body></html>\n");
+      out.print("</body></html>\n");
 
-	out.close();
+      out.close();
     }
 }

@@ -32,47 +32,48 @@ import java.io.ObjectOutput;
 import java.io.Serializable;
 
 /**
- *   Class Is Basic Structure for Alp Message
- *   <p>
- *   All forms of Messages in the Alp system are derived from this base class
- *   originally Message
- **/
+ * A message is an object sent from one agent (the "originator")
+ * to another agent (the "target") through the {@link
+ * org.cougaar.core.service.MessageTransportService}.
+ */
 public abstract class Message 
   implements Serializable 
 {
 
   private static final MessageAddress sink = MessageAddress.NULL_SYNC;
-  /** This is a Reference target Object **/
+
+  // sender:
   private MessageAddress theOriginator;
-  /** This is a Reference target Object **/
+  // target:
   private MessageAddress theTarget;
-  /** This is the sequence number **/
+  // optional sequence number:
   private int theSequenceNumber = 0;
 
   /**
-   *   Default Constructor for factory.
-   **/
+   * Default Constructor for factory.
+   */
   public Message() {
     this( sink, sink, 0 );
   }
 
   /**
-   *   Constructor with just the addresses
-   *   <p>
-   *   @param aSource The creator of this message used to consruct the super class
-   *   @param aTarget The target for this message
-   **/
+   * Standard message contructor, which specifies the source and
+   * target agent addresses.
+   * <p>
+   * @param aSource creator of this message
+   * @param aTarget target for this message
+   */
   public Message(MessageAddress aSource, MessageAddress aTarget) {
     this(aSource, aTarget, 0);
   }
 
   /**
-   *   Constructor with a full parameter list
-   *   <p>
-   *   @param aSource The creator of this message used to consruct the super class
-   *   @param aTarget The target for this message
-   *   @param anId Primative int value for message id used to create message
-   **/
+   * Message constructor with sequence number. 
+   *
+   * @param aSource creator of this message
+   * @param aTarget target for this message
+   * @param anId Sequence number
+   */
   public Message(MessageAddress aSource, MessageAddress aTarget, int anId) {
     setOriginator(aSource);
     setTarget(aTarget);
@@ -80,62 +81,39 @@ public abstract class Message
   }
     
   /**
-   *   Constructor for constructing a message form another message.
-   *   <p>
-   *   @param aMessage The message to use as the data source for construction.
-   **/
+   * Copy constructor. 
+   *
+   * @param aMessage The message to use as the data source for construction.
+   */
   public Message(Message aMessage) {
     this(aMessage.getOriginator(),
          aMessage.getTarget(),
 	 aMessage.getContentsId());
   }
 
-  /**
-   *    Accessor Method for theContentsId Property
-   *    @return int the value of the standard message with intrinsics
-   **/
+  /** @return the sequence number */
   public final int getContentsId() {
     return theSequenceNumber;
   }
 
-  /**
-   *   Accessor Method for theOriginator Property
-   *   @return Object Returns theOriginator object
-   **/
+  /** @return the sender */
   public final MessageAddress getOriginator() { return theOriginator; }
  
-  /**
-   *   Accessor Method for theTarget Property
-   *   @return Object Returns the target object
-   **/
+  /** @return the destination */
   public final MessageAddress getTarget() { return theTarget; }
 
-  /**
-   *   Modify Method for theContentsId Property
-   *   @param aContentsId The modifies theContentsId variable with the int primative
-   **/
+  /** Set the sequence number */
   public final void setContentsId(int aContentsId) {
     theSequenceNumber = aContentsId;
   }
 
-  /**
-   *   Modify Method for theOriginator Property
-   *   @param aSource The modifies theOriginator variable with the Object object
-   **/
+  /** Set the sender */
   public final void setOriginator(MessageAddress aSource) { theOriginator = aSource; }
 
-  /**
-   *   Modify Method for theTarget Property
-   *   @param aTarget The modifies theTarget variable with the Object object
-   **/
+  /** Set the destination */
   public final void setTarget(MessageAddress aTarget) { theTarget = aTarget; }
 
-  /**
-   *   Overide the toString implemntation for all message classes
-   *   @return String Formatted string for displayying all the internal data of the message.
-   **/
-  public String toString()
-  {
+  public String toString() {
     try {
       return "The source: " + getOriginator().toString() +
         " The Target: " + getTarget().toString() +

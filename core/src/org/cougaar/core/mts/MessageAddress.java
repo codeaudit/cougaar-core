@@ -30,42 +30,51 @@ import java.io.Externalizable;
 import java.net.URI;
 
 /**
- * An address for a Message sender or receiver.
- **/
-
+ * An address for a {@link Message} sender or receiver.
+ */
 public abstract class MessageAddress 
   implements Externalizable
 {
 
-  /** MessageAttributes associated with this MessageAddress.  
-   * @return MessageAttributes or null
-   **/
+  /** @return the attributes associated with the address, or null */
   public MessageAttributes getMessageAttributes() {
     return null;
   }
   
-  /** @return The address of a society member.  This is Society-centric and
-   * may not be human readable or parsable.
-   **/
+  /** @see #toAddress */
   public String getAddress() {
     return toAddress();
   }
 
-  /** @return the object address part of a URL describing the entity on
-   * the COUGAAR society's pseudo-web.  e.g. the URL of an entity could be 
-   * contstructed with something like protocol+"://"+host+":"+port+"/"+getAddress()+"/";
-   **/
+  /**
+   * @return a string representation of this address, which may not be
+   * human readable or parsable. 
+   */
   public abstract String toAddress();
 
+  /** @see #toAddress */
   public String toString() {
     return toAddress();
   }
 
-  /** Return the primary MessageAddress associated with this Address.
+  /** @see #getPrimary */
+  public int hashCode() {
+    return super.hashCode();
+  }
+
+  /** @see #getPrimary */
+  public boolean equals(Object o) {
+    return super.equals(o);
+  }
+
+  /**
+   * Return the primary address associated with this {@link
+   * MessageAddress}, suitable for hashing.
+   * <p> 
    * For example, if an address has MessageAttributes, getPrimary() will
    * return the Address without the attributes.
    * @note This is usually an identity operation.
-   **/
+   */
   public MessageAddress getPrimary() {
     return this;
   }
@@ -74,34 +83,38 @@ public abstract class MessageAddress
   // factory items
   //
 
+  /** @deprecated */
   public static final MessageAddress NULL_SYNC = getMessageAddress("NULL");
   public static final MessageAddress MULTICAST_SOCIETY = MulticastMessageAddress.getMulticastMessageAddress("SOCIETY");
   public static final MessageAddress MULTICAST_COMMUNITY = MulticastMessageAddress.getMulticastMessageAddress("COMMUNITY");
   public static final MessageAddress MULTICAST_LOCAL = MulticastMessageAddress.getMulticastMessageAddress("LOCAL");
 
-
+  /** @return an address with the specified name */
   public static final MessageAddress getMessageAddress(String address) {
     return SimpleMessageAddress.getSimpleMessageAddress(address);
   }
 
+  /** @return an address with the specified name and attributes */
   public static final MessageAddress getMessageAddress(String address, MessageAttributes mas) {
     return MessageAddressWithAttributes.getMessageAddressWithAttributes(address,mas);
   }
 
+  /** @return an address plus the specified attributes */
   public static final MessageAddress getMessageAddress(MessageAddress address, MessageAttributes mas) {
     return MessageAddressWithAttributes.getMessageAddressWithAttributes(address,mas);
   }
 
-    /**
-     * @deprecated Why would you want a MessageAddress that only has attributes?
-     */
+  /** @deprecated Why would you want a MessageAddress that only has attributes? */
   public static final MessageAddress getMessageAddress(MessageAttributes mas) {
     return MessageAddressWithAttributes.getMessageAddressWithAttributes(mas);
   }
 
+  /** @see #getMessageAddress(String) for agent addresses */
   public static final MessageAddress getMessageAddress(URI uri) {
     return URIMessageAddress.getURIMessageAddress(uri);
   }
+
+  /** @see #getMessageAddress(String) for agent addresses */
   public static final MessageAddress getMessageAddress(URI uri, MessageAttributes mas) {
     MessageAddress ma = URIMessageAddress.getURIMessageAddress(uri);
     return new MessageAddressWithAttributes(ma, mas);

@@ -28,18 +28,17 @@ package org.cougaar.core.mts;
 
 
 /**
- * API for Metrics analysis of MessageTransport traffic analysis.
+ * Callback API to monitor {@link
+ * org.cougaar.core.service.MessageTransportService} traffic.
  *
  * It is extremely important that implementations of this code not
  * block or crash.
- **/
-
+ */
 public interface MessageTransportWatcher {
 
-  /** called whenever a message is sent (to the society) **/
+  /** called whenever a message is sent */
   void messageSent(Message m);
 
-  /** called whenever a message is received (from the society) **/
+  /** called whenever a message is received */
   void messageReceived(Message m);
 }
-

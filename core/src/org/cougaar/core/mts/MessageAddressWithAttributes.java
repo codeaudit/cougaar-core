@@ -34,9 +34,9 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * A MessageAddress which includes MessageAttributes
- **/
-
+ * A wrapped {@link MessageAddress} with added {@link
+ * MessageAttributes}.
+ */
 public class MessageAddressWithAttributes 
   extends MessageAddress
 {
@@ -52,9 +52,7 @@ public class MessageAddressWithAttributes
     this.attributes = attributes;
   }
 
-    /**
-     * @deprecated Why would you want a MessageAddress that only has attributes?
-     */
+  /** @deprecated Why would you want a MessageAddress that only has attributes? */
   protected MessageAddressWithAttributes(MessageAttributes attributes)
   {
     Logger logger = Logging.getLogger(getClass().getName());
@@ -69,14 +67,15 @@ public class MessageAddressWithAttributes
     attributes = attrs;
   }
 
-  /** @return The MessageAddress without the MessageAtributes **/
+  /** @return The MessageAddress without the MessageAtributes */
   public final MessageAddress getPrimary() {
       return delegate == null ? null : delegate.getPrimary();
   }
 
-  /** @return The Parent MessageAddress.  This is usually the same
+  /**
+   * @return The Parent MessageAddress.  This is usually the same
    * as the result of getPrimary();
-   **/
+   */
   public final MessageAddress getDelegate() {
     return delegate;
   }
@@ -100,9 +99,7 @@ public class MessageAddressWithAttributes
     return new MessageAddressWithAttributes(ma, mas);
   }
 
-    /**
-     * @deprecated Why would you want a MessageAddress that only has attributes?
-     */
+  /** @deprecated Why would you want a MessageAddress that only has attributes? */
   public static final MessageAddress getMessageAddressWithAttributes(MessageAttributes mas) {
     return new MessageAddressWithAttributes(mas);
   }

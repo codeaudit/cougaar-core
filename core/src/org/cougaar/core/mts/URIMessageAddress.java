@@ -33,16 +33,20 @@ import java.net.URI;
 
 
 /**
- * A MessageAddress which encapsulates a standard URI.  The URI must
- * be directly interpretable by the MTS.
- **/
-
+ * A {@link MessageAddress} containing a standard URI.
+ * <p>
+ * Typically {@link SimpleMessageAddress} is used for agent-to-agent
+ * communications, relying upon the naming service to resolve agent
+ * names to network addresses.
+ * <p>
+ * The URI must be directly interpretable by the message transport.
+ */
 public class URIMessageAddress 
   extends MessageAddress 
 {
   private URI uri;
 
-  /** @return the MessageAddress as a URI **/
+  /** @return the MessageAddress as a URI */
   public URI toURI() { 
     return uri;
   }

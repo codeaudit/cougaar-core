@@ -31,9 +31,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 /**
- * A plain old MessageAddress
- **/
-
+ * A simple {@link MessageAddress} containing an agent name.
+ */
 public class SimpleMessageAddress 
   extends MessageAddress 
 {

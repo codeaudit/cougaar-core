@@ -28,26 +28,29 @@ package org.cougaar.core.mts;
 
 import java.io.Serializable;
 
+/**
+ * Message key/value attributes, divided into transferable
+ * attributes and transient "local" attributes.
+ */
 public interface Attributes extends Serializable, AttributeConstants
 {
- 
-    Object getAttribute(String attribute);
+  Object getAttribute(String attribute);
 
-    void setAttribute(String attribute, Object value);
-    void removeAttribute(String attribute);
-    void addValue(String attribute, Object value);
-    void pushValue(String attribute, Object value);
-    void removeValue(String attribute, Object value);
+  void setAttribute(String attribute, Object value);
+  void removeAttribute(String attribute);
+  void addValue(String attribute, Object value);
+  void pushValue(String attribute, Object value);
+  void removeValue(String attribute, Object value);
 
-    void setLocalAttribute(String attribute, Object value);
-    void removeLocalAttribute(String attribute);
-    void addLocalValue(String attribute, Object value);
-    void pushLocalValue(String attribute, Object value);
-    void removeLocalValue(String attribute, Object value);
+  void setLocalAttribute(String attribute, Object value);
+  void removeLocalAttribute(String attribute);
+  void addLocalValue(String attribute, Object value);
+  void pushLocalValue(String attribute, Object value);
+  void removeLocalValue(String attribute, Object value);
 
-    Attributes cloneAttributes();
-    void clearAttributes();
-    void mergeAttributes(Attributes attributes);
+  Attributes cloneAttributes();
+  void clearAttributes();
+  void mergeAttributes(Attributes attributes);
 
-    String getAttributesAsString();
+  String getAttributesAsString();
 }
