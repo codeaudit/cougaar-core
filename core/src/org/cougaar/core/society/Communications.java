@@ -43,6 +43,9 @@ import java.net.*;
  *
  * Arguments:
  * -ns foo sets org.cougaar.name.server.
+
+ * @property org.cougaar.name.server Sets the nameserver connection to use for the classic Name service.
+ * @property org.cougaar.name.server.port Sets the port to use for the classic Name service.
  **/
 
 public class Communications {

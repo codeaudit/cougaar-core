@@ -87,7 +87,10 @@ import java.lang.reflect.Modifier;
  * latest copy is valid and all references from other objects must be
  * made to this latest copy and all others should be ignored.  This is
  * handled by overwriting the value of the earlier objects with newer
- * values from later versions of the objects.  */
+ * values from later versions of the objects.  
+ * @property org.cougaar.core.cluster.persistence.debug Enable persistence debugging.
+ * @property org.cougaar.core.cluster.persistence.class Specify the persistence class to be used.
+ */
 public abstract class BasePersistence implements Persistence {
 //    private static List clusters = new ArrayList();
 

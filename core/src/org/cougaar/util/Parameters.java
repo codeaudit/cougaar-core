@@ -30,6 +30,7 @@ import java.util.*;
  * The NAME will be looked up in a passed-in parameter table (if supplied),
  * then the parameter map (e.g. from $HOME/.cougaarrc), 
  * then system properties and then the default value (if supplied).
+ * @property user.home Used to find .cougaarrc.
  **/
 
 public class Parameters {

@@ -34,8 +34,10 @@ import java.util.*;
  *   "quiet"	no feedback.
  *   "visible"	an asterix is printed to err on each timer expiration.
  *   "verbose"  a line with the timer and the alarm is printed on each expiration.
- * The default is "org.cougaar.timer=visible".
+ * The default is "org.cougaar.timer=quiet".
  * Subclasses may override the feedback printed.
+ * @property org.cougaar.timer Controls visibility of timer expirations.  See class description for 
+ * more information.
  **/
 
 public abstract class Timer implements Runnable {

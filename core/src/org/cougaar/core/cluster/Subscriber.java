@@ -35,12 +35,20 @@ import java.util.*;
 // pollution of subscriber purity for completion checking
 import org.cougaar.domain.planning.ldm.plan.*;
 
+/** Subscriber is the most common implementation of BlackboardService
+ *
+ * @property org.cougaar.core.blackboard.enforceTransactions Set to "false" to disable checking for clients
+ * of BlackboardService publishing changes to the blackboard outside of a transaction.
+ * @property org.cougaar.core.blackboard.debug Set to true to additional checking on blackboard transactions.  
+ * For instance, it will attempt to look for changes to blackboard objects which have not been published
+ * at transaction close time.
+ **/
 public class Subscriber implements BlackboardService {
   private static boolean isEnforcing =
-    (Boolean.valueOf(System.getProperty("org.cougaar.enforceTransactions", "true"))).booleanValue();
+    (Boolean.valueOf(System.getProperty("org.cougaar.core.blackboard.enforceTransactions", "true"))).booleanValue();
 
   private static boolean warnUnpublishChanges = 
-    "true".equals(System.getProperty("org.cougaar.subscriber.warnUnpublishChanges","false"));
+    "true".equals(System.getProperty("org.cougaar.core.blackboard.debug","false"));
 
   private BlackboardClient theClient = null;
   private Distributor theDistributor = null;

@@ -32,6 +32,10 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 
+/**
+ * The NamingSocketFactory.
+ *
+ **/
 public class NamingSocketFactory
     implements RMIClientSocketFactory, RMIServerSocketFactory, Serializable
 {

@@ -75,6 +75,10 @@ import java.util.Calendar;
  *   The above codes were selected for backward compatibility with the
  *   former t/f meaning active was true/false
  * data   -- has a LONG RAW with the serialized data
+ * @property org.cougaar.core.cluster.persistence.database.url Specify the database to use for DatabasePersistence.
+ * @property org.cougaar.core.cluster.persistence.database.user Specify the database user to use for DatabasePersistence.
+ * @property org.cougaar.core.cluster.persistence.database.password Specify the database password to use for DatabasePersistence.
+ * @property org.cougaar.core.cluster.persistence.database.driver Specify the database driver to use for DatabasePersistence.
  **/
 public class DatabasePersistence
   extends BasePersistence

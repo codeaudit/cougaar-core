@@ -44,6 +44,10 @@ import java.lang.reflect.Modifier;
 /**
  * This persistence class saves plan objects in files. It saves and
  * restores persistence deltas in files.
+ * @property org.cougaar.install.path Used by FilePersistence as the parent directory for persistence
+ * snapshots when org.cougaar.core.cluster.persistence.path is a relative pathname.
+ * @property org.cougaar.core.cluster.persistence.path Specifies the directory in which persistence
+ * snapshots should be saved.  If this is a relative path, it the base will be the value or org.cougaar.install.path.
  */
 public class FilePersistence extends BasePersistence implements Persistence {
   static File persistenceRoot;

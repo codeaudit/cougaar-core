@@ -43,6 +43,11 @@ import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.domain.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
 
+/**  The Distributor
+ * 
+ * @property org.cougaar.core.cluster.keepPublishHistory When set to true, enables tracking of 
+ * all publishes.  Extremely expensive.
+ **/
 public class Distributor {
   /*
    * Synchronization methodology. The distributor distributes three

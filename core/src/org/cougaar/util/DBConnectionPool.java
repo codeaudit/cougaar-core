@@ -34,15 +34,14 @@ import java.util.*;
  * A database connection manager that creates pools of db connections that can
  * be reused to improve performance.
  * 
- * System properties:
- * org.cougaar.util.DBConnectionPool.maxConnections=10  number of simulataneous 
- * connections allowed per pool.
- * org.cougaar.util.DBConnectionPool.timeoutCheckInterval=5000 milliseconds between
- * checks to see if any old connections should be collected.
- * org.cougaar.util.DBConnectionPool.timeout=10000 milliseconds that a connection
- * must be idle in order to be collected by the reaper.
- * org.cougaar.util.DBConnectionPool.verbosity=0 should verbose debugging
- * messages be turned on? 1=progress, 2=warnings, 3=loud progress
+ * @property org.cougaar.util.DBConnectionPool.maxConnections  number of simulataneous 
+ * connections allowed per pool (10).
+ * @property org.cougaar.util.DBConnectionPool.timeoutCheckInterval milliseconds between
+ * checks to see if any old connections should be collected (5000).
+ * @property org.cougaar.util.DBConnectionPool.timeout milliseconds that a connection
+ * must be idle in order to be collected by the reaper (10000).
+ * @property org.cougaar.util.DBConnectionPool.verbosity should verbose debugging
+ * messages be turned on? 0=off (default) 1=progress, 2=warnings, 3=loud progress.
  **/
 public class DBConnectionPool {
   

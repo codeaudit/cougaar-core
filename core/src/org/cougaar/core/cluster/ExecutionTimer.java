@@ -76,6 +76,7 @@ import java.text.*;
  * the changeover time dominate. If the execution times at the
  * changeover time are equal, the change with the highest offset
  * dominates.
+ *
  **/
 public class ExecutionTimer extends Timer {
   public static final long DEFAULT_CHANGE_DELAY = 10000L;
@@ -321,6 +322,9 @@ public class ExecutionTimer extends Timer {
    * compute the same value for this time. The best we can do is
    * select a boundary that is unlikely to be near the actual starting
    * time and compute relative to that.
+   *
+   * @property org.cougaar.core.cluster.startTime The date to use as the
+   * start of execution for demonstration purposes.
    **/
   public ExecutionTimer() {
     String startTime = System.getProperty("org.cougaar.core.cluster.startTime");

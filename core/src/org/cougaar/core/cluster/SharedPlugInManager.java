@@ -53,6 +53,15 @@ import java.io.*;
  * (re)generated approximately every two minutes.  The watcher is one
  * thread per vm, so it isn't too expensive.
  * <p>
+ * @property org.cougaar.core.cluster.SharedPlugInManager.statistics Keep statistics on plugin
+ * scheduling (default false).
+ * @property org.cougaar.core.cluster.SharedPlugInManager.dumpStatistics If true, periodically 
+ * (every two minutes)  dump statistics on plugin scheduling to the file "nodename.statistics".  Implies
+ * statistics gathering.
+ * @property org.cougaar.core.cluster.SharedPlugInManager.watching If true (on by default), watches
+ * for and complains about scheduled plugins with unusually long execution time.
+ * @property org.cougaar.core.cluster.SharedPlugInManager.warningTime How long in millis (2 minutes)
+ * is considered an "unusually long execution time" for a scheduled plugin.
  **/
 class SharedPlugInManager implements SharedThreadingService {
   

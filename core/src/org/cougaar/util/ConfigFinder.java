@@ -59,6 +59,11 @@ import org.w3c.dom.Document;
  *
  * Set org.cougaar.core.util.ConfigFinder.verbose=true to enable 
  * additional debugging logs.
+ * @property org.cougaar.install.path Used as the base path for config file finding.
+ * @property org.cougaar.config.path The search path for config files.  See the class
+ * documentation for details.
+ * @property org.cougaar.core.util.ConfigFinder.verbose set to true to report
+ * on how each config file is searched for.
  **/
 public final class ConfigFinder {
   /** this is the default string used if org.cougaar.config.path is not defined.
