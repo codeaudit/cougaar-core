@@ -65,6 +65,15 @@ public class WorkflowImpl
   private ClusterIdentifier owner;
   private transient AllocationResultAggregator currentARA = AllocationResultAggregator.DEFAULT;
   private transient AllocationResult cachedar = null;
+  private transient int walkingSubtasks = 0;
+
+  public void setWalkingSubtasks(boolean walking) {
+    if (walking) {
+      walkingSubtasks++;
+    } else if (walkingSubtasks > 0) {
+      walkingSubtasks--;
+    }
+  }
 
   public String toString() {
     return "<workflow " +  uid + " of base task "  + basetask + " of  "  + subtasks.size() + " tasks " + "and " + constraints.size() + " constraints>";
@@ -231,8 +240,19 @@ public class WorkflowImpl
     if (tasks == null) {
         throw new IllegalArgumentException("Workflow.setTasks(Enum e): e must be a non-null Enumeration");
     }
+
     synchronized (subtasks) {
-      subtasks.removeAllElements();
+      if (walkingSubtasks > 0) {
+	RuntimeException rt = 
+	  new RuntimeException("Attempt to remove subtasks while enum is active");
+	rt.printStackTrace();
+      }
+
+      // Attempt to wait until walk is complete
+      synchronized (this) {
+	subtasks.removeAllElements();
+      }
+
       while (tasks.hasMoreElements()) {
         Task t = (Task) tasks.nextElement();
         if ( t != null ) {
@@ -266,7 +286,17 @@ public class WorkflowImpl
 
   /** @param remTask Remove the specified Task from the Workflow's sub-task collection  **/
   public void removeTask(Task remTask) {
-    subtasks.removeElement(remTask);
+    if (walkingSubtasks > 0) {
+      RuntimeException rt = 
+	new RuntimeException("Attempt to remove subtask while enum is active");
+      rt.printStackTrace();
+    } 
+
+    // Attempt to wait until walk is complete
+    synchronized (this) {
+      subtasks.removeElement(remTask);
+    }
+
     clearTST();
   }
 
@@ -504,7 +534,17 @@ public class WorkflowImpl
   public List clearSubTasks() {
     ArrayList l = null;
     l = new ArrayList(subtasks);
-    subtasks.removeAllElements();
+    
+    if (walkingSubtasks > 0) {
+      RuntimeException rt = 
+	new RuntimeException("Attempt to remove subtasks while enum is active");
+      rt.printStackTrace();
+    }
+
+    synchronized (this) {
+      subtasks.removeAllElements();
+    }
+
     return l;
   }
 
