@@ -54,7 +54,6 @@ public class DynamicSortedQueue
     void processEach(Processor processor) {
 	Iterator itr = store.iterator();
 	Object thing = null;
-	String string = null;
 	while (itr.hasNext()) {
 	    thing = itr.next();
 	    processor.process(thing);

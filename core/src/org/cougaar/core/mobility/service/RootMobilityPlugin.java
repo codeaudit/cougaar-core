@@ -557,7 +557,7 @@ extends AbstractMobilityPlugin
 
     if (!(isNode)) return;
 
-    AbstractTicket abstractTicket = control.getAbstractTicket();
+    control.getAbstractTicket();
 
     if (log.isDebugEnabled()) {
       log.debug("Observed removal of "+control.getUID());

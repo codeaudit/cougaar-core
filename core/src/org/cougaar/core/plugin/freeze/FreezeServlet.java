@@ -24,7 +24,6 @@ package org.cougaar.core.plugin.freeze;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -326,13 +325,11 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
 
   private synchronized void checkStopped() {
     int stillRunning = badGuys.size();
-    Set unfrozenAgents;
     if (stillRunning <= 0) {
       if (logger.isDebugEnabled()) {
         logger.debug("Frozen");
         isFreezing = false;
       }
-      unfrozenAgents = Collections.EMPTY_SET;
     } else {
       if (logger.isDebugEnabled()) {
         Set consumerSet = new HashSet();
@@ -342,7 +339,6 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
         }
         logger.debug("Still running: " + consumerSet);
       }
-      unfrozenAgents = Collections.singleton(getAgentIdentifier());
       resetTimer(5000);
     }
   }

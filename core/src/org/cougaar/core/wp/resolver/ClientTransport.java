@@ -776,7 +776,6 @@ implements Component
 
     // remove from pending queue
     synchronized (sendLock) {
-      boolean anyAccepted = false;
       Iterator iter = m.entrySet().iterator();
       for (int i = 0; i < n; i++) {
         Map.Entry me = (Map.Entry) iter.next();

@@ -256,7 +256,6 @@ public abstract class Response implements Callback, Serializable {
         // the server can answer "get" with "getAll" map
         Map m = (Map) r;
         Request.Get rg = (Request.Get) getRequest();
-        String n = rg.getName();
         String type = rg.getType();
         return (AddressEntry) m.get(type);
       } else {

@@ -267,7 +267,6 @@ class ThreadPool
 
     void listRunningThreads(List records) {
 	PooledThread thread = null;
-	long elapsed = 0;
 	for (int i=0; i<pool.length; i++) {
 	    thread = pool[i];
 	    if (thread != null && thread.isRunning) {

@@ -357,7 +357,7 @@ public abstract class WhitePagesService implements Service {
       throw new IllegalArgumentException("Negative unbind timeout");
     }
     Request.Unbind req = new Request.Unbind(Request.NONE, ae);
-    Response.Unbind res = (Response.Unbind) assertSubmit(req, timeout);
+    assertSubmit(req, timeout);
   }
   /** 
    * @see Request.Unbind
@@ -368,7 +368,7 @@ public abstract class WhitePagesService implements Service {
       timeout = 0; // timeout doesn't really apply here...
     }
     Request.Unbind req = new Request.Unbind(Request.CACHE_ONLY, ae);
-    Response.Unbind res = (Response.Unbind) assertSubmit(req, timeout);
+    assertSubmit(req, timeout);
   }
 
   /**

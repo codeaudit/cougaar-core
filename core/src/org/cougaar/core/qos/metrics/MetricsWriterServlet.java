@@ -81,7 +81,6 @@ public class MetricsWriterServlet
 	try {		  
 	    
 	    // parses params
-	    String uri = request.getRequestURI();	    
 	    String key = request.getParameter("key");
 	    String value = request.getParameter("value");
 	    

@@ -307,7 +307,7 @@ public class PersistenceServiceComponent
     }
 
     public String[] getMediaControlNames(String mediaName) {
-      PersistencePluginInfo ppio = getPluginInfo(mediaName); // Test existence
+      getPluginInfo(mediaName); // Test existence
       return new String[] {
         PERSISTENCE_INTERVAL_NAME,
         PERSISTENCE_CONSOLIDATION_PERIOD_NAME,
@@ -315,7 +315,7 @@ public class PersistenceServiceComponent
     }
 
     public OMCRangeList getMediaControlValues(String mediaName, String controlName) {
-      PersistencePluginInfo ppio = getPluginInfo(mediaName);
+      getPluginInfo(mediaName);// Test existence
       if (controlName.equals(PERSISTENCE_INTERVAL_NAME)) {
         return new OMCRangeList(new Long(MIN_PERSISTENCE_INTERVAL),
                                 new Long(MAX_PERSISTENCE_INTERVAL));

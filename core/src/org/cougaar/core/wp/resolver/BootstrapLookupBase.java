@@ -800,7 +800,6 @@ implements Component
       }
 
       protected AddressEntry createAlias(String id, String name) {
-        AddressEntry alias = null;
         if (id.equals(name)) {
           throw new IllegalArgumentException(
               "No alias necessary for id="+id+" == name="+name);

@@ -73,7 +73,6 @@ class MobilityFactoryImpl implements MobilityFactory {
       UID ownerUID,
       MessageAddress target,
       AbstractTicket ticket) {
-    MessageAddress source = agentId;
     UID uid = uidService.nextUID();
     return new AgentControlImpl(
         uid, ownerUID, agentId, target, ticket);

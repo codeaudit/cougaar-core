@@ -90,8 +90,6 @@ public class MetricQueryServlet
     
     try {
       // parses params
-      String uri = request.getRequestURI();
-      
       String paths = request.getParameter("paths");
       String format = "xml";
       format = request.getParameter("format");

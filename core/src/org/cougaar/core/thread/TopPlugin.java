@@ -63,7 +63,7 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	String test = getParameter("test", "false");
 	ServiceBroker sb = getServiceBroker();
 	if (run_servlet.equalsIgnoreCase("true")) {
-	    TopServlet servlet = new TopServlet(sb);
+	    new TopServlet(sb);
 	}
 	if (run_timer.equalsIgnoreCase("true")) {
 	    rtd = new RogueThreadDetector(sb, sample_period);

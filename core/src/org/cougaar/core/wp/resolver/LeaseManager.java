@@ -403,7 +403,6 @@ implements Component
     boolean createNewLease = false;
     String unifiedAgent = null;
 
-    boolean wasBound = false;
     Record record = null;
 
     synchronized (leases) {
@@ -426,7 +425,6 @@ implements Component
         // not bound, nothing to unbind
       } else if (ae.equals(oldAE)) {
         // found exact match
-        wasBound = true;
         // cancel any pending requests
         //
         // this can also be used to intentionally cancel a
@@ -689,7 +687,7 @@ implements Component
     }
     for (int i = 0, n = responses.size(); i < n; i++) {
       Response res = (Response) responses.get(i);
-      Request req = res.getRequest();
+      res.getRequest();
       res.setResult(reason);
     }
   }

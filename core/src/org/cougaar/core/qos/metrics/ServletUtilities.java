@@ -272,8 +272,6 @@ public class ServletUtilities implements Constants
 
 
     public static void colorTest(PrintWriter out) {
-	Metric metric;
-
 	out.print("<table border=1>\n <tr>");
 
 	out.print("<th>VALUE \\ CRED</th>");

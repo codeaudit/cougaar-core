@@ -271,7 +271,6 @@ implements Component
   //
 
   private void submit(Response res) {
-    Response ret = res;
     Request req = res.getRequest();
     boolean cacheOnly = req.hasOption(Request.CACHE_ONLY);
     if (req instanceof Request.Get) {

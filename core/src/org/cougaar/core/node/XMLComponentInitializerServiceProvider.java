@@ -246,7 +246,7 @@ public class XMLComponentInitializerServiceProvider
       String classname = (String) componentProps.get("class");
       String priority = (String) componentProps.get("priority");
       String insertionPoint = (String) componentProps.get("insertionpoint");
-      String order = (String) componentProps.get("order");
+//      String order = (String) componentProps.get("order");
       ArrayList args = (ArrayList) componentProps.get("arguments");
       Vector vParams = null;
       if ((args != null) && (args.size() > 0)) {

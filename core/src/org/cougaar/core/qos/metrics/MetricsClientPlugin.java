@@ -50,7 +50,6 @@ public class MetricsClientPlugin
       public void update(Observable obs, Object arg) {
 	    if (arg instanceof Metric) {
 		Metric metric = (Metric) arg;
-		double value = metric.doubleValue();
 		System.out.println("Metric "+ paramPath +"=" + metric);
 	    }
 	}
@@ -74,10 +73,7 @@ public class MetricsClientPlugin
     paramPath = getParameter("path");
     if (paramPath == null) 
 	paramPath ="$(localagent)"+PATH_SEPR+"LoadAverage";
-    
-    Object subscriptionKey=metricsService.subscribeToValue(paramPath, cb,
-							   evaluator);
-
+    metricsService.subscribeToValue(paramPath, cb, evaluator);
   }
 
     protected void setupSubscriptions() {
