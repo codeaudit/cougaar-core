@@ -52,17 +52,17 @@ public class ListAllAgents {
    */
   public static List encodeAndSort(Set s) {
     // URLEncode the names and sort
-    ArrayList l = new ArrayList(s.size());
-    for (Iterator iter = s.iterator(); iter.hasNext(); ) {
-      String tmp = (String) iter.next();
+    ArrayList l = new ArrayList(s);
+    Collections.sort(l);
+    for (int i = 0, n = l.size(); i < n; i++) {
+      String tmp = (String) l.get(i);
       try {
         tmp = URLEncoder.encode(tmp, "UTF-8");
       } catch (UnsupportedEncodingException uee) {
         throw new RuntimeException("No UTF-8?", uee);
       }
-      l.add(tmp);
+      l.set(i, tmp);
     }
-    Collections.sort(l);
     return l;
   }
 
