@@ -51,7 +51,7 @@ import org.cougaar.core.servlet.SimpleServletSupport;
  */
 public class HelloAgentServlet extends HttpServlet {
   private SimpleServletSupport support;
-  public HelloAgentServlet(SimpleServletSupport support) {
+  public void setSimpleServletSupport(SimpleServletSupport support) {
     this.support = support;
   }
   public void doGet(
