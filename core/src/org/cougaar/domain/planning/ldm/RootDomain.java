@@ -13,8 +13,8 @@ package org.cougaar.domain.planning.ldm;
 import java.util.*;
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.core.cluster.LogPlan;
-import org.cougaar.core.cluster.XPlanServesWhiteboard;
-import org.cougaar.core.cluster.WhiteboardServesLogicProvider;
+import org.cougaar.core.cluster.XPlanServesBlackboard;
+import org.cougaar.core.cluster.BlackboardServesLogicProvider;
 import org.cougaar.core.cluster.LogPlanServesLogicProvider;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 
@@ -41,9 +41,9 @@ public class RootDomain
   public void initialize() {
   }
 
-  public XPlanServesWhiteboard createXPlan(Collection existingXPlans) {
+  public XPlanServesBlackboard createXPlan(Collection existingXPlans) {
     for (Iterator plans = existingXPlans.iterator(); plans.hasNext(); ) {
-      XPlanServesWhiteboard xPlan = (XPlanServesWhiteboard) plans.next();
+      XPlanServesBlackboard xPlan = (XPlanServesBlackboard) plans.next();
       if (xPlan instanceof LogPlan) return xPlan;
     }
     return new LogPlan();
@@ -53,7 +53,7 @@ public class RootDomain
    * Create new Domain-specific LogicProviders for loading into the LogPlan.
    * @return a Collection of the LogicProvider instances or null.
    **/
-  public Collection createLogicProviders(WhiteboardServesLogicProvider alpplan, 
+  public Collection createLogicProviders(BlackboardServesLogicProvider alpplan, 
                                          ClusterServesLogicProvider cluster) 
   {
     ArrayList l = new ArrayList(14); // don't let this be too small.

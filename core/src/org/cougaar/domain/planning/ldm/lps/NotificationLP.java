@@ -42,7 +42,7 @@ import java.util.Collection;
  * rescinded PlanElements (removed from collection)
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: NotificationLP.java,v 1.3 2001-03-29 21:51:13 mthome Exp $
+  * @version $Id: NotificationLP.java,v 1.4 2001-04-05 19:14:44 mthome Exp $
   **/
 
 public class NotificationLP
@@ -85,7 +85,7 @@ public class NotificationLP
         return false;
       }
     };
-    Enumeration enum = logplan.searchWhiteboard(pred);
+    Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       checkValues((PlanElement) enum.nextElement(), null);
     }

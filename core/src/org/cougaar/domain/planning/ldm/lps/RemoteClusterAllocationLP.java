@@ -103,7 +103,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
         return false;
       }
     };
-    Enumeration enum = logplan.searchWhiteboard(pred);
+    Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AllocationforCollections alloc = (AllocationforCollections) enum.nextElement();
       System.out.println("Resending " + alloc);

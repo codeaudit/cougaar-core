@@ -23,7 +23,7 @@ import java.util.*;
  *   CHANGE     mark the object as changed in the set.
  *   BULK       like ADD of a set of Objects, with the slightly different
  *                functional semantics.  In particular, since these are
- *                only emitted Whiteboard on
+ *                only emitted Blackboard on
  *                initialization of subscriptions, and by PersistenceSubscribers
  *                on LogPlan rehydration, LogicProviders function differently
  *                on BULKs than ADDs, for instance, business rules which

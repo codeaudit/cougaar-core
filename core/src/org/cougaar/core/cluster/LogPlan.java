@@ -24,9 +24,9 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.society.UID;
 
-public class LogPlan implements LogPlanServesLogicProvider, XPlanServesWhiteboard
+public class LogPlan implements LogPlanServesLogicProvider, XPlanServesBlackboard
 {
-  private Whiteboard alpPlan;      // Delegate ALPPLanServesLogicProvider methods to this
+  private Blackboard alpPlan;      // Delegate ALPPLanServesLogicProvider methods to this
 
   static final UnaryPredicate planElementP = new UnaryPredicate() {
     public boolean execute(Object o) {
@@ -75,7 +75,7 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesWhiteboar
   AssetSet assetSet = new AssetSet();
   private CollectionSubscription assetCollection;
 
-  public void setupSubscriptions(Whiteboard alpPlan) {
+  public void setupSubscriptions(Blackboard alpPlan) {
     this.alpPlan = alpPlan;
     planElementCollection = new CollectionSubscription(planElementP, planElementSet);
     alpPlan.subscribe(planElementCollection);
@@ -129,7 +129,7 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesWhiteboar
   }
 
   public Enumeration searchLogPlan(UnaryPredicate predicate) {
-    return searchWhiteboard(predicate);
+    return searchBlackboard(predicate);
   }
 
   /** Counters for different types of logplan objects for metrics **/
@@ -162,7 +162,7 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesWhiteboar
   };
 
   public int getWorkflowCount() {
-    return countWhiteboard(workflowPredicate);
+    return countBlackboard(workflowPredicate);
   }
 
   // Increment counts by given amount
@@ -182,18 +182,18 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesWhiteboar
       workflowCnt += inc;
   }
 
-  // Implementation of WhiteboardServesLogProvider
+  // Implementation of BlackboardServesLogProvider
 
   /**
-   * Apply predicate against the entire "Whiteboard".
+   * Apply predicate against the entire "Blackboard".
    * User provided predicate
    **/
-  public Enumeration searchWhiteboard(UnaryPredicate predicate) {
-    return alpPlan.searchWhiteboard(predicate);
+  public Enumeration searchBlackboard(UnaryPredicate predicate) {
+    return alpPlan.searchBlackboard(predicate);
   }
 
-  public int countWhiteboard(UnaryPredicate predicate) {
-    return alpPlan.countWhiteboard(predicate);
+  public int countBlackboard(UnaryPredicate predicate) {
+    return alpPlan.countBlackboard(predicate);
   }
 
   /** Add Object to the LogPlan Collection

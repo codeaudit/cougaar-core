@@ -121,11 +121,11 @@ public class Subscriber {
                 if (currentClient != null) {
                   thisPublisher = currentClient.getSubscriptionClientName();
                 }
-                if (envelope instanceof Whiteboard.PlanEnvelope) {
+                if (envelope instanceof Blackboard.PlanEnvelope) {
                   if (thisPublisher == null) {
-                    thisPublisher = "Whiteboard";
+                    thisPublisher = "Blackboard";
                   } else {
-                    thisPublisher = "Whiteboard after " + thisPublisher;
+                    thisPublisher = "Blackboard after " + thisPublisher;
                   }
                 } else if (thisPublisher == null) {
                   thisPublisher = "Unknown";
@@ -292,7 +292,7 @@ public class Subscriber {
     return subscription;
   }
     
-  /** lightweight query of Whiteboard **/
+  /** lightweight query of Blackboard **/
   public final Collection query(UnaryPredicate isMember) {
     QuerySubscription s = new QuerySubscription(isMember);
     s.setSubscriber(this);      // shouldn't really be needed
@@ -301,7 +301,7 @@ public class Subscriber {
   }
 
   final void checkTransactionOK(String methodname, Object arg) {
-    if (this instanceof Whiteboard) return;               // No check for Whiteboard
+    if (this instanceof Blackboard) return;               // No check for Blackboard
     if (!isMyTransaction()) {
       synchronized (System.err) {
         if (arg != null) { methodname = methodname+"("+arg+")"; }

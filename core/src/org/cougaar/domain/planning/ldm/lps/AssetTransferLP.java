@@ -117,7 +117,7 @@ public class AssetTransferLP
         return false;
       }
     };
-    Enumeration enum = logplan.searchWhiteboard(pred);
+    Enumeration enum = logplan.searchBlackboard(pred);
     while (enum.hasMoreElements()) {
       AssetTransfer at = (AssetTransfer) enum.nextElement();
       System.out.println("Resending " + at);
@@ -135,7 +135,7 @@ public class AssetTransferLP
         return false;
       }
     };
-    for (enum = logplan.searchWhiteboard(pred); enum.hasMoreElements(); ) {
+    for (enum = logplan.searchBlackboard(pred); enum.hasMoreElements(); ) {
       Asset asset = (Asset) enum.nextElement();
       
       if (related(asset)) {

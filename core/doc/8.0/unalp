@@ -102,7 +102,7 @@ sub hack {
   s/ALPRed/CougaarRed/g && $found++;
   s/ALPYellow/CougaarYellow/g && $found++;
   s/ALPGreen/CougaarGreen/g && $found++;
-  s/ALPPlan/Whiteboard/g && $found++;
+  s/ALPPlan/Blackboard/g && $found++;
 
   # GLM classes
   s/ALPDomain/GLMDomain/g && $found++;

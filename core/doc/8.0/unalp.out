@@ -2523,10 +2523,10 @@ cvs server: use 'cvs commit' to add this file permanently
 ./core/src/org/cougaar/core/cluster/MetricsLP.java
 ./core/src/org/cougaar/core/cluster/MetricsMessage.java
 ./core/src/org/cougaar/core/cluster/ClusterInitializedMessage.java
-./core/src/org/cougaar/core/cluster/ALPPlanServesLogicProvider.java renamed to ./core/src/org/cougaar/core/cluster/WhiteboardServesLogicProvider.java (4 changes)
+./core/src/org/cougaar/core/cluster/ALPPlanServesLogicProvider.java renamed to ./core/src/org/cougaar/core/cluster/BlackboardServesLogicProvider.java (4 changes)
 cvs server: scheduling `./core/src/org/cougaar/core/cluster/ALPPlanServesLogicProvider.java' for removal
 cvs server: use 'cvs commit' to remove this file permanently
-cvs server: scheduling file `./core/src/org/cougaar/core/cluster/WhiteboardServesLogicProvider.java' for addition
+cvs server: scheduling file `./core/src/org/cougaar/core/cluster/BlackboardServesLogicProvider.java' for addition
 cvs server: use 'cvs commit' to add this file permanently
 ./core/src/org/cougaar/core/cluster/LogPlan.java 11 changes
 ./core/src/org/cougaar/core/cluster/AckSet.java
@@ -2555,18 +2555,18 @@ cvs server: use 'cvs commit' to add this file permanently
 ./core/src/org/cougaar/core/cluster/Timer.java
 ./core/src/org/cougaar/core/cluster/Distributor.java 6 changes
 ./core/src/org/cougaar/core/cluster/DirectiveMessage.java
-./core/src/org/cougaar/core/cluster/XPlanServesALPPlan.java renamed to ./core/src/org/cougaar/core/cluster/XPlanServesWhiteboard.java (3 changes)
+./core/src/org/cougaar/core/cluster/XPlanServesALPPlan.java renamed to ./core/src/org/cougaar/core/cluster/XPlanServesBlackboard.java (3 changes)
 cvs server: scheduling `./core/src/org/cougaar/core/cluster/XPlanServesALPPlan.java' for removal
 cvs server: use 'cvs commit' to remove this file permanently
-cvs server: scheduling file `./core/src/org/cougaar/core/cluster/XPlanServesWhiteboard.java' for addition
+cvs server: scheduling file `./core/src/org/cougaar/core/cluster/XPlanServesBlackboard.java' for addition
 cvs server: use 'cvs commit' to add this file permanently
 ./core/src/org/cougaar/core/cluster/EventSubscription.java
 ./core/src/org/cougaar/core/cluster/PublishException.java
 ./core/src/org/cougaar/core/cluster/NoResponseException.java
-./core/src/org/cougaar/core/cluster/ALPPlan.java renamed to ./core/src/org/cougaar/core/cluster/Whiteboard.java (12 changes)
+./core/src/org/cougaar/core/cluster/ALPPlan.java renamed to ./core/src/org/cougaar/core/cluster/Blackboard.java (12 changes)
 cvs server: scheduling `./core/src/org/cougaar/core/cluster/ALPPlan.java' for removal
 cvs server: use 'cvs commit' to remove this file permanently
-cvs server: scheduling file `./core/src/org/cougaar/core/cluster/Whiteboard.java' for addition
+cvs server: scheduling file `./core/src/org/cougaar/core/cluster/Blackboard.java' for addition
 cvs server: use 'cvs commit' to add this file permanently
 ./core/src/org/cougaar/core/cluster/ChangeReport.java
 ./core/src/org/cougaar/core/cluster/ClusterIdentifier.java
@@ -4014,10 +4014,10 @@ cvs server: use 'cvs commit' to add this file permanently
 ./whatif/src/Asset.java
 ./whatif/src/Notification.java
 ./whatif/src/BranchRequest.java
-./whatif/src/ALPPlanServesLogicProvider.java renamed to ./whatif/src/WhiteboardServesLogicProvider.java (4 changes)
+./whatif/src/ALPPlanServesLogicProvider.java renamed to ./whatif/src/BlackboardServesLogicProvider.java (4 changes)
 cvs server: scheduling `./whatif/src/ALPPlanServesLogicProvider.java' for removal
 cvs server: use 'cvs commit' to remove this file permanently
-cvs server: scheduling file `./whatif/src/WhiteboardServesLogicProvider.java' for addition
+cvs server: scheduling file `./whatif/src/BlackboardServesLogicProvider.java' for addition
 cvs server: use 'cvs commit' to add this file permanently
 ./whatif/src/LogPlan.java 11 changes
 ./whatif/src/WhatIfTransaction.java
@@ -4042,10 +4042,10 @@ cvs server: use 'cvs commit' to add this file permanently
 ./whatif/src/ReceiveTaskLP.java
 ./whatif/src/PlanElement.java
 ./whatif/src/BranchQuerySubscription.java
-./whatif/src/ALPPlan.java renamed to ./whatif/src/Whiteboard.java (10 changes)
+./whatif/src/ALPPlan.java renamed to ./whatif/src/Blackboard.java (10 changes)
 cvs server: scheduling `./whatif/src/ALPPlan.java' for removal
 cvs server: use 'cvs commit' to remove this file permanently
-cvs server: scheduling file `./whatif/src/Whiteboard.java' for addition
+cvs server: scheduling file `./whatif/src/Blackboard.java' for addition
 cvs server: use 'cvs commit' to add this file permanently
 ./whatif/src/ClusterObjectFactory.java
 ./whatif/src/Publishable.java

@@ -24,7 +24,7 @@ import java.util.*;
  * <p>
  * This particular
  * implementation is only concerned with vetting Envelopes.
- * It does not attempt to detect any in-state Whiteboard
+ * It does not attempt to detect any in-state Blackboard
  * or Message problems.
  * <p>
  * The specific tests that are performed are described by the

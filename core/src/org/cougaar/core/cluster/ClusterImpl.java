@@ -136,7 +136,7 @@ public class ClusterImpl
 {
   private Distributor myDistributor = null;
 
-  private Whiteboard myWhiteboard = null;
+  private Blackboard myBlackboard = null;
   private LogPlan myLogPlan = null;
 
   private MessageTransportServer messenger = null;
@@ -314,18 +314,18 @@ public class ClusterImpl
     Domain rootDomain = DomainManager.find("root");
     myRootFactory = (RootFactory) rootDomain.getFactory(this);
 
-    // set up Whiteboard and LogicProviders
+    // set up Blackboard and LogicProviders
     try {
-      myWhiteboard = new Whiteboard(getDistributor(), this);
-      getDistributor().setWhiteboard(myWhiteboard);
+      myBlackboard = new Blackboard(getDistributor(), this);
+      getDistributor().setBlackboard(myBlackboard);
 
       Collection domains = DomainManager.values();
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
         Domain d = (Domain) i.next();
 
         // add all the domain-specific logic providers
-        XPlanServesWhiteboard xPlan = d.createXPlan(myWhiteboard.getXPlans());
-        myWhiteboard.addXPlan(xPlan);
+        XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
+        myBlackboard.addXPlan(xPlan);
         if (d == rootDomain) {
           myLogPlan = (LogPlan) xPlan;
         }
@@ -334,7 +334,7 @@ public class ClusterImpl
           for (Iterator li = lps.iterator(); li.hasNext(); ) {
             Object lo = li.next();
             if (lo instanceof LogicProvider) {
-              myWhiteboard.addLogicProvider((LogicProvider) lo);
+              myBlackboard.addLogicProvider((LogicProvider) lo);
             } else {
               System.err.println("Domain "+d+" requested loading of a non LogicProvider "+lo+" (Ignored).");
             }
@@ -344,9 +344,9 @@ public class ClusterImpl
 
       // specialLPs
       if (isMetricsHeartbeatOn) {
-        myWhiteboard.addLogicProvider(new MetricsLP(myLogPlan, this));
+        myBlackboard.addLogicProvider(new MetricsLP(myLogPlan, this));
       }
-      myWhiteboard.init();
+      myBlackboard.init();
 
     } catch (Exception e) { 
       synchronized (System.err) {

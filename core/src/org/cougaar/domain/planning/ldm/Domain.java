@@ -13,8 +13,8 @@ package org.cougaar.domain.planning.ldm;
 import java.util.Collection;
 
 import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.core.cluster.WhiteboardServesLogicProvider;
-import org.cougaar.core.cluster.XPlanServesWhiteboard;
+import org.cougaar.core.cluster.BlackboardServesLogicProvider;
+import org.cougaar.core.cluster.XPlanServesBlackboard;
 import org.cougaar.core.cluster.ClusterServesLogicProvider;
 
 /**
@@ -49,7 +49,7 @@ public interface Domain
    * Create new Domain-specific LogicProviders for loading into the LogPlan.
    * @return a Collection of the LogicProvider instances or null.
    **/
-  Collection createLogicProviders(WhiteboardServesLogicProvider logplan, 
+  Collection createLogicProviders(BlackboardServesLogicProvider logplan, 
                                   ClusterServesLogicProvider cluster);
 
   /**
@@ -57,6 +57,6 @@ public interface Domain
    * This allows the domain's LPs to have custom collections/subscriptions
    * for efficiency rather than having to do slow searches every time.
    **/
-  XPlanServesWhiteboard createXPlan(java.util.Collection existingXPlans);
+  XPlanServesBlackboard createXPlan(java.util.Collection existingXPlans);
 
 }
