@@ -135,8 +135,11 @@ public class ServletWorker {
   /**
    * Write XMLable result to output. <p>
    *
-   * Output format is either data, xml, or html
-   * @see #getHierarchyData
+   * Output format is either data, xml, or html <p>
+   *
+   * For an example of how this is used, see the following references.
+   * @see org.cougaar.planning.servlet.HierarchyWorker#getHierarchy
+   * @see org.cougaar.planning.servlet.HierarchyWorker#writeResponse
    */
   protected void writeResponse(XMLable result, 
 			       OutputStream out, HttpServletRequest request, 

@@ -51,7 +51,7 @@ public abstract class ServletBase
   public static boolean VERBOSE = false;
 
   static {
-      VERBOSE = Boolean.getBoolean("org.cougaar.mlm.ui.psp.transit.ServletBase.verbose");
+    VERBOSE = Boolean.getBoolean("org.cougaar.mlm.ui.psp.transit.ServletBase.verbose");
   }
 
   /**
