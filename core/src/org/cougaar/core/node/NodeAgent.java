@@ -106,9 +106,6 @@ public class NodeAgent
 
   private ComponentDescription[] agentDescs = null;
 
-  /** A reference to the MessageTransportService containing the Messenger **/
-  private transient MessageTransportService theMessenger = null;
-
   private String nodeName = null;
   private NodeIdentifier nodeIdentifier = null;
 
@@ -451,9 +448,6 @@ public class NodeAgent
     }
   }
 
-  // **** QUO *****
-  // Change this to create (or find?) a MessageTransportManager as the
-  // value of theMessenger.
   private void initTransport(ServiceBroker rootsb, NodeIdentifier id) {
     String name = id.toString();
     MessageTransportServiceProvider mtsp = 
@@ -464,24 +458,8 @@ public class NodeAgent
     rootsb.addService(MessageStatisticsService.class, mtsp);
     rootsb.addService(MessageWatcherService.class, mtsp);
     rootsb.addService(AgentStatusService.class, mtsp);
-
-    theMessenger = (MessageTransportService)
-      getServiceBroker().getService(this, MessageTransportService.class, null);
-    //System.err.println("Started "+theMessenger);
-    theMessenger.registerClient(this);
-
   }
 
-
-  private class MTSClient implements MessageTransportClient {
-    public void receiveMessage(Message message) {
-      NodeAgent.this.receiveMessage(message);
-    }
-
-    public MessageAddress getMessageAddress() {
-      return NodeAgent.this.getMessageAddress();
-    }
-  }
 
   /** deliver or queue the message.  
    * We'll queue the message until we're really completely up
