@@ -28,19 +28,30 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.planning.plugin.AssetDataReader;
 
 public interface InitializerService extends Service {
-    ComponentDescription[]
-        getComponentDescriptions(String parentName,
-                                 String insertionPoint)
-        throws InitializerServiceException;
-    String getAgentPrototype(String agentName)
-        throws InitializerServiceException;
-    String[] getAgentPropertyGroupNames(String agentName)
-        throws InitializerServiceException;
-    Object[][] getAgentProperties(String agentName, String pgName)
-        throws InitializerServiceException;
-    String[][] getAgentRelationships(String agentName)
-        throws InitializerServiceException;
-    AssetDataReader getAssetDataReader();
-    Object[] translateAttributeValue(String type, String key)
-        throws InitializerServiceException;
+  /**
+   * Get the descriptions of components with the named parent having
+   * an insertion point below the given container insertion point.
+   * <p> 
+   * Note that the returned value is in whatever order the underlying 
+   * implementation uses.  It is <em>not</em> sorted by priority.
+   **/
+  ComponentDescription[] getComponentDescriptions(String parentName, String insertionPoint)
+    throws InitializerServiceException;
+
+  String getAgentPrototype(String agentName) 
+    throws InitializerServiceException;
+
+  String[] getAgentPropertyGroupNames(String agentName)
+    throws InitializerServiceException;
+
+  Object[][] getAgentProperties(String agentName, String pgName)
+    throws InitializerServiceException;
+
+  String[][] getAgentRelationships(String agentName)
+    throws InitializerServiceException;
+
+  AssetDataReader getAssetDataReader();
+
+  Object[] translateAttributeValue(String type, String key)
+    throws InitializerServiceException;
 }

@@ -25,6 +25,7 @@ import org.cougaar.core.mts.*;
 
 import java.io.*;
 import java.util.*;
+import java.util.regex.*;
 
 import org.cougaar.core.component.ComponentDescription;
 
@@ -69,6 +70,9 @@ public final class INIParser {
     return EMPTY_VECTOR;
   }
 
+  /** Pattern for matching insertionPoint&priority **/
+  final static Pattern namePattern = Pattern.compile("([a-zA-Z0-9.]+)(\\((.+)\\))?");
+
   /**
    * Read an INI file from a <code>BufferedReader</code> to create
    * <code>ComponentDescription</code>s.
@@ -100,9 +104,12 @@ public final class INIParser {
    * </ul>
    */
   public static ComponentDescription[] parse(
-      BufferedReader in,
-      String containerInsertionPoint) {
+                                             BufferedReader in,
+                                             String containerInsertionPoint) 
+  {
+
     List descs = new ArrayList();
+    int line = 0;
     try {
 
 readDescriptions:
@@ -112,6 +119,7 @@ readDescriptions:
         String s = null;
         while (true) {
           // read the current line
+          line++;
           String tmp = in.readLine();
           if (tmp == null) {
             // end of file
@@ -157,6 +165,27 @@ readDescriptions:
 
         // name is the insertion point
         String insertionPoint = name;
+        int priority = -1;      // illegal priority (undefined) - we'll default it later
+        {
+          Matcher m = namePattern.matcher(insertionPoint);
+          if (m.matches()) {   
+            // group 1 is the new name
+            String n = m.group(1);
+            if (n != null) insertionPoint=n;
+
+            // group 3 is the priority or null
+            String p = m.group(3);
+            if (p != null) {
+              try {
+                priority = ComponentDescription.parsePriority(p);
+              } catch (IllegalArgumentException iae) {
+                System.err.println("Warning: illegal component priority line "+line+": "+s);
+              } 
+            }
+          } else {
+            System.err.println("Warning: unparsable component description line "+line+": "+s);
+          }
+        }
 
         // FIXME only a simplistic property of "Vector<String>" is supported
         //
@@ -194,19 +223,30 @@ readDescriptions:
           insertionPoint = containerInsertionPoint + insertionPoint;
         }
 
+        if (priority == -1) {
+          // default binders to PRIORITY_BINDER instead of STANDARD 
+          if (insertionPoint.endsWith(".Binder")) {
+            priority = ComponentDescription.PRIORITY_BINDER;
+          } else {
+            priority = ComponentDescription.PRIORITY_COMPONENT;
+          }
+        }
+
         // FIXME unsupported fields: codebase, certificate, lease, policy
         //
         // create a new ComponentDescription
         ComponentDescription cd =
           new ComponentDescription(
-              classname, // name
+              classname,        // name
               insertionPoint,
               classname,
-              null,  // codebase
+              null,             // codebase
               vParams,
-              null,  // certificate
-              null,  // lease
-              null); // policy
+              null,             // certificate
+              null,             // lease
+              null,             // policy
+              priority          // priority, of course.
+              );
 
         // save
         descs.add(cd);

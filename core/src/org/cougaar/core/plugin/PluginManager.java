@@ -67,72 +67,36 @@ public class PluginManager
     this.loadState = loadState;
   }
 
-  public void load() {
-    super.load();
-    // add services here (none for now)
-
-    // display the agent id
-    MessageAddress cid = getBindingSite().getAgentIdentifier();
-    String cname = cid.toString();
-    // System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
-    
-    // get an array of child Components
-    Object[] children;
+  /** Get the components from the InitializerService or the state **/
+  protected ComponentDescriptions findExternalComponentDescriptions() {
     if (loadState instanceof StateTuple[]) {
-      // use the existing state
-      children = (StateTuple[])loadState;
-      loadState = null;
+      StateTuple[] ls = (StateTuple[])loadState;
+      int len = ls.length;
+      List l = new ArrayList(ls.length);
+      for (int i=0; i<len; i++) {
+        l.add(ls[i].getComponentDescription());
+      }
+      return new ComponentDescriptions(l);
     } else {
+      // display the agent id
+      MessageAddress cid = getBindingSite().getAgentIdentifier();
+      String cname = cid.toString();
+
       ServiceBroker sb = getServiceBroker();
-      InitializerService is = (InitializerService)
-        sb.getService(this, InitializerService.class, null);
+      InitializerService is = (InitializerService) sb.getService(this, InitializerService.class, null);
       try {
-        children = is.getComponentDescriptions(cname, specifyContainmentPoint());
+        return new ComponentDescriptions(is.getComponentDescriptions(cname, specifyContainmentPoint()));
       } catch (Exception e) {
-        System.err.println(
-            "\nUnable to add "+cname+"'s child Components: "+e);
+        System.err.println("\nUnable to add "+cname+"'s child Components: "+e);
         e.printStackTrace();
-        children = null;
+        return null;
       } finally {
         sb.releaseService(this, InitializerService.class, is);
       }
     }
-
-    // load the child Components (Plugins, etc)
-    int n = ((children != null) ? children.length : 0);
-    for (int i = 0; i < n; i++) {
-      Object x = children[i];
-      ComponentDescription cd = null;
-      Object cstate = null;
-      if (x instanceof ComponentDescription) {
-        cd = (ComponentDescription) x;
-      } else if (x instanceof StateTuple) {
-        StateTuple st = (StateTuple) x;
-        cd = st.getComponentDescription();
-        cstate = st.getState();
-      }
-      if (cd != null) {
-        String ip = cd.getInsertionPoint();
-        // PluginManager should only load plugins!
-        if (ip != null &&
-            ip.startsWith("Node.AgentManager.Agent.PluginManager.")) {
-          try {
-            add(x);
-          } catch (ComponentRuntimeException cre) {
-            // cre.printStackTrace();
-            Throwable th = cre;
-            while (true) {
-              Throwable nx = th.getCause();
-              if (nx == null) break;
-              th = nx;
-            }
-            System.err.println("Failed to load "+cd+":");
-            th.printStackTrace();
-          }
-        }
-      }
-    }
   }
+
+  // no need for load() any more.
 
   //
   //
