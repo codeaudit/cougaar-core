@@ -71,10 +71,22 @@ public class TimeSpanSet
   public boolean addAll(Collection c) {
     boolean hasChanged = false;
 
-    for (Iterator i = c.iterator(); i.hasNext(); ) {
-      if (add(i.next()))
-        hasChanged = true;
+    if (c instanceof List) {
+      List list = (List)c;
+      int numToAdd = list.size();
+      
+      for (int index = 0; index < numToAdd; index++) {
+        if (add(list.get(index))) {
+          hasChanged = true;
+        }
+      }
+    } else {
+      for (Iterator i = c.iterator(); i.hasNext(); ) {
+        if (add(i.next()))
+          hasChanged = true;
+      }
     }
+
     return hasChanged;
   }
 
