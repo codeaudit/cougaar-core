@@ -28,14 +28,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.planning.ldm.policy.RangeRuleParameter;
-import org.cougaar.planning.ldm.policy.RangeRuleParameterEntry;
-import org.cougaar.planning.ldm.policy.RuleParameter;
-import org.cougaar.planning.ldm.policy.RuleParameterIllegalValueException;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * Convenience base class for plugins that need to acquire services
@@ -55,6 +52,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   /**
    * Everybody needs a logger, so we provide it here.
    **/
+  private LoggingService loggingService;
   protected LoggingService logger;
 
   /**
@@ -72,16 +70,18 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    **/
   public void load() {
     super.load();
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    loggingService = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    logger = LoggingServiceWithPrefix.add(loggingService, getClusterIdentifier().cleanToString() + ": ");
   }
 
   /**
    * Override to release a logger on load
    **/
   public void unload() {
-    if (logger != null) {
-      getServiceBroker().releaseService(this, LoggingService.class, logger);
+    if (loggingService != null) {
+      getServiceBroker().releaseService(this, LoggingService.class, loggingService);
       logger = null;
+      loggingService = null;
     }
     super.unload();
   }
