@@ -1,3 +1,18 @@
+2001-09-13  Todd Wright <twright@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/plan/LatLonPoint.java:
+	New core implementation for simple (Latitude, Longitude) 
+        Locations.  Also added the corresponding "NewLatLonPoint"
+        and "LatLonPointImpl".
+
+2001-09-13  Todd Wright <twright@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/asset/properties.def:
+	Moved GLM's LocationSchedulePG into core.
+
+	* org/cougaar/domain/planning/ldm/asset/assets.def:
+	Added LocationSchedulePG to Entity Assets.
+
 2001-09-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBConnectionPool.java:
