@@ -115,7 +115,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
 
       if (aa.isUpdate() || aa.isRepeat()) {
         removeExistingRelationships(aa.getSchedule(), rs_a, rs_assignee);
-      } 
+      }
 
       addRelationships(aa, rs_a, rs_assignee);
       
@@ -301,6 +301,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     return relationships;
   }
 }
+
 
 
 

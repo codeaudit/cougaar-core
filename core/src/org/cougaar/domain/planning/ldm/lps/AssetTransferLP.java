@@ -199,47 +199,26 @@ public class AssetTransferLP
 
     Schedule s;
 
-    if (related(naa.getAsset())) {
+    Asset asset = naa.getAsset();
+    Asset assignee = naa.getAssignee();
+
+    // Only fuss with relationship schedules if both Asset & Assignee implement
+    // HasRelationships
+    if (related(asset) & related(assignee)) {
       s = makeAARelationshipSchedule(naa, at);
 
       if (!updateLocalAssets(at, kind)) {
         return null;
       }
-
-
-      // Clear role and relationship schedules to ensure that there 
-      // are no dangling references to other organizations.
-      Asset asset = naa.getAsset();
-      RelationshipSchedule relationshipSchedule = 
-        ((HasRelationships )asset).getRelationshipSchedule();
-      relationshipSchedule = null;
-
-      if (asset.getRoleSchedule() != null) {
-        asset.getRoleSchedule().clear();
-      } 
-      if (asset.getRoleSchedule().getAvailableSchedule() != null) {
-        asset.getRoleSchedule().getAvailableSchedule().clear();
-      }
-
-      Asset assignee = naa.getAssignee();
-      relationshipSchedule = 
-        ((HasRelationships )assignee).getRelationshipSchedule();
-      relationshipSchedule = null;
-
-
-      if (assignee.getRoleSchedule() != null) {
-        assignee.getRoleSchedule().clear();
-      } 
-      if (assignee.getRoleSchedule().getAvailableSchedule() != null) {
-        assignee.getRoleSchedule().getAvailableSchedule().clear();
-      }
-
-
     } else {
       s = ldmf.newSchedule(at.getSchedule().getAllScheduleElements());
     }
-
     naa.setSchedule(s);
+
+    // Clear asset and assignee relationship, role, and available schedules to ensure 
+    // that there are no references to other organizations.
+    clearSchedule(asset);
+    clearSchedule(assignee);
 
     return naa;
   }
@@ -469,6 +448,24 @@ public class AssetTransferLP
     }
 
     return localRelationships;
+  }
+
+  // Clear relationship, role and availble schedules to ensure that there 
+  // are no dangling references to other organizations.
+  private void clearSchedule(Asset asset) {
+    if (related(asset)) {
+      RelationshipSchedule relationshipSchedule = 
+        ((HasRelationships )asset).getRelationshipSchedule();
+      relationshipSchedule = null;
+    }
+
+    if (asset.getRoleSchedule() != null) {
+      asset.getRoleSchedule().clear();
+
+      if (asset.getRoleSchedule().getAvailableSchedule() != null) {
+        asset.getRoleSchedule().getAvailableSchedule().clear();
+      }
+    }
   }
 }
 

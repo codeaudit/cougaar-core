@@ -58,6 +58,10 @@ public class ReceiveAssetRescindLP
     }
   }
 
+  private final static boolean related(Asset a) {
+    return (a instanceof HasRelationships); 
+  }
+
   private void receiveAssetRescind(AssetRescind ar) {
     Asset localAsset = logplan.findAsset(ar.getAsset());
     if (localAsset == null) {
@@ -74,8 +78,8 @@ public class ReceiveAssetRescindLP
     }
 
 
-    if (ar.getAsset() instanceof HasRelationships &&
-        ar.getRescindee() instanceof HasRelationships) {
+    if (related(ar.getAsset()) &&
+        related(ar.getRescindee())) {
       updateRelationshipSchedules(ar, localAsset, localAssignee);
     }
 
@@ -93,10 +97,10 @@ public class ReceiveAssetRescindLP
       asset.getItemIdentificationPG().getItemIdentification();
 
     RelationshipSchedule assetRelationshipSchedule = 
-      ((HasRelationships)asset).getRelationshipSchedule();
+      ((HasRelationships) asset).getRelationshipSchedule();
 
     RelationshipSchedule assigneeRelationshipSchedule = 
-      ((HasRelationships)assignee).getRelationshipSchedule();
+      ((HasRelationships) assignee).getRelationshipSchedule();
 
 
     // Remove matching relationships
@@ -116,7 +120,7 @@ public class ReceiveAssetRescindLP
     NewSchedule assetAvailSchedule = 
       (NewSchedule)asset.getRoleSchedule().getAvailableSchedule();
 
-    if (!(asset instanceof HasRelationships)) {
+    if (!related(asset)) {
     
       // Remove Matching Availabilities
       synchronized (assetAvailSchedule) {
@@ -142,9 +146,9 @@ public class ReceiveAssetRescindLP
       
       // Get all relationships between asset and assignee
       RelationshipSchedule relationshipSchedule = 
-        ((HasRelationships)asset).getRelationshipSchedule();
+        ((HasRelationships) asset).getRelationshipSchedule();
       Collection collection = 
-        relationshipSchedule.getMatchingRelationships((HasRelationships)assignee,
+        relationshipSchedule.getMatchingRelationships((HasRelationships) assignee,
                                                       new MutableTimeSpan());
       
       // If any relationships, add a single avail element with the 
