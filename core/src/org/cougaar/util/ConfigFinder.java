@@ -13,7 +13,10 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.zip.*;
-import com.ibm.xml.parser.*;
+import org.apache.xerces.parsers.DOMParser;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.EntityResolver;
 import org.w3c.dom.Document;
 
 /**
@@ -236,39 +239,16 @@ public final class ConfigFinder {
 
 
   public Document parseXMLConfigFile(String xmlfile) throws IOException {
-    InputStream is = null;
+    DOMParser parser = new DOMParser();
+    parser.setEntityResolver(new ConfigResolver());
     try {
-      is = open(xmlfile);
-      Parser parser = new Parser(xmlfile, null, new ConfigStreamProducer());
-      parser.setExpandEntityReferences(true);
-      return parser.readStream(is);
-    } finally {
-      if (is!=null) is.close();
+      parser.parse(new InputSource(open(xmlfile)));
+    } catch (SAXException e) {
+      System.out.println("Error parsing file: " + xmlfile);
+      e.printStackTrace();
     }
-  }
-
-  private class ConfigStreamProducer implements StreamProducer {
-    Stack stack = new Stack();
-    public Source getInputStream(String name, String publicID, String systemID) 
-      throws IOException
-    {
-      //System.err.println("Asked to open "+name+":"+publicID+":"+systemID);
-      int i = systemID.lastIndexOf("/");
-      if (i > -1) systemID = systemID.substring(i+1);
-      InputStream is = ConfigFinder.this.open(systemID);
-      stack.push(is);
-      return new Source(is);
-    }
-    public void closeInputStream(Source source)
-    {
-      if (!stack.empty()) {
-        InputStream is = (InputStream) stack.pop();
-        try {
-          if (is != null) is.close();
-        } catch (IOException ioe) {}
-      }
-    }
-    public void loadCatalog(Reader reader) {}
+    
+    return parser.getDocument();
   }
 
   // Singleton pattern
@@ -302,6 +282,20 @@ public final class ConfigFinder {
     return defaultConfigFinder;
   }
 
+  class ConfigResolver implements EntityResolver {
+    public InputSource resolveEntity (String publicId, String systemId) {
+
+      String filename = systemId.substring(systemId.lastIndexOf(File.separatorChar)+1,
+	 systemId.length());
+
+      InputSource is = null;
+      try {
+	is = new InputSource(open(filename));
+      } catch(IOException e) {
+      }
+      return is;
+   } 
+  }
 
   /**
    * Point test for ConfigFinder.  prints the first line of the
