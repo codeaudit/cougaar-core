@@ -1,10 +1,10 @@
 /*
  * <copyright>
- * Copyright 1997-2001 Defense Advanced Research Projects
- * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- * Raytheon Systems Company (RSC) Consortium).
- * This software to be used only in accordance with the
- * COUGAAR licence agreement.
+ *  Copyright 1997-2000 Defense Advanced Research Projects
+ *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ *  Raytheon Systems Company (RSC) Consortium).
+ *  This software to be used only in accordance with the
+ *  COUGAAR licence agreement.
  * </copyright>
  */
 
@@ -329,8 +329,9 @@ public abstract class MessageTransport implements MessageTransportServer
     
     if (msmName != null && (! msmName.equals("")) && (! msmName.equals("none"))) {
       try {
-        msm = (MessageSecurityManager) Beans.instantiate(null,msmName);
-        msm.setMessageTransport(this);
+	  msm = (MessageSecurityManager)Class.forName(msmName).newInstance();
+	  //  msm = (MessageSecurityManager) Beans.instantiate(null,msmName);
+	  msm.setMessageTransport(this);
       } catch (Exception e) {
         System.err.println("Problem instantiating MessageSecurityManager \""+
                            msmName+"\":\n\t"+e);
