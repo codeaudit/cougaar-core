@@ -119,14 +119,18 @@ implements Component {
   public void setAgentIdentificationService(
       AgentIdentificationService agentIdService) {
     this.agentIdService = agentIdService;
-    this.agentId = agentIdService.getMessageAddress();
-    if (agentId != null) {
-      try {
-        String name = agentId.getAddress();
-        encAgentName = URLEncoder.encode(name, "UTF-8");
-      } catch (java.io.UnsupportedEncodingException e) {
-        // should never happen
-        throw new RuntimeException("Unable to encode to UTF-8?");
+    if (agentIdService == null) {
+      // Revocation
+    } else {
+      this.agentId = agentIdService.getMessageAddress();
+      if (agentId != null) {
+        try {
+          String name = agentId.getAddress();
+          encAgentName = URLEncoder.encode(name, "UTF-8");
+        } catch (java.io.UnsupportedEncodingException e) {
+          // should never happen
+          throw new RuntimeException("Unable to encode to UTF-8?");
+        }
       }
     }
   }
