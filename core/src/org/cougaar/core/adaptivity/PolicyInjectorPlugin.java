@@ -68,11 +68,11 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
       } catch (Exception e) {
 	logger.error("Error parsing policy file " + policyFileName, e);
       }
-    }
-    for (int i=0; i<policies.length; i++) {
-      policies[i].setAuthority(here);
-      uidService.registerUniqueObject(policies[i]);
-      blackboard.publishAdd(policies[i]);
+      for (int i=0; i<policies.length; i++) {
+	policies[i].setAuthority(here);
+	uidService.registerUniqueObject(policies[i]);
+	blackboard.publishAdd(policies[i]);
+      }
     }
   }
   
