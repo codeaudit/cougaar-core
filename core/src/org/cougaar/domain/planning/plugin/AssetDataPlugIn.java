@@ -45,8 +45,11 @@ import org.cougaar.domain.planning.ldm.DomainManager;
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.ItemIdentificationPGImpl;
+import org.cougaar.domain.planning.ldm.asset.LocationSchedulePG;
+import org.cougaar.domain.planning.ldm.asset.LocationSchedulePGImpl;
 import org.cougaar.domain.planning.ldm.asset.NewClusterPG;
 import org.cougaar.domain.planning.ldm.asset.NewItemIdentificationPG;
+import org.cougaar.domain.planning.ldm.asset.NewLocationSchedulePG;
 import org.cougaar.domain.planning.ldm.asset.NewPropertyGroup;
 import org.cougaar.domain.planning.ldm.asset.NewRelationshipPG;
 import org.cougaar.domain.planning.ldm.asset.NewTimePhasedPropertyGroup;
@@ -56,8 +59,14 @@ import org.cougaar.domain.planning.ldm.asset.PropertyGroupSchedule;
 import org.cougaar.domain.planning.ldm.asset.RelationshipBG;
 import org.cougaar.domain.planning.ldm.asset.TimePhasedPropertyGroup;
 
+import org.cougaar.domain.planning.ldm.measure.Latitude;
+import org.cougaar.domain.planning.ldm.measure.Longitude;
+
 import org.cougaar.domain.planning.ldm.plan.AspectType;
 import org.cougaar.domain.planning.ldm.plan.HasRelationships;
+import org.cougaar.domain.planning.ldm.plan.LocationScheduleElement;
+import org.cougaar.domain.planning.ldm.plan.LocationScheduleElementImpl;
+import org.cougaar.domain.planning.ldm.plan.NewLocationScheduleElement;
 import org.cougaar.domain.planning.ldm.plan.NewPrepositionalPhrase;
 import org.cougaar.domain.planning.ldm.plan.NewRoleSchedule;
 import org.cougaar.domain.planning.ldm.plan.NewSchedule;
@@ -66,6 +75,7 @@ import org.cougaar.domain.planning.ldm.plan.Preference;
 import org.cougaar.domain.planning.ldm.plan.Relationship;
 import org.cougaar.domain.planning.ldm.plan.Role;
 import org.cougaar.domain.planning.ldm.plan.Schedule;
+import org.cougaar.domain.planning.ldm.plan.ScheduleImpl;
 import org.cougaar.domain.planning.ldm.plan.ScoringFunction;
 import org.cougaar.domain.planning.ldm.plan.TimeAspectValue;
 import org.cougaar.domain.planning.ldm.plan.Verb;
@@ -337,6 +347,12 @@ public class AssetDataPlugIn extends SimplePlugIn {
             newVal = tokens.nextToken();
           } else if (dataItem.equals("[Relationship]")) {
             newVal = fillRelationships(newVal, tokens);
+          } else if (dataItem.equals("[LocationSchedulePG]")) {
+            // parser language is currently incapable of expressing a 
+            // complex schedule, so here we hack in some minimal support.
+            newVal = 
+              setLocationSchedulePG(
+                myLocalAsset, dataItem, newVal, tokens);
           } else if (dataItem.substring(0, 1).equals("[")) {
             // We've got a property or capability
             newVal = setPropertyForAsset(myLocalAsset, dataItem, newVal, tokens);
@@ -628,6 +644,122 @@ public class AssetDataPlugIn extends SimplePlugIn {
     } else {
       System.err.println("AssetDataPlugIn Error: asset is null");
     }
+    return newVal;
+  }
+
+
+  /**
+   * Hack to attach a LocationSchedulePG to an Asset.
+   * <pre>
+   * For now we only support a single LocationScheduleElementImpl
+   * which has a LatLonPointImpl as it's Location.  The TimeSpan
+   * is hard-coded to TimeSpan.MIN_VALUE .. TimeSpan.MAX_VALUE.
+   * In the future this can be enhanced to support full location
+   * schedules, but that would likely require a new file format.
+   * 
+   * The format is:
+   *   "FixedLocation \"(" + LATITUDE + ", " + LONGITUDE + ")\""
+   *
+   * For example, all of time at latitude 12.3 longitude -45.6:
+   *   FixedLocation "(12.3, -45.6)"
+   * </pre>
+   */
+  protected int setLocationSchedulePG(
+      Asset asset, String prop, int newVal, StreamTokenizer tokens) {
+
+    // check asset
+    if (asset == null) {
+      System.err.println("AssetDataPlugIn Error: asset is null");
+      return newVal;
+    }
+
+    // read two strings
+    String firstStr;
+    String secondStr;
+    try {
+      newVal = tokens.nextToken();
+      if ((newVal == StreamTokenizer.TT_EOF) ||
+          (tokens.sval.substring(0,1).equals("["))) {
+        // Reached a left bracket "[", want to exit block
+        return newVal;
+      }
+      firstStr = tokens.sval;
+
+      newVal = tokens.nextToken();
+      if ((newVal == StreamTokenizer.TT_EOF) ||
+          (tokens.sval.substring(0,1).equals("["))) {
+        // Reached a left bracket "[", want to exit block
+        return newVal;
+      }
+      secondStr = tokens.sval;
+
+      newVal = tokens.nextToken();
+    } catch (java.io.IOException ioe) {
+      return StreamTokenizer.TT_EOF;
+    }
+
+    // skip "FixedLocation " string
+    if (!(firstStr.equals("FixedLocation"))) {
+      System.err.println(
+          "Expecting: FixedLocation \"(LAT, LON)\"\n"+
+          "Not: "+firstStr+" .. ");
+      return newVal;
+    }
+
+    // parse single Location
+    org.cougaar.domain.planning.ldm.plan.Location loc;
+    if ((!(secondStr.startsWith("("))) ||
+        (!(secondStr.endsWith(")"))))  {
+      System.err.println(
+          "Expecting: FixedLocation \"(LAT, LON)\"\n"+
+          "Not: FixedLocation "+secondStr+" ..");
+      System.err.println("SWith(: "+secondStr.startsWith("("));
+      System.err.println("EWith): "+secondStr.endsWith(")"));
+      return newVal;
+    }
+    String locStr = 
+      secondStr.substring(
+          1, secondStr.length()-1);
+    try {
+      int sepIdx = locStr.indexOf(",");
+
+      String latStr = locStr.substring(0, sepIdx).trim();
+      org.cougaar.domain.planning.ldm.measure.Latitude lat = 
+        org.cougaar.domain.planning.ldm.measure.Latitude.newLatitude(
+            latStr);
+
+      String lonStr = locStr.substring(sepIdx+1).trim();
+      org.cougaar.domain.planning.ldm.measure.Longitude lon = 
+        org.cougaar.domain.planning.ldm.measure.Longitude.newLongitude(
+            lonStr);
+
+      loc = 
+        new org.cougaar.domain.planning.ldm.plan.LatLonPointImpl(
+            lat, lon);
+    } catch (RuntimeException e) {
+      System.err.println("Invalid LatLonPoint: "+locStr);
+      return newVal;
+    }
+
+    // create LocationScheduleElementImpl
+    LocationScheduleElement locSchedElem =
+      new LocationScheduleElementImpl(
+          TimeSpan.MIN_VALUE, TimeSpan.MAX_VALUE, loc);
+
+    // add to schedule
+    LocationSchedulePG locSchedPG = asset.getLocationSchedulePG();
+    if (locSchedPG == null) {
+      locSchedPG = new LocationSchedulePGImpl();
+      asset.setLocationSchedulePG(locSchedPG);
+    }
+    Schedule locSched = locSchedPG.getSchedule();
+    if (locSched == null) {
+      locSched = new ScheduleImpl();
+      ((NewLocationSchedulePG)locSchedPG).setSchedule(locSched);
+    }
+    locSched.add(locSchedElem);
+
+    // done
     return newVal;
   }
 
