@@ -42,7 +42,7 @@ abstract class Scheduler
     int runningThreadCount = 0;
     ThreadListenerProxy listenerProxy;
     String name;
-    PolicyTreeNode node;
+    PolicyTreeNode treeNode;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -75,8 +75,14 @@ abstract class Scheduler
 
 
 
-    void setNode(PolicyTreeNode node) {
-	this.node = node;
+    void setTreeNode(PolicyTreeNode treeNode) {
+	this.treeNode = treeNode;
+    }
+
+
+    // TimeSliceConsumer
+    public String getName() {
+	return name;
     }
 
 
@@ -88,7 +94,7 @@ abstract class Scheduler
 
     public synchronized void setTimeSlicePolicy(TimeSlicePolicy policy)
     {
-	node.setPolicy(policy);
+	treeNode.setPolicy(policy);
     }
 
     public synchronized void setMaxRunningThreadCount(int count) {
@@ -121,7 +127,7 @@ abstract class Scheduler
 
 
     TimeSlicePolicy getPolicy() {
-	return node.getPolicy();
+	return treeNode.getPolicy();
     }
 
     TimeSlice getSlice() {

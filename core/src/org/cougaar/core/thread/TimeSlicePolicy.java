@@ -27,7 +27,7 @@ import java.util.ArrayList;
 
 public interface TimeSlicePolicy extends TimeSliceConsumer
 {
-    void setNode(PolicyTreeNode node);
+    void setTreeNode(PolicyTreeNode node);
 
     TimeSlice getSlice(TimeSliceConsumer consumer);
     void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice);

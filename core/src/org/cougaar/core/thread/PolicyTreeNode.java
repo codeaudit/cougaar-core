@@ -36,7 +36,7 @@ final class PolicyTreeNode
     {
 	children = new ArrayList();
 	this.scheduler = scheduler;
-	scheduler.setNode(this);
+	scheduler.setTreeNode(this);
 	setPolicy(policy);
 	setParent(parent);
     }
@@ -69,7 +69,7 @@ final class PolicyTreeNode
 
     void setPolicy(TimeSlicePolicy policy) {
 	this.policy = policy;
-	policy.setNode(this);
+	policy.setTreeNode(this);
     }
 
     TimeSlicePolicy getPolicy() {

@@ -81,12 +81,6 @@ final class TimeSliceScheduler extends Scheduler
 	    if (DebugThreads) 
 		System.out.println(thread+ "'s slice expired");
 	    releaseThreadSlice(thread);
-	    // Now look for some other thread to run, in some other
-	    // slice.
-	    if (!queue_empty) {
-		TimeSlice slice  = getSlice();
-		if (slice != null) runNextThread(slice);
-	    }
 	} else if (!queue_empty) {
 	    // Reuse the slice
 	    TimeSlice slice = thread.slice();
