@@ -35,7 +35,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.LinkedByteOutputStream;
 import org.cougaar.util.log.Logger;
 
-public class PersistenceOutputStream extends ObjectOutputStream {
+public class PersistenceOutputStream extends ObjectOutputStream implements PersistenceStream {
 
   private static final int DEFAULT_INITIAL_SIZE = 10000;
 

@@ -35,6 +35,7 @@ import java.lang.reflect.Method;
 
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
+
 /**
  * Read persisted objects from a stream. Detects objects that have
  * been wrapped in a PersistenceAssociation and resolves those to the
@@ -43,7 +44,7 @@ import org.cougaar.util.log.Logger;
  * stored in the identityTable. Thereafter, its values are updated
  * from later versions of the same object.
  **/
-public class PersistenceInputStream extends ObjectInputStream {
+public class PersistenceInputStream extends ObjectInputStream implements PersistenceStream {
   private Logger logger;
 
   public MessageAddress getOriginator() { return null; }
