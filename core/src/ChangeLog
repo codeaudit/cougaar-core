@@ -1,3 +1,58 @@
+2001-09-18  Ray Tomlinson  <RTomlinson@HEFEWEIZEN>
+
+	* org/cougaar/core/plugin/PluginManager.java (Repository):
+	Uses the InitializerService to read either a cluster .ini file or
+	the config database instead of reading the .ini file itself.
+
+	* org/cougaar/core/society/Node.java (Repository): 
+	Check for -X option and create install either a
+	DBInitializerServiceProvider or FileInitializerServiceProvider to
+	provide InitializerService. If -X is specified, the former is
+	created using the experiment id specified with the option. If -X
+	is specified, the FileInitializerServiceProvider supplies a
+	InitializerService equivalent to the old way of doing things.
+	Using the InitializerService to create a ComponentDescription
+	array of the agents (and node-level components) to be added to the
+	node.
+
+	* org/cougaar/core/society/ArgTableIfc.java (Repository): 
+	* org/cougaar/core/society/ArgTable.java (Repository): 
+	Add -X command line option for specifying experiment Id.
+
+	* org/cougaar/core/society/InitializerServiceException.java (Repository): 
+	Exception to be thrown when failures occur in an
+	InitializerService. Mostly wraps the IOException or SQLException
+	that occurs when reading a file or database.
+
+	* org/cougaar/core/society/InitializerService.java (Repository): 
+	The API for the InitializerService.	
+
+	* org/cougaar/core/society/FileInitializerServiceProvider.java (Repository): 
+	A service provider implementatation that create
+	InitializerServices using files.	
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository): 
+	A service provider implementation that creates InitializerServices
+	using a database.
+
+	* org/cougaar/domain/planning/plugin/AssetDataPlugInFile.java (Repository): 
+	File extension of AssetDataPlugInBase that reads the information
+	from prototype-ini.dat files. This implements is equivalent to
+	AssetDataPlugIn.	
+
+	* org/cougaar/domain/planning/plugin/AssetDataPlugInDB.java (Repository): 
+	Database extension of AssetDataPlugInBase the reads the
+	information from a database.	
+
+	* org/cougaar/domain/planning/plugin/AssetDataPlugInBase.java (Repository): 
+	Factored out the media independent part of AssetDataPlugIn.	
+
+	* org/cougaar/util/DBProperties.java (Repository):
+	This class extends java.util.Properties and adds functions useful
+	for handling the contents of q files. In particular, it performs
+	parameter substitutions (from cougaar.rc) and variable
+	substitutions for (e.g. ':agent_id".
+
 2001-09-13  Todd Wright <twright@bbn.com>
 
 	* org/cougaar/domain/planning/ldm/plan/LatLonPoint.java:
