@@ -1863,7 +1863,7 @@ implements AgentIdentityClient
       // Too many threads in a multi-cluster node are printing progress 
       // at the same time and we don't really care about the newlines
       // so we'll drop the synchronized and live with the consequences.
-      System.out.print(p);
+      Logging.printDot(p);
     }
   }
 
