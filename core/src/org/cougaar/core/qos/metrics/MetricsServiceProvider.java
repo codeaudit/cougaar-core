@@ -34,6 +34,10 @@ public final class MetricsServiceProvider implements ServiceProvider
     private static final String UPDATER_IMPL_CLASS =
 	"org.cougaar.core.qos.rss.STECMetricsUpdateServiceImpl";
 
+    private static final String SCFAC_CLASSNAME =
+	"org.cougaar.lib.mquo.SyscondFactory";
+
+
     private static long Start;
     public static long relativeTimeMillis() {
 	return System.currentTimeMillis()-Start;
@@ -41,6 +45,7 @@ public final class MetricsServiceProvider implements ServiceProvider
 
     private MetricsService retriever;
     private MetricsUpdateService updater;
+    private boolean syscondFactoryStarted = false;
 
     public MetricsServiceProvider(ServiceBroker sb, NodeIdentifier id) {
 	Start = System.currentTimeMillis();
@@ -75,10 +80,33 @@ public final class MetricsServiceProvider implements ServiceProvider
     }
 
 
+    private synchronized void startSyscondFactory(ServiceBroker sb) {
+	// Make the SyscondFactory here if the class is available
+	try {
+	    Class scfac_class = Class.forName(SCFAC_CLASSNAME);
+	    Class[] types = { ServiceBroker.class };
+	    Object[] args = { sb };
+	     java.lang.reflect.Constructor cons =
+		 scfac_class.getConstructor(types);
+	    cons.newInstance(args);
+	} catch (ClassNotFoundException cnf) {
+	    // This means the quo jar isn't loaded
+	} catch (Exception ex) {
+	    ex.printStackTrace();
+	}
+    }
+
+
     public Object getService(ServiceBroker sb, 
 			     Object requestor, 
 			     Class serviceClass) 
     {
+	synchronized (this) {
+	    if (!syscondFactoryStarted) {
+		syscondFactoryStarted = true;
+		startSyscondFactory(sb);
+	    }
+	}
 	if (serviceClass == MetricsService.class) {
 	    return retriever;
 	} else if (serviceClass == MetricsUpdateService.class) {

@@ -34,7 +34,7 @@ public interface MetricsService extends Service
     Metric getValue(String path, Properties qos_tags);
 
     Object subscribeToValue(String path, Observer observer);
-    void unsubscribeToValue(Object key);
+    void unsubscribeToValue(Object subscription_handle);
 
 
 }

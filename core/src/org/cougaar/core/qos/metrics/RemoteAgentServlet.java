@@ -54,7 +54,7 @@ public class RemoteAgentServlet extends HttpServlet implements Constants
 
 	topologyService = (TopologyReaderService)
 	    sb.getService(this, TopologyReaderService.class, null);
-	if (servletService == null) {
+	if (topologyService == null) {
 	    throw new RuntimeException("Unable to obtain Topology service");
 	}
 
