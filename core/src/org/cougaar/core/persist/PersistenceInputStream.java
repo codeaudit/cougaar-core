@@ -144,8 +144,7 @@ public class PersistenceInputStream extends ObjectInputStream {
     return pAssoc;
   }
 
-  private static Method _ano = null;
-  private static Object _anoLock = new Object();
+  /* 
   private static Object callAllocateNewObject(Class clazz, Class serializableClazz) 
     throws InstantiationException, IllegalAccessException
   {
@@ -182,6 +181,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       throw new RuntimeException("javaiopatch not installed");
     }
   }
+  */
 
   /**
    * Allocate an object to be filled in from the serialized
@@ -197,8 +197,9 @@ public class PersistenceInputStream extends ObjectInputStream {
    * constructed using their default constructors.
    * @return the object to be filled in.
    */
-  protected Object allocateNewObjectOverride(Class clazz, Class serializableClazz)
-    throws InstantiationException, IllegalAccessException {
+  protected Object newInstanceFromDesc(ObjectStreamClass desc) 
+    throws InstantiationException, java.lang.reflect.InvocationTargetException  {
+    Class clazz = desc.forClass();
     if (references != null &&
 	clazz != PersistenceReference.class &&
 	!clazz.isArray() &&
@@ -207,7 +208,7 @@ public class PersistenceInputStream extends ObjectInputStream {
       if (reference != null) {
 	PersistenceAssociation pAssoc = identityTable.get(reference);
 	if (pAssoc == null) {
-	  Object object = callAllocateNewObject(clazz, serializableClazz);
+	  Object object = super.newInstanceFromDesc(desc);
 	  pAssoc = identityTable.create(object, reference);
 	  print("Allocating " + BasePersistence.getObjectName(object) + " @ " + reference);
 	  return object;
@@ -218,13 +219,13 @@ public class PersistenceInputStream extends ObjectInputStream {
 	print("Overwriting " + BasePersistence.getObjectName(result) + " @ " + reference);
 	return result;
       } else {
-        Object result = callAllocateNewObject(clazz, serializableClazz);
+        Object result =   super.newInstanceFromDesc(desc);
         print("Allocating " + (nextReadIndex-1) + " " +
               BasePersistence.getObjectName(result));
         return result;
       }
     }
-    Object result = callAllocateNewObject(clazz, serializableClazz);
+    Object result = super.newInstanceFromDesc(desc);
     print("Allocating " + BasePersistence.getObjectName(result));
     return result;
   }

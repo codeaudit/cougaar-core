@@ -133,7 +133,7 @@ public class FilePersistence implements PersistencePlugin {
         sequenceFile = new File("sequence" + names[i].substring("newSequence".length()));
         newSequenceFile.renameTo(sequenceFile);
       } else {
-        sequenceFile = new File(names[i]);
+        sequenceFile = new File(persistenceDirectory, names[i]);
       }
       if (ls.isDebugEnabled()) {
         ls.debug("Reading " + sequenceFile);
