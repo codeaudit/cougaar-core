@@ -22,7 +22,7 @@
 package org.cougaar.core.qos.metrics;
 
 
-public class MetricImpl implements Metric
+public class MetricImpl implements Metric, java.io.Serializable
 {
     public static MetricImpl UndefinedMetric = 
 	new MetricImpl(0.0, 0.0, null, "undefined");
