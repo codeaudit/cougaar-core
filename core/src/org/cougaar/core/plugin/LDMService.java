@@ -20,12 +20,14 @@
  */
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.cluster.*;
-import org.cougaar.domain.planning.ldm.*;
+import org.cougaar.core.agent.*;
+import org.cougaar.core.domain.*;
 
 
 /** placeholder to clean up plugin->manager interactions **/

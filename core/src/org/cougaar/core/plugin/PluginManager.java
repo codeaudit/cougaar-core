@@ -25,8 +25,8 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
-import org.cougaar.core.society.InitializerService;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.node.InitializerService;
+import org.cougaar.core.agent.ClusterIdentifier;
 import java.beans.*;
 import java.lang.reflect.*;
 

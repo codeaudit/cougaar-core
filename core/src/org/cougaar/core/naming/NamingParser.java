@@ -21,6 +21,8 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import javax.naming.NameParser;
 import javax.naming.Name;
 import javax.naming.CompoundName;

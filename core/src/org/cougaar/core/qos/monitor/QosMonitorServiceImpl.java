@@ -24,7 +24,7 @@ package org.cougaar.core.qos.monitor;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.NameSupport;
-import org.cougaar.core.society.MessageAddress;
+import org.cougaar.core.mts.MessageAddress;
 
 import java.util.Iterator;
 import javax.naming.directory.Attributes;

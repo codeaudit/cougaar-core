@@ -10,6 +10,8 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import javax.naming.directory.Attributes;
 import javax.naming.NamingException;
 

@@ -21,6 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.agent.*;
+
 /** Anyone component requesting BlackboardService must implement
  * BlackboardClient in order to support blackboard callbacks
  **/

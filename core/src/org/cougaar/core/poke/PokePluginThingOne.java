@@ -22,8 +22,8 @@
 package org.cougaar.core.poke;
 
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.cluster.IncrementalSubscription;
-import org.cougaar.core.cluster.Subscription;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.util.UnaryPredicate;
 
 import java.util.Collection;

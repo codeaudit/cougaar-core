@@ -20,22 +20,24 @@
  */
 package org.cougaar.core.util;
 
+import org.cougaar.core.service.*;
+
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.domain.RootFactory;
+import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.PropertyGroup;
 
 import org.w3c.dom.*;
 import org.apache.xerces.parsers.DOMParser;
 import org.xml.sax.InputSource;
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.agent.*;
 import java.io.*;
-import org.cougaar.core.society.Message;
+import org.cougaar.core.mts.Message;
 
 /**
  * XML-based Object factory, using reflection and COUGAAR factories.  Also

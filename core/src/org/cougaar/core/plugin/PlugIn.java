@@ -21,9 +21,11 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.*;
-import org.cougaar.domain.planning.ldm.*;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.domain.*;
+
+import org.cougaar.core.agent.*;
+import org.cougaar.core.domain.*;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 import org.cougaar.util.UnaryPredicate;
 import java.util.*;

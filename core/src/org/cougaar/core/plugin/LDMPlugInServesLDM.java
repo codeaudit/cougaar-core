@@ -21,7 +21,7 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.Asset;
 import java.util.Enumeration;
 
 /**

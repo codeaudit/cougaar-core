@@ -21,17 +21,19 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import java.util.Enumeration;
-import org.cougaar.core.cluster.SubscriptionWatcher;
+import org.cougaar.core.blackboard.SubscriptionWatcher;
 import org.cougaar.util.StateModelException;
 import org.cougaar.core.plugin.util.PlugInHelper;
-import org.cougaar.core.cluster.Alarm;
+import org.cougaar.core.agent.service.alarm.Alarm;
 
-import org.cougaar.domain.planning.ldm.plan.AllocationResult;
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.domain.planning.ldm.plan.Task;
-import org.cougaar.domain.planning.ldm.plan.NewTask;
-import org.cougaar.domain.planning.ldm.plan.Expansion;
+import org.cougaar.planning.ldm.plan.AllocationResult;
+import org.cougaar.core.domain.RootFactory;
+import org.cougaar.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.NewTask;
+import org.cougaar.planning.ldm.plan.Expansion;
 
 
 /** SimplePlugIn is a replacement for SimplifiedPlugIn and

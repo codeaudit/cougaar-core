@@ -23,11 +23,11 @@ package org.cougaar.core.plugin.util;
 
 import org.cougaar.util.UnaryPredicate;
 
-import org.cougaar.domain.planning.ldm.plan.Verb;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
-import org.cougaar.domain.planning.ldm.plan.Expansion;
-import org.cougaar.domain.planning.ldm.plan.Workflow;
-import org.cougaar.domain.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.Verb;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Expansion;
+import org.cougaar.planning.ldm.plan.Workflow;
+import org.cougaar.planning.ldm.plan.Task;
 
 import java.util.Enumeration;
 

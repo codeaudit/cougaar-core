@@ -10,6 +10,8 @@
 
 package org.cougaar.core.logging;
 
+import org.cougaar.core.service.*;
+
 /** 
  * This class is to make binding of the LoggingServiceImpl
  * easier.

@@ -23,7 +23,7 @@ package org.cougaar.core.plugin.util;
 
 import org.cougaar.util.UnaryPredicate;
 
-import org.cougaar.domain.planning.ldm.plan.Verb;
+import org.cougaar.planning.ldm.plan.Verb;
 
 public interface NewAllocationsPredicate extends UnaryPredicate {
   void setVerb( Verb vb );

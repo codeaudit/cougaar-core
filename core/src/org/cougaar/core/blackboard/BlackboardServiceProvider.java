@@ -20,10 +20,14 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.service.*;
+
+import org.cougaar.core.agent.*;
+
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.cluster.Subscriber;
-import org.cougaar.core.cluster.Distributor;
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.blackboard.Distributor;
 
 import java.util.*;
 

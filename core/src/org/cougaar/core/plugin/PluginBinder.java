@@ -23,8 +23,8 @@ package org.cougaar.core.plugin;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.UIDServer;
+import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.service.UIDServer;
 
 /** The standard Binder api for Binders.  This is the interface
  * which the container may call on the Binder.

@@ -20,14 +20,22 @@
  */
 package org.cougaar.core.agent;
 
+import org.cougaar.core.mts.Message;
+
+import org.cougaar.core.mts.MessageAddress;
+
+import org.cougaar.core.node.NodeIdentifier;
+
+import org.cougaar.core.blackboard.*;
+
 import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.*;
-import org.cougaar.core.society.*;
+import org.cougaar.core.agent.*;
+import org.cougaar.core.node.*;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.service.MessageTransportService;
 
 import java.beans.*;
 import java.lang.reflect.*;

@@ -22,15 +22,15 @@
 
 package org.cougaar.core.util;
 
-import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.asset.AssetIntrospection;
-import org.cougaar.domain.planning.ldm.asset.LockedPG;
+import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.AssetIntrospection;
+import org.cougaar.planning.ldm.asset.LockedPG;
 
-import org.cougaar.domain.planning.ldm.measure.AbstractMeasure;
-import org.cougaar.domain.planning.ldm.measure.Capacity;
+import org.cougaar.planning.ldm.measure.AbstractMeasure;
+import org.cougaar.planning.ldm.measure.Capacity;
 
-import org.cougaar.core.society.UID;
-import org.cougaar.core.society.UniqueObject;
+import org.cougaar.core.util.UID;
+import org.cougaar.core.util.UniqueObject;
 
 import java.beans.BeanInfo;
 import java.beans.Beans;

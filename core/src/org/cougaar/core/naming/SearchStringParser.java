@@ -10,6 +10,8 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;

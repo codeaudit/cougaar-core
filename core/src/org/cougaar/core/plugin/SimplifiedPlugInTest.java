@@ -21,10 +21,10 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.Subscription;
-import org.cougaar.core.cluster.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.blackboard.IncrementalSubscription;
 
-import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.util.UnaryPredicate;
 
 

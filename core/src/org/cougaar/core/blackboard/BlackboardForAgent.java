@@ -20,11 +20,13 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.agent.*;
+
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.core.cluster.persist.Persistence;
+import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.persist.Persistence;
 
 /**
  * The service which the Blackboard serves back to the Agent.

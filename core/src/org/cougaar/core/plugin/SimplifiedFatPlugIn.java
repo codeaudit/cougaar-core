@@ -22,6 +22,8 @@
 // Perfect use for multiple inheritence, sigh.
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import org.cougaar.util.StateModelException;
 
 /**

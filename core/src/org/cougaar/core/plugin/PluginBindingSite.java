@@ -23,7 +23,7 @@ package org.cougaar.core.plugin;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 /** A plugin's view of its parent component (Container).
  *

@@ -10,6 +10,8 @@
 
 package org.cougaar.core.logging;
 
+import org.cougaar.core.service.*;
+
 import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.WriterAppender;

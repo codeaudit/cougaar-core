@@ -20,10 +20,12 @@
  */
 package org.cougaar.core.agent;
 
+import org.cougaar.core.blackboard.*;
+
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.agent.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.plugin.PluginManager;
 

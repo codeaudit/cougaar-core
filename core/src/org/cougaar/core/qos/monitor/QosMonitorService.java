@@ -22,7 +22,7 @@
 package org.cougaar.core.qos.monitor;
 
 import org.cougaar.core.component.Service;
-import org.cougaar.core.society.MessageAddress;
+import org.cougaar.core.mts.MessageAddress;
 
 public interface QosMonitorService extends Service
 {

@@ -35,9 +35,9 @@ import java.io.Serializable;
  * 
  * This structure is intentionally opaque to the infrastructure.
  *
- * @see org.cougaar.domain.planning.ldm.plan.Task
- * @see org.cougaar.domain.planning.ldm.plan.Workflow
- * @see org.cougaar.domain.planning.ldm.plan.PlanElement
+ * @see org.cougaar.planning.ldm.plan.Task
+ * @see org.cougaar.planning.ldm.plan.Workflow
+ * @see org.cougaar.planning.ldm.plan.PlanElement
  **/
 public interface Annotation 
   extends Serializable

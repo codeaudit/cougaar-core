@@ -21,8 +21,10 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import java.util.Enumeration;
-import org.cougaar.core.cluster.SubscriptionWatcher;
+import org.cougaar.core.blackboard.SubscriptionWatcher;
 import org.cougaar.util.StateModelException;
 
 /** @deprecated Use SimplePlugIn

@@ -20,10 +20,12 @@
  */
 package org.cougaar.core.agent;
 
+import org.cougaar.core.blackboard.*;
+
 import java.util.*;
 import java.lang.reflect.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.society.NodeForBinder;
+import org.cougaar.core.node.NodeForBinder;
 
 /**
  * A BinderFactory for binding AgentManagers to Nodes.

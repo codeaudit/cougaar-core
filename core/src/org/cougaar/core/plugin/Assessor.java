@@ -21,7 +21,7 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.PrivilegedClaimant;
+import org.cougaar.core.blackboard.PrivilegedClaimant;
 
 /** Assessor interface.
  *  This is a marker interface for Assessor and Assessor like plugins

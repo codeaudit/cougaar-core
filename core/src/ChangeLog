@@ -70,7 +70,7 @@
 	Component form.  Privileged Node-level component, loaded before
 	any external components are considered. StandardSecurityComponent
 	implements NAI/Boeing code as before, but requires
-	-Dorg.cougaar.core.security.Component=org.cougaar.core.society.StandardSecurityComponent
+	-Dorg.cougaar.core.security.Component=org.cougaar.core.security.StandardSecurityComponent
 	in order to activate it.  Better would be to move it to the
 	security jar.  Node updated to load the SecurityComponent if
 	requested.
@@ -172,7 +172,7 @@
 	* ClusterImpl
 	Use only new SchedulerServiceProvider instead of PluginScheduler.
 
-	* org.cougaar.core.society.Bootstrapper
+	* org.cougaar.core.node.Bootstrapper
 	Changed rules for the bootstrap classloader to avoid the whole
 	package-prefix exclusion-list mess.  Essentially, the classloader
 	will attempt to load classes from "discovered" jars and then defer
@@ -959,7 +959,7 @@
 2001-04-13  Michael Thome  <mthome@bbn.com>
 
 	* Bootstrapper
-	Add support for org.cougaar.core.society.bootstrapper.loud={false,true,shout}.
+	Add support for org.cougaar.core.node.bootstrapper.loud={false,true,shout}.
 	false, the default, leaves behavior untouched.  true dumps the
 	ordered list of jar,zip,directorys searched by the classloader at
 	startup time. shout additionally lists the file used to load every
@@ -1098,13 +1098,13 @@
 	plugins take to execute and keep statistics.  We also watch to see
 	if plugins block or otherwise fail to return from execute(). 
 	
-	org.cougaar.core.cluster.SharedPlugInManager.statistics=false Set
+	org.cougaar.core.agent.service.sharedthreading.SharedPlugInManager.statistics=false Set
 	it to true to get periodic dumps of plugin statistics to the file
 	<NODENAME>.statistics in the current directory.  Requires that the
 	watcher be enabled in order to actually get the output, but
 	perhaps some metrics display should get access to the info. 
 
-	org.cougaar.core.cluster.SharedPlugInManager.watching=true Set it
+	org.cougaar.core.agent.service.sharedthreading.SharedPlugInManager.watching=true Set it
 	to false to disable the watcher (default is enabled). When enabled,
 	will complain whever it sees a plugin run or block for more than
 	15 seconds.  It will also cause the above statistics file(s) to be
@@ -1175,10 +1175,10 @@
 	processing will, of course, be dropped at some point.
 
 2001-01-05  Noelle Givler <ngivler@bbn.com>
-	* org.cougaar.domain.planning.ldm.plan.Schedule
+	* org.cougaar.planning.ldm.plan.Schedule
 
 	Changes to the 7.0 tree designed to make access to 
-	org.cougaar.domain.planning.ldm.plan.Schedule and extenders thread 
+	org.cougaar.planning.ldm.plan.Schedule and extenders thread 
 	safe. The changes should be transparent with one exception - 
 	Schedule.iterator() now returns an Iterator over a copy of the 
 	schedule. Calls to Iterator.remove() will not affect the schedule and

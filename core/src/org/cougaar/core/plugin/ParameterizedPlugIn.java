@@ -21,6 +21,8 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import java.util.Vector;
 
 /** PlugIn classes which implement ParameterizedPlugIn

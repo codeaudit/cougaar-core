@@ -10,6 +10,8 @@
 
 package org.cougaar.core.logging;
 
+import org.cougaar.core.service.*;
+
 import org.cougaar.core.component.*;
 import java.util.Enumeration;
 

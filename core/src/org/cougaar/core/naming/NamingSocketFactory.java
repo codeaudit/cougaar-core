@@ -21,6 +21,8 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.ServerSocket;

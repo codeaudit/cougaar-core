@@ -21,6 +21,12 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
+import org.cougaar.core.service.*;
+
+import org.cougaar.core.agent.service.alarm.*;
+
 import org.cougaar.util.StateModelException;
 
 public class StatelessPlugInAdapter 

@@ -20,36 +20,36 @@
  */
 package org.cougaar.core.plugin.util;
 
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.domain.planning.ldm.plan.Allocation;
-import org.cougaar.domain.planning.ldm.plan.AllocationResult;
-import org.cougaar.domain.planning.ldm.plan.AspectScorePoint;
-import org.cougaar.domain.planning.ldm.plan.AspectType;
-import org.cougaar.domain.planning.ldm.plan.AspectValue;
-import org.cougaar.domain.planning.ldm.plan.Context;
-import org.cougaar.domain.planning.ldm.plan.Expansion;
-import org.cougaar.domain.planning.ldm.plan.NewComposition;
-import org.cougaar.domain.planning.ldm.plan.MPTask;
-import org.cougaar.domain.planning.ldm.plan.NewMPTask;
-import org.cougaar.domain.planning.ldm.plan.Aggregation;
-import org.cougaar.domain.planning.ldm.plan.NewTask;
-import org.cougaar.domain.planning.ldm.plan.NewWorkflow;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
-import org.cougaar.domain.planning.ldm.plan.Preference;
-import org.cougaar.domain.planning.ldm.plan.Preposition;
-import org.cougaar.domain.planning.ldm.plan.PrepositionalPhrase;
-import org.cougaar.domain.planning.ldm.plan.Role;
-import org.cougaar.domain.planning.ldm.plan.ScoringFunction;
-import org.cougaar.domain.planning.ldm.plan.Task;
-import org.cougaar.domain.planning.ldm.plan.Workflow;
+import org.cougaar.core.domain.RootFactory;
+import org.cougaar.planning.ldm.plan.Allocation;
+import org.cougaar.planning.ldm.plan.AllocationResult;
+import org.cougaar.planning.ldm.plan.AspectScorePoint;
+import org.cougaar.planning.ldm.plan.AspectType;
+import org.cougaar.planning.ldm.plan.AspectValue;
+import org.cougaar.planning.ldm.plan.Context;
+import org.cougaar.planning.ldm.plan.Expansion;
+import org.cougaar.planning.ldm.plan.NewComposition;
+import org.cougaar.planning.ldm.plan.MPTask;
+import org.cougaar.planning.ldm.plan.NewMPTask;
+import org.cougaar.planning.ldm.plan.Aggregation;
+import org.cougaar.planning.ldm.plan.NewTask;
+import org.cougaar.planning.ldm.plan.NewWorkflow;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Preference;
+import org.cougaar.planning.ldm.plan.Preposition;
+import org.cougaar.planning.ldm.plan.PrepositionalPhrase;
+import org.cougaar.planning.ldm.plan.Role;
+import org.cougaar.planning.ldm.plan.ScoringFunction;
+import org.cougaar.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.Workflow;
 
-import org.cougaar.domain.planning.ldm.asset.AbstractAsset;
-import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.AbstractAsset;
+import org.cougaar.planning.ldm.asset.Asset;
 
-import org.cougaar.core.cluster.IncrementalSubscription;
-import org.cougaar.core.cluster.Subscription;
-import org.cougaar.core.cluster.Subscriber;
-import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.service.BlackboardService;
 
 import org.cougaar.util.Enumerator;
 

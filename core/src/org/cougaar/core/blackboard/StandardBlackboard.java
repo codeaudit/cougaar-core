@@ -20,22 +20,26 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.service.*;
+
+import org.cougaar.core.agent.*;
+
 import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.AgentChildBindingSite;
-import org.cougaar.domain.planning.ldm.Domain;
-import org.cougaar.domain.planning.ldm.DomainManager;
+import org.cougaar.core.domain.Domain;
+import org.cougaar.core.domain.DomainManager;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.agent.*;
 import org.cougaar.core.agent.*;
 import java.beans.*;
 import java.lang.reflect.*;
 
-import org.cougaar.core.cluster.persist.BasePersistence;
-import org.cougaar.core.cluster.persist.DatabasePersistence;
-import org.cougaar.core.cluster.persist.Persistence;
-import org.cougaar.core.cluster.persist.PersistenceException;
+import org.cougaar.core.persist.BasePersistence;
+import org.cougaar.core.persist.DatabasePersistence;
+import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.persist.PersistenceException;
 
 
 /** The standard Blackboard Component implementation.

@@ -28,8 +28,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 
-import org.cougaar.domain.planning.ldm.plan.Location;
-import org.cougaar.domain.planning.ldm.plan.Verb;
+import org.cougaar.planning.ldm.plan.Location;
+import org.cougaar.planning.ldm.plan.Verb;
 
 /**
  * <code>Ascii Printer</code>.
@@ -183,11 +183,11 @@ public abstract class AsciiPrinter extends AbstractPrinter {
       objInfo.addNameVal("Time", Long.toString(((Date)o).getTime()));
       return objInfo;
     } else if (o instanceof Verb) {
-      return new StringObjectInfo("org.cougaar.domain.planning.ldm.plan.Verb", ((Verb)o).toString());
+      return new StringObjectInfo("org.cougaar.planning.ldm.plan.Verb", ((Verb)o).toString());
     }
     /*
     else if (o instanceof Position) {
-      ListObjectInfo objInfo = new ListObjectInfo("org.cougaar.domain.planning.ldm.plan.Position");
+      ListObjectInfo objInfo = new ListObjectInfo("org.cougaar.planning.ldm.plan.Position");
       Position pos = (Position)o;
       if (pos.getLatitude() != null)
         objInfo.addNameVal("Latitude", 
@@ -196,11 +196,11 @@ public abstract class AsciiPrinter extends AbstractPrinter {
         objInfo.addNameVal("Longitude", 
                            pos.getLongitude().getDegrees()+"degrees");
       if (o instanceof NamedPosition) {
-        objInfo.setClassName("org.cougaar.domain.planning.ldm.plan.NamedPosition");
+        objInfo.setClassName("org.cougaar.planning.ldm.plan.NamedPosition");
         NamedPosition npos = (NamedPosition)o;
         objInfo.addNameVal("Name", npos.getName());
         if (o instanceof GeolocLocation) {
-          objInfo.setClassName("org.cougaar.domain.planning.ldm.plan.GeolocLocation");
+          objInfo.setClassName("org.cougaar.planning.ldm.plan.GeolocLocation");
           GeolocLocation loc = (GeolocLocation)o;
           objInfo.addNameVal("GeolocCode", loc.getGeolocCode());
           objInfo.addNameVal("InstallationTypeCode", 

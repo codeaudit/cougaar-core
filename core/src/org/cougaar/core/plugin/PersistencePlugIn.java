@@ -21,11 +21,13 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.cluster.Subscriber;
-import org.cougaar.core.cluster.PersistenceSubscriber;
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.ClusterContext;
-import org.cougaar.core.blackboard.BlackboardService;
+import org.cougaar.core.domain.*;
+
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.blackboard.PersistenceSubscriber;
+import org.cougaar.core.blackboard.Distributor;
+import org.cougaar.core.agent.ClusterContext;
+import org.cougaar.core.service.BlackboardService;
 
 public abstract class PersistencePlugIn extends PlugInAdapter
 {

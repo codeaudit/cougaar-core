@@ -20,10 +20,14 @@
  */
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
-import org.cougaar.domain.planning.ldm.plan.Task;
+import org.cougaar.core.service.*;
+
+import org.cougaar.core.agent.*;
+
+import org.cougaar.core.blackboard.Distributor;
+import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.util.UnaryPredicate;
 
 /** A BlackboardMetricsService is an API which may be supplied by a 

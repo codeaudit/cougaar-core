@@ -10,13 +10,15 @@
 
 package org.cougaar.core.logging;
 
+import org.cougaar.core.service.*;
+
 import java.util.Enumeration;
 import java.util.Vector;
 import java.util.HashSet;
 
 import org.cougaar.core.component.*;
 
-import org.cougaar.core.cluster.ClusterServesPlugIn;
+import org.cougaar.core.agent.ClusterServesPlugIn;
 
 import org.apache.log4j.Category;
 import org.apache.log4j.Appender;

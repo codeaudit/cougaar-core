@@ -22,7 +22,7 @@
 package org.cougaar.util;
 
 // soon to move to "org.cougaar.util.Trigger":
-import org.cougaar.core.component.Trigger;
+import org.cougaar.util.Trigger;
 
 /**
  * A simple "registry" API for triggers, which is used by 

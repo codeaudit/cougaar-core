@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 /**
  * This is a simple API for a <code>Servlet</code> to access

@@ -21,6 +21,8 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import java.io.Serializable;
 import java.rmi.Naming;
 import java.rmi.RemoteException;

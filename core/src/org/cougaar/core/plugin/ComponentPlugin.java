@@ -27,16 +27,16 @@ import org.cougaar.core.component.ServiceRevokedEvent;
 import org.cougaar.core.component.ServiceRevokedListener;
 
 import org.cougaar.core.blackboard.BlackboardClient;
-import org.cougaar.core.blackboard.BlackboardService;
-import org.cougaar.core.cluster.AlarmService;
-import org.cougaar.core.cluster.SchedulerService;
-import org.cougaar.core.cluster.SubscriptionWatcher;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.AlarmService;
+import org.cougaar.core.service.SchedulerService;
+import org.cougaar.core.blackboard.SubscriptionWatcher;
 
-import org.cougaar.core.cluster.ClusterServesPlugIn;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.agent.ClusterServesPlugIn;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.core.component.Trigger;
+import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
 import org.cougaar.util.SyncTriggerModelImpl;
 

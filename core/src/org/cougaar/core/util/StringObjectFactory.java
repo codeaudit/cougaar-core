@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
-import org.cougaar.domain.planning.ldm.Factory;
+import org.cougaar.core.domain.Factory;
 import org.cougaar.util.StringUtility;
 import org.cougaar.util.Reflect;
 
@@ -277,10 +277,10 @@ public class StringObjectFactory {
     // initialize packages:
     packages = new ArrayList();
     packages.add("");
-    packages.add("org.cougaar.domain.planning.ldm.measure.");
-    packages.add("org.cougaar.domain.planning.ldm.plan.");
-    packages.add("org.cougaar.domain.planning.ldm.asset.");
-    packages.add("org.cougaar.domain.planning.ldm.oplan.");
+    packages.add("org.cougaar.planning.ldm.measure.");
+    packages.add("org.cougaar.planning.ldm.plan.");
+    packages.add("org.cougaar.planning.ldm.asset.");
+    packages.add("org.cougaar.planning.ldm.oplan.");
     packages.add("java.lang.");  // extras for fallthrough
     packages.add("java.util.");
 
@@ -491,7 +491,7 @@ public class StringObjectFactory {
   protected static int getMeasureUnit(
       String measureClass, String unitOfMeasure) {
     try {
-      String fullClassName = "org.cougaar.domain.planning.ldm.measure." + measureClass;
+      String fullClassName = "org.cougaar.planning.ldm.measure." + measureClass;
       Field f = Class.forName(fullClassName).getField(unitOfMeasure);
       return f.getInt(null);
     } catch (Exception e) {
@@ -511,7 +511,7 @@ public class StringObjectFactory {
   protected static Object createMeasureObject(
       String className, double quantity, String unitOfMeasure) {
     try {
-      Class classObj = Class.forName("org.cougaar.domain.planning.ldm.measure." + className);
+      Class classObj = Class.forName("org.cougaar.planning.ldm.measure." + className);
       String methodName = "new" + className;
       Class parameters[] = {double.class, int.class};
       Method meth = classObj.getMethod(methodName, parameters);
@@ -542,13 +542,13 @@ public class StringObjectFactory {
       System.out.println("Exception:");
       e.printStackTrace();
     }
-    if (!(arg instanceof org.cougaar.domain.planning.ldm.plan.GeolocLocation)) {
+    if (!(arg instanceof org.cougaar.planning.ldm.plan.GeolocLocation)) {
       System.out.println("FAILED: ");
       System.out.println("  Type: "+dataType);
       System.out.println("  Value: "+dataVal);
       System.out.println("  Result: "+arg);
     } else {
-      org.cougaar.domain.planning.ldm.plan.GeolocLocation loc = (org.cougaar.domain.planning.ldm.plan.GeolocLocation)arg;
+      org.cougaar.planning.ldm.plan.GeolocLocation loc = (org.cougaar.planning.ldm.plan.GeolocLocation)arg;
       System.out.println("SUCCESS: ");
       System.out.println("  Code: "+loc.getGeolocCode());
       System.out.println("  Name: "+loc.getName());

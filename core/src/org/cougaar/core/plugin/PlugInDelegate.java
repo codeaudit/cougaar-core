@@ -21,18 +21,18 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.blackboard.BlackboardService;
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.ClusterServesPlugIn;
-import org.cougaar.core.cluster.SubscriberException;
-import org.cougaar.core.cluster.Subscription;
-import org.cougaar.core.cluster.MetricsSnapshot;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.domain.planning.ldm.RootFactory;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.blackboard.Distributor;
+import org.cougaar.core.agent.ClusterServesPlugIn;
+import org.cougaar.core.blackboard.SubscriberException;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.agent.MetricsSnapshot;
+import org.cougaar.core.domain.LDMServesPlugIn;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.domain.RootFactory;
+import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.util.UnaryPredicate;

@@ -20,6 +20,8 @@
  */
 package org.cougaar.core.naming;
 
+import org.cougaar.core.service.*;
+
 import java.util.Hashtable;
 import javax.naming.NamingException;
 import javax.naming.Context;

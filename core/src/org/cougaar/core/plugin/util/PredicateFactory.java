@@ -21,9 +21,9 @@
 
 package org.cougaar.core.plugin.util;
 
-import org.cougaar.domain.planning.ldm.plan.Verb;
-import org.cougaar.domain.planning.ldm.Factory;
-import org.cougaar.domain.planning.ldm.RootFactory;
+import org.cougaar.planning.ldm.plan.Verb;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.domain.RootFactory;
 import org.cougaar.util.UnaryPredicate;
 
 

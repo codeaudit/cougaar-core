@@ -21,6 +21,8 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
 import org.cougaar.util.StateModelException;
 
 /** @deprecated Use SimplePlugIn: no modification needed.

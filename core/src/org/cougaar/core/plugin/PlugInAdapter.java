@@ -21,44 +21,50 @@
 
 package org.cougaar.core.plugin;
 
+import org.cougaar.core.domain.*;
+
+import org.cougaar.core.service.*;
+
+import org.cougaar.core.agent.service.alarm.*;
+
 import java.util.*;
 import org.cougaar.util.*;
 
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.agent.*;
 
-import org.cougaar.domain.planning.ldm.plan.ClusterObjectFactory;
-import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
+import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
+import org.cougaar.core.domain.LDMServesPlugIn;
 import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.core.plugin.ScheduleablePlugIn;
 
-import org.cougaar.core.cluster.AlarmService;
-import org.cougaar.core.cluster.AlarmServiceProvider;
-import org.cougaar.core.cluster.ClusterServesPlugIn;
-import org.cougaar.core.cluster.Claimable;
-import org.cougaar.core.cluster.Subscriber;
-import org.cougaar.core.cluster.CollectionSubscription;
-import org.cougaar.core.cluster.Subscription;
-import org.cougaar.core.cluster.Distributor;
-import org.cougaar.core.cluster.SubscriptionWatcher;
-import org.cougaar.core.cluster.SubscriberException;
-import org.cougaar.core.cluster.Alarm;
-import org.cougaar.core.cluster.MetricsSnapshot;
-import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.service.AlarmService;
+import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
+import org.cougaar.core.agent.ClusterServesPlugIn;
+import org.cougaar.core.blackboard.Claimable;
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.blackboard.CollectionSubscription;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.blackboard.Distributor;
+import org.cougaar.core.blackboard.SubscriptionWatcher;
+import org.cougaar.core.blackboard.SubscriberException;
+import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.agent.MetricsSnapshot;
+import org.cougaar.core.agent.ClusterIdentifier;
 
 import org.cougaar.core.plugin.PlugInServesCluster;
 
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.core.component.Trigger;
+import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
 import org.cougaar.util.SyncTriggerModelImpl;
 import org.cougaar.util.UnaryPredicate;
 
-import org.cougaar.domain.planning.ldm.*;
+import org.cougaar.planning.ldm.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
-import org.cougaar.core.cluster.*;
+import org.cougaar.core.agent.*;
 
 import org.cougaar.core.component.ServiceBroker;
 
@@ -107,11 +113,11 @@ public abstract class PlugInAdapter
 
   /**
    * @deprecated use various metrics services - throws a runtime exception
-   * @see org.cougaar.core.blackboard.BlackboardMetricsService
-   * @see org.cougaar.core.mts.MessageStatisticsService
-   * @see org.cougaar.core.mts.MessageWatcherService
-   * @see org.cougaar.core.society.NodeMetricsService
-   * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+   * @see org.cougaar.core.service.BlackboardMetricsService
+   * @see org.cougaar.core.service.MessageStatisticsService
+   * @see org.cougaar.core.service.MessageWatcherService
+   * @see org.cougaar.core.service.NodeMetricsService
+   * @see org.cougaar.core.service.PrototypeRegistryService
    */
   protected final MetricsSnapshot getMetricsSnapshot() {
     throw new RuntimeException("\n GetMetricsSnapshot is no longer supported.  Please use the various node level and agent level metrics services.");
@@ -120,11 +126,11 @@ public abstract class PlugInAdapter
 
   /**
    * @deprecated use various metrics services - throws a runtime exception
-   * @see org.cougaar.core.blackboard.BlackboardMetricsService
-   * @see org.cougaar.core.mts.MessageStatisticsService
-   * @see org.cougaar.core.mts.MessageWatcherService
-   * @see org.cougaar.core.society.NodeMetricsService
-   * @see org.cougaar.domain.planning.ldm.PrototypeRegistryService
+   * @see org.cougaar.core.service.BlackboardMetricsService
+   * @see org.cougaar.core.service.MessageStatisticsService
+   * @see org.cougaar.core.service.MessageWatcherService
+   * @see org.cougaar.core.service.NodeMetricsService
+   * @see org.cougaar.core.service.PrototypeRegistryService
    */
   protected final MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
     throw new RuntimeException("\n GetMetricsSnapshot is no longer supported.  Please use the various node level and agent level metrics services.");
@@ -650,8 +656,8 @@ public abstract class PlugInAdapter
    * @param isIncremental should be true if an incremental subscription is desired.
    * An incremental subscription provides access to the incremental changes to the subscription.
    * @return the Subsciption.
-   * @see org.cougaar.core.cluster.Subscriber#subscribe
-   * @see org.cougaar.core.cluster.Subscription
+   * @see org.cougaar.core.blackboard.Subscriber#subscribe
+   * @see org.cougaar.core.blackboard.Subscription
    **/
   protected final Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
     return getBlackboardService().subscribe(isMember, realCollection, isIncremental);
@@ -671,7 +677,7 @@ public abstract class PlugInAdapter
    * previous invocation of subscribe().  Alias for
    * <code> getBlackboardService().unsubscribe(Subscription)</code>.
    * @param subscription the subscription to cancel
-   * @see org.cougaar.core.cluster.Subscriber#unsubscribe
+   * @see org.cougaar.core.blackboard.Subscriber#unsubscribe
    **/
   protected final void unsubscribe(Subscription subscription) {
     getBlackboardService().unsubscribe(subscription);

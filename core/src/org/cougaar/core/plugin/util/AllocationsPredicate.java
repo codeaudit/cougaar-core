@@ -23,10 +23,10 @@ package org.cougaar.core.plugin.util;
 
 import org.cougaar.util.UnaryPredicate;
 
-import org.cougaar.domain.planning.ldm.plan.Verb;
-import org.cougaar.domain.planning.ldm.plan.Allocation;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
-import org.cougaar.domain.planning.ldm.plan.Task;
+import org.cougaar.planning.ldm.plan.Verb;
+import org.cougaar.planning.ldm.plan.Allocation;
+import org.cougaar.planning.ldm.plan.PlanElement;
+import org.cougaar.planning.ldm.plan.Task;
 
 public class AllocationsPredicate  implements UnaryPredicate, NewAllocationsPredicate {
     

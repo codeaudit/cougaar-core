@@ -21,8 +21,8 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.domain.planning.ldm.asset.Asset;
-import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
+import org.cougaar.planning.ldm.asset.Asset;
+import org.cougaar.planning.ldm.asset.PropertyGroup;
 import java.util.*;
 
 /**

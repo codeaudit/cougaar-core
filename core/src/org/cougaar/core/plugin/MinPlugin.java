@@ -25,11 +25,11 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.core.component.Trigger;
+import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
 import org.cougaar.util.SyncTriggerModelImpl;
 
-import org.cougaar.core.cluster.SchedulerService;
+import org.cougaar.core.service.SchedulerService;
 
 /**
  * A minimal Plugin that illustrates use of the scheduler 

@@ -22,7 +22,7 @@
 package org.cougaar.util;
 
 // soon to move to "org.cougaar.util.Trigger":
-import org.cougaar.core.component.Trigger;
+import org.cougaar.util.Trigger;
 
 /**
  * An interface for a Trigger that's also a GenericStateModel.

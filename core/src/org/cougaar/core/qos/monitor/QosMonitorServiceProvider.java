@@ -28,7 +28,7 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.naming.NamingService;
+import org.cougaar.core.service.NamingService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.mts.NameSupportImpl;
 
