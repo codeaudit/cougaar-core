@@ -258,9 +258,9 @@ public class PlayHelper {
         operatingModes.remove(operatingModeName); // This one has been accounted for
       }
     }
-    if (!operatingModes.isEmpty()) {
+    if (!operatingModes.isEmpty() && logger.isDebugEnabled()) {
       for (Iterator i = operatingModes.iterator(); i.hasNext(); ) {
-        if (logger.isDebugEnabled()) logger.debug("No play found to set operating mode: " + i.next());
+        logger.debug("No play found to set operating mode: " + i.next());
       }
     }
     omMap.clear();
