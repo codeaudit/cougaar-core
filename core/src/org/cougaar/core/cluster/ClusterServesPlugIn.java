@@ -127,26 +127,6 @@ public interface ClusterServesPlugIn
   void addRealTimeAlarm(Alarm alarm);
 
   /**
-   * Return a snapshot of gathered cluster metrics.
-   * This is exclusively for the use of UI-like plugins - there is
-   * absolutely no guarantee of the degree of consistency required
-   * for planning, nor will there ever be via this method.
-   * @deprecated
-   **/
-  //  MetricsSnapshot getMetricsSnapshot();
-
-  /**
-   * Return a snapshot of gathered cluster metrics.
-   * This is exclusively for the use of UI-like plugins - there is
-   * absolutely no guarantee of the degree of consistency required
-   * for planning, nor will there ever be via this method.
-   * @param ms a <code>MetricsSnapshot</code> whose slots should be filled in
-   * @param resetMsgStats a <bode>boolean</code> whether to reset the message transport counters
-   * @return a <code>MetricsSnapshot</code> with the new values
-   **/
-  //MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);
-
-  /**
    * Cluster-wide database support that can be integrated with persistence
    **/
   java.sql.Connection getDatabaseConnection(Object locker);

@@ -32,7 +32,6 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.core.cluster.SubscriberException;
 import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.MetricsSnapshot;
-//import org.cougaar.core.cluster.MetricsService;
 import org.cougaar.core.cluster.ClusterIdentifier;
 
 import org.cougaar.core.plugin.PlugInServesCluster;
@@ -91,33 +90,6 @@ public abstract class PlugInAdapter
   protected final LDMService getLDMService() {
     return ldmService;
   }
-
-//   // metrics service
-
-//   private MetricsService metricsService = null;
-//   public final void setMetricsService(MetricsService s) {
-//     metricsService = s;
-//   }
-//   protected final MetricsService getMetricsService() {
-//     return metricsService;
-//   }
-
-//   /** @deprecated supply a <code>MetricsSnapshot</code> object **/
-//   protected final MetricsSnapshot getMetricsSnapshot() {
-//     if (metricsService != null) {
-//       return metricsService.getMetricsSnapshot();
-//     } else {
-//       return null;
-//     }
-//   }
-
-//   protected final MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) {
-//     if (metricsService != null) {
-//       return metricsService.getMetricsSnapshot(ms, resetMsgStats);
-//     } else {
-//       return null;
-//     }
-//   }
 
   /**
    * @deprecated use various metrics services - throws a runtime exception
