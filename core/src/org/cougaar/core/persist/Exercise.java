@@ -76,7 +76,7 @@ public class Exercise extends ServiceUserPlugin {
     maxPublishCount = parseParameter("maxPublishCount=", 400);
     objects = new Item[nItems];
     logger.warn("Running " + blackboardClientName);
-    startTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
+    resetTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
   }
 
   private void wasteTime(Item item, int factor) {
@@ -103,7 +103,7 @@ public class Exercise extends ServiceUserPlugin {
       }
       long et = System.currentTimeMillis();
       logger.warn("execute for " + (et - st) + " millis");
-      startTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
+      resetTimer(executionMinDelay + random.nextInt(executionMaxDelay - executionMinDelay));
     }
   }
 }
