@@ -118,7 +118,8 @@ public class RemoteAgentServlet
 		agentStatusService.getRemoteAgentState(agent);
 	    String agentHost = null;
 	    try {
-		AddressEntry entry = wpService.get(name, TOPOLOGY);
+		// -1 means don't block
+		AddressEntry entry = wpService.get(name, TOPOLOGY, -1);
 		if (entry == null) {
 		    agentHost = localHost;
 		} else {
