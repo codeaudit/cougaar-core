@@ -21,9 +21,7 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.ReusableThread;
-
-final class SchedulableThread extends ReusableThread
+final class SchedulableThread extends ThreadPool.PooledThread
 {
 
     SchedulableObject schedulable;

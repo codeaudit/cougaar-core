@@ -34,7 +34,7 @@ abstract class Scheduler
 	"org.cougaar.thread.running.max";
     
     // O means unlimited
-    private static final int MaxRunningCountDefault = 0;
+    private static final int MaxRunningCountDefault = 10;
 
     private DynamicSortedQueue pendingThreads;
     private int maxRunningThreads;

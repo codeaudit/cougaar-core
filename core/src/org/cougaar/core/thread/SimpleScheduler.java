@@ -36,12 +36,13 @@ final class SimpleScheduler extends Scheduler
 
 
     private void runNextThread() {
-	nextPendingThread().start();
+	SchedulableObject thread = nextPendingThread();
+	if (thread != null) thread.start();
     }
 
 
 
-    void changedMaxRunningThreadCount() {
+    synchronized void changedMaxRunningThreadCount() {
 	// Maybe we can run some pending threads
 	while (canStartThread() && pendingThreadCount() > 0) {
 	    runNextThread();
@@ -50,7 +51,7 @@ final class SimpleScheduler extends Scheduler
     
 
     // Called when a thread is about to end
-    void threadReclaimed(SchedulableObject thread) {
+    synchronized void threadReclaimed(SchedulableObject thread) {
 	super.threadReclaimed(thread);
 	if (pendingThreadCount() > 0) runNextThread();
     }
@@ -82,7 +83,7 @@ final class SimpleScheduler extends Scheduler
 
 
     // Called when a thread is about to suspend.
-    void suspendThread(SchedulableObject thread) {
+    synchronized void suspendThread(SchedulableObject thread) {
 	super.suspendThread(thread);
 	if (pendingThreadCount() > 0) runNextThread();
     }

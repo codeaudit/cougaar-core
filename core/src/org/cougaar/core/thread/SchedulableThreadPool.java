@@ -21,37 +21,22 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.ReusableThreadPool;
-import org.cougaar.util.ReusableThread;
-import org.cougaar.util.PropertyParser;
 
 /**
  * A special kind of ReusableThreadPool which makes
  * schedulable threads.
  */
-final class SchedulableThreadPool extends ReusableThreadPool 
+final class SchedulableThreadPool extends ThreadPool 
 {
-
-    private static final String InitialPoolSizeProp =
-	"org.cougaar.thread.poolsize.initial";
-    private static final int InitialPoolSizeDefault = 32;
-    private static final String MaxPoolSizeProp =
-	"org.cougaar.thread.poolsize.max";
-    private static final int MaxPoolSizeDefault = 64;
-
 
     private Scheduler scheduler;
 
     SchedulableThreadPool(ThreadGroup group, Scheduler scheduler)  {
-	super(group, 
-	      PropertyParser.getInt(InitialPoolSizeProp, 
-				    InitialPoolSizeDefault),
-	      PropertyParser.getInt(MaxPoolSizeProp, 
-				    MaxPoolSizeDefault));
+	super(group);
 	this.scheduler = scheduler;
     }
 
-    protected ReusableThread constructReusableThread() {
+    protected PooledThread constructReusableThread() {
 	return  new SchedulableThread(this);
     }
 
