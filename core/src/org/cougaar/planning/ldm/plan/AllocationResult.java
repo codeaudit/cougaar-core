@@ -26,12 +26,7 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * The "result" of allocating a task.
@@ -47,63 +42,69 @@ public class AllocationResult
   private ArrayList phasedavrs = null;      // A List of AspectValue[], null if not phased
   private String[] auxqueries = null;
   
-  /** Simple Constructor for a NON-PHASED result of ordinary AspectValues
-   * @param rating The confidence rating of this result.
-   * @param success  Whether the allocationresult violated any preferences.
-   * @param aspecttypes  The AspectTypes (and order) of the results.
-   * @param result  The value for each aspect.
-   */
-  public AllocationResult(double rating, boolean success, int[] aspecttypes, double[] result) {
-    isSuccess = success;
-    setRollup(aspecttypes, result);
-    confrating = (float) rating;
-  }
-  
-  /** Simple Constructor for a PHASED result
-   * @param rating The confidence rating of this result.
-   * @param success  Whether the allocationresult violated any preferences.
-   * @param aspecttypes  The AspectTypes (and order) of the results.
-   * @param rollup  The summary values for each aspect.
-   * @param allresults  An Enumeration representing
-   * each phased List of results.
-   * For Example a phased answer may look like
-   * [ [10, 100.00, c0], [5, 50.00, c3], [5, 50.00, c6] ]
-   */
-  public AllocationResult(double rating, boolean success, int[] aspecttypes,
-                          double[] rollup, Enumeration allresults)
-  {
-    isSuccess = success;
-    setRollup(aspecttypes, rollup);
-    setPhasedResults(allresults);
-    confrating = (float) rating;
-  }
-  
-  /** Constructor that takes a PHASED result in the form of AspectValues.
-   * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
-   * @param rating The confidence rating of this result.
-   * @param success  Whether the allocationresult violated any preferences.
-   * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
-   * @param phasedresults  A List of the phased results. The List should contain
-   * one List of AspectValues for each phase of the results.  
-   */
-  public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, List phasedresults) {
-    isSuccess = success;
-    setAspectValueResults((AspectValue[]) rollupavs.clone());
-    setPhasedAspectValueResults(phasedresults);
-    confrating = (float) rating;
-  }
-  
   /** Constructor that takes a result in the form of AspectValues (NON-PHASED).
    * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
    * @param rating The confidence rating of this result.
    * @param success  Whether the allocationresult violated any preferences.
    * @param aspectvalues  The AspectValues(can be aspectvalue subclasses) that represent the results.  
+   * @note Prior to Cougaar 10.0, there was a similar constructor which took an int[] and double[] instead of 
+   * the current AspectValue[].  This change is required because most ApectValue types
+   * are not longer represented by int/double pairs.
    */
   public AllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
     isSuccess = success;
     setAspectValueResults((AspectValue[]) aspectvalues.clone());
     confrating = (float) rating;
   }
+
+  /** @deprecated Use #AllocationResult(double,boolean,AspectValue[]) instead because
+   * AspectValues are not all describable by double values.
+   **/
+  public AllocationResult(double rating, boolean success, int[] keys, double[] values) {
+    this(rating, success, convertToAVA(keys,values));
+  }
+
+  /** Simple Constructor for a PHASED result
+   * @param rating The confidence rating of this result.
+   * @param success  Whether the allocationresult violated any preferences.
+   * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
+   * @param allresults  An Enumeration of either AspectValue[]s or Collection<AspectValue>s.
+   * @note Prior to Cougaar 10.0, this constructor took an int[] and double[] instead of 
+   * the current AspectValue[].  This change is required because most ApectValue types
+   * are not longer represented by int/double pairs.
+   * @deprecated Use #AllocationResult(double, boolean, AspectValue[], Collection) instead.
+   */
+  public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, Enumeration allresults)
+  {
+    isSuccess = success;
+    setAspectValueResults((AspectValue[]) rollupavs.clone());
+    setPhasedResults(allresults);
+    confrating = (float) rating;
+  }
+
+  /** @deprecated Use #AllocationResult(double,boolean,AspectValue[],Collection) instead because
+   * AspectValues are not all describable by double values.
+   **/
+  public AllocationResult(double rating, boolean success, int[] keys, double[] values, Enumeration allresults) {
+    this(rating, success, convertToAVA(keys,values), allresults);
+  }
+
+
+  /** Constructor that takes a PHASED result in the form of AspectValues.
+   * Subclasses of AspectValue, such as TypedQuantityAspectValue are allowed.
+   * @param rating The confidence rating of this result.
+   * @param success  Whether the allocationresult violated any preferences.
+   * @param rollupavs  The Summary (or rolled up) AspectValues that represent the results.
+   * @param phasedresults  A Collections of the phased results. The Collection should contain
+   * one Collection or AspectValue[] of AspectValues for each phase of the results.  
+   */
+  public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults) {
+    isSuccess = success;
+    setAspectValueResults((AspectValue[]) rollupavs.clone());
+    setPhasedResults(phasedresults);
+    confrating = (float) rating;
+  }
+
 
   /**
    * Construct a merged AllocationResult containing AspectValues from
@@ -140,7 +141,7 @@ public class AllocationResult
         if (mergedQueries[i] == null) mergedQueries[i] = ar2.auxqueries[i];
       }
     }
-//      checkAVResults();
+    // checkAVResults();
     isSuccess = ar1.isSuccess() || ar2.isSuccess();
   }
 
@@ -162,13 +163,6 @@ public class AllocationResult
     if (ar.auxqueries != null) auxqueries = (String[]) ar.auxqueries.clone();
   }
 
-  private void setRollup(int[] aspects, double[] result) {
-    AspectValue[] avs = new AspectValue[aspects.length];
-    for (int i = 0; i < avs.length; i++) {
-      avs[i] = AspectValue.newAspectValue(aspects[i], result[i]);
-    }
-    setAspectValueResults(avs);
-  }
 
   private int getIndexOfType(int aspectType) {
     if (aspectType == _lasttype) return _lastindex; // Use memoized value
@@ -204,6 +198,22 @@ public class AllocationResult
     }
     // didn't find it.
     throw new IllegalArgumentException("AllocationResult.getValue(int "
+                                       + aspectType
+                                       + ") - The AspectType is not defined by this Result.");
+  }
+
+
+  /** Get the AspectValue of the result with the specified type **/
+  public AspectValue getAspectValue(int aspectType) {
+    synchronized (avResults) {
+      if (_lasttype == aspectType) 
+        return avResults[_lastindex];
+      int i = getIndexOfType(aspectType);
+      if (i >= 0)
+        return avResults[i];
+    }
+    // didn't find it.
+    throw new IllegalArgumentException("AllocationResult.getAspectValue(int "
                                        + aspectType
                                        + ") - The AspectType is not defined by this Result.");
   }
@@ -304,8 +314,8 @@ public class AllocationResult
    * The AspectValues of a failed allocation may be set by the Allocator
    * with values that would be more likely to be successful. 
    * The Expander can use these new values as suggestions when 
-   * resetting the Preferences
-   * @return AspectValue[] 
+   * resetting the Preferences.
+   * @note Will always return a new AspectValue[]
    **/
   public AspectValue[] getAspectValueResults() {
     // go ahead and return it if its defined, otherwise create it
@@ -416,24 +426,45 @@ public class AllocationResult
     }
   }
         
-  /** A collection of arrays (double[]) that represents each phased result.
-   * @param theresults  
+  /** Set the phased results
+   * @param theresults  An Enumeration of AspectValue[]
    */
   private void setPhasedResults(Enumeration theResults) {
     phasedavrs = new ArrayList();
     while (theResults.hasMoreElements()) {
-      AspectValue[] phase = (AspectValue[]) theResults.nextElement();
-      phasedavrs.add(phase);
+      phasedavrs.add(convertAVO(theResults.nextElement()));
     }
     phasedavrs.trimToSize();
   }
   
-  /** A List of Lists that represent phased results in the form of
-    * AspectValues.
-    * @param phasedaspectvalues
-    */
-  private void setPhasedAspectValueResults(List phasedaspectvalues) {
-    phasedavrs = new ArrayList(phasedaspectvalues);
+  /** Set the results based on a collection of AspectValue[] representing each phase of the result
+   * @param theresults  
+   */
+  private void setPhasedResults(Collection theResults) {
+    int l = theResults.size();
+    phasedavrs = new ArrayList(l);
+    if (theResults instanceof List) {
+      List trl = (List) theResults;
+      for (int i=0; i<l; i++) {
+        phasedavrs.add(convertAVO(trl.get(i)));
+      }
+    } else {
+      for (Iterator it = theResults.iterator(); it.hasNext(); ) {
+        phasedavrs.add(convertAVO(it.next()));
+      }
+    }
+  }
+
+  /** Convert an logical array of AspectValues to an actual AspectValue[], if needed **/
+  // fixes bug 1968
+  private AspectValue[] convertAVO(Object o) {
+    if (o instanceof AspectValue[]) {
+      return (AspectValue[]) o;
+    } else if (o instanceof Collection) {
+      return (AspectValue[]) ((Collection)o).toArray(new AspectValue[((Collection)o).size()]);
+    } else {
+      throw new IllegalArgumentException("Each element of a PhaseResult must be in the form of an AspectValue[] or a Collection of AspectValues, but got: "+o);
+    }
   }
     
                 
@@ -631,52 +662,22 @@ public class AllocationResult
     return returnDiff;
   }
 
+  /** Utility method to help conversion of old code to new usage
+   **/
+  public static AspectValue[] convertToAVA(int[] types, double[] values) {
+    int l = types.length;
+    AspectValue[] ava = new AspectValue[l];
+    for (int i=0; i<l; i++) {
+      ava[i] = AspectValue.newAspectValue(types[i], values[i]);
+    }
+    return ava;
+  }
+
   private void readObject(ObjectInputStream ois)
     throws IOException, ClassNotFoundException
   {
     ois.defaultReadObject();
     clearMemos();
   }
-
-    // for unit testing only
-  /*  public static void main(String args[]) {
-    int[] ats = {AspectType.START_TIME, AspectType.END_TIME, AspectType.COST};
-    double[] rupres = {10.0, 20.0, 3000.00};
-    double[] result1 = {10.0, 13.0, 500.00};
-    double[] result2 = {15.0, 20.0, 2500.00};
-    java.util.Vector total = new java.util.Vector();
-    total.addElement(result1);
-    total.addElement(result2);
-    
-    //    AllocationResult ar1 = new AllocationResult(99.0, true, ats, rupres, total.elements());
-    AllocationResult ar1 = new AllocationResult(99.0, true, ats, rupres);
-    System.out.println("instantiated");
-    double answer1 = ar1.getValue(AspectType.START_TIME);
-    double answer2 = ar1.getValue(AspectType.END_TIME);
-    double answer3 = ar1.getValue(AspectType.COST);
-    System.out.println("isDefined(AspectType.COST)???: " + ar1.isDefined(AspectType.COST));
-    System.out.println("isDefined(AspectType.START_TIME)???: " + ar1.isDefined(AspectType.START_TIME));
-    System.out.println("isDefined(AspectType.END_TIME)???: " + ar1.isDefined(AspectType.END_TIME));
-    System.out.println("isDefined(AspectType.DANGER)???: " + ar1.isDefined(AspectType.DANGER));
-    System.out.println("answers " + answer1 + " " + answer2 + " " +answer3);
-
-
-    PreferenceImpl[] prefs = new PreferenceImpl[3];
-    prefs[0] = new PreferenceImpl(AspectType.START_TIME, 
-					     ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.START_TIME, 15)));
-
-    prefs[1] = new PreferenceImpl(AspectType.END_TIME, 
-				  ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.END_TIME, 20)));
-
-    prefs[2] = new PreferenceImpl(AspectType.INTERVAL,
-				  ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.INTERVAL, 50)));
-
-    AspectValue[] avs = ar1.difference(prefs);
-
-    for (int i=0; i<avs.length; i++) {
-    for (int i=0; i<avs.length; i++) {      System.out.println(avs[i]);
-    for (int i=0; i<avs.length; i++) {
-    }
-    } */
 }
 

@@ -69,22 +69,22 @@ public interface AllocationResultDistributor
 
       if (l == 0 || ar == null) return null;
 
-      // create the shared value vector and fill in the values for the defined aspects ONLY.
-      int[] types = ar.getAspectTypes();
-      double acc[] = new double[types.length];
-      for (int x = 0; x < types.length; x++) {
+      AspectValue[] avs = ar.getAspectValueResults(); // get a new AVR copy
+
+      for (int x = 0; x<avs.length ; x++) {
+        AspectValue av = avs[x];
+        int type = av.getType();
         // if the aspect is COST or QUANTITY divide evenly across parents
-        if ( (types[x] == COST) || (types[x] == QUANTITY) ) {
-          acc[x] = ar.getValue(types[x]) / l;
+        if ( (type == COST) || (type == QUANTITY) ) {
+          avs[x] = av.dupAspectValue(av.floatValue() / l);
         } else {
-          acc[x] = ar.getValue(types[x]);
+          // it is ok already - just propagate it through
         }
       }
       
       AllocationResult newar = new AllocationResult(ar.getConfidenceRating(),
                                                     ar.isSuccess(),
-                                                    types,
-                                                    acc);
+                                                    avs);
       // fill in the auxiliaryquery info
       // each of the new allocationresults(for the parents) will have the SAME
       // auxiliaryquery info that the allocationresult (of the child) has.  
