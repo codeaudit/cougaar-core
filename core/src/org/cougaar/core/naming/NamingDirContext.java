@@ -502,6 +502,107 @@ public class NamingDirContext extends NamingContext implements DirContext {
     return new WrapEnum(answer.elements());
   }
   
+  public NamingEnumeration search(String name,
+                                  SearchControls cons,
+                                  Attributes matchingAttrs) 
+    throws NamingException {
+    return search(new CompositeName(name), cons, matchingAttrs);
+  }
+
+  public NamingEnumeration search(Name name,
+                                  SearchControls cons,
+                                  Attributes matchingAttrs) 
+    throws NamingException {
+    Attributes attrs;
+    String []attrsRet = cons.getReturningAttributes();
+
+    // Vector for storing answers
+    Vector answer = new Vector();
+    int scope = cons.getSearchScope();
+
+    switch (cons.getSearchScope()) {
+    case (SearchControls.OBJECT_SCOPE):
+      attrs = getAttributes(name);
+      if (contains(attrs, matchingAttrs)) {
+        answer.addElement(new SearchResult("", null,
+                                           selectAttributes(attrs, attrsRet)));
+      }
+      return new WrapEnum(answer.elements());
+      
+      
+    case (SearchControls.ONELEVEL_SCOPE):
+      Object obj = lookup(name);
+
+      if (obj instanceof DirContext) {
+        return ((DirContext) obj).search("", matchingAttrs, attrsRet);
+      } else {
+        return null;
+      }
+
+    case (SearchControls.SUBTREE_SCOPE):
+      Binding item;
+    
+      // Get context
+      Object target = lookup(name);
+      if (!(target instanceof Context)) {
+        // Same as OBJECT_SCOPE]
+        SearchControls tmpCons = new SearchControls();
+        tmpCons.setSearchScope(SearchControls.OBJECT_SCOPE);
+        tmpCons.setReturningAttributes(attrsRet);
+        return search(name, tmpCons, matchingAttrs);
+      } else {
+        Context targetContext = (Context) target;
+    
+        try {
+          // List context
+          NamingEnumeration objs = targetContext.listBindings("");
+          
+          // For each item on list, examine its attributes
+          while (objs.hasMore()) {
+            item = (Binding)objs.next();
+
+            if (item.getObject() instanceof DirContext) {
+              NamingDirContext subContext = 
+                (NamingDirContext) item.getObject();
+              /*
+              System.out.println("Searching " + 
+                                 subContext.getNameInNamespace());
+              */
+              NamingEnumeration enum = 
+                subContext.search("", cons, matchingAttrs);
+              while (enum.hasMore()) {
+                SearchResult result = (SearchResult) enum.next();
+
+                // KLUDGE -  need to put name in dir hierarchy
+                result.setName(item.getName() + NS.DirSeparator + 
+                               result.getName());
+                answer.addElement(result);
+              }
+              attrs = ((DirContext)item.getObject()).getAttributes("");
+            } else {
+              /*
+              System.out.println("Getting attributes for " + 
+                                 getDirectory().getPath() + item.getName());
+              */
+              attrs = getAttributes(item.getName());
+            }
+            if (contains(attrs, matchingAttrs)) {
+              answer.addElement(new SearchResult(item.getName(), null,
+                                                 selectAttributes(attrs, attrsRet)));
+            }
+          } 
+        } finally {
+          targetContext.close();
+        }
+    
+        return new WrapEnum(answer.elements());
+      }
+    default:
+      throw new NamingException("Unrecognized SearchControls scope: " + 
+                                cons.getSearchScope());
+    }
+  }
+
   /** 
    * Returns true if superset contains subset.
    */
@@ -1066,9 +1167,47 @@ public class NamingDirContext extends NamingContext implements DirContext {
     while (enum.hasMore()) {
       System.out.println("\t\t attribute:" + enum.next());
     } 
+
+    // attributes for c
+    enum = c.search("", searchAttributes);
+    System.out.println("Search c context for: " + searchAttribute);
+    while (enum.hasMore()) {
+      System.out.println(enum.next());
+    }
     System.out.println("");
 
+    // SubTree scope
+    SearchControls cons = new SearchControls();
+    System.out.println("Search initial context - SUBTREE_SCOPE for: " + searchAttribute);
+    cons.setSearchScope(SearchControls.SUBTREE_SCOPE);
+    cons.setReturningAttributes(null);
+    enum = ((NamingDirContext) ctx).search("", cons, searchAttributes);
+    while (enum.hasMore()) {
+      System.out.println(enum.next());
+    }
+    System.out.println("");
 
+    System.out.println("Search b in initial context - OBJECT_SCOPE for : " + 
+                       searchAttribute);
+    cons.setSearchScope(SearchControls.OBJECT_SCOPE);
+    cons.setReturningAttributes(null);
+    enum = ((NamingDirContext) ctx).search("b", cons, searchAttributes);
+    while (enum.hasMore()) {
+      System.out.println(enum.next());
+    }
+    System.out.println("");
+
+    System.out.println("Search b in initial context - ONELEVEL_SCOPE for : " +
+                       searchAttribute);
+    cons.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+    cons.setReturningAttributes(null);
+    enum = ((NamingDirContext) ctx).search("b", cons, searchAttributes);
+    while (enum.hasMore()) {
+      System.out.println(enum.next());
+    }
+    System.out.println("");
+    
+      
     c.rename("foo", "roo");
     System.out.println("Contents of c after renaming foo to roo");
     bindings = c.listBindings("");
