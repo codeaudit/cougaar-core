@@ -61,7 +61,7 @@ public abstract class ServletBase
   public SimpleServletSupport getSupport () { return support; }
 
   /** **/
-  public ServletBase(SimpleServletSupport support) {
+  public void setSimpleServletSupport(SimpleServletSupport support) {
     this.support = support;
   }
 

@@ -82,11 +82,6 @@ public class HierarchyServlet
    */
   private final String myPath = "/Hierarchy";
 
-  /** **/
-  public HierarchyServlet(SimpleServletSupport support) {
-    super (support);
-  }
-
   /**
    * Pretty to-String for debugging.
    */

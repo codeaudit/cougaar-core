@@ -70,7 +70,7 @@ import org.w3c.dom.Element;
  * <pre>
  *    public class HelloServlet extends HttpServlet {
  *      private SimpleServletSupport support;
- *      public HelloServlet(SimpleServletSupport support) {
+ *      public void setSimpleServletSupport(SimpleServletSupport support) {
  *        this.support = support;
  *      }
  *      public void doGet(
@@ -97,7 +97,7 @@ extends HttpServlet
 
   private SimpleServletSupport support;
 
-  public PlanViewServlet(SimpleServletSupport support) {
+  public void setSimpleServletSupport(SimpleServletSupport support) {
     this.support = support;
   }
 
