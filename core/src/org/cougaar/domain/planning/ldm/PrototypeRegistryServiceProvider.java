@@ -11,36 +11,62 @@ package org.cougaar.domain.planning.ldm;
 
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
-
-import java.util.*;
+import org.cougaar.core.plugin.PrototypeProvider;
+import org.cougaar.core.plugin.PropertyProvider;
+import org.cougaar.core.plugin.LatePropertyProvider;
+import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 
 /** A PrototypeRegistryServiceProvider is a provider class for prototype registry functions. **/
 public class PrototypeRegistryServiceProvider implements ServiceProvider {
 
-  private PrototypeRegistry _protregistry = null;
+  private PrototypeRegistry protregistry;
   
-  public PrototypeRegistryServiceProvider() {
-    super();
+  public PrototypeRegistryServiceProvider(PrototypeRegistry theRegistry) {
+    this.protregistry = theRegistry;
   }
   
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    return getPrototypeRegistry();
+    if (PrototypeRegistryService.class.isAssignableFrom(serviceClass)) {
+      return new PrototypeRegistryServiceImpl();
+    } else {
+      return null;
+    }
   }
 
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
-    // more??
-    _protregistry = null;
   }
 
-  // should only have one per cluster  
-  private PrototypeRegistry getPrototypeRegistry() {
-    synchronized (this) {
-      if (_protregistry == null) {
-        _protregistry = new PrototypeRegistry();
-      }
-      return _protregistry;
+  private final class PrototypeRegistryServiceImpl implements PrototypeRegistryService {
+    public void addPrototypeProvider(PrototypeProvider prov) {
+      protregistry.addPrototypeProvider(prov);
     }
-  }
+    public void addPropertyProvider(PropertyProvider prov) {
+      protregistry.addPropertyProvider(prov);
+    }
+    public void addLatePropertyProvider(LatePropertyProvider lpp) {
+      protregistry.addLatePropertyProvider(lpp);
+    }
+    public void cachePrototype(String aTypeName, Asset aPrototype) {
+      protregistry.cachePrototype(aTypeName, aPrototype);
+    }
+    public boolean isPrototypeCached(String aTypeName) {
+      return protregistry.isPrototypeCached(aTypeName);
+    }
+    public Asset getPrototype(String aTypeName, Class anAssetClass) {
+      return protregistry.getPrototype(aTypeName, anAssetClass);
+    }
+    public Asset getPrototype(String aTypeName) {
+      return protregistry.getPrototype(aTypeName);
+    }
+    public void fillProperties(Asset anAsset) {
+      protregistry.fillProperties(anAsset);
+    }
+    public PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pg, long time) {
+      return protregistry.lateFillPropertyGroup(anAsset, pg, time);
+    }
+  }  // end of PrototypeRegistryServiceImpl
+
 
 }
 
