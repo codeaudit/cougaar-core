@@ -1,4 +1,13 @@
-2001-02-27  Todd Wright  <twright@bbn.com>
+2002-03-94  Noelle Givler  <ngivler@bbn.com>
+
+	* PropertyGroupSchedule:
+	add()/remove() methods act upon the default if appropriate. add() 
+	calls setDefault() if the TimePhasedPropertyGroup to be added runs 
+	from TimeSpan.MIN_VALUE to TimeSpan.MAX_VALUE. remove() calls 
+	clearDefault() if the TimePhasedPropertyGroup to be removed is the 
+	same as the default (using .equals() for comparison).
+
+2002-02-27  Todd Wright  <twright@bbn.com>
 
 	* PluginAdapter:
 	Fixed "load()" race-condition bug, where blackboard watcher
