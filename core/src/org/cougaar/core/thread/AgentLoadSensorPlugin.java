@@ -67,12 +67,17 @@ public class AgentLoadSensorPlugin
 	}
 
 	private String extractObjectName(String rawName) {
-	    if (rawName.startsWith("Node")) {
-		return rawName.replace(' ', '-');
+	    if (rawName.startsWith("NodeTotal_")) {
+		return rawName;
+	    } else if (rawName.startsWith("Node")) {
+		// Root Scheduler of the ThreadService
+		return "Service" +KEY_SEPR+ "NodeRoot";
 	    } else if (rawName.startsWith("Agent")){
+		// Agent-level Scheduler.
 		// We assume 'Agent_AgentName'
 		return rawName.substring(6);
 	    } else {
+		// Some other Scheduler (eg MTS or MetricService)
 		return "Service" +KEY_SEPR+ rawName;
 	    }
 	}	
@@ -126,6 +131,7 @@ public class AgentLoadSensorPlugin
 
     private int total;
     private HashMap records = new HashMap();
+    private ConsumerRecord nodeRecord;
 
     private LoggingService loggingService;
     private AgentLoadService serviceImpl;
@@ -137,7 +143,9 @@ public class AgentLoadSensorPlugin
     public void load() {
 	super.load();
 	
+
 	ServiceBroker sb = getServiceBroker();
+
 
 	loggingService = (LoggingService)
 	    sb.getService(this, LoggingService.class, null);
@@ -149,6 +157,9 @@ public class AgentLoadSensorPlugin
 
 	MetricsService metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
+
+	nodeRecord = new ConsumerRecord("NodeTotal_" + my_node);
+
 
 	String path = "Node(" +my_node+ ")" +PATH_SEPR+ "Jips";
 	Observer mjips_obs = new Observer() {
@@ -237,6 +248,7 @@ public class AgentLoadSensorPlugin
 
     private ArrayList snapshot() {
 	ArrayList result = new ArrayList();
+	result.add(nodeRecord.snapshot());
 	synchronized (records) {
 	    Iterator itr = records.values().iterator();
 	    while (itr.hasNext()) {
@@ -279,19 +291,23 @@ public class AgentLoadSensorPlugin
     {
     }
 
-    public synchronized void rightGiven(String consumer) {
-	ConsumerRecord rec = findRecord(consumer);
+    public synchronized void rightGiven(String scheduler) {
+	ConsumerRecord rec = findRecord(scheduler);
 	rec.incrementOutstanding();
+	nodeRecord.incrementOutstanding();
 	++total;
     }
 		
-    public synchronized void rightReturned(String consumer) {
-	ConsumerRecord rec = findRecord(consumer);
+    public synchronized void rightReturned(String scheduler) {
+	ConsumerRecord rec = findRecord(scheduler);
 
 	// The given consumer Scheduler may have running threads when
 	// this listener starts listening.  When those threads stop,
 	// the count will go negative.  Ignore those.
-	if (rec.decrementOutstanding()) --total;
+	if (rec.decrementOutstanding()) {
+	    --total;
+	    nodeRecord.decrementOutstanding();
+	}
    }
 
 

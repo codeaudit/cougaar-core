@@ -64,6 +64,8 @@ public class AgentLoadRatePlugin
 	    super(10, 3, BASE_PERIOD);
 	    if (name.startsWith("Service")) 	       
 		agentKey = name;
+	    else if (name.startsWith("NodeTotal_"))
+		agentKey = "Node" +KEY_SEPR+ name.substring(10);
 	    else
 		agentKey = "Agent" +KEY_SEPR+ name ;
 	    mjipsKey=(agentKey +KEY_SEPR+ CPU_LOAD_MJIPS).intern();
