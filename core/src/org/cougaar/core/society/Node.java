@@ -671,49 +671,13 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
 
     if (Boolean.getBoolean("org.cougaar.core.servlet.enable")) {
       // start up the Node-level ServletService component
-      
-      // config data, maybe from system properties:
-      int httpPort = 8800;  // FIXME make this (nsPort + 100)?
-      int httpsPort = 8400; // FIXME make this (httpPort + 100)?
-      boolean clientAuth = false; // FIXME make a parameter?
-
-      // private keystore/keypass for HTTPS
-      String keystore = null;
-      String keypass = null;
-      if (httpsPort > 0) {
-        // look in the "cougaar.rc"
-        keystore = Parameters.findParameter("org.cougaar.web.keystore");
-        keypass  = Parameters.findParameter("org.cougaar.web.keypass");
-      }
-
-      // the parameter is an Object[] of:
-      //    String servlet engine classname
-      //    Object servlet engine configuration info
-      //    Integer HTTP  port, or null to disable HTTP
-      //    Integer HTTPS port, or null to disable HTTPS
-      //    String public keystore for trusted clients 
-      //    String private keystore for the server certificate
-      //    String private keypass for the server keystore
-      //    String private keyname for the server certificate
-      //    Boolean enable/disable client authentication
-      Object[] nsscParam = new Object[] {
-        "org.cougaar.lib.web.tomcat.TomcatServletEngine",
-        "webtomcat/data",
-        ((httpPort  > 0) ? (new Integer(httpPort )) : null),
-        ((httpsPort > 0) ? (new Integer(httpsPort)) : null),
-        keystore, // use the same keystore for client certs
-        keystore,
-        keypass,
-        "tomcat", // tomcat insists that the keyname is "tomcat"
-        (clientAuth ? Boolean.TRUE : Boolean.FALSE),
-      };
       ComponentDescription nsscDesc = 
         new ComponentDescription(
             (getIdentifier()+"ServletService"),
             "Node.NodeServletService",
             "org.cougaar.lib.web.service.RootServletServiceComponent",
             null,  //codebase
-            nsscParam,
+            null,  //parameters
             null,  //certificate
             null,  //lease
             null); //policy
