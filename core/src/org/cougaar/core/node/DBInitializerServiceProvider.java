@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.Collection;
 import org.cougaar.util.DBProperties;
 import org.cougaar.util.DBConnectionPool;
 import org.cougaar.util.Parameters;
@@ -43,8 +44,11 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.node.CommunityConfig;
+import org.cougaar.core.node.CommunityConfigUtils;
 import org.cougaar.planning.plugin.AssetDataReader;
 import org.cougaar.planning.plugin.AssetDataDBReader;
+
 
 /**
  * Implementation of InitializerServiceProvider that reads
@@ -503,6 +507,17 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       } catch (SQLException sqle) {
         throw new InitializerServiceException(sqle);
       }
+    }
+
+    public Collection getCommunityDescriptions(String entityName, String empty)
+      throws InitializerServiceException { 
+      try {
+        return CommunityConfigUtils.getCommunityConfigsFromDB(entityName);
+      }
+      catch (Exception ex) {
+        System.out.println("Exception in getCommunityDescriptions from DB");
+      }
+      return new Vector();      
     }
   }
 }

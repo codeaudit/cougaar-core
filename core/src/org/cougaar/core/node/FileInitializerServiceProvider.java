@@ -24,12 +24,18 @@ package org.cougaar.core.node;
 import org.cougaar.core.mts.*;
 
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Vector;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.planning.plugin.AssetDataReader;
 import org.cougaar.planning.plugin.AssetDataFileReader;
+
+import org.cougaar.core.node.CommunityConfig;
+import org.cougaar.core.node.CommunityConfigUtils;
+
 
 public class FileInitializerServiceProvider implements ServiceProvider {
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -91,6 +97,22 @@ public class FileInitializerServiceProvider implements ServiceProvider {
 
     public Object[] translateAttributeValue(String type, String key) {
       return new Object[] {type, key};
+    }
+
+    public Collection getCommunityDescriptions(String entityName, String initXmlFile)
+      throws InitializerServiceException { 
+      try {
+        if (initXmlFile == null) {
+          return CommunityConfigUtils.getCommunityConfigsFromFile("communities.xml", entityName);
+        }
+        else {
+          return CommunityConfigUtils.getCommunityConfigsFromFile(initXmlFile, entityName);
+        }
+      }
+      catch (Exception ex) {
+        System.out.println("Exception in getCommunityDescriptions from File");
+      }
+      return new Vector();
     }
   }
 }

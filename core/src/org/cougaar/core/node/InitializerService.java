@@ -21,6 +21,8 @@
 
 package org.cougaar.core.node;
 
+import java.util.Collection;
+
 import org.cougaar.core.mts.*;
 
 import org.cougaar.core.component.Service;
@@ -54,4 +56,8 @@ public interface InitializerService extends Service {
 
   Object[] translateAttributeValue(String type, String key)
     throws InitializerServiceException;
+
+  Collection getCommunityDescriptions(String entityName, String initFileName)
+    throws InitializerServiceException;
+  
 }
