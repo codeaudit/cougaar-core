@@ -26,6 +26,7 @@ import java.util.*;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.core.blackboard.ABATranslation;
 import org.cougaar.core.blackboard.AnonymousChangeReport;
 import org.cougaar.core.blackboard.ChangeReport;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -34,12 +35,13 @@ import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
 import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
+import org.cougaar.core.domain.ABAChangeLogicProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
-
+import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.planning.ldm.plan.Directive;
-
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.*;
 
 /**
  * Logic provider to transmit and update Relay objects.
@@ -47,10 +49,11 @@ import org.cougaar.util.UnaryPredicate;
  * @see Relay
  */
 public class RelayLP extends LogPlanLogicProvider
-  implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider
+  implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, ABAChangeLogicProvider
 {
   private Relay.Token token = new Relay.Token();
   private MessageAddress self;
+  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
 
   public RelayLP(
       LogPlanServesLogicProvider logplan, 
@@ -95,6 +98,10 @@ public class RelayLP extends LogPlanLogicProvider
     Set targets = rs.getTargets();
     if (targets == null) return;
     if (targets.isEmpty()) return; // No targets
+    localAdd(rs, targets);
+  }
+
+  private void localAdd(Relay.Source rs, Set targets) {
     Object content = rs.getContent();
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
@@ -157,7 +164,10 @@ public class RelayLP extends LogPlanLogicProvider
     Set targets = rs.getTargets();
     if (targets == null) return;
     if (targets.isEmpty()) return; // No targets
-    UID uid =  rs.getUID();
+    localRemove(rs.getUID(), targets);
+  }
+
+  private void localRemove(UID uid, Set targets) {
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
       if (target.equals(self)) {
@@ -390,6 +400,62 @@ public class RelayLP extends LogPlanLogicProvider
     }
   }
 
+  // ABAChange implementation
+  private static final UnaryPredicate relaySourcePred =
+    new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return o instanceof Relay.Source;
+      }
+    };
+
+  public void abaChange(Set communities) {
+    if (logger.isDebugEnabled()) logger.debug("RelayLP: abaChange");
+    Enumeration en = logplan.searchBlackboard(relaySourcePred);
+    while (en.hasMoreElements()) {
+      Relay.Source rs = (Relay.Source) en.nextElement();
+      Set targets = rs.getTargets();
+      if (targets != null && !targets.isEmpty()) {
+        Set oldTranslation = new HashSet();
+        Set newTranslation = new HashSet();
+        for (Iterator i = targets.iterator(); i.hasNext(); ) {
+          Object o = i.next();
+          if (o instanceof AttributeBasedAddress) {
+            AttributeBasedAddress aba = (AttributeBasedAddress) o;
+            ABATranslation abaTranslation = logplan.getABATranslation(aba);
+            if (abaTranslation != null) {
+              oldTranslation.addAll(abaTranslation.getOldTranslation());
+              newTranslation.addAll(abaTranslation.getCurrentTranslation());
+            }
+          }
+        }
+        if (!newTranslation.isEmpty() || !oldTranslation.isEmpty()) {
+          Set adds = new HashSet(newTranslation);
+          Set removes = new HashSet(oldTranslation);
+          adds.removeAll(oldTranslation);
+          removes.removeAll(newTranslation);
+          boolean isNOP = adds.isEmpty() && removes.isEmpty();
+          if (isNOP && logger.isDebugEnabled()) {
+            logger.debug("old " + oldTranslation);
+            logger.debug("new " + newTranslation);
+            logger.debug("Rmv " + removes + " from " + rs);
+            logger.debug("Add " + adds + " to " + rs);
+          }
+          if (!isNOP && logger.isInfoEnabled()) {
+            logger.info("old " + oldTranslation);
+            logger.info("new " + newTranslation);
+            logger.info("Rmv " + removes + " from " + rs);
+            logger.info("Add " + adds + " to " + rs);
+          }
+          if (!removes.isEmpty()) {
+            localRemove(rs.getUID(), removes);
+          }
+          if (!adds.isEmpty()) {
+            localAdd(rs, adds);
+          }
+        }
+      }
+    }
+  }
 
   /** 
    * ChangeReport for this LP to identify it's own changes.
