@@ -84,8 +84,8 @@ implements BlackboardClient
 
   public void setAgentIdentificationService(
       AgentIdentificationService agentIdService) {
-    this.agentIdService = agentIdService;
     if (agentIdService != null) {
+      this.agentIdService = agentIdService;
       agentId = agentIdService.getMessageAddress();
     }
   }

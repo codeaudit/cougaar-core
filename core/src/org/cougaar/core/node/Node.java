@@ -21,196 +21,151 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.bootstrap.Bootstrapper;
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.component.*;
-import org.cougaar.core.logging.LoggingControlService;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.Configuration;
-import org.cougaar.util.PropertyParser;
-import org.cougaar.util.log.LogTarget;
-import org.cougaar.util.log.LoggerController;
-import org.cougaar.util.log.Logging;
-
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.UnknownHostException;
+import java.net.URL;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.Vector;
-import java.util.Properties;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
+import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-
 import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BinderFactorySupport;
 import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.ComponentFactory;
-import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedEvent;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.Configuration;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.Logging;
-import org.cougaar.util.log.LogTarget; // inlined
 
 /**
- * This class is responsible for creating and maintaining a Node in the alp
- * system.  A Node refers to the actual Physical box or machine that this
- * contains the instatiated object of this class
+ * The Node is the root component of the
+ * <a href="http://www.cougaar.org">Cougaar Agent Architecture</a>.
  * <p>
- * This class is responsible to:
- * <ul>
- * <li>Manage the resources of the computer</li>
- * <li>Provide the message handling for all NodeMessages</li>
- * <li>Provide the highest level of Log file for the latest run</li>
- * <li>Provide validation services to ensure all access request are valid 
- *     before processing them.</li>
- * </ul>
- * <p><pre>
- * Usage:
+ * Usage:<pre>
  *    <tt>java [props] org.cougaar.core.node.Node [props] [-help]</tt>
- * where the "props" are "-D" System Properties, such as:
+ * </pre> where the "props" are "-D" System Properties, such as:<pre>
  *    "-Dorg.cougaar.node.name=NAME" -- name of the Node
- * See the documentation below for Node-specific properties, and 
- * the external documentation for a list of all COUGAAR properties.
  * </pre>
+ * <p>
+ * A node refers to a per-JVM component that contains the Cougaar
+ * agents and per-JVM services.  The primary job of the node is to:
+ * <ul>
+ *   <li>Provide the initial launch methods</li>
+ *   <li>Initialize the system properties</li>
+ *   <li>Create the root ServiceBroker for the component model</li>
+ *   <li>Create the NodeIdentificationService</li>
+ *   <li>Create the initial ComponentInitializerService</li>
+ *   <li>Create the AgentManager</li>
+ *   <li>Create the NodeAgent, which in turn creates the other
+ *       agents for this node</li>
+ * </ul>
+ * <p>
  *
- * <pre>
  * @property org.cougaar.node.name
  *   The (required) name for this Node.
+ *
+ * @property org.cougaar.core.node.InitializationComponent
+ *   Used to specify which service component to use.  Can be passed
+ *   in short hand (<em>DB</em>, <em>XML</em>, <em>File</em>) or as
+ *   a fully specified class:
+ *   <em>org.cougaar.core.node.DBComponentInitializerServiceComponent</em>
  * @property org.cougaar.filename
  *   The file name (.ini) for starting this Node, which defaults to 
- *   (<em>org.cougaar.node.name</em>+".ini") if both <em>org.cougaar.filename</em>
- *   and <em>org.cougaar.experiment.id</em> are not specified.  If this property 
- *   is specified then <em>org.cougaar.experiment.id</em> must not be specified.
+ *   (<em>org.cougaar.node.name</em>+".ini") if both
+ *   <em>org.cougaar.filename</em> and
+ *   <em>org.cougaar.experiment.id</em> are not specified.  If this
+ *   property is specified then <em>org.cougaar.experiment.id</em>
+ *    must not be specified.
  * @property org.cougaar.experiment.id
  *   The experiment identifier for running this Node; see 
  *   <em>org.cougaar.filename</em> for details.
+ *
  * @property org.cougaar.install.path
  *   The <em>base</em> path for finding jar and configuration files.
  * @property org.cougaar.validate.jars
  *   If <em>true</em>, will check the certificates on the 
- *   (<em>org.cougaar.install.path</em>+"/plugin/*.jar") files.  Defaults to 
- *   <em>false</em>.
+ *   (<em>org.cougaar.install.path</em>+"/plugin/*.jar") files.
+ *   Defaults to <em>false</em>.
  * @property org.cougaar.security.certificate
- *   The path of the <em>org.cougaar.install.path</em> for finding the 
- *   <em>org.cougaar.validate.jars</em> certificates.
- *
- * @property org.cougaar.config
- *   Only used by Node to transfer a command-line "-config X" to
- *   the corresponding <em>org.cougaar.config=X</em> property.
- * @property org.cougaar.config.server
- *   Only used by Node to transfer a command-line "-cs X" to
- *   the corresponding <em>org.cougaar.config.server=X</em> property.
- * @property org.cougaar.name.server
- *   Only used by Node to transfer a command-line "-ns X" to
- *   the corresponding <em>org.cougaar.name.server=X</em> property.
- * @property org.cougaar.name.server.port
- *   Only used by Node to transfer a command-line "-port X" to
- *   the corresponding <em>org.cougaar.name.server.port=X</em> property.
- * 
- * @property org.cougaar.core.security.Component
- *   The class to use for the security domain Component.  If not set, no
- *   security manager will be used.  A security manager must implement
- *   the interface org.cougaar.core.security.SecurityComponent.  If set and
- *   not found or not loaded properly, Node will refuse to run.  See 
- *   org.cougaar.core.node.StandardSecurityComponent for sample implementation.
- *
- * @property org.cougaar.core.node.InitializationComponent
- *   Used to specify which service component to use.  Can be passed in
- *   short hand (<em>DB</em>, <em>XML</em>, <em>File</em>) or as a fully specified class:
- *   <em>org.cougaar.core.node.DBComponentInitializerServiceComponent</em>
+ *   The path of the <em>org.cougaar.install.path</em> for finding
+ *   the <em>org.cougaar.validate.jars</em> certificates.
  *
  * @property org.cougaar.core.node.ignoreRehydratedAgentList
  *   Ignore the list of agents from the rehydrated state of the
- *   NodeAgent, if any. Defaults to false. Set to true to disable this
- *   feature and always use the list of agents from the
+ *   NodeAgent, if any. Defaults to false. Set to true to disable
+ *   this feature and always use the list of agents from the
  *   ComponentInitializerService.
  * </pre>
  */
-public class Node extends ContainerSupport
-implements ContainerAPI, ServiceRevokedListener
+public class Node
+extends ContainerSupport
 {
   public static final String INSERTION_POINT = "Node";
-  private MessageAddress myNodeIdentity_ = null;
   public static final String FILENAME_PROP = "org.cougaar.filename";
   public static final String EXPTID_PROP = "org.cougaar.experiment.id";
-  public static final String INITIALIZER_PROP = "org.cougaar.core.node.InitializationComponent";
+  public static final String INITIALIZER_PROP = 
+    "org.cougaar.core.node.InitializationComponent";
   public static final String IGNORE_REHYDRATED_AGENT_LIST_PROP =
     "org.cougaar.core.node.ignoreRehydratedAgentList";
 
-  public String getIdentifier() {
-    return 
-      ((myNodeIdentity_ != null) ? 
-       myNodeIdentity_.getAddress() :
-       null);
-  }
-
-  public void setMessageAddress(MessageAddress aMessageAddress) {
-    myNodeIdentity_ = aMessageAddress;
-  }
-
-  public String toString() {
-    return "<Node "+getIdentifier()+">";
-  }
+  private MessageAddress myNodeIdentity_ = null;
 
   /**
    * Node entry point.
-   * If org.cougaar.useBootstrapper is true, will search for installed jar files
-   * in order to load all classes.  Otherwise, will rely solely on classpath.
+   * <p>
+   * If org.cougaar.useBootstrapper is true, will search for
+   * installed jar files in order to load all classes.  Otherwise,
+   * will rely solely on classpath.
    *
    * @see #launch(String[])
-   **/
+   */
   // @deprecated
-  static public void main(String[] args){
-    if (PropertyParser.getBoolean("org.cougaar.useBootstrapper", true)) {
+  public static void main(String[] args){
+    if (PropertyParser.getBoolean(
+          "org.cougaar.useBootstrapper", true)) {
       Logging.getLogger(Node.class).warn(
-          "-Dorg.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
+          "-Dorg.cougaar.useBootstrapper is deprecated."+
+          "  Invoke Bootstrapper directly.");
       Bootstrapper.launch(Node.class.getName(), args);
     } else {
       launch(args);
     }
   }
 
-  
-
-  /** The real entry-point for Node, generally invoked via 
+  /**
+   * The real entry-point for Node, generally invoked via 
    * the bootstrapper.
+   *
    * @see org.cougaar.bootstrap.Bootstrapper
-   **/
-  static public void launch(String[] args) {
+   */
+  public static void launch(String[] args) {
     // convert any command-line args to System Properties
+    loadSystemProperties();
     if (!setSystemProperties(args)) {
       return; // must be "--help"
     }
@@ -219,74 +174,31 @@ implements ContainerAPI, ServiceRevokedListener
     printVersion(true);
 
     // check for valid plugin jars
-    boolean validateJars = PropertyParser.getBoolean("org.cougaar.validate.jars", false);
-    if (validateJars) {
-      // validate
-      if (validatePluginJarsByStream()) {
-        // validation succeeded
-      } else {
-        throw new RuntimeException(
-          "Error!  Found unsigned jars in plugin directory!");
-      }
-    } else {
-      // not validating
-    }
+    maybeValidateJars();
+
+    // create root service broker and binding site
+    final ServiceBroker rootsb = 
+      new ServiceBrokerSupport() {
+      };
+    BindingSite rootbs = 
+      new BindingSite() {
+        public ServiceBroker getServiceBroker() {
+          return rootsb;
+        }
+        public void requestStop() {
+        }
+      };
 
     // try block to ensure we catch all exceptions and exit gracefully
-    try{
+    try {
       Node myNode = new Node();
-      myNode.initNode();
+      BindingUtility.activate(myNode, rootbs, rootsb);
       // done with our job... quietly finish.
     } catch (Throwable e) {
       System.out.println(
           "Caught an exception at the highest try block.  Exception is: " +
           e );
       e.printStackTrace();
-    }
-  }
-
-  /**
-   * Parse and load system properties from a well-known file, as defined
-   * by a system property (default "$INSTALL/configs/common/system.properties")
-   * it will only load properties which do not already have a value.
-   * Property values are interpreted with Configuration.resolveValue to
-   * do installation substitution.
-   * @property org.cougaar.core.node.properties
-   * @note The property org.cougaar.core.node.properties must be defined as a
-   * standard java -D argument, as it is evaluated extremely early in the Node boot
-   * process.  
-   **/
-
-  private static final void loadSystemProperties() {
-    String u = System.getProperty("org.cougaar.core.node.properties");
-    if (u == null) {
-      u = "$INSTALL/configs/common/system.properties";
-    }
-
-    try {
-      URL cip = Configuration.canonicalizeElement(u);
-      if (cip != null) {
-        Properties p = new Properties();
-        InputStream in = cip.openStream();
-        try {
-          p.load(in);
-        } finally {
-          in.close();
-        }
-        for (Iterator it = p.keySet().iterator(); it.hasNext(); ) {
-          String key = (String) it.next();
-          if (System.getProperty(key) == null) {
-            try {
-              String value = Configuration.resolveValue(p.getProperty(key));
-              System.setProperty(key, value);
-            } catch (RuntimeException re) {
-              re.printStackTrace();
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      //e.printStackTrace();
     }
   }
 
@@ -315,8 +227,6 @@ implements ContainerAPI, ServiceRevokedListener
    * @return false if node should exit
    */
   private static boolean setSystemProperties(String[] args) {
-    loadSystemProperties();
-
     // separate the args into "-D" properties and normal arguments
     for (int i = 0; i < args.length; i++) {
       String argi = args[i];
@@ -367,6 +277,283 @@ implements ContainerAPI, ServiceRevokedListener
     return true;
   }
 
+  /**
+   * Parse and load system properties from a well-known file, as
+   * defined by a system property
+   * (default "$INSTALL/configs/common/system.properties")
+   * it will only load properties which do not already have a value.
+   * <p>
+   * Property values are interpreted with Configuration.resolveValue to
+   * do installation substitution.
+   *
+   * @property org.cougaar.core.node.properties
+   * @note The property org.cougaar.core.node.properties must be
+   *   defined as a standard java -D argument, as it is evaluated
+   *   extremely early in the Node boot process.  
+   */
+  private static void loadSystemProperties() {
+    String u = 
+      System.getProperty("org.cougaar.core.node.properties");
+    if (u == null) {
+      u = "$INSTALL/configs/common/system.properties";
+    }
+
+    try {
+      URL cip = Configuration.canonicalizeElement(u);
+      if (cip != null) {
+        Properties p = new Properties();
+        InputStream in = cip.openStream();
+        try {
+          p.load(in);
+        } finally {
+          in.close();
+        }
+        for (Iterator it = p.keySet().iterator();
+            it.hasNext();
+            ) {
+          String key = (String) it.next();
+          if (System.getProperty(key) == null) {
+            try {
+              String value = p.getProperty(key);
+              value = Configuration.resolveValue(value);
+              System.setProperty(key, value);
+            } catch (RuntimeException re) {
+              re.printStackTrace();
+            }
+          }
+        }
+      }
+    } catch (Exception e) {
+      //e.printStackTrace();
+    }
+  }
+
+  protected String specifyContainmentPoint() {
+    return INSERTION_POINT;
+  }
+
+  protected ServiceBroker createChildServiceBroker(BindingSite bs) {
+    // node uses the root service broker
+    return getServiceBroker();
+  }
+
+  protected ComponentDescriptions findInitialComponentDescriptions() {
+    return null;
+  }
+
+  /**
+   * This method provides the initialization of a Node.
+   */
+  public void load() {
+    super.load();
+
+    // get the node name
+    String name = System.getProperty("org.cougaar.node.name");
+    if (name == null) {
+      try {
+        name = InetAddress.getLocalHost().getHostName();
+      } catch (UnknownHostException uhe) {
+      }
+      if (name == null) {
+        throw new IllegalArgumentException("Node name not specified");
+      }
+    }
+    MessageAddress nid = MessageAddress.getMessageAddress(name);
+
+    // sb is our service broker (for *all* agents)
+    ServiceBroker sb = getServiceBroker();
+
+    // we need to make this available here so others can get it.
+    sb.addService(NodeIdentificationService.class,
+		  new NodeIdentificationServiceProvider(nid));
+
+    // we need the initializerservice so that AgentManager can load external binders
+    // This will use the CSMART DB (advertising the DBInitializerService)
+    // if the experiment_id system property was set, and some other
+    // initializer was not selected.
+    // Otherwise, INI files are used (and no DBInitializerService is provided)
+    // however, users may specify, for example, an XML initializer
+    ComponentDescription compInitDesc = 
+      new ComponentDescription(
+          "component-init",
+          Node.INSERTION_POINT+".Init",
+          getInitializerComponentName(),
+          null,  //codebase
+          null,  //params
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH);
+    add(compInitDesc);
+
+    //
+    // construct the NodeAgent and hook it in.
+    // 
+
+    // create the AgentManager on our own for now
+    AgentManager agentManager = new AgentManager();
+    add(agentManager);
+
+    //
+    // construct the NodeAgent and then hand off control
+    // 
+    List naParams = new ArrayList(4);
+    naParams.add(nid);
+    naParams.add(sb);
+    naParams.add(agentManager);
+    naParams.add(
+        Boolean.valueOf(
+          System.getProperty(IGNORE_REHYDRATED_AGENT_LIST_PROP)));
+    ComponentDescription naDesc = 
+      new ComponentDescription(
+          name,
+          Agent.INSERTION_POINT,
+          NodeAgent.class.getName(),
+          null,  //codebase
+          naParams,
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH);
+    agentManager.add(naDesc);
+
+    // may need to wait for the NodeAgent to come all the way up.
+  }
+
+  // Select the ComponentInitializer to use
+  private String getInitializerComponentName() {
+    String component = System.getProperty(INITIALIZER_PROP);
+
+    if (component == null) {
+      component = getOldComponentString();
+      System.setProperty(INITIALIZER_PROP, component);
+    }
+
+    // If full class name not specified, intuit it
+    if (component.indexOf(".") < 0) {
+      // Build up the name, full name was not specified.
+      component = 
+        "org.cougaar.core.node." +
+        component +
+        "ComponentInitializerServiceComponent";
+    }
+    Logging.getLogger(getClass()).info(
+        "Will intialize components from " + component);
+
+    return component;
+  }
+
+  // Figure out whether to use Files or CSMART DB for Component initalization
+  // if not explicitly specified with -D argument
+  private String getOldComponentString() {
+    String filename = System.getProperty(FILENAME_PROP);
+    String expt = System.getProperty(EXPTID_PROP);
+    if ((filename == null) && (expt == null)) {
+      // use the default "name.ini"
+      Logging.getLogger(getClass()).info(
+          "Got no filename or experimentId! Using default File");
+      return "File";
+    }
+    if (filename == null) {
+      // use the experiment ID to read from the DB
+      Logging.getLogger(getClass()).info(
+          "Got no filename, using exptID " + expt);
+      return "DB";
+    }
+    if (expt == null) {
+      // use the filename provided
+      Logging.getLogger(getClass()).info(
+          "Got no exptID, using given filename " + filename);
+    }
+
+    return "File";
+  }
+
+  private static void printVersion(boolean fullFormat) {
+    String version = null;
+    long buildTime = -1;
+    String repositoryTag = null;
+    boolean repositoryModified = false;
+    long repositoryTime = -1;
+    try {
+      Class vc = Class.forName("org.cougaar.Version");
+      Field vf = vc.getField("version");
+      Field bf = vc.getField("buildTime");
+      version = (String) vf.get(null);
+      buildTime = bf.getLong(null);
+      Field tf = vc.getField("repositoryTag");
+      Field rmf = vc.getField("repositoryModified");
+      Field rtf = vc.getField("repositoryTime");
+      repositoryTag = (String) tf.get(null);
+      repositoryModified = rmf.getBoolean(null);
+      repositoryTime = rtf.getLong(null);
+    } catch (Exception e) {}
+
+    Logging.getLogger(Node.class).info(
+        "COUGAAR "+version+" "+buildTime+
+        " "+repositoryTag+" "+repositoryModified+
+        " "+repositoryTime);
+
+
+    if (!(fullFormat)) {
+      System.out.println(
+          "COUGAAR\t"+version+"\t"+buildTime+
+          "\t"+repositoryTag+"\t"+repositoryModified+
+          "\t"+repositoryTime);
+      return;
+    } 
+
+    synchronized (System.out) {
+      System.out.print("COUGAAR ");
+      if (version == null) {
+        System.out.println("(unknown version)");
+      } else {
+        System.out.println(
+            version+" built on "+
+            ((buildTime > 0) ? 
+             ((new Date(buildTime)).toString()) : 
+             "(unknown time)"));
+      }
+      System.out.println(
+          "Repository: "+
+          ((repositoryTag != null) ? 
+           (repositoryTag + 
+            (repositoryModified ? " (modified)" : "")) :
+           "(unknown tag)")+
+          " on "+
+          ((repositoryTime > 0) ? 
+           ((new Date(repositoryTime)).toString()) :
+           "(unknown time)"));
+      String vminfo = System.getProperty("java.vm.info");
+      String vmv = System.getProperty("java.vm.version");
+      System.out.println("VM: JDK "+vmv+" ("+vminfo+")");
+      String os = System.getProperty("os.name");
+      String osv = System.getProperty("os.version");
+      System.out.println("OS: "+os+" ("+osv+")");
+    }
+  }
+
+  //
+  // old jar validation
+  // will likely be removed/refactored in the future
+  //
+
+  private static void maybeValidateJars() {
+    // check for valid plugin jars
+    boolean validateJars = 
+      PropertyParser.getBoolean("org.cougaar.validate.jars", false);
+    if (validateJars) {
+      // validate
+      if (validatePluginJarsByStream()) {
+        // validation succeeded
+      } else {
+        throw new RuntimeException(
+          "Error!  Found unsigned jars in plugin directory!");
+      }
+    } else {
+      // not validating
+    }
+  }
 
   /** Returns true if all plugin jars are signed, else false **/
   private static boolean validatePluginJarsByStream() {
@@ -515,290 +702,4 @@ implements ContainerAPI, ServiceRevokedListener
     }
     return cert;
   }
-
-  /**
-   * Create the node, which is configured with System Properties.
-   */
-  public Node() {
-    super();
-  }
-
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
-  protected String specifyContainmentPoint() {
-    return INSERTION_POINT;
-  }
-  protected ServiceBroker specifyChildContext() {
-    return new NodeServiceBroker();
-  }
-  protected ServiceBroker specifyChildServiceBroker() {
-    return new NodeServiceBroker();
-  }
-  protected ContainerAPI getContainerProxy() {
-    return new NodeProxy();
-  }
-
-  public void serviceRevoked(ServiceRevokedEvent e) {}
-
-  public void addStreamToRootLogging(OutputStream logStream) {
-    ServiceBroker sb = getServiceBroker();
-    LoggingControlService lcs = (LoggingControlService)
-      sb.getService(this, LoggingControlService.class, this);
-    LoggerController lc = lcs.getLoggerController("root");
-    lc.addLogTarget(LogTarget.STREAM, logStream);
-  }
-
-  public boolean removeStreamFromRootLogging(OutputStream logStream) {
-    ServiceBroker sb = getServiceBroker();
-    LoggingControlService lcs = (LoggingControlService)
-      sb.getService(this, LoggingControlService.class, this);
-    LoggerController lc = lcs.getLoggerController("root");
-    return lc.removeLogTarget(LogTarget.STREAM, logStream);
-  }
-
-  /**
-   *   @return String the string object containing the local DNS name
-   */
-  protected String findHostName() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException uhe) {
-      return null;
-    }
-  }
-
-  public ConfigFinder getConfigFinder() {
-    return ConfigFinder.getInstance();
-  }
-
-  /**
-   *    This method provides the initialization of a Node.
-   *    <p>
-   **/
-  protected void initNode() {
-    // get the node name
-    String name = System.getProperty("org.cougaar.node.name");
-    if (name == null) {
-      name = findHostName();
-      if (name == null) {
-        throw new IllegalArgumentException("Node name not specified");
-      }
-    }
-
-    // set the node name
-    MessageAddress nid = MessageAddress.getMessageAddress(name);
-    setMessageAddress(nid);
-
-    BinderFactory ambf = new AgentManagerBinderFactory();
-    if (!attachBinderFactory(ambf)) {
-      throw new Error("Failed to load the AgentManagerBinderFactory in Node");
-    }
-
-    // sb is our service broker (for *all* agents)
-    ServiceBroker sb = getServiceBroker();
-
-    // we need to make this available here so others can get it.
-    sb.addService(NodeIdentificationService.class,
-		  new NodeIdentificationServiceProvider(nid));
-
-    // we need the initializerservice so that AgentManager can load external binders
-    // This will use the CSMART DB (advertising the DBInitializerService)
-    // if the experiment_id system property was set, and some other
-    // initializer was not selected.
-    // Otherwise, INI files are used (and no DBInitializerService is provided)
-    // however, users may specify, for example, an XML initializer
-    ComponentDescription compInitDesc = 
-      new ComponentDescription(
-          "component-init",
-          Node.INSERTION_POINT+".Init",
-          getInitializerComponentName(),
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
-    add(compInitDesc);
-
-    //
-    // construct the NodeAgent and hook it in.
-    // 
-
-    // create the AgentManager on our own for now
-    AgentManager agentManager = new AgentManager();
-    add(agentManager);
-
-    //
-    // construct the NodeAgent and then hand off control
-    // 
-    List naParams = new ArrayList(4);
-    naParams.add(nid);
-    naParams.add(getServiceBroker());
-    naParams.add(agentManager);
-    naParams.add(Boolean.valueOf(System.getProperty(IGNORE_REHYDRATED_AGENT_LIST_PROP)));
-    ComponentDescription naDesc = 
-      new ComponentDescription(
-          name,
-          Agent.INSERTION_POINT,
-          NodeAgent.class.getName(),
-          null,  //codebase
-          naParams,
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
-    agentManager.add(naDesc);
-
-    // may need to wait for the NodeAgent to come all the way up.
-
-  }
-
-  // Select the ComponentInitializer to use
-  private String getInitializerComponentName() {
-    String component = System.getProperty(INITIALIZER_PROP);
-
-    if (component == null) {
-      component = getOldComponentString();
-      System.setProperty(INITIALIZER_PROP, component);
-    }
-
-    // If full class name not specified, intuit it
-    if(component.indexOf(".") == -1 ) {
-      // Build up the name, full name was not specified.
-      component = "org.cougaar.core.node." + component + "ComponentInitializerServiceComponent";
-    }
-    Logging.getLogger(getClass()).info("Will intialize components from " + component);
-
-    return component;
-  }
-
-  // Figure out whether to use Files or CSMART DB for Component initalization
-  // if not explicitly specified with -D argument
-  private String getOldComponentString() {
-    String filename = System.getProperty(FILENAME_PROP);
-    String expt = System.getProperty(EXPTID_PROP);
-    if ((filename == null) && (expt == null)) {
-      // use the default "name.ini"
-      filename = myNodeIdentity_.getAddress() + ".ini";
-      Logging.getLogger(getClass()).info(
-          "Got no filename or experimentId! Using default " + filename);
-      return "File";
-    }
-    if (filename == null) {
-      // use the experiment ID to read from the DB
-      Logging.getLogger(getClass()).info(
-          "Got no filename, using exptID " + expt);
-      return "DB";
-    }
-    if (expt == null) {
-      // use the filename provided
-      Logging.getLogger(getClass()).info(
-          "Got no exptID, using given filename " + filename);
-    }
-
-    return "File";
-  }
-
-  public MessageAddress getMessageAddress() {
-    return myNodeIdentity_;
-  }
-
-  private static void printVersion(boolean fullFormat) {
-    String version = null;
-    long buildTime = -1;
-    String repositoryTag = null;
-    boolean repositoryModified = false;
-    long repositoryTime = -1;
-    try {
-      Class vc = Class.forName("org.cougaar.Version");
-      Field vf = vc.getField("version");
-      Field bf = vc.getField("buildTime");
-      version = (String) vf.get(null);
-      buildTime = bf.getLong(null);
-      Field tf = vc.getField("repositoryTag");
-      Field rmf = vc.getField("repositoryModified");
-      Field rtf = vc.getField("repositoryTime");
-      repositoryTag = (String) tf.get(null);
-      repositoryModified = rmf.getBoolean(null);
-      repositoryTime = rtf.getLong(null);
-    } catch (Exception e) {}
-
-    Logging.getLogger(Node.class).info("COUGAAR "+version+" "+buildTime+
-          " "+repositoryTag+" "+repositoryModified+" "+repositoryTime);
-
-
-    if (!(fullFormat)) {
-      System.out.println(
-          "COUGAAR\t"+version+"\t"+buildTime+
-          "\t"+repositoryTag+"\t"+repositoryModified+"\t"+repositoryTime);
-      return;
-    } 
-
-    synchronized (System.out) {
-      System.out.print("COUGAAR ");
-      if (version == null) {
-        System.out.println("(unknown version)");
-      } else {
-        System.out.println(
-            version+" built on "+
-            ((buildTime > 0) ? 
-             ((new Date(buildTime)).toString()) : 
-             "(unknown time)"));
-      }
-      System.out.println(
-          "Repository: "+
-          ((repositoryTag != null) ? 
-           (repositoryTag + 
-            (repositoryModified ? " (modified)" : "")) :
-           "(unknown tag)")+
-          " on "+
-          ((repositoryTime > 0) ? 
-           ((new Date(repositoryTime)).toString()) :
-           "(unknown time)"));
-      String vminfo = System.getProperty("java.vm.info");
-      String vmv = System.getProperty("java.vm.version");
-      System.out.println("VM: JDK "+vmv+" ("+vminfo+")");
-      String os = System.getProperty("os.name");
-      String osv = System.getProperty("os.version");
-      System.out.println("OS: "+os+" ("+osv+")");
-    }
-  }
-
-  public void requestStop() {}
-
-  // 
-  //support classes
-  //
-
-  private static class AgentManagerBinderFactory 
-    extends BinderFactorySupport {
-      public Binder getBinder(Object child) {
-        return new AgentManagerBinder(this, child);
-      }
-      private static class AgentManagerBinder
-        extends BinderSupport 
-        implements BindingSite
-        {
-          public AgentManagerBinder(BinderFactory parentInterface, Object child) {
-            super(parentInterface, child);
-          }
-          protected BindingSite getBinderProxy() {
-            // do the right thing later
-            return this;
-          }
-        }
-    }
-
-  private class NodeProxy implements ContainerAPI {
-    public boolean remove(Object o) {return true;}
-    public ServiceBroker getServiceBroker() {
-      return Node.this.getServiceBroker();
-    }
-    public void requestStop() {}
-  }
-
-  private static class NodeServiceBroker extends ServiceBrokerSupport {}
-
 }
-

@@ -44,15 +44,10 @@ import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.agent.service.democontrol.DemoControlServiceProvider;
 import org.cougaar.core.blackboard.Blackboard; // inlined
 import org.cougaar.core.blackboard.BlackboardForAgent;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BoundComponent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mobility.MobileAgentService;
@@ -88,6 +83,7 @@ import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
+import org.cougaar.util.log.Logging;
 
 /**
  * Implementation of Agent which creates a PluginManager and Blackboard and 
@@ -118,10 +114,8 @@ import org.cougaar.util.StateModelException;
  *   component.  See bug 2522.  Default <em>true</em>
  */
 public class SimpleAgent 
-  extends Agent
-  implements 
-  AgentIdentityClient,
-  StateObject
+extends Agent
+implements AgentIdentityClient
 {
   // this node's address
   private MessageAddress localNode;
@@ -135,8 +129,6 @@ public class SimpleAgent
   private long moveId;
 
   private PersistenceServiceForAgent persistenceService;
-
-  private ComponentDescription persistenceComponentDescription;
 
   private PersistenceIdentity persistenceIdentity =
     new PersistenceIdentity(getClass().getName());
@@ -277,6 +269,11 @@ public class SimpleAgent
     this.myMessageAddress_ = cid;
   }
 
+  protected ComponentDescriptions findInitialComponentDescriptions() {
+    // always use "findExternalComponentDescriptions()"
+    return null;
+  }
+
   /**
    * Get the components from the ComponentInitializerService or the
    * state. If persistenceData is non-null, our components are defined
@@ -285,22 +282,35 @@ public class SimpleAgent
   protected ComponentDescriptions findExternalComponentDescriptions() {
     if (persistenceData != null) {
       // get descriptions from mobile state
-      List tuples = persistenceData.tuples;
+      ComponentDescriptions descs = persistenceData.descs;
       // fix tuples where the desc.getParameter is an 
       // "InternalAdapter", since these are pointers into *this*
       // agent.  This is required for agent mobility to work.
-      for (int i=0, n=tuples.size(); i<n; i++) {
-        StateTuple st = (StateTuple) tuples.get(i);
-        ComponentDescription desc = st.getComponentDescription();
-        Object p = desc.getParameter();
-        if (p instanceof InternalAdapter) {
-          if (log.isInfoEnabled()) {
-            log.info("Setting agent back-pointer in "+desc);
+      List fixme = 
+        descs.selectComponentDescriptions(
+            ComponentDescription.PRIORITY_COMPONENT);
+      for (int i=0, n=fixme.size(); i<n; i++) {
+        Object oi = fixme.get(i);
+        ComponentDescription desc;
+        if (oi instanceof StateTuple) {
+          StateTuple st = (StateTuple) oi;
+          desc = st.getComponentDescription();
+        } else if (oi instanceof ComponentDescription) {
+          desc = (ComponentDescription) oi;
+        } else {
+          desc = null;
+        }
+        if (desc != null) {
+          Object p = desc.getParameter();
+          if (p instanceof InternalAdapter) {
+            if (log.isInfoEnabled()) {
+              log.info("Setting agent back-pointer in "+desc);
+            }
+            ((InternalAdapter) p).setAgent(this);
           }
-          ((InternalAdapter)p).setAgent(this);
         }
       }
-      return new ComponentDescriptions(tuples);
+      return descs;
     }
 
     String cname = getIdentifier();
@@ -519,7 +529,8 @@ public class SimpleAgent
     return persistenceClient;
   }
 
-  protected List getRehydrationList(PersistenceServiceForAgent persistenceService) {
+  protected List getRehydrationList(
+      PersistenceServiceForAgent persistenceService) {
     RehydrationData rd = persistenceService.getRehydrationData();
     if (rd != null) {
       return rd.getObjects();
@@ -528,6 +539,7 @@ public class SimpleAgent
   }
 
   public void load() {
+
     // get our log
     LoggingService newLog = (LoggingService) 
       getServiceBroker().getService(
@@ -541,16 +553,17 @@ public class SimpleAgent
       log.info("Loading");
     }
 
-    persistenceComponentDescription =
-      new ComponentDescription(getMessageAddress() + "Persist",
-                               Agent.INSERTION_POINT + ".Persist",
-                               "org.cougaar.core.persist.PersistenceServiceComponent",
-                               null,
-                               getMessageAddress(),
-                               null,
-                               null,
-                               null,
-                               ComponentDescription.PRIORITY_INTERNAL);
+    ComponentDescription persistenceComponentDescription =
+      new ComponentDescription(
+          getMessageAddress() + "Persist",
+          Agent.INSERTION_POINT + ".Persist",
+          "org.cougaar.core.persist.PersistenceServiceComponent",
+          null,
+          getMessageAddress(),
+          null,
+          null,
+          null,
+          ComponentDescription.PRIORITY_INTERNAL);
     super.add(persistenceComponentDescription);
 
     // add our address to our VM's cluster table
@@ -560,7 +573,8 @@ public class SimpleAgent
     ClusterContextTable.addContext(getMessageAddress());
 
     persistenceService = (PersistenceServiceForAgent)
-      getServiceBroker().getService(getPersistenceClient(), PersistenceServiceForAgent.class, null);
+      getChildServiceBroker().getService(
+          getPersistenceClient(), PersistenceServiceForAgent.class, null);
     persistenceService.rehydrate(persistenceObject);
     List rehydrationList = getRehydrationList(persistenceService);
     if (rehydrationList != null && rehydrationList.size() > 0) {
@@ -570,7 +584,8 @@ public class SimpleAgent
       if (!(getMessageAddress().equals(persistenceData.agentId))) {
         if (log.isErrorEnabled()) {
           log.error(
-              "Load state contains incorrect agent address " + persistenceData.agentId);
+              "Load state contains incorrect agent address " +
+              persistenceData.agentId);
         }
         // continue anyways
       }
@@ -613,6 +628,7 @@ public class SimpleAgent
 
   protected void loadInternalPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
 
     // lookup localhost, for WP and event use
     try {
@@ -638,7 +654,7 @@ public class SimpleAgent
            ("new identity")));
     }
     myAgentIdService = (AgentIdentityService) 
-      sb.getService(this, AgentIdentityService.class, null);
+      csb.getService(this, AgentIdentityService.class, null);
     if (myAgentIdService == null) {
       throw new RuntimeException(
           "Unable to get the agent identity service for agent "+
@@ -679,31 +695,6 @@ public class SimpleAgent
         if (t != null) messenger.getAgentState().mergeAttributes(t);
     }
 
-    if (log.isInfoEnabled()) {
-      log.info("Getting / adding all services");
-    }
-
-    // add alarm service
-    ClusterServesClocks alarmClock = new AlarmClockAdapter(this);
-    myAlarmServiceProvider = new AlarmServiceProvider(alarmClock);
-    sb.addService(AlarmService.class, myAlarmServiceProvider);
-
-    // add demo control
-    ClusterServesClocks demoClock = new DemoClockAdapter(this);
-    myDemoControlServiceProvider = new DemoControlServiceProvider(demoClock);
-    sb.addService(DemoControlService.class, myDemoControlServiceProvider);
-
-    // add a Service hook into the MessageSwitch
-    myMessageSwitchSP = new MessageSwitchServiceProvider();
-    sb.addService(MessageSwitchService.class, myMessageSwitchSP);
-
-    //for backwards compatability
-    super.loadInternalPriorityComponents();
-
-    /** get the timers **/
-    xTimer = (NaturalTimeService) sb.getService(this, NaturalTimeService.class, null);
-    rTimer = (RealTimeService) sb.getService(this, RealTimeService.class, null);
-
     messenger.registerClient(mtsClientAdapter);
 
     if (persistenceData != null) {
@@ -716,6 +707,33 @@ public class SimpleAgent
         }
       }
     }
+
+    if (log.isInfoEnabled()) {
+      log.info("Getting / adding all services");
+    }
+
+    // add alarm service
+    ClusterServesClocks alarmClock = new AlarmClockAdapter(this);
+    myAlarmServiceProvider = new AlarmServiceProvider(alarmClock);
+    csb.addService(AlarmService.class, myAlarmServiceProvider);
+
+    // add demo control
+    ClusterServesClocks demoClock = new DemoClockAdapter(this);
+    myDemoControlServiceProvider = new DemoControlServiceProvider(demoClock);
+    csb.addService(DemoControlService.class, myDemoControlServiceProvider);
+
+    // add a Service hook into the MessageSwitch
+    myMessageSwitchSP = new MessageSwitchServiceProvider();
+    csb.addService(MessageSwitchService.class, myMessageSwitchSP);
+
+    //for backwards compatability
+    super.loadInternalPriorityComponents();
+
+    /** get the timers **/
+    xTimer = (NaturalTimeService) 
+      sb.getService(this, NaturalTimeService.class, null);
+    rTimer = (RealTimeService) 
+      sb.getService(this, RealTimeService.class, null);
   }
 
   protected void loadBinderPriorityComponents() {
@@ -725,11 +743,10 @@ public class SimpleAgent
   protected void loadComponentPriorityComponents() {
     super.loadComponentPriorityComponents();
 
-    ServiceBroker sb = getServiceBroker();
-
     // get blackboard service
     myBlackboardService = (BlackboardForAgent) 
-      sb.getService(this, BlackboardForAgent.class, null);
+      getChildServiceBroker().getService(
+          this, BlackboardForAgent.class, null);
     if (myBlackboardService == null) {
       throw new RuntimeException("Couldn't get BlackboardForAgent!");
     }
@@ -790,10 +807,7 @@ public class SimpleAgent
     }
   }
 
-
   public void suspend() {
-    super.suspend();
-
     if (log.isInfoEnabled()) {
       log.info("Suspending");
     }
@@ -802,16 +816,7 @@ public class SimpleAgent
     if (log.isInfoEnabled()) {
       log.info("Recursively suspending all child components");
     }
-    List childBinders = listBinders();
-    Binder persistenceComponentBinder = null;
-    for (int i = childBinders.size() - 1; i >= 0; i--) {
-      Binder b = (Binder) childBinders.get(i);
-      if (b.getComponentDescription().equals(persistenceComponentDescription)) {
-        persistenceComponentBinder = b;  // suspend later.
-        continue;
-      }
-      b.suspend();
-    }
+    super.suspend();
 
     if (log.isInfoEnabled()) {
       log.info("Suspending scheduler");
@@ -863,9 +868,9 @@ public class SimpleAgent
       log.info("Suspended");
     }
 
-    if (persistenceComponentBinder != null) {
+    if (persistenceService != null) {
       persistenceObject = myBlackboardService.getPersistenceObject();
-      persistenceComponentBinder.suspend();
+      persistenceService.suspend();
     }
 
     if (moveTargetNode != null) {
@@ -904,8 +909,6 @@ public class SimpleAgent
   }
 
   public void resume() {
-    super.resume();
-
     if (log.isInfoEnabled()) {
       log.info("Resuming");
     }
@@ -1002,11 +1005,7 @@ public class SimpleAgent
       if (log.isInfoEnabled()) {
         log.info("Recursively resuming all child components");
       }
-      List childBinders = listBinders();
-      for (int i = 0, n = childBinders.size(); i < n; i++) {
-        Binder b = (Binder) childBinders.get(i);
-        b.resume();
-      }
+      super.resume();
 
     } catch (RuntimeException re) {
       if (acquiredIdentity) {
@@ -1036,10 +1035,7 @@ public class SimpleAgent
     }
   }
 
-
   public void stop() {
-    super.stop();
-
     if (log.isInfoEnabled()) {
       log.info("Stopping");
     }
@@ -1059,11 +1055,7 @@ public class SimpleAgent
     if (log.isInfoEnabled()) {
       log.info("Recursively stopping all child components");
     }
-    List childBinders = listBinders();
-    for (int i = childBinders.size() - 1; i >= 0; i--) {
-      Binder b = (Binder) childBinders.get(i);
-      b.stop();
-    }
+    super.stop();
 
     // already transfered or released identity in "suspend()"
 
@@ -1092,15 +1084,7 @@ public class SimpleAgent
     }
   }
 
-  public void halt() {
-    // this seems reasonable:
-    suspend();
-    stop();
-  }
-
   public void unload() {
-    super.unload();
-
     if (log.isInfoEnabled()) {
       log.info("Unloading");
     }
@@ -1108,20 +1092,25 @@ public class SimpleAgent
     // unload in reverse order of "load()"
 
     ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
 
     // release child services
-    sb.releaseService(this, BlackboardForAgent.class, myBlackboardService);
+    csb.releaseService(this, BlackboardForAgent.class, myBlackboardService);
+
+    csb.revokeService(MessageSwitchService.class, myMessageSwitchSP);
+    csb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
+    csb.revokeService(AlarmService.class, myAlarmServiceProvider);
+
+    csb.releaseService(
+        this, AgentIdentityService.class, myAgentIdService);
+
+    csb = null;
 
     // unload children
     if (log.isInfoEnabled()) {
       log.info("Recursively unloading all child components");
     }
-    List childBinders = listBinders();
-    for (int i = childBinders.size() - 1; i >= 0; i--) {
-      Binder b = (Binder) childBinders.get(i);
-      b.unload();
-    }
-    boundComponents.clear();
+    super.unload();
 
     //
     // release context-based services
@@ -1133,10 +1122,6 @@ public class SimpleAgent
 
     sb.releaseService(this, RealTimeService.class, rTimer);
     sb.releaseService(this, NaturalTimeService.class, xTimer);
-
-    sb.revokeService(MessageSwitchService.class, myMessageSwitchSP);
-    sb.revokeService(DemoControlService.class, myDemoControlServiceProvider);
-    sb.revokeService(AlarmService.class, myAlarmServiceProvider);
 
     //
     // release remaining services
@@ -1161,9 +1146,6 @@ public class SimpleAgent
       log = LoggingService.NULL;
     }
 
-    sb.releaseService(
-        this, AgentIdentityService.class, myAgentIdService);
-
     // optionally spawn a thread to watch for clean agent removal
     Long removalCheckMillis = Long.getLong(
         "org.cougaar.core.agent.removalCheckMillis");
@@ -1179,10 +1161,7 @@ public class SimpleAgent
   }
 
   /**
-   * Get the state of this cluster, which should be suspended.
-   * <p>
-   * Need to fix ContainerSupport for locking and hide
-   * "boundComponents" access.
+   * Get the state of this agent, which should be suspended.
    */
   public Object getState() {
     return persistenceObject;
@@ -1190,32 +1169,10 @@ public class SimpleAgent
 
   private List getPersistenceData() {
     PersistenceData persistenceData = new PersistenceData();
+
     // get the child components
-    synchronized (boundComponents) {
-      int n = boundComponents.size();
-      persistenceData.tuples = new ArrayList(n);
-      for (int i = 0; i < n; i++) {
-        BoundComponent bc = (BoundComponent)
-          boundComponents.get(i);
-        Object comp = bc.getComponent();
-        if (comp instanceof ComponentDescription) {
-          ComponentDescription cd = (ComponentDescription) comp;
-          Binder b = bc.getBinder();
-          Object state;
-//           if (excludeBlackboard &&
-//               Blackboard.INSERTION_POINT.equals(
-//                 cd.getInsertionPoint())) {
-//             state = null;
-//           } else {
-            state = b.getState();
-//           }
-          StateTuple ti = new StateTuple(cd, state);
-          persistenceData.tuples.add(ti);
-        } else {
-          // error?
-        }
-      }
-    }
+    persistenceData.descs = super.captureState();
+
     if (moveTargetNode != null) {
       // Moving state capture
       // get unsent messages
@@ -1229,7 +1186,8 @@ public class SimpleAgent
         log.info("Transfering identity from node "+
                  localNode+" to node "+moveTargetNode);
       }
-      persistenceData.identity = myAgentIdService.transferTo(moveTargetNode);
+      persistenceData.identity =
+        myAgentIdService.transferTo(moveTargetNode);
       if (persistenceData.identity == null) {
         persistenceData.identity = NULL_MOBILE_IDENTITY;
       }
@@ -1421,7 +1379,8 @@ public class SimpleAgent
     case ComponentMessage.RELOAD:
       // not implemented yet -- requires modifications to Container
     default:
-      throw new UnsupportedOperationException( "Unsupported ComponentMessage: "+cm);
+      throw new UnsupportedOperationException(
+          "Unsupported ComponentMessage: "+cm);
     }
   }
 
@@ -2104,25 +2063,10 @@ public class SimpleAgent
         return;
       }
       // create error message
-      String msg = 
-        "Unload of agent "+agent.getIdentifier()+
-        " didn't result in garbage collection of the agent,"+
-        " please use a profiler to check for a memory leak";
-      // try to get the logger
-      try {
-        ServiceBroker sb = agent.getServiceBroker();
-        LoggingService xlog = (LoggingService)
-          sb.getService(
-              agent, LoggingService.class, null);
-        if ((xlog != null) && (xlog.isWarnEnabled())) {
-          xlog.warn(msg);
-        }
-        sb.releaseService(agent, LoggingService.class, xlog);
-        return;
-      } catch (Exception e) {
-      }
-      // minimally print to standard-err
-      System.err.println(msg);
+      Logging.getLogger(agent).warn(
+          "Unload of agent "+agent.getIdentifier()+
+          " didn't result in garbage collection of the agent,"+
+          " please use a profiler to check for a memory leak");
     }
   }
 
@@ -2134,7 +2078,7 @@ public class SimpleAgent
 
     private MessageAddress agentId;
     private TransferableIdentity identity;
-    private List tuples;  // List<StateTuple>
+    private ComponentDescriptions descs;
     private org.cougaar.core.mts.AgentState mtsState;
     private List unsentMessages; // List<ClusterMessage>
     private RestartState restartState;
@@ -2145,12 +2089,14 @@ public class SimpleAgent
         + agentId
         + " state, identity "
         + identity
-        + ", tuples["
-        + tuples.size()
-        + "], mtsState "
+        + ", descs "
+        + descs
+        + ", mtsState "
         + (mtsState != null)
         + ", unsentMessages["
-        + (unsentMessages == null ? "none" : String.valueOf(unsentMessages.size()))
+        + (unsentMessages == null ?
+            "none" :
+            String.valueOf(unsentMessages.size()))
         + "]";
     }
 

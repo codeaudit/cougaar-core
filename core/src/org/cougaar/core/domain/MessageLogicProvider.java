@@ -24,10 +24,11 @@ package org.cougaar.core.domain;
 import java.util.Collection;
 import org.cougaar.core.blackboard.Directive;
 
-/** Marker interface indicating that the Logic Provider is for
- * handling Directives rather than transaction Envelopes.
- **/
-
+/**
+ * Marker interface indicating that the Logic Provider is for
+ * handling Directive messages rather than blackboard transaction
+ * Envelopes.
+ */
 public interface MessageLogicProvider extends LogicProvider {
 
   /** Called by the Blackboard on each received Message.
@@ -36,8 +37,3 @@ public interface MessageLogicProvider extends LogicProvider {
    **/
   void execute(Directive m, Collection changeReports);
 }
-
-
-
-
-

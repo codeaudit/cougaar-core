@@ -43,24 +43,14 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BoundComponent;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.ComponentFactory;
-import org.cougaar.core.component.ComponentRuntimeException;
-import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.PropagatingServiceBroker;
+import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.StateObject;
-import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
-import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
@@ -68,30 +58,23 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 
-/** A container for Domain Components.
- * <p>
- * A DomainManager expects all subcomponents to be bound with 
- * implementations of DomainBinder.  In return, the DomainManager
- * offers the DomainManagerForBinder to each DomainBinder.
+/**
+ * A container for Domain Components.
  *
  * @property org.cougaar.core.load.planning
  *   If enabled, the domain manager will load the planning-specific
  *   PlanningDomain.  See bug 2522.  Default <em>true</em>
  **/
 public class DomainManager 
-  extends ContainerSupport
-  implements StateObject
+extends ContainerSupport
 {
 
-  private static final String FILENAME = "L"+"DMDomains.ini";
+  private static final String FILENAME = "LDMDomains.ini";
 
   private final static String PREFIX = "org.cougaar.domain.";
   private final static int PREFIXLENGTH = PREFIX.length();
 
-  private final static boolean verbose = "true".equals(System.getProperty("org.cougaar.verbose","false"));
-
   private final static boolean isPlanningEnabled;
-
   static {
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
   }
@@ -102,223 +85,217 @@ public class DomainManager
   private final static String CONTAINMENT_POINT = INSERTION_POINT;
 
   private Object loadState = null;
-  private HashSet xplans = new HashSet();
+
+  private final Object lock = new Object();
+  private List delayedXPlans = Collections.EMPTY_LIST;
+  private List domains = Collections.EMPTY_LIST;
   private Blackboard blackboard = null;
-  private ServiceBroker serviceBroker;
 
   private MessageAddress self;
   private AgentIdentificationService agentIdService;
-  private LoggingService loggingService;
+  private LoggingService loggingService = LoggingService.NULL;
+
+  private DomainRegistryServiceProvider domainRegistrySP;
+  private XPlanServiceProvider xplanSP;
   private DomainServiceProvider domainSP;
   private DomainForBlackboardServiceProvider domainForBlackboardSP;
 
-  public DomainManager() {
-    if (!attachBinderFactory(new DefaultDomainBinderFactory())) {
-      throw new RuntimeException("Failed to load the DefaultDomainBinderFactory");
-    }
-  }
-
-  public void setBindingSite(BindingSite bs) {
-    super.setBindingSite(bs);
-    serviceBroker = bs.getServiceBroker();
-    setChildServiceBroker(new DomainManagerServiceBroker(bs));
-  }
-
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
-    if (ais == null) {
-      // Revocation
-    } else {
+    if (ais != null) {
       this.self = ais.getMessageAddress();
     }
   }
 
-  private NodeControlService nodeControlService = null;
-  /*
-  public void setNodeControlService(NodeControlService ncs) {
-    if (ncs == null) {
-      // Revocation
-    } else {
-      nodeControlService = ncs;
-    }
-  }
-  */
-  protected NodeControlService getNodeControlService() {
-    return nodeControlService;
-  }
-
-  public void setState(Object loadState) {
-    this.loadState = loadState;
-  }
-
   public void load() {
-    super.load();
+    ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
 
-    // ugh
-    nodeControlService = (NodeControlService) serviceBroker.getService(this, NodeControlService.class, null);
-
-    domainSP = new DomainServiceProvider(new DomainServiceImpl(this));
-    serviceBroker.addService(DomainService.class, domainSP);
-
-    domainForBlackboardSP = 
-      new DomainForBlackboardServiceProvider(new DomainForBlackboardServiceImpl(this));
-    serviceBroker.addService(DomainForBlackboardService.class, 
-                             domainForBlackboardSP);
-
-    loggingService = 
-      (LoggingService) serviceBroker.getService(this, LoggingService.class,
-                                                null);
-    if (loggingService == null) {
-      System.out.println("DomainManager: unable to get LoggingService");
+    LoggingService ls = (LoggingService)
+      sb.getService(this, LoggingService.class, null);
+    if (ls != null) {
+      loggingService = ls;
     }
+
+    xplanSP = new XPlanServiceProvider();
+    csb.addService(XPlanService.class, xplanSP);
+
+    domainSP = new DomainServiceProvider();
+    sb.addService(DomainService.class, domainSP);
+
+    domainRegistrySP = new DomainRegistryServiceProvider();
+    csb.addService(
+        DomainRegistryService.class,
+        domainRegistrySP);
+
+    domainForBlackboardSP = new DomainForBlackboardServiceProvider();
+    sb.addService(
+        DomainForBlackboardService.class, 
+        domainForBlackboardSP);
 
     // display the agent id
     if (loggingService.isDebugEnabled()) {
-      loggingService.debug("DomainManager "+this+" loading Domains for agent "+self);
+      loggingService.debug(
+          "DomainManager "+this+" loading Domains for agent "+self);
     }
 
-    // get an array of child Components
-    Object[] children;
-    if (loadState instanceof StateTuple[]) {
-      // use the existing state
-      children = (StateTuple[])loadState;
-      loadState = null;
-      // load the child Components (Domains, etc)
-      int n = ((children != null) ? children.length : 0);
-      for (int i = 0; i < n; i++) {
-        add(children[i]);
-      }
-    } else {
-      /* Order - root, planning, domain-file, agent.ini */
-      List descs = new ArrayList(5);
-      // setup the root domain
-      addDomain(descs, "root", 
-                "org.cougaar.core.domain.RootDomain");
+    super.load();
+  }
 
-      if (isPlanningEnabled) {
-        // setup the planning domain
-        addDomain(
-            descs,
-            "planning", 
-            "org.cougaar.planning.ldm.PlanningDomain");
-      }
-
-      /* read domain file */ 
-      initializeFromProperties(descs);
-      initializeFromConfigFiles(descs);
-
-      /* load root domain and domains specified in domain file */
-      children = descs.toArray();
-      for (int i = 0; i < children.length; i++) {
-        add(children[i]);
-      }      
-
-      /* load domains specified in  agent.ini */
-      loadFromComponentInitializer();
+  private Iterator delayedXPlansIterator() {
+    synchronized (lock) {
+      // the list is immutable, since we replace it when modified
+      return delayedXPlans.iterator();
     }
   }
 
-  public Object getState() {
-    synchronized (boundComponents) {
-      int n = boundComponents.size();
-      StateTuple[] tuples = new StateTuple[n];
-      for (int i = 0; i < n; i++) {
-        BoundComponent bc = (BoundComponent)boundComponents.get(i);
-        Object comp = bc.getComponent();
-        if (comp instanceof ComponentDescription) {
-          ComponentDescription cd = (ComponentDescription)comp;
-          Binder b = bc.getBinder();
-          Object state = b.getState();
-          tuples[i] = new StateTuple(cd, state);
+  private XPlan getXPlan(String domainName) {
+    Domain d = getDomain(domainName);
+    return (d == null ? null : d.getXPlan());
+  }
+
+  private XPlan getXPlan(Class domainClass) {
+    Domain d = getDomain(domainClass);
+    return (d == null ? null : d.getXPlan());
+  }
+
+  private void registerDomain(Domain d) {
+    String domainName = d.getDomainName();
+    XPlan xplan = d.getXPlan();
+    synchronized (lock) {
+      Domain origD = getDomain(domainName);
+      if (origD != null) {
+        if (loggingService.isWarnEnabled()) {
+          loggingService.warn(
+              "Domain \""+domainName+"\" multiply defined!"+
+              " Already loaded "+origD+".  Ignoring "+d);
+        }
+        return;
+      }
+      // replace the list, treat it as immutable.
+      // this makes the blackboard access more efficient
+      List l = new ArrayList(domains.size()+1);
+      l.addAll(domains);
+      l.add(d);
+      domains = l;
+      // add xplan
+      if (xplan instanceof SupportsDelayedLPActions &&
+          (!delayedXPlans.contains(xplan))) {
+        l = new ArrayList(delayedXPlans.size()+1);
+        l.addAll(delayedXPlans);
+        l.add(xplan);
+        delayedXPlans = l;
+      }
+    }
+
+    if (loggingService.isDebugEnabled()) {
+      loggingService.debug("Registering "+domainName);
+    }
+
+    if ((xplan != null) && (blackboard != null)) {
+      xplan.setupSubscriptions(blackboard);
+    }
+  }
+
+  private void unregisterDomain(Domain d) {
+    String domainName = d.getDomainName();
+    synchronized (lock) {
+      // find index
+      int i;
+      int n;
+      for (i = 0, n = domains.size(); i < n; i++) {
+        Domain di = (Domain) domains.get(i);
+        if (di.getDomainName().equals(domainName)) {
+          break;
         }
       }
-      return tuples;
-    } 
+      if (i >= n) {
+        // not registered?
+        return;
+      }
+      // remove entry, replace list
+      // fix domains
+      List l = new ArrayList(n-1);
+      for (int j = 0; j < i; j++) {
+        l.add(domains.get(j));
+      }
+      for (int j = i+1; j < n; j++) {
+        l.add(domains.get(j));
+      }
+      domains = l;
+      // fix delayed xplans
+      XPlan xplan = d.getXPlan();
+      if (xplan instanceof SupportsDelayedLPActions &&
+          delayedXPlans.contains(xplan)) {
+        l = new ArrayList(delayedXPlans);
+        l.remove(xplan);
+        delayedXPlans = l;
+      }
+    }
   }
 
-
-  public Collection getXPlans() {
-    return (Collection) xplans.clone();
+  private Iterator domainIterator() {
+    synchronized (lock) {
+      // the list is immutable, since we replace it when modified
+      return domains.iterator();
+    }
   }
 
-  public XPlan getXPlanForDomain(String domainName) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      if (b.getDomain().getDomainName().equals(domainName)) {
-        return b.getDomain().getXPlan();
+  private Domain getDomain(String name) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      if (d.getDomainName().equals(name)) {
+        return d;
       }
     }
     return null;
   }
 
-  public XPlan getXPlanForDomain(Class domainClass) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      if (b.getDomain().getClass().equals(domainClass)) {
-        return b.getDomain().getXPlan();
+  private Domain getDomain(Class clazz) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      if (d.getClass().equals(clazz)) {
+        return d;
       }
     }
     return null;
   }
 
-  public void setBlackboard(Blackboard blackboard) {
+  private void setBlackboard(Blackboard blackboard) {
     if (this.blackboard != null) {
-      LoggingService logger = 
-        (LoggingService) serviceBroker.getService(this, LoggingService.class,
-                                                  null);
-      logger.warn("DomainManager: ignoring duplicate call to setBlackboard. " +
-                  "Blackboard can only be set once.");
+      if (loggingService.isWarnEnabled()) {
+        loggingService.warn(
+            "DomainManager: ignoring duplicate call to setBlackboard. " +
+            "Blackboard can only be set once.");
+      }
       return;
     }
-
     this.blackboard = blackboard;
-    
-    for (Iterator i = xplans.iterator(); i.hasNext();) {
-      XPlan xplan = (XPlan) i.next();
-      xplan.setupSubscriptions(this.blackboard);
-    }
-  }
-
-  public void invokeDelayedLPActions() {
-    for (Iterator i = xplans.iterator(); i.hasNext();) {
-      XPlan xplan = (XPlan) i.next();
-      if (xplan instanceof SupportsDelayedLPActions) {
-        ((SupportsDelayedLPActions) xplan).executeDelayedLPActions();
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      XPlan xplan = d.getXPlan();
+      if (xplan != null) {
+        xplan.setupSubscriptions(blackboard);
       }
     }
   }
 
-  public Factory getFactoryForDomain(String domainName) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      if (b.getDomain().getDomainName().equals(domainName)) {
-        return b.getDomain().getFactory();
-      }
-    }
-    return null;
+  private Factory getFactory(String domainName) {
+    Domain d = getDomain(domainName);
+    return (d == null ? null : d.getFactory());
   }
 
-  public Factory getFactoryForDomain(Class domainClass) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      if (b.getDomain().getClass().equals(domainClass)) {
-        return b.getDomain().getFactory();
-      }
-    }
-    return null;
+  private Factory getFactory(Class domainClass) {
+    Domain d = getDomain(domainClass);
+    return (d == null ? null : d.getFactory());
   }
 
   /** return a List of all domain-specific factories **/
-  public List getFactories() {
+  private List getFactories() {
     ArrayList factories = new ArrayList(size());
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      Factory f = b.getDomain().getFactory();
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      Factory f = d.getFactory();
       if (f != null) {
         factories.add(f);
       }
@@ -326,41 +303,44 @@ public class DomainManager
     return factories;
   }
 
+  private void invokeDelayedLPActions() {
+    for (Iterator iter = delayedXPlansIterator(); iter.hasNext(); ) {
+      SupportsDelayedLPActions xplan = 
+        (SupportsDelayedLPActions) iter.next();
+      xplan.executeDelayedLPActions();
+    }
+  }
 
   /** invoke EnvelopeLogicProviders across all currently loaded domains **/
-  public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
-                                           boolean persistenceEnv) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      b.getDomain().invokeEnvelopeLogicProviders(tuple, persistenceEnv);
+  private void invokeEnvelopeLogicProviders(
+      EnvelopeTuple tuple, boolean persistenceEnv) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      d.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
     }
   }
 
   /** invoke MessageLogicProviders across all currently loaded domains **/
-  public void invokeMessageLogicProviders(DirectiveMessage message) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      b.getDomain().invokeMessageLogicProviders(message);
+  private void invokeMessageLogicProviders(DirectiveMessage message) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      d.invokeMessageLogicProviders(message);
     }
   }
 
   /** invoke RestartLogicProviders across all currently loaded domains **/
-  public void invokeRestartLogicProviders(MessageAddress cid) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      b.getDomain().invokeRestartLogicProviders(cid);
+  private void invokeRestartLogicProviders(MessageAddress cid) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      d.invokeRestartLogicProviders(cid);
     }
   }
 
   /** invoke ABAChangeLogicProviders across all currently loaded domains **/
-  public void invokeABAChangeLogicProviders(Set communities) {
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();) {
-      DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-      b.getDomain().invokeABAChangeLogicProviders(communities);
+  private void invokeABAChangeLogicProviders(Set communities) {
+    for (Iterator iter = domainIterator(); iter.hasNext(); ) {
+      Domain d = (Domain) iter.next();
+      d.invokeABAChangeLogicProviders(communities);
     }
   }
 
@@ -368,238 +348,255 @@ public class DomainManager
   // binding services
   //
 
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
   protected String specifyContainmentPoint() {
     return CONTAINMENT_POINT;
   }
 
-  protected Blackboard getBlackboard() {
-    return blackboard;
-  }
-
-
-  /* load domains specified in  agent.ini */
-  protected void loadFromComponentInitializer() {
-    ComponentDescription [] children;
+  protected ComponentDescriptions findInitialComponentDescriptions() {
+    // display the agent id
+    String cname = agentIdService.getMessageAddress().toString();
     ServiceBroker sb = getServiceBroker();
     ComponentInitializerService cis = (ComponentInitializerService)
       sb.getService(this, ComponentInitializerService.class, null);
-    String cname = self.toString();
-
     try {
-      children = cis.getComponentDescriptions(cname, specifyContainmentPoint());
-    } catch (ComponentInitializerService.InitializerException cise) {
-      //loggingService.error("Unable to add "+cname+"'s Domains", cise);
-      if (loggingService.isInfoEnabled()) {
-        loggingService.info("Unable to add "+cname+"'s Domains", cise);
+      List l = new ArrayList(5);
+
+      // setup the root domain
+      addDomain(
+          l,
+          "root", 
+          "org.cougaar.core.domain.RootDomain");
+
+      if (isPlanningEnabled) {
+        // setup the planning domain
+        addDomain(
+            l,
+            "planning", 
+            "org.cougaar.planning.ldm.PlanningDomain");
       }
-      children = null; 
+
+      /* read domain file */ 
+      initializeFromProperties(l);
+      initializeFromConfigFiles(l);
+
+      /* read agent.ini */
+      try {
+        String cp = specifyContainmentPoint();
+        ComponentDescription[] cds =
+          cds = cis.getComponentDescriptions(cname, cp);
+        for (int i = 0; i < cds.length; i++) {
+          l.add(cds[i]);
+        }      
+      } catch (ComponentInitializerService.InitializerException cise) {
+        if (loggingService.isWarnEnabled()) {
+          loggingService.warn(
+              "Cannot find DomainManager configuration for "+cname,
+              cise);
+        }
+      }
+
+      return new ComponentDescriptions(l);
+    } catch (Exception e) {
+      loggingService.error("Unable to add "+cname+"'s child Components", e);
+      return null;
     } finally {
       sb.releaseService(this, ComponentInitializerService.class, cis);
-    } 
-    
-    // load the child Components (Plugins, etc)
-    int n = ((children != null) ? children.length : 0);
-    for (int i = 0; i < n; i++) {
-      ComponentDescription cd = (ComponentDescription) children[i];
-      
-      if (cd != null) {
-        String ip = cd.getInsertionPoint();
-        // DomainManager should only load Domains!
-        if (ip != null &&
-            ip.startsWith(specifyContainmentPoint())) {
-          try {
-            add(cd);
-          } catch (ComponentRuntimeException cre) {
-            Throwable th = cre;
-            while (true) {
-              Throwable nx = th.getCause();
-              if (nx == null) break;
-              th = nx;
-            }
-            loggingService.error("Failed to load "+cd+":");
-            th.printStackTrace();
-          }
-        }
-      }
     }
-  }
-
-  
-  private DomainManagerForBinder containerProxy = 
-    new DomainManagerForBinder() {
-        public ServiceBroker getServiceBroker() {
-          return DomainManager.this.getServiceBroker();
-        }
-        public boolean remove(Object childComponent) {
-          return DomainManager.this.remove(childComponent);
-        }
-        public void requestStop() {}
-
-        public Collection getXPlans() {
-          return DomainManager.this.getXPlans();
-        }
-
-        public XPlan getXPlanForDomain(String domainName) {
-          return DomainManager.this.getXPlanForDomain(domainName);
-        }
-
-        public XPlan getXPlanForDomain(Class domainClass) {
-          return DomainManager.this.getXPlanForDomain(domainClass);
-        }
-
-        public Factory getFactoryForDomain(String domainName) {
-          return DomainManager.this.getFactoryForDomain(domainName);
-        }
-
-        public Factory getFactoryForDomain(Class domainClass) {
-          return DomainManager.this.getFactoryForDomain(domainClass);
-        }
-
-      };
-
-  protected ContainerAPI getContainerProxy() {
-    return containerProxy;
-  }
-
-  //
-  // typical implementations of state transitions --
-  //   these might be moved into a base class...
-  //
-  // We really need a "container.lock()" to make these
-  //   operations safe.  Mobility would like to lock down
-  //   multiple steps, e.g. "suspend(); stop(); ..", without
-  //   another Thread calling "add(..)" in between.
-  //   
-  protected boolean loadComponent(Object c, Object cstate) {
-    if (super.loadComponent(c, cstate)) {
-
-      // find the domain we just loaded
-      Domain domain = null;
-      if (c instanceof ComponentDescription) {
-        Object []parameters = ((List)((ComponentDescription) c).getParameter()).toArray();
-
-        if (parameters.length < 1) {
-          throw new RuntimeException(
-              "First element of the Domain ComponentDescription parameter List must specify the Domain name.");
-        }
- 
-        String domainName = (String) parameters[0]; 
-        for (Iterator childBinders = binderIterator();
-            childBinders.hasNext();) {
-          DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();
-          Domain d = b.getDomain();
-          if (d.getDomainName().equals(domainName)) {
-            domain = d;
-            break;
-          }
-        }
-      } else if (c instanceof Domain) {
-        // should be disabled!
-        domain = (Domain) c;
-      }
-
-      if (domain == null) {
-        throw new RuntimeException(
-            "Unable to find domain for loaded "+c);
-      }
-
-      if (loggingService.isDebugEnabled()) {
-        loggingService.debug("Loading : " + domain.getDomainName());
-      }
-
-      XPlan xplan = domain.getXPlan();
-      if ((xplan != null) &&
-          (xplans.add(xplan)) &&
-          (getBlackboard() != null)) {
-        xplan.setupSubscriptions(blackboard);
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-        
-
-    // Can't simply cast o to a domain so .. iterate over the children
-    // and see whether any have an xplan that I don't know about
-
-    
-  
-  public void suspend() {
-    super.suspend();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
-      b.suspend();
-    }
-  }
-
-  public void resume() {
-    super.resume();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
-      b.resume();
-    }
-  }
-
-  public void stop() {
-    super.stop();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
-      b.stop();
-    }
-  }
-
-  public void halt() {
-    // this seems reasonable:
-    suspend();
-    stop();
   }
 
   public void unload() {
+    ServiceBroker sb = getServiceBroker();
+    ServiceBroker csb = getChildServiceBroker();
+
+    sb.revokeService(
+        DomainForBlackboardService.class, 
+        domainForBlackboardSP);
+    csb.revokeService(
+        DomainRegistryService.class,
+        domainRegistrySP);
+    sb.revokeService(DomainService.class, domainSP);
+    csb.revokeService(XPlanService.class, xplanSP);
+
+    csb = null;
+
     super.unload();
-    for (Iterator childBinders = binderIterator();
-         childBinders.hasNext();
-         ) {
-      Binder b = (Binder)childBinders.next();
-      b.unload();
+
+    if (loggingService != LoggingService.NULL) {
+      sb.releaseService(
+          this, LoggingService.class, loggingService);
+      loggingService = LoggingService.NULL;
     }
-    boundComponents.clear();
 
-    serviceBroker.revokeService(DomainService.class, domainSP);
-    serviceBroker.revokeService(DomainForBlackboardService.class, 
-                                domainForBlackboardSP);
-
-    serviceBroker.releaseService(this, LoggingService.class, loggingService);
     if (agentIdService != null) {
-      serviceBroker.releaseService(
+      sb.releaseService(
           this, AgentIdentificationService.class, agentIdService);
       agentIdService = null;
     }
   }
 
-  
-  
   //
-  // support classes
+  // service providers
   //
 
-  private static class DomainManagerServiceBroker 
-    extends PropagatingServiceBroker 
-  {
-    public DomainManagerServiceBroker(BindingSite bs) {
-      super(bs);
+  private class DomainRegistryServiceProvider
+    implements ServiceProvider {
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (DomainRegistryService.class.isAssignableFrom(
+                serviceClass)) {
+          return new DomainRegistryServiceImpl();
+        }
+        return null;
+      }
+
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service)  {
+        if (service instanceof DomainRegistryServiceImpl) {
+          DomainRegistryServiceImpl srv = 
+            (DomainRegistryServiceImpl) service;
+          srv.onRelease();
+        }
+      }
+
+      private class DomainRegistryServiceImpl
+        implements DomainRegistryService {
+          public void registerDomain(Domain d) {
+            DomainManager.this.registerDomain(d);
+          }
+          public void unregisterDomain(Domain d) {
+            DomainManager.this.unregisterDomain(d);
+          }
+          private void onRelease() {
+            // unregister all registered domains?
+          }
+        }
     }
-  }
-  
+
+  private class XPlanServiceProvider
+    implements ServiceProvider {
+      private final XPlanServiceImpl xps = new XPlanServiceImpl();
+
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (XPlanService.class.isAssignableFrom(serviceClass)) {
+          return xps;
+        }
+        return null;
+      }
+
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+      }
+
+      private class XPlanServiceImpl
+        implements XPlanService {
+          public XPlan getXPlan(String domainName) {
+            return DomainManager.this.getXPlan(domainName);
+          }
+          public XPlan getXPlan(Class domainClass) {
+            return DomainManager.this.getXPlan(domainClass);
+          }
+        }
+    }
+
+  private class DomainServiceProvider
+    implements ServiceProvider {
+      private final DomainServiceImpl ds = new DomainServiceImpl();
+
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (DomainService.class.isAssignableFrom(serviceClass)) {
+          return ds;
+        }
+        return null;
+      }
+
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service)  {
+      }
+
+      private class DomainServiceImpl implements DomainService {
+        public Factory getFactory(String domainName) {
+          return DomainManager.this.getFactory(domainName);
+        }
+        public Factory getFactory(Class domainClass) {
+          return DomainManager.this.getFactory(domainClass);
+        }
+        public List getFactories() {
+          return DomainManager.this.getFactories();
+        }
+      }
+    }
+
+  private class DomainForBlackboardServiceProvider 
+    implements ServiceProvider {
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (DomainForBlackboardService.class.isAssignableFrom(
+              serviceClass)) {
+          Blackboard bb = (Blackboard) requestor;
+          return new DomainForBlackboardServiceImpl(bb);
+        }
+        return null;
+      }
+
+      public void releaseService(
+          ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service)  {
+        if (service instanceof DomainForBlackboardServiceImpl) {
+          DomainForBlackboardServiceImpl srv = 
+            (DomainForBlackboardServiceImpl) service;
+          srv.onRelease();
+        }
+      }
+
+      private class DomainForBlackboardServiceImpl
+        implements DomainForBlackboardService {
+          public DomainForBlackboardServiceImpl(Blackboard bb) {
+            // ignore
+          }
+          // blackboard registration
+          public void setBlackboard(Blackboard blackboard) {
+            DomainManager.this.setBlackboard(blackboard);
+          }
+          // copy of DomainService
+          public Factory getFactory(String domainName) {
+            return DomainManager.this.getFactory(domainName);
+          }
+          public Factory getFactory(Class domainClass) {
+            return DomainManager.this.getFactory(domainClass);
+          }
+          public List getFactories() {
+            return DomainManager.this.getFactories();
+          }
+          // new stuff for the blackboard
+          public void invokeDelayedLPActions() {
+            DomainManager.this.invokeDelayedLPActions();
+          }
+          public void invokeEnvelopeLogicProviders(
+              EnvelopeTuple tuple, boolean persistenceEnv) {
+            DomainManager.this.invokeEnvelopeLogicProviders(
+                tuple, persistenceEnv);
+          }
+          public void invokeMessageLogicProviders(DirectiveMessage message) {
+            DomainManager.this.invokeMessageLogicProviders(message);
+          }
+          public void invokeRestartLogicProviders(MessageAddress cid) {
+            DomainManager.this.invokeRestartLogicProviders(cid);
+          }
+          public void invokeABAChangeLogicProviders(Set communities) {
+            DomainManager.this.invokeABAChangeLogicProviders(communities);
+          }
+          // cleanup
+          private void onRelease() {
+            // set the domain manager's blackboard to null?
+          }
+        }  
+    }
+
   // 
   // other services
   //
@@ -609,12 +606,14 @@ public class DomainManager
   }
 
 
-  /** Set up a Domain from the argument strings.
+  /** 
+   * Set up a Domain from the argument strings.
+   *
    * @param descs a list of component-descriptions for all
    *    previously added domains
    * @param domainName the name to register the domain under.
    * @param className the name of the class to instantiate as the domain.
-   **/
+   */
   private void addDomain(List descs, String domainName, 
                          String className) {
     // Unique?
@@ -630,9 +629,6 @@ public class DomainManager
         return;
       }
     }
-
-    // we do not synchronize because it is only called from initialize()
-    // which is synchronized...
 
     // pass the domain-name as a parameter
     Object parameter =
@@ -659,13 +655,15 @@ public class DomainManager
 
   private void initializeFromProperties(List descs) {
     Properties props = SystemProperties.getSystemPropertiesWithPrefix(PREFIX);
-    for (Enumeration names = props.propertyNames(); names.hasMoreElements(); ) {
+    for (Enumeration names = props.propertyNames();
+        names.hasMoreElements();
+        ) {
       String key = (String) names.nextElement();
       if (key.startsWith(PREFIX)) {
         String name = key.substring(PREFIXLENGTH);
         // domain names have no extra "." characters, so we can 
         // use -D arguments to control domain-related facilities.
-        if (name.indexOf('.')<0) {
+        if (name.indexOf('.') < 0) {
           String value = props.getProperty(key);
           addDomain(descs, name, value);
         }
@@ -710,7 +708,4 @@ public class DomainManager
       }
     }
   }
-
 }
-
-

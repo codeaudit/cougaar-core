@@ -21,36 +21,15 @@
 
 package org.cougaar.core.domain;
 
-import java.io.PrintStream;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactorySupport;
+import org.cougaar.core.component.Service;
 
 /**
- * A simple BinderFactory for binding domain Domains.
- **/
-public class DefaultDomainBinderFactory extends BinderFactorySupport
-{
+ * This service allows domains to register with the domain manager.
+ */
+public interface DomainRegistryService extends Service {
 
-  /** Select the binder to use - must be an extension of DefaultDomainBinder.
-   **/
-  protected Class getBinderClass(Object child) {
-    return DefaultDomainBinder.class;
-  }
-  
-  /** Bind a domain with a domain binder. 
-   **/
-  protected Binder bindChild(Class binderClass, Object child) {
-    Binder b = super.bindChild(binderClass, child);
-    if (b == null) {
-      return null;
-    } else {
-      if (b instanceof DefaultDomainBinder) {
-        return b;
-      } else {
-        System.err.println("Illegal binder class specified: "+binderClass);
-        return null;
-      }
-    }
-  }
+  void registerDomain(Domain d);
+
+  void unregisterDomain(Domain d);
 
 }

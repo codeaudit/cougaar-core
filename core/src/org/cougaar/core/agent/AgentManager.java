@@ -30,21 +30,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BinderFactorySupport;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BinderSupport;
-import org.cougaar.core.component.BoundComponent;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
-import org.cougaar.core.component.ComponentFactory;
-import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.Node;
@@ -60,23 +50,11 @@ import org.cougaar.util.log.Logging;
  * need to supply a Binder which knows how to bind your Component class.
  **/
 public class AgentManager 
-  extends ContainerSupport
-  implements ContainerAPI, AgentContainer
+extends ContainerSupport
+implements AgentContainer
 {
   /** The Insertion point for the AgentManager, defined relative to that of Node. **/
   public static final String INSERTION_POINT = Node.INSERTION_POINT + ".AgentManager";
-
-  public AgentManager() {
-    BinderFactory bf = new DefaultAgentBinderFactory();
-    if (!attachBinderFactory(bf)) {
-      throw new RuntimeException("Failed to load the "+bf);
-    }
-  }
-
-  public final void setBindingSite(BindingSite bs) {
-    super.setBindingSite(bs);
-    setChildServiceBroker(new AgentManagerServiceBroker(bs));
-  }
 
   /** Load up any externally-specified AgentBinders **/
   public void load() {
@@ -116,48 +94,20 @@ public class AgentManager
     addAll(ComponentDescriptions.sort(cds.extractInsertionPointComponent(INSERTION_POINT + ".Binder")));
   }
 
-
-  protected ComponentFactory specifyComponentFactory() {
-    return super.specifyComponentFactory();
-  }
   protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 
-  protected ContainerAPI getContainerProxy() {
-    return new AgentManagerProxy();
-  }
-
-  public void requestStop() { }
-
-  //
-  // support classes
-  //
-
-  private static class AgentManagerServiceBroker 
-    extends PropagatingServiceBroker
-    {
-      public AgentManagerServiceBroker(BindingSite bs) {
-        super(bs);
-      }
-    }
-
-  private class AgentManagerProxy 
-    implements BindingSite, ContainerAPI {
-
-    // BindingSite
-    public ServiceBroker getServiceBroker() {
-      return AgentManager.this.getServiceBroker();
-    }
-    public void requestStop() {}
-    public boolean remove(Object o) {return true; }
+  protected ComponentDescriptions findInitialComponentDescriptions() {
+    return null;
   }
 
   public boolean add(Object o) {
     try {
       return super.add(o);
     } catch (RuntimeException re) {
-      Logging.getLogger(this.getClass()).error("Failed to add "+o+" to "+this, re);
+      Logging.getLogger(this.getClass()).error(
+          "Failed to add "+o+" to "+this, re);
       return false;
     }
   }
@@ -182,20 +132,7 @@ public class AgentManager
   }
 
   public List getComponents() {
-    // get the child components
-    synchronized (boundComponents) {
-      int n = boundComponents.size();
-      List result = new ArrayList(n);
-      for (int i = 0; i < n; i++) {
-        BoundComponent bc = (BoundComponent) boundComponents.get(i);
-        Object comp = bc.getComponent();
-        if (comp instanceof ComponentDescription) {
-          ComponentDescription cd = (ComponentDescription) comp;
-          result.add(cd);
-        }
-      }
-      return result;
-    }
+    return super.listComponents();
   }
 
   public Map getAgents() {
@@ -203,42 +140,32 @@ public class AgentManager
     //
     // assume that all agents are loaded with a ComponentDescription,
     // where the desc's parameter is (<agentId> [, ...])
-    synchronized (boundComponents) {
-      Map ret = new HashMap(boundComponents.size());
-      for (Iterator iter = boundComponents.iterator(); iter.hasNext(); ) {
-        Object obc = iter.next();
-        if (!(obc instanceof BoundComponent)) {
-          continue;
-        }
-        BoundComponent bc = (BoundComponent) obc;
-        Object cmp = bc.getComponent();
-        if (!(cmp instanceof ComponentDescription)) {
-          continue;
-        }
-        ComponentDescription desc = (ComponentDescription) cmp;
-        Object o = desc.getParameter();
-        MessageAddress cid = null;
-        if (o instanceof MessageAddress) {
-          cid = (MessageAddress) o;
-        } else if (o instanceof String) {
-          cid = MessageAddress.getMessageAddress((String) o);
-        } else if (o instanceof List) {
-          List l = (List)o;
-          if (l.size() > 0) {
-            Object o1 = l.get(0);
-            if (o1 instanceof MessageAddress) {
-              cid = (MessageAddress) o1;
-            } else if (o1 instanceof String) {
-              cid = MessageAddress.getMessageAddress((String) o1);
-            }
+    List descs = listComponents();
+    Map ret = new HashMap(descs.size());
+    for (Iterator iter = descs.iterator(); iter.hasNext();) {
+      ComponentDescription desc = (ComponentDescription) iter.next();
+      Object o = desc.getParameter();
+      MessageAddress cid = null;
+      if (o instanceof MessageAddress) {
+        cid = (MessageAddress) o;
+      } else if (o instanceof String) {
+        cid = MessageAddress.getMessageAddress((String) o);
+      } else if (o instanceof List) {
+        List l = (List)o;
+        if (l.size() > 0) {
+          Object o1 = l.get(0);
+          if (o1 instanceof MessageAddress) {
+            cid = (MessageAddress) o1;
+          } else if (o1 instanceof String) {
+            cid = MessageAddress.getMessageAddress((String) o1);
           }
         }
-        if (cid != null) {
-          ret.put(cid, desc);
-        }
       }
-      return ret;
+      if (cid != null) {
+        ret.put(cid, desc);
+      }
     }
+    return ret;
   }
 
   public void addAgent(MessageAddress agentId, StateTuple tuple) {
@@ -274,40 +201,4 @@ public class AgentManager
 
     // the agent has been UNLOADED and removed
   }
-
-  /**
-   * The default factory for binding Agents to the AgentManager.
-   **/
-  private static class DefaultAgentBinderFactory extends BinderFactorySupport {
-
-    public Binder getBinder(Object child) {
-      if (child instanceof ComponentDescription) {
-        ComponentDescription cd = (ComponentDescription) child;
-        if (Agent.INSERTION_POINT.equals(cd.getInsertionPoint())) {
-          //Might want to differentiate between Agent and specializations of
-          //agents such as Clusters at some point.  But for now...
-          return new DefaultAgentBinder(this, child);
-        }
-      } else if (child instanceof Agent) {
-        return new DefaultAgentBinder(this, child);
-      }
-      return null;
-    }
-
-    /**
-     * The default Binder for Agents.
-     */
-    private static class DefaultAgentBinder
-      extends BinderSupport
-      implements BindingSite {
-        public DefaultAgentBinder(BinderFactory bf, Object child) {
-          super(bf, child);
-        }
-        protected final BindingSite getBinderProxy() {
-          // horribly unsecure!
-          return this;
-        }
-      }
-  }
-
 }

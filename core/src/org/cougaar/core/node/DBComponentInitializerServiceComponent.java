@@ -29,19 +29,19 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * ServiceComponent Initializer for CSMART database component Initialization.
+ * ServiceComponent Initializer for CSMART database component
+ * Initialization.
+ * <p>
  * Provides the CSMART DB compatible DBInitializerService.
  */
 public class DBComponentInitializerServiceComponent
-    extends GenericStateModelAdapter
-    implements Component {
-
+extends GenericStateModelAdapter
+implements Component
+{
 
   private ServiceBroker sb;
-  private DBInitializerService dbInit = null;
   private ServiceProvider theInitSP;
   private ServiceProvider theDBSP;
-  private LoggingService log;
 
   public void setBindingSite(BindingSite bs) {
     // this is the *node* service broker!  The NodeControlService
@@ -52,54 +52,74 @@ public class DBComponentInitializerServiceComponent
   public void load() {
     super.load();
 
-    log = (LoggingService)
+    LoggingService log = (LoggingService)
       sb.getService(this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
 
-    String experimentId = System.getProperty(Node.EXPTID_PROP);
-
     // Do not provide this service if there is already one there.
     // This allows someone to provide their own component to provide
     // the asset initializer service in their configuration
+    DBInitializerService dbInit;
+    String experimentId = System.getProperty(Node.EXPTID_PROP);
     if (sb.hasService(DBInitializerService.class)) {
       // already have DBInitializer service!
       //
       // leave the existing service in place
       if (log.isInfoEnabled()) {
         log.info(
-            "Not loading the DBInitializer service");
+            "Not loading the DBInitializer service"+
+            ", it already exists");
       }
-      dbInit = (DBInitializerService)sb.getService(this, DBInitializerService.class, null);
+      dbInit = (DBInitializerService) sb.getService(
+          this, DBInitializerService.class, null);
+    } else if (experimentId == null) {
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Not loading the DBInitializer service"+
+            ", missing system property -D"+
+            Node.EXPTID_PROP);
+      }
+      dbInit = null;
     } else {
-      if (experimentId != null) {
-	try {
-	  dbInit = new DBInitializerServiceImpl(experimentId);
-	} catch (Exception e) {
-	  throw new RuntimeException("Unable to load Database Initializer.");
-	}
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Creating a new DBInitializer service"+
+            ", using system property -D"+
+            Node.EXPTID_PROP+"="+experimentId);
       }
-    
-      if (dbInit != null) {
-	theInitSP = new DBInitializerServiceProvider();
-	sb.addService(DBInitializerService.class, theInitSP);
+      try {
+        dbInit = new DBInitializerServiceImpl(experimentId);
+      } catch (Exception e) {
+        throw new RuntimeException(
+            "Unable to load Database Initializer.");
       }
+      theInitSP = new DBInitializerServiceProvider(dbInit);
+      sb.addService(DBInitializerService.class, theInitSP);
     }
 
-    if (dbInit != null) {
-      if (sb.hasService(ComponentInitializerService.class)) {
-	// already have a ComponentInitializer? 
-	// Leave the existing one in place
-	if (log.isInfoEnabled()) {
-	  log.info("Not loading the DBComponentInitializer service");
-	}
-      } else {
-	theDBSP = new DBComponentInitializerServiceProvider(dbInit);
-	if (log.isDebugEnabled())
-	  log.debug("Providing CSMART DB Init service");
-	sb.addService(ComponentInitializerService.class, theDBSP);
+    if (sb.hasService(ComponentInitializerService.class)) {
+      // already have a ComponentInitializer? 
+      // Leave the existing one in place
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Not loading the DB ComponentInitializer service"+
+            ", it already exists");
       }
+    } else if (dbInit == null) {
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Not loading the DB ComponentInitializer service"+
+            ", missing the DBInitializer service");
+      }
+    } else {
+      if (log.isDebugEnabled())
+        log.debug(
+            "Creating a new DB ComponentInitializer service"+
+            " based on the DBInitializer service");
+      theDBSP = new DBComponentInitializerServiceProvider(dbInit);
+      sb.addService(ComponentInitializerService.class, theDBSP);
     }
 
     if (log != LoggingService.NULL) {
@@ -107,7 +127,7 @@ public class DBComponentInitializerServiceComponent
       log = null;
     }
   }
-    
+
   public void unload() {
     if (theInitSP != null) {
       sb.revokeService(DBInitializerService.class, theInitSP);
@@ -120,18 +140,27 @@ public class DBComponentInitializerServiceComponent
     super.unload();
   }
 
-  private class DBInitializerServiceProvider implements ServiceProvider {
-    public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-      if (serviceClass != DBInitializerService.class) {
-        throw new IllegalArgumentException(
-            getClass()+" does not furnish "+serviceClass);
-      }
-      return dbInit;
-    }
+  private static class DBInitializerServiceProvider
+    implements ServiceProvider {
 
-    public void releaseService(ServiceBroker sb, Object requestor,
-        Class serviceClass, Object service)
-    {
+      private final DBInitializerService dbInit;
+
+      public DBInitializerServiceProvider(
+          DBInitializerService dbInit) {
+        this.dbInit = dbInit;
+      }
+
+      public Object getService(
+          ServiceBroker sb, Object requestor, Class serviceClass) {
+        if (serviceClass != DBInitializerService.class) {
+          throw new IllegalArgumentException(
+              getClass()+" does not furnish "+serviceClass);
+        }
+        return dbInit;
+      }
+
+      public void releaseService(ServiceBroker sb, Object requestor,
+          Class serviceClass, Object service) {
+      }
     }
-  }
 }

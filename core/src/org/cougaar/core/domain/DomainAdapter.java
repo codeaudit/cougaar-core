@@ -32,13 +32,25 @@ import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
+/**
+ * This is an optional base class for domain implementations.
+ */
 public abstract class DomainAdapter 
-  extends GenericStateModelAdapter implements DomainBase {
+  extends GenericStateModelAdapter
+  implements Component, Domain 
+{
+
+  private BindingSite bindingSite;
+  private ServiceBroker serviceBroker;
+  private LoggingService logger;
+  private XPlanService xplanService;
+  private DomainRegistryService domainRegistryService;
 
   private final List myEnvelopeLPs = new ArrayList();
   private final List myMessageLPs = new ArrayList();
@@ -46,13 +58,7 @@ public abstract class DomainAdapter
   private final List myABAChangeLPs = new ArrayList();
   
   private Factory myFactory;
-
-  private DomainBindingSite myBindingSite;
-
   private XPlan myXPlan;
-
-  private LoggingService myLoggingService = null;
-
   private String myDomainName;
 
 
@@ -60,33 +66,25 @@ public abstract class DomainAdapter
   public abstract String getDomainName();
 
   public void setBindingSite(BindingSite bindingSite) {
-    if (bindingSite instanceof DomainBindingSite) {
-      myBindingSite = (DomainBindingSite) bindingSite;
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bindingSite);
-    }
-
-    myLoggingService = 
-      (LoggingService) bindingSite.getServiceBroker().getService(this, LoggingService.class, null);
+    this.bindingSite = bindingSite;
+    serviceBroker = bindingSite.getServiceBroker();
   }
 
-  public BindingSite getBindingSite() {
-    return myBindingSite;
+  protected BindingSite getBindingSite() {
+    return bindingSite;
   }
 
   protected XPlan getXPlanForDomain(String domainName) {
-    DomainBindingSite domainBS = (DomainBindingSite) getBindingSite();
-    return domainBS.getXPlanForDomain(domainName);
+    return xplanService.getXPlan(domainName);
   }
 
   protected XPlan getXPlanForDomain(Class domainClass) {
-    DomainBindingSite domainBS = (DomainBindingSite) getBindingSite();
-    return domainBS.getXPlanForDomain(domainClass);
+    return xplanService.getXPlan(domainClass);
   }
 
   /** returns the LoggingService **/
   public LoggingService getLoggingService() {
-    return myLoggingService;
+    return logger;
   }
 
   /** returns the Factory for this Domain. **/
@@ -103,10 +101,56 @@ public abstract class DomainAdapter
   public void load() {
     super.load();
 
+    LoggingService ls = (LoggingService) 
+      serviceBroker.getService(this, LoggingService.class, null);
+    if (ls != null) {
+      logger = ls;
+    }
+
+    xplanService = (XPlanService)
+      serviceBroker.getService(this, XPlanService.class, null);
+    if (xplanService == null) {
+      throw new RuntimeException(
+          "Unable to obtain XPlanService");
+    }
+
+    domainRegistryService = (DomainRegistryService)
+      serviceBroker.getService(this, DomainRegistryService.class, null);
+    if (domainRegistryService == null) {
+      throw new RuntimeException(
+          "Unable to obtain DomainRegistryService");
+    }
+
     loadFactory();
     loadXPlan();
     loadLPs();
+
+    domainRegistryService.registerDomain(this);
   }
+
+  public void unload() {
+    super.unload();
+
+    if (domainRegistryService != null) {
+      domainRegistryService.unregisterDomain(this);
+      serviceBroker.releaseService(
+          this, DomainRegistryService.class, domainRegistryService);
+      domainRegistryService = null;
+    }
+
+    if (xplanService != null) {
+      serviceBroker.releaseService(
+          this, XPlanService.class, xplanService);
+      xplanService = null;
+    }
+
+    if (logger != LoggingService.NULL) {
+      serviceBroker.releaseService(
+          this, LoggingService.class, logger);
+      logger = LoggingService.NULL;
+    }
+  }
+
 
   /** invoke the MessageLogicProviders for this domain **/
   public void invokeMessageLogicProviders(DirectiveMessage message) {
@@ -251,9 +295,9 @@ public abstract class DomainAdapter
 
   /** set the factory for this Domain **/
   protected void setFactory(Factory factory) {
-    if ((myFactory != null) && myLoggingService.isDebugEnabled()) {
+    if ((myFactory != null) && logger.isDebugEnabled()) {
       // Should we even allow this?
-      myLoggingService.debug("DomainAdapter: resetting Factory");
+      logger.debug("DomainAdapter: resetting Factory");
     }
 
     myFactory = factory;
@@ -261,9 +305,9 @@ public abstract class DomainAdapter
 
   /** set the XPlan for this Domain **/
   protected void setXPlan(XPlan xPlan) {
-    if ((myXPlan != null) && myLoggingService.isDebugEnabled()) {
+    if ((myXPlan != null) && logger.isDebugEnabled()) {
       // Should we even allow this?
-      myLoggingService.debug("DomainAdapter: resetting XPlan");
+      logger.debug("DomainAdapter: resetting XPlan");
     }
     
     myXPlan = xPlan;

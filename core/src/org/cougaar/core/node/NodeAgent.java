@@ -35,11 +35,6 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.agent.SimpleAgent;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BinderFactorySupport;
-import org.cougaar.core.component.BinderSupport;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.Container;
@@ -79,7 +74,7 @@ import org.cougaar.util.log.Logging;
  * MetricsService, MetricsUpdateService, NodeMetricsService, MessageTransport,
  * RootServletComponent, external INTERNAL components.
  * </li>
- * <li> <em>BINDER</em>: NodeAgentBinderFactory, external BINDER components.
+ * <li> <em>BINDER</em>: external BINDER components.
  * </li>
  * <li> <em>COMPONENT</em>: external COMPONENT components.
  * </li>
@@ -109,9 +104,9 @@ import org.cougaar.util.log.Logging;
  *   component.  See bug 2522.  Default <em>true</em>
  */
 public class NodeAgent
-  extends SimpleAgent
+extends SimpleAgent
 {
-  private ServiceBroker agentServiceBroker = null;
+  private ServiceBroker rootsb = null;
   private AgentManager agentManager = null;
   private AgentContainer agentManagerProxy = null;
 
@@ -186,7 +181,7 @@ public class NodeAgent
     nodeIdentifier = (MessageAddress) l.get(0);
     nodeName = nodeIdentifier.getAddress();
     super.setParameter(nodeIdentifier);
-    agentServiceBroker = (ServiceBroker) l.get(1);
+    rootsb = (ServiceBroker) l.get(1);
     agentManager = (AgentManager) l.get(2);
     agentManagerProxy = new AgentManagerProxy();
     ignoreRehydratedAgentDescs = ((Boolean) l.get(3)).booleanValue();
@@ -207,39 +202,17 @@ public class NodeAgent
   /// 
 
   protected void loadHighPriorityComponents() {
-    ServiceBroker rootsb = agentServiceBroker;
+    // add NodeControlService
+    ServiceBroker csb = getChildServiceBroker();
+    NodeControlServiceProvider ncsp = 
+      new NodeControlServiceProvider(
+          rootsb, agentManagerProxy);
+    csb.addService(NodeControlService.class, ncsp);
 
-    // set up the NodeControlService
-    { 
-      final Service _nodeControlService = new NodeControlService() {
-        public ServiceBroker getRootServiceBroker() {
-          return agentServiceBroker;
-        }
-        public AgentContainer getRootContainer() {
-          return agentManagerProxy;
-        }
-      };
-
-      ServiceProvider ncsp = new ServiceProvider() {
-        public Object getService(ServiceBroker xsb, Object requestor, Class serviceClass) {
-          if (serviceClass == NodeControlService.class) {
-            return _nodeControlService;
-          } else {
-            throw new IllegalArgumentException("Can only provide NodeControlService!");
-          }
-        }
-        public void releaseService(
-            ServiceBroker xsb, Object requestor, Class serviceClass, Object service) {
-        }
-      };
-      getServiceBroker().addService(NodeControlService.class, ncsp);
-    }
-
-    {
-      LoggingServiceProvider lsp = new LoggingServiceProvider();
-      rootsb.addService(LoggingService.class, lsp);
-      rootsb.addService(LoggingControlService.class, lsp);
-    }
+    // add logging services
+    LoggingServiceProvider lsp = new LoggingServiceProvider();
+    rootsb.addService(LoggingService.class, lsp);
+    rootsb.addService(LoggingControlService.class, lsp);
 
     super.loadHighPriorityComponents();
 
@@ -257,8 +230,6 @@ public class NodeAgent
   }
 
   protected void loadInternalPriorityComponents() {
-    ServiceBroker rootsb = agentServiceBroker;
-
     List threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
@@ -316,15 +287,17 @@ public class NodeAgent
     }
     if (agentDescs == null) {
       try {
+        ServiceBroker sb = getServiceBroker();
         ComponentInitializerService cis = (ComponentInitializerService) 
-          rootsb.getService(this, ComponentInitializerService.class, null);
+          sb.getService(
+              this, ComponentInitializerService.class, null);
         if (logger.isInfoEnabled())
           logger.info("NodeAgent(" + nodeName + ").loadInternal about to ask for agents");
         // get the agents - this gives _anything_ below AgentManager,
         // so must extract out just the .Agent's later (done in addAgents)
         agentDescs =
           cis.getComponentDescriptions(nodeName, AgentManager.INSERTION_POINT);
-        rootsb.releaseService(this, ComponentInitializerService.class, cis);
+        sb.releaseService(this, ComponentInitializerService.class, cis);
         if (logger.isInfoEnabled()) {
           logger.info("Using ComponentInitializerService list of " + agentDescs.length + " agents");
         }
@@ -371,14 +344,8 @@ public class NodeAgent
   }
 
   protected void loadBinderPriorityComponents() {
-    // set up our binder factory
-    {
-      BinderFactory nabf = new NodeAgentBinderFactory();
-      if (!attachBinderFactory(nabf)) {
-        throw new Error("Failed to load the NodeAgentBinderFactory in NodeAgent");
-      }
-    }
-
+    // we used to delay the PluginManager binder factor until now.
+    // a config-defined binder factory is a better solution
     super.loadBinderPriorityComponents();
   }
 
@@ -609,32 +576,8 @@ public class NodeAgent
         super.receiveMessage(m);
       }
     } catch (Exception e) {
-      getLogger().warn("NodeAgent "+this+" received invalid message: "+m, e);
+      logger.warn("NodeAgent "+this+" received invalid message: "+m, e);
     }
-  }
-
-  //
-  // Binder for children
-  //
-  private static class NodeAgentBinderFactory extends BinderFactorySupport {
-    // bind everything but NodeAgent's PluginManager
-    public Binder getBinder(Object child) {
-      if (! (child instanceof PluginManager)) {
-        return new NodeAgentBinder(this, child);
-      } else {
-        return null;
-      }
-    }
-    private static class NodeAgentBinder 
-      extends BinderSupport
-      implements BindingSite {
-        public NodeAgentBinder(BinderFactory bf, Object child) {
-          super(bf, child);
-        }
-        protected BindingSite getBinderProxy() {
-          return this;
-        }
-      }
   }
 
   //
@@ -647,4 +590,37 @@ public class NodeAgent
     heartbeat.start();
   }
 
+  private static class NodeControlServiceProvider
+    implements ServiceProvider {
+
+      private final Service myService;
+
+      public NodeControlServiceProvider(
+          final ServiceBroker rootsb,
+          final AgentContainer rootac) {
+        myService = 
+          new NodeControlService() {
+            public ServiceBroker getRootServiceBroker() {
+              return rootsb;
+            }
+            public AgentContainer getRootContainer() {
+              return rootac;
+            }
+          };
+      }
+
+      public Object getService(
+          ServiceBroker xsb, Object requestor, Class serviceClass) {
+        if (serviceClass == NodeControlService.class) {
+          return myService;
+        } else {
+          throw new IllegalArgumentException(
+              "Can only provide NodeControlService!");
+        }
+      }
+      public void releaseService(
+          ServiceBroker xsb, Object requestor,
+          Class serviceClass, Object service) {
+      }
+    }
 }

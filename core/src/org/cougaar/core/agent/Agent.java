@@ -21,15 +21,7 @@
 
 package org.cougaar.core.agent;
 
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BinderFactorySupport;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ContainerAPI;
-import org.cougaar.core.component.ContainerBinderSupport;
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
@@ -40,56 +32,18 @@ import org.cougaar.util.log.Logging;
  * implementing an Agent.
  **/
 public abstract class Agent 
-  extends ContainerSupport
-  implements ContainerAPI 
+extends ContainerSupport
 {
   /** The Insertion point for any Agent, defined relative to the AgentManager. **/
   public static final String INSERTION_POINT = AgentManager.INSERTION_POINT + ".Agent";
-
-  private ServiceBroker childServiceBroker;
-  private Logger logger;
-
-  public Agent() {
-    BinderFactory pmbf = new AgentChildBinderFactory();
-    if (!attachBinderFactory(pmbf)) {
-      throw new RuntimeException("Failed to load the AgentChildBinderFactory");
-    }
-    logger = Logging.getLogger(this.getClass());
-  }
-
-  protected final Logger getLogger() { return logger; }
-
-  public void setBindingSite(BindingSite bs) {
-    super.setBindingSite(bs);
-    childServiceBroker = specifyAgentServiceBroker(bs);
-    setChildServiceBroker(childServiceBroker);
-  }
-
-  public void unload() {
-    if (childServiceBroker != null) {
-      destroyAgentServiceBroker(childServiceBroker);
-      childServiceBroker = null;
-    }
-
-    super.unload();
-  }
 
   public boolean add(Object o) {
     try {
       return super.add(o);
     } catch (RuntimeException re) {
-      getLogger().error("Failed to add "+o+" to "+this, re);
+      Logger logger = Logging.getLogger(this.getClass());
+      logger.error("Failed to add "+o+" to "+this, re);
       throw re;
-    }
-  }
-
-  protected ServiceBroker specifyAgentServiceBroker(BindingSite bs) {
-    return new AgentServiceBroker(bs);
-  }
-
-  protected void destroyAgentServiceBroker(ServiceBroker sb) {
-    if (sb instanceof AgentServiceBroker) {
-      ((AgentServiceBroker) sb).myDestroy();
     }
   }
 
@@ -97,50 +51,6 @@ public abstract class Agent
     return INSERTION_POINT;
   }
 
-  protected Object getBinderFactoryProxy() {
-    return this;
-  }
-  protected ContainerAPI getContainerProxy() {
-    return this;
-  }
-
   //backwards compatability to attach to Cluster Agents for now
-  abstract public MessageAddress getAgentIdentifier();
-
-  //
-  // implement the API needed by agent binders
-  //
-
-  public final void requestStop() {} // used to satisfy ContainerAPI of BindingSite 
-  //
-  // support classes
-  //
-
-  private static class AgentServiceBroker extends PropagatingServiceBroker {
-    public AgentServiceBroker(BindingSite bs) {
-      super(bs);
-    }
-    private void myDestroy() {
-      super.destroy();
-    }
-  }
-
-  private static class AgentChildBinderFactory extends BinderFactorySupport {
-    public Binder getBinder(Object child) {
-      return new AgentChildBinder(this, child);
-    }
-    private static class AgentChildBinder 
-      extends ContainerBinderSupport 
-      implements BindingSite
-      {
-        public AgentChildBinder(BinderFactory bf, Object child) {
-          super(bf, child);
-        }
-        protected BindingSite getBinderProxy() {
-          // do the right thing later
-          return this;
-        }
-      }
-  }
-
+  public abstract MessageAddress getAgentIdentifier();
 }

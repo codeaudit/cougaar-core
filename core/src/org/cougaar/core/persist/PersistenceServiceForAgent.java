@@ -32,4 +32,13 @@ public interface PersistenceServiceForAgent extends PersistenceService {
    * @return null if there is no persisted state.
    **/
   void rehydrate(PersistenceObject pObject);
+
+  /**
+   * Suspend persistence services.
+   * <p>
+   * This method is invoked after the agent has suspended the
+   * persistence component and captured the blackboard state.
+   */
+  void suspend();
+
 }

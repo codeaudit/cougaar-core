@@ -26,27 +26,24 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.ContainerAPI;
-import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.StateObject;
 import org.cougaar.core.service.BlackboardMetricsService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.persist.PersistenceObject;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /** The standard Blackboard Component implementation.
  * For now it just looks like a container but doesn't
  * actually contain anything - at least not any subcomponents.
  **/
 public class StandardBlackboard
-  extends ContainerSupport
-  implements StateObject
+extends GenericStateModelAdapter
+implements Component
 {
   private ServiceBroker sb = null;
-  private BindingSite bindingSite = null;
-//   private Object loadState = null;
   private Blackboard bb = null;
   private Distributor d = null;
 
@@ -56,24 +53,9 @@ public class StandardBlackboard
   private BlackboardServiceProvider bbSP;
   
   public void setBindingSite(BindingSite bs) {
-    super.setBindingSite(bs);
-    this.bindingSite = bs;
-    this.sb = bs.getServiceBroker();
+    sb = bs.getServiceBroker();
   }
 
-  public void setState(Object loadState) {
-//     this.loadState = loadState;
-  }
-
-  public Object getState() {
-    return null;
-//     try {
-//       return bb.getState();
-//     } catch (Exception e) {
-//       throw new RuntimeException(
-//           "Unable to capture Blackboard state", e);
-//     }
-  }
   public PersistenceObject getPersistenceObject() {
     try {
       return bb.getPersistenceObject();
@@ -133,17 +115,6 @@ public class StandardBlackboard
           this, MessageSwitchService.class, msgSwitch);
       msgSwitch = null;
     }
-  }
-
-  //
-  // binding services
-  //
-
-  protected String specifyContainmentPoint() {
-    return Blackboard.INSERTION_POINT;
-  }
-  protected ContainerAPI getContainerProxy() {
-    return null;
   }
 
   //

@@ -22,29 +22,19 @@
 package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.component.Binder;
-import org.cougaar.core.component.BinderFactory;
-import org.cougaar.core.component.BinderFactorySupport;
-import org.cougaar.core.component.BinderSupport;
-import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
-import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.component.StateObject;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 
-
 public final class MetricsServiceProvider
-    extends ContainerSupport
-    implements ContainerAPI, ServiceProvider, StateObject
+extends ContainerSupport
+implements ServiceProvider
 {
     
     private static final String RETRIEVER_IMPL_CLASS =
@@ -63,14 +53,6 @@ public final class MetricsServiceProvider
     private MetricsService retriever;
     private MetricsUpdateService updater;
     private DataFeedRegistrationService registrar;
-
-    public MetricsServiceProvider() {
-	BinderFactory bf = new QosBinderFactory();
-	if (!attachBinderFactory(bf)) {
-	    throw new RuntimeException("Failed to load the BinderFactory in MetricsServiceProvider");
-	}
-
-    }
 
     private void makeUpdaterService() {
 	try {
@@ -136,18 +118,6 @@ public final class MetricsServiceProvider
 	sb.addService(DataFeedRegistrationService.class, this);
     }
 
-    // Child Components loaded here
-    public void loadComponentPriorityComponents() {
-        super.loadComponentPriorityComponents();
-    }
-
-    // After Child Components are loaded
-    public void load() {
-	super.load();
-    }
-
-
-
     // Service Provider API
 
     public Object getService(ServiceBroker sb, 
@@ -172,12 +142,9 @@ public final class MetricsServiceProvider
     {
     }
 
-
-
     // Container API
 
-
-    protected ComponentDescriptions findExternalComponentDescriptions() {
+    protected ComponentDescriptions findInitialComponentDescriptions() {
 	ServiceBroker sb = getServiceBroker();
 	ComponentInitializerService cis = (ComponentInitializerService) 
 	    sb.getService(this, ComponentInitializerService.class, null);
@@ -201,49 +168,4 @@ public final class MetricsServiceProvider
     protected String specifyContainmentPoint() {
 	return Agent.INSERTION_POINT + ".MetricsServices";
     }
-
-    public void requestStop() {}
-
-    public final void setBindingSite(BindingSite bs) {
-        super.setBindingSite(bs);
-        setChildServiceBroker(new PropagatingServiceBroker(bs));
-    }
-
-
-    public ContainerAPI getContainerProxy() {
-	return this;
-    }
-
-
-    // StateModel API
-
-    // Return a (serializable) snapshot that can be used to
-    // reconstitute the state later.
-    public Object getState() {
-	// TBD
-	return null;
-    }
-
-    // Reconstitute from the previously returned snapshot.
-    public void setState(Object state) {
-    }
-
-    private static class QosBinderFactory
-      extends BinderFactorySupport {
-        public Binder getBinder(Object child) {
-          return new QosBinder(this, child);
-        }
-        private static class QosBinder 
-          extends BinderSupport
-          implements BindingSite {
-            public QosBinder(BinderFactory bf, Object child) {
-              super(bf, child);
-            }
-            protected final BindingSite getBinderProxy() {
-              return this;
-            }
-          }
-      }
-
 }
-

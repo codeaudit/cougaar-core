@@ -30,53 +30,34 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
  * Describe an COUGAAR "Pluggable Domain Package" which consists of
  * a set of domain-specific objects as represented by a 
  * Factory class, and a set of LogicProviders.
- *
- * Domain classes must also implement a static
- * create() method so that they can be constructed
- * by the infrastructure.
- *
- * Domains may optionally implement <pre>Collection<String> getAliases()</pre>
- * to present alias names to the domain manager.  This feature is likely
- * to be removed in short order, as it is only to allow backward-compatability
- * when domain names change.  Use of domain aliases may result in warnings.
- **/
+ */
+public interface Domain {
 
-public interface Domain 
-{
+  /** returns the domain name, which must be unique */
+  String getDomainName();
 
-  /** Return the Factory for this Domain. **/
+  /** returns the XPlan instance for the domain */
+  XPlan getXPlan();
+
+  /** returns the Factory for this Domain */
   Factory getFactory();
 
-  /** invoke the MessageLogicProviders for this domain **/
+  /** invoke the MessageLogicProviders for this domain */
   void invokeMessageLogicProviders(DirectiveMessage message);
 
-  /** invoke the EnvelopeLogicProviders for this domain **/
+  /** invoke the EnvelopeLogicProviders for this domain */
   void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
                                     boolean isPersistenceEnvelope);
 
-  /** invoke the RestartLogicProviders for this domain **/
+  /** invoke the RestartLogicProviders for this domain */
   void invokeRestartLogicProviders(MessageAddress cid);
 
   /**
-   * invoke the ABAChangeLogicProviders for this domain
+   * invoke the ABAChangeLogicProviders for this domain.
+   *
    * @param communities the set of communities with potiential
    * changes. If null, all communities may have changed.
-   **/
+   */
   void invokeABAChangeLogicProviders(Set communities);
 
-  /** returns the domain name  - uniqueness not currently enforced **/
-  String getDomainName();
-
-  /** returns the XPlan instance for the domain - instance may be **/
-  /** be shared among domains **/
-  XPlan getXPlan();
 }
-
-
-
-
-
-
-
-
-

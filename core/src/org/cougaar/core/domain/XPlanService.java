@@ -21,19 +21,15 @@
 
 package org.cougaar.core.domain;
 
-import java.util.Collection;
-import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.Service;
 
-/** This is the interface presented to a DomainBinder from the DomainManager.
- **/
-public interface DomainManagerForBinder
-  extends ContainerAPI
-{
-  Collection getXPlans();
-  XPlan getXPlanForDomain(String domainName);
-  XPlan getXPlanForDomain(Class domainClass);
-  Factory getFactoryForDomain(String domainName);
-  Factory getFactoryForDomain(Class domainClass);
+/**
+ * This service provides access to the XPlans.
+ * <p>
+ * This service is advertised by the domain manager to
+ * its child components, which are typically domains.
+ */
+public interface XPlanService extends Service {
+  XPlan getXPlan(String domainName);
+  XPlan getXPlan(Class domainClass);
 }
-
-
