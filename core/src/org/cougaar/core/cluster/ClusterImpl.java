@@ -351,6 +351,7 @@ public class ClusterImpl extends Agent
     try {
       myBlackboard = new Blackboard(getDistributor(), this);
       getDistributor().setBlackboard(myBlackboard);
+      Domain rootDomain = DomainManager.find("root");
 
       Collection domains = DomainManager.values();
       for (Iterator i = domains.iterator(); i.hasNext(); ) {
@@ -359,8 +360,8 @@ public class ClusterImpl extends Agent
         // add all the domain-specific logic providers
         XPlanServesBlackboard xPlan = d.createXPlan(myBlackboard.getXPlans());
         myBlackboard.addXPlan(xPlan);
-        if (d == getFactory()) {
-          myLogPlan = (LogPlan) xPlan;
+        if (d == rootDomain) {
+          myLogPlan = (LogPlan) xPlan; // required for metrics (until we fix metrics)
         }
         Collection lps = d.createLogicProviders(xPlan, this);
         if (lps != null) {
