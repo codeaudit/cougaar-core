@@ -49,7 +49,7 @@ final class SchedulableObject implements Schedulable
 
 
     public String toString() {
-	return "<Schedulable for " +consumer+ ">";
+	return "<Schedulable " +name+ " for " +consumer+ ">";
     }
 
     long timestamp() {

@@ -26,7 +26,6 @@ import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.qos.metrics.Metric;
 import org.cougaar.core.qos.metrics.MetricImpl;
-import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.MetricsUpdateService;
 import org.cougaar.core.qos.metrics.Constants;
 
@@ -109,16 +108,12 @@ public class LoadWatcher
 
 
     private HashMap records = new HashMap();
-    private int total = 0;
     private MetricsUpdateService metricsUpdateService;
-    private MetricsService metricsService;
 
 
     public LoadWatcher(ServiceBroker sb) {
 	metricsUpdateService = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
-	metricsService = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
 	ThreadListenerService tls = (ThreadListenerService)
 	    sb.getService(this, ThreadListenerService.class, null);
 	tls.addListener(this);
@@ -158,14 +153,12 @@ public class LoadWatcher
     }
 
     public void rightGiven(String consumer) {
-	++total;
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	++rec.outstanding;
     }
 		
     public void rightReturned(String consumer) {
-	--total; 
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	--rec.outstanding;
