@@ -33,7 +33,7 @@ import org.cougaar.core.society.UID;
 
 /** Policy implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: Policy.java,v 1.2 2001-01-03 14:33:07 mthome Exp $
+ * @version $Id: Policy.java,v 1.3 2001-02-15 19:43:28 tomlinso Exp $
  **/
 
 
@@ -66,7 +66,10 @@ public class Policy
   }
 
   /**
-   * Adds a new RuleParameter to the set stored in the Policy
+   * Adds a new RuleParameter to the set stored in the Policy. This
+   * should be the sole means for putting parameters into the policy
+   * and can be overridden if desired to take special action such as
+   * caching certain parameters for quicker access.
    * @param rule_parameter the new param to be added to the Policy
    **/
   public void Add(RuleParameter rule_parameter) 
@@ -111,7 +114,7 @@ public class Policy
   public boolean Replace(RuleParameter replacement_param) 
   {
     if (my_parameters.get(replacement_param.getName()) != null) {
-      my_parameters.put(replacement_param.getName(), replacement_param);
+      Add(replacement_param);
       return true;
     }
     return false;
