@@ -21,9 +21,11 @@
 
 package org.cougaar.core.thread;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -45,6 +47,20 @@ public class DynamicSortedQueue
 	this.comparator = comparator;
     }
 
+    interface Processor {
+	void process(Object thing);
+    }
+
+    // Utter and total hack.
+    void processEach(Processor processor) {
+	Iterator itr = store.iterator();
+	Object thing = null;
+	String string = null;
+	while (itr.hasNext()) {
+	    thing = itr.next();
+	    processor.process(thing);
+	}
+    }
 
     public ArrayList filter(UnaryPredicate predicate) {
 	ArrayList result = new ArrayList();

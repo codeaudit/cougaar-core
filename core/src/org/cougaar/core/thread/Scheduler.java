@@ -106,6 +106,33 @@ public class Scheduler
     }
 
 
+    // NB: By design this method is NOT synchronized!  
+    void listQueuedThreads(final List records) {
+	final long now = System.currentTimeMillis();
+	DynamicSortedQueue.Processor processor = 
+	    new DynamicSortedQueue.Processor() {
+		public void process(Object thing) {
+		    try {
+			ThreadStatusService.Record record = 
+			    new ThreadStatusService.QueuedRecord();
+			SchedulableObject sched = (SchedulableObject) thing;
+			if (sched == null) return;
+			Object consumer = sched.getConsumer();
+			if (consumer != null)
+			    record.consumer = consumer.toString();
+			record.scheduler = name;
+			record.schedulable = sched.getName();
+			record.elapsed = now-sched.getTimestamp();
+			records.add(record);
+		    } catch (Throwable t) {
+		    }
+		}};
+	try {
+	    pendingThreads.processEach(processor);
+	} catch (Throwable r) {
+	}
+    }
+
     private synchronized Logger getLogger() {
 	if (logger == null) logger = Logging.getLogger(getClass().getName());
 	return logger;

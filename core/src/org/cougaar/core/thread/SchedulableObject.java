@@ -52,6 +52,10 @@ final class SchedulableObject implements Schedulable
     }
 
 
+    String getName() {
+	return name;
+    }
+
     Scheduler getScheduler() {
 	return scheduler;
     }

@@ -22,8 +22,10 @@
 package org.cougaar.core.thread;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -55,6 +57,7 @@ public final class ThreadServiceProvider
     private ThreadListenerProxy listenerProxy;
     private Scheduler scheduler;
     private ThreadServiceProxy proxy;
+    private ThreadStatusService statusProxy;
     private String name;
 
     /**
@@ -87,6 +90,18 @@ public final class ThreadServiceProvider
 	    sb.getService(this, ThreadService.class, null);
 	makeProxies(parent);
 	provideServices(sb);
+	if (isRoot) {
+	    statusProxy = new ThreadStatusService() {
+		    public List getStatus() {
+			TreeNode node = scheduler.getTreeNode();
+			List result = new ArrayList();
+			node.listQueuedThreads(result);	
+			node.listActiveThreads(result);
+			return result;
+		    }
+		};
+	    sb.addService(ThreadStatusService.class, this);
+	}
     }
 
     private void setParameterFromString(String property) {
@@ -154,6 +169,8 @@ public final class ThreadServiceProvider
 	    return scheduler;
 	} else if (serviceClass == ThreadListenerService.class) {
 	    return listenerProxy;
+	} else if (serviceClass == ThreadStatusService.class) {
+	    return statusProxy;
 	} else {
 	    return null;
 	}

@@ -26,6 +26,11 @@ import java.util.Iterator;
 import java.util.TimerTask;
 import org.cougaar.core.service.ThreadService;
 
+/**
+ * This class represents something like a TimerTask but one which uses
+ * a 'thread' from the ThreadService.  It's not currently used but may
+ * be later. 
+ */
 public class TimerRunnable implements Runnable
 {
 

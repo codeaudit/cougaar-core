@@ -116,12 +116,10 @@ public class LoadWatcher
 
 	private String extractObjectName(String rawName) {
 	    if (rawName.startsWith("Node")) {
-		return rawName.replace(' ', '_');
+		return rawName.replace(' ', '-');
 	    } else if (rawName.startsWith("Agent")){
-		// We assume 'Agent <Cluster name>'
-		int start = rawName.lastIndexOf(' ');
-		int end = rawName.length();
-		return rawName.substring(start+1, end-1);
+		// We assume 'Agent_AgentName'
+		return rawName.substring(6);
 	    } else {
 		return "Service" +KEY_SEPR+ rawName;
 	    }

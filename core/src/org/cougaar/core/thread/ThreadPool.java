@@ -23,6 +23,8 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -63,6 +65,8 @@ class ThreadPool
 	 * suspended.
 	 **/
 	private Object runLock = new Object();
+
+	private long start_time;
 
 	private void setRunnable(Runnable r) {
 	    runnable = r;
@@ -115,6 +119,7 @@ class ThreadPool
 		    throw new IllegalThreadStateException("PooledThread already started: "+
 							  schedulable);
 		this.schedulable = schedulable;
+		start_time = System.currentTimeMillis();
 		isRunning = true;
 
 		if (!isStarted) {
@@ -254,5 +259,29 @@ class ThreadPool
 	    return null;
     }
 
-
+    void listActiveThreads(List records) {
+	PooledThread thread = null;
+	long now = System.currentTimeMillis();
+	long elapsed = 0;
+	for (int i=0; i<pool.length; i++) {
+	    thread = pool[i];
+	    if (thread != null && thread.isRunning) {
+		ThreadStatusService.Record record = 
+		    new ThreadStatusService.ActiveRecord();
+		try {
+		    SchedulableObject sched = thread.schedulable;
+		    Object consumer = sched.getConsumer();
+		    if (consumer != null)
+			record.consumer = consumer.toString();
+		    Scheduler scheduler = sched.getScheduler();
+		    if (scheduler != null)
+			record.scheduler = scheduler.getName();
+		    record.schedulable = sched.getName();
+		    record.elapsed = now-thread.start_time;
+		    records.add(record);
+		} catch (Throwable t) {
+		}
+	    }
+	}
+    }
 }

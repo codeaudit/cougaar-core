@@ -80,7 +80,7 @@ public class SchedulerWatcher
 	    this.consumer = consumer;
 	    this.name = consumer.toString();
 	    this.prefix = "Agent" +KEY_SEPR+ agentName
-		+KEY_SEPR+ "Plugin"+this.name +KEY_SEPR;
+		+KEY_SEPR+ "Plugin" +KEY_SEPR+ this.name +KEY_SEPR;
 	}
 
 
@@ -134,6 +134,7 @@ public class SchedulerWatcher
 					   PROVENANCE);
 // 	    metricsUpdateService.updateValue(prefix+tag, PROVENANCE, metric);
  	    metricsUpdateService.updateValue(prefix+tag, metric);
+	    //	    System.out.println("Metric:"+prefix+tag + "="+metric);
 	}
 
 

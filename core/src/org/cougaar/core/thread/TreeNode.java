@@ -22,6 +22,8 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 final class TreeNode
 {
@@ -68,7 +70,21 @@ final class TreeNode
 	return children;
     }
 
+    void listActiveThreads(List records) {
+	pool.listActiveThreads(records);
+    }
 
+    void listQueuedThreads(List records) {
+	scheduler.listQueuedThreads(records);
+	if (children != null) {
+	    Iterator itr = children.iterator();
+	    TreeNode child = null;
+	    while (itr.hasNext()) {
+		child = (TreeNode) itr.next();
+		child.listQueuedThreads(records);
+	    }
+	}
+    }
 
 
     Scheduler getScheduler() {

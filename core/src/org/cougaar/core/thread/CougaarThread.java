@@ -22,28 +22,46 @@
 package org.cougaar.core.thread;
 
 
-public class CougaarThread
+/**
+ * Defines a set of Schedulable state constants.  The only states
+ * supported right now are RUNNING (active), PENDING (queued), and
+ * DORMANT (neither).  We may eventually have a use for DISQUALIFIED
+ * (the ThreadControlService has prevented it from running).
+ * SUSPENDED is here for historical reasons and will almost never be
+ * supported. 
+ * 
+ * Note that these states are purely for informational purposes.
+ * They're not used internally in any way.
+ */
+public interface CougaarThread
 {
 
-    // Four states: running, suspended, pending, dormant
+    /**
+     * The Schedulable is currently running. 
+     */
     public static final int THREAD_RUNNING = 0;
+
+    /**
+     * Not supported, but would in theory mean the Schedulable has
+    suspended itself.
+    */
     public static final int THREAD_SUSPENDED = 1;
+
+    /**
+     * The Schedulable is currently queued. 
+     */
     public static final int THREAD_PENDING = 2;
+
+    /**
+     * The Schedulable is qualified but neither running nor queued. 
+     */
     public static final int THREAD_DORMANT = 3;
+
+
+    /**
+     * The Schedulable has been disqualified by the ThreadControlService.
+     */
     public static final int THREAD_DISQUALIFIED = 4;
-
-    public static final boolean Debug = 
-	Boolean.getBoolean("org.cougaar.thread.debug");
-
-    
-    private static SchedulableObject getSchedulableObject() {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ThreadPool.PooledThread) 
-	    return ((ThreadPool.PooledThread) thread).getSchedulable();
-	else
-	    return null;
-		    
-    }
 
 
 }
