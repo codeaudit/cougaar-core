@@ -1,3 +1,11 @@
+2002-06-06  Noelle Givler  <ngivler@bbn.com>
+	
+	* org/cougaar/planning/ldm/lps/AssetTransferLP
+	* org/cougaar/planning/ldm/lps/ReceiveAssetVerificationLP
+	* org/cougaar/planning/ldm/lps/RescindLP	
+	Update transferring assets availability schedule to reflect the
+	start/end and 'owning' asset. Bug 877
+	
 2002-06-05  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/core/plugin/DefaultPluginBinder
