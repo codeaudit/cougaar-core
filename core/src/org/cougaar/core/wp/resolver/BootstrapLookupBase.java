@@ -22,8 +22,11 @@
 package org.cougaar.core.wp.resolver;
 
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -295,23 +298,65 @@ implements Component
   }
 
   /** Generic utility method to check if a host is localhost */
-  protected static boolean isLocalHost(String addr) {
+  protected boolean isLocalHost(String addr) {
     // quick test for localhost...
     if (addr.equals("localhost") ||
         addr.equals("127.0.0.1") ||
         addr.equals("localHost") // bogus
        ) {
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "isLocalHost("+addr+") is true");
+      }
       return true;
     }
     try {
       InetAddress de = InetAddress.getByName(addr);
-      InetAddress me = InetAddress.getLocalHost();
-      return de.equals(me);
+      // quick test for "getLocalHost"
+      InetAddress lh = InetAddress.getLocalHost();
+      if (logger.isDetailEnabled()) {
+        logger.detail(
+            "isLocalHost("+addr+
+            "), getByName("+addr+")="+de+
+            ", getLocalHost()="+lh+
+            ", equal="+(lh.equals(de)));
+      }
+      if (lh.equals(de)) {
+        return true;
+      }
+      // check all network interfaces
+      for (Enumeration e1 = NetworkInterface.getNetworkInterfaces();
+          e1.hasMoreElements();
+          ) {
+        NetworkInterface iface = (NetworkInterface) e1.nextElement();
+        for (Enumeration e2 = iface.getInetAddresses();
+            e2.hasMoreElements();
+            ) {
+          InetAddress me = (InetAddress) e2.nextElement();
+          if (logger.isDetailEnabled()) {
+            logger.detail(
+                "isLocalHost("+addr+
+                "), getByName("+addr+")="+de+
+                ", network_interface[?]="+me+
+                ", equal="+(me.equals(de)));
+          }
+          if (me.equals(de)) {
+            return true;
+          }
+        }
+      }
     } catch (UnknownHostException e) {
-      e.printStackTrace();
+      if (logger.isErrorEnabled()) {
+        logger.error("isLocalHost("+addr+") failed", e);
+      }
+    } catch (SocketException e) {
+      if (logger.isErrorEnabled()) {
+        logger.error("isLocalHost("+addr+") failed", e);
+      }
     }
     return false;
   }
+
 
   /**
    * Utility method to replace the host name in an AddressEntry with
