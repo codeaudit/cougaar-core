@@ -59,8 +59,6 @@ public abstract class DomainAdapter
   
   private Factory myFactory;
   private XPlan myXPlan;
-  private String myDomainName;
-
 
   /** returns the Domain name **/
   public abstract String getDomainName();
@@ -266,15 +264,15 @@ public abstract class DomainAdapter
     return myEnvelopeLPs;
   }
 
-  private final List getMessageLPs() {
+  protected final List getMessageLPs() {
     return myMessageLPs;
   }
 
-  private final List getRestartLPs() {
+  protected final List getRestartLPs() {
     return myRestartLPs;
   }
 
-  private final List getABAChangeLPs() {
+  protected final List getABAChangeLPs() {
     return myABAChangeLPs;
   }
 
