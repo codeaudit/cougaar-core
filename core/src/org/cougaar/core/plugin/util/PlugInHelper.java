@@ -272,7 +272,8 @@ public class PlugInHelper {
     }
 
     public static double getARAspectValue(AllocationResult ar, int type) {
-	AspectValue[] avs = ar.getAspectValueResults();
+	if (ar == null) return Double.NaN;
+        AspectValue[] avs = ar.getAspectValueResults();
 	for (int ii = 0; ii < avs.length; ii++) {
 	    if (avs[ii].getAspectType() == type) {
 		return avs[ii].getValue();
