@@ -26,7 +26,9 @@
 
 package org.cougaar.core.util;
 
-
+/**
+ * A simple "name=value" pair.
+ */ 
 public class PropertyNameValue {
   public String name;
   public Object value;
@@ -35,5 +37,4 @@ public class PropertyNameValue {
     this.name = name;
     this.value = value;
   }
-
 }

@@ -31,9 +31,9 @@ import java.io.ObjectOutputStream;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Simple implementation of UniqueObject for objects that don't manage the UID themselves.
- **/
-
+ * A {@link UniqueObject} with an agent "owner" field and allocation
+ * stack context.
+ */
 public abstract class OwnedUniqueObject extends SimpleUniqueObject {
   protected MessageAddress owner;
 

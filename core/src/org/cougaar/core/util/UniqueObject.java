@@ -29,28 +29,37 @@ package org.cougaar.core.util;
 import java.io.Serializable;
 
 /**
- * Any object implementing this interface is uniquely-identifiable 
- * in the society by the object's UID.  This is similar to OIDs and
- * URLs, but is society-based.  We might eventually just use URLs
- * rather than UIDs.
- *
- * This interface does not promise that such objects are 
- * retrievable via any specific api, though such functionality
- * may be provided by some other facility.
- **/
-
+ * An object with a {@link UID} created by the {@link
+ * org.cougaar.core.service.UIDService}.
+ * <p>
+ * The UID is often set by a {@link org.cougaar.core.domain.Domain}
+ * {@link org.cougaar.core.domain.Factory}, and/or as a final field
+ * set in the object's constructor.
+ * <p>
+ * Objects that implement UniqueObject often use the UID for the
+ * "equals(Object)" and "hashCode()" methods, e.g.<pre>
+ *   public class X implements UniqueObject .. {.. 
+ *     public boolean equals(Object o) {
+ *       return
+ *         (o == this ||
+ *         ((o instanceof X) &amp;&amp;
+ *          getUID().equals(((X) o).getUID()));
+ *     }
+ *     public int hashCode() {
+ *       return getUID().hashCode();
+ *     }
+ *   } 
+ * </pre>
+ */
 public interface UniqueObject extends Serializable {
-  /** @return the UID of a UniqueObject.  If the object was created
-   * correctly (e.g. via a Factory), will be non-null.
-   **/
+  /**
+   * @return the UID of this UniqueObject.
+   */
   UID getUID();
 
-  /** set the UID of a UniqueObject.  This should only be done by
-   * a domain factory.  Will throw a RuntimeException if
-   * the UID was already set.
-   **/
+  /**
+   * Set the UID of this UniqueObject, which may throw a
+   * RuntimeException if the UID is already set.
+   */
   void setUID(UID uid);
 }
-
-
-

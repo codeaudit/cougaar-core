@@ -30,16 +30,17 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 /**
- * Simple implementation of UniqueObject for objects that don't manage the UID themselves.
- **/
-
+ * A {@link UniqueObject} that records the allocation stack and
+ * complains if the {@link UID} is reset.
+ */
 public abstract class SimpleUniqueObject implements UniqueObject {
-  /** The UID of the object **/
+  /** The UID of the object */
   protected UID uid;
 
-  /** DEBUGGING
+  /**
+   * DEBUGGING
    * @deprecated Should be turned off
-   **/
+   */
   private transient Throwable allocationContext;
 
   protected SimpleUniqueObject() {
@@ -49,7 +50,7 @@ public abstract class SimpleUniqueObject implements UniqueObject {
   /**
    * @return the UID of a UniqueObject.  If the object was created
    * correctly (e.g. via a Factory), will be non-null.
-   **/
+   */
   public UID getUID() {
     if (uid == null) {
       uidError("uid was never set");
@@ -61,7 +62,7 @@ public abstract class SimpleUniqueObject implements UniqueObject {
    * Set the UID of a UniqueObject.  This should only be done by
    * a domain factory.  Will throw a RuntimeException if
    * the UID was already set.
-   **/
+   */
   public void setUID(UID newUID) {
     if (uid != null && !uid.equals(newUID)) {
       uidError("uid already set");
