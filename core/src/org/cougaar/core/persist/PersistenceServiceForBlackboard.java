@@ -40,7 +40,6 @@ public interface PersistenceServiceForBlackboard extends PersistenceService {
    * ReservationManager to avoid blocking on a static global lock.
    **/
   PersistenceObject persist(boolean returnBytes, boolean full);
-  void disableWrite(String sequenceNumberSuffix);
   java.sql.Connection getDatabaseConnection(Object locker);
   void releaseDatabaseConnection(Object locker);
   long getPersistenceTime();
