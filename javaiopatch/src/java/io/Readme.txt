@@ -18,4 +18,4 @@ with the following sequence of commands:
 
 Example 2:  To regenerate the patchfile from the current sources:
 % cd /tmp/cougaar/latest/src/javaiopatch
-% bin/applypatch.pl /usr/local/java/j2sdk1.4.2_03 /tmp/cougaar/latest/src/javaiopatch/src
+% bin/makepatch.pl /usr/local/java/j2sdk1.4.2_03 /tmp/cougaar/latest/src/javaiopatch/src
