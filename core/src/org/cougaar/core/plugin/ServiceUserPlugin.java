@@ -93,8 +93,8 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
    * returns true, the services should be requested and normal
    * operation started. Once all the services are available, this
    * method simply returns true. See <code>haveServices()</code> in
-   * {@link ConditionServiceProvider#execute} for a typical
-   * usage pattern.
+   * {@link org.cougaar.core.adaptivity.ConditionServiceProvider#execute ConditionServiceProvider}
+   * for a typical usage pattern.
    **/
   protected boolean acquireServices() {
     cancelTimer();
