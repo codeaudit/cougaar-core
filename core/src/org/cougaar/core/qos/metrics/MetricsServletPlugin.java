@@ -22,12 +22,11 @@
 package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.plugin.ComponentPlugin;
 
-public class QosMetricsPlugin extends ComponentPlugin
+public class MetricsServletPlugin extends ComponentPlugin
 {
-    public QosMetricsPlugin() {
+    public MetricsServletPlugin() {
 	super();
     }
 
@@ -36,12 +35,6 @@ public class QosMetricsPlugin extends ComponentPlugin
 
 	ServiceBroker sb = getServiceBroker();
 	new MetricsServlet(sb);
-
-	// Watcher needs the Node's service broker.
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
-	sb = ncs.getRootServiceBroker();
-	new org.cougaar.core.thread.LoadWatcher(sb);
     }
 
     protected void setupSubscriptions() {

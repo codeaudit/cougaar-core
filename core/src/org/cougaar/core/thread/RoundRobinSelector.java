@@ -52,7 +52,7 @@ class RoundRobinSelector implements RightsSelector
 	return handoff;
     }
 
-    public SchedulableObject getNextPending() {
+    public synchronized SchedulableObject getNextPending() {
 	int initialIndex = currentIndex;
 	ArrayList children = scheduler.getTreeNode().getChildren();
 	SchedulableObject handoff = null;
