@@ -87,30 +87,52 @@ abstract class DefaultComponents {
 
     if (isNode) {
       l.add(NODE_BUSY);
+      l.add(CONFIG_SERVICE); // new since 11.2.0
       l.add(NODE_THREAD_SERVICE);
       l.add(MTS_SOCKET_FACTORY);
+
+      // Split since 11.2.0
       if (PropertyParser.getBoolean("org.cougaar.core.load.wp", true)) {
-        l.add(WHITE_PAGES_SERVICE);
+	// Load WP Cache / Client pieces
+	l.add(WP_RESOLVER_CONTAINER);
+	l.add(WP_CONFIG_MANAGER);
+	l.add(WP_SELECT_MANAGER);
+	l.add(WP_CLIENT_TRANSPORT);
+	l.add(WP_LEASE_MANAGER);
+	l.add(WP_CACHE_MANAGER);
+	l.add(WP_RESOLVER);
+	l.add(WPBOOT_DISCOVERY_MANAGER);
+	l.add(WPBOOT_CONFIGDISCOVERY);
+	l.add(WPBOOT_MULTIDISCOVERY);
+	l.add(WPBOOT_HTTPDISCOVERY);
+	l.add(WPBOOT_RMIDISCOVERY);
+	l.add(WPBOOT_ENSUREFOUND);	
       }
-      if (PropertyParser.getBoolean("org.cougaar.core.load.wp.server", true)) {
-        l.add(WHITE_PAGES_SERVER);
-      }
+
       if (Boolean.getBoolean("org.cougaar.metrics.trivial")) {
         l.add(TRIVIAL_QOS_METRICS_SERVICE);
       } else {
         l.add(QOS_METRICS_SERVICE);
       }
       l.add(NODE_METRICS);
+
+      l.add(INCARNATION); // new since 11.2.0
+
       if (Boolean.getBoolean("org.cougaar.core.mts.singlenode")) {
         l.add(LOCAL_MESSAGE_TRANSPORT_SERVICE);
       } else {
         l.add(MESSAGE_TRANSPORT_SERVICE);
       }
-      l.add(TIME_SERVICES);
+
+      l.add(REAL_TIME_COMP); // Split into 2 is for 11.4
+      l.add(NATURAL_TIME_COMP);
+
       if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
         l.add(SERVLET_SERVICE);
       }
-    }
+
+      l.add(SUICIDE_SERVICE); // new since 11.2.0
+    } // end of IfNode
 
     l.add(TOPOLOGY);
     l.add(RECONCILE);
@@ -145,6 +167,7 @@ abstract class DefaultComponents {
     if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
       l.add(LEAF_SERVLET_SERVICE);
     }
+
     l.add(DOMAIN_MANAGER);
     if (PropertyParser.getBoolean("org.cougaar.core.load.community", true)) {
       l.add(COMMUNITY_SERVICE);
@@ -152,6 +175,25 @@ abstract class DefaultComponents {
     l.add(BLACKBOARD_SERVICE);
 
     // COMPONENT
+
+    // WP Server must be loaded after leaf_servlet_service for
+    // HTTP service advertising
+    // This re-order & split is new since 11.2.0
+    if (isNode) {
+      if (PropertyParser.getBoolean("org.cougaar.core.load.wp.server", true)) {
+	// Add WP Server Components
+	l.add(WP_SERVER_CONTAINER);
+	l.add(WP_SERVER_CONFIG_MANAGER);
+	l.add(WP_SERVER_PEERS_MANAGER);
+	l.add(WP_SERVER_TRANSPORT);
+	l.add(WP_SERVER_ROOT_AUTH);
+	l.add(WP_SERVER_AD_MANAGER);
+	l.add(WP_SERVER_MULTI_ADVERTISE);
+	l.add(WP_SERVER_HTTP_ADVERTISE);
+	l.add(WP_SERVER_RMI_ADVERTISE);
+      }
+    }
+
     l.addAll(findComponents(cds, COMPONENT));
 
     l.add(PLUGIN_MANAGER);
@@ -164,7 +206,7 @@ abstract class DefaultComponents {
     l.add(END_LOGGER);
 
     if (isNode) {
-      l.add(AGENT_LOADER);
+      l.add(AGENT_LOADER); // FIXME: Needs arguments of agent names?
       l.add(HEARTBEAT);
     }
 
@@ -270,6 +312,14 @@ abstract class DefaultComponents {
         null, null, null, null, null,
         HIGH);
 
+  private static final ComponentDescription CONFIG_SERVICE =
+    new ComponentDescription(
+        "org.cougaar.core.node.ConfigurationServiceComponent",
+        "Node.AgentManager.Agent.Component",
+        "org.cougaar.core.node.ConfigurationServiceComponent",
+        null, null, null, null, null,
+        HIGH);
+
   private static final ComponentDescription NODE_THREAD_SERVICE =
     new ComponentDescription(
         "org.cougaar.core.thread.ThreadServiceProvider",
@@ -296,21 +346,185 @@ abstract class DefaultComponents {
         null, null, null, null, null,
         HIGH);
 
-  private static final ComponentDescription WHITE_PAGES_SERVICE =
+  // WP Client / Cache Components
+  private static final ComponentDescription WP_RESOLVER_CONTAINER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.resolver.ResolverContainer",
+        "Node.AgentManager.Agent.WPClient",
+        "org.cougaar.core.wp.resolver.ResolverContainer",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_CONFIG_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.ConfigManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.ConfigManager",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_SELECT_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.resolver.SelectManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.resolver.SelectManager",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_CLIENT_TRANSPORT =
+    new ComponentDescription(
+        "org.cougaar.core.wp.resolver.ClientTransport",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.resolver.ClientTransport",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_LEASE_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.resolver.LeaseManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.resolver.LeaseManager",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_CACHE_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.resolver.CacheManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.resolver.CacheManager",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WP_RESOLVER =
     new ComponentDescription(
         "org.cougaar.core.wp.resolver.Resolver",
-        "Node.AgentManager.Agent.WPClient",
+        "Node.AgentManager.Agent.WPClient.Component",
         "org.cougaar.core.wp.resolver.Resolver",
         null, null, null, null, null,
         HIGH);
 
-  private static final ComponentDescription WHITE_PAGES_SERVER =
+  private static final ComponentDescription WPBOOT_DISCOVERY_MANAGER =
     new ComponentDescription(
-        "org.cougaar.core.wp.server.Server",
-        "Node.AgentManager.Agent.WPServer",
-        "org.cougaar.core.wp.server.Server",
+        "org.cougaar.core.wp.bootstrap.DiscoveryManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.DiscoveryManager",
         null, null, null, null, null,
         HIGH);
+
+  private static final ComponentDescription WPBOOT_CONFIGDISCOVERY =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.config.ConfigDiscovery",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.config.ConfigDiscovery",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WPBOOT_MULTIDISCOVERY =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.multicast.MulticastDiscovery",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.multicast.MulticastDiscovery",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WPBOOT_HTTPDISCOVERY =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.http.HttpDiscovery",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.http.HttpDiscovery",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WPBOOT_RMIDISCOVERY =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.rmi.RMIDiscovery",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.rmi.RMIDiscovery",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription WPBOOT_ENSUREFOUND =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.EnsureIsFoundManager",
+        "Node.AgentManager.Agent.WPClient.Component",
+        "org.cougaar.core.wp.bootstrap.EnsureIsFoundManager",
+        null, null, null, null, null,
+        HIGH);
+  // End of WP Client / Cache pieces
+
+  // WP Server pieces
+  private static final ComponentDescription WP_SERVER_CONTAINER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.server.ServerContainer",
+        "Node.AgentManager.Agent.WPServer",
+        "org.cougaar.core.wp.server.ServerContainer",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_CONFIG_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.ConfigManager",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.ConfigManager",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_PEERS_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.PeersManager",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.PeersManager",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_TRANSPORT =
+    new ComponentDescription(
+        "org.cougaar.core.wp.server.ServerTransport",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.server.ServerTransport",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_ROOT_AUTH =
+    new ComponentDescription(
+        "org.cougaar.core.wp.server.RootAuthority",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.server.RootAuthority",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_AD_MANAGER =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.AdvertiseManager",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.AdvertiseManager",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_MULTI_ADVERTISE =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.multicast.MulticastAdvertise",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.multicast.MulticastAdvertise",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_HTTP_ADVERTISE =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.http.HttpAdvertise",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.http.HttpAdvertise",
+        null, null, null, null, null,
+        COMPONENT);
+
+  private static final ComponentDescription WP_SERVER_RMI_ADVERTISE =
+    new ComponentDescription(
+        "org.cougaar.core.wp.bootstrap.rmi.RMIAdvertise",
+        "Node.AgentManager.Agent.WPServer.Component",
+        "org.cougaar.core.wp.bootstrap.rmi.RMIAdvertise",
+        null, null, null, null, null,
+        COMPONENT);
+  // End of WP Server pieces
 
   private static final ComponentDescription TRIVIAL_QOS_METRICS_SERVICE =
     new ComponentDescription(
@@ -336,6 +550,14 @@ abstract class DefaultComponents {
         null, null, null, null, null,
         HIGH);
 
+  private static final ComponentDescription INCARNATION =
+    new ComponentDescription(
+        "org.cougaar.core.node.Incarnation",
+        "Node.AgentManager.Agent.Component",
+        "org.cougaar.core.node.Incarnation",
+        null, null, null, null, null,
+        HIGH);
+
   private static final ComponentDescription LOCAL_MESSAGE_TRANSPORT_SERVICE =
     new ComponentDescription(
         "org.cougaar.core.mts.singlenode.SingleNodeMTSProvider",
@@ -352,11 +574,19 @@ abstract class DefaultComponents {
         null, null, null, null, null,
         HIGH);
 
-  private static final ComponentDescription TIME_SERVICES =
+  private static final ComponentDescription REAL_TIME_COMP =
     new ComponentDescription(
-        "org.cougaar.core.node.TimeComponent",
+        "org.cougaar.core.node.RealTimeComponent",
         "Node.AgentManager.Agent.Component",
-        "org.cougaar.core.node.TimeComponent",
+        "org.cougaar.core.node.RealTimeComponent",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription NATURAL_TIME_COMP =
+    new ComponentDescription(
+        "org.cougaar.core.node.NaturalTimeComponent",
+        "Node.AgentManager.Agent.Component",
+        "org.cougaar.core.node.NaturalTimeComponent",
         null, null, null, null, null,
         HIGH);
 
@@ -365,6 +595,14 @@ abstract class DefaultComponents {
         "org.cougaar.lib.web.service.RootServletServiceComponent",
         "Node.AgentManager.Agent.Component",
         "org.cougaar.lib.web.service.RootServletServiceComponent",
+        null, null, null, null, null,
+        HIGH);
+
+  private static final ComponentDescription SUICIDE_SERVICE =
+    new ComponentDescription(
+        "org.cougaar.core.node.SuicideServiceComponent",
+        "Node.AgentManager.Agent.Component",
+        "org.cougaar.core.node.SuicideServiceComponent",
         null, null, null, null, null,
         HIGH);
 
