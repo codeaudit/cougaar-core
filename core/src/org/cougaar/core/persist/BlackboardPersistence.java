@@ -225,6 +225,7 @@ public class BlackboardPersistence implements Persistence {
     if (v == null) return null;
     ArrayList result = new ArrayList(v.size());
     for (Iterator iter = v.iterator(); iter.hasNext(); ) {
+      // The next line is the source of bug 3595
       Envelope e = (Envelope) iter.next();
       Envelope copy = null;
       for (Iterator tuples = e.getAllTuples(); tuples.hasNext(); ) {
