@@ -102,14 +102,21 @@ public class RelayLP extends LogPlanLogicProvider
   }
 
   private void localAdd(Relay.Source rs, Set targets) {
-    Object content = rs.getContent();
+    boolean gotContent = false;
+    Object content = null;
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
-      if (target.equals(self)) {
+      if (target == null) {
+        // Ignore nulls.
+      } else if (target.equals(self)) {
         // Never send to self.  Likely an error.
-        continue; 
+      } else {
+        if (!gotContent) {
+          gotContent = true;
+          content = rs.getContent();
+        }
+        sendAdd(rs, target, content);
       }
-      sendAdd(rs, target, content);
     }
   }
 
@@ -149,14 +156,21 @@ public class RelayLP extends LogPlanLogicProvider
     //   for added targets: sendAdd
     //   for removed targets: sendRemove
     // add ContentReport to changes
-    Object content = rs.getContent();
+    boolean gotContent = false;
+    Object content = null;
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
-      if (target.equals(self)) {
+      if (target == null) {
+        // Ignore nulls.
+      } else if (target.equals(self)) {
         // Never send to self.  Likely an error.
-        continue; 
+      } else {
+        if (!gotContent) {
+          gotContent = true;
+          content = rs.getContent();
+        }
+        sendChange(rs, target, content, changes);
       }
-      sendChange(rs, target, content, changes);
     }
   }
 
@@ -170,11 +184,13 @@ public class RelayLP extends LogPlanLogicProvider
   private void localRemove(UID uid, Set targets) {
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
-      if (target.equals(self)) {
+      if (target == null) {
+        // Ignore nulls.
+      } else if (target.equals(self)) {
         // Never send to self.  Likely an error.
-        continue; 
+      } else {
+        sendRemove(uid, target);
       }
-      sendRemove(uid, target);
     }
   }
 
@@ -380,15 +396,22 @@ public class RelayLP extends LogPlanLogicProvider
     Set targets = rs.getTargets();
     if (targets == null) return; // Not really a source
     if (targets.isEmpty()) return;
-    Object content = rs.getContent();
+    boolean gotContent = false;
+    Object content = null;
     for (Iterator i = targets.iterator(); i.hasNext(); ) {
       MessageAddress target = (MessageAddress) i.next();
-      if (target.equals(self)) {
+      if (target == null) {
+        // Ignore nulls.
+      } else if (target.equals(self)) {
         // Don't send to ourself.  Likely an error.
-      } else { 
-        if (t == null || target.equals(t)) {
-          sendAdd(rs, target, content);
+      } else if (t != null && !target.equals(t)) { 
+        // Only resend to the specified address.
+      } else {
+        if (!gotContent) {
+          gotContent = true;
+          content = rs.getContent();
         }
+        sendAdd(rs, target, content);
       }
     }
   }
