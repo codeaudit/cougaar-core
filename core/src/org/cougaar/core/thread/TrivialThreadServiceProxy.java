@@ -61,24 +61,5 @@ class TrivialThreadServiceProxy
     }
 
 
-    // No longer supported
-    public void schedule(java.util.TimerTask task, long delay) 
-    {
-	throw new RuntimeException("ThreadService.schedule is no longer supported");
-    }
-
-
-    public void schedule(java.util.TimerTask task, long delay, long interval) 
-    {
-	throw new RuntimeException("ThreadService.schedule is no longer supported");
-    }
-
-    public void scheduleAtFixedRate(java.util.TimerTask task, 
-				    long delay, 
-				    long interval)
-    {
-	throw new RuntimeException("ThreadService.scheduleAtFixedRate is no longer supported");
-    }
-
-
+    
 }

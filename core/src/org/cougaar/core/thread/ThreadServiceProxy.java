@@ -71,22 +71,4 @@ final class ThreadServiceProxy 	implements ThreadService
 				     lane);
     }
 
-
-    public void schedule(java.util.TimerTask task, long delay) {
-	treeNode.timer().schedule(task, delay);
-    }
-
-
-    public void schedule(java.util.TimerTask task, long delay, long interval) {
-	treeNode.timer().schedule(task, delay, interval);
-    }
-
-    public void scheduleAtFixedRate(java.util.TimerTask task, 
-				    long delay, 
-				    long interval)
-    {
-	treeNode.timer().scheduleAtFixedRate(task, delay, interval);
-    }
-
-
 }

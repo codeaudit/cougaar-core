@@ -50,19 +50,4 @@ public interface ThreadService extends Service
     Schedulable getThread(Object consumer, Runnable runnable, String name,
 			  int lane);
 
-    /**
-     * @deprecated Use the schedule methods on Schedulable.
-     */
-    void schedule(java.util.TimerTask task, long delay);
-
-    /**
-     * @deprecated Use the schedule methods on Schedulable.
-     */
-    void schedule(java.util.TimerTask task, long delay, long interval);
-
-    /**
-     * @deprecated Use the schedule methods on Schedulable.
-     */
-    void scheduleAtFixedRate(java.util.TimerTask task, long delay, long interval);
-
 }
