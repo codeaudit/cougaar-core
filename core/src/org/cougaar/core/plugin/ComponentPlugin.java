@@ -117,8 +117,19 @@ public class ComponentPlugin
     serviceBroker = pluginBindingSite.getServiceBroker();
   }
 
+  public final void setSchedulerService(SchedulerService ss) {
+    myScheduler = ss;
+  }
+  public final void setBlackboardService(BlackboardService bs) {
+    blackboard = bs;
+  }
+  public final void setAlarmService(AlarmService s) {
+    alarmService = s;
+  }
   public void load() {
     super.load();
+    /*
+      // rely on setSchedulerService for now - don't worry about revokation
     myScheduler = (SchedulerService )
       serviceBroker.getService(
           this, 
@@ -129,13 +140,17 @@ public class ComponentPlugin
                 myScheduler = null;
               }
             });
+    */
     
+
     if (myScheduler != null) {
       Trigger pokeMe = new PluginCallback();
       // Tell him to schedule me, and get his callback object
       schedulerProd = myScheduler.register(pokeMe);
     }
     
+
+    /*
     // proceed to get blackboard service
     blackboard = (BlackboardService)
       serviceBroker.getService(
@@ -149,7 +164,9 @@ public class ComponentPlugin
               }
             }
           });
+    */
     
+    /*
     // proceed to get alarm service
     alarmService = (AlarmService)
       serviceBroker.getService(
@@ -162,7 +179,7 @@ public class ComponentPlugin
               }
             }
           });
-    
+    */
     
     // someone to watch over me
     watcher = new ThinWatcher();
