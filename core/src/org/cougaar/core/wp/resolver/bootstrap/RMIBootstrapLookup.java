@@ -21,20 +21,18 @@
 
 package org.cougaar.core.wp.resolver.bootstrap;
 
-import java.util.*;
-import java.net.*;
-import java.rmi.*;
-import java.rmi.registry.*;
-import java.rmi.server.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.thread.*;
-import org.cougaar.core.wp.*;
-import org.cougaar.core.wp.resolver.*;
-import org.cougaar.util.*;
+import java.net.URI;
+import java.rmi.ConnectException;
+import java.rmi.Remote;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.ExportException;
+import java.rmi.server.RMIClientSocketFactory;
+import java.rmi.server.RMIServerSocketFactory;
+import java.rmi.server.RMISocketFactory;
+import org.cougaar.core.mts.SocketFactory;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.wp.AddressEntry;
 
 /**
  * RMI-specific implementation of a bootstrap lookup.
@@ -142,31 +140,19 @@ extends BootstrapLookupBase
   }
 
   protected boolean isBootEntry(AddressEntry entry) {
-    String type = entry.getApplication().toString();
-    String scheme = entry.getAddress().getScheme();
+    String type = entry.getType();
+    String scheme = entry.getURI().getScheme();
     return
-      (type.equals("-RMI_REG") &&
-       scheme.equals("rmi"));
+      ("-RMI_REG".equals(type) &&
+       "rmi".equals(scheme));
   }
 
   protected boolean isBindEntry(AddressEntry entry) {
-    /*
-    String name = entry.getName();
-    if (!agentName.equals(entry.getName())) {
-      // here we restrict ourselves to only register
-      // our node-agent MTS addresses.
-      //
-      // this restriction could be dropped, but would
-      // clutter the rmi registry with an entry for
-      // each agent
-      return false;
-    }
-    */
-    String type = entry.getApplication().toString();
-    String scheme = entry.getAddress().getScheme();
+    String type = entry.getType();
+    String scheme = entry.getURI().getScheme();
     return
-      ((type.equals("-RMI") || type.equals("-RMISSL")) &&
-       scheme.equals("rmi"));
+      (("-RMI".equals(type) || "-RMISSL".equals(type)) &&
+       "rmi".equals(scheme));
   }
 
   protected LookupTimer createLookupTimer(AddressEntry bootEntry) {
@@ -190,7 +176,7 @@ extends BootstrapLookupBase
 
       protected AddressEntry doLookup() {
         String name = bootEntry.getName();
-        URI uri = bootEntry.getAddress();
+        URI uri = bootEntry.getURI();
         String host = uri.getHost();
         int port = uri.getPort();
 

@@ -21,17 +21,23 @@
 
 package org.cougaar.core.wp.resolver.bootstrap;
 
-import java.util.*;
-import java.net.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.thread.*;
-import org.cougaar.core.wp.*;
-import org.cougaar.core.wp.resolver.*;
-import org.cougaar.util.*;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.thread.Schedulable;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component is a base class for bootstrap components
@@ -226,7 +232,7 @@ implements Component
         if (!isBootEntry(bootEntry)) {
           return;
         }
-        URI uri = bootEntry.getAddress();
+        URI uri = bootEntry.getURI();
         String id = uri.getPath().substring(1);
         if (id.equals("*")) {
           // wildcard race for binding, use node name
@@ -246,7 +252,7 @@ implements Component
         if (!isBootEntry(bootEntry)) {
           return;
         }
-        String id = bootEntry.getAddress().getPath().substring(1);
+        String id = bootEntry.getURI().getPath().substring(1);
         if (id.equals("*")) {
           id = agentName;
         }
@@ -469,7 +475,7 @@ implements Component
 
         // configure
         this.bootEntry = bootEntry;
-        URI uri = bootEntry.getAddress();
+        URI uri = bootEntry.getURI();
         String id = uri.getPath().substring(1);
         if (id.equals("*")) {
           // wildcard race for binding
@@ -600,7 +606,7 @@ implements Component
 
       protected long lookup() {
         String name = bootEntry.getName();
-        URI uri = bootEntry.getAddress();
+        URI uri = bootEntry.getURI();
 
         AddressEntry newFound = doLookup();
         if (newFound == null) {
@@ -736,13 +742,8 @@ implements Component
           throw new IllegalArgumentException(
               "No alias necessary for id="+id+" == name="+name);
         }
-        return
-          new AddressEntry(
-              id,
-              Application.getApplication("alias"),
-              URI.create("name://"+name),
-              Cert.NULL,
-              Long.MAX_VALUE);
+        return AddressEntry.getAddressEntry(
+              id, "alias", URI.create("name://"+name));
       }
 
       public String toString() {

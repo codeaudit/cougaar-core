@@ -21,8 +21,8 @@
 
 package org.cougaar.core.wp.resolver;
 
-import java.util.*;
-import org.cougaar.core.service.wp.*;
+import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.service.wp.Response;
 
 /**
  * Resolver WhitePagesService handler.

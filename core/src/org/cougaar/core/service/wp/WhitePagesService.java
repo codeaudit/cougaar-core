@@ -21,8 +21,14 @@
 
 package org.cougaar.core.service.wp;
 
+import java.net.URI;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import org.cougaar.core.component.Service;
+import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.Logger;
 
 /**
  * The white pages service provides access to the distributed name
@@ -31,7 +37,15 @@ import org.cougaar.core.component.Service;
  * The primary function of the white pages is to allow agents
  * to register their message transport addresses and lookup the
  * addresses of other agents.  This service is the client-side
- * resolver and may be backed by a cache.
+ * resolver and is backed by a cache.
+ * <p>
+ * The main method of this class is:<pre>
+ *    public abstract Response submit(Request req);
+ * </pre>
+ * This submits an request with an asynchronous response.  The
+ * caller can attach callbacks to the response or block until
+ * the response result is set.  All the other methods of the
+ * WhitePagesService are based upon the above "submit" method.
  * <p>
  * The white pages service currently does not support a "listener"
  * API to watch for changes, primarily due to scalability concerns.
@@ -43,27 +57,28 @@ public abstract class WhitePagesService implements Service {
   //
 
   /** @see Request.Get */
-  public final AddressEntry[] get(String name) throws Exception {
-    return get(name, 0);
-  }
-  /** @see #get(String,Application,String,long) */
   public final AddressEntry get(
-      String name, Application app, String scheme) throws Exception {
-    return get(name, app, scheme, 0);
+      String name, String type) throws Exception {
+    return get(name, type, 0);
+  }
+  /** @see Request.GetAll */
+  public final Map getAll(String name) throws Exception {
+    return getAll(name, 0);
   }
   /** @see Request.List */
   public final Set list(String suffix) throws Exception {
     return list(suffix, 0);
   }
-  /** @see Request.Refresh */
-  public final AddressEntry refresh(AddressEntry ae) throws Exception {
-    return refresh(ae, 0);
+  /** @see Request.Get */
+  public final AddressEntry refresh(
+      String name, String type) throws Exception {
+    return refresh(name, type, 0);
   }
   /** @see Request.Bind */
   public final void bind(AddressEntry ae) throws Exception {
     bind(ae, 0);
   }
-  /** @see Request.Rebind */
+  /** @see Request.Bind */
   public final void rebind(AddressEntry ae) throws Exception {
     rebind(ae, 0);
   }
@@ -73,27 +88,38 @@ public abstract class WhitePagesService implements Service {
   }
 
   // 
-  // Callback variations
+  // callback variations:
   //
-  public final void get(String name, Callback callback) throws Exception {
-    submit(new Request.Get(name, 0), callback);
-  }
 
+  /** @see Request.Get */
+  public final void get(
+      String name, String type, Callback callback) throws Exception {
+    submit(new Request.Get(true, 0, name, type), callback);
+  }
+  /** @see Request.GetAll */
+  public final void getAll(String name, Callback callback) throws Exception {
+    submit(new Request.GetAll(true, 0, name), callback);
+  }
+  /** @see Request.List */
   public final void list(String suffix, Callback callback) throws Exception {
-    submit(new Request.List(suffix, 0), callback);
+    submit(new Request.List(true, 0, suffix), callback);
   }
-
-  public final void refresh(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Refresh(ae, 0), callback);
+  /** @see Request.Get */
+  public final void refresh(
+      String name, String type, Callback callback) throws Exception {
+    submit(new Request.Get(false, 0, name, type), callback);
   }
+  /** @see Request.Bind */
   public final void bind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Bind(ae, 0), callback);
+    submit(new Request.Bind(false, 0, ae, false, false), callback);
   }
+  /** @see Request.Bind */
   public final void rebind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Rebind(ae, 0), callback);
+    submit(new Request.Bind(false, 0, ae, true, false), callback);
   }
+  /** @see Request.Rebind */
   public final void unbind(AddressEntry ae, Callback callback) throws Exception {
-    submit(new Request.Unbind(ae, 0), callback);
+    submit(new Request.Unbind(false, 0, ae), callback);
   }
 
   //
@@ -113,187 +139,78 @@ public abstract class WhitePagesService implements Service {
     public boolean isRequestTimeout() { return b; }
   }
 
-  public final AddressEntry[] get(String name, long timeout) throws Exception {
-    Request.Get req = new Request.Get(name, timeout);
-    Response.Get res = (Response.Get) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return res.getAddressEntries();
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
-    }
-  }
-
-  /**
-   * Utility method that calls "get(name, timeout)" and returns the
-   * first entry with the specified application and scheme.
-   */
+  /** @see Request.Get */
   public final AddressEntry get(
-      String name,
-      Application app,
-      String scheme,
+      String name, String type,
       long timeout) throws Exception {
-    if (name == null || app == null || scheme == null) {
-      throw new IllegalArgumentException("Null parameter");
-    }
-    AddressEntry[] a = get(name, timeout);
-    int n = (a == null ? 0 : a.length);
-    for (int i = 0; i < n; i++) {
-      AddressEntry ae = a[i];
-      if (ae != null &&
-          name.equals(ae.getName()) &&
-          app.equals(ae.getApplication()) &&
-          scheme.equals(ae.getAddress().getScheme())) {
-        return ae;
-      }
-    }
-    return null;
+    Request.Get req = 
+      new Request.Get(true, timeout, name, type);
+    Response.Get res = (Response.Get) assertSubmit(req);
+    return res.getAddressEntry();
   }
-
+  /** @see Request.GetAll */
+  public final Map getAll(String name, long timeout) throws Exception {
+    Request.GetAll req = new Request.GetAll(true, timeout, name);
+    Response.GetAll res = (Response.GetAll) assertSubmit(req);
+    return res.getAddressEntries();
+  }
+  /** @see Request.List */
   public final Set list(String suffix, long timeout) throws Exception {
-    Request.List req = new Request.List(suffix, timeout);
-    Response.List res = (Response.List) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return res.getNames();
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
-    }
+    Request.List req = new Request.List(true, timeout, suffix);
+    Response.List res = (Response.List) assertSubmit(req);
+    return res.getNames();
   }
-
-  public final AddressEntry refresh(AddressEntry ae, long timeout) throws Exception {
-    Request.Refresh req = new Request.Refresh(ae, timeout);
-    Response.Refresh res = (Response.Refresh) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return res.getNewEntry();
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
-    }
+  /** @see Request.Get */
+  public final AddressEntry refresh(
+      String name, String type,
+      long timeout) throws Exception {
+    Request.Get req = new Request.Get(
+        false, timeout, name, type);
+    Response.Get res = (Response.Get) assertSubmit(req);
+    return res.getAddressEntry();
   }
-
+  /** @see Request.Bind */
   public final void bind(AddressEntry ae, long timeout) throws Exception {
-    Request.Bind req = new Request.Bind(ae, timeout);
-    Response.Bind res = (Response.Bind) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return;
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
+    Request.Bind req = new Request.Bind(false, timeout, ae, false, false);
+    Response.Bind res = (Response.Bind) assertSubmit(req);
+    if (!res.didBind()) {
+      throw new RuntimeException("Bind failed: "+res);
     }
   }
-
+  /** @see Request.Bind */
   public final void rebind(AddressEntry ae, long timeout) throws Exception {
-    Request.Rebind req = new Request.Rebind(ae, timeout);
-    Response.Rebind res = (Response.Rebind) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return;
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
+    Request.Bind req = new Request.Bind(false, timeout, ae, true, false);
+    Response.Bind res = (Response.Bind) assertSubmit(req);
+    if (!res.didBind()) {
+      throw new RuntimeException("Rebind failed: "+res);
     }
   }
-
+  /** @see Request.Unbind */
   public final void unbind(AddressEntry ae, long timeout) throws Exception {
-    Request.Unbind req = new Request.Unbind(ae, timeout);
-    Response.Unbind res = (Response.Unbind) submit(req);
-    if (res.waitForIsAvailable(timeout)) {
-      if (res.isSuccess()) {
-        return;
-      } else if (res.isTimeout()) {
-        throw new TimeoutException(true);
-      } else {
-        throw res.getException();
-      }
-    } else {
-      throw new TimeoutException(false);
-    }
+    Request.Unbind req = new Request.Unbind(false, timeout, ae);
+    Response.Unbind res = (Response.Unbind) assertSubmit(req);
   }
 
   /**
-   * Submit a request, get back a "future reply" response.
-   * <p>
-   * Example blocking usage is illustrated in the above
-   * utility methods, such as:<pre>
-   *   try {
-   *     AddressEntry[] a = wps.get("foo");
-   *     System.out.println("got foo: "+a);
-   *   } catch (Exception e) {
-   *     System.out.println("failed: "+e);
-   *   }
-   * </pre>
-   * <p>
-   * An example "polling" usage is:<pre>
-   *    Request req = new Request.Get("foo");
-   *    Response res = wps.submit(req);
-   *    while (!res.isAvailable()) {
-   *      try {
-   *        Thread.sleep(1000);       // wait a sec
-   *      } catch (InterruptedException ie) {}
-   *    }
-   *    Response.Get getRes = (Response.Get) res;
-   *    System.out.println(getRes);
-   * </pre>
-   * <p>
-   * An example "callback" usage is:<pre>
-   *    Response r = yps.submitQuery(q);
-   *    Callback callback = new Callback() {
-   *      public void execute(Response res) {
-   *        Response.Get getRes = (Response.Get) res;
-   *        System.out.println(getRes);
-   *      }
-   *    }
-   *    // add callback, will callback immediately if 
-   *    // there is already an answer
-   *    r.addCallback(callback);
-   *    // keep going, or optionally wait for the callback
-   * </pre>
-   * <p>
-   * One can also mix the polling and callback styles:<pre>
-   *    Request.Get req = new Request.Get("foo");
-   *    Response.Get res = (Response.Get) wps.submit(req);
-   *    if (res.waitForIsAvailable(5000)) {
-   *      System.out.println("Got in 5 secs: "+res);
-   *    } else {
-   *      Callback callback = new Callback() {
-   *        public void execute(Response r) {
-   *          assert r == res;
-   *          System.out.println("Got later: "+r);
-   *        }
-   *      }
-   *      res.addCallback(callback);
-   *    }
-   * </pre>
-   *
-   * @param request the non-null request
-   * @return a non-null response
+   * Submit a request and return the response if it is completed
+   * within the request's timeout and successful, otherwise throw
+   * an exception.
    */
-  public abstract Response submit(Request req);
+  public final Response assertSubmit(Request req) throws Exception {
+    long timeout = req.getTimeout();
+    Response res = submit(req);
+    if (res.waitForIsAvailable(timeout)) {
+      if (res.isSuccess()) {
+        return res;
+      } else if (res.isTimeout()) {
+        throw new TimeoutException(true);
+      } else {
+        throw res.getException();
+      }
+    } else {
+      throw new TimeoutException(false);
+    }
+  }
 
   /**
    * Submit with a callback.
@@ -306,10 +223,152 @@ public abstract class WhitePagesService implements Service {
    */
   public final Response submit(Request req, Callback c) {
     Response res = submit(req);
-    if (c != null) {
-      res.addCallback(c);
-    }
+    res.addCallback(c);
     return res;
   }
 
+  /**
+   * Submit a request, get back a "future reply" response.
+   * <p>
+   * Example blocking usage is illustrated in the above
+   * utility methods, such as:<pre>
+   *   try {
+   *     Map m = wps.getAll("foo");
+   *     System.out.println("got all entries for foo: "+m);
+   *   } catch (Exception e) {
+   *     System.out.println("failed: "+e);
+   *   }
+   * </pre>
+   * <p>
+   * An example timed block:<pre>
+   *   try {
+   *     // wait at most 5 seconds
+   *     Map m = wps.getAll("foo", 5000);
+   *     System.out.println("got all entries for foo: "+m);
+   *   } catch (WhitePagesService.TimeoutException te) {
+   *     System.out.println("timeout"); // waited over 5 seconds
+   *   } catch (Exception e) {
+   *     System.out.println("failed: "+e);
+   *   }
+   * </pre>
+   * <p>
+   * An example "callback" usage is:<pre>
+   *    Request req = new Request.GetAll("foo");
+   *    Response r = wps.submit(req);
+   *    Callback callback = new Callback() {
+   *      public void execute(Response res) {
+   *        // note that (res == r)
+   *        if (res.isSuccess()) {
+   *          Map m = ((Response.GetAll) res).getAddressEntries();
+   *          System.out.println("got all entries for foo: "+m);
+   *        } else {
+   *          System.out.println("failed: "+res);
+   *        }
+   *      }
+   *    };
+   *    // add callback, will execute immediately if 
+   *    // there is already an answer
+   *    r.addCallback(callback);
+   *    // keep going, or optionally wait for the callback
+   * </pre>
+   * <p>
+   * An example blocking "poll" usage is:<pre>
+   *    Request req = new Request.GetAll("foo");
+   *    Response res = wps.submit(req);
+   *    // wait at most 5 seconds
+   *    if (res.waitForIsAvailable(5000)) {
+   *      // got an answer in under 5 seconds
+   *      if (res.isSuccess()) {
+   *        Map m = ((Response.GetAll) res).getAddressEntries();
+   *        System.out.println("got all entries for foo: "+m);
+   *      } else {
+   *        System.out.println("failed: "+res);
+   *      }
+   *    } else {
+   *      // can wait some more, attach a callback, or give up
+   *    }
+   * </pre>
+   *
+   * @param request the non-null request
+   * @return a non-null response
+   */
+  public abstract Response submit(Request req);
+
+  //
+  // deprecated, to be removed in Cougaar 10.4.1+
+  //
+
+  /** @deprecated use "Map getAll(name)" */
+  public final AddressEntry[] get(String name) throws Exception {
+    return get(name, 0);
+  }
+  /** @deprecated use "get(name,type)" */
+  public final AddressEntry get(
+      String name, Application app, String scheme) throws Exception {
+    return get(name, app, scheme, 0);
+  }
+  /** @deprecated use "refresh(name,type)" */
+  public final AddressEntry refresh(AddressEntry ae) throws Exception {
+    return refresh(ae, 0);
+  }
+  /** @deprecated use "Map getAll(name,timeout)" */
+  public final AddressEntry[] get(String name, long timeout) throws Exception {
+    Map m = getAll(name, 0);
+    AddressEntry[] ret;
+    if (m == null || m.isEmpty()) {
+      ret = new AddressEntry[0];
+    } else {
+      int msize = m.size();
+      ret = new AddressEntry[msize];
+      int i = 0;
+      for (Iterator iter = m.values().iterator();
+          iter.hasNext();
+          ) {
+        AddressEntry aei = (AddressEntry) iter.next();
+        ret[i++] = aei;
+      }
+    }
+    return ret;
+  }
+  /** @deprecated use "get(name,type,timeout)" */
+  public final AddressEntry get(
+      String name,
+      Application app,
+      String scheme,
+      long timeout) throws Exception {
+    String origType = app.toString();
+    String type = origType;
+    // backwards compatibility hack:
+    if ("topology".equals(type) && "version".equals(scheme)) {
+      type="version";
+    }
+    if (type != origType) {
+      Exception e = 
+        new RuntimeException(
+            "White pages \"get("+name+
+            ", "+origType+", "+scheme+
+            ")\" should be replaced with"+
+            "\"get("+name+", "+type+")\"");
+      Logging.getLogger(getClass()).warn(
+          null, e);
+    }
+    AddressEntry ae = get(name, type, timeout);
+    if (ae != null &&
+        !scheme.equals(ae.getURI().getScheme())) {
+      Exception e = 
+        new RuntimeException(
+            "White pages \"get("+name+
+            ", "+origType+", "+scheme+
+            ")\" returned an entry with a different"+
+            " URI scheme: "+ae);
+      Logging.getLogger(getClass()).warn(
+          null, e);
+    }
+    return ae;
+  }
+  /** @deprecated use "refresh(name,type,timeout)" */
+  public final AddressEntry refresh(
+      AddressEntry ae, long timeout) throws Exception {
+    return refresh(ae.getName(), ae.getType(), timeout);
+  }
 }

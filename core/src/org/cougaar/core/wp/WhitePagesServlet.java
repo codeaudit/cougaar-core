@@ -21,23 +21,26 @@
 
 package org.cougaar.core.wp;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.servlet.*;
-import org.cougaar.util.GenericStateModelAdapter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Callback;
+import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.servlet.ComponentServlet;
 
 /**
  * An option servlet for viewing and altering the white pages.
@@ -46,13 +49,13 @@ import org.cougaar.util.GenericStateModelAdapter;
  *   plugin = org.cougaar.core.wp.WhitePagesServlet(/wp)
  * </pre>
  * <p>
- * FIXME: document URL parameters.
- * <p>
- * Maybe repackage this to a new home...
+ * FIXME: document URL parameters!
+ *   For starters, just click on "submit" to do a recursive
+ *   white pages dump.
  */
 public class WhitePagesServlet extends ComponentServlet {
 
-  // default "getAll" depth-first recursion limit
+  // default "recursive_dump" depth-first recursion limit
   private static final int DEFAULT_LIMIT = 3;
 
   private LoggingService log;
@@ -90,13 +93,9 @@ public class WhitePagesServlet extends ComponentServlet {
     private boolean async;
     private String s_limit;
     private String name;
-    private String scheme;
-    private String addr;
-    private String s_app;
-    private Application app;
-    private boolean rel_ttl;
-    private String s_ttl;
-    private long now;
+    private String type;
+    private String s_uri;
+    private boolean useCache;
 
     public MyHandler(
         String localAgent,
@@ -130,18 +129,13 @@ public class WhitePagesServlet extends ComponentServlet {
       async = "true".equals(param("async"));
       s_limit = param("limit");
       name = param("name");
-      scheme = param("scheme");
-      addr = param("addr");
-      s_app = param("app");
-      if (s_app != null) {
-        app = Application.getApplication(s_app);
-      }
-      rel_ttl = (!"false".equals(param("rel_ttl")));
-      s_ttl = param("ttl");
-      now = System.currentTimeMillis();
+      type = param("type");
+      s_uri = param("uri");
+      useCache = !"false".equals(param("useCache"));
     }
 
     private void printHeader() {
+      long now = System.currentTimeMillis();
       out.println(
           "<html>\n"+
           "<head>\n"+
@@ -151,20 +145,18 @@ public class WhitePagesServlet extends ComponentServlet {
           "function selectOp() {\n"+
           "  var i = document.f.action.selectedIndex;\n"+
           "  var s = document.f.action.options[i].text;\n"+
-          "  var noLimit = (s != \"getAll\");\n"+
-          "  var noApp  = (s == \"get\" || s == \"list\");\n"+
-          "  var noSch  = noApp;\n"+
-          "  var noAddr = (s != \"bind\" && s != \"rebind\");\n"+
-          "  var noCert = noAddr;\n"+
-          "  var noRTTL = noCert;\n"+
-          "  var noTTL  = noRTTL;\n"+
+          "  var noLimit = (s != \"recursive_dump\");\n"+
+          "  var noType  = \n"+
+          "     (s == \"recursive_dump\" ||\n"+
+          "      s == \"getAll\" ||\n"+
+          "      s == \"list\");\n"+
+          "  var noURI =\n"+
+          "     (s != \"bind\" &&\n"+
+          "      s != \"rebind\" &&\n"+
+          "      s != \"unbind\");\n"+
           "  disable(noLimit, document.f.limit)\n"+
-          "  disable(noApp,   document.f.app)\n"+
-          "  disable(noSch,   document.f.scheme)\n"+
-          "  disable(noAddr,  document.f.addr)\n"+
-          "  disable(noCert,  document.f.cert)\n"+
-          "  disable(noRTTL,  document.f.rel_ttl)\n"+
-          "  disable(noTTL,   document.f.ttl)\n"+
+          "  disable(noType,  document.f.type)\n"+
+          "  disable(noURI,   document.f.uri)\n"+
           "}\n"+
         "function disable(b, txt) {\n"+
         "  txt.disabled=b;\n"+
@@ -189,7 +181,31 @@ public class WhitePagesServlet extends ComponentServlet {
         sreq.getRequestURI()+
         "\">\n"+
         "<tr><th colspan=2>Request</th></tr>\n"+
-        "<tr><td>Mode</td><td>"+
+        "<tr><td>Action</td><td>"+
+        "<select name=\"action\" onChange=\"selectOp()\">\n"+
+        option("recursive_dump", action)+
+        option("get", action)+
+        option("getAll", action)+
+        option("list", action)+
+        option("bind", action)+
+        option("rebind", action)+
+        option("unbind", action)+
+        "</select>\n"+
+        "</td><tr>\n"+
+        "<tr><td>Cache</td><td>"+
+        "<select name=\"useCache\">"+
+        "<option value=\"true\""+
+        (useCache ? " selected" : "") +
+        ">Use the cache</option>\n"+
+        "<option value=\"false\""+
+        (useCache ? "" : " selected") +
+        ">Bypass the cache</option>\n"+
+        "</select>\n"+
+        "</td></tr>\n"+
+        "<tr><td>Timeout</td><td>"+
+        input("timeout", s_timeout)+
+        "</td></tr>\n"+
+        "<tr><td>Blocking</td><td>"+
         "<select name=\"async\">"+
         "<option value=\"false\""+
         (async ? "" : " selected") +
@@ -198,20 +214,6 @@ public class WhitePagesServlet extends ComponentServlet {
         (async ? " selected" : "") +
         ">Don't wait (async)</option>\n"+
         "</select>\n"+
-        "</td></tr>\n"+
-        "<tr><td>Action</td><td>"+
-        "<select name=\"action\" onChange=\"selectOp()\">\n"+
-        option("get", action)+
-        option("getAll", action)+
-        option("list", action)+
-        option("refresh", action)+
-        option("bind", action)+
-        option("rebind", action)+
-        option("unbind", action)+
-        "</select>\n"+
-        "</td><tr>\n"+
-        "<tr><td>Timeout</td><td>"+
-        input("timeout", s_timeout)+
         "</td></tr>\n"+
         "<tr><td>Recursion limit</td><td>\n"+
         input("limit", s_limit, 4)+
@@ -223,26 +225,10 @@ public class WhitePagesServlet extends ComponentServlet {
         "<table border=1>\n"+
         "<tr><td>Name</td><td>"+
         input("name", name)+
-        "</td></tr>\n<tr><td>App</td><td>"+
-        input("app", s_app)+
+        "</td></tr>\n<tr><td>Type</td><td>"+
+        input("type", type)+
         "</td></tr>\n<tr><td>URI</td><td>"+
-        input("scheme", scheme, 7)+
-        "://"+
-        input("addr", addr, 30)+
-        "</td></tr>\n<tr><td>Cert</td><td>"+
-        "<select name=\"cert\">\n"+
-        "<option name=\"null\" selected>null</option>\n"+
-        "</select>\n"+
-        "</td></tr>\n<tr><td>TTL</td><td>"+
-        "<select name=\"rel_ttl\">"+
-        "<option value=\"true\""+
-        (rel_ttl ? " selected" : "") +
-        ">submit_time+</option>\n"+
-        "<option value=\"false\""+
-        (rel_ttl ? "" : " selected") +
-        ">exact millis</option>\n"+
-        "</select>\n"+
-        input("ttl", s_ttl, 26)+
+        input("uri", s_uri, 40)+
         "</td></tr>\n</table>\n"+
         "</td></tr>\n"+
         "<tr><td>"+
@@ -257,42 +243,57 @@ public class WhitePagesServlet extends ComponentServlet {
     private void performRequest() {
       try {
         Request req = null;
-        if ("get".equals(action)) {
+        if ("recursive_dump".equals(action)) {
+          String suffix = (name == null ? "." : name);
+          if (suffix.startsWith(".")) {
+            int limit = DEFAULT_LIMIT;
+            if (s_limit != null) {
+              limit = Integer.parseInt(s_limit);
+            }
+            submitDump(suffix, limit);
+          } else {
+            out.println(
+                "<font color=\"red\">Recursive dump suffix must"+
+                " start with \".\", not \""+suffix+"\"</font>");
+          }
+        } else if ("get".equals(action)) {
+          if (name == null) {
+            out.println(
+                "<font color=\"red\">Please specify a name</font>");
+          } else if (type == null) {
+            out.println(
+                "<font color=\"red\">Please specify a type</font>");
+          } else {
+            req = new Request.Get(useCache, timeout, name, type);
+          }
+        } else if ("getAll".equals(action)) {
           if (name == null) {
             out.println(
                 "<font color=\"red\">Please specify a name</font>");
           } else {
-            req = new Request.Get(name, timeout);
+            req = new Request.GetAll(useCache, timeout, name);
           }
-        } else if ("getAll".equals(action)) {
-          String suffix = (name == null ? "." : name);
-          int limit = DEFAULT_LIMIT;
-          if (s_limit != null) {
-            limit = Integer.parseInt(s_limit);
-          }
-          submitGetAll(suffix, limit);
         } else if ("list".equals(action)) {
-          String tmp = (name == null ? "" : name);
-          req = new Request.List(tmp, timeout);
-        } else if ("refresh".equals(action)) {
-          AddressEntry ae = parseEntry();
-          if (ae != null) {
-            req = new Request.Refresh(ae, timeout);
+          String tmp = (name == null ? "." : name);
+          if (tmp.startsWith(".")) {
+            req = new Request.List(useCache, timeout, tmp);
+          } else {
+            out.println(
+                "<font color=\"red\">List suffix must start"+
+                " with \".\", not \""+tmp+"\"</font>");
           }
-        } else if ("bind".equals(action)) {
+        } else if (
+            "bind".equals(action) ||
+            "rebind".equals(action)) {
+          boolean overWrite = "rebind".equals(action);
           AddressEntry ae = parseEntry();
           if (ae != null) {
-            req = new Request.Bind(ae, timeout);
-          }
-        } else if ("rebind".equals(action)) {
-          AddressEntry ae = parseEntry();
-          if (ae != null) {
-            req = new Request.Rebind(ae, timeout);
+            req = new Request.Bind(false, timeout, ae, overWrite, false);
           }
         } else if ("unbind".equals(action)) {
           AddressEntry ae = parseEntry();
           if (ae != null) {
-            req = new Request.Unbind(ae, timeout);
+            req = new Request.Unbind(false, timeout, ae);
           }
         } else if (action != null) {
           out.println(
@@ -336,28 +337,24 @@ public class WhitePagesServlet extends ComponentServlet {
     }
 
     private AddressEntry parseEntry() throws Exception {
-      String x_addr = addr;
-      String x_ttl = s_ttl;
-      if ("refresh".equals(action) || "unbind".equals(action)) {
-        x_addr = "ignored";
-        x_ttl = "0";
+      String x_uri = s_uri;
+      if ("unbind".equals(action) && s_uri == null) {
+        x_uri = "ignored://wp-servlet";
       }
-      if (name==null || s_app==null || x_addr==null || x_ttl==null) {
+      if (name==null || type==null || x_uri==null) {
         out.println("<font color=\"red\">Missing required field</font>");
         return null;
       }
-      URI uri = new URI(scheme+"://"+x_addr);
-      Cert cert = Cert.NULL;
-      long ttl = Long.parseLong(x_ttl);
-      if (rel_ttl) {
-        ttl += now;
+      if (name.startsWith(".")) {
+        out.println("<font color=\"red\">Name can't start with \".\"</font>");
+        return null;
       }
-      AddressEntry ae = new AddressEntry(
-          name, app, uri, cert, ttl);
+      URI uri = URI.create(s_uri);
+      AddressEntry ae = AddressEntry.getAddressEntry(name, type, uri);
       return ae;
     }
 
-    private void submitGetAll(
+    private void submitDump(
         String suffix, int limit) throws Exception {
       out.println("<p><hr><p>");
       if (wps == null) {
@@ -366,12 +363,12 @@ public class WhitePagesServlet extends ComponentServlet {
         return;
       }
       printTableStart();
-      recurseGetAll(suffix, 0, limit);
+      recurseDump(suffix, 0, limit);
       printTableEnd();
     }
 
     // recursive!
-    private int recurseGetAll(
+    private int recurseDump(
         String suffix, int idx, int limit) throws Exception {
       int newIdx = idx;
       if (limit == 0) {
@@ -381,10 +378,11 @@ public class WhitePagesServlet extends ComponentServlet {
             "<td align=right>"+newIdx+"&nbsp;</td>"+
             "<td colspan=4><a href=\""+
             sreq.getRequestURI()+
-            "?action=getAll"+
+            "?action=recursive_dump"+
+            "&useCache="+useCache+
             "&name="+suffix+
-            (s_app == null ? "" : ("&app="+s_app))+
-            (scheme == null ? "" : ("&scheme="+scheme))+
+            (type == null ? "" : ("&type="+type))+
+            (s_uri == null ? "" : ("&uri="+s_uri))+
             (s_timeout == null ? "" : ("&timeout="+s_timeout))+
             (s_limit == null ? "" : ("&limit="+s_limit))+
             "\">"+suffix+"</a></td>"+
@@ -408,10 +406,10 @@ public class WhitePagesServlet extends ComponentServlet {
         String s = (String) l.get(i);
         if (s == null) {
         } else if (s.length() > 0 && s.charAt(0) == '.') {
-          newIdx = recurseGetAll(s, newIdx, (limit - 1));
+          newIdx = recurseDump(s, newIdx, (limit - 1));
         } else {
-          AddressEntry[] a = wps.get(s, timeout);
-          newIdx = print(a, newIdx, app, scheme);
+          Map m = wps.getAll(s, timeout);
+          newIdx = print(m, newIdx);
         }
       }
       return newIdx;
@@ -448,69 +446,48 @@ public class WhitePagesServlet extends ComponentServlet {
 
     private void print(Response res) {
       out.print("<b>"+action+":</b><br>");
-      if (res instanceof Response.Get) {
-        if (!res.isAvailable()) {
-          out.println("Not available yet");
-        } else if (res.isSuccess()) {
-          AddressEntry[] a =
-            ((Response.Get) res).getAddressEntries();
-          print(a);
-        } else if (res.isTimeout()) {
-          out.print("Timeout");
-        } else {
-          print(res.getException());
-        }
-      } else if (res instanceof Response.List) {
-        if (!res.isAvailable()) {
-          out.println("Not available yet");
-        } else if (res.isSuccess()) {
+      if (!res.isAvailable()) {
+        out.println("Not available yet");
+      } else if (res.isTimeout()) {
+        out.print("Timeout");
+      } else if (!res.isSuccess()) {
+        print(res.getException());
+      } else {
+        // success:
+        if (res instanceof Response.Get) {
+          AddressEntry ae = ((Response.Get) res).getAddressEntry();
+          print(ae);
+        } else if (res instanceof Response.GetAll) {
+          Map m = ((Response.GetAll) res).getAddressEntries();
+          print(m);
+        } else if (res instanceof Response.List) {
           Set names = ((Response.List) res).getNames();
           print(names);
-        } else if (res.isTimeout()) {
-          out.print("Timeout");
-        } else {
-          print(res.getException());
-        }
-      } else if (res instanceof Response.Refresh) {
-        if (!res.isAvailable()) {
-          out.println("Not available yet");
-        } else if (res.isSuccess()) {
-          out.print("Old Entry:");
-          Request req = res.getRequest();
-          AddressEntry oldAE = 
-            ((Request.Refresh) req).getOldEntry();
-          print(oldAE);
-          out.print("New Entry:");
-          AddressEntry newAE = 
-            ((Response.Refresh) res).getNewEntry();
-          print(newAE);
-        } else if (res.isTimeout()) {
-          out.print("Timeout");
-        } else {
-          print(res.getException());
-        }
-      } else {
-        AddressEntry ae;
-        if (!res.isAvailable()) {
-          out.println("Not available yet");
-        } else if (res.isSuccess()) {
-          out.println("Success");
-          Request req = res.getRequest();
-          if (req instanceof Request.Bind) {
-            ae = ((Request.Bind) req).getAddressEntry();
-          } else if (req instanceof Request.Rebind) {
-            ae = ((Request.Rebind) req).getAddressEntry();
-          } else if (req instanceof Request.Unbind) {
-            ae = ((Request.Unbind) req).getAddressEntry();
+        } else if (res instanceof Response.Bind) {
+          Response.Bind bres = (Response.Bind) res;
+          if (bres.didBind()) {
+            long leaseExpireTime = bres.getExpirationTime();
+            out.print(
+                "Bind succeded, lease renewal due at "+
+                leaseExpireTime+" ("+
+                (new Date(leaseExpireTime))+")");
           } else {
-            out.println(res);
-            return;
+            AddressEntry usurperEntry = bres.getUsurperEntry();
+            if (usurperEntry == null) {
+              out.println("Bind failed, reason is unknown");
+            } else {
+              out.println("Bind failed, usurper entry is:<br>");
+              print(usurperEntry);
+            }
           }
-          print(ae);
-        } else if (res.isTimeout()) {
-          out.println("Timeout");
+        } else if (res instanceof Response.Unbind) {
+          if (((Response.Unbind) res).didUnbind()) {
+            out.println("Unbind succeeded");
+          } else {
+            out.println("Unbind failed?");
+          }
         } else {
-          print(res.getException());
+          out.println(res);
         }
       }
     }
@@ -521,10 +498,8 @@ public class WhitePagesServlet extends ComponentServlet {
           "<tr>"+
           "<th>&nbsp;</th>"+
           "<th>Name</th>"+
-          "<th>App</th>"+
+          "<th>Type</th>"+
           "<th>URI</th>"+
-          "<th>Cert</th>"+
-          "<th>TTL</th>"+
           "</tr>\n");
     }
 
@@ -532,29 +507,30 @@ public class WhitePagesServlet extends ComponentServlet {
       out.println("</table>");
     }
 
-    private void print(AddressEntry[] a) {
+    private void print(Map m) {
       printTableStart();
-      print(a, 0, null, null);
+      print(m, 0);
       printTableEnd();
     }
 
     private void print(AddressEntry ae) {
       printTableStart();
-      print(ae, 0, null, null);
+      print(ae, 0);
       printTableEnd();
     }
 
     private int print(
-        AddressEntry[] a,
-        int idx,
-        Application appFilter,
-        String schemeFilter) {
+        Map m,
+        int idx) {
       int ret = idx;
-      int n = (a == null ? 0 : a.length);
-      for (int i = 0; i < n; i++) {
-        AddressEntry ae = a[i];
-        if (print(ae, ret, appFilter, schemeFilter)) {
-          ++ret;
+      if (m != null && !m.isEmpty()) {
+        for (Iterator iter = m.values().iterator();
+            iter.hasNext();
+            ) {
+          AddressEntry ae = (AddressEntry) iter.next();
+          if (print(ae, ret)) {
+            ++ret;
+          }
         }
       }
       return ret;
@@ -562,22 +538,14 @@ public class WhitePagesServlet extends ComponentServlet {
 
     private boolean print(
         AddressEntry ae,
-        int idx,
-        Application appFilter,
-        String schemeFilter) {
-      if (ae != null &&
-          (appFilter == null ||
-           appFilter.equals(ae.getApplication())) &&
-          (schemeFilter == null ||
-           schemeFilter.equals(ae.getAddress().getScheme()))) {
+        int idx) {
+      if (ae != null) {
         out.print(
             "<tr>"+
             "<td align=right>"+(idx+1)+"&nbsp;</td>"+
             "<td align=right>"+ae.getName()+"</td>"+
-            "<td align=right>"+ae.getApplication()+"</td>"+
-            "<td>"+ae.getAddress()+"</td>"+
-            "<td>"+ae.getCert()+"</td>"+
-            "<td>"+ae.getTTL()+"</td>"+
+            "<td align=right>"+ae.getType()+"</td>"+
+            "<td>"+ae.getURI()+"</td>"+
             "</td></tr>\n");
         return true;
       }

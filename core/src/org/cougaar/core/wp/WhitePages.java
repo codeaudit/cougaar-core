@@ -21,15 +21,21 @@
 
 package org.cougaar.core.wp;
 
-import java.util.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.wp.resolver.Resolver;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import org.cougaar.core.agent.Agent; // inlined
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.ComponentInitializerService;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.wp.resolver.Resolver; // inlined
 
 /**
  * This container holds the client-side WP resolver and

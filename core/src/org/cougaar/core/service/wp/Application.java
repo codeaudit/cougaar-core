@@ -26,6 +26,8 @@ import java.util.HashMap;
 
 /**
  * An address entry must specify an application.
+ *
+ * @deprecated see new AddressEntry factory method
  */
 public final class Application implements Serializable {
 

@@ -94,6 +94,8 @@ implements Component {
   private Schedulable queueThread;
   private final Map queueResponses = new HashMap(13);
 
+  private static final long FAKE_TTL = 1234567;
+
   public void setBindingSite(BindingSite bs) {
     //this.sb = bs.getServiceBroker();
   }
@@ -229,23 +231,13 @@ implements Component {
   }
 
   private void bindNow(AddressEntry ae) throws Exception {
-    long now = System.currentTimeMillis();
-    if (ae.getTTL() < now) {
-      throw new IllegalArgumentException(
-          "TTL is less than current time ("+
-          ae.getTTL()+" < "+now+")");
-    }
+    // ignore ae.getTTL()
     String key = createKey(ae);
     nsBind(key, ae);
   }
 
   private void rebindNow(AddressEntry ae) throws Exception {
-    long now = System.currentTimeMillis();
-    if (ae.getTTL() < now) {
-      throw new IllegalArgumentException(
-          "TTL is less than current time ("+
-          ae.getTTL()+" < "+now+")");
-    }
+    // ignore ae.getTTL()
     String key = createKey(ae);
     nsRebind(key, ae);
   }
@@ -335,24 +327,22 @@ implements Component {
       throw new IllegalArgumentException("Negative timeout: "+timeout);
     }
 
-    if (req instanceof Request.Get) {
-      // "get"
-      String name = ((Request.Get) req).getName();
+    if (req instanceof Request.GetAll ||
+        req instanceof Request.Get) {
+      // "get" or "getAll"
+      String name =
+        (req instanceof Request.GetAll ?
+         ((Request.GetAll) req).getName() :
+         ((Request.Get) req).getName());
       Object ret;
       synchronized (cache) {
         CacheEntry ce = (CacheEntry) cache.get(name);
         if (ce == null) {
           // not listed
-          ret = AddressEntry.EMPTY_ARRAY;
+          ret = Collections.EMPTY_MAP;
         } else if (!ce.isStale) {
           // already cached
-          List l = ce.entries;
-          int n = l.size();
-          AddressEntry[] a = new AddressEntry[n];
-          for (int i = 0; i < n; i++) {
-            a[i] = (AddressEntry) l.get(i);
-          }
-          ret = a;
+          ret = ce.entries;
         } else {
           // must fetch
           ret = null;
@@ -362,7 +352,7 @@ implements Component {
         if (log.isDebugEnabled()) { 
           log.debug("HIT "+res+" "+ret);
         }
-        res.setResult(ret);
+        res.setResult(ret, FAKE_TTL);
         return;
       }
       // wrap timeout response to allow removal
@@ -390,7 +380,7 @@ implements Component {
             if (log.isDebugEnabled()) { 
               log.debug("TIMEOUT "+res+" "+this);
             }
-            res.setResult(Response.TIMEOUT);
+            res.setResult(Response.TIMEOUT, FAKE_TTL);
           }
           public String toString() {
             return 
@@ -417,23 +407,15 @@ implements Component {
       if (log.isDebugEnabled()) { 
         log.debug("LIST "+suffix+" ["+ret.size()+"]");
       }
-      res.setResult(ret);
+      res.setResult(ret, FAKE_TTL);
       return;
     } 
-
-    if (req instanceof Request.Refresh) {
-      // special case using "get"
-      refreshCached((Response.Refresh) res);
-      return;
-    }
 
     {
       // must be a *bind
       AddressEntry ae;
       if (req instanceof Request.Bind) {
         ae = ((Request.Bind) req).getAddressEntry();
-      } else if (req instanceof Request.Rebind) {
-        ae = ((Request.Rebind) req).getAddressEntry();
       } else if (req instanceof Request.Unbind) {
         ae = ((Request.Unbind) req).getAddressEntry();
       } else {
@@ -447,7 +429,7 @@ implements Component {
       if (timeout > 0) {
         TimerTask timerTask = new TimerTask() {
           public void run() {
-            res.setResult(Response.TIMEOUT);
+            res.setResult(Response.TIMEOUT, FAKE_TTL);
             if (log.isDebugEnabled()) {
               log.debug("TIMEOUT "+res+" "+this);
             }
@@ -465,44 +447,6 @@ implements Component {
         threadService.schedule(timerTask, timeout);
       }
     }
-  }
-
-  private void refreshCached(final Response.Refresh origRes) {
-    // translate a "refresh(entry)" to a "get(entry.name)"
-    Request.Refresh origReq = (Request.Refresh) origRes.getRequest();
-    long timeout = origReq.getTimeout();
-    AddressEntry ae = origReq.getOldEntry();
-    final Application app = ae.getApplication();
-    final String scheme = ae.getAddress().getScheme();
-    Request getReq = new Request.Get(ae.getName(), timeout);
-    Callback getC = new Callback() {
-      public void execute(Response r) {
-        if (log.isDebugEnabled()) {
-          log.debug("Refresh callback origRes="+origRes+" r="+r);
-        }
-        Response.Get gr = (Response.Get) r;
-        Object ret = Response.Refresh.NULL;
-        AddressEntry[] a = gr.getAddressEntries();
-        int n = (a==null?0:a.length);
-        for (int i = 0; i < n; i++) {
-          AddressEntry ai = a[i];
-          if (ai.getApplication().equals(app) &&
-              ai.getAddress().getScheme().equals(scheme)) {
-            if (ai.getTTL() >= System.currentTimeMillis()) {
-              ret = ai;
-            }
-            break;
-          }
-        }
-        origRes.setResult(ret);
-        if (log.isDebugEnabled()) {
-          log.debug("Refresh callback set result for "+origRes);
-        }
-      }
-    };
-    Response getRes = getReq.createResponse();
-    getRes.addCallback(getC);
-    submitCached(getRes);
   }
 
   private static class WrappedResponse {
@@ -558,7 +502,8 @@ implements Component {
             }
             ce.keys.add(key);
             ce.isStale = false;
-            ce.entries.add(ae);
+            String type = ae.getType();
+            ce.entries.put(type, ae);
           }
           // prepare responses
           Iterator qrIter = queueResponses.entrySet().iterator();
@@ -571,21 +516,20 @@ implements Component {
             } else {
               ri = (Response) o;
             }
-            Request.Get req = (Request.Get) ri.getRequest();
-            String name = req.getName();
+            String name;
+            Request req = ri.getRequest();
+            if (req instanceof Request.Get) {
+              name = ((Request.Get) req).getName();
+            } else {
+              name = ((Request.GetAll) req).getName();
+            }
             CacheEntry ce = (CacheEntry) cache.get(name);
             Object val;
             if (ce == null) {
-              val = AddressEntry.EMPTY_ARRAY;
+              val = Collections.EMPTY_MAP;
             } else {
               // at this point we ignore the stale flag
-              List l = ce.entries;
-              int m = l.size();
-              AddressEntry[] a = new AddressEntry[m];
-              for (int j = 0; j < m; j++) {
-                a[j] = (AddressEntry) l.get(j);
-              }
-              val = a;
+              val = ce.entries;
             }
             me.setValue(val);
           }
@@ -606,7 +550,7 @@ implements Component {
         if (log.isDebugEnabled()) {
           log.debug("MISS "+ri+" "+val);
         }
-        ri.setResult(val);
+        ri.setResult(val, FAKE_TTL);
       }
       queueResponses.clear();
       return;
@@ -619,20 +563,24 @@ implements Component {
       AddressEntry ae;
       try {
         if (req instanceof Request.Bind) {
-          ae = ((Request.Bind)req).getAddressEntry();
-          bindNow(ae);
-        } else if (req instanceof Request.Rebind) {
-          ae = ((Request.Rebind)req).getAddressEntry();
-          rebindNow(ae);
+          Request.Bind rbin = (Request.Bind) req;
+          ae = rbin.getAddressEntry();
+          boolean isRebind = rbin.isOverWrite();
+          if (isRebind) {
+            rebindNow(ae);
+          } else {
+            bindNow(ae);
+          }
+          val = new Long(FAKE_TTL);
         } else if (req instanceof Request.Unbind) {
           ae = ((Request.Unbind)req).getAddressEntry();
           unbindNow(ae);
+          val = Boolean.TRUE;
         } else {
           throw new InternalError(
               "Invalid request class: "+
               (req==null?"null":req.getClass().getName()));
         }
-        val = ae;
       } catch (Exception e) {
         val = e;
       }
@@ -640,7 +588,7 @@ implements Component {
       if (log.isDebugEnabled()) {
         log.debug("MISS "+res+" "+val);
       }
-      res.setResult(val);
+      res.setResult(val, FAKE_TTL);
     }
   }
 
@@ -734,13 +682,13 @@ implements Component {
   }
 
   private static final class CacheEntry {
-    // set of String keys (name#app#scheme)
+    // set of String keys (name#type)
     // mutable, access under cache lock
     public final Set keys = new HashSet(13);
     // true if the entries are stale
     public boolean isStale = true;
     // fetched entries, immutable but maybe stale
-    public final List entries = new ArrayList();
+    public final Map entries = new HashMap();
     public String toString() {
       return "(keys="+keys+" stale="+isStale+" entries="+entries+")";
     }
@@ -756,11 +704,9 @@ implements Component {
 
   private String createKey(AddressEntry ae) {
     String name = ae.getName();
-    String app = ae.getApplication().toString();
-    String scheme = ae.getAddress().getScheme();
+    String type = ae.getType();
     if (name.indexOf('#') >= 0 ||
-        app.indexOf('#') >= 0 ||
-        scheme.indexOf('#') >= 0) {
+        type.indexOf('#') >= 0) {
       String msg = 
         "AddressEntry contains unexpected \"#\" character: "+
         ae;
@@ -769,7 +715,7 @@ implements Component {
       }
       throw new RuntimeException(msg);
     }
-    String key = name+"#"+app+"#"+scheme;
+    String key = name+"#"+type;
     return key;
   }
 

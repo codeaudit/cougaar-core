@@ -21,17 +21,23 @@
 
 package org.cougaar.core.wp.resolver.bootstrap;
 
-import java.io.*;
-import java.util.*;
-import java.net.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.wp.*;
-import org.cougaar.core.wp.resolver.*;
-import org.cougaar.util.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
+import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.Component;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component reads the bootstrap config and fills
@@ -147,12 +153,8 @@ implements Component
         } catch (Exception e) {
           throw new RuntimeException("Invalid line: "+line, e);
         }
-        AddressEntry ae = new AddressEntry(
-            name,
-            Application.getApplication(type),
-            uri,
-            Cert.NULL,
-            Long.MAX_VALUE);
+        AddressEntry ae = AddressEntry.getAddressEntry(
+            name, type, uri);
         add(ae);
       }
     }

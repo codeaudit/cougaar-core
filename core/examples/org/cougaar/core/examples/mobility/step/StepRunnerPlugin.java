@@ -46,7 +46,6 @@ import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.wp.Application;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.util.UID;
@@ -62,9 +61,6 @@ import org.cougaar.util.UnaryPredicate;
 public class StepRunnerPlugin 
 extends ComponentPlugin 
 {
-
-  private static final Application TOPOLOGY = 
-    Application.getApplication("topology");
 
   private MessageAddress todd;
   private MessageAddress agentId;
@@ -890,31 +886,29 @@ extends ComponentPlugin
       // get "node://host/node"
       AddressEntry nodeAE = wps.get(
           agent.getAddress(),
-          TOPOLOGY,
-          "node",
+          "topology",
           timeout);
       if (nodeAE == null) {
         if (log.isInfoEnabled()) {
-          log.info("Missing \"node://\" WP entry for "+agent);
+          log.info("Missing \"topology\" WP entry for "+agent);
         }
         return null;
       }
-      URI nodeURI = nodeAE.getAddress();
+      URI nodeURI = nodeAE.getURI();
       String host = nodeURI.getHost();
       String node = nodeURI.getPath().substring(1);
       // get "version:///incarnation/moveId"
       AddressEntry versionAE = wps.get(
           agent.getAddress(),
-          TOPOLOGY,
           "version",
           timeout);
       if (versionAE == null) {
         if (log.isInfoEnabled()) {
-          log.info("Missing \"version://\" WP entry for "+agent);
+          log.info("Missing \"version\" WP entry for "+agent);
         }
         return null;
       }
-      URI versionURI = versionAE.getAddress();
+      URI versionURI = versionAE.getURI();
       String tmp = versionURI.getPath();
       int sep = tmp.indexOf('/', 1);
       long inc = Long.parseLong(tmp.substring(1, sep));

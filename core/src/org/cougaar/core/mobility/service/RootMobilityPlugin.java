@@ -51,7 +51,6 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.service.wp.Application;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.util.UID;
@@ -201,8 +200,7 @@ extends AbstractMobilityPlugin
         try {
           ae = whitePagesService.get(
               destNode.getAddress(),
-              Application.getApplication("topology"),
-              "node",
+              "topology",
               (30000)); // 30 seconds
         } catch (Exception e) {
           s = e.toString();
@@ -212,7 +210,7 @@ extends AbstractMobilityPlugin
             s = "It's not listed in the white pages";
           }
         } else {
-          URI uri = ae.getAddress();
+          URI uri = ae.getURI();
           String path = uri.getPath();
           String node = (path == null ? null : path.substring(1));
           if (!destNode.getAddress().equals(node)) {

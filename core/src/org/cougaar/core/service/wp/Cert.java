@@ -34,6 +34,8 @@ import java.security.cert.Certificate;
  *   <li>{@link #Indirect}</li>
  * </ul>
  * User-defined Cert subclasses are also permitted.
+ *
+ * @deprecated see new AddressEntry factory method
  */
 public abstract class Cert implements Serializable {
 

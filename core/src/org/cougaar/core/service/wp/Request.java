@@ -25,22 +25,58 @@ import java.io.Serializable;
 
 /**
  * Request for the white pages service.
+ * <p>
+ * Request objects are immutable.  A client submits a request
+ * to the white pages and watches the mutable Response object.
  */
 public abstract class Request implements Serializable {
 
   private final long timeout;
+  private final boolean useCache;
 
-  private Request() {
-    this(0);
-  }
-  private Request(long timeout) {
+  private Request(boolean useCache, long timeout) {
+    this.useCache = useCache;
     this.timeout = timeout;
   }
 
   /**
+   * Returns false if this request would prefer to bypass the
+   * cache.
+   * <p>
+   * Always false for the "*bind" operations.
+   * <p>
+   * For "get", "getAll", and "list" the server is free to ignore
+   * this flag and return a cached value.  This should only be
+   * set to false if the client has detected a <b>strong</b>
+   * out-of-band hint that the entry is stale, such as a lost
+   * network connection to the entry's URI.
+   * <p>
+   * This field is ignored when comparing "equals()".
+   */
+  public final boolean useCache() {
+    return useCache;
+  }
+
+  /**
    * The timeout indicates the maximum time in milliseconds
-   * for the <i>resolver</i> action, where zero indicates
-   * "forever".
+   * for the <i>resolver</i> action.
+   * <p>
+   * The valid timeout values are:</ul>
+   *   <li>positive:<br>
+   *       Maximum resolver time in milliseconds.  If the
+   *       resolver takes longer than this time, it may
+   *       continue the request in the background for future
+   *       caching use.
+   *   </li>
+   *   <li>zero:<br>
+   *       No timeout.
+   *   </li>
+   *   <li>negative:<br>
+   *       Check the cache, but don't initiate a remote request
+   *       if the entry is not in the cache.  This is only
+   *       valid for the "get" and "list" operations.
+   *   </li>
+   * </ul>
    * <p>
    * Note that this can be different than the Response
    * "waitForIsAvailable(long timeout)", which is a timeout
@@ -50,35 +86,94 @@ public abstract class Request implements Serializable {
    *    - thread A wants a response in 5 seconds
    *    - thread B is willing to wait forever (max = 10 minutes)
    * </pre>
-   *
-   * @return millis
+   * <p>
+   * This field is ignored when comparing "equals()".
+   * <p>
+   * @return milliseconds
    */
   public final long getTimeout() { 
     return timeout;
   }
 
+  /**
+   * Create a response object for this request.
+   */
   public abstract Response createResponse();
 
   public String toString() {
     return 
       " oid="+System.identityHashCode(this)+
-      ((timeout > 0) ? (" timeout="+timeout) : "")+
+      " timeout="+getTimeout()+
+      " useCache="+useCache()+
       ")";
+  }
+
+  /**
+   * Get the entry with the matching (name, type) fields.
+   *
+   * @see Request.GetAll get all entries with a given name
+   */
+  public static class Get extends Request {
+    private final String name;
+    private final String type;
+    private transient int _hc;
+    public Get(
+        boolean useCache, long timeout,
+        String name, String type) {
+      super(useCache, timeout);
+      this.name = name;
+      this.type = type;
+      if (name==null || type==null) {
+        throw new IllegalArgumentException("Null parameter");
+      }
+    }
+    public final String getName() { return name; }
+    public final String getType() { return type; }
+    public Response createResponse() {
+      return new Response.Get(this);
+    }
+    public int hashCode() {
+      if (_hc == 0) {
+        int h = 0;
+        h = 31*h + name.hashCode();
+        h = 31*h + type.hashCode();
+        _hc = h;
+      }
+      return _hc;
+    }
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof Get)) {
+        return false;
+      } else {
+        Get g = (Get) o;
+        return
+          (name.equals(g.name) &&
+           type.equals(g.type));
+      }
+    }
+    public String toString() {
+      return 
+        "("+
+        (useCache() ? "get" : "refresh")+
+        " name="+getName()+
+        " type="+getType()+
+        super.toString();
+    }
   }
 
   /**
    * Get all entries associated with the given name.
    *
-   * @see Get.Refresh do a specific (name, app, scheme) lookup,
-   *   or update an existing entry.
+   * @see Request.Get do a specific (name, type) lookup
    */
-  public static class Get extends Request {
+  public static class GetAll extends Request {
     private final String name;
-    public Get(String name) {
-      this(name, 0);
-    }
-    public Get(String name, long timeout) {
-      super(timeout);
+    public GetAll(
+        boolean useCache, long timeout,
+        String name) {
+      super(useCache, timeout);
       this.name = name;
       if (name == null) {
         throw new IllegalArgumentException("null name");
@@ -88,10 +183,26 @@ public abstract class Request implements Serializable {
       return name;
     }
     public Response createResponse() {
-      return new Response.Get(this);
+      return new Response.GetAll(this);
+    }
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof GetAll)) {
+        return false;
+      } else {
+        return name.equals(((GetAll) o).name);
+      }
+    }
+    public int hashCode() {
+      return name.hashCode();
     }
     public String toString() {
-      return "(get name="+getName()+super.toString();
+      return 
+        "("+
+        (useCache() ? "getAll" : "refreshAll")+
+        " name="+getName()+
+        super.toString();
     }
   }
 
@@ -126,16 +237,14 @@ public abstract class Request implements Serializable {
    *       suffix +
    *       "$");</pre>
    * <p>
-   * This is somewhat like a the DNS zone transfer (AXFR) limited to
-   * depth=1.
+   * This is similar to a DNS zone transfer (AXFR) limited to depth=1.
    */
   public static class List extends Request {
     private final String suffix;
-    public List(String suffix) {
-      this(suffix, 0);
-    }
-    public List(String suffix, long timeout) {
-      super(timeout);
+    public List(
+        boolean useCache, long timeout,
+        String suffix) {
+      super(useCache, timeout);
       String suf = suffix;
       // must start with '.'
       int len = (suf == null ? 0 : suf.length());
@@ -155,146 +264,147 @@ public abstract class Request implements Serializable {
     public Response createResponse() {
       return new Response.List(this);
     }
-    public String toString() {
-      return "(list suffix="+getSuffix()+super.toString();
-    }
-  }
-
-  /**
-   * Refresh the specified entry.
-   * <p>
-   * Only these fields of the entry are used:
-   * <ul>
-   *   <li>entry.getName()  <i>e.g. "foo"</i></li>
-   *   <li>entry.getApplication()   <i>e.g. "wp"</i></li>
-   *   <li>entry.getAddress().getScheme()  <i>e.g. "rmi"</i></li>
-   * </ul><br>
-   * Note that this allows a client to do a simple "get" for just
-   * one (name, application, scheme) tuple.
-   * <p>
-   * If the client already has an entry, one can't necessarily
-   * use the TTL to guarantee validity.  The entry TTL is primarily
-   * for the resolver's cache use.  A rebind may update the entry 
-   * before the TTL has expired.  Calling "refresh" will force both
-   * a cache and entry update, and the returned entry is guaranteed
-   * to either be null or have a TTL in the future.
-   * <p>
-   * This is typically only used if the client has detected a
-   * <b>strong</b> out-of-band hint that the entry is stale, such
-   * as a lost network connection to the entry's URI.
-   */
-  public static class Refresh extends Request {
-    private final AddressEntry oa;
-    public Refresh(AddressEntry oa) {
-      this(oa, 0);
-    }
-    public Refresh(AddressEntry oa, long timeout) {
-      super(timeout);
-      this.oa = oa;
-      if (oa == null) {
-        throw new IllegalArgumentException("Null entry");
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof List)) {
+        return false;
+      } else {
+        return suffix.equals(((List) o).suffix);
       }
     }
-    public final AddressEntry getOldEntry() { 
-      return oa;
-    }
-    public Response createResponse() {
-      return new Response.Refresh(this);
+    public int hashCode() {
+      return suffix.hashCode();
     }
     public String toString() {
-      return "(refresh old="+getOldEntry()+super.toString();
+      return
+        "("+
+        (useCache() ? "list" : "relist")+
+        " suffix="+getSuffix()+
+        super.toString();
     }
   }
 
   /**
-   * Bind a new entry.
+   * Bind a new entry, or rebind an existing entry if the
+   * overwrite flag is false.
    * <p>
-   * The entry TTL must be in the future.
+   * The renewal flag is for the infrastructure's use, for
+   * renewing bind leases.
    */
   public static class Bind extends Request {
-    private final AddressEntry a;
-    public Bind(AddressEntry a) {
-      this(a, 0);
-    }
-    public Bind(AddressEntry a, long timeout) {
-      super(timeout);
-      this.a = a;
-      if (a == null) {
+    private final AddressEntry ae;
+    private final boolean overWrite;
+    private final boolean renewal;
+    public Bind(
+        boolean useCache,
+        long timeout,
+        AddressEntry ae,
+        boolean overWrite,
+        boolean renewal) {
+      super(useCache, timeout);
+      this.ae = ae;
+      this.overWrite = overWrite;
+      this.renewal = renewal;
+      if (useCache) {
+        throw new IllegalArgumentException(
+            "Bind must have \"useCache\" set to false");
+      }
+      if (ae == null) {
         throw new IllegalArgumentException("Null entry");
+      }
+      if (renewal && overWrite) {
+        throw new IllegalArgumentException(
+            "Renewal implies non-overwrite");
       }
     }
     public final AddressEntry getAddressEntry() { 
-      return a;
+      return ae;
+    }
+    public final boolean isOverWrite() {
+      return overWrite;
+    }
+    public final boolean isRenewal() {
+      return renewal;
     }
     public Response createResponse() {
       return new Response.Bind(this);
     }
-    public String toString() {
-      return "(bind entry="+getAddressEntry()+super.toString();
-    }
-  }
-
-  /**
-   * Rebinds the specified entry with the new value, where any
-   * existing binding for the name is replaced.
-   * <p>
-   * The entry TTL must be in the future.
-   */
-  public static class Rebind extends Request {
-    private final AddressEntry a;
-    public Rebind(AddressEntry a) {
-      this(a, 0);
-    }
-    public Rebind(AddressEntry a, long timeout) {
-      super(timeout);
-      this.a = a;
-      if (a == null) {
-        throw new IllegalArgumentException("Null entry");
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof Bind)) {
+        return false;
+      } else {
+        Bind b = (Bind) o;
+        return 
+          (ae.equals(b.ae) &&
+           overWrite == b.overWrite &&
+           renewal == b.renewal);
       }
     }
-    public final AddressEntry getAddressEntry() { 
-      return a;
-    }
-    public Response createResponse() {
-      return new Response.Rebind(this);
+    public int hashCode() {
+      return 
+        (ae.hashCode() +
+         (overWrite ? 1 : 2)+
+         (renewal ? 3 : 4));
     }
     public String toString() {
-      return "(rebind entry="+getAddressEntry()+super.toString();
+      return 
+        "("+
+        (isOverWrite() ?
+         "rebind" :
+         (isRenewal() ?
+          "renew" : "bind"))+
+        " entry="+getAddressEntry()+
+        super.toString();
     }
   }
 
   /**
    * Destroy the binding for the specified entry.
    * <p>
-   * Only these fields of the entry are used:
-   * <ul>
-   *   <li>entry.getName()  <i>e.g. "foo"</i></li>
-   *   <li>entry.getApplication()   <i>e.g. "wp"</i></li>
-   *   <li>entry.getAddress().getScheme()  <i>e.g. "rmi"</i></li>
-   * </ul><br>
-   * This allows a client to remove an entry without worrying
-   * about the current value (if any).
+   * The client must pass the current value for the
+   * bound entry.
    */
   public static class Unbind extends Request {
-    private final AddressEntry a;
-    public Unbind(AddressEntry a) {
-      this(a, 0);
-    }
-    public Unbind(AddressEntry a, long timeout) {
-      super(timeout);
-      this.a = a;
-      if (a == null) {
+    private final AddressEntry ae;
+    public Unbind(
+        boolean useCache,
+        long timeout,
+        AddressEntry ae) {
+      super(useCache, timeout);
+      this.ae = ae;
+      if (useCache) {
+        throw new IllegalArgumentException(
+            "Bind must have \"useCache\" set to false");
+      }
+      if (ae == null) {
         throw new IllegalArgumentException("Null entry");
       }
     }
-    public final AddressEntry getAddressEntry() { 
-      return a;
-    }
+    public final AddressEntry getAddressEntry() { return ae; }
     public Response createResponse() {
       return new Response.Unbind(this);
     }
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (!(o instanceof Unbind)) {
+        return false;
+      } else {
+        Unbind u = (Unbind) o;
+        return ae.equals(u.ae);
+      }
+    }
+    public int hashCode() {
+      return ae.hashCode();
+    }
     public String toString() {
-      return "(unbind entry="+getAddressEntry()+super.toString();
+      return 
+        "(unbind"+
+        " entry="+getAddressEntry()+
+        super.toString();
     }
   }
 }

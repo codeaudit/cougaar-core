@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.Application;
 import org.cougaar.core.service.wp.WhitePagesService;
 
 /**
@@ -42,10 +41,6 @@ public final class ListAllNodes {
     "true".equals(
         System.getProperty(
           "org.cougaar.core.wp.list.useShortcut", "true"));
-
-  private static Application NODE_APP = 
-    Application.getApplication("topology");
-  private static String NODE_SCHEME   = "node";
 
   private ListAllNodes() { }
 
@@ -93,9 +88,9 @@ public final class ListAllNodes {
       }
     } else {
       // do a WP lookup for the agent's node
-      AddressEntry ae = wps.get(s, NODE_APP, NODE_SCHEME, timeout);
+      AddressEntry ae = wps.get(s, "topology", timeout);
       if (ae != null) {
-        URI uri = ae.getAddress();
+        URI uri = ae.getURI();
         return uri.getPath().substring(1);
       }
     }

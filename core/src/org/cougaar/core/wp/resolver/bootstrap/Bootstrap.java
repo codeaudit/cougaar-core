@@ -21,14 +21,32 @@
 
 package org.cougaar.core.wp.resolver.bootstrap;
 
-import java.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.mts.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.service.wp.*;
-import org.cougaar.core.wp.*;
-import org.cougaar.core.wp.resolver.*;
+import java.net.URL;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
+import org.cougaar.core.component.ContainerSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.ComponentInitializerService;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Request;
+import org.cougaar.core.service.wp.Response;
+import org.cougaar.core.wp.resolver.Handler;
+import org.cougaar.core.wp.resolver.HandlerRegistryService;
+import org.cougaar.core.wp.resolver.Resolver; // inlined
 
 /**
  * This is the resolver bootstrap cache, which includes
@@ -190,29 +208,29 @@ extends ContainerSupport
     if (logger.isDebugEnabled()) {
       logger.debug("Bootstrap intercept wp request: "+req);
     }
-    if (req instanceof Request.Refresh) {
-      // FIXME Get
-      Request.Refresh ref = (Request.Refresh) req;
-      AddressEntry oldAE = ref.getOldEntry();
-      String name = oldAE.getName();
-      String type = oldAE.getApplication().toString();
-      String scheme = oldAE.getAddress().getScheme();
-      AddressEntry bootAE = table.get(name, type, scheme);
+    if (req instanceof Request.Get) {
+      Request.Get greq = (Request.Get) req;
+      String name = greq.getName();
+      String type = greq.getType();
+      AddressEntry bootAE = table.get(name, type);
       if (bootAE != null) {
-        res.setResult(bootAE);
+        res.setResult(bootAE, 30000);
       }
     } else if (req instanceof Request.Bind) {
       Request.Bind bin = (Request.Bind) req;
       AddressEntry ae = bin.getAddressEntry();
-      bindWatchers.bind(ae);
-    } else if (req instanceof Request.Rebind) {
-      Request.Rebind reb = (Request.Rebind) req;
-      AddressEntry ae = reb.getAddressEntry();
-      bindWatchers.rebind(ae);
+      boolean overWrite = bin.isOverWrite();
+      if (overWrite) {
+        bindWatchers.rebind(ae);
+      } else {
+        bindWatchers.bind(ae);
+      }
     } else if (req instanceof Request.Unbind) {
       Request.Unbind unb = (Request.Unbind) req;
       AddressEntry ae = unb.getAddressEntry();
       bindWatchers.unbind(ae);
+    } else {
+      // ignore
     }
     return res;
   }
@@ -289,25 +307,17 @@ extends ContainerSupport
    * when the entries change.
    */
   private static class EntryTable {
-
-    // Map<String><List<AddressEntry>>
+    // Map<String><Map<String,AddressEntry>>>
     private final Map entries = new HashMap();
 
     // Set<TableService.TableWatcher>
     private final Set tableWatchers = new IdentityHashSet();
 
-    public AddressEntry get(
-        String name, String type, String scheme) {
+    public AddressEntry get(String name, String type) {
       synchronized (entries) {
-        List l = (List) entries.get(name);
-        if (l != null) {
-          for (int i = 0, n = l.size(); i < n; i++) {
-            AddressEntry ae = (AddressEntry) l.get(i);
-            if (type.equals(ae.getApplication().toString()) &&
-                scheme.equals(ae.getAddress().getScheme())) {
-              return ae;
-            }
-          }
+        Map m = (Map) entries.get(name);
+        if (m != null) {
+          return (AddressEntry) m.get(type);
         }
         return null;
       }
@@ -317,19 +327,15 @@ extends ContainerSupport
       return entries().iterator();
     }
 
+    // List<AddressEntry>
     private List entries() {
       synchronized (entries) {
         List ret = new ArrayList(entries.size());
         for (Iterator iter = entries.values().iterator();
             iter.hasNext();
             ) {
-          List l = (List) iter.next();
-          for (Iterator i2 = l.iterator();
-              i2.hasNext();
-              ) {
-            AddressEntry ae = (AddressEntry) i2.next();
-            ret.add(ae);
-          }
+          Map m = (Map) iter.next();
+          ret.addAll(m.values());
         }
         return ret;
       }
@@ -338,24 +344,13 @@ extends ContainerSupport
     public void add(AddressEntry entry) {
       synchronized (entries) {
         String name = entry.getName();
-        List l = (List) entries.get(name);
-        if (l == null) {
-          l = new ArrayList(3);
-          entries.put(name, l);
+        Map m = (Map) entries.get(name);
+        if (m == null) {
+          m = new HashMap(3);
+          entries.put(name, m);
         }
-        int n = l.size();
-        int i = n;
-        while (--i >= 0) {
-          AddressEntry ae = (AddressEntry) l.get(i);
-          if (matches(entry, ae)) {
-            break;
-          }
-        }
-        if (i >= 0) {
-          l.set(i, entry);
-        } else {
-          l.add(entry);
-        }
+        String type = entry.getType();
+        m.put(type, entry);
 
         // tell table watchers
         for (Iterator iter = tableWatchers.iterator();
@@ -381,25 +376,24 @@ extends ContainerSupport
     public void remove(AddressEntry entry) {
       synchronized (entries) {
         String name = entry.getName();
-        List l = (List) entries.get(name);
-        int n = (l == null ? 0 : l.size());
-        int i = n;
-        while (--i >= 0) {
-          AddressEntry ae = (AddressEntry) l.get(i);
-          if (matches(entry, ae)) {
-            break;
-          }
-        }
-        if (i >= 0) {
-          l.remove(i);
+        Map m = (Map) entries.get(name);
+        if (m != null) {
+          String type = entry.getType();
+          AddressEntry ae = (AddressEntry) m.get(type);
+          if (entry.equals(ae)) {
+            m.remove(type);
+            if (m.isEmpty()) {
+              entries.remove(name);
+            }
 
-          // tell table watchers
-          for (Iterator iter = tableWatchers.iterator();
-              iter.hasNext();
-              ) {
-            TableService.TableWatcher tw =
-              (TableService.TableWatcher) iter.next();
-            tw.removed(entry);
+            // tell table watchers
+            for (Iterator iter = tableWatchers.iterator();
+                iter.hasNext();
+                ) {
+              TableService.TableWatcher tw =
+                (TableService.TableWatcher) iter.next();
+              tw.removed(entry);
+            }
           }
         }
       }
@@ -408,6 +402,9 @@ extends ContainerSupport
     private void clear() {
       synchronized (entries) {
         entries.clear();
+
+        // should we tell the watchers?  for now we assume
+        // this is due to a component unload.
         tableWatchers.clear();
       }
     }
@@ -425,28 +422,14 @@ extends ContainerSupport
         tableWatchers.remove(tw);
       }
     }
-
-    private boolean matches(AddressEntry a, AddressEntry b) {
-      if (a == b) {
-        return true;
-      } else if (a == null || b == null) {
-        return false;
-      } else {
-        return 
-          a.getName().equals(b.getName()) &&
-          a.getApplication().equals(b.getApplication()) &&
-          a.getAddress().getScheme().equals(b.getAddress().getScheme());
-      }
-    }
   }
 
   private class TableSP 
     implements ServiceProvider {
       private final TableService ts =
         new TableService() {
-          public AddressEntry get(
-              String name, String type, String scheme) {
-            return table.get(name, type, scheme);
+          public AddressEntry get(String name, String type) {
+            return table.get(name, type);
           }
           public Iterator iterator() {
             return table.iterator();

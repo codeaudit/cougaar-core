@@ -25,21 +25,27 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Response from the white pages service.
  */
-public abstract class Response implements Serializable {
+public abstract class Response implements Callback, Serializable {
 
   /** A marker exception for a request timeout failure */
   public static final String TIMEOUT = "timeout";
 
   private final Request request;
   private final Object lock = new Object();
-  private Set callbacks;
+  private transient Set callbacks;
   private Object result;
+  private long ttl;
 
+  /**
+   * Responses are created by asking a Request to
+   * "createResponse()".
+   */
   private Response(Request request) {
     this.request = request;
     if (request == null) {
@@ -55,17 +61,23 @@ public abstract class Response implements Serializable {
     return (getResult() != null);
   }
 
-  /** Suspend the current thread until response.isAvailable() will return true
+  /**
+   * Suspend the current thread until response.isAvailable()
+   * will return true
+   * <p>
    * @return true
    */
   public boolean waitForIsAvailable() throws InterruptedException {
     return waitForIsAvailable(0);
   }
 
-  /** Suspend the current thread until response.isAvailable() will return true
+  /**
+   * Suspend the current thread until response.isAvailable() will
+   * return true or the timeout is exceeded.
+   * <p>
    * @param timeout How long to wait.
    * @return true if "isAvailable()"
-   **/
+   */
   public boolean waitForIsAvailable(long timeout) throws InterruptedException {
     synchronized (lock) {
       if (result != null) {
@@ -76,16 +88,18 @@ public abstract class Response implements Serializable {
     }
   }
 
-  /** install a callback to be invoked when the response is available.
+  /** 
+   * Install a callback to be invoked when the response is available.
+   * <p>
    * If the response is already available when this method is called,
    * the callback my be invoked in the calling thread immediately.
-   * @note The behavior of this method is undefined if it is called more than
-   * once on a single YPResponse instance.
-   * @param callback A runnable to be executed when a result is available.  This will
-   * be called exactly once.  The callback.execute(Result) method should execute
-   * quickly - under no circumstances should it ever block or perform any
-   * non-trivial tasks.
-   **/
+   * <p>
+   * @param callback A runnable to be executed when a result is
+   * available.  This will be called exactly once.  The
+   * callback.execute(Result) method should execute quickly - under
+   * no circumstances should it ever block or perform any non-trivial
+   * tasks.
+   */
   public void addCallback(Callback c) {
     if (c == null) {
       throw new IllegalArgumentException("Null callback");
@@ -137,9 +151,15 @@ public abstract class Response implements Serializable {
     }
   }
 
-  public final void setResult(Object r) { 
+  public final long getTTL() {
+    synchronized (lock) {
+      return ttl;
+    }
+  }
+
+  public final void setResult(Object r, long ttl) {
     if (r == null) {
-      throw new IllegalArgumentException("Null result");
+      r = getDefaultResult();
     }
     Set s;
     synchronized (lock) {
@@ -153,6 +173,7 @@ public abstract class Response implements Serializable {
             ", won't replace with "+r);
       }
       this.result = r;
+      this.ttl = ttl;
       lock.notifyAll();
       if (callbacks == null) {
         return;
@@ -166,33 +187,32 @@ public abstract class Response implements Serializable {
     }
   }
 
-  public String toString() {
-    synchronized (lock) {
-      StringBuffer buf = new StringBuffer();
-      buf.append("(response oid=");
-      buf.append(System.identityHashCode(this));
-      buf.append(" req=").append(request);
-      if (result != null) {
-        buf.append(" val=");
-        if (result instanceof Object[]) {
-          Object[] a = (Object[]) result;
-          int n = a.length;
-          buf.append("[").append(n).append("]{");
-          if (n > 0) {
-            while (true) {
-              buf.append(a[--n]);
-              if (n <= 0) break;
-              buf.append(", ");
-            }
-          }
-          buf.append("}");
-        } else {
-          buf.append(result);
-        }
-      }
-      buf.append(")");
-      return buf.toString();
+  protected abstract Object getDefaultResult();
+
+  // let a response be a callback, for easy chaining
+  public void execute(Response res) {
+    if (res == this) {
+      // invalid chain!
+      return;
     }
+    if (res == null || !res.isAvailable()) {
+      throw new IllegalArgumentException(
+          "Invalid callbach result: "+res);
+    }
+    setResult(res.getResult(), res.getTTL());
+  }
+
+  // equals is ==
+
+  public String toString() {
+    Object r = getResult();
+    long t = getTTL();
+    return
+      "(response oid="+
+      System.identityHashCode(this)+
+      " req="+request+
+      (r == null ? "" : " result="+r)+
+      " ttl="+t+")";
   }
 
   public boolean isSuccess() {
@@ -217,28 +237,67 @@ public abstract class Response implements Serializable {
       null;
   }
 
-  /**
-   * Get all entries associated with the given name.
-   */
+  /** @see Request.Get */
   public static class Get extends Response {
+    public static final Object NULL = new Object() {
+      private Object readResolve() { return NULL; }
+      public String toString() { return "null_get"; }
+    };
     public Get(Request q) {
       this((Request.Get) q);
     }
     public Get(Request.Get q) {
       super(q);
     }
-    public AddressEntry[] getAddressEntries() { 
+    public AddressEntry getAddressEntry() { 
       Object r = getResult();
-      return
-        (r instanceof AddressEntry[]) ?
-        ((AddressEntry[]) r) :
-        null;
+      if (r instanceof AddressEntry) {
+        return ((AddressEntry) r);
+      } else if (r == NULL) {
+        return null;
+      } else if (r instanceof Map) {
+        // the server can answer "get" with "getAll" map
+        Map m = (Map) r;
+        Request.Get rg = (Request.Get) getRequest();
+        String n = rg.getName();
+        String type = rg.getType();
+        return (AddressEntry) m.get(type);
+      } else {
+        // !isSuccess
+        return null;
+      }
+    }
+    protected Object getDefaultResult() {
+      return NULL;
     }
   }
 
-  /**
-   * List response.
-   */
+  /** @see Request.GetAll */
+  public static class GetAll extends Response {
+    public GetAll(Request q) {
+      this((Request.GetAll) q);
+    }
+    public GetAll(Request.GetAll q) {
+      super(q);
+    }
+    /**
+     * @return a Map of (String type, AddressEntry entry) pairs,
+     *   where the type matches the `entry.getType()`
+     */
+    // Map<String,AddressEntry>
+    public Map getAddressEntries() { 
+      Object r = getResult();
+      return
+        (r instanceof Map) ?
+        ((Map) r) :
+        null;
+    }
+    protected Object getDefaultResult() {
+      return Collections.EMPTY_MAP;
+    }
+  }
+
+  /** @see Request.List */
   public static class List extends Response {
     public List(Request q) {
       this((Request.List) q);
@@ -246,6 +305,10 @@ public abstract class Response implements Serializable {
     public List(Request.List q) {
       super(q);
     }
+    /**
+     * @return a Set of entry names.
+     */
+    // Set<String>
     public Set getNames() { 
       Object r = getResult();
       return
@@ -253,40 +316,12 @@ public abstract class Response implements Serializable {
         ((Set) r) :
         null;
     }
-  }
-
-  /**
-   * Refresh the specified entry.
-   * <p>
-   * Note that an entry TTL indicates the resolver's cache lifetime,
-   * not necessarily the validity of the entry.  A rebind may update
-   * the entry before the TTL has expired.  Calling "refresh" will
-   * force both a cache and entry update.
-   * <p>
-   * This is typically only used if the client has detected a
-   * strong out-of-band hint that the entry is stale, such as a
-   * lost network connection to the entry's address.
-   */
-  public static class Refresh extends Response {
-    public static final Object NULL = new Object();
-    public Refresh(Request q) {
-      this((Request.Refresh) q);
-    }
-    public Refresh(Request.Refresh q) {
-      super(q);
-    }
-    public AddressEntry getNewEntry() { 
-      Object r = getResult();
-      return
-        (r instanceof AddressEntry) ?
-        ((AddressEntry) r) :
-        null;
+    protected Object getDefaultResult() {
+      return Collections.EMPTY_SET;
     }
   }
 
-  /**
-   * Bind a new entry.
-   */
+  /** @see Request.Bind */
   public static class Bind extends Response {
     public Bind(Request q) {
       this((Request.Bind) q);
@@ -294,30 +329,47 @@ public abstract class Response implements Serializable {
     public Bind(Request.Bind q) {
       super(q);
     }
+    public boolean didBind() {
+      return (getExpirationTime() > 0);
+    }
+    // if renewed, when does the lease expire?
+    public long getExpirationTime() {
+      Object r = getResult();
+      return
+        (r instanceof Long) ?
+        ((Long) r).longValue() :
+        -1;
+    }
+    // if not renewed, who took our place?
+    //
+    // isn't this !isSuccess ?
+    public AddressEntry getUsurperEntry() {
+      Object r = getResult();
+      return
+        (r instanceof AddressEntry) ?
+        ((AddressEntry) r) :
+        null;
+    }
+    protected Object getDefaultResult() {
+      return Boolean.FALSE;
+    }
   }
 
-  /**
-   * Rebinds the specified entry with the new value, where any
-   * existing binding for the name is replaced.
-   */
-  public static class Rebind extends Response {
-    public Rebind(Request q) {
-      this((Request.Rebind) q);
-    }
-    public Rebind(Request.Rebind q) {
-      super(q);
-    }
-  }
-
-  /**
-   * Destroy the binding for the specified entry.
-   */
+  /** @see Request.Unbind */
   public static class Unbind extends Response {
     public Unbind(Request q) {
       this((Request.Unbind) q);
     }
     public Unbind(Request.Unbind q) {
       super(q);
+    }
+    // isn't this the same as isSuccess ?
+    public final boolean didUnbind() {
+      Object r = getResult();
+      return Boolean.TRUE.equals(r);
+    }
+    protected Object getDefaultResult() {
+      return Boolean.FALSE;
     }
   }
 }

@@ -78,8 +78,6 @@ import org.cougaar.core.service.identity.AgentIdentityService;
 import org.cougaar.core.service.identity.CrlReason;
 import org.cougaar.core.service.identity.TransferableIdentity;
 import org.cougaar.core.service.wp.AddressEntry;
-import org.cougaar.core.service.wp.Application;
-import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.service.wp.Callback;
 import org.cougaar.core.service.wp.Response;
@@ -884,11 +882,10 @@ implements AgentIdentityClient
           AddressEntry nodeEntry = 
             whitePagesService.get(
                 moveTargetNode.getAddress(),
-                Application.getApplication("topology"),
-                "node",
+                "topology",
                 10000); // wait at most 10 seconds
           if (nodeEntry != null) {
-            moveTargetHost = nodeEntry.getAddress().getHost();
+            moveTargetHost = nodeEntry.getURI().getHost();
           }
         } catch (Exception e) {
           if (log.isInfoEnabled()) {
@@ -1510,24 +1507,20 @@ implements AgentIdentityClient
     URI versionURI = 
       URI.create("version:///"+incarnation+"/"+moveId);
     AddressEntry versionEntry = 
-      new AddressEntry(
+      AddressEntry.getAddressEntry(
           getIdentifier(),
-          Application.getApplication("topology"),
-          versionURI,
-          Cert.NULL,
-          Long.MAX_VALUE);
+          "version",
+          versionURI);
     whitePagesService.rebind(versionEntry, callback); // should really pay attention
 
     // register WP node location
     URI nodeURI = 
       URI.create("node://"+localHost+"/"+localNode.getAddress());
     AddressEntry nodeEntry = 
-      new AddressEntry(
+      AddressEntry.getAddressEntry(
           getIdentifier(),
-          Application.getApplication("topology"),
-          nodeURI,
-          Cert.NULL,
-          Long.MAX_VALUE);
+          "topology",
+          nodeURI);
     whitePagesService.rebind(nodeEntry, callback); // really should pay attention
   }
 
@@ -1539,14 +1532,11 @@ implements AgentIdentityClient
   private long lookupCurrentIncarnation(
       MessageAddress agentId) throws Exception {
     AddressEntry versionEntry = 
-      whitePagesService.get(
-          agentId.getAddress(),
-          Application.getApplication("topology"),
-          "version");
+      whitePagesService.get(agentId.getAddress(), "version");
     if (versionEntry == null) {
       return -1;
     }
-    URI uri = versionEntry.getAddress();
+    URI uri = versionEntry.getURI();
     try {
       String p = uri.getRawPath();
       int i = p.indexOf('/', 1);

@@ -31,59 +31,35 @@ import java.net.URI;
  */
 public final class AddressEntry implements Serializable {
 
-  /**
-   * A zero-length array of address entries, for use
-   * by the white pages and clients.
-   */
-  public static final AddressEntry[] EMPTY_ARRAY = 
-    new AddressEntry[0];
-
   private final String name;
-  private final Application app;
+  private final String type;
   private final URI uri;
-  private final Cert cert;
-  private final long ttl;
   private transient int _hc;
 
-  public AddressEntry(
-      String name, Application app, URI uri, Cert cert, long ttl) {
+  private AddressEntry(
+      String name, String type, URI uri) {
     this.name = name;
-    this.app = app;
+    this.type = type;
     this.uri = uri;
-    this.cert = cert;
-    this.ttl = ttl;
-    if (name==null || app==null || uri==null || cert==null) {
-      throw new IllegalArgumentException(
-          "Null argument");
+    if (name==null || type==null || uri==null) {
+      throw new IllegalArgumentException("Null argument");
     }
+    // validate name?
   }
 
-  /** @return the non-null name (e.g.: "p.X.A") */
+  public static AddressEntry getAddressEntry(
+      String name, String type, URI uri) {
+    return new AddressEntry(name, type, uri);
+  }
+
+  /** @return the non-null name (e.g.: "foo.bar") */
   public String getName() { return name; }
 
-  /** @return the non-null application (e.g.: "WP") */
-  public Application getApplication() { return app; }
+  /** @return the non-null type (e.g.: "mts") */
+  public String getType() { return type; }
 
-  /** @return the non-null address (e.g.: "rmi://foo.com:123/xyz") */
-  public URI getAddress() { return uri; }
-
-  /** @return the non-null cert (e.g.: Cert.NULL) */
-  public Cert getCert() { return cert; }
-
-  /**
-   * @return the lease "time to live" in milliseconds
-   * (e.g.: midnight jan 1st 2003)
-   */
-  public long getTTL() { return ttl; }
-
-  public String toString() {
-    return 
-      "(name="+name+
-      " app="+app+
-      " uri="+uri+
-      " cert="+cert+
-      " ttl="+ttl+")";
-  }
+  /** @return the non-null uri (e.g.: "rmi://foo.com:123/xyz") */
+  public URI getURI() { return uri; }
 
   public boolean equals(Object o) {
     if (o == this) {
@@ -94,10 +70,8 @@ public final class AddressEntry implements Serializable {
       AddressEntry ae = (AddressEntry) o;
       return 
         name.equals(ae.name) &&
-        app.equals(ae.app) &&
-        cert.equals(ae.cert) &&
-        uri.equals(ae.uri) &&
-        (ttl==ae.ttl);
+        type.equals(ae.type) &&
+        uri.equals(ae.uri);
     }
   }
 
@@ -105,12 +79,47 @@ public final class AddressEntry implements Serializable {
     if (_hc == 0) {
       int h = 0;
       h = 31*h + name.hashCode();
-      h = 31*h + app.hashCode();
+      h = 31*h + type.hashCode();
       h = 31*h + uri.hashCode();
-      h = 31*h + cert.hashCode();
-      h = 31*h + (int)ttl;
       _hc = h;
     }
     return  _hc;
   }
+
+  public String toString() {
+    return 
+      "(name="+name+
+      " type="+type+
+      " uri="+uri+
+      ")";
+  }
+
+  private Object readResolve() {
+    return getAddressEntry(name, type, uri);
+  }
+
+  //
+  // deprecated, to be removed in Cougaar 10.4.1+
+  //
+
+  /** @deprecated use "getAddressEntry(name, type, uri)" */
+  public AddressEntry(
+      String name, Application app, URI uri, Cert cert, long ttl) {
+    this(name, app.toString(), uri);
+    if (cert != Cert.NULL) {
+      throw new UnsupportedOperationException(
+          "The cert field has been deprecated."+
+          " Only the \"Cert.NULL\" cert is supported.");
+    }
+  }
+  /** @deprecated use "String getType()" */
+  public Application getApplication() { 
+    return Application.getApplication(type);
+  }
+  /** @deprecated use "URI getURI()" */
+  public URI getAddress() { return getURI(); }
+  /** @deprecated Cert field has been removed */
+  public Cert getCert() { return Cert.NULL; }
+  /** @deprecated the TTL is a wp-internal variable */
+  public long getTTL() { return 0; }
 }

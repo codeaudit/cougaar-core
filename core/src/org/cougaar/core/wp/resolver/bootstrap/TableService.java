@@ -21,7 +21,8 @@
 
 package org.cougaar.core.wp.resolver.bootstrap;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.service.wp.AddressEntry;
 
@@ -36,7 +37,7 @@ extends Service
 {
 
   /** lookup an entry */
-  AddressEntry get(String name, String type, String scheme);
+  AddressEntry get(String name, String type);
 
   /** iterate over entries */
   Iterator iterator();
