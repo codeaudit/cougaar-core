@@ -117,6 +117,7 @@ public class LoggingServiceProvider implements ServiceProvider {
     switch (level) {
     case LoggingService.DEBUG   : return Priority.toPriority(Priority.DEBUG_INT);
     case LoggingService.INFO    : return Priority.toPriority(Priority.INFO_INT);
+    case LoggingService.LEGACY  : return Priority.toPriority(Priority.INFO_INT);
     case LoggingService.WARNING : return Priority.toPriority(Priority.WARN_INT);
     case LoggingService.ERROR   : return Priority.toPriority(Priority.ERROR_INT);
     case LoggingService.FATAL   : return Priority.toPriority(Priority.FATAL_INT);
