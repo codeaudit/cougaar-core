@@ -37,6 +37,7 @@ import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportService;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.ServiceRevokedEvent;
+import org.cougaar.domain.planning.ldm.DomainService;
 
 public class PanicButtonPlugin
   extends ComponentPlugin implements MessageTransportClient
@@ -47,6 +48,7 @@ public class PanicButtonPlugin
   protected JButton panicButton;
   
   private MessageTransportService messageTransService = null;
+  private DomainService domainService = null;
     
   public PanicButtonPlugin() {}
 
@@ -63,6 +65,17 @@ public class PanicButtonPlugin
         }
       });    
     messageTransService.registerClient(this);
+
+    // setup domain service
+    domainService = (DomainService)
+      getServiceBroker().getService(this, DomainService.class, 
+                                    new ServiceRevokedListener() {
+        public void serviceRevoked(ServiceRevokedEvent re) {
+          if (DomainService.class.equals(re.getService())) {
+            domainService = null;
+          }
+        }
+      });
 
   }
 
@@ -103,13 +116,17 @@ public class PanicButtonPlugin
   public void sendNodeTrustPolicy() {
     // for now assume that pushing the button means to create a
     // society wide trust policy of '0' (trust no one level)
-    int trust = 0;
     NodeTrustPolicy trustpolicy = 
-      new NodeTrustPolicy(NodeTrustPolicy.SOCIETY, 0, null);
+      (NodeTrustPolicy)domainService.getFactory().newPolicy(NodeTrustPolicy.class.getName());
+    trustpolicy.setTrustCategory(NodeTrustPolicy.SOCIETY);
+    trustpolicy.setTrustLevel(0);
     //create a message to contain the trust policy
- //    PolicyMulticastMessage policymsg = 
-//       new PolicyMulticastMessage(getMessageAddress(), multicastaddress, trustpolicy);
-//     messageTransService.sendMessage(policymsg);
+    MulticastMessageAddress dest = 
+      new MulticastMessageAddress(org.cougaar.core.society.NodePolicyWatcher.class);
+    PolicyMulticastMessage policymsg = 
+      new PolicyMulticastMessage(getMessageAddress(), dest, trustpolicy);
+    messageTransService.sendMessage(policymsg);
+    System.out.println("\n PanicButtonPlugin just sent msg: "+policymsg);
   }
 
     
