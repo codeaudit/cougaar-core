@@ -1,4 +1,87 @@
+2002-07-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingEventContext.java: 
+	* org/cougaar/core/naming/NamingContext.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Translate Context objects in naming events correctly.
+
+	* org/cougaar/core/service/DomainForBlackboardService.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Handle ABA change invocations.
+
+	* org/cougaar/multicast/AttributeBasedAddress.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Fix extraneous String intern
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Implement ABAChangeLogicProvider to deal with changes in ABA
+	translations. Out with the old, in with the new.
+
+	* org/cougaar/core/domain/DomainManager.java: 
+	* org/cougaar/core/domain/DomainForBlackboardServiceProvider.java: 
+	* org/cougaar/core/domain/DomainForBlackboardServiceImpl.java: 
+	* org/cougaar/core/domain/DomainAdapter.java: 
+	* org/cougaar/core/domain/Domain.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Handle ABA change invocations.
+
+	* org/cougaar/core/domain/ABAChangeLogicProvider.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	New LP interface to be implemented by LPs that need to deal with
+	changes in ABA translations.
+
+	* org/cougaar/core/blackboard/LogPlan.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Do ABA  change LPs.
+
+	* org/cougaar/core/blackboard/Distributor.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Pass through ABA changes to LPs	
+
+	* org/cougaar/core/blackboard/BlackboardServesLogicProvider.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Add method to support ABAChange LPs	
+
+	* org/cougaar/core/blackboard/Blackboard.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Implement community change listener and invoke
+	ABAChangeLogicProviders when the listener fires.
+
+	* org/cougaar/core/blackboard/ABATranslation.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	A holder for old and new ABA translations to pass to LPs.
+
+	* org/cougaar/core/service/community/CommunityService.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Add methods to add and remove community change listeners.
+
+	* org/cougaar/core/service/community/CommunityChangeListener.java: 
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Interface to be implemented by community change listeners.
+
+	* org/cougaar/core/service/community/CommunityChangeEvent.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Event to send to community change listeners to describe the change.
+
+	* org/cougaar/core/service/community/CommunityChangeAdapter.java:
+	Bug #1636 -- The expansion of ABAs fails to track community membership
+	Adapter for building CommunityChangeListeners.
+
 2002-07-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingServiceFactory.java:
+	Bug #1608 -- Periodic connection refused exceptions
+	Wrap name server in an NSRetryWrapper.
+
+	* org/cougaar/core/naming/NSRetryWrapper.java:
+	Bug #1608 -- Periodic connection refused exceptions
+	New class wraps name server stub to perform retries when
+	RemoteException("Connection refused...") exceptions occur. Added
+	logging of retries.
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Remote superfluous "throws RemoteException"
 
 	* org/cougaar/core/topology/TopologyReaderServiceComponent.java:
 	Fix unintended change in behavior when searches fail. Should

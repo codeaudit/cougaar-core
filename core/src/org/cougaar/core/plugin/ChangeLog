@@ -1,3 +1,8 @@
+2002-07-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* TestABA.java:
+	Test plugin for dynamic ABAs.
+
 2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ServiceUserPlugin.java:
