@@ -93,6 +93,14 @@ public final class INIParser {
    *   <li>"cluster" == "Node.AgentManager.Agent"</li>
    *   <li>"plugin" == "Node.AgentManager.Agent.PluginManager.Plugin"</li>
    * </ul>
+   * <p>
+   * Any insertion point (including aliases) may be postfixed with "(<em>PRIORITY</em>)"
+   * where "<em>PRIORITY</em>" is one of the component priority names specified in
+   * ComponentDescription (e.g. HIGH, INTERNAL, BINDER, COMPONENT, LOW, or STANDARD).  Note that
+   * the name must be in upper case, no punctuation and no extra whitespace.  An example
+   * is: "plugin(LOW)=org.cougaar.test.MyPlugin", which would specify that MyPlugin should be
+   * loaded as a low priority plugin (e.g. after most other plugins and internal components).
+   * <p>
    * Also "cluster=name" and is converted into<pre>
    *   "Node.AgentManager.Agent=org.cougaar.core.agent.ClusterImpl(name)"
    * </pre> as a default classname.
@@ -102,6 +110,7 @@ public final class INIParser {
    *   <li>"uic"     (ignored)</li>
    *   <li>"cloned"  (ignored)</li>
    * </ul>
+   * @see org.cougaar.core.component.ComponentDescription
    */
   public static ComponentDescription[] parse(
                                              BufferedReader in,
