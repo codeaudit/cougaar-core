@@ -72,6 +72,7 @@ import org.cougaar.core.service.NamingService;
 import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 import org.cougaar.util.log.*;
+import org.cougaar.util.PropertyParser;
 
 /**
  * Implementation of an Agent which manages the resources and capabilities of a node.
@@ -91,6 +92,13 @@ import org.cougaar.util.log.*;
  * <li> <em>LOW</em>: external LOW components.
  * </li>
  * </ul>
+ * @property org.cougaar.core.agent.heartbeat
+ *   If enabled, a low-priority thread runs and prints
+ *   a '.' every few seconds when nothing else much is going on.
+ *   This is a one-per-vm function.  Default <em>true</em>.
+ *
+ * @property org.cougaar.core.agent quiet
+ *   Makes standard output as quiet as possible.
  */
 public class NodeAgent
   extends SimpleAgent
@@ -108,6 +116,15 @@ public class NodeAgent
   private String nodeName = null;
   private NodeIdentifier nodeIdentifier = null;
 
+  private static boolean isHeartbeatOn = true;
+  private static boolean isQuiet = false;
+
+  static {
+    isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
+    isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
+  }
+
+
   /**
    * Set the required NodeAgent parameter.
    *
@@ -121,6 +138,16 @@ public class NodeAgent
     List l = (List) o;
     agentServiceBroker = (ServiceBroker) l.get(0);
     agentManager = (AgentManager) l.get(1);
+  }
+
+
+  /** Activates heartbeat (if enabled) and then continues to start the node.
+   **/
+  public void start() {
+    if (isHeartbeatOn) {
+      startHeartbeat();
+    }
+    super.start();
   }
 
   ///
@@ -560,4 +587,16 @@ public class NodeAgent
         return NodeAgent.this;
       }
     }
+
+  //
+  // heartbeat
+  //
+  private Heartbeat heartbeat = null;
+  
+  private void startHeartbeat() {
+    heartbeat = new Heartbeat();
+    heartbeat.start();
+  }
+
+
 }

@@ -1,3 +1,9 @@
+2002-06-13  Michael Thome  <mthome@bbn.com>
+
+	* Heartbeat, SimpleAgent, NodeAgent
+	Refactored the Heartbeat functionality into a new class connected
+	to NodeAgent rather than a static in SimpleAgent.
+
 2002-06-12  Michael Thome  <mthome@bbn.com>
 
 	* Distributor, Subscriber, InitializeSubscriptionEnvelope, Subscription

@@ -112,21 +112,11 @@ import org.cougaar.util.StateModelException;
  * Implementation of Agent which creates a PluginManager and Blackboard and 
  * provides basic services to Agent Components.
  * <p>
- * <pre>
- * @property org.cougaar.core.agent.heartbeat
- *   If enabled, a low-priority thread runs and prints
- *   a '.' every few seconds when nothing else much is going on.
- *   This is a one-per-vm function.  Default <em>true</em>.
- * @property org.cougaar.core.agent.idleInterval 
- * How long between idle detection and heartbeat cycles (prints '.');
- * @property org.cougaar.core.agent.idle.verbose
- *   If <em>true</em>, will print elapsed time (seconds) since
- *   cluster start every idle.interval millis.
- * @property org.cougaar.core.agent.idle.verbose.interval=60000
- *   The number of milliseconds between verbose idle reports.
  * @property org.cougaar.core.agent.showTraffic
- *   If <em>true</em>, shows '+' and '-' on message sends and receives.  if
- *   <em>false</em>, also turns off reports of heartbeat ('.') and other status chars.
+ *   If <em>true</em>, shows '+' and '-' on message sends and receives.
+ *
+ * @property org.cougaar.core.agent quiet
+ *   Makes standard output as quiet as possible.
  *
  * @property org.cougaar.core.servlet.enable
  *   Used to enable ServletService; defaults to "true".
@@ -135,14 +125,10 @@ import org.cougaar.util.StateModelException;
  *   If set, this indicates the number of milliseconds after
  *   agent "unload()" for a GC check of the agent.  This is 
  *   primarily for agent mobility memory-leak testing.
- * </pre>
  */
 public class SimpleAgent 
-extends Agent
-implements
-Cluster, AgentIdentityClient, LDMServesPlugin, 
-ClusterContext, MessageTransportClient, MessageStatistics, 
-MobilityListener, StateObject
+  extends Agent
+  implements Cluster, AgentIdentityClient, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, MobilityListener, StateObject
 {
 
   // this node's address
@@ -219,22 +205,14 @@ MobilityListener, StateObject
 
   // properties
   private static long RESTART_CHECK_INTERVAL = 43000L;
-  private static boolean isHeartbeatOn = true;
-  private static int idleInterval = 5*1000;
-  private static boolean idleVerbose = false; // don't be verbose
-  private static long idleVerboseInterval = 60*1000L; // 1 minute
-  private static long maxIdleInterval;
   private static boolean usePluginLoader = false;
   private static boolean showTraffic = true;
+  private static boolean isQuiet = false;
 
   static {
-    isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
     usePluginLoader=PropertyParser.getBoolean("org.cougaar.core.agent.pluginloader", false);
-    idleInterval=PropertyParser.getInt("org.cougaar.core.agent.idleInterval", 5000);
-    maxIdleInterval = (idleInterval+(idleInterval/10));
     showTraffic=PropertyParser.getBoolean("org.cougaar.core.agent.showTraffic", true);
-    idleVerbose = PropertyParser.getBoolean("org.cougaar.core.agent.idle.verbose", true);
-    idleVerboseInterval = PropertyParser.getInt("org.cougaar.core.agent.idle.verbose.interval", 60000);
+    isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
   }
 
   private AgentBindingSite bindingSite = null;
@@ -732,10 +710,6 @@ MobilityListener, StateObject
    **/
 
   public void start() throws StateModelException {
-
-    if (isHeartbeatOn) {
-      startHeartbeat();
-    }
 
     super.start();
 
@@ -1600,77 +1574,6 @@ MobilityListener, StateObject
     }
   }
 
-  /** implement a low-priority heartbeat function which
-   * just prints '.'s every few seconds when nothing else
-   * is happening.
-   * deactivated by -Dorg.cougaar.core.cluster.heartbeat=false
-   *
-   * Should be moved into Node as a Node-level Service.
-   **/
-  private static class Heartbeat implements Runnable {
-    private long firstTime;
-    private long lastVerboseTime;
-
-    public Heartbeat() {
-      firstTime = System.currentTimeMillis();
-      lastVerboseTime = firstTime;
-    }
-
-    public void run() {
-      // if heartbeat actually gets to run at least every 5.5 seconds,
-      // we'll consider the VM idle.
-      while (true) {
-        try {
-          Thread.sleep(idleInterval); // sleep for (at least) 5s
-        } catch (InterruptedException ie) {}
-        showProgress(".");
-        long t = System.currentTimeMillis();
-        if (lastHeartbeat!=0) {
-          long delta = t-lastHeartbeat;
-          if (delta <= maxIdleInterval) {
-            // we're pretty much idle
-            idleTime += delta;
-          } else {
-            idleTime = 0;
-          }
-        }
-        lastHeartbeat = t;
-
-        if (idleVerbose) {
-          long delta = t-lastVerboseTime;
-          if (delta >= idleVerboseInterval) {
-            showProgress("("+Long.toString(((t-firstTime)+500)/1000)+")");
-            lastVerboseTime=t;
-          }
-        }
-      }
-    }
-  }
-
-  private static Thread heartbeat = null;
-  private static Object heartbeatLock = new Object();
-
-  private static long lastHeartbeat = 0L;
-  private static long idleTime = 0L;
-
-  private static void startHeartbeat() {
-    synchronized (heartbeatLock) {
-      if (heartbeat == null) {
-        heartbeat = new Thread(new Heartbeat(), "Heartbeat");
-        heartbeat.setPriority(Thread.MIN_PRIORITY);
-        heartbeat.start();
-      }
-    }
-  }
-
-  public static long getIdleTime() { 
-    long delta = System.currentTimeMillis() - lastHeartbeat;
-    if (delta <= maxIdleInterval) {
-      return idleTime+delta;
-    } else {
-      return 0;
-    }
-  }
 
   //
   // COUGAAR Scenario Time management and support for Plugins
