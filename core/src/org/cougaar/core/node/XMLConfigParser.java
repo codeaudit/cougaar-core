@@ -479,7 +479,6 @@ public final class XMLConfigParser {
     if (e instanceof SAXException) {
       SAXException sx = (SAXException) e;
       // extract nested sax exception
-      String locator = null;
       if (sx instanceof SAXParseException) {
         SAXParseException spx = (SAXParseException) sx;
         msg +=
@@ -594,10 +593,6 @@ public final class XMLConfigParser {
     private boolean inArgument;
 
     private int state = STATE_INITIAL;
-
-    private static final String AGENT_PRIORITY =
-      ComponentDescription.priorityToString(
-          ComponentDescription.PRIORITY_STANDARD);
 
     public MyHandler(
         Map ret,

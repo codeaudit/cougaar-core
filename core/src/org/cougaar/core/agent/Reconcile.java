@@ -80,8 +80,6 @@ implements Component
 
   private BlackboardForAgent bb;
 
-  private MessageAddress localAgent;
-
   private Schedulable restartTimer;
 
   // map of agent name to most recently observed incarnation, used
