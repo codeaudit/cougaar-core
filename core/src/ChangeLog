@@ -1,3 +1,12 @@
+2001-08-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Finish fixing the toString(StringBuffer) method.
+
+	* org/cougaar/core/naming/SearchStringParser.java:
+	Remove space from toString output. The canonical form of a filter
+	string is sans-whitespace.
+
 2001-08-23  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/SearchStringParser.java:
