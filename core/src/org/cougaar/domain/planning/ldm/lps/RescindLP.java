@@ -100,7 +100,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     Task task = pe.getTask();
     if (logplan.findTask(task) == null) {
 //        System.out.println("Removing added planelement [task not found in the logplan] for " + task + " as " + pe);
-      removePlanElement(pe);
+      removePlanElement(pe, true);
     }
   }
 
@@ -108,23 +108,17 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     UID rtuid = deferredRescind.tr.getTaskUID();
     Task t = logplan.findTask(rtuid);
     if (t != null) {
-      /*
-      System.err.println("DeferredRescind Succeeded " +
-                         deferredRescind.tryCount +
-                         ": " + rt.getUID());
-      */
       removeTask(t);
       logplan.remove(deferredRescind);
     } else {
-      System.err.println("DeferredRescind failed [task not found in the logplan]: " + rtuid);
       logplan.remove(deferredRescind);
     }
   }
 
   /** remove PE and any cascade objects */
-  private void removePlanElement(PlanElement pe) {
+  private void removePlanElement(PlanElement pe, boolean force) {
      if (pe != null) {
-       if (logplan.findPlanElement(pe.getTask()) != null) {
+       if (force || logplan.findPlanElement(pe.getTask()) != null) {
          logplan.remove(pe);
 //      planElementRemoved(pe);
        }
@@ -186,7 +180,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     PlanElement taskpe = logplan.findPlanElement(task);
     // rescind (or remove) this planelement from the collection
     if (taskpe != null) {
-      removePlanElement(taskpe);
+      removePlanElement(taskpe, false);
     }
   }
 
