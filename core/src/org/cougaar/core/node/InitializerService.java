@@ -32,8 +32,15 @@ import org.cougaar.planning.plugin.AssetDataReader;
 public interface InitializerService extends Service {
   /**
    * Get the descriptions of components with the named parent having
-   * an insertion point below the given container insertion point.
+   * an insertion point <em>below</em> the given container insertion point.
    * <p> 
+   * For example, to get items with insertion point Node.AgentManager.Agent,
+   * pass in Node.AgentManager. Then use 
+   * <code>ComponentDescriptions.extractInsertionPointComponent("Node.AgentManager.Agent")</code> 
+   * to get just those with the required insertion point. Typical
+   * usage however is for the Node.AgentManager component to pass in its
+   * own insertion point as a way to find its child components. 
+   * <p>
    * Note that the returned value is in whatever order the underlying 
    * implementation uses.  It is <em>not</em> sorted by priority.
    **/

@@ -27,7 +27,9 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.plugin.PluginBase;
 
 import org.cougaar.util.StringUtility;
 
@@ -110,6 +112,12 @@ public final class INIParser {
    *   <li>"uic"     (ignored)</li>
    *   <li>"cloned"  (ignored)</li>
    * </ul>
+   * <br>
+   * <em>Note:</em> This is used by 
+   * <code>FileInitializerServiceProvider.getComponentDescriptions</code>,
+   * which is declared to return only items <em>below</em> the given insertion point. 
+   * However, this method returns <em>all</em> items, regardless
+   * of insertion point. Callers must beware they may get themselves. 
    * @see org.cougaar.core.component.ComponentDescription
    */
   public static ComponentDescription[] parse(
@@ -216,16 +224,16 @@ readDescriptions:
         // fix the insertion point for backwards compatibility
         if (insertionPoint.equals("plugin")) {
           // should load into an Agent
-          insertionPoint = "Node.AgentManager.Agent.PluginManager.Plugin";
+          insertionPoint = PluginBase.INSERTION_POINT;
         } else if (insertionPoint.equals("cluster")) {
           if (vParams == null) {
             // fix "cluster=name" to be "cluster=classname(name)"
             vParams = new Vector(1);
             vParams.add(classname);
-            classname = "org.cougaar.core.agent.ClusterImpl";
+            classname = "org.cougaar.core.agent.SimpleAgent";
           }
           // should load into a Node
-          insertionPoint = "Node.AgentManager.Agent";
+          insertionPoint = Agent.INSERTION_POINT;
         }
 
         if (insertionPoint.startsWith(".")) {
@@ -265,6 +273,10 @@ readDescriptions:
     } catch (IOException ioe) {
       System.err.println("Error: " + ioe);
     }
+
+    // FIXME: To make this method return only strict sub-components
+    // use ComponentDescriptions.extractDirectComponents(containerInsertionPoint)
+
     return (ComponentDescription[])
       descs.toArray(
           new ComponentDescription[descs.size()]);
