@@ -37,12 +37,13 @@ class RoundRobinSelector implements RightsSelector
     private SchedulableObject checkNextPending(ArrayList children) 
     {
 	SchedulableObject handoff = null;
+	int child_count = children.size();
 	if (currentIndex == -1) {
 	    handoff = scheduler.popQueue();
-	    currentIndex = children.size() == 0 ? -1 : 0;
+	    currentIndex = child_count == 0 ? -1 : 0;
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
-	    if (currentIndex == children.size()) currentIndex = -1;
+	    if (currentIndex == child_count) currentIndex = -1;
 	    Scheduler child = child_node.getScheduler();
 	    handoff = child.getNextPending();
 	    // We're the parent of the Scheduler to which the handoff
