@@ -24,6 +24,7 @@ package org.cougaar.core.thread;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 
+import java.util.Timer;
 import java.util.TimerTask;
 
 /**
@@ -32,20 +33,14 @@ import java.util.TimerTask;
 final class ThreadServiceProxy 	implements ThreadService
 {
     private SchedulableThreadPool pool;
-    private TimerRunnable timer;
+    private Timer timer;
     private TreeNode treeNode;
 
     ThreadServiceProxy(TreeNode treeNode) 
     {
 	this.treeNode = treeNode;
 	this.pool = treeNode.getPool();
-	this.timer = new TimerRunnable(this);
-
-	// Use a special Thread for the timer
-	Thread thread = new Thread(treeNode.getGroup(), timer, 
-				   treeNode.getName()+"Timer");
-	thread.setDaemon(true);
-	thread.start();
+	this.timer = new Timer(true);
     }
 
 
@@ -69,17 +64,7 @@ final class ThreadServiceProxy 	implements ThreadService
     }
 
 
-    public TimerTask getTimerTask(Object consumer, Runnable runnable) {
-	return timer.getTimerTask(consumer, runnable);
-    }
 
-
-    public TimerTask getTimerTask(Object consumer, 
-				  Runnable runnable,
-				  String name) 
-    {
-	return timer.getTimerTask(consumer, runnable, name);
-    }
 
     public void schedule(TimerTask task, long delay) {
 	timer.schedule(task, delay);

@@ -31,9 +31,6 @@ public interface ThreadService extends Service
     Schedulable getThread(Object consumer, Runnable runnable);
     Schedulable getThread(Object consumer, Runnable runnable, String name);
 
-    TimerTask getTimerTask(Object consumer, Runnable runnable);
-    TimerTask getTimerTask(Object consumer, Runnable runnable, String name);
-
     void schedule(TimerTask task, long delay);
     void schedule(TimerTask task, long delay, long interval);
     void scheduleAtFixedRate(TimerTask task, long delay, long interval);
