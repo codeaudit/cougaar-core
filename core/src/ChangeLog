@@ -1,3 +1,10 @@
+2002-07-15  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/adaptivity/OperatingModeServiceProvider.java:
+	Bug #1653 -- Concurrent Mod. exception in PlayHelper.updateOperatingModes
+	Subscription set cannot be referenced from another thread.
+	Subscription must be copied to a separate set for used by other threads.
+
 2002-07-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NamingEventContext.java: 
