@@ -102,24 +102,25 @@ import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.persist.DatabasePersistence;
 import org.cougaar.core.cluster.persist.Persistence;
 
+import org.cougaar.util.PropertyParser;
+
 /**
  * Implementation of Agent which creates a PlugInManager and Blackboard and 
  * provides basic services to Agent Components.
  * <p>
  * <pre>
- * System properties:
- * org.cougaar.core.cluster.heartbeat : 
+ * @property org.cougaar.core.cluster.heartbeat
  *   a low-priority thread runs and prints
  *   a '.' every few seconds when nothing else much is going on.
  *   This is a one-per-vm function.  Default true.
- * org.cougaar.core.cluster.idleInterval : 
- *   how long between idle detection and heartbeat cycles (prints '.');
- * org.cougaar.core.cluster.idle.verbose : 
+ * @property org.cougaar.core.cluster.idleInterval 
+ * how long between idle detection and heartbeat cycles (prints '.');
+ * @property org.cougaar.core.cluster.idle.verbose
  *   if true, will print elapsed time (seconds) since
  *   cluster start every idle.interval millis.
- * org.cougaar.core.cluster.idle.verbose.interval=60000 : 
+ * @property org.cougaar.core.cluster.idle.verbose.interval=60000
  *   millis between verbose idle reports
- * org.cougaar.core.cluster.showTraffic : 
+ * @property org.cougaar.core.cluster.showTraffic
  *   if True, shows '+' and '-' on message sends and receives.  if
  *   false, also turns off reports of heartbeat ('.') and other status chars.
  * </pre>
@@ -164,14 +165,13 @@ public class ClusterImpl
   private static boolean showTraffic = true;
 
   static {
-    Properties props = System.getProperties();
-    isHeartbeatOn=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.heartbeat", "true"))). booleanValue();
-    usePlugInLoader=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.pluginloader", "false"))).booleanValue();
-    idleInterval=(Integer.valueOf(props.getProperty("org.cougaar.core.cluster.idleInterval", "5000"))).intValue();
+    isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.cluster.heartbeat", true);
+    usePlugInLoader=PropertyParser.getBoolean("org.cougaar.core.cluster.pluginloader", false);
+    idleInterval=PropertyParser.getInt("org.cougaar.core.cluster.idleInterval", 5000);
     maxIdleInterval = (idleInterval+(idleInterval/10));
-    showTraffic=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.showTraffic", "true"))).booleanValue();
-    idleVerbose = (Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.idle.verbose", "true"))).booleanValue();
-    idleVerboseInterval = (Integer.valueOf(props.getProperty("org.cougaar.core.cluster.idle.verbose.interval", "60000"))).intValue();
+    showTraffic=PropertyParser.getBoolean("org.cougaar.core.cluster.showTraffic", true);
+    idleVerbose = PropertyParser.getBoolean("org.cougaar.core.cluster.idle.verbose", true);
+    idleVerboseInterval = PropertyParser.getInt("org.cougaar.core.cluster.idle.verbose.interval", 60000);
   }
 
 

@@ -38,6 +38,11 @@ import org.cougaar.util.ConfigFinder;
  * Also will attempt to load domains from a config file "LDMDomains.ini".
  * This file has lines of the form (matching the above example):
  *   foo=com.FooCo.org.cougaar.FooDomain
+ * @property org.cougaar.domain.foo The fully qualified classname of the Domain to be
+ * loaded with the name "foo".  All properties with the "org.cougaar.domain." prefix
+ * are loaded as domains by the DomainManager.  See the DomainManager documentation for more
+ * information.
+ * @property org.cougaar.verbose Enabled extended debugging information on domain loading.
  **/
 
 public final class DomainManager

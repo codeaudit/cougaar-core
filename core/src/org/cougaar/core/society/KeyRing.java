@@ -32,6 +32,8 @@ import java.security.*;
 import java.security.cert.*;
 
 /** A common holder for Security keystore information and functionality
+ * @property org.cougaar.security.keystore.password The password to the cougaar keystore.
+ * @property org.cougaar.security.keystore The URL of the cougaar keystore.
  **/
 
 public final class KeyRing {

@@ -32,6 +32,10 @@ import java.util.Properties;
  * "new Thread()", you use "ReusableThread.newThread()" instead.
  * Most of the Thread constructors are provided as factory methods -
  * missing are all constructors using ThreadGroup arguments.
+ * @property org.cougaar.ReusableThread.initialPoolSize Sets the inital pool size for 
+ * the thread pool utility (defaults to 32).
+ * @property org.cougaar.ReusableThread.maximumPoolSize Sets the maximum pool size for
+ * the thread pool utility (defaults to 64).
  *
  **/
 

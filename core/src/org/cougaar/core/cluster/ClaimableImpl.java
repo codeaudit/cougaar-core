@@ -25,11 +25,14 @@ import java.io.IOException;
 import java.io.NotActiveException;
 import java.io.ObjectInputStream;
 import java.util.Properties;
+import org.cougaar.util.PropertyParser;
 
 /** 
  * Keep track of who is Disposing of me. <p>
  * Extends PublishableAdapter so that subclasses may
  * implicitly collect changes.
+ * @property org.cougaar.core.cluster.claim.isLoud If set to true, will do additional 
+ * checking for Claim conflicts.
  **/
 
 public class ClaimableImpl 
@@ -108,8 +111,7 @@ public class ClaimableImpl
   private static boolean hasComplained = false;
 
   static {
-    Properties props = System.getProperties();
-    isLoud=(Boolean.valueOf(props.getProperty("org.cougaar.core.cluster.claim.isLoud", "false"))).booleanValue();
+    isLoud = PropertyParser.getBoolean("org.cougaar.core.cluster.claim.isLoud", isLoud);
   }
 
   private void complain(String complaint) {

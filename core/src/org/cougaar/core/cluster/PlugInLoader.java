@@ -30,7 +30,7 @@ import java.io.*;
 import java.security.*;
 import java.security.cert.*;
 import org.cougaar.core.society.KeyRing;
-
+import org.cougaar.util.PropertyParser;
 /**
  * Facility for loading plugins and associated code.
  * Extends classpath using the following rules (AIP=org.cougaar.install.path):
@@ -45,6 +45,14 @@ import org.cougaar.core.society.KeyRing;
  * Checks for signatures on plugin jar files.
  *
  * There should be exactly one of these per VM.
+
+   * @property org.cougaar.security.plugin.check When set to true (and PlugInLoader is enabled), 
+   * will perform additional security checks on plugins prior to loading.
+   * @property org.cougaar.security.plugin.debug When set to true (and PlugInLoader is enabled),
+   * will be verbose about plugin class loading progress.
+   * @property org.cougaar.security.plugin.quiet When set to true (and PlugInLoader is enabled),
+   * will be as quiet as possible while classloading plugins.
+   * 
  *
  * @deprecated Do not use - ancient code kept for historical value.
  **/
