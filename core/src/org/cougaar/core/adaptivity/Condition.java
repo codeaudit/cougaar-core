@@ -22,13 +22,14 @@ package org.cougaar.core.adaptivity;
 
 /** 
  * A Condition holds a value that the {@link AdaptivityEngine} or
- * {@link PolicyManager} uses for selecting {@link Play}s or {@link
- * OperatingModePolicy}s. Conditions include the measurements made by
- * sensors, external conditions distributed throughout portions of the
- * society and inputs from higher level adaptivity engines. This
- * interface does not define a setValue method because establishing
- * the current value is the responsibility of the owner of the
- * Condition.
+ * {@link PolicyManager PolicyManager} uses for selecting
+ * {@link Play Play}s or
+ * {@link OperatingModePolicy OperatingModePolicy}s.
+ * Conditions include the measurements made by sensors, external
+ * conditions distributed throughout portions of the society and
+ * inputs from higher level adaptivity engines. This interface does
+ * not define a setValue method because establishing the current value
+ * is the responsibility of the owner of the Condition.
  **/
 public interface Condition {
 
