@@ -67,31 +67,34 @@
 Build 8.4.2 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
 for this release include:
 <ul>
-<li> <b> Additional javadoc support </b> New javadoc
-	      doclet generates additional file <a href="api/Parameters.html">Parameters.html</a> which
-	      is a catalog of System Properties (-D flags) used. The
-	      file is generated on the basis of @property javadoc tags
-	      in the source code.  Also, generated javadoc is now
-	      placed within doc directories rather than parallel to
-	      the doc directory.
- </li>
-<li> Added a logging service for the standardized logging of messages and a 
-        logging control service to control how those messages are ouput. Also 
-	added a PSP that controls logging output using this service.
-</li>
-</ul>
+<li>
+<b>Additional javadoc support </b>New javadoc doclet generates additional
+file <a href="api/Parameters.html">Parameters.html</a> which is a catalog
+of System Properties (-D flags) used. The file is generated on the basis
+of @property javadoc tags in the source code. Also, generated javadoc is
+now placed within doc directories rather than parallel to the doc directory.&nbsp;</li>
 
+<li>
+Added a logging service for the standardized logging of messages and a
+logging control service to control how those messages are ouput. Also added
+a PSP that controls logging output using this service.</li>
+</ul>
 Build 8.4.1 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
 for this release include:
 <ul>
-<li> Secure Whitepages/Yellowpages (naming) communications implementation using SSL. </li>
-<li> <a href="#jvm">
-Requires installation of Java Secure Socket Extension (JSSE).
-</a></li>
-<li> Extended INI-format: see <a href="details/INIFormat.txt">details/INIFormat.txt</a>.</li>
-<li> Full support for layered/combined Binders at all levels.</li>
-</ul>
+<li>
+Secure Whitepages/Yellowpages (naming) communications implementation using
+SSL.&nbsp;</li>
 
+<li>
+<a href="#jvm">Requires installation of Java Secure Socket Extension (JSSE).</a></li>
+
+<li>
+Extended INI-format: see <a href="details/INIFormat.txt">details/INIFormat.txt</a>.</li>
+
+<li>
+Full support for layered/combined Binders at all levels.</li>
+</ul>
 Build 8.4 is a point release along COUGAAR 8.0.&nbsp; Notable additions
 for this release include:
 <ul>
@@ -154,18 +157,6 @@ Further refactoring of MessageTransport (for details see <a href="MessageTranspo
 The StrategicTransport package formerly known as TOPS has been replaced
 with a simpler package called glm-trans.</li>
 </ul>
-Build 8.2.1 is a patch release associated with the COUGAAR 8.2 release.
-Notable additions for this release include:
-<ul>
-<li>
-An expanded test configuration: configs/small-135</li>
-
-<li>
-Partial refactoring of MessageTransport</li>
-
-<li>
-Bug fixes</li>
-</ul>
 Build 8.2 is a point release along COUGAAR 8.0. Notable additions for this
 release include:
 <blockquote>
@@ -208,7 +199,7 @@ docs</li>
 
 <li>
 <a href="api/index.html">Core infrastructure javadoc</a> (available in
-	      api/index.html if the cougaar-api.zip archive has been installed).</li>
+api/index.html if the cougaar-api.zip archive has been installed).</li>
 
 <li>
 Cougaar Developers Guide, v8.4 (dated 31-August-2001)</li>
@@ -275,7 +266,13 @@ md5sums.txt:&nbsp; md5 checksums of all the zips.</li>
 <li>
 build.out: output of the build process</li>
 </ul>
-Notes:
+To install Cougaar:
+<br>Go to the cougaar website (<a href="http://www.cougaar.org">www.cougaar.org</a>)
+to get the latest windows Cougaar installer which will install Cougaar
+as well as a MySQL database.&nbsp; This will allow users to run off of
+a local MySQL database rather than accessing an Oracle database located
+in Cambridge, MA at BBN Technologies.
+<p>Alternatively you can follow these instructions.
 <br>1. You'll need cougaar.zip and cougaar-support.zip (the first time)
 to get a
 <br>runnable system.&nbsp; The rest are extras.&nbsp; Furthermore, the
@@ -313,7 +310,8 @@ alpine/demo/OPLAN_EDIT.PSP</li>
 ?list?psps</li>
 
 <br>&nbsp;</ul>
-
+To execute these PSPs, enter the following URL in your browser: http://&lt;hostname>.5555:&lt;service>
+where &lt;service> might be /alpine/demo/TASKS.PSP
 <h2>
 <a NAME="example"></a>Test Harness Example Implementations</h2>
 We only maintain society configurations that we are currently using for
@@ -377,15 +375,18 @@ General Development&nbsp;</h3>
 </ul>
 
 <h3>
-<a name="jvm">Java Virtual Machine Requirements&nbsp;</a></h3>
-<p>
-Cougaar is compiled and tested using the 1.3.1 release of JDK. We recommend that users use this release.
-Cougaar uses the following Java extensions that are not part of the default JDK 1.3.1 installation. These packages should be obtained and installed according to the instructions accompanying them:
-</p>
+<a NAME="jvm"></a>Java Virtual Machine Requirements&nbsp;</h3>
+Cougaar is compiled and tested using the 1.3.1 release of JDK. We recommend
+that users use this release. Cougaar uses the following Java extensions
+that are not part of the default JDK 1.3.1 installation. These packages
+should be obtained and installed according to the instructions accompanying
+them:
 <ul>
 <li>
-<a href="http://java.sun.com/products/jsse/">Java Secure Socket Extension (JSSE)</a>
+<a href="http://java.sun.com/products/jsse/">Java Secure Socket Extension
+(JSSE)</a></li>
 </ul>
+
 <h3>
 User Interface Development&nbsp;</h3>
 Please refer to the UI design doc.&nbsp; For general PSP help, see: <a href="ui/PSPServices.html">PSPServices</a>.
@@ -393,13 +394,13 @@ Please refer to the UI design doc.&nbsp; For general PSP help, see: <a href="ui/
 <a NAME="future"></a>Future Releases</h2>
 There will be further releases as we address system enhancements and deficiencies.
 Please watch the cougaar-developers@cougaar.org email list and carefully
-read the latest PlugIn Developers Guide (PDG) and all release notes.&nbsp;
+read the latest Cougaar Developers Guide (CDG) and all release notes.&nbsp;
 <h2>
 <a NAME="questions"></a>Questions and Bug Reports</h2>
 In addition, email infrastructure questions and initiate community discussions
 through cougaar-developers@cougaar.org. Bug and system-enhancement reports
-can be submitted through the <a href="HTTPS://www.alpine.bbn.com/">ALPINE</a>
-or <a href="http://www.cougaar.org">COUGAAR</a> websites.&nbsp;
+can be submitted through the <a href="http://www.cougaar.org">COUGAAR</a>
+website.&nbsp;
 <h2>
 <a NAME="bugs"></a>Known bugs and other issues</h2>
 
