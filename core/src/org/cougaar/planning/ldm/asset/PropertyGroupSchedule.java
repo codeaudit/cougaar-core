@@ -193,6 +193,21 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     return schedule;
   }
 
+  public PropertyGroupSchedule lock(Object key) {
+    PropertyGroupSchedule schedule = new PropertyGroupSchedule(this);
+    schedule.lockPGs(key);
+    
+    return schedule;
+  }
+
+  public PropertyGroupSchedule lock() {
+    return lock(null);
+  }
+
+  public PropertyGroupSchedule unlock(Object key) { 
+    return this;
+  }
+
   public void lockPGs(Object key) {
     if (getDefault() != null) {
       setDefault((TimePhasedPropertyGroup)getDefault().lock(key));
