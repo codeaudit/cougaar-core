@@ -156,6 +156,16 @@ public class SimpleAgent
   // mobility transferable identity
   private TransferableIdentity mobileIdentity;
 
+  // dummy mobility identity, in case the agent-id-service
+  // passes back a null transfer identity
+  //
+  // the AgentIdentityService API should be fixed to guarantee
+  // a non-null transferable identity
+  private static final TransferableIdentity NULL_MOBILE_IDENTITY =
+    new TransferableIdentity() {
+      private Object readResolve() { return NULL_MOBILE_IDENTITY; }
+    };
+
   // services, in order of "load()"
 
   private LoggingService log = LoggingService.NULL;
@@ -504,8 +514,19 @@ public class SimpleAgent
     ServiceBroker sb = getServiceBroker();
 
     // acquire our identity
+    TransferableIdentity priorIdentity = 
+      ((agentState != null) ?
+       agentState.identity :
+       null);
+    if (priorIdentity == NULL_MOBILE_IDENTITY) {
+      priorIdentity = null;
+    }
     if (log.isInfoEnabled()) {
-      log.info("Acquiring identity");
+      log.info(
+          "Acquiring "+
+          ((priorIdentity != null) ?
+           ("transfered identity: "+priorIdentity) :
+           ("new identity")));
     }
     myAgentIdService = (AgentIdentityService) 
       sb.getService(this, AgentIdentityService.class, null);
@@ -514,16 +535,17 @@ public class SimpleAgent
           "Unable to get the agent identity service for agent "+
           getIdentifier());
     }
-    TransferableIdentity priorIdentity = 
-      ((agentState != null) ?
-       agentState.identity :
-       null);
     try {
       myAgentIdService.acquire(priorIdentity);
     } catch (Exception e) {
       throw new RuntimeException(
-          "Unable to acquire agent identity for agent "+
-          getIdentifier(), e);
+          ("Unable to acquire agent identity for agent "+
+           getIdentifier()+
+           ((priorIdentity != null) ? 
+            (" from transfered identity: "+
+             priorIdentity) :
+            (""))),
+          e);
     }
 
     // add the containment service
@@ -867,22 +889,18 @@ public class SimpleAgent
       messenger = null;
     }
 
-    // suspend our identity
-    if (log.isInfoEnabled()) {
-      log.info(
-          "Preparing identity for "+
-          ((moveTargetNode != null) ? 
-           ("transfer from "+localNode+
-            " to node "+moveTargetNode) :
-           "release"));
-    }
     if (moveTargetNode != null) {
-      // moving, get transferrable identity
-      mobileIdentity = 
-        myAgentIdService.transferTo(
+      // moving, delay identity transfer until after getState()
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Postponing identity transfer to node "+
             moveTargetNode);
+      }
     } else {
       // non-moving suspend?
+      if (log.isInfoEnabled()) {
+        log.info("Releasing identity");
+      }
       myAgentIdService.release();
     }
 
@@ -902,28 +920,43 @@ public class SimpleAgent
     try {
 
       // re-establish our identity
-      if (log.isInfoEnabled()) {
-        log.info(
-            "Acquiring agent identify from "+
-            ((moveTargetNode != null) ? 
-             "transfered identity" :
-             "scratch"));
-      }
       if (moveTargetNode != null) {
         // failed move, restart
-        // take and clear the saved identity
-        TransferableIdentity tmp = mobileIdentity;
-        mobileIdentity = null;
-        try {
-          myAgentIdService.acquire(tmp);
-        } catch (Exception e) {
-          throw new RuntimeException(
-              "Unable to restart agent "+getIdentifier()+
-              " after failed move to "+moveTargetNode+
-              " and transfer-identity "+tmp, e);
+        if (mobileIdentity != null) {
+          // take and clear the saved identity
+          TransferableIdentity tmp = 
+            ((mobileIdentity != NULL_MOBILE_IDENTITY) ? 
+             (mobileIdentity) : 
+             null);
+          mobileIdentity = null;
+          if (log.isInfoEnabled()) {
+            log.info(
+                "Acquiring agent identify from"+
+                " failed move to "+moveTargetNode+
+                " and transfer-identity "+tmp);
+          }
+          try {
+            myAgentIdService.acquire(tmp);
+          } catch (Exception e) {
+            throw new RuntimeException(
+                "Unable to restart agent "+getIdentifier()+
+                " after failed move to "+moveTargetNode+
+                " and transfer-identity "+tmp, e);
+          }
+        } else {
+          // never transfered identity (state capture failed?)
+          if (log.isInfoEnabled()) {
+            log.info(
+                "Identity was never transfered to "+
+                moveTargetNode);
+          }
         }
       } else {
         // resume after non-move suspend
+        if (log.isInfoEnabled()) {
+          log.info(
+              "Acquiring agent identify from scratch");
+        }
         try {
           myAgentIdService.acquire(null);
         } catch (Exception e) {
@@ -1229,6 +1262,23 @@ public class SimpleAgent
 
     // get remote incarnations
     Object restartState = getRestartState();
+
+    if (moveTargetNode != null) {
+      // moving, get transferrable identity
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Transfering identity from node "+
+            localNode+" to node "+moveTargetNode);
+      }
+      mobileIdentity = 
+        myAgentIdService.transferTo(
+            moveTargetNode);
+      if (mobileIdentity == null) {
+        mobileIdentity = NULL_MOBILE_IDENTITY;
+      }
+    } else {
+      // non-moving state capture?
+    }
 
     // create a state object
     AgentState result = 
