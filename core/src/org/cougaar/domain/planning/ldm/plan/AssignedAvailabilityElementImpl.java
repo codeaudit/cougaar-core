@@ -1,10 +1,10 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
- *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- *  Raytheon Systems Company (RSC) Consortium).
- *  This software to be used only in accordance with the
- *  COUGAAR licence agreement.
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
  * </copyright>
  */
 
@@ -16,7 +16,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
  * AssignedAvailabilityElement represents the availability to a specific asset
  * over a time interval.
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AssignedAvailabilityElementImpl.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
+ * @version $Id: AssignedAvailabilityElementImpl.java,v 1.3 2001-04-05 19:27:14 mthome Exp $
  **/
 
 

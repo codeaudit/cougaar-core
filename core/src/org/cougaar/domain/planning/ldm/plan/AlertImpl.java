@@ -1,10 +1,10 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
- *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- *  Raytheon Systems Company (RSC) Consortium).
- *  This software to be used only in accordance with the
- *  COUGAAR licence agreement.
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
  * </copyright>
  */
 package org.cougaar.domain.planning.ldm.plan;
@@ -23,7 +23,7 @@ import org.cougaar.core.util.XMLize;
 
 /** Alert Implementation
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: AlertImpl.java,v 1.2 2001-01-03 14:33:07 mthome Exp $
+ * @version $Id: AlertImpl.java,v 1.3 2001-04-05 19:27:12 mthome Exp $
  *
  * Open issues - 
  * what happens when no one is subscribed to listen for this alert

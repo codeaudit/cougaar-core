@@ -1,10 +1,10 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
- *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- *  Raytheon Systems Company (RSC) Consortium).
- *  This software to be used only in accordance with the
- *  COUGAAR licence agreement.
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
  * </copyright>
  */
 
@@ -43,7 +43,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
   * returns null when there are no subtasks or any task has no result.
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: SimpleAspectValueARA.java,v 1.2 2001-04-03 14:02:23 tomlinso Exp $
+  * @version $Id: SimpleAspectValueARA.java,v 1.3 2001-04-05 19:27:20 mthome Exp $
   **/
   public class SimpleAspectValueARA implements AllocationResultAggregator {
     public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar) {

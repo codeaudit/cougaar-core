@@ -1,10 +1,10 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
- *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- *  Raytheon Systems Company (RSC) Consortium).
- *  This software to be used only in accordance with the
- *  COUGAAR licence agreement.
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
  * </copyright>
  */
 
@@ -42,8 +42,8 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterObjectFactory.java,v 1.3 2001-01-24 12:50:40 tomlinso Exp $
- * @version $Id: ClusterObjectFactory.java,v 1.3 2001-01-24 12:50:40 tomlinso Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.4 2001-04-05 19:27:14 mthome Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.4 2001-04-05 19:27:14 mthome Exp $
  *
  * @see org.cougaar.component.ComponentServesPlugIn
  */

@@ -1,10 +1,10 @@
 /*
  * <copyright>
- *  Copyright 1997-2000 Defense Advanced Research Projects
- *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
- *  Raytheon Systems Company (RSC) Consortium).
- *  This software to be used only in accordance with the
- *  COUGAAR licence agreement.
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
  * </copyright>
  */
 
@@ -17,7 +17,7 @@ import org.cougaar.util.UnaryPredicate;
 
 /** 
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: PredicateRuleParameter.java,v 1.2 2001-03-08 15:54:51 ngivler Exp $
+ * @version $Id: PredicateRuleParameter.java,v 1.3 2001-04-05 19:27:23 mthome Exp $
  **/
 
 /**

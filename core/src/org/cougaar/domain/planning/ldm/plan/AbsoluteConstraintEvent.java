@@ -1,3 +1,12 @@
+/*
+ * <copyright>
+ * Copyright 1997-2001 Defense Advanced Research Projects
+ * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ * Raytheon Systems Company (RSC) Consortium).
+ * This software to be used only in accordance with the
+ * COUGAAR licence agreement.
+ * </copyright>
+ */
 /* AbsoluteConstraintEvent objects are used to describe the fixed
  * (non-task) side of constraints involving one task */
 
