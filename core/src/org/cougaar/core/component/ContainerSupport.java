@@ -124,10 +124,35 @@ public abstract class ContainerSupport
       return tmp.iterator();
     }
   }
-  
+
+  /**
+   * Get an Iterator of all child Binders.
+   * <p>
+   * Need a "ContainerSupport.lock()" to make this safe...
+   */
+  protected Iterator binderIterator() {
+    synchronized(boundComponents) {
+      int l = boundComponents.size();
+      ArrayList tmp = new ArrayList(l);
+      for (int i=0; i<l; i++) {
+        BoundComponent bc = (BoundComponent) boundComponents.get(i);
+        tmp.add(bc.getBinder());
+      }
+      return tmp.iterator();
+    }
+  }
+
   public boolean add(Object o) {
+    ComponentDescription cd = null;
+    Object cstate = null;
     if (o instanceof ComponentDescription) {
-      ComponentDescription cd = (ComponentDescription)o;
+      cd = (ComponentDescription)o;
+    } else if (o instanceof StateTuple) {
+      StateTuple st = (StateTuple)o;
+      cd = st.getComponentDescription();
+      cstate = st.getState();
+    }
+    if (cd != null) {
       String ip = cd.getInsertionPoint();
       if (ip == null) return false;
       if (ip.startsWith(containmentPrefix)) {
@@ -135,12 +160,13 @@ public abstract class ContainerSupport
         // the one trailing the prefix...
         String tail = ip.substring(containmentPrefix.length());
         if ("Binder".equals(tail) || "BinderFactory".equals(tail)) {
+          // load binder factory, ignore cstate?
           return loadBinderFactory(cd);
         } else {
           int subi = tail.indexOf(".");
           if (subi == -1) {
             // no more dots: insert here
-            return loadComponent(cd);
+            return loadComponent(cd, cstate);
           } else {
             // more dots: try inserting in subcomponents
             synchronized (boundComponents) {
@@ -165,7 +191,7 @@ public abstract class ContainerSupport
     } else if (o instanceof BinderFactory) {
       return attachBinderFactory((BinderFactory)o);
     } else if (o instanceof Component) {
-      return loadComponent( o);
+      return loadComponent(o, null);
     } else {
       // not a clue.
       return false;
@@ -210,7 +236,7 @@ public abstract class ContainerSupport
    *
    * @return true on success.
    **/
-  protected boolean loadComponent(Object c) {
+  protected boolean loadComponent(Object c, Object cstate) {
     try {
       Binder b = bindComponent(c);
       if (b != null) {
@@ -218,6 +244,10 @@ public abstract class ContainerSupport
         synchronized (boundComponents) {
           boundComponents.add(bc);
         }
+        if (cstate != null) {
+          // provide the state during load
+	  b.setState(cstate);
+	}
         b.load();
         b.start();
         return true;
@@ -230,70 +260,6 @@ public abstract class ContainerSupport
     }
   }
 
-  /* getState()recurses through the boundcomponents binders from the Agent level, 
-   * returning a huge array of the Component's ComponentDescription. Pass-through 
-   * code implemented in Binder. 
-   * blackboard and scheduler override getState() to handle their states.
-   
-   parent recurses down through binders of bound components
-   iterate through arraylist of boundcomponents
-   get the next one
-   get state of next one - recursive call 
-   if null, stop
-   
-   in binder: getstate() adds to component description
-   
-   */
-
-  public Object getState() {
-    
-    synchronized (boundComponents) {
-      int l = boundComponents.size();
-      ComponentDescription[] descs = new ComponentDescription[l];
-      for (int i=0; i<l; i++) {
-	Object p = boundComponents.get(i);
-	if (p instanceof BoundComponent) {
-	  BoundComponent bc = (BoundComponent)p;
-	  Binder b = bc.getBinder();
-	  Object comp = bc.getComponent();
-	  if (comp instanceof ComponentDescription) {
-	    ComponentDescription cd = (ComponentDescription)comp;
-	    Object state = b.getState();
-            ComponentDescription dupCD = 
-	      new ComponentDescription(
-				       cd.getName(),
-				       cd.getInsertionPoint(),
-				       cd.getClassname(),
-				       cd.getCodebase(),
-				       cd.getParameter(),
-				       cd.getCertificate(),
-				       cd.getLeaseRequested(),
-				       cd.getPolicy(),
-				       state);
-	    descs[i] = dupCD;
-          } else {
-	    // error?
-          }
-	} else {
-          // error?
-	}
-      }
-      return descs;
-    } 
-  }
-
-  public void setState(Object state) {
-    if (state instanceof ComponentDescription[]) {
-      ComponentDescription[] descs = 
-	(ComponentDescription[])state;
-      for (int i = 0; i < descs.length; i++) {
-        add(descs[i]);
-      }
-    } else {
-      // error?
-    }
-  }
-  
   /**  These BinderFactories
    * are used to generate the primary containment
    * binders for the child components.  If the child
@@ -338,13 +304,6 @@ public abstract class ContainerSupport
         //System.err.println("setting Binder for "+c);
         BindingUtility.setBindingSite(b, getContainerProxy());
         BindingUtility.setServices(b, getServiceBroker());
-        //System.err.println("Setting Binder state for "+c);
-	if (c instanceof ComponentDescription) {
-	  Object state = ((ComponentDescription)c).getState();
-          if (state != null) {
-	    b.setState(state);
-	  }
-	}
         //System.err.println("Initializing Binder for "+c);
         BindingUtility.initialize(b);
         // done

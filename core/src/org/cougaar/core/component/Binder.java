@@ -14,6 +14,8 @@ import java.beans.beancontext.*;
 import java.util.*;
 import java.net.URL;
 
+import org.cougaar.util.GenericStateModel;
+
 /** A Binder is an implementation of a BindingSite: that is
  * an implementation of the Service-like relationship API
  * between a child component and its parent.  A Binder
@@ -30,13 +32,8 @@ import java.net.URL;
  * to be called by the bound component.
  **/
 
-public interface Binder extends StateObject // extends BindingSite 
+public interface Binder 
+  extends GenericStateModel, StateObject // BindingSite 
 {
-  /** initilize the Binder and the component tree below **/
-  void initialize();
-  /** load the binder and the component tree below **/
-  void load();
-  /** start the binder and the component tree below **/
-  void start();
 }
 

@@ -27,7 +27,10 @@ import java.lang.reflect.*;
  **/
 public class PluginManager 
   extends ContainerSupport
+  implements StateObject
 {
+
+  private Object loadState = null;
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
@@ -47,31 +50,76 @@ public class PluginManager
     }
   }
 
-  public void initialize() {
-    super.initialize();
-    ServiceBroker sb = getServiceBroker();
-    //add services here (none for now)
+  public void setState(Object loadState) {
+    this.loadState = loadState;
+  }
 
-    //try to load this agents clusters from the ini files
+  public void load() {
+    super.load();
+    // add services here (none for now)
+
+    // display the agent id
     ClusterIdentifier cid = getBindingSite().getAgentIdentifier();
     String cname = cid.toString();
     System.err.println("\n PluginManager "+this+" loading Plugins for agent "+cname);
     
-    try {
-      // parse the cluster properties
-      // currently assume ".ini" files
-      InputStream in = ConfigFinder.getInstance().open(cname+".ini");
-      ComponentDescription[] cDescs = 
-        org.cougaar.core.society.INIParser.parse(in, "Node.AgentManager.Agent.PluginManager");
-
-      for (int j = 0; j < cDescs.length; j++) {
-        add(cDescs[j]);
+    // get an array of child Components
+    Object[] children;
+    if (loadState instanceof StateTuple[]) {
+      // use the existing state
+      children = (StateTuple[])loadState;
+      loadState = null;
+    } else {
+      try {
+        // parse the cluster properties
+        // currently assume ".ini" files
+        InputStream in = ConfigFinder.getInstance().open(cname+".ini");
+        children = 
+          org.cougaar.core.society.INIParser.parse(
+              in, 
+              "Node.AgentManager.Agent.PluginManager");
+      } catch (Exception e) {
+        System.err.println(
+            "\nUnable to add "+cname+"'s child Components: "+e);
+        e.printStackTrace();
+        children = null;
       }
-    } catch (Exception e) {
-      System.err.println("\nUnable to add "+cname+"'s child omponents: "+e);
-      e.printStackTrace();
+    }
+
+    // load the child Components (Plugins, etc)
+    int n = ((children != null) ? children.length : 0);
+    for (int i = 0; i < n; i++) {
+      add(children[i]);
     }
   }
+
+  //
+  //
+  //
+
+  public Object getState() {
+    synchronized (boundComponents) {
+      int n = boundComponents.size();
+      StateTuple[] tuples = new StateTuple[n];
+      for (int i = 0; i < n; i++) {
+        BoundComponent bc = (BoundComponent)boundComponents.get(i);
+        Object comp = bc.getComponent();
+        if (comp instanceof ComponentDescription) {
+          ComponentDescription cd = (ComponentDescription)comp;
+          Binder b = bc.getBinder();
+          Object state = b.getState();
+          tuples[i] = new StateTuple(cd, state);
+        } else {
+          // error?
+        }
+      }
+      return tuples;
+    } 
+  }
+
+  //
+  // binding services
+  //
 
   protected final PluginManagerBindingSite getBindingSite() {
     return bindingSite;
@@ -104,6 +152,61 @@ public class PluginManager
     return containerProxy;
   }
 
+  //
+  // typical implementations of state transitions --
+  //   these might be moved into a base class...
+  //
+  // We really need a "container.lock()" to make these
+  //   operations safe.  Mobility would like to lock down
+  //   multiple steps, e.g. "suspend(); stop(); ..", without
+  //   another Thread calling "add(..)" in between.
+  //   
+
+  public void suspend() {
+    super.suspend();
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.suspend();
+    }
+  }
+
+  public void resume() {
+    super.resume();
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.resume();
+    }
+  }
+
+  public void stop() {
+    super.stop();
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.stop();
+    }
+  }
+
+  public void halt() {
+    // this seems reasonable:
+    suspend();
+    stop();
+  }
+
+  public void unload() {
+    super.unload();
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.unload();
+    }
+  }
 
   //
   // support classes

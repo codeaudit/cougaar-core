@@ -24,8 +24,11 @@ import org.cougaar.core.blackboard.BlackboardServiceProvider;
 import org.cougaar.core.cluster.Cluster;
 
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.StateObject;
+import org.cougaar.core.component.StateTuple;
 
 import org.cougaar.core.cluster.Distributor;
 import org.cougaar.core.cluster.MetricsSnapshot;
@@ -151,7 +154,7 @@ import java.beans.Beans;
  * @see org.cougaar.core.society.MessageTransport
  **/
 public class ClusterImpl extends Agent
-  implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics
+  implements Cluster, LDMServesPlugIn, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
   private Distributor myDistributor = null;
   private Blackboard myBlackboard = null;
@@ -502,26 +505,37 @@ public class ClusterImpl extends Agent
     // transit the state.
     super.load();
 
-    // start up the pluginManager component - should really itself be loaded
-    // as an agent subcomponent.
-    //pluginManager = new PluginManager();
-    //create a component description for pluginmanager instead of an instance
-    String pimname = new String(getClusterIdentifier()+"PluginManager");
-    ComponentDescription pimdesc = new ComponentDescription(pimname,
-                                                            "Node.AgentManager.Agent.PluginManager",
-                                                            "org.cougaar.core.plugin.PluginManager",
-                                                            null, //codebase
-                                                            null, //parameters
-                                                            null, //certificate
-                                                            null, //lease
-                                                            null, //policy
-                                                            null  // state
-                                                            );
-                                                            
-    //add(pluginManager);
-    boolean pimwasadded = add(pimdesc);
-    //System.err.println("Added "+pimwasadded+" PluginManager: "+pimdesc+" to "+this);
-    
+    if (loadState instanceof StateTuple[]) {
+      // use the existing state
+      StateTuple[] children = (StateTuple[])loadState;
+      this.loadState = null;
+      // load the child Components (Plugins, etc)
+      int n = ((children != null) ? children.length : 0);
+      for (int i = 0; i < n; i++) {
+        add(children[i]);
+      }
+    } else {
+      // start up the pluginManager component - should really itself be loaded
+      // as an agent subcomponent.
+      //pluginManager = new PluginManager();
+      //create a component description for pluginmanager instead of an instance
+      String pimname = new String(getClusterIdentifier()+"PluginManager");
+      ComponentDescription pimdesc = 
+        new ComponentDescription(
+            pimname,
+            "Node.AgentManager.Agent.PluginManager",
+            "org.cougaar.core.plugin.PluginManager",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null); //policy
+
+      //add(pluginManager);
+      boolean pimwasadded = add(pimdesc);
+      //System.err.println("Added "+pimwasadded+" PluginManager: "+pimdesc+" to "+this);
+    }
+
 
     //System.err.println("Cluster.load() completed");
   }
@@ -548,6 +562,121 @@ public class ClusterImpl extends Agent
     super.start();
   }
 
+
+  public void suspend() {
+    super.suspend();
+
+    // suspend all children
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.suspend();
+    }
+
+    // suspend the alarms
+
+    // suspend the plugin scheduling
+
+    // unregister the MessageTransport -- this could
+    //   be moved later...
+  }
+
+  public void resume() {
+    super.resume();
+
+    // re-register for MessageTransport
+
+    // resume the plugin scheduling
+
+    // resume the alarms 
+
+    // resume all children
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.resume();
+    }
+  }
+
+
+  public void stop() {
+    super.stop();
+
+    // should be okay...
+
+    // stop all children
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.stop();
+    }
+  }
+
+  public void halt() {
+    // this seems reasonable:
+    suspend();
+    stop();
+  }
+
+  public void unload() {
+    super.unload();
+
+    // unload all services
+
+    // unload children
+    for (Iterator childBinders = binderIterator();
+         childBinders.hasNext();
+         ) {
+      Binder b = (Binder)childBinders.next();
+      b.unload();
+    }
+    boundComponents.clear();
+  }
+
+  /**
+   * Get the state of this cluster, which should be suspended.
+   *
+   * Need to fix ContainerSupport for locking and hide
+   * "boundComponents" access.
+   */
+  public Object getState() {
+    // get the child components
+    StateTuple[] tuples;
+    synchronized (boundComponents) {
+      int n = boundComponents.size();
+      tuples = new StateTuple[n];
+      for (int i = 0; i < n; i++) {
+        org.cougaar.core.component.BoundComponent bc = 
+          (org.cougaar.core.component.BoundComponent)
+          boundComponents.get(i);
+        Object comp = bc.getComponent();
+        if (comp instanceof ComponentDescription) {
+          ComponentDescription cd = (ComponentDescription)comp;
+          Binder b = bc.getBinder();
+          Object state = b.getState();
+          tuples[i] = new StateTuple(cd, state);
+        } else {
+          // error?
+        }
+      }
+    }
+
+    // get the blackboard state
+
+    // wrap in interface
+    
+    // for now, just return the child tuples
+    return tuples;
+  }
+
+  private Object loadState;
+
+  public void setState(Object loadState) {
+    this.loadState = loadState;
+  }
 
   /** Standard, no argument constructor. */
   public ClusterImpl() {

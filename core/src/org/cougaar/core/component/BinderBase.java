@@ -60,6 +60,12 @@ public abstract class BinderBase
   public abstract void initialize();
   public abstract void load();
   public abstract void start();
+  public abstract void suspend();
+  public abstract void resume();
+  public abstract void stop();
+  public abstract void halt();
+  public abstract void unload();
+  public abstract int getModelState();
 
   public abstract Object getState();
   public abstract void setState(Object state);

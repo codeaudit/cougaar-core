@@ -25,6 +25,6 @@ import java.util.*;
  *
  * @see java.beans.beancontext.BeanContext
  **/
-public interface Container extends Component, Collection, StateObject
+public interface Container extends Component, Collection
 {
 }

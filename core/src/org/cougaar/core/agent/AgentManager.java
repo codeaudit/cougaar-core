@@ -84,36 +84,30 @@ public class AgentManager
   */
   public boolean add(Object obj) {
     //System.err.print("AgentManager adding Cluster");
-    ClusterServesClusterManagement cluster = null;
-    if (obj instanceof ComponentDescription) {
-      ComponentDescription desc = (ComponentDescription) obj;
 
-      if (!("Node.AgentManager.Agent".equals(
-              desc.getInsertionPoint()))) {
-        // fix to support non-agent components
-        throw new IllegalArgumentException(
-            "Currently only agent ADD is supported, not "+
-            desc.getInsertionPoint());
+    if (!(super.add(obj))) {
+      // unable to add
+      return false;
+    }
+
+    // send the Agent an "initialized" message
+    //
+    // maybe we can replace this with a more direct API?
+
+    Agent agent;
+    if ((obj instanceof ComponentDescription) ||
+        (obj instanceof StateTuple)) {
+      // get the description
+      ComponentDescription desc;
+      if (obj instanceof ComponentDescription) {
+        desc = (ComponentDescription)obj;
+      } else {
+        desc = ((StateTuple)obj).getComponentDescription();
       }
-
-      //System.out.println("ADDING desc: "+desc);
-
-      // add the agent
-      if (!(super.add(desc))) {
-        return false;
-      }
-
-      //System.out.println("Added "+desc);
-
-      // send the Agent an "initialized" message
-      //
-      // maybe we can replace this with a more direct API?
-
-      // find the AgentBinder that we just added -- is there
-      //   a better way to do this?
+      // use the description to find the AgentBinder that we just 
+      //   added -- is there a better way to do this?
       AgentBinder agentBinder = null;
-      Iterator iter = super.boundComponents.iterator();
-      while (true) {
+      for (Iterator iter = super.boundComponents.iterator(); ;) {
         if (!(iter.hasNext())) {
           // unable to find our own child?
           return false;
@@ -135,38 +129,25 @@ public class AgentManager
       }
 
       // get the Cluster itself -- this is a hack!
-      Agent agent = agentBinder.getAgent();
-      if (!(agent instanceof ClusterServesClusterManagement)) {
-        return false;
-      }
-      cluster = (ClusterServesClusterManagement)agent;
-
-      //System.out.println("Cluster: "+cluster);
-
-      // hookup the Cluster
-      return hookupCluster(cluster);
-
-      /*
-      try {
-        String insertionPoint = desc.getInsertionPoint();
-        if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
-          // fix to support non-agent components
-          throw new IllegalArgumentException("Currently only agent ADD is supported, not "+ insertionPoint);
-        }
-        cluster = createCluster(desc); // calls super.add(cluster);
-      } catch (Exception e) {
-      System.err.println("\nUnable to load cluster["+desc+"]: "+e);
-      e.printStackTrace();
-      }
-      return hookupCluster(cluster);
-      */
-    } else if (obj instanceof ClusterServesClusterManagement) {
-      return hookupCluster((ClusterServesClusterManagement)obj);
+      agent = agentBinder.getAgent();
+    } else if (obj instanceof Agent) {
+      agent = (Agent)obj;
     } else {
-      //just bail if this is a weird object for now
-      System.err.println("Warning AgentManager can not add the following object: " +obj);
+      // unable to hookup?
       return false;
     }
+
+    // get the Cluster itself -- this is a hack!
+    if (!(agent instanceof ClusterServesClusterManagement)) {
+      return false;
+    }
+    ClusterServesClusterManagement cluster = 
+      (ClusterServesClusterManagement)agent;
+
+    //System.out.println("Cluster: "+cluster);
+
+    // hookup the Cluster
+    return hookupCluster(cluster);
   }
 
   private boolean hookupCluster(ClusterServesClusterManagement cluster) {
@@ -192,28 +173,34 @@ public class AgentManager
   }
 
   private static void debugState(Object state, String path) {
-    if (state instanceof ComponentDescription[]) {
-      ComponentDescription[] descs = 
-        (ComponentDescription[])state;
-      for (int i = 0; i < descs.length; i++) {
-        ComponentDescription di = descs[i];
-        String prefix = path+"["+i+" / "+descs.length+"]";
-        if (di == null) {
+    if (state instanceof StateTuple[]) {
+      StateTuple[] tuples = (StateTuple[])state;
+      for (int i = 0; i < tuples.length; i++) {
+        String prefix = path+"["+i+" / "+tuples.length+"]";
+        StateTuple sti = tuples[i];
+        if (sti == null) {
           System.out.println(
-                             prefix+": null");
-        } else {
+              prefix+": null");
+          continue;
+        }
+        ComponentDescription cdi = sti.getComponentDescription();
+        if (cdi == null) {
           System.out.println(
-                             prefix+": "+
-                             di.getInsertionPoint()+" = "+
-                             di.getClassname()+" "+
-                             di.getParameter());
-          if (di.getState() != null) {
-            debugState(di.getState(), prefix);
-          }
+            prefix+": {null, ..}");
+          continue;
+        }
+        System.out.println(
+            prefix+": "+
+            cdi.getInsertionPoint()+" = "+
+            cdi.getClassname()+" "+
+            cdi.getParameter());
+        Object si = sti.getState();
+        if (si != null) {
+          debugState(si, prefix);
         }
       }
     } else {
-      System.out.println(path+" non-CD[] "+state);
+      System.out.println(path+" non-StateTuple[] "+state);
     }
   }
 
@@ -237,8 +224,7 @@ public class AgentManager
     // lookup the agent on this node
     ComponentDescription origDesc = null;
     Agent agent = null;
-    Iterator iter = super.boundComponents.iterator();
-    while (true) {
+    for (Iterator iter = super.boundComponents.iterator(); ;) {
       if (!(iter.hasNext())) {
         // no such agent?
         return;
@@ -266,6 +252,7 @@ public class AgentManager
     }
 
     // suspend the agent's activity, prepare for state capture
+    agent.suspend();
 
     // recursively gather the agent state
     Object state = 
@@ -276,7 +263,7 @@ public class AgentManager
     System.out.println("state is: "+state);
     debugState(state, "");
 
-    // create a ComponentDescription for the agent, set it's state
+    // create a ComponentDescription for the agent
     ComponentDescription cd;
     if (origDesc != null) {      
       Vector param = new Vector(1);
@@ -289,8 +276,7 @@ public class AgentManager
           param, //origDesc.getParameter(),
           origDesc.getCertificate(),
           origDesc.getLeaseRequested(),
-          origDesc.getPolicy(),
-          state);
+          origDesc.getPolicy());
     } else {
       // lost the description?
       Vector param = new Vector(1);
@@ -299,35 +285,66 @@ public class AgentManager
           "org.cougaar.core.cluster.ClusterImpl",
           "Node.AgentManager.Agent",
           "org.cougaar.core.cluster.ClusterImpl",
-          null,
+          null,  // codebase
           param,
-          null, // certificate
-          null, // lease
-          null, // policy
-          state);
+          null,  // certificate
+          null,  // lease
+          null); // policy
     }
 
-    System.out.println(
-		       "add("+cd+")");
-    add(cd);
+    // create a StateTuple
+    StateTuple st = new StateTuple(cd, state);
+
+    System.out.println("add("+st+")");
+    add(st);
     if (true) {
+
+      // stop and unload the original agent
+      agent.stop();
+      agent.unload();
+
+      // cancel all services requested by the agent
+
+      // unhand the original agent, let GC reclaim it
+      //
+      // ContainerSupport should be modified to clean this up...
+      for (Iterator iter = super.boundComponents.iterator();
+           iter.hasNext();
+          ) {
+        Object oi = iter.next();
+        if (!(oi instanceof BoundComponent)) {
+          continue;
+        }
+        BoundComponent bc = (BoundComponent)oi;
+        Binder b = bc.getBinder();
+        if (!(b instanceof AgentBinder)) {
+          continue;
+        }
+        Agent a = ((AgentBinder)b).getAgent();
+        if ((a != null) &&
+            (agentID.equals(a.getAgentIdentifier()))) {
+          // remove our agent
+          iter.remove();
+          break;
+        }
+      }
       return;
     }
 
     // create an ADD ComponentMessage with the ComponentDescription
     ComponentMessage addMsg =
       new ComponentMessage(
-        new NodeIdentifier(bindingSite.getIdentifier()),
-        nodeID,
-        ComponentMessage.ADD,
-        cd);
+          new NodeIdentifier(bindingSite.getIdentifier()),
+          nodeID,
+          ComponentMessage.ADD,
+          cd);
 
     // get the message transport
     MessageTransportService mts = (MessageTransportService)
       getServiceBroker().getService(
-                                    this,
-                                    MessageTransportService.class,
-                                    null);
+          this,
+          MessageTransportService.class,
+          null);
     if (mts == null) {
       // error!  we should have requested this earlier...
       System.err.println("Unable to get MessageTransport for mobility message");
@@ -344,59 +361,6 @@ public class AgentManager
     System.out.println(
         "Move "+agentID+" to "+nodeID);
   }
-
-  /**
-   * Create a Cluster from a ComponentDescription.
-   */
-  /*
-  private ClusterServesClusterManagement createCluster( ComponentDescription desc) 
-  {
-
-    // check the cluster classname
-    String clusterClassname = desc.getClassname();
-
-    // load an instance of the cluster
-    //
-    // FIXME use the "desc.getCodebase()" and other arguments
-    ClusterServesClusterManagement cluster;
-    try {
-      Class clusterClass = Class.forName(clusterClassname);
-      Object clusterInstance = clusterClass.newInstance();
-      if (!(clusterInstance instanceof ClusterServesClusterManagement)) {
-        throw new ClassNotFoundException();
-      }
-      cluster = (ClusterServesClusterManagement)clusterInstance;
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new IllegalArgumentException(
-          "Unable to load agent class: \""+clusterClassname+"\"");
-    }
-
-    // the parameter should be the cluster name
-    String clusterid;
-    try {
-      clusterid = (String)((List)desc.getParameter()).get(0);
-    } catch (Exception e) {
-      clusterid = null;
-    }
-    if (clusterid == null) {
-      throw new IllegalArgumentException(
-          "Agent specification lacks a String \"name\" parameter");
-    }
-   
-    // set the ClusterId
-    ClusterIdentifier cid = new ClusterIdentifier(clusterid);
-    cluster.setClusterIdentifier(cid);
-
-    //move the cluster to the intialized state
-    super.add(cluster);
-    if (cluster.getModelState() != GenericStateModel.ACTIVE) {
-      System.err.println("Cluster "+cluster+" is not Active!");
-    }
-
-    return cluster;
-  }
-*/
 
   public String getName() {
     return getBindingSite().getName();
@@ -417,7 +381,8 @@ public class AgentManager
  
 
   private class AgentManagerProxy implements AgentManagerForBinder, 
-                                             ClusterManagementServesCluster, BindingSite {
+                                             ClusterManagementServesCluster, 
+                                             BindingSite {
 
     public String getName() {return AgentManager.this.getName(); }
     
@@ -428,21 +393,6 @@ public class AgentManager
     public void requestStop() {}
     public boolean remove(Object o) {return true; }
   }
-
-//   public boolean add(Object o) {
-//     // this could go away if we turned the message into a ComponentDescription object.
-//     return true;
-//   }
-
-//   public boolean remove(Object o) {
-//     return true;
-//   }
-  
-  //is this node level or agent level???
-  //public ConfigFinder getConfigFinder() {
-  //  return agent.getConfigFinder();
-  //}
-
 
 }
 

@@ -121,6 +121,24 @@ public abstract class BinderSupport
   public void start() {
     child.start();
   }
+  public void suspend() {
+    child.suspend();
+  }
+  public void resume() {
+    child.resume();
+  }
+  public void stop() {
+    child.stop();
+  }
+  public void halt() {
+    child.halt();
+  }
+  public void unload() {
+    child.unload();
+  }
+  public int getModelState() {
+    return child.getModelState();
+  }
 
   public Object getState() {
     if (child instanceof StateObject) {
@@ -133,6 +151,11 @@ public abstract class BinderSupport
   public void setState(Object state) {
     if (child instanceof StateObject) {
       ((StateObject)child).setState(state);
+    } else {
+      System.err.println(
+          "BinderSupport: No \"setState(..)\" from "+
+          getContainer()+" for "+child);
+      Thread.dumpStack();
     }
   }
 }
