@@ -79,6 +79,11 @@ public interface BlackboardService extends Service {
    **/
   Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental);
 
+  /**
+   * Primary subscribe method, which registers a new subscription.
+   */
+  Subscription subscribe(Subscription subscription);
+
   /** Issue a query against the logplan.  Similar in function to
    * opening a new subscription, getting the results and immediately
    * closing the subscription, but can be implemented much more efficiently.
