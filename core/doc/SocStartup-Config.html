@@ -17,6 +17,7 @@
 <font size=+0>To install COUGAAR 7.0, first unzip the "core-&lt;builddate>.zip"
 file. It will create a top-level "alp-&lt;builddate>" directory and appropriate
 subdirectories. Then move the toolkit-&lt;builddate>.zip, planserver-&lt;builddate>.zip,
+server-&lt;builddate>.zip, contract-&lt;builddate>.zip,
 glm-&lt;builddate>.zip, tutorial-&lt;builddate>.zip (optional) files to
 the alp-&lt;builddate> directory and unzip them there.
 This unzip process will overlay the original
@@ -96,34 +97,34 @@ describes the current organization of "jar" and data files and system parameters
 In addition, this information describes the organization of PlugIn software
 submissions and how PlugIns must reference private data files and software
 libraries.
-<p>Unpacking the release package (cougaar.zip or cougaar.tar) should produce the
-following directory structure (use of "cougaar\&lt;product>" directories for
-PlugIn-related files will be required in all future software submissions
-and all future infrastructure releases):
+<p>Unpacking the release packages (zip files) should produce the
+following directory structure inside the new alp-&lt;builddate> directory:
 <ul>
 <li>
-cougaar\lib ---------------- "jar" files for the infrastructure, ALPINE PlugIns,
+
+lib ---------------- "jar" files for the infrastructure, ALPINE PlugIns,
 and COTS libraries</li>
 
 <li>
-cougaar\bin ---------------- "bat" and "csh" scripts for setting environment
+bin ---------------- "bat" and "csh" scripts for setting environment
 variables and paths</li>
 
 <li>
-cougaar\configs ----------- subdirectories of society configuration files (e.g.,
+configs ----------- subdirectories of society configuration files (e.g.,
 minitestconfig)</li>
 
 <li>
-cougaar\releaseNotes ----- text descriptions of the COUGAAR software release</li>
+src --------------- infrastructure source code (in zip files)</li>
 
 <li>
-cougaar\src --------------- infrastructure source code</li>
+doc ------ Release Notes (release_notes_index.html) and other
+	documentation for COUGAAR infrastructure.</li>
 
 <li>
-cougaar\doc\javadoc ------"javadoc" for COUGAAR infrastructure</li>
+doc/javadoc ------"javadoc" for COUGAAR infrastructure</li>
 
 <li>
-cougaar\&lt;product>------ product specific data files and non-java executables
+&lt;product*>------ product specific data files and non-java executables
 (each PlugIn or COUGAAR participant will have a corresponding subdirectory)</li>
 </ul>
 The following information describes the configuration scheme for ALPINE
@@ -138,16 +139,17 @@ Node.csh files.</li>
 
 <li>
 The environment variable ALP_INSTALL_PATH must point to the installation
-directory "cougaar." In addition, the system property org.cougaar.install.path must
+directory "alp-&lt;builddate>." This is used to set the (java) system
+property org.cougaar.install.path which must 
 point to the same directory. These variables will allow the infrastructure
-and PlugIns to find the necessary "jar" files (cougaar\lib) and data files
-(cougaar\&lt;product-n>).</li>
+and PlugIns to find the necessary "jar" files (lib) and data files
+(&lt;product-n>).</li>
 
 <li>
 For system testing in a single node configuration, "serialization" of COUGAAR
 objects can be forced by setting the alp.message.alwaysSerialize system
-property to True. This feature cannot be used in a multiple node scenario
-and should be False.</li>
+property to true. This feature cannot be used in a multiple node scenario
+and should be false.</li>
 
 <li>
 Please note that the Node.bat/csh files are only present in the cougaar/bin
