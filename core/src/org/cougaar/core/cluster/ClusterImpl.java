@@ -503,19 +503,23 @@ public class ClusterImpl
 
     // suspend the alarms
 
-    System.out.println("suspend scheduler service");
+	// System.out.println("ClusterImpl.suspend - suspend scheduler service");
     mySchedulerServiceProvider.suspend(); // suspend the plugin scheduling
 
-    System.out.println("unregisterClient");
+	// System.out.println("ClusterImpl.suspend - unregisterClient from messenger");
     messenger.unregisterClient(ClusterImpl.this);
 
-    getQueueHandler().halt();
+	stopQueueHandler ();
   }
 
   public void resume() {
     super.resume();
 
+	startQueueHandler ();
+	
     // re-register for MessageTransport
+	// System.out.println("ClusterImpl.resume - re-registerClient with messenger.");
+    messenger.registerClient(this);
 
     mySchedulerServiceProvider.resume(); // suspend the plugin scheduling
 
@@ -655,7 +659,7 @@ public class ClusterImpl
     }
 
     // Do this here because we might not get another opportunity
-    System.out.println("flushMessages");
+	// System.out.println("ClusterImpl.getState - flushMessages from messenger");
     messenger.flushMessages();
     
     return result;
@@ -922,7 +926,7 @@ public class ClusterImpl
   public void sendMessage(ClusterMessage message)
   {
     checkClusterInfo(message.getDestination());
-    showProgress("+");
+	showProgress("+");
     try {
       if (messenger == null) {
         throw new RuntimeException("MessageTransport unavailable. Message dropped.");
@@ -972,23 +976,40 @@ public class ClusterImpl
 
   private boolean isQueueHandlerStarted = false;
 
+  private Object queueHandlerLock = new Object ();
+
   private void startQueueHandler() {
-    if (! isQueueHandlerStarted ) {
-      getQueueHandler().start();
-      isQueueHandlerStarted = true;
-    } else {
-      System.err.println(
-          "QueueHandler in " + getClusterIdentifier() + " asked to restart.");
-    }
+	synchronized (queueHandlerLock) {
+	  if (! isQueueHandlerStarted ) {
+		getQueueHandler().start();
+		isQueueHandlerStarted = true;
+	  } else {
+		System.err.println(
+						   "QueueHandler in " + getClusterIdentifier() + " asked to restart.");
+	  }
+	}
+  }
+
+  private void stopQueueHandler() {
+	synchronized (queueHandlerLock) {
+	  if (isQueueHandlerStarted ) {
+		getQueueHandler().halt();
+		isQueueHandlerStarted = false;
+		queueHandler = null;
+	  } else {
+		System.err.println(
+						   "QueueHandler in " + getClusterIdentifier() + " asked to stop.");
+	  }
+	}
   }
 
   private QueueHandler getQueueHandler() {
-    synchronized (this) {
-      if (queueHandler == null) {
-        queueHandler = new QueueHandler(this);
-      }
-      return queueHandler;
-    }
+	synchronized (queueHandlerLock) {
+	  if (queueHandler == null) {
+		queueHandler = new QueueHandler(this);
+	  }
+	  return queueHandler;
+	}
   }
 
   private static class QueueHandler extends Thread {
@@ -1036,6 +1057,10 @@ public class ClusterImpl
 
     public void addMessage(ClusterMessage m) {
       synchronized (queue) {
+		if (!running)
+		  System.err.println ("ClusterImpl - QueueHandler - " +
+							  "ERROR - queue is not running -- message will be ignored!");
+		
         queue.add(m);
         queue.notify();
       }
