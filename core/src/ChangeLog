@@ -1,3 +1,28 @@
+2003-01-17  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #2370 -- Persist blocks multiple agents on a per-JVM lock
+	Added ReservationManager. When a Distributor decides its time to
+	persist, it first makes a reservation to use the persistence
+	facility. If the reservation is not granted, persistence is
+	deferred and retried at the next opportunity. When the reservation
+	is granted, the distributor waits for open transactions to be
+	closed out and persistence proceeds. If the reservation is lost
+	(times out) before all open transactions can be closed, the
+	process is reversed, a new reservation request is made and
+	transactions are again allowed. This may repeat until a lack of
+	activity permits the transactions to be closed.
+
+	* org/cougaar/core/blackboard/ReservationManager.java:
+	New class manages reservations for using the persistence facility.
+	This is actually general purpose. A reservation request for a
+	particular object can be placed in a queue and its reaching the
+	head of the queue sensed. Reservations that are not used in a
+	timely fashion are removed from the queue.
+	Used for accessing the persistence mechanism so that multiple
+	agents do not stack up trying to get the VM global persistence
+	lock.
+
 2002-12-05  Todd Wright  <twright@bbn.com>
 
 	* *
