@@ -33,6 +33,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.security.PrivilegedAction;
+import java.security.AccessController;
 import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -537,8 +539,17 @@ public class PersistenceServiceComponent
 
   private DataProtectionService getDataProtectionService() {
     if (dataProtectionService == null) {
+
+      // For running with security, getting the service, which may be
+      // the security service, is a privileged action
+      // See RFE 3771
       dataProtectionService = (DataProtectionService)
-        sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
+	AccessController.doPrivileged(new PrivilegedAction() {
+            public Object run() {
+              return sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
+            }
+          });
+      
       if (dataProtectionService == null) {
         if (logger.isInfoEnabled()) logger.info("No DataProtectionService Available.");
         if (Boolean.getBoolean("org.cougaar.core.persistence.DataProtectionServiceStubEnabled")) {
