@@ -105,8 +105,8 @@ public abstract class Subscription {
   protected final UnaryPredicate predicate;
 
   public Subscription(UnaryPredicate p) {
-    if (p instanceof DynamicUnaryPredicate) { // cbug 3674
-      _logger.warn("Performance hit: use of DynamicUnaryPredicate "+p, new throwable()); 
+    if (p instanceof org.cougaar.util.DynamicUnaryPredicate) { // cbug 3674
+      _logger.warn("Performance hit: use of DynamicUnaryPredicate "+p, new Throwable()); 
     }
     if (p == null) throw new IllegalArgumentException("Predicate must be non-null");
     predicate = p;

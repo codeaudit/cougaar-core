@@ -383,7 +383,7 @@ public class Subscriber {
     if (this instanceof Blackboard) return;               // No check for Blackboard
 
     if (arg instanceof Collection) {
-      logger.warning("Suspicious "+methodname+" of Collection "+arg);  // cbug 3674
+      logger.warn("Suspicious "+methodname+" of Collection "+arg);  // cbug 3674
     }
 
     if (!isMyTransaction()) {
