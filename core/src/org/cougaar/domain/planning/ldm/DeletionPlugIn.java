@@ -285,6 +285,10 @@ public class DeletionPlugIn extends SimplePlugIn {
         }
     };
 
+    protected Subscription subscribe(UnaryPredicate p, PlanElementSet c, boolean b) {
+        return super.subscribe(p, c, b);
+    }
+
     private class PESet {
         private Alarm planElementAlarm;
         private PlanElementSet planElementSet;
