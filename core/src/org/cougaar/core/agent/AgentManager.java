@@ -53,6 +53,8 @@ public class AgentManager
   extends ContainerSupport
   implements ContainerAPI, AgentContainer
 {
+  /** The Insertion point for the AgentManager, defined relative to that of Node. **/
+  public static final String INSERTION_POINT = Node.INSERTION_POINT + ".AgentManager";
   public AgentManager() {
     BinderFactory bf = new DefaultAgentBinderFactory();
     if (!attachBinderFactory(bf)) {
@@ -104,13 +106,16 @@ public class AgentManager
     try {
       InitializerService is = (InitializerService) 
         sb.getService(this, InitializerService.class, null);
-      cds = new ComponentDescriptions(is.getComponentDescriptions(nodeName, "Node.AgentManager.Binder"));
+      Logging.getLogger(AgentManager.class).info(nodeName + " AgentManager.load about to look for CompDesc's of Agent Binders.");
+      // Get all items _below_ given insertion point.
+      // To get just binders, must use extract method later....
+      cds = new ComponentDescriptions(is.getComponentDescriptions(nodeName, INSERTION_POINT));
       sb.releaseService(this, InitializerService.class, is);
     } catch (Exception e) {
       throw new Error("Couldn't initialize AgentManager Binders with InitializerService ", e);
     }
 
-    addAll(ComponentDescriptions.sort(cds.extractInsertionPointComponent("Node.AgentManager.Binder")));
+    addAll(ComponentDescriptions.sort(cds.extractInsertionPointComponent(INSERTION_POINT + ".Binder")));
   }
 
 
@@ -123,7 +128,7 @@ public class AgentManager
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "Node.AgentManager";
+    return INSERTION_POINT;
   }
 
   protected ContainerAPI getContainerProxy() {
