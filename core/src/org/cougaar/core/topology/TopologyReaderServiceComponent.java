@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.naming.Name;
 import javax.naming.NameClassPair;
@@ -39,6 +41,13 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+import javax.naming.event.EventContext;
+import javax.naming.event.EventDirContext;
+import javax.naming.event.NamespaceChangeListener;
+import javax.naming.event.NamingEvent;
+import javax.naming.event.NamingExceptionEvent;
+import javax.naming.event.NamingListener;
+import javax.naming.event.ObjectChangeListener;
 
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
@@ -71,8 +80,36 @@ implements Component
 
   private NamingService namingService;
   private LoggingService log;
-
+  private EventDirContext rootContext;
+  private EventDirContext topologyContext;
+  private Map cache = new HashMap();
+  private NamingListener namingListener = new MyNamingListener();
   private TopologyReaderServiceProviderImpl topologyRSP;
+  private int componentId = System.identityHashCode(this);
+
+  private class MyNamingListener implements NamespaceChangeListener, ObjectChangeListener {
+    public void objectAdded(NamingEvent evt) {
+      try {
+        String name = evt.getNewBinding().getName();
+        topologyContext.addNamingListener(name, EventContext.OBJECT_SCOPE, namingListener);
+        if (log.isDebugEnabled()) log.debug(componentId + " installing NamingListener to added " + name);
+      } catch (NamingException ne) {
+        log.error("Error installing naming listener", ne);
+      }
+      clearCache();
+    }
+    public void objectRemoved(NamingEvent evt) {
+      clearCache();
+    }
+    public void objectRenamed(NamingEvent evt) {
+      clearCache();
+    }
+    public void objectChanged(NamingEvent evt) {
+      clearCache();
+    }
+    public void namingExceptionThrown(NamingExceptionEvent evt) {
+    }
+  }
 
   public void setBindingSite(BindingSite bs) {
     // only care about the service broker
@@ -121,6 +158,115 @@ implements Component
       log = null;
     }
     super.unload();
+  }
+
+  private void clearCache() {
+    synchronized (cache) {
+      if (log.isDebugEnabled()) log.debug(componentId + " clearCache " + cache.size() + " entries");
+      cache.clear();
+    }
+  }
+
+  private EventDirContext getTopologyContext() throws NamingException {
+    synchronized (cache) {
+      if (topologyContext == null) {
+        try {
+          topologyContext = (EventDirContext)
+            getRootContext().lookup(TopologyNamingConstants.TOPOLOGY_DIR);
+          topologyContext.addNamingListener("", EventContext.SUBTREE_SCOPE, namingListener);
+        } catch (NamingException ne) {
+          throw ne;
+        } catch (Exception e) {
+          NamingException x = 
+            new NamingException("Unable to access name-server");
+          x.setRootCause(e);
+          throw x;
+        }
+      }
+      return topologyContext;
+    }
+  }
+
+  private EventDirContext getRootContext() throws NamingException {
+    synchronized (cache) {
+      if (rootContext == null) {
+        try {
+          DirContext initialContext = (DirContext) namingService.getRootContext();
+          rootContext = (EventDirContext) initialContext.lookup("");
+        } catch (NamingException ne) {
+          throw ne;
+        } catch (Exception e) {
+          NamingException x = 
+            new NamingException("Unable to access name-server");
+          x.setRootCause(e);
+          throw x;
+        }
+      }
+      return rootContext;
+    }
+  }
+
+  private class CacheKey {
+    public static final int SEARCHALLVALUES = 1;
+    public static final int SEARCHAGENT_S = 2;
+    public static final int SEARCHAGENT_SS = 3;
+    public static final int SEARCHAGENT_ISS = 4;
+    public static final int SEARCHALLAGENTS = 5;
+    public static final int SEARCHALLATTRIBUTES = 6;
+    int keyType;
+    Object[] keyElements;
+    int hash;
+
+    public CacheKey(int keyType, Object[] keyElements) {
+      this.keyType = keyType;
+      this.keyElements = keyElements;
+      hash = keyType;
+      for (int i = 0; i < keyElements.length; i++) {
+        hash = hash * 31 + keyElements[i].hashCode();
+      }
+    }
+
+    public int hashCode() {
+      return hash;
+    }
+
+    public boolean equals(Object o) {
+      if (o instanceof CacheKey) {
+        CacheKey that = (CacheKey) o;
+        if (this.keyType == that.keyType) {
+          if (this.keyElements.length == that.keyElements.length) {
+            for (int i = 0; i < this.keyElements.length; i++) {
+              Object o1 = this.keyElements[i];
+              Object o2 = that.keyElements[i];
+              if (o1 == o2) {
+                return true;
+              }
+              if (o1 == null) {
+                return false;
+              }
+              if (o2 == null) {
+                return false;
+              }
+              if (!o1.equals(o2)) {
+                return false;
+              }
+            }
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    public String toString() {
+      StringBuffer buf = new StringBuffer();
+      buf.append("CacheKey(").append(keyType);
+      for (int i = 0; i < keyElements.length; i++) {
+        buf.append(", ").append(keyElements[i]);
+      }
+      buf.append(")");
+      return buf.toString();
+    }
   }
 
   private class TopologyReaderServiceProviderImpl
@@ -341,13 +487,13 @@ implements Component
             TopologyNamingConstants.SITE_ATTR);
         String enclave = (String) getAttribute(ats,
             TopologyNamingConstants.ENCLAVE_ATTR);
-        Long linc    = (Long) getAttribute(ats,
+        String linc    = (String) getAttribute(ats,
             TopologyNamingConstants.INCARNATION_ATTR);
-        Long lmoveId = (Long) getAttribute(ats,
+        String lmoveId = (String) getAttribute(ats,
             TopologyNamingConstants.MOVE_ID_ATTR);
-        Integer itype = (Integer) getAttribute(ats,
+        String itype   = (String) getAttribute(ats,
             TopologyNamingConstants.TYPE_ATTR);
-        Integer istatus  = (Integer) getAttribute(ats,
+        String istatus = (String) getAttribute(ats,
             TopologyNamingConstants.STATUS_ATTR);
 
         return new TopologyEntry(
@@ -356,10 +502,10 @@ implements Component
             host, 
             site,
             enclave,
-            linc.longValue(), 
-            lmoveId.longValue(), 
-            itype.intValue(),
-            istatus.intValue());
+            Long.parseLong(linc), 
+            Long.parseLong(lmoveId), 
+            Integer.parseInt(itype),
+            Integer.parseInt(istatus));
       }
 
       /** get named attribute, throw exception if not present */
@@ -513,31 +659,53 @@ implements Component
       }
 
       private Attributes searchAgent(String agent) {
-        try {
-          DirContext ctx = getTopologyContext();
-          return ctx.getAttributes(agent);
-        } catch (NamingException ne) {
-          if (ne instanceof NameNotFoundException) {
-            return null;
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHAGENT_S, new Object[] {agent});
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return (Attributes) cache.get(cacheKey);
           }
-          throw new RuntimeException(
-              "Unable to access name server", ne);
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
+          Attributes ret;
+          try {
+            EventDirContext ctx = getTopologyContext();
+            ret = ctx.getAttributes(agent);
+          } catch (NamingException ne) {
+            if (ne instanceof NameNotFoundException) {
+              ret = null;
+            }
+            throw new RuntimeException(
+                                       "Unable to access name server", ne);
+          }
+          cache.put(cacheKey, ret);
+          return ret;
         }
       }
 
       private Object searchAgent(
           String agent, String single_attr) {
-        try {
-          DirContext ctx = getTopologyContext();
-          String[] ats_filter = { single_attr };
-          Attributes ats = ctx.getAttributes(agent);
-          return getAttributeValue(ats, single_attr);
-        } catch (NamingException ne) {
-          if (ne instanceof javax.naming.NameNotFoundException) {
-            return null;
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHAGENT_SS, new Object[] {agent, single_attr});
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return (Attributes) cache.get(cacheKey);
           }
-          throw new RuntimeException(
-              "Unable to access name server", ne);
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
+          Object ret;
+          try {
+            EventDirContext ctx = getTopologyContext();
+            String[] ats_filter = { single_attr };
+            Attributes ats = ctx.getAttributes(agent);
+            ret = getAttributeValue(ats, single_attr);
+          } catch (NamingException ne) {
+            if (ne instanceof javax.naming.NameNotFoundException) {
+              ret = null;
+            }
+            throw new RuntimeException(
+                                       "Unable to access name server", ne);
+          }
+          cache.put(cacheKey, ret);
+          return ret;
         }
       }
 
@@ -546,51 +714,79 @@ implements Component
         if (type == ANY_AGENT_TYPE) {
           return searchAgent(agent, single_attr);
         }
-        try {
-          DirContext ctx = getTopologyContext();
-          String[] ats_filter = { 
-            single_attr, 
-            TopologyNamingConstants.TYPE_ATTR,
-          };
-          Attributes ats = ctx.getAttributes(agent);
-          Object val = getAttributeValue(ats, single_attr);
-          if (val == null) return null;
-          Object otype = getAttributeValue(ats, 
-              TopologyNamingConstants.TYPE_ATTR);
-          if (otype == null) return null;
-          int itype = ((Integer) otype).intValue();
-          if ((type & itype) == 0) return null;
-          return val;
-        } catch (NamingException ne) {
-          if (ne instanceof javax.naming.NameNotFoundException) {
-            return null;
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHAGENT_ISS,
+                                           new Object[] {new Integer(type), agent, single_attr});
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return cache.get(cacheKey);
           }
-          throw new RuntimeException(
-              "Unable to access name server", ne);
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
+          Object ret;
+          try {
+            EventDirContext ctx = getTopologyContext();
+            String[] ats_filter = { 
+              single_attr, 
+              TopologyNamingConstants.TYPE_ATTR,
+            };
+            Attributes ats = ctx.getAttributes(agent);
+            ret = getAttributeValue(ats, single_attr);
+            if (ret == null) {
+              ret = null;
+            } else {
+              Object otype = getAttributeValue(ats, 
+                                               TopologyNamingConstants.TYPE_ATTR);
+              if (otype == null) {
+                ret = null;
+              } else {
+                int itype = Integer.parseInt((String) otype);
+                if ((type & itype) == 0) {
+                  ret = null;
+                }
+              }
+            }
+          } catch (NamingException ne) {
+            if (ne instanceof javax.naming.NameNotFoundException) {
+              ret = null;
+            }
+            throw new RuntimeException(
+                                       "Unable to access name server", ne);
+          }
+          cache.put(cacheKey, ret);
+          return ret;
         }
       }
 
       private Set searchAllAgents() {
-        try {
-          DirContext ctx = getTopologyContext();
-          NamingEnumeration e = ctx.list("");
-          Set ret;
-          if (!(e.hasMore())) {
-            ret = Collections.EMPTY_SET;
-          } else {
-            ret = new HashSet(13);
-            do {
-              NameClassPair ncp = (NameClassPair) e.next();
-              String agent = ncp.getName();
-              if (agent != null) {
-                ret.add(agent);
-              }
-            } while (e.hasMore());
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHALLAGENTS, new Object[0]);
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return (Set) cache.get(cacheKey);
           }
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
+          Set ret;
+          try {
+            EventDirContext ctx = getTopologyContext();
+            NamingEnumeration e = ctx.list("");
+            if (!(e.hasMore())) {
+              ret = Collections.EMPTY_SET;
+            } else {
+              ret = new HashSet(13);
+              do {
+                NameClassPair ncp = (NameClassPair) e.next();
+                String agent = ncp.getName();
+                if (agent != null) {
+                  ret.add(agent);
+                }
+              } while (e.hasMore());
+            }
+          } catch (NamingException ne) {
+            throw new RuntimeException(
+                                       "Unable to access name server", ne);
+          }
+          cache.put(cacheKey, ret);
           return ret;
-        } catch (NamingException ne) {
-          throw new RuntimeException(
-              "Unable to access name server", ne);
         }
       }
 
@@ -613,104 +809,102 @@ implements Component
       }
 
       private List searchAllAttributes(Attributes match) {
-        try {
-          DirContext ctx = namingService.getRootContext();
-          NamingEnumeration e =
-            ctx.search(
-                TopologyNamingConstants.TOPOLOGY_DIR,
-                match,
-                null);
-          List ret;
-          if (!(e.hasMore())) {
-            ret = Collections.EMPTY_LIST;
-          } else {
-            ret = new ArrayList(13);
-            do {
-              SearchResult result = (SearchResult) e.next();
-              if (result != null) {
-                Attributes ats = result.getAttributes();
-                if (ats != null) {
-                  ret.add(ats);
-                }
-              }
-            } while (e.hasMore());
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHALLATTRIBUTES, new Object[] {match});
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return (List) cache.get(cacheKey);
           }
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
+          List ret;
+          try {
+            NamingEnumeration e =
+              getTopologyContext().search(
+                                          "",
+                                          match,
+                                          null);
+            if (!(e.hasMore())) {
+              ret = Collections.EMPTY_LIST;
+            } else {
+              ret = new ArrayList(13);
+              do {
+                SearchResult result = (SearchResult) e.next();
+                if (result != null) {
+                  Attributes ats = result.getAttributes();
+                  if (ats != null) {
+                    ret.add(ats);
+                  }
+                }
+              } while (e.hasMore());
+            }
+          } catch (NamingException e) {
+            if (log.isDebugEnabled()) log.debug(e.toString(), e);
+            throw new RuntimeException(
+                                       "Unable to access name server", e);
+          }
+          cache.put(cacheKey, ret);
           return ret;
-        } catch (NamingException e) {
-          throw new RuntimeException(
-              "Unable to access name server", e);
         }
       }
 
       private Set searchAllValues(
           Attributes match, int type) {
-        String single_attr = getAttributeName(type);
-        boolean isAgentFilter = 
-          (((type & ANY_AGENT_TYPE) != 0) &&
-           ((type != ANY_AGENT_TYPE)));
-        try {
-          DirContext ctx = namingService.getRootContext();
-          NamingEnumeration e;
-          if (isAgentFilter) {
-            String[] ats_filter = { 
-              single_attr, 
-              TopologyNamingConstants.TYPE_ATTR,
-            };
-            e = ctx.search(TopologyNamingConstants.TOPOLOGY_DIR, match,
-                ats_filter);
-          } else {
-            String[] ats_filter = { single_attr };
-            e = ctx.search(TopologyNamingConstants.TOPOLOGY_DIR, match,
-                ats_filter);
+        synchronized (cache) {
+          CacheKey cacheKey = new CacheKey(CacheKey.SEARCHALLVALUES, new Object[] {match, new Integer(type)});
+          if (cache.containsKey(cacheKey)) {
+            if (log.isDebugEnabled()) log.debug(componentId + " cache hit " + cacheKey);
+            return (Set) cache.get(cacheKey);
           }
+          if (log.isDebugEnabled()) log.debug(componentId + " cache miss " + cache.size() + " " + cacheKey);
           Set ret;
-          if (!(e.hasMore())) {
-            ret = Collections.EMPTY_SET;
-          } else {
-            ret = new HashSet(13);
-            do {
-              SearchResult result = (SearchResult) e.next();
-              // get value
-              if (result == null) continue;
-              Attributes ats = result.getAttributes();
-              Object val = getAttributeValue(ats, single_attr);
-              if (val == null) continue;
-              // check agent-type filter
-              if (isAgentFilter) {
-                Object otype = getAttributeValue(ats, 
-                    TopologyNamingConstants.TYPE_ATTR);
-                if (otype == null) continue;
-                int itype = ((Integer) otype).intValue();
-                if ((type & itype) == 0) continue;
-              }
-              // add value
-              ret.add(val);
-            } while (e.hasMore()); 
+          String single_attr = getAttributeName(type);
+          boolean isAgentFilter = 
+            (((type & ANY_AGENT_TYPE) != 0) &&
+             ((type != ANY_AGENT_TYPE)));
+          try {
+            NamingEnumeration e;
+            if (isAgentFilter) {
+              String[] ats_filter = { 
+                single_attr, 
+                TopologyNamingConstants.TYPE_ATTR,
+              };
+              e = getTopologyContext().search("", match,
+                                              ats_filter);
+            } else {
+              String[] ats_filter = { single_attr };
+              e = getTopologyContext().search("", match, ats_filter);
+            }
+            if (!(e.hasMore())) {
+              ret = Collections.EMPTY_SET;
+            } else {
+              ret = new HashSet(13);
+              do {
+                SearchResult result = (SearchResult) e.next();
+                // get value
+                if (result == null) continue;
+                Attributes ats = result.getAttributes();
+                Object val = getAttributeValue(ats, single_attr);
+                if (val == null) continue;
+                // check agent-type filter
+                if (isAgentFilter) {
+                  Object otype = getAttributeValue(ats, 
+                                                   TopologyNamingConstants.TYPE_ATTR);
+                  if (otype == null) continue;
+                  int itype = Integer.parseInt((String) otype);
+                  if ((type & itype) == 0) continue;
+                }
+                // add value
+                ret.add(val);
+              } while (e.hasMore()); 
+            }
+          } catch (NamingException e) {
+            throw new RuntimeException(
+                                       "Unable to access name server", e);
           }
+          cache.put(cacheKey, ret);
           return ret;
-        } catch (NamingException e) {
-          throw new RuntimeException(
-              "Unable to access name server", e);
         }
       }
-
-      private DirContext getTopologyContext() throws NamingException {
-        DirContext ctx = namingService.getRootContext();
-        try {
-          ctx = (DirContext) 
-            ctx.lookup(
-                TopologyNamingConstants.TOPOLOGY_DIR);
-        } catch (NamingException ne) {
-          throw ne;
-        } catch (Exception e) {
-          NamingException x = 
-            new NamingException(
-                "Unable to access name-server");
-          x.setRootCause(e);
-          throw x;
-        }
-        return ctx;
-      }
-    }
-
+  }
 }
+
