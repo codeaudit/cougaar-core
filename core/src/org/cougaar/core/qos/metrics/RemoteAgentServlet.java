@@ -147,14 +147,18 @@ public class RemoteAgentServlet
 					  "none",
 					  qProvenance);
 
-	    Metric msgTo = metricsService.getValue(destPath+
-						   MSG_TO_10_SEC_AVG);
-	    Metric msgFrom = metricsService.getValue(destPath+
-						   MSG_FROM_10_SEC_AVG);
-//	    Metric bytesTo= metricsService.getValue(destPath+
-//						       BYTES_TO_10_SEC_AVG);
-//	    Metric bytesFrom = metricsService.getValue(destPath+
-//						   BYTES_FROM_10_SEC_AVG);
+	    Metric msgTo = metricsService.getValue(destPath
+						   +MSG_TO+
+						   "(" +_10_SEC_AVG+ ")");
+	    Metric msgFrom = metricsService.getValue(destPath
+						     +MSG_FROM+
+						     "(" +_10_SEC_AVG+ ")");
+// 	    Metric bytesTo= metricsService.getValue(destPath
+// 						    +BYTES_TO+
+// 						    "(" +_10_SEC_AVG+ ")");
+// 	    Metric bytesFrom = metricsService.getValue(destPath
+// 						       +BYTES_FROM+
+// 						       "(" +_10_SEC_AVG+ ")");
 	    Metric eMbps = metricsService.getValue(ipFlowPath+
 						   "CapacityUnused");
 	    Metric mMbps = metricsService.getValue(ipFlowPath+

@@ -45,10 +45,10 @@ public interface Constants
     /** 
      *Averaging Intervals
      */
-    static final String _1_SEC_AVG = "1SecAvg";
-    static final String _10_SEC_AVG = "10SecAvg";
-    static final String _100_SEC_AVG = "100SecAvg";
-    static final String _1000_SEC_AVG = "1000SecAvg";
+    static final String _1_SEC_AVG = "1";
+    static final String _10_SEC_AVG = "10";
+    static final String _100_SEC_AVG = "100";
+    static final String _1000_SEC_AVG = "1000";
 
     /**
      * The category of thread-service measurements, and some specific
@@ -56,78 +56,20 @@ public interface Constants
      */
     static final String THREAD_SENSOR = "COUGAAR_THREAD";
 
+    static final String SecAvgKeySuffix = "SecAvg";
     static final String CPU_LOAD_AVG = "CPULoadAvg";
-    static final String CPU_LOAD_AVG_1_SEC_AVG =  "CPULoadAvg1SecAvg";
-    static final String CPU_LOAD_AVG_10_SEC_AVG = "CPULoadAvg10SecAvg";
-    static final String CPU_LOAD_AVG_100_SEC_AVG = "CPULoadAvg100SecAvg";
-    static final String CPU_LOAD_AVG_1000_SEC_AVG = "CPULoadAvg1000SecAvg";
-
     static final String CPU_LOAD_MJIPS = "CPULoadMJips";
-    static final String CPU_LOAD_MJIPS_1_SEC_AVG = "CPULoadMJips1SecAvg";
-    static final String CPU_LOAD_MJIPS_10_SEC_AVG = "CPULoadMJips10SecAvg";
-    static final String CPU_LOAD_MJIPS_100_SEC_AVG = "CPULoadMJips100SecAvg";
-    static final String CPU_LOAD_MJIPS_1000_SEC_AVG = "CPULoadMJips1000SecAvg";
-
     static final String MSG_IN = "MsgIn";
-    static final String MSG_IN_1_SEC_AVG = "MsgIn1SecAvg";
-    static final String MSG_IN_10_SEC_AVG = "MsgIn10SecAvg";
-    static final String MSG_IN_100_SEC_AVG = "MsgIn100SecAvg";
-    static final String MSG_IN_1000_SEC_AVG = "MsgIn1000SecAvg";
-
     static final String MSG_OUT = "MsgOut";
-    static final String MSG_OUT_1_SEC_AVG = "MsgOut1SecAvg";
-    static final String MSG_OUT_10_SEC_AVG = "MsgOut10SecAvg";
-    static final String MSG_OUT_100_SEC_AVG = "MsgOut100SecAvg";
-    static final String MSG_OUT_1000_SEC_AVG = "MsgOut1000SecAvg";
-
     static final String BYTES_IN = "BytesIn";
-    static final String BYTES_IN_1_SEC_AVG = "BytesIn1SecAvg";
-    static final String BYTES_IN_10_SEC_AVG = "BytesIn10SecAvg";
-    static final String BYTES_IN_100_SEC_AVG = "BytesIn100SecAvg";
-    static final String BYTES_IN_1000_SEC_AVG = "BytesIn1000SecAvg";
-
     static final String BYTES_OUT = "BytesOut";
-    static final String BYTES_OUT_1_SEC_AVG = "BytesOut1SecAvg";
-    static final String BYTES_OUT_10_SEC_AVG = "BytesOut10SecAvg";
-    static final String BYTES_OUT_100_SEC_AVG = "BytesOut100SecAvg";
-    static final String BYTES_OUT_1000_SEC_AVG = "BytesOut1000SecAvg";
-
     static final String MSG_FROM = "MsgFrom";
-    static final String MSG_FROM_1_SEC_AVG = "MsgFrom1SecAvg";
-    static final String MSG_FROM_10_SEC_AVG = "MsgFrom10SecAvg";
-    static final String MSG_FROM_100_SEC_AVG = "MsgFrom100SecAvg";
-    static final String MSG_FROM_1000_SEC_AVG = "MsgFrom1000SecAvg";
-
     static final String MSG_TO = "MsgTo";
-    static final String MSG_TO_1_SEC_AVG = "MsgTo1SecAvg";
-    static final String MSG_TO_10_SEC_AVG = "MsgTo10SecAvg";
-    static final String MSG_TO_100_SEC_AVG = "MsgTo100SecAvg";
-    static final String MSG_TO_1000_SEC_AVG = "MsgTo1000SecAvg";
-
     static final String BYTES_FROM = "BytesFrom";
-    static final String BYTES_FROM_1_SEC_AVG = "BytesFrom1SecAvg";
-    static final String BYTES_FROM_10_SEC_AVG = "BytesFrom10SecAvg";
-    static final String BYTES_FROM_100_SEC_AVG = "BytesFrom100SecAvg";
-    static final String BYTES_FROM_1000_SEC_AVG = "BytesFrom1000SecAvg";
-
     static final String BYTES_TO = "BytesTo";
-    static final String BYTES_TO_1_SEC_AVG = "BytesTo1SecAvg";
-    static final String BYTES_TO_10_SEC_AVG = "BytesTo10SecAvg";
-    static final String BYTES_TO_100_SEC_AVG = "BytesTo100SecAvg";
-    static final String BYTES_TO_1000_SEC_AVG = "BytesTo1000SecAvg";
-
     // Traffic Matrix
     static final String MSG_RATE = "MsgRate";
-    static final String MSG_RATE_1_SEC_AVG = "MsgRate1SecAvg";
-    static final String MSG_RATE_10_SEC_AVG = "MsgRate10SecAvg";
-    static final String MSG_RATE_100_SEC_AVG = "MsgRate100SecAvg";
-    static final String MSG_RATE_1000_SEC_AVG = "MsgRate1000SecAvg";
-
     static final String BYTE_RATE = "ByteRate";
-    static final String BYTE_RATE_1_SEC_AVG = "ByteRate1SecAvg";
-    static final String BYTE_RATE_10_SEC_AVG = "ByteRate10SecAvg";
-    static final String BYTE_RATE_100_SEC_AVG = "ByteRate100SecAvg";
-    static final String BYTE_RATE_1000_SEC_AVG = "ByteRate1000SecAvg";
 
 
     static final String PERSIST_SIZE_LAST = "PersistSizeLast";

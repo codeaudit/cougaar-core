@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 
 public abstract class DecayingHistory
+    implements Constants
 {
     
     // Callback with a pair of snapshots need to be processed.
@@ -57,8 +58,9 @@ public abstract class DecayingHistory
     private String columnToSecavg(int column) {
 	long periodInt= basePeriod * 
 	    Math.round(Math.pow(rows, column));
-	return periodInt + "SecAvg";
+	return periodInt +SecAvgKeySuffix;
     }
+
 
     // Keeps a map of interned strings Each 1xxxSecAvg will have thier
     // own map The customer of Decaying history will supply the key

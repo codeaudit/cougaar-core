@@ -111,31 +111,37 @@ public class AgentLoadTracePlugin
 	String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
 	
 	Metric cpuLoad = metricsService.getValue(agentPath
-						 + CPU_LOAD_AVG_10_SEC_AVG);
+						 +CPU_LOAD_AVG+
+						 "(" +_10_SEC_AVG+ ")");
 	double cpuLoadV = cpuLoad.doubleValue();
 	    
 	Metric cpuLoadJips = metricsService.getValue(agentPath
-						     + CPU_LOAD_MJIPS_10_SEC_AVG);
+						     +CPU_LOAD_MJIPS+
+						     "(" +_10_SEC_AVG+")");
 	double cpuLoadJipsV = cpuLoadJips.doubleValue();
 
-	Metric msgIn = metricsService.getValue(agentPath+
-					       MSG_IN_10_SEC_AVG);
+	Metric msgIn = metricsService.getValue(agentPath
+					       +MSG_IN+
+					       "(" +_10_SEC_AVG+")");
 	double msgInV = msgIn.doubleValue();
 
-	Metric msgOut = metricsService.getValue(agentPath+
-						MSG_OUT_10_SEC_AVG);
+	Metric msgOut = metricsService.getValue(agentPath
+						+MSG_OUT+
+						"(" +_10_SEC_AVG+")");
 	double msgOutV = msgIn.doubleValue();
 
-	Metric bytesIn = metricsService.getValue(agentPath+
-						 BYTES_IN_10_SEC_AVG);
+	Metric bytesIn = metricsService.getValue(agentPath
+						 +BYTES_IN+
+						 "(" +_10_SEC_AVG+")");
 	double bytesInV = bytesIn.doubleValue();
 
-	Metric bytesOut = metricsService.getValue(agentPath+
-						  BYTES_OUT_10_SEC_AVG);
+	Metric bytesOut = metricsService.getValue(agentPath
+						  +BYTES_OUT+
+						  "(" +_10_SEC_AVG+")");
 	double bytesOutV = bytesOut.doubleValue();
 
-	Metric persistSize = metricsService.getValue(agentPath+
-						     PERSIST_SIZE_LAST );
+	Metric persistSize = metricsService.getValue(agentPath
+						     +PERSIST_SIZE_LAST );
 	double persistSizeV = persistSize.doubleValue();
 
 	long now =  System.currentTimeMillis();

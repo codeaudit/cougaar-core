@@ -84,21 +84,27 @@ public class AgentLoadServlet
 
 	    // Get Metrics
 	    Metric cpuLoad = metricsService.getValue(agentPath
-						     + CPU_LOAD_AVG_10_SEC_AVG);
+						     +CPU_LOAD_AVG+
+						     "(" +_10_SEC_AVG+ ")");
 
 	    Metric cpuLoadJips = 
 		metricsService.getValue(agentPath
-					+ CPU_LOAD_MJIPS_10_SEC_AVG);
-	    Metric msgIn = metricsService.getValue(agentPath+
-						   MSG_IN_10_SEC_AVG);
-	    Metric msgOut = metricsService.getValue(agentPath+
-						   MSG_OUT_10_SEC_AVG);
-	    Metric bytesIn = metricsService.getValue(agentPath+
-						   BYTES_IN_10_SEC_AVG);
-	    Metric bytesOut = metricsService.getValue(agentPath+
-						   BYTES_OUT_10_SEC_AVG);
-	    Metric persistSize = metricsService.getValue(agentPath+
-						  PERSIST_SIZE_LAST );
+					+CPU_LOAD_MJIPS+
+					"(" +_10_SEC_AVG+ ")");
+	    Metric msgIn = metricsService.getValue(agentPath
+						   +MSG_IN+ 
+						   "("+_10_SEC_AVG+")");
+	    Metric msgOut = metricsService.getValue(agentPath
+						    +MSG_OUT+
+						    "("+_10_SEC_AVG+")");
+	    Metric bytesIn = metricsService.getValue(agentPath
+						     +BYTES_IN+
+						     "(" +_10_SEC_AVG+")");
+	    Metric bytesOut = metricsService.getValue(agentPath
+						      +BYTES_OUT+
+						      "(" +_10_SEC_AVG+")");
+	    Metric persistSize = metricsService.getValue(agentPath
+							 +PERSIST_SIZE_LAST );
 
 
 	    //output Row
@@ -129,22 +135,23 @@ public class AgentLoadServlet
 	out.print("</tr>");
 
 	out.print("<tr><td><b>MTS</b></td>");
-	String mtsLoadPath = "Service(MTS)" +PATH_SEPR+ CPU_LOAD_AVG_10_SEC_AVG;
+	String mtsLoadPath = "Service(MTS)" +PATH_SEPR+ 
+	    CPU_LOAD_AVG +"("+ _10_SEC_AVG +")";
 	Metric mtsCpuLoad = metricsService.getValue(mtsLoadPath);
 	ServletUtilities.valueTable(mtsCpuLoad, 0.0, 1.0,true, f4_2, out);
 	String mtsMJIPSPath = "Service(MTS)" +PATH_SEPR+ 
-	    CPU_LOAD_MJIPS_10_SEC_AVG;
+	    CPU_LOAD_MJIPS +"("+ _10_SEC_AVG +")";
 	Metric mtsCpuMJIPS = metricsService.getValue(mtsMJIPSPath);
 	ServletUtilities.valueTable(mtsCpuMJIPS, 0.0, 500.0,true, f6_3, out);
 	out.print("</tr>\n");
 
 	out.print("<tr><td><b>Metrics</b></td>");
 	String metricLoadPath = "Service(Metrics)" +PATH_SEPR+ 
-	    CPU_LOAD_AVG_10_SEC_AVG;
+	    CPU_LOAD_AVG +"("+ _10_SEC_AVG+")";
 	Metric metricCpuLoad = metricsService.getValue(metricLoadPath);
 	ServletUtilities.valueTable(metricCpuLoad, 0.0, 1.0,true, f4_2, out);
 	String metricMJIPSPath = "Service(Metrics)" +PATH_SEPR+ 
-	    CPU_LOAD_MJIPS_10_SEC_AVG;
+	    CPU_LOAD_MJIPS +"("+ _10_SEC_AVG +")";
 	Metric metricCpuMJIPS = metricsService.getValue(metricMJIPSPath);
 	ServletUtilities.valueTable(metricCpuMJIPS, 0.0, 500.0,true, f6_3, out);
 
