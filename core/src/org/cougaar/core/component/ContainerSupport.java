@@ -172,15 +172,18 @@ public abstract class ContainerSupport
               int l = boundComponents.size();
               for (int i=0; i<l; i++) {
                 Object p = boundComponents.get(i);
-                if (p instanceof Container) {
-                  // try loading into this guy.
-                  if (((Container)p).add(o)) {
-                    return true;    // someone claimed it!
-                  }
-                }
+		if (p instanceof BoundComponent) {
+		  Binder b = ((BoundComponent)p).getBinder();
+		  if (b instanceof ContainerBinder) {
+		    if (((ContainerBinder)b).add(o)) {
+		      return true; // child added it
+		    }
+		  }
+		}
               }
             }
           }
+	 
           return false;
         }
       } else {
