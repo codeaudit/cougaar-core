@@ -212,7 +212,7 @@ public class DomainManager
     return null;
   }
 
-  public void blackboard(Blackboard blackboard) {
+  public void setBlackboard(Blackboard blackboard) {
     if (this.blackboard != null) {
       LoggingService logger = 
         (LoggingService) serviceBroker.getService(this, LoggingService.class,

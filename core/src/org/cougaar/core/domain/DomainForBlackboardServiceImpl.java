@@ -41,7 +41,7 @@ public class DomainForBlackboardServiceImpl extends DomainServiceImpl
   }
   
   public void setBlackboard(Blackboard blackboard) {
-    domainManager.blackboard(blackboard);
+    domainManager.setBlackboard(blackboard);
   }
 
   public void invokeDelayedLPActions() {
