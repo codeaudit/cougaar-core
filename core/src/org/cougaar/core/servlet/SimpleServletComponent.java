@@ -109,12 +109,8 @@ extends BaseServletComponent
   protected LoggingService log;
 
   public final void setAgentIdentificationService(AgentIdentificationService ais) {
-    MessageAddress an;
-    if ((ais != null) &&
-        ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
-      this.agentId = (MessageAddress) an;
-    } else {
-      // FIXME: Log something?
+    if ((ais != null)) {
+      this.agentId = ais.getMessageAddress();
     }
   }
 
@@ -193,6 +189,7 @@ extends BaseServletComponent
         m.invoke(comp, new Object[]{path});
       } catch (NoSuchMethodException nsme) {
         // ignore, support a couple broken clients
+	// (cant log cause log service comes later)
       } catch (Exception e) {
         throw new RuntimeException(
             "Unable to setParameter("+path+")", e);
