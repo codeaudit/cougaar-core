@@ -50,7 +50,7 @@ public interface OperatingMode {
      * Attempts to set the value outside these ranges will fail.
      * @return a list of allowed value ranges
      **/
-    public OMCRangeList getAllowedValues();
+    OMCRangeList getAllowedValues();
 
     /**
      * Get the current value of this OperatingMode. This value must

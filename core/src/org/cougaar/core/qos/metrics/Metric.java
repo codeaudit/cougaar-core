@@ -24,18 +24,18 @@ package org.cougaar.core.qos.metrics;
 
 public interface Metric
 {
-    public String stringValue();
-    public byte byteValue();
-    public short shortValue();
-    public int intValue();
-    public long longValue();
-    public float floatValue();
-    public double doubleValue();
-    public char charValue();
-    public boolean booleanValue();
+    String stringValue();
+    byte byteValue();
+    short shortValue();
+    int intValue();
+    long longValue();
+    float floatValue();
+    double doubleValue();
+    char charValue();
+    boolean booleanValue();
 
-    public Object getRawValue();
-    public double getCredibility();
-    public String getUnits();
-    public String getProvenance();
+    Object getRawValue();
+    double getCredibility();
+    String getUnits();
+    String getProvenance();
 }

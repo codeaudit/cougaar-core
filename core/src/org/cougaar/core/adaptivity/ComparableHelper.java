@@ -58,7 +58,7 @@ public class ComparableHelper {
     minimumValue.put(Float.class, new Float(Float.MIN_VALUE));
     minimumValue.put(Long.class, new Long(Long.MIN_VALUE));
     minimumValue.put(Integer.class, new Integer(Integer.MIN_VALUE));
-  };
+  }
 
   /**
    * Get a value of the same type as the supplied value having the

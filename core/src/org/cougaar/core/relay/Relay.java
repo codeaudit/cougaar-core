@@ -39,9 +39,9 @@ import org.cougaar.core.util.UniqueObject;
  */
 public interface Relay extends UniqueObject {
   // The kinds of changes caused by updateResponse and updateContent
-  public static final int NO_CHANGE       = 0;
-  public static final int CONTENT_CHANGE  = 1;
-  public static final int RESPONSE_CHANGE = 2;
+  int NO_CHANGE       = 0;
+  int CONTENT_CHANGE  = 1;
+  int RESPONSE_CHANGE = 2;
 
   // UID support from UniqueObject -- note that the
   // Source and Target(s) all have the same UID.

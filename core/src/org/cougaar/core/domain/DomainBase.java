@@ -35,6 +35,6 @@ public interface DomainBase
   extends Component, Domain
 {
 
-  public void setBindingSite(BindingSite bindingSite);
+  void setBindingSite(BindingSite bindingSite);
 
 }

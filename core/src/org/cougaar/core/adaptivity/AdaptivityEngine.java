@@ -59,7 +59,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     public boolean execute(Object o) {
       return (this == o);
     }
-  };
+  }
 
   private PlayHelper helper;
   private PlaybookReadService playbookService;
