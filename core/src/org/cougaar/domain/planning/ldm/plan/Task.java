@@ -152,6 +152,11 @@ public interface Task
     */
   Date getCommitmentDate();
 
+  /**
+   * Get the deleted status of this task.
+   **/
+  boolean isDeleted();
+
   Enumeration getObservableAspects();
 
   /** 

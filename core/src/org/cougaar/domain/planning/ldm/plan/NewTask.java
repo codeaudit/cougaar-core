@@ -147,6 +147,11 @@ public interface NewTask extends Task, NewDirective
   void setCommitmentDate(Date commitDate);
 
   /**
+   * Set the deleted status of this task
+   **/
+  void setDeleted(boolean newDeleted);
+
+  /**
    * Add to the collection of observable aspect types
    **/
   void addObservableAspect(int aspectType);

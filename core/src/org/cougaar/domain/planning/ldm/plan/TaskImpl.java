@@ -56,6 +56,7 @@ public class TaskImpl extends DirectiveImpl
   // initialize to null unitl we fully implement
   private long commitmenttime = 0;
   //private Date commitmentdate = null;
+  private boolean deleted = false;// Set to true when deletion occurs
   private transient Set observableAspects;
   // initialize with one slot = -1 in case its never filled in.
   private int[] auxqtypes = {-1};
@@ -453,6 +454,14 @@ public class TaskImpl extends DirectiveImpl
     commitmentdate = commitDate;
     commitmenttime = commitDate.getTime();
     decacheTS();
+  }
+
+  public boolean isDeleted() {
+    return deleted;
+  }
+
+  public void setDeleted(boolean newDeleted) {
+    deleted = newDeleted;
   }
   
   public void addObservableAspect(int aspectType) {
