@@ -447,7 +447,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     if (newName != null) {
       newBinding =  new Binding(dirMap.getFullName(newName), newValue, false);
     }
-    Object[] cbs = target.getCallbacks().toArray();
+    Object[] cbs = target.getCallbacksAsArray();
     for (int i = 0; i < cbs.length; i++) {
       NSCallback.Id cbid = (NSCallback.Id) cbs[i];
       NSNamingEvent evt = new NSNamingEvent(cbid, type, newBinding, oldBinding);
@@ -573,16 +573,29 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
 
     public Set getCallbacks() {
-      return _callbacks;
+      synchronized (_callbacks) {
+        return _callbacks;
+      }
+    }
+    public Object[] getCallbacksAsArray() {
+      synchronized (_callbacks) {
+        return _callbacks.toArray();
+      }
     }
 
     public void addCallback(NSCallback.Id cbid) {
       if (_callbacks == null) _callbacks = new HashSet();
-      _callbacks.add(cbid);
+      synchronized (_callbacks) {
+        _callbacks.add(cbid);
+      }
     }
 
     public void removeCallback(NSCallback.Id cbid) {
-      if (_callbacks != null) _callbacks.remove(cbid);
+      if (_callbacks != null) {
+        synchronized (_callbacks) {
+          _callbacks.remove(cbid);
+        }
+      }
     }
   }
 
