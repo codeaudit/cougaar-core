@@ -22,6 +22,8 @@
 package org.cougaar.core.agent;
 
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Base class for Agent management Messages, such
