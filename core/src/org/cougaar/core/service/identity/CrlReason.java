@@ -49,4 +49,24 @@ public class CrlReason
   public int getReason() {
     return reason;
   }
+
+  public String getReasonAsString() {
+    switch (reason) {
+      case UNSPECIFIED: return "UNSPECIFIED";
+      case KEY_COMPROMISE: return "KEY_COMPROMISE";
+      case CA_COMPROMISE: return "CA_COMPROMISE";
+      case AFFILIATION_CHANGED: return "AFFILIATION_CHANGED";
+      case SUPERSEDED: return "SUPERSEDED";
+      case CESSATION_OF_OPERATION: return "CESSATION_OF_OPERATION";
+      case CERTIFICATE_HOLD: return "CERTIFICATE_HOLD";
+      case REMOVE_FROM_CRL: return "REMOVE_FROM_CRL";
+      case PRIVILEGE_WITHDRAWN: return "PRIVILEGE_WITHDRAWN";
+      case AA_COMPROMISE: return "AA_COMPROMISE";
+      default: return "UNKNOWN ("+reason+")";
+    }
+  }
+
+  public String toString() {
+    return "Certificate revoked due to "+getReasonAsString();
+  }
 }
