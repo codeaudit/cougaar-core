@@ -58,7 +58,6 @@ public class PluginServiceFilter
     {
       public ClusterIdentifier getAgentIdentifier() { return getPluginManager().getAgentIdentifier(); }
       public ConfigFinder getConfigFinder() { return getPluginManager().getConfigFinder(); }
-      public UIDServer getUIDServer() { return getPluginManager().getUIDServer(); }
     }
 
 
