@@ -34,8 +34,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Category;
-import org.apache.log4j.Priority;
+//import org.apache.log4j.Logger;
+import org.apache.log4j.Level;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.log4j.DetailPriority;
@@ -132,9 +132,10 @@ public class LoggingConfigServlet extends BaseServletComponent {
               setlog+"\": ");
           e.printStackTrace(out);
         }
-      } else {
-        // usage
+//        } else {
+//          // Neither get or set invoked. Print a Usage message?
       }
+
       out.print(
           "<br><hr>\n"+
           "<form method=\"GET\" action=\""+
@@ -217,77 +218,77 @@ public class LoggingConfigServlet extends BaseServletComponent {
 
   // okay public api:
   private int getLevel(String name) {
-    Category cat = getCategory(name);
+    org.apache.log4j.Logger cat = getLogger(name);
     return getLevel(cat);
   }
 
   // okay public api:
   private void setLevel(String name, int level) {
-    Category cat = getCategory(name);
+    org.apache.log4j.Logger cat = getLogger(name);
     setLevel(cat, level);
   }
 
   // hack:
-  static final Priority SHOUT = 
-    ShoutPriority.toPriority("SHOUT", null);
+  static final Level SHOUT = 
+    ShoutPriority.toLevel("SHOUT", null);
 
   // hack:
-  static final Priority DETAIL = 
-    DetailPriority.toPriority("DETAIL", null);
+  static final Level DETAIL = 
+    DetailPriority.toLevel("DETAIL", null);
 
   // log4j private
-  private Category getCategory(String name) {
+  private org.apache.log4j.Logger getLogger(String name) {
     return
       (name != null ?
        ((name.equals("root") ||
          name.equals(""))?
-        Category.getRoot() :
-        Category.getInstance(name)) :
+        org.apache.log4j.Logger.getRootLogger() :
+        org.apache.log4j.Logger.getLogger(name)) :
        null);
   }
 
   // log4j private
-  private int getLevel(Category cat) {
+  private int getLevel(org.apache.log4j.Logger cat) {
     if (cat != null) {
-      Priority p = cat.getChainedPriority();
-      return convertPriorityToInt(p);
+      Level p = cat.getEffectiveLevel();
+      return convertLevelToInt(p);
     } else {
       return -1;
     }
   }
 
   // log4j private
-  private void setLevel(Category cat, int level) {
+  private void setLevel(org.apache.log4j.Logger cat, int level) {
     if (cat != null) {
-      Priority p = convertIntToPriority(level);
-      cat.setPriority(p);
+      Level p = convertIntToLevel(level);
+      cat.setLevel(p);
     } else {
       throw new RuntimeException("null category");
     }
   }
 
   // log4j private
-  private Priority convertIntToPriority(int level) {
+  private Level convertIntToLevel(int level) {
     switch (level) {
     case Logger.DETAIL : return DETAIL;
-    case Logger.DEBUG : return Priority.DEBUG;
-    case Logger.INFO  : return Priority.INFO;
-    case Logger.WARN  : return Priority.WARN;
-    case Logger.ERROR : return Priority.ERROR;
+    case Logger.DEBUG : return Level.DEBUG;
+    case Logger.INFO  : return Level.INFO;
+    case Logger.WARN  : return Level.WARN;
+    case Logger.ERROR : return Level.ERROR;
     case Logger.SHOUT : return SHOUT;
-    case Logger.FATAL : return Priority.FATAL;
+    case Logger.FATAL : return Level.FATAL;
     default: return null;
     }
   }
 
   // log4j private
-  private int convertPriorityToInt(Priority level) {
+  private int convertLevelToInt(Level level) {
     switch (level.toInt()) {
-      case Priority.DEBUG_INT:      return Logger.DEBUG;
-      case Priority.INFO_INT :      return Logger.INFO;
-      case Priority.WARN_INT :      return Logger.WARN;
-      case Priority.ERROR_INT:      return Logger.ERROR;
-      case Priority.FATAL_INT:      return Logger.FATAL;
+      case Level.DEBUG_INT:      return Logger.DEBUG;
+      case Level.INFO_INT :      return Logger.INFO;
+      case Level.WARN_INT :      return Logger.WARN;
+      case Level.ERROR_INT:      return Logger.ERROR;
+      case Level.FATAL_INT:      return Logger.FATAL;
       default: 
         if (level.equals(SHOUT)) {
           return Logger.SHOUT;
