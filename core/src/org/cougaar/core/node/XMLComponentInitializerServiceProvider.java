@@ -32,6 +32,10 @@ import org.cougaar.util.ConfigFinder;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.ParserConfigurationException;
+
 /**
  * Class to provide service for initializing Components
  * from an XML file.
@@ -83,11 +87,13 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
   }
 
   private void parseFile()
-    throws FileNotFoundException, IOException, SAXException {
-    XMLReader xr = new org.apache.crimson.parser.XMLReaderImpl();
-    MyHandler handler = new MyHandler();
-    xr.setContentHandler(handler);
-    xr.setErrorHandler(handler);
+    throws FileNotFoundException, IOException, SAXException, ParserConfigurationException {
+      MyHandler handler = new MyHandler();
+      SAXParserFactory factory = SAXParserFactory.newInstance();
+      factory.setValidating(true);
+      factory.setNamespaceAware(true);
+      SAXParser saxParser = factory.newSAXParser();
+
     InputStream istr = ConfigFinder.getInstance().open(filename);
     if (istr == null) {
       logger.error("null InputStream from ConfigFinder on " + filename);
@@ -95,7 +101,7 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
     }
     InputSource is = new InputSource(istr);
     if (is != null) {
-      xr.parse(is);
+      saxParser.parse(is, handler);
     } else {
       logger.error("Unable to open " + filename + " for XML initialization");
     }
