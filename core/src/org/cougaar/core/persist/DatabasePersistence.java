@@ -36,14 +36,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.Savepoint;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.SQLWarning;
 import java.sql.DatabaseMetaData;
+import java.sql.ParameterMetaData;
 import java.sql.ResultSetMetaData;
 import java.sql.Clob;
 import java.sql.Blob;
@@ -59,6 +62,8 @@ import java.util.Enumeration;
 import java.util.Vector;
 import java.util.Map;
 import java.util.Calendar;
+import java.math.BigDecimal;
+import java.io.Reader;
 
 /**
  * This persistence class saves plan objects in a database. It saves and
@@ -607,6 +612,69 @@ public class DatabasePersistence
     public void setTypeMap(java.util.Map map) throws SQLException {
       throw new SQLException("setTypeMap disallowed");
     }
+
+    // begin jdk1.4 compatability
+    public void setHoldability(int holdability) throws SQLException {
+      throw new SQLException("setHoldability disallowed");      
+    }
+    public int getHoldability() throws SQLException {
+      throw new SQLException("setHoldability disallowed");      
+    }
+    public Savepoint setSavepoint() throws SQLException {
+      throw new SQLException("setSavepoint disallowed");      
+    }
+    public Savepoint setSavepoint(String s) throws SQLException {
+      throw new SQLException("setSavepoint(String) disallowed");      
+    }
+    public void rollback(Savepoint savepoint) throws SQLException {
+      throw new SQLException("rollback disallowed");      
+    }
+    public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+      throw new SQLException("releaseSavepoint disallowed");      
+    }
+    public Statement createStatement(int resultSetType,
+                                     int resultSetConcurrency,
+                                     int resultSetHoldability)
+      throws SQLException
+    {
+      throw new SQLException("createStatement(int,int,int) disallowed");      
+    }
+    public PreparedStatement prepareStatement(String sql,
+                                              int resultSetType,
+                                              int resultSetConcurrency,
+                                              int resultSetHoldability)
+      throws SQLException
+    {
+      throw new SQLException("prepareStatement(String,int,int,int) disallowed");      
+    }
+    public CallableStatement prepareCall(String sql,
+                                         int resultSetType,
+                                         int resultSetConcurrency,
+                                         int resultSetHoldability)
+      throws SQLException
+    {
+      throw new SQLException("prepareCall(String,int,int,int) disallowed");      
+    }
+    public PreparedStatement prepareStatement(String sql,
+                                              int autoGenerateKeys)
+      throws SQLException
+    {
+      throw new SQLException("prepareStatement(String,int) disallowed");      
+    }
+    public PreparedStatement prepareStatement(String sql,
+                                              int ci[] )
+      throws SQLException
+    {
+      throw new SQLException("prepareStatement(String,int[]) disallowed");      
+    }
+    public PreparedStatement prepareStatement(String sql,
+                                              String cn[])
+      throws SQLException
+    {
+      throw new SQLException("prepareStatement(String,String[]) disallowed");      
+    }
+    // end jdk1.4 compatability
+
     /**
      * A wrapper for a Statement object. Most operations are
      * delegated to the wrapped object. The close operation goes
@@ -729,6 +797,37 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return theStatement.getMoreResults();
       }
+
+      // begin jdk 1.4 compatability
+      public boolean getMoreResults(int current) throws java.sql.SQLException {
+        throw new SQLException("getMoreResults(int) disallowed");
+      }
+      public ResultSet getGeneratedKeys() throws java.sql.SQLException {
+        throw new SQLException("getGeneratedKeys() disallowed");
+      }
+      public int executeUpdate(String sql, int agk) throws java.sql.SQLException {
+        throw new SQLException("executeUpdate(String,int) disallowed");
+      }
+      public int executeUpdate(String sql, int ci[]) throws java.sql.SQLException { 
+        throw new SQLException("executeUpdate(String,int[]) disallowed");
+      }
+      public int executeUpdate(String sql, String cn[]) throws java.sql.SQLException { 
+        throw new SQLException("executeUpdate(String,String[]) disallowed");
+      }
+      public boolean execute(String sql, int agk)  throws java.sql.SQLException {
+        throw new SQLException("execute(String,int) disallowed");
+      }
+      public boolean execute(String sql, int ci[])  throws java.sql.SQLException {
+        throw new SQLException("execute(String,int[]) disallowed");
+      }
+      public boolean execute(String sql, String cn[])  throws java.sql.SQLException {
+        throw new SQLException("execute(String,String[]) disallowed");
+      }
+      public int getResultSetHoldability() throws java.sql.SQLException {
+        throw new SQLException("getResultSetHoldability() disallowed");
+      }
+      // end jdk 1.4 compatability
+
     }
     /**
      * A wrapper for a PreparedStatement object. All operations are
@@ -884,6 +983,14 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return thePreparedStatement.execute();
       }
+      // begin jdk 1.4 compatability
+      public void setURL(int param, URL x) throws java.sql.SQLException {
+        throw new SQLException("setURL(int,URL) disallowed");
+      }
+      public ParameterMetaData getParameterMetaData() throws java.sql.SQLException {
+        throw new SQLException("getParameterMetaData() disallowed");
+      }
+      // end jdk 1.4 compatability
     }
     /**
      * A wrapper for a CallableStatement object. All operations are
@@ -1008,6 +1115,216 @@ public class DatabasePersistence
         if (!active) throw new SQLException("getDatabaseConnection not called");
         return theCallableStatement.getObject(arg0);
       }
+      // begin jdk 1.4 compatability
+      public void registerOutParameter(String pn, int sqltype) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.registerOutParameter(pn, sqltype);
+      }
+      public void registerOutParameter(String pn, int sqltype, int scale) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.registerOutParameter(pn, sqltype,scale);
+      }
+      public void registerOutParameter(String pn, int sqltype, String tn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.registerOutParameter(pn, sqltype,tn);
+      }
+      public URL getURL(int pi)  throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getURL(pi);
+      }
+      public void setURL(String pn, URL v)  throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setURL(pn,v);
+      }
+      public void setNull(String pn, int sqlt) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNull(pn,sqlt);
+      }
+      public void setBoolean(String pn, boolean x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBoolean(pn, x);
+      }
+      public void setByte(String pn, byte x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setByte(pn, x);
+      }
+      public void setShort(String pn, short x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setShort(pn,x);
+      }
+      public void setInt(String pn, int x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setInt(pn,x);
+      }
+      public void setLong(String pn, long x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setLong(pn,x);
+      }
+      public void setFloat(String pn, float x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setFloat(pn,x);
+      }
+      public void setDouble(String pn, double x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setDouble(pn,x);
+      }
+      public void setBigDecimal(String pn, BigDecimal x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBigDecimal(pn,x);
+      }
+      public void setString(String pn, String x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setString(pn, x);
+      }
+      public void setBytes(String pn, byte[] x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBytes(pn,x);
+      }
+      public void setDate(String pn, Date x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setDate(pn,x);
+      }
+      public void setTime(String pn, Time x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setTime(pn,x);
+      }
+      public void setTimestamp(String pn, Timestamp x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setTimestamp(pn,x);
+      }
+      public void setAsciiStream(String pn, InputStream x, int l) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setAsciiStream(pn,x,l);
+      }
+      public void setBinaryStream(String pn, InputStream x, int l) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBinaryStream(pn,x,l);
+      }
+      public void setObject(String pn, Object x, int tt,int s) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setObject(pn,x,tt,s);
+      }
+      public void setObject(String pn, Object x, int tt) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setObject(pn,x,tt);
+      }
+      public void setObject(String pn, Object x) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setObject(pn,x);
+      }
+      public void setCharacterStream(String pn, Reader x, int l) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setCharacterStream(pn,x,l);
+      }
+      public void setDate(String pn, Date x, Calendar cal) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setDate(pn,x,cal);
+      }
+      public void setTime(String pn, Time x, Calendar cal) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setTime(pn,x,cal);
+      }
+      public void setTimestamp(String pn, Timestamp x, Calendar cal) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setTimestamp(pn,x,cal);
+      }
+      public void setNull(String pn, int st, String tn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNull(pn,st,tn);
+      }
+      public String getString(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getString(pn);
+      }
+      public boolean getBoolean(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getBoolean(pn);
+      }
+      public byte getByte(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getByte(pn);
+      }
+      public short getShort(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getShort(pn);
+      }
+      public int getInt(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getInt(pn);
+      }
+      public long getLong(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getLong(pn);
+      }
+      public float getFloat(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getFloat(pn);
+      }
+      public double getDouble(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getDouble(pn);
+      }
+      public byte[] getBytes(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getBytes(pn);
+      }
+      public Date getDate(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getDate(pn);
+      }
+      public Time getTime(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getTime(pn);
+      }
+      public Timestamp getTimestamp(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getTimestamp(pn);
+      }
+      public Object getObject(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getObject(pn);
+      }
+      public BigDecimal getBigDecimal(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getBigDecimal(pn);
+      }
+      public Object getObject(String pn,Map m) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getObject(pn,m);
+      }
+      public Ref getRef(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getRef(pn);
+      }
+      public Blob getBlob(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getBlob(pn);
+      }
+      public Clob getClob(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getClob(pn);
+      }
+      public Array getArray(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getArray(pn);
+      }
+      public Date getDate(String pn,Calendar c) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getDate(pn,c);
+      }
+      public Time getTime(String pn,Calendar c) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getTime(pn,c);
+      }
+      public Timestamp getTimestamp(String pn,Calendar c) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getTimestamp(pn,c);
+      }
+      public URL getURL(String pn) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getURL(pn);
+      }
+      // end jdk 1.4 compatability
     }
   }
 }

@@ -29,6 +29,10 @@ package org.cougaar.util;
 
 import java.sql.*;
 import java.util.*;
+import java.net.URL;
+import java.math.BigDecimal;
+import java.io.Reader;
+import java.io.InputStream;
 
 /**
  * A database connection manager that creates pools of db connections that can
@@ -504,6 +508,189 @@ public class DBConnectionPool {
           throw sqle;
         }
       }
+      // begin jdk1.4 compatability
+      public void setHoldability(int holdability) throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  c.setHoldability(holdability);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public int getHoldability() throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  return c.getHoldability();
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public Savepoint setSavepoint() throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  return c.setSavepoint();
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public Savepoint setSavepoint(String s) throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  return c.setSavepoint(s);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public void rollback(Savepoint savepoint) throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  c.rollback(savepoint);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public void releaseSavepoint(Savepoint savepoint) throws SQLException {
+	if (closed) throw new SQLException("Connection is closed");
+        try {
+	  c.releaseSavepoint(savepoint);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+      public Statement createStatement(int a, int b, int p) throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	Statement statement = null;
+
+        int rc = 0;             // retry count
+        while (true) {
+          try {
+            statement = new PoolStatement(c.createStatement(a, b, p));
+            statements.add(statement);
+            return statement;
+          } catch (SQLException sqle) {
+            if (isRetryable(sqle) && rc < maxRetries) {
+              rc++;
+              try {
+                Thread.sleep(retryTimeout);
+              } catch (InterruptedException ie) {}
+            } else {
+              destroyPool();
+              throw sqle;
+            }
+          }
+        }
+      }
+      public PreparedStatement prepareStatement(String sql, int a, int b, int p)
+        throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	PreparedStatement statement = null;
+        try {
+          statement = (PreparedStatement)new PoolPreparedStatement(c.prepareStatement(sql, a, b,p));
+	  statements.add(statement);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+	return statement;
+      }
+      public CallableStatement prepareCall(String sql, int a, int b, int p)
+        throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	CallableStatement statement = null;
+        try {
+          statement = new PoolCallableStatement(c.prepareCall(sql,a,b,p));
+	  statements.add(statement);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+	return statement;
+
+      }
+      public PreparedStatement prepareStatement(String sql, int a)
+        throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	PreparedStatement statement = null;
+        try {
+          statement = (PreparedStatement)new PoolPreparedStatement(c.prepareStatement(sql, a));
+	  statements.add(statement);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+	return statement;
+
+      }
+      public PreparedStatement prepareStatement(String sql,
+                                                int ci[] )
+        throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	PreparedStatement statement = null;
+        try {
+          statement = (PreparedStatement)new PoolPreparedStatement(c.prepareStatement(sql, ci));
+	  statements.add(statement);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+	return statement;
+      }
+      public PreparedStatement prepareStatement(String sql,
+                                                String cn[])
+        throws SQLException
+      {
+        if (closed) throw new SQLException("Connection is closed");
+	PreparedStatement statement = null;
+        try {
+          statement = (PreparedStatement)new PoolPreparedStatement(c.prepareStatement(sql, cn));
+	  statements.add(statement);
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+	return statement;
+      }
+
+      // example of where I'd like to go here:
+      public PreparedStatement x_prepareStatement(final String sql,
+                                                  final String cn[])
+        throws SQLException
+      {
+        return recordPreparedStatement(new PreparedStatementConstructor() {
+            public PreparedStatement create() throws SQLException { return c.prepareStatement(sql, cn);}});
+      }
+
+      private final PreparedStatement recordPreparedStatement(PreparedStatementConstructor c) 
+        throws SQLException
+      {
+        checkOpen();
+        try {
+          PreparedStatement statement = new PoolPreparedStatement(c.create());
+	  statements.add(statement);
+          return statement;
+        } catch (SQLException sqle) {
+          destroyPool();
+          throw sqle;
+        }
+      }
+
+      private final void checkOpen() throws SQLException {
+        if (closed) throw new SQLException("Connection is closed");
+      }
+
+      // end jdk1.4 compatability
+
       /**
        * A wrapper for a Statement object. Most operations are
        * delegated to the wrapped object. The close operation goes
@@ -771,6 +958,80 @@ public class DBConnectionPool {
           }
           return b;
 	}
+        // begin jdk 1.4 compatability
+        public boolean getMoreResults(int current) throws java.sql.SQLException {
+          try {
+            return theStatement.getMoreResults(current);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public ResultSet getGeneratedKeys() throws java.sql.SQLException {
+          try {
+            return theStatement.getGeneratedKeys();
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public int executeUpdate(String sql, int agk) throws java.sql.SQLException {
+          try {
+            return theStatement.executeUpdate(sql, agk);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public int executeUpdate(String sql, int ci[]) throws java.sql.SQLException { 
+          try {
+            return theStatement.executeUpdate(sql, ci);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public int executeUpdate(String sql, String cn[]) throws java.sql.SQLException { 
+          try {
+            return theStatement.executeUpdate(sql, cn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public boolean execute(String sql, int agk)  throws java.sql.SQLException {
+          try {
+            return theStatement.execute(sql, agk);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public boolean execute(String sql, int ci[])  throws java.sql.SQLException {
+          try {
+            return theStatement.execute(sql, ci);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public boolean execute(String sql, String cn[])  throws java.sql.SQLException {
+          try {
+            return theStatement.execute(sql,cn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public int getResultSetHoldability() throws java.sql.SQLException {
+          try {
+            return theStatement.getResultSetHoldability();
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        // end jdk 1.4 compatability
       }
       /**
        * A wrapper for a PreparedStatement object. All operations are
@@ -1071,6 +1332,25 @@ public class DBConnectionPool {
           }
           return b;
 	}
+        // begin jdk 1.4 compatability
+        public void setURL(int param, URL x) throws java.sql.SQLException {
+          try {
+	    thePreparedStatement.setURL(param, x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public ParameterMetaData getParameterMetaData() throws java.sql.SQLException {
+          try {
+	    return thePreparedStatement.getParameterMetaData();
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        // end jdk 1.4 compatability
+
       }
       /**
        * A wrapper for a CallableStatement object. All operations are
@@ -1290,8 +1570,12 @@ public class DBConnectionPool {
           return d;
 	}
 	public java.math.BigDecimal getBigDecimal(int arg0, int arg1) throws java.sql.SQLException {
-          throw new java.sql.SQLException("Method not supported");
-          //	  return theCallableStatement.getBigDecimal(arg0, arg1);
+          try {
+            return theCallableStatement.getBigDecimal(arg0, arg1); 
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
 	}
 	public byte[] getBytes(int arg0) throws java.sql.SQLException {
           byte[] b;
@@ -1343,6 +1627,424 @@ public class DBConnectionPool {
           }
           return o;
 	}
+        // begin jdk 1.4 compatability
+        public void registerOutParameter(String pn, int sqltype) throws java.sql.SQLException {
+          try {
+            theCallableStatement.registerOutParameter(pn, sqltype);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void registerOutParameter(String pn, int sqltype, int scale) throws java.sql.SQLException {
+          try {
+            theCallableStatement.registerOutParameter(pn, sqltype,scale);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void registerOutParameter(String pn, int sqltype, String tn) throws java.sql.SQLException {
+          try{
+            theCallableStatement.registerOutParameter(pn, sqltype,tn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public URL getURL(int pi)  throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getURL(pi);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setURL(String pn, URL v)  throws java.sql.SQLException {
+          try {
+            theCallableStatement.setURL(pn,v);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setNull(String pn, int sqlt) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setNull(pn,sqlt);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setBoolean(String pn, boolean x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setBoolean(pn, x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setByte(String pn, byte x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setByte(pn, x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setShort(String pn, short x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setShort(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setInt(String pn, int x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setInt(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setLong(String pn, long x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setLong(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setFloat(String pn, float x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setFloat(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setDouble(String pn, double x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setDouble(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setBigDecimal(String pn, BigDecimal x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setBigDecimal(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setString(String pn, String x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setString(pn, x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setBytes(String pn, byte[] x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setBytes(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setDate(String pn, java.sql.Date x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setDate(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setTime(String pn, Time x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setTime(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setTimestamp(String pn, Timestamp x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setTimestamp(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setAsciiStream(String pn, InputStream x, int l) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setAsciiStream(pn,x,l);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setBinaryStream(String pn, InputStream x, int l) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setBinaryStream(pn,x,l);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setObject(String pn, Object x, int tt,int s) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setObject(pn,x,tt,s);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setObject(String pn, Object x, int tt) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setObject(pn,x,tt);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setObject(String pn, Object x) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setObject(pn,x);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setCharacterStream(String pn, Reader x, int l) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setCharacterStream(pn,x,l);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setDate(String pn, java.sql.Date x, Calendar cal) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setDate(pn,x,cal);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setTime(String pn, Time x, Calendar cal) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setTime(pn,x,cal);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setTimestamp(String pn, Timestamp x, Calendar cal) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setTimestamp(pn,x,cal);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public void setNull(String pn, int st, String tn) throws java.sql.SQLException {
+          try {
+            theCallableStatement.setNull(pn,st,tn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public String getString(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getString(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public boolean getBoolean(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getBoolean(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public byte getByte(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getByte(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public short getShort(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getShort(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public int getInt(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getInt(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public long getLong(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getLong(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public float getFloat(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getFloat(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public double getDouble(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getDouble(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public byte[] getBytes(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getBytes(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public java.sql.Date getDate(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getDate(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Time getTime(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getTime(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Timestamp getTimestamp(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getTimestamp(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Object getObject(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getObject(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public BigDecimal getBigDecimal(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getBigDecimal(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Object getObject(String pn,Map m) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getObject(pn,m);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Ref getRef(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getRef(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Blob getBlob(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getBlob(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Clob getClob(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getClob(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Array getArray(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getArray(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public java.sql.Date getDate(String pn,Calendar c) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getDate(pn,c);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Time getTime(String pn,Calendar c) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getTime(pn,c);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public Timestamp getTimestamp(String pn,Calendar c) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getTimestamp(pn,c);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        public URL getURL(String pn) throws java.sql.SQLException {
+          try {
+            return theCallableStatement.getURL(pn);
+          } catch (SQLException sqle) {
+            PoolConnection.this.destroyPool();
+            throw sqle;
+          }
+        }
+        // end jdk 1.4 compatability
       }
     }
   }
@@ -1693,3 +2395,8 @@ public class DBConnectionPool {
   */
 
 }
+
+interface PreparedStatementConstructor {
+  PreparedStatement create() throws SQLException;
+}
+
