@@ -1976,7 +1976,7 @@ public class ObjectOutputStream
 	 * underlying stream
 	 */
 	abstract public void write(ObjectOutput out) throws IOException;
-    };
+    }
 
     /*************************************************************/
 
@@ -2202,7 +2202,7 @@ public class ObjectOutputStream
 	 private byte[] data;
 	 private Object[] objects;
 	 private ObjectStreamClass desc;
-     };
+     }
 
     /*************************************************************/
 
@@ -2497,4 +2497,4 @@ public class ObjectOutputStream
 	    return get(len - 1);
 	}
     }
-};
+}

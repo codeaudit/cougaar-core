@@ -1,5 +1,5 @@
 /*
- * @(#)ObjectInputStream.java	1.105 00/02/02
+ * @(#)OBJECTINPUTSTREAM.java	1.105 00/02/02
  *
  * Copyright 1996-2000 Sun Microsystems, Inc. All Rights Reserved.
  * 
@@ -2909,7 +2909,7 @@ public class ObjectInputStream extends InputStream
     private boolean enableSubclassImplementation;
 
     private Object[] readObjectArglist = {this};
-};
+}
 
 // Internal class to hold the Callback object and priority
 class ValidationCallback {
