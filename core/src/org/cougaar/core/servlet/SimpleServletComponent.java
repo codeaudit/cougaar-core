@@ -52,54 +52,46 @@ import javax.servlet.Servlet;
  *   &lt;path&gt; is the path for the Servlet, such as "/test".
  * </pre><br>
  * <p>
- * Eventually this class may be integrated into a 
- * <code>BinderFactory</code> to allow the simpler:<pre>
- *    plugin = &lt;servlet-class&gt;(&lt;path&gt;)
- * </pre><br>
+ *
+ * Most of this code is "reflection-glue" to:<ul>
+ *   <li>capture the (classname, path) parameters</li>
+ *   <li>examine the class's constructor method(s)</li>
+ *   <li>construct the class instance</li>
+ *   <li>setup and create a <code>SimpleServletSupportImpl</code>
+ *       instance</li>
+ * </ul>
+ * Most subclass developers have the classname and path hard-coded,
+ * so they should consider not extending SimpleServletComponent and
+ * instead use <code>BaseServletComponent</code> and 
+ * SimpleServletSupportImpl directly.
  *
  * @see SimpleServletSupport
  */
 public class SimpleServletComponent
-  extends GenericStateModelAdapter
-  implements Component, BlackboardClient
+  extends BaseServletComponent
+  implements BlackboardClient
 {
 
   /**
    * Servlet classname from "setParameter(..)".
    */
-  private String classname;
+  protected String classname;
 
   /**
    * Servlet path from "setParameter(..)".
    */
-  private String path;
-
-  /**
-   * Instance of <tt>classname</tt>.
-   */
-  private Servlet servlet;
-
-  /**
-   * Service broker from "setBindingSite(..)".
-   */
-  private ServiceBroker serviceBroker;
-
-  /**
-   * To launch our Servlet we need to obtain the Servlet
-   * registration service.
-   */
-  private ServletService servletService;
+  protected String path;
 
   /**
    * Agent identifier for the Agent that loaded this Component.
    */
-  private ClusterIdentifier agentId;
+  protected ClusterIdentifier agentId;
 
   //
   // Services for our SimpleServletSupport use
   //
-  private BlackboardService blackboard;
-  private NamingService ns;
+  protected BlackboardService blackboard;
+  protected NamingService ns;
 
 
   /**
@@ -113,7 +105,7 @@ public class SimpleServletComponent
    * Save our binding info during initialization.
    */
   public void setBindingSite(BindingSite bindingSite) {
-    this.serviceBroker = bindingSite.getServiceBroker();
+    super.setBindingSite(bindingSite);
 
     // kludge until a "AgentIdentificationService" is created
     if (bindingSite instanceof org.cougaar.core.plugin.PluginBindingSite) {
@@ -159,20 +151,11 @@ public class SimpleServletComponent
     this.path = (String) o2;
   }
 
-  public void load() {
-    super.load();
-    
-    // first get the servlet service
-    servletService = (ServletService)
-      serviceBroker.getService(
-		    this,
-		    ServletService.class,
-		    null);
-    if (servletService == null) {
-      throw new IllegalStateException(
-          "Unable to obtain servlet service");
-    }
+  protected String getPath() {
+    return path;
+  }
 
+  protected Servlet createServlet() {
     // load the servlet class
     Class cl;
     try {
@@ -207,60 +190,64 @@ public class SimpleServletComponent
     }
 
     // obtain the services required for support
-    SimpleServletSupport support;
-    if (needsSupport) {
-      // get the blackboard service (for "query")
-      blackboard = (BlackboardService)
-        serviceBroker.getService(
-            this, 
-            BlackboardService.class,
-            null);
-      if (blackboard == null) {
-        throw new RuntimeException(
-            "Unable to obtain blackboard service");
-      }
-
-      // get the naming service (for "listAgentNames")
-      ns = (NamingService)
-        serviceBroker.getService(
-            this, 
-            NamingService.class,
-            null);
-      if (ns == null) {
-        throw new RuntimeException(
-            "Unable to obtain naming service");
-      }
-
-      support = new SimpleServletSupportImpl();
-    } else {
-      support = null;
-    }
+    SimpleServletSupport support =
+      (needsSupport ?
+       createSimpleServletSupport() :
+       null);
 
     // create the servlet instance
+    Servlet ret;
     try {
       Object[] args = 
           ((needsSupport) ? 
            (new Object[]{support}) :
            (new Object[] {}));
-      this.servlet = (Servlet) cons.newInstance(args);
+      ret = (Servlet) cons.newInstance(args);
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to create Servlet instance: "+
           e.getMessage());
     }
+    return ret;
+  }
+  
+  protected SimpleServletSupport createSimpleServletSupport() {
+    // the agentId is known from "setBindingSite(..)"
 
-    // register the servlet
-    try {
-      servletService.register(path, servlet);
-    } catch (Exception e) {
+    // get the blackboard service (for "query")
+    blackboard = (BlackboardService)
+      serviceBroker.getService(
+          this, 
+          BlackboardService.class,
+          null);
+    if (blackboard == null) {
       throw new RuntimeException(
-          "Unable to register servlet with path \""+
-          path+"\"");
+          "Unable to obtain blackboard service");
     }
+
+    // get the naming service (for "listAgentNames")
+    ns = (NamingService)
+      serviceBroker.getService(
+          this, 
+          NamingService.class,
+          null);
+    if (ns == null) {
+      throw new RuntimeException(
+          "Unable to obtain naming service");
+    }
+
+    // create a new "SimpleServletSupport" instance
+    return 
+      new SimpleServletSupportImpl(
+        path,
+        agentId,
+        blackboard,
+        ns);
   }
 
   public void unload() {
     // release all services
+    super.unload();
     if (ns != null) {
       serviceBroker.releaseService(
           this, NamingService.class, ns);
@@ -269,19 +256,11 @@ public class SimpleServletComponent
       serviceBroker.releaseService(
           this, BlackboardService.class, blackboard);
     }
-    if (servletService != null) {
-      serviceBroker.releaseService(
-        this, ServletService.class, servletService);
-    }
-    super.unload();
   }
 
   public String toString() {
     return 
-      ((servlet != null) ? 
-       servlet.getClass().getName() : 
-       "null") +
-      "("+path+")";
+      classname+"("+path+")";
   }
 
   // odd BlackboardClient method:
@@ -304,100 +283,4 @@ public class SimpleServletComponent
         this+" only supports Blackboard queries, but received "+
         "a \"trigger\" event: "+event);
   }
-
-
-
-
-  /**
-   * This Component's "hook" that allows it's Servlet to
-   * access COUGAAR Services.
-   */
-  private class SimpleServletSupportImpl
-  implements SimpleServletSupport 
-  {
-    private String encAgentName;
-
-    private SimpleServletSupportImpl() {
-      // cache:
-      encAgentName = encodeAgentName(agentId.getAddress());
-    }
-
-    public String getPath() {
-      return path;
-    }
-
-    public Collection queryBlackboard(UnaryPredicate pred) {
-      // standard stuff here:
-      Collection col;
-      try {
-        blackboard.openTransaction();
-        col = blackboard.query(pred);
-      } finally {
-        blackboard.closeTransaction(false);
-      }
-      return col;
-    }
-
-    public String getEncodedAgentName() {
-      return encAgentName;
-    }
-
-    public ClusterIdentifier getAgentIdentifier() {
-      return agentId;
-    }
-
-    public List getAllEncodedAgentNames() {
-      return getAllEncodedAgentNames(new ArrayList());
-    }
-
-    public List getAllEncodedAgentNames(List toList) {
-      toList.clear();
-
-      // FIXME abstract away this naming-service use!
-      //
-      // here we find all Servlet-server names, which
-      // (for now) are the encoded Agent names.  this is 
-      // equal-to or a subset-of the list of all Agent names.
-      //
-      // should add a "ServerQueryService" to provide
-      // this lookup, plus a flag in this registry
-      // to distinguish between Agent and other (future)
-      // root names (e.g. Node-level Servlets, etc).
-      // additionally should consider caching...
-      //
-      // for now this is tolerable:
-      try {
-        javax.naming.directory.DirContext d = 
-          ns.getRootContext(); 
-        d = (javax.naming.directory.DirContext) 
-          d.lookup("WEBSERVERS");
-        javax.naming.NamingEnumeration en = d.list("");
-        while (en.hasMoreElements()) {
-          javax.naming.NameClassPair ncp = 
-            (javax.naming.NameClassPair) en.nextElement();
-          toList.add(ncp.getName());
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e.getMessage());
-      }
-
-      return toList;
-    }
-
-    // maybe add a "getAllAgentIdentifiers()"
-
-    public String encodeAgentName(String name) {
-      return URLEncoder.encode(name);
-    }
-
-    // etc to match "SimpleServletSupport"
-
-    public String toString() {
-      return 
-        "Support for "+
-        SimpleServletComponent.this.toString();
-    }
-  }
-
 }
-
