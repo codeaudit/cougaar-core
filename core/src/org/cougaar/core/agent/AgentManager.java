@@ -181,6 +181,23 @@ public class AgentManager
     return (ComponentDescription) m.get(agentId);
   }
 
+  public List getComponents() {
+    // get the child components
+    synchronized (boundComponents) {
+      int n = boundComponents.size();
+      List result = new ArrayList(n);
+      for (int i = 0; i < n; i++) {
+        BoundComponent bc = (BoundComponent) boundComponents.get(i);
+        Object comp = bc.getComponent();
+        if (comp instanceof ComponentDescription) {
+          ComponentDescription cd = (ComponentDescription) comp;
+          result.add(cd);
+        }
+      }
+      return result;
+    }
+  }
+
   public Map getAgents() {
     // FIXME cleanup this code
     //
