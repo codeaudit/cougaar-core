@@ -40,6 +40,7 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.component.ComponentRuntimeException;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -133,8 +134,13 @@ public class PluginManager
         logger.info("Agent "+agentId+" added plugin "+o);
       }
       return result;
+    } catch (ComponentRuntimeException cre) {
+      Throwable cause = cre.getCause();
+      if (cause == null) cause = cre;
+      logger.error("Failed to add "+o+" to "+this, cause);
+      throw cre;
     } catch (RuntimeException re) {
-      logger.error("Failed to add "+o+" to "+this, re);
+      //logger.error("Failed to add "+o+" to "+this, re);
       throw re;
     }
   }
