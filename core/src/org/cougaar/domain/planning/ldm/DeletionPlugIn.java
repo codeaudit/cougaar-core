@@ -280,6 +280,8 @@ public class DeletionPlugIn extends SimplePlugIn {
     private static final int DELETION_DELAY_PARAM  = 0;
     private static final int DELETION_PERIOD_PARAM = 1;
     private static final int DELETION_PHASE_PARAM = 2;
+    private static final int ARCHIVING_ENABLED_PARAM = 3;
+    private static final int DEBUG_PARAM = 4;
 
     // Default times are to check every week and delete tasks older
     // than 15 days. The checks occur at times that are zero modulo
@@ -288,6 +290,8 @@ public class DeletionPlugIn extends SimplePlugIn {
     private static final long DEFAULT_DELETION_PERIOD =  7 * 86400000L;
     private static final long DEFAULT_DELETION_DELAY  =  15 * 86400000L;
     private static final long DEFAULT_DELETION_PHASE = 0L;
+    private static final boolean DEFAULT_ARCHIVING_ENABLED = true;
+    private static final boolean DEFAULT_DEBUG = false;
 
     private static final long subscriptionExpirationTime = 10L * 60L * 1000L;
 
@@ -329,7 +333,7 @@ public class DeletionPlugIn extends SimplePlugIn {
     private CollectionSubscription deletionSchedulePolicies;
 
     private static java.io.PrintWriter logFile = null;
-    private static final boolean DEBUG = false;
+    private static boolean DEBUG = false;
 
     static {
         try {
@@ -389,16 +393,21 @@ public class DeletionPlugIn extends SimplePlugIn {
         long deletionDelay = DEFAULT_DELETION_DELAY;
         long deletionPeriod = DEFAULT_DELETION_PERIOD;
         long deletionPhase = DEFAULT_DELETION_PHASE;
+        archivingEnabled = DEFAULT_ARCHIVING_ENABLED;
+        DEBUG = DEFAULT_DEBUG;
         List params = getParameters();
         switch (params.size()) {
         default:
-        case 3:
+            DEBUG = ((String) params.get(DEBUG_PARAM)).equals("true");
+        case DEBUG_PARAM:
+            archivingEnabled = ((String) params.get(ARCHIVING_ENABLED_PARAM)).equals("true");
+        case ARCHIVING_ENABLED_PARAM:
             deletionPhase = parseInterval((String) params.get(DELETION_PHASE_PARAM));
-        case 2:
+        case DELETION_PHASE_PARAM:
             deletionPeriod = parseInterval((String) params.get(DELETION_PERIOD_PARAM));
-        case 1:
+        case DELETION_PERIOD_PARAM:
             deletionDelay = parseInterval((String) params.get(DELETION_DELAY_PARAM));
-        case 0:
+        case DELETION_DELAY_PARAM:
         }
         deletionPolicies =
             (CollectionSubscription) subscribe(deletionPolicyPredicate, false);
@@ -474,6 +483,7 @@ public class DeletionPlugIn extends SimplePlugIn {
     public void execute() {
         now = currentTimeMillis();
         if (alarm.hasExpired()) { // Time to make the donuts
+//              System.out.println("Time to make the donuts");
             if (archivingEnabled) {
                 try {
                     getBlackboardService().persistNow(); // Record our state
@@ -503,6 +513,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         long now = currentTimeMillis();
         long nextAlarm = theDeletionSchedulePolicy.getNextDeletionTime(now);
         long delay = nextAlarm - now;
+//          System.out.println("Make the donuts in " + delay + "msec.");
         alarm = wakeAfter(delay);
     }
 
@@ -558,6 +569,7 @@ public class DeletionPlugIn extends SimplePlugIn {
                 e.printStackTrace();
             }
             publishAdd(policy);
+            theDeletionSchedulePolicy = policy;
         }
     }
 
@@ -772,9 +784,19 @@ public class DeletionPlugIn extends SimplePlugIn {
         double et;
         Task task = pe.getTask();
         et = PlugInHelper.getEndTime(pe.getEstimatedResult());
-        if (Double.isNaN(et)) et = PlugInHelper.getEndTime(task);
+        if (Double.isNaN(et))
+            try {
+                et = PlugInHelper.getEndTime(task);
+            } catch (RuntimeException re) {
+                et = Double.NaN;
+            }
         if (Double.isNaN(et)) et = PlugInHelper.getStartTime(pe.getEstimatedResult());
-        if (Double.isNaN(et)) et = PlugInHelper.getStartTime(task);
+        if (Double.isNaN(et))
+            try {
+                et = PlugInHelper.getStartTime(task);
+            } catch (RuntimeException re) {
+                et = Double.NaN;
+            }
         if (Double.isNaN(et)) return 0L;
         for (Iterator i = deletionPolicies.iterator(); i.hasNext(); ) {
             DeletionPolicy policy = (DeletionPolicy) i.next();
