@@ -1,6 +1,10 @@
 2001-09-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/DBConnectionPool.java:
+	Set the state of the autoCommit flag to its initial value when
+	reusing a pool connection.
+
+	* org/cougaar/util/DBConnectionPool.java:
 	Check the state of the auto-commit flag before calling commit
 	during a close() operation. Completes the fix for bug 434.
 
