@@ -32,13 +32,13 @@ import java.io.OutputStream;
 
 public interface MessageProtectionService extends Service
 {
-    public byte[] encryptHeader(byte[] rawData, 
+    public byte[] protectHeader(byte[] rawData, 
 				MessageAddress source,
 				MessageAddress destination);
 
-    public byte[] decryptHeader(byte[] rawData, 
-				MessageAddress source,
-				MessageAddress destination);
+    public byte[] unprotectHeader(byte[] rawData, 
+				  MessageAddress source,
+				  MessageAddress destination);
 
     public ProtectedOutputStream getOutputStream(OutputStream os,
 						 MessageAddress src,
