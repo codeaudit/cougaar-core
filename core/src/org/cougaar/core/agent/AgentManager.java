@@ -67,7 +67,7 @@ public class AgentManager
       bindingSite = (AgentManagerBindingSite) bs;
       setChildServiceBroker(new AgentManagerServiceBroker(bindingSite));
     } else {
-      throw new RuntimeException("Tried to laod "+this+"into "+bs);
+      throw new RuntimeException("Tried to load "+this+"into "+bs);
     }
 
     // We cannot start adding services until after the serviceBroker has been created.
@@ -77,6 +77,41 @@ public class AgentManager
     //childContext.addService(MessageTransportService.class, new MessageTransportServiceProvider(agent));
 
   }
+
+  /** Load up any externally-specified AgentBinders **/
+  public void load() {
+    super.load();
+
+    ComponentDescriptions cds;
+    
+    ServiceBroker sb = getServiceBroker();
+    
+    String nodeName;
+    try {
+      NodeIdentificationService nis = (NodeIdentificationService) 
+        sb.getService(this,NodeIdentificationService.class,null);
+      if (nis != null) {
+        nodeName = nis.getNodeIdentifier().toString();
+      } else {
+        throw new RuntimeException("No node name specified");
+      }
+      sb.releaseService(this, NodeIdentificationService.class, nis);
+    } catch (RuntimeException e) {
+      throw new Error("Couldn't figure out Node name ", e);
+    }
+
+    try {
+      InitializerService is = (InitializerService) 
+        sb.getService(this, InitializerService.class, null);
+      cds = new ComponentDescriptions(is.getComponentDescriptions(nodeName, "Node.AgentManager.Binder"));
+      sb.releaseService(this, InitializerService.class, is);
+    } catch (Exception e) {
+      throw new Error("Couldn't initialize AgentManager Binders with InitializerService ", e);
+    }
+
+    addAll(ComponentDescriptions.sort(cds.extractInsertionPointComponent("Node.AgentManager.Binder")));
+  }
+
 
   protected final AgentManagerBindingSite getBindingSite() {
     return bindingSite;

@@ -599,6 +599,9 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     sb.addService(NodeIdentificationService.class,
 		  new NodeIdentificationServiceProvider(nid));
 
+    // we need the initializerservice so that AgentManager can load external binders
+    sb.addService(InitializerService.class, new InitializerServiceProvider(name));
+
     //
     // construct the NodeAgent and hook it in.
     // 

@@ -281,8 +281,9 @@ public class NodeAgent
     try {
       InitializerService is = (InitializerService) 
         rootsb.getService(this, InitializerService.class, null);
+      // get the agents
       agentDescs =
-        is.getComponentDescriptions(nodeName, "Node.AgentManager");
+        is.getComponentDescriptions(nodeName, "Node.AgentManager.Agent");
       rootsb.releaseService(this, InitializerService.class, is);
     } catch (Exception e) {
       throw new Error("Couldn't initialize NodeAgent from InitializerService ", e);
@@ -398,38 +399,6 @@ public class NodeAgent
     // set the MessageAddress to be a cid for now (sigh)
     setMessageAddress( new ClusterIdentifier(nodeName) );
 
-    String filename = System.getProperty("org.cougaar.filename");
-    String experimentId = System.getProperty("org.cougaar.experiment.id");
-    if (filename == null) {
-      if (experimentId == null) {
-        // use the default "name.ini"
-        filename = nodeName + ".ini";
-      } else {
-        // use the filename
-      }
-    } else if (experimentId == null) {
-      // use the experimentId
-    } else {
-      throw new IllegalArgumentException(
-          "Both file name (-f) and experiment -X) specified. "+
-          "Only one allowed.");
-    }
-
-
-    try {
-      ServiceProvider sp;
-      if (filename != null) {
-        sp = new FileInitializerServiceProvider();
-      } else {
-        sp = new DBInitializerServiceProvider(experimentId);
-      }
-      rootsb.addService(InitializerService.class, sp);
-    } catch (Exception yech) {
-      throw new Error("Couldn't initialize node", yech);
-    }
-
-    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
-
     super.load();
 
     // Wait until the end to deal with outstanding queued messages
@@ -461,7 +430,7 @@ public class NodeAgent
    */
   protected void addAgents(ComponentDescription[] descs) {
     ComponentDescriptions cds = new ComponentDescriptions(descs);
-    List cdcs = cds.extractDirectComponents("Node.AgentManager");
+    List cdcs = cds.extractInsertionPointComponent("Node.AgentManager.Agent");
     try {
       agentManager.addAll(cdcs);
     } catch (RuntimeException re) {
