@@ -31,25 +31,26 @@ import java.util.*;
 
 public class PrototypeRegistry implements PrototypeRegistryService {
 
-  private Registry myRegistry = null;
+  private final Registry myRegistry = new Registry();
 
-  public PrototypeRegistry() {
-    // initialize LDM parts
-    myRegistry = new Registry();
-  }
+  public PrototypeRegistry() {}
 
   /** set of PrototypeProvider LDM PlugIns **/
   // might want this to be prioritized lists
-  private List prototypeProviders = new ArrayList();
+  private final List prototypeProviders = new ArrayList();
 
   public void addPrototypeProvider(PrototypeProvider prov) {
-    prototypeProviders.add(prov);
+    synchronized (prototypeProviders) {
+      prototypeProviders.add(prov);
+    }
   }
 
   /** set of PropertyProvider LDM PlugIns **/
-  private List propertyProviders = new ArrayList();
+  private final List propertyProviders = new ArrayList();
   public void addPropertyProvider(PropertyProvider prov) {
-    propertyProviders.add(prov);
+    synchronized (propertyProviders) {
+      propertyProviders.add(prov);
+    }
   }
 
   // use the registry for registering prototypes for now.
@@ -76,42 +77,55 @@ public class PrototypeRegistry implements PrototypeRegistryService {
       if (found != null) return found;
     } catch (ClassCastException cce) {}
     
-    // else, try the prototype providers
-    for (Iterator pps = prototypeProviders.iterator(); pps.hasNext(); ) {
-      PrototypeProvider pp = (PrototypeProvider) pps.next();
-      found = pp.getPrototype(aTypeName, anAssetClass);
-      if (found != null) return found;
+    synchronized (prototypeProviders) {
+      // else, try the prototype providers
+      int l = prototypeProviders.size();
+      for (int i = 0; i<l; i++) {
+        PrototypeProvider pp = (PrototypeProvider) prototypeProviders.get(i);
+        found = pp.getPrototype(aTypeName, anAssetClass);
+        if (found != null) return found;
+      }
     }
+
     // might want to throw an exception in a later version
     return null;
   }
 
   public void fillProperties(Asset anAsset) {
     // expose the asset to all propertyproviders
-    for (Iterator pps = propertyProviders.iterator(); pps.hasNext(); ) {
-      PropertyProvider pp = (PropertyProvider) pps.next();
-      pp.fillProperties(anAsset);
+    synchronized (propertyProviders) {
+      int l = propertyProviders.size();
+      for (int i=0; i<l; i++) {
+        PropertyProvider pp = (PropertyProvider) propertyProviders.get(i);
+        pp.fillProperties(anAsset);
+      }
     }
   }
         
   /** hash of PropertyGroup interface to Lists of LatePropertyProvider instances. **/
-  private HashMap latePPs = new HashMap(11);
+  private final HashMap latePPs = new HashMap(11);
   /** list of LatePropertyProviders who supply all PropertyGroups **/
-  private ArrayList defaultLatePPs = new ArrayList(3); 
+  private final ArrayList defaultLatePPs = new ArrayList(3); 
   public void addLatePropertyProvider(LatePropertyProvider lpp) {
     Collection c = lpp.getPropertyGroupsProvided();
     if (c == null) {
-      defaultLatePPs.add(lpp);
+      synchronized (defaultLatePPs) {
+        defaultLatePPs.add(lpp);
+      }
     } else {
       try {
         for (Iterator it = c.iterator(); it.hasNext(); ) {
           Class pgc = (Class) it.next();
-          ArrayList l = (ArrayList) latePPs.get(pgc);
-          if (l == null) {
-            l = new ArrayList(3);
-            latePPs.put(pgc,l);
+          synchronized (latePPs) {
+            ArrayList l = (ArrayList) latePPs.get(pgc);
+            if (l == null) {
+              l = new ArrayList(3);
+              latePPs.put(pgc,l);
+            }
+            synchronized (l) {
+              l.add(lpp);
+            }
           }
-          l.add(lpp);
         }
       } catch (ClassCastException e) {
         System.err.println("LatePropertyProvider "+lpp+" returned an illegal PropertyGroup spec:");
@@ -123,7 +137,10 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   /** hook for late-binding **/
   public PropertyGroup lateFillPropertyGroup(Asset anAsset, Class pgclass, long t) {
     // specifics
-    ArrayList c = (ArrayList) latePPs.get(pgclass);
+    ArrayList c;
+    synchronized (latePPs) {
+      c = (ArrayList) latePPs.get(pgclass);
+    }
     PropertyGroup pg = null;
     if (c != null) {
       pg = tryLateFillers(c, anAsset, pgclass, t);
@@ -137,12 +154,14 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   /** utility method of lateFillPropertyGroup() **/
   private PropertyGroup tryLateFillers(ArrayList c, Asset anAsset, Class pgclass, long t)
   {
-    int l = c.size();
-    for (int i = 0; i<l; i++) {
-      LatePropertyProvider lpp = (LatePropertyProvider) c.get(i);
-      PropertyGroup pg = lpp.fillPropertyGroup(anAsset, pgclass, t);
-      if (pg != null) 
-        return pg;
+    synchronized (c) {
+      int l = c.size();
+      for (int i = 0; i<l; i++) {
+        LatePropertyProvider lpp = (LatePropertyProvider) c.get(i);
+        PropertyGroup pg = lpp.fillPropertyGroup(anAsset, pgclass, t);
+        if (pg != null) 
+          return pg;
+      }
     }
     return null;
   }    

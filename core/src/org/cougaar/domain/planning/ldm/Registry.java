@@ -67,6 +67,5 @@ public final class Registry  {
   }
 
   // backup uppercase-only registry for debugging stupid code.
-
-  private final HashMap theOtherRegistry = new HashMap(89);
+  //private final HashMap theOtherRegistry = new HashMap(89);
 }
