@@ -18,6 +18,8 @@
 
 package org.cougaar.core.service.community;
 
+import java.util.Collection;
+
 
 /** CommunityRoster Interface
   * A CommunityRoster identifies the agents that are currently the member
@@ -52,11 +54,11 @@ public interface CommunityRoster {
 
 
   /**
-   * Returns an array of CommunityMember objects representing the currenty
+   * Returns an collection of CommunityMember objects representing the currenty
    * community membership.
-   * @return Array of CommunityMember objects
+   * @return Collection of CommunityMember objects
    */
-  CommunityMember[] getMembers();
+  Collection getMembers();
 
 
   /**
