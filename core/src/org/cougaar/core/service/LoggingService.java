@@ -35,7 +35,7 @@ import org.cougaar.util.log.Logger;
 public interface LoggingService 
   extends Service, Logger
 {
-  LoggingService NULL = NullLoggingServiceImpl.getNullLoggingServiceImpl();
+  LoggingService NULL = NullLoggingServiceImpl.getLoggingService();
 
 }  
 
