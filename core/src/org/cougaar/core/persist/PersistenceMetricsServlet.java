@@ -38,15 +38,21 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.cougaar.core.plugin.ServiceUserPlugin;
+import org.cougaar.core.service.EventService;
 import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.ServletService;
 
+/**
+ * Simple servlet describing the persistence snapshots available for the agent,
+ * and allowing direct request of a Full Persistence snapshot.
+ **/
 public class PersistenceMetricsServlet extends ServiceUserPlugin {
-  private static final String PERSIST_NOW = "Persist Now";
+  private static final String PERSIST_NOW = "PersistNow";
 
   private static final Class[] requiredServices = {
     ServletService.class,
-    PersistenceMetricsService.class
+    PersistenceMetricsService.class,
+    EventService.class
   };
 
   private static SimpleDateFormat dateFormat;
@@ -57,6 +63,7 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
 
   private ServletService servletService = null;
   private PersistenceMetricsService metricsService = null;
+  private EventService eventService = null;
   private String agentName;
 
   public PersistenceMetricsServlet() {
@@ -66,6 +73,8 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
   protected boolean haveServices() {
     if (servletService != null) return true;
     if (acquireServices()) {
+      eventService = (EventService)
+        getServiceBroker().getService(this, EventService.class, null);
       servletService = (ServletService)
         getServiceBroker().getService(this, ServletService.class, null);
       metricsService = (PersistenceMetricsService)
@@ -166,11 +175,16 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
       out.println(" <head>");
       out.println("  <title>Persistence Metrics For " + agentName + "</title>");
       out.println(" </head>");
-      out.println(" </body>");
+      out.println(" <body>");
       String submit = request.getParameter("submit");
       if (PERSIST_NOW.equals(submit)) {
         try {
           blackboard.persistNow();
+
+	  // Send event allowing automated users to move on
+	  if (eventService != null) {
+	    eventService.event("Did Full Persist.");
+	  }
         } catch (PersistenceNotEnabledException pnee) {
           out.println(pnee);
         }
@@ -241,7 +255,7 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
                   "Average" + metricsService.getCount(PersistenceMetricsService.ALL) + ") All");
       out.println("  </table>");
       out.println(" </body>");
-      out.println("</head>");
+      out.println("</html>");
     }
   }
 
