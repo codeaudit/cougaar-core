@@ -20,7 +20,7 @@ import org.cougaar.core.cluster.persist.StatePersistable;
  * parts of a cluster.
  **/
 
-public final class UIDServer {
+public final class UIDServer implements UIDService {
   private ClusterContext cc;
   private ClusterIdentifier cid;
   private String prefix;
