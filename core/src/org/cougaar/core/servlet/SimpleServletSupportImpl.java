@@ -28,7 +28,7 @@ import org.cougaar.util.UnaryPredicate;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.logging.NullLoggingServiceImpl;
-import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 
@@ -46,7 +46,7 @@ implements SimpleServletSupport
 {
   protected String path;
   protected ClusterIdentifier agentId;
-  protected BlackboardService blackboard;
+  protected BlackboardQueryService blackboardQuery;
   protected NamingService ns;
   protected LoggingService log;
 
@@ -55,24 +55,23 @@ implements SimpleServletSupport
   public SimpleServletSupportImpl(
       String path,
       ClusterIdentifier agentId,
-      BlackboardService blackboard,
+      BlackboardQueryService blackboardQuery,
       NamingService ns) {
-    this(path, agentId, blackboard, ns, null);
+    this(path, agentId, blackboardQuery, ns, null);
   }
 
   public SimpleServletSupportImpl(
       String path,
       ClusterIdentifier agentId,
-      BlackboardService blackboard,
+      BlackboardQueryService blackboardQuery,
       NamingService ns,
       LoggingService log) {
     this.path = path;
     this.agentId = agentId;
-    this.blackboard = blackboard;
+    this.blackboardQuery = blackboardQuery;
     this.ns = ns;
     this.log = 
-      ((log != null) ? log : 
-       NullLoggingServiceImpl.getNullLoggingServiceImpl());
+      ((log != null) ? log :  LoggingService.NULL);
     // cache:
     encAgentName = encodeAgentName(agentId.getAddress());
   }
@@ -82,15 +81,7 @@ implements SimpleServletSupport
   }
 
   public Collection queryBlackboard(UnaryPredicate pred) {
-    // standard stuff here:
-    Collection col;
-    try {
-      blackboard.openTransaction();
-      col = blackboard.query(pred);
-    } finally {
-      blackboard.closeTransactionDontReset();
-    }
-    return col;
+    return blackboardQuery.query(pred);
   }
 
   public String getEncodedAgentName() {

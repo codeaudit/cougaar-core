@@ -2,6 +2,7 @@ package org.cougaar.core.servlet;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.domain.*;
+import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
@@ -20,19 +21,22 @@ public class BlackboardServletSupport extends SimpleServletSupportImpl {
   public BlackboardServletSupport(
       String path,
       ClusterIdentifier agentId,
-      BlackboardService blackboard,
+      BlackboardQueryService blackboardQuery,
       NamingService ns,
       LoggingService logger,
+      BlackboardService blackboard,
       ConfigFinder configFinder,
       RootFactory ldmf,
       LDMServesPlugin ldm,
       SchedulerService scheduler) {
-    super (path, agentId, blackboard, ns, logger);
+    super (path, agentId, blackboardQuery, ns, logger);
+    this.blackboard = blackboard;
     this.configFinder = configFinder;
     this.ldmf = ldmf;
     this.ldm = ldm;
     this.scheduler = scheduler;
   }
+  protected BlackboardService blackboard;
   protected ConfigFinder configFinder;
   protected RootFactory ldmf;
   protected LDMServesPlugin ldm;

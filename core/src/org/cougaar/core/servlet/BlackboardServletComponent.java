@@ -24,6 +24,7 @@ package org.cougaar.core.servlet;
 import javax.servlet.Servlet;
 
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.plugin.LDMService;
@@ -32,9 +33,13 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.service.SchedulerService;
 
 public class BlackboardServletComponent extends SimpleServletComponent {
+  private BlackboardService blackboard;
   private LDMService ldmService = null;
   private SchedulerService scheduler;
 
+  public final void setBlacboardService(BlackboardService s) {
+    blackboard = s;
+  }
   public final void setLDMService(LDMService s) {
     ldmService = s;
   }
@@ -76,12 +81,34 @@ public class BlackboardServletComponent extends SimpleServletComponent {
       new BlackboardServletSupport (
         path,
         agentId,
-        blackboard,
+        blackboardQuery,
         ns,
 	log,
+        blackboard,
 	getConfigFinder(),
 	getLDMService().getFactory(),
 	getLDMService().getLDM(),
 	scheduler);
+  }
+
+  // odd BlackboardClient method:
+  public String getBlackboardClientName() {
+    return toString();
+  }
+
+  // odd BlackboardClient method:
+  public long currentTimeMillis() {
+    throw new UnsupportedOperationException(
+        this+" asked for the current time???");
+  }
+
+  // unused BlackboardClient method:
+  public boolean triggerEvent(Object event) {
+    // if we had Subscriptions we'd need to implement this.
+    //
+    // see "ComponentPlugin" for details.
+    throw new UnsupportedOperationException(
+        this+" only supports Blackboard queries, but received "+
+        "a \"trigger\" event: "+event);
   }
 }
