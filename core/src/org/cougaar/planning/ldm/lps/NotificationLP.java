@@ -113,33 +113,29 @@ public class NotificationLP
   }
 
   private void checkValues(PlanElement pe, Collection changes) {
-    AllocationResult ar = pe.getEstimatedResult();
-    if (ar != null) {
-      Task task = pe.getTask();
-      //System.err.println( "\n" + cid + ": task = " + task );
-      ((PEforCollections)pe).setNotification(false);
-      if (task instanceof MPTask) {
-        TaskScoreTable resultsbytask = ((MPTask)task).getComposition().calculateDistribution();
-        if (resultsbytask != null) {
-          Enumeration etasks = ((MPTask)task).getParentTasks();
-          while (etasks.hasMoreElements()) {
-            Task pt = (Task) etasks.nextElement();
-            if (pt != null) {
-              AllocationResult result = resultsbytask.getAllocationResult(pt);
-              if (result != null) {
-		createNotification(pt.getUID(), task, result, changes);
-              }
-            } // else no notification need be generated
-          }
-        }
-      } else {
-        UID ptuid = task.getParentTaskUID();
-        if (ptuid != null) {
-          createNotification(ptuid, task, ar, changes);
-        } // else no notification need be generated
+    Task task = pe.getTask();
+
+    //System.err.println( "\n" + cid + ": task = " + task );
+    ((PEforCollections)pe).setNotification(false);
+    if (task instanceof MPTask) {
+      TaskScoreTable resultsbytask = ((MPTask)task).getComposition().calculateDistribution();
+      if (resultsbytask != null) {
+	Enumeration etasks = ((MPTask)task).getParentTasks();
+	while (etasks.hasMoreElements()) {
+	  Task pt = (Task) etasks.nextElement();
+	  if (pt != null) {
+	    AllocationResult result = resultsbytask.getAllocationResult(pt);
+	    createNotification(pt.getUID(), task, result, changes);
+	  } // else no notification need be generated
+	}
       }
+    } else {
+      UID ptuid = task.getParentTaskUID();
+      if (ptuid != null) {
+	AllocationResult ar = pe.getEstimatedResult();
+	createNotification(ptuid, task, ar, changes);
+      } // else no notification need be generated
     }
-    // do nothing if the estimated allocation result was null
   }
   
   private void createNotification(UID ptuid, Task t, AllocationResult ar, Collection changes) {

@@ -72,9 +72,12 @@ public class ReceiveRescindLP extends LogPlanLogicProvider implements MessageLog
     if (t != null) {
       logplan.remove(t);
     } else {
-      // System.err.println("Couldn't find task to rescind: " + rt.getUID());
+      //System.err.println("Couldn't find task to rescind: " + tuid);
       logplan.add(new RescindLP.DeferredRescind(tr));
     }
   }
 }
  
+
+
+
