@@ -173,7 +173,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
     try {
       blackboard.persistNow();
       if (logger.isInfoEnabled()) {
-        logger.info(getClusterIdentifier() + " doPersistence()");
+        logger.info("doPersistence()");
       }
     } catch (PersistenceNotEnabledException pnee) {
       logger.error(pnee.getMessage(), pnee);
@@ -231,21 +231,21 @@ public class CompletionTargetPlugin extends CompletionPlugin {
 
   private void respondToRelays() {
     if (debug && logger.isDebugEnabled() && relaySubscription.size() == 0) {
-      logger.debug(getClusterIdentifier() + ": No relays to respond to");
+      logger.debug("No relays to respond to");
       return;
     }
     for (Iterator relays = relaySubscription.iterator(); relays.hasNext(); ) {
       CompletionRelay relay = (CompletionRelay) relays.next();
       if (debug && logger.isDebugEnabled()) {
-        logger.debug(getClusterIdentifier() + ": Responding to " + relay.getSource());
+        logger.debug("Responding to " + relay.getSource());
       }
       Laggard newLaggard = createLaggard(relay);
       if (newLaggard != null) {
-        if (logger.isDebugEnabled()) logger.debug(getClusterIdentifier() + ": setResponseLaggard " + newLaggard);
+        if (logger.isDebugEnabled()) logger.debug("setResponseLaggard " + newLaggard);
         relay.setResponseLaggard(newLaggard);
         blackboard.publishChange(relay);
       } else {
-        if (logger.isDebugEnabled()) logger.debug(getClusterIdentifier() + ": no response laggard ");
+        if (logger.isDebugEnabled()) logger.debug("no response laggard ");
       }
     }
   }

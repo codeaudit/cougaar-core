@@ -1,3 +1,13 @@
+2002-06-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* CompletionTargetPlugin.java: 
+	* CompletionSourcePlugin.java: 
+	* CompletionSocietyPlugin.java: 
+	* CompletionNodePlugin.java:
+	Bug #1540 -- Message could be more explanatory on setValue exception
+	Remove cluster identifier from log messages since it is now
+	supplied by the logger.
+
 2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* HowTo.txt:

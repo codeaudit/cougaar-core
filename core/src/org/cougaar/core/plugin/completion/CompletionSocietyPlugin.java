@@ -129,7 +129,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   protected void handleNewLaggard(Laggard worstLaggard) {
     boolean haveLaggard = worstLaggard != null && worstLaggard.isLaggard();
     if (logger.isInfoEnabled() && filter.filter(worstLaggard)) {
-      logger.info(getClusterIdentifier() + ": new worst " + worstLaggard);
+      logger.info("new worst " + worstLaggard);
     }
     insureCompletionActions();
     if (nextCompletionAction < completionActions.length) {

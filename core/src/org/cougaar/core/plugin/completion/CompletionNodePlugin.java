@@ -72,18 +72,16 @@ public class CompletionNodePlugin extends CompletionSourcePlugin {
         }
         if (filter.filter(newLaggard)) {
           if (logger.isDebugEnabled()) {
-            logger.debug(getClusterIdentifier()
-                         + ": setResponseLaggard "
-                         + newLaggard);
+            logger.debug("setResponseLaggard " + newLaggard);
           }
           relay.setResponseLaggard(newLaggard);
           blackboard.publishChange(relay);
         } else {
-          if (logger.isDebugEnabled()) logger.debug(getClusterIdentifier() + ": no response ");
+          if (logger.isDebugEnabled()) logger.debug("No response ");
         }
       }
     } else {
-      if (logger.isDebugEnabled()) logger.debug(getClusterIdentifier() + ": No relays");
+      if (logger.isDebugEnabled()) logger.debug("No relays");
     }
   }
 }

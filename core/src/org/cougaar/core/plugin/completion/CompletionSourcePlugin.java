@@ -184,7 +184,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     if (laggards.size() > 0) {
       Laggard newLaggard = (Laggard) laggards.first();
       if (logger.isDebugEnabled()) {
-        logger.debug(getClusterIdentifier() + ": checkLaggards " + newLaggard);
+        logger.debug("checkLaggards " + newLaggard);
       }
       handleNewLaggard(newLaggard);
     } else {
@@ -196,7 +196,7 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
 
   protected void setPersistenceNeeded() {
     if (logger.isInfoEnabled()) {
-      logger.info(getClusterIdentifier() + " setPersistence()");
+      logger.info("setPersistence()");
     }
     relay.setPersistenceNeeded();
     blackboard.publishChange(relay);
