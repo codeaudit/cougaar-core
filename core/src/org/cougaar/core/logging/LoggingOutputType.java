@@ -25,6 +25,7 @@ public interface LoggingOutputType {
   public String getNode();
   public int getOutputType();
   public String getOutputDevice();
+  public int getLoggingLevel();
 
 }
 

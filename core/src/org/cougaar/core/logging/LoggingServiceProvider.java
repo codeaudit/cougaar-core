@@ -281,17 +281,24 @@ public class LoggingServiceProvider implements ServiceProvider {
 
       public LoggingOutputType[] getOutputTypes(String node) {
 	  Enumeration appenders=null;
+	  int loggingLevel;
 	  if(node.equals("root")) {
 	      appenders = Category.getRoot().getAllAppenders();
+	      loggingLevel = convertPriorityToInt(Category.getRoot().getChainedPriority());
 	  }
 	  else {
 	      appenders = Category.getInstance(node).getAllAppenders();
+	      loggingLevel = convertPriorityToInt(Category.getInstance(node).getChainedPriority());
 	  }
 	  Vector outputs = new Vector();
+
 	  int i;
 
 	  while(appenders.hasMoreElements()){
-	      outputs.addElement(new LoggingProviderOutputTypeImpl(node,(Appender) appenders.nextElement()));
+	      outputs.addElement(
+	       new LoggingProviderOutputTypeImpl(node,
+						 loggingLevel,
+						 (Appender) appenders.nextElement()));
 	  }
 
 	  LoggingOutputType[] lots = new LoggingOutputType[outputs.size()];

@@ -25,18 +25,22 @@ public class LoggingProviderOutputTypeImpl implements LoggingOutputType {
     private String nodeName;
     private int    outputType;
     private String outputDevice;
+    private int    loggingLevel;
 
     public LoggingProviderOutputTypeImpl(String aNodeName,
 					 int    anOutputType,
-					 String anOutputDevice) {
+					 String anOutputDevice,
+					 int    aLoggingLevel) {
       nodeName = aNodeName;
       outputType = anOutputType;
       outputDevice = anOutputDevice;
+      loggingLevel = aLoggingLevel;
     }
     
     public LoggingProviderOutputTypeImpl(String aNodeName,
+					 int    aLoggingLevel,
 					 Appender appender) {
-	this(aNodeName,0,null);
+	this(aNodeName,0,null,aLoggingLevel);
 	
 	if(appender instanceof FileAppender) {
 	    outputType = FILE;
@@ -58,6 +62,7 @@ public class LoggingProviderOutputTypeImpl implements LoggingOutputType {
     public String getNode() {return nodeName;}
     public int getOutputType() {return outputType;}
     public String getOutputDevice() {return outputDevice;}
+    public int getLoggingLevel() {return loggingLevel;}
     
 }
 
