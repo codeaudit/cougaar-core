@@ -125,9 +125,13 @@ implements SimpleServletSupport
       while (en.hasMoreElements()) {
         javax.naming.Binding binding =  
           (javax.naming.Binding) en.nextElement();
+	/*
         org.cougaar.lib.web.arch.root.GlobalEntry entry = 
           (org.cougaar.lib.web.arch.root.GlobalEntry)binding.getObject();
         toList.add(entry.getName());
+	*/
+        
+        toList.add(binding.getName());
       }
       Collections.sort(toList);
     } catch (Exception e) {
