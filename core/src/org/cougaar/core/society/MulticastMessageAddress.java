@@ -26,13 +26,41 @@ package org.cougaar.core.society;
  * Used by constant addresses in MessageAddress.
  **/
 
-public class MulticastMessageAddress extends MessageAddress {
+public class MulticastMessageAddress extends MessageAddress 
+{
 
-  /** for Externalizable use only **/
-  public MulticastMessageAddress() {}
+    private static final String CLASS_TAG = "CLASS_";
 
-  public MulticastMessageAddress( String address ) {
-    super(address);
-  }
+    /** for Externalizable use only **/
+    public MulticastMessageAddress() {}
+
+    public MulticastMessageAddress( String address ) {
+	super(address);
+    }
+
+
+    public MulticastMessageAddress( Class clientClass ) {
+	super( CLASS_TAG + clientClass.getName() );
+    }
+
+    public boolean hasReceiverClass() {
+	return getAddress().startsWith(CLASS_TAG);
+    }
+
+    public Class getReceiverClass() {
+	if (hasReceiverClass()) {
+	    String class_name = getAddress().substring(CLASS_TAG.length());
+	    try {
+		return Class.forName(class_name);
+	    } catch (ClassNotFoundException cnf) {
+		System.err.println("Bad multicast address: " +
+				   class_name + " is not a class name");
+		return null;
+	    }
+	} else {
+	    return null;
+	}
+    }
+    
 
 }
