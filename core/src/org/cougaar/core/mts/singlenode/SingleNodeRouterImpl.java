@@ -151,7 +151,7 @@ final class SingleNodeRouterImpl
 	try {
 	    clients.remove(key);
 	    waitingMsgs.remove(key);
-	} catch (Exception e) {}
+	} catch (Exception e) {} // Map declares exceptions we wont see here
     }
     
     public String getIdentifier() {
