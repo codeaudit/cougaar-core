@@ -20,8 +20,8 @@ import org.cougaar.core.component.*;
 
 /**
  * Scheduler that runs its schedulees in a shared thread
- * The schedulees tell the Scheduler they want to be run via a Pokable.
- * The schedulees pass in a Pokable that the Scheduler calls to activate them.
+ * The schedulees tell the Scheduler they want to be run via a Trigger.
+ * The schedulees pass in a Trigger that the Scheduler calls to activate them.
  */
 public class SchedulerServiceProvider 
   implements ServiceProvider
@@ -46,14 +46,14 @@ public class SchedulerServiceProvider
 
 
   protected class SchedulerServiceImpl implements SchedulerService{
-    // Poker interface methods
-    public Pokable register(Pokable manageMe) {
+
+    public Trigger register(Trigger manageMe) {
       assureStarted();
       clients.add(manageMe);
       return new SchedulerCallback(manageMe);
     }
 
-    public void unregister(Pokable stopPokingMe) {
+    public void unregister(Trigger stopPokingMe) {
       clients.remove(stopPokingMe);
     }
 
@@ -109,8 +109,8 @@ public class SchedulerServiceProvider
 	    runThese.clear();
 	  }
 	  for (Iterator it = pokables.iterator(); it.hasNext();) {
-	    Pokable pc = (Pokable)it.next();
-	    pc.poke();
+	    Trigger pc = (Trigger)it.next();
+	    pc.trigger();
 	  }
 	}
       }
@@ -120,18 +120,18 @@ public class SchedulerServiceProvider
     /**
      * Components hook into me
      **/
-    protected class SchedulerCallback implements Pokable {
-      private Pokable componentsPokable = null;
-      public SchedulerCallback (Pokable manageMe) {
-	componentsPokable = manageMe;
+    protected class SchedulerCallback implements Trigger {
+      private Trigger componentsTrigger = null;
+      public SchedulerCallback (Trigger manageMe) {
+	componentsTrigger = manageMe;
       }
       /**
-       * Add component to the list of pokables to be poked
+       * Add component to the list of pokables to be triggerd
        **/
-      public void poke() {
-	System.out.println("SchedulerServiceProvider.SchedulerCallback.poke() - ouch! I've been poked");
+      public void trigger() {
+	System.out.println("SchedulerServiceProvider.SchedulerCallback.trigger() - ouch! I've been triggerd");
 	synchronized(runListSemaphore) {
-	  runThese.add(componentsPokable);
+	  runThese.add(componentsTrigger);
 	  signalActivity();
 	}
       }

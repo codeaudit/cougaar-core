@@ -22,7 +22,7 @@ public class MinPlugin implements PluginBase {
 
   // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;
-  protected Pokable schedulerProd = null;
+  protected Trigger schedulerProd = null;
   protected boolean primed = false;
   protected SchedulerService myScheduler = null;
   private PluginBindingSite pluginBindingSite = null;
@@ -52,7 +52,7 @@ public class MinPlugin implements PluginBase {
 			      });
 
     if (myScheduler != null) {
-      Pokable pokeMe = new PluginCallback();
+      Trigger pokeMe = new PluginCallback();
       // Tell him to schedule me, and get his callback object
       schedulerProd = myScheduler.register(pokeMe);
     }
@@ -69,15 +69,15 @@ public class MinPlugin implements PluginBase {
    **/
   public void initialize() {
     // Tell the scheduler to run me at least this once
-    schedulerProd.poke();
+    schedulerProd.trigger();
   }
 
   /**
    * This is the scheduler's hook into me
    **/
-  protected class PluginCallback implements Pokable {
-    public void poke() {
-      System.out.println("PluginCallback.poke()");
+  protected class PluginCallback implements Trigger {
+    public void trigger() {
+      System.out.println("PluginCallback.trigger()");
       if (!primed) {
 	precycle();
       }

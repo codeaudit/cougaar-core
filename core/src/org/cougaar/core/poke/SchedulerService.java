@@ -15,6 +15,18 @@ import org.cougaar.core.component.*;
 /**
  * Schedules plugins. Tells them to run by poking them
  */
-public interface SchedulerService
-  extends Poker{
+public interface SchedulerService {
+
+  /**
+   * Tells Scheduler to handle scheduling this object
+   * @param managedItem the trigger to be pulled to run the object
+   * @return a handle that the caller can use to tell the scheduler that it wants to be run.
+   **/
+  Trigger register(Trigger managedItem);
+
+  /**
+   * @param removeMe Stop scheduling this item
+   **/
+  void unregister(Trigger removeMe);
 }
+
