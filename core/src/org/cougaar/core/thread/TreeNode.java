@@ -34,11 +34,12 @@ import org.cougaar.core.service.ThreadService;
 
 final class TreeNode
 {
+    private static Timer timer;
+
     private TreeNode parent;
     private ArrayList children;
     private Scheduler[] schedulers;
     private ThreadPool[] pools;
-    private Timer timer;
     private String name;
     private int defaultLane = ThreadService.BEST_EFFORT_LANE; // parameter?
 
@@ -72,7 +73,7 @@ final class TreeNode
 	return schedulers.length;
     }
 
-    synchronized Timer timer() 
+    static synchronized Timer timer() 
     {
 	if (timer == null) timer = new Timer(true);
 	return timer;

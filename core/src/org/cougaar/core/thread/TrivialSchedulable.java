@@ -31,8 +31,6 @@ import java.util.TimerTask;
 
 class TrivialSchedulable implements Schedulable
 {
-    private static final Timer timer = new Timer();
-
     private Object consumer;
     private Thread thread;
     private Runnable runnable;
@@ -132,18 +130,18 @@ class TrivialSchedulable implements Schedulable
 
     public synchronized void schedule(long delay) 
     {
-	timer.schedule(task(), delay);
+	TreeNode.timer().schedule(task(), delay);
     }
 
 
     public synchronized void schedule(long delay, long interval) 
     {
-	timer.schedule(task(), delay, interval);
+	TreeNode.timer().schedule(task(), delay, interval);
     }
 
     public synchronized void scheduleAtFixedRate(long delay, long interval)
     {
-	timer.scheduleAtFixedRate(task(), delay, interval);
+	TreeNode.timer().scheduleAtFixedRate(task(), delay, interval);
     }
 
 
