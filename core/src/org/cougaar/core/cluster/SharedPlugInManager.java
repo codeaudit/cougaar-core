@@ -139,8 +139,9 @@ class SharedPlugInManager implements SharedThreadingService {
   }
     
   /** delegate health checks to the scheduler **/
-  void checkHealth() {
-    scheduler.checkHealth();
+  synchronized void checkHealth() {
+    if (scheduler != null)
+      scheduler.checkHealth();
   }
 
   /** the scheduler instance (if started) **/
