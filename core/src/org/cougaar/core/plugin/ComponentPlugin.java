@@ -182,17 +182,16 @@ public abstract class ComponentPlugin
         private boolean didPrecycle = false;
         // no need to "sync" when using "SyncTriggerModel"
         public void trigger() {
-          watcher.clearSignal(); 
-          if (didPrecycle) {
-            try {
-              awakened = watcher.clearSignal();
+          awakened = watcher.clearSignal();
+          try {
+            if (didPrecycle) {
               cycle();
-            } finally {
-              awakened = false;
+            } else {
+              didPrecycle = true;
+              precycle();
             }
-          } else {
-            didPrecycle = true;
-            precycle();
+          } finally {
+            awakened = false;
           }
         }
         public String toString() {
@@ -283,7 +282,9 @@ public abstract class ComponentPlugin
     // do stuff
     try {
       blackboard.openTransaction();
-      execute();
+      if (wasAwakened() || blackboard.haveCollectionsChanged()) {
+        execute();
+      }
     } catch (Throwable t) {
       System.err.println("Error: Uncaught exception in "+this+": "+t);
       t.printStackTrace();
