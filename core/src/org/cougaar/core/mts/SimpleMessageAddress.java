@@ -93,6 +93,7 @@ public class SimpleMessageAddress
   private static java.util.HashMap cache = new java.util.HashMap(89);
 
   public static SimpleMessageAddress getSimpleMessageAddress(String as) {
+      if (as == null) return null;
     as = as.intern();
     synchronized (cache) {
       SimpleMessageAddress a = (SimpleMessageAddress) cache.get(as);
@@ -107,6 +108,7 @@ public class SimpleMessageAddress
   }
 
   public static SimpleMessageAddress cacheSimpleMessageAddress(SimpleMessageAddress a) {
+      if (a == null) return null;
     synchronized (cache) {
       String as = a._as;
       SimpleMessageAddress x = (SimpleMessageAddress) cache.get(as);
