@@ -15,10 +15,10 @@ package org.cougaar.domain.planning.ldm.measure;
 
 public final class Longitude extends AbstractMeasure
 {
-  private final double upperBound = 179.0;
-  private final double lowerBound = -180.0;
-  private final double wrapUpperBound = 360.0;
-  private final double wrapLowerBound = -360.0;
+  private final static double upperBound = 180.0;
+  private final static double lowerBound = -180.0;
+  private final static double wrapUpperBound = 360.0;
+  private final static double wrapLowerBound = -360.0;
 	
 	
   //no real conversions for now
@@ -30,16 +30,7 @@ public final class Longitude extends AbstractMeasure
 
   // private constructor
   private Longitude(double v) throws ValueRangeException {
-    if ( inWrapBounds(v) ) {
-      if ( inBounds(v) ) {
-        theValue = v;
-      } else {
-        theValue = figureWrap(v);
-      }
-    } else {
-      throw new ValueRangeException ("Longitude expects a wrapping double between -180.0 and +179.0.");
-    }
-  	
+    theValue = wrap(v);
   }
 
   public Longitude(String s) {
@@ -89,9 +80,9 @@ public final class Longitude extends AbstractMeasure
     //DEGREES_TO_RADIANS
   };
   // indexes into factor array
-  public static int DEGREES = 0;
-  //public static int RADIANS = 1;
-  private static int MAXUNIT = 0;
+  public final static int DEGREES = 0;
+  //public final static int RADIANS = 1;
+  private final static int MAXUNIT = 0;
 
   // Index Typed factory methods
   public static Longitude newLongitude(double v, int unit) {
@@ -150,42 +141,38 @@ public final class Longitude extends AbstractMeasure
   public String toString() {
     return Double.toString(theValue) + "o";
   }
+  private static final double hashFactor = (Integer.MAX_VALUE / 180.0);
   public int hashCode() {
-    return (new Double(theValue)).hashCode();
+    return (int) (theValue*hashFactor);
   }
   
-  private double figureWrap( double v ) {
-    double wrappedValue = 999;
-    if ( (v >= 180.0) && (v <= 359.0) ) {
-      wrappedValue = v - 360;
-    } else if ( (v >= -359.9) && ( v <= -181.0) ) {
-      wrappedValue = v + 360;
-    } else if (( v == 360.0 ) || ( v == -360.0 )) {
-      wrappedValue = 0;
+  /** convert an arbitrary value to be in the range of -180 (open) to +180 (closed) **/
+  private static double wrap( double v ) {
+    v = v % 360.0;              // to (-359.99999, 359.99999)
+    if (v <= -180.0) {          // to (-179.00000, 359.99999)
+      v += 360.0;
+    } else if (v > 180.0) {     // to (-179.00000, 180.00000)
+      v -= 360.0;
     }
-    return wrappedValue;
+    return v;
   }
   
-  private boolean inWrapBounds( double v ) {
-    boolean ok;
-    if ( (v <= wrapUpperBound) && (v >= wrapLowerBound) ) {
-      ok = true;
-    } else {
-      ok = false;
+  /*
+  private static void check(double x, double z) {
+    double y = wrap(x);
+    if (y != z) {
+      System.err.println("wrap("+x+") = "+y+" not "+z);
     }
-    return ok;
   }
-
-  
-  private boolean inBounds( double v ) {
-    boolean ok;
-    if ( (v <= upperBound) && (v >= lowerBound) ) {
-      ok = true;
-    } else {
-      ok = false;
-    }
-    return ok;
+  public static void main(String arg[]) {
+    check(0.0, 0.0);
+    check(180.0, 180.0);
+    check(-180.0, 180.0);
+    check(270.0, -90.0);
+    check(-90.0, -90.0);
+    check(-90.0-(360.0*100), -90.0);
+    check(90.0+(360.0*100), 90.0);
   }
-
+  */
   
-} // end Longitude
+}
