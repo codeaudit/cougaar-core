@@ -46,6 +46,11 @@ public class ClaimableImpl
 
   public final Object getClaim() { return claimer; }
 
+  public final String getClaimClassName() { 
+    // for beanInfo use
+    return ((claimer != null) ? claimer.getClass().getName() : "null"); 
+  }
+
   public final void setClaim(Object pch) {
     doClaim(pch, pch, "setClaim", " to ");
   }
