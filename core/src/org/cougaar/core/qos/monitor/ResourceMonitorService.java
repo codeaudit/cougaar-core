@@ -28,13 +28,34 @@ import java.util.Observable;
 
 public interface ResourceMonitorService extends Service
 {
-    double getJipsForAgent(MessageAddress agentAddress);
-    Observable getJipsForAgentObservable(MessageAddress agentAddress);
-    Object getJipsForAgentSyscond(MessageAddress agentAddress);
+    double getExpectedMaxMJipsForAgent(MessageAddress agentAddress);
+    //Note that this is in Jips and not MJips
+    Observable getExpectedMaxJipsForAgentObservable(MessageAddress agentAddress);
+    Object getExpectedMaxMJipsForAgentSyscond(MessageAddress agentAddress);
 
+
+    double getExpectedEffectiveMJipsForAgent(MessageAddress agentAddress);
+    Observable getExpectedEffectiveMJipsForAgentObservable(MessageAddress agentAddress);
+    Object getExpectedEffectiveMJipsForAgentSyscond(MessageAddress agentAddress);
+
+
+    double getExpectedBandwidthForAgent(MessageAddress agentAddress);
+    Observable getExpectedBandwidthForAgentObservable(MessageAddress agentAddress);
+    Object getExpectedBandwidthForAgentSyscond(MessageAddress agentAddress);
+
+
+
+    double getExpectedCapacityForAgent(MessageAddress agentAddress);
+    Observable getExpectedCapacityForAgentObservable(MessageAddress agentAddress);
+    Object getExpectedCapacityForAgentSyscond(MessageAddress agentAddress);
+
+
+
+
+    //double getExpectedMaxBandwidthToAgent(MessageAddress agentAddress);
 
    //  double getExpectedAvailableBandwidthToAgent(MessageAddress agentAddress);
-//     double getExpectedMaxBandwidthToAgent(MessageAddress agentAddress);
+
 //     double getExpectedMaxJipsForAgent(MessageAddress agentAddress);
 //     double getExpectedAvailableJipsForAgent(MessageAddress agentAddress);
 
