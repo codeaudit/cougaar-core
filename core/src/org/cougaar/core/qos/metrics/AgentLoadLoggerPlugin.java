@@ -115,10 +115,7 @@ public class AgentLoadLoggerPlugin
 	NodeControlService ncs = (NodeControlService)
             sb.getService(this, NodeControlService.class, null);
         if (ncs != null) {
-            Container c = ncs.getRootContainer();
-            if (c instanceof AgentContainer) {
-                agentContainer = (AgentContainer) c;
-            }
+            agentContainer = ncs.getRootContainer();
             sb.releaseService(this, NodeControlService.class, ncs);
         }
 
