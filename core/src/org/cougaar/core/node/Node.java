@@ -640,7 +640,7 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     
 
 
-    sb.addService(MetricsService.class, new MetricsServiceProvider());
+    sb.addService(MetricsService.class, new MetricsServiceProvider(sb));
 
 
     //add the vm metrics

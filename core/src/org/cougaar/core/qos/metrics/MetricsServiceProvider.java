@@ -32,10 +32,13 @@ public final class MetricsServiceProvider implements ServiceProvider
 
     private MetricsService impl;
 
-    public MetricsServiceProvider() {
+    public MetricsServiceProvider(ServiceBroker sb) {
 	try {
 	    Class cl = Class.forName(IMPL_CLASS);
-	    impl = (MetricsService) cl.newInstance();
+	    Class[] parameters = { ServiceBroker.class };
+	    Object[] args = { sb };
+	    java.lang.reflect.Constructor cons = cl.getConstructor(parameters);
+	    impl = (MetricsService) cons.newInstance(args);
 	} catch (ClassNotFoundException cnf) {
 	    // qos jar not loaded
 	} catch (Exception ex) {

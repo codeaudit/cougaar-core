@@ -105,6 +105,18 @@ public class QosMonitorServiceImpl
     // The rest used to be in ResourceMonitorService
 
 
+    public String lookupHostForNode(String nodeName) {
+	Attributes match = 
+	    new BasicAttributes(NameSupport.NODE_ATTR, nodeName);
+	String attr = NameSupport.HOST_ATTR;
+	Iterator result = nameSupport.lookupInTopology(match, attr);
+	if (result.hasNext()) {
+	    return (String) result.next();
+	} else {
+	    return null;
+	} 
+    }
+
     public String lookupHostForAgent(MessageAddress agentAddress) {
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
@@ -178,6 +190,16 @@ public class QosMonitorServiceImpl
 	    return host;
 	} else {
 	    return lookupHostForAgent(agentAddress);
+	}
+    }
+
+
+    public String getHostForNode(String nodeName) {
+	String host = (String) hosts.get(nodeName);
+	if (host != null) {
+	    return host;
+	} else {
+	    return lookupHostForNode(nodeName);
 	}
     }
 

@@ -46,6 +46,13 @@ public interface QosMonitorService extends Service
 
     int getAgentCommStatus(MessageAddress agentAddress);
 
+    String lookupHostForAgent(MessageAddress agentAddress);
+    String lookupNodeForAgent(MessageAddress agentAddress);
+    String getNodeForAgent(MessageAddress agentAddress);
+    String getHostForAgent(MessageAddress agentAddress);
+
+    String lookupHostForNode(String name);
+    String getHostForNode(String name);
 
 }
 
