@@ -227,25 +227,6 @@ public class ClusterImpl extends Agent
 
   // end services
 
- /**
-   * myClusterManager_ is a private reference to this cluster's
-   * ClusterManagement container.  This value is set once and only
-   * once during the #load(Object) phase.
-   **/
-  //ClusterManagementServesCluster myClusterManager_;
-        
-  /** 
-   * Answer with the reference to the ClusterManagement instance
-   * that manages me.
-   * @return Object the enclosing ClusterManagement instance
-   **/
-//   private ClusterManagementServesCluster getClusterManagement() {
-//     return myClusterManager_;
-//   }
-    
-//   private void setClusterManagement(ClusterManagementServesCluster myClusterManagement){
-//     myClusterManager_ = myClusterManagement;
-//   }
   /**
    * myClusterIdentity_ is a private representation of this instance's
    * ClusterIdentifier.
@@ -317,9 +298,7 @@ public class ClusterImpl extends Agent
     if (!( getBindingSite() instanceof AgentBindingSite ) ) {
       throw new StateModelException ("Container ("+getBindingSite()+") does not implement AgentBindingSite");
     }
-
-    //ClusterManagementServesCluster cm = (ClusterManagementServesCluster) getBindingSite();
-    //setClusterManagement(cm);
+    ServiceBroker sb = getServiceBroker();
 
     // get the Messenger instance from ClusterManagement
     messenger = getBindingSite().getMessageTransportServer();
@@ -329,25 +308,25 @@ public class ClusterImpl extends Agent
 
     //set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
-    childServiceBroker.addService(UIDService.class, new UIDServiceProvider(theUIDServer));
+    sb.addService(UIDService.class, new UIDServiceProvider(theUIDServer));
     // for backwards compatability
-    myUIDService = (UIDService) childServiceBroker.getService(this, UIDService.class, null);
+    myUIDService = (UIDService) sb.getService(this, UIDService.class, null);
     
     //set up the PrototypeRegistry and the PrototypeRegistryService
     PrototypeRegistry myPrototypeRegistry = new PrototypeRegistry();
-    childServiceBroker.addService(PrototypeRegistryService.class, 
+    sb.addService(PrototypeRegistryService.class, 
                             new PrototypeRegistryServiceProvider(myPrototypeRegistry));
     //for backwards compatability
-    myPrototypeService = (PrototypeRegistryService) childServiceBroker.getService(
+    myPrototypeService = (PrototypeRegistryService) sb.getService(
                                                      this, PrototypeRegistryService.class, null);
 
     //set up the DomainServiceImpl and the DomainService
     // DomainServiceImpl needs the PrototypeRegistryService
     //for now its in the form of this as LDMServesPlugin - should be changed!!!
     DomainServiceImpl myDSI = new DomainServiceImpl(this);
-    childServiceBroker.addService(DomainService.class, new DomainServiceProvider(myDSI));
+    sb.addService(DomainService.class, new DomainServiceProvider(myDSI));
     //for backwards compatability
-    myDomainService = (DomainService) childServiceBroker.getService(this, DomainService.class, null);
+    myDomainService = (DomainService) sb.getService(this, DomainService.class, null);
 
     // set up Blackboard and LogicProviders
     try {
@@ -604,13 +583,6 @@ public class ClusterImpl extends Agent
   public Factory getFactory(String domainname) {
     return getDomainService().getFactory(domainname);
   }
-  /** Expose the Registry to consumers. 
-   **/
-  // try to get rid of this...
-  //public Registry getRegistry() {
-  //  return myRegistry;
-  //}
-
 
   /**
    * Temporary support for <code>MessageTransportServiceProvider</code>.  
@@ -1166,3 +1138,15 @@ public class ClusterImpl extends Agent
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
