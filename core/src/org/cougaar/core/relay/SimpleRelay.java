@@ -85,7 +85,7 @@ public interface SimpleRelay extends UniqueObject {
    * Note that the relay implementation may batch changes and
    * only send the latest change.
    *
-   * @param query the immutable reply object 
+   * @param reply the immutable reply object 
    */ 
   void setReply(Object reply);
 
