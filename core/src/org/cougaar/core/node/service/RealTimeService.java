@@ -28,6 +28,11 @@ package org.cougaar.core.node.service;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * This service manages the node-level real ("system" or "wall-clock")
+ * alarm timer, which is wrapped by the agent's {@link
+ * org.cougaar.core.service.AlarmService}.
+ */
 public interface RealTimeService 
   extends TimeServiceBase, Service 
 {

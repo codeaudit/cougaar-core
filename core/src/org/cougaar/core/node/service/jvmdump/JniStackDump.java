@@ -28,7 +28,16 @@ package org.cougaar.core.node.service.jvmdump;
 
 
 /**
- * Package-private JNI implementation.
+ * The JNI implementation to signal a stack dump.
+ * <p>
+ * The library name is "jvmdump".  On Unix compiled file that
+ * must be in your $LD_LIBRARY_PATH (or -Djava.library.path) is
+ * "$CIP/bin/libjvmdump.so".  On Windows the compiled file that
+ * must be in your %PATH% (or -Djava.library.path) is
+ * "%CIP%\bin\jvmdump.dll".
+ * <p>
+ * This class is package private, but includes a "main(..)"
+ * method for testing.
  */
 class JniStackDump {
 
@@ -41,7 +50,7 @@ class JniStackDump {
    * Load library if necessary, check for loading errors and 
    * disable the dump if the library can't be loaded.
    * @return true if the libary is available.
-   **/
+   */
   private static boolean checkLibrary() {
     if (needLibrary) {
       try {

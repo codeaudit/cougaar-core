@@ -36,7 +36,7 @@ import org.cougaar.util.log.Logger;
 
 /**
  * The quiescence state of a particular agent
- **/
+ */
 class QuiescenceState {
   public QuiescenceState(MessageAddress me, Logger logger) {
     this.me = me;
@@ -76,7 +76,7 @@ class QuiescenceState {
 
   /**
    * Is the agent "alive" - as in, not marked as dead cause its a duplicate
-   **/
+   */
   public boolean isAlive() {
     return isAlive;
   }
@@ -84,7 +84,7 @@ class QuiescenceState {
   /**
    * Called when the agent is dead - another instance of the agent elsewhere
    * is the real instance, and this one should be ignored. Not un-doable.
-   **/
+   */
   public void setDead() {
     isAlive = false;
   }
@@ -142,7 +142,7 @@ class QuiescenceState {
    * Update an existing map to equal a new Map while minimizing
    * additional memory allocation where the keys in the old map are
    * very likely to be the same as the keys in the new Map.
-   **/
+   */
   private static Map updateMap(Map oldMap, Map newMap) {
     if (newMap == null) {
       throw new IllegalArgumentException("Null Map");

@@ -34,12 +34,18 @@ import java.util.HashMap;
 
 import org.cougaar.util.ConfigFinder;
 
-/** A common holder for Security keystore information and functionality
- * @property org.cougaar.install.path Used to find keystore as "org.cougaar.install.path/configs/common/.keystore"
- * @property org.cougaar.security.keystore.password The password to the cougaar keystore.
- * @property org.cougaar.security.keystore The URL of the cougaar keystore.
- **/
-
+/**
+ * A container for security keystore information and functionality.
+ *
+ * @property org.cougaar.install.path
+ * Used to find keystore as "org.cougaar.install.path/configs/common/.keystore"
+ *
+ * @property org.cougaar.security.keystore.password
+ * The password to the cougaar keystore.
+ *
+ * @property org.cougaar.security.keystore
+ * The URL of the cougaar keystore.
+ */
 public final class KeyRing {
   private static String ksPass;
   private static String ksPath;
@@ -114,7 +120,4 @@ public final class KeyRing {
     }
     return cert;
   }
-
-
 }
- 

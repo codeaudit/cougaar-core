@@ -40,12 +40,17 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.servlet.ComponentServlet;
 
 /**
- * Servlet to display the agents registered with the Node's quiescence service,
- * and allow an agent to be marked as "dead", for use when the agent has been 
- * restarted elsewhere, and the original instance should be ignored.
+ * This component is a {@link javax.servlet.Servlet} that displays
+ * the agents registered with the node's {@link
+ * AgentQuiescenceStateService}, and allow an agent to be marked as
+ * "dead" (for use when the agent has been restarted elsewhere and
+ * the original instance should be ignored).
+ * <p>
  * Address it at /agentQuiescenceState
- * Load it into every Node at BINDER or lower priority, using the insertion point
- * Node.AgentManager.Agent.PluginManager.Servlet
+ * <p> 
+ * Load it into every Node at BINDER or lower priority, using the
+ * insertion point
+ * <code>Node.AgentManager.Agent.PluginManager.Servlet</code>
  */
 public class QuiescenceStateServlet extends ComponentServlet {
   private LoggingService log = null;

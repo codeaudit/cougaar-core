@@ -30,7 +30,9 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.Service;
 
 /**
- * Component model configuration service.
+ * This service provides access to the initial component model
+ * {@link ComponentDescription} list, specifying which components
+ * to load into the agents.
  */
 public interface ComponentInitializerService extends Service {
 
@@ -47,7 +49,7 @@ public interface ComponentInitializerService extends Service {
    * <p>
    * Note that the returned value is in whatever order the underlying 
    * implementation uses.  It is <em>not</em> sorted by priority.
-   **/
+   */
   ComponentDescription[] getComponentDescriptions(
       String parentName, String insertionPoint)
     throws InitializerException;

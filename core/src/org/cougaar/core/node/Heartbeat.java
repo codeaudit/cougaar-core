@@ -32,27 +32,27 @@ import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 
-/** implement a low-priority heartbeat function which
- * just prints '.'s every few seconds when nothing else
- * is happening.
+/**
+ * A low-priority "heartbeat" function that prints a period
+ * every few seconds when nothing else is happening.
  *
- * @property org.cougaar.core.agent.heartbeat Unless disabled, the node
- * will provide a heartbeat to the vm.
+ * @property org.cougaar.core.agent.heartbeat
+ * Unless disabled, the node will provide a heartbeat to the vm.
  *
  * @property org.cougaar.core.agent.idleInterval 
  * How long between idle detection and heartbeat cycles (prints '.');
  *
  * @property org.cougaar.core.agent.idle.verbose
- *   If <em>true</em>, will print elapsed time (seconds) since
- *   cluster start every idle.interval millis.
+ * If <em>true</em>, will print elapsed time (seconds) since
+ * the agent's start every idle.interval millis.
  *
  * @property org.cougaar.core.agent.idle.verbose.interval=60000
- *   The number of milliseconds between verbose idle reports.
+ * The number of milliseconds between verbose idle reports.
  *
- * @property org.cougaar.core.agent quiet Makes standard output as quiet as possible.  
+ * @property org.cougaar.core.agent
+ * quiet Makes standard output as quiet as possible.  
  * If Heartbeat is running, will not print dots.
- **/
-
+ */
 public final class Heartbeat 
 {
 
@@ -78,7 +78,7 @@ public final class Heartbeat
 
   private Schedulable schedulable;
 
-  /** Only node can construct a Heartbeat **/
+  /** Only node can construct a Heartbeat */
   Heartbeat() {
     firstTime = System.currentTimeMillis();
     lastVerboseTime = firstTime;
@@ -150,9 +150,10 @@ public final class Heartbeat
     Logging.printDot(p);
   }
 
-  /** @return an estimate of how long in milliseconds the VM has been 
+  /**
+   * @return an estimate of how long in milliseconds the VM has been 
    * approximately idle.
-   **/
+   */
   public long getIdleTime() { 
     long delta = System.currentTimeMillis() - lastHeartbeat;
     if (delta <= maxIdleInterval) {

@@ -60,8 +60,9 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * The Node is the root component of the
- * <a href="http://www.cougaar.org">Cougaar Agent Architecture</a>.
+ * This component is the root component of the
+ * <a href="http://www.cougaar.org">Cougaar Agent Architecture</a>,
+ * containing the {@link #main} method. 
  * <p>
  * Usage:<pre>
  *    <tt>java [props] org.cougaar.core.node.Node [props] [-help]</tt>
@@ -91,6 +92,7 @@ import org.cougaar.util.log.Logging;
  *   in short hand (<em>DB</em>, <em>XML</em>, <em>File</em>) or as
  *   a fully specified class:
  *   <em>org.cougaar.core.node.DBComponentInitializerServiceComponent</em>
+ *
  * @property org.cougaar.filename
  *   The file name (.ini) for starting this Node, which defaults to 
  *   (<em>org.cougaar.node.name</em>+".ini") if both
@@ -98,20 +100,22 @@ import org.cougaar.util.log.Logging;
  *   <em>org.cougaar.experiment.id</em> are not specified.  If this
  *   property is specified then <em>org.cougaar.experiment.id</em>
  *    must not be specified.
+ *
  * @property org.cougaar.experiment.id
  *   The experiment identifier for running this Node; see 
  *   <em>org.cougaar.filename</em> for details.
  *
  * @property org.cougaar.install.path
  *   The <em>base</em> path for finding jar and configuration files.
+ *
  * @property org.cougaar.validate.jars
  *   If <em>true</em>, will check the certificates on the 
  *   (<em>org.cougaar.install.path</em>+"/plugin/*.jar") files.
  *   Defaults to <em>false</em>.
+ *
  * @property org.cougaar.security.certificate
  *   The path of the <em>org.cougaar.install.path</em> for finding
  *   the <em>org.cougaar.validate.jars</em> certificates.
- * </pre>
  */
 public class Node
 extends ContainerSupport
@@ -439,7 +443,7 @@ extends ContainerSupport
     }
   }
 
-  /** Returns true if all plugin jars are signed, else false **/
+  /** Returns true if all plugin jars are signed, else false */
   private static boolean validatePluginJarsByStream() {
     String jarSubdirectory = "plugins";
     String installpath = System.getProperty("org.cougaar.install.path");
@@ -549,7 +553,7 @@ extends ContainerSupport
     return true;
   }
 
-  /** look for jar files in org.cougaar.install.path/subdir **/
+  /** look for jar files in org.cougaar.install.path/subdir */
   private static String[] searchForJars(String subdir, String installpath)
   {
     String[] files = new String[0];

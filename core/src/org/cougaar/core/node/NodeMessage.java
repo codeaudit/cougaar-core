@@ -30,8 +30,7 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * A org.cougaar.core.node.NodeMessage  provides a basic implementation of 
- *  NodeMessage
+ * @deprecated unused {@link Message} base for nodes.
  */
 public class NodeMessage 
   extends Message
@@ -46,7 +45,7 @@ public class NodeMessage
    * <p>
    * @param s The MessageAddress of creator node 
    * @param d The MessageAddress of the target node
-   **/
+   */
   public NodeMessage(MessageAddress s, MessageAddress d) {
     super(s, d);
   }

@@ -34,10 +34,11 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * ServiceComponent Initializer for CSMART database component
- * Initialization.
- * <p>
- * Provides the CSMART DB compatible DBInitializerService.
+ * This component advertises the {@link DBInitializerService} and
+ * CSMART-database {@link ComponentInitializerService}.
+ *
+ * @property org.cougaar.node.name org.cougaar.experiment.id
+ * CSMART database experiment identifier
  */
 public class DBComponentInitializerServiceComponent
 extends GenericStateModelAdapter

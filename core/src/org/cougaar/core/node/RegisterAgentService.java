@@ -30,9 +30,11 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Node service to track agent add/remove, which is used by the
- * NodeAgent to persist the names of live agents and rehydrate
- * only those agents. 
+ * This service is used by agents to register themselves with the
+ * nodes dynamic agent add/remove tracker.
+ * <p>
+ * The node persists the names of live agents and rehydrate only
+ * those agents. 
  */
 public interface RegisterAgentService extends Service {
 

@@ -37,8 +37,9 @@ import org.cougaar.util.PropertyParser;
 import org.xml.sax.ContentHandler;
 
 /**
- * Utility class used by the XML component initializer to parse
- * the society config.
+ * Utility class used by the {@link
+ * XMLComponentInitializerServiceComponent} to parse the agent
+ * configurations.
  * <p>
  * <pre>
  * @property org.cougaar.node.name

@@ -39,8 +39,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The NodeBusyComponent adds the {@link NodeBusyService}
- * to the root-level service broker.
+ * This component advertises the {@link NodeBusyService} to all
+ * agents.
  */
 public final class NodeBusyComponent
 extends GenericStateModelAdapter

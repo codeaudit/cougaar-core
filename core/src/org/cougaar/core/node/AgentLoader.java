@@ -52,9 +52,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The AgentLoader adds the initial set of agents into
- * the node and persists the names of dynamically added/removed
- * agents.
+ * This component loads the initial set of agents into the node and
+ * persists the names of dynamically added/removed agents.
  *
  * @property org.cougaar.core.node.ignoreRehydratedAgentList
  *   Ignore the list of agents from the rehydrated state of the

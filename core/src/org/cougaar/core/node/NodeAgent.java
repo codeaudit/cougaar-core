@@ -28,5 +28,6 @@ package org.cougaar.core.node;
 
 import org.cougaar.core.agent.AgentImpl;
 
+/** @deprecated see {@link AgentImpl} */
 public class NodeAgent extends AgentImpl {
 }

@@ -32,29 +32,33 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 
-/** Service offered to components of NodeAgent to allow sufficient 
- * non-local access to the Node for control purposes.
- **/
+/**
+ * This service is used by agents to note when they are busy in
+ * an action that may block communication, such as persistence.
+ * <p>
+ * This service is advertised in the root service broker for
+ * access by all agents on the node.
+ */
 public interface NodeBusyService extends Service {
   /**
    * The component using this must supply AgentIdentificationService
    * capable of correctly identifying the agent using the service
    * before it can call the setAgentBusy method.
-   **/
+   */
   void setAgentIdentificationService(AgentIdentificationService ais);
   /**
    * The agent using this service must have already identified itself
    * using the setAgentIdentificationService before calling this
    * method. This avoids the possibilility of misrepresenting the
    * agent.
-   **/
+   */
   void setAgentBusy(boolean busy);
   /**
    * Anybody can check if an agent is busy.
-   **/
+   */
   boolean isAgentBusy(MessageAddress agent);
   /**
    * @return an unmodifiable set of busy agents (MessageAddress elements).
-   **/
+   */
   Set getBusyAgents();
 }

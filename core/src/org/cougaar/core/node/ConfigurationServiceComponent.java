@@ -48,8 +48,9 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 
 /**
- * Implement the ConfigurationService for nodes.
- **/
+ * This component advertises the {@link ConfigurationService},
+ * wrapping the {@link ConfigFinder}.
+ */
 public class ConfigurationServiceComponent
   extends ComponentSupport
 {

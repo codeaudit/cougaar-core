@@ -30,9 +30,9 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.NodeMetricsService;
 
-/** A NodeMetricsServiceProvider is a provider class for the NodeMetricsService
- * which provides Node/VM metrics.
- **/
+/**
+ * {@link ServiceProvider} for the {@link NodeMetricsService}.
+ */
 public class NodeMetricsServiceProvider implements ServiceProvider {
   
   private NodeMetricsService theproxy;

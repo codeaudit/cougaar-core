@@ -27,14 +27,16 @@
 package org.cougaar.core.node;
 
 
-/** SecureMessage is marker class for securing the contents of 
- * a message using cryptography.
- *
+/**
+ * A marker interface for securing the contents of a message using
+ * cryptography.
+ * <p>
  * Note that there is no additional public api for getting at the contents of 
  * the object.  This access is granted only to the MessageSecurityManager 
  * implementation.
+ *
  * @see org.cougaar.core.mts.MessageSecurityManager
- **/
+ */
 public interface SecureMessage
 {
 }

@@ -51,6 +51,8 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
+ * {@link ServiceProvider} for the {@link QuiescenceReportService}.
+ * <p> 
  * The QRS collects quiescence information from the Agent Distributors
  * and other QRS clients in the Node. It also matches sent and
  * received messages between agents in the Node. When the collective
@@ -61,7 +63,7 @@ import org.cougaar.util.log.Logging;
  * number of milliseconds that the Node waits when it thinks it has become 
  * quiescent to send an event announcing the fact. This suppresses 
  * possible toggling. Default is 20 seconds.
- **/
+ */
 class QuiescenceReportServiceProvider implements ServiceProvider {
   private Map quiescenceStates = new HashMap();
   private boolean isQuiescent = false;
@@ -81,7 +83,8 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   private QuiescenceAnnouncer quiescenceAnnouncer;
   private AgentQuiescenceStateService aqsService = null;
 
-  private static final long ANNOUNCEMENT_DELAY = Long.parseLong(System.getProperty("org.cougaar.core.node.quiescenceAnnounceDelay", "20000"));
+  private static final long ANNOUNCEMENT_DELAY =
+    Long.parseLong(System.getProperty("org.cougaar.core.node.quiescenceAnnounceDelay", "20000"));
 
   //  private static final long ANNOUNCEMENT_DELAY = 30000L;
   private static final String EOL = " "; //System.getProperty("line.separator");
@@ -153,7 +156,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return quiescenceState;
   }
 
-  /** Just like getQuiescenceState, except does not create empty ones for misses **/
+  /** Just like getQuiescenceState, except does not create empty ones for misses */
   private synchronized QuiescenceState accessQuiescenceState(MessageAddress me) {
     return (QuiescenceState) quiescenceStates.get(me);
   }
@@ -169,9 +172,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return (otherState.isEnabled() && otherState.isAlive());
   }
 
-  /** memoization of the quiescence state set.  Avoids bothering to make changes to 
+  /**
+   * Memoization of the quiescence state set.
+   * Avoids bothering to make changes to 
    * unless there might be a difference.
-   **/
+   */
   private Memo _quiescenceStatesMemo = Memo.get(new Memo.Function() {
       public String toString() { return "Memo<active quiescenceStates>"; }
       public Object eval(Object o) {
@@ -190,7 +195,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
    * An agent has become quiescent. If all agents are quiescent and no
    * messages are outstanding, we announce our quiescence. Otherwise,
    * we cancel quiescence.
-   **/
+   */
   private void checkQuiescence() { // We might be quiescent...
     // If an agent moves out of this node, we need to clean out any
     // remembered message numbers.
@@ -272,7 +277,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     return result;
   }
 
-  /** Check known QS to see if all locally-sent messages have been recieved **/
+  /** Check known QS to see if all locally-sent messages have been recieved */
   private boolean noMessagesAreOutstanding() {
     // Old version:  O(N^2)
     //   for each X in local agents {
@@ -503,7 +508,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * @param incomingMessageNumbers a Map from agent MessageAddresses
      * to Integers giving the number of the last message received. The
      * arguments must not be null.
-     **/
+     */
     public void setMessageNumbers(Map outgoing, Map incoming) {
       if (quiescenceState == null) throw new RuntimeException("AgentIdentificationService has not be set");
       QuiescenceReportServiceProvider.this.setMessageNumbers(quiescenceState, outgoing, incoming);
@@ -512,7 +517,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     /**
      * Specifies that, from this service instance point-of-view, the
      * agent is quiescent.
-     **/
+     */
     public void setQuiescentState() {
       if (quiescenceState == null) {
         throw new RuntimeException("AgentIdentificationService has not been set.");
@@ -533,9 +538,10 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
 
     /**
-     * Specifies that this agent is no longer quiescent. That is, this client of the QRS (requestor)
-     * is saying that it has work to do, and therefore the agent cannot be quiescent.
-     **/
+     * Specifies that this agent is no longer quiescent.
+     * That is, this client of the QRS (requestor) is saying that it
+     * has work to do, and therefore the agent cannot be quiescent.
+     */
     public void clearQuiescentState() {
       if (quiescenceState == null) {
         throw new RuntimeException("AgentIdentificationService has not been set.");
@@ -579,7 +585,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
 
   // Service to support servlet to mark agents as dead (and view all agent registered)
   private class AgentQuiescenceStateServiceImpl implements AgentQuiescenceStateService {
-    /** Is the Node altogether quiescent **/
+    /** Is the Node altogether quiescent */
     public boolean isNodeQuiescent() {
       return QuiescenceReportServiceProvider.this.isQuiescent;
     }
@@ -587,7 +593,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     /**
      * List the local agents with quiescence states for the Node to consider
      * @return an array of MessageAddresses registered with the Nodes QuiescenceReportService
-     **/
+     */
     public MessageAddress[] listAgentsRegistered() {
       return listQuiescenceStates();
     }
@@ -596,7 +602,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * Is the named agent's quiescence service enabled (ie the Distributor is fully loaded)?
      * @param agentAddress The agent to query
      * @return true if the agent's quiescence service has been enabled and it counts towards Node quiescence, false otherwise or if it does not exist locally
-     **/
+     */
     public boolean isAgentEnabled(MessageAddress agentAddress) {
       if (agentAddress == null)
 	return false;
@@ -610,7 +616,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * Is the named agent quiescent?
      * @param agentAddress The agent to query
      * @return true if the Agent's Distributor is quiescent, false otherwise or if the agent does not exist locally
-     **/
+     */
     public boolean isAgentQuiescent(MessageAddress agentAddress) {
       if (agentAddress == null)
 	return false;
@@ -625,7 +631,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * marked as dead to be ignored?
      * @param agentAddress The agent to query
      * @return false if the agent is dead and should be ignored for local quiescence or does not exist locally
-     **/
+     */
     public boolean isAgentAlive(MessageAddress agentAddress) {
       if (agentAddress == null)
 	return false;
@@ -639,7 +645,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
      * Mark the named agent as dead - it has been restarted elsewhere, and should
      * be ignored locally for quiescence calculations.
      * @param agentAddress The Agent to mark as dead
-     **/
+     */
     public void setAgentDead(MessageAddress agentAddress) {
       if (agentAddress == null)
 	return;

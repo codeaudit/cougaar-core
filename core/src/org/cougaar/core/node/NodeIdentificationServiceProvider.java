@@ -30,6 +30,9 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * {@link ServiceProvider} for the {@link NodeIdentificationService}.
+ */
 public class NodeIdentificationServiceProvider implements ServiceProvider {
   private MessageAddress nodeID;
 

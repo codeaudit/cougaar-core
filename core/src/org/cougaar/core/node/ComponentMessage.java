@@ -31,12 +31,8 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Message to a <code>Container</code> that a <code>Component</code> be 
- * added/removed/etc.
- * <p>
- * All Component messages require a <code>ComponentDescription</code> to
- * uniquely identify the Component (via the ".equals(..)" and ".hashCode()"
- * methods).
+ * @deprecated message to add/remove components, see {@link
+ * org.cougaar.core.service.AgentContainmentService}.
  */
 public class ComponentMessage 
 extends Message {

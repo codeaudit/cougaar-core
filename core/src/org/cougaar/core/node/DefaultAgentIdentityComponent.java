@@ -39,9 +39,8 @@ import org.cougaar.core.service.identity.TransferableIdentity;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * Default implementation of the AgentIdentityService, which is
- * used if the node configuration doesn't include a high-priority
- * component which provides the AgentIdentityService.
+ * This component advertises a dummy implementation of the
+ * {@link AgentIdentityService}, if not already advertised.
  */
 public class DefaultAgentIdentityComponent
 extends GenericStateModelAdapter

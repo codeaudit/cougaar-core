@@ -33,7 +33,7 @@ import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.JvmStackDumpService;
 
 /**
- * Component that provides the JvmStackDumpService.
+ * This component provides the {@link JvmStackDumpService}.
  * <p>
  * This is simply a node-level wrapper for our package-private
  * JNI implementation (JniStackDump).

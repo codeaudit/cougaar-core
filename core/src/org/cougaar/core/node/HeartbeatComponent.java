@@ -32,14 +32,12 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.PropertyParser;
 
 /**
- * The HeartbeatComponent loads the Heartbeat class,
- * which periodically prints "."s to indicate that the
- * node is running.
+ * This component loads the {@link Heartbeat} class.
  *
  * @property org.cougaar.core.agent.heartbeat
- *   If enabled, a low-priority thread runs and prints
- *   a '.' every few seconds when nothing else much is going on.
- *   This is a one-per-vm function.  Default <em>true</em>.
+ * If enabled, a low-priority thread runs and prints
+ * a '.' every few seconds when nothing else much is going on.
+ * This is a one-per-vm function.  Default <em>true</em>.
  */
 public final class HeartbeatComponent
 extends GenericStateModelAdapter

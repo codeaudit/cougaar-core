@@ -29,6 +29,9 @@ package org.cougaar.core.node;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * This service provides the local node's {@link MessageAddress}.
+ */
 public interface NodeIdentificationService extends Service {
   MessageAddress getMessageAddress();
 }

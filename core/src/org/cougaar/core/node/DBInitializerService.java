@@ -35,7 +35,7 @@ import java.util.Map;
 import org.cougaar.core.component.Service;
 
 /**
- * Database initializer service API.
+ * This service provides access to database configuration data.
  */
 public interface DBInitializerService extends Service {
 
@@ -63,7 +63,7 @@ public interface DBInitializerService extends Service {
    * names a query that should be done to obtain the actual
    * value. 
    * @return a two-element array of attribute type and value.
-   **/
+   */
   Object[] translateAttributeValue(
       String type, String key) throws SQLException;
 

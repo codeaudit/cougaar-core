@@ -43,8 +43,9 @@ import org.cougaar.core.service.JvmStackDumpService;
 import org.cougaar.core.servlet.BaseServletComponent;
 
 /**
- * Trivial servlet that registers with the path "/jvmdump"
- * and allows the client to invoke the "dumpStack()" method.
+ * This component is a {@link Servlet} that registers with the path
+ * "/jvmdump"* and allows the client to invoke the "dumpStack()"
+ * method.
  * <p>
  * The servlet requires a "?action=Dump" URL parameter.
  * If not provided, the user is prompted in an HTML form.

@@ -36,8 +36,10 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.ConfigFinder;
 
 /**
- * Provides service to initialize components from INI files.
- **/
+ * {@link ServiceProvider} for the {@link
+ * FileComponentInitializerServiceComponent} that uses the {@link
+ * INIParser}. 
+ */
 public class FileComponentInitializerServiceProvider implements ServiceProvider {
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -57,7 +59,7 @@ public class FileComponentInitializerServiceProvider implements ServiceProvider 
     /**
      * Get the descriptions of components with the named parent having
      * an insertion point below the given container insertion point.
-     **/
+     */
     public ComponentDescription[] getComponentDescriptions(
         String parentName, String containerInsertionPoint) throws InitializerException {
       try {

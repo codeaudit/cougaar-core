@@ -34,10 +34,10 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * A component which creates and advertises a XMLComponentInitializerService
- * <p>
- * @see XMLComponentInitializerServiceProvider
+ * This component advertises the XML-based {@link
+ * ComponentInitializerService}.
  *
+ * @see XMLComponentInitializerServiceProvider
  */
 public class XMLComponentInitializerServiceComponent
  extends GenericStateModelAdapter

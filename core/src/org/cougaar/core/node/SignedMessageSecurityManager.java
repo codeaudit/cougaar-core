@@ -34,11 +34,11 @@ import java.security.SignedObject;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageSecurityManager;
 
-/** A useful MessageSecurityManager which signs each message, but depends on
- * the destination to recover the public key of the sender.
- *
- **/
-
+/**
+ * A useful {@link MessageSecurityManager} which signs each message,
+ * but depends on the destination to recover the public key of the
+ * sender.
+ */
 public class SignedMessageSecurityManager implements MessageSecurityManager {
 
   public SignedMessageSecurityManager() {
@@ -55,8 +55,6 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
       return null;
     }
   }
-
-
 
   private static class SignedSecureMessage extends Message implements SecureMessage {
     private SignedObject secret;

@@ -28,6 +28,10 @@ package org.cougaar.core.node.service;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 
+/**
+ * A base interface for the node-level {@link NaturalTimeService}
+ * and {@link RealTimeService}.
+ */
 public interface TimeServiceBase {
   long currentTimeMillis();
   void addAlarm(Alarm alarm);

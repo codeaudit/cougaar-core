@@ -36,8 +36,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The LoggingServiceComponent adds the {@link LoggingService}
- * to the root-level service broker.
+ * This component advertises the {@link LoggingService}
+ * to all agents.
  */
 public final class LoggingServiceComponent
 extends GenericStateModelAdapter

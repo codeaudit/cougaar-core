@@ -43,7 +43,8 @@ import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * SAX ContextHandler that handles the society config parsing.
+ * SAX {@link org.xml.sax.ContentHandler} that handles the society
+ * config parsing.
  */
 public class XMLConfigHandler extends DefaultHandler {
 

@@ -33,6 +33,9 @@ import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.util.GenericStateModelAdapter;
 
+/**
+ * This component advertises the {@link NodeMetricsService}.
+ */
 public final class NodeMetrics
 extends GenericStateModelAdapter
 implements Component
@@ -72,7 +75,7 @@ implements Component
   private static class NodeMetricsProxy 
     implements NodeMetricsService {
 
-      /** Free Memory snapshot from the Java VM   **/
+      /** Free Memory snapshot from the Java VM   */
       public long getFreeMemory() {
         return Runtime.getRuntime().freeMemory();
       }
@@ -80,7 +83,7 @@ implements Component
       public long getTotalMemory() {
         return Runtime.getRuntime().totalMemory();
       }
-      /** The number of active Threads in the main COUGAAR threadgroup **/
+      /** The number of active Threads in the main COUGAAR threadgroup */
       public int getActiveThreadCount() {
         return Thread.currentThread().getThreadGroup().activeCount();
       }

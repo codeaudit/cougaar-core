@@ -29,6 +29,11 @@ package org.cougaar.core.node.service;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.component.Service;
 
+/**
+ * This service manages the node-level execution ("scenario")
+ * alarm timer, which is wrapped by the agent's {@link
+ * org.cougaar.core.service.AlarmService}.
+ */
 public interface NaturalTimeService 
   extends TimeServiceBase, Service 
 {

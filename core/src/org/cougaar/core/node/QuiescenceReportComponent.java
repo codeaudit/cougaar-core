@@ -40,8 +40,8 @@ import org.cougaar.core.service.QuiescenceReportService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The QuiescenceReportComponent adds the
- * {@link QuiescenceReportService} to the root-level service broker.
+ * This component advertises the {@link QuiescenceReportService} to
+ * all agents.
  */ 
 public final class QuiescenceReportComponent
 extends GenericStateModelAdapter

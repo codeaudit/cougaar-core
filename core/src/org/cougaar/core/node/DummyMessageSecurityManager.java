@@ -29,41 +29,42 @@ package org.cougaar.core.node;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageSecurityManager;
 
-/** A vacuous MessageSecurityManager.  DMSM looks like a MSM, but
- * doesn't actually add any real security at all.  Instead, it 
- * merely wraps each "secure" message inside another message for transmission.
- *
+/**
+ * A trivial {@link MessageSecurityManager}.
+ * <p>
+ * This implementation looks like a {@link MessageSecurityManager},
+ * but doesn't actually add any real security at all.  Instead, it
+ * merely wraps each "secure" message inside another message for
+ * transmission.
+ * <p>
  * For debugging use, it prints '{' for each message "encoded" and
  * '}' for each message decoded.
- **/
-
+ */
 public class DummyMessageSecurityManager implements MessageSecurityManager 
 {
-    public Message secureMessage(Message m) {
-	System.err.print("{");
-	return new DummySecureMessage(m);
-    }
+  public Message secureMessage(Message m) {
+    System.err.print("{");
+    return new DummySecureMessage(m);
+  }
 
-    public Message unsecureMessage(SecureMessage m) {
-	if (m instanceof DummySecureMessage) {
-	    System.err.print("}");
-	    return ((DummySecureMessage)m).m;
-	} else {
-	    return null;
-	}
+  public Message unsecureMessage(SecureMessage m) {
+    if (m instanceof DummySecureMessage) {
+      System.err.print("}");
+      return ((DummySecureMessage)m).m;
+    } else {
+      return null;
     }
+  }
 
- 
-    private static class DummySecureMessage 
-	extends Message
-	implements SecureMessage 
+  private static class DummySecureMessage 
+    extends Message
+    implements SecureMessage 
     {
-	private Message m;
+      private Message m;
 
-	private DummySecureMessage(Message m) {
-	    super(m.getOriginator(), m.getTarget());
-	    this.m = m;
-	}
+      private DummySecureMessage(Message m) {
+        super(m.getOriginator(), m.getTarget());
+        this.m = m;
+      }
     }
-
 }

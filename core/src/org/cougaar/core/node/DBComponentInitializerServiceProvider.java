@@ -41,9 +41,9 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * Implementation of ComponentInitializerServiceProvider that reads
- * initialization information from a database.
- **/
+ * {@link ServiceProvider} for a {@link ComponentInitializerService}
+ * backed by the {@link DBInitializerService}.
+ */
 class DBComponentInitializerServiceProvider implements ServiceProvider {
 
   private final DBInitializerService dbInit;

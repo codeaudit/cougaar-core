@@ -612,6 +612,9 @@ public class XSLTransformer {
     return new ParseException(msg, cause);
   }
 
+  /**
+   * An {@link XSLTransformer} XML/XSL parsing exception.
+   */
   public static class ParseException 
       extends Exception {
         public ParseException(String s) {
@@ -625,6 +628,10 @@ public class XSLTransformer {
         }
   }
 
+  /**
+   * An {@link InputStream} resolver for reading files referenced
+   * in XSL/XML.
+   */
   public interface Resolver extends EntityResolver, URIResolver {
     // ConfigFinder:
     InputStream open(String aURL) throws IOException;
@@ -639,6 +646,10 @@ public class XSLTransformer {
       throws TransformerException;
   }
 
+  /**
+   * {@link XSLTransformer.Resolver} that uses the {@link
+   * ConfigFinder}.
+   */
   public static class ConfigFinderBasedResolver 
       implements Resolver {
         private final ConfigFinder configFinder;

@@ -42,9 +42,15 @@ import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.service.ThreadService;
 
-/** Pseudo-component implementing NaturalTimeService and RealTimeService ServiceProvider
- * and holding references to the actual timers.
- **/
+/**
+ * {@link ServiceProvider} for the {@link NaturalTimeService} and
+ * {@link RealTimeService}, holding references to the actual timers.
+ * <p>
+ * At one point these timers were more closely intertwined,
+ * requiring a single {@link ServiceProvider} for the two services.
+ * Recent cleanups would now make it easier to tease them apart
+ * into two separate components and providers.
+ */
 class TimeServiceProvider 
   implements ServiceProvider 
 {
@@ -56,7 +62,7 @@ class TimeServiceProvider
     this.sb = sb;
   }
 
-  /** Starts the timers **/
+  /** Starts the timers */
   void start() {
     ThreadService tsvc = (ThreadService)
         sb.getService(this, ThreadService.class, null);
@@ -123,7 +129,7 @@ class TimeServiceProvider
       }
     }
 
-    /** clear out any saved state, e.g. remove outstanding alarms **/
+    /** clear out any saved state, e.g. remove outstanding alarms */
     private void clear() {
       synchronized (alarms) {
         for (Iterator it = alarms.values().iterator(); it.hasNext(); ) {
@@ -134,10 +140,10 @@ class TimeServiceProvider
       }
     }
 
-    /** map of <Alarm,AlarmWrapper> **/
+    /** map of &lt;Alarm,AlarmWrapper&gt; */
     private final Map alarms = new HashMap(11);
 
-    /** create an AlarmWrapper around an Alarm, and remember it **/
+    /** create an AlarmWrapper around an Alarm, and remember it */
     protected Alarm wrap(Alarm a) {
       Alarm w = new AlarmWrapper(a);
       synchronized (alarms) {
@@ -146,14 +152,14 @@ class TimeServiceProvider
       return w;
     }
 
-    /** drop an Alarm (not an AlarmWrapper) from the remembered alarms **/
+    /** drop an Alarm (not an AlarmWrapper) from the remembered alarms */
     protected void forget(Alarm a) {
       synchronized (alarms) {
         alarms.remove(a);
       }
     }
 
-    /** Find the remembered AlarmWrapper matching a given Alarm **/
+    /** Find the remembered AlarmWrapper matching a given Alarm */
     protected AlarmWrapper find(Alarm a) {
       synchronized (alarms) {
         return (AlarmWrapper) alarms.get(a);

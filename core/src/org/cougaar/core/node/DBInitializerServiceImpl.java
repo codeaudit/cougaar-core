@@ -43,8 +43,8 @@ import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.NullLogger;
 
 /**
- * Database initializer implementation.
- **/
+ * Implementation of {@link DBInitializerService}.
+ */
 public class DBInitializerServiceImpl implements DBInitializerService {
 
   public static final String QUERY_FILE = "DBInitializer.q";
@@ -173,7 +173,7 @@ public class DBInitializerServiceImpl implements DBInitializerService {
    * names a query that should be done to obtain the actual
    * value. 
    * @return a two-element array of attribute type and value.
-   **/
+   */
   public Object[] translateAttributeValue(String type, String key) throws SQLException {
     Map substitutions = createSubstitutions();
     substitutions.put(":key:", key);

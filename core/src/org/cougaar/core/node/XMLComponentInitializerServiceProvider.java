@@ -39,8 +39,9 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * Class to provide service for initializing Components
- * from an XML file.
+ * {@link ServiceProvider} for the XML-based {@link
+ * ComponentInitializerService} that uses the {@link
+ * XSLTransformer}.
  * <p> 
  * <pre>
  * @property org.cougaar.society.file
@@ -181,7 +182,7 @@ public class XMLComponentInitializerServiceProvider
         /**
          * Get the descriptions of components with the named parent having
          * an insertion point below the given container insertion point.
-         **/
+         */
         public ComponentDescription[] getComponentDescriptions(
             String agentName,
             String containmentPoint)

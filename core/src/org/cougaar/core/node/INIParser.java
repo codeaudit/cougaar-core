@@ -46,8 +46,6 @@ import org.cougaar.util.CSVUtility;
 
 /**
  * Parse an INI stream into an <code>ComponentDescription[]</code>.
- * <p>
- * There should also be a similar XML parser.
  */
 public final class INIParser {
 
@@ -68,7 +66,7 @@ public final class INIParser {
     return parse(new BufferedReader(new InputStreamReader(in)));
   }
 
-  /** Pattern for matching insertionPoint&priority **/
+  /** Pattern for matching insertionPoint &amp; priority */
   final static Pattern namePattern = Pattern.compile("([a-zA-Z0-9.]+)(\\((.+)\\))?");
 
   /**

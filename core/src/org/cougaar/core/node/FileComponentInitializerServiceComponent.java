@@ -32,10 +32,10 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * A component which creates and advertises a FileComponentInitializerService
- * <p>
- * @see FileComponentInitializerServiceProvider
+ * This component advertises the INI-based {@link
+ * ComponentInitializerService}.
  *
+ * @see FileComponentInitializerServiceProvider
  */
 public class FileComponentInitializerServiceComponent
  extends GenericStateModelAdapter
