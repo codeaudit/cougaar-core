@@ -70,18 +70,6 @@ public class DomainServiceProvider implements ServiceProvider {
       return theService.getFactories();
     }
 
-    public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
-                                             boolean persistenceEnv) {
-      theService.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
-    }
-
-    public void invokeMessageLogicProviders(DirectiveMessage message) {
-      theService.invokeMessageLogicProviders(message);
-    }
-
-    public void invokeRestartLogicProviders(ClusterIdentifier cid) {
-      theService.invokeRestartLogicProviders(cid);
-    }
   } // end of DomainServiceProxy
 
 }

@@ -23,16 +23,19 @@ package org.cougaar.core.domain;
 
 import java.util.List;
 
+import org.cougaar.core.agent.ClusterIdentifier;
+
 import org.cougaar.core.blackboard.Blackboard;
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.blackboard.EnvelopeTuple;
+
 import org.cougaar.core.service.DomainForBlackboardService;
+
+
 
 public class DomainForBlackboardServiceImpl extends DomainServiceImpl
  implements DomainForBlackboardService {
 
-  //When cluster creates this service it will
-  //pass a reference to it's PrototypeRegistryService in the form
-  // of itself acting as LDMServesPlugin...
-  //In the future these service may dynamically find each otehr
   public DomainForBlackboardServiceImpl(DomainManager domainManager) {
     super(domainManager);
   }
@@ -44,6 +47,23 @@ public class DomainForBlackboardServiceImpl extends DomainServiceImpl
   public void invokeDelayedLPActions() {
     domainManager.invokeDelayedLPActions();
   }
+
+  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
+                                           boolean persistenceEnv) {
+    domainManager.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
+  }
+
+  /** invoke MessageLogicProviders across all currently loaded domains **/
+  public void invokeMessageLogicProviders(DirectiveMessage message) {
+    domainManager.invokeMessageLogicProviders(message);
+  }
+
+  /** invoke RestartLogicProviders across all currently loaded domains **/
+  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+    domainManager.invokeRestartLogicProviders(cid);
+  }
+
 }  
 
 

@@ -73,6 +73,10 @@ public class DomainForBlackboardServiceProvider implements ServiceProvider {
       return theService.getFactories();
     }
 
+    public void invokeDelayedLPActions() {
+      theService.invokeDelayedLPActions();
+    }
+
     public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
                                              boolean persistenceEnv) {
       theService.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
@@ -88,10 +92,6 @@ public class DomainForBlackboardServiceProvider implements ServiceProvider {
 
     public void setBlackboard(Blackboard blackboard) {
       theService.setBlackboard(blackboard);
-    }
-
-    public void invokeDelayedLPActions() {
-      theService.invokeDelayedLPActions();
     }
   } // end of DomainForBlackboardServiceProxy
 

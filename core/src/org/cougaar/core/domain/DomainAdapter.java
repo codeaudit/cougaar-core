@@ -57,8 +57,8 @@ public abstract class DomainAdapter
 
   private LoggingService myLoggingService = null;
 
+  /** returns the Domain name **/
   abstract public String getDomainName();
-
 
   public void setBindingSite(BindingSite bindingSite) {
     if (bindingSite instanceof DomainBindingSite) {
@@ -75,17 +75,18 @@ public abstract class DomainAdapter
     return myBindingSite;
   }
 
+  /** returns the LoggingService **/
   public LoggingService getLoggingService() {
     return myLoggingService;
   }
 
-  /**
-   * construct an LDM factory to serve the specified LDM instance.
-   **/
+  /** returns the LDM factory for this Domain. **/
   public Factory getFactory() {
     return myFactory;
   }
 
+  /** returns the XPlan instance for the domain - instance may be **/
+  /** be shared among domains **/
   public XPlanServesBlackboard getXPlan() {
     return myXPlan;
   }
@@ -98,6 +99,7 @@ public abstract class DomainAdapter
     loadLPs();
   }
 
+  /** invoke the MessageLogicProviders for this domain **/
   public void invokeMessageLogicProviders(DirectiveMessage message) {
     Directive [] directives = message.getDirectives();
     for (int index = 0; index < directives.length; index ++) {
@@ -118,6 +120,7 @@ public abstract class DomainAdapter
     }
   }
     
+  /** invoke the EnvelopeLogicProviders for this domain **/
   public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
     Collection changeReports = null;
     if (tuple instanceof ChangeEnvelopeTuple) {
@@ -139,7 +142,7 @@ public abstract class DomainAdapter
     }
   }
 
-
+  /** invoke the RestartLogicProviders for this domain **/
   public void invokeRestartLogicProviders(ClusterIdentifier cid) {
     synchronized (myRestartLPs) {
       for (int index = 0;  index < myRestartLPs.size(); index++) {
@@ -154,7 +157,7 @@ public abstract class DomainAdapter
   }
 
   
-  // default protection
+  /** Add a LogicProvider to the set maintained for this Domain. **/
   protected void addLogicProvider(LogicProvider lp) {
     if (lp instanceof MessageLogicProvider) {
       myMessageLPs.add(lp);
@@ -181,15 +184,22 @@ public abstract class DomainAdapter
     return myRestartLPs;
   }
 
+  /** load the LDMFactory for this Domain. Should call setFactory() to set the
+   *  factory for this Domain
+   **/
   abstract protected void loadFactory();
 
+  /** load the XPLan for this Domain. Should call setXPlan() to set the XPlan 
+   *  for this Domain
+   **/
   abstract protected void loadXPlan();
   
+  /** load the LogicProviders for this Domain. Should call addLogicProvider() to
+   *  add each LogicProvider to the set maintained for this Domain.
+   **/
   abstract protected void loadLPs();
 
-  /**
-   * construct an LDM factory to serve the specified LDM instance.
-   **/
+  /** set the factory for this Domain **/
   protected void setFactory(Factory factory) {
     if ((myFactory != null) && myLoggingService.isDebugEnabled()) {
       // Should we even allow this?
@@ -199,6 +209,7 @@ public abstract class DomainAdapter
     myFactory = factory;
   }
 
+  /** set the XPlan for this Domain **/
   protected void setXPlan(XPlanServesBlackboard xPlan) {
     if ((myXPlan != null) && myLoggingService.isDebugEnabled()) {
       // Should we even allow this?

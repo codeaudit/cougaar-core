@@ -25,14 +25,7 @@ import java.util.List;
 
 import org.cougaar.core.service.DomainService;
 
-import org.cougaar.core.agent.ClusterIdentifier;
-
-import org.cougaar.core.blackboard.DirectiveMessage;
-import org.cougaar.core.blackboard.EnvelopeTuple;
-
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
-
-
 
 public class DomainServiceImpl implements DomainService {
 
@@ -40,11 +33,6 @@ public class DomainServiceImpl implements DomainService {
   private RootFactory myRootFactory = null;
   protected DomainManager domainManager = null;
 
-
-  //When cluster creates this service it will
-  //pass a reference to it's PrototypeRegistryService in the form
-  // of itself acting as LDMServesPlugin...
-  //In the future these service may dynamically find each otehr
   public DomainServiceImpl(DomainManager domainManager) {
     this.domainManager = domainManager;
  }
@@ -81,21 +69,6 @@ public class DomainServiceImpl implements DomainService {
     return domainManager.getFactories();
   }
 
-  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
-  public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
-                                           boolean persistenceEnv) {
-    domainManager.invokeEnvelopeLogicProviders(tuple, persistenceEnv);
-  }
-
-  /** invoke MessageLogicProviders across all currently loaded domains **/
-  public void invokeMessageLogicProviders(DirectiveMessage message) {
-    domainManager.invokeMessageLogicProviders(message);
-  }
-
-  /** invoke RestartLogicProviders across all currently loaded domains **/
-  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
-    domainManager.invokeRestartLogicProviders(cid);
-  }
 
 }  
 

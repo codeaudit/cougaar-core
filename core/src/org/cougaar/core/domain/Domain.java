@@ -47,9 +47,8 @@ import org.cougaar.core.blackboard.XPlanServesBlackboard;
 
 public interface Domain 
 {
-  /**
-   * construct an LDM factory to serve the specified LDM instance.
-   **/
+
+  /** Return the LDM factory for this Domain. **/
   Factory getFactory();
 
   /** invoke the MessageLogicProviders for this domain **/
