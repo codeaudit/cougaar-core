@@ -20,27 +20,33 @@
  */
 package org.cougaar.core.adaptivity;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.PlaybookConstrainService;
+import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.component.ServiceBroker;
 
 /** 
  * A PolicyManager that handles OperatingModePolicies
  * For now, it listens for OperatingModePolicies and uses the 
  * PlaybookConstrainService to constrain the playbook with the OMPolicies.
+ * It also sets the values of OperatingModes for non-adaptive OMPolicies.
  * In the future, it will forward InterAgentOperatingModePolicies to
  * other entities.
  */
 
 public class OperatingModePolicyManager extends ServiceUserPluginBase {
   private PlaybookConstrainService playbookConstrainService;
+  private OperatingModeService operatingModeService;
 
   private static final Class[] requiredServices = {
-    PlaybookConstrainService.class
+    PlaybookConstrainService.class,
+    OperatingModeService.class
   };
 
 
@@ -72,6 +78,8 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
       ServiceBroker sb = getServiceBroker();
       playbookConstrainService = (PlaybookConstrainService)
         sb.getService(this, PlaybookConstrainService.class, null);
+      operatingModeService = (OperatingModeService)
+        getServiceBroker().getService(this, OperatingModeService.class, null);
       return true;
     }
     return false;
@@ -92,7 +100,10 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     if (logger.isInfoEnabled()) logger.info("Adding policy");
     if (haveServices()) {
       for (Iterator it = newPolicies.iterator(); it.hasNext();) {
-	playbookConstrainService.constrain((OperatingModePolicy)it.next());
+	OperatingModePolicy omp = (OperatingModePolicy)it.next();
+	if (nonAdaptive(omp)) {
+	  playbookConstrainService.constrain(omp);
+	}
       }
     }
   }
@@ -118,10 +129,59 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     if (haveServices()) {
       for (Iterator it = changedPolicies.iterator(); it.hasNext();) {
 	OperatingModePolicy omp = (OperatingModePolicy)it.next();
-	playbookConstrainService.unconstrain(omp);
-	playbookConstrainService.constrain(omp);
+	if (nonAdaptive(omp)) {
+	  playbookConstrainService.unconstrain(omp);
+	  playbookConstrainService.constrain(omp);
+	}
       }
     }
+  }
+
+  /**
+   * This methods sets the values of OperatingModes of NonAdaptive Policies.
+   * A non adaptivie policies is defined as one that has a TRUE ifClause and
+   * only single point ranges as values of the OperatingModeConstraints.
+   * @return true if the policy always restricts its OMs to a single point and has a TRUE ifClause
+   * 
+   **/
+  private boolean nonAdaptive(OperatingModePolicy policy) {
+    PolicyKernel pk = policy.getPolicyKernel();
+    ConstrainingClause ifClause = pk.getIfClause();
+    ArrayList keepers = new ArrayList(13);
+
+    if (ifClause.equals(ConstrainingClause.TRUE_CLAUSE)) {
+      ConstraintPhrase[] cps = pk.getOperatingModeConstraints();
+
+      for (int i=0; i<cps.length; i++) {
+	OMCRangeList rl = cps[i].getAllowedValues();
+	OMCRange[] ranges = rl.getAllowedValues();
+
+	if (ranges.length > 1) {
+	  return false;
+	}
+	if (!(ranges[0] instanceof OMCPoint)) {
+	  return false;
+	} 
+	keepers.add(cps[i]);
+      }
+    }
+
+    if (keepers.size() == 0) {
+      return false;
+    }
+
+    for (Iterator it = keepers.iterator(); it.hasNext();) {
+      ConstraintPhrase cp = (ConstraintPhrase)it.next();
+      
+      /* lookup and set operating mode corresponding to this phrase */
+      OperatingMode om = operatingModeService.getOperatingModeByName(cp.getProxyName());
+      if (om != null) {
+	OMCRange theValue = cp.getAllowedValues().getAllowedValues()[0];
+	om.setValue(theValue.getMin());
+	blackboard.publishChange(om);
+      }
+    }
+    return true;
   }
 }
 
