@@ -17,7 +17,6 @@ import org.cougaar.core.cluster.IncrementalSubscription;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import org.cougaar.domain.planning.ldm.plan.PlanElement;
 
 import org.cougaar.util.UnaryPredicate;
 
@@ -57,21 +56,21 @@ public class TriggerPredicateBasedMonitor implements TriggerMonitor {
       // check for changes
       Enumeration clist = my_subscription.getChangedList();
       while (clist.hasMoreElements()){
-        PlanElement pe = (PlanElement) clist.nextElement();
+        Object subobj =  clist.nextElement();
         // make sure that this object isn't already in the list, we don't need it 
         // twice if it happened to get added and changed before we got a chance to run.
-        if ( ! assobjects.contains(pe) ) {
-          assobjects.add(pe);
+        if ( ! assobjects.contains(subobj) ) {
+          assobjects.add(subobj);
         }
       }
       // check for additions
       Enumeration alist = my_subscription.getAddedList();
       while (alist.hasMoreElements()){
-        PlanElement pe = (PlanElement) alist.nextElement();
+        Object subobj = alist.nextElement();
         // make sure that this object isn't already in the list, we don't need it 
         // twice if it happened to get added and changed before we got a chance to run.
-        if ( ! assobjects.contains(pe) ) {
-          assobjects.add(pe);
+        if ( ! assobjects.contains(subobj) ) {
+          assobjects.add(subobj);
         }
       }
        
