@@ -108,13 +108,18 @@ public class SchedulerServiceProvider
     }
   }
 
+  private Object runListSemaphore = new Object();
+
   protected class EasyScheduler implements Runnable {
     public void run() {
       while (true) {
 	waitForActivity();
 	//make copy to prevent concurrent modification error. (I couldn't figure out the synchronization)
-	ArrayList pokables = new ArrayList(runThese);
-	runThese.clear();
+	ArrayList pokables;
+	synchronized(runListSemaphore) {
+	  pokables = new ArrayList(runThese);
+	  runThese.clear();
+	}
 	for (Iterator it = pokables.iterator(); it.hasNext();) {
 	  Pokable pc = (Pokable)it.next();
 	  pc.poke();
@@ -136,7 +141,7 @@ public class SchedulerServiceProvider
      **/
     public void poke() {
       System.out.println("SchedulerServiceProvider.SchedulerCallback.poke() - ouch! I've been poked");
-      synchronized(runThese) {
+      synchronized(runListSemaphore) {
 	runThese.add(componentsPokable);
 	signalActivity();
       }
