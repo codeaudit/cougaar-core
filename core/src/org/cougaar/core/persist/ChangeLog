@@ -1,3 +1,9 @@
+2002-07-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* BasePersistence.java:
+	Bug #1616 --
+	Change warning about missing security services to INFO level.
+
 2002-06-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BufferedFilePersistence.java:

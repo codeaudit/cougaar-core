@@ -456,7 +456,7 @@ public class BasePersistence
     dataProtectionService = (DataProtectionService)
       sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
     if (dataProtectionService == null) {
-      if (logger.isWarnEnabled()) logger.warn("No DataProtectionService Available.");
+      if (logger.isInfoEnabled()) logger.info("No DataProtectionService Available.");
 //       dataProtectionService = new DataProtectionServiceStub();
     } else {
       if (logger.isInfoEnabled()) logger.info("DataProtectionService is "
