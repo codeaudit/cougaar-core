@@ -20,11 +20,12 @@
  */
 package org.cougaar.core.component;
 
-import java.util.*;
 import java.net.URL;
 import java.io.Serializable;
 
-/** A description of a loadable component (i.e. a plugin, psp, etc).
+/**
+ * An immutable description of a loadable component (for example, 
+ * a plugin, servlet, etc).
  * <p>
  * We may want several levels of description and protection, 
  * starting here and ending up at an uninitialized instance.  
@@ -39,15 +40,23 @@ import java.io.Serializable;
  * <p>
  **/
 public final class ComponentDescription implements Serializable {
-  private String name;
-  private String insertionPoint;
-  private String classname;
-  private URL codebase;
-  private Object parameter;
-  private Object certificate;
-  private Object lease;
-  private Object policy;
 
+  private final String name;
+  private final String insertionPoint;
+  private final String classname;
+  private final URL codebase;
+  private final Object parameter;
+  private final Object certificate;
+  private final Object lease;
+  private final Object policy;
+
+  /**
+   * A ComponentDescription must have a non-null name, 
+   * insertionPoint, and classname.
+   *
+   * @throws IllegalArgumentException if name is null,
+   *         insertionPoint is null, or classname is null.
+   */
   public ComponentDescription(String name,
                               String insertionPoint,
                               String classname,
@@ -64,9 +73,21 @@ public final class ComponentDescription implements Serializable {
     this.certificate = certificate;
     this.lease = lease;
     this.policy = policy;
+
+    // clone the object parameters to ensure immutability?
+
+    // validate -- also see "readObject(..)"
+    if (name == null) {
+      throw new IllegalArgumentException("Null name");
+    } else if (insertionPoint == null) {
+      throw new IllegalArgumentException("Null insertionPoint");
+    } else if (classname == null) {
+      throw new IllegalArgumentException("Null classname");
+    }
   }
 
-  /** The name of a particular component, used
+  /** 
+   * The name of a particular component, used
    * both as the displayable identifier of 
    * the Component and to disambiguate between 
    * multiple similar components which might otherwise
@@ -76,7 +97,8 @@ public final class ComponentDescription implements Serializable {
    **/
   public String getName() { return name; }
 
-  /** The point in the component hierarchy where the component
+  /**
+   * The point in the component hierarchy where the component
    * should be inserted.  It is used by the component hierarchy to
    * determine the container component the plugin should be
    * added.  This point is interpreted individually by each
@@ -93,7 +115,8 @@ public final class ComponentDescription implements Serializable {
    */
   public String getInsertionPoint() { return insertionPoint; }
 
-  /** the name of the class to instantiate, relative to the
+  /**
+   * The name of the class to instantiate, relative to the
    * codebase url.  The class will not be loaded or instantiated
    * until the putative parent component has been found and has
    * had the opportunity to verify the plugin's identity and 
@@ -101,13 +124,15 @@ public final class ComponentDescription implements Serializable {
    **/
   public String getClassname() { return classname; }
 
-  /** Where the code for classname should be loaded from.
+  /**
+   * Where the code for classname should be loaded from.
    * Will be evaulated for trust before any classes are loaded
    * from this location.
    **/
   public URL getCodebase() { return codebase; }
 
-  /** a parameter supplied to the constructor of classname,
+  /**
+   * A parameter supplied to the constructor of classname,
    * often some sort of structured object (xml document, etc).
    * <p>
    * This is defined as just an Object, but we will likely 
@@ -138,11 +163,63 @@ public final class ComponentDescription implements Serializable {
    **/
   public Object getPolicy() { return policy; }
 
-  // utilities
+  /**
+   * Equality tests <i>all</i> publicly visibile fields.
+   * <p>
+   * In the future this may be modified to ignore the
+   * certificate, lease, and/or policy.
+   */
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    }
+    if (!(o instanceof ComponentDescription)) {
+      return false;
+    }
+    ComponentDescription cd = (ComponentDescription) o;
+    // simplistic equality test:
+    if (eq(name, cd.name) &&
+        eq(insertionPoint, cd.insertionPoint) &&
+        eq(classname, cd.classname) &&
+        eq(codebase, cd.codebase) &&
+        eq(parameter, cd.parameter) &&
+        eq(certificate, cd.certificate) &&
+        eq(lease, cd.lease) &&
+        eq(policy, cd.policy)) {
+      return true;
+    }
+    return false;
+  }
+
+  private final static boolean eq(Object a, Object b) {
+    return ((a == null) ? (b == null) : (a.equals(b)));
+  }
+
+  public int hashCode() {
+    return 
+      (name.hashCode() ^ 
+       insertionPoint.hashCode() ^ 
+       classname.hashCode());
+  }
+
+  private void readObject(java.io.ObjectInputStream ois) 
+  throws java.io.IOException, ClassNotFoundException {
+    ois.defaultReadObject();
+    // validate -- see constructor
+    if (name == null) {
+      throw new java.io.InvalidObjectException("Null name");
+    } else if (insertionPoint == null) {
+      throw new java.io.InvalidObjectException("Null insertionPoint");
+    } else if (classname == null) {
+      throw new java.io.InvalidObjectException("Null classname");
+    }
+  }
+
   public String toString() {
     return "<ComponentDescription "+classname+
       ((parameter==null)?"":(" "+parameter))+
       ">";
   }
 
+  private static final long serialVersionUID = 1673609926074089996L;
 }
