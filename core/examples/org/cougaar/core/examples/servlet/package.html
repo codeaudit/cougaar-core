@@ -45,5 +45,12 @@ HelloComponent.java:
   internal Servlets can be built in a similar fashion.  The 
   inner Servlet is hard-coded to the "/hello" path.
 
+FileServletComponent.java:
+  Example component that uses the "ServletService" directly
+  to listen for "/file?name=FILENAME" requests.  The 
+  ConfigFinder is then used to stream back the contents of
+  the named file to the client.  This can be used to embed
+  "&lt;img src=..&gt;" tags in HTML pages, where the image
+  is a file on a node's config-path.
 </pre>
 </body></html>
