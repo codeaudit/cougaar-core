@@ -275,7 +275,7 @@ public class Bootstrapper
    * the parent.
    **/
 
-  static class BootstrapClassLoader extends URLClassLoader {
+  static class BootstrapClassLoader extends XURLClassLoader {
     private static final List exclusions = new ArrayList();
     static {
       exclusions.add("java.");  // avoids javaiopatch.jar
