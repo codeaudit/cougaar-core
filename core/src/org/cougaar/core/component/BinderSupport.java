@@ -124,17 +124,28 @@ public abstract class BinderSupport implements Binder
 
     // now call child.initialize, if there.
     try {
-      Method init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
-      init.invoke(child, new Object[] {proxy});
-      return;                  
-      // bail out!
+      Method init = null;
+      try {
+        init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
+      } catch (NoSuchMethodException e1) { }
+      if (init != null) {
+        init.invoke(child, new Object[] {proxy});
+        // bail out!
+        return;                 
+      }
     } catch (Exception e) {
+      e.printStackTrace();
       // no initialize(Binder - oh well, fall through.
     }
 
     try {
-      Method init = childClass.getMethod("initialize", null);
-      init.invoke(child, new Object[] {});
+      Method init = null;
+      try {
+        init = childClass.getMethod("initialize", null);
+      } catch (NoSuchMethodException e1) { }
+      if (init != null) {
+        init.invoke(child, new Object[] {});
+      }
     } catch (Exception e) {
       // no initialize!  strange, but maybe it doesn't need it.
     }

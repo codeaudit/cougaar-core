@@ -267,8 +267,15 @@ public abstract class PlugInAdapter
   // StateModel extensions
   //
 
+  /** Component Model <em>AND</em> GenericStateModel initialization **/
+  public void initialize() {
+    super.initialize();         // uninitialized->unloaded (defined in GSMAdapter)
+    load(null);                 // unloaded->loaded
+  }
+
+
   /** Load the plugin.  No longer pays any attention to the passed object,
-   * as it will now always be null.
+   * as it will now always be null.  Called from this.initialize().
    **/
   public void load(Object object) throws StateModelException {
     setThreadingChoice(getThreadingChoice()); // choose the threading model

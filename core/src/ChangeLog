@@ -1,5 +1,8 @@
 2001-07-19  Michael Thome  <mthome@bbn.com>
 
+	* PluginAdapter, DefaultPluginBinder
+	Binder no longer needs ANY special case for PluginAdapter.
+
 	* DefaultPluginBinderFactory, DefaultPluginBinder, PluginAdapter
 	Drop need for PluginAdapterBinder.  Still need to port
 	PluginAdapter's threading to new model.

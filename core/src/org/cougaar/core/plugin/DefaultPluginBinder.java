@@ -31,13 +31,6 @@ public class DefaultPluginBinder
   /** package-private kickstart method for use by the PluginBinderFactory **/
   protected void initialize() {
     initializeChild();          // set up initial services
-
-    // see if we need to run in compatability mode...
-    Component child = getComponent();
-    if (child instanceof PlugInServesCluster) { // old-style compatability until we do more porting
-      PlugInServesCluster plugin = (PlugInServesCluster) child;
-      plugin.load(null); // argument is ignored now
-    }
   }
 
   protected final PluginBase getPlugin() {

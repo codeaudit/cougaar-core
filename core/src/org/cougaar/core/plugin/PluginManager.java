@@ -71,7 +71,7 @@ public class PluginManager
     return "Node.AgentManager.Agent.PluginManager";
   }
   protected ServiceBroker specifyChildServiceBroker() {
-    return new PluginServiceBroker();
+    return new PluginManagerServiceBroker();
   }
 
   protected Class specifyChildBindingSite() {
@@ -117,7 +117,7 @@ public class PluginManager
   // support classes
   //
 
-  private static class PluginServiceBroker extends ServiceBrokerSupport {}
+  private static class PluginManagerServiceBroker extends ServiceBrokerSupport {}
   
   //
   // support for direct loading of old-style plugins
