@@ -29,7 +29,7 @@ package org.cougaar.core.domain;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Helper methods for RestartLogicProviders.
+ * Helper methods for {@link RestartLogicProvider}s.
  */
 public abstract class RestartLogicProviderHelper {
 

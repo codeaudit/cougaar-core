@@ -29,7 +29,8 @@ package org.cougaar.core.domain;
 import org.cougaar.core.component.Service;
 
 /**
- * This service allows domains to register with the domain manager.
+ * This service allows {@link Domain}s to register with the
+ * agent's {@link DomainManager}.
  */
 public interface DomainRegistryService extends Service {
 

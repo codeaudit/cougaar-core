@@ -43,7 +43,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is an optional base class for domain implementations.
+ * This component is an optional base class for {@link Domain}
+ * implementations.
  */
 public abstract class DomainAdapter 
   extends GenericStateModelAdapter
@@ -64,7 +65,7 @@ public abstract class DomainAdapter
   private Factory myFactory;
   private XPlan myXPlan;
 
-  /** returns the Domain name **/
+  /** returns the Domain name */
   public abstract String getDomainName();
 
   public void setBindingSite(BindingSite bindingSite) {
@@ -91,18 +92,20 @@ public abstract class DomainAdapter
     return xplanService.getXPlan(domainClass);
   }
 
-  /** returns the LoggingService **/
+  /** returns the LoggingService */
   public LoggingService getLoggingService() {
     return logger;
   }
 
-  /** returns the Factory for this Domain. **/
+  /** returns the Factory for this Domain. */
   public Factory getFactory() {
     return myFactory;
   }
 
-  /** returns the XPlan instance for the domain - instance may be **/
-  /** be shared among domains **/
+  /**
+   * @return the XPlan instance for the domain - instance may be
+   * be shared among domains
+   */
   public XPlan getXPlan() {
     return myXPlan;
   }
@@ -161,7 +164,7 @@ public abstract class DomainAdapter
   }
 
 
-  /** invoke the MessageLogicProviders for this domain **/
+  /** invoke the MessageLogicProviders for this domain */
   public void invokeMessageLogicProviders(DirectiveMessage message) {
     Directive [] directives = message.getDirectives();
     for (int index = 0; index < directives.length; index ++) {
@@ -182,7 +185,7 @@ public abstract class DomainAdapter
     }
   }
     
-  /** invoke the EnvelopeLogicProviders for this domain **/
+  /** invoke the EnvelopeLogicProviders for this domain */
   public void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
     Collection changeReports = null;
     if (tuple instanceof ChangeEnvelopeTuple) {
@@ -192,7 +195,8 @@ public abstract class DomainAdapter
     synchronized (myEnvelopeLPs) {
       for (int lpIndex = 0; lpIndex < myEnvelopeLPs.size(); lpIndex++) {
         EnvelopeLogicProvider lp = (EnvelopeLogicProvider) myEnvelopeLPs.get(lpIndex);
-	if (isPersistenceEnvelope && !(lp instanceof LogicProviderNeedingPersistenceEnvelopes)) {
+	if (isPersistenceEnvelope &&
+            !(lp instanceof LogicProviderNeedingPersistenceEnvelopes)) {
 	  continue;	// This lp does not want contents of PersistenceEnvelopes
 	}
         try {
@@ -204,7 +208,7 @@ public abstract class DomainAdapter
     }
   }
 
-  /** invoke the RestartLogicProviders for this domain **/
+  /** invoke the RestartLogicProviders for this domain */
   public void invokeRestartLogicProviders(MessageAddress cid) {
     synchronized (myRestartLPs) {
       for (int index = 0;  index < myRestartLPs.size(); index++) {
@@ -253,7 +257,7 @@ public abstract class DomainAdapter
   }
 
   
-  /** Add a LogicProvider to the set maintained for this Domain. **/
+  /** Add a LogicProvider to the set maintained for this Domain. */
   protected void addLogicProvider(LogicProvider lp) {
     if (lp instanceof MessageLogicProvider) {
       myMessageLPs.add(lp);
@@ -287,22 +291,25 @@ public abstract class DomainAdapter
     return myABAChangeLPs;
   }
 
-  /** load the Factory for this Domain. Should call setFactory() to set the
-   *  factory for this Domain
-   **/
+  /**
+   * Load the Factory for this Domain. Should call setFactory() to set the
+   * factory for this Domain
+   */
   abstract protected void loadFactory();
 
-  /** load the XPLan for this Domain. Should call setXPlan() to set the XPlan 
-   *  for this Domain
-   **/
+  /**
+   * Load the XPLan for this Domain. Should call setXPlan() to set the XPlan 
+   * for this Domain
+   */
   abstract protected void loadXPlan();
   
-  /** load the LogicProviders for this Domain. Should call addLogicProvider() to
-   *  add each LogicProvider to the set maintained for this Domain.
-   **/
+  /**
+   * Load the LogicProviders for this Domain. Should call addLogicProvider() to
+   * add each LogicProvider to the set maintained for this Domain.
+   */
   abstract protected void loadLPs();
 
-  /** set the factory for this Domain **/
+  /** set the factory for this Domain */
   protected void setFactory(Factory factory) {
     if ((myFactory != null) && logger.isDebugEnabled()) {
       // Should we even allow this?
@@ -312,7 +319,7 @@ public abstract class DomainAdapter
     myFactory = factory;
   }
 
-  /** set the XPlan for this Domain **/
+  /** set the XPlan for this Domain */
   protected void setXPlan(XPlan xPlan) {
     if ((myXPlan != null) && logger.isDebugEnabled()) {
       // Should we even allow this?

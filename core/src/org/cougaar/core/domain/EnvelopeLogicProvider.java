@@ -31,17 +31,12 @@ import java.util.Collection;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 
 /** 
- * API for Blackboard LogicProviders which handle transaction packets
- * (EnvelopeTuples) rather than Messages.
+ * A {@link LogicProvider} that handles blackboard transaction
+ * add/change/remove {@link EnvelopeTuple}s.
  */
 public interface EnvelopeLogicProvider extends LogicProvider {
-  /** Called by the Blackboard on each received EnvelopeTuple.
-   * @return true iff it actually performed an action based on the 
-   * tuple.
-   **/
+  /**
+   * Called by the Blackboard on each received EnvelopeTuple.
+   */
   void execute(EnvelopeTuple m, Collection changeReports);
 }
-
-
-
-

@@ -27,8 +27,10 @@
 package org.cougaar.core.domain;
 
 
-/** Base class for all LogicProviders 
- **/
+/**
+ * A logic provider performs the blackboard and message handling work
+ * of a {@link Domain}.
+ */
 public interface LogicProvider {
   void init();
 }

@@ -28,6 +28,10 @@ package org.cougaar.core.domain;
 
 import org.cougaar.core.blackboard.BlackboardServesDomain;
 
+/**
+ * An action by a {@link LogicProvider} that is delayed until all the
+ * other {@link LogicProvider}s have a chance to run.
+ */
 public interface DelayedLPAction
 {
   /**
@@ -37,7 +41,7 @@ public interface DelayedLPAction
    */
   void execute(BlackboardServesDomain bb);
   
-  /** Merge a second (equals) LPAction into this one. **/
+  /** Merge a second (equals) LPAction into this one. */
   void merge(DelayedLPAction other);
 
   // also hashcode and equals should be properly implemented.

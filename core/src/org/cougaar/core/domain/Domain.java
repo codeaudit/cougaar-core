@@ -33,9 +33,15 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
- * Describe an COUGAAR "Pluggable Domain Package" which consists of
- * a set of domain-specific objects as represented by a 
- * Factory class, and a set of LogicProviders.
+ * A domain provides problem-specific support for blackboard
+ * objects, such as an object {@link Factory} and {@link
+ * LogicProvider}s to automate object behaviors and communicate with
+ * remote agents.
+ * <p>
+ * Technically, domains don't need to contain separate {@link
+ * LogicProvider}s, since these operations could be performed by
+ * the domain itself, but typically separate component-like
+ * {@link LogicProvider} classes are used.
  */
 public interface Domain {
 

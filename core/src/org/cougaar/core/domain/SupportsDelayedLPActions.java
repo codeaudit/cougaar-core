@@ -26,7 +26,10 @@
 
 package org.cougaar.core.domain;
 
-
+/**
+ * A marker interface for {@link Domain}s that handle {@link
+ * DelayedLPAction}s.
+ */ 
 public interface SupportsDelayedLPActions
 {
   void executeDelayedLPActions();

@@ -28,8 +28,13 @@ package org.cougaar.core.domain;
 
 
 /**
- * Marker interface indicating a logic provider that needs to see the
- * contents of PersistenceEnvelopes.
- **/
-public interface LogicProviderNeedingPersistenceEnvelopes {
+ * A {@link LogicProvider} that needs to see {@link
+ * org.cougaar.core.blackboard.PersistenceEnvelope}s.
+ * <p>
+ * Usually logic providers don't need to see persistence envelopes,
+ * since they're primarily used to refill the subscriptions and not
+ * to process objects. 
+ */
+public interface LogicProviderNeedingPersistenceEnvelopes
+extends LogicProvider {
 }

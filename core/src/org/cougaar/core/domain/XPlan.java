@@ -29,12 +29,17 @@ package org.cougaar.core.domain;
 import org.cougaar.core.blackboard.Blackboard;
 
 /**
- * Generic domain-pluggable "plan", available for LogicProvider
- * use.
+ * An "xplan" is a marker interface for a domain-specific blackboard
+ * view that is shared between {@link Domain}s through the
+ * {@link XPlanService}.
  * <p>
- * @see RootPlanImpl the "root" plan, which is included
- * by default.
+ * This interface name dates way back and is confusing; the more
+ * general concept is a domain's subscription-like view of the
+ * blackboard, including utility methods for efficiently locating
+ * domain-specific objects.
+ *
+ * @see RootPlan the standard "root" plan that is always loaded.
  */
 public interface XPlan {
-  void setupSubscriptions(Blackboard alpPlan);
+  void setupSubscriptions(Blackboard blackboard);
 }

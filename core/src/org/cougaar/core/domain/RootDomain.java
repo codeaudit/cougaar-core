@@ -42,15 +42,13 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * This is the "root" or infrastructure domain, defining the
- * objects and behavior shared by all COUGAAR-based systems.
+ * This component is the minimal "root" domain that creates the
+ * basic {@link RootPlan} for other {@link Domain}s and loads the
+ * {@link RelayLP}.
  * <p>
- * The root domain only loads the "RelayLP".  User-defined
- * domains can load other logic providers and XPlans.
- * <p>
- * This implementation could use the DomainAdapter base class.
- * In this case we directly implement the Domain API for
- * efficiency and illustative purposes.
+ * Instead of using the {@link DomainAdapter} as a base class, this
+ * simple domain directly implements the domain API for efficiency
+ * and illustative purposes.
  */
 public final class RootDomain
 extends GenericStateModelAdapter

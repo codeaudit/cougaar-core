@@ -43,18 +43,14 @@ import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
 
 /**
- * The "root" plan allows LPs to add/change/remove objects
- * in the blackboard, plus maintains a collection of all
- * UniqueObjects in the blackboard.
- * <p>
- * This is the class that LPs see.
+ * Standard implementation of {@link RootPlan}. 
  */
 public class RootPlanImpl
 implements RootPlan, XPlan, SupportsDelayedLPActions
 {
   private Blackboard blackboard;
 
-  /** is this a UniqueObject? **/
+  /** is this a UniqueObject? */
   private static final UnaryPredicate uniqueObjectP = new UnaryPredicate() {
     public boolean execute(Object o) {
       if (o instanceof UniqueObject) {
@@ -84,7 +80,7 @@ implements RootPlan, XPlan, SupportsDelayedLPActions
   /**
    * Apply predicate against the entire "Blackboard".
    * User provided predicate
-   **/
+   */
   public Enumeration searchBlackboard(UnaryPredicate predicate) {
     return blackboard.searchBlackboard(predicate);
   }
@@ -93,45 +89,53 @@ implements RootPlan, XPlan, SupportsDelayedLPActions
     return blackboard.countBlackboard(predicate);
   }
 
-  /** Add Object to the RootPlan Collection
+  /**
+   * Add Object to the RootPlan Collection
    * (All subscribers will be notified)
-   **/
+   */
   public void add(Object o) {
     blackboard.add(o);
   }
 
-  /** Removed Object to the RootPlan Collection
+  /**
+   * Removed Object to the RootPlan Collection
    * (All subscribers will be notified)
-   **/
+   */
   public void remove(Object o) {
     blackboard.remove(o);
   }
 
-  /** Change Object to the RootPlan Collection
+  /**
+   * Change Object to the RootPlan Collection
    * (All subscribers will be notified)
-   **/
+   */
   public void change(Object o) {
     blackboard.change(o, null);
   }
 
-  /** Change Object to the RootPlan Collection
+  /**
+   * Change Object to the RootPlan Collection
    * (All subscribers will be notified)
-   **/
+   */
   public void change(Object o, Collection changes) {
     blackboard.change(o, changes);
   }
 
   /**
    * Alias for sendDirective(Directive, null);
-   **/
+   */
   public void sendDirective(Directive dir) {
     blackboard.sendDirective(dir, null);
   }
 
   /**
-   * Reliably send a directive. Take pains to retransmit this message
-   * until it is acknowledged even if clusters crash.
-   **/
+   * Reliably send a directive.
+   * <p> 
+   * The message transport takes pains to retransmit this message
+   * until it is acknowledged, even if agents crash.  When a crashed
+   * agent recovers, the blackboard invokes the {@link
+   * RestartLogicProvider}s.
+   */
   public void sendDirective(Directive dir, Collection changes) {
     blackboard.sendDirective(dir, changes);
   }

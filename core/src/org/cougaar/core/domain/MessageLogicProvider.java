@@ -31,15 +31,13 @@ import java.util.Collection;
 import org.cougaar.core.blackboard.Directive;
 
 /**
- * Marker interface indicating that the Logic Provider is for
- * handling Directive messages rather than blackboard transaction
- * Envelopes.
+ * A {@link LogicProvider} that handles incoming {@link Directive}
+ * messages. 
  */
 public interface MessageLogicProvider extends LogicProvider {
 
-  /** Called by the Blackboard on each received Message.
-   * @return true iff it actually performed an action based on the 
-   * message.
-   **/
+  /**
+   * Called by the Blackboard on each received Message.
+   */
   void execute(Directive m, Collection changeReports);
 }

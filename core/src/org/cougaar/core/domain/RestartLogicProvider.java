@@ -29,7 +29,7 @@ package org.cougaar.core.domain;
 import org.cougaar.core.mts.MessageAddress;
 
 /** 
- * API for Blackboard LogicProviders which handle agent restarts
+ * A {@link LogicProvider} that handles agent restart reconciliation.
  */
 public interface RestartLogicProvider extends LogicProvider {
 
@@ -58,10 +58,3 @@ public interface RestartLogicProvider extends LogicProvider {
    */
   void restart(MessageAddress cid);
 }
-
-
-
-
-
-
-

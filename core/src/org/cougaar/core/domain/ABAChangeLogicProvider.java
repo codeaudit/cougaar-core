@@ -24,13 +24,13 @@ package org.cougaar.core.domain;
 import java.util.Set;
 
 /** 
- * API for Blackboard LogicProviders which handle ABA changes
+ * A {@link LogicProvider} that handles community membership changes.
  */
 public interface ABAChangeLogicProvider extends LogicProvider {
   /**
    * Invoked when the translation of ABAs may have changed.
    * @param communities the set of communities having changes. If
    * null, any community might have changed.
-   **/
+   */
   void abaChange(Set communities);
 }

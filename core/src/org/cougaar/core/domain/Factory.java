@@ -28,11 +28,24 @@ package org.cougaar.core.domain;
 
 
 /**
- * Marker for domain factory instances.  Although no particular API
- * is specified, instances will support domain-specific factory methods
- * and constants for the use of domain-specific plugins.
- * 
- * Factory instances are created exclusively by their matching Domain object.
+ * A factory allows clients to create domain-specific object
+ * instances.
+ * <p>
+ * For example, instead of calling an object constructor
+ * directly:<pre>
+ *    Foo f = new FooImpl();
+ * </pre>
+ * a factory could hide this detail by providing a method:<pre>
+ *    Foo f = fooFactory.newFoo();
+ * </pre> 
+ * and may hide further initializing of the new object.
+ * <p>
+ * Although no particular API is specified, instances will support
+ * domain-specific factory methods and constants for the use of
+ * domain-specific plugins.
+ * <p>
+ * Factory instances are created exclusively by their domain
+ * instance.
  */
 public interface Factory
 {

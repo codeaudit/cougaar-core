@@ -61,12 +61,12 @@ import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyParser;
 
 /**
- * A container for Domain Components.
+ * This component is a container for {@link Domain}s.
  *
  * @property org.cougaar.core.load.planning
  *   If enabled, the domain manager will load the planning-specific
  *   PlanningDomain.  See bug 2522.  Default <em>true</em>
- **/
+ */
 public class DomainManager 
 extends ContainerSupport
 {
@@ -81,7 +81,7 @@ extends ContainerSupport
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
   }
 
-  /** Insertion point for a DomainManager, defined relative to its parent, Agent. **/
+  /** Insertion point for a DomainManager, defined relative to its parent, Agent. */
   public static final String INSERTION_POINT = 
     Agent.INSERTION_POINT + ".DomainManager";
   private final static String CONTAINMENT_POINT = INSERTION_POINT;
@@ -290,7 +290,7 @@ extends ContainerSupport
     return (d == null ? null : d.getFactory());
   }
 
-  /** return a List of all domain-specific factories **/
+  /** return a List of all domain-specific factories */
   private List getFactories() {
     ArrayList factories = new ArrayList(size());
     for (Iterator iter = domainIterator(); iter.hasNext(); ) {
@@ -311,7 +311,7 @@ extends ContainerSupport
     }
   }
 
-  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  /** invoke EnvelopeLogicProviders across all currently loaded domains */
   private void invokeEnvelopeLogicProviders(
       EnvelopeTuple tuple, boolean persistenceEnv) {
     for (Iterator iter = domainIterator(); iter.hasNext(); ) {
@@ -320,7 +320,7 @@ extends ContainerSupport
     }
   }
 
-  /** invoke MessageLogicProviders across all currently loaded domains **/
+  /** invoke MessageLogicProviders across all currently loaded domains */
   private void invokeMessageLogicProviders(DirectiveMessage message) {
     for (Iterator iter = domainIterator(); iter.hasNext(); ) {
       Domain d = (Domain) iter.next();
@@ -328,7 +328,7 @@ extends ContainerSupport
     }
   }
 
-  /** invoke RestartLogicProviders across all currently loaded domains **/
+  /** invoke RestartLogicProviders across all currently loaded domains */
   private void invokeRestartLogicProviders(MessageAddress cid) {
     for (Iterator iter = domainIterator(); iter.hasNext(); ) {
       Domain d = (Domain) iter.next();
@@ -336,7 +336,7 @@ extends ContainerSupport
     }
   }
 
-  /** invoke ABAChangeLogicProviders across all currently loaded domains **/
+  /** invoke ABAChangeLogicProviders across all currently loaded domains */
   private void invokeABAChangeLogicProviders(Set communities) {
     for (Iterator iter = domainIterator(); iter.hasNext(); ) {
       Domain d = (Domain) iter.next();

@@ -29,10 +29,11 @@ package org.cougaar.core.domain;
 import org.cougaar.core.component.Service;
 
 /**
- * This service provides access to the XPlans.
+ * This service provides {@link Domain} access to other domain {@link
+ * XPlan}s.
  * <p>
- * This service is advertised by the domain manager to
- * its child components, which are typically domains.
+ * This service is advertised by the {@link DomainManager} to its
+ * child {@link Domain}s.
  */
 public interface XPlanService extends Service {
   XPlan getXPlan(String domainName);

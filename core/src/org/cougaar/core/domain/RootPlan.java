@@ -31,17 +31,22 @@ import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
 /**
- * Extra core support for LPs, such as fast UniqueObject lookup
- * support.
+ * The "root" plan provides blackboard access to {@link Domain}
+ * {@link LogicProvider}s, including a view of all {@link
+ * UniqueObject}s on the blackboard.
+ * <p>
+ * This is the interface that most domains use to access the
+ * blackboard.
  */
 public interface RootPlan
 extends BlackboardServesDomain, XPlan {
 
-  /** Find objects that are UniqueObjects using the UID as key **/
+  /** Find {@link UniqueObject}s using the {@link UID} as key */
   UniqueObject findUniqueObject(UID uid);
 
-  /** Add a DelayedLPAction to the set of actions to execute after
-   * most of the transaction work has completed.
-   **/
+  /**
+   * Add a {@link DelayedLPAction} to the set of actions to execute
+   * after most of the transaction work has completed.
+   */
   void delayLPAction(DelayedLPAction dla);
 }
