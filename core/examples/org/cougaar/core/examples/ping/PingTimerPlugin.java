@@ -290,7 +290,7 @@ extends ComponentPlugin
           ((limit > 0) ? 
            Integer.toString(limit) : 
            "inf")+
-          " from "+
+          "] from "+
           agentId+" to "+ping.getTarget()+
           ", uid "+ping.getUID());
     }

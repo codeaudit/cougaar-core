@@ -117,7 +117,56 @@ implements BlackboardClient
     super.unload();
   }
 
+  protected Ping queryPing(final UID uid) {
+    UnaryPredicate pred = new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return 
+          ((o instanceof Ping) &&
+           (uid.equals(((Ping) o).getUID())));
+      }
+    };
+    Ping ret = null;
+    try {
+      blackboard.openTransaction();
+      Collection c = blackboard.query(pred);
+      if ((c != null) && (c.size() >= 1)) {
+        ret = (Ping) c.iterator().next();
+      }
+    } finally {
+      blackboard.closeTransactionDontReset();
+    }
+    return ret;
+  }
+
+  protected void addPing(Ping ping) {
+    try {
+      blackboard.openTransaction();
+      blackboard.publishAdd(ping);
+    } finally {
+      blackboard.closeTransactionDontReset();
+    }
+  }
+
+  protected void removePing(Ping ping) {
+    try {
+      blackboard.openTransaction();
+      blackboard.publishRemove(ping);
+    } finally {
+      blackboard.closeTransactionDontReset();
+    }
+  }
+
   private class MyServlet extends HttpServlet {
+
+    private static final String ACTION_PARAM = "action";
+    private static final String ADD_VALUE = "Add";
+    private static final String REMOVE_VALUE = "Remove";
+    private static final String REFRESH_VALUE = "Refresh";
+
+    private static final String TARGET_PARAM = "target";
+    private static final String TIMEOUT_PARAM = "timeout";
+    private static final String LIMIT_PARAM = "limit";
+    private static final String REMOVE_UID_PARAM = "removeUID";
 
     public void doGet(
         HttpServletRequest req,
@@ -126,20 +175,26 @@ implements BlackboardClient
       String target = null;
       long timeout = DEFAULT_TIMEOUT;
       int limit = DEFAULT_LIMIT;
+      String sremoveUID = null;
         
-      String action = req.getParameter("action");
-      if ("Add".equals(action)) {
-        target = req.getParameter("target");
+      String action = req.getParameter(ACTION_PARAM);
+      if (ADD_VALUE.equals(action)) {
+        target = req.getParameter(TARGET_PARAM);
         if ((target != null) && (target.length() == 0)) {
           target = null;
         }
-        String stimeout = req.getParameter("timeout");
+        String stimeout = req.getParameter(TIMEOUT_PARAM);
         if (stimeout != null) {
           timeout = Long.parseLong(stimeout);
         }
-        String slimit = req.getParameter("limit");
+        String slimit = req.getParameter(LIMIT_PARAM);
         if (slimit != null) {
           limit = Integer.parseInt(slimit);
+        }
+      } else if (REMOVE_VALUE.equals(action)) {
+        sremoveUID = req.getParameter("removeUID");
+        if ((sremoveUID != null) && (sremoveUID.length() == 0)) {
+          sremoveUID = null;
         }
       }
 
@@ -151,6 +206,16 @@ implements BlackboardClient
         targetId = ClusterIdentifier.getClusterIdentifier(target);
 
         if (agentId.equals(targetId)) {
+          // use "setStatus" instead of "sendError" -- see bug 1259
+          res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+        }
+      }
+
+      Ping removePing = null;
+      if (sremoveUID != null) {
+        UID uid = UID.toUID(sremoveUID);
+        removePing = queryPing(uid);
+        if (removePing == null) {
           // use "setStatus" instead of "sendError" -- see bug 1259
           res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
@@ -178,7 +243,6 @@ implements BlackboardClient
       out.print(req.getRequestURI());
       out.print(
           "\">\n"+
-          "<input type=\"submit\" name=\"action\" value=\"Refresh\">"+
           "<p>");
 
       if (targetId != null) {
@@ -193,16 +257,27 @@ implements BlackboardClient
         UID uid = uidService.nextUID();
         Ping ping = new PingImpl(
             uid, agentId, targetId, timeout, limit);
-        try {
-          blackboard.openTransaction();
-          blackboard.publishAdd(ping);
-        } finally {
-          blackboard.closeTransaction();
-        }
+        addPing(ping);
 
         out.print(
             "<hr>"+
             "Added new ping from "+agentId+" to "+targetId+" with UID "+uid+
+            "<p>");
+      }
+
+      if (sremoveUID != null) {
+
+        if (removePing == null) {
+          out.print("Unknown ping "+sremoveUID);
+          out.print("</body></html>");
+          out.close();
+          return;
+        }
+
+        removePing(removePing);
+        out.print(
+            "<hr>"+
+            "Remove ping "+sremoveUID+
             "<p>");
       }
 
@@ -275,32 +350,85 @@ implements BlackboardClient
           out.print("</tr>\n");
         }
       }
+      out.print(
+          "</table>\n"+
+          "<input type=\"submit\" name=\""+
+          ACTION_PARAM+
+          "\" value=\""+
+          REFRESH_VALUE+
+          "\">");
+
+      // allow user to remove an existing ping
+      out.print(
+          "<p><hr><p>"+
+          "<h2>Remove an existing Ping:</h2>\n");
+      if (n > 0) {
+        out.print(
+            "<select name=\""+
+            REMOVE_UID_PARAM+
+            "\">");
+        Iterator iter = c.iterator();
+        for (int i = 0; i < n; i++) {
+          Ping ping = (Ping) iter.next();
+          UID uid = ping.getUID();
+          out.print("<option value=\"");
+          out.print(uid);
+          out.print("\">");
+          out.print(uid);
+          out.print("</option>");
+        }
+        out.print(
+            "</select>"+
+            "<input type=\"submit\" name=\""+
+            ACTION_PARAM+
+            "\" value=\""+
+            REMOVE_VALUE+
+            "\">\n");
+      } else {
+        out.print("<i>none</i>");
+      }
 
       out.print(
-          "</table>"+
           "<hr>"+
+          "<h2>Add new Ping:</h2>"+
           "<table>"+
-          "Add new Ping:<p>"+
           "<tr><td>"+
-          "Target Agent</td><td><input name=\"target\" type=\"text\""+
+          "Target Agent</td><td><input name=\""+
+          TARGET_PARAM+
+          "\" type=\"text\""+
           " size=30"+
           ((target != null) ? (" value=\""+target+"\"") : "")+
-          "></td><td><i>Destination agent, can't be "+
+          "></td><td><i>Destination agent, which can't be "+
           agentId+
           "</i></td></tr>\n"+
-          "<tr><td>Timeout Millis</td><td><input name=\"timeout\""+
-          " type=\"text\" size=30 value=\""+
+          "<tr><td>Timeout Millis</td><td><input name=\""+
+          TIMEOUT_PARAM+
+          "\" type=\"text\" size=30 value=\""+
           timeout+
-          "\"></td><td><i>Milliseconds until timeout, or -1"+
-          "if no timeout</i></td></tr>\n"+
-          "<tr><td>Repeat Limit</td><td><input name=\"limit\""+
-          " type=\"text\" size=30 value=\""+
+          "\"></td><td><i>Milliseconds until timeout, or -1 "+
+          "if no timeout, default is "+
+          DEFAULT_TIMEOUT+
+          "</i></td></tr>\n"+
+          "<tr><td>Repeat Limit</td><td><input name=\""+
+          LIMIT_PARAM+
+          "\" type=\"text\" size=30 value=\""+
           limit+
-          "\"></td><td><i>Number of pings to send</i></td></tr>\n"+
-          "<input type=\"submit\" name=\"action\" value=\"Add\">\n"+
+          "\"></td><td><i>Number of pings to send, or -1 for"+
+          " infinite, default is "+
+          DEFAULT_LIMIT+
+          "</i></td></tr>\n"+
+          "</table>\n"+
+          "<input type=\"submit\" name=\""+
+          ACTION_PARAM+
+          "\" value=\""+
+          ADD_VALUE+
+          "\">\n"+
           " &nbsp; "+
-          "<input type=\"submit\" name=\"action\" value=\"Refresh\">"+
-          "</table>"+
+          "<input type=\"submit\" name=\""+
+          ACTION_PARAM+
+          "\" value=\""+
+          REFRESH_VALUE+
+          "\">"+
           "</form>\n");
 
       out.print(
