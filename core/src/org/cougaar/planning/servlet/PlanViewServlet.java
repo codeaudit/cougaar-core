@@ -185,6 +185,10 @@ extends HttpServlet
     public static final String PREDICATE_DEBUG = "predDebug";
     private boolean predDebug;
 
+    // sort results by UID
+    public static final String SORT_BY_UID = "sortByUID";
+    private boolean sortByUID; 
+
     // writer from the request
     private PrintWriter out;
 
@@ -232,8 +236,16 @@ extends HttpServlet
             } else if (name.equalsIgnoreCase(PREDICATE_STYLE)) {
               predStyle = value;
             } else if (name.equalsIgnoreCase(PREDICATE_DEBUG)) {
-              predDebug = "true".equalsIgnoreCase(value);
-            }
+              predDebug = 
+                ((value != null) ?  
+                 value.equalsIgnoreCase("true") : 
+                 true);
+            } else if (name.equalsIgnoreCase(SORT_BY_UID)) {
+	      sortByUID = 
+		((value != null) ?  
+                 value.equalsIgnoreCase("true") : 
+                 true);
+	    }
           }
         };
 
@@ -670,7 +682,10 @@ extends HttpServlet
         System.out.println("\nDisplay Tasks Summary");
       }
       // find tasks
+      boolean oldSortByUID = sortByUID;
+      sortByUID = false;
       Collection col = findAllTasks();
+      sortByUID = oldSortByUID;
       int numTasks = col.size();
       Iterator tasksIter = col.iterator();
       if (DEBUG) {
@@ -1337,6 +1352,7 @@ extends HttpServlet
           // user should enter an encoded UID
           ITEM_UID+
           "\" size=12><br>\n"+
+	  "Sort results by UID<input type=\"checkbox\" name=\"sortByUID\" value=\"true\"><br>\n"+
           "<input type=\"submit\" name=\"formSubmit\" value=\"Search\"><br>\n"+
           "<p>\n"+
           // link to advanced search
@@ -3180,6 +3196,7 @@ extends HttpServlet
     private static final byte _FLAG_LIMIT   = (1 << 0);
     private static final byte _FLAG_VERB    = (1 << 1);
     private static final byte _FLAG_VERBOSE = (1 << 2);
+    private static final byte _FLAG_SORT    = (1 << 3);
 
     /**
      * printLinkToAllTasks for the local cluster.
@@ -3228,6 +3245,9 @@ extends HttpServlet
         if (verbose) {
           flags |= _FLAG_VERBOSE;
         }
+	if (sortByUID)
+	  out.print ("&" + SORT_BY_UID + "=true");
+
         out.print("\" target=\"tablesFrame\">");
         // print over-customized output .. make parameter?
         switch (flags) {
@@ -3992,7 +4012,36 @@ extends HttpServlet
     private Collection searchUsingPredicate(
         UnaryPredicate pred) 
     {
-      return support.queryBlackboard(pred);
+      Collection col = support.queryBlackboard(pred);
+      if (sortByUID && 
+          (col.size() > 1)) {
+        Object[] a = col.toArray();
+        Arrays.sort(a, THE_ONLY_UID_COMPARATOR);
+        return Arrays.asList(a);
+      } else {
+        return col;
+      }
+    }
+
+    private static final Comparator THE_ONLY_UID_COMPARATOR = new UIDComparator ();
+
+    private static class UIDComparator implements Comparator {
+      public int compare (Object first, Object second) {
+	if (first instanceof UniqueObject) {
+	  if (second instanceof UniqueObject) {
+	    // return the usual UID compare
+	    UID u1 = ((UniqueObject) first).getUID();
+	    UID u2 = ((UniqueObject) second).getUID();
+	    return u1.compareTo(u2);
+	  } else {
+	    return -1;
+	  }
+	} else if (second instanceof UniqueObject) {
+	  return 1;
+	} else {
+	  return 0;
+	}
+      }
     }
 
     private UniqueObject findUniqueObjectWithUID(
