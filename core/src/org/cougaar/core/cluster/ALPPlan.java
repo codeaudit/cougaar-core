@@ -120,7 +120,14 @@ public class ALPPlan extends Subscriber
     public boolean remove(Object o) {
       boolean result = super.remove(o);
       if (!result) {
-        System.err.println("Warning!!!!!!!!!! alpPlanObjects.remove object not published: " + o.toString());
+        PublishStack priorStack = null;
+        if (stacks != null) {
+          priorStack = (PublishStack) stacks.get(o);
+        }
+        throw new PublishException("ALPPlan.alpPlanObjects.remove object not published: " + o.toString(),
+                                   priorStack);
+      } else if (stacks != null) {
+        stacks.put(o, new PublishStack("Prior remover: "));
       }
       return result;
     }
