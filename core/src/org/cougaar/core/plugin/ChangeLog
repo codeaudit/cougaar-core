@@ -1,3 +1,15 @@
+2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/PlugInHelper.java:
+	Applies to Bug #196
+	Use AllocationResultHelper for createEstimatedAllocationResult.
+	That code is now in AllocationResultHelper.
+
+	* util/AllocationResultHelper.java:
+	Applies to Bug #196
+	New class supporting phased allocation results needed for the
+	correct handling of multi-day projections.
+
 1999-07-13  Ray Tomlinson  <rtomlinson@bbn.com>
 
 	* PlugInAdapter
