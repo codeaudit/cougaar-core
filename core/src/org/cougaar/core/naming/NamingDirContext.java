@@ -197,7 +197,15 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
       if (nsObject == null) {
+        NamingEnumeration bindings = listBindings("");
+        while (bindings.hasMore()) {
+          Binding binding = (Binding) bindings.next();
+          
+          System.out.println("\t" + binding.getName() + " " + binding.getObject());
+        } 
+        
         throw new NameNotFoundException(name + " not found");
+
       }
       
       // Get attributes
@@ -245,6 +253,21 @@ public class NamingDirContext extends NamingContext implements DirContext {
   // destroySubcontext() already uses unbind() so we just need to
   // override unbind() to affect both unbind() and destroySubcontext().
   public void unbind(Name name) throws NamingException {
+    if (name.isEmpty()) {
+      throw new InvalidNameException("Cannot unbind empty name");
+    }
+
+    // Sigh .... would like to use getNSObject but name may be in a sub context
+    // so use lookup to make sure that we find the object.
+    try {
+      if (lookup(name) instanceof Context) {
+        throw new OperationNotSupportedException("Use destroySubContext to remove a Context.");
+      }
+    } catch (NameNotFoundException nnfe) {
+      // Object doesn't  so we can stop now 
+      return;
+    }
+
     try {
       // Get attributes that belong to name
       Attributes attrs = getAttributes(name);
@@ -277,10 +300,15 @@ public class NamingDirContext extends NamingContext implements DirContext {
    */
   public void bind(Name name, Object obj, Attributes attrs)
     throws NamingException {
+    System.out.println("Attempt to bind :" + name + " in " + myDirectory.getPath()); 
     if (name.isEmpty()) {
       throw new InvalidNameException("Cannot bind empty name");
     }
     
+    if (obj instanceof Context) {
+      throw new OperationNotSupportedException("Use createSubContext to create a Context.");
+    }
+
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
@@ -341,6 +369,10 @@ public class NamingDirContext extends NamingContext implements DirContext {
       throw new InvalidNameException("Cannot bind empty name");
     }
     
+    if (obj instanceof Context) {
+      throw new OperationNotSupportedException("Can not use rebind with a Context.");
+    }
+
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
@@ -348,6 +380,10 @@ public class NamingDirContext extends NamingContext implements DirContext {
     if (nm.size() == 1) {
       // Atomic name
       
+      if (getNSObject(getDirectory(), atom) instanceof Context) {
+        throw new OperationNotSupportedException("Can not use rebind to replace a Context.");
+      }
+
       // Call getStateToBind for using any state factories
       DirStateFactory.Result res = 
         DirectoryManager.getStateToBind(obj, new CompositeName().add(atom), this, myEnv, 
@@ -360,7 +396,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
         arrayList.add(((Attribute) cloneEnum.next()).clone());
       }
 
-      
       // Add object to internal data structure
       try {
         getNS().put(getDirectory(), atom, res.getObject(), arrayList);
@@ -988,6 +1023,8 @@ public class NamingDirContext extends NamingContext implements DirContext {
       }
     } 
 
+     
+     
     c.rebind("foo", "mex", new BasicAttributes("fact", "fiction"));
     System.out.println("Contents of c after rebinding foo");
     bindings = c.listBindings("");
@@ -1020,10 +1057,6 @@ public class NamingDirContext extends NamingContext implements DirContext {
     mods[1] = new ModificationItem(REPLACE_ATTRIBUTE, 
                                    replaceAttribute);
 
-    /*
-    mods[2] = new ModificationItem(REMOVE_ATTRIBUTE, 
-                                   new BasicAttribute("chocolate"));
-    */
     mods[2] = new ModificationItem(REMOVE_ATTRIBUTE, 
                                    attributes.get("chocolate"));
     
@@ -1036,8 +1069,8 @@ public class NamingDirContext extends NamingContext implements DirContext {
     System.out.println("");
 
 
-    c.unbind("foo");
-    System.out.println("Contents of c after unbinding foo");
+    c.rename("foo", "roo");
+    System.out.println("Contents of c after renaming foo to roo");
     bindings = c.listBindings("");
     while (bindings.hasMore()) {
       Binding binding = (Binding) bindings.next();
@@ -1051,6 +1084,56 @@ public class NamingDirContext extends NamingContext implements DirContext {
     } 
     System.out.println("");
 
+    c.unbind("roo");
+    System.out.println("Contents of c after unbinding roo");
+    bindings = c.listBindings("");
+    while (bindings.hasMore()) {
+      Binding binding = (Binding) bindings.next();
+
+      System.out.println("\t" + binding.getName() + " " + binding.getObject());
+
+      enum = c.getAttributes(binding.getName()).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t\t attribute:" + enum.next());
+      }
+    } 
+    System.out.println("");
+
+
+    System.out.println("Contents of initial context with associated 'fact' attribute");
+    bindings = ctx.listBindings("");
+    while (bindings.hasMore()) {
+      Binding binding = (Binding) bindings.next();
+
+      System.out.println(binding.getName() + " " + binding.getObject());
+      returnAttrIDs = new String[1];
+      returnAttrIDs[0] = "fact";
+      enum = ctx.getAttributes(binding.getName(), returnAttrIDs).getAll();
+      while (enum.hasMore()) {
+        System.out.println("\t attribute:" + enum.next());
+      }
+    } 
+
+    // Boundary conditions -
+    Object o1 = ctx.lookup("/b/c/boo");
+    Object o2 = ctx.lookup("b/c/boo");
+    boolean same = (o1 == o2);
+    System.out.println("/b/c/boo == b/c/boo: " + same);
+
+    System.out.println("Attempt to remove a Context");
+    try {
+      ctx.unbind("b");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    System.out.println("Attempt to rename a Context"); 
+    try {
+      ctx.rename("b", "d");
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    
     System.out.println("Contents of initial context with associated 'fact' attribute");
     bindings = ctx.listBindings("");
     while (bindings.hasMore()) {

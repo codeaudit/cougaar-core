@@ -87,10 +87,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
     if (dirMap != null) {
       synchronized (dirMap) {
-        NSObject o = (NSObject) dirMap.get(subDirName);
+        NSObjectAndAttributes o = 
+          (NSObjectAndAttributes) dirMap.get(subDirName);
         if (o == null) {
           subDirectory = new NSDirectory(fullName(directory, subDirName));
-          o = new NSObject(subDirectory, null);
+          o = new NSObjectAndAttributes(subDirectory, null);
           dirMap.put(subDirName, o);
           
           putDirMap(subDirectory, new NSDirMap(attributes));
@@ -99,6 +100,31 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
 
     return subDirectory;
+  }
+
+  public void destroySubDirectory(NameServer.Directory directory) { 
+    Map dirMap = getDirectory(directory, false);
+
+    if ((dirMap != null) && (dirMap.size() == 0)) {
+      synchronized (mapOfMaps) {
+        mapOfMaps.remove(directory);
+      }
+
+
+      // strip trailing DirSeparators
+      String dirName = directory.getPath();
+      while (dirName.endsWith(DirSeparator)) {
+        dirName = dirName.substring(0, dirName.length() - 1);
+      }
+
+      Map parentMap = getDirectory(new NSDirectory(parseDirectory(dirName)), 
+                                   false);
+      if (dirMap != null) {
+        synchronized (parentMap) {
+          parentMap.remove(getTail(dirName));
+        }
+      }
+    }
   }
 
   public Collection entrySet(String directory) {
@@ -114,7 +140,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
         for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
           Map.Entry ent = (Map.Entry) i.next();
           Object key = ent.getKey();
-          Object value = ((NSObject) ent.getValue()).getObject();
+          Object value = ent.getValue();
+          
+          if (value instanceof NSObjectAndAttributes) {
+            value = ((NSObjectAndAttributes) value).getObject();
+          }
           l.add(new NSEntry(key, value));
         }
       }
@@ -133,13 +163,18 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
   public Object get(NameServer.Directory directory, String name) {
     Map dirMap = getDirectory(directory, false);
+
+    if ((name == null) || (name.equals(""))) {
+      return directory;
+    }
+
     Object found = null;
 
     if (dirMap != null) {
       synchronized (dirMap) {
         found = dirMap.get(name);
         if (found != null) {
-          found = ((NSObject) found).getObject();
+          found = ((NSObjectAndAttributes) found).getObject();
         }
       }
     }
@@ -161,7 +196,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
     if (dirMap != null) {
       synchronized (dirMap) {
-        NSObject found = (NSObject) dirMap.get(name);
+        NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
         if (found != null) {
           attr = found.getAttributes();
         }
@@ -228,11 +263,17 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       return null;
     }
 
+    if (o instanceof NameServer.Directory) {
+      return null;
+    }
+
     Map dirMap = getDirectory(directory, true);
 
     if (dirMap != null) {
       synchronized (dirMap) {
-        NSObject found = (NSObject) dirMap.put(name, new NSObject(o, attributes));
+        NSObjectAndAttributes found = 
+          (NSObjectAndAttributes) dirMap.put(name, 
+                                             new NSObjectAndAttributes(o, attributes));
 
         if (found != null) {
           return found.getObject();
@@ -260,13 +301,13 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
     if (dirMap != null) {
       synchronized (dirMap) {
-        NSObject found = (NSObject) dirMap.get(name);
+        NSObjectAndAttributes found = (NSObjectAndAttributes) dirMap.get(name);
         if (found != null) {
           found.setAttributes(attributes);
         } else {
           
           // ??? Is it okay to have a null object?
-          dirMap.put(name, new NSObject(null, attributes));
+          dirMap.put(name, new NSObjectAndAttributes(null, attributes));
         }
       }
     }
@@ -279,15 +320,60 @@ public class NSImpl extends UnicastRemoteObject implements NS {
 
   /** remove an object (and name) from the directory **/
   public Object remove(NameServer.Directory directory, String name) {
+    if ((name == null) || (name.equals(""))) {
+      return null;
+    }
+
     Map dirMap = getDirectory(directory, false);
 
     if (dirMap != null) {
       synchronized (dirMap) {
-        NSObject remove = (NSObject) dirMap.remove(name);
-        if (remove != null) {
-          return remove.getObject();
-        } else {
+        Object found = dirMap.get(name);
+        if ((found == null) || 
+            (found instanceof NameServer.Directory)) {
+          // Use destroySubDirectory to remove directories
           return null;
+        } else {
+          NSObjectAndAttributes remove = 
+            (NSObjectAndAttributes) dirMap.remove(name);
+          if (remove != null) {
+            return remove.getObject();
+          } else {
+            return null;
+          }
+        }
+      }
+    } else {
+      return null;
+    }
+  }
+
+  /** rename an object in the directory **/
+  public Object rename(NameServer.Directory directory, String oldName,
+                       String newName) {
+    if ((oldName == null) || (oldName.equals("")) ||
+        (newName == null) || (newName.equals(""))) {
+      return null;
+    }
+
+    Map dirMap = getDirectory(directory, false);
+
+    if (dirMap != null) {
+      synchronized (dirMap) {
+        Object found = dirMap.get(oldName);
+        if ((found == null) || 
+            (found instanceof NameServer.Directory)) {
+          // Use destroySubDirectory to remove directories
+          return null;
+        } else {
+          NSObjectAndAttributes nsObj = 
+            (NSObjectAndAttributes) dirMap.remove(oldName);
+          dirMap.put(newName, nsObj);
+          if (nsObj != null) {
+            return nsObj.getObject();
+          } else {
+            return null;
+          }
         }
       }
     } else {
@@ -323,9 +409,13 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       synchronized (dirMap) {
         for (Iterator i = dirMap.entrySet().iterator(); i.hasNext(); ) {
           Map.Entry ent = (Map.Entry) i.next();
-          NSObject nsObject = (NSObject) ent.getValue();
+          Object value = ent.getValue();
           
-          l.add(nsObject.getObject());
+          if (value instanceof NSObjectAndAttributes) {
+            l.add(((NSObjectAndAttributes) value).getObject());
+          } else {
+            l.add(value);
+          }
         }
       }
     }
@@ -488,11 +578,11 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
   }
 
-  private class NSObject {
+  private class NSObjectAndAttributes {
     private Object _object;
     private Collection _attributes;
 
-    public NSObject(Object object, Collection attributes) {
+    public NSObjectAndAttributes(Object object, Collection attributes) {
       _object = object;
 
       if (attributes != null) {
@@ -536,10 +626,10 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       foo.put(NS.DirSeparator + "bar", "Bar", new ArrayList(attrs));
 
       attrs.add(new BasicAttribute("fact", " the letter C"));
-      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "a", "a", new ArrayList(attrs));
+      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "a", "aString", new ArrayList(attrs));
       
       attrs.add(new BasicAttribute("fact", " the letter D"));
-      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "b", "b", new ArrayList(attrs));
+      foo.put(NS.DirSeparator + "clusters" + NS.DirSeparator + "b", "bString", new ArrayList(attrs));
 
       System.out.println("foo = "+foo.get(NS.DirSeparator + "foo")+" " + foo.getAttributes(NS.DirSeparator + "foo"));
       System.out.println("bar = "+foo.get(NS.DirSeparator + "bar")+ " " + foo.getAttributes(NS.DirSeparator + "bar"));
@@ -585,6 +675,28 @@ public class NSImpl extends UnicastRemoteObject implements NS {
         Map.Entry entry = (Map.Entry) a.next();
         System.out.println("\t"+entry.getKey()+ " " + entry.getValue());
       }
+
+      System.out.println("createSubDirectory: " + NS.DirSeparator + 
+                         "clusters" + NS.DirSeparator + "subDir");
+      NameServer.Directory clustersDir = 
+        (NameServer.Directory) foo.get(NS.DirSeparator + "clusters" + 
+                                       NS.DirSeparator);
+      NameServer.Directory subDir = 
+        foo.createSubDirectory(clustersDir, "subDir");
+      for (Iterator a = 
+             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+           a.hasNext();){
+        System.out.println("\t"+a.next());
+      }
+
+      System.out.println("destroySubDirectory: " + subDir);
+      foo.destroySubDirectory(subDir);
+      for (Iterator a = 
+             foo.keySet(NS.DirSeparator + "clusters" + NS.DirSeparator).iterator(); 
+           a.hasNext();){
+        System.out.println("\t"+a.next());
+      }
+
       System.exit(1);
 
     } catch (Exception e) {

@@ -33,6 +33,8 @@ public interface NS extends Remote {
   NameServer.Directory createSubDirectory(NameServer.Directory directory, 
                                           String subDirName) throws RemoteException;
  
+  void destroySubDirectory(NameServer.Directory directory) throws RemoteException;
+ 
   Collection entrySet(String directory) throws RemoteException;
   Collection entrySet(NameServer.Directory directory) throws RemoteException;
   
@@ -47,7 +49,7 @@ public interface NS extends Remote {
                            String name) throws RemoteException;
 
   NameServer.Directory getRoot() throws RemoteException;
-
+ 
   boolean isEmpty(String directory) throws RemoteException;
   boolean isEmpty(NameServer.Directory directory) throws RemoteException;
 
@@ -68,6 +70,8 @@ public interface NS extends Remote {
   Object remove(String name) throws RemoteException;
   Object remove(NameServer.Directory directory, String name) throws RemoteException;
 
+  Object rename(NameServer.Directory directory, String oldName, String newName) throws RemoteException;
+
   int size(String directory) throws RemoteException;
   int size(NameServer.Directory directory) throws RemoteException;
 
@@ -75,6 +79,7 @@ public interface NS extends Remote {
   Collection values(String directory) throws RemoteException;
   Collection values(NameServer.Directory directory) throws RemoteException;
 }
+
 
 
 

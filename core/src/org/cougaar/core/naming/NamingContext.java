@@ -95,6 +95,10 @@ public class NamingContext implements Context {
       throw new InvalidNameException("Cannot bind empty name");
     }
     
+    if (obj instanceof Context) {
+      throw new OperationNotSupportedException("Use createSubContext to create a Context.");
+    }
+
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
@@ -138,6 +142,10 @@ public class NamingContext implements Context {
       throw new InvalidNameException("Cannot bind empty name");
     }
     
+    if (obj instanceof Context) {
+      throw new OperationNotSupportedException("Can not use rebind with a Context.");
+    }
+
     // Extract components that belong to this namespace
     Name nm = getMyComponents(name);
     String atom = nm.get(0);
@@ -145,6 +153,10 @@ public class NamingContext implements Context {
     if (nm.size() == 1) {
       // Atomic name
       
+      if (getNSObject(getDirectory(), atom) instanceof Context) {
+        throw new OperationNotSupportedException("Can not use rebind to replace a Context.");
+      }
+
       // Call getStateToBind for using any state factories
       obj = NamingManager.getStateToBind(obj, 
                                          new CompositeName().add(atom), 
@@ -175,7 +187,7 @@ public class NamingContext implements Context {
   
   public void unbind(Name name) throws NamingException {
     if (name.isEmpty()) {
-      throw new InvalidNameException("Cannot unbind empty name");
+      throw new InvalidNameException("Can not unbind empty name");
     }
     
     // Extract components that belong to this namespace
@@ -184,6 +196,10 @@ public class NamingContext implements Context {
     
     // Remove object from internal data structure
     if (nm.size() == 1) {
+      if (getNSObject(getDirectory(), atom) instanceof Context) {
+        throw new OperationNotSupportedException("Can not unbind Context. Use destroySubContext instead.");
+      }
+        
       // Atomic name: Find object in internal data structure
       try {
         getNS().remove(getDirectory(), atom);
@@ -220,39 +236,44 @@ public class NamingContext implements Context {
                                                "Do not support rename across different contexts");
     }
     
-    String oldatom = oldnm.get(0);
-    String newatom = newnm.get(0);
+    String oldAtom = oldnm.get(0);
+    String newAtom = newnm.get(0);
     
     if (oldnm.size() == 1) {
       // Atomic name: Add object to internal data structure
       // Check if new name exists
-      if (getNSObject(getDirectory(), newatom) != null) {
+      if (getNSObject(getDirectory(), newAtom) != null) {
         throw new NameAlreadyBoundException(newName.toString() +
                                             " is already bound");
       }
       
       try {
-        // Check if old name is bound
-        Object oldBinding = getNS().remove(getDirectory(), oldatom);
+        Object oldBinding = lookup(oldAtom);
+        
         if (oldBinding == null) {
           throw new NameNotFoundException(oldName.toString() + " not bound");
+        } else if (oldBinding instanceof Context) {
+          throw new OperationNotSupportedException("Do not support rename of a Context");
+        } 
+
+        oldBinding = getNS().rename(getDirectory(), oldAtom, newAtom);
+        if (oldBinding == null) {
+          throw new NamingException("Unable to rename " + oldName.toString());
         }
-        
-        getNS().put(getDirectory(), newatom, oldBinding);
       } catch (RemoteException re) {
         re.printStackTrace();
       }
     } else {
       // Simplistic implementation: support only rename within same context
-      if (!oldatom.equals(newatom)) {
+      if (!oldAtom.equals(newAtom)) {
         throw new OperationNotSupportedException(
                                                  "Do not support rename across different contexts");
       }
       
       // Intermediate name: Consume name in this context and continue
-      Object nsObj = getNSObject(getDirectory(), oldatom);
+      Object nsObj = getNSObject(getDirectory(), oldAtom);
       if (!(nsObj instanceof Context)) {
-        throw new NotContextException(oldatom +
+        throw new NotContextException(oldAtom +
                                       " does not name a context");
       }
       ((Context) nsObj).rename(oldnm.getSuffix(1), newnm.getSuffix(1));
@@ -336,8 +357,7 @@ public class NamingContext implements Context {
     if (nm.size() == 1) {
       // Atomic name: Find object in internal data structure
       if (nsObj != null) {
-        throw new NameAlreadyBoundException(
-                                            "Use rebind to override");
+        throw new NameAlreadyBoundException("Use rebind to override");
       }
       
       // Add child to internal data structure
@@ -346,7 +366,7 @@ public class NamingContext implements Context {
         if (dir != null) {
           return createContext(dir);
         } else {
-          return null;
+          throw new NamingException("Unable to create subcontext.");
         }
       } catch (RemoteException re) {
         re.printStackTrace();
