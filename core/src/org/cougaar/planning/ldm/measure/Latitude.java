@@ -26,8 +26,8 @@ package org.cougaar.planning.ldm.measure;
 
 public final class Latitude extends AbstractMeasure
 {
-  private final double upperBound = 90.0;
-  private final double lowerBound = -90.0;
+  private static final double upperBound = 90.0;
+  private static final double lowerBound = -90.0;
 	
   //no real conversions for now
   private static final Conversion DEGREES_TO_DEGREES = new Conversion() {

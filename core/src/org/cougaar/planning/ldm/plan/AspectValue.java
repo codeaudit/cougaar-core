@@ -24,9 +24,9 @@ package org.cougaar.planning.ldm.plan;
 import java.io.Serializable;
 import org.cougaar.util.MoreMath;
 
-/*
- * @author  ALPINE <alpine-software@bbn.com>
- *
+/** AspectValue is the essential "value" abstraction with respect to
+ * evaluation of the goodness or correctness of a particular solution.
+ * @see AllocationResult
  */
  
 public class AspectValue implements AspectType, Serializable, Cloneable {
