@@ -53,6 +53,9 @@ import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.planning.ldm.plan.WorkflowImpl;
 import org.cougaar.core.util.UID;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 import java.util.*;
 
 import org.cougaar.util.UnaryPredicate;
@@ -67,6 +70,8 @@ public class ReceiveNotificationLP
   extends LogPlanLogicProvider
   implements MessageLogicProvider
 {
+  private static Logger logger = Logging.getLogger(ReceiveNotificationLP.class);
+
   public ReceiveNotificationLP(LogPlanServesLogicProvider logplan,
                                ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
@@ -97,8 +102,7 @@ public class ReceiveNotificationLP
         UID remoteTUID = remoteT.getUID();
         if (!(remoteTUID.equals(childuid))) {
           // this was likely due to a race condition...
-          System.err.print(
-                           "Got a Notification for the wrong allocation:"+
+          logger.error("Got a Notification for the wrong allocation:"+
                            "\n\tTask="+tuid+
                            "  ("+pe.getTask().getUID()+")"+
                            "\n\tFrom="+childuid+
@@ -164,7 +168,7 @@ public class ReceiveNotificationLP
     }
     */
     } else {
-      System.err.print("Got a Notification for an inappropriate PE:\n"+
+      logger.error("Got a Notification for an inappropriate PE:\n"+
                        "\tTask="+tuid+"\n"+
                        "\tFrom="+childuid+"\n"+
                        "\tResult="+result+"\n"+
@@ -189,28 +193,32 @@ public class ReceiveNotificationLP
       Workflow wf = pe.getWorkflow();
 
       // compute the new result from the subtask results.
-      AllocationResult ar = wf.aggregateAllocationResults();
-      if (ar != null) {         // if the aggragation is defined:
+      try {
+        AllocationResult ar = wf.aggregateAllocationResults();
+        if (ar != null) {         // if the aggragation is defined:
+          
+          // get the TaskScoreTable used in the aggregation
+          TaskScoreTable aggTST = ((WorkflowImpl)wf).getCurrentTST();
 
-	// get the TaskScoreTable used in the aggregation
-	TaskScoreTable aggTST = ((WorkflowImpl)wf).getCurrentTST();
+          // get the UID of the child task that caused this aggregation
+          int l = ids.size();
+          for (int i = 0; i<l; i++) {
+            UID childuid = (UID) ids.get(i);
+            // yuck! another n^2 operation.  sigh.
+            // surely we should be able to do better...
+            ((ExpansionImpl)pe).setSubTaskResults(aggTST,childuid);
+          }
 
-	// get the UID of the child task that caused this aggregation
-        int l = ids.size();
-        for (int i = 0; i<l; i++) {
-          UID childuid = (UID) ids.get(i);
-          // yuck! another n^2 operation.  sigh.
-          // surely we should be able to do better...
-          ((ExpansionImpl)pe).setSubTaskResults(aggTST,childuid);
+          // set the result on the
+          ((PEforCollections) pe).setReceivedResult(ar);
+
+          // publish the change to the blackboard.
+          logplan.change(pe, null); // drop the change details.
+          //logplan.change(pe, changes);
+          //System.err.print("=");
         }
-
-        // set the result on the
-        ((PEforCollections) pe).setReceivedResult(ar);
-
-        // publish the change to the blackboard.
-	logplan.change(pe, null); // drop the change details.
-	//logplan.change(pe, changes);
-        //System.err.print("=");
+      } catch (RuntimeException re) {
+        logger.error("Caught exception while processing DelayedAggregateResults for "+pe+"("+id+")", re);        
       }
     }
 
