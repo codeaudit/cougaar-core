@@ -1220,7 +1220,7 @@ final class Distributor {
   public void invokeABAChangeLPs(Set communities) {
     assert  Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
-    synchronized (transactionLock) { 
+    synchronized (transactionLock) { // this was distributorLock, which appears wrong
       try {
         blackboard.startTransaction();
         blackboard.invokeABAChangeLPs(communities);
