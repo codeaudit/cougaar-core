@@ -31,6 +31,15 @@ public class TrustStatusServiceImpl extends Observable
 
   public TrustStatusServiceImpl() {
     super();
+    //get our property if its set
+    String proplevel = 
+      System.getProperty("org.cougaar.node.trustStatus");
+    if (proplevel != null) {
+      int newlevel = new Integer(proplevel).intValue();
+      if (newlevel >= 0 && newlevel <= 10) {
+        trustlevel = newlevel;
+      }
+    }
   }
 
   // implement interface
