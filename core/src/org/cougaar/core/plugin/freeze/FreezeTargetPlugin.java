@@ -185,7 +185,7 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
     }
   }
 
-  private void checkStopped() {
+  private synchronized void checkStopped() {
     int stillRunning = badGuys.size();
     Set unfrozenAgents;
     if (stillRunning <= 0) {
