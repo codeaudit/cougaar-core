@@ -45,6 +45,8 @@ public class CompletionRelay
   transient Token token;
   private double completionThreshold;
   private double cpuThreshold;
+  private int persistenceCount = 0;
+  transient int oldPersistenceCount = 0;
 
   CompletionRelay(MessageAddress source, Set targets,
                   double completionThreshold, double cpuThreshold)
@@ -73,9 +75,23 @@ public class CompletionRelay
     return cpuThreshold;
   }
 
+  boolean persistenceNeeded() {
+    return persistenceCount != oldPersistenceCount;
+  }
+
+  void resetPersistenceNeeded() {
+    if (response != null) {
+      oldPersistenceCount = persistenceCount;
+    }
+  }
+
   // Application Source API
   synchronized SortedSet getLaggards() {
     return new TreeSet(laggardsByTarget.values());
+  }
+
+  void setPersistenceNeeded() {
+    persistenceCount++;
   }
             
   // Relay.Source implementation
@@ -131,9 +147,11 @@ public class CompletionRelay
     if (newContent instanceof CompletionRelay) {
       CompletionRelay cr = (CompletionRelay) newContent;
       if (this.completionThreshold != cr.completionThreshold ||
-          this.cpuThreshold != cr.cpuThreshold) {
+          this.cpuThreshold != cr.cpuThreshold ||
+          this.persistenceCount != cr.persistenceCount) {
         this.cpuThreshold = cr.cpuThreshold;
         this.completionThreshold = cr.completionThreshold;
+        this.persistenceCount = cr.persistenceCount;
         return Relay.CONTENT_CHANGE;
       }
       return Relay.NO_CHANGE;

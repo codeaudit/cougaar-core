@@ -52,7 +52,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   /** Length of inactive period required before time is advanced **/
   private static final long DEFAULT_NORMAL_TIME_ADVANCE_DELAY = 5000L;
   /** Length of inactive period required before time is advanced for the first time **/
-  private static final long DEFAULT_INITIAL_TIME_ADVANCE_DELAY = 240000L;
+  private static final long DEFAULT_INITIAL_TIME_ADVANCE_DELAY = 150000L;
   /** Length of time after time is advanced before another advance is allowed. **/
   private static final long DEFAULT_ADVANCE_TIME_ADVANCE_DELAY = 20000L;
   /** How much to advance time **/
@@ -65,6 +65,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
   private long ADVANCE_TIME_ADVANCE_DELAY = DEFAULT_ADVANCE_TIME_ADVANCE_DELAY;
   private long TIME_STEP = DEFAULT_TIME_STEP;
   private int advancementSteps = 0;
+  private boolean persistenceNeeded = false;
   private static final Class[] requiredServices = {
     ServletService.class
   };
@@ -154,7 +155,13 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
    * first time advance.
    **/
   protected void checkTimeAdvance(boolean haveLaggard) {
-    if (advancementSteps <= 0) return;
+    if (advancementSteps <= 0) {
+      if (persistenceNeeded) {
+        setPersistenceNeeded();
+        persistenceNeeded = false;
+      }
+      return;
+    }
     long demoNow = alarmService.currentTimeMillis();
     if (tomorrow == Long.MIN_VALUE) {
       tomorrow = (demoNow / TIME_STEP) * TIME_STEP; // Beginning of today
@@ -172,6 +179,7 @@ public abstract class CompletionSocietyPlugin extends CompletionSourcePlugin {
         long newTomorrow = ((demoNow / TIME_STEP) + 1) * TIME_STEP;
         advancementSteps -= (int) ((newTomorrow - tomorrow) / TIME_STEP);
         tomorrow = newTomorrow;
+        persistenceNeeded = true;
         try {
           demoControlService.setTime(tomorrow, true);
           if (logger.isInfoEnabled()) {

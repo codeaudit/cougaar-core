@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.Task;
@@ -143,6 +144,14 @@ public class CompletionTargetPlugin extends CompletionPlugin {
   }
 
   public void execute() {
+    processSubscriptions();
+    if (relaySubscription.hasChanged()) {
+      checkPersistenceNeeded(relaySubscription);
+      processSubscriptions();
+    }
+  }
+
+  private void processSubscriptions() {
     boolean timerExpired = timerExpired();
     now = System.currentTimeMillis();
     if (activitySubscription.hasChanged()) {
@@ -158,6 +167,17 @@ public class CompletionTargetPlugin extends CompletionPlugin {
       startTimer(SLEEP_INTERVAL);
     }
     respondToRelays();
+  }
+
+  protected void setPersistenceNeeded() {
+    try {
+      blackboard.persistNow();
+      if (logger.isInfoEnabled()) {
+        logger.info(getClusterIdentifier() + " doPersistence()");
+      }
+    } catch (PersistenceNotEnabledException pnee) {
+      logger.error(pnee.getMessage(), pnee);
+    }
   }
 
   private void updateCPUConsumption(long now) {

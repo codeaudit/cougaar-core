@@ -176,6 +176,9 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     return false;
   }
 
+  /**
+   * Identify the worst laggard and "handle" it.
+   **/
   private void checkLaggards() {
     SortedSet laggards = relay.getLaggards();
     if (laggards.size() > 0) {
@@ -189,6 +192,14 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
         logger.debug("Waiting for relay responses");
       }
     }
+  }
+
+  protected void setPersistenceNeeded() {
+    if (logger.isInfoEnabled()) {
+      logger.info(getClusterIdentifier() + " setPersistence()");
+    }
+    relay.setPersistenceNeeded();
+    blackboard.publishChange(relay);
   }
 
   protected abstract Set getTargetNames();

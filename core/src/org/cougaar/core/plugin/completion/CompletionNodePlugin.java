@@ -27,7 +27,7 @@ import java.util.WeakHashMap;
 import java.util.Set;
 import java.util.Date;
 import java.util.TimeZone;
-import org.cougaar.core.blackboard.CollectionSubscription;
+import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.service.TopologyReaderService;
 
 /**
@@ -38,13 +38,20 @@ import org.cougaar.core.service.TopologyReaderService;
  **/
 
 public class CompletionNodePlugin extends CompletionSourcePlugin {
-  private CollectionSubscription targetRelaySubscription;
+  private IncrementalSubscription targetRelaySubscription;
   private Map filters = new WeakHashMap();
 
   public void setupSubscriptions() {
-    targetRelaySubscription = (CollectionSubscription)
-      blackboard.subscribe(targetRelayPredicate, false);
+    targetRelaySubscription = (IncrementalSubscription)
+      blackboard.subscribe(targetRelayPredicate);
     super.setupSubscriptions();
+  }
+
+  public void execute() {
+    if (targetRelaySubscription.hasChanged()) {
+      checkPersistenceNeeded(targetRelaySubscription);
+    }
+    super.execute();
   }
 
   protected Set getTargetNames() {

@@ -26,6 +26,7 @@ import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.EmptyIterator;
 import java.util.Date;
 import java.util.AbstractCollection;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.TimeZone;
 import java.text.SimpleDateFormat;
@@ -76,6 +77,18 @@ public abstract class CompletionPlugin extends ServiceUserPlugin {
       return false;
     }
   }
+
+  protected void checkPersistenceNeeded(Collection relays) {
+    for (Iterator i = relays.iterator(); i.hasNext(); ) {
+      CompletionRelay relay = (CompletionRelay) i.next();
+      if (relay.persistenceNeeded()) {
+        setPersistenceNeeded();
+        relay.resetPersistenceNeeded();
+      }
+    }
+  }
+
+  protected abstract void setPersistenceNeeded();
 
   private static final SimpleDateFormat dateFormat =
     new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
