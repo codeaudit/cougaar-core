@@ -77,6 +77,15 @@ public class DBProperties extends java.util.Properties {
         return createDBProperties(url.toString(), url.openStream());
     }
 
+    public void addQueryFile(String qfile) throws IOException {
+        InputStream i = new BufferedInputStream(ConfigFinder.getInstance().open(qfile));
+        try {
+            load(i);
+        } finally {
+            i.close();
+        }
+    }
+
     private static DBProperties createDBProperties(String name, InputStream is)
         throws IOException
     {
@@ -120,7 +129,7 @@ public class DBProperties extends java.util.Properties {
     /**
      * Convert a db url into a database type string
      **/
-    private String getDBType(String dburl) {
+    public String getDBType(String dburl) {
         int ix1 = dburl.indexOf("jdbc:") + 5;
         int ix2 = dburl.indexOf(":", ix1);
         return dburl.substring(ix1, ix2);
