@@ -2,11 +2,11 @@
  * <copyright>
  *  Copyright 1997-2003 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -39,13 +39,15 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Class to provide service for initializing Components
  * from an XML file.
- * 
+ *
  * <pre>
  * @property org.cougaar.node.name
- *   The name for this Node. 
- * @property org.cougaar.society.file 
+ *   The name for this Node.
+ * @property org.cougaar.society.file
  *   The name of the XML file from which to read this Node's definition
- * 
+ * @property org.cougaar.node.validate
+ *   Indicates if the XML parser should be validating or not. Expected values are true/false.
+ *
  * </pre>
  **/
 public class XMLComponentInitializerServiceProvider
@@ -55,16 +57,17 @@ public class XMLComponentInitializerServiceProvider
   private String nodename;
   Logger logger;
   HashMap allComponents = new HashMap();
+
   /*
    * "allComponents" is a mapping of of the name of the parent component (String)
    *   to a HashMap.  There is one entry in here for each agent (including the node agent)
    * This HashMap is a mapping of insertion point container names (ie the  insertion
-   *   point truncated at the last '.') -- a String -- to a ArrayList. The list 
+   *   point truncated at the last '.') -- a String -- to a ArrayList. The list
    *   contains an ordered list of components to be inserted at this container.
-   * This ArrayList is an ordered list of HashMaps. Each HashMap maps property names 
+   * This ArrayList is an ordered list of HashMaps. Each HashMap maps property names
    *   (String) like "insertionpoint" to String values. A special value in the HashMap is
    *   "arguments" which maps to a ArrayList of strings (ordered)
-   *   that are the component's arguments. 
+   *   that are the component's arguments.
    */
 
   private static String insertionPointContainer(String insertionPoint) {
@@ -98,7 +101,9 @@ public class XMLComponentInitializerServiceProvider
       ParserConfigurationException {
     MyHandler handler = new MyHandler();
     SAXParserFactory factory = SAXParserFactory.newInstance();
-    factory.setValidating(true);
+    factory.setValidating(Boolean.getBoolean("org.cougaar.core.node.validate"));
+    if(logger.isDebugEnabled())
+      logger.debug((factory.isValidating()) ? "Validating against schema" : "Validating disabled");
     factory.setNamespaceAware(true);
     SAXParser saxParser = factory.newSAXParser();
 
@@ -180,7 +185,7 @@ public class XMLComponentInitializerServiceProvider
       return ret;
     }
   }
-  
+
   private void dump(ComponentDescription[] comps) {
     for (int i=0; i<comps.length; i++) {
       StringBuffer output = new StringBuffer();
