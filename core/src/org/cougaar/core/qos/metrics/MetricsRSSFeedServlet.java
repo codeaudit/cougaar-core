@@ -149,7 +149,7 @@ public class MetricsRSSFeedServlet
 	    out.print(metric.getCredibility());
 
 	    if (metric.getUnits() != null) {
-		out.print(" Units");
+		out.print(" Units ");
 		out.print(metric.getUnits());
 	    }
 
