@@ -56,15 +56,15 @@ import org.cougaar.util.CallerTracker;
  *    and TimestampSubscriptions (defaults to false).
  **/
 public class Subscriber {
-  private static Logger logger = Logging.getLogger(Subscriber.class);
+  private static final Logger logger = Logging.getLogger(Subscriber.class);
 
-  private static boolean isEnforcing =
+  private static final boolean isEnforcing =
     (Boolean.valueOf(System.getProperty("org.cougaar.core.blackboard.enforceTransactions", "true"))).booleanValue();
 
-  private static boolean warnUnpublishChanges = 
+  private static final boolean warnUnpublishChanges = 
     "true".equals(System.getProperty("org.cougaar.core.blackboard.debug","false"));
 
-  private final boolean enableTimestamps = 
+  private static final boolean enableTimestamps = 
     Boolean.getBoolean("org.cougaar.core.blackboard.timestamp");
 
   private BlackboardClient theClient = null;
@@ -263,15 +263,20 @@ public class Subscriber {
   private int publishRemovedCount;
 
   public int getSubscriptionCount() {
-    return subscriptions.size();
+    synchronized (subscriptions) {
+      return subscriptions.size();
+    }
   }
   
   public int getSubscriptionSize() {
     int size = 0;
-    for (int i = 0; i < subscriptions.size(); i++) {
-      Object s = subscriptions.get(i);
-      if (s instanceof CollectionSubscription) {
-        size += ((CollectionSubscription)s).size();
+    synchronized (subscriptions) {
+      int l = subscriptions.size();
+      for (int i = 0; i < l; i++) {
+        Object s = subscriptions.get(i);
+        if (s instanceof CollectionSubscription) {
+          size += ((CollectionSubscription)s).size();
+        }
       }
     }
     return size;
@@ -290,8 +295,8 @@ public class Subscriber {
   }
 
 
-  /** our set of active subscriptions */
-  protected List subscriptions = new ArrayList();
+  /** our set of active subscriptions. Access must be synchronized on self. */
+  protected final List subscriptions = new ArrayList(5);
 
   protected void resetSubscriptionChanges() {
     synchronized (subscriptions) {
@@ -450,7 +455,7 @@ public class Subscriber {
   private List pendingEnvelopes = new ArrayList();     // Envelopes to be added at next transaction
   private List transactionEnvelopes = null;            // Envelopes of current transaction
   private List idleEnvelopes = new ArrayList();        // Alternate list
-  private Object inboxLock = new Object();             // For synchronized access to inboxes
+  private final Object inboxLock = new Object();       // For synchronized access to inboxes
   private boolean inboxAllowsQuiescence = true;        // True if inbox allows quiescence
   private boolean transactionAllowsQuiescence = true;  // True if inbox being processed allowed quiescence.
 
@@ -472,16 +477,21 @@ public class Subscriber {
    **/
   public void receiveEnvelopes(List envelopes, boolean envelopeQuiescenceRequired) {
     boolean signalActivity = false;
-    synchronized (inboxLock) {
-      boolean notBusy = transactionLock.tryGetBusyFlag();
-      if (getSubscriptionCount() > 0 || (watchers.size() > 0 && !notBusy)) {
-        pendingEnvelopes.addAll(envelopes);
-        if (envelopeQuiescenceRequired) inboxAllowsQuiescence = false;
-        signalActivity = true;
-      } else if (logger.isInfoEnabled() && getSubscriptionCount() == 0 && !notBusy && watchers.size() == 0) {
-	logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
+    synchronized (watchers) { // I dislike nested locks, but we need to be sure nobody is adding watchers...
+      synchronized (inboxLock) {
+        boolean notBusy = transactionLock.tryGetBusyFlag();
+        boolean hasWatchers = !watchers.isEmpty();
+        if (getSubscriptionCount() > 0 || (hasWatchers && !notBusy)) {
+          pendingEnvelopes.addAll(envelopes);
+          if (envelopeQuiescenceRequired) { inboxAllowsQuiescence = false; }
+          signalActivity = true;
+        } else {
+          if (logger.isInfoEnabled() && getSubscriptionCount() == 0 && !notBusy && !hasWatchers) {
+            logger.info(this + ".receiveEnvs: Fix for bug 3328 means we're not distributing the outbox here cause no watchers.");
+          }
+        }
+        if (notBusy) transactionLock.freeBusyFlag();
       }
-      if (notBusy) transactionLock.freeBusyFlag();
     }
     if (signalActivity) signalExternalActivity();
   }
@@ -995,12 +1005,19 @@ public class Subscriber {
   //
 
   /** list of SubscriptionWatchers to be notified when something
-   * interesting happens.
+   * interesting happens.  Access must be synchronized on watchers.
    **/
-  private List watchers = new ArrayList();
+  private final List watchers = new ArrayList(1);
 
   public final SubscriptionWatcher registerInterest(SubscriptionWatcher w) {
-    watchers.add(w);
+    if (w == null) {
+      throw new IllegalArgumentException("Null SubscriptionWatcher");
+    }
+
+    synchronized (watchers) {
+      watchers.add(w);
+    }
+
     return w;
   }
 
@@ -1020,8 +1037,10 @@ public class Subscriber {
    * thread exits, or a plugin unloads.
    **/
   public final void unregisterInterest(SubscriptionWatcher w) throws SubscriberException {
-    if (! watchers.remove(w) ) {
-      throw new SubscriberException("Attempt to unregisterInterest of unknown SubscriptionWatcher");
+    synchronized (watchers) {
+      if (! watchers.remove(w) ) {
+        throw new SubscriberException("Attempt to unregisterInterest of unknown SubscriptionWatcher");
+      }
     }
   }
 
