@@ -19,23 +19,22 @@
  * </copyright>
  */
 
+
 package org.cougaar.core.qos.metrics;
 
-import java.util.Observer;
-import java.util.Properties;
-import org.cougaar.core.component.Service;
 
-public interface MetricsService extends Service
+
+public class CredibilityQualifier implements MetricNotificationQualifier
 {
-    Metric getValue(String path);
+    private double min_credibility;
 
-    Metric getValue(String path, Properties qos_tags);
+    public CredibilityQualifier(double min_credibility) {
+	this.min_credibility = min_credibility;
+    }
 
-    Object subscribeToValue(String path, Observer observer);
-    Object subscribeToValue(String path, Observer observer,
-			    MetricNotificationQualifier qualifier);
-    void unsubscribeToValue(Object subscription_handle);
-
+    public boolean shouldNotify(Metric metric) {
+	return metric.getCredibility() > min_credibility;
+    }
 
 }
 

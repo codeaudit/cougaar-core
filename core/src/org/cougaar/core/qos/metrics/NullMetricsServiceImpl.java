@@ -43,6 +43,13 @@ public class NullMetricsServiceImpl
 	return null;
     }
 
+    public Object subscribeToValue(String path, 
+				   Observer observer,
+				   MetricNotificationQualifier qualifier) 
+    {
+	return null;
+    }
+
     public void unsubscribeToValue(Object subscription_handle)
     {
     }

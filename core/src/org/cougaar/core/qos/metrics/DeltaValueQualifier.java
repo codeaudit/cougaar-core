@@ -21,21 +21,33 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.Observer;
-import java.util.Properties;
-import org.cougaar.core.component.Service;
 
-public interface MetricsService extends Service
+
+public class DeltaValueQualifier implements MetricNotificationQualifier
 {
-    Metric getValue(String path);
+    private double min_delta;
+    private Metric last_qualified;
 
-    Metric getValue(String path, Properties qos_tags);
+    public DeltaValueQualifier(double min_delta) {
+	this.min_delta = min_delta;
+    }
 
-    Object subscribeToValue(String path, Observer observer);
-    Object subscribeToValue(String path, Observer observer,
-			    MetricNotificationQualifier qualifier);
-    void unsubscribeToValue(Object subscription_handle);
+    public boolean shouldNotify(Metric metric) {
+	if (last_qualified == null) {
+	    last_qualified = metric;
+	    return true;
+	}
 
+	double old_value = last_qualified.doubleValue();
+	double new_value = metric.doubleValue();
+	if (Math.abs(new_value-old_value) > min_delta) {
+	    last_qualified = metric;
+	    return true;
+	} else {
+	    return false;
+	}
+	
+    }
 
 }
 
