@@ -356,9 +356,10 @@ public abstract class AssetSkeletonBase
       return null;    
     }
 
-    Iterator i = otherProperties.iterator();
-    while (i.hasNext()) {
-      Object p = i.next();
+    // use index loop rather than iterator
+    int l = otherProperties.size();
+    for (int i = 0; i<l; i++) {
+      Object p = otherProperties.get(i);
       if ((p instanceof PropertyGroupSchedule)) {
         PropertyGroupSchedule pgs = (PropertyGroupSchedule) p;
         if (pgc.isAssignableFrom(pgs.getPGClass())) {
