@@ -1,3 +1,12 @@
+2001-02-13  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* AssetTransferLP and ReceiveAssetTransferLP
+	New relationship schedules are only sent if changes show the
+	presence of a
+	RelationshipSchedule.RelationshipScheduleChangeReport. If no
+	schedule is received, the relationships are left alone; only
+	property groups are update.
+
 2001-01-26  Michael Thome  <mthome@bbn.com>
 
 	* Added ComplainingLP
