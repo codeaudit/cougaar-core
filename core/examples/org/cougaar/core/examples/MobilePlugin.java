@@ -32,6 +32,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.*;
 import org.cougaar.core.mts.*;
 import org.cougaar.core.plugin.ComponentPlugin;
+import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.util.UnaryPredicate;
 
 /**

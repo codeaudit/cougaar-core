@@ -24,6 +24,7 @@ package org.cougaar.core.security;
 import org.cougaar.core.component.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.mts.*;
+import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.util.*;
 import java.lang.reflect.*;
 /**

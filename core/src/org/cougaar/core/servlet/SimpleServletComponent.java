@@ -30,6 +30,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.component.*;
+import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.servlet.ServletService;
 

@@ -35,8 +35,6 @@ import org.cougaar.core.agent.service.registry.*;
 
 import org.cougaar.core.agent.service.scheduler.*;
 
-import org.cougaar.core.agent.service.sharedthreading.*;
-
 import org.cougaar.core.agent.service.uid.*;
 
 import org.cougaar.core.blackboard.*;

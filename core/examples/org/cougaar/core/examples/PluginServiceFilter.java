@@ -31,6 +31,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.plugin.PluginManagerForBinder;
+import org.cougaar.core.service.BlackboardService;
 
 /** A plugin's view of its parent component (Container).
  * Add a line like the following to a cluster.ini file:
