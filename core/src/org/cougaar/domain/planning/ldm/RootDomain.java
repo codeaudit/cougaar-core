@@ -64,6 +64,7 @@ public class RootDomain
     l.add(new ReceiveAssetVerificationLP(logplan, cluster));
     l.add(new ReceiveAssetRescindLP(logplan, cluster));
     l.add(new ReceiveNotificationLP(logplan, cluster));
+    l.add(new ReceiveDeletionLP(logplan, cluster));
     l.add(new ReceiveRescindLP(logplan, cluster));
     l.add(new ReceiveTaskLP(logplan, cluster));
     //l.add(new AggregationPublishLP(logplan, cluster));
@@ -71,6 +72,7 @@ public class RootDomain
     // envelopeLPs
     l.add(new AssetTransferLP(logplan, cluster));    
     l.add(new NotificationLP(logplan, cluster));
+    l.add(new DeletionLP(logplan, cluster));
     l.add(new RemoteClusterAllocationLP(logplan, cluster));
     l.add(new PreferenceChangeLP(logplan, cluster));
     l.add(new RescindLP(logplan, cluster));
