@@ -21,7 +21,7 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.society.Communications;
+import org.cougaar.core.node.Communications;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
