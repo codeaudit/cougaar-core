@@ -37,7 +37,7 @@ public interface OperatingModeService extends Service {
      **/
     boolean wantRemoves();
   }
-  static class ListenerAdapter {
+  class ListenerAdapter {
     public boolean wantAdds() { return false; }
     public boolean wantChanges() { return false; }
     public boolean wantRemoves() { return false; }
