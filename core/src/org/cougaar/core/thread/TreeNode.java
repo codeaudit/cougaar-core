@@ -38,7 +38,6 @@ final class TreeNode
 	this.scheduler = scheduler;
 	scheduler.setTreeNode(this);
 	setPolicy(new DefaultTimeSlicePolicy());
-	setPolicy(policy);
 	TreeNode parent = 
 	    parentService == null ? null : parentService.getTreeNode();
 	setParent(parent);

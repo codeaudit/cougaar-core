@@ -199,11 +199,7 @@ public class PercentageLatencyPolicy
 	if (CougaarThread.Debug)
 	    System.out.println(this+ " getting slice for " +consumer);
 
-	if (isRoot())
-	    slice = getLocalSlice(this);
-	else
-	    slice = treeNode().getParentPolicy().getSlice(this);
-
+	slice = super.getSlice(consumer);
 	if (slice == null) {
 	    if(CougaarThread.Debug)
 		System.out.println("No slice available");
@@ -251,21 +247,14 @@ public class PercentageLatencyPolicy
 	    System.out.println("Releasing slice from " +consumer);
 
 
-	noteRelease(consumer, slice);
+	noteRelease(consumer, slice); // add in the time
 
-	TimeSlice whole = slice.parent;
-
-	// If the slice is now expired, or if no one wants it right
-	// now, give it back.  This must always operate on the full
-	// slice, as given by our parent, not on the locally created
-	// subslice.
-	if (whole.isExpired() || !offerSlice(whole)) {
-	    if (isRoot())
-		releaseLocalSlice(this, whole);
-	    else
-		treeNode().getParentPolicy().releaseSlice(this, whole);
-	}
+	// Now do a standard releaseSlice on the full slice, as given
+	// by our parent, not on the locally created subslice.
+	super.releaseSlice(consumer, slice.parent);
     }
+
+
 
     public synchronized boolean offerSlice(TimeSlice slice) 
     {

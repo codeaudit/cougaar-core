@@ -132,13 +132,11 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
 
     void reinitializeSlice(TimeSlice slice) {
-	long start = System.currentTimeMillis();
-	long end = start + DEFAULT_SLICE_DURATION;
-	slice.start = start;
-	slice.end = end;
+	slice.start = System.currentTimeMillis();
+	slice.end = slice.start + DEFAULT_SLICE_DURATION;
     }
 
-    synchronized TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
+    private synchronized TimeSlice getLocalSlice(TimeSliceConsumer consumer) {
 	int use_count = treeNode.getScheduler().runningThreadCount() +
 	    outstandingChildSliceCount;
 	int max = treeNode.getScheduler().maxRunningThreadCount();
@@ -166,8 +164,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 				   "; " +outstandingChildSliceCount+
 				   " now outstanding");
 	} else {
-	    if (CougaarThread.Debug)
-		System.out.println("use_count < running count but no slice available!");
+	    System.err.println("use_count < max running count but no slice available!");
 	}
 	
 	return slice;
@@ -177,20 +174,38 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     // Release a slice from a child.  This version passes it all the
     // way to the root of the tree, which is the only owner of slices.
-    public void releaseSlice(TimeSliceConsumer consumer, TimeSlice slice) 
+    public synchronized void releaseSlice(TimeSliceConsumer consumer, 
+					  TimeSlice slice) 
     {
-	TimeSlicePolicy parent = treeNode.getParentPolicy();
-	if (parent != null) {
-	    parent.releaseSlice(this, slice);
+	// If this is our slice and it expired, reset the start and
+	// end times.  If the slice belongs to a parent, we don't mess
+	// with it; in that case it could still be expired after this
+	// statement.  It wonb't be offered to our children in that case.
+	if (slice.owner == this && slice.isExpired()) reinitializeSlice(slice);
+
+	// Re-offer the slice, unless it belongs to a parent and has
+	// expired.
+	boolean accepted = !slice.isExpired() && offerSlice(slice);
+
+	if (accepted) {
+	    // The slice was handed off to a child.  Nothing further to do,
 	} else {
-	    releaseLocalSlice(consumer, slice);
+	    // No one wanted it (or we couldn't offer it because it
+	    // was expired).  Give it back.
+	    if (isRoot()) 
+		releaseLocalSlice(this, slice);
+	    else
+		treeNode().getParentPolicy().releaseSlice(this, slice);
 	}
+
+
+
     }
 
 
 
-    synchronized void releaseLocalSlice (TimeSliceConsumer consumer,
-					 TimeSlice slice) 
+    private void releaseLocalSlice (TimeSliceConsumer consumer,
+				    TimeSlice slice) 
     {
 	// The root of the tree: notify everyone that slices may be
 	// available.
@@ -200,9 +215,11 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 			       " released a slice from " +consumer+
 			       "; " +outstandingChildSliceCount+
 			       " now outstanding");
-	if (slice.isExpired())  reinitializeSlice(slice);
 
-	if (offerSlice(slice)) ++outstandingChildSliceCount;
+
+	if (CougaarThread.Debug)
+	    System.out.println("Marking " +slice+ " as available");
+	slice.in_use = false;
     }
 
 
@@ -244,12 +261,6 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 	    if (lastIndex == currentIndex) break;
 	}
 
-
-	if (slice.owner == this) {
-	    if (CougaarThread.Debug)
-		System.out.println("Marking " +slice+ " as available");
-	    slice.in_use = false;
-	}
 	return false;
 
     }
