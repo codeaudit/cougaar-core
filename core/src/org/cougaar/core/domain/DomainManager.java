@@ -32,15 +32,15 @@ import org.cougaar.core.security.bootstrap.SystemProperties;
  * Manage a per-VM set of Domain instances.
  *
  * The set of domains loaded is based on the System properties
- * starting with org.cougaar.  For example, the "foo" domain would
+ * starting with org.cougaar.domain.  For example, the "foo" domain would
  * be initialized on demand from the value of the system property
- * "org.cougaar.foo=com.FooCo.org.cougaar.FooDomain"
+ * "org.cougaar.domain.foo=com.FooCo.org.cougaar.FooDomain"
  *
  * Also will attempt to load domains from a config file "LDMDomains.ini".
  * This file has lines of the form (matching the above example):
  *   foo=com.FooCo.org.cougaar.FooDomain
- * @property org.cougaar.foo The fully qualified classname of the Domain to be
- * loaded with the name "foo".  All properties with the "org.cougaar." prefix
+ * @property org.cougaar.domain.foo The fully qualified classname of the Domain to be
+ * loaded with the name "foo".  All properties with the "org.cougaar.domain." prefix
  * are loaded as domains by the DomainManager.  See the DomainManager documentation for more
  * information.
  * @property org.cougaar.verbose Enabled extended debugging information on domain loading.
@@ -48,7 +48,7 @@ import org.cougaar.core.security.bootstrap.SystemProperties;
 
 public final class DomainManager
 {
-  private final static String PREFIX = "org.cougaar.";
+  private final static String PREFIX = "org.cougaar.domain.";
   private final static int PREFIXLENGTH = PREFIX.length();
 
   private final static boolean verbose = "true".equals(System.getProperty("org.cougaar.verbose","false"));
@@ -68,7 +68,7 @@ public final class DomainManager
   private static boolean isInitialized = false;
 
   /** Find a domain instance by name.
-   * Looks in System property "org.cougaar.domainName" for the 
+   * Looks in System property "org.cougaar.domain.domainName" for the 
    * class to instantiate.  As a special case, the "root" domain
    * always maps to "org.cougaar.core.domain.RootDomain"
    **/
