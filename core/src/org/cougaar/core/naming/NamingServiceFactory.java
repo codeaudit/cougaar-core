@@ -21,14 +21,13 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.mts.SocketFactory;
 import org.cougaar.core.node.Communications;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RMIServerSocketFactory;
-import java.rmi.server.RMIClientSocketFactory;
 import java.util.Hashtable;
 
 import javax.naming.Context;
@@ -123,7 +122,7 @@ public class NamingServiceFactory implements InitialContextFactory {
     if (ns == null) {           // Has this been set yet?
       int port = Communications.getPort();
       String addr = Communications.getFdsAddress();
-      NamingSocketFactory nsf = NamingSocketFactory.getInstance();
+      SocketFactory nsf = SocketFactory.getNameServiceSocketFactory();
       String url = "//" + addr + ":" + port + "/NameService";
       if (verbosity > 0) System.err.print("Attempting to contact " + url + ": ");
       // First we have to locate (or become) the registry

@@ -21,6 +21,7 @@
 
 package org.cougaar.core.naming;
 
+import org.cougaar.core.mts.SocketFactory;
 import org.cougaar.core.service.*;
 
 import java.io.Serializable;
@@ -50,7 +51,9 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   private HashMap mapOfMaps = new HashMap(11);
 
   public NSImpl() throws RemoteException {
-    super(0, NamingSocketFactory.getInstance(), NamingSocketFactory.getInstance());
+    super(0, 
+	  SocketFactory.getNameServiceSocketFactory(), 
+	  SocketFactory.getNameServiceSocketFactory());
     putDirMap((NSDirKey) ROOT, new NSDirMap(ROOT_NAME));
   }
 
