@@ -3,7 +3,7 @@
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
    <meta name="GENERATOR" content="Mozilla/4.61 [en] (WinNT; I) [Netscape]">
-   <title>ALP PSP Developer's Guide</title>
+   <title>COUGAAR PSP Developer's Guide</title>
 </head>
 <body>
 <!--  ############################################################################ --><!--  ############################################################################ --><!--  ############################################################################ -->
@@ -13,7 +13,7 @@ PlanServiceProvider Developer's Guide</h1>
 <h2>
 Introduction</h2>
 <!--  ############################################################################ --><!--  ############################################################################ -->
-<p>The LogPlanServer is a light-weight ALP Cluster PlugIn server which
+<p>The LogPlanServer is a light-weight COUGAAR Cluster PlugIn server which
 provides the following categories of services:
 <pre>+) It can handle a limited HTTP vocabulary&nbsp; (GET/POST).&nbsp;&nbsp;
 +) It can act as a proxy to another LogPlanServer or webserver.
@@ -400,7 +400,7 @@ to the user.</li>
 
 <h3>
 PlanServerPlugIn</h3>
-In its role as a cluster level plugin, PlanServerPlugIn extends alp.plugin.SimplifiedPlugIn,
+In its role as a cluster level plugin, PlanServerPlugIn extends org.cougaar.plugin.SimplifiedPlugIn,
 and hence it must implement 2 abstract methods:
 <ul>
 <li>
@@ -521,7 +521,7 @@ help.html (obtain from: external.alpine.planserver)... enables u to evoke ?help&
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "http://localhost:5555?help"
 
 
-1.) The fastest way to "cook-book" a PSP is to take an existing alp PSP and copy it.&nbsp; Example:
+1.) The fastest way to "cook-book" a PSP is to take an existing cougaar PSP and copy it.&nbsp; Example:
 
 copy ui.xmlservice.PSP_PolicyEditor&nbsp;&nbsp;&nbsp; [located at external/alpine/ui ]
 

@@ -17,7 +17,7 @@
 <b><font size=+2>Release Notes</font></b></h2>
 
 <h2>
-<b><font size=+2>ALP 6.6</font></b></h2>
+<b><font size=+2>COUGAAR 7.0</font></b></h2>
 </td>
 
 <td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 height=83 width=95></a></td>
@@ -46,7 +46,7 @@
 <a href="#delivering">Delivering Software Products (PlugIns)</a></li>
 
 <li>
-<a href="#developing">Developing and Running ALP Societies</a></li>
+<a href="#developing">Developing and Running COUGAAR Societies</a></li>
 
 <li>
 <a href="#future">Future Releases</a></li>
@@ -61,47 +61,11 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
-MiniBuild 6.8 is a new branch release. For the integration activities scheduled
-as part of the next ALP PlugIn Developers Workshop, we will use the latest
-point release on the ALP v6.8 branch. All changes to the ALP v6.8 branch
-will compatible with the previously release APIs. We expect all PlugIns
-to be compatible with the ALP v6.8 branch software. MiniBuild 6.8 contains
-the following significant enhancements or modifications:
-<ul>
-<li>
-Changes in the transfers of Organization Assets that should fix problems
-reported in 6.6 with missing PGs and Predictors.</li>
+MiniBuild 7.0 is a new branch release.  7.0 is functionally identical
+to MB6.8, but has be reorganized into different packages and modules.
+See <a href="7.0/README">7.0/README</a> for detailed information on
+converting 6.8 software into 7.0 software.
 
-<li>
-Addition of the "AS" Prepositional Phrase to represent an array of roles
-and the timespan preference in a Report For Service tasks that replace
-Relationship Schedules.</li>
-
-<li>
-Addition of AdministrativeSuperior/AdministrativeSubordinate roles which
-will allow code to distinguish between superior/subordinate relationships
-created at start up and dynamic superior/subordinate relationships.</li>
-
-<li>
-Addition of the System property alp.message.fastTransport=true (default
-is false)</li>
-
-<br>which optimizes the rmi message transport for societies where nodes
-usually
-<br>contain multiple clusters.
-<li>
-The patch to java.io.ObjectInputStream which previously had sources in</li>
-
-<br>the core module and was built into alpio.jar, has been moved to its
-<br>own module "javaiopatch".
-<li>
-Changes to the Boostrapper classloader.</li>
-
-<li>
-Addition of Overtime and Readiness AuxiliaryQueryTypes</li>
-
-<br>&nbsp;
-<p>&nbsp;</ul>
 For additional details, please review the following documentation:
 <ul>
 <li>
@@ -123,7 +87,7 @@ website</a>)</li>
 
 <h2>
 <a NAME="organization"></a>Organization of a Release&nbsp;</h2>
-The files in an ALP release fall into the following organizational areas:
+The files in an COUGAAR release fall into the following organizational areas:
 <ul>
 <li>
 "core:" domain independent agent architecture</li>
@@ -185,7 +149,7 @@ alpine/demo/OPLAN_EDIT.PSP</li>
 ALPINE maintains only the node configurations that we are currently using
 for testing purposes and for the ALP demonstrations. These node configurations
 are available in subdirectories under "alpine/configs" in the release.
-To execute the ALP society, these nodes can be combined to form a society
+To execute the COUGAAR society, these nodes can be combined to form a society
 that can be executed on a single computer or distributed across multiple
 computers. Note that only <b><a href="MiniTestConfig.html">minitestconfig</a></b>
 will work "out of the box". We intend to expand this test society in subsequent
@@ -193,7 +157,7 @@ MiniBuild releases in size and complexity. PlugIn developers are encouraged
 to use <b>minitestconfig</b> as a starting point for bringing PlugIn compliance
 up to the latest infrastructure release. In addition, the subdirectory
 "flag-config" contains the configuration files used for the Flag Demonstration
-society. This society requires the use of PlugIns from various ALP participants.&nbsp;
+society. This society requires the use of PlugIns from various COUGAAR participants.&nbsp;
 <br>&nbsp;
 <h2>
 <a NAME="delivering"></a>Delivering Software Products (PlugIns)</h2>
@@ -202,16 +166,16 @@ PlugIns. Avoid names with obvious collision problems such as those associated
 with the Logistics domain. There needs to be a direct correlation between
 your product name and your Java package name. It is recommended that you
 follow the usual Java package naming guidelines (e.g., "com.bbn.tops...").&nbsp;
-<p>We will be providing a cvs repository for ALP plugin developers that
+<p>We will be providing a cvs repository for COUGAAR plugin developers that
 are ALPINE subcontractors and participating in the FY2000 demonstration.
 If you would like to participate, we will provide you with details as to
 how to interact with the cvs repository (setting CVSROOT and passwords).
-The directory structure should follow the one described at the March ALP
+The directory structure should follow the one described at the March COUGAAR
 PlugIn Developers workshop.&nbsp;
 <ul>
 <li>
 product: root cvs directory and jar file name; this "jar" file should be
-sufficient for demonstration and testing and include non-ALP jar dependencies</li>
+sufficient for demonstration and testing and include non-COUGAAR jar dependencies</li>
 
 <li>
 product/lib: PlugIn developer produced jar files</li>
@@ -250,7 +214,7 @@ PlugIn testing</li>
 <br>&nbsp;
 <br>&nbsp;
 <br>&nbsp;</ul>
-All PlugIn software must use the Java system parameter "alp.install.path"
+All PlugIn software must use the Java system parameter "org.cougaar.install.path"
 or the environment variable ALP_INSTALL_PATH to find data files, scripts,
 and external programs. For example, if your product is "tops," your classes
 will be in:&nbsp;
@@ -262,7 +226,7 @@ and your java code could find your data files with:&nbsp;
 <font face="Courier New"><font size=-1>Properties props = System.getProperties();</font></font></dt>
 
 <dt>
-<font face="Courier New"><font size=-1>String path = props.getProperty("alp.install.path")
+<font face="Courier New"><font size=-1>String path = props.getProperty("org.cougaar.install.path")
 +</font></font></dt>
 
 <dt>
@@ -276,7 +240,7 @@ props.getProperty("file.separator") + "myData.dat";</font></font></dt>
 </dir>
 
 <h2>
-<a NAME="developing"></a>Developing and Running ALP Societies</h2>
+<a NAME="developing"></a>Developing and Running COUGAAR Societies</h2>
 
 <h3>
 General Development&nbsp;</h3>
@@ -294,7 +258,7 @@ User Interface Development&nbsp;</h3>
 
 <ul>
 <li>
-<a href="../ui/help.html">ALP UI LogPlanServer Services&nbsp;</a></li>
+<a href="../ui/help.html">COUGAAR UI LogPlanServer Services&nbsp;</a></li>
 
 <li>
 <a href="../ui/pspdevguide.html">PlanServiceProvider Developer's Guide</a></li>

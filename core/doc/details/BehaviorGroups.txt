@@ -4,7 +4,7 @@ hand-defined methods into machine-generated code via delegation.
 The specification has been changed since the original in several
 ways:
 1. the delegates= directive may take a fully-qualified class name,
-	i.e. com.fooco.alp.MyDelegate
+	i.e. com.fooco.cougaar.MyDelegate
 2. the delegate class may be a class, and abstract class or even an
 	interface, since the PG code never actually constructs the
 	objects.  In any case, the specified class must still
@@ -31,20 +31,20 @@ ways:
 
 Example:
 
-;!generate: alp.build.PGWriter
+;!generate: org.cougaar.tools.build.PGWriter
 ;; my properties.def file
 
 [MyPG]
 doc=A property group with standard and active slots
 slots=int x, String y, double z
-delegates=com.thingco.alp.MyDelegate thing
+delegates=com.thingco.cougaar.MyDelegate thing
 thing.delegate=int computeW(int inc);\
 		String prettyString();\
 		double checkAsset(Asset a);
 
 /// hand-written myDelegate
 // expect it to be Serialized!
-package com.thingco.alp;
+package com.thingco.cougaar;
 import ...;
 class MyDelegate implements PGDelegate {
   private MyPG myPG;

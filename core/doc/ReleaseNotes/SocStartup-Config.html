@@ -10,12 +10,12 @@
 
 <center>
 <h2>
-<b>ALP Society Startup and Configuration: MB 6.6</b></h2></center>
+<b>COUGAAR Society Startup and Configuration: MB 6.6</b></h2></center>
 
 <h2>
 <b>Overview</b></h2>
 <font size=+0>To install MB 6.6, first unzip the "core-MB-&lt;builddate>.zip"
-file. It will create a top-level "alp-&lt;builddate>" directory and appropriate
+file. It will create a top-level "cougaar-&lt;builddate>" directory and appropriate
 subdirectories. Then, unzip the alpine-MB-&lt;builddate>.zip, utility-MB-&lt;builddate>.zip,
 tutorial-MB-&lt;builddate>.zip and tools-MB-&lt;builddate>.zip files in
 the alp-&lt;builddate> directory. This unzip process will overlay the original
@@ -40,7 +40,7 @@ minitestconfig</a> society.
 and are located in the alp\lib directory:
 <ul>
 <li>
-core.jar: ALP core infrastructure</li>
+core.jar: COUGAAR core infrastructure</li>
 
 <li>
 alpine.jar: domain infrastructure support and ALPINE PlugIns</li>
@@ -52,7 +52,7 @@ tools.jar: scalability and test tools</li>
 utility.jar: contracts and gss</li>
 
 <li>
-build.jar: code generators for ALP software</li>
+build.jar: code generators for COUGAAR software</li>
 
 <li>
 xmlj_2_0_11.jar: XML parser</li>
@@ -60,7 +60,7 @@ xmlj_2_0_11.jar: XML parser</li>
 
 <h2>
 <b>3rd Party Commercial Software</b></h2>
-The ALP society software depends on a number of freely distributed 3rd
+The COUGAAR society software depends on a number of freely distributed 3rd
 party software packages. These software packages can be obtained free from
 their respective sources. The <a href="https://www.alpine.bbn.com">ALPINE
 web site</a> (HTTPS://www.alpine.bbn.com/) contains a list of freely available
@@ -107,35 +107,35 @@ describes the current organization of "jar" and data files and system parameters
 In addition, this information describes the organization of PlugIn software
 submissions and how PlugIns must reference private data files and software
 libraries.
-<p>Unpacking the release package (alp.zip or alp.tar) should produce the
-following directory structure (use of "alp\&lt;product>" directories for
+<p>Unpacking the release package (cougaar.zip or cougaar.tar) should produce the
+following directory structure (use of "cougaar\&lt;product>" directories for
 PlugIn-related files will be required in all future software submissions
 and all future infrastructure releases):
 <ul>
 <li>
-alp\lib ---------------- "jar" files for the infrastructure, ALPINE PlugIns,
+cougaar\lib ---------------- "jar" files for the infrastructure, ALPINE PlugIns,
 and COTS libraries</li>
 
 <li>
-alp\bin ---------------- "bat" and "csh" scripts for setting environment
+cougaar\bin ---------------- "bat" and "csh" scripts for setting environment
 variables and paths</li>
 
 <li>
-alp\configs ----------- subdirectories of society configuration files (e.g.,
+cougaar\configs ----------- subdirectories of society configuration files (e.g.,
 minitestconfig)</li>
 
 <li>
-alp\releaseNotes ----- text descriptions of the ALP software release</li>
+cougaar\releaseNotes ----- text descriptions of the COUGAAR software release</li>
 
 <li>
-alp\src --------------- infrastructure source code</li>
+cougaar\src --------------- infrastructure source code</li>
 
 <li>
-alp\doc\javadoc ------"javadoc" for ALP infrastructure</li>
+cougaar\doc\javadoc ------"javadoc" for COUGAAR infrastructure</li>
 
 <li>
-alp\&lt;product>------ product specific data files and non-java executables
-(each PlugIn or ALP participant will have a corresponding subdirectory)</li>
+cougaar\&lt;product>------ product specific data files and non-java executables
+(each PlugIn or COUGAAR participant will have a corresponding subdirectory)</li>
 </ul>
 The following information describes the configuration scheme for ALPINE
 software distributions. Please note the new organization of release software
@@ -143,32 +143,32 @@ and data files for PlugIn software and society configuration directories.
 <ol>
 <li>
 There are environment variables and Java system properties as defined in
-the table below. The purpose of these parameters is to control ALP system
+the table below. The purpose of these parameters is to control COUGAAR system
 behavior and minimize placing environment variables in the Node.bat or
 Node.csh files.</li>
 
 <li>
 The environment variable ALP_INSTALL_PATH must point to the installation
-directory "alp." In addition, the system property alp.install.path must
+directory "cougaar." In addition, the system property org.cougaar.install.path must
 point to the same directory. These variables will allow the infrastructure
-and PlugIns to find the necessary "jar" files (alp\lib) and data files
-(alp\&lt;product-n>).</li>
+and PlugIns to find the necessary "jar" files (cougaar\lib) and data files
+(cougaar\&lt;product-n>).</li>
 
 <li>
-For system testing in a single node configuration, "serialization" of ALP
+For system testing in a single node configuration, "serialization" of COUGAAR
 objects can be forced by setting the alp.message.alwaysSerialize system
 property to True. This feature cannot be used in a multiple node scenario
 and should be False.</li>
 
 <li>
-Please note that the Node.bat/csh files are only present in the alp/bin
+Please note that the Node.bat/csh files are only present in the cougaar/bin
 directory. They have been removed from all configuration directories to
 encourage use of a single version in a standard location. We suggest adding
 %ALP_INSTALL_PATH%\bin to your PATH environment variable.</li>
 
 <li>
 Although we have not tested all society configurations on all types of
-processing platforms, all ALP infrastructure software is compatible with
+processing platforms, all COUGAAR infrastructure software is compatible with
 NT, UNIX and LINUX operating systems.</li>
 
 <li>
@@ -190,7 +190,7 @@ in the {$ALP_INSTALL_PATH}\configs\common.</li>
 </ol>
 
 <p><br><b>Table 1: Environment variables and system properties used to
-control ALP system behavior</b>
+control COUGAAR system behavior</b>
 <br>&nbsp;
 <br>&nbsp;
 <table BORDER CELLPADDING=7 WIDTH="646" >
@@ -209,19 +209,19 @@ control ALP system behavior</b>
 
 <td VALIGN=TOP WIDTH="20%">Environment Variable</td>
 
-<td VALIGN=TOP WIDTH="22%">&lt;drive>:\alp</td>
+<td VALIGN=TOP WIDTH="22%">&lt;drive>:\cougaar</td>
 
-<td VALIGN=TOP WIDTH="36%">Top-level location of ALP software&nbsp;</td>
+<td VALIGN=TOP WIDTH="36%">Top-level location of COUGAAR software&nbsp;</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.install.path</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.install.path</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
-<td VALIGN=TOP WIDTH="22%">&lt;drive>:\alp</td>
+<td VALIGN=TOP WIDTH="22%">&lt;drive>:\cougaar</td>
 
-<td VALIGN=TOP WIDTH="36%">Top-level location of ALP software&nbsp;</td>
+<td VALIGN=TOP WIDTH="36%">Top-level location of COUGAAR software&nbsp;</td>
 </tr>
 
 <tr>
@@ -267,7 +267,7 @@ transaction boundaries&nbsp;</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.domain.foo</td>
+<td VALIGN=TOP WIDTH="22%">cougaar.domain.foo</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
@@ -278,7 +278,7 @@ package where the domain corresponds with "foo"</td>
 </tr>
 
 <tr>
-<td VALIGN=TOP WIDTH="22%">alp.cluster.metrics</td>
+<td VALIGN=TOP WIDTH="22%">org.cougaar.cluster.metrics</td>
 
 <td VALIGN=TOP WIDTH="20%">Java System Property</td>
 
@@ -299,7 +299,7 @@ PlugIns query the XML files and create the specified LDM objects. Note
 that the ClusterAsset.ini file is no longer used in the test society.
 <p>The JDBC drivers required for the LDMSQLPlugIns are freely available
 from Oracle. All of our required functionality is available in a portable
-ZIP file that needs to be added to the ALP CLASSPATH. Oracle suggests that
+ZIP file that needs to be added to the COUGAAR CLASSPATH. Oracle suggests that
 the zip file be placed in $ORACLE_HOME/jdbc/lib/classes111.zip. While we
 are not able to provide this zip file in the release, it is available on
 the web: <a href="http://technet.oracle.com/software/download.htm">Oracle

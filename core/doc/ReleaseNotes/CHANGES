@@ -1,3 +1,9 @@
+* MB 7.0
+
+Package reorganization to support COUGAAR opensource release 7.0.
+Details may be found in 7.0/alp7.pkg.  Changes are reflected in
+javadocs and other documentation.
+
 * MB 6.8.2
 
 New PG in alp domain LocationSchedulePG is maintained by

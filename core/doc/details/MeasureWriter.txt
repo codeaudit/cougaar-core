@@ -1,10 +1,11 @@
 MeasureWriter is a code generator which writes "unitless measure"
 class implementations.
 
-For example, the class alp.ldm.measure.Mass implements a class which
-is essentially a wrapper around a double value which can be
-initialized in an arbitrary unit of Mass and retrieved using arbitrary 
-units:
+For example, the class org.cougaar.domain.planning.ldm.measure.Mass
+implements a class which is essentially a wrapper around a double
+value which can be initialized in an arbitrary unit of Mass and
+retrieved using arbitrary units:
+
 	Mass x = new Mass(24, Mass.KILOGRAMS);
 	double lbs = x.getPounds();
 	double stons = x.getShortTons();

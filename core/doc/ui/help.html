@@ -1,6 +1,6 @@
-<HTML><HEADER><TITLE>ALP UI PlanServer</TITLE></HEADER>
+<HTML><HEADER><TITLE>COUGAAR UI PlanServer</TITLE></HEADER>
 <BODY>
-<CENTER><H2><BOLD>(HELP) ALP UI 
+<CENTER><H2><BOLD>(HELP) COUGAAR UI 
 LogPlanServer</H2></CENTER>
 <P>Service URL parameters/resource-references recognized by 
 PlanServer:</P>
@@ -107,7 +107,7 @@ CLUSTERXXXY listening...  (port=5556)
 ...
 CLUSTERXXXZ listening...  (port=5557)
 </PRE>
-<P>With the next release, the ALP cluster name service 
+<P>With the next release, the COUGAAR cluster name service 
 [Voyager Federated Name Service (FDS)] will be exposed to the server. With this 
 access, a user could then ask any server to list &quot;all the other 
 servers&quot; registered within the Society.</P>
@@ -133,7 +133,7 @@ PlugIn.</FONT> ---</P>
 <P></P>
 <P><FONT COLOR=#990000 SIZE=+1>From the 
 Command-Line.</FONT> Command line looks something like this:
-<PRE>java -nojit -Dalp.install.path=D:\Dev\alp ui.planserver.ThreadedPlanServer</PRE>
+<PRE>java -nojit -Dorg.cougaar.install.path=D:\Dev\alp ui.planserver.ThreadedPlanServer</PRE>
 <P>Note. Running from the command line gives you a fully 
 operational Plan Server, but it doesn't give you access to PlugIn services to 
 answer Log Plan queries etc. </P>
@@ -145,7 +145,7 @@ should be installed if you plan to use ?help option.</FONT></P>
 <P><FONT COLOR=#990000 SIZE=+1>Simple 
 Proxy Service.</FONT> The PlanServer can serve as a Proxy for another webserver. 
 the intent is to defer APPLET, IMAGE etc. serving responsibilities to a 
-webserver. Hence, ALP debugging applets etc. can be used within the normal 
+webserver. Hence, COUGAAR debugging applets etc. can be used within the normal 
 applet/browser security model.&nbsp;&nbsp; The usage pattern is this:&nbsp; a.) 
 define proxy session, b.) during the session use the PlanServer as 
 &quot;proxy&quot; host for your applet/application; c.) when done, turn off the 
@@ -179,7 +179,7 @@ location.</U>&nbsp; For example, if you wanted to view document located at</P>
 <P><FONT COLOR=#990000 SIZE=+1>Proxy for 
 other LogPlanServers.</FONT> The PlanServer can serve as a Proxy for other 
 LogPlanServers.&nbsp; LogPlanServers are identified by way of their alias.&nbsp; 
-The alias of a LogPlanServer (running within ALP Society context) is its 
+The alias of a LogPlanServer (running within COUGAAR Society context) is its 
 ClusterID.&nbsp; The literal ClusterID &quot;&lt;3ID&gt;&quot; can be used as 
 well as just &quot;3ID&quot;.&nbsp; Aliases are case-sensitive.</P>
 <P>http://localhost:5555/$&lt;3ID&gt;/?LIST?PSP&nbsp; will 
@@ -222,7 +222,7 @@ face="">PSPs</FONT>) are typically executed as a
 &ldquo;light-weight&rdquo; server-side action which writes to an output stream 
 to the UI application, then quits. A UI application , based on this usage 
 pattern, can poll periodically to stimulate the PSP to rerun and receive updated 
-data. It is anticipated for most ALP UI usage, this will be sufficient. However, 
+data. It is anticipated for most COUGAAR UI usage, this will be sufficient. However, 
 in some cases (eg &ldquo;Alert&rdquo; notification), it may be more practical 
 for the LogPlanServer to &ldquo;push&rdquo; an update to a UI application rather 
 than have the UI application repeatedly &ldquo;poll&rdquo; for it. This option 

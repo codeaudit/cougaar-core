@@ -8,8 +8,8 @@ where URL should be a virtual directory (not a file - must end with
 
 CS Examples: 
     http://configs.alpine.log.darpa.mil/
-    file:/usr/alp/configs/
-    ftp://alpuser:password@ftp.alpine.log.darpa.mil/configs/
+    file:/usr/cougaar/configs/
+    ftp://cougaaruser:password@ftp.alpine.log.darpa.mil/configs/
 
 The simplest form would also specify the particular config directory
 with the CS spec.  E.g:
@@ -26,7 +26,7 @@ To avoid loading alpreg.ini through the network (which works fine, but
 may be undesirable for large, multi-nameserver societies), the
 "registry" spec may be specified on the node command line with the
 "-ns" argument.  eg:
-    Node MiniNode -ns ns.alp.org:ns.alp.org:8000:5555
+    Node MiniNode -ns ns.cougaar.org:ns.cougaar.org:8000:5555
 
 
 

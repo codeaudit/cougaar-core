@@ -6,24 +6,24 @@ uses a proprietary java library "engine.jar".
 
 The installed package will look like:
 
-* alp/plugins/widget.plugin
+* cougaar/plugins/widget.plugin
 
   This is a zip or jar file which includes all of the java code
-that makes up the alp plugin.  It should be possible for Alpine to
+that makes up the cougaar plugin.  It should be possible for Alpine to
 produce this file from the sources and libraries submitted to
 Alpine. The java package(s) of these classes should start with something
 like "com.widgetco." 
 There should be a top-level entry in the .plugin file titled "PLUGIN"
 which must be a text file with lines of the form:
-      WidgetExpander = com.widgetco.alp.WidgetExpander
+      WidgetExpander = com.widgetco.cougaar.WidgetExpander
 
   Lines starting with '#' and white lines are ignored.  This allows
 clusters to find the main entry points of a plugin software set.  Each 
 plugin set is loaded with its' own classloader.  This means that
 classes from different .plugin files may not refer to each other.
 
-  Future infrastructure code will do things like prohibit loading of
-classes from the alp.*, java.* and alp.* class trees,
+  Infrastructure code will do things like prohibit loading of
+classes from the org.cougaar.* and java.* class trees,
 and may require that classes be signed. 
 
   This is not provided by the submitting organization, but rather
@@ -31,7 +31,7 @@ should be equivalent to the submitted file widget/widget.plugin.
 However, the installed widget.plugin will have been compiled by
 Alpine.
 
-* alp/external/widget/
+* cougaar/external/widget/
   A directory for any plugin/product-specific data, information,
 binaries, external programs, etc.  WidgetCo should submit the contents 
 of this directory as the deliverable in a zip or tar file starting
@@ -40,9 +40,9 @@ archive as widget/widget.plugin.  Note that the directory "widget/src"
 will (by default) be deleted before redistribution.  All other
 contents will be distributed as provided.
 
-* alp/external/widget/widget.plugin
+* cougaar/external/widget/widget.plugin
   The originally-submitted plugin file.
 
-* alp/external/widget/lib/engine.jar
+* cougaar/external/widget/lib/engine.jar
   WidgetCo's proprietary scheduling engine.
 

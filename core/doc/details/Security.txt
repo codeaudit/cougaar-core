@@ -1,19 +1,19 @@
-ALP demonstration security details
+COUGAAR demonstration security details
 
-I. ALP demonstration may run on IPSec - essentially a secured
+I. COUGAAR demonstration may run on IPSec - essentially a secured
 "intranet" for the demonstration society.
 
-II. ALP infrastructure can be told to use a MessageSecurityManager,
+II. COUGAAR infrastructure can be told to use a MessageSecurityManager,
 which can sign or even encrypt all messages (e.g. one might use an
 encrypting MSM if it wasn't going to be running on top of IPSec).
 
   A. the MSM to use is specified by the system property
   alp.security.  For instance, to activate the "signing" MSM,
   the VM would be started with:
-	-Dalp.message.security=alp.society.SignedMessageSecurityManager
+	-Dalp.message.security=org.cougaar.core.society.SignedMessageSecurityManager
 
   B. There is a test MSM in the same package as the real one called
-	alp.society.DummyMessageSecurityManager
+	org.cougaar.core.society.DummyMessageSecurityManager
   this MSM simply encapsulates the real message inside an opaque
   wrapper.  No authentication or integrity checks are done.
 

@@ -1,4 +1,4 @@
-Many predicates in ALP are created using a construct something like this:
+Many predicates in COUGAAR are created using a construct something like this:
 
   private UnaryPredicate myXYZPredicate = new UnaryPredicate() {
     public boolean execute(Object o) {
@@ -33,3 +33,9 @@ have a reference to any outer class instance. For cases where there is
 information in the outer class needed by the predicate, consider defining a
 private static class extending UnaryPredicate and pass this needed
 information information to the constructor.
+
+Predicates should be strictly functional - that is, a predicate should
+not return different values at different times for the same object
+during its lifecycle.  If you must define a predicate so that its
+return value for an object changes, you should extend
+DynamicUnaryPredicate instead of UnaryPredicate.
