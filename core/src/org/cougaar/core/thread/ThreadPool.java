@@ -104,16 +104,16 @@ public class ThreadPool
 	    }
 	}
 
-	public void start (SchedulableObject schedulable) {
-	    this.schedulable = schedulable;
-	    start();
+	public void start () {
+	    throw new RuntimeException("You can't call start() on a PooledThread");
 	}
 
-	public void start() throws IllegalThreadStateException {
+	public void start(SchedulableObject schedulable) throws IllegalThreadStateException {
 	    synchronized (runLock) {
 		if (isRunning) 
 		    throw new IllegalThreadStateException("PooledThread already started: "+
 							  this);
+		this.schedulable = schedulable;
 		isRunning = true;
 
 		if (!isStarted) {
