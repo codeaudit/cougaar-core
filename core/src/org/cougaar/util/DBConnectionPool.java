@@ -997,6 +997,7 @@ public class DBConnectionPool {
             throw sqle;
           }
 	}
+        /** @deprecated **/
 	public void setUnicodeStream(int arg0, java.io.InputStream arg1, int arg2) throws java.sql.SQLException {
           throw new java.sql.SQLException("Method not supported");
           //	  thePreparedStatement.setUnicodeStream(arg0, arg1, arg2);
@@ -1074,6 +1075,7 @@ public class DBConnectionPool {
           }
           return a;
 	}
+        /** @deprecated **/
 	public java.math.BigDecimal getBigDecimal(int paramIndex)  throws java.sql.SQLException {
           java.math.BigDecimal bd;
           try {

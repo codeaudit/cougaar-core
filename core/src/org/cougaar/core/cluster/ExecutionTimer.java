@@ -12,6 +12,7 @@ package org.cougaar.core.cluster;
 
 import org.cougaar.core.cluster.Alarm;
 import java.util.*;
+import java.text.*;
 
 /**
  * Control the advancement of Execution time. Execution time is a
@@ -316,7 +317,7 @@ public class ExecutionTimer extends Timer {
       try {
         GregorianCalendar calendar = new GregorianCalendar();
         calendar.set(Calendar.HOUR_OF_DAY, 0); // Midnight today
-        long offset = Date.parse(startTime) - calendar.getTime().getTime();
+        long offset = (new SimpleDateFormat()).parse(startTime).getTime() - calendar.getTime().getTime();
         theParameters[0] = new Parameters(1.0, offset, 0L);
       } catch (Exception e) {
         System.err.println("Bad org.cougaar.core.cluster.startTime: " + e);
