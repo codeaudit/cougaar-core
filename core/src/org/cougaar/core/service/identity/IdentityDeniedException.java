@@ -29,10 +29,9 @@
 
 package org.cougaar.core.service.identity;
 
-
 /**
- * Mark an exception thrown when a request for credentials
- * for a particular identity is denied.
+ * An {@link IdentityException} thrown when the certificate authority
+ * denies an identity.
  */
 public class IdentityDeniedException
   extends IdentityException

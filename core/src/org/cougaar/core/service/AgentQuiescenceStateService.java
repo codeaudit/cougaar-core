@@ -31,32 +31,33 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.Service;
 
 /**
- * Service for querying the agents registered with the Node quiescence service,
- * and marking agents as dead when they have been restarted elsewhere, and the local
- * Node should ignore this copy.
- **/
+ * This service allows a component to query the agents registered
+ * with the node's {@link QuiescenceReportService} and mark agents
+ * as dead (ignorable) when they have been restarted on another
+ * node.
+ */
 public interface AgentQuiescenceStateService extends Service {
-  /** Is the Node altogether quiescent **/
+  /** Is the Node altogether quiescent */
   boolean isNodeQuiescent();
 
   /**
    * List the local agents with quiescence states for the Node to consider
    * @return an array of MessagAddresses registered with the Nodes QuiescenceReportService
-   **/
+   */
   MessageAddress[] listAgentsRegistered();
   
   /**
    * Is the named agent's quiescence service enabled (ie the Distributor is fully loaded)?
    * @param agentAddress The agent to query
    * @return true if the agent's quiescence service has been enabled and it counts towards Node quiescence
-   **/
+   */
   boolean isAgentEnabled(MessageAddress agentAddress);
   
   /**
    * Is the named agent quiescent?
    * @param agentAddress The agent to query
    * @return true if the Agent's Distributor is quiescent
-   **/
+   */
   boolean isAgentQuiescent(MessageAddress agentAddress);
   
   /**
@@ -64,20 +65,20 @@ public interface AgentQuiescenceStateService extends Service {
    * marked as dead to be ignored?
    * @param agentAddress The agent to query
    * @return false if the agent is dead and should be ignored for local quiescence
-   **/
+   */
   boolean isAgentAlive(MessageAddress agentAddress);
   
   /**
    * Mark the named agent as dead - it has been restarted elsewhere, and should
    * be ignored locally for quiescence calculations.
    * @param agentAddress The Agent to mark as dead
-   **/
+   */
   void setAgentDead(MessageAddress agentAddress);
   
   /**
    * Show the QuiescenceService clients that are blocking quiescence for this agent, if any
    * @param agentAddress The Agent whose quiescence blockers to show
-   **/
+   */
   String getAgentQuiescenceBlockers(MessageAddress agentAddress);
 
   // Other options: list message numbers? 

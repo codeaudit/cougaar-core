@@ -29,7 +29,7 @@ package org.cougaar.core.service.community;
 
 /**
  * Response to request performed by Community Manger.
- **/
+ */
 public interface CommunityResponse {
 
   public static final int UNDEFINED  = 0;

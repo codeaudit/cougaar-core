@@ -29,6 +29,10 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.ThreadListener;
 
+/**
+ * This service allows components to watch {@link ThreadService}
+ * activity.
+ */
 public interface ThreadListenerService extends Service
 {
     void addListener(ThreadListener listener);

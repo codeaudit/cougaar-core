@@ -37,10 +37,14 @@ import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.util.UnaryPredicate;
 
-/** A BlackboardService is an API which may be supplied by a 
- * ServiceProvider registered in a ServiceBroker that provides basic
- * blackboard publish, subscription and transaction services.
- **/
+/**
+ * This service provides transactional publish/subscribe access to
+ * the local agent's blackboard.
+ * <p>
+ * Most developers should extend {@link
+ * org.cougaar.core.plugin.ComponentPlugin} to handle threading and
+ * opening/closing transactions.
+ */
 public interface BlackboardService extends Service {
   //
   //Subscriber/ Subscription stuff
@@ -48,7 +52,8 @@ public interface BlackboardService extends Service {
 
   Subscriber getSubscriber();
     
-  /** Request a subscription to all objects for which 
+  /**
+   * Request a subscription to all objects for which 
    * isMember.execute(object) is true.  The returned Collection
    * is a transactionally-safe set of these objects which is
    * guaranteed not to change out from under you during run()
@@ -56,19 +61,20 @@ public interface BlackboardService extends Service {
    * 
    * subscribe() may be called any time after 
    * load() completes.
-   **/
+   */
   Subscription subscribe(UnaryPredicate isMember);
 
-  /** like subscribe(UnaryPredicate), but allows specification of
+  /**
+   * like subscribe(UnaryPredicate), but allows specification of
    * some other type of Collection object as the internal representation
    * of the collection.
    * Alias for getSubscriber().subscribe(UnaryPredicate, Collection);
-   **/
+   */
   Subscription subscribe(UnaryPredicate isMember, Collection realCollection);
 
   /**
    * Alias for getSubscriber().subscribe(UnaryPredicate, boolean);
-   **/
+   */
   Subscription subscribe(UnaryPredicate isMember, boolean isIncremental);
   
   /**
@@ -81,7 +87,7 @@ public interface BlackboardService extends Service {
    * @return the Subsciption.
    * @see org.cougaar.core.blackboard.Subscriber#subscribe
    * @see org.cougaar.core.blackboard.Subscription
-   **/
+   */
   Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental);
 
   /**
@@ -89,11 +95,12 @@ public interface BlackboardService extends Service {
    */
   Subscription subscribe(Subscription subscription);
 
-  /** Issue a query against the logplan.  Similar in function to
+  /**
+   * Issue a query against the logplan.  Similar in function to
    * opening a new subscription, getting the results and immediately
    * closing the subscription, but can be implemented much more efficiently.
    * Note: the initial implementation actually does exactly this.
-   **/
+   */
   Collection query(UnaryPredicate isMember);
 
   /**
@@ -102,7 +109,7 @@ public interface BlackboardService extends Service {
    * <code> getSubscriber().unsubscribe(Subscription)</code>.
    * @param subscription the subscription to cancel
    * @see org.cougaar.core.blackboard.Subscriber#unsubscribe
-   **/
+   */
   void unsubscribe(Subscription subscription);
   
   int getSubscriptionCount();
@@ -115,9 +122,10 @@ public interface BlackboardService extends Service {
 
   int getPublishRemovedCount();
   
-  /** @return true iff collection contents have changed since the last 
+  /**
+   * @return true iff collection contents have changed since the last 
    * transaction.
-   **/
+   */
   boolean haveCollectionsChanged();
 
   //
@@ -130,7 +138,8 @@ public interface BlackboardService extends Service {
 
   void publishChange(Object o);
   
-  /** mark an element of the Plan as changed.
+  /**
+   * mark an element of the Plan as changed.
    * Behavior is not defined if the object is not a member of the plan.
    * There is no need to call this if the object was added or removed,
    * only if the contents of the object itself has been changed.
@@ -140,7 +149,7 @@ public interface BlackboardService extends Service {
    * types of changes are tracked).  Any additional changes are
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
-   **/
+   */
   void publishChange(Object o, Collection changes); 
 
   // 
@@ -151,10 +160,11 @@ public interface BlackboardService extends Service {
    * Open a transaction by grabbing the transaction lock and updating
    * the subscriptions.  This method blocks waiting for the
    * transaction lock.
-   **/
+   */
   void openTransaction();
 
-  /** Attempt to open a transaction by attempting to grab the 
+  /**
+   * Attempt to open a transaction by attempting to grab the 
    * transaction lock and updating the collections (iff we got the 
    * lock).
    *
@@ -162,15 +172,16 @@ public interface BlackboardService extends Service {
    * in PluginWrapper.
    *
    * @return true IFF a transaction was opened.
-   **/
+   */
   boolean tryOpenTransaction();
 
-  /** Close a transaction opened by openTransaction() or a 
+  /**
+   * Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction(), flushing the change
    * tracking (delta) lists of any open subscriptions.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
-   **/
+   */
   void closeTransaction() throws SubscriberException;
     
   /**
@@ -180,10 +191,11 @@ public interface BlackboardService extends Service {
    * transaction.
    * @exception SubscriberException IFF we did not own the transaction
    * lock.
-   **/
+   */
   void closeTransactionDontReset();
 
-  /** Close a transaction opened by openTransaction() or a 
+  /**
+   * Close a transaction opened by openTransaction() or a 
    * successful tryOpenTransaction().
    * @param resetp IFF true, all subscriptions will have
    * their resetChanges() method called to clear any delta lists, etc.
@@ -191,56 +203,60 @@ public interface BlackboardService extends Service {
    * lock.
    * @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
    * This method becomes private after deprecation period expires.
-   **/
+   */
   void closeTransaction(boolean resetp) throws SubscriberException;
 
 
-  /** Check to see if a transaction is open and owned by the current thread.
+  /**
+   * Check to see if a transaction is open and owned by the current thread.
    * There is no method to check to see if the subscribe has a transaction 
    * open which is owned by a different thread, since that would not be a safe 
    * operation.
    * @return true IFF the current thread already has an open transaction.
    * @note This method should really only be used in assertions and the like, since
    * code should generally know exactly when it is or is not inside an open transaction.
-   **/
+   */
   boolean isTransactionOpen();
     
   //
   // plugin hooks
   //
 
-  /** called when the client (Plugin) requests that it be waked again.
+  /**
+   * called when the client (Plugin) requests that it be waked again.
    * by default, just calls wakeSubscriptionWatchers, but subclasses
    * may be more circumspect.
-   **/
+   */
   void signalClientActivity();
 
-  /** register a watcher of subscription activity **/
+  /** register a watcher of subscription activity */
   SubscriptionWatcher registerInterest(SubscriptionWatcher w);
 
-  /** register a watcher of subscription activity **/
+  /** register a watcher of subscription activity */
   SubscriptionWatcher registerInterest();
 
-  /** stop watching subscription activity **/
+  /** stop watching subscription activity */
   void unregisterInterest(SubscriptionWatcher w) throws SubscriberException;
 
   //
   // persistence hooks
   //
 
-  /** indicate that this blackboard service information should (or should not)
+  /**
+   * indicate that this blackboard service information should (or should not)
    * be persisted.
-   **/
+   */
   void setShouldBePersisted(boolean value);
-  /** @return the current value of the persistence setting **/
+  /** @return the current value of the persistence setting */
   boolean shouldBePersisted();
 
-//    /** indicate that the blackboard view is ready to persist **/
+//    /** indicate that the blackboard view is ready to persist */
 //    void setReadyToPersist();
 
-  /** is this BlackboardService the result of a rehydration of a persistence 
+  /**
+   * is this BlackboardService the result of a rehydration of a persistence 
    * snapshot? 
-   **/
+   */
   boolean didRehydrate();
 
   /**
@@ -252,18 +268,19 @@ public interface BlackboardService extends Service {
    * envelopes after re-opening the transaction. Otherwise, the
    * changes will be lost.
    * @exception PersistenceNotEnabledException
-   **/
+   */
   void persistNow() throws PersistenceNotEnabledException;
 
-  /** Hook to allow access to Blackboard persistence mechanism **/
+  /** Hook to allow access to Blackboard persistence mechanism */
   Persistence getPersistence();
 
-  /** BlackboardService.Delegate is an instantiable convenience class which may be
+  /**
+   * BlackboardService.Delegate is an instantiable convenience class which may be
    * used by Binder writers to bind BlackboardService, either as a simple
    * protective indirection layer, or as the base class for more complex behavior.
    * This implementation merely passes through all requests to a constructor
    * specified delegate.
-   **/
+   */
   class Delegate implements BlackboardService {
     private final BlackboardService bs;
     public Delegate(BlackboardService bs) {
@@ -335,8 +352,9 @@ public interface BlackboardService extends Service {
     public void closeTransactionDontReset() throws SubscriberException {
       bs.closeTransactionDontReset();
     }
-    /** @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
-     **/
+    /**
+     * @deprecated Use {@link #closeTransactionDontReset closeTransactionDontReset}
+     */
     public void closeTransaction(boolean resetp) throws SubscriberException {
       bs.closeTransaction(resetp);
     }

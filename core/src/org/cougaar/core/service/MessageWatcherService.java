@@ -29,17 +29,21 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageTransportWatcher;
 
+/**
+ * This service allows components to watch message send/receive
+ * activity.
+ */
 public interface MessageWatcherService extends Service
 {
 
     /**
      * Add a MessageTransportWatcher to the server.
-     **/
+     */
     void addMessageTransportWatcher(MessageTransportWatcher watcher);
 
     /**
      * Remove a MessageTransportWatcher from the server.
-     **/
+     */
     void removeMessageTransportWatcher(MessageTransportWatcher watcher);
 
 }

@@ -29,6 +29,10 @@ package org.cougaar.core.service.identity;
 
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * Required service requestor API for the {@link
+ * AgentIdentityManagementService}.
+ */
 public interface AgentIdentityManagementClient
 {
   void identityRevoked(MessageAddress agentName, CrlReason reason);

@@ -31,14 +31,19 @@ package org.cougaar.core.service.identity;
 
 import java.security.Principal;
 
+/**
+ * Required service requestor API for the {@link
+ * AgentIdentityService}.
+ */ 
 public interface AgentIdentityClient
   extends Principal
 {
-  /** Callback for revocation of an aquired identity.
-   *  See RFC 2459, 5.3.1 for a list of possible reasons
-   *  why the certificate was revoked.
+  /**
+   * Callback for revocation of an aquired identity.
+   * See RFC 2459, 5.3.1 for a list of possible reasons
+   * why the certificate was revoked.
    *
-   *  @param reason the reason code as defined in RFC 2459
+   * @param reason the reason code as defined in RFC 2459
    */
   void identityRevoked(CrlReason reason);
 

@@ -29,7 +29,11 @@
 
 package org.cougaar.core.service.identity;
 
-
+/**
+ * An {@link IdentityException} thrown if the certificate authority
+ * did not sign the request immediately, requiring the client to
+ * send the request again later.
+ */
 public class PendingRequestException
   extends IdentityException
 {

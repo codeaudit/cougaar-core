@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * An address entry must specify an application.
+ * A deprecated field formerly required by an {@link AddressEntry}.
  *
  * @deprecated see new AddressEntry factory method
  */

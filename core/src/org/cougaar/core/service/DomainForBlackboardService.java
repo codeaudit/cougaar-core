@@ -33,22 +33,26 @@ import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * This service is an extended {@link DomainService} for the
+ * {@link Blackboard}'s use.
+ */
 public interface DomainForBlackboardService extends DomainService {
-  /** set the blackboard for all the domains **/
+  /** set the blackboard for all the domains */
   void setBlackboard(Blackboard blackboard);
 
-  /** invoke delayed LP actions on the domain's XPlans **/
+  /** invoke delayed LP actions on the domain's XPlans */
   void invokeDelayedLPActions();
 
-  /** invoke EnvelopeLogicProviders across all currently loaded domains **/
+  /** invoke EnvelopeLogicProviders across all currently loaded domains */
   void invokeEnvelopeLogicProviders(EnvelopeTuple tuple, 
                                     boolean persistenceEnv);
-  /** invoke MessageLogicProviders across all currently loaded domains **/
+  /** invoke MessageLogicProviders across all currently loaded domains */
   void invokeMessageLogicProviders(DirectiveMessage message);
 
-  /** invoke RestartLogicProviders across all currently loaded domains **/
+  /** invoke RestartLogicProviders across all currently loaded domains */
   void invokeRestartLogicProviders(MessageAddress cid);
 
-  /** invoke ABAChangeLogicProviders across all currently loaded domains **/
+  /** invoke ABAChangeLogicProviders across all currently loaded domains */
   void invokeABAChangeLogicProviders(Set communities);
 }  

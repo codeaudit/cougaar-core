@@ -37,7 +37,8 @@ import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.ProtectedInputStream;
 import org.cougaar.core.mts.ProtectedOutputStream;
 
-/** Cryptographic Service used to cryptographically protect incoming
+/**
+ * This service is used to cryptographically protect incoming
  * and outgoing messages.
  * This service should be called by the transport service for
  * all Cougaar messages.
@@ -71,8 +72,8 @@ public interface MessageProtectionService extends Service
    * @throws IOException
    */
   byte[] protectHeader(MessageAttributes attributes, 
-		       MessageAddress source,
-		       MessageAddress destination) 
+                       MessageAddress source,
+                       MessageAddress destination) 
     throws GeneralSecurityException, IOException;
 
   /**
@@ -86,8 +87,8 @@ public interface MessageProtectionService extends Service
    * @throws IOException
    */
   MessageAttributes unprotectHeader(byte[] rawData, 
-				    MessageAddress source,
-				    MessageAddress destination) 
+                                    MessageAddress source,
+                                    MessageAddress destination) 
     throws GeneralSecurityException, IOException;
 
   /** 
@@ -117,9 +118,9 @@ public interface MessageProtectionService extends Service
    * @throws IOException
    */
   ProtectedOutputStream getOutputStream(OutputStream os,
-					MessageAddress source,
-					MessageAddress destination,
-					MessageAttributes attrs)
+                                        MessageAddress source,
+                                        MessageAddress destination,
+                                        MessageAttributes attrs)
     throws IOException;
 
   /** 
@@ -148,8 +149,8 @@ public interface MessageProtectionService extends Service
    * @throws IOException
    */
   ProtectedInputStream getInputStream(InputStream is,
-				      MessageAddress src,
-				      MessageAddress dst,
-				      MessageAttributes attrs)
+                                      MessageAddress src,
+                                      MessageAddress dst,
+                                      MessageAttributes attrs)
     throws IOException;
 }

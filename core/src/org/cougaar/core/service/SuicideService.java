@@ -30,10 +30,13 @@ import org.cougaar.core.component.Service;
 import org.cougaar.util.PropertyParser;
 
 /** 
- * API for an agent (or node) to commit suicide.
+ * This service is used to tell the agent (or node) to exit, for
+ * example due to an {@link java.lang.OutOfMemoryError}.
+ * <p> 
  * The intent is to allow major components to report that they
  * have recognised that they have been corrupted by various means and
  * so should be restarted.
+ *
  * @property org.cougaar.core.service.SuicideService.enable If true, will enable 
  * suicide of Nodes and Agents.  Otherwise, the suicide API exists but only logs
  * attempts rather than actually kills anything. The default is false.
@@ -48,15 +51,14 @@ import org.cougaar.util.PropertyParser;
  * 2 percent.  If this value is greater than or equal to 1.0, then it is interpreted
  * as a number of kilobytes.  Examples: if maxMemory is 100Mb, then "0.005" and "512" are both
  * interpreted as one half a megabyte.
- * 
  */
-
 public interface SuicideService
   extends Service
 {
-  /** If the VM exits as a result of a suicide call, it will do so
+  /**
+   * If the VM exits as a result of a suicide call, it will do so
    * using this value.
-   **/
+   */
   int EXIT_CODE = 5;
 
   String SUICIDE_PROP = (SuicideService.class).getName()+".enable";
@@ -76,7 +78,9 @@ public interface SuicideService
   double lowMem = PropertyParser.getDouble(LOWMEM_PROP, lowMem_default);
   
 
-  /** Report a fatal error and die.  This call might not return.
+  /**
+   * Report a fatal error and die.  This call might not return.
+   *
    * @param component Which component should be killed.  May be specified as
    * null, implying that the whole node is suspect, or a specific component 
    * descriptor (e.g. an agent name).  It is probably illegal to specify a component
@@ -84,6 +88,6 @@ public interface SuicideService
    * @param error The error indicating the problem.  An attempt will be made
    * to log the error during the component's death throws.  May not be specified
    * as null.
-   **/
+   */
   void die(Object component, Throwable error);
 }

@@ -30,6 +30,27 @@ import java.util.Map;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * This service is used by components to tell the node the initial
+ * quiescence numbering and to toggle between quiescence and
+ * non-quiescence.
+ * <p>
+ * "Quiescence" is partially a node-local concept, where all local
+ * agents have completed processing, and a society-wide concept,
+ * where all inter-agent messages have been delivered.  The {@link
+ * EventService} is used to report node-local quiescence and
+ * incoming/outgoing message numbers to an external script that
+ * detects society-wide quiescence.  Quiescence detection is
+ * primarily an execution-time planning tool used to advance the
+ * execution time ({@link DemoControlService}) past idle planning
+ * time (e.g. advance a day once all agents have planned the current
+ * day).
+ * <p>
+ * Usually blackboard activity is enough to detect quiescence,
+ * but a component that runs in a separate thread or queues work
+ * must often tell the node that the agent is non-quiescent even
+ * though blackboard activity has ceased. 
+ */
 public interface QuiescenceReportService extends Service {
   /**
    * Specifies the client agent's identity using his
@@ -37,7 +58,7 @@ public interface QuiescenceReportService extends Service {
    * other method and establishes the identity of the client agent in
    * a more or less unforgable way.
    * @param agentIdentificationService the agent's identification service
-   **/
+   */
   void setAgentIdentificationService(AgentIdentificationService agentIdentificationService);
 
   /**
@@ -51,17 +72,17 @@ public interface QuiescenceReportService extends Service {
    * @param incomingMessageNumbers a Map from agent MessageAddresses
    * to Integers giving the number of the last message received. The
    * arguments must not be null.
-   **/
+   */
   void setMessageNumbers(Map outgoingMessageNumbers, Map incomingMessageNumbers);
 
   /**
    * Specifies that, from this service instance point-of-view, the
    * agent is quiescent. The message number maps are not altered.
-   **/
+   */
   void setQuiescentState();
 
   /**
    * Specifies that this agent is no longer quiescent.
-   **/
+   */
   void clearQuiescentState();
 }

@@ -29,7 +29,6 @@ package org.cougaar.core.service.community;
 /**
  * Interface defining callback for find community request.
  */
-
 public interface FindCommunityCallback {
 
   /**

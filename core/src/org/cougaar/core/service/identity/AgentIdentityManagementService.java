@@ -30,6 +30,10 @@ package org.cougaar.core.service.identity;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * This service allows a component to manage local agent
+ * identities granted by the {@link AgentIdentityService}.
+ */
 public interface AgentIdentityManagementService
   extends Service
 {

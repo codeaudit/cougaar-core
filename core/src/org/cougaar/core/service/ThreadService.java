@@ -30,10 +30,16 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.Schedulable;
 
 /**
- * The ThreadService provides Schedulables for use by a COUGAAR
- * objects (known as the 'consumer') The body of code to be run is
- * passed in as a Runnable.  An optional name can be passed in as
- * well, and should be passed in if at all possible.
+ * This service provides a {@link Schedulable}s to execute a
+ * {@link Runnable#run()} method within a pooled thread.
+ * <p>
+ * The "consumer" is typically the service requestor.
+ * <p>
+ * The "lane" is an option parameter that differentiates service
+ * based on expected thread use, e.g. the {@link #WILL_BLOCK_LANE}
+ * is for runnables that may block on I/O or a "wait()".  See
+ * the thread service documentation for details.  The default is
+ * {@link #BEST_EFFORT_LANE}.
  */
 public interface ThreadService extends Service
 {
@@ -48,6 +54,6 @@ public interface ThreadService extends Service
     Schedulable getThread(Object consumer, Runnable runnable, String name);
 
     Schedulable getThread(Object consumer, Runnable runnable, String name,
-			  int lane);
+                          int lane);
 
 }

@@ -29,11 +29,24 @@ package org.cougaar.core.service;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.component.Service;
 
-/** a Service for getting at Metrics information
- **/
-
+/**
+ * This service provides access to the time-based alarm services
+ * (real-time and execution-time).
+ * <p>
+ * Alarms typically wake a plugin for an "execute()" cycle, which
+ * is implemented by {@link
+ * org.cougaar.core.service.BlackboardService#signalClientActivity()}.
+ * For an example alarm, see {@link
+ * org.cougaar.core.plugin.PluginAlarm}.
+ * 
+ * @see org.cougaar.core.agent.service.alarm.ExecutionTimer
+ * @see org.cougaar.core.agent.service.alarm.RealTimer 
+ */
 public interface AlarmService extends Service {
+  /** @return the current scenario time */
   long currentTimeMillis();
+  /** Add an execution-time alarm */
   void addAlarm(Alarm alarm);
+  /** Add a real-time alarm */
   void addRealTimeAlarm(Alarm alarm);
 }

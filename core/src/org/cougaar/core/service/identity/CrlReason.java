@@ -30,7 +30,9 @@ package org.cougaar.core.service.identity;
 
 
 /**
- * Reasons for revoking a certificate.
+ * A reason for revoking a certificate.
+ * <p>
+ * These reasons match RFC 2459 section 5.3.1.
  */
 public class CrlReason
 {

@@ -30,40 +30,39 @@ import org.cougaar.core.adaptivity.OperatingModePolicy;
 import org.cougaar.core.component.Service;
 
 /**  
- * Part of the PlaybookService which manages plays and playbooks. 
+ * This service allows components to modify {@link
+ * org.cougaar.core.adaptivity.AdaptivityEngine} plays and playbooks. 
+ * <p> 
  * This part of the service is used to alter the plays in the playbook
  * by adding, modifying, or removing OperatingMode Policies.
- * 
- *  
- *   Play - if THREATCON > 3 && ENCLAVE == THEATER
+ * <p>
+ * <pre> 
+ *   Play - if THREATCON &gt; 3 &amp;&amp; ENCLAVE == THEATER
  *          then ENCRYPT = {56, 128}  - the first value is preferred
  *
- *   Policy - if THREATCON > 3 && CPU > 90
- *            then ENCRYPT >= 128
+ *   Policy - if THREATCON &gt; 3 &amp;&amp; CPU &gt; 90
+ *            then ENCRYPT &gt;= 128
  *
+ * Plays formed by calling constrain(Policy)
  *
- *  Plays formed by calling constrain(Policy)
- *
- *        if (THREATCON > 3 && ENCLAVE == THEATER) 
- *           && (THREATCON >3 && CPU > 90)
+ *        if (THREATCON &gt; 3 &amp;&amp; ENCLAVE == THEATER) 
+ *           &amp;&amp; (THREATCON &gt;3 &amp;&amp; CPU &gt; 90)
  *        then ENCRYPT = {128}
  *
- *        if (THREATCON > 3 && ENCLAVE == THEATER) 
- *           && !(THREATCON >3 && CPU > 90)
+ *        if (THREATCON &gt; 3 &amp;&amp; ENCLAVE == THEATER) 
+ *           &amp;&amp; !(THREATCON &gt;3 &amp;&amp; CPU &gt; 90)
  *        then ENCRYPT = {56, 128}
- *
+ * </pre> 
  * This play can constrain this policy because their "then" clauses
  * are operating on the same knobs.
- *
+ * <p>
  * Two plays result from constraining the original play with the
  * policy. The "if" clause of the first new play has the "if" clause
  * of the policy tacked on to it, and the knob on the "then" clause
  * must be set to 128. The "if" clause on the second new play has 
  * the -negated- "if" clause of the policy tacked on. The "then"
  * clause is untouched.
- * 
- **/
-
+ */
 public interface PlaybookConstrainService extends Service {
 
   /* constrain and unconstrain called by OperatingModePolicyManager */

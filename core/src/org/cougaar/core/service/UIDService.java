@@ -26,7 +26,10 @@
 
 package org.cougaar.core.service;
 
-
+/**
+ * This service provides {@link org.cougaar.core.util.UID}s, which
+ * are globally unique object identifiers.
+ */
 public interface UIDService extends UIDServer {
  
 }

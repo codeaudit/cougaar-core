@@ -29,7 +29,7 @@ package org.cougaar.core.service.wp;
 import java.io.Serializable;
 
 /**
- * Request for the white pages service.
+ * A request for the {@link WhitePagesService}.
  * <p>
  * Request objects are immutable.  A client submits a request
  * to the white pages and watches the mutable Response object.

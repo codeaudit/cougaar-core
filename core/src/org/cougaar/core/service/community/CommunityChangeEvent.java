@@ -29,11 +29,13 @@ package org.cougaar.core.service.community;
 import java.util.EventObject;
 
 /**
- * CommunityChangeEvent is used to notify interested parties that a change
- * has occurred in a community of interest.  The event contains a reference
- * to the community generating the event.  The event also contains attributes
- * identifying the cheange type and affected entity.  Since event generators
- * may not generate separate events for each change these attributes can only
+ * An event used to notify interested parties that a change
+ * has occurred in a community of interest.
+ * <p>
+ * The event contains a reference to the community generating
+ * the event.  The event also contains attributes identifying the
+ * cheange type and affected entity.  Since event generators may not
+ * generate separate events for each change these attributes can only
  * be assumed to reflect the most recent change.
  */
 public class CommunityChangeEvent extends EventObject {

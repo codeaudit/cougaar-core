@@ -31,7 +31,12 @@ import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerRegistry;
 
 /**
- * Scheduler API for Component use.
+ * This service is used to schedule plugins for thread execution. 
+ * <p> 
+ * The standard scheduler implementation just wraps the 
+ * {@link ThreadService}.  An open enhancement request is to
+ * port all SchedulerService clients to use the ThreadService
+ * directly, making this service obsolete. 
  *
  * @see TriggerRegistry
  */

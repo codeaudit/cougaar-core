@@ -32,6 +32,9 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.RightsSelector;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * This service controls the {@link ThreadService}.
+ */
 public interface ThreadControlService extends Service
 {
     // General
@@ -51,7 +54,6 @@ public interface ThreadControlService extends Service
     // Default lane
     int getDefaultLane();
     void setDefaultLane(int lane);
-	
 
     // General
     void setMaxRunningThreadCount(int count);

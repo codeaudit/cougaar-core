@@ -41,43 +41,48 @@ import java.util.List;
 import org.w3c.dom.Document;
 
 /**
- * ConfigurationService is a service interface front for org.cougaar.util.ConfigFinder.
- **/
-
+ * This service provides access to the file system by searching
+ * the configuration path.
+ * <p>
+ * The standard implementation is backed by the {@link
+ * org.cougaar.util.ConfigFinder}.  See the {@link
+ * org.cougaar.util.ConfigFinder} javadoc for the default
+ * configuration path and configurable system properties.
+ */
 public interface ConfigurationService extends Service {
-  /** the (immutable) set of configuration URLs used by this Service **/
+  /** the (immutable) set of configuration URLs used by this Service */
   List getConfigurationPath();
   
   /**
    * Locate an actual file in the config path. This will skip over
    * elements of org.cougaar.config.path that are not file: urls.
-   **/
+   */
   File locateFile(String filename);
 
   /**
    * Resolve a logical reference to a URL.
    * @return null if unresolvable.
-   **/
+   */
   URL resolveName(String logicalName) throws MalformedURLException;
 
   /**
    * Opens an InputStream to access the named file. The file is sought
    * in all the places specified in configPath.
    * @throws IOException if the resource cannot be found.
-   **/
+   */
   InputStream open(String aURL) throws IOException;
 
   /**
    * Attempt to find the URL which would be opened by the open method.
    * Note that this must actually attempt to open the various URLs
    * under consideration, so this is <em>not</em> an inexpensive operation.
-   **/
+   */
   URL find(String aURL) throws IOException;
 
-  /** Read and parse an XML file somewhere in the configpath **/
+  /** Read and parse an XML file somewhere in the configpath */
   Document parseXMLConfigFile(String xmlfile) throws IOException;
 
-  /** Delegate class for easing implementation of Binders, etc **/
+  /** Delegate class for easing implementation of Binders, etc */
   class Delegate implements ConfigurationService {
     private final ConfigurationService _delegate;
     protected final ConfigurationService getDelegate() { return _delegate; }

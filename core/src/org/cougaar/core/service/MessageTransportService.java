@@ -33,24 +33,27 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
 
 /**
- * Abstract MessageTransport layer for Society interaction.
+ * This service is the node-level message transport that agents
+ * use to send and receive messages.
  *
- **/
-
+ * @see org.cougaar.core.agent.service.MessageSwitchService for
+ * intra-agent message handling.
+ */
 public interface MessageTransportService extends Service
 {
 
-    /** Ask MessageTransport to deliver a message (asynchronously).
+    /**
+     * Ask MessageTransport to deliver a message (asynchronously).
      * message.getTarget() names the destination.  The client must be
      * registered, otherwise the message will not be sent.
-     **/
+     */
     void sendMessage(Message m);
 
     /** 
      * Register a client with MessageTransport.  A client is any
      * object which can receive Messages directed to it as the Target
      * of a message.
-     **/
+     */
     void registerClient(MessageTransportClient client);
 
 
@@ -58,22 +61,23 @@ public interface MessageTransportService extends Service
      * Unregister a client with MessageTransport.  No further
      * sendMessage calls will be accepted, and any queued messages
      * which aren't successfully delivered will be dropped.
-     **/
+     */
     void unregisterClient(MessageTransportClient client);
 
 
     /**
      * Block until all queued messages have been sent (or dropped).
-     * @return The list of dropped messages (could be null). */
+     * @return The list of dropped messages (could be null).
+     */
     java.util.ArrayList flushMessages();
 
     /**
      * @return the name of the entity that this MessageTransport
      * represents.  Will usually be the name of a node.
-     **/
+     */
     String getIdentifier();
 
-    /** @return true IFF the MessageAddress is known to the nameserver **/
+    /** @return true IFF the MessageAddress is known to the nameserver */
     boolean addressKnown(MessageAddress a);
 
     AgentState getAgentState();

@@ -29,6 +29,10 @@ package org.cougaar.core.service.identity;
 
 import java.io.Serializable;
 
+/**
+ * A marker interface for a captured {@link AgentIdentityService}
+ * state that can be transfered when an agent moves.
+ */
 public interface TransferableIdentity
   extends Serializable
 {

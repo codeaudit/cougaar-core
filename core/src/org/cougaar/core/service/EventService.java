@@ -29,12 +29,12 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 
 /** 
- * Logging service for assessment events.
+ * This service is used to log assessment events.
  * <p>
  * Events are intended for external profiling and monitoring
  * applications and often follow a strict application-defined
- * syntax.  In contrast, LoggingService logs are primarily for
- * human-readable debugging.
+ * syntax.  In contrast, {@link LoggingService} logs are primarily
+ * for human-readable debugging.
  * <p>
  * EventService clients should always check "isEventEnabled()"
  * before logging an event, for the same reasons as noted
@@ -42,11 +42,9 @@ import org.cougaar.core.component.Service;
  * <p>
  * Events are currently equivalent to using the logging service
  * with the "EVENT.<i>classname</i>" log category and INFO
- * log level.
- * <p>
- * For example, if component "org.foo.Bar" emits an event, it
- * will be logged as category "EVENT.org.foo.Bar" and level
- * INFO.
+ * log level.  For example, if component "org.foo.Bar" emits an
+ * event, it will be logged as category "EVENT.org.foo.Bar" and
+ * level INFO.
  *
  * @see LoggingService
  */

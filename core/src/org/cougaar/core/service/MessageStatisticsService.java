@@ -29,6 +29,10 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageStatistics;
 
+/**
+ * This service provides message transport statistics, such as
+ * the total number of messages sent by the local node.
+ */
 public interface MessageStatisticsService extends Service
 {
   MessageStatistics.Statistics getMessageStatistics(boolean reset);

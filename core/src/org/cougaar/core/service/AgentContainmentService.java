@@ -30,9 +30,8 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.Service;
 
 /** 
- * Agent's "containment service" that allows a child component
- * of the agent to interact with the agent's container (add, 
- * remove, etc).
+ * This service allows a component to add/remove components from
+ * its agent.
  * <p>
  * For example, a plugin within an agent can add another 
  * brand-new plugin to its agent by using this service.

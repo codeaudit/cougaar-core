@@ -26,6 +26,10 @@
 
 package org.cougaar.core.service;
 
+/**
+ * This service provides metrics for recent persistence activity,
+ * such as the most recent snapshot size in bytes.
+ */
 public interface PersistenceMetricsService {
   interface Metric {
     long getStartTime();
@@ -43,19 +47,19 @@ public interface PersistenceMetricsService {
   /**
    * Designates that averaging should include only full
    * snapshots
-   **/
+   */
   static final int FULL = 1;
 
   /**
    * Designates that averaging should include only delta
    * snapshots
-   **/
+   */
   static final int DELTA = 2;
 
   /**
    * Designates that averaging should include all
    * snapshots
-   **/
+   */
   static final int ALL = 3;
 
   static final int MAX_METRICS = 100;
@@ -65,7 +69,7 @@ public interface PersistenceMetricsService {
    * currently a constant MAX_METRICS
    * @param which one of the constants FULL, DELTA, ALL designating
    * which kind of snapshots should be included.
-   **/
+   */
   Metric[] getAll(int which);
 
   /**
@@ -73,7 +77,7 @@ public interface PersistenceMetricsService {
    * that have been dropped due to exceeding MAX_METRICS
    * @param which one of the constants FULL, DELTA, ALL designating
    * which kind of snapshots should be averaged.
-   **/
+   */
   Metric getAverage(int which);
 
   /**
@@ -82,6 +86,6 @@ public interface PersistenceMetricsService {
    * @return the count of all persistence snapshots taken.
    * @param which one of the constants FULL, DELTA, ALL designating
    * which kind of snapshots should be counted.
-   **/
+   */
   int getCount(int which);
 }

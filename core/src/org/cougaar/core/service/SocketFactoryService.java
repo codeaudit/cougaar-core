@@ -29,11 +29,13 @@ import java.util.Map;
 
 import org.cougaar.core.component.Service;
 
-/** A service for finding the right SocketFactory for our current application.
- **/
-
+/**
+ * This service is used to get a socket factory, such as an {@link
+ * java.rmi.server.RMISocketFactory}.
+ */
 public interface SocketFactoryService extends Service {
-  /** Get an appropriate SocketFactory instance.
+  /**
+   * Get an appropriate SocketFactory instance.
    * the return value is typed Object because RMISocketFactory and SSLSocketFactory
    * do not otherwise share a superclass.
    * Implementations will generally support SSLSocketFactory, SSLServerSocketFactory, and RMISocketFactory.
@@ -49,6 +51,6 @@ public interface SocketFactoryService extends Service {
    * the service, it will return null.
    * @param m Allows arbitrary preferences and parameters to be specified.
    * @return an object which is instanceof the requested class or null.
-   **/
+   */
   Object getSocketFactory(Class clazz, Map m);
 }

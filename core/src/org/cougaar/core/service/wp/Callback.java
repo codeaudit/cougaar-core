@@ -27,7 +27,8 @@
 package org.cougaar.core.service.wp;
 
 /**
- * A callback allows asynchronous WhitePagesService interaction.
+ * A callback allowing asynchronous {@link WhitePagesService}
+ * interaction.
  * <p>
  * A client should keep the callback method as short as possible,
  * since the WhitePagesService may use a single callback thread.

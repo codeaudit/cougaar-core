@@ -33,15 +33,16 @@ import javax.naming.directory.ModificationItem;
 
 import org.cougaar.core.component.Service;
 
-/** A CommunityService is an API which may be supplied by a
- * ServiceProvider registered in a ServiceBroker that provides
- * access to community capabilities.  Most operations are performed
- * asynchronously in which case a callback is used to return status and
- * results.  In addition to the asynchronous callback, the getCommunity and
- * searchCommunity methods may also return results immediately if the operation
- * can be completed using locally cached data.  In these cases the callback is
- * not invoked.  When required, callbacks are always invoked from within a
- * blackboard transaction.
+/**
+ * This service provides access to community capabilities.
+ * <p>
+ * Most operations are performed asynchronously in which case a
+ * callback is used to return status and results.  In addition to
+ * the asynchronous callback, the getCommunity and searchCommunity
+ * methods may also return results immediately if the operation
+ * can be completed using locally cached data.  In these cases the
+ * callback is not invoked.  When required, callbacks are always
+ * invoked from within a blackboard transaction.
  */
 public interface CommunityService extends Service {
 

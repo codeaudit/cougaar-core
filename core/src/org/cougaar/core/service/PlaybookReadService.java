@@ -31,10 +31,10 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 
 /**  
- * Part of the PlaybookService responsible for sending the
- * list of current plays
+ * This service is used by the {@link
+ * org.cougaar.core.adaptivity.AdaptivityEngine} to get
+ * the list of current plays.
  */
-
 public interface PlaybookReadService extends Service {
   interface Listener extends NotPersistable {
   }

@@ -31,7 +31,7 @@ import javax.servlet.Servlet;
 import org.cougaar.core.component.Service;
 
 /**
- * Service that can be used to register a <code>Servlet</code>
+ * This service can be used to register a <code>Servlet</code>
  * for all HTTP requests that match a specified String path.
  * <p>
  * This is analogous to a <code>java.util.Map</code>:<pre>

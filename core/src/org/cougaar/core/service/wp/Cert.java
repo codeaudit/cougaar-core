@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.security.cert.Certificate;
 
 /**
- * A Cert holds the certification for an AddressEntry.
+ * A Cert holds the certification for an {@link AddressEntry}.
  * <p>
  * There are currently four built-in certs:<ul>
  *   <li>{@link #NULL}</li>

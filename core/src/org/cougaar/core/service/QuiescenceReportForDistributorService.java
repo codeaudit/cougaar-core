@@ -27,12 +27,15 @@
 package org.cougaar.core.service;
 
 /**
- * Service for the Distributor's use for telling the service when an Agent is 
- * present or not for quiescence purposes.
- **/
+ * This service is used by the {@link
+ * org.cougaar.core.blackboard.Distributor} to tell the node when
+ * a local agent is quiescent or not.
+ *
+ * @see QuiescenceReportService 
+ */
 public interface QuiescenceReportForDistributorService extends QuiescenceReportService {
   /**
    * Enables quiescence reporting for this agent
-   **/
+   */
   void setQuiescenceReportEnabled(boolean enabled);
 }

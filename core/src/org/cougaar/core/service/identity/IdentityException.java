@@ -29,9 +29,9 @@
 
 package org.cougaar.core.service.identity;
 
-
 /**
- * Class of exceptions thrown in dealing with identity credentials.
+ * A base class for exceptions thrown in dealing with identity
+ * credentials.
  */
 public class IdentityException
   extends Exception

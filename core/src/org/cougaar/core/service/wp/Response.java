@@ -36,7 +36,7 @@ import java.util.Set;
 import org.cougaar.core.thread.SchedulableStatus;
 
 /**
- * Response from the white pages service.
+ * A response from the {@link WhitePagesService}.
  */
 public abstract class Response implements Callback, Serializable {
 
@@ -90,10 +90,10 @@ public abstract class Response implements Callback, Serializable {
         return true;
       }
       try {
-	SchedulableStatus.beginWait("WP lookup");
+        SchedulableStatus.beginWait("WP lookup");
         lock.wait(timeout);
       } finally {
-	SchedulableStatus.endBlocking();
+        SchedulableStatus.endBlocking();
       }
       return (result != null);
     }

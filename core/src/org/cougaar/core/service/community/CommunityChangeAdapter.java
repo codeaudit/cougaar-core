@@ -26,7 +26,9 @@
 
 package org.cougaar.core.service.community;
 
-
+/**
+ * A base class for a {@link CommunityChangeListener}.
+ */
 public abstract class CommunityChangeAdapter implements CommunityChangeListener {
   private String communityName;
 
@@ -40,14 +42,14 @@ public abstract class CommunityChangeAdapter implements CommunityChangeListener 
 
   /**
    * Method invoked when a change occurs
-   **/
+   */
   public abstract void communityChanged(CommunityChangeEvent event);
 
   /**
    * Should return the name of the community of interest.
    * @return the name of the community of interest or null if
    * interested in all communities
-   **/
+   */
   public String getCommunityName() {
     return communityName;
   }

@@ -32,19 +32,19 @@ package org.cougaar.core.service;
 import java.io.IOException;
 
 /**
- *  Implementations of this interface contain a secret key used to
- *  encrypt/decrypt persisted data. The getOutputStream method of the
- *  PersistenceProtectionService places the (encrypted) key used for
- *  encrypting the output stream in the envelope. The getInputStream
- *  method, retrieves the key from the envelope to decrypt the input
- *  stream. In addition, the PersistenceProtectionServiceClient has an
- *  iterator method that returns an iterator over a collection of
- *  PersistedKeyEnvelopes. When the PersistenceProtectionService
- *  iterates over the keys, it uses the getPersistedKey() method to
- *  retrieve the key. The PersistenceProtectionService can re-encrypt
- *  the key if it wishes, and call setPersistedKey() to notify the
- *  service client that it should persist the new key.
- **/
+ * Implementations of this interface contain a secret key used to
+ * encrypt/decrypt persisted data. The getOutputStream method of the
+ * PersistenceProtectionService places the (encrypted) key used for
+ * encrypting the output stream in the envelope. The getInputStream
+ * method, retrieves the key from the envelope to decrypt the input
+ * stream. In addition, the PersistenceProtectionServiceClient has an
+ * iterator method that returns an iterator over a collection of
+ * PersistedKeyEnvelopes. When the PersistenceProtectionService
+ * iterates over the keys, it uses the getPersistedKey() method to
+ * retrieve the key. The PersistenceProtectionService can re-encrypt
+ * the key if it wishes, and call setPersistedKey() to notify the
+ * service client that it should persist the new key.
+ */
 public interface DataProtectionKeyEnvelope
 {
   /** 

@@ -31,11 +31,16 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.util.UID;
 
 /** 
- * The blackboard timestamp service tracks UniqueObject creation 
- * (ADD) and most recent modification (CHANGE) timestamps.
+ * This service tracks timestamps for the ADD ({@link
+ * BlackboardService#publishAdd}) and the more recent modification
+ * ({@link BlackboardService#publishChange}) of {@link
+ * org.cougaar.core.util.UniqueObject}s.
  * <p>
  * These timestamps are not persisted, and upon rehydration the
  * creation time of the objects will be the agent restart time.
+ *
+ * @property org.cougaar.core.blackboard.timestamp
+ * Enable blackboard timestamps, defaults to false. 
  *
  * @see org.cougaar.core.blackboard.TimestampSubscription
  */

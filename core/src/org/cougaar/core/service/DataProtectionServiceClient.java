@@ -33,6 +33,10 @@ import java.util.Iterator;
 
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * Required service requestor API for {@link DataProtectionService}
+ * clients.
+ */
 public interface DataProtectionServiceClient
 {
   /** 
@@ -45,6 +49,6 @@ public interface DataProtectionServiceClient
    * the service. That identity is used to allow the correct
    * certificate and public key to be used in encrypting the
    * encrypted streams.
-   **/
+   */
   MessageAddress getAgentIdentifier();
 }

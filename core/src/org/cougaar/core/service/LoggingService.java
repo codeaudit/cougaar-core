@@ -31,12 +31,10 @@ import org.cougaar.core.logging.NullLoggingServiceImpl;
 import org.cougaar.util.log.Logger;
 
 /** 
- * Abstract API for a Service that provides the
- * generic Logger API.
+ * This Service provides a generic logging API.
  *
  * @see Logger
  */
-
 public interface LoggingService 
   extends Service, Logger
 {

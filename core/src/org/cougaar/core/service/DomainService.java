@@ -31,18 +31,18 @@ import java.util.List;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.domain.Factory;
 
+/**
+ * This service provides access to {@link
+ * org.cougaar.core.domain.Domain} object {@link
+ * org.cougaar.core.domain.Factory}s.
+ */ 
 public interface DomainService extends Service {
-  /** return a domain-specific factory **/
+  /** return a domain-specific factory */
   Factory getFactory(String domainName);
 
-  /** return a domain-specific factory **/
+  /** return a domain-specific factory */
   Factory getFactory(Class domainClass);
 
-  /** return a list of all domain-specific factories **/
+  /** return a list of all domain-specific factories */
   List getFactories();
 }  
-
-
-
-
-

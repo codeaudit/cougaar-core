@@ -29,8 +29,7 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 
 /**
- * Service that allows the client to request a JVM-wide stack
- * dump.
+ * This service requests a JVM-wide stack dump.
  * <p>
  * Access to this service will likely be restricted to a
  * limited subset of node-agent components.  Typical plugin 

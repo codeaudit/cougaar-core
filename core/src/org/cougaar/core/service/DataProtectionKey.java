@@ -29,8 +29,10 @@
 
 package org.cougaar.core.service;
 
+import java.io.Serializable;
 
-public interface DataProtectionKey
-  extends java.io.Serializable
-{
+/**
+ * An interface used by the {@link DataProtectionService}.
+ */
+public interface DataProtectionKey extends Serializable {
 }

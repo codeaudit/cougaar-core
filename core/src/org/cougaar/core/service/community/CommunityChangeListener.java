@@ -34,13 +34,13 @@ public interface CommunityChangeListener {
   /**
    * Method invoked when a change occurs.  Multiple changes in the community
    * of interest may be associated with a single change event.
-   **/
+   */
   void communityChanged(CommunityChangeEvent event);
 
   /**
    * Should return the name of the community of interest.
    * @return the name of the community of interest or null if
    * interested in all communities
-   **/
+   */
   String getCommunityName();
 }

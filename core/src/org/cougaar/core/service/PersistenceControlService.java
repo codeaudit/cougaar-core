@@ -29,12 +29,16 @@ package org.cougaar.core.service;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.component.Service;
 
+/**
+ * This service can be used to view and modify persistence
+ * settings. 
+ */
 public interface PersistenceControlService extends Service {
     /**
      * Gets the names of all controls (operating modes). These are
      * controls over persistence as a whole, not media-specific.
      * @return an array of all control names
-     **/
+     */
     String[] getControlNames();
 
     /**
@@ -43,7 +47,7 @@ public interface PersistenceControlService extends Service {
      * @return a list of ranges of values that are allowed for the
      * named control.
      * @param controlName the name of a persistence-wide control
-     **/
+     */
     OMCRangeList getControlValues(String controlName);
 
     /**
@@ -52,20 +56,20 @@ public interface PersistenceControlService extends Service {
      * @param controlName the name of the control to set.
      * @param newValue the new value for the control. Must be in the
      * allowed ranges.
-     **/
+     */
     void setControlValue(String controlName, Comparable newValue);
 
     /**
      * Gets the names of the installed media plugins.
      * @return an array of the names of the installed media plugins.
-     **/
+     */
     String[] getMediaNames();
 
     /**
      * Gets the names of the controls for the named media (plugin).
      * @return an array of all control names for the given media.
      * @param mediaName the name of the media.
-     **/
+     */
     String[] getMediaControlNames(String mediaName);
 
     /**
@@ -77,7 +81,7 @@ public interface PersistenceControlService extends Service {
      * @param mediaName the name of the media having the control
      * @param controlName the name of a media-specific control
      * @return a list of the allowed value ranges.
-     **/
+     */
     OMCRangeList getMediaControlValues(String mediaName, String controlName);
 
     /**
@@ -88,6 +92,6 @@ public interface PersistenceControlService extends Service {
      * @param controlName the name of the control to set.
      * @param newValue the new value for the control. Must be in the
      * allowed ranges.
-     **/
+     */
     void setMediaControlValue(String mediaName, String controlName, Comparable newValue);
 }

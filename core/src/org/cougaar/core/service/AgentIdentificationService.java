@@ -29,12 +29,12 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
-/** A service to provide access to the identity of the agent 
- * the requestor is resident in.
- **/
+/**
+ * This service provides the local agent's {@link MessageAddress}.
+ */
 public interface AgentIdentificationService extends Service {
-  /** @return the MessageAddress associated with the Agent **/
+  /** @return the MessageAddress associated with the Agent */
   MessageAddress getMessageAddress();
-  /** @return the (human readable) name of the Agent **/
+  /** @return the (human readable) name of the Agent */
   String getName();
 }

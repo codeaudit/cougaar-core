@@ -29,11 +29,11 @@ package org.cougaar.core.service;
 import org.cougaar.core.component.Service;
 import org.cougaar.util.UnaryPredicate;
 
-/** A BlackboardMetricsService is an API which may be supplied by a 
- * ServiceProvider registered in a ServiceBroker that provides metrics for
- * the entire Blackboard.
+/**
+ * This service provides primitive blackboard metrics.
+ * <p>
+ * Also see the {@link BlackboardQueryService}.
  */
-
 public interface BlackboardMetricsService extends Service {
   
   /**
@@ -41,7 +41,7 @@ public interface BlackboardMetricsService extends Service {
    * found in the Blackboard.
    * <p>
    * Equivalent to "getBlackboardCount(Object.class)".
-   **/
+   */
   int getBlackboardCount();
 
   /**

@@ -29,29 +29,38 @@ package org.cougaar.core.service;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.component.Service;
 
-/** a Service for controlling COUGAAR demonstration facilities 
- * from loaded components. 
- **/
-
+/**
+ * This service controls the execution time in {@link
+ * AlarmService#currentTimeMillis} and {@link
+ * AlarmService#addAlarm}.
+ */
 public interface DemoControlService extends Service {
   /**
-   * These all send remote AdvanceClockMessage messages
-   * to the whole society (ie the old way)
+   * Get the local node's execution rate.
    */
-  void setSocietyTime(long time);
-  void setSocietyTime(long time, boolean foo);
-  void setSocietyTimeRate(double rate);
-  void advanceSocietyTime(long period);
-  void advanceSocietyTime(long period, boolean foo);
-  void advanceSocietyTime(long period, double rate);
-  void advanceSocietyTime(ExecutionTimer.Change[] changes);
-  
+  double getExecutionRate();
+
   /**
-   * These all send remote AdvanceClockMessage messages
-   * to the whole society (ie the old way)
+   * Modify the local node's execution time.
    */
   void advanceNodeTime(long period, double rate);
   void setNodeTime(long time, double rate);
   void setNodeTime(long time, double rate, long changeTime);
-  double getExecutionRate();
+
+  /**
+   * Modify the execution time on all nodes in the society.
+   * <p>
+   * These methods have known scalability issues:<ul>
+   * <li>What if the naming service finds a partial node list?</li>
+   * <li>What if a node is unreachable?</li> 
+   * <li>What if it takes too long to reach a node?</li> 
+   * </ul> 
+   */
+  void setSocietyTime(long time);
+  void setSocietyTime(long time, boolean forceRunning);
+  void setSocietyTimeRate(double rate);
+  void advanceSocietyTime(long period);
+  void advanceSocietyTime(long period, boolean forceRunning);
+  void advanceSocietyTime(long period, double rate);
+  void advanceSocietyTime(ExecutionTimer.Change[] changes);
 }

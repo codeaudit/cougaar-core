@@ -32,34 +32,33 @@ import org.cougaar.core.persist.PersistenceState;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 
-/** Now an interface for backwards compatability.
- ** Real stuff is in UIDServiceImpl and the real interface
- ** should be UIDService(which is a marker for now).
- **/
-
+/**
+ * This service is the backwards-compatible API for the {@link
+ * UIDService}. 
+ */
 public interface UIDServer extends Service {
- /** MessageAddress of the proxy server.
-   *  This might go away if we ever really separated proxy 
-   * servers from clusters.
-   **/
+  /**
+   * MessageAddress of the agent.
+   * <p> 
+   * This is primarily for backwards compatibility; components
+   * should get their agent's address through the
+   * {@link org.cougaar.core.service.AgentIdentificationService},
+   * which the common plugin base classes provide as a
+   * "getAgentIdentifier()" method.
+   */
   MessageAddress getMessageAddress();
 
- /** get the next Unique ID for the Proxiable object registry
-   * at this server.
-   * It is better for Factories to use the registerUniqueObject method.
-   **/
+  /** Take the next Unique ID. */
   UID nextUID();
 
-  /** assign a new UID to a unique object.
-   **/
+  /**
+   * Assign the next UID to a unique object.
+   * <p>
+   * This is equivalent to <code>o.setUID(nextUID())</code>.
+   */
   UID registerUniqueObject(UniqueObject o);
 
-
-  // persistence backwards compat
+  /** persistence backwards compatibility. */
   PersistenceState getPersistenceState();
-
-  /** called during persistence rehydration to reset the state **/
   void setPersistenceState(PersistenceState state);
-
-
 }

@@ -31,17 +31,20 @@ import java.util.Collection;
 import org.cougaar.core.component.Service;
 import org.cougaar.util.UnaryPredicate;
 
-/** A Service which offers a lightweight query-only
- * version of BlackboardService.  There are no transactions,
- * no publish access and no subscriptions via this interface.
+/**
+ * This service offers a lightweight query-only version of {@link
+ * BlackboardService}.
+ * <p> 
+ * There are no transactions, no publish access and no subscriptions
+ * via this interface.
+ *
  * @see BlackboardService#query(UnaryPredicate)
- **/
-
+ */
 public interface BlackboardQueryService extends Service {
-  /** Issue a query against the Blackboard.  Similar in function to
+  /**
+   * Issue a query against the Blackboard.  Similar in function to
    * opening a new subscription, getting the results and immediately
    * closing the subscription, but can be implemented much more efficiently.
-   * Note: the initial implementation actually does exactly this.
-   **/
+   */
   Collection query(UnaryPredicate isMember);
 }
