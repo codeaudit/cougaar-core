@@ -140,19 +140,46 @@ public class Distributor {
 
     public Iterator iterator() {
       checkRefQ();
-      final Iterator iter = subscribers.iterator();
-      return new Iterator() {
+
+      class MyIterator implements Iterator {
+        private Object n = null;
+        private Iterator iter;
+          
+        public MyIterator(Iterator it) {
+          iter = it;
+          advance();
+        }
+
+        /** advance to the next non-null element, dropping
+         * nulls along the way
+         **/
+        private void advance() {
+          while (iter.hasNext()) {
+            WeakReference ref = (WeakReference) iter.next();
+            n = ref.get();
+            if (n == null) {
+              iter.remove();
+            } else {
+              return;
+            }
+          }
+          // ran off the end,
+          n = null;
+        }
+
         public boolean hasNext() {
-          return iter.hasNext();
+          return (n != null);
         }
         public Object next() {
-          WeakReference ref = (WeakReference) iter.next();
-          return ref.get();
+          Object x = n;
+          advance();
+          return x;
         }
         public void remove() {
           iter.remove();
         }
       };
+      return new MyIterator(subscribers.iterator());
     }
 
     private void checkRefQ() {
