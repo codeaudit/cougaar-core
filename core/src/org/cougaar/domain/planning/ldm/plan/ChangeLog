@@ -1,3 +1,12 @@
+2001-07-16  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* AggregationImpl.java
+	Bug #410
+	publishChange the task of an Aggregation that is removed as a side
+	effect of propagating the removal of another Aggregation. This
+	allows the task to be re-disposed.
+
+
 2001-07-16  Jim Winston  <jwinston@bbn.com>
         * ScoringFunction.java:
 	Bug #406
