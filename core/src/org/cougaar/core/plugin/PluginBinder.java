@@ -59,6 +59,9 @@ public class PluginBinder extends BinderSupport implements PluginBindingSite
     return getPluginManager().getConfigFinder();
   }
 
+  public String toString() {
+    return getPlugin() + "'s PluginBinder";
+  }
 
   private Threading threadingModel = null;
   
