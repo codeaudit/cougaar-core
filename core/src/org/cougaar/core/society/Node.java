@@ -37,9 +37,9 @@ import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.naming.NamingServiceProvider;
 import org.cougaar.core.naming.NamingService;
 
-import org.cougaar.core.cluster.LoggingService;
-import org.cougaar.core.cluster.LoggingControlService;
-import org.cougaar.core.cluster.LoggingServiceProvider;
+import org.cougaar.core.logging.LoggingService;
+import org.cougaar.core.logging.LoggingControlService;
+import org.cougaar.core.logging.LoggingServiceProvider;
 
 
 import org.cougaar.core.component.*;
