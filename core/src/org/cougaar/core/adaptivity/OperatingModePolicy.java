@@ -37,7 +37,7 @@ import org.cougaar.core.util.UID;
 public class OperatingModePolicy implements Policy  {
 
   private UID uid = null;
-  private String policyName;
+  private String policyName = "";
   private String authority;
   private PolicyKernel policy;
 
@@ -78,7 +78,7 @@ public class OperatingModePolicy implements Policy  {
   public String getAuthority() { return authority; }
   
   public void setAuthority(String authority) {
-    if (authority != null) throw new RuntimeException("Attempt to change Policy Authority");
+    if (this.authority != null) throw new RuntimeException("Attempt to change Policy Authority");
     this.authority = authority;
   }
 
@@ -124,4 +124,15 @@ public class OperatingModePolicy implements Policy  {
     return policy.getOperatingModeConstraints();
   }
   
+  public String toString() {
+    StringBuffer sb = new StringBuffer(getName());
+    sb.append(" ");
+    sb.append(policy.getIfClause().toString());
+    ConstraintPhrase[] cp = policy.getOperatingModeConstraints();
+    for (int i=0; i < cp.length; i++) {
+      sb.append(": ");
+      sb.append(cp[i].toString());
+    }
+    return sb.toString();
+  }
 }

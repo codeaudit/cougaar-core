@@ -39,7 +39,6 @@ public class InterAgentOperatingModePolicy
   implements Relay.Source, Relay.Target
 {
   private transient Set targets = Collections.EMPTY_SET;
-  protected String authority;
   protected MessageAddress source;
   protected Relay.Token owner;
 
@@ -53,28 +52,23 @@ public class InterAgentOperatingModePolicy
     super(ifClause, omConstraints);
   }
 
-  public InterAgentOperatingModePolicy(String authority,
+  public InterAgentOperatingModePolicy(String name,
 				       ConstrainingClause ifClause, 
-				       ConstraintPhrase[] omConstraints) {
-    super(ifClause, omConstraints);
-    this.authority = authority;
+				       ConstraintPhrase[] omConstraints,
+				       String authority) {
+    super(name, ifClause, omConstraints, authority);
   }
 
   protected InterAgentOperatingModePolicy( InterAgentOperatingModePolicy other,
 					   MessageAddress src, 
 					   Relay.Token owner) {
-    this(other.getAuthority(), other.getIfClause(), other.getOperatingModeConstraints());
+    this(other.getName(),
+	 other.getIfClause(), 
+	 other.getOperatingModeConstraints(),
+	 other.getAuthority());
     setUID(other.getUID());
     this.owner = owner;
     this.source = src;
-  }
-
-  /**
-   * Policy interface
-   * 
-   */ 
-  public String getAuthority() {
-    return authority;
   }
 
   // Initialization methods

@@ -31,7 +31,7 @@ public class Parser {
   StreamTokenizer st;
   boolean pushedBack = false;
   ConstrainingClause cc;
-  private static final boolean debug = true;
+  private static final boolean debug = false;
 
   public Parser(StreamTokenizer s) {
     st = s;
@@ -87,9 +87,16 @@ public class Parser {
   /**
    **/
   public OperatingModePolicy parseOperatingModePolicy() throws IOException {
+    // pull the first token, assume it is the policy name
+    String policyName = null;
+    if (nextToken() == StreamTokenizer.TT_WORD) {
+      policyName = st.sval;
+    } else {
+      pushBack();
+    }
     ConstrainingClause cc = parseConstrainingClause();          // Parse the ifClause
     ConstraintPhrase[] cp = parseConstraints();
-    return new OperatingModePolicy(cc, cp);
+    return new OperatingModePolicy(policyName, cc, cp);
   }
 
   public OperatingModePolicy[] parseOperatingModePolicies() throws IOException {

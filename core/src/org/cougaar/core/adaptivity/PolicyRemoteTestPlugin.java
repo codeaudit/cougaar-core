@@ -35,6 +35,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.util.GenericStateModelAdapter;
 
 
@@ -72,15 +73,18 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     policies = new InterAgentOperatingModePolicy[tempPolicies.length];
     for (int i = 0; i < tempPolicies.length; i++) {
       InterAgentOperatingModePolicy iaomp 
-	= new InterAgentOperatingModePolicy("here", 
+	= new InterAgentOperatingModePolicy(tempPolicies[i].getName(),
 					    tempPolicies[i].getIfClause(), 
-					    tempPolicies[i].getOperatingModeConstraints());
+					    tempPolicies[i].getOperatingModeConstraints(),
+					    ((PluginBindingSite)getBindingSite()).getAgentIdentifier().toString());
+
       policies[i] = iaomp;
       if (haveServices()) {
   	uidService.registerUniqueObject(policies[i]);
       }
     }
     setPolicies();
+
   }
 
   public void execute() {
