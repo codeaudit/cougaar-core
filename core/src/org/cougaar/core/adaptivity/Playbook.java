@@ -71,10 +71,14 @@ public class Playbook
   private void constrainPlays() {
     constrainedPlays = originalPlays;
     for (Iterator i = constraints.iterator(); i.hasNext(); ) {
-      logger.debug(constrainedPlays.length + " plays");
+      if (logger.isDebugEnabled()) {
+        logger.debug(constrainedPlays.length + " plays");
+      }
       constrainPlays((OperatingModePolicy) i.next());
     }
-    logger.debug(constrainedPlays.length + " plays");
+    if (logger.isDebugEnabled()) {
+      logger.debug(constrainedPlays.length + " plays");
+    }
   }
 
   /**

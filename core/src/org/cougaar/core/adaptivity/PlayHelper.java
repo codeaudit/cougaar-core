@@ -212,7 +212,7 @@ public class PlayHelper {
     iaompChanges.clear();
     // post initialized -- iaompUpdates.clear();
     // post initialized -- iaompRemoves.clear();
-    logger.debug("Updating operating modes");
+    if (logger.isDebugEnabled()) logger.debug("Updating operating modes");
     for (Iterator i = omMap.entrySet().iterator(); i.hasNext(); ) {
       Map.Entry entry = (Map.Entry) i.next();
       String operatingModeName = (String) entry.getKey();
