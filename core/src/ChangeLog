@@ -1,5 +1,17 @@
 2002-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/service/SensorMeasurementService.java:
+	New Service for accessing SensorMeasurements
+
+	* org/cougaar/core/service/PlaybookReadService.java:
+	New Service for Reading the Playbook
+
+	* org/cougaar/core/service/PlaybookConstrainService.java:
+	New Service for constraining the Playbook
+
+	* org/cougaar/core/service/OperatingModeService.java:
+	New Service for accessing OperatingModes.
+
 	* org/cougaar/util/ReadOnlyCollection.java:
 	* org/cougaar/util/ReadOnlySet.java:
 	New classes wrapping Collections and Sets respectively that
