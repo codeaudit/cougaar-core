@@ -92,7 +92,7 @@ public class PlayHelper {
         return new ClusterIdentifier(targetName.substring(AGENT_PREFIX.length()));
       }
       if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
-        StringTokenizer tokens = new StringTokenizer(targetName.substring(ATTRIBUTE_PREFIX.length()));
+        StringTokenizer tokens = new StringTokenizer(targetName.substring(ATTRIBUTE_PREFIX.length()), ".");
         try {
           String community = tokens.nextToken();
           String attribute = tokens.nextToken();
@@ -122,22 +122,25 @@ public class PlayHelper {
 
   /**
    * Update all operating modes based on conditions and the playbook.
-   * This is the real workhorse of this plugin and carries out
-   * playbook-based adaptivity. All the active plays from the playbook
-   * are considered. If the ifClause evaluates to true, then the
-   * operating mode values are saved in a Map under the operating mode
-   * name. When multiple plays affect the same operating mode, the
-   * values are combined by intersecting the allowed value ranges. If
-   * a play specifies a constraint that would have the effect of
+   * This is the real workhorse of the adaptivity engine and carries
+   * out playbook-based adaptivity. All the active plays from the
+   * playbook are considered. If the ifClause evaluates to true, then
+   * the operating mode values are saved in a Map under the operating
+   * mode name. When multiple plays affect the same operating mode,
+   * the values are combined by intersecting the allowed value ranges.
+   * If a play specifies a constraint that would have the effect of
    * eliminating all possible values for an operating mode, that
    * constraint is logged and ignored. Finally, the operating modes
    * are set to the effective value of the combined constraints.
    * <p>Some operating modes may be remote (in different agents). Such
    * remote OperatingModes are designated with a naming convention
    * wherein the remote location is designated with square brackets,
-   * e.g. [Agent:3ID]<remotename>. The caller supplies a Map of such
-   * remote modes and we use or update that Map accordingly. The names
-   * of remote operating modes that are added or removed are returned.
+   * e.g. [agent:3ID]<remotename>. This notation may also be used with
+   * attribute-based addresses using the notation:
+   * [attribute.<community>.<attribute_name>.<attribute_value>]. The
+   * caller supplies a Map of such remote modes and we use or update
+   * that Map accordingly. The names of remote operating modes that
+   * are added or removed are returned.
    * @param plays the plays to be tested and applied.
    * @param iaompMap a Map of the current remote operating mode
    * constraints. Items are added or removed from this Map according

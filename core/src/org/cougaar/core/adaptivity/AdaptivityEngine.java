@@ -231,19 +231,7 @@ public class AdaptivityEngine extends ServiceUserPlugin {
 
   /**
    * Update all operating modes based on conditions and the playbook.
-   * This is the real workhorse of this plugin and carries out
-   * playbook-based adaptivity. All the active plays from the playbook
-   * are considered. If the ifClause evaluates to true, then the
-   * operating mode values are saved in a Map under the operating mode
-   * name. When multiple plays affect the same operating mode, the
-   * values are combined by intersecting the allowed value ranges. If
-   * a play specifies a constraint that would have the effect of
-   * eliminating all possible values for an operating mode, that
-   * constraint is logged and ignored. Finally, the operating modes
-   * are set to the effective value of the combined constraints.
-   * <p>Some constraints apply to remote operating modes. We keep
-   * track of these publish as required so the LP can keep the remote
-   * agent(s) up-to-date.
+   * The real work is done in the {@link PlayHelper}.
    **/
   private void updateOperatingModes() {
     tempROMCMap.putAll(romcMap);
