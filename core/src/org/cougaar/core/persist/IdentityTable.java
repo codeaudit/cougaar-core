@@ -139,9 +139,13 @@ class IdentityTable {
       if (gcTime > (now - minGCInterval)) {
         return;
       } 
-      gcTime = now;
     }
     System.gc();
+    // I know - but I'd rather not keep it locked for the GC.  
+    // The syncs are moot anyway, since this is invoked per node/vm
+    synchronized (gcLock) {
+      gcTime = System.currentTimeMillis();
+    }
   }
 
   public int getNextId() {
