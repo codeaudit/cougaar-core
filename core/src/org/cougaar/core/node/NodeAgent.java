@@ -84,8 +84,18 @@ import org.cougaar.util.log.Logging;
  *   a '.' every few seconds when nothing else much is going on.
  *   This is a one-per-vm function.  Default <em>true</em>.
  *
- * @property org.cougaar.core.agent quiet
- *   Makes standard output as quiet as possible.
+ * @property org.cougaar.core.load.community
+ *   If enabled, the node will load the CommunityService
+ *   component.  See bug 2522.  Default <em>true</em>
+ *
+ * @property org.cougaar.core.load.planning
+ *   If enabled, the node will load the planning-specific
+ *   NodeTrustComponent or AssetInitializerService.  See bug 2522.
+ *   Default <em>true</em>
+ *
+ * @property org.cougaar.core.load.servlet
+ *   If enabled, the node will load the ServletService
+ *   component.  See bug 2522.  Default <em>true</em>
  */
 public class NodeAgent
   extends SimpleAgent
@@ -98,14 +108,18 @@ public class NodeAgent
   private String nodeName = null;
   private MessageAddress nodeIdentifier = null;
 
-  private static boolean isHeartbeatOn = true;
-  private static boolean isQuiet = false;
+  private static final boolean isHeartbeatOn;
+  private static final boolean isCommunityEnabled;
+  private static final boolean isPlanningEnabled;
+  private static final boolean isServletEnabled;
 
   private Logger logger = Logging.getLogger(NodeAgent.class);
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
-    isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
+    isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
+    isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
+    isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
   }
 
 
@@ -286,27 +300,31 @@ public class NodeAgent
       rootsb.addService(RealTimeService.class, tsp);
     }
 
-    // start up the Node-level ServletService component
-    add(new ComponentDescription(
-          (getIdentifier()+"ServletService"),
-          Agent.INSERTION_POINT + ".NodeServletService",
-          "org.cougaar.lib.web.service.RootServletServiceComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null)); //policy
+    if (isServletEnabled) {
+      // start up the Node-level ServletService component
+      add(new ComponentDescription(
+            (getIdentifier()+"ServletService"),
+            Agent.INSERTION_POINT + ".NodeServletService",
+            "org.cougaar.lib.web.service.RootServletServiceComponent",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null)); //policy
+    }
 
-    // start up the NodeTrust component
-    add(new ComponentDescription(
-          (getIdentifier()+"NodeTrust"),
-          Agent.INSERTION_POINT + ".NodeTrust",
-          "org.cougaar.planning.plugin.node.NodeTrustComponent",
-          null,  //codebase
-          null,  //parameters
-          null,  //certificate
-          null,  //lease
-          null)); //policy
+    if (isPlanningEnabled) {
+      // start up the NodeTrust component
+      add(new ComponentDescription(
+            (getIdentifier()+"NodeTrust"),
+            Agent.INSERTION_POINT + ".NodeTrust",
+            "org.cougaar.planning.plugin.node.NodeTrustComponent",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null)); //policy
+    }
 
     super.loadInternalPriorityComponents();
   }
@@ -324,27 +342,31 @@ public class NodeAgent
   }
 
   protected void loadComponentPriorityComponents() {
-    add(new ComponentDescription(
-          "community-init",
-          Agent.INSERTION_POINT+".Init",
-          "org.cougaar.community.init.CommunityInitializerServiceComponent",
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT));
+    if (isCommunityEnabled) {
+      add(new ComponentDescription(
+            "community-init",
+            Agent.INSERTION_POINT+".Init",
+            "org.cougaar.community.init.CommunityInitializerServiceComponent",
+            null,  //codebase
+            null,  //params
+            null,  //certificate
+            null,  //lease
+            null,  //policy
+            ComponentDescription.PRIORITY_COMPONENT));
+    }
 
-    add(new ComponentDescription(
-          "asset-init",
-          Agent.INSERTION_POINT+".Init",
-          "org.cougaar.planning.ldm.AssetInitializerServiceComponent",
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_COMPONENT));
+    if (isPlanningEnabled) {
+      add(new ComponentDescription(
+            "asset-init",
+            Agent.INSERTION_POINT+".Init",
+            "org.cougaar.planning.ldm.AssetInitializerServiceComponent",
+            null,  //codebase
+            null,  //params
+            null,  //certificate
+            null,  //lease
+            null,  //policy
+            ComponentDescription.PRIORITY_COMPONENT));
+    }
 
     super.loadComponentPriorityComponents();
   }

@@ -66,12 +66,17 @@ import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.PropertyParser;
 
 /** A container for Domain Components.
  * <p>
  * A DomainManager expects all subcomponents to be bound with 
  * implementations of DomainBinder.  In return, the DomainManager
  * offers the DomainManagerForBinder to each DomainBinder.
+ *
+ * @property org.cougaar.core.load.planning
+ *   If enabled, the domain manager will load the planning-specific
+ *   PlanningDomain.  See bug 2522.  Default <em>true</em>
  **/
 public class DomainManager 
   extends ContainerSupport
@@ -84,6 +89,12 @@ public class DomainManager
   private final static int PREFIXLENGTH = PREFIX.length();
 
   private final static boolean verbose = "true".equals(System.getProperty("org.cougaar.verbose","false"));
+
+  private final static boolean isPlanningEnabled;
+
+  static {
+    isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
+  }
 
   /** Insertion point for a DomainManager, defined relative to its parent, Agent. **/
   public static final String INSERTION_POINT = 
@@ -171,11 +182,13 @@ public class DomainManager
       addDomain(descs, "root", 
                 "org.cougaar.core.domain.RootDomain");
 
-      // setup the planning domain
-      addDomain(
-          descs,
-          "planning", 
-          "org.cougaar.planning.ldm.PlanningDomain");
+      if (isPlanningEnabled) {
+        // setup the planning domain
+        addDomain(
+            descs,
+            "planning", 
+            "org.cougaar.planning.ldm.PlanningDomain");
+      }
 
       /* read domain file */ 
       initializeFromProperties(descs);

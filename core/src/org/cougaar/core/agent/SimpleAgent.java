@@ -95,6 +95,19 @@ import org.cougaar.util.StateModelException;
  *   If set, this indicates the number of milliseconds after
  *   agent "unload()" for a GC check of the agent.  This is 
  *   primarily for agent mobility memory-leak testing.
+ *
+ * @property org.cougaar.core.load.community
+ *   If enabled, the agent will load the CommunityService
+ *   component.  See bug 2522.  Default <em>true</em>
+ *
+ * @property org.cougaar.core.load.planning
+ *   If enabled, the agent will load the planning-specific
+ *   NodeTrustComponent or AssetInitializerService.  See bug 2522.
+ *   Default <em>true</em>
+ *
+ * @property org.cougaar.core.load.servlet
+ *   If enabled, the agent will load the ServletService
+ *   component.  See bug 2522.  Default <em>true</em>
  */
 public class SimpleAgent 
   extends Agent
@@ -170,12 +183,18 @@ public class SimpleAgent
   // properties
   private static final boolean VERBOSE_RESTART = false;
   private static final long RESTART_CHECK_INTERVAL = 43000L;
-  private static boolean showTraffic = true;
-  private static boolean isQuiet = false;
+  private static final boolean showTraffic;
+  private static final boolean isQuiet;
+  private static final boolean isCommunityEnabled;
+  private static final boolean isPlanningEnabled;
+  private static final boolean isServletEnabled;
 
   static {
     showTraffic=PropertyParser.getBoolean("org.cougaar.core.agent.showTraffic", true);
     isQuiet=PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
+    isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
+    isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
+    isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
   }
 
   private Timer restartTimer;
@@ -359,42 +378,47 @@ public class SimpleAgent
             null,
             ComponentDescription.PRIORITY_COMPONENT));
 
-      // set up the PrototypeRegistry and the PrototypeRegistryService
-      // this needs to happen before we start accepting messages.
-      l.add(new ComponentDescription(
-            getMessageAddress()+"ProtoReg",
-            Agent.INSERTION_POINT + ".ProtoReg",
-            "org.cougaar.planning.ldm.PrototypeRegistryServiceComponent",
-            null,
-            null,
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
+      if (isPlanningEnabled) {
+        // set up the PrototypeRegistry and the PrototypeRegistryService
+        // this needs to happen before we start accepting messages.
+        l.add(new ComponentDescription(
+              getMessageAddress()+"ProtoReg",
+              Agent.INSERTION_POINT + ".ProtoReg",
+              "org.cougaar.planning.ldm.PrototypeRegistryServiceComponent",
+              null,
+              null,
+              null,
+              null,
+              null,
+              ComponentDescription.PRIORITY_COMPONENT));
 
-      // ldm service
-      l.add(new ComponentDescription(
-            getMessageAddress()+"LDM",
-            Agent.INSERTION_POINT + ".LDM",
-            "org.cougaar.planning.ldm.LDMServiceComponent",
-            null,
-            null,
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
+        // ldm service
+        l.add(new ComponentDescription(
+              getMessageAddress()+"LDM",
+              Agent.INSERTION_POINT + ".LDM",
+              "org.cougaar.planning.ldm.LDMServiceComponent",
+              null,
+              null,
+              null,
+              null,
+              null,
+              ComponentDescription.PRIORITY_COMPONENT));
+      }
 
-      // start up the Agent-level ServletService component
-      l.add(new ComponentDescription(
-            getMessageAddress()+"ServletService",
-            Agent.INSERTION_POINT + ".AgentServletService",
-            "org.cougaar.lib.web.service.LeafServletServiceComponent",
-            null,  //codebase
-            getMessageAddress().getAddress(),
-            null,  //certificate
-            null,  //lease
-            null,  //policy
-            ComponentDescription.PRIORITY_COMPONENT));
+      if (isServletEnabled) {
+        // start up the Agent-level ServletService component
+        l.add(new ComponentDescription(
+              getMessageAddress()+"ServletService",
+              Agent.INSERTION_POINT + ".AgentServletService",
+              "org.cougaar.lib.web.service.LeafServletServiceComponent",
+              null,  //codebase
+              getMessageAddress().getAddress(),
+              null,  //certificate
+              null,  //lease
+              null,  //policy
+              ComponentDescription.PRIORITY_COMPONENT));
+      }
+
       // Domains *MUST* be loaded before the blackboard
       l.add(new ComponentDescription(
             getMessageAddress()+"DomainManager",
@@ -407,17 +431,19 @@ public class SimpleAgent
             null,
             ComponentDescription.PRIORITY_COMPONENT));
 
-      // CommunityService *MUST* be loaded before the blackboard
-      l.add(new ComponentDescription(
-            getMessageAddress()+"CommunityService",
-            Agent.INSERTION_POINT + ".Component",
-            "org.cougaar.community.CommunityServiceComponent",
-            null,
-            null,
-            null,
-            null,
-            null,
-            ComponentDescription.PRIORITY_COMPONENT));
+      if (isCommunityEnabled) {
+        // CommunityService *MUST* be loaded before the blackboard
+        l.add(new ComponentDescription(
+              getMessageAddress()+"CommunityService",
+              Agent.INSERTION_POINT + ".Component",
+              "org.cougaar.community.CommunityServiceComponent",
+              null,
+              null,
+              null,
+              null,
+              null,
+              ComponentDescription.PRIORITY_COMPONENT));
+      }
 
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       l.add(new ComponentDescription(
