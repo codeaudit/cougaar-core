@@ -231,6 +231,10 @@ public class AllocationResult
    * and the PlugIn that created the subtask should
    * recognize this event. The Expander may re-expand, change the 
    * Constraints or Preferences, or indicate failure to its superior. 
+   * The AspectValues of a failed allocation may be set by the Allocator
+   * with values that would be more likely to be successful. 
+   * The Expander can use these new values as suggestions when 
+   * resetting the Preferences
    */
   public boolean isSuccess() {
     return isSuccess;
@@ -297,6 +301,10 @@ public class AllocationResult
    * defined through a constructor, one will be built from the result
    * and aspecttype arrays.  In this case only true AspectValue
    * objects will be build (no subclasses of AspectValues).
+   * The AspectValues of a failed allocation may be set by the Allocator
+   * with values that would be more likely to be successful. 
+   * The Expander can use these new values as suggestions when 
+   * resetting the Preferences
    * @return AspectValue[] 
    **/
   public AspectValue[] getAspectValueResults() {
@@ -577,17 +585,60 @@ public class AllocationResult
     return buf.toString();
   }
 
+
+  /*
+   * The AspectValues of a failed allocation may be set by the Allocator
+   * with values that would be more likely to be successful. 
+   * The Expander can use these new values as suggestions when 
+   * resetting the Preferences. This method tells which AspectValues
+   * have been changed or added by the Allocator.
+   *
+   * @param prefs the preference from the task corresponding to this allocation
+   * @return the aspect values in the allocation that are different
+   * from the the preference.
+   */
+  public AspectValue[] difference(Preference[] prefs) {
+    AspectValue[] diffs = new AspectValue[avResults.length];
+    int diffCount = 0;
+
+    for (int i=0; i<avResults.length; i++) {
+      boolean found = false;
+      AspectValue prefAV = null;
+
+      for (int j=0; j<prefs.length; j++) {
+	prefAV = prefs[j].getScoringFunction().getBest().getAspectValue();
+	if (prefAV.getAspectType() == avResults[i].getAspectType()) {
+	  found = true;
+	  break;
+	}
+      }
+      if (!found) {
+	diffs[diffCount++] = avResults[i];
+      } else if (prefAV.getValue() != avResults[i].getValue()) {
+	diffs[diffCount++] = avResults[i];
+      }
+    }
+    
+    AspectValue[] returnDiff = new AspectValue[diffCount];
+    for (int i=0; i<diffCount; i++) {
+      returnDiff[i] = diffs[i];
+    }
+
+    return returnDiff;
+  }
+
     // for unit testing only
-    /*public static void main(String args[]) {
+  /*  public static void main(String args[]) {
     int[] ats = {AspectType.START_TIME, AspectType.END_TIME, AspectType.COST};
     double[] rupres = {10.0, 20.0, 3000.00};
     double[] result1 = {10.0, 13.0, 500.00};
     double[] result2 = {15.0, 20.0, 2500.00};
-    Vector total = new Vector();
+    java.util.Vector total = new java.util.Vector();
     total.addElement(result1);
     total.addElement(result2);
     
-    AllocationResult ar1 = new AllocationResult(99.0, true, ats, rupres, total.elements());
+    //    AllocationResult ar1 = new AllocationResult(99.0, true, ats, rupres, total.elements());
+    AllocationResult ar1 = new AllocationResult(99.0, true, ats, rupres);
     System.out.println("instantiated");
     double answer1 = ar1.getValue(AspectType.START_TIME);
     double answer2 = ar1.getValue(AspectType.END_TIME);
@@ -597,7 +648,24 @@ public class AllocationResult
     System.out.println("isDefined(AspectType.END_TIME)???: " + ar1.isDefined(AspectType.END_TIME));
     System.out.println("isDefined(AspectType.DANGER)???: " + ar1.isDefined(AspectType.DANGER));
     System.out.println("answers " + answer1 + " " + answer2 + " " +answer3);
+
+
+    PreferenceImpl[] prefs = new PreferenceImpl[3];
+    prefs[0] = new PreferenceImpl(AspectType.START_TIME, 
+					     ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.START_TIME, 15)));
+
+    prefs[1] = new PreferenceImpl(AspectType.END_TIME, 
+				  ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.END_TIME, 20)));
+
+    prefs[2] = new PreferenceImpl(AspectType.INTERVAL,
+				  ScoringFunction.createStrictlyAtValue(new AspectValue(AspectType.INTERVAL, 50)));
+
+    AspectValue[] avs = ar1.difference(prefs);
+
+    for (int i=0; i<avs.length; i++) {
+    for (int i=0; i<avs.length; i++) {      System.out.println(avs[i]);
+    for (int i=0; i<avs.length; i++) {
     }
-    */
-      
+    } */
 }
+
