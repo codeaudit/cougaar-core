@@ -123,11 +123,13 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
 
   /** remove PE and any cascade objects */
   private void removePlanElement(PlanElement pe) {
-    if (pe != null) {
-      logplan.remove(pe);
-//        planElementRemoved(pe);
-    }
-  }
+     if (pe != null) {
+       if (logplan.findPlanElement(pe.getTask()) != null) {
+         logplan.remove(pe);
+//      planElementRemoved(pe);
+       }
+     }
+   }
 
   /** rescind the cascade of any PE (does not remove the PE) */
   private void planElementRemoved(PlanElement pe) {
