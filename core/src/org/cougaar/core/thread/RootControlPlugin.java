@@ -39,18 +39,17 @@ public class RootControlPlugin extends ComponentPlugin
 	NodeControlService ncs = (NodeControlService)
 	    sb.getService(this, NodeControlService.class, null);
 	sb = ncs.getRootServiceBroker();
-	new LoadWatcher(sb);
-// 	RightsSelector selector = new PercentageLoadSelector(sb);
-// 	ThreadControlService tcs = (ThreadControlService)
-// 	    sb.getService(this, ThreadControlService.class, null);
-// 	tcs.setRightsSelector(selector);
+ 	RightsSelector selector = new PercentageLoadSelector(sb);
+ 	ThreadControlService tcs = (ThreadControlService)
+ 	    sb.getService(this, ThreadControlService.class, null);
+ 	tcs.setRightsSelector(selector);
     }
 
     protected void setupSubscriptions() {
     }
   
     protected void execute() {
-	System.out.println("Never called");
+	System.out.println("Uninteresting");
     }
 
 }

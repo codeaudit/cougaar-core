@@ -107,20 +107,6 @@ public class LoadWatcher
 	}
     }
 
-    private class Checker extends TimerTask {
-	public void run() {
-	    synchronized (records) {
-		Iterator itr = records.values().iterator();
-		while (itr.hasNext()) {
-		    ConsumerRecord rec = (ConsumerRecord) itr.next();
- 		    String path = "Agent(" +rec.name+ ")"
-			+PATH_SEPR+ ONE_SEC_LOAD_AVG;
-		    Metric metric = metricsService.getValue(path);
-		    System.out.println(rec.name+ "=" +metric);
-		}
-	    }
-	}
-    }
 
     private HashMap records = new HashMap();
     private int total = 0;
@@ -139,7 +125,6 @@ public class LoadWatcher
 	ThreadService ts = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
 	ts.schedule(new SnapShotter(), 5000, 1000);
-	ts.schedule(new Checker(), 7500, 2000);
     }
 
     ConsumerRecord findRecord(String name) {
