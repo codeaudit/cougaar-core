@@ -76,5 +76,18 @@ public interface ConfigurationService extends Service {
 
   /** Read and parse an XML file somewhere in the configpath **/
   Document parseXMLConfigFile(String xmlfile) throws IOException;
+
+  /** Delegate class for easing implementation of Binders, etc **/
+  class Delegate implements ConfigurationService {
+    private final ConfigurationService _delegate;
+    protected final ConfigurationService getDelegate() { return _delegate; }
+    public Delegate(ConfigurationService cs) { _delegate = cs; }
+    public List getConfigurationPath() { return _delegate.getConfigurationPath(); }
+    public File locateFile(String filename) { return _delegate.locateFile(filename); }
+    public URL resolveName(String name) throws MalformedURLException { return _delegate.resolveName(name); }
+    public InputStream open(String u) throws IOException { return _delegate.open(u); }
+    public URL find(String u) throws IOException { return _delegate.find(u); }
+    public Document parseXMLConfigFile(String f) throws IOException { return _delegate.parseXMLConfigFile(f); }
+  }
 }
 
