@@ -249,6 +249,8 @@ implements ContainerAPI, ServiceRevokedListener
    * Parse and load system properties from a well-known file, as defined
    * by a system property (default "$INSTALL/configs/common/system.properties")
    * it will only load properties which do not already have a value.
+   * Property values are interpreted with Configuration.resolveValue to
+   * do installation substitution.
    * @property org.cougaar.core.node.properties
    * @note The property org.cougaar.core.node.properties must be defined as a
    * standard java -D argument, as it is evaluated extremely early in the Node boot
@@ -274,7 +276,12 @@ implements ContainerAPI, ServiceRevokedListener
         for (Iterator it = p.keySet().iterator(); it.hasNext(); ) {
           String key = (String) it.next();
           if (System.getProperty(key) == null) {
-            System.setProperty(key, p.getProperty(key));
+            try {
+              String value = Configuration.resolveValue(p.getProperty(key));
+              System.setProperty(key, value);
+            } catch (RuntimeException re) {
+              re.printStackTrace();
+            }
           }
         }
       }
