@@ -139,7 +139,8 @@ public class SnoopServlet extends HttpServlet {
     out.println();  
     out.println("Cookies in this request:");
     Cookie[] cookies = request.getCookies();
-    for (int i = 0; i < cookies.length; i++) {
+    int ncookies = (cookies == null ? 0 : cookies.length);
+    for (int i = 0; i < ncookies; i++) {
       Cookie cookie = cookies[i];
       out.println("   " + cookie.getName() + " = " + cookie.getValue());
     }
