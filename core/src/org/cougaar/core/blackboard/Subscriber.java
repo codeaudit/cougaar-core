@@ -355,6 +355,7 @@ public class Subscriber {
     
   /** lightweight query of Blackboard **/
   public final Collection query(UnaryPredicate isMember) {
+    checkTransactionOK("query(UnaryPredicate)");
     QuerySubscription s = new QuerySubscription(isMember);
     s.setSubscriber(this);      // shouldn't really be needed
     theDistributor.fillQuery(s);

@@ -67,11 +67,13 @@ public abstract class Subscription {
     }
     subscriber = s;
 
-    /*
+
     // blackboard needs no delayed fill
-    if (subscriber instanceof Blackboard)
+    if (subscriber instanceof Blackboard) {
+	//Logger logger = Logging.getLogger(Subscription.class);
+	//logger.error("Preset InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
       setIsInitialized();
-    */
+    }
   }
 
   /** @return the Subscriber instance which is the interface to the plugin.
@@ -203,8 +205,12 @@ public abstract class Subscription {
       if (ise.getSubscription() == this) {
         if (isInitialized) {
           Logger logger = Logging.getLogger(Subscription.class);
-          logger.error("Received redundant InitializeSubscriptionEnvelope");
-        }
+          logger.error("Received redundant InitializeSubscriptionEnvelope for "+this.predicate);
+          //logger.error("Received redundant InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+        } else {
+	    //Logger logger = Logging.getLogger(Subscription.class);
+	    //logger.error("Received InitializeSubscriptionEnvelope for "+this.predicate+" "+this.hashCode(), new Throwable());
+	}
         setIsInitialized();
       }
       return false;             // doesn't actually change the subscription in any case

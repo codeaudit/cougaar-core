@@ -427,7 +427,8 @@ public class Distributor {
       distribute(new InitializeSubscriptionEnvelope(subscription), null);
     }
     */
-    {
+    // blackboard subscribes don't need an ISE to fill
+    if (subscriber != blackboard) {
       // option 2
       Subscriber s = subscription.getSubscriber();
       List l = new ArrayList(1);

@@ -1,3 +1,11 @@
+2002-06-18  Mike Thome  <mthome@ul020-dmz.ul.isotic.org>
+
+	* Subscriber
+	Make sure that query is called within a transaction.
+	This isn't really critical, but people can get very confused 
+	by interleaving query, subscribe and publishes.  For 
+	extra-transaction queries, use BlackboardQueryService instead.
+
 2002-06-18  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/multicast/AttributeBasedAddress.java:
@@ -18,12 +26,6 @@
 	Bug #1430
 	Partial fix reduces logging level to WARN for missing conditions.
 
-2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
-
-	* org/cougaar/core/service/DataProtectionKeyEnvelope.java:
-	Declare both getDataProtectionKey and setDataProtectionKey to
-	throw IOException
-
 2002-06-14  Michael Thome  <mthome@bbn.com>
 
 	* NodeAgent
@@ -34,6 +36,10 @@
 
 2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/service/DataProtectionKeyEnvelope.java:
+	Declare both getDataProtectionKey and setDataProtectionKey to
+	throw IOException
+	
 	* org/cougaar/core/adaptivity/PlaybookManager.java:
 	Bug #1461
 	Check for presence of playbook file name and complain if it is
