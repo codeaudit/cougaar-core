@@ -440,6 +440,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
           if (rs.next()) {
             result[0] = rs.getString(1);
             result[1] = rs.getObject(2);
+          } else {
+            throw new InitializerServiceException("No row returned for attribute value query "
+                                                  + type
+                                                  + "("
+                                                  + key
+                                                  + ")");
           }
           rs.close();
           stmt.close();
