@@ -192,18 +192,26 @@ public class ALPPlan extends Subscriber
   /** Alias for sendDirective(aDirective, null);
    **/
   public void sendDirective(Directive aDirective) {
-    sendQueue.add(aDirective);
+    if (aDirective == null) {
+      throw new IllegalArgumentException("directive must not be null.");
+    } else {
+      sendQueue.add(aDirective);
+    }
   }
 
   /** Submit a directive with attached ChangeReports for transmission 
    * from this cluster. We fill in the ContentsId with the next available number.
    **/
   public void sendDirective(Directive aDirective, Collection c) {
-    if (c != null && ((Collection) c).size()>0) {
-      DirectiveMessage.DirectiveWithChangeReports dd = new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
-      aDirective = dd;
+    if (aDirective == null) {
+      throw new IllegalArgumentException("directive must not be null.");
+    } else {
+      if (c != null && ((Collection) c).size()>0) {
+        DirectiveMessage.DirectiveWithChangeReports dd = new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
+        aDirective = dd;
+      }
+      sendQueue.add(aDirective);
     }
-    sendQueue.add(aDirective);
   }
 
   public long currentTimeMillis() {

@@ -1,3 +1,11 @@
+2001-03-22  Michael Thome  <mthome@bbn.com>
+
+	* ALPPlan
+	Modified sendDirective variations to throw an
+	IllegalArgumentException when called with null.  This lets us know
+	where the real problem lays rather than getting a NPE when the
+	directive queue is emptied.  Fixes bug 182
+
 2001-03-16  Michael Thome  <mthome@bbn.com>
 
 	* IncrementalSubscription
