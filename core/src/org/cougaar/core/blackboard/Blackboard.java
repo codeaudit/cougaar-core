@@ -68,8 +68,6 @@ import org.cougaar.util.log.Logging;
  * for each published object in order to pinpoint both sides of publish conflicts.  This is <em>extremely</em> 
  * expensive.
  * @property org.cougaar.core.persistence.enable When set to <em>true</em> will enable blackboard persistence.
- * @property org.cougaar.core.persistence.disableWrite See documentation on Blackboard persistence.
- * @property org.cougaar.core.persistence.sequence See documentation on Blackboard persistence.
  * @property org.cougaar.core.blackboard waitForSomeCommChanges Time in milliseconds to wait 
  * for some communitye changes before killing the Thread that does so. Default is 10,000.
  * @property org.cougaar.core.blackboard.waitForNewCommChangeNotifications Time in 
@@ -633,13 +631,7 @@ public class Blackboard extends Subscriber
   protected Persistence createPersistence() {
     try {
 //       Persistence result = BasePersistence.find(myServiceBroker);
-      Persistence result = BlackboardPersistence.find(myServiceBroker);
-      if (System.getProperty("org.cougaar.core.persistence.disableWrite", "false").equals("true")) {
-        String sequence =
-          System.getProperty("org.cougaar.core.persistence.sequence", "");
-        result.disableWrite(sequence);
-      }
-      return result;
+      return BlackboardPersistence.find(myServiceBroker);
     }
     catch (PersistenceException e) {
       e.printStackTrace();
