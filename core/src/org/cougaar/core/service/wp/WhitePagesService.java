@@ -72,6 +72,30 @@ public abstract class WhitePagesService implements Service {
     unbind(ae, 0);
   }
 
+  // 
+  // Callback variations
+  //
+  public final void get(String name, Callback callback) throws Exception {
+    submit(new Request.Get(name, 0), callback);
+  }
+
+  public final void list(String suffix, Callback callback) throws Exception {
+    submit(new Request.List(suffix, 0), callback);
+  }
+
+  public final void refresh(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Refresh(ae, 0), callback);
+  }
+  public final void bind(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Bind(ae, 0), callback);
+  }
+  public final void rebind(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Rebind(ae, 0), callback);
+  }
+  public final void unbind(AddressEntry ae, Callback callback) throws Exception {
+    submit(new Request.Unbind(ae, 0), callback);
+  }
+
   //
   // timeout variations:
   //
@@ -282,7 +306,9 @@ public abstract class WhitePagesService implements Service {
    */
   public final Response submit(Request req, Callback c) {
     Response res = submit(req);
-    res.addCallback(c);
+    if (c != null) {
+      res.addCallback(c);
+    }
     return res;
   }
 

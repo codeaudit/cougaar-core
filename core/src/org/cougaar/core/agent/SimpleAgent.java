@@ -81,6 +81,8 @@ import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Application;
 import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.service.wp.WhitePagesService;
+import org.cougaar.core.service.wp.Callback;
+import org.cougaar.core.service.wp.Response;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StateModelException;
 import org.cougaar.util.log.Logging;
@@ -1483,6 +1485,19 @@ implements AgentIdentityClient
   }
 
   private void bindRestart() throws Exception {
+    final LoggingService ls = log;
+    Callback callback = new Callback() {
+        public void execute(Response res) {
+          if (res.isSuccess()) {
+            if (ls.isInfoEnabled()) {
+              ls.info("WP Response: "+res);
+            }
+          } else {
+            ls.error("WP Error: "+res);
+          }
+        }
+      };
+
     // register WP version numbers
     if (log.isInfoEnabled()) {
       log.info("Updating white pages");
@@ -1501,7 +1516,7 @@ implements AgentIdentityClient
           versionURI,
           Cert.NULL,
           Long.MAX_VALUE);
-    whitePagesService.rebind(versionEntry);
+    whitePagesService.rebind(versionEntry, callback); // should really pay attention
 
     // register WP node location
     URI nodeURI = 
@@ -1513,7 +1528,7 @@ implements AgentIdentityClient
           nodeURI,
           Cert.NULL,
           Long.MAX_VALUE);
-    whitePagesService.rebind(nodeEntry);
+    whitePagesService.rebind(nodeEntry, callback); // really should pay attention
   }
 
   /**
