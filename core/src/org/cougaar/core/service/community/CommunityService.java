@@ -39,7 +39,7 @@ public interface CommunityService extends Service {
    * Creates a new community in Name Server.
    * @param communityName Name of community
    * @param attributes    Community attributes
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean createCommunity(String communityName, Attributes attributes);
 
@@ -54,7 +54,7 @@ public interface CommunityService extends Service {
 
   /**
    * Lists all communities in Name Server.
-   * @result  Collection of community names
+   * @return  Collection of community names
    */
   Collection listAllCommunities();
 
@@ -71,7 +71,7 @@ public interface CommunityService extends Service {
    * Modifies the attributes associated with a community.
    * @param communityName Name of community
    * @param attributes    Communities attributes
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean setCommunityAttributes(String communityName, Attributes attributes);
 
@@ -81,7 +81,7 @@ public interface CommunityService extends Service {
    * @param communityName        Community name
    * @param entityName           Name of entity to add
    * @param attributes           Attributes to associate with entity
-   * @result                     True if operation was successful
+   * @return                     True if operation was successful
    */
   boolean addToCommunity(String communityName, String entityName,
                          Attributes attributes);
@@ -92,7 +92,7 @@ public interface CommunityService extends Service {
    * @param communityName        Community name
    * @param agent                Agents ClusterID
    * @param attributes           Attributes to associate with agent
-   * @result                     True if operation was successful
+   * @return                     True if operation was successful
    */
   boolean addToCommunity(String communityName, ClusterIdentifier agent,
                          Attributes attributes);
@@ -102,7 +102,7 @@ public interface CommunityService extends Service {
    * Removes an entity from a community.
    * @param communityName  Community name
    * @param entityName     Name of entity to remove
-   * @result               True if operation was successful
+   * @return               True if operation was successful
    */
   boolean removeFromCommunity(String communityName, String entityName);
 
@@ -111,7 +111,7 @@ public interface CommunityService extends Service {
    * Returns attributes associated with specified community entity.
    * @param communityName  Entities parent community
    * @param entityName     Name of community entity
-   * @result               Attributes associated with entity
+   * @return               Attributes associated with entity
    */
   Attributes getEntityAttributes(String communityName, String entityName);
 
@@ -121,7 +121,7 @@ public interface CommunityService extends Service {
    * @param communityName  Entities parent community
    * @param entityName     Name of community entity
    * @param attributes     Attributes to associate with entity
-   * @result               True if operation was successful
+   * @return               True if operation was successful
    */
   boolean setEntityAttributes(String communityName, String entityName,
                               Attributes attributes);
@@ -134,7 +134,7 @@ public interface CommunityService extends Service {
    * purpose search operation using a JNDI search filter.  Refer to JNDI
    * documentation for filter syntax.
    * @param filter        JNDI search filter
-   * @result              Collection of community names that satisfy filter
+   * @return              Collection of community names that satisfy filter
    */
   Collection search(String filter);
 
@@ -144,7 +144,7 @@ public interface CommunityService extends Service {
    * purpose search operation using a JNDI search filter.
    * @param communityName Name of community to search
    * @param filter        JNDI search filter
-   * @result              Collection of entity names
+   * @return              Collection of entity names
    */
   Collection search(String communityName, String filter);
 
@@ -154,7 +154,7 @@ public interface CommunityService extends Service {
    * purpose search operation using a JNDI search filter.
    * @param communityName Name of community to search
    * @param filter        JNDI search filter
-   * @result              ClusterIdentifiers for agents satisfying search criteria
+   * @return              ClusterIdentifiers for agents satisfying search criteria
    */
   Collection agentSearch(String communityName, String filter);
 
@@ -171,7 +171,7 @@ public interface CommunityService extends Service {
   /**
    * Requests a collection of community names identifying the communities that
    * contain the specified member.
-   * @pram name   Member name
+   * @param name   Member name
    * @return A collection of community names
    */
   Collection listParentCommunities(String member);
@@ -182,7 +182,7 @@ public interface CommunityService extends Service {
    * community.
    * @param agent         Listener agents ClusterIdentifier
    * @param communityName Community of interest
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean addListener(ClusterIdentifier agent, String communityName);
 
@@ -192,7 +192,7 @@ public interface CommunityService extends Service {
    * specified community.
    * @param agent         Listener agents ClusterIdentifier
    * @param communityName Community of interest
-   * @result              True if operation was successful
+   * @return              True if operation was successful
    */
   boolean removeListener(ClusterIdentifier agent, String communityName);
 
@@ -202,7 +202,7 @@ public interface CommunityService extends Service {
    * that are have the attribute "ChangeListener".
    * specified community.
    * @param communityName Community of interest
-   * @result              ClusterIdentifiers of listener agents
+   * @return              ClusterIdentifiers of listener agents
    */
   Collection getListeners(String communityName);
 
@@ -213,7 +213,7 @@ public interface CommunityService extends Service {
    * "(Role=RoleName)".
    * @param communityName Name of community to query
    * @param roleName      Name of role provided
-   * @result              Collection of entity names
+   * @return              Collection of entity names
    */
   Collection searchByRole(String communityName, String roleName);
 
@@ -223,7 +223,7 @@ public interface CommunityService extends Service {
    * a given role.
    * @param communityName Name of community to search
    * @param filter        JNDI search filter
-   * @result              ClusterIdentifiers for agents satisfying search criteria
+   * @return              ClusterIdentifiers for agents satisfying search criteria
    */
   Collection agentSearchByRole(String communityName, String roleName);
 
@@ -233,7 +233,7 @@ public interface CommunityService extends Service {
    * entity.
    * @param communityName  Parent community
    * @param entityName     Name of community entity
-   * @result               Collection of role names
+   * @return               Collection of role names
    */
   Collection getEntityRoles(String communityName, String entityName);
 
@@ -241,7 +241,7 @@ public interface CommunityService extends Service {
   /**
    * Returns a list of all external roles supported by the specified community.
    * @param communityName Community name
-   * @result              Collection of role names
+   * @return              Collection of role names
    */
   Collection getCommunityRoles(String communityName);
 
@@ -251,7 +251,7 @@ public interface CommunityService extends Service {
    * @param communityName  Parent community
    * @param entityName     Name of community entity
    * @param roleName       Name of role to associate with entity
-   * @result               True if operation was successful
+   * @return               True if operation was successful
    */
   boolean addRole(String communityName, String entityName, String roleName);
 
@@ -261,7 +261,7 @@ public interface CommunityService extends Service {
    * @param communityName  Parent community
    * @param entityName     Name of community entity
    * @param roleName       Name of role to associate with entity
-   * @result               True if operation was successful
+   * @return               True if operation was successful
    */
   boolean removeRole(String communityName, String entityName, String roleName);
 
