@@ -961,7 +961,7 @@ public class SimpleAgent
             ") Agent("+getIdentifier()+
             ") Node("+localNode+
             ") Host("+localHost+
-            ") toNode("+moveTargetNode+
+            ") ToNode("+moveTargetNode+
             ")");
       }
       moveTargetNode = null;
@@ -1018,7 +1018,7 @@ public class SimpleAgent
             ") Agent("+getIdentifier()+
             ") Node("+localNode+
             ") Host("+localHost+
-            ") toNode("+moveTargetNode+
+            ") ToNode("+moveTargetNode+
             ")");
       }
     }
