@@ -173,14 +173,6 @@ implements Component
   protected abstract boolean isBindEntry(AddressEntry entry);
 
   /**
-   * Returns true if the registered oldEntry should be replaced
-   * by the observed newEntry.
-   */ 
-  protected abstract boolean shouldReplace(
-      AddressEntry oldEntry,
-      AddressEntry newEntry);
-
-  /**
    * Create a non-abstract instance of a LookupTimer.
    */
   protected abstract LookupTimer createLookupTimer(
@@ -629,17 +621,15 @@ implements Component
           // unbound
           // assert (bindEntry != null);
           removeBinding();
-        } else if (bindEntry == null) {
-          // bound
-          state = LOOKUP;
-          bindEntry = qEntry;
-        } else if (shouldReplace(bindEntry, qEntry)) {
-          // rebound?
-          removeBinding();
-          state = LOOKUP;
-          bindEntry = qEntry;
         } else {
-          // keep old entry
+          if (bindEntry == null) {
+            // bound
+          } else {
+            // rebound?
+            removeBinding();
+          }
+          state = LOOKUP;
+          bindEntry = qEntry;
         }
 
         // maybe transition state
