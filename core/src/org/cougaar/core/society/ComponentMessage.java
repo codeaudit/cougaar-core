@@ -16,13 +16,14 @@ import org.cougaar.core.component.ComponentDescription;
  * Message to a <code>Container</code> that a <code>Component</code> be 
  * added/removed/etc.
  * <p>
- * Currently all Component messages require a <code>ComponentDescription</code>
- * to uniquely identify the Component (via the ".equals(..)" and ".hashCode()"
+ * All Component messages require a <code>ComponentDescription</code> to
+ * uniquely identify the Component (via the ".equals(..)" and ".hashCode()"
  * methods).
  */
 public class ComponentMessage 
 extends Message {
 
+  /** the operations */
   public static final int ADD     = 0;
   public static final int REMOVE  = 1;
   public static final int SUSPEND = 2;
@@ -36,34 +37,23 @@ extends Message {
   /** @see #getComponentDescription() */
   private ComponentDescription desc;
 
-  /** 
-  /** 
-   * no-arg Constructor.
-   */
-  public ComponentMessage() {
-    super();
-    operation = -1;
-  }
-
-  public ComponentMessage(
-      MessageAddress aSource, 
-      MessageAddress aTarget) {
-    super(aSource, aTarget);
-    operation = -1;
-  }
+  /** @see #getState() */
+  private Object state;
 
   public ComponentMessage(
       MessageAddress aSource, 
       MessageAddress aTarget,
       int operation,
-      ComponentDescription desc) {
+      ComponentDescription desc,
+      Object state) {
     super(aSource, aTarget);
     setOperation(operation);
     setComponentDescription(desc);
+    setState(state);
   }
 
   /**
-   * Get the component description for the Component to add.
+   * Get the specified action, such as ADD.
    *
    * @see ComponentDescription
    */
@@ -84,7 +74,7 @@ extends Message {
   }
 
   /**
-   * Get the component description for the Component to add.
+   * Get the component description for the Component.
    *
    * @see ComponentDescription
    */
@@ -97,6 +87,24 @@ extends Message {
    */
   public void setComponentDescription(ComponentDescription desc) {
     this.desc = desc;
+  }
+
+  /**
+   * Get the state for the Component to ADD or RELOAD.
+   * <p>
+   * The state must be a <code>java.io.Serializable</code> Object.
+   * <p>
+   * Together the description and state form a <code>StateTuple</code>.
+   */
+  public Object getState() {
+    return state;
+  }
+
+  /**
+   * @see #getState()
+   */
+  public void setState(Object state) {
+    this.state = state;
   }
 
   public String toString() {
@@ -113,6 +121,10 @@ extends Message {
       sOp+
       " ComponentMessage "+
       super.toString()+
-      " ComponentDescription: "+desc;
+      " ComponentDescription: "+desc+
+      " State: "+
+      ((state != null) ? 
+       state.getClass().getName() : 
+       "null");
   }
 }

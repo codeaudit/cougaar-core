@@ -15,6 +15,7 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.cluster.*;
 import org.cougaar.core.society.*;
+import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.mts.MessageTransportService;
 
 import java.beans.*;
@@ -104,6 +105,9 @@ public class AgentManager
       } else {
         desc = ((StateTuple)obj).getComponentDescription();
       }
+      if (!("Node.AgentManager.Agent".equals(desc.getInsertionPoint()))) {
+        return true;
+      }
       // use the description to find the AgentBinder that we just 
       //   added -- is there a better way to do this?
       AgentBinder agentBinder = null;
@@ -172,6 +176,12 @@ public class AgentManager
      return true;
   }
 
+  /**
+   * Recursively print the result of "agent.getState()".
+   * <p>
+   * This is expected to break once Components create
+   * customized state holders!
+   */
   private static void debugState(Object state, String path) {
     if (state instanceof StateTuple[]) {
       StateTuple[] tuples = (StateTuple[])state;
@@ -218,6 +228,25 @@ public class AgentManager
     if ((agentID == null) ||
         (nodeID == null)) {
       // error
+      System.err.println(
+          "Must specify an agentID ("+
+          agentID+") and nodeID ("+nodeID+")");
+      return;
+    }
+
+    // get this node's id
+    NodeIdentificationService nis = (NodeIdentificationService)
+      getServiceBroker().getService(
+          this,
+          NodeIdentificationService.class,
+          null);
+    if (nis == null) {
+      System.err.println("Unable to get this Node's Identification");
+      return;
+    }
+    final NodeIdentifier thisNodeID = nis.getNodeIdentifier();
+    if (thisNodeID.equals(nodeID)) {
+      System.err.println("Agent "+agentID+" already on Node "+nodeID);
       return;
     }
 
@@ -227,6 +256,8 @@ public class AgentManager
     for (Iterator iter = super.boundComponents.iterator(); ;) {
       if (!(iter.hasNext())) {
         // no such agent?
+        System.err.println(
+            "Agent "+agentID+" is not on Node "+thisNodeID);
         return;
       }
       Object oi = iter.next();
@@ -251,8 +282,12 @@ public class AgentManager
       }
     }
 
+    System.out.println("Suspend Agent "+agentID);
+
     // suspend the agent's activity, prepare for state capture
     agent.suspend();
+
+    System.out.println("Get the Agent state");
 
     // recursively gather the agent state
     Object state = 
@@ -260,106 +295,92 @@ public class AgentManager
        ((StateObject)agent).getState() :
        null);
 
-    System.out.println("state is: "+state);
+    System.out.println("The state is: "+state);
     debugState(state, "");
 
-    // create a ComponentDescription for the agent
-    ComponentDescription cd;
-    if (origDesc != null) {      
-      Vector param = new Vector(1);
-      param.add("copied"+agentID.toString());
-      cd = new ComponentDescription(
-          origDesc.getName(),
-          origDesc.getInsertionPoint(),
-          origDesc.getClassname(),
-          origDesc.getCodebase(),
-          param, //origDesc.getParameter(),
-          origDesc.getCertificate(),
-          origDesc.getLeaseRequested(),
-          origDesc.getPolicy());
-    } else {
-      // lost the description?
-      Vector param = new Vector(1);
-      param.add("copied"+agentID.toString());
-      cd = new ComponentDescription(
-          "org.cougaar.core.cluster.ClusterImpl",
-          "Node.AgentManager.Agent",
-          "org.cougaar.core.cluster.ClusterImpl",
-          null,  // codebase
-          param,
-          null,  // certificate
-          null,  // lease
-          null); // policy
-    }
-
-    // create a StateTuple
-    StateTuple st = new StateTuple(cd, state);
-
-    System.out.println("add("+st+")");
-    add(st);
-    if (true) {
-
-      // stop and unload the original agent
-      agent.stop();
-      agent.unload();
-
-      // cancel all services requested by the agent
-
-      // unhand the original agent, let GC reclaim it
-      //
-      // ContainerSupport should be modified to clean this up...
-      for (Iterator iter = super.boundComponents.iterator();
-           iter.hasNext();
-          ) {
-        Object oi = iter.next();
-        if (!(oi instanceof BoundComponent)) {
-          continue;
-        }
-        BoundComponent bc = (BoundComponent)oi;
-        Binder b = bc.getBinder();
-        if (!(b instanceof AgentBinder)) {
-          continue;
-        }
-        Agent a = ((AgentBinder)b).getAgent();
-        if ((a != null) &&
-            (agentID.equals(a.getAgentIdentifier()))) {
-          // remove our agent
-          iter.remove();
-          break;
-        }
-      }
-      return;
-    }
-
-    // create an ADD ComponentMessage with the ComponentDescription
+    // create an ADD ComponentMessage
     ComponentMessage addMsg =
       new ComponentMessage(
           new NodeIdentifier(bindingSite.getIdentifier()),
           nodeID,
           ComponentMessage.ADD,
-          cd);
+          origDesc,
+          state);
+
+    // create a dummy message transport client
+    MessageTransportClient mtc = 
+      new MessageTransportClient() {
+        public void receiveMessage(Message message) {
+          // never
+        }
+        public MessageAddress getMessageAddress() {
+          return thisNodeID;
+        }
+      };
 
     // get the message transport
     MessageTransportService mts = (MessageTransportService)
       getServiceBroker().getService(
-          this,
+          mtc,
           MessageTransportService.class,
           null);
     if (mts == null) {
       // error!  we should have requested this earlier...
-      System.err.println("Unable to get MessageTransport for mobility message");
+      System.err.println(
+          "Unable to get MessageTransport for mobility message");
       return;
     }
 
-    // send message to destination node
+    // send the message to destination node
     mts.sendMessage(addMsg);
+    System.out.println("Sent Message: "+addMsg);
 
-    // wait for add acknowledgement -- postponed to 8.6+
+    // wait for an add acknowledgement -- postponed to 8.6+
 
-    // destroy the original agent on this node
+    // stop and unload the original agent
+    agent.stop();
+    agent.unload();
+
+    // disable the agent's ServiceBroker, cancel all services requested 
+    //   by the agent, and set all pointers leaving the agent to null.
+    //
+    // this could be done by a ServiceFilter using an
+    //   java.lang.reflect.InvocationHandler to proxy all
+    //   actual Services.
+    //
+    // postponed to 8.6+ -- we'll assume the Agent is well-behaved
+
+    // unhand the original agent, let GC reclaim it
+    //
+    // ContainerSupport should be modified to clean this up...
+    for (Iterator iter = super.boundComponents.iterator();
+        iter.hasNext();
+        ) {
+      Object oi = iter.next();
+      if (!(oi instanceof BoundComponent)) {
+        continue;
+      }
+      BoundComponent bc = (BoundComponent)oi;
+      Binder b = bc.getBinder();
+      if (!(b instanceof AgentBinder)) {
+        continue;
+      }
+      Agent a = ((AgentBinder)b).getAgent();
+      if ((a != null) &&
+          (agentID.equals(a.getAgentIdentifier()))) {
+        // remove our agent
+        iter.remove();
+        break;
+      }
+    }
+
+    // the agent is isolated and will be GC'ed
+    //
+    // even if the agent spawned Threads it should be unable
+    //   to interact with the Node
 
     System.out.println(
-        "Move "+agentID+" to "+nodeID);
+        "Moved Agent "+agentID+" to Node "+nodeID);
   }
 
   public String getName() {

@@ -682,6 +682,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   // gets put into the Node's running list of clusters.
   // This is an artifact of moving the cluster creation to AgentManager and
   // should probably be cleanup up further.
+
   private void registerCluster(ClusterServesClusterManagement cluster) {
     // get the (optional) external listener
     ExternalNodeActionListener eListener;
@@ -734,7 +735,6 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
   protected void add(ComponentDescription[] descs) {
     int nDescs = ((descs != null) ? descs.length : 0);
     System.err.print("Creating Clusters:");
-    List clusters = new ArrayList(nDescs);
     for (int i = 0; i < nDescs; i++) {
       try {
         ComponentDescription desc = descs[i];
@@ -784,10 +784,24 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
     try {
       if (m instanceof ComponentMessage) {
         ComponentMessage cm = (ComponentMessage)m;
-        ComponentDescription desc = cm.getComponentDescription();
         int operation = cm.getOperation();
+        System.out.println("\n\ngot message: " +cm);
         if (operation == ComponentMessage.ADD) {
-          add(desc);
+          // add
+          ComponentDescription cd = cm.getComponentDescription();
+          StateTuple st = 
+            new StateTuple(
+                cd,
+                cm.getState());
+          // should do "add(st)", but requires Node fixes
+          //
+          // for now we do this work-around:
+          String ip = cd.getInsertionPoint();
+          if (!("Node.AgentManager.Agent".equals(ip))) {
+            throw new UnsupportedOperationException(
+              "Only Agent ADD supported for now, not "+ip);
+          }
+          agentManager.add(st);
         } else {
           // not implemented yet!  will be okay once Node is a Container
           throw new UnsupportedOperationException(
