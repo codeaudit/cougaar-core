@@ -679,19 +679,6 @@ public class SimpleAgent
         if (t != null) messenger.getAgentState().mergeAttributes(t);
     }
 
-    messenger.registerClient(mtsClientAdapter);
-
-    if (persistenceData != null) {
-      // send all unsent messages
-      List l = persistenceData.unsentMessages;
-      if (l != null) {
-        for (int i = 0, n = l.size(); i < n; i++) {
-          Message cmi = (Message) l.get(i);
-          sendMessage(cmi);
-        }
-      }
-    }
-
     if (log.isInfoEnabled()) {
       log.info("Getting / adding all services");
     }
@@ -716,6 +703,19 @@ public class SimpleAgent
     /** get the timers **/
     xTimer = (NaturalTimeService) sb.getService(this, NaturalTimeService.class, null);
     rTimer = (RealTimeService) sb.getService(this, RealTimeService.class, null);
+
+    messenger.registerClient(mtsClientAdapter);
+
+    if (persistenceData != null) {
+      // send all unsent messages
+      List l = persistenceData.unsentMessages;
+      if (l != null) {
+        for (int i = 0, n = l.size(); i < n; i++) {
+          Message cmi = (Message) l.get(i);
+          sendMessage(cmi);
+        }
+      }
+    }
   }
 
   protected void loadBinderPriorityComponents() {
