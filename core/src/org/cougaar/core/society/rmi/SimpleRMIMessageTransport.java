@@ -74,6 +74,12 @@ public class SimpleRMIMessageTransport
 
 
 
+    // temporary
+    public static void startNameService() {
+	RMINameServer.create();
+    }
+
+
     private MT lookupRMIObject(MessageAddress address) throws Exception {
 	Object object = 
 	    nameSupport.lookupAddressInNameServer(address, TRANSPORT_TYPE);

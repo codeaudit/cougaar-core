@@ -216,8 +216,8 @@ public class Communications {
   // initialize static vars from system properties.
   static {
     Properties props = System.getProperties();
-    putTransport("RMI", "org.cougaar.core.society.rmi.RMIMessageTransport");
-    putTransport("Pipe", "org.cougaar.core.society.PipedMessageTransport");
+    putTransport("RMI", "org.cougaar.core.society.rmi.SimpleRMIMessageTransport");
+    // putTransport("Pipe", "org.cougaar.core.society.PipedMessageTransport");
 
     String key = props.getProperty("org.cougaar.message.transport");
     if (key != null) {
