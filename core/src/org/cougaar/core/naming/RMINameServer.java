@@ -21,7 +21,6 @@
 
 package org.cougaar.core.naming;
 
-import org.cougaar.core.society.NameServer;
 import org.cougaar.core.society.Communications;
 
 import java.rmi.Naming;
@@ -58,7 +57,7 @@ import java.net.UnknownHostException;
  * @property org.cougaar.nameserver.local Circumvent RMI if possible for nameservice.
  **/
 
-public class RMINameServer implements NameServer, InitialContextFactory {
+public class RMINameServer implements InitialContextFactory {
   
   private static int verbosity = 0;
   private static boolean autoStart = true;
@@ -143,190 +142,6 @@ public class RMINameServer implements NameServer, InitialContextFactory {
     }
     if (verbosity>1) System.err.println("\nContacted "+url+" as "+remote);
     return (NS) remote;
-  }
-
-  public String getDirSeparator() {
-    return getNS().DirSeparator;
-  }
-
-  public void clear() {
-    clear(getDirSeparator());
-  }
-  public void clear(Object directory) {
-    try {
-      getNS().clear((String) directory);
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-  }
-
-  public boolean containsKey(Object key) {
-    try {
-      return getNS().containsKey((String) key);
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-      return false;
-    }
-  }        
-  public boolean containsValue(Object value) { return false; }
-  public Set entrySet() {
-    return entrySet(getDirSeparator());
-  }
-  public Set entrySet(Object directory) {
-    try {
-      return new HashSet(getNS().entrySet((String) directory));
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-      return null;
-    }
-  }
-  public Object get(Object key) {
-    if (verbosity>1) System.err.print("Looking up '"+key+"':");
-    try {
-      Object r = getNS().get((String) key);
-      if (verbosity>1) System.err.println(" Found "+r);
-      return r;
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-    return null;
-  }
-
-  public boolean isEmpty() {
-    return isEmpty(getDirSeparator());
-  }
-  public boolean isEmpty(Object directory) {
-    try {
-      return getNS().isEmpty((String) directory);
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-      return true;
-    }
-  }
-  public Set keySet() {
-    return keySet(getDirSeparator());
-  }
-
-  public Set keySet(Object directory) {
-    try {
-      return new HashSet(getNS().keySet((String) directory));
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-      return null;
-    }
-  }
-
-  public Object put(Object name, Object o) {
-    if (verbosity>1) System.err.print("Adding "+o+" as '"+name+"':");
-    try {
-      Object r = getNS().put((String) name, o);
-      if (verbosity>1) System.err.println(" OK");
-      return r;
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-    return null;
-  }
-
-  public void putAll(Map t) {
-    for (Iterator i = t.entrySet().iterator(); i.hasNext(); ) {
-      Map.Entry e = (Map.Entry) i.next();
-      put(e.getKey(), e.getValue());
-    }
-  }
-
-  /** remove an object (and name) from the directory **/
-  public Object remove(Object name) {
-    if (verbosity>1) System.err.print("Removing "+name+"':");
-    try {
-      Object r = getNS().remove((String)name);
-      if (verbosity>1) System.err.println(" OK");
-      return r;
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-    return null;
-  }
-
-  public int size() {
-    return size(getDirSeparator());
-  }
-
-  public int size(Object name) {
-    if (verbosity>1) System.err.print("getting size of "+name+"':");
-    try {
-      int r = getNS().size((String)name);
-      if (verbosity>1) System.err.println(" OK");
-      return r;
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-    return -1;
-  }
-
-  public Collection values() {
-    return values(getDirSeparator());
-  }
-  public Collection values(Object directory) {
-    if (verbosity>1) System.err.print("values '"+directory+"':");
-    try {
-      Collection o = getNS().values((String) directory);
-      if (verbosity>1) System.err.println(" Found "+o.size()+" elements.");
-      return o;
-    } catch (RemoteException re) {
-      if (verbosity>1) System.err.println(" Failed:");
-      if (verbosity>0) {
-        re.printStackTrace();
-      } else {
-        System.err.print("!");
-      }
-    }
-    return null;
   }
 
   public Context getInitialContext(Hashtable env) {
@@ -440,35 +255,16 @@ public class RMINameServer implements NameServer, InitialContextFactory {
     
     try {
       NS ns = new NSImpl();
-      rns.put(ns.fullName(ns.getRoot(), "fred"), "fred");
-      Object o = rns.get(ns.fullName(ns.getRoot(), "fred"));
-      System.err.println("got " + o + " " + o.getClass());
-
-      rns.put(ns.fullName(ns.getRoot(), "wilma"), "wilma");
-      o = rns.get(ns.fullName(ns.getRoot(),"wilma"));
-      System.err.println("got " + o + " " + o.getClass());
-
-
-      NSKey barneyKey = ns.createSubDirectory(ns.getRoot(), "barney");
-      String pathSpec = ns.fullName(barneyKey, "bam bam");
-      System.out.println(pathSpec);
-      rns.put(pathSpec, "bam bam");
-      o = rns.get(pathSpec);
-      System.err.println("got "+ o + " " + o.getClass());
-
       
-      Enumeration stuff = new Enumerator(rns.values());
-      if (stuff != null) {
-        System.err.println("top level =");
-        while (stuff.hasMoreElements()) {
-          Object next = stuff.nextElement();
-          System.err.println("\t" + next + " " + next.getClass());
-        }
-      } else {
-        System.err.println("Nothing!");
-      }
-
       Context initialContext = rns.getInitialContext(new Hashtable());
+      initialContext.bind("fred", "fred");
+
+      initialContext.bind("wilma", "wilma");
+
+      Context barneyContext = 
+        initialContext.createSubcontext("barney");
+      barneyContext.bind("bam bam", "bam bam");
+
       NamingEnumeration bindings = initialContext.listBindings("");
       while (bindings.hasMore()) {
         Binding binding = (Binding) bindings.next();

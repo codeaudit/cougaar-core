@@ -27,9 +27,6 @@ import javax.naming.*;
 import javax.naming.spi.*;
 import java.util.*;
 
-import org.cougaar.core.society.NameServer;
-
-
 /**
  * Implementation of javax.naming.directory.Context for 
  * Cougaar Naming Service

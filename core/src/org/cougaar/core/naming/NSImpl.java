@@ -28,7 +28,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.io.Serializable;
 
 import javax.naming.directory.*;
-import org.cougaar.core.society.NameServer;
 import java.util.*;
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
@@ -55,11 +54,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return ROOT;
   }
 
-  public void clear(String path) {
-    String dirName = parseDirectory(path);
-    clear(new NSDirKey(dirName));
-  }
-
   public void clear(NSKey dirKey) {
     Map dirMap = getDirectory(dirKey);
     
@@ -68,22 +62,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
         dirMap.clear();
       }
     }
-  }
-
-  public boolean containsKey(String key) {
-    return containsKey(new NSDirKey(parseDirectory(key)), getTail(key));
-  }
-
-  public boolean containsKey(NSKey dirKey, String key) {
-    Map dirMap = getDirectory(dirKey);
-
-    if (dirMap != null) {
-      synchronized (dirMap) {
-        return (dirMap.get(key) != null);
-      }
-    } 
-
-    return false;
   }
 
   public NSKey createSubDirectory(NSKey dirKey, 
@@ -137,10 +115,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
   }
 
-  public Collection entrySet(String directory) {
-    return entrySet(new NSDirKey(directory));
-  }
-
   public Collection entrySet(NSKey dirKey) {
     ArrayList l = new ArrayList();
     Map dirMap = getDirectory(dirKey);
@@ -169,10 +143,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
   }
 
   /** Look up an object in the NameService directory **/
-  public Object get(String path) {
-    return get(new NSDirKey(parseDirectory(path)), getTail(path));
-  }
-
   public Object get(NSKey dirKey, String name) {
     Map dirMap = getDirectory(dirKey);
     Object found = null;
@@ -193,10 +163,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return found;
   }
 
-  public Collection getAttributes(String path) {
-    return getAttributes(new NSDirKey(parseDirectory(path)), getTail(path));
-  }
-    
   public Collection getAttributes(NSKey dirKey, String name) {
     if ((name == null) || (name.equals(""))) {
       return getDirAttributes(dirKey);
@@ -217,12 +183,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     return attr;
   }
 
-
-
-  public boolean isEmpty(String directory) {
-    return isEmpty(new NSDirKey(parseDirectory(directory)));
-  }
-
   public boolean isEmpty(NSKey dirKey) {
     Map dirMap = getDirectory(dirKey);
    
@@ -233,10 +193,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     } else {
       return true;
     }
-  }
-
-  public Collection keySet(String directory) {
-    return keySet(new NSDirKey(parseDirectory(directory)));
   }
 
   public Collection keySet(NSKey dirKey) {
@@ -252,15 +208,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
       }
     }
     return l;
-  }
-
-  /** add an object to the directory **/
-  public Object put(String path, Object o) {
-    return put(path, o, null);
-  }
-
-  public Object put(String path, Object o, Collection attributes) {
-    return put(new NSDirKey(parseDirectory(path)), getTail(path), o, attributes);
   }
 
   /** add an object to the directory **/
@@ -297,10 +244,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
   }
 
-  public void putAttributes(String path, Collection attributes) {
-    putAttributes(new NSDirKey(parseDirectory(path)), getTail(path), attributes);
-  }
-
   public void putAttributes(NSKey dirKey, String name, 
                             Collection attributes)  {
     if ((name == null) || name.equals("")) {
@@ -322,11 +265,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
         }
       }
     }
-  }
-
-  /** remove an object (and name) from the directory **/
-  public Object remove(String path) {
-    return remove(new NSDirKey(parseDirectory(path)), getTail(path));
   }
 
   /** remove an object (and name) from the directory **/
@@ -392,10 +330,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     }
   }
 
-  public int size(String directory) {
-    return size(new NSDirKey(parseDirectory(directory)));
-  }
-
   public int size(NSKey dirKey) {
     Map dirMap = getDirectory(dirKey);
 
@@ -406,10 +340,6 @@ public class NSImpl extends UnicastRemoteObject implements NS {
     } else {
       return -1;
     }
-  }
-
-  public Collection values(String directory) {
-    return values(new NSDirKey(parseDirectory(directory)));
   }
 
   public Collection values(NSKey dirKey) {
