@@ -1,3 +1,31 @@
+2003-02-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/PersistenceMetricsService.java:
+	Bug #1655 -- Add metrics for persistence size & frequency
+	New file defines the PersistenceMetricsService.
+
+	* org/cougaar/core/blackboard/StandardBlackboard.java:
+	Bug #1655 -- Add metrics for persistence size & frequency
+	Call Persistence.registerServices when registering other services
+	with the ServiceBroker and Persistence.unregisterServices whch
+	unregistering other services. Persistence now supplies
+	PersistenceMetricsService and PersistenceControlService to the
+	agent but is not itself a component. Perhaps it should be, but it
+	isn't. It's part of the distributor and that is part of the
+	blackboard.
+
+	* org/cougaar/core/blackboard/ReservationManager.java: 
+	Bug #2560 -- Distributor fails to release its persistence reservation
+	Added Logger to waitFor method so we can tell what agent is being
+	waited for when debugging. Also added toString method so the item
+	being waited for prints something reasonable.
+	
+	* org/cougaar/core/blackboard/Distributor.java:
+	Bug #2560 -- Distributor fails to release its persistence reservation
+	Call release reservation after completing persistence at the tail
+	end of finishTransaction. This case was missed and doesn't show up
+	under stress. It only shows up in a lightly loaded situation.
+
 2003-02-04  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/service/DataProtectionService.java:
