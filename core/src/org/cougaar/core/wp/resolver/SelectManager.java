@@ -357,6 +357,7 @@ implements Component
     Iterator iter = entries.entrySet().iterator();
     for (int i = 0; i < n; i++) {
       Map.Entry me = (Map.Entry) iter.next();
+      String name = (String) me.getKey();
       Entry e = (Entry) me.getValue();
       MessageAddress addr = e.getMessageAddress();
       if (logger.isDebugEnabled()) {
@@ -459,7 +460,7 @@ implements Component
     }
   }
 
-  private MessageAddress select() {
+  private MessageAddress select(boolean lookup, String name) {
     // select the entry with the min score
     synchronized (lock) {
       long now = System.currentTimeMillis();
@@ -565,7 +566,7 @@ implements Component
     double ret =
       (e.getUpdateTime() > 0 ?
        ((double) e.getAverage()) :
-       config.defaultScore);
+       config.initialScore);
     // favor primary server by adjusting its score
     boolean isPrimary =
       (config.primaryAddress != null &&
@@ -795,7 +796,7 @@ implements Component
           return SelectManager.this.contains(addr);
         }
         public MessageAddress select(boolean lookup, String name) {
-          return SelectManager.this.select();
+          return SelectManager.this.select(lookup, name);
         }
         public void update(
             MessageAddress addr, long duration, boolean timeout) {
@@ -817,7 +818,7 @@ implements Component
     public final String primaryAddress;
     public final double primaryWeight;
     public final long pingTimeout;
-    public final double defaultScore;
+    public final double initialScore;
     public final double lousyScore;
 
     public SelectManagerConfig(Object o) {
@@ -841,10 +842,11 @@ implements Component
       }
       primaryWeight = d;
       pingTimeout = p.getLong("pingTimeout", 30000);
-      defaultScore = p.getDouble("defaultScore", 750.0);
-      d = p.getDouble("lousyScore", 3000.0);
-      d = Math.max(d, 4*defaultScore);
-      lousyScore = d;
+      double defaultScore = p.getDouble("defaultScore", 750.0);
+      d = Math.max(defaultScore, (double) (pingTimeout + 10000));
+      initialScore = p.getDouble("initialScore", d);
+      d = Math.max(defaultScore, 3000.0);
+      lousyScore = p.getDouble("lousyScore", d);
     }
   }
 }
