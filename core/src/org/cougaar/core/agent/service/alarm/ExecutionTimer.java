@@ -382,8 +382,8 @@ public class ExecutionTimer extends Timer {
           theParameters[theParameterCount - 1] = parameters;
         }
       }
-      sem.notify();
     }
+    requestRun();
   }
 
   protected long getMaxWait() {

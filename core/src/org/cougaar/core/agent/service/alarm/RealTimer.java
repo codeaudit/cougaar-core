@@ -40,7 +40,7 @@ public class RealTimer extends Timer {
   protected void report(Alarm alarm) {
     long now = currentTimeMillis();
     long at = alarm.getExpirationTime();
-    if ((at+epsilon)<now) {
+    if ((at+EPSILON)<now) {
       // if we're more then epsilon late, we'll warn
       if (log.isInfoEnabled()) {
         log.info("Alarm "+alarm+" is "+(now-at)+"ms late");

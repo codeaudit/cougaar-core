@@ -59,15 +59,19 @@ import org.cougaar.util.log.Logging;
 public abstract class Timer implements Runnable {
   protected final static Logger log = Logging.getLogger(Timer.class);
 
-  protected static long epsilon = 10*1000L;
-  protected static boolean useSchedulable = true;
-  static {
-    epsilon = PropertyParser.getLong("org.cougaar.core.agent.service.alarm.Timer.epsilon", epsilon);
-    useSchedulable = PropertyParser.getBoolean("org.cougaar.core.agent.service.alarm.Timer.useSchedulable", useSchedulable);
-  }
+  protected static final long EPSILON = 
+    PropertyParser.getLong(
+        "org.cougaar.core.agent.service.alarm.Timer.epsilon",
+        10*1000L);
+  protected static final boolean USE_SCHEDULABLE = 
+    PropertyParser.getBoolean(
+        "org.cougaar.core.agent.service.alarm.Timer.useSchedulable",
+        true);
 
   /** all alarms **/
-  private ArrayList alarms = new ArrayList();
+  // this could be optimized to use a heap
+  private final ArrayList alarms = new ArrayList();
+
   /** Pending Periodic Alarms.  
    * PeriodicAlarms which have gone off but
    * need to be added back on.  These are collected and added
@@ -75,16 +79,16 @@ public abstract class Timer implements Runnable {
    * if someone abuses a periodic alarm
    **/
   // only modified in the run loop
-  private ArrayList ppas = new ArrayList();
+  private final ArrayList ppas = new ArrayList();
 
   /** Pending Alarms.  
    * alarms which need to be rung, but we haven't gotten around to yet.
    **/
   // only modified in the run loop thread
-  private ArrayList pas = new ArrayList();
+  private final ArrayList pas = new ArrayList();
 
 
-  private static final Comparator comparator = new Comparator() {
+  private static final Comparator COMPARATOR = new Comparator() {
       public int compare(Object a, Object b) {
         long ta = ((Alarm)a).getExpirationTime();
         long tb = ((Alarm)b).getExpirationTime();
@@ -93,55 +97,73 @@ public abstract class Timer implements Runnable {
         return -1;
       }};
 
-  protected Object sem = new Object();
+  protected final Object sem = new Object();
 
-  /** must be called only within a sync(sem) **/
-  private void insert(Alarm alarm) {
-    ListIterator i = alarms.listIterator(0);
-    
-    if (! i.hasNext()) {        // no elements?
-      alarms.add(alarm);
-    } else {
-      // find the right insertion point
-      while (i.hasNext()) {
-        Alarm cur = (Alarm) i.next();
-        // stop if the alarm is < the current insertion point
-        if (comparator.compare(alarm, cur) < 0) {
-          i.previous();         // back up one step
-          i.add(alarm);         // add before cur
-          return;               
-        }
-      }
-      // no elements were greater, add at end
-      i.add(alarm);
-    }
+  private Schedulable schedulable;
+  private ThreadService threadService = null;
+
+  public Timer() {}
+
+  public void start(ThreadService tsvc) {
+    threadService = tsvc;
+    schedulable = tsvc.getThread(this, this, getName()); // lane?
+    // should be nothing on the queue yet, so no need to start.
+    // On the other hand, starting is harmless, since it will quit 
+    // immediately if the queue is empty.
+    // For now we don't do a "schedulable.start()"
+    if (log.isDebugEnabled()) {
+      log.debug("Started");
+    } 
   }
 
-  public String alarmsToString() {
-    synchronized (sem) {
-      String s = "[";
-      Iterator i = alarms.iterator();
-      while(i.hasNext()) {
-        s = s+(i.next());
-        if (i.hasNext()) s=s+", ";
-      }
-      s=s+"]";
-      return s;
-    }
+  public long currentTimeMillis() {
+    return System.currentTimeMillis();
   }
+
   public void addAlarm(Alarm alarm) {
+    if (log.isDebugEnabled()) {
+      log.debug("addAlarm("+alarm+")");
+    }
     synchronized (sem) {
       insert(alarm);
-      //System.err.println("Alarms = "+alarmsToString()); // debug
     }
-    schedulable.start();
+    requestRun();
   }
 
   public void cancelAlarm(Alarm alarm) {
+    if (log.isDebugEnabled()) {
+      log.debug("cancelAlarm("+alarm+")");
+    }
     synchronized (sem) {
       alarms.remove(alarm);
     }
+    requestRun();
+  }
+
+  protected double getRate() {
+    return 1.0;
+  }
+
+  /**
+   * Override this to specify time before next rate change. It is
+   * always safe to underestimate.
+   **/
+  protected long getMaxWait() {
+    return 10000000000L;        // A long time
+  }
+
+  protected String getName() {
+    return "Timer";
+  }
+
+  protected void requestRun() {
     schedulable.start();
+  }
+
+  protected void report(Alarm alarm) {
+    if (log.isDebugEnabled()) {
+      log.debug("Ringing "+alarm);
+    }
   }
 
   // must be called within sync(sem) 
@@ -151,6 +173,7 @@ public abstract class Timer implements Runnable {
     else
       return (Alarm) alarms.get(0);
   }
+
   // must be called within sync(sem) 
   private Alarm nextAlarm() {
     if (alarms.isEmpty()) return null;
@@ -161,7 +184,42 @@ public abstract class Timer implements Runnable {
     return (Alarm) alarms.get(0);
   }
 
+  // must be called only within a sync(sem)
+  private void insert(Alarm alarm) {
+    if (log.isDebugEnabled()) {
+      log.debug("insert("+alarm+")");
+    }
+    boolean added = false;
+    // find the right insertion point
+    ListIterator i = alarms.listIterator(0);
+    if (i.hasNext()) {
+      while (i.hasNext()) {
+        Alarm cur = (Alarm) i.next();
+        // stop if the alarm is < the current insertion point
+        if (COMPARATOR.compare(alarm, cur) < 0) {
+          i.previous();         // back up one step
+          i.add(alarm);         // add before cur
+          added = true;
+          break;               
+        }
+      }
+    }
+    if (!added) {
+      // no elements were greater, add at end
+      alarms.add(alarm);
+    }
+    if (log.isDetailEnabled()) {
+      synchronized (sem) {
+        log.detail("Alarms = "+alarms);
+      }
+    }
+  }
+
+  // only called by scheduler
   public void run() {
+    if (log.isDetailEnabled()) {
+      log.detail("run");
+    }
     schedulable.cancelTimer(); // cancel any outstanding timed restarts
     while (true) {
       long time;
@@ -184,6 +242,9 @@ public abstract class Timer implements Runnable {
           } else {            // Time is standing still
             delta = maxWait;  // Wait until next significant change in timer
           }
+          if (log.isDetailEnabled()) {
+            log.detail("delta is "+delta+" for top "+top);
+          }
           if (delta > 0) {
             if (delta < 100) delta=100; // min of .1 second wait time
             schedulable.schedule(delta);   // restart after delta ms
@@ -201,6 +262,10 @@ public abstract class Timer implements Runnable {
           top = nextAlarm();
         }
 
+        if (log.isDetailEnabled()) {
+          log.detail("pas is "+pas);
+        }
+
       } // sync(sem)
       
       // now ring any outstanding alarms: outside the sync
@@ -212,8 +277,7 @@ public abstract class Timer implements Runnable {
           try {
             ring(top);
           } catch (Throwable e) {
-            System.err.println("Alarm "+top+" generated Exception: "+e);
-            e.printStackTrace();
+            log.error("Alarm "+top+" generated Exception", e);
             // cancel error generating alarms to be certain.
             top.cancel();
           }
@@ -243,82 +307,46 @@ public abstract class Timer implements Runnable {
   }
 
   private void ring(final Alarm alarm) {
-    if (!alarm.hasExpired()) {  // only ring if it wasn't cancelled already
-      if (useSchedulable && threadService != null) { //wrap with schedulable
-        Schedulable quasimodo = threadService.getThread(this, new Runnable() {
-            public void run() {
-              report(alarm);
-              try {
-                alarm.expire();
-              } finally {
-                if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
-                  log.error("Alarm "+alarm+" failed to close it's transaction");
-                }
-              }
-            }},
-                                                        "Alarm Ringer");
-        quasimodo.start();
-      } else {
-        report(alarm);
-        long dt = 0L;
-        try {
-          dt = System.currentTimeMillis(); // real start time
-          alarm.expire();
-          dt = System.currentTimeMillis() - dt; // real delta time
-          //
-          if (dt > epsilon) {
-            if (log.isWarnEnabled()) {
-              log.warn("Alarm "+alarm+" blocked for "+dt+"ms while ringing");
-            }
+    if (alarm.hasExpired()) {
+      // already cancelled
+      return; 
+    }
+    if (!USE_SCHEDULABLE && threadService == null) { 
+      // ring in our thread
+      reallyRing(alarm);
+      return;
+    }
+    // ring in pooled thread
+    Schedulable quasimodo = threadService.getThread(
+        this,
+        new Runnable() {
+          public void run() {
+            reallyRing(alarm);
           }
-        } finally {
-          // see if the alarm has been evil and as has opened a transaction
-          // but neglected to close it
-          if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
-            log.error("Alarm "+alarm+" failed to close it's transaction");
-          }
-        }}
+        },
+       "Alarm Ringer");
+    quasimodo.start();
+  }
+
+  private void reallyRing(Alarm alarm) {
+    report(alarm);
+    long dt = 0L;
+    try {
+      dt = System.currentTimeMillis(); // real start time
+      alarm.expire();
+      dt = System.currentTimeMillis() - dt; // real delta time
+      //
+      if (dt > EPSILON) {
+        if (log.isWarnEnabled()) {
+          log.warn("Alarm "+alarm+" blocked for "+dt+"ms while ringing");
+        }
+      }
+    } finally {
+      // see if the alarm has been evil and as has opened a transaction
+      // but neglected to close it
+      if (org.cougaar.core.blackboard.Subscriber.abortTransaction()) {
+        log.error("Alarm "+alarm+" failed to close it's transaction");
+      }
     }
   }
-
-  protected void report(Alarm alarm) {
-    if (log.isDebugEnabled()) {
-      log.debug("Ringing "+alarm);
-    }
-  }
-
-  public long currentTimeMillis() {
-    return System.currentTimeMillis();
-  }
-
-  protected double getRate() {
-    return 1.0;
-  }
-
-  /**
-   * Override this to specify time before next rate change. It is
-   * always safe to underestimate.
-   **/
-  protected long getMaxWait() {
-    return 10000000000L;        // A long time
-  }
-
-  public Timer() {}
-
-  private Schedulable schedulable;
-  private ThreadService threadService = null;
-
-  public void start(ThreadService tsvc) {
-    threadService = tsvc;
-    schedulable = tsvc.getThread(this, this, getName()); // lane?
-    // should be nothing on the queue yet, so no need to start.
-    // On the other hand, starting is harmless, since it will quit 
-    // immediately if the queue is empty.
-    // For now we don't do a "schedulable.start()"
-  }
-
-  protected String getName() {
-    return "Timer";
-  }
-
 }
