@@ -1122,9 +1122,35 @@ public abstract class PlugInAdapter
     public void start() {
       super.start();
       getBlackboardService().registerInterest(sw = new ThinWatcher());
-      requestTrigger = getSchedulerService().register(this);
+      setRequestTrigger(getSchedulerService().register(this));
       synchronized (this) {     //  make sure we don't get scheduled while initializing
         plugin_prerun();
+      }
+    }
+
+    // we may need to delay an RT activation if it isn't hooked up yet
+    private boolean rtDelayed = false;
+    // we could probably sync on this, but I'm more comfortable with a semephore-like
+    // pattern here...
+    private final Object rtDelayLock = new Object();
+
+    private void setRequestTrigger(Trigger rt) {
+      synchronized (rtDelayLock) {
+        requestTrigger = rt;
+        if (rtDelayed) {
+          rtDelayed = false;    // useless cleanup
+          System.err.println("Warning: avoiding bug 837\nPlease report that you've seen this message at https://www.alpine.bbn.com/bugzilla/show_bug.cgi?id=837");
+          requestTrigger.trigger();
+        }
+      }
+    }
+    private void activateRequestTrigger() {
+      synchronized (rtDelayLock) {
+        if (requestTrigger != null) {
+          requestTrigger.trigger();
+        } else {
+          rtDelayed = true;
+        }
       }
     }
 
@@ -1139,7 +1165,7 @@ public abstract class PlugInAdapter
     private class ThinWatcher extends SubscriptionWatcher {
       public void signalNotify(int event) {
         super.signalNotify(event);
-        requestTrigger.trigger();
+        activateRequestTrigger();
       }
       public String toString() {
         return "ThinWatcher("+PlugInAdapter.this.toString()+")";
