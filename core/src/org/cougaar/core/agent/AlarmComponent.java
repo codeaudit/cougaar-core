@@ -27,7 +27,6 @@
 package org.cougaar.core.agent;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.agent.service.alarm.AlarmServiceProvider;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -56,7 +55,7 @@ implements Component
   private RealTimeService rTimer;
   private NaturalTimeService xTimer;
 
-  private AlarmServiceProvider asp;
+  private AlarmSP asp;
 
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
@@ -74,10 +73,7 @@ implements Component
       sb.getService(this, RealTimeService.class, null);
 
     // add alarm service
-    ClusterServesClocks alarmClock =
-      new AlarmClockAdapter(xTimer, rTimer);
-    asp =
-      new AlarmServiceProvider(alarmClock);
+    asp = new AlarmSP();
     sb.addService(AlarmService.class, asp);
   }
 
@@ -97,39 +93,58 @@ implements Component
       xTimer = null;
     }
   }
-  private static final class AlarmClockAdapter
-    implements ClusterServesClocks {
-      private final NaturalTimeService xTimer;
-      private final RealTimeService rTimer;
-      public AlarmClockAdapter(
-          NaturalTimeService xTimer,
-          RealTimeService rTimer) {
-        this.xTimer = xTimer;
-        this.rTimer = rTimer;
+
+  private class AlarmSP implements ServiceProvider {
+    private final AlarmService SERVICE_INSTANCE =
+      new AlarmSI(xTimer, rTimer);
+
+    public Object getService(
+        ServiceBroker sb, Object requestor, Class serviceClass) {
+      if (AlarmService.class.isAssignableFrom(serviceClass)) {
+        return SERVICE_INSTANCE;
+      } else {
+        return null;
       }
-      // alarm service:
-      public long currentTimeMillis() {
-        return xTimer.currentTimeMillis();
-      }
-      public void addAlarm(Alarm alarm) {
-        xTimer.addAlarm(alarm);
-      }
-      public void addRealTimeAlarm(Alarm alarm) {
-        rTimer.addAlarm(alarm);
-      }
-      // demo service:
-      private void die() { throw new UnsupportedOperationException(); }
-      public MessageAddress getMessageAddress() { die(); return null; }
-      public void setSocietyTime(long time) { die(); }
-      public void setSocietyTime(long time, boolean leaveRunning) { die(); }
-      public void setSocietyTimeRate(double newRate) { die(); }
-      public void advanceSocietyTime(long timePeriod) { die(); }
-      public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
-      public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
-      public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
-      public void advanceNodeTime(long timePeriod, double newRate) {die();}
-      public void setNodeTime(long time, double newRate) {die();}
-      public void setNodeTime(long time, double newRate, long changeTime) {die();}
-      public double getExecutionRate() { die(); return -1; }
     }
+
+    public void releaseService(
+        ServiceBroker sb, Object requestor,
+        Class serviceClass, Object service) {
+    }
+  }
+
+  private static final class AlarmSI implements AlarmService {
+    private final NaturalTimeService xTimer;
+    private final RealTimeService rTimer;
+    public AlarmSI(
+        NaturalTimeService xTimer,
+        RealTimeService rTimer) {
+      this.xTimer = xTimer;
+      this.rTimer = rTimer;
+    }
+    // alarm service:
+    public long currentTimeMillis() {
+      return xTimer.currentTimeMillis();
+    }
+    public void addAlarm(Alarm alarm) {
+      xTimer.addAlarm(alarm);
+    }
+    public void addRealTimeAlarm(Alarm alarm) {
+      rTimer.addAlarm(alarm);
+    }
+    // demo service:
+    private void die() { throw new UnsupportedOperationException(); }
+    public MessageAddress getMessageAddress() { die(); return null; }
+    public void setSocietyTime(long time) { die(); }
+    public void setSocietyTime(long time, boolean leaveRunning) { die(); }
+    public void setSocietyTimeRate(double newRate) { die(); }
+    public void advanceSocietyTime(long timePeriod) { die(); }
+    public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
+    public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
+    public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
+    public void advanceNodeTime(long timePeriod, double newRate) {die();}
+    public void setNodeTime(long time, double newRate) {die();}
+    public void setNodeTime(long time, double newRate, long changeTime) {die();}
+    public double getExecutionRate() { die(); return -1; }
+  }
 }

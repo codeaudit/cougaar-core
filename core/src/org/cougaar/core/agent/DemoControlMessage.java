@@ -29,32 +29,57 @@ package org.cougaar.core.agent;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.util.UID;
 
 /**
- * This a multicast message sent by the DemoTimeControlService to
- * set the execution time on all nodes.
+ * A message sent by the {@link DemoControl} component to
+ * set the execution time on a single node, or to acknowledge
+ * another node's DemoControlMessage.
  */
-public class AdvanceClockMessage extends Message
-{
-  private ExecutionTimer.Parameters theParameters;
+public final class DemoControlMessage extends Message {
 
-  /**
-   * Advance the society's clock to a fixed (stopped) time.
-   */
-  public AdvanceClockMessage(MessageAddress s, ExecutionTimer.Parameters parameters) {
-    super(s, MessageAddress.MULTICAST_SOCIETY);
-    theParameters = parameters;
+  private final UID uid;
+	private final ExecutionTimer.Parameters p;
+  private final boolean ack;
+
+  public DemoControlMessage(
+      MessageAddress source,
+      MessageAddress target,
+      UID uid,
+      ExecutionTimer.Parameters p,
+      boolean ack) {
+    super(source, target);
+    this.uid = uid;
+    this.p = p;
+    this.ack = ack;
+    String s =
+      (source == null ? "source" :
+       target == null ? "target" :
+       uid == null ? "uid" :
+       (!ack && p == null) ? "time-parameters (non-ack)" :
+       null);
+    if (s != null) {
+      throw new IllegalArgumentException("null "+s);
+    }
+  }
+
+  public UID getUID() {
+    return uid;
   }
 
   public ExecutionTimer.Parameters getParameters() {
-    return theParameters;
+    return p;
+  }
+
+  public boolean isAck() {
+    return ack;
   }
 
   public String toString() {
-    return "<AdvanceClockMessage "
-      + getOriginator()
-      + " "
-      + theParameters
-      + ">";
+    return 
+      "(DemoControlMessage "+(ack ? "ACK" : "SET")+
+      " source="+getOriginator()+" target="+getTarget()+
+      " uid="+getUID()+
+      " parameters="+getParameters()+")";
   }
 }

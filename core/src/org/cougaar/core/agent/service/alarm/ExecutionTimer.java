@@ -139,9 +139,9 @@ public class ExecutionTimer extends Timer {
   public static final long DEFAULT_CHANGE_DELAY = 10000L;
 
   public static class Parameters implements Comparable, java.io.Serializable {
-    double theRate;             // The advancement rate (Km)
-    long theOffset;             // The offset (Ko)
-    long theChangeTime;         // The changeover time
+    public final long theOffset;             // The offset (Ko)
+    public final double theRate;             // The advancement rate (Km)
+    public final long theChangeTime;         // The changeover time
 
     public Parameters(double aRate, long anOffset, long aChangeTime) {
       theRate = aRate;
@@ -181,9 +181,9 @@ public class ExecutionTimer extends Timer {
    * Description of a Parameters change (relative to some implicit Parameters)
    */
   public static class Change {
-    long theOffsetDelta;       // Step in the offset
-    double theRate;             // New rate is absolute
-    long theChangeTimeDelta; // Change time relative to some other Parameters
+    public final long theOffsetDelta;       // Step in the offset
+    public final double theRate;             // New rate is absolute
+    public final long theChangeTimeDelta; // Change time relative to some other Parameters
     public Change(double aRate, long anOffsetDelta, long aChangeTimeDelta) {
       theOffsetDelta = anOffsetDelta;
       theRate = aRate;
