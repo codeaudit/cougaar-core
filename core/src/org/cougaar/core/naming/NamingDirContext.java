@@ -1474,7 +1474,8 @@ public class NamingDirContext extends NamingContext implements DirContext {
     StringBuffer buf = new StringBuffer(len);
     char ch;
     for (int i = 0; i < len; i++) {
-      switch (ch=str.charAt(i)) {
+      ch=str.charAt(i);         // avoid jikes bug with assigniments in switch
+      switch (ch) {
       case '*': 
         buf.append("\\2a");
         break;
