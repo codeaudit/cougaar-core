@@ -11,37 +11,42 @@ package org.cougaar.core.cluster;
 
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.society.UID;
+import org.cougaar.core.society.UniqueObject;
+import org.cougaar.core.cluster.ClusterIdentifier;
 
 /** A UIDServiceProvider is a provider class for the UID services. **/
 public class UIDServiceProvider implements ServiceProvider {
-  private UIDServer _uidService = null;
-  private ClusterContext ccontext = null;
-  
-  public UIDServiceProvider(ClusterContext context) {
-    super();
-    ccontext = context;
+  private UIDServer theServer;
+  public UIDServiceProvider(UIDServer theServer) {
+    this.theServer = theServer;
   }
-  
+
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-    return getUIDService();
+    if (UIDService.class.isAssignableFrom(serviceClass)) {
+      return new UIDServiceImpl();
+    } else {
+      return null;
+    }
   }
 
   public void releaseService(ServiceBroker sb, Object requestor, Class serviceClass, Object service)  {
-    // more??
-    _uidService = null;
   }
 
-  //only want one per cluster  
-  private UIDServer getUIDService() {
-    synchronized (this) {
-      if (_uidService == null) {
-        _uidService = new UIDServer(ccontext);
-      }
-      return _uidService;
+  private final class UIDServiceImpl implements UIDService {
+    public ClusterIdentifier getClusterIdentifier() {
+      return theServer.getClusterIdentifier();
+    }
+    public UID nextUID() {
+      return theServer.nextUID();
+    }
+    public UID registerUniqueObject(UniqueObject o) {
+      return theServer.registerUniqueObject(o);
     }
   }
 
 }
+
 
 
   
