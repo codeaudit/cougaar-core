@@ -14,32 +14,69 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 import java.util.*;
+
+import org.cougaar.core.society.NameServer;
   
 /** actual RMI remote interface for RMI Nameserver objects.
  **/
 
 public interface NS extends Remote {
+  public static final String DirSeparator = "/";
+  
   void clear(String directory) throws RemoteException;
+  void clear(NameServer.Directory directory) throws RemoteException;
 
   boolean containsKey(String key) throws RemoteException;
+  boolean containsKey(NameServer.Directory directory, String key) throws RemoteException;
 
-  Collection entrySet(String directory) throws RemoteException;
   
+  NameServer.Directory createSubDirectory(NameServer.Directory directory, 
+                                          String subDirName) throws RemoteException;
+ 
+  Collection entrySet(String directory) throws RemoteException;
+  Collection entrySet(NameServer.Directory directory) throws RemoteException;
+  
+  String fullName(NameServer.Directory directory, String name) throws RemoteException;
+
   /** Look up an object in the NameService directory **/
   Object get(String name) throws RemoteException;
+  Object get(NameServer.Directory directory, String name) throws RemoteException;
+
+  Collection getAttributes(String name) throws RemoteException;
+  Collection getAttributes(NameServer.Directory directory, 
+                           String name) throws RemoteException;
+
+  NameServer.Directory getRoot() throws RemoteException;
 
   boolean isEmpty(String directory) throws RemoteException;
+  boolean isEmpty(NameServer.Directory directory) throws RemoteException;
 
   Collection keySet(String directory) throws RemoteException;
+  Collection keySet(NameServer.Directory directory) throws RemoteException;
 
   /** add an object to the directory **/
   Object put(String name, Object o) throws RemoteException;
+  Object put(String name, Object o, Collection attributes) throws RemoteException;
+  Object put(NameServer.Directory directory, String name, Object o) throws RemoteException;
+  Object put(NameServer.Directory directory, String name, Object o, Collection attributes) throws RemoteException;
+
+  void putAttributes(String name, Collection attributes) throws RemoteException;
+  void putAttributes(NameServer.Directory directory, String name, 
+                           Collection attributes) throws RemoteException;
 
   /** remove an object (and name) from the directory **/
   Object remove(String name) throws RemoteException;
+  Object remove(NameServer.Directory directory, String name) throws RemoteException;
 
   int size(String directory) throws RemoteException;
+  int size(NameServer.Directory directory) throws RemoteException;
 
   /** @return all objects in the specified directory **/
   Collection values(String directory) throws RemoteException;
+  Collection values(NameServer.Directory directory) throws RemoteException;
 }
+
+
+
+
+

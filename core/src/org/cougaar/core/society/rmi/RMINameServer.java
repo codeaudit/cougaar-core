@@ -19,6 +19,12 @@ import java.rmi.RMISecurityManager;
 import java.rmi.registry.*;
   
 import java.util.*;
+
+import javax.naming.Context;
+import javax.naming.spi.InitialContextFactory;
+
+import javax.naming.*;
+
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
@@ -39,7 +45,7 @@ import java.net.UnknownHostException;
  * @property org.cougaar.nameserver.local Circumvent RMI if possible for nameservice.
  **/
 
-public class RMINameServer implements NameServer {
+public class RMINameServer implements NameServer, InitialContextFactory {
   
   private static int verbosity = 0;
   private static boolean autoStart = true;
@@ -125,9 +131,12 @@ public class RMINameServer implements NameServer {
     return (NS) remote;
   }
 
+  public String getDirSeparator() {
+    return getNS().DirSeparator;
+  }
 
   public void clear() {
-    clear("/");
+    clear(getDirSeparator());
   }
   public void clear(Object directory) {
     try {
@@ -157,7 +166,7 @@ public class RMINameServer implements NameServer {
   }        
   public boolean containsValue(Object value) { return false; }
   public Set entrySet() {
-    return entrySet("/");
+    return entrySet(getDirSeparator());
   }
   public Set entrySet(Object directory) {
     try {
@@ -190,7 +199,7 @@ public class RMINameServer implements NameServer {
   }
 
   public boolean isEmpty() {
-    return isEmpty("/");
+    return isEmpty(getDirSeparator());
   }
   public boolean isEmpty(Object directory) {
     try {
@@ -206,8 +215,9 @@ public class RMINameServer implements NameServer {
     }
   }
   public Set keySet() {
-    return keySet("/");
+    return keySet(getDirSeparator());
   }
+
   public Set keySet(Object directory) {
     try {
       return new HashSet(getNS().keySet((String) directory));
@@ -265,7 +275,7 @@ public class RMINameServer implements NameServer {
   }
 
   public int size() {
-    return size("/");
+    return size(getDirSeparator());
   }
 
   public int size(Object name) {
@@ -286,7 +296,7 @@ public class RMINameServer implements NameServer {
   }
 
   public Collection values() {
-    return values("/");
+    return values(getDirSeparator());
   }
   public Collection values(Object directory) {
     if (verbosity>1) System.err.print("values '"+directory+"':");
@@ -302,6 +312,21 @@ public class RMINameServer implements NameServer {
         System.err.print("!");
       }
     }
+    return null;
+  }
+
+  public Context getInitialContext(Hashtable env) {
+    try {
+      return new RMIDirContext(getNS(), getNS().getRoot(), env);
+    } catch (RemoteException re) {
+      if (verbosity>1) System.err.println(" Failed:");
+      if (verbosity>0) {
+        re.printStackTrace();
+      } else {
+        System.err.print("!");
+      }
+    }
+
     return null;
   }
 
@@ -360,6 +385,7 @@ public class RMINameServer implements NameServer {
       try {
         r = LocateRegistry.createRegistry(port);
       } catch (RemoteException re) {
+        re.printStackTrace();
         if (! tryHard) return;  //  bail
         if (verbosity>0) {
           re.printStackTrace();
@@ -398,21 +424,63 @@ public class RMINameServer implements NameServer {
     
     try {
       NS ns = new NSImpl();
-      rns.put("fred", ns);
-      Object o = rns.get("fred");
-      System.err.println("got "+o);
+      rns.put(rns.getDirSeparator() + "fred", "fred");
+      Object o = rns.get(rns.getDirSeparator() + "fred");
+      System.err.println("got " + o + " " + o.getClass());
+
+      rns.put(ns.getRoot().getPath() + "wilma", "wilma");
+      o = rns.get(ns.getRoot().getPath() + "wilma");
+      System.err.println("got " + o + " " + o.getClass());
+
+
+      String pathSpec = ns.getRoot().getPath() + "barney" + rns.getDirSeparator() + "bam bam";
+      System.out.println(pathSpec);
+      rns.put(pathSpec, "bam bam");
+      o = rns.get(pathSpec);
+      System.err.println("got "+ o + " " + o.getClass());
+
       
       Enumeration stuff = new Enumerator(rns.values());
       if (stuff != null) {
         System.err.println("top level =");
         while (stuff.hasMoreElements()) {
-          System.err.println("\t"+stuff.nextElement());
+          Object next = stuff.nextElement();
+          System.err.println("\t" + next + " " + next.getClass());
         }
       } else {
         System.err.println("Nothing!");
       }
+
+      Context initialContext = rns.getInitialContext(new Hashtable());
+      NamingEnumeration bindings = initialContext.listBindings("");
+      while (bindings.hasMore()) {
+        Binding binding = (Binding) bindings.next();
+        System.out.println(binding.getName() + " " + binding.getObject());
+        if (binding.getObject() instanceof Context) {
+          NamingEnumeration subBindings = ((Context) binding.getObject()).listBindings("");
+          while (subBindings.hasMore()) {
+            binding = (Binding) subBindings.next();
+            System.out.println("\t" + binding.getName() + " " + binding.getObject());
+          }
+        }
+      }
+      
+      
+      
+      System.exit(0);
+      // test Context implementation
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
+
+
 }
+
+
+
+
+
+
+
+

@@ -15,11 +15,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 
-import org.cougaar.core.component.ContainerAPI;
-import org.cougaar.core.component.Container;
-import org.cougaar.core.component.ContainerSupport;
-import org.cougaar.core.component.ServiceBroker;
-
+import org.cougaar.core.component.*;
+import org.cougaar.core.naming.NamingService;
 
 
 /**
@@ -53,13 +50,14 @@ public class MessageTransportServerImpl
     protected SendQueue sendQ;
     protected ReceiveQueue recvQ;
 
+    private String id;
+
     private static ArrayList aspects;
     private static HashMap aspects_table;
     
     public static MessageTransportAspect findAspect(String classname) {
 	return (MessageTransportAspect) aspects_table.get(classname);
     }
-
 
     private void readAspects() {
 	String property = "org.cougaar.message.transport.aspects";
@@ -85,12 +83,22 @@ public class MessageTransportServerImpl
 	}
     }
 
+    private NameSupport createNameSupport(String id) {
+        ServiceBroker sb = getServiceBroker();
+        if (sb == null) throw new RuntimeException("No service broker");
+        return new NewNameSupport(id, (NamingService)
+                                  sb.getService(this, NamingService.class, null));
+    }
+
     public MessageTransportServerImpl(String id) {
+        this.id = id;
+    }
 
-	nameSupport = new NameSupport(id);
-	registry = MessageTransportRegistry.makeRegistry(id, this);
-
+    public void initialize() {
 	readAspects();
+
+        nameSupport = createNameSupport(id);
+	registry = MessageTransportRegistry.makeRegistry(id, this);
 
 	//Watcher Aspect is special because the MTServicer interace
 	//needs it.  So we have to make the Watcher Aspect all the
@@ -114,7 +122,7 @@ public class MessageTransportServerImpl
 	transportFactory.setRecvQ(recvQ);
 	// force transports to be created here
 	transportFactory.getTransports();
-
+        super.initialize();
     }
 
     protected void wireComponents(String id) {
@@ -166,7 +174,7 @@ public class MessageTransportServerImpl
 	private boolean validateRequestor(Object requestor, 
 					  Class serviceClass) 
 	{
-	    return requestor instanceof Communications &&
+	    return requestor instanceof Node &&
 		serviceClass == MessageTransportServer.class;
 	}
 
@@ -194,9 +202,9 @@ public class MessageTransportServerImpl
 	// This is an odd place to put this method.  It will stay here
 	// for now because Communications expects to find it here and
 	// we don't want to edit that class.
-	public NameServer getDefaultNameServer() {
-	    return nameSupport.getNameServer();
-	}
+//  	public NameServer getDefaultNameServer() {
+//  	    return nameSupport.getNameServer();
+//  	}
 
     }
 
@@ -222,17 +230,16 @@ public class MessageTransportServerImpl
 	return "messagetransportservice.messagetransport";
     }
 
-    protected ServiceBroker specifyChildServiceBroker() {
-	// TO BE DONE
-	return null;
-    }
-
-    public ServiceBroker getServiceBroker() {
-	// TO BE DONE
-	return null;
-    }
     public void requestStop() {}
 
+    public final void setBindingSite(BindingSite bs) {
+        super.setBindingSite(bs);
+        setChildServiceBroker(new PropagatingServiceBroker(bs));
+    }
+
+    protected Class specifyChildBindingSite() {
+        return null;
+    }
 
     public ContainerAPI getContainerProxy() {
 	return this;

@@ -19,6 +19,10 @@ import java.util.*;
  **/
 
 public interface NameServer extends Map {
+  
+  String getDirSeparator();
+
+
   /** not implemented **/
   void clear();
   /** key must be a String **/
@@ -52,3 +56,10 @@ public interface NameServer extends Map {
     String getPath();
   }
 }
+
+
+
+
+
+
+
