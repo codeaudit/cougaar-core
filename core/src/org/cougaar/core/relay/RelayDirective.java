@@ -29,10 +29,10 @@ import org.cougaar.core.util.UID;
  * and remove a Relay.Target and send responses back to the
  * Relay.Source.
  **/
-class RelayDirective extends DirectiveImpl {
-  protected UID uid;
+public abstract class RelayDirective extends DirectiveImpl {
+  protected final UID uid;
 
-  protected RelayDirective(UID uid) {
+  public RelayDirective(UID uid) {
     this.uid = uid;
   }
 
@@ -40,7 +40,7 @@ class RelayDirective extends DirectiveImpl {
     return uid;
   }
 
-  static class Add extends RelayDirective {
+  public static class Add extends RelayDirective {
     private Object content;
     private Relay.TargetFactory tf;
 
@@ -60,7 +60,7 @@ class RelayDirective extends DirectiveImpl {
     }
   }
 
-  static class Change extends RelayDirective {
+  public static class Change extends RelayDirective {
     private Object content;
     private Relay.TargetFactory tf;
 
@@ -80,7 +80,7 @@ class RelayDirective extends DirectiveImpl {
     }
   }
 
-  static class Remove extends RelayDirective {
+  public static class Remove extends RelayDirective {
     public Remove(UID uid) {
       super(uid);
     }
@@ -89,7 +89,7 @@ class RelayDirective extends DirectiveImpl {
     }
   }
 
-  static class Response extends RelayDirective {
+  public static class Response extends RelayDirective {
     private Object response;
     public Response(UID uid, Object response) {
       super(uid);
