@@ -1,3 +1,12 @@
+2002-05-16  Todd Wright  <twright@bbn.com>
+
+	* mts, topology, SimpleAgent, NodeAgent:
+        Fixed bug 1313, "Separate topology from MTS"
+        Moved topology related code from MTS to separate service 
+        providers.  Created new topology reader/writer services.
+        Modified agent and node-agent to use the new topology APIs.
+        Created new "/topology" servlet.
+
 2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/CPUTestPlugin.java:
