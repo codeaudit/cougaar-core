@@ -27,6 +27,8 @@ import org.cougaar.core.blackboard.*;
 
 import org.cougaar.core.agent.service.alarm.*;
 
+import org.cougaar.core.agent.service.containment.*;
+
 import org.cougaar.core.agent.service.democontrol.*;
 
 import org.cougaar.core.agent.service.domain.*;
@@ -159,6 +161,8 @@ public class ClusterImpl
   implements Cluster, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
   // services, in order of "load()"
+  private AgentContainmentServiceProvider myAgentContainmentServiceProvider;
+      
   private MessageTransportService messenger;
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
@@ -324,6 +328,13 @@ public class ClusterImpl
 
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getClusterIdentifier(), this);
+
+    // add the containment service
+    myAgentContainmentServiceProvider = 
+      new AgentContainmentServiceProvider(this);
+    sb.addService(
+        AgentContainmentService.class,
+        myAgentContainmentServiceProvider);
 
     // get the Messenger instance from ClusterManagement
     messenger = (MessageTransportService) 
@@ -617,6 +628,10 @@ public class ClusterImpl
 
     sb.releaseService(this, UIDService.class, myUIDService);
     sb.revokeService(UIDService.class, myUIDServiceProvider);
+
+    sb.revokeService(
+        AgentContainmentService.class, 
+        myAgentContainmentServiceProvider);
 
     // remove ourselves from the VM-local context
     ClusterContextTable.removeContext(getClusterIdentifier());
