@@ -381,6 +381,11 @@ public class Subscriber {
 
   final void checkTransactionOK(String methodname, Object arg) {
     if (this instanceof Blackboard) return;               // No check for Blackboard
+
+    if (arg instanceof Collection) {
+      logger.warning("Suspicious "+methodname+" of Collection "+arg);  // cbug 3674
+    }
+
     if (!isMyTransaction()) {
       if (arg != null) { methodname = methodname+"("+arg+")"; }
       logger.error(toString()+"."+methodname+" called outside of transaction", new Throwable());
