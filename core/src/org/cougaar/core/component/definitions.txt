@@ -1,0 +1,131 @@
+
+Let's figure out the names of things:
+
+Component: Everything is a component - plugins, agents, the
+blackboard, etc.  Example: MyAllocationPlugin
+
+Container: A Component which can hold other components.  A Component
+may be contained by only one container.  Example: PluginManager
+
+BindingSite: The Primary API that a Component uses to communicate with
+the outside world.  A BindingSite is literally a java interface class
+(e.g. "PluginBindingSite.class").  Any given Component will be
+initialized inside an implementation of its desired BindingSite -
+E.g. the only outside object that a Plugin starts out knowing about it
+it's PluginBindingSite.  BindingSites may offer additional services
+and/or an API for dynamically requesting additional services from
+other components.  Example: PluginBindingSite
+
+Binder: an implementation of a BindingSite chosen by the Container
+which will hold the Component, customized specifically for that
+Component.  A given Binder implementation may be trivial (just
+delegating to another object), complex (perform the service itself),
+or wrapping (conditionally delegating or modifying requests).  Binders
+are generally not very visible from the component side, as a component
+should not generally have any direct access to the Container which is
+actually holding it.  Binder classes are often private to their
+BinderFactory. 
+
+BinderFactory: a Component which "plugs into" a Container for the
+express purpose of generating Binders around child components of the
+Container.  BinderFactories are loaded like other components, but
+obviously must be highly trusted.  Example: TrustedPluginBinderFactory
+
+ServiceClass: An API (java interface class) for an abstract service
+which other Components might be interested in.  A BindingSite is a
+special case of a ServiceClass which defines the Child-Parent
+relationship at a particular place in the component hierarchy.
+Example: DatabaseService.class
+
+Service: An implementation of a ServiceClass.  It doesn't matter what
+form the implementation is - it could be a standalone implementation,
+it could delegate to another object (perhaps the ServiceProvider) or
+it could interface to some other external facility.  A Binder is a
+special case of a Service which implements a BindingSite for an
+enclosed Component.  Service classes are often private to their
+ServiceProvider.
+
+ServiceProvider: An object (usually another Component), which
+advertises that it can provide implementations of one or more
+ServiceClasses.  MyDatabaseServiceProvider
+
+Services: (maybe ServiceContext) essentially a fancy map of
+ServiceClass to ServiceProvider.  Usually there is one of these per
+Container for use by the contained Components.  Services is the name
+of the Interface.  Binders may use Services directly, but rarely will
+the actual implementation class of Services play any role in
+development of anything but the infrastructure.
+
+Advanced Notes:
+
+- BindingSites which offer links to other services have a variety of
+options available to handling such requests.  They can look up and
+pass back the service directly, veto the service request, change the
+request, or even interpose code around the returned service to provide
+low-level analysis of the component's behavior with respect to the
+service. 
+
+- Common Binder implementations will use introspection to
+automatically provide important services to child Components -
+e.g. Plugin Components can request a BlackboardService by simply
+having a "public void setBlackboardService(BlackboardService bs)"
+method. 
+
+- Implementation secret: BindingSite is just another service class
+with a slightly different use, and Binder is just another Service
+implementation which is usally more of a proxy than an implementation.
+
+Example for Component developers:
+
+class MyAllocationPlugin implements Component {
+  // initialization for BindingSite
+  public void setPluginBindingSite(PluginBindingSite pbs){
+    // pbs is a Binder which implements the BindingSite interface.
+    this.pbs=pbs;
+  }
+
+  // initialization for services
+  public void setBlackboardService(BlackboardService bs){
+    // bs is a Service which implements the ServiceClass
+    this.bs=bs;
+  }
+  
+  // runtime startup - setX(X) methods already called
+  public void initialize() {
+    // get another service
+    DatabaseService ds = (DatabaseService)pbs.getService(DatabaseService.class);
+  }
+
+  //...
+}
+
+interface PluginBindingSite extends BindingSite {
+  Service getService(Class serviceClass);
+}
+
+interface BlackboardService extends Service {
+  Subscription subscribe(UnaryPredicate p);
+}
+
+interface DatabaseService extends Service {
+  DBConnection getConnection(String url);
+  //...
+}
+
+Example for Binder developers:
+
+class MyPluginBinderFactory implements BinderFactory {
+  public void initialize() {
+    pluginManager.serviceAvailable(PluginBindingSite.class, this);
+  }
+  public Service getService(Class bindingSite, Object client) {
+    return new MyPluginBinder(pluginManager, client);
+  }
+}
+class MyPluginBinder implements PluginBinder {
+  public Service getService(Class serviceClass) {
+    // if ok, then:
+    return pluginManager.getService(client, serviceClass
+  }
+}
+

@@ -1,6 +1,6 @@
 /*
  * <copyright>
- * Copyright 1997-2001 Defense Advanced Research Projects
+ * Copyright 2000-2001 Defense Advanced Research Projects
  * Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
  * Raytheon Systems Company (RSC) Consortium).
  * This software to be used only in accordance with the
@@ -9,15 +9,12 @@
  */
 package org.cougaar.core.component;
 
-import java.beans.*;
-import java.beans.beancontext.*;
 import java.util.*;
-import java.net.URL;
 
-/**
- * A Component which can itself contain other Components.
+/** A plugin's view of its parent component (Container).
+ *
  **/
-public interface ContainingComponent 
-  extends Component, BeanContext
+public interface PluginBindingSite 
+  extends BindingSite
 {
 }

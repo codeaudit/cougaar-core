@@ -9,29 +9,50 @@
  */
 package org.cougaar.core.component;
 
-import java.beans.*;
-import java.beans.beancontext.*;
 import java.util.*;
 import java.net.URL;
+import java.io.Serializable;
 
-/** A description of a loadable component (i.e. a plugin).
+/** A description of a loadable component (i.e. a plugin, psp, etc).
+ * <p>
  * We may want several levels of description and protection, 
  * starting here and ending up at an uninitialized instance.  
  * This could be done either as a sequence of classes or
  * as a single class with instantiation state (e.g. Description,
  * Classloaded, Instantiated, Loaded (into a component), Active).
  * <p>
- * The word "Plugin" should be interpreted as "Runtime loaded
- * Component" which implements the Plugin interface.
- * <p>
  * The Description is interpreted and evaluated to varying degrees
  * as it is passed through the hierarchy until the insertion point
  * is found.  In particular, the description will be evaluated for
  * trust attributes at each level before instantiation or pass-through.
  * <p>
- * Perhaps this might be better named ComponentDescription.
  **/
-public interface PluginDescription {
+public class ComponentDescription implements Serializable {
+  private String insertionPoint;
+  private String classname;
+  private URL codebase;
+  private Object parameter;
+  private Object certificate;
+  private Object lease;
+  private Object policy;
+
+  public ComponentDescription(String insertionPoint,
+                              String classname,
+                              URL codebase,
+                              Object parameter,
+                              Object certificate,
+                              Object lease,
+                              Object policy) {
+    this.insertionPoint = insertionPoint;
+    this.classname = classname;
+    this.codebase = codebase;
+    this.parameter = parameter;
+    this.certificate = certificate;
+    this.lease = lease;
+    this.policy = policy;
+  }
+
+
   /** The point (ContainerComponent) at which the Plugin 
    * should be inserted.  This is the name of a class which 
    * could be loaded in the core (e.g. not in the plugin's
@@ -42,7 +63,7 @@ public interface PluginDescription {
    * hierarchy - it may be interpreted any number of times along
    * the way to the final insertion point.
    */
-  String getInsertionPoint();
+  public String getInsertionPoint() { return insertionPoint; }
 
   /** the name of the class to instantiate, relative to the
    * codebase url.  The class will not be loaded or instantiated
@@ -50,13 +71,13 @@ public interface PluginDescription {
    * had the opportunity to verify the plugin's identity and 
    * authorization.
    **/
-  String getClassname();
+  public String getClassname() { return classname; }
 
   /** Where the code for classname should be loaded from.
    * Will be evaulated for trust before any classes are loaded
    * from this location.
    **/
-  URL getCodebase();
+  public URL getCodebase() { return codebase; }
 
   /** a parameter supplied to the constructor of classname,
    * often some sort of structured object (xml document, etc).
@@ -70,21 +91,21 @@ public interface PluginDescription {
    * receiving agents more flexibility in determining trustability
    * of the component being sent.
    **/
-  Object getParameter();
+  public Object getParameter() { return parameter; }
 
   /**
    * Assurance that the Plugin is trustworth enough to instantiate.
    * The type is specified as Object until we decide what really
    * should be here.
    **/
-  Object getCertificate();
+  public Object getCertificate() { return certificate; }
 
   /**
    * Lease information - how long should the plugin live in the agent?
    * We need some input on what this should look like.
    * It is possible that this could be merged with Policy.
    **/
-  Object getLeaseRequested();
+  public Object getLeaseRequested() { return lease; }
 
   /**
    * High-level Policy information.  Allows plugin policy/techspec 
@@ -92,5 +113,13 @@ public interface PluginDescription {
    * actually instantiated.  Perhaps this is overkill, and instance-level
    * policy is sufficient.
    **/
-  Object getPolicy();
+  public Object getPolicy() { return policy; }
+
+  // utilities
+  public String toString() {
+    return "<ComponenentDescription "+classname+
+      ((parameter==null)?"":(" "+parameter))+
+      ">";
+  }
+
 }
