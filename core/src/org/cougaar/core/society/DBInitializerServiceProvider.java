@@ -45,21 +45,7 @@ import org.cougaar.domain.planning.plugin.AssetDataReader;
 import org.cougaar.domain.planning.plugin.AssetDataDBReader;
 
 public class DBInitializerServiceProvider implements ServiceProvider {
-  public static final String DATABASE = "org.cougaar.configuration.database";
   public static final String QUERY_FILE = "DBInitializer.q";
-  public static final String NODE_COMPONENT_TYPE = "NODE";
-  public static final String AGENT_COMPONENT_TYPE = "AGENT";
-  public static final String QUERY_EXPERIMENT = "queryExperiment";
-  public static final String QUERY_COMPONENTS = "queryComponents";
-  public static final String QUERY_COMPONENT_PARAMS = "queryComponentParams";
-  public static final String QUERY_AGENT_PROTOTYPE = "queryAgentPrototype";
-  public static final String QUERY_AGENT_PG_NAMES = "queryAgentPGNames";
-  public static final String QUERY_LIB_PROPERTIES = "queryLibProperties";
-  public static final String QUERY_AGENT_PROPERTIES = "queryAgentProperties";
-  public static final String QUERY_AGENT_RELATION = "queryAgentRelation";
-  public static final String AGENT_INSERTION_POINT = "Node.AgentManager.Agent";
-  public static final String PLUGIN_INSERTION_POINT =
-    "Node.AgentManager.Agent.PluginManager.Plugin";
 
   private DBProperties dbp;
   private String database;
@@ -72,7 +58,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
    * Constructor creates a DBProperties object from the
    * DBInitializer.q query control file and sets up variables for referencing the database.
    * @param experimentId the identifier of the experiment. Used in the
-   * QUERY_EXPERIMENT to extract the societyId, laydownId, and
+   * "queryExperiment" to extract the societyId, laydownId, and
    * oplanIds.
    * @param node the name of this node used to extract the information
    * pertinent to this node.
@@ -80,12 +66,11 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   public DBInitializerServiceProvider(String trialId)
     throws SQLException, IOException
   {
-    dbp = DBProperties.readQueryFile(DATABASE, QUERY_FILE);
-    //    dbp.setDebug(true);
+    dbp = DBProperties.readQueryFile(QUERY_FILE);
     database = dbp.getProperty("database");
     username = dbp.getProperty("username");
     password = dbp.getProperty("password");
-    substitutions.put(":trial_id", trialId);
+    substitutions.put(":trial_id:", trialId);
 //      log = new PrintWriter(new FileWriter("DBInitializerServiceProviderQuery.log"));
     try {
       String dbtype = dbp.getDBType();
@@ -102,7 +87,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       Connection conn = DBConnectionPool.getConnection(database, username, password);
       try {
         Statement stmt = conn.createStatement();
-        String query = dbp.getQuery(QUERY_EXPERIMENT, substitutions);
+        String query = dbp.getQuery("queryExperiment", substitutions);
         ResultSet rs = executeQuery(stmt, query);
         boolean first = true;
         StringBuffer assemblyMatch = new StringBuffer();
@@ -118,7 +103,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
           assemblyMatch.append("'");
         }
         assemblyMatch.append(")");
-        substitutions.put(":assemblyMatch", assemblyMatch.toString());
+        substitutions.put(":assemblyMatch:", assemblyMatch.toString());
         rs.close();
         stmt.close();
       } finally {
@@ -177,26 +162,29 @@ public class DBInitializerServiceProvider implements ServiceProvider {
 
   private class InitializerServiceImpl implements InitializerService {
     public ComponentDescription[]
-      getComponentDescriptions(String parentName, String insertionPoint)
+      getComponentDescriptions(String parentName, String containerInsertionPoint)
       throws InitializerServiceException
     {
       if (parentName == null) throw new IllegalArgumentException("parentName cannot be null");
-      substitutions.put(":parent_name", parentName);
-      substitutions.put(":insertion_point", insertionPoint);
+      // append a dot to containerInsertionPoint if not already there
+      if (!containerInsertionPoint.endsWith(".")) containerInsertionPoint += ".";
+      substitutions.put(":parent_name:", parentName);
+      substitutions.put(":container_insertion_point:", containerInsertionPoint);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_COMPONENTS, substitutions);
+          String query = dbp.getQuery("queryComponents",  substitutions);
           ResultSet rs = executeQuery(stmt, query);
           List componentDescriptions = new ArrayList();
           while (rs.next()) {
             String componentName = getNonNullString(rs, 1, query);
             String componentClass = getNonNullString(rs, 2, query);
             String componentId = getNonNullString(rs, 3, query);
+            String insertionPoint = getNonNullString(rs, 4, query);
             Statement stmt2 = conn.createStatement();
-            substitutions.put(":component_id", componentId);
-            String query2 = dbp.getQuery(QUERY_COMPONENT_PARAMS, substitutions);
+            substitutions.put(":component_id:", componentId);
+            String query2 = dbp.getQuery("queryComponentParams",  substitutions);
             ResultSet rs2 = executeQuery(stmt2, query2);
             Vector vParams = new Vector();
             while (rs2.next()) {
@@ -253,12 +241,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String getAgentPrototype(String agentName)
       throws InitializerServiceException
     {
-      substitutions.put(":agent_name", agentName);
+      substitutions.put(":agent_name:", agentName);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_AGENT_PROTOTYPE, substitutions);
+          String query = dbp.getQuery("queryAgentPrototype",  substitutions);
           ResultSet rs = executeQuery(stmt, query);
           if (rs.next()) {
             String result = getNonNullString(rs, 1, query);
@@ -278,12 +266,12 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     public String[] getAgentPropertyGroupNames(String agentName)
       throws InitializerServiceException
     {
-      substitutions.put(":agent_name", agentName);
+      substitutions.put(":agent_name:", agentName);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_AGENT_PG_NAMES, substitutions);
+          String query = dbp.getQuery("queryAgentPGNames",  substitutions);
           ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
@@ -312,11 +300,11 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     {
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
-        substitutions.put(":agent_name", agentName);
-        substitutions.put(":pg_name", pgName);
+        substitutions.put(":agent_name:", agentName);
+        substitutions.put(":pg_name:", pgName);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_LIB_PROPERTIES, substitutions);
+          String query = dbp.getQuery("queryLibProperties",  substitutions);
           ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
@@ -325,8 +313,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
             boolean collection = !rs.getString(3).equals("SINGLE");
             Object attributeId = rs.getObject(4);
             Statement stmt2 = conn.createStatement();
-            substitutions.put(":pg_attribute_id", attributeId);
-            String query2 = dbp.getQuery(QUERY_AGENT_PROPERTIES, substitutions);
+            substitutions.put(":pg_attribute_id:", attributeId);
+            String query2 = dbp.getQuery("queryAgentProperties",  substitutions);
             ResultSet rs2 = executeQuery(stmt2, query2);
             Object value;
             if (collection) {
@@ -371,10 +359,10 @@ public class DBInitializerServiceProvider implements ServiceProvider {
     {
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
-        substitutions.put(":agent_name", agentName);
+        substitutions.put(":agent_name:", agentName);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(QUERY_AGENT_RELATION, substitutions);
+          String query = dbp.getQuery("queryAgentRelation",  substitutions);
           ResultSet rs = executeQuery(stmt, query);
           List result = new ArrayList();
           while (rs.next()) {
@@ -420,55 +408,33 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       return new AssetDataDBReader(InitializerServiceImpl.this);
     }
 
+
     /**
      * Translate the value of a "query" attribute type. The "key"
      * should be one or more query substitutions. Each substitution is
      * an equals separated key and value. Multiple substitutions are
-     * separated by semi-colon. Backslash can quote a character
+     * separated by semi-colon. Backslash can quote a character. The
+     * query may be in a different database. If so, then the dbp
+     * should contain properties named by concatenating the query
+     * name with .database, .username, .password describing the
+     * database to connect to.
+     * @param type is the "data type" of the attribute value and
+     * names a query that should be done to obtain the actual
+     * value. 
      * @return a two-element array of attribute type and value.
      **/
     public Object[] translateAttributeValue(String type, String key)
       throws InitializerServiceException
     {
-//        StringBuffer buf = new StringBuffer();
-//        boolean inKey = true;
-//        String key = null;
-//        String val = null;
-//        try {
-//          for (int i = 0, n = s.length(); i <= n; i++) {
-//            char c = i == n ? ';' : s.charAt(i);
-//            switch (c) {
-//            case '\\':
-//              buf.append(s.charAt(++i)); // Quote next character
-//              break;
-//            case '=':
-//              key = buf.substring(0).trim();
-//              buf.setLength(0);
-//              if (key.length() == 0)
-//                throw new InitializerServiceException("Bad key in " + s);
-//              break;
-//            case ';':
-//              val = buf.substring(0).trim();
-//              buf.setLength(0);
-//              if (key == null) break;
-//              substitutions.put(key, val);
-//              break;
-//            default:
-//              buf.append(c);
-//              break;
-//            }
-//          }
-//        } catch (InitializerServiceException ise) {
-//          throw ise;
-//        } catch (Throwable t) {
-//          throw new InitializerServiceException("Parse failure: " + s);
-//        }
-      substitutions.put(":key", key);
+      substitutions.put(":key:", key);
       try {
-        Connection conn = DBConnectionPool.getConnection(database, username, password);
+        String db = dbp.getProperty(type + ".database", database);
+        String un = dbp.getProperty(type + ".username", username);
+        String pw = dbp.getProperty(type + ".password", password);
+        Connection conn = DBConnectionPool.getConnection(db, un, pw);
         try {
           Statement stmt = conn.createStatement();
-          String query = dbp.getQuery(type, substitutions);
+          String query = dbp.getQueryForDatabase(type, substitutions, type + ".database");
           ResultSet rs = executeQuery(stmt, query);
           Object[] result = new Object[2];
           if (rs.next()) {

@@ -43,15 +43,19 @@ public class FileInitializerServiceProvider implements ServiceProvider {
   }
 
   private class InitializerServiceImpl implements InitializerService {
+    /**
+     * Get the descriptions of components with the named parent having
+     * an insertion point below the given container insertion point.
+     **/
     public ComponentDescription[]
-      getComponentDescriptions(String parentName, String insertionPoint)
+      getComponentDescriptions(String parentName, String containerInsertionPoint)
       throws InitializerServiceException
     {
       try {
         String filename = parentName + ".ini";
         InputStream in = ConfigFinder.getInstance().open(filename);
         try {
-          return INIParser.parse(in, insertionPoint);
+          return INIParser.parse(in, containerInsertionPoint);
         } finally {
           in.close();
         }
@@ -85,4 +89,3 @@ public class FileInitializerServiceProvider implements ServiceProvider {
     }
   }
 }
-

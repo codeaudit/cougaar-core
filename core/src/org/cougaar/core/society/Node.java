@@ -595,7 +595,7 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     InitializerService is = (InitializerService) sb.getService(
         this, InitializerService.class, null);
     ComponentDescription[] agentDescs =
-      is.getComponentDescriptions(name, "Node.AgentManager.Agent");
+      is.getComponentDescriptions(name, "Node.AgentManager");
     sb.releaseService(this, InitializerService.class, is);
 
     // Set up MTS and QOS service provides.
