@@ -184,7 +184,12 @@ public abstract class ComponentPlugin
         public void trigger() {
           watcher.clearSignal(); 
           if (didPrecycle) {
-            cycle();
+            try {
+              awakened = watcher.clearSignal();
+              cycle();
+            } finally {
+              awakened = false;
+            }
           } else {
             didPrecycle = true;
             precycle();
@@ -313,6 +318,16 @@ public abstract class ComponentPlugin
     return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }
   
+  /** storage for wasAwakened - only valid during cycle().
+   **/
+  private boolean awakened = false;
+
+  /** true IFF were we awakened explicitly (i.e. we were asked to run
+   * even if no subscription activity has happened).
+   * The value is valid only within the scope of the cycle() method.
+   */
+  protected final boolean wasAwakened() { return awakened; }
+
   // for BlackboardClient use
   public synchronized String getBlackboardClientName() {
     if (blackboardClientName == null) {
