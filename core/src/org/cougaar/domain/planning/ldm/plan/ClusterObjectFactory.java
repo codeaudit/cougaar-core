@@ -42,8 +42,8 @@ import java.util.List;
  * contain set-methods (since the object has already been built).
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: ClusterObjectFactory.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
- * @version $Id: ClusterObjectFactory.java,v 1.2 2001-01-04 19:14:21 ngivler Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.3 2001-01-24 12:50:40 tomlinso Exp $
+ * @version $Id: ClusterObjectFactory.java,v 1.3 2001-01-24 12:50:40 tomlinso Exp $
  *
  * @see org.cougaar.component.ComponentServesPlugIn
  */
@@ -73,6 +73,7 @@ public interface ClusterObjectFactory {
   NewLocationScheduleElement newLocationScheduleElement();
   NewMPTask newMPTask();
   NewNotification newNotification();
+  NewDeletion newDeletion();
   NewAssetVerification newAssetVerification();
   NewAssetVerification newAssetVerification(Asset asset, Asset assignee, Schedule schedule);
   Policy newPolicy(String policyType);

@@ -249,6 +249,14 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return nn;
   }
 
+  public NewDeletion newDeletion() {
+    NewDeletion nd = new DeletionImpl();
+    //set default source and destination to this cluster
+    nd.setSource(cid);
+    nd.setDestination(cid);
+    return nd;
+  }
+
   public NewAssetVerification newAssetVerification() {
     return new AssetVerificationImpl();
   }
