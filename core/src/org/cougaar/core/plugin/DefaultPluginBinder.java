@@ -69,7 +69,7 @@ public class DefaultPluginBinder
   }
 
   public String toString() {
-    return (super.toString())+"/"+getPlugin();
+    return (super.toString())+"/"+getComponent();
   }
 
   /** useful shorthand for binder functions **/
