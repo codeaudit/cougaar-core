@@ -126,7 +126,7 @@ public class SystemProperties {
 	}
       }
     }
-    props.list(System.out);
+    //props.list(System.out);
     return props;
   } 
 }
