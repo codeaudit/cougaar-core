@@ -1,5 +1,15 @@
 2001-11-08  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* org/cougaar/core/naming/NamingDirContext.java:
+	Remove obsolete code containing references to obsolete
+	RMINameServer.
+
+	* org/cougaar/core/naming/NSLS.java:
+	Use new NamingServiceFactory instead of RMINameServer.
+
+	* org/cougaar/core/society/Communications.java:
+	Remove obsolete reference to RMINameServer.
+
 	* org/cougaar/core/naming/NamingServiceProvider.java:
 	Use the new NamingServiceFactory instead of RMINameServer.
 
