@@ -821,6 +821,9 @@ public abstract class PlugInAdapter
     public int getState() { 
       return UNINITIALIZED; 
     }
+    public String toString() {
+      return getClusterIdentifier()+"/"+(PlugInAdapter.this);
+    }
   }
 
   /** up to the class to implement what it needs **/
@@ -898,7 +901,7 @@ public abstract class PlugInAdapter
       waker = getSubscriber().registerInterest();
     }
     public void start() {
-      myThread = new Thread(this, "Plugin/"+getClusterIdentifier()+"/"+this);
+      myThread = new Thread(this, "Plugin/"+getClusterIdentifier()+"/"+(PlugInAdapter.this));
       myThread.setPriority(priority);
       myThread.start();
     }

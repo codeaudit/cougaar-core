@@ -144,6 +144,9 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     String nodeName = (String) myArgs.get(NAME_KEY) ;
     java.util.Properties props = System.getProperties();
 
+    // keep track of the node name we are using
+    props.put("org.cougaar.core.society.Node.name", nodeName);
+
     String config = (String) myArgs.get(CONFIG_KEY);
     if (config != null) {
       props.put("org.cougaar.config", config);

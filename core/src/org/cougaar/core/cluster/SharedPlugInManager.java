@@ -11,8 +11,6 @@
 
 package org.cougaar.core.cluster;
 
-import java.util.*;
-
 import org.cougaar.core.plugin.PlugInServesCluster;
 import org.cougaar.core.plugin.ScheduleablePlugIn;
 import org.cougaar.core.cluster.SubscriptionWatcher;
@@ -20,10 +18,25 @@ import org.cougaar.core.cluster.SubscriptionWatcher;
 import org.cougaar.core.cluster.ClusterIdentifier;
 import org.cougaar.util.GenericStateModel;
 
+import java.util.*;
+import java.io.*;
+
 class SharedPlugInManager {
   
+  static boolean keepingStatistics;
+  static boolean isWatching;
+  static {
+    keepingStatistics = System.getProperty("org.cougaar.core.cluster.SharedPlugInManager.statistics","false").equals("true");
+    isWatching = System.getProperty("org.cougaar.core.cluster.SharedPlugInManager.watching","true").equals("true");
+  }
+
   protected ClusterIdentifier cid;
-  public SharedPlugInManager(ClusterIdentifier cid) {this.cid = cid;}
+
+  public SharedPlugInManager(ClusterIdentifier cid) {
+    this.cid = cid;
+    if (isWatching)
+      getWatcher().register(this);
+  }
 
   /** map of plugin->watcher.  
    * Also used as the lock protecting itself, pq, and pqBack
@@ -44,9 +57,7 @@ class SharedPlugInManager {
    * started.
    **/
   public void registerPlugIn(ScheduleablePlugIn plugin) {
-    // make sure that the scheduler thread is started.  (double check)
-    if (schedulerThread == null)
-      assureStarted();
+    assureStarted();
 
     SubscriptionWatcher watcher = new ThinWatcher(plugin);
     synchronized (plugins) {    // make sure not to mod while traversing
@@ -91,15 +102,18 @@ class SharedPlugInManager {
     }
   }
     
-  /** the thread that the scheduler is running in (if running yet) **/
-  private Thread schedulerThread = null;
+  /** delegate health checks to the scheduler **/
+  void checkHealth() {
+    scheduler.checkHealth();
+  }
+
+  /** the scheduler instance (if started) **/
+  private ThinScheduler scheduler = null;
 
   synchronized private void assureStarted() {
-    if (schedulerThread == null) {
-      schedulerThread = new Thread(new ThinScheduler(), "PlugInScheduler/"+cid);
-      // don't bother to sync on activitySignal, since 
-      // we're protected by the sync on assureStarted().
-      schedulerThread.start();
+    if (scheduler == null) {
+      scheduler = new ThinScheduler();
+      (new Thread(scheduler, "PlugInScheduler/"+cid)).start();
     }
   }
 
@@ -131,15 +145,14 @@ class SharedPlugInManager {
             if (watcher != null) {
               if ( watcher.needsAttention()) {
                 ScheduleablePlugIn plugin = watcher.getPlugIn();
-                //if (plugin.getState() == GenericStateModel.ACTIVE) {}
-                // the waitforsignal should not block, since test() is true.
                 try {
-                  plugin.externalCycle(watcher.waitForSignal());
+                  runPlugin(plugin, watcher);
                 } catch (Throwable die) {
                   System.err.println("\nPlugin "+plugin+"("+cid+") raised "+die);
                   die.printStackTrace();
                   // should probably remove it from the cycle...
                 }
+
                 //move to pqBack
                 j--;
                 pqBack.set(j, watcher);
@@ -176,6 +189,155 @@ class SharedPlugInManager {
         }
       }
     }
+
+    private ScheduleablePlugIn currentPlugin = null;
+    private long t0 = 0; 
+
+    /** warn if a plugin takes longer than this number of millis in an execute cycle **/
+    private static final long warningTime = 10*1000L;
+
+    private void runPlugin(ScheduleablePlugIn plugin, ThinWatcher watcher) {
+      //if (plugin.getState() == GenericStateModel.ACTIVE) {}
+
+      synchronized (this) {
+        currentPlugin = plugin;
+        t0 = System.currentTimeMillis();
+      }
+
+      // the waitforsignal should not block, since test() is true.
+      try {
+        plugin.externalCycle(watcher.waitForSignal());
+
+        if (keepingStatistics)
+          accumulate(plugin, System.currentTimeMillis()-t0);
+      } finally {               // make sure not to mis-record a thrown plugin
+        synchronized (this) {
+          currentPlugin = null;
+        }
+      }
+    }
+
+    void checkHealth() {
+      synchronized (this) {
+        if (currentPlugin != null) {
+          long delta = System.currentTimeMillis() - t0;
+          if (delta >= warningTime) {
+            System.err.println("Warning "+cid+" "+currentPlugin+" has been running for "+(delta/1000.0)+" seconds");
+          }
+        }
+      }
+    }
   }
+
+  // statistics keeper
+
+  private HashMap statistics = new HashMap(29);
+
+  private synchronized void accumulate(ScheduleablePlugIn plugin, long elapsed) {
+    InvocationStatistics is = (InvocationStatistics) statistics.get(plugin);
+    if (is == null) {
+      is = new InvocationStatistics(plugin);
+      statistics.put(plugin,is);
+    }
+    is.accumulate(elapsed);
+  }
+
+  static class InvocationStatistics {
+    private int count = 0;
+    private long millis = 0L;
+
+    ScheduleablePlugIn plugin;
+    InvocationStatistics(ScheduleablePlugIn p) {
+      plugin = p;
+    }
+
+    synchronized void accumulate(long elapsed) {
+      count++;
+      millis+=elapsed;
+    }
+    public synchronized String toString() {
+      double mean = ((millis/count)/1000.0);
+      return plugin.toString()+"\t"+count+"\t"+mean;
+    }
+  }
+
+  synchronized void reportStatistics(PrintStream os) {
+    // the cid should be part of the stats toString
+    //os.println(cid.toString());
+    for (Iterator i = statistics.values().iterator(); i.hasNext(); ) {
+      InvocationStatistics is = (InvocationStatistics) i.next();
+      os.println(is.toString());
+    }
+  }
+
+
+  // watcher
+  
+  private static Watcher watcher = null;
+
+  private static synchronized Watcher getWatcher() {
+    if (watcher == null) {
+      watcher = new Watcher();
+      new Thread(watcher, "SharedPlugInManager Watcher").start();
+    }
+    return watcher;
+  }
+
+  private static class Watcher implements Runnable {
+    private long reportTime = 0;
+
+    public void run() {
+      while (true) {
+        try {
+          Thread.sleep(10*1000L); // sleep for a 10 seconds at a time
+          long now = System.currentTimeMillis();
+
+          check();
+
+          // no more often then every two minutes
+          if (keepingStatistics && (now-reportTime) >= 120*1000L) {
+            reportTime = now;
+            report();
+          }
+        } catch (Throwable t) {
+          t.printStackTrace();
+        }
+      }
+    }
+
+    /** List<SharedPlugInManager> **/
+    private ArrayList pims = new ArrayList();
+    
+    synchronized void register(SharedPlugInManager pim) {
+      pims.add(pim);
+    }
+
+    /** dump reports on plugin usage **/
+    private synchronized void report() {
+        
+      String nodeName = System.getProperty("org.cougaar.core.society.Node.name", "unknown");
+      try {
+        File f = new File(nodeName+".statistics");
+        FileOutputStream fos = new FileOutputStream(f);
+        PrintStream ps = new PrintStream(fos);
+        for (Iterator i = pims.iterator(); i.hasNext(); ) {
+          SharedPlugInManager pim = (SharedPlugInManager) i.next();
+          pim.reportStatistics(ps);
+        }
+        ps.close();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    /** check the health of each plugin manager, reporting problems **/
+    private synchronized void check() {
+      for (Iterator i = pims.iterator(); i.hasNext(); ) {
+        SharedPlugInManager pim = (SharedPlugInManager) i.next();
+        pim.checkHealth();
+      }
+    }
+  }
+
 }
 

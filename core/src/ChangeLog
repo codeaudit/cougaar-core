@@ -1,5 +1,25 @@
 2001-02-26  Michael Thome  <mthome@bbn.com>
 
+	* SharedPlugInManager
+	I just checked in some new facilities useful for debugging and
+	performance analysis.  The basic idea is to watch how simple
+	plugins are scheduled: we can watch how long "Shared Thread"
+	plugins take to execute and keep statistics.  We also watch to see
+	if plugins block or otherwise fail to return from execute(). 
+	
+	org.cougaar.core.cluster.SharedPlugInManager.statistics=false Set
+	it to true to get periodic dumps of plugin statistics to the file
+	<NODENAME>.statistics in the current directory.  Requires that the
+	watcher be enabled in order to actually get the output, but
+	perhaps some metrics display should get access to the info. 
+
+	org.cougaar.core.cluster.SharedPlugInManager.watching=true Set it
+	to false to disable the watcher (default is enabled). When enabled,
+	will complain whever it sees a plugin run or block for more than
+	15 seconds.  It will also cause the above statistics file(s) to be
+	(re)generated approximately every two minutes.  The watcher is one
+	thread per vm, so it isn't too expensive.
+
 	* DBConnectionPool
 	Retry getConnection and createStatement on known possibly
 	continuable exceptions.  Also reap idle connections after
