@@ -1,0 +1,36 @@
+# postprocess.pkg
+# Because the service apis moved out of their orig packages and their names
+# are prefixes of the impls - we must move the affected impls back to their
+# orig package.
+# This is a list of package moves to be applied in order to port
+# COUGAAR core software from the cougaar 8.x to cougaar 97.x pacakge
+# layout.  This file is used as an input file to the repackage and
+# the mvsources scripts.
+#
+# empty lines and anything after a '#' are ignored.
+#
+# format:
+# old.package.prefix	new.package.prefix
+# The package prefixes are simple java package strings separated
+# by whitespace.
+# Order is important.  The first matching pattern always wins.
+#
+# A number of package prefix abbreviations are accepted:
+#  (abbrev  =  actual)
+occ.	=	org.cougaar.core.
+
+# move blackboard service impls back
+occ.service.BlackboardServiceProvider		occ.blackboard.BlackboardServiceProvider
+occ.service.BlackboardMetricsServiceImpl	occ.blackboard.BlackboardMetricsServiceImpl
+
+# move naming service impls back
+occ.service.LoggingServiceAdapter	occ.logging.LoggingServiceAdapter
+occ.service.LoggingServiceProvider	occ.logging.LoggingServiceProvider
+
+# move naming service impls back
+occ.service.NamingServiceProvider	occ.naming.NamingServiceProvider
+
+#move mts service impls back
+occ.service.MessageTransportServiceProvider	occ.mts.MessageTransportServiceProvider
+occ.service.MessageTransportServiceProxy	occ.mts.MessageTransportServiceProxy
+occ.service.MessageWatcherServiceImpl		occ.mts.MessageWatcherServiceImpl

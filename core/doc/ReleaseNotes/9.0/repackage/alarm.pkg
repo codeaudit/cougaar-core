@@ -1,0 +1,26 @@
+# fixpackage.pkg
+# This is a list of package moves to be applied in order to port
+# COUGAAR core software from the cougaar 8.x to cougaar 9.x pacakge
+# layout.  This file is used as an input file to the repackage and
+# the mvsources scripts.
+#
+# empty lines and anything after a '#' are ignored.
+#
+# format:
+# old.package.prefix	new.package.prefix
+# The package prefixes are simple java package strings separated
+# by whitespace.
+# Order is important.  The first matching pattern always wins.
+#
+# A number of package prefix abbreviations are accepted:
+#  (abbrev  =  actual)
+occ.	=	org.cougaar.core.
+
+#in occ.agent.service.alarm
+occ.cluster;	occ.agent.service.alarm;
+occ.society;	occ.agent.service.alarm;
+occ.agent;	occ.agent.service.alarm;
+
+
+
+

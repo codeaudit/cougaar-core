@@ -1,0 +1,164 @@
+# cougaar9module.pkg
+# This is a list of package moves to be applied in order to port
+# COUGAAR core software from the cougaar 8.x to cougaar 97.x pacakge
+# layout.  This file is used as an input file to the repackage and
+# the mvsources scripts.
+#
+# empty lines and anything after a '#' are ignored.
+#
+# format:
+# old.package.prefix	new.package.prefix
+# The package prefixes are simple java package strings separated
+# by whitespace.
+# Order is important.  The first matching pattern always wins.
+#
+# A number of package prefix abbreviations are accepted:
+#  (abbrev  =  actual)
+oc.	=	org.cougaar.
+occ.	=	org.cougaar.core.
+ocp.	=	org.cougaar.planning.
+
+
+#misc services
+occ.blackboard.BlackboardService		occ.service.BlackboardService
+occ.blackboard.BlackboardMetricsService		occ.service.BlackboardMetricsService
+occ.logging.LoggingService		occ.service.LoggingService
+occ.naming.NamingService		occ.service.NamingService
+occ.mts.MessageStatisticsService	occ.service.MessageStatisticsService
+occ.mts.MessageTransportService		occ.service.MessageTransportService
+occ.mts.MessageWatcherService		occ.service.MessageWatcherService
+
+
+#
+# org.cougaar.core.cluster
+#
+
+# occ.cluster.persist
+occ.cluster.persist	occ.persist
+
+# Alarm service
+occ.cluster.AlarmService		occ.service.AlarmService
+occ.cluster.Alarm			occ.agent.service.alarm.Alarm
+occ.cluster.PeriodicAlarm		occ.agent.service.alarm.PeriodicAlarm
+occ.cluster.Timer			occ.agent.service.alarm.Timer
+occ.cluster.ExecutionTimer		occ.agent.service.alarm.ExecutionTimer
+occ.cluster.RealTimer			occ.agent.service.alarm.RealTimer
+
+# DemoControl service
+occ.cluster.DemoControlService		occ.service.DemoControlService
+
+#Scheduler Service
+occ.cluster.SchedulerService		occ.service.SchedulerService
+
+# SharedThreadingService
+occ.cluster.SharedThreadingService		occ.service.SharedThreadingService
+
+#UID Service
+occ.cluster.UIDServer		occ.service.UIDServer	#(for backwards compat)
+occ.cluster.UIDService		occ.service.UIDService
+
+# cluster related code in occ.cluster  (less of this than blackboard code)
+occ.cluster.AdvanceClockMessage			occ.agent.AdvanceClockMessage
+occ.cluster.Cluster				occ.agent.Cluster
+occ.cluster.MetricsSnapshot			occ.agent.MetricsSnapshot	# (only for backward compat!)
+occ.cluster.NoResponseException			occ.agent.NoResponseException
+
+# move all blackboard related stuff to occ.blackboard
+occ.cluster.ActiveSubscriptionObject		occ.blackboard.ActiveSubscriptionObject
+occ.cluster.BlackboardServesLogicProvider	occ.blackboard.BlackboardServesLogicProvider
+occ.cluster.ChangeReport			occ.blackboard.ChangeReport
+occ.cluster.ClaimableImplBeanInfo		occ.blackboard.ClaimableImplBeanInfo
+occ.cluster.Claimable				occ.blackboard.Claimable
+occ.cluster.CollectionSubscription		occ.blackboard.CollectionSubscription
+occ.cluster.DelayedLPAction			occ.blackboard.DelayedLPAction
+occ.cluster.EventSubscription			occ.blackboard.EventSubscription
+occ.cluster.HysteresisSubscription		occ.blackboard.HysteresisSubscription
+occ.cluster.IncrementalSubscription		occ.blackboard.IncrementalSubscription
+occ.cluster.LogPlan				occ.blackboard.LogPlan
+occ.cluster.PersistenceEnvelope			occ.blackboard.PersistenceEnvelope
+occ.cluster.PersistenceSubscriber		occ.blackboard.PersistenceSubscriber
+occ.cluster.PlanElementSet			occ.blackboard.PlanElementSet
+occ.cluster.PrivilegedClaimant			occ.blackboard.PrivilegedClaimant
+occ.cluster.PublishException			occ.blackboard.PublishException
+occ.cluster.PublishHistory			occ.blackboard.PublishHistory
+occ.cluster.PublishStack			occ.blackboard.PublishStack
+occ.cluster.PublishableAdapter			occ.blackboard.PublishableAdapter
+occ.cluster.Publishable				occ.blackboard.Publishable
+occ.cluster.QuerySubscription			occ.blackboard.QuerySubscription
+occ.cluster.SortedSubscription			occ.blackboard.SortedSubscription
+occ.cluster.SubscriberException			occ.blackboard.SubscriberException
+occ.cluster.Subscriber				occ.blackboard.Subscriber
+occ.cluster.SubscriptionException		occ.blackboard.SubscriptionException
+occ.cluster.SubscriptionWatcher			occ.blackboard.SubscriptionWatcher
+occ.cluster.Subscription			occ.blackboard.Subscription
+occ.cluster.SupportsDelayedLPActions		occ.blackboard.SupportsDelayedLPActions
+occ.cluster.Transaction				occ.blackboard.Transaction
+occ.cluster.AckDirectiveMessage			occ.blackboard.AckDirectiveMessage
+occ.cluster.AckSet				occ.blackboard.AckSet
+occ.cluster.DirectiveMessage			occ.blackboard.DirectiveMessage
+
+#
+# org.cougaar.core.society
+#
+
+# society special cases
+
+# move to agent
+occ.society.MoveAgentMessage			occ.agent.MoveAgentMessage
+
+# move to mts
+occ.society.MessageAddress		occ.mts.MessageAddress
+occ.society.MessageEnvelope		occ.mts.MessageEnvelope
+occ.society.Message			occ.mts.Message
+occ.society.MulticastMessageAddress	occ.mts.MulticastMessageAddress
+
+# move to occ.util
+occ.society.UID			occ.util.UID
+occ.society.UniqueObject	occ.util.UniqueObject
+occ.society.OwnedUniqueObject	occ.util.OwnedUniqueObject
+occ.society.SimpleUniqueObject	occ.util.SimpleUniqueObject
+
+#  move node stuff to occ.node
+occ.society.Bootstrapper			occ.node.Bootstrapper
+occ.society.ClusterManagementServesCluster	occ.node.ClusterManagementServesCluster
+occ.society.ClusterXMLParser			occ.node.ClusterXMLParser
+occ.society.Communications			occ.node.Communications
+occ.society.ComponentMessage			occ.node.ComponentMessage
+occ.society.DBInitializerServiceProvider	occ.node.DBInitializerServiceProvider
+occ.society.INIParser				occ.node.INIParser
+occ.society.InitializerServiceException		occ.node.InitializerServiceException
+occ.society.InitializerService			occ.node.InitializerService
+occ.society.KeyRing				occ.node.KeyRing
+occ.society.LogWriter				occ.node.LogWriter
+occ.society.MessageStatistics			occ.node.MessageStatistics  #old backwards compat
+occ.society.NodeIdentificationService		occ.node.NodeIdentificationService
+occ.society.NodeIdentifier			occ.node.NodeIdentifier
+occ.society.NodeMessage				occ.node.NodeMessage
+occ.society.NodeMetricsService			occ.service.NodeMetricsService
+occ.society.NodeXMLParser			occ.node.NodeXMLParser
+occ.society.SecureMessage			occ.node.SecureMessage
+
+#
+# org.cougaar.domain.planning.ldm
+#
+
+# PrototypeRegistryService
+ocp.ldm.PrototypeRegistryService		occ.service.PrototypeRegistryService
+ocp.ldm.DefaultPrototypeProviderPlugIn		occ.agent.service.registry.DefaultPrototypeProviderPlugIn
+
+# Domain Service
+ocp.ldm.DomainService		occ.service.DomainService
+
+# Domain base stuff
+ocp.ldm.DomainManager		occ.domain.DomainManager
+ocp.ldm.Domain			occ.domain.Domain
+ocp.ldm.Registry		occ.domain.Registry
+ocp.ldm.FactoryException	occ.domain.FactoryException
+ocp.ldm.Factory			occ.domain.Factory
+ocp.ldm.RootDomain		occ.domain.RootDomain
+ocp.ldm.RootFactory		occ.domain.RootFactory
+ocp.ldm.LDMServesClient		occ.domain.LDMServesClient
+ocp.ldm.LDMServesPlugIn		occ.domain.LDMServesPlugIn
+
+# move to ocp.plugin for parallelism with glm structures
+ocp.ldm.DeletionPlugIn		ocp.plugin.DeletionPlugIn
