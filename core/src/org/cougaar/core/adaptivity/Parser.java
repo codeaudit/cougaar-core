@@ -24,17 +24,182 @@ import java.util.*;
 import java.io.StreamTokenizer;
 import java.io.IOException;
 import java.io.StreamTokenizer;
-import java.io.FileReader;
-import java.io.StringReader;
+import java.io.Reader;
+import org.cougaar.core.service.LoggingService;
 
+/**
+ * Parser for plays to be stored in a Playbook. The grammar is mostly
+ * straightforward with the exception of ranges and range lists.
+ * <h3>Basic Syntax</h3>
+ * <p>Each play consists of an if clause (predicate) and one or more
+ * constraint phrases. These are all separated by colons and
+ * terminated with a semi-colon. For example:</p>
+ * <pre>&lt;if clause&gt;:&lt;constraint&gt;:...&lt;constraint&gt;;</pre><p>
+ * The &lt;if clause&gt; is an expression involving {@link Condition}s and
+ * constants that must evaluate to true or false. A constraint
+ * consists of an {@link OperatingMode} following by a
+ * ConstraintOperator and a range list and signifies that the
+ * OperatingMode will be constrained so as to satisfy the relation
+ * specified by the operator to the range list. For example:</p>
+ * <pre>
+ * FooPlugin.MODE &lt; 5;
+ * FooPlugin.MODE in {1 to 7};
+ * FooPlugin.SPEED = "FAST";</pre>
+ * <h3>Numeric Constants and Range Lists</h3><p>
+ * Numeric constants are a degenerate form of a range list with a
+ * single range in which the minimum and maximum are identically equal
+ * to the written value. In general the context makes it clear which
+ * should be used, but for example:</p><pre>
+ * Foo &lt; {11 to 20, 25 thru 30, 1 to 3};</pre><p>
+ * is true if Foo is less than 1 (the minimum of the ranges). This
+ * characteristic is an artifact of the parser and probably
+ * insignificant to the playbook writer.</p><p>
+ * As implied above, a range list consists of one or more ranges
+ * enclosed in braces. The comma between the ranges is optional (white
+ * space is sufficient). The braces are also optional if the list has
+ * a single range. Each range consists of either one number or string
+ * or two numbers or strings separated by either "to" or "thru". "To"
+ * signifies a range that does not include the end point whereas
+ * "thru" signifies a range that does include the end point. If the
+ * number is floating point, only the exact value given by the end
+ * point is excluded. The next smaller value that can be represented
+ * is always included. This characteristic can be used to insure there
+ * are no gaps in the coverage of a series of predicates. For
+ * example:</p><pre>
+ * x in {1 to 3, 5 to 10}:...;
+ * x in {3 to 5}:...;
+ * x &gt;= 10:...;</pre><p>insures that exactly one of the predicates
+ * is true for any
+ * value of x from 1 to infinity. There is no value of x that can fall
+ * into a crack in the vicinity of 3 or 5 or 10 nor is there any value of x
+ * in those same regions that can cause two predicates to
+ * fire.</p><p>Numbers are parsed as doubles and coerced to other
+ * numeric typs as needed. This means that long values cannot be
+ * written with their entire range. (Doubles can exactly represent
+ * only 56 bits of precision.)</p>
+ * <h3>Strings</h3><p>Strings are used as constants (range limits),
+ * Condition names and OperatingMode names. The interpretation depends
+ * on context (see below). Strings do not need to be quoted unless
+ * they contain characters (such as spaces) that have syntactic
+ * meaning to the parser. In particular, strings need not be quoted
+ * when they contain . (period) and [] (brackets). All other
+ * punctuation and special characters should be quoted.</p><p>
+ * String constants can be used in range lists and arithmetic
+ * expressions using the + operator. Strings cannot be used in other
+ * arithmetic expressions. String comparisons are usually
+ * confined to equality and inequality tests, but the other operators
+ * have a defined meaning (alphabetic comparison using the default
+ * collation sequence). String ranges are rare, but if used, have a
+ * slightly different meaning when "to" ranges are specified because
+ * the highest value included in a "to" range would be infinitely
+ * long. For example, the last string in the range "bar" to "foo"
+ * would be "fon\uffff\uffff\uffff\uffff...". It is hard to conceive of
+ * a use for a "to" range involving strings, so the infinite string is
+ * truncated after the first "\uffff".</p>
+ * Strings that name Conditions <em>can</em> be used in arithmetic
+ * expressions if the named Condition has a numeric value. If the
+ * named Condition has a String value, then only the + operator is
+ * allowed.
+ * <h3>If Clause Operators</h3>
+ * <h4>Arithmetic Operators (+, -, *, /)</h4><p>
+ * These have their standard meanings. The parser treats these with
+ * standard precedence so parentheses are needed in the usual places.
+ * When in doubt, parenthesize. There is no modulus operator (%).</p>
+ * <h4>Relational Operators (&lt; &lt;= == != &gt;= &gt;)</h4><p>
+ * Relational operators compare two quantities and yield a boolean
+ * (true or false) result. Relational operators are <em>not</em>
+ * commutative; the interpretation of the left hand operand is
+ * different from the right hand operand. Strings in the left hand
+ * operand always name Conditions in if clauses or OperatingModes in
+ * constraints. Strings in the right hand operand are always values
+ * (or range limits). So, for example, in the play:</p><pre>
+ * FOO == HIGH: HIGH = FOO;</pre><p>The first FOO is the name of a
+ * Condition, the second FOO is a value to be stored in the
+ * OperatingMode named HIGH when the Condition named FOO has a value
+ * equal to HIGH. For clarity, it is a good practice to quote strings
+ * used as values and not quote strings that denote Conditions and
+ * Operating Modes.
+</p><p>Comparison of strings uses the default
+ * collation sequence for characters.</p><h4>
+ * Range Operators (in and not in)</h4><p>
+ * Range operators test for inclusion in (or exclusion from) a range
+ * list. The meaning is straightforward:</p><pre>
+ * x in {1 thru 7, 10}</pre><p>is true iff
+ * x has a value between 1 and 7 inclusive or has the value 10. A
+ * range list is just a shorthand for a combination of less than and
+ * greater than terms, but is easier to write and process.</p>
+ * <h4>Boolean Constants</h4><p>The boolean constants true and false
+ * may be used in an if clause. This is useful when developing a
+ * playbook before the details are worked out or to deactivate certain
+ * plays.</p>
+ * <h3>Constraints</h3><p>
+ * Constraints specify an allowed list of ranges to which an
+ * <code>OperatingMode</code> can be set. The constraints from all the
+ * plays (including those manufactured from policies) are combined
+ * (intersected) to form the final constraint. Often this final
+ * constraint is a single value, but when it has multiple values, the
+ * minimum of the first range in the list is used. The constraint can
+ * be viewed either as an expression that must be true or as an
+ * assignment of a range list to the <code>OperatingMode</code>. For
+ * example:</p><pre>
+ * Opmode1 = 3
+ * Opmode1 in {3 thru 3}
+ * Opmode1 == 3</pre><p>
+ * are all equivalent. The first assigns the single valued range {3
+ * thru 3} to Opmode1. The second requires that Opmode1 have the value
+ * 3 so that is in the range 3 thru 3. The third requires that Opmode1
+ * be exactly equal to 3.</p><p>All forms of constraints are rewritten
+ * as an assignment of a range list to the <code>OperatingMode</code>.
+ * For example:</p><pre>
+ * Opmode < 3</pre><p>
+ * is rewritten as:</p><pre>
+ * Opmode = {&lt;negative infinity&gt; to 3}</pre><p>
+ * The process of intersecting the constraints from several plays may
+ * not be clear. For example, if the if clauses of two places yielded
+ * these two constraints:</p><pre>
+ * opmode in {56, 128, 256, 1024}
+ * opmode >= 128</pre><p>The combined constraint would be:</p><pre>
+ * opmode in {128, 256, 1024}</pre><p>Another example:</p><pre>
+ * opmode in 1 thru 10
+ * opmode in 5 to 20</pre><p>The combined result would be:
+ * opmode in 5 thru 10</pre><p>For a value to be included in the
+ * combined range list, it must be included by the range lists of all
+ * the selected plays. It is a playbook-writing error to allow plays
+ * to be simultaneously active for which the combined range list is
+ * empty. For example:</p><pre>
+ * opmode in {56, 128, 256}
+ * opmode < 56</pre><p>would be an error. Such errors are not detected
+ * until they occur. When they do occur, they are logged and the later
+ * constraint is ignored.</p><h3>OperatingModeConditions</h3><p>
+ * OperatingModeConditions are intermediate variables the act as
+ * OperatingModes in some plays and Conditions in later plays. This
+ * allows certain plays such as those that result from policies
+ * received from other agents to set the value of an agent-wide
+ * OperatingMode that is then translated into component-specific
+ * OperatingModes by using the agent-wide mode as a Condition in other
+ * plays. For example, assume the following plays resulting from
+ * inter-agent operating mode policies:</p><pre>
+ * Threatcon > 3: DefensePosture = 2;
+ * Threatcon <= 3: DefensePosture = 1;</pre><p>
+ * and the following plays from the local playbook:</p><pre>
+ * DefensePosture < 2: FooPlugin.keyLength = 56: AdaptivePlugin.fidelity = high;
+ * DefensePosture >= 2: FooPlugin.keylength = 128: AdaptivePlugin.fidelity = medium;</pre><p>
+ * The allows the outside agent to be unaware of the details of the
+ * makeup of the agent by expressing its policy in terms of a
+ * "DefensePosture" concept. However, the local playbook is developed with an
+ * awareness of the agent makeup so it can contain plays to set the
+ * operating modes of its plugins based on this
+ * DefensePosture value.</p>
+ **/
 public class Parser {
   StreamTokenizer st;
   boolean pushedBack = false;
   ConstrainingClause cc;
-  private static final boolean debug = false;
+  private LoggingService logger;
 
-  public Parser(StreamTokenizer s) {
-    st = s;
+  public Parser(Reader s, LoggingService logger) {
+    this.logger = logger;
+    st = new StreamTokenizer(s);
     st.wordChars('_', '_');
     st.wordChars('[', '[');
     st.wordChars(']', ']');
@@ -55,11 +220,10 @@ public class Parser {
     List constraintPhrases = new ArrayList();
     while (true) {
       int token = nextToken();
-      if (token == StreamTokenizer.TT_EOF) break;
       if (token == ';') {
         break;
       }
-      if (token != ':') throw unexpectedTokenException(1);
+      if (token != ':') throw unexpectedTokenException("Missing semicolon");
       constraintPhrases.add(parseConstraintPhrase());
     }
 
@@ -76,8 +240,20 @@ public class Parser {
 
   public Play[] parsePlays() throws IOException {
     List plays = new ArrayList();
+    readPlays:
     while (true) {
-      plays.add(parsePlay());
+      try {
+        plays.add(parsePlay());
+      } catch (IllegalArgumentException e) {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Parse exception", e);
+        } else {
+          logger.error(e.getMessage());
+        }
+        while (st.ttype != ';') {
+          if (st.ttype == StreamTokenizer.TT_EOF) break readPlays;
+        }
+      }
       if (nextToken() == StreamTokenizer.TT_EOF) break;
       pushBack();
     }
@@ -114,15 +290,15 @@ public class Parser {
    * @param lp left left precedence of operator calling this method.
    */
   private void parse(int lp) throws IOException {
-    if (debug) {
+    if (logger.isDebugEnabled()) {
       String caller = new Throwable().getStackTrace()[1].toString();
-      System.out.println("Parse from " + caller + " " + lp);
+      logger.debug("Parse from " + caller + " " + lp);
     }
     try {
       int token = nextToken();
       switch (token) {
       default:
-        throw unexpectedTokenException(2);
+        throw unexpectedTokenException("Unexpected token");
       case '!':
         parse(BooleanOperator.NOT.getLP());
         cc.push(BooleanOperator.NOT);
@@ -134,7 +310,7 @@ public class Parser {
       case '(':
         parse(Operator.MAXP);
         token = nextToken();
-        if (token != ')') throw unexpectedTokenException(3);
+        if (token != ')') throw unexpectedTokenException("Missing close paren");
         break;
       case StreamTokenizer.TT_WORD:
         if (st.sval.equalsIgnoreCase(BooleanOperator.TRUE.toString())) {
@@ -196,12 +372,12 @@ public class Parser {
         }
       }
     } finally {
-      if (debug) System.out.println("Exit parse " + lp);
+      if (logger.isDebugEnabled()) logger.debug("Exit parse " + lp);
     }
   }
 
   private ConstraintPhrase parseConstraintPhrase() throws IOException {
-    if (nextToken() != StreamTokenizer.TT_WORD) throw unexpectedTokenException(5);
+    if (nextToken() != StreamTokenizer.TT_WORD) throw unexpectedTokenException("Expected OperatingMode name");
     ConstraintPhrase cp = new ConstraintPhrase(st.sval);
     parseConstraintOpValue(cp);
     return cp;
@@ -231,8 +407,6 @@ public class Parser {
         case '!':
           cov.setOperator(ConstraintOperator.NOTEQUAL);
           break;
-        default:
-          throw unexpectedTokenException(6);
         }
         token1 = nextToken();
       } else {
@@ -247,7 +421,7 @@ public class Parser {
           cov.setOperator(ConstraintOperator.GREATERTHAN);
           break;
         default:
-          throw unexpectedTokenException(7);
+          throw unexpectedTokenException("Malformed ConstraintOperator");
         }
         token1 = token2;
       }
@@ -266,7 +440,7 @@ public class Parser {
         }
       }
     default: 
-      throw unexpectedTokenException(6);
+      throw unexpectedTokenException("Missing ConstraintOperator");
     }
     if (token1 == StreamTokenizer.TT_WORD) {
       cov.setAllowedValues(new OMCRangeList(parseRange(st.sval)));
@@ -275,7 +449,7 @@ public class Parser {
     } else if (token1 == '{') {
       cov.setAllowedValues(parseSet());
     } else {
-      throw unexpectedTokenException(7);
+      throw unexpectedTokenException("Expected range list");
     }
     return cov;
   }
@@ -291,16 +465,16 @@ public class Parser {
         token = nextToken();
         if (token == StreamTokenizer.TT_WORD) {
           if (elementClass == Double.class) {
-            throw new IllegalArgumentException("Values in range must have homogeneous types");
+            throw unexpectedTokenException("Number expected");
           }
           last = st.sval;
         } else if (token == StreamTokenizer.TT_NUMBER) {
           if (elementClass == String.class) {
-            throw new IllegalArgumentException("Values in range must have homogeneous types");
+            throw unexpectedTokenException("String expected");
           }
           last = new Double(st.nval);
         } else {
-          throw unexpectedTokenException(10);
+          throw unexpectedTokenException("Expected " + (elementClass == Double.class ? "number" : "string"));
         }
         if (isTo) {
           return new OMCToRange(first, last);
@@ -321,14 +495,14 @@ public class Parser {
       int token1 = nextToken();
       if (token1 == StreamTokenizer.TT_WORD) {
         if (elementClass == Double.class) {
-          throw new IllegalArgumentException("Values in set must have homogeneous types");
+          throw unexpectedTokenException("Number expected");
         } else if (elementClass == null) {
           elementClass = String.class;
         }
         values.add(parseRange(st.sval));
       } else if (token1 == StreamTokenizer.TT_NUMBER) {
         if (elementClass == String.class) {
-          throw new IllegalArgumentException("Values in set must have homogeneous types");
+          throw unexpectedTokenException("String expected");
         } else if (elementClass == null) {
           elementClass = Double.class;
         }
@@ -338,7 +512,7 @@ public class Parser {
       } else if (token1 == '}') {
         break;
       } else {
-        throw unexpectedTokenException(11);
+        throw unexpectedTokenException("Missing close brace");
       }
     }
     return new OMCRangeList((OMCRange[]) values.toArray(new OMCRange[values.size()]));
@@ -350,15 +524,15 @@ public class Parser {
 
   private int nextToken() throws IOException {
     int token;
-    String caller;
-    if (debug) caller = new Throwable().getStackTrace()[1].toString();
+    String caller = null;
+    if (logger.isDebugEnabled()) caller = new Throwable().getStackTrace()[1].toString();
     if (pushedBack) {
       pushedBack = false;
       token = st.ttype;
-      if (debug) System.out.println("nextToken from " + caller + ": repeat " + tokenAsString());
+      if (logger.isDebugEnabled()) logger.debug("nextToken from " + caller + ": repeat " + tokenAsString());
     } else {
       token = st.nextToken();
-      if (debug) System.out.println("nextToken from " + caller + ": token " + tokenAsString());
+      if (logger.isDebugEnabled()) logger.debug("nextToken from " + caller + ": token " + tokenAsString());
     }
     return token;
   }
@@ -376,43 +550,15 @@ public class Parser {
     }
   }
 
-  private IllegalArgumentException unexpectedTokenException(int n) {
+  private IllegalArgumentException unexpectedTokenException(String mm) {
+    String line = "line " + st.lineno();
     String mesg = tokenAsString();
     IllegalArgumentException result =
-      new IllegalArgumentException("Unexpected token(" + n + ") " + mesg);
+      new IllegalArgumentException(mm + " on line " + line + " found " + mesg);
     StackTraceElement[] trace = result.getStackTrace();
     StackTraceElement[] callerTrace = new StackTraceElement[trace.length - 1];
     System.arraycopy(trace, 1, callerTrace, 0, callerTrace.length);
     result.setStackTrace(callerTrace);
     return result;
-  }
-  
-  public static void mai1n (String args []) {
-    try {
-      for (int i = 0; i < args.length; i++) {
-        StringReader sbis = new StringReader(args[i]);
-        StreamTokenizer st = new StreamTokenizer(sbis);
-        Parser p = new Parser(st);
-        ConstrainingClause cc = p.parseConstrainingClause();
-        for (Iterator iter = cc.iterator(); iter.hasNext();) {
-          System.out.println(iter.next());
-        }
-      }
-    } catch (IOException io) {}
-  }
-  
-  public static void main (String args []) {
-    try {
-      for (int i = 0; i < args.length; i++) {
-        FileReader sbis = new FileReader(args[i]);
-        StreamTokenizer st = new StreamTokenizer(sbis);
-        Parser p = new Parser(st);
-        Play[] plays = p.parsePlays();
-        System.out.println(plays.length + " plays");
-        for (int j = 0; j < plays.length; j++) {
-          System.out.println(plays[j]);
-        }
-      }
-    } catch (IOException io) {}
   }
 }
