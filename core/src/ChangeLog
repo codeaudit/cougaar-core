@@ -1,3 +1,10 @@
+2001-11-02  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/DBProperties.java (Repository): Remove dbspec
+	arg when reading a query file. The default dbspec is obtained from
+	the query file itself. Add methods for interpreting queries
+	relative to an arbitrary database.
+
 2001-10-31  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/component/ComponentFactory.java (Repository):
