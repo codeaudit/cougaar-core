@@ -21,8 +21,6 @@
 
 package org.cougaar.core.agent.service.registry;
 
-import org.cougaar.core.domain.*;
-
 import org.cougaar.core.service.*;
 
 import org.cougaar.core.agent.*;
@@ -36,8 +34,11 @@ import org.cougaar.planning.ldm.asset.PropertyGroup;
 import java.util.*;
 
 public class PrototypeRegistry implements PrototypeRegistryService {
-
-  private final Registry myRegistry = new Registry();
+  /** THEINITIALREGISTRYSIZE specifies the initial size of the HashMap theRegistry,
+   *   which contains the Strings of RegistryTerms
+   **/
+  private final static int THE_INITIAL_REGISTRY_SIZE = 89;
+  private final HashMap myRegistry = new HashMap(THE_INITIAL_REGISTRY_SIZE);
 
   public PrototypeRegistry() {}
 
@@ -62,11 +63,11 @@ public class PrototypeRegistry implements PrototypeRegistryService {
   // use the registry for registering prototypes for now.
   // later, just replace with a hash table.
   public void cachePrototype(String aTypeName, Asset aPrototype) {
-    myRegistry.createRegistryTerm(aTypeName, aPrototype);
+    myRegistry.put(aTypeName.intern(), aPrototype);
   }
 
   public boolean isPrototypeCached(String aTypeName) {
-    return (myRegistry.findDomainName(aTypeName) != null);
+    return (myRegistry.get(aTypeName) != null);
   }    
 
   public Asset getPrototype(String aTypeName) {
@@ -79,7 +80,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
     // the catch is in case some bozo registered a non-asset under this
     // name.
     try {
-      found = (Asset) myRegistry.findDomainName(aTypeName);
+      found = (Asset) myRegistry.get(aTypeName);
       if (found != null) return found;
     } catch (ClassCastException cce) {}
     
@@ -171,11 +172,14 @@ public class PrototypeRegistry implements PrototypeRegistryService {
     }
     return null;
   }    
+  
  /** Expose the Registry to consumers. 
    **/
+  /*
   public Registry getRegistry() {
     return myRegistry;
   }
+  */
 
   //metrics service hooks
   public int getPrototypeProviderCount() {
@@ -185,7 +189,7 @@ public class PrototypeRegistry implements PrototypeRegistryService {
     return propertyProviders.size();
   }
   public int getCachedPrototypeCount() {
-    return getRegistry().size();
+    return myRegistry.size();
   }
 
 }

@@ -27,7 +27,6 @@ import org.cougaar.core.blackboard.*;
 
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.domain.Registry;
 import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
