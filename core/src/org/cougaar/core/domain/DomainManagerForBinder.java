@@ -22,7 +22,6 @@
 package org.cougaar.core.domain;
 
 import java.util.Collection;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.ContainerAPI;
 
 /** This is the interface presented to a DomainBinder from the DomainManager.
@@ -30,7 +29,6 @@ import org.cougaar.core.component.ContainerAPI;
 public interface DomainManagerForBinder
   extends ContainerAPI
 {
-  ClusterServesLogicProvider getClusterServesLogicProvider();
   Collection getXPlans();
   XPlan getXPlanForDomain(String domainName);
   XPlan getXPlanForDomain(Class domainClass);

@@ -31,8 +31,6 @@ import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 import org.cougaar.util.StringUtility;
 
 /**

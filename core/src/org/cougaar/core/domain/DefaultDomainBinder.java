@@ -22,7 +22,6 @@
 package org.cougaar.core.domain;
 
 import java.util.Collection;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.BindingSite;
@@ -60,10 +59,6 @@ public class DefaultDomainBinder
 
     public final void requestStop() {
       DefaultDomainBinder.this.requestStop();
-    }
-
-    public final ClusterServesLogicProvider getClusterServesLogicProvider() {
-      return getDomainManager().getClusterServesLogicProvider();
     }
 
     public final Collection getXPlans() {

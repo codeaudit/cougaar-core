@@ -113,16 +113,20 @@ public class NodeAgent
   /**
    * Set the required NodeAgent parameter.
    *
-   * @param o A list containing two elements, where the first element is
-   *    an unproxied reference to the top-level ServiceBroker so that 
-   *    we can add global services, and the second element is
-   *    an unproxied reference to the AgentManager so that we can 
-   *    add agents.
+   * @param o A list containing three elements, where the
+   *    first element is the node address, and the
+   *    second element is an unproxied reference to the top-level 
+   *      ServiceBroker so that we can add global services, and the 
+   *    third element is an unproxied reference to the AgentManager
+   *      so that we can add agents.
    */
   public void setParameter(Object o) {
     List l = (List) o;
-    agentServiceBroker = (ServiceBroker) l.get(0);
-    agentManager = (AgentManager) l.get(1);
+    nodeIdentifier = (MessageAddress) l.get(0);
+    nodeName = nodeIdentifier.getAddress();
+    super.setParameter(nodeIdentifier);
+    agentServiceBroker = (ServiceBroker) l.get(1);
+    agentManager = (AgentManager) l.get(2);
   }
 
 
@@ -194,13 +198,6 @@ public class NodeAgent
   protected void loadInternalPriorityComponents() {
     ServiceBroker rootsb = agentServiceBroker;
 
-    
-//     {
-// 	ThreadServiceProvider tsp = new ThreadServiceProvider(rootsb, "Node " + nodeName);
-// 	tsp.provideServices(rootsb);
-//     }
-
-
     ArrayList threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
@@ -215,8 +212,6 @@ public class NodeAgent
           null,  //lease
           null); //policy
     add(threadServiceDesc);
-
-
 
     try {
       rootsb.addService(NamingService.class,
@@ -391,24 +386,6 @@ public class NodeAgent
 
   public void load() 
   {
-    ServiceBroker rootsb = agentServiceBroker;
-
-    try {
-      NodeIdentificationService nis = (NodeIdentificationService) 
-        rootsb.getService(this,NodeIdentificationService.class,null);
-      if (nis != null) {
-        nodeIdentifier = nis.getMessageAddress();
-        nodeName = nodeIdentifier.toString();
-      } else {
-        throw new RuntimeException("No node name specified");
-      }
-    } catch (RuntimeException e) {
-      throw new Error("Couldn't figure out Node name ", e);
-    }
-
-    // set the MessageAddress to be a cid for now (sigh)
-    setMessageAddress( MessageAddress.getMessageAddress(nodeName) );
-
     super.load();
 
     // Wait until the end to deal with outstanding queued messages
@@ -578,12 +555,6 @@ public class NodeAgent
       }
       protected BindingSite getBinderProxy() {
         return this;
-      }
-      public MessageAddress getAgentIdentifier() {
-        return (getAgent()).getAgentIdentifier();
-      }
-      public Agent getAgent() {
-        return NodeAgent.this;
       }
     }
 

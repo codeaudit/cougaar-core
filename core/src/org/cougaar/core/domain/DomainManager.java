@@ -39,9 +39,7 @@ import java.util.Properties;
 import java.util.Set;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -63,6 +61,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
@@ -96,6 +95,8 @@ public class DomainManager
   private Blackboard blackboard = null;
   private ServiceBroker serviceBroker;
 
+  private MessageAddress self;
+  private AgentIdentificationService agentIdService;
   private LoggingService loggingService;
   private DomainServiceProvider domainSP;
   private DomainForBlackboardServiceProvider domainForBlackboardSP;
@@ -106,16 +107,15 @@ public class DomainManager
     }
   }
 
-  private AgentChildBindingSite bindingSite = null;
-  
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof AgentChildBindingSite) {
-      bindingSite = (AgentChildBindingSite) bs;
-      setChildServiceBroker(new DomainManagerServiceBroker(bs));
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bs);
-    }
+    serviceBroker = bs.getServiceBroker();
+    setChildServiceBroker(new DomainManagerServiceBroker(bs));
+  }
+
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    this.self = ais.getMessageAddress();
   }
 
   private NodeControlService nodeControlService = null;
@@ -132,8 +132,6 @@ public class DomainManager
 
   public void load() {
     super.load();
-
-    serviceBroker = bindingSite.getServiceBroker();
 
     domainSP = new DomainServiceProvider(new DomainServiceImpl(this));
     serviceBroker.addService(DomainService.class, domainSP);
@@ -152,9 +150,7 @@ public class DomainManager
 
     // display the agent id
     if (loggingService.isDebugEnabled()) {
-      MessageAddress cid = getBindingSite().getAgentIdentifier();
-      String cname = cid.toString();
-      loggingService.debug("DomainManager "+this+" loading Domains for agent "+cname);
+      loggingService.debug("DomainManager "+this+" loading Domains for agent "+self);
     }
 
     // get an array of child Components
@@ -175,12 +171,11 @@ public class DomainManager
       addDomain(descs, "root", 
                 "org.cougaar.core.domain.RootDomain");
 
-// setup the planning domain
-// FIXME remove from core!!! TWRIGHT
-addDomain(
-descs,
-"planning", 
-"org.cougaar.planning.ldm.PlanningDomain");
+      // setup the planning domain
+      addDomain(
+          descs,
+          "planning", 
+          "org.cougaar.planning.ldm.PlanningDomain");
 
       /* read domain file */ 
       initializeFromProperties(descs);
@@ -347,18 +342,11 @@ descs,
   // binding services
   //
 
-  protected final AgentChildBindingSite getBindingSite() {
-    return bindingSite;
-  }
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
     return CONTAINMENT_POINT;
-  }
-
-  protected ClusterServesLogicProvider getClusterServesLogicProvider() {
-    return bindingSite.getCluster();
   }
 
   protected Blackboard getBlackboard() {
@@ -372,8 +360,7 @@ descs,
     ServiceBroker sb = getServiceBroker();
     ComponentInitializerService cis = (ComponentInitializerService)
       sb.getService(this, ComponentInitializerService.class, null);
-    MessageAddress cid = getBindingSite().getAgentIdentifier();
-    String cname = cid.toString();
+    String cname = self.toString();
 
     try {
       children = cis.getComponentDescriptions(cname, specifyContainmentPoint());
@@ -424,10 +411,6 @@ descs,
           return DomainManager.this.remove(childComponent);
         }
         public void requestStop() {}
-
-        public ClusterServesLogicProvider getClusterServesLogicProvider() {
-          return DomainManager.this.getClusterServesLogicProvider();
-        }
 
         public Collection getXPlans() {
           return DomainManager.this.getXPlans();
@@ -570,6 +553,11 @@ descs,
                                 domainForBlackboardSP);
 
     serviceBroker.releaseService(this, LoggingService.class, loggingService);
+    if (agentIdService != null) {
+      serviceBroker.releaseService(
+          this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
   }
 
   
@@ -591,7 +579,7 @@ descs,
   //
   
   public String toString() {
-    return bindingSite.getAgentIdentifier().toString()+"/DomainManager";
+    return self+"/DomainManager";
   }
 
 

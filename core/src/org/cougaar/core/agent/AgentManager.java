@@ -124,11 +124,6 @@ public class AgentManager
   }
 
 
-  protected final AgentManagerBindingSite getBindingSite() {
-    return bindingSite;
-  }
-
-
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();
   }
@@ -141,10 +136,6 @@ public class AgentManager
   }
 
   public void requestStop() { }
-
-  public String getName() {
-    return getBindingSite().getName();
-  }
 
   //
   // support classes
@@ -159,9 +150,7 @@ public class AgentManager
     }
 
   private class AgentManagerProxy 
-    implements AgentManagerForBinder, BindingSite {
-
-    public String getName() {return AgentManager.this.getName(); }
+    implements BindingSite, ContainerAPI {
 
     // BindingSite
     public ServiceBroker getServiceBroker() {
@@ -189,17 +178,11 @@ public class AgentManager
     // FIXME cleanup this code
     //
     // first check that the agent isn't already loaded
-    for (Iterator iter = binderIterator(); iter.hasNext(); ) {
-      Object oi = iter.next();
-      if (!(oi instanceof AgentBinder)) {
-        continue;
-      }
-      MessageAddress id = ((AgentBinder) oi).getAgentIdentifier();
-      if (agentId.equals(id)) {
-        // agent already exists
-        throw new RuntimeException(
-            "Agent "+agentId+" already exists");
-      }
+    ComponentDescription desc = getAgentDescription(agentId);
+    if (desc != null) {
+      // agent already exists
+      throw new RuntimeException(
+          "Agent "+agentId+" already exists");
     }
     
     // add the agent
@@ -231,28 +214,42 @@ public class AgentManager
 
   public ComponentDescription getAgentDescription(MessageAddress agentId) {
     // FIXME cleanup this code
+    //
+    // assume that all agents are loaded with a ComponentDescription,
+    // where the desc's parameter is (<agentId> [, ...])
     synchronized (boundComponents) {
       Iterator iter = super.boundComponents.iterator();
       while (iter.hasNext()) {
-        Object oi = iter.next();
-        if (!(oi instanceof BoundComponent)) {
+        Object obc = iter.next();
+        if (!(obc instanceof BoundComponent)) {
           continue;
         }
-        BoundComponent bc = (BoundComponent)oi;
-        Binder b = bc.getBinder();
-        if (!(b instanceof AgentBinder)) {
+        BoundComponent bc = (BoundComponent) obc;
+        Object cmp = bc.getComponent();
+        if (!(cmp instanceof ComponentDescription)) {
           continue;
         }
-        MessageAddress id = ((AgentBinder) b).getAgentIdentifier();
-        if (agentId.equals(id)) {
-          Object cmp = bc.getComponent();
-          if (cmp instanceof ComponentDescription) {
-            // found the description
-            return (ComponentDescription) cmp;
-          } else {
-            // description not known
-            return null;
+        ComponentDescription desc = (ComponentDescription) cmp;
+        Object o = desc.getParameter();
+        MessageAddress cid = null;
+        if (o instanceof MessageAddress) {
+          cid = (MessageAddress) o;
+        } else if (o instanceof String) {
+          cid = MessageAddress.getMessageAddress((String) o);
+        } else if (o instanceof List) {
+          List l = (List)o;
+          if (l.size() > 0) {
+            Object o1 = l.get(0);
+            if (o1 instanceof MessageAddress) {
+              cid = (MessageAddress) o1;
+            } else if (o1 instanceof String) {
+              cid = MessageAddress.getMessageAddress((String) o1);
+            }
           }
+        }
+        if (agentId.equals(cid)) {
+          // found the description
+          return desc;
         }
       }
     }

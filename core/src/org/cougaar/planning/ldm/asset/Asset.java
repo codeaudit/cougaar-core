@@ -23,20 +23,17 @@
 
 package org.cougaar.planning.ldm.asset;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.planning.ldm.asset.*;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.util.*;
+import org.cougaar.planning.ldm.LDMContextTable;
 import org.cougaar.planning.ldm.PlanningFactory;
 import org.cougaar.planning.ldm.plan.RoleSchedule;
 import org.cougaar.planning.ldm.plan.Schedule;
 import org.cougaar.planning.ldm.plan.PlanElement;
 import org.cougaar.planning.ldm.plan.AssetTransfer;
-import org.cougaar.core.util.XMLizable;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.agent.ClusterContext;
@@ -49,8 +46,6 @@ import org.cougaar.core.domain.Factory;
 
 // only for transition period
 import org.cougaar.planning.ldm.plan.RoleScheduleImpl;
-
-import org.cougaar.core.util.XMLize;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -69,7 +64,7 @@ import java.beans.IntrospectionException;
  **/
 
 public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
-  implements Cloneable, XMLizable, UniqueObject, Publishable {
+  implements Cloneable, UniqueObject, Publishable {
   private transient RoleSchedule roleschedule;
   private static final String AGGREGATE_TYPE_ID = "AggregateAsset" ;
   
@@ -391,7 +386,8 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     if (cs instanceof ClusterContextTable.MessageContext) {
       ClusterContextTable.MessageContext c = (ClusterContextTable.MessageContext)cs;
       ClusterContext cc = cs.getClusterContext();
-      LDMServesPlugin ldm = cc.getLDM();
+      MessageAddress ma = cc.getMessageAddress();
+      LDMServesPlugin ldm = LDMContextTable.getLDM(ma);
       bindToLDM(ldm);
 
       in.defaultReadObject();
@@ -459,7 +455,9 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
     } else {
       ClusterContext cc = ClusterContextTable.getClusterContext();
       if (cc != null) {
-        bindToLDM(cc.getLDM());
+        MessageAddress ma = cc.getMessageAddress();
+        LDMServesPlugin ldm = LDMContextTable.getLDM(ma);
+        bindToLDM(ldm);
       }
 
       // plain serialization
@@ -510,11 +508,6 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
   }
 
   void recacheToString() { cachedToString=null; }
-
-  // Implement conversion to XML, mainly for UI developers
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this,doc);
-  }
 
   //dummy PropertyChangeSupport for the Jess Interpreter.
   public transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);

@@ -50,7 +50,12 @@ public final class ClusterContextTable {
   }
 
   /** Add a context to the context table **/
-  static void addContext(MessageAddress cid, ClusterContext c) {
+  static void addContext(final MessageAddress cid) {
+    ClusterContext c = new ClusterContext() {
+      public MessageAddress getMessageAddress() {
+        return cid;
+      }
+    };
     synchronized (contextTable) {
       contextTable.put(cid, c);
     }

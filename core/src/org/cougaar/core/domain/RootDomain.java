@@ -24,9 +24,9 @@ package org.cougaar.core.domain;
 import java.util.Collection;
 import java.util.Iterator;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.relay.RelayLP;
+import org.cougaar.core.service.AgentIdentificationService;
 
 /**
  * This is the "root" or infrastructure domain, defining the
@@ -36,10 +36,19 @@ import org.cougaar.core.relay.RelayLP;
  * domains can load other logic providers and XPlans.
  */
 public class RootDomain extends DomainAdapter {
+
   public static final String ROOT_NAME = "root";
+
+  private MessageAddress self;
+  private AgentIdentificationService agentIdService;
 
   public String getDomainName() {
     return ROOT_NAME;
+  }
+
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    this.self = ais.getMessageAddress();
   }
 
   public void load() {
@@ -81,19 +90,7 @@ public class RootDomain extends DomainAdapter {
   }
 
   protected void loadLPs() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException(
-          "Binding site for the domain has not be set.\n" +
-          "Unable to initialize domain LPs without a binding site.");
-    } 
-
-    ClusterServesLogicProvider cluster = bindingSite.getClusterServesLogicProvider();
-    MessageAddress self = cluster.getMessageAddress();
-
     RootPlan rootplan = (RootPlan) getXPlan();
-
     addLogicProvider(new RelayLP(rootplan, self));
     // maybe include "ComplainingLP" as well...
   }

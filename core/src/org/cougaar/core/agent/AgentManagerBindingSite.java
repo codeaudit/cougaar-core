@@ -29,9 +29,4 @@ import org.cougaar.core.component.BindingSite;
 public interface AgentManagerBindingSite 
   extends BindingSite
 {
-  String getIdentifier();
-  //name of the node
-  String getName();
 }
-
-

@@ -28,10 +28,6 @@ import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Package-private implementation of AgentControl.
@@ -39,7 +35,7 @@ import org.w3c.dom.Element;
  * This uses a Relay.
  */
 class AgentControlImpl 
-implements AgentControl, Relay.Source, Relay.Target, XMLizable, Serializable {
+implements AgentControl, Relay.Source, Relay.Target, Serializable {
 
   private static final ControlStatus NO_CONTROL_STATUS =
     new ControlStatus(NONE, null);
@@ -183,9 +179,6 @@ implements AgentControl, Relay.Source, Relay.Target, XMLizable, Serializable {
     return Relay.NO_CHANGE;
   }
 
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
   public boolean equals(Object o) {
     if (o == this) {
       return true;

@@ -41,7 +41,6 @@ public class DAB
   // This is a "Wrapper" binder which installs a service filter for plugins
   public static class DABber
     extends ServiceFilterBinder
-    implements AgentManagerForBinder
   {
     Logger logger;
 
@@ -59,10 +58,5 @@ public class DAB
     protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return sb;
     }
-
-    protected final AgentManagerForBinder getAgentManager() {
-      return (AgentManagerForBinder)getContainer();
-    }
-    public String getName() {return getAgentManager().getName(); }
   }
 }

@@ -30,8 +30,7 @@ import org.cougaar.core.util.UniqueObject;
 /** Essential services for serving UniqueObjects to
  * parts of a cluster.
  **/
-
-public final class UIDServiceImpl implements UIDService {
+final class UIDServiceImpl implements UIDService {
   private MessageAddress cid;
   private String prefix;
   private long count = System.currentTimeMillis();

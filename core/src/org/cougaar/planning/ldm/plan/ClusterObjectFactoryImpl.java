@@ -44,17 +44,23 @@ import java.util.*;
  * of the FooImpl class.
  */
 public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
-  protected LDMServesPlugin ldm;
-  private MessageAddress cid;
+  protected final LDMServesPlugin ldm;
+  private final MessageAddress cid;
   private long count = 0;
   private HashMap IDHashMap;
   private ClassLoader ldmcl;
   private UIDServer myUIDServer;
   
-  public ClusterObjectFactoryImpl(LDMServesPlugin ldm, MessageAddress cluster) {
+  public ClusterObjectFactoryImpl(LDMServesPlugin ldm, MessageAddress cid) {
     this.ldm = ldm;
+    this.cid = cid;
+    if (cid == null) {
+      throw new IllegalArgumentException("Null agent address");
+    }
     myUIDServer = ldm.getUIDServer();
-    cid = cluster;
+    if (myUIDServer == null) {
+      throw new IllegalArgumentException("Null UID server");
+    }
     ldmcl = ldm.getLDMClassLoader();
     IDHashMap = new HashMap(89);
   }

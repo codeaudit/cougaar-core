@@ -24,10 +24,10 @@ package org.cougaar.planning.ldm;
 import java.util.*;
 import java.util.Iterator;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.domain.*;
-import org.cougaar.core.relay.RelayLP;
+import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.planning.ldm.lps.AssetTransferLP;
 import org.cougaar.planning.ldm.lps.ComplainingLP;
 import org.cougaar.planning.ldm.lps.DeletionLP;
@@ -42,6 +42,7 @@ import org.cougaar.planning.ldm.lps.ReceiveRescindLP;
 import org.cougaar.planning.ldm.lps.ReceiveTaskLP;
 import org.cougaar.planning.ldm.lps.RemoteClusterAllocationLP;
 import org.cougaar.planning.ldm.lps.RescindLP;
+import org.cougaar.planning.service.LDMService;
 
 /**
  * This is the "planning" domain, which defines planning
@@ -51,13 +52,43 @@ public class PlanningDomain extends DomainAdapter {
   public static final String PLANNING_NAME = "planning";
 
   private RootPlan rootplan;
+  private AgentIdentificationService agentIdService;
+  private MessageAddress self;
+  private LDMService ldmService;
 
   public String getDomainName() {
     return PLANNING_NAME;
   }
 
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    this.self = ais.getMessageAddress();
+  }
+
+  public void setLDMService(LDMService ldmService) {
+    this.ldmService = ldmService;
+  }
+
   public void load() {
     super.load();
+    if (ldmService != null) {
+      LDMServesPlugin ldm = ldmService.getLDM();
+      LDMContextTable.setLDM(self, ldm);
+    }
+  }
+
+  public void unload() {
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    if (agentIdService != null) {
+      sb.releaseService(this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
+    if (ldmService != null) {
+      sb.releaseService(this, LDMService.class, ldmService);
+      ldmService = null;
+      LDMContextTable.setLDM(self, null);
+    }
+    super.unload();
   }
 
   public Collection getAliases() {
@@ -68,71 +99,25 @@ public class PlanningDomain extends DomainAdapter {
   }
 
   protected void loadFactory() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain Factory without a binding site.");
-    } 
-
-    LDMServesPlugin ldm = bindingSite.getClusterServesLogicProvider().getLDM();
+    LDMServesPlugin ldm = ldmService.getLDM();
     Factory f = new PlanningFactoryImpl(ldm);
     setFactory(f);
   }
 
   protected void loadXPlan() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException(
-          "Binding site for the domain has not be set.\n" +
-          "Unable to initialize domain XPlan without a binding site.");
-    } 
-
-    Collection xPlans = bindingSite.getXPlans();
-    LogPlan logplan = null;
-
-    Iterator iterator = xPlans.iterator();
-    while (true) {
-      if (!iterator.hasNext()) {
-        if (rootplan == null) {
-          throw new RuntimeException(
-              "\""+getDomainName()+
-              "\" unable to find required RootPlan!");
-        }
-        if (logplan == null) {
-          // typical case:
-          logplan = new LogPlanImpl();
-        }
-        break;
-      }
-      XPlan xPlan = (XPlan) iterator.next();
-      if (xPlan instanceof RootPlan) {
-        rootplan = (RootPlan) xPlan;
-      }
-      if (xPlan instanceof LogPlan) {
-        // already loaded?
-        logplan = (LogPlan) logplan;
-        break;
-      }
-    }
-    
+    LogPlan logplan = new LogPlanImpl();
     setXPlan(logplan);
   }
 
   protected void loadLPs() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
+    DomainBindingSite domainBS = (DomainBindingSite) getBindingSite();
+    RootPlan rootplan = (RootPlan) domainBS.getXPlanForDomain("root");
+    if (rootplan == null) {
+      throw new RuntimeException("Missing \"root\" plan!");
+    }
 
-    if (bindingSite == null) {
-      throw new RuntimeException("Binding site for the domain has not be set.\n" +
-                             "Unable to initialize domain LPs without a binding site.");
-    } 
-
-    ClusterServesLogicProvider cluster = bindingSite.getClusterServesLogicProvider();
-    // already holding onto rootplan
     LogPlan logplan = (LogPlan) getXPlan();
     PlanningFactory ldmf = (PlanningFactory) getFactory();
-    MessageAddress self = cluster.getMessageAddress();
 
     // input LPs
     addLogicProvider(new ReceiveAssetLP(rootplan, logplan, ldmf, self));

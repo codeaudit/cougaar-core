@@ -61,7 +61,7 @@ import org.w3c.dom.Element;
  *   <li> Illustrates the use of URLs to allow the user to 
  *        seamlessly jump between views of separate blackboards</li>
  *   <li> Provide XML views of data (using 
- *        org.cougaar.util.XMLify)</li>
+ *        org.cougaar.core.util.XMLize)</li>
  * </ol>.
  * <p>
  * This is a very large Servlet and is overly-complex to be
@@ -1420,7 +1420,7 @@ extends HttpServlet
       // get the attached object
       Object attachedObj;
       if (isAttached) {
-        // examine baseObj to find attached XMLizable
+        // examine baseObj to find attached xml
         // 
         // currently only a few cases are supported:
         //   Asset itself
@@ -1441,11 +1441,7 @@ extends HttpServlet
         // the base itself
         attachedObj = baseObj;
       }
-      // cast to XMLizable
-      XMLizable xo =
-        ((attachedObj instanceof XMLizable) ?
-         (XMLizable)attachedObj :
-         null);
+      Object xo = attachedObj;
       if (asHTML) {
         // print as HTML
         out.print("<html>\n<head>\n<title>");
@@ -1464,7 +1460,7 @@ extends HttpServlet
           printLinkToXML(xo, false);
           out.print("<br><hr><br><pre>\n");
           // print HTML-wrapped XML
-          printXMLizableDetails(xo, true);
+          printXMLDetails(xo, true);
           out.print("\n</pre><br><hr><br>\n");
         } else {
           out.print("<p><font size=small color=mediumblue>");
@@ -1485,15 +1481,16 @@ extends HttpServlet
             out.print(itemUID);
             out.print("\" of type ");
             out.print(baseObj.getClass().getName());
-            out.print(" has non-XMLizable attached Object: ");
+            out.print(" has no XML attached Object: ");
             out.print(attachedObj.getClass().getName());
+            out.print(" (internal error?)");
           }
           out.print("</font><p>\n");
         }
         out.print("</body></html>\n");
       } else {
         // print raw XML
-        printXMLizableDetails(xo, false);
+        printXMLDetails(xo, false);
       }
       out.flush();
     }
@@ -1585,21 +1582,8 @@ extends HttpServlet
               break;
             case ITEM_TYPE_WORKFLOW:
             default:
-              if (uo instanceof XMLizable) {
-                // XMLizable and a local UniqueObject
-                printLinkToXML(uo, true);
-              } else {
-                out.print("<font color=red>No XML for ");
-                UID uoU;
-                String uoUID;
-                if (((uoU = uo.getUID()) != null) &&
-                    ((uoUID = uoU.toString()) != null)) {
-                  out.print(uoUID);
-                } else {
-                  out.print("null");
-                }
-                out.print("</font>");
-              } 
+              // xml for a local UniqueObject
+              printLinkToXML(uo, true);
               break;
           }
           out.print(
@@ -1940,27 +1924,8 @@ extends HttpServlet
               break;
             case ITEM_TYPE_WORKFLOW:
             default:
-              if (o instanceof XMLizable) {
-                // XMLizable and a local UniqueObject
-                printLinkToXML((XMLizable)o, true);
-              } else {
-                out.print("<font color=red>No XML for ");
-                UID uoU;
-                String uoUID;
-                if (o instanceof UniqueObject) {
-                  if (((uoU = ((UniqueObject)o).getUID()) != null) &&
-                      ((uoUID = uoU.toString()) != null)) {
-                    out.print(uoUID);
-                  } else {
-                    out.print("null-UID");
-                  }
-                } else if (o != null) {
-                  out.print("non-UniqueObject");
-                } else {
-                  out.print("null");
-                }
-                out.print("</font>");
-              } 
+              // xml for a local UniqueObject
+              printLinkToXML(o, true);
               break;
           }
           out.print(
@@ -2703,18 +2668,12 @@ extends HttpServlet
         }
         out.print("</ol>\n");
         if (baseObj != null) {
-          if (asset instanceof XMLizable) {
-            // link to HTML-encoded XML view
-            out.print("<font size=small color=mediumblue>");
-            printLinkToAttachedXML(
-                baseObj,
-                (XMLizable)asset,
-                true);
-            out.print("</font>");
-          } else {
-            // asset not XMLizable
-            out.print("<font color=red>Asset not XMLable</font>");
-          }
+          // link to HTML-encoded XML view
+          out.print("<font size=small color=mediumblue>");
+          printLinkToAttachedXML(
+              baseObj,
+              asset,
+              true);
         }
         return;
       }
@@ -2958,19 +2917,13 @@ extends HttpServlet
       // PGs?
       out.print("</ul>");
       if (baseObj != null) {
-        // provide XML view
-        if (asset instanceof XMLizable) {
-          // link to HTML-encoded XML view
-          out.print("<font size=small color=mediumblue>");
-          printLinkToAttachedXML(
-              baseObj,
-              (XMLizable)asset,
-              true);
-          out.print("</font>");
-        } else {
-          // asset not XMLizable
-          out.print("<font color=red>Asset not XMLable</font>");
-        }
+        // link to HTML-encoded XML view
+        out.print("<font size=small color=mediumblue>");
+        printLinkToAttachedXML(
+            baseObj,
+            asset,
+            true);
+        out.print("</font>");
       } else {
         // likely recursed on an AssetGroup, and the top-level group
         //   had a "View XML" link.
@@ -3111,9 +3064,9 @@ extends HttpServlet
     }
 
     /**
-     * printXMLizableDetails.
+     * printXMLDetails.
      * <p>
-     * Prints XML for given XMLizable Object.
+     * Prints XML for given Object.
      * <p>
      * Considered embedding some Applet JTree viewer, e.g.<br>
      * <code>ui.planviewer.XMLViewer</code>
@@ -3125,13 +3078,13 @@ extends HttpServlet
      * <p>
      * @param printAsHTML uses XMLtoHTMLOutputStream to pretty-print the XML
      */
-    private void printXMLizableDetails(
-        XMLizable xo, boolean printAsHTML)
+    private void printXMLDetails(
+        Object xo, boolean printAsHTML)
     {
       try {
         // convert to XML
         Document doc = new DocumentImpl();
-        Element element = xo.getXML((Document)doc);
+        Element element = XMLize.getPlanObjectXML(xo, doc);
         doc.appendChild(element);
 
         // print to output
@@ -3746,26 +3699,14 @@ extends HttpServlet
     private void printLinkToXML(
         UniqueObject uo, boolean asHTML)
     {
-      if (uo instanceof XMLizable) {
+      if (uo != null) {
         // link to HTML-encoded XML view
         printLinkToAttachedXML(
             uo,
-            (XMLizable)uo,
+            uo,
             asHTML);
-      } else if (uo == null) {
-        out.print("<font color=red>null</font>");
       } else {
-        // uniqueObject not XMLizable
-        out.print("<font color=red>No XML for ");
-        UID uoU;
-        String uoUID;
-        if (((uoU = uo.getUID()) != null) &&
-            ((uoUID = uoU.toString()) != null)) {
-          out.print(uoUID);
-        } else {
-          out.print("null");
-        }
-        out.print("</font>");
+        out.print("<font color=red>null</font>");
       }
     }
 
@@ -3775,7 +3716,7 @@ extends HttpServlet
      * XML objects stay in cluster.
      **/
     private void printLinkToXML(
-        XMLizable xo, boolean asHTML)
+        Object xo, boolean asHTML)
     {
       if (xo instanceof UniqueObject) {
         // link to HTML-encoded XML view
@@ -3786,7 +3727,7 @@ extends HttpServlet
       } else if (xo == null) {
         out.print("<font color=red>null</font>");
       } else {
-        // asset not XMLizable
+        // asset not unique
         out.print("<font color=red>");
         out.print(xo.getClass().getName());
         out.print(" not a UniqueObject</font>");
@@ -3797,7 +3738,7 @@ extends HttpServlet
      * printLinkToAttachedXML.
      **/
     private void printLinkToAttachedXML(
-        UniqueObject baseObj, XMLizable xo, 
+        UniqueObject baseObj, Object xo, 
         boolean asHTML)
     {
       UID baseObjU;

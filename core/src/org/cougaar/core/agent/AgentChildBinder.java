@@ -41,21 +41,6 @@ implements AgentChildBindingSite
     super(bf, child);
   }
 
-  protected final Agent getAgent() {
-    return (Agent)getContainer();
-  }
-  public MessageAddress getAgentIdentifier() {
-    return getAgent().getAgentIdentifier();
-  }
-  public ConfigFinder getConfigFinder() {
-    return getAgent().getConfigFinder();
-  }
-
-  public ClusterServesLogicProvider getCluster() { 
-    //throw new RuntimeException("Call to getCluster()");
-    return ((ClusterServesLogicProvider)getContainer());
-  }
-
   /** Defines a pass-through insulation layer to ensure that the plugin cannot 
    * downcast the BindingSite to the Binder and gain control via introspection
    * and/or knowledge of the Binder class.  This is neccessary when Binders do

@@ -451,7 +451,7 @@ public class AllocationResult
    */
   private void setAspectValueResults(AspectValue[] avresult) {
     avResults = avresult;
-//      checkAVResults();
+    checkAVResults();
     clearMemos();
   }
 

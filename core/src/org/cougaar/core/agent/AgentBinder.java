@@ -22,24 +22,11 @@
 package org.cougaar.core.agent;
 
 import org.cougaar.core.component.Binder;
-import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Binder API for all agent binders.
+ * <p>
+ * Soon to be removed!!!
  */
 public interface AgentBinder extends Binder {
-
-  /**
-   * Get the agent's message address.
-   */
-  MessageAddress getAgentIdentifier();
-
-  /**
-   * Obtain direct access to the agent.
-   * <p>
-   * This method may be removed from the binder API due to
-   * security concerns.
-   */
-  Agent getAgent();
-
 }

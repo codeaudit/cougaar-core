@@ -28,14 +28,10 @@ import org.cougaar.core.blackboard.Subscriber;
 
 import org.cougaar.core.blackboard.PublishableAdapter;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.planning.ldm.asset.Asset;
 
 import org.cougaar.core.blackboard.Transaction;
 import org.cougaar.core.agent.*;
-import org.cougaar.core.util.XMLizable;
 
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
@@ -57,7 +53,7 @@ import org.cougaar.core.util.UniqueObject;
  */
 
 public class TaskImpl extends PlanningDirectiveImpl
-  implements Task, NewTask, Cloneable, XMLizable, ActiveSubscriptionObject, java.io.Serializable
+  implements Task, NewTask, Cloneable, ActiveSubscriptionObject, java.io.Serializable
 {
   private static final Logger logger = Logging.getLogger(TaskImpl.class);
 
@@ -851,14 +847,6 @@ public class TaskImpl extends PlanningDirectiveImpl
       }
     }
   }
-
-  // 
-  // XMLizable method for UI, other clients
-  //
-  public Element getXML(Document doc) {
-      return XMLize.getPlanObjectXML(this,doc);
-  }
-
 
   //dummy PropertyChangeSupport for the Jess Interpreter.
   public transient PropertyChangeSupport pcs = new PropertyChangeSupport(this);

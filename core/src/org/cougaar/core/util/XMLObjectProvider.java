@@ -29,7 +29,6 @@ public interface XMLObjectProvider
 {
      //
      // Add object to internal DOM Document.
-     // Most legacy XMLObjectProviders assume obj is XMLizable 
      //
      void addObject(Object obj);
 

@@ -20,17 +20,11 @@
  */
 package org.cougaar.planning.ldm.plan;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.planning.ldm.plan.Alert;
 import org.cougaar.planning.ldm.plan.NewAlert;
 import org.cougaar.planning.ldm.plan.AlertParameter;
 
 import org.cougaar.core.util.UID;
-
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 
 /** Alert Implementation
  * @author  ALPINE <alpine-software@bbn.com>
@@ -41,7 +35,7 @@ import org.cougaar.core.util.XMLize;
  * need an Alert type, otherwise all Alerts will go to all subscribers
  */
 
-public class AlertImpl implements Alert, NewAlert, XMLizable {
+public class AlertImpl implements Alert, NewAlert {
 
   protected String myDisplayText; // answers the question "Right, what's all this, then?"
   protected AlertParameter[] myParameters; //description, object pairs
@@ -263,18 +257,5 @@ public class AlertImpl implements Alert, NewAlert, XMLizable {
   public UID getUID() { 
     return myUID;
   }
-
-
-  /** getXML - add the Alert to the document as an XML Element and return the 
-   * 
-   * BOZO - not currently handling XML
-   * 
-   * @param doc Document to which XML Element will be added
-   * @return Element 
-   **/
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
-
 }
  

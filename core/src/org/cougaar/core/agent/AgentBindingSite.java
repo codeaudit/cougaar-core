@@ -24,10 +24,10 @@ package org.cougaar.core.agent;
 import org.cougaar.core.component.BindingSite;
 
 /** An Agent's view of its parent component (Container).
- *
+ * <p>
+ * Soon to be removed!!!
  **/
 public interface AgentBindingSite 
   extends BindingSite
 {
-  String getName();
 }

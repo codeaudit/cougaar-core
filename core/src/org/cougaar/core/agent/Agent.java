@@ -28,7 +28,6 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -103,7 +102,6 @@ public abstract class Agent
 
   //backwards compatability to attach to Cluster Agents for now
   abstract public MessageAddress getAgentIdentifier();
-  abstract public ConfigFinder getConfigFinder();
 
   //
   // implement the API needed by agent binders

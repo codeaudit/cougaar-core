@@ -68,7 +68,6 @@ class PlanningFactoryImpl
    **/
   public PlanningFactoryImpl(LDMServesPlugin ldm) {
     super(ldm, ldm.getMessageAddress());
-    this.ldm = ldm;
 
     // add the asset factories
     addAssetFactory(new AssetFactory());

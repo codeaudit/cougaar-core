@@ -28,10 +28,6 @@ import java.util.Set;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Package-private implementation of a Ping.
@@ -40,7 +36,7 @@ import org.w3c.dom.Element;
  * between the source agent and target agent.
  */
 class PingImpl 
-implements Ping, Relay.Source, Relay.Target, XMLizable, Serializable {
+implements Ping, Relay.Source, Relay.Target, Serializable {
 
   private static final Random rand = new Random();
 
@@ -278,9 +274,6 @@ implements Ping, Relay.Source, Relay.Target, XMLizable, Serializable {
     return (Relay.CONTENT_CHANGE | Relay.RESPONSE_CHANGE);
   }
 
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
   public boolean equals(Object o) {
     if (o == this) {
       return true;

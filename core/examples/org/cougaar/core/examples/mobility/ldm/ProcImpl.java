@@ -23,14 +23,12 @@ package org.cougaar.core.examples.mobility.ldm;
 import java.io.Serializable;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 
 /**
  * Package-private implementation for a script proc.
  */
 class ProcImpl
-implements Proc, XMLizable, Serializable {
+implements Proc, Serializable {
 
   private final UID uid;
   private final UID scriptUID;
@@ -102,10 +100,6 @@ implements Proc, XMLizable, Serializable {
     scriptIndex = index;
   }
 
-
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
   public boolean equals(Object o) {
     if (o == this) {
       return true;

@@ -21,12 +21,7 @@
 
 package org.cougaar.planning.ldm.policy;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
-import org.cougaar.core.util.XMLizable;
 import org.cougaar.planning.ldm.plan.Transferable;
-import org.cougaar.core.util.XMLize;
 import org.cougaar.planning.ldm.plan.Context;
 import java.util.Hashtable;
 import java.util.Enumeration;
@@ -53,7 +48,7 @@ import org.cougaar.core.util.UID;
  **/
 public class Policy
   extends OwnedUniqueObject
-  implements java.io.Serializable, XMLizable,
+  implements java.io.Serializable,
   Transferable, UniqueObject
 { 
   protected Hashtable my_parameters;
@@ -225,7 +220,7 @@ public class Policy
 
 
   /**
-   * Save the Policy object in some format (XML?) in some file
+   * Save the Policy object in some format in some file
    **/
   public void save() {
 
@@ -238,13 +233,6 @@ public class Policy
   public void load() {
 
     // stub
-  }
-
-  // 
-  // XMLizable method for UI, other clients
-  //
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this,doc);
   }
 
   //dummy PropertyChangeSupport for the Jess Interpreter.

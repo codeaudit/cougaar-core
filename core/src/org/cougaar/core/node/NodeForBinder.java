@@ -28,6 +28,4 @@ import org.cougaar.core.component.ContainerAPI;
 public interface NodeForBinder
   extends ContainerAPI
 {
-  String getIdentifier();
-  String getName();
 }

@@ -22,8 +22,6 @@
 package org.cougaar.core.agent;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.planning.ldm.LDMServesPlugin;
-import org.cougaar.core.service.UIDServer;
 
 /**
  * Interface required for out-of-band communication with clusters.
@@ -33,17 +31,11 @@ import org.cougaar.core.service.UIDServer;
 
 public interface ClusterContext
 {
-  /** The current cluster's CID */
+  /** The current agent's address */
   MessageAddress getMessageAddress();
   
-  UIDServer getUIDServer();
-
-  LDMServesPlugin getLDM();
-
   final class DummyClusterContext implements ClusterContext {
     private static final MessageAddress cid = MessageAddress.NULL_SYNC;
     public MessageAddress getMessageAddress() { return cid; }
-    public UIDServer getUIDServer() { return null; }
-    public LDMServesPlugin getLDM() { return null; }
   }
 }

@@ -23,17 +23,10 @@ package org.cougaar.planning.ldm.plan;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.planning.ldm.plan.Report;
 import org.cougaar.planning.ldm.plan.NewReport;
 
 import org.cougaar.core.util.UID;
-
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
-
 
 /** Report Implementation
  * @author  ALPINE <alpine-software@bbn.com>
@@ -43,7 +36,7 @@ import org.cougaar.core.util.XMLize;
  **/
 
 public class ReportImpl 
-  implements Report, NewReport, XMLizable,  Serializable {
+  implements Report, NewReport, Serializable {
 
   protected String myText; // answers the question "Right, what's all this, then?"
   protected Date myDate; // Date associated with message. (When created?)
@@ -128,17 +121,5 @@ public class ReportImpl
   public UID getUID() { 
     return myUID;
   }
-
-  /** getXML - add the Report to the document as an XML Element and return the 
-   * 
-   * BOZO - not currently handling XML
-   *
-   * @param doc Document to which XML Element will be added
-   * @return Element 
-   **/
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
-
 }
  

@@ -44,6 +44,9 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.Trigger;
 
 /**
+ * Package-private scheduler service provider implementation, for
+ * use by the SchedulerServiceComponent.
+ * <p>
  * Scheduler that runs its schedulees in a shared thread
  * The schedulees tell the Scheduler they want to be run via a Trigger.
  * The schedulees pass in a Trigger that the Scheduler calls to activate them.
@@ -72,7 +75,7 @@ import org.cougaar.util.Trigger;
  * The number of threads to use as workers for the MultiScheduler - these
  * threads are shared among all scheduled components in the node.
  **/
-public class SchedulerServiceProvider 
+class SchedulerServiceProvider 
   implements ServiceProvider
 {
   /** Should we keep statistics on plugin runtimes? **/

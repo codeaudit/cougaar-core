@@ -26,8 +26,6 @@ import java.util.Collections;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 
 /**
  * Package-private implementation of a Ping.
@@ -38,7 +36,7 @@ import org.cougaar.core.util.XMLize;
  * @deprecated moved to "org.cougaar.core.mobility.ping.*" (bug 1792)
  */
 class PingImpl 
-implements Ping, Relay.Source, Relay.Target, XMLizable, Serializable {
+implements Ping, Relay.Source, Relay.Target, Serializable {
 
   private final UID uid;
   private final MessageAddress source;
@@ -230,9 +228,6 @@ implements Ping, Relay.Source, Relay.Target, XMLizable, Serializable {
     return (Relay.CONTENT_CHANGE | Relay.RESPONSE_CHANGE);
   }
 
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
   public boolean equals(Object o) {
     if (o == this) {
       return true;

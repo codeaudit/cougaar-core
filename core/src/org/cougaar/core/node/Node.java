@@ -566,7 +566,8 @@ implements ContainerAPI, ServiceRevokedListener
     //
     // construct the NodeAgent and then hand off control
     // 
-    List naParams = new ArrayList(2);
+    List naParams = new ArrayList(3);
+    naParams.add(nid);
     naParams.add(getServiceBroker());
     naParams.add(agentManager);
     ComponentDescription naDesc = 
@@ -660,10 +661,6 @@ implements ContainerAPI, ServiceRevokedListener
   // Children's view of the parent component Node - as accessed through 
   // the NodeForBinder interface.  Keeps the actual Node safe.
   private class NodeProxy implements NodeForBinder, BindingSite {
-    public String getName() {return getIdentifier(); }
-    public String getIdentifier() {
-      return Node.this.getIdentifier();
-    }
     public boolean remove(Object o) {return true;}
     // BindingSite
     public ServiceBroker getServiceBroker() {return Node.this.getServiceBroker(); }

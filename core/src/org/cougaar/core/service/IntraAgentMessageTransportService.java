@@ -19,16 +19,27 @@
  * </copyright>
  */
 
-package org.cougaar.core.agent;
+package org.cougaar.core.service;
 
-import org.cougaar.util.GenericStateModel;
+import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.Message;
 
-/** ClusterStateModel interface.
- *  This is the interface that defines state transitions for clusters.
- *
- * @author  ALPINE <alpine-software@bbn.com>
- *
+/**
+ * Send a message on behalf of the local agent.
+ * <p>
+ * <b>ONLY</b> for use by Blackboard and blackboard internals.
+ * <p>
+ * See bug 1146.  Future enhancement intended to reduce
+ * agent-blackboard coupling and allow multiple internal
+ * message handlers.
  */
-
-public interface ClusterStateModel extends GenericStateModel {
+public interface IntraAgentMessageTransportService extends Service {
+  /** get the local agent's address
+   * @see AgentIdentificationService preferred service
+   */
+  MessageAddress getMessageAddress();
+  
+  /** send a message on behalf of the local agent */
+  void sendMessage(Message message);
 }

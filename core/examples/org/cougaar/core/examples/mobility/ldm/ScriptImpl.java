@@ -26,14 +26,12 @@ import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 
 /**
  * Package-private implementation for a script.
  */
 class ScriptImpl
-implements Script, XMLizable, Serializable {
+implements Script, Serializable {
 
   protected final UID uid;
   protected final List entries;
@@ -66,9 +64,6 @@ implements Script, XMLizable, Serializable {
     return (Entry) entries.get(idx);
   }
 
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
-  }
   public boolean equals(Object o) {
     if (o == this) {
       return true;

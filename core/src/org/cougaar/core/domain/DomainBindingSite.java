@@ -22,7 +22,6 @@
 package org.cougaar.core.domain;
 
 import java.util.Collection;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.BindingSite;
 
 /**
@@ -30,7 +29,6 @@ import org.cougaar.core.component.BindingSite;
  **/
 public interface DomainBindingSite extends BindingSite
 {
-  ClusterServesLogicProvider getClusterServesLogicProvider();
   Collection getXPlans();
   XPlan getXPlanForDomain(String domainName);
   XPlan getXPlanForDomain(Class domainClass);

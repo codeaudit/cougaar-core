@@ -25,10 +25,11 @@ import java.util.*;
 
 import org.cougaar.core.agent.*;
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.domain.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.UIDServer;
-import org.cougaar.planning.ldm.LDMServesPlugin;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.UIDService;
 
 /**
  * The mobility test domain ("mobilityTest") just has a 
@@ -38,6 +39,10 @@ public class MobilityTestDomain extends DomainAdapter {
 
   private static final String MOBILTY_TEST_NAME = "mobilityTest";
 
+  private MessageAddress self;
+  private AgentIdentificationService agentIdService;
+  private UIDService uidService;
+
   public String getDomainName() {
     return MOBILTY_TEST_NAME;
   }
@@ -46,20 +51,30 @@ public class MobilityTestDomain extends DomainAdapter {
     return Collections.singleton(getDomainName());
   }
 
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    this.self = ais.getMessageAddress();
+  }
+
+  public void setUIDService(UIDService uidService) {
+    this.uidService = uidService;
+  }
+
+  public void unload() {
+    super.unload();
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    if (uidService != null) {
+      sb.releaseService(this, UIDService.class, uidService);
+      uidService = null;
+    }
+    if (agentIdService != null) {
+      sb.releaseService(this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
+  }
+
   protected void loadFactory() {
-    DomainBindingSite bindingSite = (DomainBindingSite) getBindingSite();
-
-    if (bindingSite == null) {
-      throw new RuntimeException(
-          "Binding site for the domain has not be set.\n" +
-          "Unable to initialize domain Factory without a binding site.");
-    } 
-
-    LDMServesPlugin ldm = bindingSite.getClusterServesLogicProvider().getLDM();
-    MessageAddress self = ldm.getMessageAddress();
-    UIDServer uidServer = ldm.getUIDServer();
-
-    Factory f = new MobilityTestFactoryImpl(self, uidServer);
+    Factory f = new MobilityTestFactoryImpl(self, uidService);
     setFactory(f);
   }
 

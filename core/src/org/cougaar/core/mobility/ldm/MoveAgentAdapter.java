@@ -24,10 +24,6 @@ import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay; // inlined
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * Package-private implementation of MoveAgent.
@@ -36,7 +32,7 @@ import org.w3c.dom.Element;
  */
 class MoveAgentAdapter
 extends AgentControlImpl 
-implements MoveAgent, XMLizable {
+implements MoveAgent {
 
   private Status myStatus;
 
@@ -103,10 +99,6 @@ implements MoveAgent, XMLizable {
           ("Failed at time "+System.currentTimeMillis()),
           stack);
     }
-  }
-
-  public org.w3c.dom.Element getXML(org.w3c.dom.Document doc) {
-    return XMLize.getPlanObjectXML(this, doc);
   }
 
 }

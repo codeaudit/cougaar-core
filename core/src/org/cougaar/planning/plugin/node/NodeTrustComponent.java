@@ -22,7 +22,6 @@
 package org.cougaar.planning.plugin.node;
 
 import java.io.PrintStream;
-import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
@@ -49,7 +48,7 @@ public class NodeTrustComponent
   extends ContainerSupport
   implements StateObject, MessageTransportClient, NodePolicyWatcher
 {
-  private AgentChildBindingSite bindingSite = null;
+  private ServiceBroker sb;
   private Object loadState = null;
   private TrustStatusServiceImpl theTSS;
   private TrustStatusServiceProvider tssSP;
@@ -59,7 +58,7 @@ public class NodeTrustComponent
 
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    bindingSite = (AgentChildBindingSite) bs; // allow ClassCastException to pass up
+    sb = bs.getServiceBroker();
   }
 
   private NodeIdentificationService nodeIdentificationService = null;
@@ -86,8 +85,6 @@ public class NodeTrustComponent
     //if we were doing something with state... use it here
     // then reset it.
     loadState = null;
-
-    ServiceBroker sb = bindingSite.getServiceBroker();
 
     // create the TrustStatusService implementation
     theTSS = new TrustStatusServiceImpl(); 
@@ -125,7 +122,6 @@ public class NodeTrustComponent
     super.unload();
     
     // unload services in reverse order of "load()"
-    ServiceBroker sb = bindingSite.getServiceBroker();
     sb.revokeService(TrustStatusService.class, tssSP);
     // release services
     sb.releaseService(this, MessageTransportService.class, messageTransService);
@@ -136,9 +132,6 @@ public class NodeTrustComponent
   // binding services
   //
 
-  protected final AgentChildBindingSite getBindingSite() {
-    return bindingSite;
-  }
   protected String specifyContainmentPoint() {
     return "Node.NodeTrust";
   }

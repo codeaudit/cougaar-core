@@ -36,7 +36,6 @@ import java.util.Vector;
 import javax.naming.event.EventContext;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
@@ -46,7 +45,9 @@ import org.cougaar.core.persist.BasePersistence;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceException;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DomainForBlackboardService;
+import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.community.CommunityChangeAdapter;
 import org.cougaar.core.service.community.CommunityChangeEvent;
@@ -81,14 +82,15 @@ public class Blackboard extends Subscriber
   PrivilegedClaimant
 {
   protected CollectionSubscription everything;
-  protected ClusterServesLogicProvider myCluster;
+  protected MessageAddress self;
   private Distributor myDistributor;
   protected ServiceBroker myServiceBroker;
+  protected AlarmService alarmService;
   protected DomainForBlackboardService myDomainService;
   protected LoggingService logger;
 
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".Blackboard";
-  public MessageAddress getCID() { return myCluster.getMessageAddress();}
+  public MessageAddress getCID() { return self; }
 
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
@@ -168,25 +170,26 @@ public class Blackboard extends Subscriber
     }
   };
 
-  public Blackboard(ClusterServesLogicProvider cluster, ServiceBroker sb, Object state) {
+  public Blackboard(
+      IntraAgentMessageTransportService iamts, ServiceBroker sb, Object state) {
     myServiceBroker = sb;
-    myDistributor = createDistributor(cluster, state);
+    self = iamts.getMessageAddress();
+    myDistributor = createDistributor(iamts, state);
     setClientDistributor((BlackboardClient) this, myDistributor);
     setName("<blackboard>");
-    myCluster = cluster;
     logger = (LoggingService)
       sb.getService(this, LoggingService.class, null);
-    logger = LoggingServiceWithPrefix.add(logger, myCluster.getMessageAddress().toString() + ": ");
-    myDomainService = 
-      (DomainForBlackboardService) sb.getService(this, 
-                                                 DomainForBlackboardService.class, 
-                                                 null);
+    logger = LoggingServiceWithPrefix.add(logger, self+": ");
+    myDomainService = (DomainForBlackboardService) 
+      sb.getService(this, DomainForBlackboardService.class, null);
     if (myDomainService == null) {
       RuntimeException re = 
         new RuntimeException("Couldn't get DomainForBlackboardService!");
       re.printStackTrace();
       throw re;
     }
+    alarmService = (AlarmService)
+      sb.getService(this, AlarmService.class, null);
   }
 
   public void stop() {
@@ -300,7 +303,7 @@ public class Blackboard extends Subscriber
   }
 
   /** Submit a directive with attached ChangeReports for transmission 
-   * from this cluster. We fill in the ContentsId with the next available number.
+   * from this agent. We fill in the ContentsId with the next available number.
    **/
   public void sendDirective(Directive aDirective, Collection c) {
     if (aDirective == null) {
@@ -315,7 +318,7 @@ public class Blackboard extends Subscriber
   }
 
   public long currentTimeMillis() {
-    return myCluster.currentTimeMillis();
+    return alarmService.currentTimeMillis();
   }
 
   /**
@@ -493,7 +496,7 @@ public class Blackboard extends Subscriber
    */
   public void appendMessagesToSend(List messages) {
     
-    // FIXME - prefill cache of aba roles to ClusterIDs here, instead of building up a cache
+    // FIXME - prefill cache of aba roles to addresses here, instead of building up a cache
     // fillCache();
     
     for (Iterator iter = sendQueue.iterator(); iter.hasNext(); ) {
@@ -531,7 +534,7 @@ public class Blackboard extends Subscriber
       } // done with aba handling
       
       /**
-       * dest is regular ClusterID so proceed as before 
+       * dest is regular address so proceed as before 
        */
       else {
         Object key = getDirectiveKeyOfDestination(dest);
@@ -556,7 +559,7 @@ public class Blackboard extends Subscriber
         Directive[] directives = (Directive[]) dirs.toArray(new Directive[size]);
         DirectiveMessage ndm = new DirectiveMessage(directives);
 	ndm.setDestination(tmpci);
-        ndm.setSource(myCluster.getMessageAddress());
+        ndm.setSource(self);
         messages.add(ndm);
         dirs.clear();
       }
@@ -604,13 +607,13 @@ public class Blackboard extends Subscriber
   // Distributor
   //
   private Distributor createDistributor(
-      ClusterServesLogicProvider cluster,
+      IntraAgentMessageTransportService iamts,
       Object state) {
-    Distributor d = new Distributor(this, cluster.getMessageAddress().getAddress());
-    Persistence persistence = createPersistence(cluster);
+    Distributor d = new Distributor(this, self.getAddress());
+    Persistence persistence = createPersistence();
     boolean lazyPersistence = System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
     d.setPersistence(persistence, lazyPersistence);
-    d.start(cluster, state);       // cluster, state
+    d.start(iamts, state);       // iamts, state
 
     return d;
   }
@@ -625,7 +628,7 @@ public class Blackboard extends Subscriber
     return myDistributor;
   }
 
-  protected Persistence createPersistence(ClusterServesLogicProvider cluster) {
+  protected Persistence createPersistence() {
     try {
       Persistence result = BasePersistence.find(myServiceBroker);
       if (System.getProperty("org.cougaar.core.persistence.disableWrite", "false").equals("true")) {

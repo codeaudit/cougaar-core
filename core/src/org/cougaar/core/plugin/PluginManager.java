@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BindingSite;
@@ -40,11 +39,11 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
 
 /** A container for Plugin Components.
  * <p>
@@ -60,27 +59,30 @@ public class PluginManager
   public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".PluginManager";
 
   private Object loadState = null;
-  private final Logger logger;
+  private ServiceBroker sb;
+  private LoggingService logger;
+  private MessageAddress agentId;
+  private AgentIdentificationService agentIdService;
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
-    logger = Logging.getLogger(this.getClass());
   }
-
-  protected final Logger getLogger() { return logger; }
-
-  private AgentChildBindingSite bindingSite = null;
   
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof AgentChildBindingSite) {
-      bindingSite = (AgentChildBindingSite) bs;
-      setChildServiceBroker(new PluginManagerServiceBroker(bs));
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bs);
-    }
+    sb = bs.getServiceBroker();
+    setChildServiceBroker(new PluginManagerServiceBroker(bs));
+  }
+
+  public void setLoggingService(LoggingService logger) {
+    this.logger = logger;
+  }
+
+  public void setAgentIdentificationService(AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    this.agentId = ais.getMessageAddress();
   }
 
   public void setState(Object loadState) {
@@ -99,8 +101,7 @@ public class PluginManager
       return new ComponentDescriptions(l);
     } else {
       // display the agent id
-      MessageAddress cid = getBindingSite().getAgentIdentifier();
-      String cname = cid.toString();
+      String cname = agentId.toString();
 
       ServiceBroker sb = getServiceBroker();
       ComponentInitializerService cis = (ComponentInitializerService)
@@ -120,20 +121,17 @@ public class PluginManager
   }
 
   public boolean add(Object o) {
-    Logger l = getLogger();
     try {
-      if (l.isInfoEnabled()) {
-        MessageAddress cid = getBindingSite().getAgentIdentifier();
-        l.info("Agent "+cid+" adding plugin "+o);
+      if (logger.isInfoEnabled()) {
+        logger.info("Agent "+agentId+" adding plugin "+o);
       }
       boolean result = super.add(o);
-      if (l.isInfoEnabled()) {
-        MessageAddress cid = getBindingSite().getAgentIdentifier();
-        l.info("Agent "+cid+" added plugin "+o);
+      if (logger.isInfoEnabled()) {
+        logger.info("Agent "+agentId+" added plugin "+o);
       }
       return result;
     } catch (RuntimeException re) {
-      getLogger().error("Failed to add "+o+" to "+this, re);
+      logger.error("Failed to add "+o+" to "+this, re);
       throw re;
     }
   }
@@ -162,9 +160,6 @@ public class PluginManager
   // binding services
   //
 
-  protected final AgentChildBindingSite getBindingSite() {
-    return bindingSite;
-  }
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();
   }
@@ -182,6 +177,9 @@ public class PluginManager
         }
         public void requestStop() {}
         public MessageAddress getAgentIdentifier() {
+          if (PluginManager.this.getAgentIdentifier() == null) {
+            throw new RuntimeException("TWRIGHT null agent-id!");
+          }
           return PluginManager.this.getAgentIdentifier();
         }
         public ConfigFinder getConfigFinder() {
@@ -251,6 +249,17 @@ public class PluginManager
       Binder b = (Binder) childBinders.get(i);
       b.unload();
     }
+    // release services
+    if (agentIdService != null) {
+      sb.releaseService(
+          this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
+    if (logger != null) {
+      sb.releaseService(
+          this, LoggingService.class, logger);
+      logger = null;
+    }
   }
 
   //
@@ -270,16 +279,16 @@ public class PluginManager
   //
   
   public MessageAddress getMessageAddress() {
-    return (MessageAddress)getAgentIdentifier();
+    return agentId;
   }
   public MessageAddress getAgentIdentifier() {
-    return getBindingSite().getAgentIdentifier();
+    return agentId;
   }
   public ConfigFinder getConfigFinder() {
-    return getBindingSite().getConfigFinder();
+    return ConfigFinder.getInstance(); // FIXME replace with service
   }
   public String toString() {
-    return getAgentIdentifier().toString()+"/PluginManager";
+    return agentId+"/PluginManager";
   }
 
 }

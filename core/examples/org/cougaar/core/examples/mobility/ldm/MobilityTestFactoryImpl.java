@@ -21,7 +21,7 @@
 package org.cougaar.core.examples.mobility.ldm;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.UIDServer;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 
 /**
@@ -30,31 +30,31 @@ import org.cougaar.core.util.UID;
 class MobilityTestFactoryImpl implements MobilityTestFactory {
 
   private final MessageAddress self;
-  private final UIDServer uidServer;
+  private final UIDService uidService;
 
   public MobilityTestFactoryImpl(
       MessageAddress self,
-      UIDServer uidServer) {
+      UIDService uidService) {
     this.self = self;
-    this.uidServer = uidServer;
+    this.uidService = uidService;
   }
 
   public Script createScript(String text) {
-    UID uid = uidServer.nextUID();
+    UID uid = uidService.nextUID();
     Script script = new ScriptImpl(uid, text);
     return script;
   }
 
   public Proc createProc(UID scriptUID) {
     // verify that a matching script exists
-    UID uid = uidServer.nextUID();
+    UID uid = uidService.nextUID();
     long nowTime = System.currentTimeMillis();
     Proc proc = new ProcImpl(uid, scriptUID, nowTime);
     return proc;
   }
 
   public Step createStep(StepOptions options) {
-    UID uid = uidServer.nextUID();
+    UID uid = uidService.nextUID();
     MessageAddress actorAgent = options.getTarget();
     if ((actorAgent == null) ||
         (actorAgent.equals(self))) {

@@ -29,17 +29,11 @@ import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.PublishableAdapter;
 import org.cougaar.core.blackboard.BlackboardException;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.util.XMLizable;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 
 import org.cougaar.core.blackboard.Transaction;
 import org.cougaar.core.agent.*;
-
-import org.cougaar.core.util.XMLize;
 
 import org.cougaar.util.log.*;
 
@@ -69,7 +63,7 @@ import org.cougaar.util.log.Logger;
 
 public abstract class PlanElementImpl 
   extends PublishableAdapter
-  implements PlanElement, NewPlanElement, PEforCollections, ScheduleElement, XMLizable, ActiveSubscriptionObject, ActivePersistenceObject, BeanInfo
+  implements PlanElement, NewPlanElement, PEforCollections, ScheduleElement, ActiveSubscriptionObject, ActivePersistenceObject, BeanInfo
 {
         
   protected transient Task task;   // changed to transient : Persistence
@@ -458,13 +452,6 @@ public abstract class PlanElementImpl
   }
   public Annotation getAnnotation() {
     return myAnnotation;
-  }
-
-  // 
-  // XMLizable method for UI, other clients
-  //
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this,doc);
   }
 
   //dummy PropertyChangeSupport for the Jess Interpreter.

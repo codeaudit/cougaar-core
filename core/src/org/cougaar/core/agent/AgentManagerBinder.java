@@ -26,7 +26,6 @@ import org.cougaar.core.component.BinderSupport;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ContainerAPI;
-import org.cougaar.core.node.NodeForBinder;
 
 /** The standard Binder for AgentManagers and possibly others attaching to a Node.
  **/
@@ -38,16 +37,6 @@ public class AgentManagerBinder extends BinderSupport
     super(parentInterface, child);
   }
 
-  //child
-  protected final AgentManager getAgentManager() {
-    return (AgentManager) getComponent();
-  }
-
-  //parent
-  protected final NodeForBinder getNode() {
-    return (NodeForBinder)getContainer();
-  }
-  
   /** Defines a pass-through insulation layer to ensure that the plugin cannot 
    * downcast the BindingSite to the Binder and gain control via introspection
    * and/or knowledge of the Binder class.  This is neccessary when Binders do
@@ -57,17 +46,4 @@ public class AgentManagerBinder extends BinderSupport
     // do the right thing later
     return this;
   }
-
-  public String toString() {
-    return "AgentManagerBinder for "+getAgentManager();
-  }
-
-  //backwards compatability pass thrus
-  public String getIdentifier() {
-    return getNode().getIdentifier();
-  }
-  public String getName() {
-    return getNode().getName();
-  }
-
 }

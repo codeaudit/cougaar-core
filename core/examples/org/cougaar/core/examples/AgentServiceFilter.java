@@ -56,25 +56,6 @@ extends ServiceFilter
       super(bf,child);
     }
 
-    public MessageAddress getAgentIdentifier() {
-      AgentBinder ab = (AgentBinder) getChildBinder();
-      MessageAddress ret = ab.getAgentIdentifier();
-      System.out.println("Agent "+ret+" wrapper: get agent-id from binder "+ab);
-      return ret;
-    }
-
-    public Agent getAgent() {
-      AgentBinder ab = (AgentBinder) getChildBinder();
-      MessageAddress addr = ab.getAgentIdentifier();
-      Agent ret = ab.getAgent();
-      System.out.println("Agent "+addr+" wrapper: get agent from binder "+ab);
-      return ret;
-    }
-
-    protected final AgentManagerForBinder getAgentManager() { 
-      return (AgentManagerForBinder) getContainer(); 
-    }
-
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
     protected ContainerAPI createContainerProxy() { 
@@ -89,11 +70,7 @@ extends ServiceFilter
     // this class implements a simple proxy for a plugin wrapper binder
     protected class AgentFilteringBinderProxy
       extends ServiceFilterContainerProxy
-      implements AgentManagerForBinder
     {
-      public String getName() {
-        return getAgentManager().getName();
-      }
     }
 
 

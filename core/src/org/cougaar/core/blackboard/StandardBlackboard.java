@@ -23,9 +23,7 @@ package org.cougaar.core.blackboard;
 
 import java.util.List;
 import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.ContainerSupport;
@@ -35,6 +33,7 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.service.BlackboardMetricsService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.core.service.IntraAgentMessageTransportService;
 
 /** The standard Blackboard Component implementation.
  * For now it just looks like a container but doesn't
@@ -44,21 +43,21 @@ public class StandardBlackboard
   extends ContainerSupport
   implements StateObject
 {
-  private AgentChildBindingSite bindingSite = null;
+  private ServiceBroker sb = null;
+  private BindingSite bindingSite = null;
   private Object loadState = null;
   private Blackboard bb = null;
   private Distributor d = null;
+
+  private IntraAgentMessageTransportService iamts;
 
   private BlackboardForAgentServiceProvider bbAgentSP;
   private BlackboardServiceProvider bbSP;
   
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
-    if (bs instanceof AgentChildBindingSite) {
-      bindingSite = (AgentChildBindingSite) bs;
-    } else {
-      throw new RuntimeException("Tried to load "+this+"into " + bs);
-    }
+    this.bindingSite = bs;
+    this.sb = bs.getServiceBroker();
   }
 
   public void setState(Object loadState) {
@@ -74,12 +73,22 @@ public class StandardBlackboard
     }
   }
 
+  public void setIntraAgentMessageTransportService(
+      IntraAgentMessageTransportService iamts) {
+    this.iamts = iamts;
+  }
+
   public void load() {
     super.load();
-    ServiceBroker sb = bindingSite.getServiceBroker();
+
+    if (iamts == null) {
+      throw new RuntimeException(
+          "Unable to obtain intra-agent MTS, which is required for the"+
+          " blackboard to send messages!");
+    }
 
     // create blackboard with optional prior-state
-    bb = new Blackboard(bindingSite.getCluster(), sb, loadState);
+    bb = new Blackboard(iamts, sb, loadState);
     loadState = null;
 
     bb.init();
@@ -105,21 +114,22 @@ public class StandardBlackboard
     super.unload();
     
     // unload services in reverse order of "load()"
-    ServiceBroker sb = bindingSite.getServiceBroker();
     sb.revokeService(BlackboardMetricsService.class, bbSP);
     sb.revokeService(BlackboardService.class, bbSP);
     sb.revokeService(BlackboardForAgent.class, bbAgentSP);
 
     bb.stop();
+    if (iamts != null) {
+      sb.releaseService(
+          this, IntraAgentMessageTransportService.class, iamts);
+      iamts = null;
+    }
   }
 
   //
   // binding services
   //
 
-  protected final AgentChildBindingSite getBindingSite() {
-    return bindingSite;
-  }
   protected String specifyContainmentPoint() {
     return Blackboard.INSERTION_POINT;
   }

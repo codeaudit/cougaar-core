@@ -33,11 +33,11 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
+import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerAdapter;
@@ -384,12 +384,12 @@ final class Distributor {
    * privately.
    **/
   public void start(
-      ClusterServesLogicProvider theCluster, Object state) {
+      IntraAgentMessageTransportService iamts, Object state) {
     assert !Thread.holdsLock(distributorLock);
     assert !Thread.holdsLock(transactionLock);
     synchronized (distributorLock) {
       rehydrate(state);
-      getMessageManager().start(theCluster, didRehydrate);
+      getMessageManager().start(iamts, didRehydrate);
 
       if (lazyPersistence && distributorTimer == null) {
         distributorTimer = new Timer();

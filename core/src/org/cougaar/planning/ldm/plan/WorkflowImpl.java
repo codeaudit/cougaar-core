@@ -21,17 +21,12 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.w3c.dom.Element;
-import org.w3c.dom.Document;
-
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 import org.cougaar.core.blackboard.ClaimableImpl;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.util.XMLizable;
-import org.cougaar.core.util.XMLize;
 import org.cougaar.util.Empty;
 
 import java.util.Vector;
@@ -53,7 +48,7 @@ import org.cougaar.core.util.UID;
 
 public class WorkflowImpl
   extends ClaimableImpl
-  implements Workflow, NewWorkflow, XMLizable, java.io.Serializable
+  implements Workflow, NewWorkflow, java.io.Serializable
 {
   private transient Task basetask;
   // protected access for MPWorkflowImpl
@@ -544,13 +539,6 @@ public class WorkflowImpl
     }
 
     return l;
-  }
-
-  //
-  // XMLizable method for UI, other clients
-  //
-  public Element getXML(Document doc) {
-    return XMLize.getPlanObjectXML(this,doc);
   }
 
   private transient Annotation myAnnotation = null;

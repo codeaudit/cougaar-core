@@ -40,25 +40,8 @@ implements AgentBinder, AgentBindingSite
     super(bf, child);
   }
 
-  public final MessageAddress getAgentIdentifier() {
-    return getAgent().getAgentIdentifier();
-  }
-
-  public final Agent getAgent() {
-    return (Agent) getComponent();
-  }
-
-  protected final AgentManagerForBinder getAgentManager() {
-    return (AgentManagerForBinder)getContainer();
-  }
   protected final BindingSite getBinderProxy() {
     // horribly unsecure! Means that the component has full access to the binder.
     return (BindingSite) this;
   }
-
-  public String toString() {
-    return getAgent() + "'s AgentManagerBinder";
-  }
-
-  public String getName() {return getAgentManager().getName(); }
 }

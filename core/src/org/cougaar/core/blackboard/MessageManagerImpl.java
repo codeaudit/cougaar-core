@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.TreeSet;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.core.service.IntraAgentMessageTransportService;
 import org.cougaar.util.StringUtility;
 
 class MessageManagerImpl implements MessageManager, Serializable {
@@ -57,8 +57,9 @@ class MessageManagerImpl implements MessageManager, Serializable {
 
   private boolean USE_MESSAGE_MANAGER = false;
 
-  /** The provider of our cluster services **/
-  private transient ClusterServesLogicProvider myCluster;
+  /** The agent's mts **/
+  private transient MessageAddress self;
+  private transient IntraAgentMessageTransportService iamts;
 
   private transient String clusterNameForLog;
 
@@ -195,7 +196,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     public AckDirectiveMessage getAcknowledgement() {
       int firstZero = ackSet.getMinSequence();
       AckDirectiveMessage ack = new AckDirectiveMessage(getMessageAddress(),
-                                                        myCluster.getMessageAddress(),
+                                                        self,
                                                         firstZero - 1,
                                                         remoteIncarnationNumber);
       needSendAcknowledgement = false;
@@ -297,7 +298,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     public void send(long now) {
-      myCluster.sendMessage(getMessage());
+      iamts.sendMessage(getMessage());
       long nextRetransmission =
         now + retransmitSchedule[Math.min(nTries++, retransmitSchedule.length - 1)];
       setTimestamp(nextRetransmission);
@@ -325,7 +326,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
     }
 
     public MessageAddress getSource() {
-      return myCluster.getMessageAddress();
+      return self;
     }
 
     public int getSequenceNumber() {
@@ -369,14 +370,15 @@ class MessageManagerImpl implements MessageManager, Serializable {
     USE_MESSAGE_MANAGER = enable;
   }
 
-  public void start(ClusterServesLogicProvider aCluster, boolean didRehydrate) {
-    myCluster = aCluster;
-    String clusterName = aCluster.getMessageAddress().getAddress();
+  public void start(IntraAgentMessageTransportService iamts, boolean didRehydrate) {
+    self = iamts.getMessageAddress();
+    this.iamts = iamts;
+    String clusterName = self.getAddress();
     clusterNameForLog = "               ".substring(Math.min(14, clusterName.length())) + clusterName + " ";
     if (debug) {
       try {
         logWriter = new PrintWriter(new FileWriter("MessageManager_" +
-                                                   aCluster.getMessageAddress().getAddress() +
+                                                   clusterName +
                                                    ".log",
                                                    true || didRehydrate));
         printLog("MessageManager Started");
@@ -414,7 +416,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       if (info.getFirstOutstandingMessage() == null) {
         if (now > info.getTransmissionTime() + KEEP_ALIVE_INTERVAL) {
           DirectiveMessage ndm =
-            new DirectiveMessage(myCluster.getMessageAddress(),
+            new DirectiveMessage(self,
                                  info.getMessageAddress(),
                                  info.getLocalIncarnationNumber(),
                                  directives);
@@ -513,7 +515,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
       }
     } else {
       while (messages.hasNext()) {
-        myCluster.sendMessage((DirectiveMessage) messages.next());
+        iamts.sendMessage((DirectiveMessage) messages.next());
       }
     }
   }
@@ -521,7 +523,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
   private Directive[] emptyDirectives = new Directive[0];
 
   private void sendInitializeMessage(ClusterInfo info) {
-    DirectiveMessage msg = new DirectiveMessage(myCluster.getMessageAddress(),
+    DirectiveMessage msg = new DirectiveMessage(self,
                                                 info.getMessageAddress(),
                                                 info.getLocalIncarnationNumber(),
                                                 emptyDirectives);
@@ -781,7 +783,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
         for (Iterator iter = acksToSend.iterator(); iter.hasNext(); ) {
           AckDirectiveMessage ack = (AckDirectiveMessage) iter.next();
           if (debug) printMessage("SAck", ack);
-          myCluster.sendMessage(ack);
+          iamts.sendMessage(ack);
         }
         acksToSend.clear();
       }
