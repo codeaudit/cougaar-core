@@ -1,3 +1,12 @@
+2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ServiceUserPlugin.java: Base class for plugins using services
+	that provided by other plugins. Supports waiting until all
+	services are available before running.
+
+	* ComponentPlugin.java:
+	Set thread name to plugin name when running the plugin.
+
 2002-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ComponentPlugin.java:

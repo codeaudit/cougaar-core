@@ -1,3 +1,36 @@
+2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Changes to support persistence adaptivity.
+
+	* org/cougaar/core/adaptivity/Parser.java:
+	Make [] be word characters to allow names of the form:
+	[agent.3ID].Plugin.control
+
+	* org/cougaar/core/adaptivity/OperatingModePolicy.java: 
+	* org/cougaar/core/adaptivity/InterAgentOperatingModePolicy.java:
+	Add constructor taking PolicyKernel.
+
+	* org/cougaar/core/adaptivity/ThreatconTestPlugin.java: 
+	* org/cougaar/core/adaptivity/TaskRateSensorPlugin.java: 
+	* org/cougaar/core/adaptivity/PolicyTestPlugin.java: 
+	* org/cougaar/core/adaptivity/PlaybookManager.java: 
+	* org/cougaar/core/adaptivity/Playbook.java: 
+	* org/cougaar/core/adaptivity/PlayHelper.java: 
+	* org/cougaar/core/adaptivity/CPUTestPlugin.java: 
+	* org/cougaar/core/adaptivity/CPURemoteTestPlugin.java: 
+	* org/cougaar/core/adaptivity/AdaptivityEngine.java:
+	Separate playbook management functions into a separate component.
+	Beginning of implementation of interface to
+	InterAgentOperatingModePolicy.
+
+	* org/cougaar/core/adaptivity/OMCRangeList.java: 
+	* org/cougaar/core/adaptivity/OMCRange.java: 
+	* org/cougaar/core/adaptivity/ConstrainingClause.java: 
+	* org/cougaar/core/adaptivity/PlayBase.java: 
+	Add equals methods to various classes to facilitate change
+	detection.
+
 2002-04-05  Todd Wright  <twright@bbn.com>
 
 	* org/cougaar/core/blackboard/AnonymousChangeReport.java:
