@@ -34,7 +34,7 @@ import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.cluster.ClusterInitializedMessage;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.util.ConfigFileFinder;
+import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.PropertyTree;
 
 import java.beans.Beans;
@@ -61,7 +61,8 @@ import java.beans.Beans;
 * <li>-p     Port. allows you to specifcy a port number to run nameserver on.  Default = random </li>
 * </ul>
 **/
-public class Node implements ArgTableIfc, ClusterManagementServesCluster
+public class Node 
+implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
 {
   public static int NSPortNo;
   public static String NSHost = "127.0.0.1";
@@ -81,10 +82,30 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     disableRetransmission = Boolean.getBoolean("org.cougaar.core.cluster.persistence.enable");
   }
 
-  private String id = null;
-  public String getIdentifier() { return id; }
+  private NodeIdentifier myNodeIdentity_ = null;
 
-  public void setIdentifier(String s) { id = s; }
+  public String getIdentifier() {
+    return 
+      ((myNodeIdentity_ != null) ? 
+       myNodeIdentity_.getAddress() :
+       null);
+  }
+
+  public NodeIdentifier getNodeIdentifier() {
+    return myNodeIdentity_;
+  }
+
+  public void setNodeIdentifier(NodeIdentifier aNodeIdentifier) {
+    if (myNodeIdentity_ != null) {
+      throw new RuntimeException(
+          "Attempt to over-ride NodeIdentity detected.");
+    }
+    myNodeIdentity_ = aNodeIdentifier;
+  }
+
+  public String toString() {
+    return "<Node "+getIdentifier()+">";
+  }
 
   /**
    * Node entry point.
@@ -108,20 +129,22 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     // quickly walk through the args and process any
     // that match -D
     Properties debugProperties = new Properties();
-    Vector revisedArgs = new Vector(); // elements of args not related to -D values
-    for ( int i=0; i<args.length; i+=1 ){
+    // elements of args not related to -D values
+    List revisedArgs = new ArrayList();
+    for (int i = 0; i < args.length; i++) {
       if (args[i].startsWith("-D")) {
         debugProperties.put(args[i].substring(2), Boolean.TRUE);
       } else {
         // process a non -D argument
-        revisedArgs.addElement(args[i]);
+        revisedArgs.add(args[i]);
       }
     }
 
     // now, swap in the revised Argument listing
     String[] replacementArgs = new String[revisedArgs.size()];
-    for ( int i=0; i<revisedArgs.size(); i+=1 )
-      replacementArgs[i]=(String)revisedArgs.elementAt(i);
+    for (int i = 0; i < revisedArgs.size(); i++) {
+      replacementArgs[i] = (String)revisedArgs.get(i);
+    }
     args = replacementArgs;
 
     Node myNode = null;
@@ -129,13 +152,13 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
 
     // <START_PLUGIN_JAR_VALIDATION>
     String validateJars = (String)myArgs.get(SIGNED_PLUGIN_JARS);
-    if( validateJars != null) {
-      {
-        boolean isValid = validatePluginJarsByStream();
-        if( isValid == false ) {
-          throw new RuntimeException("Error!  Found unsigned jars in plugin directory!");
-        }
-      }
+    if (validateJars == null) {
+      // not validating
+    } else if (validatePluginJarsByStream()) {
+      // validation succeeded
+    } else {
+      throw new RuntimeException(
+          "Error!  Found unsigned jars in plugin directory!");
     }
     // </START_PLUGIN_JAR_VALIDATION>
 
@@ -174,17 +197,17 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
       myNode = new Node(myArgs);
       myNode.initNode();
       // done with our job... quietly finish.
-    }
-    catch(Exception e){
-      System.out.println("Caught an exception at the highest try block.  Exception is: " + e );
+    } catch (Exception e) {
+      System.out.println(
+          "Caught an exception at the highest try block.  Exception is: " +
+          e );
       e.printStackTrace();
     }
   }
 
 
   /** Returns true if all plugin jars are signed, else false **/
-  private static boolean validatePluginJarsByStream()
-  {
+  private static boolean validatePluginJarsByStream() {
     Properties props = System.getProperties();
     String jarSubdirectory = "plugins";
     String installpath = props.getProperty("org.cougaar.install.path");
@@ -192,7 +215,7 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
       + File.separatorChar + "alpcertfile.cer";
 
     String certPath = props.getProperty("org.cougaar.security.certificate",
-                                        defaultCertPath);
+        defaultCertPath);
 
     try{
       String files[] = searchForJars(jarSubdirectory, installpath);
@@ -203,74 +226,85 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
 
       java.security.cert.Certificate myCert = null;
       myCert = getAlpineCertificate(myCertFile);
-      for(int i=0; i<files.length; i++)
-        {
-          String filename = files[i];
+      for (int i=0; i<files.length; i++) {
+        String filename = files[i];
 
-          File f = new File(
-                            installpath+File.separatorChar
-                            +jarSubdirectory+File.separatorChar+filename);
-          System.out.println("Testing Plugin Jar ("
-                             + f.toString() +")");
-          FileInputStream fis = new FileInputStream(f);
-          JarInputStream jis = new  JarInputStream( fis );
-          try{
-            JarEntry je=null;
-            while( null != (je = jis.getNextJarEntry()) ) {
-              cache.addElement(je);
-            }
-          } catch( IOException ioex ) {
-            // silent
+        File f = new File(
+            installpath+File.separatorChar+
+            jarSubdirectory+File.separatorChar+filename);
+        System.out.println("Testing Plugin Jar ("+
+            f.toString() +")");
+        FileInputStream fis = new FileInputStream(f);
+        JarInputStream jis = new  JarInputStream(fis);
+        try {
+          JarEntry je=null;
+          while (null != (je = jis.getNextJarEntry())) {
+            cache.addElement(je);
           }
-
-          //
-          // According to documentation -
-          // certificates apparently are not valid until end/stream
-          // reached -- hence
-          // cache/then de-reference Certificates to be really sure.
-          //
-          Enumeration en = cache.elements();
-          long sumUnsigned=0;
-          long sumSigned=0;
-          long sumMatchCerts=0;
-          long sumUnMatchedCerts=0;
-          while( en.hasMoreElements() )
-            {
-              JarEntry je = (JarEntry)en.nextElement();
-              java.security.cert.Certificate[] certs = je.getCertificates();
-              if( certs == null ){
-                //  directories are unsigned -- so if jars contain
-                //  directory hierarchy structures (ala packages)
-                //  these will show up.
-                sumUnsigned++;
-                //System.out.println("Unsigned Klass:" + je.getName());
-              } else {
-                int len = certs.length;
-                boolean anymatch = false;
-                for(int j=0;j<len;j++) {
-                  java.security.cert.Certificate cc = certs[j];
-                  if( cc.equals(myCert) == true ){ anymatch = true; }
-                }
-                if( anymatch == true ) {
-                  sumMatchCerts++;
-                }else {
-                  sumUnMatchedCerts++;
-                }
-                sumSigned++;
-              }
-              //System.out.println(""+  je.getName() +" certs=" + certs);
-            }
-          System.out.print("        sigs:(" + sumUnsigned + "," + sumSigned + ")");
-          if(sumSigned  == 0 ) System.out.println("...JAR FILE IS UNSIGNED.");
-          else System.out.println("...JAR FILE IS SIGNED.");
-
-          System.out.print("        alpcerts:(" + sumMatchCerts + "," + sumUnMatchedCerts + ")");
-          if( (sumUnMatchedCerts  == 0) && (sumMatchCerts >0) ) System.out.println("...ALPINE CERTIFIED.");
-          else System.out.println("...NOT ALPINE CERTIFIED.");
-
-          /// CRASH THE PARTY IF PLUGINS ARE UNSIGNED...
-          if( (sumSigned == 0) || (sumMatchCerts == 0) ) return false;
+        } catch( IOException ioex ) {
+          // silent
         }
+
+        //
+        // According to documentation -
+        // certificates apparently are not valid until end/stream
+        // reached -- hence
+        // cache/then de-reference Certificates to be really sure.
+        //
+        Enumeration en = cache.elements();
+        long sumUnsigned=0;
+        long sumSigned=0;
+        long sumMatchCerts=0;
+        long sumUnMatchedCerts=0;
+        while (en.hasMoreElements()) {
+          JarEntry je = (JarEntry)en.nextElement();
+          java.security.cert.Certificate[] certs = je.getCertificates();
+          if (certs == null) {
+            //  directories are unsigned -- so if jars contain
+            //  directory hierarchy structures (ala packages)
+            //  these will show up.
+            sumUnsigned++;
+            //System.out.println("Unsigned Klass:" + je.getName());
+          } else {
+            int len = certs.length;
+            boolean anymatch = false;
+            for (int j = 0; j < len; j++) {
+              java.security.cert.Certificate cc = certs[j];
+              if (cc.equals(myCert)) {
+                anymatch = true; 
+              }
+            }
+            if (anymatch) {
+              sumMatchCerts++;
+            } else {
+              sumUnMatchedCerts++;
+            }
+            sumSigned++;
+          }
+          //System.out.println(""+  je.getName() +" certs=" + certs);
+        }
+        System.out.print(
+            "        sigs:(" + sumUnsigned + "," + sumSigned + ")");
+        if (sumSigned == 0) {
+          System.out.println("...JAR FILE IS UNSIGNED.");
+        } else {
+          System.out.println("...JAR FILE IS SIGNED.");
+        }
+
+        System.out.print(
+            "        alpcerts:(" +
+            sumMatchCerts + "," + sumUnMatchedCerts + ")");
+        if ((sumUnMatchedCerts == 0) && (sumMatchCerts > 0)) {
+          System.out.println("...ALPINE CERTIFIED.");
+        } else {
+          System.out.println("...NOT ALPINE CERTIFIED.");
+        }
+
+        /// CRASH THE PARTY IF PLUGINS ARE UNSIGNED...
+        if ((sumSigned == 0) || (sumMatchCerts == 0)) {
+          return false;
+        }
+      }
     }catch (Exception ex) {
       ex.printStackTrace();
     }
@@ -282,25 +316,26 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   {
     String[] files = new String[0];
     File d = new File(installpath+File.separatorChar+subdir);
-    System.out.println("Searching for plugin jars in directory: " + d.toString());
-    if (d.exists() && d.isDirectory())
-    {
+    System.out.println(
+        "Searching for plugin jars in directory: " + d.toString());
+    if (d.exists() && d.isDirectory()) {
       files = d.list(
-                     new FilenameFilter() {
-                         public boolean accept(File dir, String name) {
-                           return (name.endsWith(".jar") ||
-                                   name.endsWith(".zip"));
-                         }
-                       }
-                     );
+          new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+              return (name.endsWith(".jar") ||
+                name.endsWith(".zip"));
+              }
+            }
+          );
     }
     return files;
   }
 
-  private static java.security.cert.Certificate getAlpineCertificate(File myCertFile) {
+  private static java.security.cert.Certificate getAlpineCertificate(
+      File myCertFile) {
 
     java.security.cert.Certificate cert = null;
-    try{
+    try {
       FileInputStream fis = new FileInputStream(myCertFile);
       DataInputStream dis = new DataInputStream(fis);
 
@@ -345,13 +380,13 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
    *   @return Node Refernce to the object just created by the new keyword
    *    @exception UnknownHostException IF the host can not be determined
    **/
-  public Node( ArgTable someArgs, Integer port ) throws UnknownHostException {
+  public Node(ArgTable someArgs, Integer port) throws UnknownHostException {
     super();
-    setArgs( someArgs );
+    setArgs(someArgs);
   }
-    
+
   public Node(ArgTable someArgs) throws UnknownHostException {
-    setArgs( someArgs );
+    setArgs(someArgs);
   }
 
   /**
@@ -365,7 +400,7 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
    **/
   protected void cleanup(){
   }
-    
+
   /**
    *   Returns name of computer platform as an String version of an IPAddress
    *   <p><PRE>
@@ -412,14 +447,18 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
    *   <p>
    *   @return ArgTable  The container that conatins references to all theArgs 
    **/
-  protected final ArgTable getArgs(){ return theArgs; }
+  protected final ArgTable getArgs() {
+    return theArgs; 
+  }
 
   /**
-   *   Accessor method for theClusters
-   *   <p>
-   *   @return SetOfObject  The container that conatins references to all the cluster objects
+   * Accessor method for theClusters
+   * <p>
+   * @return A Vector that contains references to all the cluster objects
    **/
-  public final Vector getClusters(){ return theClusters; }
+  public final Vector getClusters() {
+    return theClusters; 
+  }
 
   /** Refernece containing the Messenger **/
   private transient MessageTransport theMessenger = null;
@@ -429,33 +468,41 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
    *   <p>
    *   @return Messenger The threaded messenger component of the node as referenced by theMessenger
    **/
-  protected MessageTransport getMessenger(){ return theMessenger; }
-
-  /**
-   * 	Post a message to the destination's message queue
-   *	@param aMessage The message object to post into the system.
-   **/
-  public final void sendMessage( Message aMessage ) throws MessageTransportException {
-    theMessenger.sendMessage(aMessage);
+  protected MessageTransport getMessenger() { 
+    return theMessenger; 
   }
 
   /**
-   *    This method provides the initialization of a Node.  This use to be part of the 
-   *    Node constructor but is isolated here
+   * Post a message to the destination's message queue
+   * @param aMessage The message object to post into the system.
+   **/
+  public final void sendMessage(Message aMessage) 
+    throws MessageTransportException {
+      theMessenger.sendMessage(aMessage);
+    }
+
+  public ConfigFinder getConfigFinder() {
+    return ConfigFinder.getInstance();
+  }
+
+  /**
+   *    This method provides the initialization of a Node.
    *    <p>
    *    @exception UnknownHostException IF the host can not be determined
    **/  
-  protected void initNode() throws UnknownHostException
-  {
+  protected void initNode() throws UnknownHostException {
     String name = null;
-    if(getArgs().containsKey(NAME_KEY)) {
-      name = (String)getArgs().get( NAME_KEY );
+    if (getArgs().containsKey(NAME_KEY)) {
+      name = (String)getArgs().get(NAME_KEY);
     } else {
       name = System.getProperty("org.cougaar.node.name");
     }
-    if (name == null) name = findHostName();
+    if (name == null) {
+      name = findHostName();
+    }
 
-    setIdentifier(name);
+    NodeIdentifier nid = new NodeIdentifier(name);
+    setNodeIdentifier(nid);
 
     if (getArgs() != null && 
         (getArgs().containsKey(REGISTRY_KEY) || 
@@ -472,15 +519,25 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     PropertyTree nodePT;
     try {
       // currently assumes ".ini" format
-      InputStream in = ConfigFileFinder.open(filename);
+      InputStream in = getConfigFinder().open(filename);
       nodePT = NodeINIParser.parse(in);
     } catch (Exception e) {
       throw new RuntimeException(
           "Unable to parse node \""+name+"\" file \""+filename+"\"");
     }
 
-    initTransport();  // set up the message handler
-    loadClusters(nodePT); // set up the clusters.
+    // set up the message handler and register this Node
+    initTransport();  
+
+    // load the clusters with an "AddClustersMessage".  It's fine to send
+    // the entire "nodePT", since only the "clusters" entry is used.
+    //OLD: loadClusters(nodePT);
+    AddClustersMessage myMessage = new AddClustersMessage();
+    myMessage.setOriginator(nid);
+    myMessage.setTarget(nid);
+    myMessage.setPropertyTree(nodePT);
+    // bypass the message system to send the message directly.
+    this.receiveMessage(myMessage);
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
@@ -496,98 +553,111 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     theMessenger.setDisableRetransmission(disableRetransmission);
     theMessenger.start();
     System.err.println("Started "+theMessenger);
+    theMessenger.registerClient(this);
   }
 
   /**
-   * This method is responsible for creating the AlpProcesses for the node.
+   * This method is responsible for creating the Clusters for this Node.
    **/
-  protected void loadClusters(PropertyTree nodePT) {
-    Vector someClusters = new Vector();
+  protected void loadClusters(PropertyTree addClustersPT) {
+    // get the list of cluster entries from the PropertyTree
+    List clusterEntries;
+    try {
+      clusterEntries = (List)addClustersPT.get("clusters");
+    } catch (Exception e) {
+      // illegal format!
+      clusterEntries = null;
+    }
+    int nClusterEntries = 
+      ((clusterEntries != null) ? clusterEntries.size() : 0);
 
-    //First get a list of processes form the profilier
-    List clusterNames = (List)nodePT.get("clusters");
-    int nClusters = ((clusterNames != null) ? clusterNames.size() : 0);
-    if (nClusters > 0) {
-
-      // create the clusters
-      System.err.println("Creating Clusters:");
-      List clusterProperties = new ArrayList();
-      for (int i = 0; i < nClusters; i++) {
-        String cname = (String)clusterNames.get(i);
-        System.err.println("\t"+cname);
-        // parse the cluster properties
-        PropertyTree clusterPT;
-        try {
-          // currently assume ".ini" files
-          String fname = cname+".ini";
-          InputStream in = ConfigFileFinder.open(fname);
-          clusterPT = ClusterINIParser.parse(in);
-        } catch (Exception e) {
-          e.printStackTrace();
-          clusterPT = null;
-        }
-        clusterProperties.add(clusterPT);
-        // create the cluster
-        ClusterServesClusterManagement newCluster =
-          ((clusterPT != null) ?
-           createCluster(cname, clusterPT) :
-           null);
-        someClusters.addElement(newCluster);
-      }
-
-      // load the plugins
-      System.err.print("Loading Plugins:");
-      for (int i = 0; i < nClusters; i++) {
-        String cname = (String)clusterNames.get(i);
-        System.err.print("\n\t"+cname);
-        ClusterServesClusterManagement cluster = 
-          (ClusterServesClusterManagement)someClusters.get(i);
-        if (cluster != null) {
-          PropertyTree clusterPT = (PropertyTree)clusterProperties.get(i);
-          populateCluster(cname, cluster, clusterPT);
-        }
-      }
-
-      System.err.println("\nPlugins Loaded.");
+    if (nClusterEntries <= 0) {
+      // no clusters specified
+      return;
     }
 
-    setClusters(someClusters);
+    // other addClustersPT properties may be of interest, but for now
+    // we only use the "clusters" entry.
+
+    List addedClusters = new ArrayList(nClusterEntries);
+
+    // create the clusters
+    System.err.println("Creating Clusters:");
+    List clusterPTs = new ArrayList(nClusterEntries);
+    for (int i = 0; i < nClusterEntries; i++) {
+      Object cObj = clusterEntries.get(i);
+
+      // get the cluster's PropertyTree
+      PropertyTree cpt;
+      try {
+        if (cObj instanceof String) {
+          // read from file
+          String cname = (String)cObj;
+          System.err.println("\t"+cname);
+          // parse the cluster properties
+          // currently assume ".ini" files
+          InputStream in = getConfigFinder().open(cname+".ini");
+          cpt = ClusterINIParser.parse(in);
+          if ((cpt != null) &&
+              (!(cpt.containsKey("name")))) {
+            cpt.put("name", cname);
+          }
+        } else if (cObj instanceof PropertyTree) {
+          // already parsed
+          cpt = (PropertyTree)cObj;
+          String cname = (String)cpt.get("name");
+          System.err.println("\t"+cname);
+        } else {
+          throw new IllegalArgumentException(
+              "Expecting String or PropertyTree \"clusters\"["+i+"],"+
+              " but was given: "+
+              ((cObj != null) ? cObj.getClass().getName() : "null"));
+        }
+      } catch (Exception e) {
+        System.err.println(
+            "Caught Exception during cluster initialization:"+e);
+        e.printStackTrace();
+        cpt = null;
+      }
+
+      // create the cluster
+      if (cpt != null) {
+        clusterPTs.add(cpt);
+        addedClusters.add(createCluster(cpt));
+      }
+    }
+
+    // load the plugins
+    System.err.print("Loading Plugins:");
+    int nClusterPTs = clusterPTs.size();
+    for (int j = 0; j < nClusterPTs; j++) {
+      ClusterServesClusterManagement cluster = 
+        (ClusterServesClusterManagement)addedClusters.get(j);
+      if (cluster != null) {
+        PropertyTree cpt = (PropertyTree)clusterPTs.get(j);
+        String cname = (String)cpt.get("name");
+        System.err.print("\n\t"+cname);
+        populateCluster(cluster, cpt);
+      }
+    }
+
+    System.err.println("\nPlugins Loaded.");
+
+    addClusters(addedClusters);
   }
 
   /**
-   *   Modifier method for theArgs
-   *   @param aTable The ArgTable object that is used to modify theArgs
-   **/
-  protected final void setArgs( ArgTable aTable ) { theArgs = aTable; }
-
-  /**
-   *   Modifier method for theClusters
-   *   @param someClusters The SetOfObject object that is used to modify theClusters
-   **/
-  private final void setClusters( Vector someClusters ) { theClusters = someClusters; }
-
-  public void receiveMessage(Message m) {
-    System.err.println("Received unhandled message: "+m);
-    Thread.dumpStack();
-  }
-  
-  //
-  // ClusterManagementServesCluster
-  //
-
-  /**
-   * This method enables the ClusterManagement to instatiate the Cluster 
-   * and add it as a ClusterImpl.  
-   *
-   * This is accomplished from the Class class methods and the
-   * data present in the PropertyTree.
+   * Used by <tt>loadClusters(..)</tt> to create a Cluster.
+   * @see #loadClusters(PropertyTree)
    */
-  public ClusterServesClusterManagement createCluster(
-      String clusterid,
+  protected ClusterServesClusterManagement createCluster(
       PropertyTree clusterPT) {
     try {
       // get the cluster class name
       String clusterClassName = (String)clusterPT.get("class");
+      if (clusterClassName == null) {
+        throw new IllegalArgumentException("Cluster lacks a \"class\"");
+      }
 
       // load an instance of the cluster
       Class clusterClass = Class.forName(clusterClassName);
@@ -600,6 +670,10 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
 
       // we pass in the alias as the cluster identifier so we can use this to 
       //translate messages to system proxy objects 
+      String clusterid = (String)clusterPT.get("name");
+      if (clusterid == null) {
+        throw new IllegalArgumentException("Cluster lacks a \"name\"");
+      }
       cluster.setClusterIdentifier(new ClusterIdentifier(clusterid));
 
       //move the cluster to the intialized state
@@ -618,17 +692,18 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
     return null;
   }
 
-
-  public boolean populateCluster(
-      String clusterid, 
+  /**
+   * Used by <tt>loadClusters(..)</tt> to load and start a Cluster.
+   * @see #loadClusters(PropertyTree)
+   */
+  protected boolean populateCluster(
       ClusterServesClusterManagement cluster,
-      PropertyTree clusterPT)
-  {
-    PropertyTree pluginsPT = (PropertyTree)clusterPT.get("plugins");
+      PropertyTree clusterPT) {
     try {
-      ClusterIdentifier cid = new ClusterIdentifier(clusterid);
+      ClusterIdentifier cid = cluster.getClusterIdentifier();
 
       // add the plugins
+      PropertyTree pluginsPT = (PropertyTree)clusterPT.get("plugins");
       int nPlugins = ((pluginsPT != null) ? pluginsPT.size() : 0);
       for (int i = 0; i < nPlugins; i++) {
         Map.Entry pi = pluginsPT.get(i);
@@ -659,6 +734,59 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
   }
 
 
+
+  /**
+   * Modifier method for theArgs
+   * @param aTable The ArgTable object that is used to modify theArgs
+   **/
+  protected final void setArgs(ArgTable aTable) {
+    theArgs = aTable; 
+  }
+
+  /**
+   * Modifier method for theClusters
+   * @param addedClusters List of added Clusters, may contain nulls
+   **/
+  private final synchronized void addClusters(List addedClusters) { 
+    int n = addedClusters.size();
+    if (theClusters == null) {
+      theClusters = new Vector(addedClusters.size());
+    }
+    for (int i = 0; i < n; i++) {
+      Object oi = addedClusters.get(i);
+      if (oi != null) {
+        theClusters.addElement(oi);
+      }
+    }
+  }
+
+  public MessageAddress getMessageAddress() {
+    return myNodeIdentity_;
+  }
+
+  public void receiveMessage(Message m) {
+    try {
+      if (m instanceof NodeMessage) {
+        if (m instanceof AddClustersMessage) {
+          System.out.println("\n\n************** addClusters!");
+          loadClusters(((AddClustersMessage)m).getPropertyTree());
+        } else {
+          System.err.println(
+              "\n"+this+": Received unhandled Message: "+m);
+        }
+      } else {
+        System.err.println(
+            "\n"+this+": Received unhandled Message: "+m);
+      }
+    } catch (Exception e) {
+      System.err.println("Unhandled Exception: "+e);
+      e.printStackTrace();
+    }
+  }
+
+  //
+  // ClusterManagementServesCluster
+  //
 
 
   /** Method for construction of all the contained beans.
@@ -742,7 +870,7 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
       } else {
         System.out.println(version+" built on "+(new Date(buildtime)));
       }
-      
+
       String vminfo = System.getProperty("java.vm.info");
       String vmv = System.getProperty("java.vm.version");
       System.out.println("VM: JDK "+vmv+" ("+vminfo+")");
@@ -750,7 +878,7 @@ public class Node implements ArgTableIfc, ClusterManagementServesCluster
       String osv = System.getProperty("os.version");
       System.out.println("OS: "+os+" ("+osv+")");
     }
-    
+
   }
 
 }
