@@ -160,6 +160,33 @@ public class AgentManager
     return true;
   }
 
+  /**
+   * Support Node-issued agent mobility requests.
+   * <p>
+   * @param agentID agent to move
+   * @param nodeID destination node address
+   */
+  public void moveAgent(
+      ClusterIdentifier agentID,
+      NodeIdentifier nodeID) {
+
+    // lookup the agent on this node
+
+    // suspend the agent's activity, prepare for state capture
+
+    // recursively gather the agent state
+
+    // create a ComponentDescription for the agent, set it's state
+
+    // create an ADD ComponentMessage with the ComponentDescription
+
+    // send message to destination node
+
+    // destroy the original agent on this node
+
+    System.out.println(
+        "Move "+agentID+" to "+nodeID);
+  }
 
   /**
    * Create a Cluster from a ComponentDescription.
@@ -205,7 +232,7 @@ public class AgentManager
 
     //move the cluster to the intialized state
     super.add(cluster);
-    if (cluster.getState() != GenericStateModel.ACTIVE) {
+    if (cluster.getModelState() != GenericStateModel.ACTIVE) {
       System.err.println("Cluster "+cluster+" is not Active!");
     }
 

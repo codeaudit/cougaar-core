@@ -52,8 +52,6 @@ import org.cougaar.domain.planning.ldm.plan.Notification;
 import org.cougaar.domain.planning.ldm.plan.Task;
 
 import org.cougaar.core.plugin.PluginManager;
-import org.cougaar.core.plugin.AddPlugInMessage;
-import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.plugin.LDMService;
 import org.cougaar.core.plugin.LDMServiceProvider;
 
@@ -520,11 +518,7 @@ public class ClusterImpl extends Agent
               "Unsupported ComponentMessage: "+message);
         }
       } else if (message instanceof ClusterMessage) {
-        if (message instanceof AddPlugInMessage) {
-          pluginManager.add((AddPlugInMessage)message);
-        } else if (message instanceof RemovePlugInMessage ){
-          pluginManager.remove((RemovePlugInMessage) message );
-        } else if (message instanceof ClusterInitializedMessage ) {
+        if (message instanceof ClusterInitializedMessage ) {
           receiveClusterInitializedMessage((ClusterInitializedMessage) message);
         } else {
           // internal message queue
