@@ -133,7 +133,7 @@ public class StandardBlackboard
     return bindingSite;
   }
   protected String specifyContainmentPoint() {
-    return "Node.AgentManager.Agent.Blackboard";
+    return Blackboard.INSERTION_POINT;
   }
   protected ContainerAPI getContainerProxy() {
     return null;

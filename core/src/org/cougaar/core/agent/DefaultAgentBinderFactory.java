@@ -39,7 +39,7 @@ public class DefaultAgentBinderFactory
   public Class getBinderClass(Object child) {
     if (child instanceof ComponentDescription) {
       ComponentDescription cd = (ComponentDescription) child;
-      if ("Node.AgentManager.Agent".equals(cd.getInsertionPoint())) {
+      if (Agent.INSERTION_POINT.equals(cd.getInsertionPoint())) {
         //Might want to differentiate between Agent and specializations of
         //agents such as Clusters at some point.  But for now...
         return DefaultAgentBinder.class;

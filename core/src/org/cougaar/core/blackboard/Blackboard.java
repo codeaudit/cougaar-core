@@ -93,6 +93,9 @@ public class Blackboard extends Subscriber
   protected DomainForBlackboardService myDomainService;
   protected LoggingService logger;
 
+  /** The insertion point for a Blackboard, defined relative to its parent, Agent. **/
+  public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".Blackboard";
+
   public MessageAddress getCID() { return myCluster.getMessageAddress();}
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");

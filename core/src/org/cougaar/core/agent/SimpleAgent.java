@@ -47,6 +47,7 @@ import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;
 import org.cougaar.core.agent.service.scheduler.SchedulerServiceProvider;
 import org.cougaar.core.agent.service.uid.UIDServiceImpl;
 import org.cougaar.core.agent.service.uid.UIDServiceProvider;
+import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BindingSite;
@@ -345,6 +346,8 @@ public class SimpleAgent
       String cp = specifyContainmentPoint();
       ComponentDescription[] cds = new ComponentDescription[0];
       try {
+	// Get components _below_ given point
+	// That is, we want all items below the cp. 
         cds = is.getComponentDescriptions(cname, cp);
       } catch (InitializerServiceException ise) {
         if (log.isWarnEnabled()) {
@@ -376,7 +379,7 @@ public class SimpleAgent
         // start up the Agent-level ServletService component
         l.add(new ComponentDescription(
               getMessageAddress()+"ServletService",
-              "Node.AgentManager.Agent.AgentServletService",
+              Agent.INSERTION_POINT + ".AgentServletService",
               "org.cougaar.lib.web.service.LeafServletServiceComponent",
               null,  //codebase
               getMessageAddress().getAddress(),
@@ -388,7 +391,7 @@ public class SimpleAgent
       // Domains *MUST* be loaded before the blackboard
       l.add(new ComponentDescription(
             getMessageAddress()+"DomainManager",
-            "Node.AgentManager.Agent.DomainManager",
+            org.cougaar.core.domain.DomainManager.INSERTION_POINT,
             "org.cougaar.core.domain.DomainManager",
             null,
             null,
@@ -400,7 +403,7 @@ public class SimpleAgent
       // CommunityService *MUST* be loaded before the blackboard
       l.add(new ComponentDescription(
             getMessageAddress()+"CommunityService",
-            "Node.AgentManager.Agent.Component",
+            Agent.INSERTION_POINT + ".Component",
             "org.cougaar.community.CommunityServiceComponent",
             null,
             null,
@@ -412,7 +415,7 @@ public class SimpleAgent
       // blackboard *MUST* be loaded before pluginmanager (and plugins)
       l.add(new ComponentDescription(
             getMessageAddress()+"Blackboard",
-            "Node.AgentManager.Agent.Blackboard",
+            Blackboard.INSERTION_POINT,
             "org.cougaar.core.blackboard.StandardBlackboard",
             null,
             null,
@@ -428,7 +431,7 @@ public class SimpleAgent
       // the plugins go.
       l.add(new ComponentDescription(
             getMessageAddress()+"PluginManager",
-            "Node.AgentManager.Agent.PluginManager",
+            org.cougaar.core.plugin.PluginManager.INSERTION_POINT,
             "org.cougaar.core.plugin.PluginManager",
             null,
             null,
@@ -1242,7 +1245,7 @@ public class SimpleAgent
           Binder b = bc.getBinder();
           Object state;
           if (excludeBlackboard &&
-              "Node.AgentManager.Agent.Blackboard".equals(
+              Blackboard.INSERTION_POINT.equals(
                 cd.getInsertionPoint())) {
             state = null;
           } else {

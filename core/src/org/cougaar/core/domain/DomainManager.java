@@ -30,6 +30,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.bootstrap.SystemProperties;
 
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
@@ -67,8 +68,10 @@ public class DomainManager
 
   private final static boolean verbose = "true".equals(System.getProperty("org.cougaar.verbose","false"));
 
-  private final static String CONTAINMENT_POINT =  
-    "Node.AgentManager.Agent.DomainManager";
+  /** Insertion point for a DomainManager, defined relative to its parent, Agent. **/
+  public static final String INSERTION_POINT = 
+    Agent.INSERTION_POINT + ".DomainManager";
+  private final static String CONTAINMENT_POINT = INSERTION_POINT;
 
   private Object loadState = null;
   private HashSet xplans = new HashSet();
@@ -344,6 +347,7 @@ public class DomainManager
     String cname = cid.toString();
 
     try {
+      // Want only items _below_. Could filter (not doing so now)
       children = is.getComponentDescriptions(cname, specifyContainmentPoint());
     } catch (InitializerServiceException e) {
       //loggingService.error("Unable to add "+cname+"'s Domains", e);

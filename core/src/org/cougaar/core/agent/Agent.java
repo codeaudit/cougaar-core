@@ -39,6 +39,8 @@ public abstract class Agent
   implements ContainerAPI 
 {
 
+  /** The Insertion point for any Agent, defined relative to the AgentManager. **/
+  public static final String INSERTION_POINT = AgentManager.INSERTION_POINT + ".Agent";
   private ServiceBroker childServiceBroker;
   private Logger logger;
 
@@ -87,7 +89,7 @@ public abstract class Agent
   }
 
   protected String specifyContainmentPoint() {
-    return "Node.AgentManager.Agent";
+    return INSERTION_POINT;
   }
 
   protected Object getBinderFactoryProxy() {
