@@ -70,6 +70,7 @@ import org.cougaar.core.service.NodeMetricsService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 import org.cougaar.util.log.*;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.CircularQueue;
 
 import org.cougaar.core.node.service.*;
 
@@ -117,6 +118,8 @@ public class NodeAgent
 
   private static boolean isHeartbeatOn = true;
   private static boolean isQuiet = false;
+
+  private Logger logger = Logging.getLogger(NodeAgent.class);
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
@@ -411,15 +414,18 @@ public class NodeAgent
       throw new Error("Couldn't initialize node", yech);
     }
 
+    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
+
     super.load();
+
+    // Wait until the end to deal with outstanding queued messages
+    emptyQueuedMessages();
 
     // load the clusters
     //
     // once bulk-add ComponentMessages are implements this can
     //   be done with "this.receiveMessage(compMsg)"
     addAgents(agentDescs);
-
-    //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
 
   // replace with Container's add, but keep this basic code
@@ -495,7 +501,59 @@ public class NodeAgent
       return NodeAgent.this.getMessageAddress();
     }
   }
-  public void receiveMessage(final Message m) {
+
+  /** deliver or queue the message.  
+   * We'll queue the message until we're really completely up
+   * and running.
+   **/
+  public void receiveMessage(Message m) {
+    synchronized (mq) {
+      if (mqInitialized) {      // fully emptied?
+        realReceiveMessage(m);  // don't bother to queue it after all
+      } else {
+        if (logger.isDebugEnabled()) {
+          logger.debug("Queuing NodeAgent Message "+m);
+        }
+        mq.add(m);
+        // mq.notify();// skip since there isn't anyone listening
+      }
+    }
+  }
+
+  /** Queue for messages waiting while we're still starting up. **/
+  private final CircularQueue mq = new CircularQueue();
+
+  /** true once we've dealt with any early messages **/
+  private boolean mqInitialized = false;
+
+  /** Deal with any queued messages and then allow receiveMessage to
+   * start delivering directly.
+   **/
+  private void emptyQueuedMessages() {
+    synchronized (mq) {
+      if (!mq.isEmpty()) {
+        if (logger.isInfoEnabled()) {
+          logger.info("Delivering "+mq.size()+" queued NodeAgent Messages");
+        }
+        while (!mq.isEmpty()) {
+          Message m = (Message) mq.next();
+          if (logger.isDebugEnabled()) {
+            logger.debug("Delivering queued NodeAgent Message "+m);
+          }
+          realReceiveMessage(m);
+        }
+      }
+      mqInitialized = true;
+    }
+  }
+
+  /** really deliver the message.
+   * A better solution would be to just use the SimpleAgent's 
+   * message queue and deal with the messages there, but there
+   * are some conflicts and missing bits of information up there.  
+   * In particular, the mobility reference isn't available.
+   **/
+  private void realReceiveMessage(final Message m) {
     try {
       if (m instanceof ComponentMessage) {
         ComponentMessage cm = (ComponentMessage)m;

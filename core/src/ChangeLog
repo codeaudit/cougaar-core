@@ -1,3 +1,11 @@
+2002-06-14  Michael Thome  <mthome@bbn.com>
+
+	* NodeAgent
+	Queues incoming messages for later processing while the Node is
+	still starting.  Enable debug logging for
+	org.cougaar.core.node.NodeAgent to see the queue activity.
+	fixes bug 1438.
+
 2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/PlaybookManager.java:
