@@ -20,9 +20,12 @@ import org.cougaar.domain.planning.ldm.LDMServesPlugIn;
 import org.cougaar.domain.planning.ldm.Factory;
 import org.cougaar.domain.planning.ldm.RootFactory;
 import org.cougaar.core.cluster.ClusterIdentifier;
+import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.component.ServiceBroker;
 
 import org.cougaar.util.UnaryPredicate;
-import java.util.*;
+import java.util.*; 
 
 /** 
  * An interface for getting at the (normally) protected Plan API 
@@ -67,6 +70,7 @@ public interface PlugInDelegate {
   void publishChange(Object o, Collection changes);
   Collection getParameters();
   boolean didRehydrate();
+  ServiceBroker getServiceBroker();
 
   /** Attempt to stake a claim on a logplan object, essentially telling 
    * everyone else that you and only you will be disposing, modifying, etc.

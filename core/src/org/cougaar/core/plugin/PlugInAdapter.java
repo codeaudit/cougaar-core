@@ -48,6 +48,8 @@ import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.cluster.*;
 
+import org.cougaar.core.component.ServiceBroker;
+
 public abstract class PlugInAdapter
   extends GenericStateModelAdapter
   implements PlugInServesCluster, BlackboardClient, ParameterizedPlugIn, PluginBase
@@ -748,6 +750,9 @@ public abstract class PlugInAdapter
   // implement PlugInDelegate
   //
   protected class Delegate implements PlugInDelegate {
+    public ServiceBroker getServiceBroker() {
+      return PlugInAdapter.this.getBindingSite().getServiceBroker();
+    }
     public BlackboardService getBlackboardService() { 
       return theBlackboard;
     }
