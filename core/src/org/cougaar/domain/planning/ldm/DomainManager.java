@@ -12,6 +12,7 @@ package org.cougaar.domain.planning.ldm;
 
 import java.util.*;
 import java.io.*;
+import java.lang.reflect.*;
 
 import org.cougaar.util.ConfigFinder;
 
@@ -41,6 +42,11 @@ public final class DomainManager
   /** a map of domainName to Domain Instance **/
   private static final HashMap domains = new HashMap(11); // small is fine
 
+  /** a map of domainName aliases to primary domain name.
+   * Access is guarded by synchronizing on <em>domains</em>
+   **/
+  private static final HashMap aliases = new HashMap(11);
+
   /** have the domains been initialized? **/
   private static boolean isInitialized = false;
 
@@ -49,13 +55,23 @@ public final class DomainManager
    * class to instantiate.  As a special case, the "root" domain
    * always maps to "org.cougaar.domain.planning.ldm.RootDomain"
    **/
+
   public static Domain find(Object key) {
     synchronized (domains) {
-      return (Domain) domains.get(key);
+      Domain d = (Domain) domains.get(key);
+      if (d != null) return d;
+
+      String primary = (String) aliases.get(key);
+      if (primary != null) {
+        System.err.println("Warning: use of domain alias \""+key+"\" for \""+primary+"\".");
+        return (Domain) domains.get(primary);
+      } 
+      return null;
     }
   }
 
   /** Set up a Domain from the argument strings.
+   * Must be called in a context where domains is synchronized.
    * @param domainName the name to register the domain under.
    * @param className the name of the class to instantiate as the domain.
    **/
@@ -73,8 +89,30 @@ public final class DomainManager
       
       d.initialize();         // initialize the new domain instance
 
-      domains.put(domainName.intern(), d);
+      domainName = domainName.intern();
+      domains.put(domainName, d);
       //System.err.println("Loaded Domain \""+domainName+"\" as "+d);
+
+      // look for Collection d.getAliases();
+      try {
+        Method m = domainClass.getMethod("getAliases", null);
+        Object r = m.invoke(d, null);
+        if (r != null && r instanceof Collection) {
+          for (Iterator i = ((Collection)r).iterator(); i.hasNext(); ) {
+            String alias = (String) i.next(); // thrown classcastexception if bad
+            if (aliases.get(alias) != null) {
+              System.err.println("Warning: Domain "+domainClass+" attempting to re-alias "+alias);
+            } else {
+              aliases.put(alias, domainName);
+            }
+          }
+        }
+      } catch (NoSuchMethodException nsme) {
+        // ok - no aliases
+      } catch (Exception othere) {
+        System.err.println("Warning: domain analysis for aliases raised: "+othere);
+      }
+
       keylist = null;
       if (verbose) System.err.println("Initialized LDM Domain \""+domainName+"\".");
     } catch (Exception e) {

@@ -672,6 +672,8 @@ public class ClusterImpl
 
   /** map of domainname to domain factory instance **/
   private HashMap factories = new HashMap(11);
+  /** map of domains to factories. synchronized on factories **/
+  private HashMap domainFactories = new HashMap(11);
 
   /** @deprecated use getFactory() **/
   public RootFactory getLdmFactory() {
@@ -693,9 +695,14 @@ public class ClusterImpl
         
       Domain d = DomainManager.find(key);
       if (d == null) return null; // couldn't find the domain!
-      f = d.getFactory(this);   // create a new factory
-      if (f == null) return null; // failed to create the factory
-      factories.put(key, f);
+
+      f = (Factory) domainFactories.get(d); // check the domain factories set first
+      if (f == null) {
+        f = d.getFactory(this);   // create a new factory
+        if (f == null) return null; // failed to create the factory
+        domainFactories.put(d, f);
+      }
+      factories.put(key, f);    // cache the factory against the name
       return f;
     }
   }
