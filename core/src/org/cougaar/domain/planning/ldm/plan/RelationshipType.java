@@ -24,18 +24,21 @@ public class RelationshipType {
 
   public static RelationshipType create(String firstSuffix,
                                         String secondSuffix) {
-    String duplicate = null;
-    if (myTypes.get(firstSuffix) != null) {
-      duplicate = firstSuffix;
-    } else if (myTypes.get(secondSuffix) != null) {
-      duplicate = secondSuffix;
-    }
 
-    if (duplicate == null) {
-     return new RelationshipType(firstSuffix, secondSuffix);
+    RelationshipType existing = get(firstSuffix);
+
+    if (existing == null) {
+      return new RelationshipType(firstSuffix, secondSuffix);
+    } else if ((existing.getFirstSuffix().equals(firstSuffix)) &&
+               (existing.getSecondSuffix().equals(secondSuffix))) {
+      return existing;
     } else {
-      throw new java.lang.IllegalArgumentException("Suffix already exists - " +
-                                                   duplicate);
+      throw new java.lang.IllegalArgumentException("First suffix " +
+                                                   firstSuffix + " or " + 
+                                                   " second suffix " + 
+                                                   secondSuffix + 
+                                                   " already used in - " +
+                                                   existing);
     }
     
 
