@@ -86,7 +86,61 @@ public class AgentManager
     //System.err.print("AgentManager adding Cluster");
     ClusterServesClusterManagement cluster = null;
     if (obj instanceof ComponentDescription) {
-     ComponentDescription desc = (ComponentDescription) obj;
+      ComponentDescription desc = (ComponentDescription) obj;
+
+      if (!("Node.AgentManager.Agent".equals(
+              desc.getInsertionPoint()))) {
+        // fix to support non-agent components
+        throw new IllegalArgumentException(
+            "Currently only agent ADD is supported, not "+
+            desc.getInsertionPoint());
+      }
+
+      // add the agent
+      if (!(super.add(desc))) {
+        return false;
+      }
+
+      // send the Agent an "initialized" message
+      //
+      // maybe we can replace this with a more direct API?
+
+      // find the AgentBinder that we just added -- is there
+      //   a better way to do this?
+      AgentBinder agentBinder = null;
+      Iterator iter = super.boundComponents.iterator();
+      while (true) {
+        if (!(iter.hasNext())) {
+          // unable to find our own child?
+          return false;
+        }
+        Object oi = iter.next();
+        if (!(oi instanceof BoundComponent)) {
+          continue;
+        }
+        BoundComponent bci = (BoundComponent)oi;
+        Object cmpi = bci.getComponent();
+        if (!(desc.equals(cmpi))) {
+          continue;
+        }
+        Binder bi = bci.getBinder();
+        if (bi instanceof AgentBinder) {
+          agentBinder = (AgentBinder)bi;
+          break;
+        }
+      }
+
+      // get the Cluster itself -- this is a hack!
+      Agent agent = agentBinder.getAgent();
+      if (!(agent instanceof ClusterServesClusterManagement)) {
+        return false;
+      }
+      cluster = (ClusterServesClusterManagement)agent;
+
+      // hookup the Cluster
+      return hookupCluster(cluster);
+
+      /*
       try {
         String insertionPoint = desc.getInsertionPoint();
         if (!("Node.AgentManager.Agent".equals(insertionPoint))) {
@@ -99,6 +153,7 @@ public class AgentManager
       e.printStackTrace();
       }
       return hookupCluster(cluster);
+      */
     } else if (obj instanceof ClusterServesClusterManagement) {
       return hookupCluster((ClusterServesClusterManagement)obj);
     } else {
@@ -133,23 +188,23 @@ public class AgentManager
   private static void debugState(Object state, String path) {
     if (state instanceof ComponentDescription[]) {
       ComponentDescription[] descs = 
-	(ComponentDescription[])state;
+        (ComponentDescription[])state;
       for (int i = 0; i < descs.length; i++) {
-	ComponentDescription di = descs[i];
-	String prefix = path+"["+i+" / "+descs.length+"]";
+        ComponentDescription di = descs[i];
+        String prefix = path+"["+i+" / "+descs.length+"]";
         if (di == null) {
-	  System.out.println(
-			     prefix+": null");
-	} else {
-	  System.out.println(
-			     prefix+": "+
-			     di.getInsertionPoint()+" = "+
-			     di.getClassname()+" "+
-			     di.getParameter());
-	  if (di.getState() != null) {
-	    debugState(di.getState(), prefix);
-	  }
-	}
+          System.out.println(
+                             prefix+": null");
+        } else {
+          System.out.println(
+                             prefix+": "+
+                             di.getInsertionPoint()+" = "+
+                             di.getClassname()+" "+
+                             di.getParameter());
+          if (di.getState() != null) {
+            debugState(di.getState(), prefix);
+          }
+        }
       }
     } else {
       System.out.println(path+" non-CD[] "+state);
@@ -168,29 +223,39 @@ public class AgentManager
 
     // check parameters, security, etc
     if ((agentID == null) ||
-	(nodeID == null)) {
+        (nodeID == null)) {
       // error
       return;
     }
 
     // lookup the agent on this node
-    ClusterServesClusterManagement agent = null;
-    Iterator iter = super.iterator();
+    ComponentDescription origDesc = null;
+    Agent agent = null;
+    Iterator iter = super.boundComponents.iterator();
     while (true) {
       if (!(iter.hasNext())) {
-	// no such agent?
-	return;
+        // no such agent?
+        return;
       }
       Object oi = iter.next();
-      if (oi instanceof ClusterServesClusterManagement) {
-	ClusterServesClusterManagement ci =
-	  (ClusterServesClusterManagement)oi;
-	ClusterIdentifier cid =	ci.getClusterIdentifier();
-	if (agentID.equals(cid)) {
-	  // found our agent
-	  agent = ci;
-	  break;
-	}
+      if (!(oi instanceof BoundComponent)) {
+        continue;
+      }
+      BoundComponent bc = (BoundComponent)oi;
+      Binder b = bc.getBinder();
+      if (!(b instanceof AgentBinder)) {
+        continue;
+      }
+      Agent a = ((AgentBinder)b).getAgent();
+      if ((a != null) &&
+          (agentID.equals(a.getAgentIdentifier()))) {
+        // found our agent
+        agent = a;
+        Object cmp = bc.getComponent();
+        if (cmp instanceof ComponentDescription) {
+          origDesc = (ComponentDescription)cmp;
+        }
+        break;
       }
     }
 
@@ -206,19 +271,33 @@ public class AgentManager
     debugState(state, "");
 
     // create a ComponentDescription for the agent, set it's state
-    Vector param = new Vector(1);
-    param.add(agentID.toString());
-    ComponentDescription cd =
-      new ComponentDescription(
-			       "org.cougaar.core.cluster.ClusterImpl",
-			       "Node.AgentManager.Agent",
-			       "org.cougaar.core.cluster.ClusterImpl",
-			       null,
-			       param,
-			       null, // certificate
-			       null, // lease
-			       null, // policy
-			       state);
+    ComponentDescription cd;
+    if (origDesc != null) {
+      cd = new ComponentDescription(
+          origDesc.getName(),
+          origDesc.getInsertionPoint(),
+          origDesc.getClassname(),
+          origDesc.getCodebase(),
+          origDesc.getParameter(),
+          origDesc.getCertificate(),
+          origDesc.getLeaseRequested(),
+          origDesc.getPolicy(),
+          state);
+    } else {
+      // lost the description?
+      Vector param = new Vector(1);
+      param.add(agentID.toString());
+      cd = new ComponentDescription(
+          "org.cougaar.core.cluster.ClusterImpl",
+          "Node.AgentManager.Agent",
+          "org.cougaar.core.cluster.ClusterImpl",
+          null,
+          param,
+          null, // certificate
+          null, // lease
+          null, // policy
+          state);
+    }
 
     // create an ADD ComponentMessage with the ComponentDescription
     ComponentMessage addMsg =
@@ -231,9 +310,9 @@ public class AgentManager
     // get the message transport
     MessageTransportService mts = (MessageTransportService)
       getServiceBroker().getService(
-				    this,
-				    MessageTransportService.class,
-				    null);
+                                    this,
+                                    MessageTransportService.class,
+                                    null);
     if (mts == null) {
       // error!  we should have requested this earlier...
       System.err.println("Unable to get MessageTransport for mobility message");
@@ -254,6 +333,7 @@ public class AgentManager
   /**
    * Create a Cluster from a ComponentDescription.
    */
+  /*
   private ClusterServesClusterManagement createCluster( ComponentDescription desc) 
   {
 
@@ -301,6 +381,7 @@ public class AgentManager
 
     return cluster;
   }
+*/
 
   public String getName() {
     return getBindingSite().getName();

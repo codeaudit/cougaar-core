@@ -289,6 +289,28 @@ public class ClusterImpl extends Agent
     return "<Cluster " + body + ">";
   }
 
+  /**
+   * Expects the parameter to specify the ClusterIdentifier,
+   * either through a single String or the first element of
+   * a List.
+   */
+  public void setParameter(Object o) {
+    String sID = null;
+    if (o instanceof String) {
+      sID = (String)o;
+    } else if (o instanceof List) {
+      List l = (List)o;
+      if (l.size() > 0) {
+        Object o1 = l.get(0);
+        if (o1 instanceof String) {
+          sID = (String)o1;
+        }
+      }
+    }
+    if (sID != null) {
+      setClusterIdentifier(new ClusterIdentifier(sID));
+    }
+  }
     
   /** Notify object about its "parent"
    *  Object should transition to the LOADED state.
