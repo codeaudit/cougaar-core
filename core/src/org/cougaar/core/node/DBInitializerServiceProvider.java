@@ -514,7 +514,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       try {
         return CommunityConfigUtils.getCommunityConfigsFromDB(entityName);
       }
-      catch (Exception ex) {
+      catch (RuntimeException ex) {
         System.out.println("Exception in getCommunityDescriptions from DB");
       }
       return new Vector();      

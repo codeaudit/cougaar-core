@@ -109,7 +109,7 @@ public class FileInitializerServiceProvider implements ServiceProvider {
           return CommunityConfigUtils.getCommunityConfigsFromFile(initXmlFile, entityName);
         }
       }
-      catch (Exception ex) {
+      catch (RuntimeException ex) {
         System.out.println("Exception in getCommunityDescriptions from File");
       }
       return new Vector();
