@@ -26,6 +26,8 @@
 
 package org.cougaar.core.service;
 
+import java.io.IOException;
+
 /**
  *  Implementations of this interface contain a secret key used to
  *  encrypt/decrypt persisted data. The getOutputStream method of the
@@ -45,10 +47,10 @@ public interface DataProtectionKeyEnvelope
   /** 
    * Returns the persisted key in this envelope.
    */
-  DataProtectionKey getDataProtectionKey();
+  DataProtectionKey getDataProtectionKey() throws IOException;
 
   /** 
    * Saves an updated key to persisted storage.
    */
-  void setDataProtectionKey(DataProtectionKey pk);
+  void setDataProtectionKey(DataProtectionKey pk) throws IOException;
 }
