@@ -24,4 +24,12 @@ public interface SubscriptionClient {
    * @return true IFF the event is actually accepted.
    **/
   boolean triggerEvent(Object event);
+
+  static class Local extends ThreadLocal {
+    public SubscriptionClient getClient() {
+      return (SubscriptionClient) get();
+    }
+  }
+
+  public static final Local current = new Local();
 }
