@@ -103,9 +103,6 @@ import org.cougaar.bootstrap.Bootstrapper;
  * <pre>
  * @property org.cougaar.node.name
  *   The (required) name for this Node.
- * @property org.cougaar.useBootstrapper
- *   If <em>true</em>, will launch using the Bootstrapper to find jar files.
- *   Defaults to <em>true</em>.
  * @property org.cougaar.filename
  *   The file name (.ini) for starting this Node, which defaults to 
  *   (<em>org.cougaar.node.name</em>+".ini") if both <em>org.cougaar.filename</em>
@@ -184,8 +181,10 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
    *
    * @see #launch(String[])
    **/
+  // @deprecated
   static public void main(String[] args){
     if (PropertyParser.getBoolean("org.cougaar.useBootstrapper", true)) {
+      System.err.println("Warning! org.cougaar.useBootstrapper is deprecated.  Invoke Bootstrapper directly.");
       Bootstrapper.launch(Node.class.getName(), args);
     } else {
       launch(args);
@@ -194,8 +193,11 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 
   
 
+  /** The real entry-point for Node, generally invoked via 
+   * the bootstrapper.
+   * @see org.cougaar.bootstrap.Bootstrapper
+   **/
   static public void launch(String[] args) {
-
     // check for "-version" and "-help"
     for (int i = 0; i < args.length; i++) {
       String argi = args[i];
