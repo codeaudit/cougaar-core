@@ -1,3 +1,15 @@
+2002-06-06  Todd Wright <twright@bbn.com>
+
+	* AgentBinder, AgentManager, agent subclasses
+        Fixed bug 1423, "Agent binder denies binder wrappers .."
+        Made AgentBinder an interface, and moved implementation 
+        into new DefaultAgentBinder class.  Renamed 
+        AgentBinderFactory to DefaultAgentBinderFactory, and 
+        fixed clients of this factory to use the new name.  
+        Modified AgentBinder clients to use the new 
+        "getAgentIdentifier()" method instead of "getAgent()"
+        where possible.
+
 2002-06-06  Noelle Givler  <ngivler@bbn.com>
 	
 	* org/cougaar/planning/ldm/lps/AssetTransferLP
