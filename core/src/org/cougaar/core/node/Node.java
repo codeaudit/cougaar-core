@@ -146,6 +146,8 @@ import org.cougaar.bootstrap.Bootstrapper;
 public class Node extends ContainerSupport
 implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
+  public static final String INSERTION_POINT = "Node";
+
   private MessageAddress myNodeIdentity_ = null;
 
   public String getIdentifier() {
@@ -334,14 +336,14 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 
     String filename = (String) myArgs.get(ArgTableIfc.FILE_KEY);
     if (filename != null) {
-      System.setProperty("org.cougaar.filename", filename);
+      System.setProperty(InitializerServiceProvider.FILENAME_PROP, filename);
       Logging.getLogger(Node.class).info("Set node filename to "+filename);
     }
 
     String experimentId = 
       (String) myArgs.get(ArgTableIfc.EXPERIMENT_ID_KEY);
     if (experimentId != null) {
-      System.setProperty("org.cougaar.experiment.id", experimentId);
+      System.setProperty(InitializerServiceProvider.EXPTID_PROP, experimentId);
       Logging.getLogger(Node.class).info("Set node experiment ID to "+experimentId);
     }
   }
@@ -509,7 +511,7 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "Node";
+    return INSERTION_POINT;
   }
   protected ServiceBroker specifyChildContext() {
     return new NodeServiceBroker();
@@ -568,24 +570,6 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
       }
     }
 
-    // get the start mode (file or experimentId)
-    String filename = System.getProperty("org.cougaar.filename");
-    String experimentId = System.getProperty("org.cougaar.experiment.id");
-    if (filename == null) {
-      if (experimentId == null) {
-        // use the default "name.ini"
-        filename = name + ".ini";
-      } else {
-        // use the filename
-      }
-    } else if (experimentId == null) {
-      // use the experimentId
-    } else {
-      throw new IllegalArgumentException(
-          "Both file name (-f) and experiment -X) specified. "+
-          "Only one allowed.");
-    }
-
     // set the node name
     MessageAddress nid = MessageAddress.getMessageAddress(name);
     setMessageAddress(nid);
@@ -622,8 +606,8 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     ComponentDescription naDesc = 
       new ComponentDescription(
           name,
-          "Node.AgentManager.Agent",
-          "org.cougaar.core.node.NodeAgent",
+          Agent.INSERTION_POINT,
+          NodeAgent.class.getName(),
           null,  //codebase
           naParams,
           null,  //certificate
