@@ -20,6 +20,7 @@ import org.cougaar.core.cluster.DelayedLPAction;
 
 import org.cougaar.domain.planning.ldm.plan.Aggregation;
 import org.cougaar.domain.planning.ldm.plan.Allocation;
+import org.cougaar.domain.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.domain.planning.ldm.plan.AllocationResult;
 import org.cougaar.domain.planning.ldm.plan.AssetTransfer;
 import org.cougaar.domain.planning.ldm.plan.Directive;
@@ -79,27 +80,53 @@ public class ReceiveNotificationLP
       logplan.sendDirective(trm, changes);
       return;
     }
+    // verify that the pe matches the task
+    if (pe instanceof AllocationforCollections) {
+      Task remoteT = ((AllocationforCollections)pe).getAllocationTask();
+      UID remoteTUID = remoteT.getUID();
+      if (!(remoteTUID.equals(childuid))) {
+        // this was likely due to a race condition...
+        System.err.print(
+            "Got a Notification for the wrong allocation:"+
+            "\n\tTask="+tuid+
+            "  ("+pe.getTask().getUID()+")"+
+            "\n\tFrom="+childuid+
+            "  ("+remoteTUID+")"+
+            "\n\tResult="+not.getAllocationResult()+"\n"+
+            "\n\tPE="+pe);
+        // rescind the remote task? 
+        return;
+      }
+    }
     AllocationResult ar = not.getAllocationResult();
-    propagateNotification(logplan, tuid, ar, childuid, changes);
+    propagateNotification(logplan, pe, tuid, ar, childuid, changes);
   }
 
   // default protection so that NotificationLP can call this method
   static final void propagateNotification(LogPlanServesLogicProvider logplan,
                                           UID tuid, AllocationResult result,
                                           UID childuid, Collection changes) {
-    PlanElement pe = logplan.findPlanElement(tuid.toString());
-    if (pe == null) {
-      // System.out.println("Received notification about unknown task: " + tuid);
-      return;
+    PlanElement pe = logplan.findPlanElement(tuid);
+    if (pe != null) {
+      propagateNotification(logplan, pe, tuid, result, childuid, changes);
+    } else {
+      // System.out.println("Received notification about unknown task: "+tuid);
     }
+  }
 
+  // default protection so that NotificationLP can call this method
+  static final void propagateNotification(LogPlanServesLogicProvider logplan,
+                                          PlanElement pe,
+                                          UID tuid, AllocationResult result,
+                                          UID childuid, Collection changes) {
     if ((pe instanceof Allocation) ||
         (pe instanceof AssetTransfer) ||
         (pe instanceof Aggregation)) {
       ((PEforCollections) pe).setReceivedResult(result);
       logplan.change(pe, changes);
     } else if (pe instanceof Expansion) {
-      logplan.delayLPAction(new DelayedAggregateResults((Expansion)pe, childuid));
+      logplan.delayLPAction(
+          new DelayedAggregateResults((Expansion)pe, childuid));
 
       /*
       Workflow wf = ((Expansion)pe).getWorkflow();
