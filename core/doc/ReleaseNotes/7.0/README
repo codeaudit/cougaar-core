@@ -18,7 +18,7 @@ themselves moving:
 
 % cd RootOfYourSourceTree
 # if you want to see what it is going to do:
-% repackage -vq /your/source/tree/root alp7.pkg
+% repackage -vp /your/source/tree/root alp7.pkg
 # actually do it:
 % repackage /your/source/tree/root alp7.pkg
 # apply the glm changes:

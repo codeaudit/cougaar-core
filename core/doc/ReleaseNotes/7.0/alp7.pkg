@@ -92,7 +92,10 @@ mdl.alp.glm		oc.domain.glm
 mdl.alp.execution	oc.domain.glm.execution
 
 # mlm (was alpine)
-mdl.alpine		oc.domain.mlm
+mdl.alpine.debug		oc.domain.mlm.debug
+mdl.alpine.examples		oc.domain.mlm.examples
+mdl.alpine.plugin		oc.domain.mlm.plugin
+mdl.alpine.ui			oc.domain.mlm.ui
 
 # tutorial
 a.tutorial		oc.tutorial.class	# this is 

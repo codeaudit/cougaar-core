@@ -6,7 +6,7 @@
 #  -m  actually move files which match package prefixes.
 #  -v  be verbose.  Print every command executed an report on
 #      any files changed.
-#  -q  dont actually do anything - just pretend.
+#  -p  dont actually do anything - just pretend.
 #
 
 # stuff for internal find
@@ -283,7 +283,7 @@ sub careful_mkdir {
 	    $madedir{$_}=1;
 	}
 	lprint("mkdir $_");
-	mkdir($_) if $realP;
+	mkdir($_, 777) if $realP;
     }
 }    
 
