@@ -37,12 +37,14 @@ import java.util.TreeSet;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.blackboard.CollectionSubscription;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.plugin.PluginAlarm;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -267,8 +269,14 @@ public class DeletionPlugin extends ComponentPlugin {
 
   protected LoggingService logger;
 
+  protected UIDService uidService;
+
   public void setLoggingService(LoggingService ls) {
     logger = ls;
+  }
+
+  public void setUIDService(UIDService uidService) {
+    this.uidService = uidService;
   }
 
   public void load() {
@@ -354,6 +362,7 @@ public class DeletionPlugin extends ComponentPlugin {
 			       truePredicate,
 			       deletionDelay,
 			       DeletionPolicy.MIN_PRIORITY);
+    uidService.registerUniqueObject(policy);
     blackboard.publishAdd(policy);
   }
 
@@ -386,8 +395,8 @@ public class DeletionPlugin extends ComponentPlugin {
     }
   }
 
-  private Alarm createAlarm(long delay) {
-    return new PluginAlarm(delay) {
+  private Alarm createAlarm(long time) {
+    return new PluginAlarm(time) {
 	public BlackboardService getBlackboardService() {
 	  return blackboard;
 	}
@@ -403,8 +412,8 @@ public class DeletionPlugin extends ComponentPlugin {
     long now = currentTimeMillis();
     long nextAlarm = theDeletionSchedulePolicy.getNextDeletionTime(now);
     if (logger.isDebugEnabled())
-      logger.debug("Make the donuts in " + (nextAlarm - now) + "msec.");
-    alarm = createAlarm(nextAlarm - now);
+      logger.debug(getAgentIdentifier()+" Make the donuts in " + (nextAlarm - now) + "msec.");
+    alarm = createAlarm(nextAlarm);
     getAlarmService().addAlarm(alarm);
   }
 
