@@ -18,14 +18,16 @@ package org.cougaar.util.log;
  */
 public class NullLogger implements Logger {
 
-  private static final NullLogger SINGLETON = new NullLogger();
+  // singleton:
+  private static final NullLogger NULL_LOGGER_SINGLETON = 
+    new NullLogger();
 
-  public static NullLogger getInstance() {
-    return SINGLETON;
+  public static NullLogger getNullLogger() {
+    return NULL_LOGGER_SINGLETON;
   }
 
-  private NullLogger() {
-    // use "getInstance()"
+  protected NullLogger() {
+    // use "getNullLogger()"
   }
 
   // all "is*()" methods return false:
