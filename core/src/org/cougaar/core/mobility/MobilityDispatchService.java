@@ -32,8 +32,6 @@ public interface MobilityDispatchService extends Service {
   /**
    * Move <i>this</i> agent in accordance with the specified
    * ticket.
-   *
-   * @see #Ticket defined in this interface
    */
   void dispatch(Ticket ticket);
 
