@@ -196,8 +196,38 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
   
 
   static public void launch(String[] args) {
+
+    // check for "-version" and "-help"
+    for (int i = 0; i < args.length; i++) {
+      String argi = args[i];
+      if (argi.equals("-version") ||
+          argi.equals("--version")) {
+        printVersion(true);
+        return;
+      }
+      if (argi.equals("-info") ||
+          argi.equals("--info")) {
+        printVersion(false);
+        return;
+      }
+      if (argi.equals("-help") ||
+          argi.equals("--help")) {
+        System.out.print(
+            "Usage: java [JVM_OPTIONS] [-D..] "+
+            Node.class.getName()+" [-D..] [ARGS]\n"+
+            "A Node manages and executes Cougaar agents.\n\n"+
+            "  -D.. \t NAME=VALUE configuration properties.\n"+
+            "  -help, --help, -? \t display this help and exit.\n"+
+            "  -version, --version \t output version information and exit.\n\n"+
+            "  -info, --info \t output terse version information and exit.\n\n"+
+            "See <http://www.cougaar.org> for further details.\n\n"+
+            "Report bugs to <cougaar@cougaar.org>.\n");
+        return;
+      }
+    }
+
     // display the version info
-    printVersion();
+    printVersion(true);
 
     // convert any command-line args to System Properties
     setSystemProperties(args);
@@ -867,25 +897,54 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
     return getIdentifier();
   }
 
-  private static void printVersion() {
+  private static void printVersion(boolean fullFormat) {
     String version = null;
-    long buildtime = 0;
+    long buildTime = -1;
+    String repositoryTag = null;
+    boolean repositoryModified = false;
+    long repositoryTime = -1;
     try {
       Class vc = Class.forName("org.cougaar.Version");
       Field vf = vc.getField("version");
       Field bf = vc.getField("buildTime");
       version = (String) vf.get(null);
-      buildtime = bf.getLong(null);
+      buildTime = bf.getLong(null);
+      Field tf = vc.getField("repositoryTag");
+      Field rmf = vc.getField("repositoryModified");
+      Field rtf = vc.getField("repositoryTime");
+      repositoryTag = (String) tf.get(null);
+      repositoryModified = rmf.getBoolean(null);
+      repositoryTime = rtf.getLong(null);
     } catch (Exception e) {}
 
-    synchronized (System.err) {
+    if (!(fullFormat)) {
+      System.out.print(
+          "COUGAAR\t"+version+"\t"+buildTime+
+          "\t"+repositoryTag+"\t"+repositoryModified+"\t"+repositoryTime+"\n");
+      return;
+    } 
+
+    synchronized (System.out) {
       System.out.print("COUGAAR ");
       if (version == null) {
         System.out.println("(unknown version)");
       } else {
-        System.out.println(version+" built on "+(new Date(buildtime)));
+        System.out.println(
+            version+" built on "+
+            ((buildTime > 0) ? 
+             ((new Date(buildTime)).toString()) : 
+             "(unknown time)"));
       }
-
+      System.out.println(
+          "Repository: "+
+          ((repositoryTag != null) ? 
+           (repositoryTag + 
+            (repositoryModified ? " (modified)" : "")) :
+           "(unknown tag)")+
+          " on "+
+          ((repositoryTime > 0) ? 
+           ((new Date(repositoryTime)).toString()) :
+           "(unknown time)"));
       String vminfo = System.getProperty("java.vm.info");
       String vmv = System.getProperty("java.vm.version");
       System.out.println("VM: JDK "+vmv+" ("+vminfo+")");
@@ -893,7 +952,6 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
       String osv = System.getProperty("os.version");
       System.out.println("OS: "+os+" ("+osv+")");
     }
-
   }
 
   public void requestStop() {}
