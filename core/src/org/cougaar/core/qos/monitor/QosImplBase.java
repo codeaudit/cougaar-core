@@ -45,11 +45,8 @@ public class QosImplBase
 	if (statusService == null) {
 	    Object svc = 
 		sb.getService(this, AgentStatusService.class, null);
-	    if (svc == null) {
-		System.err.println("### Can't find AgentStatusService");
-	    } else {
+	    if (svc != null) {
 		statusService = (AgentStatusService) svc;
-		// System.out.println("%%% Got AgentStatusService!");
 	    }
 	}
     }

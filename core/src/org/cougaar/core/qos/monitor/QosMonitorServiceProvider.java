@@ -28,6 +28,7 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.NamingService;
 import org.cougaar.core.mts.NameSupport;
 import org.cougaar.core.mts.NameSupportImpl;
@@ -79,7 +80,10 @@ public class QosMonitorServiceProvider
 		rms = (ResourceMonitorService) cons.newInstance(args);
 	    } catch (Exception ex) {
 		// RSS not loaded
-		System.err.println("### No RSS, using default ResourceMonitorService: " + ex);
+		LoggingService ls = (LoggingService)
+		    sb.getService(this, LoggingService.class, null);
+		if (ls != null)
+		    ls.warn("No RSS, using default ResourceMonitorService");
 		rms = new ResourceMonitorServiceImpl(nameSupport, sb);
 	    }
 	    return rms;
@@ -91,9 +95,9 @@ public class QosMonitorServiceProvider
 			     Class serviceClass) 
     {
 	if (serviceClass == QosMonitorService.class) {
-	    return findOrMakeQMS(sb);
+	    return findOrMakeQMS(owner.getServiceBroker());
 	} else if (serviceClass == ResourceMonitorService.class) {
-	    return findOrMakeRMS(sb);
+	    return findOrMakeRMS(owner.getServiceBroker());
 	} else {
 	    return null;
 	}

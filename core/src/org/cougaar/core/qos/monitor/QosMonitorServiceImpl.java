@@ -39,7 +39,6 @@ public class QosMonitorServiceImpl
     }
 
     public int lookupAgentStatus(MessageAddress agentAddress) {
-	System.out.println(">>>>> Looking up status of " + agentAddress);
 
 	Attributes match = 
 	    new BasicAttributes(NameSupport.AGENT_ATTR, agentAddress);
