@@ -85,7 +85,6 @@ public abstract class FilePersistenceBase
       String path = params[0];
       persistenceRoot = new File(path);
     }
-    pps.getLoggingService().fatal("Persistence directory: " + persistenceRoot);
     persistenceRoot.mkdirs();
     if (!persistenceRoot.isDirectory()) {
       pps.getLoggingService().fatal("Not a directory: " + persistenceRoot);
