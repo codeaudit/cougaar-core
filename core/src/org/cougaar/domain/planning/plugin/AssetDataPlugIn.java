@@ -29,6 +29,8 @@ import org.cougaar.core.plugin.SimplePlugIn;
 
 import org.cougaar.domain.planning.Constants;
 
+import org.cougaar.domain.planning.ldm.DomainManager;
+
 import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.ClusterPG;
 import org.cougaar.domain.planning.ldm.asset.ItemIdentificationPGImpl;
@@ -55,6 +57,7 @@ import org.cougaar.domain.planning.ldm.plan.Role;
 import org.cougaar.domain.planning.ldm.plan.Schedule;
 import org.cougaar.domain.planning.ldm.plan.ScoringFunction;
 import org.cougaar.domain.planning.ldm.plan.TimeAspectValue;
+import org.cougaar.domain.planning.ldm.plan.Verb;
 
 import org.cougaar.util.Reflect;
 import org.cougaar.util.TimeSpan;
@@ -236,11 +239,15 @@ public class AssetDataPlugIn extends SimplePlugIn {
 
     reportTask.setPreferences(preferenceVector.elements());
     
-    reportTask.setVerb(Constants.Verb.Report);
+    reportTask.setVerb(getReportVerb(roles)); 
 
     return reportTask;
   }
   
+  protected Verb getReportVerb(Collection roles) {
+    return Constants.Verb.Report;
+  }
+
   protected Asset getAsset(String className, String itemIdentification,
                            String typeIdentification, String clusterName) {
 
@@ -319,7 +326,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
             newVal = tokens.nextToken();
           } else if (dataItem.equals("[Relationship]")) {
             newVal = fillRelationships(newVal, tokens);
-          } else if (dataItem.substring(0,1).equals("[")) {
+          } else if (dataItem.substring(0, 1).equals("[")) {
             // We've got a property or capability
             newVal = setPropertyForAsset(myLocalAsset, dataItem, newVal, tokens);
           } else {
@@ -354,10 +361,14 @@ public class AssetDataPlugIn extends SimplePlugIn {
 
   private Object parseExpr(String type, String arg) {
     int i;
+
+    type = type.trim();
+    arg = arg.trim();
+
     if ((i = type.indexOf("<")) >= 0) {
       int j = type.lastIndexOf(">");
-      String ctype = type.substring(0,i);
-      String etype = type.substring(i+1, j);
+      String ctype = type.substring(0, i).trim();
+      String etype = type.substring(i + 1, j).trim();
       Collection c = null;
       if (ctype.equals("Collection") || ctype.equals("List")) {
         c = new ArrayList();
@@ -371,8 +382,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
       }
       return c;
     } else if ((i = type.indexOf("/")) >= 0) {
-      String m = type.substring(0,i);
-      String mt = type.substring(i+1);
+      String m = type.substring(0, i).trim();
+      String mt = type.substring(i + 1).trim();
       double qty = Double.valueOf(arg).doubleValue();
       return createMeasureObject(m, qty, mt);
     } else {
@@ -389,7 +400,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
 
               int eq = ss.indexOf('=');
               String slotname = ss.substring(0, eq).trim();
-              String vspec = ss.substring(eq+1).trim();
+              String vspec = ss.substring(eq + 1).trim();
               try {
                 long time  = myDateFormat.parse(vspec).getTime();
                 if (slotname.equals("startTime")) {
@@ -417,7 +428,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
             if (fm == null) {
               String n = ac.getName();
               // remove the package prefix
-              n = n.substring(n.lastIndexOf('.')+1);
+              n = n.substring(n.lastIndexOf('.') + 1).trim();
               fm = Reflect.getMethod(ac, "create"+n, stringArgSpec);
               if (fm == null) 
                 fm = Reflect.getMethod(ac, "get"+n, stringArgSpec);
@@ -461,9 +472,9 @@ public class AssetDataPlugIn extends SimplePlugIn {
     int i;
     if ((i = type.indexOf("<")) > -1) { // deal with collections 
       int j = type.lastIndexOf(">");
-      return getType(type.substring(0,i)); // deal with measures
-    } else if ((i= type.indexOf("/")) > -1) {
-      return getType(type.substring(0,i));
+      return getType(type.substring(0, i).trim()); // deal with measures
+    } else if ((i = type.indexOf("/")) > -1) {
+      return getType(type.substring(0, i).trim());
     } else {
       return type;
     }
@@ -473,7 +484,8 @@ public class AssetDataPlugIn extends SimplePlugIn {
   protected Object parseWithCOF(Class cl, String val) {
     String name = cl.getName();
     int dot = name.lastIndexOf('.');
-    if (dot != -1) name = name.substring(dot+1);
+    if (dot != -1) 
+      name = name.substring(dot + 1).trim();
 
     try {
       // lookup method on ldmf
@@ -485,16 +497,16 @@ public class AssetDataPlugIn extends SimplePlugIn {
         String ss = (String) sp.nextElement();
 
         int eq = ss.indexOf('=');
-        String slotname = ss.substring(0, eq);
-        String vspec = ss.substring(eq+1);
+        String slotname = ss.substring(0, eq).trim();
+        String vspec = ss.substring(eq + 1).trim();
         
         int spi = vspec.indexOf(' ');
         Object v;
         if (spi == -1) {
           v = vspec;
         } else {
-          String st = vspec.substring(0, spi);
-          String sv = vspec.substring(spi+1);
+          String st = vspec.substring(0, spi).trim();
+          String sv = vspec.substring(spi + 1).trim();
           v = parseExpr(st, sv);
         }
         callSetMethod(o, slotname, v);
@@ -510,22 +522,25 @@ public class AssetDataPlugIn extends SimplePlugIn {
     // look up a zero-arg factory method in the ldmf
     String newname = "new"+ifcname;
     
-    // try the COUGAAR factory
-    try {
-      Class ldmfc = getFactory().getClass();
-      Method fm = ldmfc.getMethod(newname,nullClassList);
-      return fm.invoke(getFactory(), nullArgList);
-    } catch (Exception e) {
-      e.printStackTrace();
+    Collection keys = DomainManager.keySet();
+    for (Iterator i = keys.iterator(); i.hasNext(); ) {
+      String key = (String) i.next();
+      try {
+        getFactory(key);
+        Class ldmfc = getFactory(key).getClass();
+        Method fm = ldmfc.getMethod(newname,nullClassList);
+        return fm.invoke(getFactory(), nullArgList);
+      } catch (NoSuchMethodException nsme) {
+        // This is okay - just try the next factory
+        //System.out.println("Unable to find " + newname + " method in factory for " + key);
+      } catch (Exception e) { 
+        synchronized (System.err) {
+          System.err.println("Problem loading Domain Factory \""+key+"\": ");
+          e.printStackTrace(); 
+        }
+      }
     }
-
-    // try the main factory
-    try {
-      Class ldmfc = getFactory().getClass();
-      Method fm = ldmfc.getMethod(newname,nullClassList);
-      return fm.invoke(getFactory(), nullArgList);
-    } catch (Exception e) {
-    }
+      
     throw new RuntimeException ("Couldn't find a factory method for "+ifcname);
   }
   private static final Class nullClassList[] = {};
@@ -562,7 +577,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
    * and then sets it for (or adds it to) the asset
    */
   protected int setPropertyForAsset(Asset asset, String prop, int newVal, StreamTokenizer tokens) {
-    String propertyName = prop.substring(1, prop.length()-1);
+    String propertyName = prop.substring(1, prop.length()-1).trim();
     if (asset != null) {
       NewPropertyGroup property = null;
       try {
@@ -583,8 +598,7 @@ public class AssetDataPlugIn extends SimplePlugIn {
 	    newVal = tokens.nextToken();
 	    // Call appropriate setters for the slots of the property
             Object [] args = new Object[] {parseExpr(dataType, tokens.sval)};
-            createAndCallSetter(property, propName, "set" + member, 
-                                getType(dataType), args);
+            callSetter(property, "set" + member, getType(dataType), args);
 	    newVal = tokens.nextToken();
 	    member = tokens.sval;
 	  } else {
@@ -741,11 +755,10 @@ public class AssetDataPlugIn extends SimplePlugIn {
   }
 
   private static HashMap classes;
-  private static final Collection packages;
+  protected static Collection packages = new ArrayList();
 
   static {
     // initialize packages:
-    packages = new ArrayList();
     packages.add("org.cougaar.domain.planning.ldm.measure");
     packages.add("org.cougaar.domain.planning.ldm.plan");
     packages.add("org.cougaar.domain.planning.ldm.asset");
@@ -802,17 +815,15 @@ public class AssetDataPlugIn extends SimplePlugIn {
    * Creates and calls the appropriate "setter" method for the classInstance
    * which is of type className.
    */
-  protected void createAndCallSetter(Object classInstance, String className, String setterName, String type, Object []arguments) {
+  protected void callSetter(Object classInstance, String setterName, String type, Object []arguments) {
     Class parameters[] = new Class[1];
     
     try {
       parameters[0] = findClass(type);
-      Class propertyClass = findClass(className);
-      //Method meth = propertyClass.getMethod(setterName, parameters);
-      Method meth = findMethod(propertyClass, setterName, parameters);
+      Method meth = findMethod(classInstance.getClass(), setterName, parameters);
       meth.invoke(classInstance, arguments);
     } catch (Exception e) {
-      System.err.println("AssetDataPlugIn Exception: createAndCallSetter("+classInstance.getClass().getName()+", "+className+", "+setterName+", "+type+", "+arguments+" : " + e);
+      System.err.println("AssetDataPlugIn Exception: callSetter("+classInstance.getClass().getName()+", "+setterName+", "+type+", "+arguments+" : " + e);
       e.printStackTrace();
     }
   }
