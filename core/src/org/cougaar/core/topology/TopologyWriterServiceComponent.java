@@ -36,6 +36,7 @@ import org.cougaar.core.service.TopologyWriterService;
 
 import org.cougaar.util.GenericStateModelAdapter;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Iterator;
@@ -91,8 +92,8 @@ implements Component
     this.localsite = "site";
 
     try {
-      this.localhost = 
-        java.net.InetAddress.getLocalHost().getHostAddress();
+      InetAddress localAddr = InetAddress.getLocalHost();
+      this.localhost =  localAddr.getHostName();
     } catch (java.net.UnknownHostException ex) {
       throw new RuntimeException(
           "Unable to lookup localhost", ex);
