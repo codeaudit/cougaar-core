@@ -165,7 +165,16 @@ public class SimpleAgent
   extends Agent
   implements Cluster, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
+  // state from "setState(..)", used within "load()"
+  private Object loadState;
+  
+  // state from "suspend()", used within "getState()"
+  private List unsentMessages;
+
   // services, in order of "load()"
+
+  private LoggingService log;
+
   private AgentContainmentServiceProvider myAgentContainmentServiceProvider;
       
   private MessageTransportService messenger;
@@ -341,6 +350,13 @@ public class SimpleAgent
     }
     ServiceBroker sb = getServiceBroker();
 
+    // get our log
+    log = (LoggingService) 
+      sb.getService(this, LoggingService.class, null);
+    if (log == null) {
+      log = LoggingService.NULL;
+    }
+
     // add ourselves to our VM's cluster table
     ClusterContextTable.addContext(getMessageAddress(), this);
 
@@ -457,10 +473,26 @@ public class SimpleAgent
       // use the existing state
       AgentState agentState = (AgentState) loadState;
       this.loadState = null;
+      // verify state's agent id
+      if (!(getMessageAddress().equals(agentState.agentAddr))) {
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Load state for "+getMessageAddress()+
+              " contains incorrect agent address "+agentState);
+        }
+        // continue anyways
+      }
       // load the child Components (Plugins, etc)
-      int n = ((agentState.children != null) ? agentState.children.length : 0);
-      for (int i = 0; i < n; i++) {
-        add(agentState.children[i]);
+      List tuples = agentState.tuples;
+      for (int i = 0, n = tuples.size(); i < n; i++) {
+        StateTuple ti = (StateTuple) tuples.get(i);
+        add(ti);
+      }
+      // send all unsent messages
+      List l = agentState.unsentMessages;
+      for (int i = 0, n = l.size(); i < n; i++) {
+        ClusterMessage cmi = (ClusterMessage) l.get(i);
+        sendMessage(cmi);
       }
     } else {
 
@@ -556,15 +588,8 @@ public class SimpleAgent
     // register with node - temporary hack.
     getBindingSite().registerAgent(this);
     restart();
-    restartTimer = new java.util.Timer();
-    restartTimer.schedule(new java.util.TimerTask() {
-      public void run() {
-        checkRestarts();
-      }
-    },
-      RESTART_CHECK_INTERVAL,
-      RESTART_CHECK_INTERVAL);
 
+    startRestartChecker();
 
     // children started as part of "super.add(..)".
   }
@@ -580,29 +605,58 @@ public class SimpleAgent
       b.suspend();
     }
 
-    // suspend the alarms
+    // FIXME bug 989: cancel all alarms
 
-	// System.out.println("SimpleAgent.suspend - suspend scheduler service");
-    mySchedulerServiceProvider.suspend(); // suspend the plugin scheduling
+    // suspend child (plugin) scheduling
+    mySchedulerServiceProvider.suspend(); 
 
-	// System.out.println("SimpleAgent.suspend - unregisterClient from messenger");
-    messenger.unregisterClient(SimpleAgent.this);
+    stopRestartChecker();
 
-	stopQueueHandler ();
+    if (messenger != null) {
+      messenger.unregisterClient(SimpleAgent.this);
+    }
+
+    stopQueueHandler();
+
+    if (messenger != null) {
+      // flush outgoing messages, block further input.
+      // get a list of unsent messages.
+      unsentMessages = messenger.flushMessages();
+
+      // release messenger, remove agent name-server entry.
+      getServiceBroker().releaseService(
+          this, MessageTransportService.class, messenger);
+      messenger = null;
+    }
   }
 
   public void resume() {
     super.resume();
 
-	startQueueHandler ();
-	
+    if (messenger == null) {
+      messenger = (MessageTransportService) 
+        getServiceBroker().getService(
+            this, MessageTransportService.class, null);
+      messenger.registerClient(this);
+    }
+
+    startQueueHandler();
+
     // re-register for MessageTransport
-	// System.out.println("SimpleAgent.resume - re-registerClient with messenger.");
-    messenger.registerClient(this);
+    // send all unsent messages
+    List l = unsentMessages;
+    unsentMessages = null;
+    for (int i = 0, n = ((l != null) ? l.size() : 0); i < n; i++) {
+      ClusterMessage cmi = (ClusterMessage) l.get(i);
+      sendMessage(cmi);
+    }
 
-    mySchedulerServiceProvider.resume(); // suspend the plugin scheduling
+    startRestartChecker();
 
-    // resume the alarms 
+    // resume child (plugin) scheduling
+    mySchedulerServiceProvider.resume(); 
+
+    // FIXME bug 989: resume alarm service
 
     // resume all children
     List childBinders = listBinders();
@@ -615,7 +669,8 @@ public class SimpleAgent
 
   public void stop() {
     super.stop();
-    restartTimer.cancel();      // Stop the restart timer
+
+    stopRestartChecker();
 
     // should be okay...
 
@@ -687,8 +742,15 @@ public class SimpleAgent
 
     sb.releaseService(this, MessageWatcherService.class, watcherService);
     sb.releaseService(this, MessageStatisticsService.class, statisticsService);
-    sb.releaseService(this, MessageTransportService.class, messenger);
+
+    // messenger already released in "suspend()"
+
     sb.releaseService(this, DomainService.class, myDomainService);
+
+    if ((log != null) && (log != LoggingService.NULL)) {
+      sb.releaseService(this, LoggingService.class, log);
+      log = null;
+    }
   }
 
   /**
@@ -712,11 +774,12 @@ public class SimpleAgent
    * "boundComponents" access.
    */
   private Object getState(final boolean excludeBlackboard) {
-    AgentState result = new AgentState();
+
     // get the child components
+    List tuples;
     synchronized (boundComponents) {
       int n = boundComponents.size();
-      result.children = new StateTuple[n];
+      tuples = new ArrayList(n);
       for (int i = 0; i < n; i++) {
         org.cougaar.core.component.BoundComponent bc = 
           (org.cougaar.core.component.BoundComponent)
@@ -733,21 +796,29 @@ public class SimpleAgent
           } else {
             state = b.getState();
           }
-          result.children[i] = new StateTuple(cd, state);
+          StateTuple ti = new StateTuple(cd, state);
+          tuples.add(ti);
         } else {
           // error?
         }
       }
     }
 
-    // Do this here because we might not get another opportunity
-	// System.out.println("SimpleAgent.getState - flushMessages from messenger");
-    messenger.flushMessages();
-    
+    // get unsent messages
+    List uMsgs = 
+      ((unsentMessages != null) ?
+       (unsentMessages) :
+       (Collections.EMPTY_LIST));
+
+    // create a state object
+    AgentState result = 
+      new AgentState(
+          getMessageAddress(),
+          tuples,
+          uMsgs);
+
     return result;
   }
-
-  private Object loadState;
 
   public void setState(Object loadState) {
     this.loadState = loadState;
@@ -823,11 +894,17 @@ public class SimpleAgent
         // internal message queue
         getQueueHandler().addMessage((ClusterMessage)message);
       } else {
-        System.err.println("\n"+this+": Received unhandled Message ("+message.getClass()+"): "+message);
+        if (log.isErrorEnabled()) {
+          log.error(
+              this+": Received unhandled Message ("+
+              message.getClass()+"): "+message);
+        }
       }
-    } catch( Exception e) {
-      System.err.println("Unhandled Exception: "+e);
-      e.printStackTrace();
+    } catch (Exception e) {
+      if (log.isErrorEnabled()) {
+        log.error(
+            this+"Unhandled Exception: ", e);
+      }
     }
   }
 
@@ -933,6 +1010,32 @@ public class SimpleAgent
       return oldNumber != 0L && oldNumber != newNumber;
     }
     return false;
+  }
+
+  private void startRestartChecker() {
+    if (restartTimer != null) {
+      restartTimer = new java.util.Timer();
+      java.util.TimerTask tTask = 
+        new java.util.TimerTask() {
+          public void run() {
+            checkRestarts();
+          }
+        };
+      restartTimer.schedule(
+          tTask,
+          RESTART_CHECK_INTERVAL,
+          RESTART_CHECK_INTERVAL);
+    }
+  }
+
+  private void stopRestartChecker() {
+    if (restartTimer != null) {
+      restartTimer.cancel();
+      // note: If timer is running now then blackboard.restartAgent
+      // may compain about the messenger being disabled.  This can be
+      // ignored.
+      restartTimer = null;
+    }
   }
 
   /**
@@ -1381,6 +1484,32 @@ public class SimpleAgent
   public void releaseDatabaseConnection(Object locker) {}
 
   private static class AgentState implements java.io.Serializable {
-    StateTuple[] children;
+
+    private final MessageAddress agentAddr;
+    private final List tuples;  // List<StateTuple>
+    private final List unsentMessages; // List<ClusterMessage>
+
+    public AgentState(
+        MessageAddress agentAddr,
+        List tuples,
+        List unsentMessages) {
+      this.agentAddr = agentAddr;
+      this.tuples = tuples;
+      this.unsentMessages = unsentMessages;
+      if ((agentAddr == null) ||
+          (tuples == null) ||
+          (unsentMessages == null)) {
+        throw new IllegalArgumentException("null param");
+      }
+    }
+
+    public String toString() {
+      return 
+        "Agent "+agentAddr+" state, tuples["+tuples.size()+
+        "], unsentMessages["+unsentMessages.size()+
+        "]";
+    }
+
+    private static final long serialVersionUID = 3109298128098682091L;
   }
 }
