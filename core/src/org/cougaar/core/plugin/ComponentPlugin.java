@@ -33,7 +33,7 @@ import org.cougaar.core.service.SchedulerService;
 import org.cougaar.core.blackboard.SubscriptionWatcher;
 
 import org.cougaar.core.agent.ClusterServesPlugin;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.Trigger;
@@ -348,14 +348,14 @@ public abstract class ComponentPlugin
    * @deprecated Use the self Organization or plugin parameters 
    * instead.  This method will be removed.
    */
-  protected ClusterIdentifier getClusterIdentifier() { 
+  protected MessageAddress getMessageAddress() { 
     return getAgentIdentifier();
   }
   
   /** 
    * Get the local agent's address.
    */
-  protected ClusterIdentifier getAgentIdentifier() { 
+  protected MessageAddress getAgentIdentifier() { 
     // Fix to use service-based API instead of custom BindingSite
     return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }

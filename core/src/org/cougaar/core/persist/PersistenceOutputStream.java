@@ -202,7 +202,7 @@ public class PersistenceOutputStream extends ObjectOutputStream {
 
   private void print(String message) {
     logger.debug(message);
-//  String clusterName = clusterContext.getClusterIdentifier().getAddress();
+//  String clusterName = clusterContext.getMessageAddress().getAddress();
 //  System.out.println(clusterName + " -- " + message);
   }
 

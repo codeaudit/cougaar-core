@@ -345,7 +345,7 @@ implements Component
   public void setNodeIdentificationService(NodeIdentificationService s) {
     nodeIdService = s;
     if (nodeIdService != null) {
-      nodeId = nodeIdService.getNodeIdentifier();
+      nodeId = nodeIdService.getMessageAddress();
     }
   }
   public void setThreadService(ThreadService s) {

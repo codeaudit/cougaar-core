@@ -20,15 +20,15 @@
  */
 package org.cougaar.core.persist;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
 public interface PersistencePluginSupport {
     /**
-     * The ClusterIdentifier of the agent. Can be used to construction
+     * The MessageAddress of the agent. Can be used to construction
      * agent-specific identifiers, file names, table names, etc.
      **/
-    ClusterIdentifier getClusterIdentifier();
+    MessageAddress getMessageAddress();
 
     /**
      * Get the current Logger (LoggingService) instance.

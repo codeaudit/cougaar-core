@@ -23,6 +23,8 @@ package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.domain.EnvelopeLogicProvider;
@@ -72,12 +74,12 @@ public class AssetTransferLP
 {
   private static Logger logger = Logging.getLogger(AssetTransferLP.class);
   private static TimeSpan ETERNITY = new MutableTimeSpan();
-  private final ClusterIdentifier self;
+  private final MessageAddress self;
 
   public AssetTransferLP(LogPlanServesLogicProvider logplan,
                          ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
-    self = cluster.getClusterIdentifier();
+    self = cluster.getMessageAddress();
   }
 
   /**
@@ -134,13 +136,13 @@ public class AssetTransferLP
    * cluster. The restarted cluster will rescind them if they are no
    * longer valid.
    **/
-  public void restart(final ClusterIdentifier cid) {
+  public void restart(final MessageAddress cid) {
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof AssetTransfer) {
           AssetTransfer at = (AssetTransfer) o;
-          ClusterIdentifier assignee = 
-            at.getAssignee().getClusterPG().getClusterIdentifier();
+          MessageAddress assignee = 
+            at.getAssignee().getClusterPG().getMessageAddress();
           return 
             RestartLogicProviderHelper.matchesRestart(
                 self, cid, assignee);
@@ -159,7 +161,7 @@ public class AssetTransferLP
           Asset asset = (Asset) o;
           ClusterPG clusterPG = asset.getClusterPG();
           if (clusterPG != null) {
-            ClusterIdentifier assetCID = clusterPG.getClusterIdentifier();
+            MessageAddress assetCID = clusterPG.getMessageAddress();
             return
               RestartLogicProviderHelper.matchesRestart(
                   self, cid, assetCID);
@@ -206,7 +208,7 @@ public class AssetTransferLP
                                       ldmf.cloneInstance(receivingAsset),
                                       verifySchedule);
           nav.setSource(self);
-          nav.setDestination(asset.getClusterPG().getClusterIdentifier());
+          nav.setDestination(asset.getClusterPG().getMessageAddress());
           logplan.sendDirective(nav);
         }
       } else {
@@ -237,7 +239,7 @@ public class AssetTransferLP
     naa.setAssignee(ldmf.cloneInstance(at.getAssignee()));
 
     naa.setSource(at.getAssignor());
-    naa.setDestination(at.getAssignee().getClusterPG().getClusterIdentifier());
+    naa.setDestination(at.getAssignee().getClusterPG().getMessageAddress());
 
     naa.setKind(kind);
 

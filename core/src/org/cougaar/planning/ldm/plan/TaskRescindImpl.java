@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.plan.NewTaskRescind;
 import org.cougaar.planning.ldm.plan.Plan;
@@ -50,14 +50,14 @@ public class TaskRescindImpl
    * @param dest
    * @param t
    **/
-  public TaskRescindImpl(ClusterIdentifier src, ClusterIdentifier dest, Plan plan, Task t) {
+  public TaskRescindImpl(MessageAddress src, MessageAddress dest, Plan plan, Task t) {
     super.setSource(src);
     super.setDestination(dest);
     super.setPlan(plan);
     taskUID = t.getUID();
   }
 
-  public TaskRescindImpl(ClusterIdentifier src, ClusterIdentifier dest, Plan plan, UID tuid) {
+  public TaskRescindImpl(MessageAddress src, MessageAddress dest, Plan plan, UID tuid) {
     super.setSource(src);
     super.setDestination(dest);
     super.setPlan(plan);

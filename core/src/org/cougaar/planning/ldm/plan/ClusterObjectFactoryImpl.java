@@ -23,7 +23,7 @@ package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.domain.LDMServesPlugin;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.service.UIDServer;
 
@@ -48,13 +48,13 @@ import java.util.*;
  */
 public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
   protected LDMServesPlugin ldm;
-  private ClusterIdentifier cid;
+  private MessageAddress cid;
   private long count = 0;
   private HashMap IDHashMap;
   private ClassLoader ldmcl;
   private UIDServer myUIDServer;
   
-  public ClusterObjectFactoryImpl(LDMServesPlugin ldm, ClusterIdentifier cluster) {
+  public ClusterObjectFactoryImpl(LDMServesPlugin ldm, MessageAddress cluster) {
     this.ldm = ldm;
     myUIDServer = ((ClusterContext)ldm).getUIDServer();
     cid = cluster;
@@ -284,11 +284,11 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return new PrepositionalPhraseImpl();
   }
   
-  public TaskRescind newTaskRescind(Task task, ClusterIdentifier destination){
+  public TaskRescind newTaskRescind(Task task, MessageAddress destination){
     return new TaskRescindImpl(cid, destination, getRealityPlan(), task);
   }
 
-  public TaskRescind newTaskRescind(UID taskUID, ClusterIdentifier destination){
+  public TaskRescind newTaskRescind(UID taskUID, MessageAddress destination){
     return new TaskRescindImpl(cid, destination, getRealityPlan(), taskUID);
   }
 
@@ -305,7 +305,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     } 
       
     return new AssetRescindImpl(cid, 
-                                rescindeeAsset.getClusterPG().getClusterIdentifier(),
+                                rescindeeAsset.getClusterPG().getMessageAddress(),
                                 getRealityPlan(),
                                 asset,
                                 rescindeeAsset,
@@ -543,7 +543,7 @@ public class ClusterObjectFactoryImpl implements ClusterObjectFactory {
     return  schedule;
   }
 
-  public ClusterIdentifier getClusterIdentifier() {
+  public MessageAddress getMessageAddress() {
     return cid;
   }
 

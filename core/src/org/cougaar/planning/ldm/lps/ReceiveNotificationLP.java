@@ -22,7 +22,7 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 import org.cougaar.core.blackboard.DelayedLPAction;

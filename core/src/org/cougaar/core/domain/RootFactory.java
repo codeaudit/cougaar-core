@@ -26,7 +26,7 @@ import org.cougaar.planning.ldm.asset.AssetFactory;
 import org.cougaar.planning.ldm.asset.PropertyGroup;
 import org.cougaar.planning.ldm.asset.PropertyGroupFactory;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 // ugly hack.  will go away soon, I hope.
 import org.cougaar.planning.ldm.plan.ClusterObjectFactoryImpl;
@@ -66,7 +66,7 @@ public class RootFactory
    * prototype cache, etc.
    **/
   public RootFactory(LDMServesPlugin ldm) {
-    super(ldm, ldm.getClusterIdentifier());
+    super(ldm, ldm.getMessageAddress());
     this.ldm = ldm;
 
     // add the asset factories

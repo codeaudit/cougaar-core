@@ -245,7 +245,7 @@ public class AgentStatusRatePlugin
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	nodeID = nis.getNodeIdentifier();
+	nodeID = nis.getMessageAddress();
 
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {

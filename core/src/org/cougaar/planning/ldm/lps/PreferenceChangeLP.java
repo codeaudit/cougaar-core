@@ -22,6 +22,8 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
@@ -33,7 +35,7 @@ import org.cougaar.planning.ldm.asset.ClusterPG;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.NewTask;
 import org.cougaar.planning.ldm.plan.Preference;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.planning.ldm.plan.TaskImpl;
@@ -86,7 +88,7 @@ public class PreferenceChangeLP extends LogPlanLogicProvider implements Envelope
     Asset asset = all.getAsset();
     ClusterPG cpg = asset.getClusterPG();
     if (cpg == null) return;
-    ClusterIdentifier destination = cpg.getClusterIdentifier();
+    MessageAddress destination = cpg.getMessageAddress();
     if (destination == null) return;
     Task senttask = ((AllocationforCollections)pe).getAllocationTask();
 

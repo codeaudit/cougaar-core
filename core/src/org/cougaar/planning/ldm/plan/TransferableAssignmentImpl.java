@@ -25,7 +25,7 @@ import org.cougaar.planning.ldm.plan.Transferable;
 import org.cougaar.planning.ldm.plan.TransferableAssignment;
 import org.cougaar.planning.ldm.plan.NewTransferableAssignment;
 import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
@@ -49,8 +49,8 @@ public class TransferableAssignmentImpl
     assignedTransferable = transferable;
   }
 
-  public TransferableAssignmentImpl(Transferable transferable, ClusterIdentifier src, 
-			      ClusterIdentifier dest) {
+  public TransferableAssignmentImpl(Transferable transferable, MessageAddress src, 
+			      MessageAddress dest) {
     assignedTransferable = transferable;
     super.setSource(src);
     super.setDestination(dest);

@@ -36,13 +36,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 //import org.cougaar.core.agent.AgentIdentificationService;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ComponentDescription;
 
 import org.cougaar.core.service.AgentContainmentService;
 
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.StringUtility;
@@ -108,8 +108,8 @@ import org.cougaar.util.StringUtility;
 public class LoaderServletComponent
 extends BaseServletComponent
 {
-  protected ClusterIdentifier agentId;
-  protected NodeIdentifier nodeId;
+  protected MessageAddress agentId;
+  protected MessageAddress nodeId;
 
   protected AgentContainmentService agentContainer;
 
@@ -148,7 +148,7 @@ extends BaseServletComponent
           "Unable to obtain NodeIdentificationService for \""+
           getPath()+"\" servlet");
     }
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.nodeId = nodeIdService.getMessageAddress();
     if (nodeId == null) {
       throw new RuntimeException(
           "Unable to obtain node's id? for \""+

@@ -31,7 +31,7 @@ import org.cougaar.util.*;
 import org.cougaar.bootstrap.SystemProperties;
 
 import org.cougaar.core.agent.AgentChildBindingSite;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.Blackboard;
@@ -294,7 +294,7 @@ public class DomainManager
   }
 
   /** invoke RestartLogicProviders across all currently loaded domains **/
-  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+  public void invokeRestartLogicProviders(MessageAddress cid) {
     for (Iterator childBinders = binderIterator();
          childBinders.hasNext();) {
       DefaultDomainBinder b = (DefaultDomainBinder) childBinders.next();

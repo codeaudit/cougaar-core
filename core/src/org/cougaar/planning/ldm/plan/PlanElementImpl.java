@@ -35,6 +35,8 @@ import org.cougaar.core.util.XMLizable;
 import org.cougaar.planning.ldm.plan.AllocationResult;
 
 import org.cougaar.core.blackboard.Transaction;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.util.XMLize;

@@ -77,7 +77,7 @@ public class JvmStackDumpServlet extends BaseServletComponent {
       serviceBroker.getService(
           this, NodeIdentificationService.class, null);
     if (nis != null) {
-      nodeId = nis.getNodeIdentifier();
+      nodeId = nis.getMessageAddress();
       serviceBroker.releaseService(
           this, NodeIdentificationService.class, nis);
     }

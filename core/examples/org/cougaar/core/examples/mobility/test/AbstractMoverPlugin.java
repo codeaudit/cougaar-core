@@ -24,7 +24,7 @@ package org.cougaar.core.examples.mobility.test;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.mobility.Ticket;
@@ -153,17 +153,17 @@ extends ComponentPlugin
        ) {
 
      // create addresses
-     ClusterIdentifier mobileAgentId = 
+     MessageAddress mobileAgentId = 
        ((mobileAgent != null) ? 
-        (ClusterIdentifier.getClusterIdentifier(mobileAgent)) :
+        (MessageAddress.getMessageAddress(mobileAgent)) :
         null);
      MessageAddress origNodeId =
        ((origNode != null) ?
-        (new MessageAddress(origNode)) :
+        (MessageAddress.getMessageAddress(origNode)) :
         null);
      MessageAddress destNodeId = 
        ((destNode != null) ?
-        (new MessageAddress(destNode)) :
+        (MessageAddress.getMessageAddress(destNode)) :
         null);
 
      return createTicket(

@@ -197,7 +197,7 @@ public class LoadWatcher
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	MessageAddress my_node = nis.getNodeIdentifier();
+	MessageAddress my_node = nis.getMessageAddress();
 
 	String path = "Node(" +my_node+ ")" +PATH_SEPR+ "Jips";
 	Metric m = metricsService.getValue(path);

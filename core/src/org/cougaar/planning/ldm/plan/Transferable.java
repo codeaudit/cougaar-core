@@ -22,7 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** Transferable 
  *
@@ -49,10 +49,10 @@ public interface Transferable extends Cloneable, UniqueObject {
    **/
   void setAll(Transferable other);
 
-  boolean isFrom(ClusterIdentifier src);
+  boolean isFrom(MessageAddress src);
 
   /**
    * @see #isFrom
    */
-  ClusterIdentifier getSource();
+  MessageAddress getSource();
 }

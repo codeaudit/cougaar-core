@@ -29,7 +29,7 @@ import org.cougaar.core.component.PropagatingServiceBroker;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateObject;
-import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 

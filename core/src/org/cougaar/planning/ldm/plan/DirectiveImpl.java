@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.NewDirective;
@@ -43,8 +43,8 @@ public class DirectiveImpl
   implements Directive, NewDirective, Serializable
 {
 
-  protected ClusterIdentifier source = null;
-  protected ClusterIdentifier destination = null;
+  protected MessageAddress source = null;
+  protected MessageAddress destination = null;
 
   //protected transient Plan theplan;   // Made transient for Persistence
 
@@ -71,16 +71,16 @@ public class DirectiveImpl
   }
   
   /**
-   * @return ClusterIdentifier Identifies the originator of this message
+   * @return MessageAddress Identifies the originator of this message
    */
-  public ClusterIdentifier getSource() {
+  public MessageAddress getSource() {
     return source;
   }
 
   /*
-   *@return ClusterIdentifier Identifies the receiver of the message
+   *@return MessageAddress Identifies the receiver of the message
    */
-  public ClusterIdentifier getDestination() {
+  public MessageAddress getDestination() {
     return destination;
   }
   
@@ -91,16 +91,16 @@ public class DirectiveImpl
     
   /*
    *	Depricated because it is inherited from the base interface Message
-   * @param asource - Set the ClusterIdentifier of the originator of this message
+   * @param asource - Set the MessageAddress of the originator of this message
    */
-  public void setSource(ClusterIdentifier asource) {
+  public void setSource(MessageAddress asource) {
     source = asource;
   }
   
   /*
-   * @param adestination - Set the ClusterIdentifier of the receiver of this message
+   * @param adestination - Set the MessageAddress of the receiver of this message
    */
-  public void setDestination(ClusterIdentifier adestination) {
+  public void setDestination(MessageAddress adestination) {
     destination = adestination;
   }
 

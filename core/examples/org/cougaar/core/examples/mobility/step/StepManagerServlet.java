@@ -37,7 +37,7 @@ import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.examples.mobility.ldm.*;
 import org.cougaar.core.mobility.Ticket;
@@ -183,7 +183,7 @@ implements BlackboardClient
       throw new RuntimeException(
           "Unable to obtain node-id service");
     }
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.nodeId = nodeIdService.getMessageAddress();
     serviceBroker.releaseService(
         this, NodeIdentificationService.class, nodeIdService);
     if (nodeId == null) {
@@ -307,13 +307,13 @@ implements BlackboardClient
     if (mobileAgent != null) {
       // FIXME RelayLP!
       mobileAgentAddr = 
-        ClusterIdentifier.getClusterIdentifier(mobileAgent);
+        MessageAddress.getMessageAddress(mobileAgent);
     }
     if (originNode != null) {
-      originNodeAddr = new MessageAddress(originNode);
+      originNodeAddr = MessageAddress.getMessageAddress(originNode);
     }
     if (destNode != null) {
-      destNodeAddr = new MessageAddress(destNode);
+      destNodeAddr = MessageAddress.getMessageAddress(destNode);
     }
     Object ticketId =
       mobilityFactory.createTicketIdentifier();
@@ -335,7 +335,7 @@ implements BlackboardClient
     MessageAddress actorAgentAddr = 
       ((actorAgent != null) ? 
        // FIXME RelayLP!
-       (ClusterIdentifier.getClusterIdentifier(actorAgent)) :
+       (MessageAddress.getMessageAddress(actorAgent)) :
        (agentId));
     StepOptions so = 
       new StepOptions(

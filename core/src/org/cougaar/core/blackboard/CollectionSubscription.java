@@ -21,6 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 
@@ -106,15 +108,21 @@ public class CollectionSubscription
       return super.conditionalChange(o,changes,isVisible);
     }
   }
+  
+  private MetricsTuple mets = new MetricsTuple();
+  public MetricsTuple getMetricsTuple() { return mets.get(); }
 
   protected void privateAdd(Object o, boolean isVisible) { 
+    mets.incrAdds();
     real.add(o); 
   }
   protected void privateRemove(Object o, boolean isVisible) {
+    mets.incrRemoves();
     real.remove(o);
   }
 
   protected void privateChange(Object o, List changes, boolean isVisible) {
+    mets.incrChanges();
     if (isVisible) {
       Set set = (Set) changeMap.get(o);
       // here we avoid creating a new set instance if it will only

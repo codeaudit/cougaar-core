@@ -23,7 +23,7 @@ package org.cougaar.core.plugin;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import java.lang.reflect.*;
 
@@ -57,8 +57,8 @@ public class DefaultPluginBinder
     public final void requestStop() {
       DefaultPluginBinder.this.requestStop();
     }
-    public final ClusterIdentifier getAgentIdentifier() {
-      return (ClusterIdentifier) getPluginManager().getAgentIdentifier();
+    public final MessageAddress getAgentIdentifier() {
+      return (MessageAddress) getPluginManager().getAgentIdentifier();
     }
     public final ConfigFinder getConfigFinder() {
       return getPluginManager().getConfigFinder();

@@ -38,10 +38,10 @@ public class NodeMessage
   /**
    * Constructor
    * <p>
-   * @param source The NodeIdentifier of creator node 
-   * @param destination The NodeIdentifier of the target node
+   * @param source The MessageAddress of creator node 
+   * @param destination The MessageAddress of the target node
    **/
-  public NodeMessage(NodeIdentifier s, NodeIdentifier d) {
+  public NodeMessage(MessageAddress s, MessageAddress d) {
     super(s, d);
   }
 
@@ -61,37 +61,37 @@ public class NodeMessage
    * we cannot return a different type in java method overloading so the 
    * method signature is changed.  Mark it final to allow the compilier 
    * to inline optimize the function.
-   * @return NodeIdentifier Identifies the originator of this directive
+   * @return MessageAddress Identifies the originator of this directive
    */
-  public final NodeIdentifier getSource(){
-    return (NodeIdentifier)getOriginator();
+  public final MessageAddress getSource(){
+    return (MessageAddress)getOriginator();
   }
 
   /**
    * We provide the translation from the Object version in Message to the 
    * Type sepecific version for the Node messageing subsystem.
    * Mark it final to allow the compilier to inline optimize the function.
-   * @return NodeIdentifier Identifies the reciever of the directive
+   * @return MessageAddress Identifies the reciever of the directive
    */
-  public final NodeIdentifier getDestination() {
-    return (NodeIdentifier)getTarget();
+  public final MessageAddress getDestination() {
+    return (MessageAddress)getTarget();
   }
 
   /**
    * Source is stored as na object so that message can service all objects.
    * Mark it final to allow the compilier to inline optimize the function.
-   * @param asource - Set the NodeIdentifier of the originator of this message
+   * @param asource - Set the MessageAddress of the originator of this message
    */
-  public final void setSource(NodeIdentifier asource) {
+  public final void setSource(MessageAddress asource) {
     setOriginator( asource );
   }
 
   /**
    * Target is stored as na object so that message can service all objects.
    * Mark it final to allow the compilier to inline optimize the function.
-   * @param adestination - Set the NodeIdentifier of the receiver of this message
+   * @param adestination - Set the MessageAddress of the receiver of this message
    */
-  public final void setDestination(NodeIdentifier adestination) {
+  public final void setDestination(MessageAddress adestination) {
     setTarget(adestination);
   }
 

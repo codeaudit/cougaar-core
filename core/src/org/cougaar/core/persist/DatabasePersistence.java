@@ -123,7 +123,7 @@ public class DatabasePersistence
     throws PersistenceException
   {
     init(pps, name);
-    String clusterName = pps.getClusterIdentifier().getAddress().replace('-', '_');
+    String clusterName = pps.getMessageAddress().getAddress().replace('-', '_');
     LoggingService ls = pps.getLoggingService();
     deltaTable = "delta_" + clusterName;
     if (databaseDriver != null) {

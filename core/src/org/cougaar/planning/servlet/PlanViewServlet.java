@@ -31,7 +31,7 @@ import java.util.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.servlet.*;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
@@ -2509,10 +2509,10 @@ extends HttpServlet
       if (asset != null) {
         // link to allocated asset
         ClusterPG clusterPG = asset.getClusterPG();
-        ClusterIdentifier agentID;
+        MessageAddress agentID;
         String remoteAgentID =
           ((((clusterPG = asset.getClusterPG()) != null) &&
-            ((agentID = clusterPG.getClusterIdentifier()) != null)) ?
+            ((agentID = clusterPG.getMessageAddress()) != null)) ?
            agentID.toString() :
            null);
         boolean isRemoteAgent = (remoteAgentID != null);
@@ -2644,9 +2644,9 @@ extends HttpServlet
             "</li>\n");
       }
       // show assignor
-      ClusterIdentifier assignor = atrans.getAssignor();
+      MessageAddress assignor = atrans.getAssignor();
       if (assignor != null) {
-        String name = assignor.cleanToString();
+        String name = assignor.toString();
         String encName = 
           ((name != null) ?
            (support.encodeAgentName(name)) :
@@ -3540,7 +3540,7 @@ extends HttpServlet
           ((ptUID = ptU.toString()) == null)) {
         out.print("<font color=red>parent not unique</font>");
       } else {
-        ClusterIdentifier tClusterID = task.getSource();
+        MessageAddress tClusterID = task.getSource();
         String ptEncodedAgentName;
         if ((tClusterID == null) ||
             ((ptEncodedAgentName = tClusterID.toString()) == null)) {
@@ -3913,9 +3913,9 @@ extends HttpServlet
           out.print(")\"");
         } else if (io instanceof Schedule) {
           out.print(io.getClass().getName());
-        } else if (io instanceof ClusterIdentifier) {
+        } else if (io instanceof MessageAddress) {
           out.print("CID: \"");
-          out.print(((ClusterIdentifier)io).toString());
+          out.print(((MessageAddress)io).toString());
           out.print("\"");
         } else if (io instanceof AssetTransfer) {
           out.print("AssetTransfer: \"");

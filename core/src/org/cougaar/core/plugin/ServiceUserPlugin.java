@@ -72,7 +72,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   public void load() {
     super.load();
     loggingService = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
-    logger = LoggingServiceWithPrefix.add(loggingService, getClusterIdentifier().cleanToString() + ": ");
+    logger = LoggingServiceWithPrefix.add(loggingService, getMessageAddress().toString() + ": ");
   }
 
   /**

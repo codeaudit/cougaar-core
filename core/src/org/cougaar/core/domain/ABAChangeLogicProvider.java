@@ -21,7 +21,7 @@
 package org.cougaar.core.domain;
 
 import java.util.Set;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** 
  * API for LogPlan LogicProviders which handle ABA changes

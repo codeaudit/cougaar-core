@@ -21,7 +21,7 @@
 package org.cougaar.core.service.community;
 
 import java.util.*;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Defines name, type, and supported roles for a community member.
@@ -61,13 +61,13 @@ public class CommunityMember implements java.io.Serializable{
   public boolean isAgent() { return (type == AGENT); }
 
   /**
-   * Returns a ClusterIdentifier for this member.  Returns null if the
+   * Returns a MessageAddress for this member.  Returns null if the
    * member is not an Agent.
    * @return True if an Agent
    */
-  public ClusterIdentifier getAgentId() {
+  public MessageAddress getAgentId() {
     if (isAgent())
-      return new ClusterIdentifier(memberName);
+      return MessageAddress.getMessageAddress(memberName);
     else
       return null;
   }

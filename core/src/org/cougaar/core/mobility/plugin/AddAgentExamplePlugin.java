@@ -28,7 +28,7 @@ import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.ldm.*;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.util.UnaryPredicate;
@@ -103,10 +103,10 @@ public class AddAgentExamplePlugin extends ComponentPlugin {
     MessageAddress newAgentAddr = null;
     MessageAddress destNodeAddr = null;
     if (newAgent != null) {
-      newAgentAddr = new ClusterIdentifier(newAgent);
+      newAgentAddr = MessageAddress.getMessageAddress(newAgent);
     }
     if (destNode != null) {
-      destNodeAddr = new MessageAddress(destNode);
+      destNodeAddr = MessageAddress.getMessageAddress(destNode);
     }
     Object ticketId =
       mobilityFactory.createTicketIdentifier();

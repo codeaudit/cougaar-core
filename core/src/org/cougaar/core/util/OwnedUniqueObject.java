@@ -20,7 +20,7 @@
  */
 package org.cougaar.core.util;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
 
@@ -29,7 +29,7 @@ import java.io.IOException;
  **/
 
 public abstract class OwnedUniqueObject extends SimpleUniqueObject {
-  protected ClusterIdentifier owner;
+  protected MessageAddress owner;
 
   private transient Throwable allocationContext;
 
@@ -37,19 +37,19 @@ public abstract class OwnedUniqueObject extends SimpleUniqueObject {
     allocationContext = new Throwable("Allocation context");
   }
 
-  public boolean isFrom(ClusterIdentifier where) {
+  public boolean isFrom(MessageAddress where) {
     if (owner == null) {
       ownerError("owner was never set");
     }
     return where.equals(owner);
   }
 
-  public void setOwner(ClusterIdentifier newOwner) {
+  public void setOwner(MessageAddress newOwner) {
     allocationContext = new Throwable("Allocation context");
     owner = newOwner;
   }
 
-  public ClusterIdentifier getOwner() {
+  public MessageAddress getOwner() {
     if (owner == null) {
       ownerError("owner was never set");
     }
@@ -57,7 +57,7 @@ public abstract class OwnedUniqueObject extends SimpleUniqueObject {
   }
 
   /** alias for getOwner */
-  public ClusterIdentifier getSource() {
+  public MessageAddress getSource() {
     return getOwner();
   }
 

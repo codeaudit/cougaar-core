@@ -20,6 +20,8 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import java.lang.ref.WeakReference;

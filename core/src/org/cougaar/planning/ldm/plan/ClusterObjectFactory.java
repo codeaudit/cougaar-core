@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.measure.Latitude;
 import org.cougaar.planning.ldm.measure.Longitude;
@@ -318,7 +318,7 @@ public interface ClusterObjectFactory {
    *	@param destination - The Cluster to send the TaskRescind Message to.
    *	@return TaskRescind
    **/
-  TaskRescind newTaskRescind(Task task, ClusterIdentifier destination);
+  TaskRescind newTaskRescind(Task task, MessageAddress destination);
 
   /** Build a TaskRescind Message.  This message is only sent by
    *	CCRescind - NOT PLUGINS!!!.
@@ -326,7 +326,7 @@ public interface ClusterObjectFactory {
    *	@param destination - The Cluster to send the TaskRescind Message to.
    *	@return TaskRescind
    **/
-  TaskRescind newTaskRescind(UID taskUID, ClusterIdentifier destination);
+  TaskRescind newTaskRescind(UID taskUID, MessageAddress destination);
   
   /** Build an AssetRescind Message.  This message is only sent by
    *	CCRescind - NOT PLUGINS!!!.

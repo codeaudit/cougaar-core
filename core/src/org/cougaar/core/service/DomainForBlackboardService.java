@@ -22,7 +22,7 @@
 package org.cougaar.core.service;
 
 import java.util.Set;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -42,7 +42,7 @@ public interface DomainForBlackboardService extends DomainService {
   void invokeMessageLogicProviders(DirectiveMessage message);
 
   /** invoke RestartLogicProviders across all currently loaded domains **/
-  void invokeRestartLogicProviders(ClusterIdentifier cid);
+  void invokeRestartLogicProviders(MessageAddress cid);
 
   /** invoke ABAChangeLogicProviders across all currently loaded domains **/
   void invokeABAChangeLogicProviders(Set communities);

@@ -30,7 +30,7 @@ import org.cougaar.core.agent.MetricsSnapshot;
 import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.RootFactory;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.component.ServiceBroker;
@@ -57,7 +57,7 @@ public interface PluginDelegate {
   /** @deprecated Use getFactory() **/
   RootFactory getLdmFactory();
   Factory getFactory(String domainname);
-  ClusterIdentifier getClusterIdentifier();
+  MessageAddress getMessageAddress();
   /** @deprecated use getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats) **/
   MetricsSnapshot getMetricsSnapshot();
   MetricsSnapshot getMetricsSnapshot(MetricsSnapshot ms, boolean resetMsgStats);

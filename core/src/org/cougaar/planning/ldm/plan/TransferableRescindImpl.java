@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.planning.ldm.plan.NewTransferableRescind;
 import org.cougaar.planning.ldm.plan.Plan;

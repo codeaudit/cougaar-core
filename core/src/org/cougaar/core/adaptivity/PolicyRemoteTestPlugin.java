@@ -34,7 +34,7 @@ import org.cougaar.core.service.PlaybookConstrainService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.PluginBindingSite;
 import org.cougaar.util.GenericStateModelAdapter;
 
@@ -115,14 +115,14 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     if (!published) {
       if (logger.isInfoEnabled()) logger.info("publishing policy");
       for (int i = 0; i < policies.length; i++) {
-	policies[i].setTarget(new ClusterIdentifier("Provider"));
+	policies[i].setTarget(MessageAddress.getMessageAddress("Provider"));
 	getBlackboardService().publishAdd(policies[i]);
 	published = true;
       }
     } else {
       if (logger.isInfoEnabled()) logger.info("Removing policy");
       for (int i = 0; i < policies.length; i++) {
-	//policies[i].setTarget((ClusterIdentifier)null);
+	//policies[i].setTarget((MessageAddress)null);
 	//getBlackboardService().publishChange(policies[i]);        
   	getBlackboardService().publishRemove(policies[i]);        
       }

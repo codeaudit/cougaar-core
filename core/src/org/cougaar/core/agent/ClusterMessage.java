@@ -24,6 +24,7 @@ package org.cougaar.core.agent;
 import org.cougaar.core.blackboard.*;
 
 import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 import java.io.Serializable;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -43,11 +44,11 @@ public class ClusterMessage
   protected long theIncarnationNumber;
 
   /**
-   * @param source The ClusterIdentifier of creator cluster 
-   * @param destination The ClusterIdentifier of the target cluster
+   * @param source The MessageAddress of creator cluster 
+   * @param destination The MessageAddress of the target cluster
    **/
-  public ClusterMessage(ClusterIdentifier s, ClusterIdentifier d, long incarnationNumber) {
-    super( s, d );
+  public ClusterMessage(MessageAddress s, MessageAddress d, long incarnationNumber) {
+    super( (MessageAddress)s, (MessageAddress)d );
     theIncarnationNumber = incarnationNumber;
   }
 
@@ -69,8 +70,8 @@ public class ClusterMessage
    *  Mark it final to allow the compilier to inline optimize the function.
    * @return Identifies the originator of this directive
    */
-  public final ClusterIdentifier getSource(){
-    return (ClusterIdentifier)getOriginator();
+  public final MessageAddress getSource(){
+    return getOriginator();
   }
 
   /**
@@ -79,26 +80,26 @@ public class ClusterMessage
    *  Mark it final to allow the compilier to inline optimize the function.
    *	@return Identifies the reciever of the directive
    */
-  public final ClusterIdentifier getDestination() {
-    return (ClusterIdentifier)getTarget();
+  public final MessageAddress getDestination() {
+    return getTarget();
   }
   
   /*
    *  Source is stored as na object so that message can service all objects.
    *  Mark it final to allow the compilier to inline optimize the function.
-   * @param asource Set the ClusterIdentifier of the originator of this message
+   * @param asource Set the MessageAddress of the originator of this message
    */
-  public final void setSource(ClusterIdentifier asource) {
-    setOriginator( asource );
+  public final void setSource(MessageAddress asource) {
+    setOriginator( (MessageAddress)asource );
   }
   
   /*
    *  Target is stored as na object so that message can service all objects.
    *  Mark it final to allow the compilier to inline optimize the function.
-   * @param adestination Set the ClusterIdentifier of the receiver of this message
+   * @param adestination Set the MessageAddress of the receiver of this message
    */
-  public final void setDestination(ClusterIdentifier adestination) {
-    setTarget( adestination );
+  public final void setDestination(MessageAddress adestination) {
+    setTarget( (MessageAddress)adestination );
   }
 
   public String toString() {

@@ -27,7 +27,7 @@ import java.util.Iterator;
 
 import org.cougaar.core.blackboard.AnonymousChangeReport;
 import org.cougaar.core.blackboard.ChangeReport;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 
 import org.cougaar.planning.Constants;
@@ -125,13 +125,13 @@ public class AssetReportPlugin extends SimplePlugin
   }
 
   protected UnaryPredicate getLocalAssetPred() {
-    return new allLocalAssetPred(getClusterIdentifier());
+    return new allLocalAssetPred(getMessageAddress());
   }
 
   private void allocate(Task task) {
     Asset reportingAsset = task.getDirectObject();
 
-    if (!reportingAsset.getClusterPG().getClusterIdentifier().equals(getClusterIdentifier())) {
+    if (!reportingAsset.getClusterPG().getMessageAddress().equals(getMessageAddress())) {
       allocateRemote(task);
     } else {
       allocateLocal(task);
@@ -145,8 +145,8 @@ public class AssetReportPlugin extends SimplePlugin
     Asset localReportingAsset = findLocalAsset(reportingAsset);
     if ((localReportingAsset == null) ||
         (!((HasRelationships )localReportingAsset).isLocal())) {
-        //(!localReportingAsset.getClusterPG().getClusterIdentifier().equals(getClusterIdentifier()))) {
-      System.err.println(getClusterIdentifier().toString()+
+        //(!localReportingAsset.getClusterPG().getMessageAddress().equals(getMessageAddress()))) {
+      System.err.println(getMessageAddress().toString()+
                          "/AssetReportPlugin: unable to process " + 
                          task.getVerb() + " task - " + 
                          reportingAsset + " reporting to " + reportee + ".\n" +
@@ -357,8 +357,8 @@ public class AssetReportPlugin extends SimplePlugin
   }
 
   private static class allLocalAssetPred implements UnaryPredicate {
-    private final ClusterIdentifier myCID;
-    public allLocalAssetPred(ClusterIdentifier cid) {
+    private final MessageAddress myCID;
+    public allLocalAssetPred(MessageAddress cid) {
       super();
       myCID = cid;
     }
@@ -366,7 +366,7 @@ public class AssetReportPlugin extends SimplePlugin
       if ((o instanceof Asset) &&
           (o instanceof HasRelationships) &&
           (((Asset) o).hasClusterPG())) {
-        return ((Asset) o).getClusterPG().getClusterIdentifier().equals(myCID);
+        return ((Asset) o).getClusterPG().getMessageAddress().equals(myCID);
       } else {
         return false;
       }

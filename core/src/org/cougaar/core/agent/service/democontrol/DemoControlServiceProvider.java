@@ -25,6 +25,8 @@ import org.cougaar.core.agent.service.alarm.*;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.component.*;

@@ -21,7 +21,7 @@
  
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Directive interface
@@ -39,13 +39,13 @@ public interface NewDirective extends Directive {
     
   /*
   	*	Depricated because it is inherited from the base interface Message
-   * @param asource - Set the ClusterIdentifier of the originator of this message
+   * @param asource - Set the MessageAddress of the originator of this message
    */
-  void setSource(ClusterIdentifier asource);
+  void setSource(MessageAddress asource);
   
   /*
-   * @param adestination - Set the ClusterIdentifier of the receiver of this message
+   * @param adestination - Set the MessageAddress of the receiver of this message
    */
-  void setDestination(ClusterIdentifier adestination);
+  void setDestination(MessageAddress adestination);
   
  }

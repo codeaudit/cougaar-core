@@ -22,7 +22,7 @@
 package org.cougaar.planning.ldm.plan;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
@@ -44,7 +44,7 @@ public class AssetTransferImpl extends PlanElementImpl
  
   private transient Asset asset;     // changed to transient : Persistence
   private transient Asset assigneeAsset;
-  private ClusterIdentifier assignerCluster;
+  private MessageAddress assignerCluster;
   private Schedule assetSchedule;
   private Role theRole;
   private transient boolean potentialconflict = false;
@@ -65,7 +65,7 @@ public class AssetTransferImpl extends PlanElementImpl
    * @param to  The Cluster that will receive this asset for use
    * @param from  The Cluster that is provided this asset for use
    */
-  public AssetTransferImpl(Plan p, Task t, Asset a, Schedule s, Asset to, ClusterIdentifier from) {
+  public AssetTransferImpl(Plan p, Task t, Asset a, Schedule s, Asset to, MessageAddress from) {
     super(p, t);
     setAsset(a);
     setSchedule(s);
@@ -87,7 +87,7 @@ public class AssetTransferImpl extends PlanElementImpl
    * @param estimatedresult
    * @param aRole
    */
-  public AssetTransferImpl(Plan p, Task t, Asset a, Schedule s, Asset to, ClusterIdentifier from, AllocationResult estimatedresult, Role aRole) {
+  public AssetTransferImpl(Plan p, Task t, Asset a, Schedule s, Asset to, MessageAddress from, AllocationResult estimatedresult, Role aRole) {
     super(p, t);
     setAsset(a);
     setSchedule(s);
@@ -118,10 +118,10 @@ public class AssetTransferImpl extends PlanElementImpl
   }
   
   /** Returns the Cluster that the asset is assigned from.
-   * @return ClusterIdentifier representing the source of the asset
+   * @return MessageAddress representing the source of the asset
    */
  	
-  public ClusterIdentifier getAssignor() {
+  public MessageAddress getAssignor() {
     return assignerCluster;
   }
  
@@ -190,7 +190,7 @@ public class AssetTransferImpl extends PlanElementImpl
    * @param aCluster
    */
  	
-  private void setAssignor(ClusterIdentifier aCluster) {
+  private void setAssignor(MessageAddress aCluster) {
     assignerCluster = aCluster;
   }
  

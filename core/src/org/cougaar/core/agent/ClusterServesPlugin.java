@@ -25,7 +25,7 @@ import org.cougaar.core.agent.service.alarm.*;
 
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.MetricsSnapshot;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.core.domain.LDMServesPlugin;
@@ -41,10 +41,10 @@ public interface ClusterServesPlugin
 {
 
   /**
-   * @return ClusterIdentifier the ClusterIdentifier associated with 
+   * @return MessageAddress the MessageAddress associated with 
    * the Cluster where the Plugin is plugged in.
    */
-  ClusterIdentifier getClusterIdentifier();
+  MessageAddress getMessageAddress();
         
   /**
    * Returns the Distributer associated with this Cluster.

@@ -23,7 +23,7 @@ package org.cougaar.core.servlet;
 
 import javax.servlet.Servlet;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.NamingService;

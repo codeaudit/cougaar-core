@@ -21,7 +21,7 @@
 
 package org.cougaar.planning.ldm.lps;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
@@ -173,7 +173,7 @@ public class RescindLP extends LogPlanLogicProvider implements EnvelopeLogicProv
     Asset a = all.getAsset();
     ClusterPG cpg = a.getClusterPG();
     if (cpg != null) {
-      ClusterIdentifier cid = cpg.getClusterIdentifier();
+      MessageAddress cid = cpg.getMessageAddress();
       if (cid != null) {
         Task rt = ((AllocationforCollections) all).getAllocationTask();
         if (rt != null) {

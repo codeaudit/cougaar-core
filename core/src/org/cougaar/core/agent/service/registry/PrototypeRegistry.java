@@ -23,6 +23,8 @@ package org.cougaar.core.agent.service.registry;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.plugin.PrototypeProvider;

@@ -20,6 +20,8 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import java.util.*;
@@ -44,6 +46,7 @@ import org.cougaar.planning.ldm.plan.Plan;
 
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.core.mts.MessageAttributes;
+import org.cougaar.core.mts.MessageAddress;
 
 import javax.naming.NamingException;
 import javax.naming.NameNotFoundException;
@@ -90,6 +93,7 @@ public class Blackboard extends Subscriber
   protected DomainForBlackboardService myDomainService;
   protected LoggingService logger;
 
+  public MessageAddress getCID() { return myCluster.getMessageAddress();}
   public static final boolean isSavePriorPublisher =
     System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
   public static final boolean enablePublishException =
@@ -176,7 +180,7 @@ public class Blackboard extends Subscriber
     myCluster = cluster;
     logger = (LoggingService)
       sb.getService(this, LoggingService.class, null);
-    logger = LoggingServiceWithPrefix.add(logger, myCluster.getClusterIdentifier().toString() + ": ");
+    logger = LoggingServiceWithPrefix.add(logger, myCluster.getMessageAddress().toString() + ": ");
     myDomainService = 
       (DomainForBlackboardService) sb.getService(this, 
                                                  DomainForBlackboardService.class, 
@@ -437,10 +441,10 @@ public class Blackboard extends Subscriber
   }
 
   private static class DestinationKey {
-    public ClusterIdentifier cid;
+    public MessageAddress cid;
     public MessageAttributes attrs;
     private int hc;
-    public DestinationKey(ClusterIdentifier cid, MessageAttributes attrs) {
+    public DestinationKey(MessageAddress cid, MessageAttributes attrs) {
       this.cid = cid;
       this.attrs = attrs;
       hc = cid.hashCode() + attrs.hashCode();
@@ -457,17 +461,17 @@ public class Blackboard extends Subscriber
     }
   }
 
-  private ClusterIdentifier getDirectiveDestinationOfKey(Object key) {
-    if (key instanceof ClusterIdentifier) {
-      return (ClusterIdentifier) key;
+  private MessageAddress getDirectiveDestinationOfKey(Object key) {
+    if (key instanceof MessageAddress) {
+      return (MessageAddress) key;
     } else {
       DestinationKey dkey = (DestinationKey) key;
       return dkey.cid;
     }
   }
 
-  private Object getDirectiveKeyOfDestination(ClusterIdentifier dest) {
-    MessageAttributes attrs = dest.getQosAttributes();
+  private Object getDirectiveKeyOfDestination(MessageAddress dest) {
+    MessageAttributes attrs = dest.getMessageAttributes();
     if (attrs == null) return dest;
     return new DestinationKey(dest, attrs);
   }
@@ -475,7 +479,7 @@ public class Blackboard extends Subscriber
   private final HashMap directivesByDestination = new HashMap(89);
   
   /*
-   * Builds up hashmap of arrays of directives for each agent, <code>ClusterIdentifier</code>.
+   * Builds up hashmap of arrays of directives for each agent, <code>MessageAddress</code>.
    * Modified to handle destinations of <code>AttributeBasedAddress</code>es, so that these are 
    * sent properly as well. 
    */
@@ -486,7 +490,7 @@ public class Blackboard extends Subscriber
     
     for (Iterator iter = sendQueue.iterator(); iter.hasNext(); ) {
       Directive dir = (Directive) iter.next();  
-      ClusterIdentifier dest = dir.getDestination();
+      MessageAddress dest = dir.getDestination();
       
       // get all destinations
       
@@ -499,14 +503,14 @@ public class Blackboard extends Subscriber
 
       if (dest instanceof AttributeBasedAddress) {
         //System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
-        MessageAttributes qosAttributes = dest.getQosAttributes();
+        MessageAttributes qosAttributes = dest.getMessageAttributes();
 	Collection agents = getABAAddresses((AttributeBasedAddress) dest);   // List of CIs
 	// for all destinations, add a new directive array and insert a new directive, or add to 
 	// an existing array in the destinations hashmap
 	for (Iterator i = agents.iterator(); i.hasNext(); ) {
-          ClusterIdentifier agentAddress = (ClusterIdentifier) i.next();
+          MessageAddress agentAddress = (MessageAddress) i.next();
           if (qosAttributes != null) {
-            agentAddress = new ClusterIdentifier(qosAttributes, agentAddress.getAddress());
+            agentAddress = MessageAddress.getMessageAddress((MessageAddress)agentAddress, qosAttributes);
           }
           Object key = getDirectiveKeyOfDestination(agentAddress);
 	  dirs = (ArrayList)directivesByDestination.get(key);
@@ -532,19 +536,19 @@ public class Blackboard extends Subscriber
       }
     }
     /**
-     * By now directivesByDestination only has ArrayLists of ClusterIdentifiers,
+     * By now directivesByDestination only has ArrayLists of MessageAddresss,
      * so we can set their directives as before. 
      */
     for (Iterator iter = directivesByDestination.entrySet().iterator(); iter.hasNext(); ) {
       Map.Entry entry = (Map.Entry) iter.next();
-      ClusterIdentifier tmpci = getDirectiveDestinationOfKey(entry.getKey());
+      MessageAddress tmpci = getDirectiveDestinationOfKey(entry.getKey());
       ArrayList dirs = (ArrayList) entry.getValue();
       int size = dirs.size();
       if (size > 0) {
         Directive[] directives = (Directive[]) dirs.toArray(new Directive[size]);
         DirectiveMessage ndm = new DirectiveMessage(directives);
 	ndm.setDestination(tmpci);
-        ndm.setSource(myCluster.getClusterIdentifier());
+        ndm.setSource(myCluster.getMessageAddress());
         messages.add(ndm);
         dirs.clear();
       }
@@ -552,7 +556,7 @@ public class Blackboard extends Subscriber
     sendQueue.clear();
   }
 
-  public void restart(ClusterIdentifier cid) {
+  public void restart(MessageAddress cid) {
     myDomainService.invokeRestartLogicProviders(cid);
   }
 
@@ -599,7 +603,7 @@ public class Blackboard extends Subscriber
   private Distributor createDistributor(
       ClusterServesLogicProvider cluster,
       Object state) {
-    Distributor d = new Distributor(this, cluster.getClusterIdentifier().getAddress());
+    Distributor d = new Distributor(this, cluster.getMessageAddress().getAddress());
     Persistence persistence = createPersistence(cluster);
     boolean lazyPersistence = System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
     d.setPersistence(persistence, lazyPersistence);
@@ -702,7 +706,7 @@ public class Blackboard extends Subscriber
   }
 
   /*
-   * Loops through the cache of ABAs and returns ClusterIdentifiers, 
+   * Loops through the cache of ABAs and returns MessageAddresss, 
    * else it querries the nameserver for all agents with the ABA's role attribute, 
    * and builds the cache.
    * @return list (copy) of the addresses of the agents matching the ABA
@@ -777,7 +781,7 @@ public class Blackboard extends Subscriber
   }
 
   /*
-   * Queries NameServer and gets a collection ClusterIdentifiers of
+   * Queries NameServer and gets a collection MessageAddresss of
    * all agents having the attribute type and value specified by the
    * ABA and stores the collection in the ABA cache. Returns a List
    * (copy) of the addresses found.
@@ -797,7 +801,7 @@ public class Blackboard extends Subscriber
     List cis = new ArrayList(matches.size());
     for (Iterator i = matches.iterator(); i.hasNext(); ) {
       Object o = i.next();
-      if (o instanceof ClusterIdentifier) {
+      if (o instanceof MessageAddress) {
         cis.add(o);
       }
     }

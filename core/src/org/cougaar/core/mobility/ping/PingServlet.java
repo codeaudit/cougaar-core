@@ -35,7 +35,7 @@ import java.util.Set;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardService;
@@ -247,7 +247,7 @@ implements BlackboardClient
           isError = true;
         } else {
           // FIXME RelayLP
-          targetId = ClusterIdentifier.getClusterIdentifier(target);
+          targetId = MessageAddress.getMessageAddress(target);
 
           if (agentId.equals(targetId)) {
             isError = true;

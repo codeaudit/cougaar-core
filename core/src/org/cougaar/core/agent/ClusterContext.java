@@ -25,8 +25,9 @@ import org.cougaar.core.service.*;
 
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 
@@ -41,15 +42,15 @@ import java.io.*;
 public interface ClusterContext
 {
   /** The current cluster's CID */
-  ClusterIdentifier getClusterIdentifier();
+  MessageAddress getMessageAddress();
   
   UIDServer getUIDServer();
 
   LDMServesPlugin getLDM();
 
   final class DummyClusterContext implements ClusterContext {
-    private static final ClusterIdentifier cid = new ClusterIdentifier("_Dummy");
-    public ClusterIdentifier getClusterIdentifier() { return cid; }
+    private static final MessageAddress cid = MessageAddress.NULL_SYNC;
+    public MessageAddress getMessageAddress() { return cid; }
     public UIDServer getUIDServer() { return null; }
     public LDMServesPlugin getLDM() { return null; }
   }

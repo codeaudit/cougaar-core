@@ -46,7 +46,7 @@ import java.util.Vector;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterContextTable;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.NoResponseException;
 import org.cougaar.core.blackboard.BulkEnvelopeTuple;
 import org.cougaar.core.blackboard.Envelope;
@@ -215,7 +215,7 @@ public class BasePersistence
         return getDataProtectionKeyIterator();
       }
       public MessageAddress getAgentIdentifier() {
-        return clusterContext.getClusterIdentifier();
+        return clusterContext.getMessageAddress();
       }
     };
 
@@ -261,7 +261,7 @@ public class BasePersistence
   }
 
   private String getAgentName() {
-    return clusterContext.getClusterIdentifier().toString();
+    return clusterContext.getMessageAddress().toString();
   }
 
   /**
@@ -472,8 +472,8 @@ public class BasePersistence
     plugins.put(ppi.getName(), new PersistencePluginInfo(ppi));
   }
 
-  public ClusterIdentifier getClusterIdentifier() {
-    return clusterContext.getClusterIdentifier();
+  public MessageAddress getMessageAddress() {
+    return clusterContext.getMessageAddress();
   }
 
   public boolean archivingEnabled() {
@@ -540,7 +540,7 @@ public class BasePersistence
                   try {
                     if (pObject != null) {
                       if (logger.isInfoEnabled()) {
-                        logger.info("Rehydrating " + clusterContext.getClusterIdentifier()
+                        logger.info("Rehydrating " + clusterContext.getMessageAddress()
                                     + " from " + pObject);
                       }
                       resultPtr[0] = rehydrateFromBytes(pObject.getBytes());
@@ -556,7 +556,7 @@ public class BasePersistence
                         PersistencePlugin ppi = rehydrationSets[i].ppi;
                         if (logger.isInfoEnabled()) {
                           logger.info("Rehydrating "
-                                      + clusterContext.getClusterIdentifier()
+                                      + clusterContext.getMessageAddress()
                                       + " "
                                       + rehydrateNumbers.toString());
                         }

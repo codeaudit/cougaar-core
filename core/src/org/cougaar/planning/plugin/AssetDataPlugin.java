@@ -35,7 +35,7 @@ import java.util.*;
 
 import org.cougaar.util.StateModelException;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.SimplePlugin;
 import org.cougaar.core.service.DomainService;
@@ -129,7 +129,7 @@ import org.cougaar.util.TimeSpan;
  * AlternateTypeIdentification String "Stationer"
  * 
  * [ClusterPG]
- * ClusterIdentifier ClusterIdentifier "Staples"
+ * MessageAddress MessageAddress "Staples"
  * 
  * [EntityPG]
  * Roles Collection<Role> "Subordinate, PaperProvider, CrayonProvider, PaintProvider"
@@ -166,12 +166,12 @@ public class AssetDataPlugin extends SimplePlugin {
     super.load(object);
     if (!didRehydrate()) {
       try {
-        System.out.println(getClusterIdentifier().toString() + ": processing assets in load");
+        System.out.println(getMessageAddress().toString() + ": processing assets in load");
         openTransaction();
         processAssets();
       } catch (Exception e) {
         synchronized (System.err) {
-          System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+          System.err.println(getMessageAddress().toString()+"/"+this+" caught "+e);
           e.printStackTrace();
         }
       } finally {
@@ -200,7 +200,7 @@ public class AssetDataPlugin extends SimplePlugin {
 
   protected void processAssets() {
     try {
-      String cId = getClusterIdentifier().getAddress();
+      String cId = getMessageAddress().getAddress();
       ParsePrototypeFile(cId);
 
       // Put the assets for this cluster into array
@@ -258,7 +258,7 @@ public class AssetDataPlugin extends SimplePlugin {
     reportTask.setPrepositionalPhrases(prepPhrases.elements());
 
     reportTask.setPlan(getFactory().getRealityPlan());
-    reportTask.setSource(getClusterIdentifier());
+    reportTask.setSource(getMessageAddress());
 
     AspectValue startTAV = 
       TimeAspectValue.create(AspectType.START_TIME, startTime);
@@ -304,7 +304,7 @@ public class AssetDataPlugin extends SimplePlugin {
 
     
     NewClusterPG cpg = (NewClusterPG)asset.getClusterPG();
-    cpg.setClusterIdentifier(ClusterIdentifier.getClusterIdentifier(clusterName));
+    cpg.setMessageAddress(MessageAddress.getMessageAddress(clusterName));
     
     Asset saved = (Asset) myOtherAssets.get(asset.getKey());
     if (saved == null) {
@@ -666,7 +666,7 @@ public class AssetDataPlugin extends SimplePlugin {
       } catch (Exception e) {
         e.printStackTrace();
         throw new RuntimeException("AssetDataPlugin: unable to parse " + 
-                                   getFileName(getClusterIdentifier().getAddress()));
+                                   getFileName(getMessageAddress().getAddress()));
       }
     } else {
       System.err.println("AssetDataPlugin Error: asset is null");
@@ -934,7 +934,7 @@ public class AssetDataPlugin extends SimplePlugin {
     // initialize the classmap with some common ones
     classes = new HashMap();
 
-    classes.put("ClusterIdentifier", ClusterIdentifier.class);
+    classes.put("MessageAddress", MessageAddress.class);
 
     // precache some builtins
     classes.put("long", Long.TYPE);

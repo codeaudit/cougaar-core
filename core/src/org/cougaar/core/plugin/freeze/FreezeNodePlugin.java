@@ -73,7 +73,7 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
     return topologyReaderService
       .getChildrenOnParent(TopologyReaderService.AGENT,
                            TopologyReaderService.NODE,
-                           getClusterIdentifier().toString());
+                           getMessageAddress().toString());
   }
 
   /**

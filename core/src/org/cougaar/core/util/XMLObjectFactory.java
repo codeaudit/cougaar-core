@@ -35,6 +35,8 @@ import org.cougaar.planning.ldm.asset.PropertyGroup;
 import org.w3c.dom.*;
 import org.apache.xerces.parsers.DOMParser;
 import org.xml.sax.InputSource;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import java.io.*;
 import org.cougaar.core.mts.Message;
@@ -134,7 +136,7 @@ public class XMLObjectFactory {
     public void throwError() {
       throw new RuntimeException("XMLObjectFactory empty Factory!");
     }
-    public ClusterIdentifier getClusterIdentifier() { return null; }
+    public MessageAddress getMessageAddress() { return null; }
     public void cachePrototype(String t, Asset a) { throwError(); }
     public boolean isPrototypeCached(String t) { throwError(); return false; }
     public Asset getPrototype(String t, Class c) { throwError(); return null; }

@@ -21,6 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.util.UnaryPredicate;
@@ -102,6 +104,8 @@ public abstract class Subscription {
   public Subscription(UnaryPredicate p) {
     predicate = p;
   }
+
+  public String getName() { return predicate.getClass().getName(); }
 
   /**
    * Decide if the object is applicable to the subscription
@@ -243,4 +247,20 @@ public abstract class Subscription {
     return envelope.applyToSubscription(this);
   }
 
+
+  public static class MetricsTuple {
+    private long adds = 0L;
+    private long changes = 0L;
+    private long removes = 0L;
+    public void incrAdds() { adds++; }
+    public void incrChanges() { changes++; }
+    public void incrRemoves() { removes++; }
+    public MetricsTuple() {}
+    public MetricsTuple(long a, long c, long r) { adds=a; changes=c; removes=r; } 
+    public MetricsTuple get() { return new MetricsTuple(adds,changes,removes); }
+    public long getAdds() { return adds; }
+    public long getChanges() { return changes; }
+    public long getRemoves() { return removes; }
+    public String toString() { return ""+adds+","+changes+","+removes; }
+  }    
 }

@@ -26,7 +26,7 @@ import org.cougaar.core.agent.service.alarm.*;
 import org.cougaar.core.blackboard.*;
 
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 
 /**
@@ -42,7 +42,7 @@ public class AdvanceClockMessage extends Message
    * Advance the society's clock to a fixed (stopped) time.
    **/
   public AdvanceClockMessage(MessageAddress s, ExecutionTimer.Parameters parameters) {
-    super(s, MessageAddress.SOCIETY);
+    super(s, MessageAddress.MULTICAST_SOCIETY);
     theParameters = parameters;
   }
 

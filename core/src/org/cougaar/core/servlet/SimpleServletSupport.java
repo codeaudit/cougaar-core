@@ -24,7 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 
 /**
@@ -114,7 +114,7 @@ public interface SimpleServletSupport {
    *
    * @see #getEncodedAgentName
    */
-  ClusterIdentifier getAgentIdentifier();
+  MessageAddress getAgentIdentifier();
 
   /**
    * Obtain access to the logging service.
@@ -154,6 +154,6 @@ public interface SimpleServletSupport {
   //
 
   /*
-  public NodeIdentifier getNodeIdentifier();
+  public MessageAddress getMessageAddress();
   */
 }

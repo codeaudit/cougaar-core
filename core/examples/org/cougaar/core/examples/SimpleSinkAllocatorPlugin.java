@@ -109,7 +109,7 @@ public class SimpleSinkAllocatorPlugin extends org.cougaar.core.plugin.SimplePlu
 
   private AllocationResult computeAllocationResult(Task task) 
   {
-    System.out.print("[" + getClusterIdentifier() + "] allocating task " + 
+    System.out.print("[" + getMessageAddress() + "] allocating task " + 
 		       task.getUID() + "[" + task.getVerb() + "] :");
 
     // Grab the preferences and grab the aspect types and results

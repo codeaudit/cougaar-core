@@ -27,7 +27,7 @@ import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.NewAssetAssignment;
 import org.cougaar.planning.ldm.plan.Plan;
 import org.cougaar.planning.ldm.plan.Schedule;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
@@ -72,7 +72,7 @@ public class AssetAssignmentImpl extends DirectiveImpl
   //constructor that takes the Asset, the plan, the schedule
   // the source cluster and the destination asset
   public AssetAssignmentImpl (Asset as, Plan p, Schedule s, 
-                              ClusterIdentifier sc, Asset da) {
+                              MessageAddress sc, Asset da) {
     assignedAsset = as;
     super.setPlan(p);
     assignSchedule = s;
@@ -82,7 +82,7 @@ public class AssetAssignmentImpl extends DirectiveImpl
     if (!assigneeAsset.hasClusterPG()) {
       throw new IllegalArgumentException("AssetAssignmentImpl: destination asset - " + assigneeAsset + " - does not have a ClusterPG");
     }
-    super.setDestination(assigneeAsset.getClusterPG().getClusterIdentifier());
+    super.setDestination(assigneeAsset.getClusterPG().getMessageAddress());
   }
 
 		

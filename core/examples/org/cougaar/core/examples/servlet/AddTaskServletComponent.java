@@ -25,7 +25,7 @@ import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.component.*;
 import org.cougaar.core.service.*;
@@ -39,7 +39,7 @@ extends BaseServletComponent
 implements BlackboardClient
 {
 
-  private ClusterIdentifier agentId;
+  private MessageAddress agentId;
   private BlackboardService blackboard;
   private DomainService ds;
   private RootFactory rootFactory;

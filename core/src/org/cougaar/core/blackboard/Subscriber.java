@@ -22,6 +22,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.service.BlackboardService;
@@ -37,6 +39,7 @@ import java.util.*;
 
 // pollution of subscriber purity for completion checking
 import org.cougaar.planning.ldm.plan.*;
+import java.io.*;
 
 /** Subscriber is the most common implementation of BlackboardService
  *
@@ -85,6 +88,8 @@ public class Subscriber {
   public Subscriber(BlackboardClient client, Distributor distributor, String subscriberName) {
     setClientDistributor(client,distributor);
     setName(subscriberName);
+    addSubscriber(this);        // MIK Hack!
+    addDistributor(distributor);
   }
 
   public void setClientDistributor(BlackboardClient client, Distributor newDistributor)
@@ -142,6 +147,126 @@ public class Subscriber {
   public Persistence getPersistence() {
     return theDistributor.getPersistence();
   }
+
+  public void reportMetrics(PrintStream out) {
+    String distname = theDistributor.getName();
+    String plugname = theClient.getBlackboardClientName();
+    synchronized (subscriptions) {
+      for (int i = 0, n = subscriptions.size(); i < n; i++) {
+        Subscription subscription = (Subscription) subscriptions.get(i);
+        if (subscription instanceof CollectionSubscription) {
+          Subscription.MetricsTuple t = ((CollectionSubscription)subscription).getMetricsTuple();
+          plugname = plugname.replaceAll(",",":");
+          String subname = subscription.getName();
+          out.println(distname+","+
+                      plugname+","+
+                      subname+","+
+                      t);
+        }
+      }
+    }
+    {
+      Subscription.MetricsTuple t = getPublisherMetricsTuple();
+      out.println(distname+","+
+                  plugname+","+
+                  "publisher"+","+
+                  t);
+    }
+  }
+
+  public Subscription.MetricsTuple getPublisherMetricsTuple() { 
+    return new Subscription.MetricsTuple(publishAddedCount, publishChangedCount, publishRemovedCount);
+  }
+
+  private static ArrayList _subscribers = new ArrayList();
+  private static void addSubscriber(Subscriber s) {
+    synchronized (_subscribers) {
+      _subscribers.add(s);
+    }
+  }
+  private static HashSet _distributors = new HashSet();
+  private static void addDistributor(Distributor s) {
+    synchronized (_distributors) {
+      _distributors.add(s);
+    }
+  }
+
+  private static void reportAllMetrics() {
+    try {
+      long t = System.currentTimeMillis();
+      String nn = System.getProperty("org.cougaar.node.name");
+      logger.shout("Dumping Blackboard Metrics for "+nn);
+      File f = new File(nn+".tmp");
+      PrintStream out = new PrintStream(new BufferedOutputStream(new FileOutputStream(f)));
+      // subscribers
+      synchronized (_subscribers) {
+        for (int i=0,l=_subscribers.size(); i<l; i++) {
+          Subscriber s = (Subscriber) _subscribers.get(i);
+          s.reportMetrics(out);
+        }
+      }
+
+      // distributors
+      synchronized (_distributors) {
+        for (Iterator it = _distributors.iterator(); it.hasNext(); ) {
+          Distributor d = (Distributor) it.next();
+          String distname = d.getName();
+          long mi = d.getMessagesIn();
+          out.println(distname+","+
+                      "MTS"+","+
+                      "in"+","+
+                      mi+",0,0");
+          long mo = d.getMessagesOut();
+          out.println(distname+","+
+                      "MTS"+","+
+                      "out"+","+
+                      mo+",0,0");
+          long ms = d.getMessagesSelf();
+          out.println(distname+","+
+                      "MTS"+","+
+                      "self"+","+
+                      ms+",0,0");
+        }
+
+      }
+
+      out.close();
+      File bak = new File(nn+".bak");
+      if (bak.exists()) { 
+        if (! bak.delete()) {
+          logger.error("could not remove  "+bak);
+        }
+      }
+      File subs = new File(nn+".subs");
+      if (subs.exists()) { 
+        if (! subs.renameTo(bak)) {
+          logger.error("could not rename "+subs+" to "+bak);
+        }
+      }
+      if (! f.renameTo(subs)) {
+        logger.error("could not rename "+f+" to "+subs);
+      }
+    } catch (Exception e) {
+      logger.error("Exception generating Blackboard metrics file for "+System.getProperty("org.cougaar.node.name"),
+                   e);
+    }
+  }
+
+  private static Thread _reporter;
+  static {
+    _reporter = new Thread(new Runnable() {
+        public void run() {
+          while (true) {
+            try {
+              Thread.sleep(5*60*1000L); // report each minute.
+              reportAllMetrics();
+            }catch (InterruptedException ie) { }
+          }
+        }
+      });
+    _reporter.start();
+  }
+
 
   /**
    * Move inboxes into subscriptions.

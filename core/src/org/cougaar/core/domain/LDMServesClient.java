@@ -22,7 +22,7 @@
 package org.cougaar.core.domain;
 
 import org.cougaar.planning.ldm.asset.Asset;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterContext;
 
 /**

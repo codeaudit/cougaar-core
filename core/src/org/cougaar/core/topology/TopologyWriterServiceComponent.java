@@ -21,7 +21,7 @@
 
 package org.cougaar.core.topology;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -111,7 +111,7 @@ implements Component
       throw new RuntimeException(
           "Unable to obtain node-id service");
     }
-    MessageAddress nodeAddr = nodeIdService.getNodeIdentifier();
+    MessageAddress nodeAddr = nodeIdService.getMessageAddress();
     this.localnode = 
       ((nodeAddr != null) ? nodeAddr.getAddress() : null);
     if (localnode == null) {
@@ -301,7 +301,7 @@ implements Component
           String agent, Attributes ats) throws NamingException {
         DirContext ctx = ensureTopologyContext();
         // value is message-address for backwards compatibility
-        MessageAddress value = new ClusterIdentifier(agent);
+        MessageAddress value = MessageAddress.getMessageAddress(agent);
         ctx.rebind(agent, value, ats);
       }
 

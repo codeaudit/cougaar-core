@@ -20,7 +20,7 @@
  */
 package org.cougaar.core.domain;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Helper methods for RestartLogicProviders.
@@ -40,9 +40,9 @@ public abstract class RestartLogicProviderHelper {
    *    specified "dest" agent.
    */
   public static final boolean matchesRestart(
-      ClusterIdentifier self,
-      ClusterIdentifier cid,
-      ClusterIdentifier dest) {
+      MessageAddress self,
+      MessageAddress cid,
+      MessageAddress dest) {
     return 
       cid != null ? 
       cid.equals(dest) : 

@@ -30,7 +30,7 @@ import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentBinder;
 import org.cougaar.core.agent.AgentManager;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
@@ -107,7 +107,7 @@ public class NodeAgent
   private ComponentDescription[] agentDescs = null;
 
   private String nodeName = null;
-  private NodeIdentifier nodeIdentifier = null;
+  private MessageAddress nodeIdentifier = null;
 
   private static boolean isHeartbeatOn = true;
   private static boolean isQuiet = false;
@@ -387,7 +387,7 @@ public class NodeAgent
       NodeIdentificationService nis = (NodeIdentificationService) 
         rootsb.getService(this,NodeIdentificationService.class,null);
       if (nis != null) {
-        nodeIdentifier = nis.getNodeIdentifier();
+        nodeIdentifier = nis.getMessageAddress();
         nodeName = nodeIdentifier.toString();
       } else {
         throw new RuntimeException("No node name specified");
@@ -397,7 +397,7 @@ public class NodeAgent
     }
 
     // set the MessageAddress to be a cid for now (sigh)
-    setMessageAddress( new ClusterIdentifier(nodeName) );
+    setMessageAddress( MessageAddress.getMessageAddress(nodeName) );
 
     super.load();
 
@@ -532,7 +532,7 @@ public class NodeAgent
           throw new UnsupportedOperationException(
               "Unsupported ComponentMessage: "+m);
         }
-      } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
+      } else if (m.getTarget().equals(MessageAddress.MULTICAST_SOCIETY)) {
         // we don't do anything with these. ignore it.
       } else {
         super.receiveMessage(m);

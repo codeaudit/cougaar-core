@@ -247,7 +247,7 @@ public class HierarchyWorker
 					   Set visitedOrgs) {
     // create a "self" org
     String selfOrgName = 
-      ((Asset)selfOrg).getClusterPG().getClusterIdentifier().toString();
+      ((Asset)selfOrg).getClusterPG().getMessageAddress().toString();
     visitedOrgs.add (selfOrgName);
     // build list of orgs
     HierarchyData hd = new HierarchyData();
@@ -306,7 +306,7 @@ public class HierarchyWorker
       String role = schedule.getOtherRole(relationship).getName();
 
       String subOrgName = 
-	subOrg.getClusterPG().getClusterIdentifier().toString();
+	subOrg.getClusterPG().getMessageAddress().toString();
 
       // client wants a numerical identifier for the role
       int roleId;

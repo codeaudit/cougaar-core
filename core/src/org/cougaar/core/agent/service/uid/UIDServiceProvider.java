@@ -22,13 +22,15 @@ package org.cougaar.core.agent.service.uid;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceState;
 import org.cougaar.core.persist.StatePersistable;
 
@@ -51,8 +53,8 @@ public class UIDServiceProvider implements ServiceProvider {
   }
 
   private final class UIDServiceProxy implements UIDService {
-    public ClusterIdentifier getClusterIdentifier() {
-      return theServer.getClusterIdentifier();
+    public MessageAddress getMessageAddress() {
+      return theServer.getMessageAddress();
     }
     public UID nextUID() {
       return theServer.nextUID();

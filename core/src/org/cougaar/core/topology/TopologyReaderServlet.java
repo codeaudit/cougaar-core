@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.TopologyEntry;
 import org.cougaar.core.service.TopologyReaderService;
@@ -162,7 +162,7 @@ extends BaseServletComponent
     };
 
   private MessageAddress agentId;
-  private NodeIdentifier nodeId;
+  private MessageAddress nodeId;
 
   private AgentIdentificationService agentIdService;
   private NodeIdentificationService nodeIdService;
@@ -209,7 +209,7 @@ extends BaseServletComponent
           "Unable to obtain NodeIdentificationService for \""+
           getPath()+"\" servlet");
     }
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.nodeId = nodeIdService.getMessageAddress();
     if (nodeId == null) {
       throw new RuntimeException(
           "Unable to obtain node's id? for \""+

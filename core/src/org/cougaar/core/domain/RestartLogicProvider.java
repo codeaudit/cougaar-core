@@ -20,7 +20,7 @@
  */
 package org.cougaar.core.domain;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** 
  * API for LogPlan LogicProviders which handle agent restarts
@@ -45,12 +45,12 @@ public interface RestartLogicProvider extends LogicProvider {
    * <i>with regards to that one remote agent</i>.
    *
    * @param cid null if this agent restarted, otherwise the
-   *            ClusterIdentifier of a remote agent that restarted
+   *            MessageAddress of a remote agent that restarted
    *
    * @see RestartLogicProviderHelper utility method to test the 
    *    given "cid"
    */
-  void restart(ClusterIdentifier cid);
+  void restart(MessageAddress cid);
 }
 
 

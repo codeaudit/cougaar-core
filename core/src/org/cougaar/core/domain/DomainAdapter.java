@@ -25,7 +25,7 @@ import java.util.*;
 
 import org.cougaar.util.GenericStateModelAdapter;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 
 import org.cougaar.core.blackboard.ChangeEnvelopeTuple;
@@ -147,7 +147,7 @@ public abstract class DomainAdapter
   }
 
   /** invoke the RestartLogicProviders for this domain **/
-  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+  public void invokeRestartLogicProviders(MessageAddress cid) {
     synchronized (myRestartLPs) {
       for (int index = 0;  index < myRestartLPs.size(); index++) {
         try {

@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.plugin.SimplePlugin;
 import org.cougaar.core.service.DomainService;
@@ -127,7 +127,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
         processAssets();
       } catch (Exception e) {
         synchronized (System.err) {
-          System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+          System.err.println(getMessageAddress().toString()+"/"+this+" caught "+e);
           e.printStackTrace();
         }
       } finally {
@@ -156,7 +156,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
 
   protected void processAssets() {
     try {
-      String cId = getClusterIdentifier().getAddress();
+      String cId = getMessageAddress().getAddress();
       AssetDataReader assetDataReader = initializerService.getAssetDataReader();
       assetDataReader.readAsset(cId, new AssetDataCallbackImpl());
 //        System.out.println("Property Groups: ");
@@ -307,7 +307,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     reportTask.setPrepositionalPhrases(prepPhrases.elements());
 
     reportTask.setPlan(getFactory().getRealityPlan());
-    reportTask.setSource(getClusterIdentifier());
+    reportTask.setSource(getMessageAddress());
 
     AspectValue startTAV = 
       TimeAspectValue.create(AspectType.START_TIME, startTime);
@@ -351,7 +351,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     itemIdProp.setNomenclature(itemIdentification);
     
     NewClusterPG cpg = (NewClusterPG)asset.getClusterPG();
-    cpg.setClusterIdentifier(ClusterIdentifier.getClusterIdentifier(clusterName));
+    cpg.setMessageAddress(MessageAddress.getMessageAddress(clusterName));
     
     Asset saved = (Asset) myOtherAssets.get(asset.getKey());
     if (saved == null) {
@@ -633,7 +633,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     // initialize the classmap with some common ones
     classes = new HashMap();
 
-    classes.put("ClusterIdentifier", ClusterIdentifier.class);
+    classes.put("MessageAddress", MessageAddress.class);
 
     // precache some builtins
     classes.put("long", Long.TYPE);

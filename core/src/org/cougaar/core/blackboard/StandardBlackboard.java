@@ -22,6 +22,8 @@ package org.cougaar.core.blackboard;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import java.io.InputStream;
@@ -31,7 +33,11 @@ import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.domain.Domain;
 import org.cougaar.core.domain.DomainManager;
 import org.cougaar.core.component.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import java.beans.*;
 import java.lang.reflect.*;
@@ -179,7 +185,7 @@ public class StandardBlackboard
       blackboard.getDistributor().receiveMessages(messages);
     }
 
-    public void restartAgent(ClusterIdentifier cid) {
+    public void restartAgent(MessageAddress cid) {
       blackboard.getDistributor().restartAgent(cid);
     }
   }

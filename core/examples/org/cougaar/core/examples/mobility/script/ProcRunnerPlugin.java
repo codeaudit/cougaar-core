@@ -142,7 +142,7 @@ extends ComponentPlugin
       throw new RuntimeException(
           "Unable to obtain node-id service");
     }
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.nodeId = nodeIdService.getMessageAddress();
     getServiceBroker().releaseService(
         this, NodeIdentificationService.class, nodeIdService);
     if (nodeId == null) {

@@ -95,7 +95,7 @@ public class AssetCreationJdbcPlugin extends org.cougaar.core.plugin.SimplePlugi
 
 	Statement stmt = conn.createStatement();
 
-	String myOrgName = getClusterIdentifier().getAddress();
+	String myOrgName = getMessageAddress().getAddress();
 
 	String query = 
 	  "select Organization, Prototype, UniqueID, Quantity from Assets"; 

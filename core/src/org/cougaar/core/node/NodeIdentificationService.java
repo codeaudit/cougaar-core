@@ -25,5 +25,5 @@ import org.cougaar.core.mts.*;
 import org.cougaar.core.component.Service;
 
 public interface NodeIdentificationService extends Service {
-  NodeIdentifier getNodeIdentifier();
+  MessageAddress getMessageAddress();
 }

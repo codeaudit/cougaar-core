@@ -27,7 +27,11 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.util.*;
 import java.util.*;
 import org.cougaar.core.service.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.node.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 /** A very simple Component which can be plugged into just about any
@@ -56,7 +60,7 @@ public class DummyComponent
     {
       NodeIdentificationService nis = (NodeIdentificationService) sb.getService(this,NodeIdentificationService.class,null);
       if (nis != null) {
-        nn = nis.getNodeIdentifier().toString();
+        nn = nis.getMessageAddress().toString();
       }
     }
 

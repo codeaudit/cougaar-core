@@ -298,35 +298,35 @@ public class SimpleAgent
   public String toString()
   {
     String body = "anonymous";
-    ClusterIdentifier cid = getClusterIdentifier();
+    MessageAddress cid = getMessageAddress();
     if (cid != null)
       body = cid.getAddress();
-    return "<Cluster " + body + ">";
+    return "<Agent " + body + ">";
   }
 
   /**
-   * Expects the parameter to specify the ClusterIdentifier,
+   * Expects the parameter to specify the MessageAddress,
    * either through a single String or the first element of
    * a List.
    */
   public void setParameter(Object o) {
-    ClusterIdentifier cid = null;
-    if (o instanceof ClusterIdentifier) {
-      cid = (ClusterIdentifier) o;
+    MessageAddress cid = null;
+    if (o instanceof MessageAddress) {
+      cid = (MessageAddress) o;
     } else if (o instanceof String) {
-      cid = new ClusterIdentifier((String) o);
+      cid = MessageAddress.getMessageAddress((String) o);
     } else if (o instanceof List) {
       List l = (List)o;
       if (l.size() > 0) {
         Object o1 = l.get(0);
-        if (o1 instanceof ClusterIdentifier) {
-          cid = (ClusterIdentifier) o1;
+        if (o1 instanceof MessageAddress) {
+          cid = (MessageAddress) o1;
         } else if (o1 instanceof String) {
-          cid = new ClusterIdentifier((String) o1);
+          cid = MessageAddress.getMessageAddress((String) o1);
         }
       }
     }
-    setClusterIdentifier(cid);
+    setMessageAddress(cid);
   }
 
   /** Get the components from the InitializerService or the state **/
@@ -500,7 +500,7 @@ public class SimpleAgent
     if (nodeIdService == null) {
       throw new RuntimeException("Unable to get node-id service");
     }
-    localNode = nodeIdService.getNodeIdentifier();
+    localNode = nodeIdService.getMessageAddress();
     if (localNode == null) {
       throw new RuntimeException("Local node address is null?");
     }
@@ -1303,15 +1303,6 @@ public class SimpleAgent
   public SimpleAgent() {
   }
 
-  /** Answer by allowing ClusterManagement to set the ClusterIdentifier for this instance.
-   * Assert that this is called once and only once *before* ClusterManagement calls
-   * initialize.
-   * @deprecated Use setMessageAddress
-   **/
-  public void setClusterIdentifier( ClusterIdentifier aClusterIdentifier ) {
-    setMessageAddress(aClusterIdentifier);
-  }
-
   public void setMessageAddress(MessageAddress ma) {
     if ( myMessageAddress_ != null )
       throw new RuntimeException ("Attempt to over-ride MessageAddress detected.");
@@ -1368,7 +1359,7 @@ public class SimpleAgent
   //
   public void receiveMessage(Message message) {
     if (message instanceof ClusterMessage) {
-      checkClusterInfo(((ClusterMessage) message).getSource());
+      checkClusterInfo((MessageAddress) ((ClusterMessage) message).getSource());
     }
     if (showTraffic) showProgress("-");
 
@@ -1609,7 +1600,7 @@ public class SimpleAgent
             ", synchronizing blackboards");
       }
       // blackboard expects cluster-ids
-      ClusterIdentifier cid = (ClusterIdentifier) agentId;
+      MessageAddress cid = (MessageAddress) agentId;
       myBlackboardService.restartAgent(cid);
     }
   }
@@ -1649,7 +1640,7 @@ public class SimpleAgent
       log.debug("Checking restart table for "+agentId);
     }
     // only include cluster-id message addresses in restart checking
-    if (agentId instanceof ClusterIdentifier) {
+    if (agentId instanceof MessageAddress) {
       synchronized (restartIncarnationMap) {
         if (restartIncarnationMap.get(agentId) == null) {
           if (VERBOSE_RESTART && log.isDebugEnabled()) {
@@ -1690,14 +1681,6 @@ public class SimpleAgent
     return this.getMessageAddress();
   }
   // additional ClusterContext implementation
-
-  /** Answer with your represenation as a ClusterIdentifier instance. 
-   * Will throw a ClassCastException if the agent is not a cluster!
-   * @deprecated Use getMessageAddress.
-   **/
-  public ClusterIdentifier getClusterIdentifier() { 
-    return (ClusterIdentifier) myMessageAddress_;
-  }
 
   public LDMServesPlugin getLDM() {
     return this;

@@ -22,6 +22,8 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
@@ -37,7 +39,7 @@ import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.MPTask;
 import org.cougaar.planning.ldm.plan.NewMPTask;
 import org.cougaar.planning.ldm.plan.NewTask;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 import org.cougaar.planning.ldm.plan.AllocationforCollections;
 import org.cougaar.util.UnaryPredicate;
@@ -56,13 +58,13 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
   implements EnvelopeLogicProvider, RestartLogicProvider
 {
         
-  private final ClusterIdentifier self;
+  private final MessageAddress self;
   private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
 
   public RemoteClusterAllocationLP(LogPlanServesLogicProvider logplan,
                                    ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
-    self = cluster.getClusterIdentifier();
+    self = cluster.getMessageAddress();
   }
 
   private void examine(Object obj, Collection changes) {
@@ -73,7 +75,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     Asset asset = all.getAsset();
     ClusterPG cpg = asset.getClusterPG();
     if (cpg == null) return;
-    ClusterIdentifier destination = cpg.getClusterIdentifier();
+    MessageAddress destination = cpg.getMessageAddress();
     if (destination == null) return;
 
     // see if we're reissuing the task... if so, we'll just use it.
@@ -110,7 +112,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
    * If a cluster restarts, we resend all the tasks we sent before in
    * case they have been lost or are out of date.
    **/
-  public void restart(final ClusterIdentifier cid) {
+  public void restart(final MessageAddress cid) {
     if (logger.isInfoEnabled()) {
       logger.info(
         self+": Reconcile with "+
@@ -123,7 +125,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
           Asset asset = alloc.getAsset();
           ClusterPG cpg = asset.getClusterPG();
           if (cpg == null) return false;
-          ClusterIdentifier destination = cpg.getClusterIdentifier();
+          MessageAddress destination = cpg.getMessageAddress();
           return 
             RestartLogicProviderHelper.matchesRestart(
               self, cid, destination);
@@ -152,7 +154,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     }
   }
 
-  private Task prepareNewTask(ClusterServesLogicProvider cluster, Task task, ClusterIdentifier dest) {
+  private Task prepareNewTask(ClusterServesLogicProvider cluster, Task task, MessageAddress dest) {
     NewTask nt;
     /*
     if (task instanceof MPTask) {
@@ -164,7 +166,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
     nt.setParentTask(task);             // set ParenTask to original task
 
     // redundant: ldmf initializes it.
-    //nt.setSource(cluster.getClusterIdentifier());
+    //nt.setSource(cluster.getMessageAddress());
 
     // FIXME MIK WARNING! WARNING!
     // as a hack, we've made setDestination bark if it isn't the current
@@ -187,7 +189,7 @@ public class RemoteClusterAllocationLP extends LogPlanLogicProvider
 
     /*
       NewTask nt = ldmf.shadowTask(task);
-      nt.setSource(cluster.getClusterIdentifier());
+      nt.setSource(cluster.getMessageAddress());
       nt.setDestination(dest);
     */
     return nt;

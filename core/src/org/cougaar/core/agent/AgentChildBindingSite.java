@@ -26,6 +26,8 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 /** An immediate child component's view of it's Parent

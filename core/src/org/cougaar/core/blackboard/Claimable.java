@@ -21,6 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 /** A Claimable object is something that may be "claimed" by a single

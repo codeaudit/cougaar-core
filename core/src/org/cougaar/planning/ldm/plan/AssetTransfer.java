@@ -20,7 +20,7 @@
  */
 
 package org.cougaar.planning.ldm.plan;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.planning.ldm.asset.Asset;
 
 /** AssetTransfer Interface
@@ -47,10 +47,10 @@ public interface AssetTransfer extends PlanElement {
   Asset getAssignee();
  
   /** Returns the Cluster from which the asset was assigned.
-   * @return ClusterIdentifier representing the source of the asset
+   * @return MessageAddress representing the source of the asset
    */
  	
-  ClusterIdentifier getAssignor();
+  MessageAddress getAssignor();
  
   /** Returns the Schedule for the "ownership" of the asset being transfered.
    *  @return Schedule

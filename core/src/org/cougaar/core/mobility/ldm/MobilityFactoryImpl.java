@@ -21,13 +21,13 @@
 package org.cougaar.core.mobility.ldm;
 
 import org.cougaar.core.agent.ClusterContext;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 
@@ -68,8 +68,10 @@ class MobilityFactoryImpl implements MobilityFactory {
       target = agentId;
     }
     // bug 1325
+    /*
     source = makeCID(source);
     target = makeCID(target);
+    */
     //
     UID uid = ((TicketIdentifier) tid).getUID();
     return
@@ -83,8 +85,10 @@ class MobilityFactoryImpl implements MobilityFactory {
       AbstractTicket ticket) {
     MessageAddress source = agentId;
     // bug 1325
+    /*
     source = makeCID(source);
     target = makeCID(target);
+    */
     //
     UID uid = uidService.nextUID();
     return new AgentControlImpl(
@@ -92,13 +96,15 @@ class MobilityFactoryImpl implements MobilityFactory {
   }
 
   // FIXME RelayLP bug 1325!
+  /*
   private static MessageAddress makeCID(MessageAddress a) {
-    if ((a instanceof NodeIdentifier) ||
+    if ((a instanceof MessageAddress) ||
         (MessageAddress.class == a.getClass())) {
-      return ClusterIdentifier.getClusterIdentifier(
+      return MessageAddress.getMessageAddress(
           a.getAddress());
     } else {
       return a;
     }
   }
+  */
 }

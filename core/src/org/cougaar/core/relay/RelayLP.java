@@ -24,7 +24,7 @@ package org.cougaar.core.relay;
 import java.io.Serializable;
 import java.util.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.ABATranslation;
 import org.cougaar.core.blackboard.AnonymousChangeReport;
@@ -59,7 +59,7 @@ public class RelayLP extends LogPlanLogicProvider
       LogPlanServesLogicProvider logplan, 
       ClusterServesLogicProvider cluster) {
     super(logplan, cluster);
-    self = cluster.getClusterIdentifier();
+    self = cluster.getMessageAddress();
   }
 
   // EnvelopeLogicProvider implementation
@@ -213,8 +213,8 @@ public class RelayLP extends LogPlanLogicProvider
   private void sendAdd(Relay.Source rs, MessageAddress target, Object content) {
     RelayDirective.Add dir = 
       new RelayDirective.Add(rs.getUID(), content, rs.getTargetFactory());
-    dir.setSource((ClusterIdentifier) self);
-    dir.setDestination((ClusterIdentifier) target);
+    dir.setSource((MessageAddress) self);
+    dir.setDestination((MessageAddress) target);
     logplan.sendDirective(dir);
   }
 
@@ -222,23 +222,23 @@ public class RelayLP extends LogPlanLogicProvider
       Relay.Source rs, MessageAddress target, Object content, Collection c) {
     RelayDirective.Change dir =
       new RelayDirective.Change(rs.getUID(), content, rs.getTargetFactory());
-    dir.setSource((ClusterIdentifier) self);
-    dir.setDestination((ClusterIdentifier) target);
+    dir.setSource((MessageAddress) self);
+    dir.setDestination((MessageAddress) target);
     logplan.sendDirective(dir, c);
   }
 
   private void sendRemove(UID uid, MessageAddress target) {
     RelayDirective.Remove dir = new RelayDirective.Remove(uid);
-    dir.setSource((ClusterIdentifier) self);
-    dir.setDestination((ClusterIdentifier) target);
+    dir.setSource((MessageAddress) self);
+    dir.setDestination((MessageAddress) target);
     logplan.sendDirective(dir);
   }
 
   private void sendResponse(
       Relay.Target rt, MessageAddress source, Object resp, Collection c) {
     RelayDirective.Response dir = new RelayDirective.Response(rt.getUID(), resp);
-    dir.setSource((ClusterIdentifier) self);
-    dir.setDestination((ClusterIdentifier) source);
+    dir.setSource((MessageAddress) self);
+    dir.setDestination((MessageAddress) source);
     logplan.sendDirective(dir, c);
   }
 
@@ -372,7 +372,7 @@ public class RelayLP extends LogPlanLogicProvider
    * Cluster restart handler. Resend all our Relay.Source again and
    * send verification directives for all our Relay.Targets.
    **/
-  public void restart(final ClusterIdentifier cid) {
+  public void restart(final MessageAddress cid) {
     if (logger.isInfoEnabled()) {
       logger.info(
         self+": Reconcile with "+

@@ -22,7 +22,7 @@
 package org.cougaar.core.service;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.PersistenceState;
 import org.cougaar.core.persist.StatePersistable;
@@ -33,11 +33,11 @@ import org.cougaar.core.persist.StatePersistable;
  **/
 
 public interface UIDServer extends Service {
- /** ClusterIdentifier of the proxy server.
+ /** MessageAddress of the proxy server.
    *  This might go away if we ever really separated proxy 
    * servers from clusters.
    **/
-  ClusterIdentifier getClusterIdentifier();
+  MessageAddress getMessageAddress();
 
  /** get the next Unique ID for the Proxiable object registry
    * at this server.

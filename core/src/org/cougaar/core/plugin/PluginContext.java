@@ -23,9 +23,11 @@ package org.cougaar.core.plugin;
 
 import org.cougaar.core.domain.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.*;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 import java.util.*;

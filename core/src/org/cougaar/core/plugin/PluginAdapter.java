@@ -30,6 +30,8 @@ import org.cougaar.core.agent.service.alarm.*;
 import java.util.*;
 import org.cougaar.util.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
@@ -49,7 +51,7 @@ import org.cougaar.core.blackboard.SubscriptionWatcher;
 import org.cougaar.core.blackboard.SubscriberException;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.MetricsSnapshot;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.core.plugin.PluginServesCluster;
 
@@ -64,6 +66,8 @@ import org.cougaar.util.UnaryPredicate;
 import org.cougaar.planning.ldm.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.component.ServiceBroker;
@@ -437,7 +441,7 @@ public abstract class PluginAdapter
   private ClusterServesPlugin dummyCluster = new ClusterServesPlugin() {
       // real ones
       public ConfigFinder getConfigFinder() { return ((PluginBindingSite) getBindingSite()).getConfigFinder(); }
-      public ClusterIdentifier getClusterIdentifier() { return PluginAdapter.this.getClusterIdentifier();}
+      public MessageAddress getMessageAddress() { return PluginAdapter.this.getMessageAddress();}
       public UIDServer getUIDServer() { return PluginAdapter.this.getUIDServer(); }
       public LDMServesPlugin getLDM() { return PluginAdapter.this.getLDM(); }
       
@@ -717,10 +721,10 @@ public abstract class PluginAdapter
   // cluster
   // 
 
-  protected final ClusterIdentifier getAgentIdentifier() {
+  protected final MessageAddress getAgentIdentifier() {
     return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
   }
-  protected final ClusterIdentifier getClusterIdentifier() {
+  protected final MessageAddress getMessageAddress() {
     return getAgentIdentifier();
   }
 
@@ -804,7 +808,7 @@ public abstract class PluginAdapter
     public Factory getFactory(String s) {
       return getDomainService().getFactory(s);
     }
-    public ClusterIdentifier getClusterIdentifier() {
+    public MessageAddress getMessageAddress() {
       return ((PluginBindingSite) getBindingSite()).getAgentIdentifier();
     }
     public MetricsSnapshot getMetricsSnapshot() {

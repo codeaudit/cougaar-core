@@ -38,7 +38,7 @@ public class AgentControlPlugin extends ComponentPlugin
 	ServiceBroker sb = getServiceBroker();
 	AgentIdentificationService svc = (AgentIdentificationService)
 	    sb.getService(this, AgentIdentificationService.class, null);
-	// MessageAddress agent = getClusterIdentifier(); // deprecated
+	// MessageAddress agent = getMessageAddress(); // deprecated
 	MessageAddress agent = svc.getMessageAddress();
 	new SchedulerWatcher(sb, agent.toString());
     }

@@ -25,7 +25,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.planning.ldm.plan.AssetRescind;
@@ -53,7 +53,7 @@ public class AssetRescindImpl extends DirectiveImpl
    * @param dest
    * @param assetUID
    **/
-  public AssetRescindImpl(ClusterIdentifier src, ClusterIdentifier dest, Plan plan,
+  public AssetRescindImpl(MessageAddress src, MessageAddress dest, Plan plan,
                           Asset rescindedAsset, Asset rescindeeAsset, 
                           Schedule rescindSchedule) {
     setSource(src);

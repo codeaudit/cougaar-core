@@ -24,7 +24,7 @@ package org.cougaar.planning.ldm.plan;
 import org.w3c.dom.Element;
 import org.w3c.dom.Document;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.ActiveSubscriptionObject;
 import org.cougaar.core.blackboard.ClaimableImpl;
@@ -62,7 +62,7 @@ public class WorkflowImpl
   protected transient Vector subtasks = new Vector();
   private transient Vector constraints = new Vector();
   private UID uid;
-  private ClusterIdentifier owner;
+  private MessageAddress owner;
   private transient AllocationResultAggregator currentARA = AllocationResultAggregator.DEFAULT;
   private transient AllocationResult cachedar = null;
   private transient int walkingSubtasks = 0;
@@ -79,7 +79,7 @@ public class WorkflowImpl
     return "<workflow " +  uid + " of base task "  + basetask + " of  "  + subtasks.size() + " tasks " + "and " + constraints.size() + " constraints>";
   }
 
-  public WorkflowImpl(ClusterIdentifier owner, UID uid) {
+  public WorkflowImpl(MessageAddress owner, UID uid) {
     this.owner = owner;
     this.uid = uid;
   }
@@ -450,7 +450,7 @@ public class WorkflowImpl
     uid = u;
   }
 
-  public ClusterIdentifier getOwner() { return owner; }
+  public MessageAddress getOwner() { return owner; }
 
 
   /** serialize workflows by proxying the tasks all the tasks referred to

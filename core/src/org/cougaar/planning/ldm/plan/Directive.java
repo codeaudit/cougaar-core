@@ -21,7 +21,7 @@
  
 package org.cougaar.planning.ldm.plan;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import java.io.Serializable;
 
 /**
@@ -47,13 +47,13 @@ public interface Directive
   Plan getPlan();
   
   /**
-    * @return ClusterIdentifier Identifies the originator of this message
+    * @return MessageAddress Identifies the originator of this message
     */
-  ClusterIdentifier getSource();
+  MessageAddress getSource();
 
   /*
-   *@return ClusterIdentifier Identifies the receiver of the message
+   *@return MessageAddress Identifies the receiver of the message
    */
-  ClusterIdentifier getDestination();
+  MessageAddress getDestination();
    
  }

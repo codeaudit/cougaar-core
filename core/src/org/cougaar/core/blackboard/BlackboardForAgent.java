@@ -20,12 +20,14 @@
  */
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.Persistence;
 
 /**
@@ -37,5 +39,5 @@ public interface BlackboardForAgent
   // might be better for blackboard to be a messagetransport client, eh?
   void receiveMessages(List messages);
 
-  void restartAgent(ClusterIdentifier cid);
+  void restartAgent(MessageAddress cid);
 }

@@ -23,7 +23,7 @@ package org.cougaar.core.agent;
 
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.UnresolvableReferenceException;
@@ -156,7 +156,7 @@ public final class ClusterContextTable {
             "Address \""+ma+"\" is not an Agent on this node.");
       }
     } else {
-      MessageAddress oldMA = cc.getClusterIdentifier();
+      MessageAddress oldMA = (MessageAddress)cc.getMessageAddress();
       if ((ma != null) ? ma.equals(oldMA) : (oldMA == null)) {
         // valid nesting, but rare in practice
         withContextState(new MessageContext(cc, from, to), thunk);

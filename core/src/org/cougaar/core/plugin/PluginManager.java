@@ -28,7 +28,7 @@ import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
 import org.cougaar.core.node.InitializerServiceException;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import java.beans.*;
 import java.lang.reflect.*;
@@ -255,8 +255,8 @@ public class PluginManager
   // other services
   //
   
-  public ClusterIdentifier getClusterIdentifier() {
-    return (ClusterIdentifier)getAgentIdentifier();
+  public MessageAddress getMessageAddress() {
+    return (MessageAddress)getAgentIdentifier();
   }
   public MessageAddress getAgentIdentifier() {
     return getBindingSite().getAgentIdentifier();

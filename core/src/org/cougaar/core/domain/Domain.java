@@ -24,7 +24,7 @@ package org.cougaar.core.domain;
 import java.util.Collection;
 import java.util.Set;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 
 import org.cougaar.core.blackboard.DirectiveMessage;
@@ -60,7 +60,7 @@ public interface Domain
                                     boolean isPersistenceEnvelope);
 
   /** invoke the RestartLogicProviders for this domain **/
-  void invokeRestartLogicProviders(ClusterIdentifier cid);
+  void invokeRestartLogicProviders(MessageAddress cid);
 
   /**
    * invoke the ABAChangeLogicProviders for this domain

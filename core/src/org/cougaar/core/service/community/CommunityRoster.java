@@ -46,9 +46,9 @@ public interface CommunityRoster {
 
 
   /**
-   * Returns a Collection of ClusterIdentifiers identifying the agents that are
+   * Returns a Collection of MessageAddresss identifying the agents that are
    * currently community members.
-   * @return Collection of Agent ClusterIdentifiers
+   * @return Collection of Agent MessageAddresss
    */
   Collection getMemberAgents();
 

@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
@@ -314,7 +314,7 @@ class ScriptParser {
     s = (String) l.get(0);
     if ((s != null) && (s.length() > 0)) {
       // FIXME RelayLP
-      actorAgent = ClusterIdentifier.getClusterIdentifier(s);
+      actorAgent = MessageAddress.getMessageAddress(s);
     } else {
       actorAgent = null;
     }
@@ -361,7 +361,7 @@ class ScriptParser {
     s = (String) l.get(3);
     if ((s != null) && (s.length() > 0)) {
       // FIXME RelayLP
-      mobileAgent = ClusterIdentifier.getClusterIdentifier(s);
+      mobileAgent = MessageAddress.getMessageAddress(s);
     } else {
       mobileAgent = null;
     }
@@ -369,7 +369,7 @@ class ScriptParser {
     MessageAddress origNode;
     s = (String) l.get(4);
     if ((s != null) && (s.length() > 0)) {
-      origNode = new MessageAddress(s);
+      origNode = MessageAddress.getMessageAddress(s);
     } else {
       origNode = null;
     }
@@ -377,7 +377,7 @@ class ScriptParser {
     MessageAddress destNode;
     s = (String) l.get(5);
     if ((s != null) && (s.length() > 0)) {
-      destNode = new MessageAddress(s);
+      destNode = MessageAddress.getMessageAddress(s);
     } else {
       destNode = null;
     }

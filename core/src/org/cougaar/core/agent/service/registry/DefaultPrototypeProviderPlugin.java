@@ -24,6 +24,8 @@ import org.cougaar.core.domain.*;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.planning.ldm.asset.Asset;
@@ -179,7 +181,7 @@ public class DefaultPrototypeProviderPlugin
       // here test out UIDService 
       anID = uidService.nextUID();
       //System.out.println(anID);
-      //     System.out.println("cluster id = " + uidService.getClusterIdentifier());
+      //     System.out.println("cluster id = " + uidService.getMessageAddress());
     } catch (Exception e) {
       // cannot really throw any of these exceptions.
     }

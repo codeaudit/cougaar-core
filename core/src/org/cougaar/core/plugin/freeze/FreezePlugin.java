@@ -42,7 +42,7 @@ public abstract class FreezePlugin extends ServiceUserPlugin {
   public void setupSubscriptions() {
     logger = (LoggingService) getServiceBroker()
       .getService(this, LoggingService.class, null);
-    logger = LoggingServiceWithPrefix.add(logger, getClusterIdentifier().cleanToString() + ": ");
+    logger = LoggingServiceWithPrefix.add(logger, getMessageAddress().toString() + ": ");
 
   }
 

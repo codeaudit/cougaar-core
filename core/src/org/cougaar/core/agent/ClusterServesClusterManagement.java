@@ -25,7 +25,7 @@ import org.cougaar.core.blackboard.*;
 
 import org.cougaar.util.StateModelException;
 import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** 
  * Services provided to ClusterManagement by Cluster.
@@ -37,16 +37,16 @@ public interface ClusterServesClusterManagement extends ClusterStateModel, Clust
 {
 
   /** 
-   * Get the Cluster's ClusterIdentifier. 
+   * Get the Cluster's MessageAddress. 
    */
-  ClusterIdentifier getClusterIdentifier();
+  MessageAddress getMessageAddress();
 
   /**
-   * Set the Cluster's ClusterIdentifier.
+   * Set the Cluster's MessageAddress.
    * This will be called by ClusterManagement exactly once prior to calling
    * initialize (from the ClusterStateModel).  This will be included in a
    * java-beans resource initialization phase at a later time.
    * @param id The new identifier for this cluster.
    **/
-  void setClusterIdentifier(ClusterIdentifier id);
+  void setMessageAddress(MessageAddress id);
 }

@@ -74,7 +74,7 @@ import org.cougaar.planning.ldm.asset.NewPropertyGroup;
  * AlternateTypeIdentification String "Stationer"
  * 
  * [ClusterPG]
- * ClusterIdentifier ClusterIdentifier "Staples"
+ * MessageAddress MessageAddress "Staples"
  * 
  * [EntityPG]
  * Roles Collection<Role> "Subordinate, PaperProvider, CrayonProvider, PaintProvider"

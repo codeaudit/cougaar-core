@@ -128,7 +128,7 @@ public class AgentLoadLoggerPlugin
 
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
-	node = nis.getNodeIdentifier().toString();
+	node = nis.getMessageAddress().toString();
 
 
 	ThreadService threadService = (ThreadService)

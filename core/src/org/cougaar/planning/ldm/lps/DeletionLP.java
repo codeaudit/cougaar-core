@@ -23,6 +23,8 @@ package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.domain.EnvelopeLogicProvider;
@@ -54,12 +56,12 @@ public class DeletionLP
 {
   private static Logger logger = Logging.getLogger(DeletionLP.class);
 
-  private ClusterIdentifier cid;
+  private MessageAddress cid;
 
   public DeletionLP(LogPlanServesLogicProvider logplan,
                     ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
-    cid = cluster.getClusterIdentifier();
+    cid = cluster.getMessageAddress();
   }
 
   /**
@@ -75,7 +77,7 @@ public class DeletionLP
         if (task.isDeleted()) {
           UID ptuid = task.getParentTaskUID();
           if (ptuid != null) {
-            ClusterIdentifier dst = task.getSource();
+            MessageAddress dst = task.getSource();
             if (!dst.equals(cid)) {
               NewDeletion nd = ldmf.newDeletion();
               nd.setTaskUID(ptuid);

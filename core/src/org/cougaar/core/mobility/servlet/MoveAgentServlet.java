@@ -38,7 +38,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.BlackboardClient;
 
 import org.cougaar.core.mobility.AbstractTicket;
@@ -50,7 +50,7 @@ import org.cougaar.core.mobility.ldm.MobilityFactory;
 
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
@@ -115,7 +115,7 @@ extends BaseServletComponent
 implements BlackboardClient
 {
   protected MessageAddress localAgent;
-  protected NodeIdentifier localNode;
+  protected MessageAddress localNode;
 
   protected DomainService domain;
   protected AgentIdentificationService agentIdService;
@@ -150,7 +150,7 @@ implements BlackboardClient
   public void setNodeIdentificationService(
       NodeIdentificationService nodeIdService) {
     this.nodeIdService = nodeIdService;
-    this.localNode = nodeIdService.getNodeIdentifier();
+    this.localNode = nodeIdService.getMessageAddress();
   }
 
   public void setBlackboardService(BlackboardService blackboard) {
@@ -356,11 +356,11 @@ implements BlackboardClient
       private AgentControl createAgentControl() {
         MessageAddress mobileAgentAddr =
           (mobileAgent != null ?
-           ClusterIdentifier.getClusterIdentifier(mobileAgent) :
+           MessageAddress.getMessageAddress(mobileAgent) :
            localAgent);
         MessageAddress destNodeAddr = 
           (destNode != null ?
-           (new MessageAddress(destNode)) :
+           (MessageAddress.getMessageAddress(destNode)) :
            null);
         MessageAddress target;
         AbstractTicket ticket;
@@ -368,7 +368,7 @@ implements BlackboardClient
             op.equalsIgnoreCase(MOVE_OP_VALUE)) {
           MessageAddress originNodeAddr =
             (originNode != null ?
-             (new MessageAddress(originNode)) :
+             (MessageAddress.getMessageAddress(originNode)) :
              null);
           target = 
             (originNodeAddr != null ?

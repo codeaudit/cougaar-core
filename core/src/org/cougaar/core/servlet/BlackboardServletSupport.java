@@ -1,6 +1,6 @@
 package org.cougaar.core.servlet;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.domain.*;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.BlackboardService;
@@ -20,7 +20,7 @@ import org.cougaar.util.ConfigFinder;
 public class BlackboardServletSupport extends SimpleServletSupportImpl {
   public BlackboardServletSupport(
       String path,
-      ClusterIdentifier agentId,
+      MessageAddress agentId,
       BlackboardQueryService blackboardQuery,
       NamingService ns,
       LoggingService logger,

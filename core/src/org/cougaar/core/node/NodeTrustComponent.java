@@ -170,8 +170,8 @@ public class NodeTrustComponent
       return myaddress;
     } else {
       //create it
-      String name = getNodeIdentificationService().getNodeIdentifier().toString();
-      myaddress = new MessageAddress(name+"-Policy");
+      String name = getNodeIdentificationService().getMessageAddress().toString();
+      myaddress = MessageAddress.getMessageAddress(name+"-Policy");
       return myaddress;
     }
   }

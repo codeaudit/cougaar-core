@@ -95,7 +95,7 @@ public class TestPlugin extends SimplePlugin {
   }
 
   private void generateSupplyTasks() {
-    final String selfIdentification = getClusterIdentifier().toString();
+    final String selfIdentification = getMessageAddress().toString();
     TaskPredicate projectionTaskPredicate = new TaskPredicate() {
         public boolean execute(Task task) {
           if (task.getVerb().equals(PROJECTSUPPLY)) {

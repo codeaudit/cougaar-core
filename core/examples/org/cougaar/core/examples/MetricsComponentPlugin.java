@@ -211,7 +211,7 @@ public class MetricsComponentPlugin
           private int notificationsOut = 0;
         
           public MessageWatcher() {
-              //            me = getClusterIdentifier();
+              //            me = getMessageAddress();
               me = getBindingSite().getAgentIdentifier();
           }
         

@@ -23,6 +23,8 @@ package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.domain.EnvelopeLogicProvider;
@@ -74,12 +76,12 @@ public class NotificationLP
 {
   private static Logger logger = Logging.getLogger(NotificationLP.class);
 
-  private final ClusterIdentifier self;
+  private final MessageAddress self;
 
   public NotificationLP(LogPlanServesLogicProvider logplan,
                         ClusterServesLogicProvider cluster) {
     super(logplan,cluster);
-    self = cluster.getClusterIdentifier();
+    self = cluster.getMessageAddress();
   }
 
   /**
@@ -99,12 +101,12 @@ public class NotificationLP
     } 
   }
 
-  public void restart(final ClusterIdentifier cid) {
+  public void restart(final MessageAddress cid) {
     UnaryPredicate pred = new UnaryPredicate() {
       public boolean execute(Object o) {
         if (o instanceof PlanElement) {
           PlanElement pe = (PlanElement) o;
-          ClusterIdentifier source = pe.getTask().getSource();
+          MessageAddress source = pe.getTask().getSource();
           return RestartLogicProviderHelper.matchesRestart(self, cid, source);
         }
         return false;
@@ -147,7 +149,7 @@ public class NotificationLP
   }
   
   private void createNotification(UID ptuid, Task t, AllocationResult ar, Collection changes) {
-    ClusterIdentifier dest = t.getSource();
+    MessageAddress dest = t.getSource();
     if (self == dest || self.equals(dest)) {
       // deliver intra-cluster notifications directly
       ReceiveNotificationLP.propagateNotification(logplan,ptuid,ar,t.getUID(), changes);
@@ -164,9 +166,9 @@ public class NotificationLP
 		     t);
       }
 
-      ClusterIdentifier newDest = t.getSource();
-      //ClusterIdentifier newDest = pt.getDestination();
-      ClusterIdentifier newSource = self;
+      MessageAddress newDest = t.getSource();
+      //MessageAddress newDest = pt.getDestination();
+      MessageAddress newSource = self;
       
       nn.setSource(newSource);
       nn.setDestination(newDest);

@@ -23,7 +23,7 @@ package org.cougaar.core.examples.mobility.ldm;
 
 import java.util.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -105,7 +105,7 @@ public class MobilityTestDomain extends DomainAdapter {
       EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
     return;
   }
-  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+  public void invokeRestartLogicProviders(MessageAddress cid) {
     return;
   }
 

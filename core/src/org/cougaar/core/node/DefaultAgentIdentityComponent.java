@@ -97,7 +97,7 @@ implements Component
       throw new RuntimeException(
           "Unable to get node-id service");
     }
-    thisNode = nodeIdService.getNodeIdentifier();
+    thisNode = nodeIdService.getMessageAddress();
     if (thisNode == null) {
       throw new RuntimeException(
           "Node address is null?");

@@ -40,7 +40,7 @@ import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.agent.ClusterContextTable;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.blackboard.ChangeReport;
 import org.cougaar.core.domain.LDMServesPlugin;
@@ -328,10 +328,10 @@ public class Asset extends org.cougaar.planning.ldm.asset.AssetSkeleton
   // default protection!
   /** was this asset sent (as a prototype) to address **/
   boolean wasSentTo(MessageAddress address) {
-    //return false;               // HACK!! always fail so that we always send the proto
-    synchronized (_sentTo) {
-      return _sentTo.contains(address);
-    }
+    return false;               // HACK!! always fail so that we always send the proto
+    //synchronized (_sentTo) {
+    //      return _sentTo.contains(address);
+    //    }
   }
   // default protection!
   /** this asset was sent (as a prototype) to address **/

@@ -21,6 +21,8 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.mts.UnresolvableReferenceException;
 import org.cougaar.core.mts.MessageAddress;
@@ -68,7 +70,7 @@ public class DirectiveMessage extends ClusterMessage
    * @param destination
    * @param aDirective
    */
-  public DirectiveMessage(ClusterIdentifier source, ClusterIdentifier destination,
+  public DirectiveMessage(MessageAddress source, MessageAddress destination,
                           long incarnationNumber,
                           Directive[] someDirectives) 
   {
@@ -236,8 +238,8 @@ public class DirectiveMessage extends ClusterMessage
     public Collection getChangeReports() { return changes; }
 
     public Plan getPlan() { return real.getPlan(); }
-    public ClusterIdentifier getSource() { return real.getSource(); }
-    public ClusterIdentifier getDestination() { return real.getDestination(); }
+    public MessageAddress getSource() { return real.getSource(); }
+    public MessageAddress getDestination() { return real.getDestination(); }
     public String toString() {return real.toString(); }
   }
 

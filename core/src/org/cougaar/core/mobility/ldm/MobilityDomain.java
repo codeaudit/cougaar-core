@@ -23,7 +23,7 @@ package org.cougaar.core.mobility.ldm;
 
 import java.util.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -65,7 +65,7 @@ public class MobilityDomain extends DomainAdapter {
     UIDService uidService = getUIDService();
     MessageAddress nodeId = getNodeId();
     MessageAddress agentId =
-      bindingSite.getClusterServesLogicProvider().getLDM().getClusterIdentifier();
+      (MessageAddress) bindingSite.getClusterServesLogicProvider().getLDM().getMessageAddress();
     MobilityFactory f = new MobilityFactoryImpl(uidService, nodeId, agentId);
 
     setFactory(f);
@@ -127,7 +127,7 @@ public class MobilityDomain extends DomainAdapter {
       throw new RuntimeException(
           "Unable to obtain node-id service");
     }
-    MessageAddress nodeId = nodeIdService.getNodeIdentifier();
+    MessageAddress nodeId = nodeIdService.getMessageAddress();
     sb.releaseService(
         this, NodeIdentificationService.class, nodeIdService);
     if (nodeId == null) {
@@ -147,7 +147,7 @@ public class MobilityDomain extends DomainAdapter {
       EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
     return;
   }
-  public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+  public void invokeRestartLogicProviders(MessageAddress cid) {
     return;
   }
 

@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.relay.RelayChangeReport;
 import org.cougaar.core.service.AlarmService;
@@ -207,11 +207,11 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
    * @return true if a new relay was published (suppresses laggard checking)
    **/
   private boolean checkTargets() {
-    ClusterIdentifier me = getAgentIdentifier();
+    MessageAddress me = getAgentIdentifier();
     Set names = getTargetNames();
     Set targets = new HashSet(names.size());
     for (Iterator i = names.iterator(); i.hasNext(); ) {
-      ClusterIdentifier cid = new ClusterIdentifier((String) i.next());
+      MessageAddress cid = MessageAddress.getMessageAddress((String) i.next());
       if (!cid.equals(me)) targets.add(cid);
     }
     if (relay == null) {

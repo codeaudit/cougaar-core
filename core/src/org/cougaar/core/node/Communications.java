@@ -26,7 +26,7 @@ import org.cougaar.core.mts.*;
 import java.io.*;
 import java.lang.reflect.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.core.component.ServiceProvider;
 import java.util.*;

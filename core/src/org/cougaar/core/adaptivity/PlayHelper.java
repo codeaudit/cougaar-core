@@ -35,7 +35,7 @@ import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.multicast.AttributeBasedAddress;
 
 /**
@@ -89,7 +89,7 @@ public class PlayHelper {
     }
     public MessageAddress getTargetAddress() {
       if (targetName.substring(0, AGENT_PREFIX.length()).equalsIgnoreCase(AGENT_PREFIX)) {
-        return new ClusterIdentifier(targetName.substring(AGENT_PREFIX.length()));
+        return MessageAddress.getMessageAddress(targetName.substring(AGENT_PREFIX.length()));
       }
       if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
         StringTokenizer tokens = new StringTokenizer(targetName.substring(ATTRIBUTE_PREFIX.length()), ".");
@@ -97,11 +97,11 @@ public class PlayHelper {
           String community = tokens.nextToken();
           String attribute = tokens.nextToken();
           String value = tokens.nextToken();
-          return new AttributeBasedAddress(community, attribute, value);
+          return AttributeBasedAddress.getAttributeBasedAddress(community, attribute, value);
         } catch (Exception e) {
         }
       }
-      return new MessageAddress(targetName);
+      return MessageAddress.getMessageAddress(targetName);
     }
   }
 

@@ -50,17 +50,17 @@ public class TestABA extends ComponentPlugin {
 
   public void setLoggingService(LoggingService s) {
     logger = s;
-    logger = LoggingServiceWithPrefix.add(logger, getClusterIdentifier() + ": ");
+    logger = LoggingServiceWithPrefix.add(logger, getMessageAddress() + ": ");
   }
 
   public void setupSubscriptions() {
-    String cid = getClusterIdentifier().toString();
+    String cid = getMessageAddress().toString();
     boolean is135ARBN = cid.equals("1-35-ARBN");
     relays = (IncrementalSubscription) blackboard.subscribe(relayPredicate);
     if (is135ARBN) {
       logger.info("Adding relay at " + cid);
       AttributeBasedAddress target =
-        new AttributeBasedAddress("2-BDE-1-AD-COMM", "Role", "Member");
+        AttributeBasedAddress.getAttributeBasedAddress("2-BDE-1-AD-COMM", "Role", "Member");
       myRelay = new MyRelay(Collections.singleton(target));
       myRelay.setUID(uidService.nextUID());
       blackboard.publishAdd(myRelay);

@@ -22,6 +22,8 @@
 package org.cougaar.planning.ldm.lps;
 
 import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
 import org.cougaar.core.domain.LogPlanLogicProvider;
@@ -32,7 +34,7 @@ import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.NewTask;
 import org.cougaar.core.agent.ClusterMessage;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.planning.ldm.plan.ClusterObjectFactory;
 

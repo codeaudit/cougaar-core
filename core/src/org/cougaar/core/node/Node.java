@@ -63,7 +63,9 @@ import javax.naming.NamingException;
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.agent.ClusterInitializedMessage;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.util.*;
 
@@ -144,7 +146,7 @@ import org.cougaar.bootstrap.Bootstrapper;
 public class Node extends ContainerSupport
 implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
-  private NodeIdentifier myNodeIdentity_ = null;
+  private MessageAddress myNodeIdentity_ = null;
 
   public String getIdentifier() {
     return 
@@ -153,16 +155,12 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
        null);
   }
 
-  public NodeIdentifier getNodeIdentifier() {
-    return myNodeIdentity_;
-  }
-
-  public void setNodeIdentifier(NodeIdentifier aNodeIdentifier) {
+  public void setMessageAddress(MessageAddress aMessageAddress) {
     if (myNodeIdentity_ != null) {
       throw new RuntimeException(
           "Attempt to over-ride NodeIdentity detected.");
     }
-    myNodeIdentity_ = aNodeIdentifier;
+    myNodeIdentity_ = aMessageAddress;
   }
 
   public String toString() {
@@ -589,8 +587,8 @@ implements ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
     }
 
     // set the node name
-    NodeIdentifier nid = new NodeIdentifier(name);
-    setNodeIdentifier(nid);
+    MessageAddress nid = MessageAddress.getMessageAddress(name);
+    setMessageAddress(nid);
 
     // sb is our service broker (for *all* agents)
     ServiceBroker sb = getServiceBroker();

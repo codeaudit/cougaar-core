@@ -22,7 +22,7 @@ package org.cougaar.core.agent;
 
 import org.cougaar.core.blackboard.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.core.domain.LDMServesClient;
 

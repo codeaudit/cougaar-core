@@ -84,7 +84,7 @@ public abstract class SimplePlugin extends PluginAdapter {
       setupSubscriptions();
     } catch (Exception e) {
       synchronized (System.err) {
-        System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+        System.err.println(getMessageAddress().toString()+"/"+this+" caught "+e);
         e.printStackTrace();
       }
     } finally {
@@ -131,7 +131,7 @@ public abstract class SimplePlugin extends PluginAdapter {
       }
     } catch (Exception e) {
       synchronized (System.err) {
-        System.err.println(getClusterIdentifier().toString()+"/"+this+" caught "+e);
+        System.err.println(getMessageAddress().toString()+"/"+this+" caught "+e);
         e.printStackTrace();
       }
       doExecute = true;

@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.relay.RelayChangeReport;
@@ -87,11 +87,11 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
   protected synchronized void freeze() {
     if (relay != null) return;  // Already frozen
     if (logger.isDebugEnabled()) logger.debug("freeze");
-    ClusterIdentifier me = getClusterIdentifier();
+    MessageAddress me = getMessageAddress();
     Set names = getTargetNames();
     Set targets = new HashSet(names.size());
     for (Iterator i = names.iterator(); i.hasNext(); ) {
-      ClusterIdentifier cid = new ClusterIdentifier((String) i.next());
+      MessageAddress cid = MessageAddress.getMessageAddress((String) i.next());
       if (!cid.equals(me)) targets.add(cid);
     }
     relay = new FreezeRelaySource(targets);

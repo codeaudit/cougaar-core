@@ -115,7 +115,7 @@ public class CompletionTargetPlugin extends CompletionPlugin {
         continue;
       }
     }
-    debug = true;//getClusterIdentifier().toString().equals("47-FSB");
+    debug = true;//getMessageAddress().toString().equals("47-FSB");
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
     activitySubscription = (IncrementalSubscription)

@@ -25,9 +25,9 @@ import org.cougaar.core.mts.*;
 import org.cougaar.core.component.*;
 
 public class NodeIdentificationServiceProvider implements ServiceProvider {
-  private NodeIdentifier nodeID;
+  private MessageAddress nodeID;
 
-  public NodeIdentificationServiceProvider(NodeIdentifier nodeID) {
+  public NodeIdentificationServiceProvider(MessageAddress nodeID) {
     this.nodeID = nodeID;
   }
   
@@ -43,7 +43,7 @@ public class NodeIdentificationServiceProvider implements ServiceProvider {
   }
 
   private final class NodeIdentificationServiceProxy implements NodeIdentificationService {
-    public NodeIdentifier getNodeIdentifier() {
+    public MessageAddress getMessageAddress() {
       return nodeID;
     } 
   } 

@@ -36,7 +36,7 @@ class MobilityTestFactoryImpl implements MobilityTestFactory {
   private UIDServer uidServer;
 
   public MobilityTestFactoryImpl(LDMServesPlugin ldm) {
-    self = ldm.getClusterIdentifier();
+    self = ldm.getMessageAddress();
     uidServer = ((ClusterContext) ldm).getUIDServer();
   }
 

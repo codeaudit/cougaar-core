@@ -24,7 +24,7 @@ import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /** A plugin's view of its parent component (Container).
  *
@@ -32,6 +32,6 @@ import org.cougaar.core.agent.ClusterIdentifier;
 public interface PluginBindingSite 
   extends BindingSite
 {
-  ClusterIdentifier getAgentIdentifier();
+  MessageAddress getAgentIdentifier();
   ConfigFinder getConfigFinder();
 }

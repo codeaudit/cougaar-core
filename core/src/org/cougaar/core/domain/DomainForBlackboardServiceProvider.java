@@ -23,7 +23,7 @@ package org.cougaar.core.domain;
 import java.util.List;
 import java.util.Set;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.core.blackboard.Blackboard;
 import org.cougaar.core.blackboard.DirectiveMessage;
@@ -94,7 +94,7 @@ public class DomainForBlackboardServiceProvider implements ServiceProvider {
       theService.invokeMessageLogicProviders(message);
     }
 
-    public void invokeRestartLogicProviders(ClusterIdentifier cid) {
+    public void invokeRestartLogicProviders(MessageAddress cid) {
       theService.invokeRestartLogicProviders(cid);
     }
 

@@ -28,6 +28,8 @@ import org.cougaar.core.domain.MessageLogicProvider;
 
 import java.util.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.planning.ldm.asset.Asset;

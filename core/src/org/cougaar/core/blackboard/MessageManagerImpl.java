@@ -21,9 +21,11 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.planning.ldm.plan.Directive;
@@ -96,8 +98,8 @@ public class MessageManagerImpl implements MessageManager, Serializable {
    * another cluster.
    **/
   private class ClusterInfo implements java.io.Serializable {
-    /** The ClusterIdentifier of the remote cluster **/
-    private ClusterIdentifier clusterIdentifier;
+    /** The MessageAddress of the remote cluster **/
+    private MessageAddress clusterIdentifier;
 
     private long remoteIncarnationNumber = 0L;
 
@@ -105,11 +107,11 @@ public class MessageManagerImpl implements MessageManager, Serializable {
 
     private transient boolean restarted = false;
 
-    public ClusterInfo(ClusterIdentifier cid) {
+    public ClusterInfo(MessageAddress cid) {
       clusterIdentifier = cid;
     }
 
-    public ClusterIdentifier getClusterIdentifier() {
+    public MessageAddress getMessageAddress() {
       return clusterIdentifier;
     }
 
@@ -198,8 +200,8 @@ public class MessageManagerImpl implements MessageManager, Serializable {
      **/
     public AckDirectiveMessage getAcknowledgement() {
       int firstZero = ackSet.getMinSequence();
-      AckDirectiveMessage ack = new AckDirectiveMessage(getClusterIdentifier(),
-                                                        myCluster.getClusterIdentifier(),
+      AckDirectiveMessage ack = new AckDirectiveMessage(getMessageAddress(),
+                                                        myCluster.getMessageAddress(),
                                                         firstZero - 1,
                                                         remoteIncarnationNumber);
       needSendAcknowledgement = false;
@@ -285,7 +287,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
 
     protected transient DirectiveMessage theMessage;
 
-    private ClusterIdentifier theDestination;
+    private MessageAddress theDestination;
     private int theSequenceNumber;
     private long theIncarnationNumber;
     private Directive[] theDirectives;
@@ -324,12 +326,12 @@ public class MessageManagerImpl implements MessageManager, Serializable {
       return theMessage;
     }
 
-    public ClusterIdentifier getDestination() {
+    public MessageAddress getDestination() {
       return theDestination;
     }
 
-    public ClusterIdentifier getSource() {
-      return myCluster.getClusterIdentifier();
+    public MessageAddress getSource() {
+      return myCluster.getMessageAddress();
     }
 
     public int getSequenceNumber() {
@@ -375,12 +377,12 @@ public class MessageManagerImpl implements MessageManager, Serializable {
 
   public void start(ClusterServesLogicProvider aCluster, boolean didRehydrate) {
     myCluster = aCluster;
-    String clusterName = aCluster.getClusterIdentifier().getAddress();
+    String clusterName = aCluster.getMessageAddress().getAddress();
     clusterNameForLog = "               ".substring(Math.min(14, clusterName.length())) + clusterName + " ";
     if (debug) {
       try {
         logWriter = new PrintWriter(new FileWriter("MessageManager_" +
-                                                   aCluster.getClusterIdentifier().getAddress() +
+                                                   aCluster.getMessageAddress().getAddress() +
                                                    ".log",
                                                    true || didRehydrate));
         printLog("MessageManager Started");
@@ -418,8 +420,8 @@ public class MessageManagerImpl implements MessageManager, Serializable {
       if (info.getFirstOutstandingMessage() == null) {
         if (now > info.getTransmissionTime() + KEEP_ALIVE_INTERVAL) {
           DirectiveMessage ndm =
-            new DirectiveMessage(myCluster.getClusterIdentifier(),
-                                 info.getClusterIdentifier(),
+            new DirectiveMessage(myCluster.getMessageAddress(),
+                                 info.getMessageAddress(),
                                  info.getLocalIncarnationNumber(),
                                  directives);
           messages.add(ndm);
@@ -525,8 +527,8 @@ public class MessageManagerImpl implements MessageManager, Serializable {
   private Directive[] emptyDirectives = new Directive[0];
 
   private void sendInitializeMessage(ClusterInfo info) {
-    DirectiveMessage msg = new DirectiveMessage(myCluster.getClusterIdentifier(),
-                                                info.getClusterIdentifier(),
+    DirectiveMessage msg = new DirectiveMessage(myCluster.getMessageAddress(),
+                                                info.getMessageAddress(),
                                                 info.getLocalIncarnationNumber(),
                                                 emptyDirectives);
     msg.setContentsId(info.getNextTransmitSequenceNumber());
@@ -535,11 +537,11 @@ public class MessageManagerImpl implements MessageManager, Serializable {
     needAdvanceEpoch = true;
   }
 
-  private ClusterInfo getClusterInfo(ClusterIdentifier clusterIdentifier) {
+  private ClusterInfo getClusterInfo(MessageAddress clusterIdentifier) {
     return (ClusterInfo) clusterInfo.get(clusterIdentifier);
   }
 
-  private ClusterInfo createClusterInfo(ClusterIdentifier clusterIdentifier) {
+  private ClusterInfo createClusterInfo(MessageAddress clusterIdentifier) {
     ClusterInfo info = new ClusterInfo(clusterIdentifier);
     clusterInfo.put(clusterIdentifier, info);
     return info;
@@ -554,7 +556,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
     if (!USE_MESSAGE_MANAGER) return OK;
     synchronized (this) {
       boolean restarted = false;
-      ClusterIdentifier sourceIdentifier = directiveMessage.getSource();
+      MessageAddress sourceIdentifier = directiveMessage.getSource();
       ClusterInfo info = getClusterInfo(sourceIdentifier);
       boolean isFirst = directiveMessage.getContentsId() == 1;
       if (info != null) {
@@ -624,7 +626,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
     }
   }
 
-  private ClusterInfo createNewConnection(ClusterIdentifier sourceIdentifier, long remoteIncarnationNumber) {
+  private ClusterInfo createNewConnection(MessageAddress sourceIdentifier, long remoteIncarnationNumber) {
     ClusterInfo info = createClusterInfo(sourceIdentifier); // New connection
     info.setRemoteIncarnationNumber(remoteIncarnationNumber);
     if (debug) printLog("New Connection: " + info.toString());
@@ -673,7 +675,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
           int seq = theAck.getContentsId();
           if (info.getCurrentTransmitSequenceNumber() < seq) {
             if (debug) printLog("receiveAck from future same incarnation");
-            createNewConnection(info.getClusterIdentifier(), 0L);
+            createNewConnection(info.getMessageAddress(), 0L);
             return RESTART;
           }
           info.receiveAck(this, seq, false);
@@ -682,7 +684,7 @@ public class MessageManagerImpl implements MessageManager, Serializable {
           // We are living in the past. We must have rehydrated with
           // an old set of connections.
           if (debug) printLog("receiveAck from future incarnation");
-          createNewConnection(info.getClusterIdentifier(), 0L);
+          createNewConnection(info.getMessageAddress(), 0L);
           return RESTART;
         } else {
           // The other end is living in the past. Hopefully, he will

@@ -195,7 +195,7 @@ public class PanicButtonPlugin
     trustpolicy.setTrustLevel(trustlevel);
     //create a message to contain the trust policy
     MulticastMessageAddress dest = 
-      new MulticastMessageAddress(org.cougaar.core.node.NodePolicyWatcher.class);
+      MulticastMessageAddress.getMulticastMessageAddress(org.cougaar.core.node.NodePolicyWatcher.class);
     PolicyMulticastMessage policymsg = 
       new PolicyMulticastMessage(getMessageAddress(), dest, trustpolicy);
     messageTransService.sendMessage(policymsg);
@@ -210,7 +210,7 @@ public class PanicButtonPlugin
   }
 
   public MessageAddress getMessageAddress() {
-    MessageAddress myma = new MessageAddress("PanicButtonPlugin");
+    MessageAddress myma = MessageAddress.getMessageAddress("PanicButtonPlugin");
     return myma;
   }
     

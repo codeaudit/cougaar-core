@@ -28,6 +28,8 @@ import org.cougaar.core.blackboard.ChangeReport;
 import java.util.Enumeration;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.TimeSpan;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 /** PlanElement Interface

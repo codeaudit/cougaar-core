@@ -23,6 +23,8 @@ package org.cougaar.core.agent.service.alarm;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 /** Interface for Periodic Alarms which are alarms which do not

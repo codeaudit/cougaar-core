@@ -29,7 +29,7 @@ import java.util.*;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.GenericStateModelAdapter;
 
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.*;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
@@ -93,7 +93,7 @@ extends BaseServletComponent
   /**
    * Agent identifier for the Agent that loaded this Component.
    */
-  protected ClusterIdentifier agentId;
+  protected MessageAddress agentId;
 
   // servlet that we'll load
   protected Servlet servlet;

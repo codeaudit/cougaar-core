@@ -24,9 +24,10 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ServiceUserPlugin;
 import org.cougaar.core.service.UIDService;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.persist.NotPersistable;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -87,7 +88,7 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
   public void setupSubscriptions() {
     cpu = new InterAgentCondition(CPU_CONDITION_NAME,
                                       CPU_VALUES, cpuValues[0]);
-    cpu.setTarget(new ClusterIdentifier("Provider"));
+    cpu.setTarget(MessageAddress.getMessageAddress("Provider"));
     getBlackboardService().publishAdd(cpu);
     if (haveServices()) {
       uidService.registerUniqueObject(cpu);

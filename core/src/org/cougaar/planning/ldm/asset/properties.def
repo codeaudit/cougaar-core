@@ -59,11 +59,11 @@ nomenclature.unique=true;
 alternate_item_identification.unique=true
 
 [ClusterPG]
-doc=An asset that is represented by an COUGAAR Cluster
-slots=org.cougaar.core.agent.ClusterIdentifier cluster_identifier, \
+doc=An asset that is represented by a COUGAAR Agent
+slots=org.cougaar.core.mts.MessageAddress message_address, \
 	Predictor predictor
-cluster_identifier.doc=The ClusterIdentifier for adressing this asset.
-predictor.doc=Predictor (if any) for the Cluster
+message_address.doc=The MessageAddress for adressing this asset.
+predictor.doc=Predictor (if any) for the Agent
 
 [RelationshipPG]
 local=true

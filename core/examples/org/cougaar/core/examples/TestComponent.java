@@ -22,6 +22,8 @@
 package org.cougaar.core.examples;
 
 import org.cougaar.core.component.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.node.*;
 import org.cougaar.core.service.AgentIdentificationService;
 
@@ -48,7 +50,7 @@ public class TestComponent
       NodeIdentificationService nis =
         (NodeIdentificationService) sb.getService(this, NodeIdentificationService.class, null);
       if (nis != null) {
-        nodeName = nis.getNodeIdentifier().toString();
+        nodeName = nis.getMessageAddress().toString();
       }
     }
 

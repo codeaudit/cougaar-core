@@ -23,6 +23,8 @@ package org.cougaar.core.mobility.service;
 import java.io.Serializable;
 import java.util.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.util.*;
 import org.cougaar.core.blackboard.*;
@@ -445,7 +447,7 @@ extends ComponentPlugin
       throw new RuntimeException(
           "Unable to obtain node-id service");
     }
-    this.nodeId = nodeIdService.getNodeIdentifier();
+    this.nodeId = nodeIdService.getMessageAddress();
     getServiceBroker().releaseService(
         this, NodeIdentificationService.class, nodeIdService);
     if (nodeId == null) {

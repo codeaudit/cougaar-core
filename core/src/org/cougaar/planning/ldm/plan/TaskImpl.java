@@ -34,6 +34,8 @@ import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 
 import org.cougaar.core.blackboard.Transaction;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 import org.cougaar.core.util.XMLizable;
 
@@ -81,7 +83,7 @@ public class TaskImpl extends DirectiveImpl
   private static final int[] emptyAuxQTypes = {-1};
   private int[] auxqtypes = emptyAuxQTypes;
 
-  public ClusterIdentifier getOwner() { return source; }
+  public MessageAddress getOwner() { return source; }
   public UID getUID() { return uid; }
   public void setUID(UID uid) {
     if (this.uid != null) throw new IllegalArgumentException("UID already set");
@@ -715,8 +717,8 @@ public class TaskImpl extends DirectiveImpl
     return getUID().hashCode();
   }
 
-  public void setSource(ClusterIdentifier asource) {
-    ClusterIdentifier old = getSource();
+  public void setSource(MessageAddress asource) {
+    MessageAddress old = getSource();
     if (old != null) {
       if (! asource.equals(old)) {
         System.err.println("Bad task.setSource("+asource+") was "+old+":");
@@ -727,7 +729,7 @@ public class TaskImpl extends DirectiveImpl
     }
   }
 
-  public void setDestination(ClusterIdentifier dest) {
+  public void setDestination(MessageAddress dest) {
     super.setDestination(dest);
     if (! dest.equals(getSource())) {
         System.err.println("Suspicious task.setDestination("+dest+") != "+getSource()+":");
@@ -735,7 +737,7 @@ public class TaskImpl extends DirectiveImpl
     }
   }
   // Private setter without destination check
-  public void privately_setDestination(ClusterIdentifier dest) {
+  public void privately_setDestination(MessageAddress dest) {
     super.setDestination(dest);
   }
       

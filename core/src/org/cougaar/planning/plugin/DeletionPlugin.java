@@ -41,7 +41,7 @@ import java.util.TimeZone;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.blackboard.PlanElementSet;
 import org.cougaar.core.blackboard.Subscription;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.plugin.SimplePlugin;
@@ -345,7 +345,7 @@ public class DeletionPlugin extends SimplePlugin {
     }
 
     private void debug(String s) {
-        s = getClusterIdentifier() + ": " + s;
+        s = getMessageAddress() + ": " + s;
         if (logFile != null) {
             synchronized (logFile) {
                 logFile.println(s);
@@ -364,7 +364,7 @@ public class DeletionPlugin extends SimplePlugin {
                         Asset asset = alloc.getAsset();
                         ClusterPG cpg = asset.getClusterPG();
                         if (cpg == null) return true; // Can't be remote w/o ClusterPG
-                        ClusterIdentifier destination = cpg.getClusterIdentifier();
+                        MessageAddress destination = cpg.getMessageAddress();
                         if (destination == null) return true; // Can't be remote w null destination
                         Task remoteTask = ((AllocationforCollections) alloc).getAllocationTask();
                         return remoteTask.isDeleted(); // Can delete if remote task is deleted
@@ -618,7 +618,7 @@ public class DeletionPlugin extends SimplePlugin {
             Asset asset = alloc.getAsset();
             ClusterPG cpg = asset.getClusterPG();
             if (cpg != null) {
-                ClusterIdentifier destination = cpg.getClusterIdentifier();
+                MessageAddress destination = cpg.getMessageAddress();
                 if (destination != null) {
                     Task remoteTask = ((AllocationforCollections) alloc).getAllocationTask();
                     if (remoteTask == null) return "Awaiting remote task creation";

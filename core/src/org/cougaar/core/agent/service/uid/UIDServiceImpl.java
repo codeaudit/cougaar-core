@@ -23,11 +23,13 @@ package org.cougaar.core.agent.service.uid;
 
 import org.cougaar.core.service.*;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceState;
 import org.cougaar.core.persist.StatePersistable;
 
@@ -37,21 +39,21 @@ import org.cougaar.core.persist.StatePersistable;
 
 public final class UIDServiceImpl implements UIDService {
   private ClusterContext cc;
-  private ClusterIdentifier cid;
+  private MessageAddress cid;
   private String prefix;
   private long count = System.currentTimeMillis();
 
   public UIDServiceImpl(ClusterContext context) {
     cc = context;
-    cid = context.getClusterIdentifier();
+    cid = context.getMessageAddress();
     prefix = cid.getAddress();
   }
 
-  /** ClusterIdentifier of the proxy server.
+  /** MessageAddress of the proxy server.
    *  This might go away if we ever really separated proxy 
    * servers from clusters.
    **/
-  public ClusterIdentifier getClusterIdentifier() {
+  public MessageAddress getMessageAddress() {
     return cid;
   }
 

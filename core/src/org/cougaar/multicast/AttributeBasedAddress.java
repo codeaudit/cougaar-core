@@ -23,10 +23,10 @@ package org.cougaar.multicast;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
+import java.io.Externalizable;
 
-import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.Publishable;
+import org.cougaar.core.mts.MessageAddressWithAttributes;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.util.UniqueObject;
@@ -39,23 +39,19 @@ import org.cougaar.planning.ldm.plan.DirectiveImpl;
  * Attribute Based Messaging support class, 
  * used in <code>Blackboard</code> for determining those
  * directive destinations not specified by a 
- * <code>ClusterIdentifier</code>
+ * <code>MessageAddress</code>
  */
-public class AttributeBasedAddress extends ClusterIdentifier implements Serializable
+public class AttributeBasedAddress 
+  extends MessageAddress
+  implements Externalizable
 {
   protected transient String myCommunityName;
   protected transient String myAttributeType; 
   protected transient String myAttributeValue;
 
-  public AttributeBasedAddress() {
-  }
+  public AttributeBasedAddress() {}
 
-  public AttributeBasedAddress(String commName, String attrType, String attrValue) {
-    this(null, commName, attrType, attrValue);
-  }
-    
-  public AttributeBasedAddress(MessageAttributes qosAttributes, String commName, String attrType, String attrValue) {
-    super(qosAttributes);
+  private AttributeBasedAddress(String commName, String attrType, String attrValue) {
     if (commName == null) {
       myCommunityName = "";
     } else {
@@ -63,14 +59,18 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
     }
     myAttributeType = attrType;
     myAttributeValue = attrValue;
-
-    // Use MessageAddress support for equals/hashCode
-    _hc = getAddressString().hashCode();
   }
-  
 
   public String getCommunityName() {
     return myCommunityName;
+  }
+
+  public String toAddress() {
+    return "ABA";
+  }
+  public String toString() {
+    return "#<ABA '"+myCommunityName+"' "+
+      myAttributeType+"="+myAttributeValue+">";
   }
 
   /**
@@ -93,10 +93,6 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
     return false;
   }
 
-  public String toString() {
-    return getAddressString();
-  }
-      
  
   // override MessageAddress
   public void writeExternal(ObjectOutput out) throws IOException {
@@ -109,19 +105,33 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
     myCommunityName = (String) in.readObject();
     myAttributeType = (String) in.readObject();
     myAttributeValue = (String) in.readObject();
-    _hc = getAddressString().hashCode();
   }
 
+  /*
+    // totally bogus - do correctly some time
   protected Object readResolve() {
     return new AttributeBasedAddress(myCommunityName, myAttributeType, myAttributeValue);
   }
+  */
 
-  protected String getAddressString() {
-    if (_as == null) {
-      _as = myCommunityName + ":" + myAttributeType + "=" + myAttributeValue;
-    } 
-    return _as;
+  // 
+  // factories
+  //
+    
+  public static AttributeBasedAddress getAttributeBasedAddress(String commName, String attrType, String attrValue) {
+    return new AttributeBasedAddress(commName, attrType, attrValue);
   }
+
+  public static MessageAddress getAttributeBasedAddress(String commName, String attrType, String attrValue, MessageAttributes mas) {
+    MessageAddress prime = getAttributeBasedAddress(commName, attrType, attrValue);
+    if (mas == null) { 
+      return prime;
+    } else {
+      return MessageAddressWithAttributes.getMessageAddressWithAttributes(prime, mas);
+    }
+  }
+
+
 }
 
 

@@ -21,12 +21,14 @@
 
 package org.cougaar.core.blackboard;
 
+import org.cougaar.core.mts.*;
+import org.cougaar.core.mts.*;
 import org.cougaar.core.agent.*;
 
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.persist.NotPersistable;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * A AckDirectiveMessage  provides a basic implementation of 
@@ -38,8 +40,8 @@ public class AckDirectiveMessage extends ClusterMessage
 {
   /** 
    */
-  public AckDirectiveMessage(ClusterIdentifier theDirectiveSource,
-                             ClusterIdentifier theDirectiveDestination,
+  public AckDirectiveMessage(MessageAddress theDirectiveSource,
+                             MessageAddress theDirectiveDestination,
                              int theSequenceNumber,
                              long anIncarnationNumber)
   {

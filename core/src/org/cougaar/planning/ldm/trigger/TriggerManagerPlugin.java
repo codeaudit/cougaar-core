@@ -80,7 +80,7 @@ public class TriggerManagerPlugin extends SimplifiedFatPlugin
            (IncrementalSubscription) subscribe(anewpred);
           mon.EstablishSubscription(anewsub);
         }
-        if (verbosity>1) System.err.println("Added trigger "+anewtrigger+" at "+getClusterIdentifier());
+        if (verbosity>1) System.err.println("Added trigger "+anewtrigger+" at "+getMessageAddress());
       }
 
       Enumeration removedtriggers = triggerSub.getRemovedList();

@@ -41,7 +41,7 @@ import org.cougaar.core.service.SchedulerService;
 import org.cougaar.core.service.AgentIdentificationService;
 
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * Standard base-class for Components that watch the Blackboard for 
@@ -66,7 +66,7 @@ public abstract class BlackboardClientComponent
 {
   private Object parameter = null;
 
-  protected ClusterIdentifier agentId;
+  protected MessageAddress agentId;
   private SchedulerService scheduler;
   protected BlackboardService blackboard;
   protected AlarmService alarmService;
@@ -155,8 +155,8 @@ public abstract class BlackboardClientComponent
   public final void setAgentIdentificationService(AgentIdentificationService ais) {
     MessageAddress an;
     if ((ais != null) &&
-        ((an = ais.getMessageAddress()) instanceof ClusterIdentifier)) {
-      agentId = (ClusterIdentifier) an;
+        ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
+      agentId = (MessageAddress) an;
     } else {
       // FIXME: Log something?
     }
@@ -334,15 +334,15 @@ public abstract class BlackboardClientComponent
   /**
    * Get the local agent's address.
    *
-   * Also consider adding a "getNodeIdentifier()" method backed
+   * Also consider adding a "getMessageAddress()" method backed
    * by the NodeIdentificationService.
    */
-  protected ClusterIdentifier getAgentIdentifier() {
+  protected MessageAddress getAgentIdentifier() {
     return agentId;
   }
 
   /** @deprecated Use getAgentIdentifier() */
-  protected ClusterIdentifier getClusterIdentifier() {
+  protected MessageAddress getMessageAddress() {
     return getAgentIdentifier();
   }
 
