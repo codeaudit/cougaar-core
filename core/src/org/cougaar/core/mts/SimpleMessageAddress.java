@@ -38,7 +38,6 @@ public class SimpleMessageAddress
   extends MessageAddress 
 {
   protected transient byte[] addressBytes;
-  protected transient int _hc = 0;
   protected transient String _as = null;
 
   // public for externalizable use
@@ -47,7 +46,6 @@ public class SimpleMessageAddress
   protected SimpleMessageAddress(String address) {
     this.addressBytes = address.getBytes();
     _as = address.intern();
-    _hc = _as.hashCode();
   }
 
   public final String getAddress() {
@@ -73,7 +71,7 @@ public class SimpleMessageAddress
   }
 
   public final int hashCode() { 
-    return _hc;
+    return _as.hashCode();
   }
 
   public void writeExternal(ObjectOutput out) throws IOException {
@@ -87,7 +85,6 @@ public class SimpleMessageAddress
     addressBytes=new byte[l];
     in.readFully(addressBytes,0,l);
     _as = new String(addressBytes).intern();
-    _hc = _as.hashCode();
   }
 
   protected Object readResolve() {

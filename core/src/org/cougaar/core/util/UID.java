@@ -40,7 +40,6 @@ public final class UID
 {
   private String owner;
   private long id;
-  private transient int _hc;
 
   /** No argument constructor is only for use by serialization! **/
   public UID() {}
@@ -59,13 +58,11 @@ public final class UID
       throw new IllegalArgumentException(
           "String \""+uid+"\" is not a valid UID pattern");
     }
-    _hc = computeHashCode(owner,id);
   }
   
   public UID(String owner, long id) {
     this.owner = owner.intern();
     this.id = id;
-    _hc = computeHashCode(this.owner, id);
   }
 
   public String getOwner() { return owner; }
@@ -113,9 +110,10 @@ public final class UID
   }
 
   public int hashCode() {
-    return _hc;
+    return owner.hashCode()+((int)id);
   }
   
+
   /**
    * Convert a UID into a String.
    * <p>
@@ -171,12 +169,6 @@ public final class UID
       owner = (String) in.readObject();
       if (owner != null) owner = owner.intern();
       id = in.readLong();
-      _hc = computeHashCode(owner, id);
     } catch (Exception e) { throw new IOException(e.toString()); }
-  }
-
-
-  private static final int computeHashCode(String owner, long id) {
-    return owner.hashCode()+((int)id);
   }
 }
