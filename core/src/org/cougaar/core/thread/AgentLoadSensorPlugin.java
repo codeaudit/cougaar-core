@@ -116,8 +116,8 @@ public class AgentLoadSensorPlugin
 
 
 
-    private static int number_of_cpus;
-    private static double capacity_mjips;
+    private static int number_of_cpus = 1; // default, if no metrics service
+    private static double capacity_mjips = 1.0; // ditto
 
     private int total;
     private HashMap records = new HashMap();

@@ -126,17 +126,20 @@ public class AgentFlowRatePlugin
 	super.load();
     
 	ServiceBroker sb = getServiceBroker();
+
+	logging = (LoggingService)
+            sb.getService(this, LoggingService.class, null);
+
 	agentFlowService = (TrafficMatrixStatisticsService)
 	    sb.getService(this, TrafficMatrixStatisticsService.class, null);
 	if (agentFlowService == null) {
-	    throw new RuntimeException("Can't find TrafficMatrixStatsisticsService. This plugin must be loaded at Low priority");
+	    logging.error("Can't find TrafficMatrixStatsisticsService. This plugin must be loaded at Low priority");
+	    return;
 	}
     
 	metricsUpdateService = (MetricsUpdateService)
 	    sb.getService(this, MetricsUpdateService.class, null);
 
-	logging = (LoggingService)
-            sb.getService(this, LoggingService.class, null);
 
 	ThreadService threadService = (ThreadService)
 	    sb.getService(this, ThreadService.class, null);
