@@ -115,7 +115,7 @@ http://java.sun.com/products/jms/</a>
  <td valign="Top"> servlet.jar </td>
  <td valign="Top"> 3.2.3 </td>
  <td valign="Top"> Java Servlet Development kit (now Jakarta Tomcat).  Includes Java 	
- Servlet 2.2 and JSP 1.1 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
+ Servlet 2.3 and JSP 1.2 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
 http://jakarta.apache.org/tomcat/index.html</a>
  </td>
  </tr>
@@ -175,16 +175,15 @@ http://mmmysql.sourceforge.net/</a>
  </td>
  </tr>
   <tr>
- <td valign="Top"> tomcat_33.jar </td>
- <td valign="Top"> 3.3a, merged </td>
+ <td valign="Top"> tomcat_40.jar </td>
+ <td valign="Top"> 4.0.3, merged </td>
  <td valign="Top"> 
-   BBN merge of 9 Tomcat 3.3a jars taken on 1/21/02, required to run
-   the Tomcat implementation of ServletService.  The merged jars are 
-   all the jars in the standard Tomcat 3.3a release that contain 
-   "org.apache.tomcat.*" packages.  A one-line modification was made to 
-   "org.apache.tomcat.startup.EmbededTomcat" to suppress needless 
-   debugging output, plus all calls to "System.getProperties().put(..)"
-   were replaced with equivalent "System.setProperty(..)" calls.
+   BBN merge of 14 Tomcat 4.0.3 jars taken on 4/8/02, required to run
+   the Tomcat implementation of ServletService.  The merged jar 
+   contains all 11 "server/lib/*" jars, the 2 "common/lib/naming*" jars,
+   and the "bin/bootstrap.jar".  Minor modifications were made to 
+   "org.apache.tomcat.core.Standard[Engine|Service]" to suppress
+   needless debugging output.
  <a href="http://jakarta.apache.org/tomcat/index.html">
 http://jakarta.apache.org/tomcat/index.html</a>
  </td>
