@@ -40,15 +40,11 @@ import org.cougaar.core.servlet.BlackboardServletSupport;
 
 
 /**
- * Servlet to view Adaptivity components and edit operating mode policies
+ * Servlet to view adaptivity objects and edit operating mode policies
  */
 public class AEViewerServlet extends HttpServlet {
 
   private BlackboardServletSupport support;
-
-  public void setSimpleServletSupport(SimpleServletSupport support) {
-    this.support = (BlackboardServletSupport)support;
-  }
 
   private static UnaryPredicate conditionPredicate = 
     new UnaryPredicate() { 
@@ -80,6 +76,15 @@ public class AEViewerServlet extends HttpServlet {
 	}
       };
 
+  public void setSimpleServletSupport(SimpleServletSupport support) {
+    if (support instanceof BlackboardServletSupport) {
+      this.support = (BlackboardServletSupport)support;
+    } else {
+      throw new RuntimeException("AEViewerServlet must be started with BlackboardServletComponent");
+    }
+  }
+
+
   public void doGet(HttpServletRequest request, HttpServletResponse response) {
     String uid = request.getParameter("uid");
     //System.out.println("\n\nAEViewer got request " + uid);
@@ -88,89 +93,119 @@ public class AEViewerServlet extends HttpServlet {
     try {
       PrintWriter out = response.getWriter();
 
+      /* Policy change request */
       if (uid != null) {
-	String policyString = request.getParameter("kernel");
-	StringReader reader = new StringReader(policyString);
-	OperatingModePolicy[] policies = null;
-	try {
-	  Parser parser = new Parser(reader, support.getLog());
-	  policies = parser.parseOperatingModePolicies();
-	} catch (java.io.IOException ioe) {
-	  ioe.printStackTrace();
-	} finally {
-	  reader.close();
-	}
-	Collection blackboardCollection 
-	  = support.queryBlackboard(new UIDPredicate(uid));
-	OperatingModePolicy bbPolicy = (OperatingModePolicy)blackboardCollection.iterator().next();
-	bbPolicy.setPolicyKernel(policies[0].getPolicyKernel());
-	
-	BlackboardService blackboard = support.getBlackboardService();
-	blackboard.openTransaction();
-	blackboard.publishChange(bbPolicy);
-	blackboard.closeTransaction();
-
-	out.println("<html><head></head><body><h1>Policy Changed</h1><br>" );
-	out.println(bbPolicy.toString());
+	changePolicy(request, out, uid);
       } else {
-	out.println("<html><head></head><body><h1><CENTER>Conditions</CENTER></h1><br>" );
-	Collection conditions = support.queryBlackboard(conditionPredicate);
-	out.print("<UL>");
-	for (Iterator it = conditions.iterator(); it.hasNext();) {
-	  out.print("<LI>");
-	  out.println(it.next().toString());
-	}
-	out.print("</UL>");
-
-	out.println("<html><head></head><body><h1><CENTER>OperatingModes</CENTER></h1><br>" );
-	Collection operatingModes = support.queryBlackboard(omPredicate);
-	out.print("<UL>");
-	for (Iterator it = operatingModes.iterator(); it.hasNext();) {
-	  out.println("<LI>");
-	  out.println(it.next().toString());
-	}
-	out.print("</UL>");
-
-	out.print("<H1><CENTER>Operating Mode Policies</CENTER></H1><P>\n");
-
-	out.print("<font size=+1>Edit Policies for <b>" + support.getAgentIdentifier() + "</b></font><p>\n");
-	
-	out.println ("<table>\n");
-	out.println ("<tr><th>");
-	out.print("Name</th><th>Authority</th><th>UID</th><th>Kernel</th>");
-	Collection policies = support.queryBlackboard(omPolicyPredicate);
-	for (Iterator it = policies.iterator(); it.hasNext();) {
-
-	  out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
-	  out.print(support.getEncodedAgentName());
-	  out.print(support.getPath());
-	  out.print("\">\n");
-  
-	  OperatingModePolicy omp = (OperatingModePolicy) it.next();
-	  out.println ("<tr><td>");
-	  out.print(omp.getName());
-	  out.println("</td><td>");
-	  out.println(omp.getAuthority());
-	  out.println("</td><td>");
-	  out.println(omp.getUID());
-	  out.print("<INPUT TYPE=hidden NAME=uid VALUE=\"");
-	  out.print(omp.getUID());
-	  out.print("\"SIZE=20>");
-	  out.println("</td><td>");
-	  out.print("<INPUT TYPE=\"text\" NAME=kernel VALUE=\"");
-	  out.print(omp.getPolicyKernel().toString());
-	  out.print("\"SIZE=80>");
-	  out.println("</td><td>");
-	  out.print("<input type=submit value=\"Submit\">");
-	  out.println("</td></tr>");
-	  out.println("</form>");
-	}
-	 out.println("</table></body></html>");	
+	/* send adaptivity objects */
+	sendData(out);
       }
       out.close();
     } catch (java.io.IOException ie) { ie.printStackTrace(); }
   }
 
+  private void changePolicy(HttpServletRequest request, PrintWriter out, String uid) {
+
+    // get the string representing the policy
+    String policyString = request.getParameter("kernel");
+    StringReader reader = new StringReader(policyString);
+    OperatingModePolicy[] policies = null;
+    try {
+      // Use the parser to create a new policy
+      Parser parser = new Parser(reader, support.getLog());
+      policies = parser.parseOperatingModePolicies();
+    } catch (java.io.IOException ioe) {
+      ioe.printStackTrace();
+    } finally {
+      reader.close();
+    }
+
+    // find the existing policy on the blackboard
+    Collection blackboardCollection 
+      = support.queryBlackboard(new UIDPredicate(uid));
+    OperatingModePolicy bbPolicy = (OperatingModePolicy)blackboardCollection.iterator().next();
+
+    // set the existing policy's kernel to be that of the newly
+    // parsed policy
+    bbPolicy.setPolicyKernel(policies[0].getPolicyKernel());
+    
+    BlackboardService blackboard = support.getBlackboardService();
+    blackboard.openTransaction();
+    // write the updated policy to the blackboard
+    blackboard.publishChange(bbPolicy);
+    blackboard.closeTransaction();
+    
+    out.println("<html><head></head><body><h1>Policy Changed</h1><br>" );
+    out.println(bbPolicy.toString());
+  }
+  
+  /**
+   * Suck the Policies, Conditions, and Operating Modes out of the
+   * blackboard and send them to the requestor
+   */
+  private void sendData(PrintWriter out) {
+    out.println("<html><head></head><body><h1><CENTER>Conditions</CENTER></h1><br>" );
+    Collection conditions = support.queryBlackboard(conditionPredicate);
+    out.print("<UL>");
+    for (Iterator it = conditions.iterator(); it.hasNext();) {
+      out.print("<LI>");
+      out.println(it.next().toString());
+    }
+    out.print("</UL>");
+    
+    out.println("<html><head></head><body><h1><CENTER>OperatingModes</CENTER></h1><br>" );
+    Collection operatingModes = support.queryBlackboard(omPredicate);
+    out.print("<UL>");
+    for (Iterator it = operatingModes.iterator(); it.hasNext();) {
+      out.println("<LI>");
+      out.println(it.next().toString());
+    }
+    out.print("</UL>");
+    
+    out.print("<H1><CENTER>Operating Mode Policies</CENTER></H1><P>\n");
+    
+    out.print("<font size=+1>Edit Policies for <b>" + support.getAgentIdentifier() + "</b></font><p>\n");
+  
+    writePolicyTable(out);
+  }
+
+
+  /**
+   * Create a HTML table with a form in each row for editing a policy
+   */
+  private void writePolicyTable(PrintWriter out) {
+    out.println ("<table>\n");
+    out.println ("<tr><th>");
+    out.print("Name</th><th>Authority</th><th>UID</th><th>Kernel</th>");
+    Collection policies = support.queryBlackboard(omPolicyPredicate);
+    for (Iterator it = policies.iterator(); it.hasNext();) {
+      
+      out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
+      out.print(support.getEncodedAgentName());
+      out.print(support.getPath());
+      out.print("\">\n");
+      
+      OperatingModePolicy omp = (OperatingModePolicy) it.next();
+      out.println ("<tr><td>");
+      out.print(omp.getName());
+      out.println("</td><td>");
+      out.println(omp.getAuthority());
+      out.println("</td><td>");
+      out.println(omp.getUID());
+      out.print("<INPUT TYPE=hidden NAME=uid VALUE=\"");
+      out.print(omp.getUID());
+      out.print("\"SIZE=20>");
+      out.println("</td><td>");
+      out.print("<INPUT TYPE=\"text\" NAME=kernel VALUE=\"");
+      out.print(omp.getPolicyKernel().toString());
+      out.print("\"SIZE=80>");
+      out.println("</td><td>");
+      out.print("<input type=submit value=\"Submit\">");
+      out.println("</td></tr>");
+      out.println("</form>");
+    }
+    out.println("</table></body></html>");	
+  }
   private class UIDPredicate implements UnaryPredicate { 
     String uid;
     public UIDPredicate(String uidString) {
