@@ -96,6 +96,13 @@ the Allocation.</li>
 <li>
 <b>AlertReaderPlugIn</b>: The sample AlertReaderPlugIn subscribes to and
 displays Alerts.</li>
+<li>
+<b>GetOplanPlugIn</b>: The GetOplanPlugIn is used in subordinate organization to "redeem"
+the OplanCoupon. When it receives the OplanCoupon, it publishes a QueryRequest containing the
+information from the OplanCoupon and about the organization. Various LogicProviders retreive
+the requested Oplan and OrgActivities from the originating organization and publishes those
+objects in the cluster.</li>
+
 </ul>
 <b>3ID Cluster:</b>
 <ul>
@@ -109,10 +116,40 @@ GA to Ft. Irwin, CA), this PlugIn expands these Tasks into two subtasks
 Ft. Hood to Ft. Irwin. The expected dates associated with these Tasks are
 created based on information requested from the MCCGlobalMode Predictor.</li>
 
-<p><br>This PlugIn is not enabled in the default configuration of MiniTestConfig.
+<p>This PlugIn is not enabled in the default configuration of MiniTestConfig.
 In order to enable this PlugIn, the 3ID.ini file should be edited, enabling
 the PredictorExpanderPlugIn and the StrategicTransportAlloctorPlugIn, and
-disabling the TaskStrategicTransportAllocatorPlugIn.</ul>
+disabling the TaskStrategicTransportAllocatorPlugIn.
+
+<li>
+<b>XMLPolicyPlugIn</b>: The XMLPolicyPlugIn reads Policy information stored
+in XML format (in policy.ldm.xml) and creates and publishes Policy objects.</li>
+
+<li>
+<b>PolicyPlugIn</b>: The sample PolicyPlugIn subscribes for ShipPolicy
+objects. It puts up a simple GUI for each ShipPolicy in the Log Plan. The
+GUI allows the user to change the ShipMode and the ShipDays. A slider allows
+the user to change the value of ShipDays between one and ten. A set of
+radio buttons allows the user to set the ShipMode to Sea, Air, or Ground.&nbsp;
+The changes are published so that other PlugIns can receive and react to
+the changes. The sample PolicyPlugIn create and publishes a ShipPolicy
+object.</li>
+
+<li>
+<b>PropagationPlugIn</b>: The PropagationPlugIn uses an XML file (forward.xml)
+to send Log Plan objects that implement the Transferable interface to
+other clusters.  Currently all clusters use forward.xml which tells the PropagationPlugIn
+to send OplanCoupon to Subordinates and AdminstrativeSubordinates and ShipPolicy 
+to Supporting StrategicTransportationProviders. Each cluster can have its own XML file to
+direct Transferables as needed.</li>
+
+<li>
+<b>OplanPlugIn</b>: The OplanPlugIn reads an XML file containing an Operation Plan (Oplan).
+It publishes the Oplan consisting of an Oplan object and several OrgActivity objects. In addition,
+the OplanPlugIn publishes an OplanCoupon object which is forwarded to subordinate clusters via 
+the PropagationPlugIn.</li>
+</ul>
+
 <b>MCCGlobalMode Cluster:</b>
 <ul>
 <li>
@@ -179,40 +216,7 @@ success is assumed.</li>
 <br>The PlugIn's sole job is to create an instance of a Predictor (implemented
 as an inner class) and adds the Predictor as a slot value of the Cluster's
 ClusterPropertyGroup.
-<li>
-<b>XMLPolicyPlugIn</b>: The XMLPolicyPlugIn reads Policy information stored
-in XML format (in policy.ldm.xml) and creates and publishes Policy objects.</li>
 
-<li>
-<b>PolicyPlugIn</b>: The sample PolicyPlugIn subscribes for ShipPolicy
-objects. It puts up a simple GUI for each ShipPolicy in the Log Plan. The
-GUI allows the user to change the ShipMode and the ShipDays. A slider allows
-the user to change the value of ShipDays between one and ten. A set of
-radio buttons allows the user to set the ShipMode to Sea, Air, or Ground.&nbsp;
-The changes are published so that other PlugIns can receive and react to
-the changes. The sample PolicyPlugIn create and publishes a ShipPolicy
-object.</li>
-
-<li>
-<b>PropagationPlugIn</b>: The PropagationPlugIn uses an XML file (forward.xml)
-to send Log Plan objects that implement the Transferable interface to
-other clusters.  Currently all clusters use forward.xml which tells the PropagationPlugIn
-to send OplanCoupon to Subordinates and AdminstrativeSubordinates and ShipPolicy 
-to Supporting StrategicTransportationProviders. Each cluster can have its own XML file to
-direct Transferables as needed.</li>
-
-<li>
-<b>OplanPlugIn</b>: The OplanPlugIn reads an XML file containing an Operation Plan (Oplan).
-It publishes the Oplan consisting of an Oplan object and several OrgActivity objects. In addition,
-the OplanPlugIn publishes an OplanCoupon object which is forwarded to subordinate clusters via 
-the PropagationPlugIn.</li>
-
-<li>
-<b>GetOplanPlugIn</b>: The GetOplanPlugIn is used in subordinate organization to "redeem"
-the OplanCoupon. When it receives the OplanCoupon, it publishes a QueryRequest containing the
-information from the OplanCoupon and about the organization. Various LogicProviders retreive
-the requested Oplan and OrgActivities from the originating organization and publishes those
-objects in the cluster.</li>
 
 </ul>
 
