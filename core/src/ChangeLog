@@ -1,3 +1,13 @@
+2001-04-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/lps/RescindLP.java:
+	Suppress DeferredRescind failed message. This is innocuous and
+	happens when a TaskRescind is repeated as part of rehydration
+	recovery.
+	Force remove of plan element added after its task has been
+	rescinded. Because of timing issues, the plan element may not be
+	in the PlanElementSet, but may need to be removed anyway.
+
 2001-03-30  Michael Thome  <mthome@bbn.com>
 
 	* Domain, DomainManager, ClusterImpl
