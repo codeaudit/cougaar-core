@@ -17,10 +17,10 @@
 <b><font size=+2>Release Notes</font></b></h2>
 
 <h2>
-<b><font size=+2>COUGAAR 8.0</font></b></h2>
+<b><font size=+2>COUGAAR 8.2</font></b></h2>
 </td>
 
-<td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0></a></td>
+<td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 ></a></td>
 </tr>
 </table>
 
@@ -61,24 +61,44 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
-Build  8.0 is a new major release of COUGAAR.  Essential differences
-between 7.2 and 8.0 include: 
-<ul>
-<li> Support for JDK 1.3.</li>
-<li> Minor naming changes. </li>
-<li> Additional patches.</li>
-</ul>
+Build 8.2 is a point release along COUGAAR 8.0. Notable additions for this
+release include:
+<blockquote>
+<li>
+DelayedLP actions which allow batching of things like Notifications</li>
 
+<li>
+New component architecture APIs&nbsp;</li>
+
+<li>
+APIs and implementations of PluginBinder, MessageTransportBinder and BlackboardService</li>
+</blockquote>
+Build 8.0 is a major release of COUGAAR. Essential differences between
+7.2 and 8.0 include:&nbsp;
+<ul>
+<li>
+Support for JDK 1.3.</li>
+
+<li>
+Minor naming changes.&nbsp;</li>
+
+<li>
+Additional patches.</li>
+</ul>
 For additional details, please review the following documentation:
 <ul>
 <li>
 <a href="CHANGES">CHANGES</a> and doc/details</li>
 
 <li>
+<a href="ComponentModel/ComponentModel_Index.html">Component Model</a>
+docs</li>
+
+<li>
 core/doc/Javadoc</li>
 
 <li>
-PlugIn Developers Guide, v8.0</li>
+PlugIn Developers Guide, v8.0 (due out late June, 2001)</li>
 
 <li>
 core/src/Changelog</li>
@@ -86,23 +106,22 @@ core/src/Changelog</li>
 <li>
 PlugIn Developer Workshop presentations (on the <a href="HTTPS://www.alpine.bbn.com/">ALPINE
 website</a>)</li>
-<li>
-<a href="SoftwareOrganization.txt">
-Principles of COUGAAR Software Organization </a>
-</li>
 
+<li>
+<a href="SoftwareOrganization.txt">Principles of COUGAAR Software Organization&nbsp;</a></li>
 </ul>
 
 <h2>
 <a NAME="organization"></a>Organization of a Release&nbsp;</h2>
-The files in an COUGAAR release fall into the following organizational areas:
+The files in an COUGAAR release fall into the following organizational
+areas:
 <ul>
 <li>
 "core:" domain independent agent architecture</li>
 
 <li>
-"alpine:" LDM and PlugIns with a logistics domain focus based on the ALP
-program objectives</li>
+"glm:" LDM and PlugIns which have a logistics domain focus based on the
+ALP program objectives</li>
 
 <li>
 "utility:" GSS and PlugIn Contracts</li>
@@ -113,11 +132,47 @@ program objectives</li>
 <li>
 "tutorial:" non-logistics sample societies and PlugIns</li>
 
+<br>"server:" centralized society initiation and management for testing,
+integration and demonstration</ul>
+The COUGAAR release will contain the following zip files:
+<ul>
 <li>
-"server:" centralized society initiation and management for testing, integration
-and demonstration</li>
-</ul>
+cougaar.zip:&nbsp; COUGAAR demo runtime - all built jar files, configs,
+data, bin, minimum doc.</li>
 
+<li>
+cougaar-support.zip:&nbsp; All non-built supporting .jars (unpacks into
+"sys" subdirectory where Bootstrapper will find them).</li>
+
+<li>
+cougaar-api.zip:&nbsp; the javadoc for all the main cougaar classes in
+one place. unpacks to api/* instead of under doc as in previous releases.</li>
+
+<li>
+*-dev.zip:&nbsp; sources, docs (including javadoc) for each "public" module.</li>
+
+<li>
+md5sums.txt:&nbsp; md5 checksums of all the zips.</li>
+
+<li>
+build.out: output of the build process</li>
+</ul>
+Notes:
+<br>1. You'll need cougaar.zip and cougaar-support.zip (the first time)
+to get a
+<br>runnable system.&nbsp; The rest are extras.&nbsp; Furthermore, the
+cougaar-support
+<br>contents do not change very often.
+<p>2. the zips are designed to be unpacked in the same directory, e.g.
+on
+<br>unix:
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mkdir cougaar
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; cd cougaar
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unzip /tmp/cougaar.zip
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; unzip -o /tmp/cougaar-support.zip
+<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; setenv COUGAAR_INSTALL_PATH
+`pwd`
+<br>&nbsp;
 <h2>
 <a NAME="utilities"></a>Utilities in a Release&nbsp;</h2>
 The following PSPs (in the alpine module) and LPS services are tested with
@@ -154,7 +209,8 @@ MiniBuild releases in size and complexity. PlugIn developers are encouraged
 to use <b>minitestconfig</b> as a starting point for bringing PlugIn compliance
 up to the latest infrastructure release. In addition, the subdirectory
 "flag-config" contains the configuration files used for the Flag Demonstration
-society. This society requires the use of PlugIns from various COUGAAR participants.&nbsp;
+society. This society requires the use of PlugIns from various COUGAAR
+participants.&nbsp;
 <br>&nbsp;
 <h2>
 <a NAME="delivering"></a>Delivering Software Products (PlugIns)</h2>
@@ -163,8 +219,8 @@ PlugIns. Avoid names with obvious collision problems such as those associated
 with the Logistics domain. There needs to be a direct correlation between
 your product name and your Java package name. It is recommended that you
 follow the usual Java package naming guidelines (e.g., "com.bbn.tops...").&nbsp;
-<p>We will be providing a cvs repository for COUGAAR plugin developers that
-are ALPINE subcontractors and participating in the FY2000 demonstration.
+<p>We will be providing a cvs repository for COUGAAR plugin developers
+that are ALPINE subcontractors and participating in the FY2000 demonstration.
 If you would like to participate, we will provide you with details as to
 how to interact with the cvs repository (setting CVSROOT and passwords).
 The directory structure should follow the one described at the March COUGAAR

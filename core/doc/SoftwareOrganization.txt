@@ -4,10 +4,7 @@ The COUGAAR software distribution contains a number of separate
 modules of related classes with supporting documentation and sources.
 
 aggagent	Aggregation Agent
-antex		Initial support for building COUGAAR using ANT from
-		the Apache/Jakarta project.
 build		Release and build scripts, with code generators.
-configgen	A Society configuration tool.
 contract	Experimental domain-level contract code.
 core		Criticial Core COUGAAR infrastructure.
 glm		GenericLogisticsModel.  Currently also includes
@@ -16,11 +13,11 @@ javaiopatch	Patch to jdk's java.io to support incremental
 		persistence of Agents with Blackboards.
 planserver	external world interface via http.
 scalability	toolkit for scalability and performance analysis.
-server		Application server for COUGAAR agents.
-toolkit		Collection of utilities.
+server	Application server for COUGAAR agents.
+toolkit	Collection of utilities including configgen
+		which is a society configuration tool.
 tutorial	The COUGAAR tutorial.
 uiframework	A generalized User interface framework.
-whatif		experimental whatif facility.
 
 - - - - - INTRA-MODULE ORGANIZATION - - - - - 
 Each module is organized in a similar way in the source repository:
@@ -28,9 +25,9 @@ Each module is organized in a similar way in the source repository:
 <module>/src	head of java sources for module, arranged like 
 		javac would expect to see in a CLASSPATH.
 	/bin	executables, scripts and support
-	/doc	documentation, in text and html
 	/data	arbitrary (static) data for runtime use.
-	/configs  Configuration directories.  Usually contains
+	/doc	documentation, in text and html
+		/configs  Configuration directories.  Usually contains
 		only subdirectories, each is a valid configuration.
 	/examples Like src, but is never shipped compiled. 
 		The build process should attempt to
@@ -59,74 +56,46 @@ Each module is organized in a similar way in the source repository:
 
 
 - - - - - BUILD ORGANIZATION - - - - - 
+This is a list of the various zip files available from releases.
 
-The goal is to regularize the build process as much as possible.
+cougaar.zip     		COUGAAR demo runtime - all built jar files, configs, data,
+                		bin, minimum doc.
+cougaar-support.zip 	All non-built supporting .jars (unpacks into "sys"
+                		subdirectory where Bootstrapper will find them).
+cougaar-api.zip     	the javadoc for all the main cougaar classes in one
+                		place. unpacks to api/* instead of under doc as in previous
+				COUGAAR releases.
+*-dev.zip       		sources, docs (including javadoc) for each "public"
+                		module.
+md5sums.txt     		md5 checksums of all the zips.
+build.out       		output of the build process 
 
-1. release building tool should be driven by a makefile-like
-dependency description.  E.g.:
-	core: build.jar xml.jar ...
-	utils: build.jar core.jar xml.jar ...
-	...
-We are already non-portable for system building - perhaps we should
-just give in and use make to arrange the dependencies between modules,
-invocation of AlpMake/alpc.
+Notes:
+1. You'll need cougaar.zip and cougaar-support.zip (the first time) to get a
+runnable system.  The rest are extras.  Furthermore, the cougaar-support
+contents do not change very often.
 
-2. modules should be built separately from the "releases".  So a
-"nightly" build does the following:
-  a. build modules according to dependencies.  All module builds
-involve exactly the same steps and result in indentically organized
-products.  Example: after this pass, the following directory might
-show up in the filesystem:
-	.../builds/COUGAAR_8_0/20010630/modules/
-		build.zip
-		core.zip (e.g. has:
-			core/lib/core.jar
-			core/src.jar
-			core/doc.jar
-			core/bin/*
-			core/configs/*)
-		util.zip
-		alpine.zip
-					...
+2. the zips are designed to be unpacked in the same directory, e.g. on
+unix:
+        mkdir cougaar
+        cd cougaar
+        unzip /tmp/cougaar.zip
+        unzip -o /tmp/cougaar-support.zip
+        setenv COUGAAR_INSTALL_PATH `pwd`
 
-  b. build nightly releases from the above products:
-	.../builds/COUGAAR_8_0/20010630/
-		cougaar.zip =
-			(file/dir)	(where it came from)
-			bin/*		modules/core.zip/core/bin/*
-			configs/*	modules/core.zip/core/configs/*
-			...
-			lib/build.jar	modules/build.zip/build/lib/build.jar
-			lib/core.jar	modules/core.zip/core/lib/core.jar
-			lib/...
-		cougaar_doc.zip =
-			...
-		cougaar_src.zip = 
-			... (or maybe just rely on separate modules)
-		alp.zip =
-			bin/*		modules/alpine.zip/alpine/bin/*
-			...
-		alp_doc.zip =
-			...
-  c. Standard "releases" would be the zip files produced in step b.
-module products from step (a) would be also be available, but are
-considered merely building blocks of real systems.  "Module builds"
-could be trivially unpacked in a "release build" directory if someone
-wanted the sources or docs.  We could also produce "moby builds" which 
-have everything - restartable ftp clients are pretty common nowadays.
+3. Although the zips are intended to be installed in the same
+directory, they all have a top-level file "version.txt" which contains
+something like:
+COMMENT = cougaar thirdparty jars
+REPOSITORY_TAG = V8_2                           # branch of repository
+REPOSITORY_TIME = 6/1/2001 13:00:29            # checkout time of repository
+ARCHIVE_TIME = 6/1/2001 13:11:03               # zip time
+All your zips should have the same REPOSITORY_TAG and REPOSITORY_TIME.
+unzip will ask you if you want to overwrite version.txt -  do what you
+wish.  Each generated jar file also gets this information, btw.
+You can unpack all the zips into the same directory without warnings
+using the right argument to unzip.  on unix "unzip -o" will do the trick.
 
-
-  d. other build-level wishlist items:
-	- automatic rmic instead of checked-in-stubs/skels.
-	- nice and portable module and release builders, e.g. ANT
-	- exercise regression a regression test api: introspect on
-generated .class files, anything that has a "regress()" method will be 
-classloaded and invoked.  Any output will be reported as regression
-failure. 
-	- "continuous" builds when repository is changing.  Tag successful
-builds (e.g. those which clean compile and pass all regression
-tests).  Consider using a compile server (e.g. holodeck) for this
-purpose.
 
 - - - - - PACKAGE ORGANIZATION: - - - - - 
 
@@ -170,6 +139,7 @@ org.cougaar				root of the cougaar platform.
   .planserver.*		planserver
  .core			core		core cougaar system
   .component		core		component model
+  .blackboard		core		blackboard services
   .society		core		society-level entities
   .cluster		core		agent-level entities
   .plugin		core		sub-agent-level entities
