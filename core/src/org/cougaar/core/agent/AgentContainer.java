@@ -21,6 +21,8 @@
 
 package org.cougaar.core.agent;
 
+import java.util.Map;
+import java.util.Set;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.mts.MessageAddress;
@@ -29,6 +31,41 @@ import org.cougaar.core.mts.MessageAddress;
  * 
  */
 public interface AgentContainer {
+
+  /**
+   * Equivalent to
+   *   <code>(getAgentDescription(agentId) != null)</code>
+   *
+   * @return true if the agent is on the local node
+   */
+  boolean containsAgent(MessageAddress agentId);
+
+  /**
+   * Equivalent to
+   *   <code>getLocalAgentDescriptions().keySet()</code>
+   *
+   * @return a Set of all local agent MessageAddresses
+   */
+  Set getAgentAddresses();
+
+  /**
+   * Equivalent to
+   *   <code>getLocalAgentDescriptions().get(agentId)</code>
+   *
+   * @return null if the agent is not on the local node,
+   *    or the description is not known.
+   */
+  ComponentDescription getAgentDescription(
+      MessageAddress agentId);
+
+  /**
+   * Get an unmodifiable map of local agent MessageAddress to the 
+   * ComponentDescriptions.
+   *
+   * @return a Map&lt;MessageAddress&gt;&lt;ComponentDescriptions&gt;
+   *   for the local agents
+   */
+  Map getAgents();
 
   /**
    * Add a new agent to the local node.
@@ -40,23 +77,9 @@ public interface AgentContainer {
 
   /**
    * Remove an agent that's on the local node.
-   * <p>
-   * Assumes that the agent has already been stopped 
-   * and unloaded.
    * 
    * @throws RuntimeException if the agent is not on the
    *    local node, or it can't be removed.
    */
   void removeAgent(MessageAddress agentId);
-
-  /**
-   * Get the component description for an agent on the
-   * local node.
-   *
-   * @return null if the agent is not on the local node,
-   *    or the description is not known.
-   */
-  ComponentDescription getAgentDescription(
-      MessageAddress agentId);
-
 }

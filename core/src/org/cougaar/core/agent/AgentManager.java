@@ -24,8 +24,12 @@ package org.cougaar.core.agent;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.BinderFactorySupport;
@@ -163,12 +167,65 @@ public class AgentManager
   //   agent mobility
   //
 
-  public void addAgent(MessageAddress agentId, StateTuple tuple) {
+  public boolean containsAgent(MessageAddress agentId) {
+    return (getAgentDescription(agentId) != null);
+  }
+
+  public Set getAgentAddresses() {
+    Map m = getAgents();
+    return Collections.unmodifiableSet(m.keySet());
+  }
+
+  public ComponentDescription getAgentDescription(MessageAddress agentId) {
+    Map m = getAgents();
+    return (ComponentDescription) m.get(agentId);
+  }
+
+  public Map getAgents() {
     // FIXME cleanup this code
     //
-    // first check that the agent isn't already loaded
-    ComponentDescription desc = getAgentDescription(agentId);
-    if (desc != null) {
+    // assume that all agents are loaded with a ComponentDescription,
+    // where the desc's parameter is (<agentId> [, ...])
+    synchronized (boundComponents) {
+      Map ret = new HashMap(boundComponents.size());
+      for (Iterator iter = boundComponents.iterator(); iter.hasNext(); ) {
+        Object obc = iter.next();
+        if (!(obc instanceof BoundComponent)) {
+          continue;
+        }
+        BoundComponent bc = (BoundComponent) obc;
+        Object cmp = bc.getComponent();
+        if (!(cmp instanceof ComponentDescription)) {
+          continue;
+        }
+        ComponentDescription desc = (ComponentDescription) cmp;
+        Object o = desc.getParameter();
+        MessageAddress cid = null;
+        if (o instanceof MessageAddress) {
+          cid = (MessageAddress) o;
+        } else if (o instanceof String) {
+          cid = MessageAddress.getMessageAddress((String) o);
+        } else if (o instanceof List) {
+          List l = (List)o;
+          if (l.size() > 0) {
+            Object o1 = l.get(0);
+            if (o1 instanceof MessageAddress) {
+              cid = (MessageAddress) o1;
+            } else if (o1 instanceof String) {
+              cid = MessageAddress.getMessageAddress((String) o1);
+            }
+          }
+        }
+        if (cid != null) {
+          ret.put(cid, desc);
+        }
+      }
+      return ret;
+    }
+  }
+
+  public void addAgent(MessageAddress agentId, StateTuple tuple) {
+    if (containsAgent(agentId)) {
       // agent already exists
       throw new RuntimeException(
           "Agent "+agentId+" already exists");
@@ -199,52 +256,6 @@ public class AgentManager
     }
 
     // the agent has been UNLOADED and removed
-  }
-
-  public ComponentDescription getAgentDescription(MessageAddress agentId) {
-    // FIXME cleanup this code
-    //
-    // assume that all agents are loaded with a ComponentDescription,
-    // where the desc's parameter is (<agentId> [, ...])
-    synchronized (boundComponents) {
-      Iterator iter = super.boundComponents.iterator();
-      while (iter.hasNext()) {
-        Object obc = iter.next();
-        if (!(obc instanceof BoundComponent)) {
-          continue;
-        }
-        BoundComponent bc = (BoundComponent) obc;
-        Object cmp = bc.getComponent();
-        if (!(cmp instanceof ComponentDescription)) {
-          continue;
-        }
-        ComponentDescription desc = (ComponentDescription) cmp;
-        Object o = desc.getParameter();
-        MessageAddress cid = null;
-        if (o instanceof MessageAddress) {
-          cid = (MessageAddress) o;
-        } else if (o instanceof String) {
-          cid = MessageAddress.getMessageAddress((String) o);
-        } else if (o instanceof List) {
-          List l = (List)o;
-          if (l.size() > 0) {
-            Object o1 = l.get(0);
-            if (o1 instanceof MessageAddress) {
-              cid = (MessageAddress) o1;
-            } else if (o1 instanceof String) {
-              cid = MessageAddress.getMessageAddress((String) o1);
-            }
-          }
-        }
-        if (agentId.equals(cid)) {
-          // found the description
-          return desc;
-        }
-      }
-    }
-
-    // no such agent
-    return null;
   }
 
   /**
