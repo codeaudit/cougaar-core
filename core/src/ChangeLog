@@ -1,3 +1,14 @@
+2002-03-28  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Logic providers to implement Relay transfers.
+
+	* org/cougaar/core/relay/RelayDirective.java:
+	Directives for messages about Relay objects.
+
+	* org/cougaar/core/relay/Relay.java:
+	Interface definitions for Relay objects.
+
 2002-03-26  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/adaptivity/ThreatconTestPlugin.java:
