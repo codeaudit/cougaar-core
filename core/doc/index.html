@@ -457,7 +457,7 @@ includes core.jar.</li>
 The Inventory Manager does not handle blanket failed allocations very well.
 If a universal allocator at a leaf unit fails all refills to an InventoryManager
 immediately below that supply point, there are failed refills, but the level below
-that there is no shortfall and no failed refills.   This is related to a bug where confidence levels 0.5 or below should not be counted as success and aggregating failed allocations back to their expansion is not working properly.  This should be fixed in a future release. The fallout is overly short supply in a society is not reflected in the result.
+that there is no shortfall and no failed refills.   This is related to a bug where confidence levels 0.5 or below should not be counted as success and aggregating failed allocations back to their expansion is not working properly.  This should be fixed in a future release. Until this is fixed large shortfalls of supply do not reflect very well in the result.
 </li>
 
 
