@@ -304,7 +304,7 @@ public class SimpleAgent
       // Here we take advantage of that property and merge all
       // hard-coded and ".ini" components into one list.
       //
-      List l = new ArrayList(cds.length + 13);
+      List l = new ArrayList(cds.length + 14);
 
       // advertise our agent id
       l.add(new ComponentDescription(
@@ -317,6 +317,19 @@ public class SimpleAgent
             null,
             null,
             ComponentDescription.PRIORITY_HIGH));
+
+      // event service (wrapper for logging)
+      l.add(new ComponentDescription(
+            getMessageAddress()+"Event",
+            Agent.INSERTION_POINT+".Event",
+            "org.cougaar.core.agent.service.event.EventServiceComponent",
+            null,
+            null,
+            null,
+            null,
+            null,
+            ComponentDescription.PRIORITY_HIGH));
+
 
       // add the containment service
       l.add(new ComponentDescription(
