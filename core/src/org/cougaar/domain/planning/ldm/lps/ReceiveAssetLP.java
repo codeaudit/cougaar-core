@@ -78,6 +78,7 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     // figure out the assignee
     Asset assigneeT = aa.getAssignee();// assignee from message
     Asset assigneeL = logplan.findAsset(assigneeT); // local assignee instance
+    
     if (assigneeL == null) {
       System.err.println("ReceiveAssetLP: Unable to find receiving asset " + 
                          assigneeT + " in "+cluster);
@@ -89,11 +90,16 @@ public class ReceiveAssetLP extends LogPlanLogicProvider
     Asset assetT = aa.getAsset();   // asset from message
     Asset assetL = logplan.findAsset(assetT);// local instance of asset
 
-    Asset asset = (assetL == null) ?
+    Asset asset = assetL;
+
+    if (asset == null) {
       // Clone to ensure that we don't end up with cross cluster asset 
       // references
-      ldmf.cloneInstance(assetT) :
-      assetL;  
+      asset = ldmf.cloneInstance(assetT);
+      if (related(asset)) {
+        ((HasRelationships) asset).setLocal(false);
+      }
+    } 
 
     boolean updateRelationships =
       aa.getSchedule() != null && related(assetT) && related(assignee);
