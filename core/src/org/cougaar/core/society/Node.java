@@ -23,6 +23,10 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.lang.reflect.Field;
+import java.rmi.*;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.zip.*;
 import java.util.jar.*;
@@ -457,7 +461,21 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
    * @return A Vector that contains references to all the cluster objects
    **/
   public final Vector getClusters() {
-    return theClusters; 
+    return 
+      ((theClusters != null) ? 
+       (theClusters) :
+       new Vector(0));
+  }
+
+  public final synchronized List getClusterIdentifiers() {
+    int n = ((theClusters != null) ? theClusters.size() : 0);
+    List l = new ArrayList(n);
+    for (int i = 0; i < n; i++) {
+      ClusterServesClusterManagement ci = 
+        (ClusterServesClusterManagement)theClusters.elementAt(i);
+      l.add(ci.getClusterIdentifier());
+    }
+    return l;
   }
 
   /** Refernece containing the Messenger **/
@@ -491,9 +509,18 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
    *    @exception UnknownHostException IF the host can not be determined
    **/  
   protected void initNode() throws UnknownHostException {
+    // Command-line script uses "-n MyNode" and lets the filename default
+    //   to "MyNode.ini".
+    //
+    // Remote console always specifies name as a property and the filename
+    //   as an argument.
     String name = null;
+    String filename = (String)getArgs().get(FILE_KEY);
     if (getArgs().containsKey(NAME_KEY)) {
       name = (String)getArgs().get(NAME_KEY);
+      if (filename == null) {
+        filename = name+".ini";
+      }
     } else {
       name = System.getProperty("org.cougaar.node.name");
     }
@@ -504,40 +531,44 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     NodeIdentifier nid = new NodeIdentifier(name);
     setNodeIdentifier(nid);
 
-    if (getArgs() != null && 
-        (getArgs().containsKey(REGISTRY_KEY) || 
-         getArgs().containsKey(LOCAL_KEY))) {
-      Communications.getInstance().startNameServer();
+    // load node properties
+    PropertyTree nodePT = null;
+    if (filename != null) {
+      try {
+        // currently assumes ".ini" format
+        InputStream in = getConfigFinder().open(filename);
+        nodePT = NodeINIParser.parse(in);
+      } catch (Exception e) {
+        System.err.println(
+            "Unable to parse node \""+name+"\" file \""+filename+"\"");
+        e.printStackTrace();
+      }
     }
 
-    // load node properties
-    String filename = (String)getArgs().get(FILE_KEY);
-    if (filename == null) {
-      // assume ".ini" file
-      filename = name+".ini";
-    }
-    PropertyTree nodePT;
-    try {
-      // currently assumes ".ini" format
-      InputStream in = getConfigFinder().open(filename);
-      nodePT = NodeINIParser.parse(in);
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to parse node \""+name+"\" file \""+filename+"\"");
+    if (getArgs().containsKey(REGISTRY_KEY) || 
+        getArgs().containsKey(LOCAL_KEY)) {
+      Communications.getInstance().startNameServer();
     }
 
     // set up the message handler and register this Node
     initTransport();  
 
-    // load the clusters with an "AddClustersMessage".  It's fine to send
-    // the entire "nodePT", since only the "clusters" entry is used.
-    //OLD: loadClusters(nodePT);
-    AddClustersMessage myMessage = new AddClustersMessage();
-    myMessage.setOriginator(nid);
-    myMessage.setTarget(nid);
-    myMessage.setPropertyTree(nodePT);
-    // bypass the message system to send the message directly.
-    this.receiveMessage(myMessage);
+    registerNodeController();
+
+    // load the clusters with an "AddClustersMessage".  
+    if ((nodePT != null) &&
+        (nodePT.containsKey("clusters"))) {
+      // It's fine to send the entire "nodePT", since only the "clusters" 
+      // entry is used.
+      AddClustersMessage myMessage = new AddClustersMessage();
+      myMessage.setOriginator(nid);
+      myMessage.setTarget(nid);
+      myMessage.setPropertyTree(nodePT);
+      // bypass the message system to send the message directly.
+      this.receiveMessage(myMessage);
+    } else {
+      System.err.println("Created empty Node");
+    }
 
     //mgmtLP = new MgmtLP(this); // MTMTMT turn off till RMI namespace works
   }
@@ -554,6 +585,71 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     theMessenger.start();
     System.err.println("Started "+theMessenger);
     theMessenger.registerClient(this);
+  }
+
+  /**
+   * Create a <code>NodeController</code> for this Node and register it
+   * for external use.
+   * <p>
+   * Currently uses RMI, but could be modified to use another protocol
+   * (e.g. HTTP server).
+   */
+  private void registerNodeController() {
+    // get the RMI registry host and port address
+    String rmiHost = (String)getArgs().get(CONTROL_KEY);
+    if (rmiHost == null) {
+      // default to localhost
+      try {
+        rmiHost = findHostName();
+      } catch (UnknownHostException e) {
+      }
+    } else if (rmiHost.length() <= 0) {
+      rmiHost = null;
+    }
+    int rmiPort = -1;
+    String srmiPort = (String)getArgs().get(CONTROL_PORT_KEY);
+    if ((srmiPort != null) &&
+        (srmiPort.length() > 0)) {
+      try {
+        rmiPort = Integer.parseInt(srmiPort);
+      } catch (NumberFormatException e) {
+      }
+    }
+
+    if ((rmiHost == null) ||
+        (rmiPort <= 0)) {
+      // don't register this Node
+      System.err.println("Not registered for external RMI control");
+      return;
+    }
+
+    try {
+      // create the local hook
+      NodeController localNC = new NodeControllerImpl(this);
+      
+      // export to a remote hook
+      NodeController remoteNC = 
+        (NodeController)UnicastRemoteObject.exportObject(localNC);
+      
+      // use the NodeIdentifier's address as the binding name
+      //  - this might need to be modified to incorporate the host name...
+      String bindName = getIdentifier();
+
+      // release to the RMI registry
+      Registry reg = LocateRegistry.getRegistry(rmiHost, rmiPort);      
+      reg.rebind(bindName, remoteNC);
+      
+      System.err.println(
+          "Registered for external control as \""+bindName+"\""+
+          " in RMI registry \""+rmiHost+":"+rmiPort+"\"");
+
+      // never unbind!
+      //reg.unbind(getIdentifier());
+      //UnicastRemoteObject.unexportObject(remoteNC, true);
+    } catch (Exception e) {
+      System.err.println("Unable to register for external control:");
+      e.printStackTrace();
+    }
   }
 
   /**
@@ -768,6 +864,9 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     try {
       if (m instanceof NodeMessage) {
         if (m instanceof AddClustersMessage) {
+          // note that both startup and NodeController requests will 
+          // short-circuit the MessageTransport, and the NodeController
+          // requests will set the Originator to null.
           loadClusters(((AddClustersMessage)m).getPropertyTree());
         } else {
           System.err.println(

@@ -82,6 +82,10 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
         put(CS_KEY, args[x++]);
       else if (check.equals("-ns"))
         put(NS_KEY, args[x++]);
+      else if (check.equals("-control"))
+        put(CONTROL_KEY, args[x++]);
+      else if (check.equals("-controlPort"))
+        put(CONTROL_PORT_KEY, args[x++]);
       else if (check.equals("-d"))
         put(DBNAME_KEY, args[x++] );
       else if (check.equals("-f"))
@@ -102,7 +106,7 @@ public final class ArgTable extends Hashtable implements ArgTableIfc {
       else if (check.equals("-s"))
         put(SIGNED_PLUGIN_JARS, args[x++] );
       else if( check.indexOf("-") == 0 ){
-        System.out.println("Bad argument incountered in parsing command line.");
+        System.out.println("Bad argument encountered in parsing command line.");
         printHelp();
       }
                 
