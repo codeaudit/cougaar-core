@@ -50,7 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.Vector;
 
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContext;
@@ -86,6 +86,7 @@ import org.cougaar.planning.ldm.plan.Task;
 import org.cougaar.planning.ldm.plan.TaskImpl;
 import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
+import org.cougaar.util.StringUtility;
 
 /**
  * This persistence class is the base for several persistence
@@ -375,23 +376,22 @@ public class BasePersistence
           persistenceClasses = FilePersistence.class.getName() + ":" + FILE_MEDIA_NAME;
         }
       }
-      StringTokenizer pluginTokens = new StringTokenizer(persistenceClasses, ",");
-      while (pluginTokens.hasMoreTokens()) {
-        String pluginSpec = pluginTokens.nextToken();
-        StringTokenizer paramTokens = new StringTokenizer(pluginSpec, ":");
-        if (!paramTokens.hasMoreTokens()) {
-          throw new PersistenceException("No persistence plugin class specified: "
-                                         + pluginSpec);
+      Vector pluginTokens =
+        StringUtility.parseCSV(persistenceClasses, 0, persistenceClasses.length(), ',');
+      for (Iterator i = pluginTokens.iterator(); i.hasNext(); ) {
+        String pluginSpec = (String) i.next();
+        Vector paramTokens = StringUtility.parseCSV(pluginSpec, 0, pluginSpec.length(), ':');
+        if (paramTokens.size() < 1) {
+          throw new PersistenceException("No plugin class specified: " + pluginSpec);
         }
-        Class pluginClass = Class.forName(paramTokens.nextToken());
-        if (!paramTokens.hasMoreTokens()) {
-          throw new PersistenceException("No persistence plugin name specified: "
-                                         + pluginSpec);
+        if (paramTokens.size() < 2) {
+          throw new PersistenceException("No plugin name: " + pluginSpec);
         }
-        String pluginName = paramTokens.nextToken();
-        String[] pluginParams = new String[paramTokens.countTokens()];
-        for (int i = 0; i < pluginParams.length; i++) {
-          pluginParams[i] = paramTokens.nextToken();
+        Class pluginClass = Class.forName((String) paramTokens.get(0));
+        String pluginName = (String) paramTokens.get(1);
+        String[] pluginParams = new String[paramTokens.size() - 2];
+        for (int j = 0; j < pluginParams.length; j++) {
+          pluginParams[j] = (String) paramTokens.get(j + 2);
         }
         PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
         ppi.init(result, pluginName, pluginParams);
