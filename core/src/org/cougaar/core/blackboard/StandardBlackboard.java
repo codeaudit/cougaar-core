@@ -50,6 +50,9 @@ public class StandardBlackboard
   private Object loadState = null;
   private Blackboard bb = null;
   private Distributor d = null;
+
+  private BlackboardForAgentServiceProvider bbAgentSP;
+  private BlackboardServiceProvider bbSP;
   
   public void setBindingSite(BindingSite bs) {
     super.setBindingSite(bs);
@@ -68,7 +71,8 @@ public class StandardBlackboard
     try {
       return bb.getState();
     } catch (Exception e) {
-      System.err.println("Unable to capture Blackboard state: "+e.getMessage());
+      System.err.println("Unable to capture Blackboard state");
+      e.printStackTrace();
       return null;
     }
   }
@@ -86,13 +90,12 @@ public class StandardBlackboard
     ServiceBroker sb = bindingSite.getServiceBroker();
 
     // offer hooks back to the Agent
-    sb.addService(BlackboardForAgent.class,
-                  new BlackboardForAgentServiceProvider(bb));
+    bbAgentSP = new BlackboardForAgentServiceProvider(bb);
+    sb.addService(BlackboardForAgent.class, bbAgentSP);
 
     //offer Blackboard service and Blackboard metrics service
     // both use the same service provider
-    BlackboardServiceProvider bbSP =
-      new BlackboardServiceProvider(bb.getDistributor());
+    bbSP = new BlackboardServiceProvider(bb.getDistributor());
     sb.addService(BlackboardService.class, bbSP);
     sb.addService(BlackboardMetricsService.class, bbSP);
 
@@ -130,6 +133,16 @@ public class StandardBlackboard
     }
 
     // add services here (none for now)
+  }
+
+  public void unload() {
+    super.unload();
+    
+    // unload services in reverse order of "load()"
+    ServiceBroker sb = bindingSite.getServiceBroker();
+    sb.revokeService(BlackboardMetricsService.class, bbSP);
+    sb.revokeService(BlackboardService.class, bbSP);
+    sb.revokeService(BlackboardForAgent.class, bbAgentSP);
   }
 
   //
