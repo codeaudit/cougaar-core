@@ -1,3 +1,15 @@
+2001-11-13  Michael Thome  <mthome@bbn.com>
+
+	* SecurityComponent, StandardSecurityComponent, Node
+	Abstraction of Security Management tool from NAI&Boeing, in
+	Component form.  Privileged Node-level component, loaded before
+	any external components are considered. StandardSecurityComponent
+	implements NAI/Boeing code as before, but requires
+	-Dorg.cougaar.core.security.Component=org.cougaar.core.society.StandardSecurityComponent
+	in order to activate it.  Better would be to move it to the
+	security jar.  Node updated to load the SecurityComponent if
+	requested.
+	
 2001-11-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/society/DBInitializerServiceProvider.java:

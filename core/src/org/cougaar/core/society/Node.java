@@ -131,17 +131,19 @@ import org.cougaar.core.security.bootstrap.SystemProperties;
  * @property org.cougaar.name.server.port
  *   Only used by Node to transfer a command-line "-port X" to
  *   the corresponding <em>org.cougaar.name.server.port=X</em> property.
- * @property org.cougaar.core.security.manager
- *   The name of the class to use as a security domain manager.  If not supplied,
- *   will run without one.
+ * 
+ * @property org.cougaar.core.security.Component
+ *   The class to use for the security domain Component.  If not set, no
+ *   security manager will be used.  A security manager must implement
+ *   the interface org.cougaar.core.society.SecurityComponent.  If set and
+ *   not found or not loaded properly, Node will refuse to run.  See 
+ *   org.cougaar.core.society.StandardSecurityComponent for sample implementation.
  *  
  * </pre>
  */
 public class Node extends ContainerSupport
 implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI, ServiceRevokedListener
 {
-  public final static String SMC_PROP = "org.cougaar.core.security.manager";
-
   private NodeIdentifier myNodeIdentity_ = null;
 
   public String getIdentifier() {
@@ -574,34 +576,6 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     agentManager = new AgentManager();
     super.add(agentManager);
   
-    // UGH!  Couldn't we abstract this a little!
-    Object guard = null;
-    // SAFE
-    String dmId = System.getProperty(SMC_PROP);
-    if (dmId == null) {
-      //System.err.println("System property org.cougaar.security.manager not set.\nProceeding without Guard!");
-    } else {
-      System.err.println("Starting Guard");
-      try {
-        Class gc = Class.forName("SAFE.Guard.NodeGuard");
-        Class pbc = Class.forName("org.cougaar.core.security.policy.PolicyBootstrapper");
-        //Class pbc = Class.forName("com.nai.security.PolicyBootstrapper");
-        Constructor gcc = gc.getConstructor(
-                                            new Class[] {
-                                              String.class, String.class,
-                                              String.class, pbc
-                                            });
-        System.out.println("Creating Guard.");
-        guard = gcc.newInstance(
-                                new Object[] { name, name, dmId, pbc.newInstance() });
-        
-        System.out.println("Initializing Guard.");
-        Method ginit = guard.getClass().getMethod("initialize", new Class[] {});
-        ginit.invoke(guard, new Object[] {});
-      } catch (Exception e) {
-        System.err.println("ERROR: while loading NodeGuard: " + e);
-      }
-    }
 
     ServiceBroker sb = getServiceBroker();
 
@@ -641,18 +615,34 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
     // first.
     initTransport();  
 
-    // if we have a guard, give it a handle to the message transport
-    if (guard != null) {
-      try {
-        Method gsmt = guard.getClass()
-          .getMethod("setMessageTransport", new Class[] { MessageTransportService.class });
-        gsmt.invoke(guard, new Object[] { theMessenger } );
-      } catch (Exception e) {
-        e.printStackTrace();
-        System.exit(0);
+    {
+      String smn = System.getProperty(SecurityComponent.SMC_PROP);
+      if (smn != null) {
+        try {
+          Class smc = Class.forName(smn);
+          if (SecurityComponent.class.isAssignableFrom(smc)) {
+            ComponentDescription smcd = 
+              new ComponentDescription(
+                                       getIdentifier()+"SecurityComponent",
+                                       "Node.SecurityComponent",
+                                       smn,
+                                       null,  //codebase
+                                       null,  //parameters
+                                       null,  //certificate
+                                       null,  //lease
+                                       null); //policy
+            super.add(smcd);
+          } else {
+            System.err.println("Error: SecurityComponent specified as "+smn+" which is not an instance of SecurityComponent");
+            System.exit(1);
+          }
+        } catch (Exception e) {
+          System.err.println("Error: Could not load SecurityComponent "+smn+": "+e);
+          e.printStackTrace();
+          System.exit(1);
+        }
       }
     }
-
     // start Qos
     initQos();
 
@@ -746,14 +736,14 @@ public boolean removeStreamFromRootLogging(OutputStream logStream) {
    */
   protected void add(ComponentDescription[] descs) {
     int nDescs = ((descs != null) ? descs.length : 0);
-    System.err.print("Creating Clusters:");
+    //System.err.print("Creating Clusters:");
     for (int i = 0; i < nDescs; i++) {
+      ComponentDescription desc = descs[i];
       try {
-        ComponentDescription desc = descs[i];
         //Let the agentmanager create the cluster
         agentManager.add(desc);
       } catch (Exception e) {
-        System.err.println("Exception creating clusters: " + e);
+        System.err.println("Exception creating component ("+desc+"): " + e);
         e.printStackTrace();
       }
     }
