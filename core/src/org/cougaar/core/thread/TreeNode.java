@@ -30,7 +30,7 @@ final class TreeNode
     private ArrayList children;
     private Scheduler scheduler;
     private ThreadGroup group;
-    private SchedulableThreadPool pool;
+    private ThreadPool pool;
 
     TreeNode(Scheduler scheduler, ThreadServiceProxy parentService) 
     {
@@ -48,7 +48,7 @@ final class TreeNode
 	    group = new ThreadGroup(parent.group, getName());
 	}
 	
-	pool = new SchedulableThreadPool(group, scheduler);
+	pool = ThreadPool.getPool(group);
     }
 
 
@@ -94,7 +94,7 @@ final class TreeNode
 	return scheduler.getName();
     }
 
-    SchedulableThreadPool getPool() {
+    ThreadPool getPool() {
 	return pool;
     }
 

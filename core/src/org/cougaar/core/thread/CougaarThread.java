@@ -36,8 +36,8 @@ public class CougaarThread
     
     private static SchedulableObject getSchedulableObject() {
 	Thread thread = Thread.currentThread();
-	if (thread instanceof SchedulableThread) 
-	    return ((SchedulableThread) thread).getSchedulable();
+	if (thread instanceof ThreadPool.PooledThread) 
+	    return ((ThreadPool.PooledThread) thread).getSchedulable();
 	else
 	    return null;
 		    

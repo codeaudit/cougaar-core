@@ -40,24 +40,26 @@ final class TimeSliceScheduler extends Scheduler
 
 
 
-    private void runNextThread(TimeSlice slice) {
+    private boolean runNextThread(TimeSlice slice) {
 	SchedulableObject thread = nextPendingThread();
 	if (thread != null) {
 	    thread.slice(slice);
 	    if (CougaarThread.Debug)
 		System.out.println("Starting " +thread+ " with slice " +slice);
-	    thread.start();
+	    thread.thread_start();
+	    return true;
 	} else {
-	    System.err.println("No threads on the queue!");
+	    if (CougaarThread.Debug)
+		System.err.println("\n[Scheduler: No threads on the queue!]");
+	    return false;
 	}
     }
 
 
     // Parent offers us a slice
-    public  boolean offerSlice(TimeSlice slice) {
+    public boolean offerSlice(TimeSlice slice) {
 	if (pendingThreadCount() > 0) {
-	    runNextThread(slice);
-	    return true;
+	    return runNextThread(slice);
 	} else {
 	    return false;
 	}
@@ -75,18 +77,21 @@ final class TimeSliceScheduler extends Scheduler
 
 
     private void handoffSlice(SchedulableObject thread) {
-	boolean expired = thread.slice().isExpired();
-	boolean queue_empty = pendingThreadCount() == 0;
-	if (expired) {
+	TimeSlice slice = thread.slice();
+	if (slice == null) {
+	    System.err.println("\n[Scheduler: " +thread+ " has no slice!]");
+	    return;
+	}
+
+	if (slice.isExpired()) {
 	    if (CougaarThread.Debug) 
 		System.out.println(thread+ "'s slice expired");
 	    releaseThreadSlice(thread);
-	} else if (!queue_empty) {
+	} else if (pendingThreadCount() > 0) {
 	    // Reuse the slice
-	    TimeSlice slice = thread.slice();
 	    thread.slice(null);
 	    noteChangeOfOwnership(slice);
-	    runNextThread(slice);
+	    if (!runNextThread(slice)) releaseSlice(slice);
 	} else {
 	    // No other threads to run
 	    releaseThreadSlice(thread);
@@ -160,7 +165,7 @@ final class TimeSliceScheduler extends Scheduler
 	candidate.slice(slice);
 		 
 	    
-	candidate.start();
+	candidate.thread_start();
 	return true;
     }
 

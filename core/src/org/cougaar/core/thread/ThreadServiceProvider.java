@@ -53,7 +53,7 @@ public final class ThreadServiceProvider implements ServiceProvider
     private void makeProxies(ThreadService parent) {
 	listenerProxy = new ThreadListenerProxy();
 	if (Boolean.getBoolean("org.cougaar.thread.timeslice"))
-	    scheduler = new TimeSliceScheduler(listenerProxy, name);
+	    scheduler = new SimplePropagatingScheduler(listenerProxy, name);
 	else
 	    scheduler = new SimpleScheduler(listenerProxy, name);
 

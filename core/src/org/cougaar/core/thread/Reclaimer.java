@@ -21,28 +21,60 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.util.CircularQueue;
 
-/**
- * A special kind of ReusableThreadPool which makes
- * schedulable threads.
- */
-final class SchedulableThreadPool extends ThreadPool 
+final class Reclaimer extends Thread
 {
 
-    private Scheduler scheduler;
+    private static Reclaimer singleton;
 
-    SchedulableThreadPool(ThreadGroup group, Scheduler scheduler)  {
-	super(group);
-	this.scheduler = scheduler;
+    static {
+	singleton = new Reclaimer();
+	singleton.start();
     }
 
-    protected PooledThread constructReusableThread() {
-	return  new SchedulableThread(this);
+    static void push(SchedulableObject schedulable) {
+	synchronized (singleton.lock) {
+	    singleton.queue.add(schedulable);
+	    singleton.lock.notify();
+	}
     }
 
-    Scheduler scheduler() {
-	return scheduler;
+
+    private CircularQueue queue;
+    private Object lock;
+
+    private Reclaimer() {
+	super("Scheduler Reclaimer");
+	setDaemon(true);
+	queue = new CircularQueue();
+	lock = new Object();
+    }
+
+    private void dequeue() {
+	SchedulableObject schedulable = null;
+	while (true) {
+	    synchronized (lock) {
+		if (queue.isEmpty()) return;
+		schedulable = (SchedulableObject) queue.next();
+	    }
+	    schedulable.reclaimNotify();
+	}
+    }
+
+    public void run() {
+	while (true) {
+	    dequeue();
+	    synchronized (lock) {
+		while (queue.isEmpty()) {
+		    try { 
+			lock.wait();
+			break;
+		    } catch (InterruptedException ex) {
+		    }
+		}
+	    }
+	}
     }
 
 }
-

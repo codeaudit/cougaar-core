@@ -174,7 +174,7 @@ public class DefaultTimeSlicePolicy implements TimeSlicePolicy
 
     // Release a slice from a child.  This version passes it all the
     // way to the root of the tree, which is the only owner of slices.
-    public synchronized void releaseSlice(TimeSliceConsumer consumer, 
+    public void releaseSlice(TimeSliceConsumer consumer, 
 					  TimeSlice slice) 
     {
 	// If this is our slice and it expired, reset the start and

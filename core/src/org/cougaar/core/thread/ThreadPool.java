@@ -29,7 +29,19 @@ import org.cougaar.util.PropertyParser;
 public class ThreadPool 
 {
 
+    private static ThreadPool SharedPool;
+
+    static synchronized ThreadPool getPool(ThreadGroup group) {
+	// return new ThreadPool(group);
+	if (SharedPool == null) SharedPool = new ThreadPool();
+	return SharedPool;
+    }
+
+
+
     static class PooledThread extends Thread {
+	private SchedulableObject schedulable;
+
 	private boolean in_use = false;
 
 	/** reference to our thread pool so we can return when we die **/
@@ -58,6 +70,9 @@ public class ThreadPool
 	    return runnable;
 	}
 
+	SchedulableObject getSchedulable() {
+	    return schedulable;
+	}
 
 	/** The only constructor. **/
 	public PooledThread(ThreadPool p) {
@@ -68,6 +83,7 @@ public class ThreadPool
 
 	// Hook for subclasses
 	protected void claim() {
+	    schedulable.claim();
 	}
 
 	public final void run() {
@@ -80,12 +96,17 @@ public class ThreadPool
 		    isRunning = false;
 
 		    reclaim();
-
+		    Reclaimer.push(schedulable);
 		    try {
 			runLock.wait();       // suspend
 		    } catch (InterruptedException ie) {}
 		}
 	    }
+	}
+
+	public void start (SchedulableObject schedulable) {
+	    this.schedulable = schedulable;
+	    start();
 	}
 
 	public void start() throws IllegalThreadStateException {
@@ -105,6 +126,8 @@ public class ThreadPool
 	}
 
 	protected synchronized void reclaim() {
+	    schedulable.reclaim();
+	    setName( "Reclaimed " + getName());
 	    in_use = false;
 	    notifyAll();
 	}
@@ -151,6 +174,9 @@ public class ThreadPool
     private PooledThread pool[];
     private ArrayList extra;
 
+    public ThreadPool() {
+	this(defaultInitialPoolSize, defaultMaximumPoolSize);
+    }
 
     public ThreadPool(ThreadGroup group) {
 	this(group, defaultInitialPoolSize, defaultMaximumPoolSize);

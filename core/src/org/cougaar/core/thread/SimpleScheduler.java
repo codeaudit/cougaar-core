@@ -22,53 +22,56 @@
 package org.cougaar.core.thread;
 
 
-final class SimpleScheduler extends Scheduler
+class SimpleScheduler extends Scheduler
 {
     SimpleScheduler(ThreadListenerProxy listenerProxy, String name) {
 	super(listenerProxy, name);
     }
 
-
-    private boolean canStartThread() {
-	int max = maxRunningThreadCount();
-	return max <= 0 || runningThreadCount() < max;
+    
+    SchedulableObject getNextPending() {
+	return nextPendingThread();
     }
 
 
-    private void runNextThread() {
-	SchedulableObject thread = nextPendingThread();
-	if (thread != null) thread.start();
+    synchronized boolean requestRights(SimpleScheduler requestor) {
+	if (maxRunningThreads <= 0) return true;
+	if (runningThreadCount < maxRunningThreads) {
+	    ++runningThreadCount;
+	    // System.err.println("Grabbed one: " +runningThreadCount);
+	    return true;
+	}
+	return false;
     }
 
-
-
-    synchronized void changedMaxRunningThreadCount() {
-	// Maybe we can run some pending threads
-	while (canStartThread() && pendingThreadCount() > 0) {
-	    runNextThread();
+    synchronized void releaseRights(SimpleScheduler consumer) {
+	SchedulableObject handoff = getNextPending();
+	if (handoff != null) {
+	    // System.err.println("Reused one: " +runningThreadCount);
+	    handoff.thread_start();
+	} else {
+	    --runningThreadCount;
+	    // System.err.println("Released one: " +runningThreadCount);
 	}
     }
-    
+
+
+
 
     // Called when a thread is about to end
-    synchronized void threadReclaimed(SchedulableObject thread) {
+    void threadReclaimed(SchedulableObject thread) {
 	super.threadReclaimed(thread);
-	if (pendingThreadCount() > 0) runNextThread();
+	releaseRights(this);
     }
+
 
 
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
     boolean maybeYieldThread(SchedulableObject thread) {
-	SchedulableObject candidate = null;
-	if (pendingThreadCount() == 0) {
-	    // No point yielding since no pending threads
-	    return false;
-	}
-
-	candidate = nextPendingThread(thread);
-	if (candidate == thread) {
+	SchedulableObject handoff = nextPendingThread(thread);
+	if (handoff == thread) {
 	    // No better-or-equal thread on the queue.
 	    return false;
 	}
@@ -76,16 +79,16 @@ final class SimpleScheduler extends Scheduler
 	// We found a thread to yield to. 
 	threadSuspended(thread);
 
-	candidate.start();
+	handoff.thread_start();
 	return true;
     }
 
 
 
     // Called when a thread is about to suspend.
-    synchronized void suspendThread(SchedulableObject thread) {
+    void suspendThread(SchedulableObject thread) {
 	super.suspendThread(thread);
-	if (pendingThreadCount() > 0) runNextThread();
+	releaseRights(this);
     }
 
 
@@ -93,20 +96,21 @@ final class SimpleScheduler extends Scheduler
     // Try to resume a suspended or yielded thread, queuing
     // otherwise.
     boolean maybeResumeThread(SchedulableObject thread) {
-	if (canStartThread()) {
+	boolean can_run = requestRights(this);
+	if (can_run) {
 	    resumeThread(thread);
-	    return true;
 	} else {
 	    // couldn'resume - place the thread back on the queue
 	    addPendingThread(thread);
-	    return false;
 	}
+	return can_run;
     }
 
  
 
     void startOrQueue(SchedulableObject thread) {
-	if (canStartThread()) {
+	boolean can_run = requestRights(this);
+	if (can_run) {
 	    thread.thread_start();
 	} else {
 	    addPendingThread(thread);

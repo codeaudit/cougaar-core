@@ -28,27 +28,34 @@ final class SchedulableObject implements Schedulable
     private Object consumer;
     private boolean suspended;
     private Object suspendLock;
-    private SchedulableThreadPool pool;
+    private ThreadPool pool;
+    private Scheduler scheduler;
     private TimeSlice slice;
-    private SchedulableThread thread;
+    private ThreadPool.PooledThread thread;
     private Runnable runnable;
     private String name;
     private boolean restart;
     private boolean cancelled;
     private boolean queued;
 
-    SchedulableObject(SchedulableThreadPool pool, 
+    SchedulableObject(ThreadPool pool, 
+		      Scheduler scheduler,
 		      Runnable runnable, 
 		      String name,
 		      Object consumer) 
     {
 	this.suspendLock = new Object();
 	this.pool = pool;
+	this.scheduler = scheduler;
 	this.runnable = runnable;
 	this.name = name;
 	this.consumer = consumer;
     }
 
+
+    public String toString() {
+	return "<Schedulable for " +consumer+ ">";
+    }
 
     long timestamp() {
 	return timestamp;
@@ -75,19 +82,19 @@ final class SchedulableObject implements Schedulable
 
     void claim() {
 	// thread has started or restarted
-	pool.scheduler().threadClaimed(this);
+	scheduler.threadClaimed(this);
     }
 
 
     // The argument is only here to avoid overriding yield(),
     void yield(Object ignore) {
-	boolean yielded = pool.scheduler().maybeYieldThread(this);
+	boolean yielded = scheduler.maybeYieldThread(this);
 	if (yielded) attemptResume();
     }
 
     // Must be called from a block that's synchronized on lock.
     void wait(Object lock, long millis) {
-	pool.scheduler().suspendThread(this);
+	scheduler.suspendThread(this);
 	try { lock.wait(millis); }
 	catch (InterruptedException ex) {}
 	attemptResume();
@@ -95,7 +102,7 @@ final class SchedulableObject implements Schedulable
 
     // Must be called from a block that's synchronized on lock.
     void wait(Object lock) {
-	pool.scheduler().suspendThread(this);
+	scheduler.suspendThread(this);
 	try { lock.wait(); }
 	catch (InterruptedException ex) {}
 	attemptResume();
@@ -103,7 +110,7 @@ final class SchedulableObject implements Schedulable
 
 
     void suspend(long millis) {
-	pool.scheduler().suspendThread(this);
+	scheduler.suspendThread(this);
 	try { thread.sleep(millis); }
 	catch (InterruptedException ex) {}
 	attemptResume();
@@ -114,7 +121,7 @@ final class SchedulableObject implements Schedulable
     private void attemptResume() {
 	suspended = true;
 	synchronized (suspendLock) {
-	    suspended = !pool.scheduler().maybeResumeThread(this);
+	    suspended = !scheduler.maybeResumeThread(this);
 	    if (suspended) {
 		// Couldn't be resumed - requeued instead
 		while (true) {
@@ -126,7 +133,7 @@ final class SchedulableObject implements Schedulable
 		    } catch (InterruptedException ex) {
 		    }
 		}
-		pool.scheduler().resumeThread(this);
+		scheduler.resumeThread(this);
 		suspended = false;
 	    }
 	}
@@ -134,22 +141,32 @@ final class SchedulableObject implements Schedulable
 
 
     void reclaim() {
-	// thread is done
 	boolean again = false;
+	// thread is done
 	synchronized (this) { 
-	    thread = null;  
+	    thread = null;
 	    again = restart;
 	}
-	pool.scheduler().threadReclaimed(this);
-	if (again) pool.scheduler().startOrQueue(this);
+	if (again) scheduler.startOrQueue(this);
+	// Do this from a dedicted thread now
+	// reclaimNotify();
+    }
+
+    void reclaimNotify() {
+	scheduler.threadReclaimed(this);
     }
 
     void thread_start() {
-	pool.scheduler().threadStarting(this);
+	scheduler.threadStarting(this);
 	synchronized (this) {
+	    if (slice == null && scheduler instanceof TimeSliceScheduler) {
+		System.err.println("\nStarting " +this+ " without a slice!");
+		Thread.dumpStack();
+	    }
 	    restart = false;
 	    queued = false;
-	    thread = (SchedulableThread) pool.getThread(runnable, name);
+	    restart = false;
+	    thread = pool.getThread(runnable, name);
 	    thread.start(this);
 	}
     }
@@ -171,9 +188,10 @@ final class SchedulableObject implements Schedulable
 		restart = true;
 		return;
 	    }
+	    
 	}
 
-	pool.scheduler().startOrQueue(this);
+	scheduler.startOrQueue(this);
     }
 
 
@@ -198,7 +216,7 @@ final class SchedulableObject implements Schedulable
 		if (suspended) thread.interrupt();
 		return false;
 	    } 
-	    if (queued) pool.scheduler().dequeue(this);
+	    if (queued) scheduler.dequeue(this);
 	    queued = false;
 	    return true;
 	}

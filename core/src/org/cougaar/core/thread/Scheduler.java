@@ -37,12 +37,12 @@ abstract class Scheduler
     private static final int MaxRunningCountDefault = 10;
 
     private DynamicSortedQueue pendingThreads;
-    private int maxRunningThreads;
-    private int runningThreadCount = 0;
     private ThreadListenerProxy listenerProxy;
     private String name;
     private String printName;
     private TreeNode treeNode;
+    protected int maxRunningThreads;
+    protected int runningThreadCount = 0;
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -81,6 +81,11 @@ abstract class Scheduler
 
     void setTreeNode(TreeNode treeNode) {
 	this.treeNode = treeNode;
+    }
+
+
+    TreeNode getTreeNode() {
+	return treeNode;
     }
 
 
@@ -177,10 +182,10 @@ abstract class Scheduler
     // some other thread).  The count needs to be adjusted here, not
     // when the thread actually starts running.
     void threadStarting(SchedulableObject thread) {
-	synchronized (this) { ++runningThreadCount; }
 	if (CougaarThread.Debug)
-	    System.out.println("Started " +thread+
-			       ", count=" +runningThreadCount);
+	    System.out.println(" Started " +thread+
+			       " run count=" +runningThreadCount+
+			       " queue count=" +pendingThreads.size());
     }
 
     // Called within the thread itself as the first thing it does.
@@ -190,25 +195,25 @@ abstract class Scheduler
 
     // Called within the thread itself as the last thing it does.
     void threadReclaimed(SchedulableObject thread) {
-	synchronized (this) { --runningThreadCount; }
 	if (CougaarThread.Debug)
-	    System.out.println("Ended " +thread+ 
-			       ", count=" +runningThreadCount);
+	    System.out.println(" Ended " +thread+ 
+			       " run count=" +runningThreadCount+
+			       " queue count=" +pendingThreads.size());
 	listenerProxy.notifyEnd(thread);
     }
 
     void threadResumed(SchedulableObject thread) {
-	synchronized (this) { ++runningThreadCount; }
 	if (CougaarThread.Debug)
-	    System.out.println("Resumed " +thread+
-			       ", count=" +runningThreadCount);
+	    System.out.println(" Resumed " +thread+
+			       " run count=" +runningThreadCount+
+			       " queue count=" +pendingThreads.size());
     }
 
     void threadSuspended(SchedulableObject thread) {
-	synchronized (this) { --runningThreadCount; }
 	if (CougaarThread.Debug)
-	    System.out.println("Suspended " +thread+
-			       ", count=" +runningThreadCount);
+	    System.out.println(" Suspended " +thread+
+			       " run count=" +runningThreadCount+
+			       " queue count=" +pendingThreads.size());
     }
 
 
@@ -226,7 +231,10 @@ abstract class Scheduler
 
 
 
-    abstract void changedMaxRunningThreadCount();
+    // A silly and useless bit of extra complexity that no one wants
+    // or needs.
+    void changedMaxRunningThreadCount() {
+    }
 
     // Yield only if there's a candidate to yield to.  Called when
     // a thread wants to yield (as opposed to suspend).
