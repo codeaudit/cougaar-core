@@ -20,6 +20,9 @@
  */
 package org.cougaar.multicast;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.Serializable;
 
 import org.cougaar.core.agent.ClusterIdentifier;
@@ -42,6 +45,9 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
   String communityName;
   String attributeName, attributeValue;
   
+  public AttributeBasedAddress() {
+  }
+
   public AttributeBasedAddress(String commName, String attrName, String attrValue) {
     communityName = commName;
     attributeName = attrName;
@@ -63,4 +69,26 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
   public boolean isPersistable(){
     return false;
   }
+
+ 
+  // override MessageAddress
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeObject(communityName);
+    out.writeObject(attributeName);
+    out.writeObject(attributeValue);
+  }
+
+  public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+    communityName = (String) in.readObject();
+    attributeName = (String) in.readObject();
+    attributeValue = (String) in.readObject();
+  }
+
+  protected Object readResolve() {
+    return new AttributeBasedAddress(communityName, attributeName, attributeValue);
+  }
+
 }
+
+
+
