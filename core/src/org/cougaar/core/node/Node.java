@@ -77,6 +77,7 @@ import java.beans.Beans;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.LogTarget;
+import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.core.security.bootstrap.SystemProperties;
 
 /**
