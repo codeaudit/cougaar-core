@@ -46,12 +46,19 @@ public class TimeSpanSet
   public boolean add(Object o) {
     if (! (o instanceof TimeSpan)) 
       throw new IllegalArgumentException();
+    TimeSpan timeSpan = (TimeSpan)o;
 
-    int i = search((TimeSpan)o);
-    if (i<size) {
-      if (o.equals(elementData[i])) return false;
+    int i = search(timeSpan);
+    long startTime = timeSpan.getStartTime();
+    long endTime = timeSpan.getEndTime();
+
+    // Make sure that it's not really equal to any existing members of the set
+    while ((i<size) &&
+           (compare(startTime, endTime, (TimeSpan)elementData[i])== 0)){
+      if (timeSpan.equals(elementData[i++])) return false;
     }
-    super.add(i,o);
+
+    super.add(i, timeSpan);
     return true;
   }
 
@@ -331,13 +338,17 @@ public class TimeSpanSet
     class X implements TimeSpan {
       long start;
       long end;
+      String text;
 
-      public X(long x){ start = x; end = x + 1;}
+      public X(long x, String t) { start= x; end = x + 1; text = t;} 
       public long getStartTime() { return start; }
       public long getEndTime() { return end;}
       public void setTimeSpan(long s, long e) {start = s; end = e;}
+      public String getText() { return text;}
+      public void setText(String t) { text = t; }
       public String toString() { return "{start = " + start + 
-                                   " end = " + end + "}";}
+                                   " end = " + end + 
+                                   " text = " + text + "}";}
     }
     
     TimeSpanSet tss = new TimeSpanSet();
@@ -348,36 +359,79 @@ public class TimeSpanSet
     }
     */
 
-    tss.add(new X(TimeSpan.MIN_VALUE));
-    tss.add(new X(TimeSpan.MIN_VALUE));
+    if (!tss.add(new X(TimeSpan.MIN_VALUE, "milk"))) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
+    if (!tss.add(new X(TimeSpan.MIN_VALUE, "dark"))) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
-    X forever = new X(TimeSpan.MIN_VALUE);
+    X forever = new X(TimeSpan.MIN_VALUE, "bittersweet");
     forever.setTimeSpan(forever.getStartTime(), TimeSpan.MAX_VALUE);
-    tss.add(forever);
+    if (!tss.add(forever)) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
-    X longTime = new X(TimeSpan.MIN_VALUE);
+    X longTime = new X(TimeSpan.MIN_VALUE, "semisweet");
     longTime.setTimeSpan(forever.getStartTime() + TimeSpan.EPSILON,
                          TimeSpan.MAX_VALUE);
-    tss.add(longTime);
+    if (!tss.add(longTime)) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
-    X midEpoch3 = new X(TimeSpan.MIN_VALUE);
+
+
+
+    X midEpoch3 = new X(TimeSpan.MIN_VALUE, "hazelnut");
     midEpoch3.setTimeSpan(midEpoch3.getStartTime() + TimeSpan.EPSILON,
                          10);
-    tss.add(midEpoch3);
+    if (!tss.add(midEpoch3)) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
 
-    X midEpoch1 = new X(10);
+    X midEpoch1 = new X(9, "truffle");
     midEpoch1.setTimeSpan(midEpoch1.getStartTime(), TimeSpan.MAX_VALUE);
-    tss.add(midEpoch1);
+    if (!tss.add(midEpoch1)) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
 
-    X midEpoch2 = new X(9);
+    X midEpoch2 = new X(9, "caramel");
     midEpoch2.setTimeSpan(midEpoch2.getStartTime(), TimeSpan.MAX_VALUE);
-    tss.add(midEpoch2);
+    if (!tss.add(midEpoch2)) {
+      System.out.println("Unable to add");
+      IllegalArgumentException iae = 
+        new IllegalArgumentException("Unable to add");
+      iae.printStackTrace();
+    }
 
     
-    for (int i = 3; i < 16; i+=2) {
-      tss.add(new X(i));
+    for (int i = 3; i < 16; i+=2) { 
+      if (!tss.add(new X(i, Long.toString(i)))) {
+        System.out.println("Unable to add");
+        IllegalArgumentException iae = 
+          new IllegalArgumentException("Unable to add");
+        iae.printStackTrace();
+      }
     }
     
 
