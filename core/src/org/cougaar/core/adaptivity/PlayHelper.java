@@ -188,6 +188,10 @@ public class PlayHelper {
       } catch (Exception iae) {
         if (logger.isDebugEnabled()) {
           logger.debug(iae.getMessage() + " in play: " + play, iae);
+        } else if (iae instanceof MissingConditionException) {
+          if (logger.isWarnEnabled()) {
+            logger.warn(iae.getMessage() + " in play: " + play);
+          }
         } else {
           logger.error(iae.getMessage() + " in play: " + play);
         }
@@ -358,7 +362,7 @@ public class PlayHelper {
         if (omme != null) {
           return omme.newValue.getEffectiveValue();
         }
-        throw new IllegalArgumentException("No Condition named " + conditionName);
+        throw new MissingConditionException("No Condition named " + conditionName);
       }
       return condition.getValue();
     }
