@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.util.log.*;
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentChildBindingSite;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.InitializerService;
@@ -49,6 +50,8 @@ public class PluginManager
   
   private final Logger logger;
 
+  /** The insertion point for a PluginManager, defined relative to its parent, Agent. **/
+  public static final String INSERTION_POINT = Agent.INSERTION_POINT + ".PluginManager";
 
   public PluginManager() {
     if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
@@ -155,7 +158,7 @@ public class PluginManager
     return super.specifyComponentFactory();
   }
   protected String specifyContainmentPoint() {
-    return "Node.AgentManager.Agent.PluginManager";
+    return INSERTION_POINT;
   }
 
   private PluginManagerForBinder containerProxy = 
