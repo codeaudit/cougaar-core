@@ -1,5 +1,9 @@
 2002-06-21  Ray Tomlinson  <RTomlinson@bbn.com>
 
+	* NonPersistable.java
+	Bug #1551 -- NonPersistable not used
+	Removed. Use NotPersistable
+	
 	* FilePersistence.java:
 	Bug #1551 Directory creation race
 	Unconditionally call mkdirs to create the path to the persistence
