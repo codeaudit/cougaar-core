@@ -152,3 +152,51 @@ The other important parameter is the UPDATE_INTERVAL. UPDATE_INTERVAL
 determines the time between completion computations. The Completion
 Event Insertion recipe sets this time for both the node and agent
 plugins to 30 seconds.
+
+Plugin Parameters
+
+CompletionSocietyPlugin
+
+ADVANCE_TIME_ADVANCE_DELAY (20000) -- the delay after a time advance
+before another advance can occur. Allows time for the time advance to
+propagate to all agents and for the agents to beginning replanning.
+
+NORMAL_TIME_ADVANCE_DELAY (5000) -- The delay after all agents and
+nodes have reported completion that must elapse before time is
+actually advanced. Allows some time for late reports of non-completion
+to arrive.
+
+INITIAL_TIME_ADVANCE_DELAY (150000) -- The delay after startup before
+the first time advance is allowed. Like NORMAL_TIME_ADVANCE_DELAY, but
+applies before the first time advance. Additional delay is needed to
+allow for interference from initialization activity in reporting
+non-completion.
+
+DO_PERSISTENCE (true) -- Controls whether a persistence snapshot is
+taken after all days have been advanced.
+
+CompletionSocietyPlugin and CompletionNodePlugin
+
+TASK_COMPLETION_THRESHOLD (0.99) -- The fraction of tasks that must be
+completed in every agent before the agent is considered to have
+completed. 1.0 means all tasks must have completed.
+
+UPDATE_INTERVAL (5000) -- The interval between checks for new status
+from other agents (node plugin) or nodes (society plugin).
+
+LONG_CHECK_TARGETS_INTERVAL (120000) -- Interval between checks for
+new agents or nodes after initialization is completed.
+
+SHORT_CHECK_TARGETS_INTERVAL (15000) -- Interval between checks for
+new agents or nodes during initialization. Once a number of suche
+intervals have elapsed with no new agents, the
+LONG_CHECK_TARGETS_INTERVAL is used (until an new agent or node is
+discovered).
+
+CompletionTargetPlugin
+
+SLEEP_INTERVAL (5000) -- Interval between wakeups to check for a
+change in status.
+
+ACTIVITY_DELAY (60000) -- Originally this was the period of inactivity required before completion was deemed to have occurred. Now this value is used in conjunction with cpu threshold of 95% to determine that interval. So, the actual cpu inactivity required is 5% of this value or 30000 milliseconds by default.
+
