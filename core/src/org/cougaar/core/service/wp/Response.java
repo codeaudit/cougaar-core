@@ -328,10 +328,26 @@ public abstract class Response implements Callback, Serializable {
     public Bind(Request.Bind q) {
       super(q);
     }
+    /** Was the bind successful? */
     public boolean didBind() {
       return (getExpirationTime() > 0);
     }
-    // if renewed, when does the lease expire?
+    /** 
+     * If <code>(didBind() == false)<code>, was the failure
+     * due to another conflicting local bind while this bind
+     * request was still pending?
+     * <p>
+     * Other possibilities include a bind-usurper
+     * (<code>getUsurperEntry()</code>) or an exception
+     * (<code>getException()</code>).
+     */
+    public boolean wasCanceled() {
+      return (getCancelingRequest() != null);
+    }
+    /**
+     * If successfully bound or renewed, when does the lease
+     * expire?
+     */
     public long getExpirationTime() {
       Object r = getResult();
       return
@@ -339,14 +355,31 @@ public abstract class Response implements Callback, Serializable {
         ((Long) r).longValue() :
         -1;
     }
-    // if not renewed, who took our place?
-    //
-    // isn't this !isSuccess ?
+    /**
+     * If not bound or renewed, who took our place?
+     * <p>
+     * This is always null for a rebind (overwrite == true).
+     * <p>
+     * Isn't this !isSuccess ?
+     */
     public AddressEntry getUsurperEntry() {
       Object r = getResult();
       return
         (r instanceof AddressEntry) ?
         ((AddressEntry) r) :
+        null;
+    }
+    /**
+     * If this request was canceled by another conflicting
+     * local bind, what was the request?
+     *
+     * @return a Request.Bind or Request.Unbind
+     */
+    public Request getCancelingRequest() {
+      Object r = getResult();
+      return
+        (r instanceof Request) ?
+        ((Request) r) :
         null;
     }
     protected Object getDefaultResult() {
@@ -362,7 +395,11 @@ public abstract class Response implements Callback, Serializable {
     public Unbind(Request.Unbind q) {
       super(q);
     }
-    // isn't this the same as isSuccess ?
+    /**
+     * Did the unbind succeed?
+     * <p>
+     * isn't this the same as isSuccess ?
+     */
     public final boolean didUnbind() {
       Object r = getResult();
       return Boolean.TRUE.equals(r);
