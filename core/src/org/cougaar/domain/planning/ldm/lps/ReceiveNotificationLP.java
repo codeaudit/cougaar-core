@@ -86,31 +86,38 @@ public class ReceiveNotificationLP
     UID tuid = not.getTaskUID();
     UID childuid = not.getChildTaskUID();
     PlanElement pe = logplan.findPlanElement(tuid);
-    if (pe == null) {
-      TaskRescind trm = ldmf.newTaskRescind(childuid, not.getSource());
-      logplan.sendDirective(trm, changes);
-      return;
-    }
+    boolean needToRescind = (pe == null);
+
     // verify that the pe matches the task
-    if (pe instanceof AllocationforCollections) {
+    if (!needToRescind &&  (pe instanceof AllocationforCollections)) {
       Task remoteT = ((AllocationforCollections)pe).getAllocationTask();
-      UID remoteTUID = remoteT.getUID();
-      if (!(remoteTUID.equals(childuid))) {
-        // this was likely due to a race condition...
-        System.err.print(
-            "Got a Notification for the wrong allocation:"+
-            "\n\tTask="+tuid+
-            "  ("+pe.getTask().getUID()+")"+
-            "\n\tFrom="+childuid+
-            "  ("+remoteTUID+")"+
-            "\n\tResult="+not.getAllocationResult()+"\n"+
-            "\n\tPE="+pe);
-        // rescind the remote task? 
-        return;
+      if (remoteT == null) {
+        needToRescind = true;
+      } else {
+        UID remoteTUID = remoteT.getUID();
+        if (!(remoteTUID.equals(childuid))) {
+          // this was likely due to a race condition...
+          System.err.print(
+                           "Got a Notification for the wrong allocation:"+
+                           "\n\tTask="+tuid+
+                           "  ("+pe.getTask().getUID()+")"+
+                           "\n\tFrom="+childuid+
+                           "  ("+remoteTUID+")"+
+                           "\n\tResult="+not.getAllocationResult()+"\n"+
+                           "\n\tPE="+pe);
+          // rescind the remote task? 
+          return;
+        }
       }
     }
-    AllocationResult ar = not.getAllocationResult();
-    propagateNotification(logplan, pe, tuid, ar, childuid, changes);
+
+    if (needToRescind) {
+      TaskRescind trm = ldmf.newTaskRescind(childuid, not.getSource());
+      logplan.sendDirective(trm, changes);
+    } else {
+      AllocationResult ar = not.getAllocationResult();
+      propagateNotification(logplan, pe, tuid, ar, childuid, changes);
+    }
   }
 
   // default protection so that NotificationLP can call this method
