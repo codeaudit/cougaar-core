@@ -162,15 +162,18 @@ class TopServlet extends ServletFrameset
 	int running = 0;
 	int queued = 0;
 	int total = status.size();
+	int[] run_counts = new int[ThreadService.LANE_COUNT];
 
 	Iterator itr = status.iterator();
 	while (itr.hasNext()) {
 	    ThreadStatusService.Record record = (ThreadStatusService.Record)
 		itr.next();
-	    if (record.getState() == ThreadStatusService.QUEUED)
+	    if (record.getState() == ThreadStatusService.QUEUED) {
 		++queued;
-	    else
+	    } else {
 		++running;
+		++run_counts[record.lane];
+	    }
 	}
 
 	out.print("<br><br><b>");
@@ -183,9 +186,11 @@ class TopServlet extends ServletFrameset
 	out.print(running);
 	out.print(" running");
 	if (controlService != null) {
-	    out.print(", max running (per lane):");
+	    out.print(", running/max (per lane):");
 	    for (int i=0; i<ThreadService.LANE_COUNT; i++) {
 		out.print(i==0 ? " " : ", ");
+		out.print(run_counts[i]);
+		out.print("/");
 		out.print(controlService.maxRunningThreadCount(i));
 	    }
 	}
