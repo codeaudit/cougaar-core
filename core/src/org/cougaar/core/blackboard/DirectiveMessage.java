@@ -23,10 +23,12 @@ package org.cougaar.core.blackboard;
 
 import org.cougaar.core.agent.*;
 import org.cougaar.core.mts.UnresolvableReferenceException;
+import org.cougaar.core.mts.MessageAddress;
 
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.StringUtility;
 import org.cougaar.planning.ldm.plan.Plan;
+import org.cougaar.util.log.*;
 
 import java.util.Collection;
 import java.io.*;
@@ -113,31 +115,41 @@ public class DirectiveMessage extends ClusterMessage
     return buf.substring(0);
   }
 
-  /**
-   **/
-  private void writeObject(ObjectOutputStream stream) throws IOException {
-    stream.defaultWriteObject();
-
-    ClusterIdentifier cid = getSource();
-    ClusterContext context = ClusterContextTable.findContext(cid);
-    if (context == null) {
-      System.err.println("Directive Message Sent from "+cid+" before Context is known, Ignored");
-      Thread.dumpStack();
-    } else {
-      try {
-        ClusterContextTable.enterContext(context, getSource(), getDestination());
-        stream.writeInt(directives.length);
-        for (int i = 0; i < directives.length; i++) {
-         stream.writeObject(directives[i]);
-        }
-      } catch (IOException e) { // These can happen anytime communications is lost. be quiet.
-        throw e;                // In case anyone else is interested
-      } catch (Exception e) {
-        throw new IOException("Caught Exception while serializing a DirectiveMessage:" + e);
-      } finally {
-        ClusterContextTable.exitContext();
+  private void withContext(MessageAddress ma, Runnable thunk) 
+    throws IOException 
+  {
+    try {
+      ClusterContextTable.withMessageContext(ma, getSource(), getDestination(), thunk);
+    } catch (RuntimeException re) {
+      Throwable t = re.getCause();
+      if (t == null) {
+        throw re;
+      } else if (t instanceof IOException) {
+        throw (IOException) t;
+      } else {
+        Logging.getLogger(DirectiveMessage.class).error("Serialization of "+this+" caught exception", t);
+        throw new IOException("Serialization exception: "+t);
       }
     }
+  }
+  
+
+  /**
+   **/
+  private void writeObject(final ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+
+    withContext( getSource(),
+                 new Runnable() {
+                     public void run() {
+                       try {
+                         stream.writeInt(directives.length);
+                         for (int i = 0; i < directives.length; i++) {
+                           stream.writeObject(directives[i]);
+                         }
+                       } catch (Exception e) {
+                         throw new RuntimeException("Thunk", e);
+                       }}});
   }
 
   /** when we deserialize, note the message context with the 
@@ -145,57 +157,44 @@ public class DirectiveMessage extends ClusterMessage
    * reattach to the Cluster mechanism
    * @see ClusterContextTable
    **/
-  private void readObject(ObjectInputStream stream) throws ClassNotFoundException, IOException {
+  private void readObject(final ObjectInputStream stream) 
+    throws IOException, ClassNotFoundException
+  {
     stream.defaultReadObject();
 
-    // find the cluster
-    ClusterIdentifier cid = getDestination();
-    ClusterContext context = ClusterContextTable.findContext(cid);
-    if (context == null) {
-      System.err.println("Directive Message read in "+cid+" before Context is known.");
-    }
-    
-    try {
-      ClusterContextTable.enterContext(context, getSource(), getDestination());
-      directives = new Directive[stream.readInt()];
-      for (int i = 0; i < directives.length; i++) {
-        directives[i] = (Directive) stream.readObject();
-      }
-    } finally {
-      ClusterContextTable.exitContext();
-    }
+    withContext(getDestination(),
+                 new Runnable() {
+                     public void run() {
+                       try {
+                         directives = new Directive[stream.readInt()];
+                         for (int i = 0; i < directives.length; i++) {
+                           directives[i] = (Directive) stream.readObject();
+                         }
+                       } catch (Exception e) {
+                         throw new RuntimeException("Thunk", e);
+                       }}});
   }
 
   // Externalizable support
   /*
   **/
-  public void writeExternal(ObjectOutput out) throws IOException {
+  public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);   // Message
 
     out.writeBoolean(allMessagesAcknowledged);
 
-    // serialize directive through another stream
-    ClusterIdentifier cid = getSource();
-    ClusterContext context = ClusterContextTable.findContext(cid);
+    withContext( getSource(),
+                 new Runnable() {
+                     public void run() {
+                       try {
+                         out.writeInt(directives.length);
+                         for (int i = 0; i < directives.length; i++) {
+                           out.writeObject(directives[i]);
+                         }
+                       } catch (Exception e) {
+                         throw new RuntimeException("Thunk", e);
+                       }}});
 
-    if (context == null) {
-      System.err.println("Directive Message Sent from "+cid+" before Context is known, Ignored");
-      Thread.dumpStack();
-    } else {
-      try {
-        ClusterContextTable.enterContext(context, getSource(), getDestination());
-        out.writeInt(directives.length);
-        for (int i = 0; i < directives.length; i++) {
-          out.writeObject(directives[i]);
-        }
-      } catch (IOException e) { // These can happen anytime communications is lost. be quiet.
-        throw e;                // In case anyone else is interested
-      } catch (Exception e) {
-        throw new IOException("Caught Exception while serializing a DirectiveMessage:" + e);
-      } finally {
-        ClusterContextTable.exitContext();
-      }
-    }
   }
 
   /** when we deserialize, note the message context with the 
@@ -203,62 +202,24 @@ public class DirectiveMessage extends ClusterMessage
    * reattach to the Cluster mechanism
    * @see ClusterContextTable
    **/
-  public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+  public void readExternal(final ObjectInput in) 
+    throws IOException, ClassNotFoundException
+  {
     super.readExternal(in);     // Message
 
     allMessagesAcknowledged = in.readBoolean();
 
-    // find the cluster
-    ClusterIdentifier cid = getDestination();
-    ClusterContext context = ClusterContextTable.findContext(cid);
-    if (context == null) {
-	throw new UnresolvableReferenceException("Agent "+cid+
-						 " is not on this node.");
-//       //System.err.println("Directive Message read in "+cid+" before Context is known.");
-
-//       // try to work around bug 1316
-//       int nDirectives = in.readInt();
-//       System.err.println(
-//           "\n\nDirective Message read in "+cid+" before Context is known."+
-//           "\nThis may be agent mobility bug 1316."+
-//           "\nWill attempt to continue without the context."+
-//           "\n\nDebugging details:"+
-//           "\n  current time: "+System.currentTimeMillis()+
-//           "\n  message type: "+this.getClass().getName()+
-//           "\n  input stream: "+in+
-//           "\n  input stream type: "+in.getClass().getName()+
-//           "\n  message source: "+getSource()+
-//           "\n  message destination (this agent): "+getDestination()+
-//           "\n  #directives: "+nDirectives+
-//           "\n  stacktrace (likely in RMI):");
-//       Thread.dumpStack();
-//       int i = 0;
-//       try {
-//         directives = new Directive[nDirectives];
-//         for (i = 0; i < directives.length; i++) {
-//           directives[i] = (Directive) in.readObject();
-//         }
-//         System.err.println(
-//             "\n\nWork around appears to be okay, read all "+
-//             nDirectives+" directives\n\n");
-//       } catch (Exception e) {
-//         System.err.println(
-//             "\n\nFailed work around, read only "+i+
-//             " of the "+nDirectives+
-//             "directives, possibly lost the rest!\n\n");
-//       }
-//       return;
-    }
-    
-    try {
-      ClusterContextTable.enterContext(context, getSource(), getDestination());
-      directives = new Directive[in.readInt()];
-      for (int i = 0; i < directives.length; i++) {
-        directives[i] = (Directive) in.readObject();
-      }
-    } finally {
-      ClusterContextTable.exitContext();
-    }
+    withContext(getDestination(),
+                 new Runnable() {
+                     public void run() {
+                       try {
+                         directives = new Directive[in.readInt()];
+                         for (int i = 0; i < directives.length; i++) {
+                           directives[i] = (Directive) in.readObject();
+                         }
+                       } catch (Exception e) {
+                         throw new RuntimeException("Thunk", e);
+                       }}});
   }
 
   /** Wrapper for a Directive so that we can propagate ChangeReports with

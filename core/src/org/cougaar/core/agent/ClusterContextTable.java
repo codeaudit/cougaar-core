@@ -26,49 +26,65 @@ import org.cougaar.core.blackboard.*;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.UnresolvableReferenceException;
 import java.util.*;
 import org.cougaar.core.util.*;
 import org.cougaar.util.*;
 
+/** Keep track of the Agents (Clusters) running in the 
+ * current VM so that we can reconnect newly-deserialized
+ * objects in the Agent's processes.
+ * <p>
+ * @note This is a pretty dangerous security hole.
+ **/
 public final class ClusterContextTable {
   /**
    * VM-cluster registry.
    *  This table of clusterids to cluster objects is available
-   * via the public findCluster so that the deserialization 
+   * via the package-protected method findContext so that the deserialization 
    * stream can hook objects back up to the environment when
    * they are read.
    **/
   private static final HashMap contextTable = new HashMap(89);
   
-  /** find the cluster named by CID in my local VM.
+  /** find the agent named by the parameter in my local VM.
    * Anyone caught using this in plugins will be shot.
    **/
-  public static ClusterContext findContext(MessageAddress cid) {
-    return (ClusterContext) contextTable.get(cid);
+  static ClusterContext findContext(MessageAddress cid) {
+    synchronized (contextTable) {
+      return (ClusterContext) contextTable.get(cid);
+    }
   }
 
-  public static void addContext(MessageAddress cid, ClusterContext c) {
-    contextTable.put(cid, c);
+  /** Add a context to the context table **/
+  static void addContext(MessageAddress cid, ClusterContext c) {
+    synchronized (contextTable) {
+      contextTable.put(cid, c);
+    }
   }
   
-  public static void removeContext(MessageAddress cid) {
-    contextTable.remove(cid);
+  /** Remove a context from the context table **/
+  static void removeContext(MessageAddress cid) {
+    synchronized (contextTable) {
+      contextTable.remove(cid);
+    }
   }
 
+  /** The thread-local "current" context **/
   private static final ThreadLocal theContext = new ThreadLocal() {};
 
+  /** Internal object for keeping track of contexts. **/
   public static class ContextState {
-    protected ClusterContext cc;
+    private ClusterContext cc;
     public ContextState(ClusterContext c) {
       cc = c;
     }
     public final ClusterContext getClusterContext() { return cc; }
   }
-    
 
   public static final class MessageContext extends ContextState {
-    protected MessageAddress from;
-    protected MessageAddress to;
+    private MessageAddress from;
+    private MessageAddress to;
     public MessageContext(ClusterContext c, MessageAddress f, MessageAddress t) {
       super(c);
       from = f;
@@ -78,34 +94,15 @@ public final class ClusterContextTable {
     public final MessageAddress getToAddress() { return to; }
   }
 
-  public static void enterContext(ClusterContext c) {
-    // check for lossage - shouldn't be possible.
-    if (theContext.get() != null) {
-      System.err.println("Nested cluster contexts detected: was "+theContext.get()+" will be "+c);
-    }
-
-    theContext.set(new ContextState(c));
-  }
-
-  public static void enterContext(ClusterContext c, MessageAddress from, MessageAddress to) {
-    // check for lossage - shouldn't be possible.
-    if (theContext.get() != null) {
-      System.err.println("Nested cluster contexts detected: was "+theContext.get()+" will be "+c);
-    }
-
-    theContext.set(new MessageContext(c, from, to));
-  }
-  public static void exitContext() {
-    theContext.set(null);
-  }
-
   public static ContextState getContextState() {
     return ((ContextState)theContext.get());
   }
+
   public static MessageContext getMessageContext() {
     Object cs = theContext.get();
     return (cs instanceof MessageContext)?((MessageContext)cs):null;
   }
+
   public static ClusterContext getClusterContext() {
     ContextState cs = (ContextState)theContext.get();
     
@@ -113,6 +110,7 @@ public final class ClusterContextTable {
   }
 
   private static final ClusterContext _dummyContext = new ClusterContext.DummyClusterContext();
+
   /** May be used by non-society classes to provide an empty context
    * for deserialization of objects sent from within a society.
    * The resulting instances may still be "broken" in various ways, wrapping
@@ -126,12 +124,37 @@ public final class ClusterContextTable {
 
   /** Convenient shortcut for a safe enterContext - exitContext pair **/
   public static final void withClusterContext(ClusterContext cc, Runnable thunk) {
-    try {
-      enterContext(cc);
-      thunk.run();
-    } finally {
-      exitContext();
+    withContextState(new ContextState(cc), thunk);
+  }
+
+  /** Convenient shortcut for a safe enterContext - exitContext pair **/
+  public static final void withClusterContext(MessageAddress ma, Runnable thunk) {
+    ClusterContext cc = findContext(ma);
+    if (cc == null) {
+      throw new IllegalArgumentException("Address \""+ma+"\" is not an Agent on this node.");
+    } else {
+      withContextState(new ContextState(cc), thunk);
     }
   }
 
+  /** Convenient shortcut for a safe enterContext - exitContext pair **/
+  public static final void withMessageContext(MessageAddress ma, MessageAddress from, MessageAddress to, 
+                                              Runnable thunk) {
+    ClusterContext cc = findContext(ma);
+    if (cc == null) {
+      throw new IllegalArgumentException("Address \""+ma+"\" is not an Agent on this node.");
+    } else {
+      withContextState(new MessageContext(cc, from, to), thunk);
+    }
+  }
+
+  public static final void withContextState(ContextState cs, Runnable thunk) {
+    ContextState old = (ContextState) theContext.get();
+    theContext.set(cs);
+    try {
+      thunk.run();
+    } finally {
+      theContext.set(old);
+    }
+  }
 }

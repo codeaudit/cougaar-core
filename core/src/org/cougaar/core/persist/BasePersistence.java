@@ -513,7 +513,7 @@ public class BasePersistence
    */
   public RehydrationResult rehydrate(PersistenceEnvelope oldObjects, Object state) {
     RehydrationResult result = null;
-    PersistenceObject pObject = (PersistenceObject) state;
+    final PersistenceObject pObject = (PersistenceObject) state;
     synchronized (identityTable) {
       identityTable.setRehydrationCollection(new ArrayList());
       try {
@@ -527,54 +527,59 @@ public class BasePersistence
             p.ppi.deleteOldPersistence();
           }
         }
-        RehydrationSet[] rehydrationSets = getRehydrationSets(sequenceNumberSuffix);
+        final RehydrationSet[] rehydrationSets = getRehydrationSets(sequenceNumberSuffix);
         if (pObject != null || rehydrationSets.length > 0) { // Deltas exist
           try {
-            ClusterContextTable.enterContext(clusterContext);
-            try {
-              if (pObject != null) {
-                if (logger.isInfoEnabled()) {
-                  printRehydrationLog("Rehydrating " + clusterContext.getClusterIdentifier()
-                                      + " from " + pObject);
-                }
-                result = rehydrateFromBytes(pObject.getBytes());
-              } else {
-                // Loop through the available RehydrationSets and
-                // attempt to rehydrate from each one until no errors
-                // occur. This will normally happen on the very first
-                // set, but might fail if the data has been corrupted
-                // in some way.
-                boolean success = false;
-                for (int i = 0; i < rehydrationSets.length; i++) {
-                  SequenceNumbers rehydrateNumbers = rehydrationSets[i].sequenceNumbers;
-                  PersistencePlugin ppi = rehydrationSets[i].ppi;
-                  if (logger.isInfoEnabled()) {
-                    printRehydrationLog("Rehydrating "
-                                        + clusterContext.getClusterIdentifier()
-                                        + " "
-                                        + rehydrateNumbers.toString());
-                  }
+            final RehydrationResult[] resultPtr = new RehydrationResult[1];
+            Runnable thunk = new Runnable() {
+                public void run() {
                   try {
-                    while (rehydrateNumbers.first < rehydrateNumbers.current - 1) {
-                      rehydrateOneDelta(ppi, rehydrateNumbers.first++, false);
+                    if (pObject != null) {
+                      if (logger.isInfoEnabled()) {
+                        printRehydrationLog("Rehydrating " + clusterContext.getClusterIdentifier()
+                                            + " from " + pObject);
+                      }
+                      resultPtr[0] = rehydrateFromBytes(pObject.getBytes());
+                    } else {
+                      // Loop through the available RehydrationSets and
+                      // attempt to rehydrate from each one until no errors
+                      // occur. This will normally happen on the very first
+                      // set, but might fail if the data has been corrupted
+                      // in some way.
+                      boolean success = false;
+                      for (int i = 0; i < rehydrationSets.length; i++) {
+                        SequenceNumbers rehydrateNumbers = rehydrationSets[i].sequenceNumbers;
+                        PersistencePlugin ppi = rehydrationSets[i].ppi;
+                        if (logger.isInfoEnabled()) {
+                          printRehydrationLog("Rehydrating "
+                                              + clusterContext.getClusterIdentifier()
+                                              + " "
+                                              + rehydrateNumbers.toString());
+                        }
+                        try {
+                          while (rehydrateNumbers.first < rehydrateNumbers.current - 1) {
+                            rehydrateOneDelta(ppi, rehydrateNumbers.first++, false);
+                          }
+                          resultPtr[0] = rehydrateOneDelta(ppi, rehydrateNumbers.first++, true);
+                          success = true;
+                          break;      // Successful rehydration
+                        } catch (Exception e) { // Rehydration failed
+                          logger.error("Rehydration from " + rehydrationSets[i] + " failed: ", e);
+                          resetRehydration();
+                          continue;   // Try next RehydrationSet
+                        }
+                      }
+                      if (!success) {
+                        logger.error("Rehydration failed. Starting over from scratch");
+                      }
                     }
-                    result = rehydrateOneDelta(ppi, rehydrateNumbers.first++, true);
-                    success = true;
-                    break;      // Successful rehydration
-                  } catch (Exception e) { // Rehydration failed
-                    logger.error("Rehydration from " + rehydrationSets[i] + " failed: ", e);
-                    resetRehydration();
-                    continue;   // Try next RehydrationSet
+                  } catch (Exception ioe) {
+                    throw new RuntimeException("withClusterContext", ioe);
                   }
-                }
-                if (!success) {
-                  logger.error("Rehydration failed. Starting over from scratch");
-                }
-              }
-            } finally {
-              ClusterContextTable.exitContext();
-            }
+                }};
 
+            ClusterContextTable.withClusterContext(clusterContext, thunk);
+          
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
               PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
               if (pAssoc.isActive()) {
@@ -671,6 +676,7 @@ public class BasePersistence
             e.printStackTrace();
             System.exit(13);
           }
+
         }
       }
       finally {
