@@ -36,8 +36,7 @@ import org.cougaar.core.servlet.ServletService;
  * registers for all "/hello" HTTP/HTTPS requests.
  * <p>
  * This is the simplest possible Servlet that shows the full
- * <code>ServletService</code> request code.  A base class can be 
- * created to hide many of these details.
+ * <code>ServletService</code> request code.
  *
  * @see ServletService
  */

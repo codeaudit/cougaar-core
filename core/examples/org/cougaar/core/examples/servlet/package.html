@@ -1,0 +1,49 @@
+<html><body bgcolor="white">
+<pre>
+
+Example ServletService code, in recommended order for learning
+the Cougaar Servlet APIs:
+
+HelloServlet.java:
+  A simple "Hello world!" Servlet with no Cougaar dependencies.
+
+SnoopServlet.java:
+  Another Cougaar-independent example.  This Servlet calls
+  all the various HttpServletRequest methods and prints the
+  results back to an HTML page.  Load it and learn by
+  example.
+
+ColorServlet.java:
+  Another Cougaar-independent example that illustrates
+  HTML FORMs and URL-parameter passing.
+
+HelloAgentServlet.java:
+  Similar to "HelloServlet", but additionally uses the
+  "SimpleServletSupport" API to print the agent's name.
+
+HelloBaseServletComponent.java:
+  Extends "BaseServletComponent" to create a "Hello world!" 
+  Servlet.  Unlike HelloServlet, this Servlet has access to
+  the full BindingSite and ServiceBroker.  The inner Servlet
+  is hard-coded to the "/hello" path.
+
+LogServletComponent.java:
+  Just like "HelloBaseServletComponent", but additionally
+  illustrates use of the ServiceBroker to access the
+  LoggingService.  The inner Servlet is hard-coded to the 
+  "/log" path.
+
+AddTaskServletComponent.java:
+  Just like "HelloBaseServletComponent", but additionally
+  gets the BlackboardService and "publishAdd"s a Task
+  to the blackboard.  The inner Servlet is hard-coded to
+  the "/addtask" path.
+
+HelloComponent.java:
+  A "Hello world!" example that uses "ServletService" directly,
+  without extending the "BaseServletComponent".  Plugins with
+  internal Servlets can be built in a similar fashion.  The 
+  inner Servlet is hard-coded to the "/hello" path.
+
+</pre>
+</body></html>
