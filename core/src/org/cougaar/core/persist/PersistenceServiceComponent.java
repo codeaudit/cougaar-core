@@ -612,11 +612,11 @@ import org.cougaar.core.component.BindingSite;
               if (pAssoc.isActive()) {
                 if (logger.isDetailEnabled()) logger.detail(clientId + ": addAssociation " + pAssoc);
                 getClientStuff(clientId).addAssociation(pAssoc);
+                if (obj instanceof ActivePersistenceObject) {
+                  ((ActivePersistenceObject) obj).postRehydration(logger);
+                }
               } else {
                 if (logger.isDetailEnabled()) logger.detail(clientId + ": inactive " + pAssoc);
-              }
-              if (obj instanceof ActivePersistenceObject) {
-                ((ActivePersistenceObject) obj).postRehydration(logger);
               }
             }
             if (logger.isDetailEnabled()) {

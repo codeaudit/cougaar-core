@@ -636,6 +636,7 @@ public class BasePersistence
 
             for (Iterator iter = identityTable.iterator(); iter.hasNext(); ) {
               PersistenceAssociation pAssoc = (PersistenceAssociation) iter.next();
+              if (pAssoc.isInactive()) continue;
               Object obj = pAssoc.getObject();
               if (obj instanceof ActivePersistenceObject) {
                 ((ActivePersistenceObject) obj).postRehydration(logger);

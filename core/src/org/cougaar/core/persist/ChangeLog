@@ -1,3 +1,10 @@
+2003-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistenceServiceComponent.java: 
+	* BasePersistence.java:
+	Bug #2694 -- Removed PlanElements are re-inserted into role schedules by postHydration
+	Do not call postHydration for inactive objects.
+
 2003-03-14  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java
