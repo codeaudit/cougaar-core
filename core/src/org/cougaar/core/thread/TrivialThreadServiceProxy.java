@@ -46,6 +46,14 @@ final class TrivialThreadServiceProxy 	implements ThreadService
 	return new TrivialSchedulable(runnable, name, consumer);
     }
 
+    public Schedulable getThread(Object consumer, 
+				 Runnable runnable, 
+				 String name,
+				 int lane) 
+    {
+	return new TrivialSchedulable(runnable, name, consumer);
+    }
+
 
     // No longer supported
     public void schedule(java.util.TimerTask task, long delay) 

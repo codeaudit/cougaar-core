@@ -112,9 +112,8 @@ class TrivialThreadPool
 
 	    if (result == null && list_pool != null) {
 		// Use the slow ArrayList.
-		Object[] list_array = list_pool.toArray();
-		for (int i=0; i<list_array.length; i++) {
-		    candidate = (ThreadRunner) list_array[i];
+		for (int i=0; i<list_pool.size(); i++) {
+		    candidate = (ThreadRunner) list_pool.get(i);
 		    if (!candidate.in_use) {
 			result = candidate;
 			result.in_use = true;
@@ -146,9 +145,8 @@ class TrivialThreadPool
 	    addRecord(thread, records);
 	}
 	if (list_pool != null) {
-	    Object[] list_array = list_pool.toArray();
-	    for (int i=0; i<list_array.length; i++) {
-		thread = (ThreadRunner) list_array[i];
+	    for (int i=0; i<list_pool.size(); i++) {
+		thread = (ThreadRunner) list_pool.get(i);
 		addRecord(thread, records);
 	    }
 	}
@@ -169,6 +167,7 @@ class TrivialThreadPool
 		record.blocking_excuse = "none";
 		long startTime = thread.start_time;
 		record.elapsed = System.currentTimeMillis()-startTime;
+		record.lane = sched.getLane();
 		records.add(record);
 	    } catch (Throwable t) {
 		// ignore errors

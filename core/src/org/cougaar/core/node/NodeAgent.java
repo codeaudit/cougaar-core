@@ -256,6 +256,10 @@ extends SimpleAgent
     List threadServiceParams = new ArrayList();
     threadServiceParams.add("name=Node " + nodeName);
     threadServiceParams.add("isRoot=true"); // hack to use rootsb
+    threadServiceParams.add("BestEffortAbsCapacity=30");
+    threadServiceParams.add("WillBlockAbsCapacity=300");
+    threadServiceParams.add("CpuIntenseAbsCapacity=2");
+    threadServiceParams.add("WellBehavedAbsCapacity=2");
     add(new ComponentDescription(
           (getIdentifier()+"Threads"),
           Agent.INSERTION_POINT + ".Threads",

@@ -31,16 +31,6 @@ import org.cougaar.util.log.Logging;
 class ThreadPool 
 {
 
-    private static ThreadPool SharedPool;
-
-    static synchronized ThreadPool getPool(ThreadGroup group) {
-	// return new ThreadPool(group);
-	if (SharedPool == null) SharedPool = new ThreadPool();
-	return SharedPool;
-    }
-
-
-
     static final class PooledThread extends Thread {
 	private SchedulableObject schedulable;
 
@@ -164,12 +154,12 @@ class ThreadPool
     private Logger logger;
     private int index = 0;
 
-    ThreadPool() {
-	int initialSize = PropertyParser.getInt(InitialPoolSizeProp, 
-						InitialPoolSizeDefault);
-	int maximumSize = PropertyParser.getInt(Scheduler.MaxRunningCountProp, 
-					    Scheduler.MaxRunningCountDefault);
-	group = Thread.currentThread().getThreadGroup();
+    ThreadPool(int maximumSize, int initialSize, String name) 
+    {
+	// Maybe give each pool its own group?
+	group = new ThreadGroup(name); 
+	// Thread.currentThread().getThreadGroup();
+
 	logger = Logging.getLogger(getClass().getName());
 	if (maximumSize < 0) {
 	    // Unlimited.  Make an array of a somewhat arbitrary size
@@ -285,6 +275,7 @@ class ThreadPool
 		    record.elapsed = System.currentTimeMillis()-startTime;
 		    record.blocking_excuse = sched.getBlockingExcuse();
 		    record.blocking_type = sched.getBlockingType();
+		    record.lane = sched.getLane();
 		    records.add(record);
 		} catch (Throwable t) {
 		}

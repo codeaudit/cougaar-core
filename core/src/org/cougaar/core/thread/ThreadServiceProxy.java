@@ -43,14 +43,27 @@ final class ThreadServiceProxy 	implements ThreadService
 
 
     public Schedulable getThread(Object consumer, Runnable runnable) {
-	return new SchedulableObject(treeNode, runnable, null, consumer);
+	return new SchedulableObject(treeNode, runnable, null, consumer,
+				     treeNode.getDefaultLane());
     }
 
     public Schedulable getThread(Object consumer, 
 				 Runnable runnable, 
 				 String name) 
     {
-	return new SchedulableObject(treeNode, runnable, name, consumer);
+	return new SchedulableObject(treeNode, runnable, name, consumer,
+				     treeNode.getDefaultLane());
+    }
+
+    public Schedulable getThread(Object consumer, 
+				 Runnable runnable, 
+				 String name,
+				 int lane) 
+    {
+	if (lane < 0 || lane >= treeNode.getLaneCount())
+	    throw new RuntimeException("Lane is out of range: " +lane);
+	return new SchedulableObject(treeNode, runnable, name, consumer,
+				     lane);
     }
 
 

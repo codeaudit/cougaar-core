@@ -47,28 +47,22 @@ import org.cougaar.util.log.Logging;
  *
  */
 public class Scheduler 
-    implements ThreadControlService
 {
-    static final String MaxRunningCountProp =
-	"org.cougaar.thread.running.max";
-    
-    // -1 means unlimited
-    static final int MaxRunningCountDefault = 100;
-
     private DynamicSortedQueue pendingThreads;
     private ArrayList disqualified = new ArrayList();
     private UnaryPredicate qualifier;
     private UnaryPredicate childQualifier;
     private ThreadListenerProxy listenerProxy;
-    private String name;
     private String printName;
     private TreeNode treeNode;
+    private int absoluteMax;
     private int maxRunningThreads;
     private int runningThreadCount = 0;
+    private int lane;
     protected Logger logger;
     protected int rightsRequestCount = 0;
 
-  private static Logger _logger = Logging.getLogger(Scheduler.class);
+    private static Logger _logger = Logging.getLogger(Scheduler.class);
 
     private Comparator timeComparator =
 	new Comparator() {
@@ -90,28 +84,22 @@ public class Scheduler
 
 
 
-    private static int ConfiguredMaxRunningThreads;
-    static {
-	ConfiguredMaxRunningThreads = 
-	    PropertyParser.getInt(MaxRunningCountProp, 
-				  MaxRunningCountDefault);
-        if (_logger.isInfoEnabled()) {
-          _logger.info("ConfiguredMaxRunningThreads set to "+ConfiguredMaxRunningThreads);
-        }
-    };
-
-    public Scheduler(ThreadListenerProxy listenerProxy, String  name) {
+    public Scheduler(ThreadListenerProxy listenerProxy) 
+    {
 	pendingThreads = new DynamicSortedQueue(timeComparator);
-	maxRunningThreads = ConfiguredMaxRunningThreads;
         if (_logger.isInfoEnabled()) {
           _logger.info("Initialized maxRunningThreads to "+maxRunningThreads);
         }
 
 	this.listenerProxy = listenerProxy;
-	this.name = name;
-	printName = "<Scheduler " +name+ ">";
     }
 
+    void setAbsoluteMax(int absoluteMax) 
+    {
+	
+	this.absoluteMax = absoluteMax;
+	maxRunningThreads = absoluteMax;
+    }
 
     // NB: By design this method is NOT synchronized!  
     void listQueuedThreads(final List records) {
@@ -126,12 +114,13 @@ public class Scheduler
 			Object consumer = sched.getConsumer();
 			if (consumer != null)
 			    record.consumer = consumer.toString();
-			record.scheduler = name;
+			record.scheduler = getName();
 			record.schedulable = sched.getName();
 			long timestamp = sched.getTimestamp();
 			record.blocking_excuse = sched.getBlockingExcuse();
 			record.blocking_type = sched.getBlockingType();
 			record.elapsed = System.currentTimeMillis()-timestamp;
+			record.lane = getLane();
 			records.add(record);
 		    } catch (Throwable t) {
 		    }
@@ -158,6 +147,7 @@ public class Scheduler
 
     void setTreeNode(TreeNode treeNode) {
 	this.treeNode = treeNode;
+	printName = "<Scheduler " +treeNode.getName()+ ">";
     }
 
 
@@ -165,9 +155,16 @@ public class Scheduler
 	return treeNode;
     }
 
+    int getLane() {
+	return lane;
+    }
+
+    void setLane(int lane) {
+	this.lane = lane;
+    }
 
     String getName() {
-	return name;
+	return getTreeNode().getName();
     }
 
     // ThreadControlService 
@@ -343,16 +340,13 @@ public class Scheduler
     public void setMaxRunningThreadCount(int requested_max) {
 	int count = requested_max;
         Logger logger = getLogger();
-	if (requested_max > ConfiguredMaxRunningThreads) {
+	if (requested_max > absoluteMax) {
 	    if (logger.isErrorEnabled())
 		logger.error("Attempt to set maxRunningThreadCount to "
 			     +requested_max+
-			     " which is greater than the value given in "
-			     +MaxRunningCountProp+
-			     " ("
-			     +ConfiguredMaxRunningThreads+
-			     ")");
-	    count = ConfiguredMaxRunningThreads;
+			     " which is greater than the absolute max of "
+			     +absoluteMax);
+	    count = absoluteMax;
 	} else {
           if (_logger.isInfoEnabled()) {
             _logger.info("Setting maxRunningThreadCount to "+requested_max+" from "+maxRunningThreads,

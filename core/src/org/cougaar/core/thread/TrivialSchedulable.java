@@ -50,6 +50,10 @@ final class TrivialSchedulable implements Schedulable
     }
 
 
+    public int getLane() {
+	return -1;
+    }
+
     String getName() {
 	return name;
     }

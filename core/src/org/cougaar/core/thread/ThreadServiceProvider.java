@@ -51,25 +51,45 @@ public final class ThreadServiceProvider
     extends GenericStateModelAdapter
     implements ServiceProvider, Component
 {
+
     private static final String SCHEDULER_CLASS_PROPERTY = 
 	"org.cougaar.thread.scheduler";
 
     private static final String TRIVIAL_PROPERTY = 
 	"org.cougaar.thread.trivial";
 
+    private static ThreadPool[] Pools;
+    private static int[] Lane_Sizes = new int[ThreadService.LANE_COUNT];
+
+    private static synchronized void makePools() 
+    {
+	if (Pools != null) return;
+
+	Pools = new ThreadPool[ThreadService.LANE_COUNT];
+	int initializationCount = 10; // could be a param
+	for (int i=0; i<Pools.length; i++)
+	    Pools[i] = new ThreadPool(Lane_Sizes[i], initializationCount,
+				      "Pool-"+i);
+    }
+
     private ServiceBroker my_sb;
     private boolean isRoot;
     private ThreadListenerProxy listenerProxy;
-    private Scheduler scheduler;
+    private ThreadControlService controlProxy;
     private ThreadServiceProxy proxy;
     private ThreadStatusService statusProxy;
     private String name;
+    private int laneCount = ThreadService.LANE_COUNT;
 
-    public ThreadServiceProvider() {
+    public ThreadServiceProvider() 
+    {
     }
 
-    public void load() {
+    public void load() 
+    {
 	super.load();
+	
+	makePools();
 
 	ServiceBroker sb = my_sb;
 	isRoot = !sb.hasService(ThreadService.class);
@@ -108,12 +128,11 @@ public final class ThreadServiceProvider
 	
 	ThreadService parent = (ThreadService) 
 	    sb.getService(this, ThreadService.class, null);
-	makeProxies(parent);
+	final TreeNode node = makeProxies(parent);
 	provideServices(sb);
 	if (isRoot) {
 	    statusProxy = new ThreadStatusService() {
 		    public List getStatus() {
-			TreeNode node = scheduler.getTreeNode();
 			List result = new ArrayList();
 			node.listQueuedThreads(result);	
 			node.listRunningThreads(result);
@@ -124,19 +143,39 @@ public final class ThreadServiceProvider
 	}
     }
 
-    private void setParameterFromString(String property) {
+    private void setParameterFromString(String property) 
+    {
 	int sepr = property.indexOf('=');
 	if (sepr < 0) return;
 	String key = property.substring(0, sepr);
 	String value = property.substring(++sepr);
+	int lane_index, lane_max;
+
 	if (key.equals("name")) {
 	    name = value;
 	} else if (key.equals("isRoot")) {
 	    isRoot = value.equalsIgnoreCase("true");
+	} else if (key.equals("BestEffortAbsCapacity")) {
+	    lane_index = ThreadService.BEST_EFFORT_LANE;
+	    lane_max = Integer.parseInt(value);
+	    Lane_Sizes[lane_index] = lane_max;
+	} else if (key.equals("WillBlockAbsCapacity")) {
+	    lane_index = ThreadService.WILL_BLOCK_LANE;
+	    lane_max = Integer.parseInt(value);
+	    Lane_Sizes[lane_index] = lane_max;
+	} else if (key.equals("CpuIntenseAbsCapacity")) {
+	    lane_index = ThreadService.CPU_INTENSE_LANE;
+	    lane_max = Integer.parseInt(value);
+	    Lane_Sizes[lane_index] = lane_max;
+	} else if (key.equals("WellBehavedAbsCapacity")) {
+	    lane_index = ThreadService.WELL_BEHAVED_LANE;
+	    lane_max = Integer.parseInt(value);
+	    Lane_Sizes[lane_index] = lane_max;
 	} // add more later
     }
 
-    public void setParameter(Object param) {
+    public void setParameter(Object param) 
+    {
 	if (param instanceof List) {
 	    Iterator itr = ((List) param).iterator();
 	    while(itr.hasNext()) {
@@ -147,31 +186,60 @@ public final class ThreadServiceProvider
 	}
     }
 
-    private void makeProxies(ThreadService parent) {
-	listenerProxy = new ThreadListenerProxy();
-
-	Class[] formals = { ThreadListenerProxy.class, String.class};
-	Object[] actuals = { listenerProxy, name};
-	String classname = System.getProperty(SCHEDULER_CLASS_PROPERTY);
-	if (classname != null) {
+    private Scheduler makeScheduler(Constructor constructor, 
+				    Object[] args,
+				    int lane)
+				   
+    {
+	Scheduler scheduler = null;
+	if (constructor != null) {
 	    try {
-		Class s_class = Class.forName(classname);
-		Constructor cons = s_class.getConstructor(formals);
-		scheduler = (Scheduler) cons.newInstance(actuals);
+		return (Scheduler) constructor.newInstance(args);
 	    } catch (Exception ex) {
 		ex.printStackTrace();
 	    }
 	}
-	if (scheduler == null) {
-	    scheduler = new PropagatingScheduler(listenerProxy, name);
-	}
+	
+	if (scheduler == null)
+	    scheduler = new PropagatingScheduler(listenerProxy);
 
-	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;
-	TreeNode node = new TreeNode(scheduler, parentProxy);
-	proxy = new ThreadServiceProxy(node);
+	scheduler.setLane(lane);
+	scheduler.setAbsoluteMax(Lane_Sizes[lane]);
+	return scheduler;
     }
 
-    private void provideServices(ServiceBroker sb) {
+    private TreeNode makeProxies(ThreadService parent) 
+    {
+	listenerProxy = new ThreadListenerProxy(laneCount);
+
+	Class[] formals = { ThreadListenerProxy.class};
+	Object[] actuals = { listenerProxy };
+	String classname = System.getProperty(SCHEDULER_CLASS_PROPERTY);
+	Constructor constructor = null;
+	if (classname != null) {
+	    try {
+		Class s_class = Class.forName(classname);
+		constructor = s_class.getConstructor(formals);
+	    } catch (Exception ex) {
+		ex.printStackTrace();
+	    }
+	}
+	Scheduler[] schedulers = new Scheduler[laneCount];
+	for (int i=0; i<schedulers.length; i++) {
+	    schedulers[i] = makeScheduler(constructor, actuals, i);
+	}
+	
+
+	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;
+	TreeNode node = new TreeNode(schedulers, Pools, name, parentProxy);
+	proxy = new ThreadServiceProxy(node);
+	controlProxy = new ThreadControlServiceProxy(node);
+	listenerProxy.setTreeNode(node);
+	return node;
+    }
+
+    private void provideServices(ServiceBroker sb) 
+    {
 	sb.addService(ThreadService.class, this);
 	sb.addService(ThreadControlService.class, this);
 	sb.addService(ThreadListenerService.class, this);
@@ -186,7 +254,7 @@ public final class ThreadServiceProvider
 	    return proxy;
 	} else if (serviceClass == ThreadControlService.class) {
 	    // Later this will be tightly restricted
-	    return scheduler;
+	    return controlProxy;
 	} else if (serviceClass == ThreadListenerService.class) {
 	    return listenerProxy;
 	} else if (serviceClass == ThreadStatusService.class) {
@@ -204,7 +272,8 @@ public final class ThreadServiceProvider
     }
 
  
-    public final void setBindingSite(BindingSite bs) {
+    public final void setBindingSite(BindingSite bs) 
+    {
 	my_sb = bs.getServiceBroker();
     }
 

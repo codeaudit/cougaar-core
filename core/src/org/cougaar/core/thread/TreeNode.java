@@ -25,67 +25,90 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
+import org.cougaar.core.service.ThreadService;
+
 final class TreeNode
 {
     private TreeNode parent;
     private ArrayList children;
-    private Scheduler scheduler;
-    private ThreadGroup group;
-    private ThreadPool pool;
+    private Scheduler[] schedulers;
+    private ThreadPool[] pools;
     private Timer timer;
+    private String name;
+    private int defaultLane = ThreadService.BEST_EFFORT_LANE; // parameter?
 
-    TreeNode(Scheduler scheduler, ThreadServiceProxy parentService) 
+    TreeNode(Scheduler[] schedulers, 
+	     ThreadPool[] pools,
+	     String name,
+	     ThreadServiceProxy parentService) 
     {
+	this.name = name;
 	children = new ArrayList();
-	this.scheduler = scheduler;
-	scheduler.setTreeNode(this);
+	this.schedulers = schedulers;
+	this.pools = pools;
+	for (int i=0; i<schedulers.length; i++) schedulers[i].setTreeNode(this);
 	TreeNode parent = 
 	    parentService == null ? null : parentService.getTreeNode();
 	setParent(parent);
-	
-	if (parent == null) {
-	    group = new ThreadGroup(getName());
-	} else {
-	    group = new ThreadGroup(parent.group, getName());
-	}
-	
-	pool = ThreadPool.getPool(group);
     }
 
+    int getDefaultLane() 
+    {
+	return defaultLane;
+    }
 
-    synchronized Timer timer() {
+    void setDefaultLane(int lane)
+    {
+	defaultLane = lane;
+    }
+
+    int getLaneCount() 
+    {
+	return schedulers.length;
+    }
+
+    synchronized Timer timer() 
+    {
 	if (timer == null) timer = new Timer(true);
 	return timer;
     }
 
 
-
-    void setParent(TreeNode parent) {
+    void setParent(TreeNode parent)
+    {
 	this.parent = parent;
 	if (parent != null) parent.addChild(this);
     }
 
-    TreeNode getParent() {
+    TreeNode getParent() 
+    {
 	return parent;
     }
 
 
-    void addChild(TreeNode child) {
+    void addChild(TreeNode child) 
+    {
 	synchronized (children) {
 	    children.add(child);
 	}
     }
 
-    ArrayList getChildren() {
+    ArrayList getChildren() 
+    {
 	return children;
     }
 
-    void listRunningThreads(List records) {
-	pool.listRunningThreads(records);
+    void listRunningThreads(List records) 
+    {
+	// All pools
+	for (int i=0; i<pools.length; i++)
+	    pools[i].listRunningThreads(records);
     }
 
-    void listQueuedThreads(List records) {
-	scheduler.listQueuedThreads(records);
+    void listQueuedThreads(List records) 
+    {
+	for (int i=0; i<schedulers.length; i++)
+	    schedulers[i].listQueuedThreads(records);
 	if (children != null) {
 	    synchronized (children) {
 		for (int i = 0, n = children.size(); i < n; i++) {
@@ -97,19 +120,19 @@ final class TreeNode
     }
 
 
-    Scheduler getScheduler() {
-	return scheduler;
+    Scheduler getScheduler(int lane) 
+    {
+	return schedulers[lane];
     }
 
-    String getName() {
-	return scheduler.getName();
+    String getName() 
+    {
+	return name;
     }
 
-    ThreadPool getPool() {
-	return pool;
+    ThreadPool getPool(int lane) 
+    {
+	return pools[lane];
     }
 
-    ThreadGroup getGroup() {
-	return group;
-    }
 }

@@ -47,6 +47,7 @@ public interface ThreadStatusService extends Service
 	public int blocking_type;
 	public String blocking_excuse;
 	public long elapsed;
+	public int lane;
 
 	abstract public String getState();
     }

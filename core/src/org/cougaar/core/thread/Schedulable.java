@@ -67,6 +67,11 @@ public interface Schedulable
 
 
     /**
+     * Lane
+     */
+    int getLane();
+
+    /**
      * The following methods behave more or less as they on
      * TimerTasks, except that the schedule methods can be called more
      * than once.  In that case, later calls effectively reschedule

@@ -29,10 +29,9 @@ public class RightsPropagatingScheduler extends Scheduler
     private int ownedRights = 0;
     private long lastReleaseTime = 0;
 
-    public RightsPropagatingScheduler(ThreadListenerProxy listenerProxy, 
-				      String name)
+    public RightsPropagatingScheduler(ThreadListenerProxy listenerProxy)
     {
-	super(listenerProxy, name);
+	super(listenerProxy);
 	System.out.println("RightsPropagatingScheduler");
     }
 
@@ -46,7 +45,7 @@ public class RightsPropagatingScheduler extends Scheduler
 	} else if (ownedRights > 0) {
 	    return false;
 	} else {
-	    Scheduler parent = parent_node.getScheduler();
+	    Scheduler parent = parent_node.getScheduler(getLane());
 	    result = parent.requestRights(this);
 	}
 	synchronized (this) { if (result) ++ownedRights; }
@@ -71,7 +70,7 @@ public class RightsPropagatingScheduler extends Scheduler
 
     private void releaseToParent(Scheduler consumer, SchedulableObject thread) {
 	TreeNode parent_node = getTreeNode().getParent();
-	Scheduler parent = parent_node.getScheduler();
+	Scheduler parent = parent_node.getScheduler(getLane());
 	parent.releaseRights(this, thread);
 	lastReleaseTime = System.currentTimeMillis();
 	synchronized (this) { --ownedRights; }
@@ -102,7 +101,7 @@ public class RightsPropagatingScheduler extends Scheduler
 	} else {
 	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
 	    if (currentIndex == children.size()) currentIndex = -1;
-	    Scheduler child = child_node.getScheduler();
+	    Scheduler child = child_node.getScheduler(getLane());
 	    handoff = child.getNextPending();
 	}
 	return handoff;

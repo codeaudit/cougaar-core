@@ -53,7 +53,7 @@ class RoundRobinSelector implements RightsSelector
 	    if (currentIndex == child_count) currentIndex = -1;
 	    if (child_node == null) return null;
 
-	    Scheduler child = child_node.getScheduler();
+	    Scheduler child = child_node.getScheduler(scheduler.getLane());
 	    if (!scheduler.allowRightFor(child)) return null;
 
 	    handoff = child.getNextPending();

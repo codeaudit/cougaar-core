@@ -32,8 +32,18 @@ import org.cougaar.core.thread.Schedulable;
  */
 public interface ThreadService extends Service
 {
+    public static final int BEST_EFFORT_LANE  = 0;
+    public static final int WILL_BLOCK_LANE   = 1;
+    public static final int CPU_INTENSE_LANE  = 2;
+    public static final int WELL_BEHAVED_LANE = 3;
+
+    public static final int LANE_COUNT = 4;
+
     Schedulable getThread(Object consumer, Runnable runnable);
     Schedulable getThread(Object consumer, Runnable runnable, String name);
+
+    Schedulable getThread(Object consumer, Runnable runnable, String name,
+			  int lane);
 
     /**
      * @deprecated Use the schedule methods on Schedulable.

@@ -30,10 +30,9 @@ public class PropagatingScheduler extends Scheduler
 {
     private RightsSelector selector;
 
-    public PropagatingScheduler(ThreadListenerProxy listenerProxy, 
-				String name)
+    public PropagatingScheduler(ThreadListenerProxy listenerProxy)
     {
-	super(listenerProxy, name);
+	super(listenerProxy);
 
 	// Default selector
 	selector = new RoundRobinSelector();
@@ -57,7 +56,7 @@ public class PropagatingScheduler extends Scheduler
 		if (!checkLocalRights()) return false;
 		++rightsRequestCount;
 	    }
-	    Scheduler parent = parent_node.getScheduler();
+	    Scheduler parent = parent_node.getScheduler(getLane());
 	    boolean ok = parent.requestRights(this);
 	    // If our parent gave us a right, increase our local count
 	    synchronized (this) {
@@ -78,7 +77,7 @@ public class PropagatingScheduler extends Scheduler
 	    // In this simple scheduler, layers other than root always
 	    // give up the right at this point (root may hand it off).
 	    decrementRunCount(this, thread);
-	    Scheduler parent = parent_node.getScheduler();
+	    Scheduler parent = parent_node.getScheduler(getLane());
 	    parent.releaseRights(this, thread);
 	}
    }

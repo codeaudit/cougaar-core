@@ -27,6 +27,7 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
+import org.cougaar.core.service.ThreadControlService;
 
 /**
  * This class creates a servlet which displays the state of COUGAAR
@@ -85,7 +86,14 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	    timer.schedule(rtd, 0, sample_period);
 	}
 	if(test.equalsIgnoreCase("true")) {
-	    runTest();
+	    ThreadControlService tcs = (ThreadControlService)
+		sb.getService(this, ThreadControlService.class, null);
+	    if (tcs != null) {
+		int default_lane = tcs.getDefaultLane();
+		sb.releaseService(this, ThreadControlService.class, tcs);
+		long lane = getParameter("lane", default_lane);
+		runTest((int) lane);
+	    }
 	}
     }
 
@@ -100,10 +108,10 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	}
     }
 
-    void runTest() {
+    void runTest(int lane) {
 	Runnable test = new Runnable() {
 		public void run () {
-		    int type = SchedulableStatus.OTHER;
+		    int type = SchedulableStatus.CPUINTENSIVE;
 		    String excuse = "Calls to sleep() are evil";
 		    SchedulableStatus.beginBlocking(type, excuse);
 		    try { Thread.sleep(100000); }
@@ -112,8 +120,10 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 		}
 	    };
 	ServiceBroker sb = getServiceBroker();
-	ThreadService tsvc = (ThreadService) sb.getService(this, ThreadService.class, null);
-	org.cougaar.core.thread.Schedulable sched = tsvc.getThread(this, test, "Sleep test");
+	ThreadService tsvc = (ThreadService) 
+	    sb.getService(this, ThreadService.class, null);
+	org.cougaar.core.thread.Schedulable sched = 
+	    tsvc.getThread(this, test, "Sleep test", lane);
 	sb.releaseService(this, ThreadService.class, tsvc);
 	sched.schedule(0, 10);
     }

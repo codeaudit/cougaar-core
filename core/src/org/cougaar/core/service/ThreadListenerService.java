@@ -28,4 +28,6 @@ public interface ThreadListenerService extends Service
 {
     void addListener(ThreadListener listener);
     void removeListener(ThreadListener listener);
+    void addListener(ThreadListener listener, int lane);
+    void removeListener(ThreadListener listener, int lane);
 }

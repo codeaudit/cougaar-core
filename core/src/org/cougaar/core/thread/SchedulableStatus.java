@@ -21,6 +21,10 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.core.service.ThreadService;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 public final class SchedulableStatus
 {
     public static final int NOT_BLOCKING = -1;
@@ -28,6 +32,42 @@ public final class SchedulableStatus
     public static final int WAIT = 1;
     public static final int FILEIO = 2;
     public static final int NETIO = 3;
+    public static final int CPUINTENSIVE = 4;
+
+    private static Logger logger = 
+	Logging.getLogger("org.cougaar.core.thread.SchedulableStatus");
+
+    private static boolean checkLegalBlocking(int type, 
+					      SchedulableObject schedulable) 
+    {
+	int lane = schedulable.getLane();
+	switch (lane) {
+	case ThreadService.BEST_EFFORT_LANE:
+	    return true;
+
+	case ThreadService.WILL_BLOCK_LANE:
+	    return true;
+
+	case ThreadService.CPU_INTENSE_LANE:
+	    if (type == WAIT || type == CPUINTENSIVE) return true;
+	    if (logger.isWarnEnabled())
+		logger.warn(schedulable.getName() +
+			    " is in CPU_INTENSE_LANE but is blocking on  "
+			    + statusString(type,"") );
+	    return false;
+
+	case ThreadService.WELL_BEHAVED_LANE:
+	    if (type == WAIT) return true;
+	    if (logger.isWarnEnabled())
+		logger.warn(schedulable.getName() +
+			    " is in WELL_BEHAVED_LANE but is blocking on  "
+			    + statusString(type,"") );
+	    return false;
+
+	default:
+	    return true;
+	}
+    }
 
     public static void beginBlocking(int type, String excuse) 
     {
@@ -35,6 +75,7 @@ public final class SchedulableStatus
 	if (thread instanceof ThreadPool.PooledThread) {
 	    ThreadPool.PooledThread pthread = (ThreadPool.PooledThread) thread;
 	    SchedulableObject sched = pthread.getSchedulable();
+	    checkLegalBlocking(type, sched);
 	    sched.setBlocking(type, excuse == null ? "No excuse given" : excuse);
 	}
     }
@@ -48,6 +89,10 @@ public final class SchedulableStatus
     }
 
     public static void beginNetIO(String excuse) {
+	beginBlocking(NETIO, excuse);
+    }
+
+    public static void beginCPUIntensive(String excuse) {
 	beginBlocking(NETIO, excuse);
     }
 
@@ -78,6 +123,9 @@ public final class SchedulableStatus
   public static void withNetIO(String excuse, Runnable thunk) {
     withBlocking(NETIO, excuse, thunk);
   }
+  public static void withCPUIntensive(String excuse, Runnable thunk) {
+    withBlocking(CPUINTENSIVE, excuse, thunk);
+  }
 
 
     public static String statusString(int type, String excuse)
@@ -97,6 +145,9 @@ public final class SchedulableStatus
 	    break;
 	case NETIO:
 	    string = "Network I/O: " + string;
+	    break;
+	case CPUINTENSIVE:
+	    string = "CPU Intensive: " + string;
 	    break;
 	}
 	return string;

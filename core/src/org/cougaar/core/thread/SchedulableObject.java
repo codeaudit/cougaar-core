@@ -40,14 +40,17 @@ final class SchedulableObject implements Schedulable
     private TimerTask task;
     private int blocking_type = SchedulableStatus.NOT_BLOCKING;
     private String blocking_excuse;
+    private int lane;
 
     SchedulableObject(TreeNode treeNode, 
                       Runnable runnable, 
                       String name,
-                      Object consumer) 
+                      Object consumer,
+		      int lane) 
     {
-        this.pool = treeNode.getPool();
-        this.scheduler = treeNode.getScheduler();
+	this.lane = lane;
+        this.pool = treeNode.getPool(lane);
+        this.scheduler = treeNode.getScheduler(lane);
         this.runnable = runnable;
         if (name == null)
             this.name =  pool.generateName();
@@ -57,6 +60,11 @@ final class SchedulableObject implements Schedulable
 	this.start_count = 0;
     }
 
+
+    public int getLane()
+    {
+	return lane;
+    }
 
     String getBlockingExcuse () {
 	return blocking_excuse;

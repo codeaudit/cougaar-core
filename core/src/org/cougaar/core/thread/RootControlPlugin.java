@@ -48,7 +48,9 @@ public class RootControlPlugin extends ComponentPlugin
 	    if (! (x instanceof Scheduler)) return false;
 
 	    Scheduler child = (Scheduler) x;
-	    Scheduler parent = child.getTreeNode().getParent().getScheduler();
+	    int lane = child.getLane();
+	    Scheduler parent = 
+		child.getTreeNode().getParent().getScheduler(lane);
 	    float count = child.runningThreadCount();
 	    float max = parent.maxRunningThreadCount();
 	    // Random test - don't let any one child use more than half

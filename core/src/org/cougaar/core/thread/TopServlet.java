@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ThreadControlService;
+import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.servlet.ServletFrameset;
 
 
@@ -92,6 +93,7 @@ class TopServlet extends ServletFrameset
 	out.print("<th align=left><b>Blocking</b></th>");
 	out.print("<th align=left><b>Time(ms)</b></th>");
 	out.print("<th align=left><b>Level</b></th>");
+	out.print("<th align=left><b>Lane</b></th>");
 	out.print("<th align=left><b>Thread</b></th>");
 	out.print("<th align=left><b>Client</b></th>");
 	out.print("</tr>");
@@ -135,9 +137,19 @@ class TopServlet extends ServletFrameset
 
 	printCell(record.elapsed, is_queued, out);
 	printCell(record.scheduler, is_queued, out);
+	printCell(record.lane, is_queued, out);
 	printCell(record.schedulable, is_queued, out);
 	printCell(record.consumer, is_queued, out);
 	out.print("</tr>");
+    }
+
+    public void printBottomPage(HttpServletRequest request, PrintWriter out) 
+    {
+	// lane key
+	out.print("Lane 0: Best Effort");
+	out.print("<br>Lane 1: Will Block");
+	out.print("<br>Lane 2: CPU Intensive");
+	out.print("<br>Lane 3: Well Behaved");
     }
 
     private void printSummary(List status, PrintWriter out) 
@@ -166,9 +178,11 @@ class TopServlet extends ServletFrameset
 	out.print(running);
 	out.print(" running");
 	if (controlService != null) {
-	    out.print(", ");
-	    out.print(controlService.maxRunningThreadCount());
-	    out.print(" max running");
+	    out.print(", max running (per lane):");
+	    for (int i=0; i<ThreadService.LANE_COUNT; i++) {
+		out.print(i==0 ? " " : ", ");
+		out.print(controlService.maxRunningThreadCount(i));
+	    }
 	}
 	out.print("</b>");
     }

@@ -30,6 +30,25 @@ import org.cougaar.util.UnaryPredicate;
 public interface ThreadControlService extends Service
 {
     // General
+    void setMaxRunningThreadCount(int count, int lane);
+    void setQueueComparator(Comparator comparator, int lane);
+    void setRightsSelector(RightsSelector selector, int lane);
+    boolean setQualifier(UnaryPredicate predicate, int lane);
+    boolean setChildQualifier(UnaryPredicate predicate, int lane);
+
+    // Status
+    int runningThreadCount(int lane);
+    int pendingThreadCount(int lane);
+    int activeThreadCount(int lane);
+    int maxRunningThreadCount(int lane);
+
+
+    // Default lane
+    int getDefaultLane();
+    void setDefaultLane(int lane);
+	
+
+    // General
     void setMaxRunningThreadCount(int count);
     void setQueueComparator(Comparator comparator);
     void setRightsSelector(RightsSelector selector);
@@ -41,4 +60,6 @@ public interface ThreadControlService extends Service
     int pendingThreadCount();
     int activeThreadCount();
     int maxRunningThreadCount();
+
+
 }

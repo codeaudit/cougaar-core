@@ -227,7 +227,7 @@ public class PercentageLoadSelector
         ArrayList children = scheduler.getTreeNode().getChildren();
 	for (int i = 0, n = children.size(); i < n; i++) {
 	    TreeNode child = (TreeNode) children.get(i);
-	    result.add(child.getScheduler());
+	    result.add(child.getScheduler(scheduler.getLane()));
 	}
 	result.add(scheduler);
 	orderedChildren = result;
