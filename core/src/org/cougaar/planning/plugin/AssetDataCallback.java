@@ -28,15 +28,16 @@ import java.text.ParseException;
 public interface AssetDataCallback {
     ConfigFinder getConfigFinder();
     void createMyLocalAsset(String assetClassName);
-    Asset getMyLocalAsset();
-    RootFactory getFactory();
+    boolean hasMyLocalAsset();
+  void createPropertyGroup(String propertyName) throws Exception;
     Object parseExpr(String dataType, String value);
     long parseDate(String dateString) throws ParseException;
     String getType(String type);
-    void callSetter(Object classInstance, String setterName, String type, Object[] arguments);
+    void callSetter(String setterName, String type, Object[] arguments);
     void setLocationSchedule(String latStr, String lonStr);
     long getDefaultStartTime();
     long getDefaultEndTime();
+  void addPropertyToAsset();
     void addRelationship(String typeId, String itemId,
                          String otherClusterId, String roleName,
                          long start, long end);

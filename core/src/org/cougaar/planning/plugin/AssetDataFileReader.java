@@ -127,7 +127,7 @@ public class AssetDataFileReader implements AssetDataReader {
           newVal = tokens.nextToken();
           continue;
         }
-        if (cb.getMyLocalAsset() == null)
+        if (!cb.hasMyLocalAsset())
           formatError("Missing [Prototype] section");
         if (dataItem.equals("[Relationship]")) {
           newVal = fillRelationships(newVal, tokens);
@@ -180,10 +180,8 @@ public class AssetDataFileReader implements AssetDataReader {
     throws IOException
   {
     String propertyName = prop.substring(1, prop.length()-1).trim();
-    NewPropertyGroup property = null;
     try {
-      property = 
-        (NewPropertyGroup) cb.getFactory().createPropertyGroup(propertyName);
+      cb.createPropertyGroup(propertyName);
     } catch (Exception e) {
       formatError("Unrecognized keyword for a prototype-ini file: ["
                   + propertyName + "]");
@@ -200,7 +198,7 @@ public class AssetDataFileReader implements AssetDataReader {
           newVal = tokens.nextToken();
           // Call appropriate setters for the slots of the property
           Object[] args = new Object[] {cb.parseExpr(dataType, tokens.sval)};
-          cb.callSetter(property, "set" + member, cb.getType(dataType), args);
+          cb.callSetter("set" + member, cb.getType(dataType), args);
           newVal = tokens.nextToken();
           member = tokens.sval;
         } else {
@@ -210,7 +208,7 @@ public class AssetDataFileReader implements AssetDataReader {
       } //while
 
       // Add the property to the asset
-      cb.getMyLocalAsset().addOtherPropertyGroup(property);
+      cb.addPropertyToAsset();
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {

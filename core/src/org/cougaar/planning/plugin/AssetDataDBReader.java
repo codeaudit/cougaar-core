@@ -52,9 +52,8 @@ public class AssetDataDBReader implements AssetDataReader {
       String[] pgNames = initializerService.getAgentPropertyGroupNames(cId);
       for (int i = 0; i < pgNames.length; i++) {
         String pgName = pgNames[i];
-        NewPropertyGroup pg =
-          (NewPropertyGroup) cb.getFactory().createPropertyGroup(pgName);
-        cb.getMyLocalAsset().addOtherPropertyGroup(pg);
+        cb.createPropertyGroup(pgName);
+        cb.addPropertyToAsset();
         Object[][] props = initializerService.getAgentProperties(cId, pgName);
         for (int j = 0; j < props.length; j++) {
           Object[] prop = props[j];
@@ -83,10 +82,10 @@ public class AssetDataDBReader implements AssetDataReader {
                 pv[k] = cb.parseExpr(attributeType, rv[k]);
               }
               Object[] args = {Arrays.asList(pv)};
-              cb.callSetter(pg, "set" + attributeName, "Collection", args);
+              cb.callSetter("set" + attributeName, "Collection", args);
             } else {
               Object[] args = {cb.parseExpr(attributeType, (String) attributeValue)};
-              cb.callSetter(pg, "set" + attributeName, cb.getType(attributeType), args);
+              cb.callSetter("set" + attributeName, cb.getType(attributeType), args);
             }
           }
         }

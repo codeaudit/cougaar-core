@@ -115,6 +115,7 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
   protected List myRelationships = new ArrayList();
   protected Map myOtherAssets = new HashMap();
   protected Asset myLocalAsset = null;
+  protected NewPropertyGroup property = null;
 
   protected void setupSubscriptions() {
     getSubscriber().setShouldBePersisted(false);
@@ -211,6 +212,15 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
                        relationship.getEndTime());
     publishAdd(reportTask);
   
+  }
+
+  protected void createPropertyGroup(String propertyName) throws Exception {
+    property = 
+      (NewPropertyGroup) getFactory().createPropertyGroup(propertyName);
+  }
+
+  protected void addPropertyToAsset() {
+    myLocalAsset.addOtherPropertyGroup(property);
   }
 
   protected void setLocationSchedule(String latStr, String lonStr) {
@@ -641,15 +651,15 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
   }
 
   /**
-   * Creates and calls the appropriate "setter" method for the classInstance
+   * Creates and calls the appropriate "setter" method for the property
    * which is of type className.
    */
-  protected void callSetter(Object classInstance, String setterName, String type, Object []arguments) {
+  protected void callSetter(String setterName, String type, Object []arguments) {
     Class parameters[] = new Class[1];
     
     try {
       parameters[0] = findClass(type);
-      Method meth = findMethod(classInstance.getClass(), setterName, parameters);
+      Method meth = findMethod(property.getClass(), setterName, parameters);
       if (meth == null) {
         StringBuffer msg = new StringBuffer();
         msg.append("AssetDataPlugin method not found: ");
@@ -663,9 +673,9 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
         System.err.println(msg);
         return;
       }
-      meth.invoke(classInstance, arguments);
+      meth.invoke(property, arguments);
     } catch (Exception e) {
-      System.err.println("AssetDataPlugin Exception: callSetter("+classInstance.getClass().getName()+", "+setterName+", "+type+", "+arguments+" : " + e);
+      System.err.println("AssetDataPlugin Exception: callSetter("+property.getClass().getName()+", "+setterName+", "+type+", "+arguments+" : " + e);
       e.printStackTrace();
     }
   }
@@ -716,11 +726,11 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     public void createMyLocalAsset(String assetClassName) {
       AssetDataPluginBase.this.createMyLocalAsset(assetClassName);
     }
-    public Asset getMyLocalAsset() {
-      return myLocalAsset;
+    public boolean hasMyLocalAsset() {
+      return (myLocalAsset != null);
     }
-    public RootFactory getFactory() {
-      return AssetDataPluginBase.this.getFactory();
+    public void createPropertyGroup(String propertyName) throws Exception {
+      AssetDataPluginBase.this.createPropertyGroup(propertyName);
     }
     public Object parseExpr(String dataType, String value) {
       return AssetDataPluginBase.this.parseExpr(dataType, value);
@@ -731,10 +741,10 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     public String getType(String type) {
       return AssetDataPluginBase.this.getType(type);
     }
-    public void callSetter(Object classInstance, String setterName,
+    public void callSetter(String setterName,
                            String type, Object[] arguments)
     {
-      AssetDataPluginBase.this.callSetter(classInstance, setterName, type, arguments);
+      AssetDataPluginBase.this.callSetter(setterName, type, arguments);
     }
     public void setLocationSchedule(String latStr, String lonStr) {
       AssetDataPluginBase.this.setLocationSchedule(latStr, lonStr);
@@ -744,6 +754,9 @@ public abstract class AssetDataPluginBase extends SimplePlugin {
     }
     public long getDefaultEndTime() {
       return AssetDataPluginBase.this.getDefaultEndTime();
+    }
+    public void addPropertyToAsset() {
+      AssetDataPluginBase.this.addPropertyToAsset();
     }
     public void addRelationship(String typeId, String itemId,
                                 String otherClusterId, String roleName,

@@ -50,9 +50,8 @@ public class AssetDataPluginDB extends AssetDataPluginBase {
       String[] pgNames = s.getAgentPropertyGroupNames(cId);
       for (int i = 0; i < pgNames.length; i++) {
         String pgName = pgNames[i];
-        NewPropertyGroup pg =
-          (NewPropertyGroup) getFactory().createPropertyGroup(pgName);
-        myLocalAsset.addOtherPropertyGroup(pg);
+        createPropertyGroup(pgName);
+        addPropertyToAsset();
         Object[][] props = s.getAgentProperties(cId, pgName);
         for (int j = 0; j < props.length; j++) {
           Object[] prop = props[j];
@@ -74,10 +73,10 @@ public class AssetDataPluginDB extends AssetDataPluginBase {
                 pv[k] = parseExpr(attributeType, rv[k]);
               }
               Object[] args = {Arrays.asList(pv)};
-              callSetter(pg, "set" + attributeName, "Collection", args);
+              callSetter("set" + attributeName, "Collection", args);
             } else {
               Object[] args = {parseExpr(attributeType, (String) prop[2])};
-              callSetter(pg, "set" + attributeName, getType(attributeType), args);
+              callSetter("set" + attributeName, getType(attributeType), args);
             }
           }
         }

@@ -178,10 +178,8 @@ public class AssetDataPluginFile extends AssetDataPluginBase {
     throws IOException
   {
     String propertyName = prop.substring(1, prop.length()-1).trim();
-    NewPropertyGroup property = null;
     try {
-      property = 
-        (NewPropertyGroup) getFactory().createPropertyGroup(propertyName);
+      createPropertyGroup(propertyName);
     } catch (Exception e) {
       formatError("Unrecognized keyword for a prototype-ini file: ["
                   + propertyName + "]");
@@ -198,7 +196,7 @@ public class AssetDataPluginFile extends AssetDataPluginBase {
           newVal = tokens.nextToken();
           // Call appropriate setters for the slots of the property
           Object[] args = new Object[] {parseExpr(dataType, tokens.sval)};
-          callSetter(property, "set" + member, getType(dataType), args);
+          callSetter("set" + member, getType(dataType), args);
           newVal = tokens.nextToken();
           member = tokens.sval;
         } else {
@@ -208,7 +206,7 @@ public class AssetDataPluginFile extends AssetDataPluginBase {
       } //while
 
       // Add the property to the asset
-      myLocalAsset.addOtherPropertyGroup(property);
+      addPropertyToAsset();
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {
