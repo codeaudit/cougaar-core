@@ -64,6 +64,9 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     Class pgClass = schedule.getPGClass();
     if (pgClass != null) {
       initializePGClass(pgClass);      
+    } else {
+      RuntimeException rt = new RuntimeException("No pgClass for : " + schedule);
+      throw rt;
     }
 
     TimePhasedPropertyGroup defaultPG = schedule.getDefault();
@@ -481,7 +484,8 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
 
     // Kludge to work around bug in Jikes - explicitly store a ref to the outer class
     // since Jikes refuses to recognize PropertySchedule.this.
-    private transient PropertyGroupSchedule myRealSchedule = null;
+    //private transient PropertyGroupSchedule myRealSchedule = null;
+    private PropertyGroupSchedule myRealSchedule = null;
 
     private transient Object theKey = null;
 
@@ -493,7 +497,10 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
     }  
 
     /** public constructor for beaninfo - won't work**/
-    public _Locked() {}
+    public _Locked() {
+      RuntimeException rt = new RuntimeException("Calling the empty constructor");
+      throw rt;
+    }
 
     public PropertyGroupSchedule lock() { return this; }
     public PropertyGroupSchedule lock(Object o) { return this; }
@@ -531,26 +538,8 @@ public class PropertyGroupSchedule extends NonOverlappingTimeSpanSet
       throw new UnsupportedOperationException();
     }
       
-    private int myStackCount = 0;
-
     public Class getPGClass() {
-      myStackCount++;
-
-      if (myStackCount > 1) {
-        RuntimeException rt = new RuntimeException("Growing stack");
-        
-        if (myStackCount > 4) {
-          System.exit(-1);
-        } else {
-          rt.printStackTrace();
-        }
-      }
-
-      Class pgClass = myRealSchedule.getPGClass();
-
-      myStackCount--;
-
-      return pgClass; 
+      return myRealSchedule.getPGClass();
     }
 
     public void setDefault(TimePhasedPropertyGroup defaultPG) {
