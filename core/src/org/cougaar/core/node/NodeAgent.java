@@ -254,8 +254,6 @@ public class NodeAgent
 
     MetricsServiceProvider msp = new MetricsServiceProvider();
     add(msp);
-    rootsb.addService(MetricsService.class, msp);
-    rootsb.addService(MetricsUpdateService.class, msp);
 
 
     //add the vm metrics

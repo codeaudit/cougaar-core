@@ -29,6 +29,7 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateObject;
 import org.cougaar.core.node.NodeIdentifier;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.thread.ThreadServiceProvider;
 
 public final class MetricsServiceProvider
@@ -53,7 +54,6 @@ public final class MetricsServiceProvider
 
     private MetricsService retriever;
     private MetricsUpdateService updater;
-    private boolean syscondFactoryStarted = false;
 
     public MetricsServiceProvider() {
     }
@@ -97,6 +97,15 @@ public final class MetricsServiceProvider
 	    ex.printStackTrace();
 	}
 
+
+	NodeControlService ncs = (NodeControlService)
+	    sb.getService(this, NodeControlService.class, null);
+	ServiceBroker rootsb = ncs.getRootServiceBroker();
+	rootsb.addService(MetricsService.class, this);
+	rootsb.addService(MetricsUpdateService.class, this);
+
+	startSyscondFactory(sb);
+
     }
 
 
@@ -121,12 +130,6 @@ public final class MetricsServiceProvider
 			     Object requestor, 
 			     Class serviceClass) 
     {
-	synchronized (this) {
-	    if (!syscondFactoryStarted) {
-		syscondFactoryStarted = true;
-		startSyscondFactory(getServiceBroker());
-	    }
-	}
 	if (serviceClass == MetricsService.class) {
 	    return retriever;
 	} else if (serviceClass == MetricsUpdateService.class) {
