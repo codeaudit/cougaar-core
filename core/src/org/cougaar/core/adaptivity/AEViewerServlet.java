@@ -37,6 +37,7 @@ import java.util.TreeSet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.blackboard.BlackboardClient;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.BlackboardQueryService;
 import org.cougaar.core.service.LoggingService;
@@ -49,7 +50,13 @@ import org.cougaar.util.UnaryPredicate;
 /**
  * Servlet to view adaptivity objects and edit operating mode policies
  */
-public class AEViewerServlet extends ComponentServlet {
+public class AEViewerServlet
+extends ComponentServlet
+implements BlackboardClient
+{
+
+  public static final String FRAME = "frame";
+  public static final String AE_FRAME = "ae";
 
   public static final String OPERATINGMODE = "OperatingMode";
   public static final String POLICY = "Policy";
@@ -115,6 +122,14 @@ public class AEViewerServlet extends ComponentServlet {
     this.ns = ns;
   }
 
+  public String getBlackboardClientName() {
+    return getPath();
+  }
+
+  public long currentTimeMillis() {
+    return -1;  // N/A
+  }
+
   public void unload() {
     if (ns != null) {
       serviceBroker.releaseService(
@@ -139,22 +154,26 @@ public class AEViewerServlet extends ComponentServlet {
   }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response) {
-    String objectType = request.getParameter(CHANGE);
-    //System.out.println("\n\nAEViewer got request " + objectType);
+    String frame = request.getParameter(FRAME);
     response.setContentType("text/html");
-
     try {
       PrintWriter out = response.getWriter();
-
-      if (objectType != null) {
-	if (objectType.equals(POLICY)) {
-	  changePolicy(request, out);
-	} else if (objectType.equals(OPERATINGMODE)) {
-	  changeOperatingMode(request, out);
-	}
+      if (!(AE_FRAME.equals(frame))) {
+        // generate outer frame page
+        writeTopFrame(out);
       } else {
-	/* send adaptivity objects */
-	sendData(out);
+        // generate real AE frame
+        String objectType = request.getParameter(CHANGE);
+        if (objectType != null) {
+          if (objectType.equals(POLICY)) {
+            changePolicy(request, out);
+          } else if (objectType.equals(OPERATINGMODE)) {
+            changeOperatingMode(request, out);
+          }
+        } else {
+          /* send adaptivity objects */
+          sendData(out);
+        }
       }
       out.close();
     } catch (java.io.IOException ie) { ie.printStackTrace(); }
@@ -301,47 +320,53 @@ public class AEViewerServlet extends ComponentServlet {
     writePolicyTable(out);
   }
 
+  private void writeTopFrame(PrintWriter out) {
+    // generate outer frame page:
+    //   top:    select "/agent"
+    //   bottom: real AE frame
+    out.print(
+        "<html><head><title>AE Viewer</title></head>"+
+        "<frameset rows=\"10%,90%\">\n"+
+        "<frame src=\""+
+        "/agents?format=select&suffix="+
+        getEncodedAgentName()+
+        "\" name=\"agentFrame\">\n"+
+        "<frame src=\"/$"+
+        getEncodedAgentName()+
+        getPath()+"?"+FRAME+"="+AE_FRAME+
+        "\" name=\""+AE_FRAME+"\">\n"+
+        "</frameset>\n"+
+        "<noframes>Please enable frame support</noframes>"+
+        "</html>\n");
+  }
+
   private void writeAgentSelector(PrintWriter out) {
 
     out.print(
 	      "<script language=\"JavaScript\">\n"+
 	      "<!--\n"+
 	      "function mySubmit() {\n"+
-	      "  var tidx = document.myForm.formCluster.selectedIndex\n"+
-	      "  var cluster = document.myForm.formCluster.options[tidx].text\n"+
-	      "  document.myForm.action=\"/$\"+cluster+\"");
-    out.print(getPath());
-    out.print("\"\n"+
+              "  var obj = top.agentFrame.document.agent.name;\n"+
+              "  var encAgent = obj.value;\n"+
+              "  if (encAgent.charAt(0) == '.') {\n"+
+              "    alert(\"Please select an agent name\")\n"+
+              "    return false;\n"+
+              "  }\n"+
+              "  document.myForm.target=\""+AE_FRAME+"\"\n"+
+	      "  document.myForm.action=\"/$\"+encAgent+\""+
+              getPath()+"\"\n"+
 	      "  return true\n"+
 	      "}\n"+
 	      "// -->\n"+
-	      "</script>\n");
-    out.print("<h2><center>Adaptivity Viewer at ");
-    out.print(getEncodedAgentName());
-    out.print(
+	      "</script>\n"+
+              "<h2><center>Adaptivity Viewer at "+
+              getEncodedAgentName()+
 	      "</center></h2>\n"+
 	      "<form name=\"myForm\" method=\"get\" "+
 	      "onSubmit=\"return mySubmit()\">\n"+
-	      "Adaptivity Objects at "+
-	      "<select name=\"formCluster\">\n");
-    // lookup all known cluster names
-    List names = NSUtil.getAllEncodedAgentNames(ns);
-    int sz = names.size();
-    for (int i = 0; i < sz; i++) {
-      String n = (String) names.get(i);
-      out.print("  <option ");
-      if (n.equals(getEncodedAgentName())) {
-	out.print("selected ");
-      }
-      out.print("value=\"");
-      out.print(n);
-      out.print("\">");
-      out.print(n);
-      out.println("</option>");
-    }
-    out.print("</select>");
-    out.println("<input type=submit name=\"formSubmit\" value=\"Reload\"><br>\n</form>");
-
+              "<input type=hidden name=\""+FRAME+"\" value=\""+AE_FRAME+"\">\n"+
+              "<input type=submit name=\"formSubmit\" value=\"Reload\">"+
+              "<br>\n</form>");
   }
 
   /**
@@ -441,10 +466,13 @@ public class AEViewerServlet extends ComponentServlet {
 
     for (Iterator it = policies.iterator(); it.hasNext();) {
       
-      out.print("<FORM METHOD=\"GET\" ACTION=\"/$");
-      out.print(getEncodedAgentName());
-      out.print(getPath());
-      out.print("\">\n");
+      out.print(
+          "<FORM METHOD=\"GET\" ACTION=\"/$"+
+          getEncodedAgentName()+
+          getPath()+
+          "\" target=\""+AE_FRAME+"\">\n"+
+          "<input type=hidden name=\""+FRAME+
+          "\" value=\""+AE_FRAME+"\">\n");
       
       OperatingModePolicy omp = (OperatingModePolicy) it.next();
       out.println ("<tr> <td>");
