@@ -12,6 +12,9 @@ package org.cougaar.core.poke;
 
 import org.cougaar.core.component.*;
 
+/**
+ * Schedules plugins. Tells them to run by poking them
+ */
 public interface SchedulerService
   extends Poker, AsynchronousService {
 }

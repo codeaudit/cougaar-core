@@ -22,17 +22,22 @@ import java.util.Iterator;
 
 /**
  * first new-fangled plugin. It doesn't do much, but it
- * holds on to its own blackboard subscription watcher
+ * holds on to its own blackboard subscription watcher.
+ * Uses new SchedulerService.
+ *
+ * Use it as a base class. Make a derived class simply by overriding 
+ * setupSubscriptions() and execute()
  **/
 public class PokePlugin implements PluginBase, BlackboardClient {
 
+  // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;
   protected SchedulerService myScheduler = null;
   protected Pokable schedulerProd = null;
   protected BlackboardService blackboard = null;
   protected boolean primed = false;
   private PluginBindingSite pluginBindingSite = null;
-  private SubscriptionWatcher watcher = null;
+  private ThinWatcher watcher = null;
   private Collection parameters = null;
 
   public PokePlugin() { }
@@ -129,8 +134,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
    * Found by introspection by BinderSupport
    **/
   public void initialize() {
-    // poke him to see what he'll do
-    System.out.println("PokePlugin.initialize() - poking scheduler");
+    // Tell the scheduler to run me at least this once
     schedulerProd.poke();
   }
 
@@ -190,11 +194,13 @@ public class PokePlugin implements PluginBase, BlackboardClient {
 
   /**
    * override me
+   * Called once sometime after initialization
    **/
   protected void setupSubscriptions() {}
 
   /**
    * override me
+   * Called everytime plugin is scheduled to run
    **/
   protected void execute() {}
 
@@ -206,6 +212,7 @@ public class PokePlugin implements PluginBase, BlackboardClient {
     /** Override this method so we don't have to do a wait()
      */
     public void signalNotify(int event) {
+      // This seems to get called even though my subscriptions haven't changed. Why?
       super.signalNotify(event);
       System.out.println("ThinWatcher.signalNotify(" + event + ")");
       // ask the scheduler to run us again.

@@ -15,17 +15,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.cougaar.core.component.*;
 
-public class SchedulerServiceProvider // Should this be called SchedulerServiceProvider?
+/**
+ * Scheduler that runs its schedulees in a shared thread
+ * The schedulees tell the Scheduler they want to be run via a Pokable.
+ * The schedulees pass in a Pokable that the Scheduler calls to activate them.
+ */
+public class SchedulerServiceProvider 
   implements SchedulerService, ServiceProvider
 {
 
   private HashMap clients = new HashMap(13);
   private ArrayList runThese = new ArrayList(13);
-  //private Set wrapper = Collections.synchronizedSet(runThese);
 
   public SchedulerServiceProvider() {}
 
@@ -40,23 +43,28 @@ public class SchedulerServiceProvider // Should this be called SchedulerServiceP
   }
 
 
-  public Pokable register(Pokable component) {
+  // Poker interface methods
+  public Pokable register(Pokable manageMe) {
     assureStarted();
-    return new SchedulerCallback(component);
+    return new SchedulerCallback(manageMe);
   }
 
-  public void unregister(Pokable component) {
+  public void unregister(Pokable stopPokingMe) {
+    Object component = clients.get(stopPokingMe);
     clients.remove(component);
   }
 
+  /**
+   * Tell the Scheduler what it is scheduling and how to wake it
+   * @param comp - the component to schedule
+   * @param pc - the callback object to poke when its time to run
+   **/
+  // Do we really need this?
   public void setPokable(Component comp, Pokable pc) {
     System.out.println("SchedulerServiceProvider.register(" + comp.toString() + ")");
     // stuff this in a hashtable.
     clients.put(comp, pc);
 
-//      synchronized(runThese) {
-//        runThese.add(comp);
-//      }
   }
 
   /** the scheduler instance (if started) **/
@@ -119,14 +127,17 @@ public class SchedulerServiceProvider // Should this be called SchedulerServiceP
    * Components hook into me
    **/
   protected class SchedulerCallback implements Pokable {
-    private Pokable component = null;
-    public SchedulerCallback (Pokable comp) {
-      component = comp;
+    private Pokable componentsPokable = null;
+    public SchedulerCallback (Pokable manageMe) {
+      componentsPokable = manageMe;
     }
+    /**
+     * Add component to the list of pokables to be poked
+     **/
     public void poke() {
       System.out.println("SchedulerServiceProvider.SchedulerCallback.poke() - ouch! I've been poked");
       synchronized(runThese) {
-	runThese.add(component);
+	runThese.add(componentsPokable);
 	signalActivity();
       }
     }
