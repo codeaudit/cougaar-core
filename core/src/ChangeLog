@@ -1,3 +1,27 @@
+2002-05-22  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/service/SchedulerService.java:
+	Add a little bit of javadoc for parameters.
+
+	* org/cougaar/core/relay/RelayLP.java:
+	Fix bug handling null change report collection. Ya gotta create a
+	new collection before you can add to it.
+
+	* org/cougaar/core/blackboard/Distributor.java:
+	Silence "persistence overdue" message -- it's misleading and
+	unnecessary -- persistence is always overdue before it's
+	performed. That's why it happens.
+
+	* org/cougaar/core/adaptivity/TaskSensorPlugin.java:
+	Fix problem with measuring the dispose rate. The removed list of
+	an incremental subscription having a DynamicUnaryPredicate is not
+	populated with objects just because the predicate becomes false
+	unless a publishChange is done on the object. That is not normally
+	done when a Task is disposed (allocated, expanded, etc.) so we
+	would not see any disposes unless the Task were actually
+	rescinding. Instead, we need to separately subscribe to the plan
+	elements to count disposes.
+
 2002-05-21  Michael Thome  <mthome@bbn.com>
 
 	* SimpleAgent
