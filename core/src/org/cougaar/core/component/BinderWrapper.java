@@ -78,6 +78,24 @@ public abstract class BinderWrapper
   public void start() {
     child.start();
   }
+  public void suspend() {
+    child.suspend();
+  }
+  public void resume() {
+    child.resume();
+  }
+  public void stop() {
+    child.stop();
+  }
+  public void halt() {
+    child.halt();
+  }
+  public void unload() {
+    child.unload();
+  }
+  public int getModelState() {
+    return child.getModelState();
+  }
   public Object getState() {
     return child.getState();
   }
