@@ -1,3 +1,27 @@
+2001-09-06  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/NSImpl.java:
+	Create using NamingSocketFactory.
+
+	* org/cougaar/core/naming/RMINameServer.java:
+	Create rmi registry using NamingSocketFactory.
+
+	* org/cougaar/core/naming/NamingSocketFactory.java:
+	Implements RMIServerSocketFactory and RMIClientSocketFactory by
+	creating SSLServerSocket and SSLSocket instances respectively.
+	Uses the default SSL socket factories. The default SSL socket
+	factories use a trust manager based on the contents of
+	<java>/jre/lib/security/cacerts and a key manager based on keys
+	and certificates in <user.home>/.keystore. This can be overridden
+	by system properties on the command line. For example:
+	MYPROPERTIES="$MYPROPERTIES -Djavax.net.ssl.trustStore=keystore"
+	MYPROPERTIES="$MYPROPERTIES -Djavax.net.ssl.trustStorePassword=password"
+	MYPROPERTIES="$MYPROPERTIES -Djavax.net.ssl.keyStore=keystore"
+	MYPROPERTIES="$MYPROPERTIES -Djavax.net.ssl.keyStorePassword=password"
+	Currently, ssl is not enabled by default. To enable ssl set
+	-Dorg.cougaar.core.naming.useSSL=true
+	The default will probably be changed in the near future.
+
 2001-09-05  Michael Thome  <mthome@bbn.com>
 
 	* ClusterImpl, AgentBinder, AgentBindingSite, AgentManager, AgentManagerForBinder
