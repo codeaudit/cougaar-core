@@ -711,7 +711,10 @@ extends ContainerSupport
       if (in != null) {
 	try {
 	  in.close();
-	} catch(Exception e) {}
+	} catch(Exception e) {
+	  if (loggingService.isDebugEnabled())
+	    loggingService.debug("Failed closing input stream for " + FILENAME, e);
+	}
 	in = null;
       }
     }
