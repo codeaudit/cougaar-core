@@ -50,7 +50,7 @@ public class TaskSensorPlugin extends ServiceUserPlugin {
     new OMCRangeList(new OMCRange(0.0, Double.MAX_VALUE));
 
   private static final double TIME_CONSTANT = 30000.0; // Thirty second time constant
-  private static final double UPDATE_INTERVAL = 10000.0; // Update every 10 seconds
+  private static final long UPDATE_INTERVAL = 10000L; // Update every 10 seconds
 
   private ConditionService conditionService;
 
