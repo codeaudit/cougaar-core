@@ -1,12 +1,12 @@
 /*
  * <copyright>
- *  Copyright 1997-2001 BBNT Solutions, LLC
+ *  Copyright 1997-2002 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the Cougaar Open Source License as published by
  *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
- * 
+ *
  *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
  *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
  *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
@@ -21,47 +21,75 @@
 
 package org.cougaar.core.blackboard;
 
-import org.cougaar.core.agent.*;
-
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import org.cougaar.core.blackboard.*;
+import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.core.agent.ClusterServesLogicProvider;
 import org.cougaar.core.persist.Persistence;
+import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.PersistenceSubscriberState;
 import org.cougaar.core.persist.RehydrationResult;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
-import org.cougaar.core.service.NamingService;
 import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.log.LoggerFactory;
 import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.LoggerFactory;
 
-/**  The Distributor
- * 
- * @property org.cougaar.core.agent.keepPublishHistory When set to <em>true</em>, enables tracking of 
- * all publishes.  Extremely expensive.
+/**
+ * The Distributor coordinates blackboard transactions, subscriber
+ * updates, and persistence.
+ * <p>
+ * An agent has one blackboard, one distributor, and zero or more
+ * subscribers.  Each subscriber has a set of subscriptions that
+ * are known only to that subscriber.  A subscriber registers with
+ * the distributor to receive blackboard add/change/remove
+ * notification.  When a subscriber wishes to modify the
+ * blackboard contents, it must start a distributor transaction,
+ * fill an envelope with add/change/remove tuples, and finish
+ * the distributor transaction.  The blackboard is a special
+ * subscriber that maintains a view of all blackboard objects and
+ * manages the logic providers.  The distributor also coordinates
+ * periodic persistence and ensures that blackboard updates are
+ * thread-safe.
+ *
+ * @property org.cougaar.core.agent.keepPublishHistory
+ *   if set to <em>true</em>, enables tracking of
+ *   all publishes.  Extremely expensive.
  **/
-public class Distributor {
+public final class Distributor {
+
   /*
-   * Lies follow:
+   * Design summary:
+   *
+   * The distributor uses two locks:
+   *   distributorLock
+   *   transactionLock
+   * The distributorLock guards against "distribute()" and
+   * blackboard modification.  The transactionLock guards against
+   * start/finish transaction and persistence.  Only one distribute
+   * can occur at a time, and it can't occur at the same time as a
+   * persist.  Only one persist can occur at a time, and there must
+   * be no active transactions (to guard against object
+   * modifications during serialization).  When a persist is not
+   * taking place it's okay for transactions to start/finish while
+   * a distribute is taking place, to provide parallelism.
+   *
+   * Persistence runs in either a lazy or non-lazy mode, where the
+   * best-supported mode is lazy.  Lazy persistence occurs
+   * periodically (33 seconds) if the blackboard has been modified
+   * during that time, and only if the persistence implementation
+   * indicates that it is "getPersistenceTime()".
+   *
+   * Old notes, partially accurate:
+   *
    * Synchronization methodology. The distributor distributes three
    * kinds of things: envelopes, messages, and timers. All three are
    * synchronized on the distributor object (this) so only one of
@@ -76,11 +104,35 @@ public class Distributor {
    * must be generated. A persistence delta must also be generated if
    * there are no open transactions and nothing has been distributed
    * to any subscriber.
-   **/
+   */
 
   /** The maximum interval between persistence deltas. **/
   private static final long MAX_PERSIST_INTERVAL = 37000L;
   private static final long TIMER_PERSIST_INTERVAL = 33000L;
+
+  //
+  // these are set in the constructor and are final:
+  //
+
+  /** The publish history is available for subscriber use. */
+  public final PublishHistory history =
+    (Boolean.getBoolean("org.cougaar.core.agent.keepPublishHistory") ?
+     new PublishHistory() :
+     null);
+
+  /** the name of this distributor */
+  private final String name;
+
+  // blackboard, noted below.
+
+  /** the logger, which is thread safe */
+  private final Logger logger =
+    LoggerFactory.getInstance().createLogger(getClass());
+
+  //
+  // these are set immediately following the constructor, and
+  // are effectively final:
+  //
 
   /** True if using lazy persistence **/
   private boolean lazyPersistence = true;
@@ -88,23 +140,37 @@ public class Distributor {
   /** The object we use to persist ourselves. */
   private Persistence persistence = null;
 
-  /** The time that we last persisted **/
-  protected long lastPersist = System.currentTimeMillis();
+  //
+  // lock for open/close transaction and persistence:
+  //
 
-  /** Do we need to persist sometime; changed state has not been persisted **/
-  private boolean needToPersist = false;
+  private final Object transactionLock = new Object();
 
-  /** All objects published prior to the last rehydrated delta **/
-  private PersistenceEnvelope rehydrationEnvelope = null;
+  // the following are locked under the transactionLock:
+  private boolean persistPending = false;
+  private boolean persistActive = false;
+  private int transactionCount = 0;
 
-  /** Envelopes distributed since the last rehydrated delta **/
-  private List postRehydrationEnvelopes = null;
+  // temporary list for use within "doPersist":
+  private final List subscriberStates = new ArrayList();
+
+  //
+  // lock for distribute and blackboard access:
+  //
+
+  private final Object distributorLock = new Object();
+
+  // the following are locked under the distributorLock:
+
+  /** our blackboard */
+  private final Blackboard blackboard;
 
   /** True if rehydration occurred at startup **/
   private boolean didRehydrate = false;
 
-  /** Envelopes that have been distributed during a persistence epoch. **/
-  private List epochEnvelopes = new ArrayList();
+  /** Envelopes that have been distributed during a
+   * persistence epoch. **/
+  private final List epochEnvelopes = new ArrayList();
 
   /** The message manager for this cluster **/
   private MessageManager myMessageManager = null;
@@ -112,161 +178,74 @@ public class Distributor {
   /** Timer thread for periodic lazy-persistence. **/
   private Timer distributorTimer = null;
 
-  /** Debug logging **/
-  private PrintWriter logWriter = null;
+  private final Subscribers subscribers = new Subscribers();
 
-  private Logger logger = LoggerFactory.getInstance().createLogger(getClass());
+  // temporary lists, for use within "distribute()":
+  private final List outboxes = new ArrayList();
+  private final List messagesToSend = new ArrayList();
 
-  public PublishHistory history =
-    System.getProperty("org.cougaar.core.agent.keepPublishHistory", "false").equals("true")
-      ? new PublishHistory()
-      : null;
+  // temporary list, for use within "receiveMessages()":
+  private final List directiveMessages = new ArrayList();
 
-  /** The format of timestamps in the log **/
-  private DateFormat logTimeFormat =
-    new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS ");
+  //
+  // These are partially locked, and may cause bugs in
+  // the future.  In practice they seem to be fine:
+  //
 
-  /** Our set of (all) registered Subscribers **/
-  private static class Subscribers {
-    private List subscribers = new ArrayList();
-    ReferenceQueue refQ = new ReferenceQueue();
+  /** Envelopes distributed since the last rehydrated delta **/
+  private List postRehydrationEnvelopes = null;
 
-    public void register(Subscriber subscriber) {
-      checkRefQ();
-      subscribers.add(new WeakReference(subscriber, refQ));
-    }
-    public void unregister(Subscriber subscriber) {
-      for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
-        WeakReference ref = (WeakReference) iter.next();
-        if (ref.get() == subscriber) {
-          iter.remove();
-        }
-      }
-    }
+  /** All objects published prior to the last rehydrated delta **/
+  private PersistenceEnvelope rehydrationEnvelope = null;
 
-    public Iterator iterator() {
-      checkRefQ();
+  /** The time that we last persisted **/
+  private long lastPersist = System.currentTimeMillis();
 
-      class MyIterator implements Iterator {
-        private Object n = null;
-        private Iterator iter;
-          
-        public MyIterator(Iterator it) {
-          iter = it;
-          advance();
-        }
+  /** Do we need to persist sometime; changed state has not
+   * been persisted **/
+  private boolean needToPersist = false;
 
-        /** advance to the next non-null element, dropping
-         * nulls along the way
-         **/
-        private void advance() {
-          while (iter.hasNext()) {
-            WeakReference ref = (WeakReference) iter.next();
-            n = ref.get();
-            if (n == null) {
-              iter.remove();
-            } else {
-              return;
-            }
-          }
-          // ran off the end,
-          n = null;
-        }
-
-        public boolean hasNext() {
-          return (n != null);
-        }
-        public Object next() {
-          Object x = n;
-          advance();
-          return x;
-        }
-        public void remove() {
-          iter.remove();
-        }
-      };
-      return new MyIterator(subscribers.iterator());
-    }
-
-    private void checkRefQ() {
-      Reference ref;
-      while ((ref = refQ.poll()) != null) {
-        subscribers.remove(ref);
-      }
-    }
-  }
-
-  private Subscribers subscribers = new Subscribers();
-
-  /** Our Blackboard **/
-  private Blackboard blackboard;
-
-  private String myName;
 
   /** Isolated constructor **/
   public Distributor(Blackboard blackboard, String name) {
-    if (name == null) name = "Anonymous";
-    myName = name;
-
-    if (Boolean.getBoolean("org.cougaar.distributor.debug")) {
-      try {
-        logWriter = new PrintWriter(new FileWriter("Distributor_" + name + ".log", true));
-        printLog("Distributor Started");
-      }
-      catch (IOException e) {
-        logger.error("Can't open Distributor log file: " + e);
-      }
-    }
     this.blackboard = blackboard;
-    // create the message distribution thread (but don't start it),
-    // requiring our client to call this.start().
+    this.name = (name != null ? name : "Anonymous");
+    if (logger.isInfoEnabled()) {
+      logger.info(name + ": Distributor started");
+    }
   }
 
-  public void setPersistence(Persistence newPersistence, boolean lazy) {
+  /**
+   * Called by the blackboard immediately after the constructor,
+   * and only once.
+   */
+  void setPersistence(Persistence newPersistence, boolean lazy) {
+    assert persistence == null : "persistence already set";
     persistence = newPersistence;
     lazyPersistence = lazy;
   }
 
-  /** called by Subscriber to link into Blackboard persistence mechanism **/
+  /**
+   * Called by Subscriber to link into Blackboard persistence
+   * mechanism
+   */
   Persistence getPersistence() {
     return persistence;
   }
 
-  private void printEnvelope(Envelope envelope, BlackboardClient client) {
-    boolean first = true;
-    for (Iterator tuples = envelope.getAllTuples(); tuples.hasNext(); ) {
-      if (first) {
-        printLog("Outbox of " + client.getBlackboardClientName());
-        first = false;
-      }
-      EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
-      if (tuple.isBulk()) {
-        for (Iterator objects = ((BulkEnvelopeTuple) tuple).getCollection().iterator();
-             objects.hasNext(); ) {
-          printLog("BULK   " + objects.next());
-        }
-      } else {
-        String kind = ""; 
-        if (tuple.isAdd()) {
-          kind = "ADD    ";
-        } else if (tuple.isChange()) {
-          kind = "CHANGE ";
-        } else {
-          kind = "REMOVE ";
-        }
-        printLog(kind + tuple.getObject());
+  /**
+   * Called by subscriber to discard rehydration info.
+   */
+  void discardRehydrationInfo(Subscriber subscriber) {
+    // FIXME this isn't locked!
+    if (rehydrationEnvelope != null) {
+      persistence.discardSubscriberState(subscriber);
+      if (!persistence.hasSubscriberStates()) {
+        // discard rehydration info:
+        rehydrationEnvelope = null;
+        postRehydrationEnvelopes = null;
       }
     }
-  }
-
-  private void printLog(String msg) {
-    logWriter.print(logTimeFormat.format(new Date(System.currentTimeMillis())));
-    logWriter.println(msg);
-    logWriter.flush();
-  }
-
-  public String toString() {
-    return "<Distributor " + myName + ">";
   }
 
   public boolean didRehydrate(Subscriber subscriber) {
@@ -274,24 +253,32 @@ public class Distributor {
     return (persistence.getSubscriberState(subscriber) != null);
   }
 
-  public MessageManager getMessageManager() {
-    return myMessageManager;
-  }
-
-  /** Pass thru to blackboard to safely return blackboard object counts.
+  /**
+   * Pass thru to blackboard to safely return blackboard object
+   * counts.
    * Used by BlackboardMetricsService
    * @param predicate The objects to count in the blackboard
-   * @return int The count of objects that match the predicate currently in the blackboard
+   * @return int The count of objects that match the predicate
+   *   currently in the blackboard
    **/
-  public synchronized int getBlackboardCount(UnaryPredicate predicate) {
-    return blackboard.countBlackboard(predicate);
+  public int getBlackboardCount(UnaryPredicate predicate) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      return blackboard.countBlackboard(predicate);
+    }
   }
 
-  /** Pass thru to blackboard to safely return the size of the blackboard
-   *  collection.
+  /**
+   * Pass thru to blackboard to safely return the size of the
+   * blackboard collection.
    **/
-  public synchronized int getBlackboardSize() {
-    return blackboard.getBlackboardSize();
+  public int getBlackboardSize() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      return blackboard.getBlackboardSize();
+    }
   }
 
   /**
@@ -308,9 +295,12 @@ public class Distributor {
    * value of the didRehydrate flag.
    **/
   private void rehydrate(Object state) {
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     if (persistence != null) {
       rehydrationEnvelope = new PersistenceEnvelope();
-      RehydrationResult rr = persistence.rehydrate(rehydrationEnvelope, state);
+      RehydrationResult rr =
+        persistence.rehydrate(rehydrationEnvelope, state);
       if (lazyPersistence) {    // Ignore any rehydrated message manager
         myMessageManager = new MessageManagerImpl(false);
       } else {
@@ -321,13 +311,17 @@ public class Distributor {
       }
       if (rr.undistributedEnvelopes != null) {
         didRehydrate = true;
-	postRehydrationEnvelopes = new ArrayList();
+        postRehydrationEnvelopes = new ArrayList();
         postRehydrationEnvelopes.addAll(rr.undistributedEnvelopes);
         epochEnvelopes.addAll(rr.undistributedEnvelopes);
       }
     } else {
       myMessageManager = new MessageManagerImpl(false);
     }
+  }
+
+  private MessageManager getMessageManager() {
+    return myMessageManager;
   }
 
   /**
@@ -343,72 +337,73 @@ public class Distributor {
    * to the subscription. The subscriber will be notified of these as
    * well.
    **/
-  private void rehydrateNewSubscription(Subscription s,
-                                        List persistedTransactionEnvelopes,
-                                        List persistedPendingEnvelopes)
-  {
+  private void rehydrateNewSubscription(
+      Subscription s,
+      List persistedTransactionEnvelopes,
+      List persistedPendingEnvelopes) {
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     s.fill(rehydrationEnvelope);
     if (persistedTransactionEnvelopes != null) {
-      for (Iterator iter = persistedTransactionEnvelopes.iterator(); iter.hasNext(); ) {
+      for (Iterator iter = persistedTransactionEnvelopes.iterator();
+          iter.hasNext(); ) {
         s.fill((Envelope) iter.next());
       }
     }
     if (persistedPendingEnvelopes != null) {
-      for (Iterator iter = persistedPendingEnvelopes.iterator(); iter.hasNext(); ) {
+      for (Iterator iter = persistedPendingEnvelopes.iterator();
+          iter.hasNext(); ) {
         s.fill((Envelope) iter.next());
       }
     }
-    for (Iterator iter = postRehydrationEnvelopes.iterator(); iter.hasNext(); ) {
+    for (Iterator iter = postRehydrationEnvelopes.iterator();
+        iter.hasNext(); ) {
       s.fill((Envelope) iter.next());
     }
   }
 
-  /**
-   * Discard rehydration info for a given subscriber
-   **/
-  void discardRehydrationInfo(Subscriber subscriber) {
-    if (rehydrationEnvelope != null) {
-      persistence.discardSubscriberState(subscriber);
-      if (!persistence.hasSubscriberStates()) {
-        discardRehydrationInfo();
-      }
-    }
-  }
-
-  private void discardRehydrationInfo() {
-    rehydrationEnvelope = null;
-    postRehydrationEnvelopes = null;
-  }
-
   /** provide a hook to start the distribution thread.
-   * Note that although Distributor is Runnable, it does not extend Thread,
-   * rather, it maintains it's own thread state privately.
+   * Note that although Distributor is Runnable, it does not
+   * extend Thread, rather, it maintains it's own thread state
+   * privately.
    **/
-  public synchronized void start(ClusterServesLogicProvider theCluster, Object state) {
-    rehydrate(state);
-    getMessageManager().start(theCluster, didRehydrate);
+  public void start(
+      ClusterServesLogicProvider theCluster, Object state) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      rehydrate(state);
+      getMessageManager().start(theCluster, didRehydrate);
 
-    if (lazyPersistence && distributorTimer == null) {
-      distributorTimer = new Timer();
-      distributorTimer.schedule(new TimerTask() {
-        public void run() {
-          timerPersist();
-        }
-      }, 
-        TIMER_PERSIST_INTERVAL, 
-        TIMER_PERSIST_INTERVAL);
+      if (lazyPersistence && distributorTimer == null) {
+        distributorTimer = new Timer();
+        TimerTask tt =
+          new TimerTask() {
+            public void run() {
+              timerPersist();
+            }
+          };
+        distributorTimer.schedule(
+            tt,
+            TIMER_PERSIST_INTERVAL,
+            TIMER_PERSIST_INTERVAL);
+      }
     }
   }
 
   /** provide a hook to stop the distribution thread.
    * @see #start
    **/
-  public synchronized void stop() {
-    getMessageManager().stop();
+  public void stop() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      getMessageManager().stop();
 
-    if (lazyPersistence && distributorTimer != null) {
-      distributorTimer.cancel();
-      distributorTimer = null;
+      if (lazyPersistence && distributorTimer != null) {
+        distributorTimer.cancel();
+        distributorTimer = null;
+      }
     }
   }
 
@@ -420,70 +415,84 @@ public class Distributor {
    * Register a Subscriber with the Distributor.  Future envelopes are
    * distributed to all registered subscribers.
    **/
-  public synchronized void registerSubscriber(Subscriber subscriber) {
-    subscribers.register(subscriber);
+  public void registerSubscriber(Subscriber subscriber) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      subscribers.register(subscriber);
+    }
   }
 
   /**
    * Unregister subscriber with the Distributor. Future envelopes are
    * not distributed to unregistered subscribers.
    **/
-  public synchronized void unregisterSubscriber(Subscriber subscriber) {
-    subscribers.unregister(subscriber);
+  public void unregisterSubscriber(Subscriber subscriber) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      subscribers.unregister(subscriber);
+    }
   }
 
   /**
    * Provide a new subscription with its initial fill. If the
    * subscriber of the subscription was persisted, we fill from the
-   * persisted information (see rehydrateNewSubscription) otherwise we
-   * fill from the Blackboard (blackboard.fillSubscription).
+   * persisted information (see rehydrateNewSubscription) otherwise
+   * we fill from the Blackboard (blackboard.fillSubscription).
    **/
-  public synchronized void fillSubscription(Subscription subscription) {
-    Subscriber subscriber = subscription.getSubscriber();
-    PersistenceSubscriberState subscriberState = null;
-    if (didRehydrate) {
-      if (subscriber.isReadyToPersist()) {
-        if (logger.isInfoEnabled()) logger.info("No subscriber state for late subscribe of " + subscriber.getName());
-      } else {
-        subscriberState = persistence.getSubscriberState(subscriber);
+  public void fillSubscription(Subscription subscription) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      Subscriber subscriber = subscription.getSubscriber();
+      PersistenceSubscriberState subscriberState = null;
+      if (didRehydrate) {
+        if (subscriber.isReadyToPersist()) {
+          if (logger.isInfoEnabled()) {
+            logger.info(
+                name + ": No subscriber state for late subscribe of " +
+                subscriber.getName());
+          }
+        } else {
+          subscriberState =
+            persistence.getSubscriberState(subscriber);
+        }
       }
-    }
-    if (subscriberState != null &&
-        subscriberState.pendingEnvelopes != null) {
-      rehydrateNewSubscription(subscription,
-                               subscriberState.transactionEnvelopes,
-                               subscriberState.pendingEnvelopes);
-    } else {
-      blackboard.fillSubscription(subscription);
-    }
+      if (subscriberState != null &&
+          subscriberState.pendingEnvelopes != null) {
+        rehydrateNewSubscription(subscription,
+            subscriberState.transactionEnvelopes,
+            subscriberState.pendingEnvelopes);
+      } else {
+        blackboard.fillSubscription(subscription);
+      }
 
-    // distribute the initialize envelope
-    /*
-    {
+      // distribute the initialize envelope
+      /*
+         {
       // option 1
       distribute(new InitializeSubscriptionEnvelope(subscription), null);
-    }
-    */
-    // blackboard subscribes don't need an ISE to fill
-    if (subscriber != blackboard) {
-      // option 2
-      Subscriber s = subscription.getSubscriber();
-      List l = new ArrayList(1);
-      l.add(new InitializeSubscriptionEnvelope(subscription));
-      s.receiveEnvelopes(l);    // queue in the right spot
+      }
+       */
+      // blackboard subscribes don't need an ISE to fill
+      if (subscriber != blackboard) {
+        // option 2
+        Subscriber s = subscription.getSubscriber();
+        List l = new ArrayList(1);
+        l.add(new InitializeSubscriptionEnvelope(subscription));
+        s.receiveEnvelopes(l);    // queue in the right spot
+      }
     }
   }
 
-  public synchronized void fillQuery(Subscription subscription) {
-    blackboard.fillQuery(subscription);
+  public void fillQuery(Subscription subscription) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      blackboard.fillQuery(subscription);
+    }
   }
-
-  // These are used as locals, but allocated here to reduce consing.
-  private final List outboxes = new ArrayList();
-  private static final List emptyList = new ArrayList(0);
-  private final List subscriberStates = new ArrayList();
-  private final List messagesToSend = new ArrayList();
-  private final List directiveMessages = new ArrayList();
 
   /**
    * The main workhorse of the distributor. Distributes the contents
@@ -498,9 +507,12 @@ public class Distributor {
    * the generation of a persistence delta is considered.
    **/
   private void distribute(Envelope outbox, BlackboardClient client) {
-    if (outbox != null && logWriter != null && 
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    if (outbox != null &&
+        logger.isDebugEnabled() &&
         client != null) {
-      printEnvelope(outbox, client);
+      logEnvelope(outbox, client);
     }
     if (persistence != null) {
       if (needToPersist) {
@@ -550,14 +562,15 @@ public class Distributor {
         busy = true;
       }
     }
-    blackboard.appendMessagesToSend(messagesToSend); // Fill messagesToSend
+    // Fill messagesToSend
+    blackboard.appendMessagesToSend(messagesToSend);
     if (messagesToSend.size() > 0) {
-      if (logWriter != null) {
+      if (logger.isDebugEnabled()) {
         for (Iterator i = messagesToSend.iterator(); i.hasNext(); ) {
           DirectiveMessage msg = (DirectiveMessage) i.next();
           Directive[] dirs = msg.getDirectives();
           for (int j = 0; j < dirs.length; j++) {
-            printLog("SEND   " + dirs[j]);
+            logger.debug(name + ": SEND   " + dirs[j]);
           }
         }
       }
@@ -582,81 +595,104 @@ public class Distributor {
     outboxes.clear();
   }
 
-  public synchronized void restartAgent(ClusterIdentifier cid) {
+  public void restartAgent(ClusterIdentifier cid) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     try {
-      blackboard.startTransaction();
-      this.startTransaction();
-      blackboard.restart(cid);
-      Envelope envelope = blackboard.receiveMessages(Collections.EMPTY_LIST);
-      this.finishTransaction(envelope, blackboard.getClient());
+      startTransaction();
+      synchronized (distributorLock) {
+        try {
+          blackboard.startTransaction();
+          blackboard.restart(cid);
+          Envelope envelope =
+            blackboard.receiveMessages(Collections.EMPTY_LIST);
+          distribute(envelope, blackboard.getClient());
+        } finally {
+          blackboard.stopTransaction();
+        }
+      }
     } finally {
-      blackboard.stopTransaction();
+      finishTransaction();
     }
   }
 
   /**
-   * Process directive and ack messages from other clusters. Acks are
-   * given to the message manager. Directive messages are passed
-   * through the message manager for validation and then given to the
-   * Blackboard for processing. Envelopes resulting from that processing
-   * are distributed.
+   * Process directive and ack messages from other clusters. Acks
+   * are given to the message manager. Directive messages are passed
+   * through the message manager for validation and then given to
+   * the Blackboard for processing. Envelopes resulting from that
+   * processing are distributed.
    **/
-  public synchronized void receiveMessages(List messages) {
-    for (Iterator msgs = messages.iterator(); msgs.hasNext(); ) {
-      Object m = msgs.next();
-      if (m instanceof DirectiveMessage) {
-        DirectiveMessage msg = (DirectiveMessage) m;
-        int code = getMessageManager().receiveMessage(msg);
-        if ((code & MessageManager.RESTART) != 0) {
-          try {
-            blackboard.startTransaction();
-            blackboard.restart(msg.getSource());
-          } finally {
-            blackboard.stopTransaction();
-          }
-        }
-        if ((code & MessageManager.IGNORE) == 0) {
-          if (logWriter != null) {
-            Directive[] dirs = msg.getDirectives();
-            for (int i = 0; i < dirs.length; i++) {
-              printLog("RECV   " + dirs[i]);
+  public void receiveMessages(List messages) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    try {
+      startTransaction(); // Blocks if persistence active
+
+      synchronized (distributorLock) {
+        for (Iterator msgs = messages.iterator(); msgs.hasNext(); ) {
+          Object m = msgs.next();
+          if (m instanceof DirectiveMessage) {
+            DirectiveMessage msg = (DirectiveMessage) m;
+            int code = getMessageManager().receiveMessage(msg);
+            if ((code & MessageManager.RESTART) != 0) {
+              try {
+                blackboard.startTransaction();
+                blackboard.restart(msg.getSource());
+              } finally {
+                blackboard.stopTransaction();
+              }
+            }
+            if ((code & MessageManager.IGNORE) == 0) {
+              if (logger.isDebugEnabled()) {
+                Directive[] dirs = msg.getDirectives();
+                for (int i = 0; i < dirs.length; i++) {
+                  logger.debug(name + ": RECV   " + dirs[i]);
+                }
+              }
+              directiveMessages.add(msg);
+            }
+          } else if (m instanceof AckDirectiveMessage) {
+            AckDirectiveMessage msg = (AckDirectiveMessage) m;
+            int code = getMessageManager().receiveAck(msg);
+            if ((code & MessageManager.RESTART) != 0) {
+              // Remote cluster has restarted
+              blackboard.restart(msg.getSource());
             }
           }
-          directiveMessages.add(msg);
         }
-      } else if (m instanceof AckDirectiveMessage) {
-        AckDirectiveMessage msg = (AckDirectiveMessage) m;
-        int code = getMessageManager().receiveAck(msg);
-        if ((code & MessageManager.RESTART) != 0) {
-          blackboard.restart(msg.getSource()); // Remote cluster has restarted
+        // We nominally ack the messages here so the persisted
+        // state will include the acks. The acks are not actually
+        // sent until the persistence delta is concluded.
+        getMessageManager().acknowledgeMessages(
+            directiveMessages.iterator());
+
+        try {
+          blackboard.startTransaction();
+          Envelope envelope = blackboard.receiveMessages(
+              directiveMessages);
+          distribute(envelope, blackboard.getClient());
+        } finally {
+          blackboard.stopTransaction();
         }
+        directiveMessages.clear();
       }
-    }
-    // We nominally ack the messages here so the persisted state will
-    // include the acks. The acks are not actually sent until the
-    // persistence delta is concluded.
-    getMessageManager().acknowledgeMessages(directiveMessages.iterator());
 
-    // The following must be unconditional to insure persistence
-    // happens.
-    try {
-      blackboard.startTransaction();
-      this.startTransaction();       // Blocks if persistence active
-      Envelope envelope = blackboard.receiveMessages(directiveMessages);
-      this.finishTransaction(envelope, blackboard.getClient());
     } finally {
-      blackboard.stopTransaction();
+      finishTransaction();
     }
-
-    directiveMessages.clear();
   }
 
-  public synchronized void invokeABAChangeLPs(Set communities) {
-    try {
-      blackboard.startTransaction();
-      blackboard.invokeABAChangeLPs(communities);
-    } finally {
-      blackboard.stopTransaction();
+  public void invokeABAChangeLPs(Set communities) {
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
+      try {
+        blackboard.startTransaction();
+        blackboard.invokeABAChangeLPs(communities);
+      } finally {
+        blackboard.stopTransaction();
+      }
     }
   }
 
@@ -671,19 +707,28 @@ public class Distributor {
     doPersistence(false, false);
   }
 
-  private Object doPersistence(boolean persistedStateNeeded, boolean full) {
+  private Object doPersistence(
+      boolean persistedStateNeeded, boolean full) {
+    assert !Thread.holdsLock(distributorLock);
+    assert  Thread.holdsLock(transactionLock);
+    assert transactionCount == 1 : transactionCount;
     for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
       Subscriber subscriber = (Subscriber) iter.next();
       if (subscriber.isReadyToPersist()) {
-        subscriberStates.add(new PersistenceSubscriberState(subscriber));
+        subscriberStates.add(
+            new PersistenceSubscriberState(subscriber));
       }
     }
     Object result;
     synchronized (getMessageManager()) {
       getMessageManager().advanceEpoch();
-      result = persistence.persist(epochEnvelopes, emptyList, subscriberStates,
-                                   persistedStateNeeded, full,
-                                   lazyPersistence ? null : getMessageManager());
+      result = persistence.persist(
+          epochEnvelopes,
+          Collections.EMPTY_LIST,
+          subscriberStates,
+          persistedStateNeeded,
+          full,
+          lazyPersistence ? null : getMessageManager());
     }
     epochEnvelopes.clear();
     subscriberStates.clear();
@@ -693,34 +738,31 @@ public class Distributor {
     return result;
   }
 
-  protected boolean timeToLazilyPersist() {
-    long overdue = System.currentTimeMillis() - persistence.getPersistenceTime();
-//     if (overdue > 0L) {
-//       // This is a INFO-level logging statement, not an error.  It may be
-//       // silenced in the future to avoid confusion.
-//       //
-//       // Persistence is due now, based on the time elapsed since the 
-//       // prior persistence call.
-//       System.out.println("Lazy persistence " + myName + " overdue by " + overdue);
-//     } 
+  private boolean timeToLazilyPersist() {
+    long overdue =
+      System.currentTimeMillis() -
+      persistence.getPersistenceTime();
     return overdue > 0L;
   }
 
   private boolean timeToPersist() {
-    long nextPersistTime = Math.min(lastPersist + MAX_PERSIST_INTERVAL,
-                                    persistence.getPersistenceTime());
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // FIXME use of lastPersist outside transactionLock
+    long nextPersistTime =
+      Math.min(
+          lastPersist + MAX_PERSIST_INTERVAL,
+          persistence.getPersistenceTime());
     return (System.currentTimeMillis() >= nextPersistTime);
   }
 
   /**
    * Transaction control
    **/
-  private Object transactionLock = new Object();
-  private boolean persistPending = false;
-  private boolean persistActive = false;
-  private int transactionCount = 0;
 
   public void startTransaction() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     synchronized (transactionLock) {
       while (persistPending || persistActive) {
         try {
@@ -733,31 +775,36 @@ public class Distributor {
     }
   }
 
-  private void finishTransaction() {
-    synchronized (transactionLock) {
-      --transactionCount;
-      transactionLock.notifyAll();
-    }
-  }
-
-  public void finishTransaction(Envelope outbox, BlackboardClient client) {
-    synchronized (this) {
+  public void finishTransaction(
+      Envelope outbox, BlackboardClient client) {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    synchronized (distributorLock) {
       distribute(outbox, client);
     }
+    finishTransaction();
+  }
+
+  private void finishTransaction() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     synchronized (transactionLock) {
       if (persistPending) {
         if (transactionCount == 1) {
           // transactionCount == 1 implies persistActive == false
+          assert !persistActive;
           doPersistence();
         } else {
           if (logger.isInfoEnabled()) {
-            logger.info("Persist deferred, "
-                        + transactionCount
-                        + " transactions open");
+            logger.info(name + ": Persist deferred, "
+                + transactionCount
+                + " transactions open");
           }
         }
       }
-      finishTransaction();
+      --transactionCount;
+      assert transactionCount >= 0 : transactionCount;
+      transactionLock.notifyAll();
     }
   }
 
@@ -771,7 +818,8 @@ public class Distributor {
   }
 
   /**
-   * Force a (full) persistence delta to be generated and return result
+   * Force a (full) persistence delta to be generated and
+   * return result
    **/
   public Object getState() throws PersistenceNotEnabledException {
     persist(false, false);
@@ -780,55 +828,73 @@ public class Distributor {
   }
 
   /**
-   * Generate a persistence delta and (maybe) return the data of that
-   * delta. This code parallels that of
-   * startTransaction/finishTransaction except that:
+   * Generate a persistence delta and (maybe) return the data of
+   * that delta.
+   * <p>
+   * This code parallels that of start/finish transaction except
+   * that:<pre>
    *   distribute() is not called
    *   we wait for all transactions to close
-   * @param isStateWanted true if the data of a full persistence delta is wanted
+   * </pre><p>
+   * A "persistActive" flag is used to guarantee that only
+   * one persist occurs at a time.
+   *
+   * @param isStateWanted true if the data of a full persistence
+   *   delta is wanted
    * @return a state Object including all the data from a full
-   * persistence delta if isStateWanted is true, null if isStateWanted
-   * is false.
+   * persistence delta if isStateWanted is true, null if
+   *   isStateWanted is false.
    **/
   private Object persist(boolean isStateWanted, boolean full)
     throws PersistenceNotEnabledException
-  {
-    if (persistence == null)
-      throw new PersistenceNotEnabledException();
-    synchronized (transactionLock) {
-      while (persistActive) {
-        try {
-          transactionLock.wait();
-        } catch (InterruptedException ie) {
-        }
-      }
-      persistActive = true;
-      transactionCount++;
-      try {
-        while (transactionCount > 1) {
+    {
+      assert !Thread.holdsLock(distributorLock);
+      assert !Thread.holdsLock(transactionLock);
+      if (persistence == null)
+        throw new PersistenceNotEnabledException();
+      synchronized (transactionLock) {
+        while (persistActive) {
           try {
             transactionLock.wait();
           } catch (InterruptedException ie) {
           }
         }
-        // persistPending == don't care, transactionCount == 1
-        // We are the only one left in the pool
-        return doPersistence(isStateWanted, full);
-      } finally {
-        persistActive = false;
-        finishTransaction();
+        persistActive = true;
+        transactionCount++;
+        assert transactionCount >= 1 : transactionCount;
+        try {
+          while (transactionCount > 1) {
+            try {
+              transactionLock.wait();
+            } catch (InterruptedException ie) {
+            }
+          }
+          assert transactionCount == 1 : transactionCount;
+          // persistPending == don't care, transactionCount == 1
+          // We are the only one left in the pool
+          return doPersistence(isStateWanted, full);
+        } finally {
+          persistActive = false;
+          --transactionCount;
+          assert transactionCount == 0 : transactionCount;
+          transactionLock.notifyAll();
+        }
       }
     }
-  }
 
   private void maybeSetPersistPending() {
+    assert  Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
     if (!lazyPersistence || timeToLazilyPersist()) {
       setPersistPending(true);
     }
   }
 
   private void setPersistPending(boolean on) {
+    // caller may hold the distributorLock
+    // caller may already hold the transactionLock
     synchronized (transactionLock) {
+      // FIXME holds both locks!
       persistPending = on;
       if (!persistPending) {
         transactionLock.notifyAll();
@@ -836,8 +902,12 @@ public class Distributor {
     }
   }
 
-  protected void timerPersist() {
-    if (needToPersist && (!lazyPersistence || timeToLazilyPersist())) {
+  private void timerPersist() {
+    assert !Thread.holdsLock(distributorLock);
+    assert !Thread.holdsLock(transactionLock);
+    // FIXME unlocked access!
+    if (needToPersist &&
+        (!lazyPersistence || timeToLazilyPersist())) {
       try {
         persist(false, false);
       } catch (PersistenceNotEnabledException pnee) {
@@ -845,4 +915,115 @@ public class Distributor {
       }
     }
   }
+
+  private void logEnvelope(Envelope envelope, BlackboardClient client) {
+    if (!logger.isDebugEnabled()) return;
+    boolean first = true;
+    for (Iterator tuples = envelope.getAllTuples(); tuples.hasNext(); ) {
+      if (first) {
+        logger.debug(
+            name + ": Outbox of " + client.getBlackboardClientName());
+        first = false;
+      }
+      EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
+      if (tuple.isBulk()) {
+        for (Iterator objects =
+            ((BulkEnvelopeTuple) tuple).getCollection().iterator();
+            objects.hasNext(); ) {
+          logger.debug(name + ": BULK   " + objects.next());
+        }
+      } else {
+        String kind = "";
+        if (tuple.isAdd()) {
+          kind = "ADD    ";
+        } else if (tuple.isChange()) {
+          kind = "CHANGE ";
+        } else {
+          kind = "REMOVE ";
+        }
+        logger.debug(name + ": " + kind + tuple.getObject());
+      }
+    }
+  }
+
+  public String toString() {
+    return "<Distributor " + name + ">";
+  }
+
+
+  /**
+   * Hold our set of registered Subscribers.
+   * <p>
+   * The Distributor must lock this object with it's
+   * "distributorLock".
+   */
+  private static class Subscribers {
+    private List subscribers = new ArrayList();
+    ReferenceQueue refQ = new ReferenceQueue();
+
+    public void register(Subscriber subscriber) {
+      checkRefQ();
+      subscribers.add(new WeakReference(subscriber, refQ));
+    }
+    public void unregister(Subscriber subscriber) {
+      for (Iterator iter = subscribers.iterator(); iter.hasNext(); ) {
+        WeakReference ref = (WeakReference) iter.next();
+        if (ref.get() == subscriber) {
+          iter.remove();
+        }
+      }
+    }
+
+    public Iterator iterator() {
+      checkRefQ();
+
+      class MyIterator implements Iterator {
+        private Object n = null;
+        private Iterator iter;
+
+        public MyIterator(Iterator it) {
+          iter = it;
+          advance();
+        }
+
+        /** advance to the next non-null element, dropping
+         * nulls along the way
+         **/
+        private void advance() {
+          while (iter.hasNext()) {
+            WeakReference ref = (WeakReference) iter.next();
+            n = ref.get();
+            if (n == null) {
+              iter.remove();
+            } else {
+              return;
+            }
+          }
+          // ran off the end,
+          n = null;
+        }
+
+        public boolean hasNext() {
+          return (n != null);
+        }
+        public Object next() {
+          Object x = n;
+          advance();
+          return x;
+        }
+        public void remove() {
+          iter.remove();
+        }
+      };
+      return new MyIterator(subscribers.iterator());
+    }
+
+    private void checkRefQ() {
+      Reference ref;
+      while ((ref = refQ.poll()) != null) {
+        subscribers.remove(ref);
+      }
+    }
+  }
+
 }
