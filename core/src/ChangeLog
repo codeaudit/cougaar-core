@@ -1,3 +1,22 @@
+2002-04-11  Noelle Givler  <ngivler@bbn.com>
+
+	* org/cougaar/core/domain:
+	Domain now implemented in a component hierarchy. DomainAdapter class 
+	can be extended to create new Domains.
+
+	* org/cougaar/core/domain/RootDomain:
+	* org/cougaar/multicast/ABMDomain:
+	Reimplemented as an extension of DomainAdapter.
+
+	* org/cougaar/core/blackboard/Blackboard:
+        * org/cougaar/core/agent/ClusterImpl:
+	Modified to use new DomainService and DomainForBlackboardService.
+
+	* org/cougaar/planning/plugin/AssetDataPlugin
+	* org/cougaar/planning/plugin/AssetDataPluginBase:
+	* org/cougaar/core/agent/service/registry/DefaultPrototypeProviderPlugin:
+	Compatibility changes for DomainService
+	
 2002-04-10  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/blackboard/Distributor.java:
