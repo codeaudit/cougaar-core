@@ -1,3 +1,17 @@
+2002-09-10  Aaron Helsinger  <ahelsing@bbn.com>
+
+	* org/cougaar/core/blackboard/Blackboard.java: 
+	Bug # 2249: Pull out 2 constants into -D arguments.
+	org.cougaar.core.blackboard.waitForNewCommChangeNotifications
+	(default is 1000 ms, as before) is the time to wait for more community
+	changes before getting the new ABA translations. This is the
+	number Ray suggested tweaking.
+
+	While I was there...
+	org.cougaar.core.blackboard.waitForSomeCommChanges
+	(default is 10000ms, as before) is the time to wait if have no comm
+	changes before killing this thread.
+
 2002-09-10  Michael Thome  <mthome@bbn.com>
 
 	* org/cougaar/core/util/CheckJarsServlet.java
