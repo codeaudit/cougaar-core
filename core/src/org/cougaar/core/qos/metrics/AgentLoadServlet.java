@@ -22,9 +22,8 @@
 package org.cougaar.core.qos.metrics;
 
 import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.util.Iterator;
-import java.util.Set;
+
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -35,17 +34,18 @@ public class AgentLoadServlet
     public AgentLoadServlet(ServiceBroker sb) {
 	super(sb);
     }
-    protected String   myPath() {
+
+    public String getPath() {
 	return "/metrics/agent/load";
     }
 
-    protected String myTitle () {
-	return "Agent Load for Node " + nodeID;
+    public String getTitle () {
+	return "Agent Load for Node " + getNodeID();
     }
 
-    protected void outputPage(PrintWriter out) {
+    public void printPage(PrintWriter out) {
 	// Get list of All Agents On this Node
-        Set localAgents = getLocalAgents();
+	java.util.Set localAgents = getLocalAgents();
 	if (localAgents == null) return;
 
 	//Header Row

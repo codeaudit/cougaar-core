@@ -24,6 +24,7 @@ package org.cougaar.core.servlet;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.service.ServletService;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +53,21 @@ abstract public class ServletFrameset extends HttpServlet
 	NodeIdentificationService nis = (NodeIdentificationService)
 	    sb.getService(this, NodeIdentificationService.class, null);
 	nodeAddr = nis.getMessageAddress();
+
+	// Register our servlet.
+	ServletService servletService = (ServletService)
+	    sb.getService(this, ServletService.class, null);
+	if (servletService == null) {
+	    throw new RuntimeException("Unable to obtain ServletService");
+	}
+	try {
+	    servletService.register(getPath(), this);
+	} catch (Exception e) {
+	    throw new RuntimeException("Unable to register servlet at path <"
+				       +getPath()+ ">: " +e.getMessage());
+	}
+
+
     }
 
 
@@ -59,6 +75,30 @@ abstract public class ServletFrameset extends HttpServlet
     abstract public String getPath();
     abstract public void printPage(PrintWriter out);
 
+    // Not abstract, but a no-op by default
+    public void printBottomPage(PrintWriter out)
+    {
+    }
+
+    public int topPercentage() 
+    {
+	return 10;
+    }
+
+    public int dataPercentage() 
+    {
+	return 80;
+    }
+
+    public int bottomPercentage() 
+    {
+	return 10;
+    }
+
+    public MessageAddress getNodeID() 
+    {
+	return nodeAddr;
+    }
 
     private void printRefreshForm(HttpServletRequest request,
 				  PrintWriter out)
@@ -106,6 +146,7 @@ abstract public class ServletFrameset extends HttpServlet
     {
 	out.print("<html><HEAD>");
 
+
         // write javascript
         writeJavascript(out);
 
@@ -120,6 +161,9 @@ abstract public class ServletFrameset extends HttpServlet
 
         // end form
 	out.print("</form>");
+
+	printBottomPage(out);
+
 	out.print("</body></html>\n");
     }
 
@@ -159,7 +203,13 @@ abstract public class ServletFrameset extends HttpServlet
 	out.print("</title></head>");
 
 	// Frameset
-	out.print("<frameset rows=\"10%,80%,10%\">\n");
+	out.print("<frameset rows=\"");
+	out.print(topPercentage());
+	out.print("%,");
+	out.print(dataPercentage());
+	out.print("%,");
+	out.print(bottomPercentage());
+	out.print("%\">\n");
 	
 	// Top frame.  Assume there's a node here, at least.
 	out.print("<frame src=\"/agents?format=select&suffix=");

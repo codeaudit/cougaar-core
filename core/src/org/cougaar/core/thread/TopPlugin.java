@@ -23,7 +23,6 @@ package org.cougaar.core.thread;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.service.ServletService;
 
 /**
  * This class creates a servlet which displays the state of COUGAAR
@@ -44,24 +43,7 @@ public class TopPlugin extends ComponentPlugin
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-
-	ServletService servletService = (ServletService)
-	    sb.getService(this, ServletService.class, null);
-
-	if (servletService == null) {
-	    throw new RuntimeException("Unable to obtain service");
-	}
-
 	TopServlet servlet = new TopServlet(sb);
-
-	// register the servlet
-	try {
-	    servletService.register(servlet.getPath(), servlet);
-	} catch (Exception e) {
-	    throw new RuntimeException("Unable to register servlet at path <"
-				       +servlet.getPath()+ ">: " +e);
-	}
-
     }
 
     protected void setupSubscriptions() {

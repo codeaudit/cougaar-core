@@ -24,11 +24,10 @@ package org.cougaar.core.qos.metrics;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Set;
+
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.wp.AddressEntry;
@@ -61,12 +60,12 @@ public class RemoteAgentServlet
 
 
 
-    protected String myPath() {
+    public String getPath() {
 	return "/metrics/remote/agents";
     }
 
-    protected String myTitle () {
-	return "Remote Agent Status for Node " + nodeID;
+    public String getTitle () {
+	return "Remote Agent Status for Node " + getNodeID();
     }
 
     private String canonicalizeAddress(String hostname) {
@@ -78,7 +77,7 @@ public class RemoteAgentServlet
 	}
     }
 
-    protected void outputPage(PrintWriter out) {
+    public void printPage(PrintWriter out) {
 	// Get list of All Agents in society
 	Set matches = agentStatusService.getRemoteAgents();
 	if (matches == null) return;
@@ -128,7 +127,7 @@ public class RemoteAgentServlet
 	    }
 	    
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
-	    String destPath="Node("+nodeID+")"+PATH_SEPR+
+	    String destPath="Node("+getNodeID()+")"+PATH_SEPR+
 		"Destination("+name+")"+PATH_SEPR;
 	    String ipFlowPath="IpFlow(" +localHost+ "," +agentHost+ ")"
 		+PATH_SEPR;
@@ -205,7 +204,7 @@ public class RemoteAgentServlet
 	    out.print(" </b></td>");
 	    Color.valueTable(spoke, 0.0, 30.0, true, f3_0, out);
 	    Color.valueTable(heard, 0.0, 30.0, true, f3_0, out);
-	    Color.valueTable(error, 0.0, 30.0, true, f3_0, out);
+	    Color.valueTable(error, 0.0, 60.0, false, f3_0, out);
 	    Color.valueTable(queue, 0.0, 1.0, true,  f4_2, out);
 	    Color.valueTable(msgTo, 0.0, 1.0, true, f4_2, out);
 	    Color.valueTable(msgFrom, 0.0, 1.0, true, f4_2, out);

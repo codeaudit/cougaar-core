@@ -32,12 +32,13 @@ public class NodeResourcesServlet
     public NodeResourcesServlet(ServiceBroker sb) {
 	super(sb);
     }
-    protected String   myPath() {
+
+    public String getPath() {
 	return "/metrics/resources";
     }
 
-    protected String myTitle () {
-	return "Resources for Node " + nodeID;
+    public String getTitle () {
+	return "Resources for Node " + getNodeID();
     }
 
 
@@ -60,8 +61,8 @@ public class NodeResourcesServlet
 	out.print("</tr>\n");	
     }
 
-    protected void outputPage(PrintWriter out) {
-	String nodePath = "Agent(" +nodeID+ ")"+PATH_SEPR;
+    public void printPage(PrintWriter out) {
+	String nodePath = "Agent(" +getNodeID()+ ")"+PATH_SEPR;
 	
 	//Header Row
 	out.print("<table border=1>\n");

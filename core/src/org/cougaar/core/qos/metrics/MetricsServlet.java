@@ -24,43 +24,40 @@ package org.cougaar.core.qos.metrics;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
-import java.util.Date;
 import java.util.Set;
-import javax.servlet.Servlet;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.cougaar.core.agent.AgentContainer;
-import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.service.ServletService;
+import org.cougaar.core.servlet.ServletFrameset;
 import org.cougaar.core.service.wp.WhitePagesService;
 
-public abstract class MetricsServlet extends HttpServlet implements Constants
+public abstract class MetricsServlet 
+    extends ServletFrameset
+    implements Constants
 {
 
     protected WhitePagesService wpService;
     protected MetricsService metricsService;
-    protected String nodeID;
-    protected DecimalFormat f4_2,f6_3,f3_0,f7_0,f4_0,f2_0;
-
+    protected final DecimalFormat f4_2 = new DecimalFormat("#0.00");
+    protected final DecimalFormat f6_3 = new DecimalFormat("##0.000");
+    protected final DecimalFormat f2_0 = new DecimalFormat("#0");
+    protected final DecimalFormat f3_0 = new DecimalFormat("##0");
+    protected final DecimalFormat f4_0 = new DecimalFormat("###0");
+    protected final DecimalFormat f7_0 = new DecimalFormat("#######0");
+    
     private AgentContainer agentContainer;
 
-    public MetricsServlet(ServiceBroker sb) {
-	ServletService servletService = (ServletService)
-	    sb.getService(this, ServletService.class, null);
-	if (servletService == null) {
-	    throw new RuntimeException("Unable to obtain ServletService");
-	}
+    public MetricsServlet(ServiceBroker sb) 
+    {
+	super(sb);
 
 	wpService = (WhitePagesService)
 	    sb.getService(this, WhitePagesService.class, null);
-	if (servletService == null) {
-	    throw new RuntimeException("Unable to obtain WhitePages service");
-	}
 
 	NodeControlService ncs = (NodeControlService)
             sb.getService(this, NodeControlService.class, null);
@@ -72,35 +69,15 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
 
-	NodeIdentificationService node_id_svc = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
- 	nodeID = node_id_svc.getMessageAddress().toString();
-	
 
-	// register our servlet
-	try {
-	    servletService.register(myPath(), this);
-	} catch (Exception e) {
-	    throw new RuntimeException("Unable to register servlet at path <"
-				       +myPath()+ ">: " +e.getMessage());
-	}
-
-	f4_2 = new DecimalFormat("#0.00");
-	f6_3 = new DecimalFormat("##0.000");
-	f2_0 = new DecimalFormat("#0");
-	f3_0 = new DecimalFormat("##0");
-	f4_0 = new DecimalFormat("###0");
-	f7_0 = new DecimalFormat("#######0");
     }
-    protected abstract String myPath();
-    protected abstract String myTitle();
-    protected abstract void outputPage(PrintWriter out);
 
     /**
      * @return the message addresses of the agents on this
      * node, or null if that information is not available.
      */
-    protected final Set getLocalAgents() {
+    protected final Set getLocalAgents() 
+    {
         if (agentContainer == null) {
             return null;
         } else {
@@ -108,43 +85,21 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
         }
     }
 
-    public void doGet(HttpServletRequest request,
-		      HttpServletResponse response) 
-	throws java.io.IOException 
+
+    public void printBottomPage(PrintWriter out) 
     {
-
-	String refresh = request.getParameter("refresh");
-	int refreshSeconds = 
-	    ((refresh != null) ?
-	     Integer.parseInt(refresh) :
-	     0);
-
-	response.setContentType("text/html");
-	PrintWriter out = response.getWriter();
-
-	out.print("<html><HEAD>");
-	if (refreshSeconds > 0) {
-	    out.print("<META HTTP-EQUIV=\"refresh\" content=\"");
-	    out.print(refreshSeconds);
-	    out.print("\">");
-	}
-	out.print("<TITLE>");
-	out.print(myTitle());
-	out.print("</TITLE></HEAD><body><H1>");
-	out.print(myTitle());
-	out.print("</H1>");
-
-	out.print("Date: ");
-	out.print(new java.util.Date());
-	
-	outputPage(out);
-	out.print("<p><p><br><h2>KEYS</h2>RefreshSeconds: ");	
-	out.print(refreshSeconds);
-	out.print("<p><p><b>Color key</b>");
+	out.print("<p><b>Color key</b>");
 	Color.colorTest(out);
-
-	out.print("</body></html>\n");
-
-	out.close();
     }
+
+    public int dataPercentage() 
+    {
+	return 70;
+    }
+
+    public int bottomPercentage() 
+    {
+	return 20;
+    }
+
 }
