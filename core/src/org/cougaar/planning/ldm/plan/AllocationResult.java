@@ -54,7 +54,7 @@ public class AllocationResult
    */
   public AllocationResult(double rating, boolean success, AspectValue[] aspectvalues) {
     isSuccess = success;
-    setAspectValueResults((AspectValue[]) aspectvalues.clone());
+    setAspectValueResults(aspectvalues);
     confrating = (float) rating;
   }
 
@@ -88,7 +88,7 @@ public class AllocationResult
   public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, Enumeration allresults)
   {
     isSuccess = success;
-    setAspectValueResults((AspectValue[]) rollupavs.clone());
+    setAspectValueResults(rollupavs);
     setPhasedResults(allresults);
     confrating = (float) rating;
   }
@@ -113,7 +113,7 @@ public class AllocationResult
    */
   public AllocationResult(double rating, boolean success, AspectValue[] rollupavs, Collection phasedresults) {
     isSuccess = success;
-    setAspectValueResults((AspectValue[]) rollupavs.clone());
+    setAspectValueResults(rollupavs);
     setPhasedResults(phasedresults);
     confrating = (float) rating;
   }
@@ -354,7 +354,6 @@ public class AllocationResult
    * @note Will always return a new AspectValue[]
    **/
   public AspectValue[] getAspectValueResults() {
-    // go ahead and return it if its defined, otherwise create it
     return (AspectValue[]) avResults.clone();
   }
         
@@ -445,13 +444,13 @@ public class AllocationResult
     isSuccess = success;
   }
   
-  /** Set the aspectvalues results and also split apart the array to set
-   * the aspecttype and result array.
-   * @param aspectvalues  The AscpectValues representing the result of each aspect.
+  /** Set the aspectvalues results by cloning the array and filtering out nulls.
+   * @param aspectvalues  The AspectValues representing the result of each aspect.
    */
-  private void setAspectValueResults(AspectValue[] avresult) {
-    avResults = avresult;
-    checkAVResults();
+  private void setAspectValueResults(AspectValue[] aspectvalues) {
+    AspectValue[] avs = (AspectValue[]) aspectvalues.clone();
+    avResults = avs;
+    checkAVResults();           //check AVS for now
     clearMemos();
   }
 
