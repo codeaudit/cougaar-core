@@ -35,18 +35,21 @@ import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.SubscriberException;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.planning.ldm.plan.Directive;
-import org.cougaar.core.service.LoggingService;
 
 
 /**
  * LP to transfer <code>ABM</code>s between Agents.
- * Part of the <code>ABMDomain</code>. Recieved <code>ABM</code>'s 
- * have their content published, and are then logplan.remove()ed 
- * after they are publised locally or sent.
- * 
- * @see <code>LogPlanLogicProvider</code>
+ * Part of the <code>ABMDomain</code>. <code>ABM</code>'s 
+ * received from remote have their content published, if not already present.
+ * Locally sent <code>ABM</code>s, are delivered locally
+ * if that is the intent, delivered to the given <code>ClusterIdentifier</code>
+ * if the destination is explicit, or are expanded. <code>MessageType</code>
+ * destinations are expanded via the YellowPages into a list of
+ * actual destinations. New <code>ABM</code>s are created for these,
+ * and they are sent.  Then the original <code>ABM</code> is logplan.remove()ed 
  */
 public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogicProvider, EnvelopeLogicProvider {
 
@@ -63,7 +66,7 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
     super(logplan, cluster);
     myfact = (ABMFactory)cluster.getFactory("abm");
     if( myfact == null ) {
-      System.err.println("ABMTransportLP constructed with null factory at " + this.getClass());
+      System.err.println("ABMTransportLP constructed with null factory at " + cluster.getClusterIdentifier());
     }
     
     logger = (LoggingService)((ClusterImpl)cluster).getServiceBroker().getService(this, LoggingService.class, null);
@@ -71,7 +74,6 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
       System.err.println("Error obtaining LoggingService at " + cluster.getClusterIdentifier() + "'s " + this.getClass());    
   }
   
-
   /**
    * If it is a Directive of the appropriate type, with a destination, send it remotely
    *
@@ -102,6 +104,7 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
       logplan.remove(dir);
       return;
     }
+
     /**
      * If MessageAddress reflects MessageType, obtain
      * a List of interested agents and send out 
@@ -111,6 +114,7 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
       if(logger.isDebugEnabled()) {
 	logger.debug("LP at " + cluster.getClusterIdentifier().toString() + " sees a MessageType:" + dir);
       }
+
       if( myfact == null ) {
 	if(logger.isErrorEnabled()) {
           logger.error("Error getting destinations for ABM with destination MessageType - null factory.");
@@ -118,6 +122,7 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
 	// dont want to continue with directive
 	return;
       }
+
       // get list of message addresses
       List mas = myfact.getYP().getDestinations((MessageType)destination);
       // iterate over those & send out as directives
@@ -126,13 +131,14 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
           ListIterator iter = mas.listIterator();
           while(iter.hasNext()) 
             {
-              // Check for null factory before sending out   
-              
 	      MessageAddress curr = (MessageAddress)iter.next();
 	      if(logger.isDebugEnabled()) {
 		logger.debug("For directive " + dir  + ", got MessageAddress " + curr);
 	      }
 	      if(curr != null) {
+		// This assumes we get back deliverable
+		// addresses. The alternative would be
+		// to recurse on this method.
 		logplan.sendDirective(myfact.newABM((ABM)dir, curr), changes);
 		if(logger.isDebugEnabled()) {
 		  logger.debug("LP at " + cluster.getClusterIdentifier().toString() + " sending directive to: " + curr + "\n");
@@ -140,17 +146,25 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
 	      }
 	      else { 
 		if(logger.isErrorEnabled()) {
-		  logger.error("Error sending ABM, MessageAddress is null.");
+		  logger.error("Error sending ABM, expanded MessageAddress is null.");
 		}
 	      }
-            }
-        }    
-      else {
+            } // end of loop over expanded addresses
+        } else {
 	if (logger.isDebugEnabled()) {
-	  logger.debug("YP returning null list of MessageAddrs.");
+	  logger.debug("YP returning null list of MessageAddrs for directive." + dir);
 	}
       }
-    }
+    } // end of loop to handle MessageType destinations
+
+    // What about destinations that are neither
+    // a ClusterIdentifier or a MessageType? Are there such things?
+    // Should I just try to send those?
+    // FIXME!
+
+    // Done handling this ABM. Remove it.
+    // In future, might do this only if the ABM says is is not persistable,
+    // allowing persistable extensions that are not removed.
     logplan.remove(dir);
   }
   
@@ -173,9 +187,10 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
     }
   }
 
-
   /**
-   * If the incoming Directive is an appropriate type, add it's contents to the local logplan. Only add it if it is not already there.
+   * If the incoming Directive is an appropriate type, add it's 
+   * contents to the local logplan. 
+   * Only add it if it is not already there.
    *
    * @param dir a <code>Directive</code> to receive
    * @param changes a <code>Collection</code>
@@ -191,7 +206,7 @@ public class ABMTransportLP extends LogPlanLogicProvider implements MessageLogic
     if (exists != null && exists.equals(content)) {
       // it already exists in the logplan. for us, do nothing
       if (logger.isDebugEnabled()) {
-	logger.debug("LP did not add to logplan: " + content + "\n");
+	logger.debug("LP did not add to logplan in agent " + cluster.getClusterIdentifier() + ": " + content);
       }
       return;
     }

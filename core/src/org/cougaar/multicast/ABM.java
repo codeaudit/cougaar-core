@@ -32,12 +32,23 @@ import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.DirectiveImpl;
 
 /**
- * Messenging object that is sent via multicast messenging 
- * between sensors in a community. Non-persistable so as to 
- * be lightweight. Made up of a ContextWrapper and MessageAddress. 
+ * Messaging object that is sent via multicast messaging 
+ * from a sensor within a community. Non-persistable so as to 
+ * be lightweight. In addition, once an ABM is put in the delivery queue, 
+ * it is publishRemoved from the local Blackboard. Note that all Subscribers
+ * will have an opportunity to see the ABM on their Added list before it 
+ * is removed. <br>
+ * Made up of a <code>ContextWrapper</code>, which wraps the
+ * real content with some context, and a <code>MessageAddress</code>. 
+ * This <code>MessageAddress</code> could be an actual destination, like a
+ * <code>ClusterIdentifier</code>. But for multicast it will be a 
+ * <code>MessageType</code>. This type indicates the kind of message being 
+ * sent. Recipients must register an interest in messages of this type
+ * within their community, via the Yellow Pages.
  * 
  * @see ContextWrapper
  * @see ABMFactory
+ * @see MessageType
  */
 public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publishable, Serializable
 {
@@ -46,12 +57,14 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
   private ContextWrapper content;
   
   /**
-   * Creates a new <code>ABM</code> instance.
+   * Creates a new <code>ABM</code> instance. Note that ABMs should not be 
+   * modified once created, so this is the only method that sets
+   * any of the member values.
    *
-   * @param uid an <code>UID</code> value
-   * @param bw a <code>ContextWrapper</code> value
-   * @param dest a <code>MessageAddress</code> value
-   * @param source a <code>ClusterIdentifier</code> value
+   * @param uid an <code>UID</code> to identify it
+   * @param bw a <code>ContextWrapper</code>, the content to be sent
+   * @param dest a <code>MessageAddress</code> destination, often a <code>MessageType</code>
+   * @param source a <code>ClusterIdentifier</code> to ID the sending Agent
    */
   public ABM (UID uid, ContextWrapper bw, MessageAddress dest, ClusterIdentifier source) {
     
@@ -100,7 +113,10 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
   }
 
   /**
-   * Allows access to <code>ABM</code>'s destination.
+   * Allows access to <code>ABM</code>'s destination. This is distinct
+   * from the <code>getDestination()</code> inherited from DirectiveImpl.
+   * This slot may contain a MessageType or other non-deliverable address,
+   * while the inherited slot should always contain a deliverable address.
    * 
    * @return dest, a <code>MessageAddress</code>
    **/
@@ -119,27 +135,13 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
   }
   
   /**
-   * Allows access to ContextWrapper in ABM Object. 
+   * Allows access to ContextWrapper in ABM Object. This is the content
+   * of the message to be delivered.
    *
    * @return a <code>ContextWrapper</code> value
    */
   public ContextWrapper getContent() {
     return content;
-  }
-  
-  /**
-   * Allows visibility to ABM Object. 
-   *
-   * @return a <code>String</code> value
-   **/
-  public String toString() {
-    StringBuffer buf = new StringBuffer();
-    buf.append("<ABM " + this.uid.toString());
-    buf.append(" Source: " + this.source.toString()); 
-    buf.append(" Destination: " + this.dest.toString()); 
-    buf.append(" Content: " + this.content.toString());
-    buf.append(">");
-    return buf.toString();
   }
   
   /**
@@ -162,4 +164,19 @@ public class ABM extends DirectiveImpl implements Directive, UniqueObject, Publi
    * @param asource a <code>ClusterIdentifier</code> value
    */
   public void setSource(ClusterIdentifier asource){}
+
+  /**
+   * Allows visibility into ABM Object. 
+   *
+   * @return a <code>String</code> value
+   **/
+  public String toString() {
+    StringBuffer buf = new StringBuffer();
+    buf.append("<ABM " + this.uid.toString());
+    buf.append(" Source: " + this.source.toString()); 
+    buf.append(" Destination: " + this.dest.toString()); 
+    buf.append(" Content: " + this.content.toString());
+    buf.append(">");
+    return buf.toString();
+  }
 }

@@ -27,40 +27,42 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-
 /**
- * A MessageAddress that indicates the type of Message a recipient
+ * A <code>MessageAddress</code> that indicates the type of Message a recipient
  * will have registered an interest in. This "role" must be 
- * expanded to a list of actual recipients.
+ * expanded to a list of actual recipients for delivery.
+ *
  * @see ABMTransportLP
  */
 public final class MessageType extends MessageAddress {
 
-
   /** only for infrastructure **/
   public MessageType() {}
-
 
   public MessageType( String address ) {
     super(address);
     cacheMessageType(address, this);
   }
 
-
   public String toString() {
     return getAddress();
   }
 
-
+  /**
+   * Equivalent to toString()
+   * @return a <code>String</code> value
+   */
   public String toAddress() {
     return getAddress();
   }
   
+  /**
+   * Equivalent to toString()
+   * @return a <code>String</code> value
+   */
   public String cleanToString() {
     return getAddress();
   }
-
-
 
   // override MessageAddress
   public void writeExternal(ObjectOutput out) throws IOException {
@@ -69,18 +71,17 @@ public final class MessageType extends MessageAddress {
     out.write(addressBytes,0,l);
   }
 
-
   public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
     int l = in.readByte();
     addressBytes=new byte[l];
     in.readFully(addressBytes,0,l);
   }
 
-
   protected Object readResolve() {
     return getMessageType(new String(addressBytes));
   }
 
+  // Helper methods to ensure efficiencey follow
 
   private static java.util.HashMap cache = new java.util.HashMap(89);
   public static MessageType getMessageType(String as) {
@@ -93,12 +94,9 @@ public final class MessageType extends MessageAddress {
     }
   }
 
-
   public static void cacheMessageType(String as, MessageType a) {
     synchronized (cache) {
       cache.put(as, a);
     }
   }
-
-
 }

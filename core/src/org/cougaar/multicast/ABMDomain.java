@@ -21,30 +21,30 @@
 package org.cougaar.multicast;
 
 import org.cougaar.core.agent.ClusterServesLogicProvider;
+import org.cougaar.core.blackboard.LogPlan;
+import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
+import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
 import org.cougaar.core.domain.Domain;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.LDMServesPlugin;
-import org.cougaar.core.blackboard.LogPlan;
-import org.cougaar.core.blackboard.BlackboardServesLogicProvider;
-import org.cougaar.core.blackboard.LogPlanServesLogicProvider;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.ArrayList;
 
 
 /**
- * Domain created and used in the <code>ABM</code>messgenging framework. 
+ * Domain created and used in the <code>ABM</code>messgaging framework. 
  * Allows access to the logplan and creates the one Logic Provider the ABM API 
- * uses. 
+ * uses.<br> 
  * 
- * Load this domain with -Dorg.cougaar.domain.abm=org.cougaar.multicast.ABMDomain
+ * Load this domain with <code>-Dorg.cougaar.domain.abm=org.cougaar.multicast.ABMDomain</code>
  *
  * @see ABMFactory
  **/
 public class ABMDomain implements Domain {
   public ABMDomain() { }
-  
   
   /**
    * Create the ABMFactory for creating ABMs and things
@@ -54,13 +54,11 @@ public class ABMDomain implements Domain {
     return new ABMFactory(ldm);
   }
   
-
   /**
    * ABM has no Domain initialization as of yet
    **/
   public void initialize() {
   }
-
 
   /**
    * Return the basic LogPlan
@@ -76,9 +74,8 @@ public class ABMDomain implements Domain {
     return new LogPlan();
   }  
 
-
   /**
-   * ABM has one LogicProvider - ABMTransportLP
+   * ABM has one LogicProvider - <code>ABMTransportLP</code>.
    * @return a Collection of the ABM LogicProviders or null
    * @see org.cougaar.core.domain.Domain
    **/
@@ -88,7 +85,6 @@ public class ABMDomain implements Domain {
       l.add(new ABMTransportLP((LogPlanServesLogicProvider)logplan, cluster));
       return l;
   }
-
 
 } // end of ABMDomain.java
 

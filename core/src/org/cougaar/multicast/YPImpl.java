@@ -26,11 +26,10 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterIdentifier;
 
 /**
- * Implementation of YellowPages. 
+ * Implementation of YellowPages solely for testing of ABM mechanism.
  * Provides lookup of <code>MessageAddress</code>es 
  * for a two-agent test case. 
  **/
-
 public class YPImpl implements YP
 { 
   List mas = new ArrayList();

@@ -29,7 +29,15 @@ import java.util.List;
  **/
 public interface YP
 { 
-  // gets message addresses of all interesting sensors in multicast
+  /**
+   * Expand a given destination into the real destinations - Agents
+   * that have registered in the YellowPages an interest in receiving
+   * messages with the given type. This method should return all Agents
+   * in the same community(ies) as this Agent that have the given attribute.
+   * Note that the return list may be empty.
+   *
+   * @param mt a <code>MessageType</code> destination to expand
+   * @return a <code>List</code> of <code>MessageAddress</code>'s
+   */
   List getDestinations(MessageType mt);
-  
 }

@@ -29,8 +29,10 @@ import org.cougaar.core.util.UniqueObject;
 
 /**
  * Wraps sensor's content -i.e. a health report, alert, or other, along 
- * with personal information of the publishing sensor.
- * Used in <code>ABM</code> messenging between sensors in a community.  
+ * with personal information of the publishing sensor. This object
+ * provides context for the message to ensure proper handling when it 
+ * is received on remote Agents.
+ * Used in <code>ABM</code> messaging from sensors in a community.  
  * 
  * @see ABMFactory
  */
@@ -44,16 +46,17 @@ public class ContextWrapper implements Serializable, Publishable, UniqueObject
   private UID uid;
   private String publisher;
   
-  
   /**
    * Creates a new <code>ContextWrapper</code> instance with 
    * useful tracking information consisting of a UniqueIdentifier, 
-   * its source agent, which plugin published it, and its creation time. 
+   * its source agent, which plugin published it, and its creation time. <br>
+   * Note that this is the only means to set the values in this object,
+   * so that the values do not change.
    *
-   * @param uid an <code>UID</code> value
-   * @param aBlob a <code>Serializable</code> value
-   * @param publisher a <code>String</code> value
-   * @param time a <code>long</code> value
+   * @param uid an <code>UID</code> identifier
+   * @param aBlob a <code>Serializable</code> content
+   * @param publisher a <code>String</code> id of the Plugin that published it
+   * @param time a <code>long</code> when it was created
    * @param source a <code>ClusterIdentifier</code> value
    */
   public ContextWrapper(UID uid, Serializable aBlob, String publisher, long time, ClusterIdentifier source) {
@@ -65,29 +68,27 @@ public class ContextWrapper implements Serializable, Publishable, UniqueObject
   } 
 
   /**
-   * Accessor to ABM's content.
+   * Accessor to the message's content.
    *
-   * @return a <code>Serializable</code> value
+   * @return a <code>Serializable</code> content
    */
   public Serializable getContent(){
     return data;
   }
 
-
   /**
-   * Accessor to creation time.
+   * Accessor to creation time of the message
    *
-   * @return a <code>long</code> value
+   * @return a <code>long</code> time in milliseconds
    */
   public long getTime(){
     return time;
   }
 
-
   /**
    * Accessor to source agent.
    *
-   * @return a <code>ClusterIdentifier</code> value
+   * @return a <code>ClusterIdentifier</code> Agent name
    */
   public ClusterIdentifier getSource(){
     return source;
@@ -97,15 +98,14 @@ public class ContextWrapper implements Serializable, Publishable, UniqueObject
   /**
    * Accessor to plugin that published ABM.
    *
-   * @return a <code>String</code> value
+   * @return a <code>String</code> Plugin name or label
    */
   public String getPublisher() {
     return publisher;
   }
 
-
   /**
-   * Accessor to UniqueIdentifier.
+   * Accessor to UniqueIdentifier for the object.
    *
    * @return an <code>UID</code> value
    */
@@ -114,7 +114,7 @@ public class ContextWrapper implements Serializable, Publishable, UniqueObject
   }
   
   /**
-   * Does nothing to ensure a unique UID.
+   * Does nothing to ensure a static UID.
    *
    * @param uid an <code>UID</code> value
    */
