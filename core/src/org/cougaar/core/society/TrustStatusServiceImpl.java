@@ -24,6 +24,13 @@ package org.cougaar.core.society;
 import java.util.Observable;
 import java.util.Observer;
 
+/** Service for node level components (mostly message transport aspects)
+ *  that provides Node Trust policy information.
+ *  @property org.cougaar.node.trustStatus
+ *    Used to define a defulat trust status instead of sending 
+ *    NodeTrustPolicies via the PanicButtonPlugin
+ *    Valid settings are 0,2,5,10 with 10 being highest security - compromised
+ **/
 public class TrustStatusServiceImpl extends Observable 
   implements TrustStatusService {
 
