@@ -28,3 +28,5 @@ public interface NewTimeSpan extends TimeSpan {
    */
   public void setTimeSpan(long startTime, long endTime);
 }
+
+
