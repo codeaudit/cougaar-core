@@ -76,6 +76,8 @@ import org.cougaar.util.*;
 import org.cougaar.core.component.*;
 import java.beans.Beans;
 import org.cougaar.util.PropertyParser;
+import org.cougaar.util.log.LoggerController;
+import org.cougaar.util.log.LogTarget;
 import org.cougaar.core.security.bootstrap.SystemProperties;
 
 /**
@@ -502,15 +504,19 @@ implements MessageTransportClient, ClusterManagementServesCluster, ContainerAPI,
   public void serviceRevoked(ServiceRevokedEvent e) {}
 
   public void addStreamToRootLogging(OutputStream logStream) {
-      ServiceBroker sb = getServiceBroker();
-      LoggingControlService lcs=(LoggingControlService)sb.getService(this,LoggingControlService.class,this);
-      lcs.addOutputType("root",lcs.STREAM,logStream);
+    ServiceBroker sb = getServiceBroker();
+    LoggingControlService lcs = (LoggingControlService)
+      sb.getService(this, LoggingControlService.class, this);
+    LoggerController lc = lcs.getLoggerController("root");
+    lc.addLogTarget(LogTarget.STREAM, logStream);
   }
 
-public boolean removeStreamFromRootLogging(OutputStream logStream) {
-      ServiceBroker sb = getServiceBroker();
-      LoggingControlService lcs=(LoggingControlService)sb.getService(this,LoggingControlService.class,this);
-      return lcs.removeOutputType("root",lcs.STREAM,logStream);
+  public boolean removeStreamFromRootLogging(OutputStream logStream) {
+    ServiceBroker sb = getServiceBroker();
+    LoggingControlService lcs = (LoggingControlService)
+      sb.getService(this, LoggingControlService.class, this);
+    LoggerController lc = lcs.getLoggerController("root");
+    return lc.removeLogTarget(LogTarget.STREAM, logStream);
   }
 
   /**
