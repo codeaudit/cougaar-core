@@ -1,3 +1,16 @@
+2001-08-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/naming/SearchStringParser.java:
+	Add documentation. Add toString to all filters that return a
+	string that will parse to the same value.
+
+	* org/cougaar/core/naming/Glob.java:
+	Add documentation. Fix bug in parsing [...] patterns containing -
+	and ] characters.
+
+	* org/cougaar/core/naming/Filter.java:
+	Add toString(StringBuffer) method for composing toString values.
+
 2001-08-22  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/naming/NamingDirContext.java:
