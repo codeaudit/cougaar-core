@@ -21,15 +21,28 @@
 
 package org.cougaar.core.node;
 
-import java.io.*;
-import java.util.*;
+import java.io.CharArrayWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.ComponentInitializerService.InitializerException;
 import org.cougaar.util.log.*;
 import org.cougaar.util.ConfigFinder;
-import org.xml.sax.*;
+
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.SAXParserFactory;
@@ -52,6 +65,10 @@ import javax.xml.parsers.ParserConfigurationException;
  **/
 public class XMLComponentInitializerServiceProvider
   implements ServiceProvider {
+
+  // SAX Parser constants required by new xerces parser
+  static final String JAXP_SCHEMA_LANGUAGE = "http://java.sun.com/xml/jaxp/properties/schemaLanguage";
+  static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
   private String filename;
   private String nodename;
@@ -106,7 +123,8 @@ public class XMLComponentInitializerServiceProvider
       logger.debug((factory.isValidating()) ? "Validating against schema" : "Validating disabled");
     factory.setNamespaceAware(true);
     SAXParser saxParser = factory.newSAXParser();
-
+    saxParser.setProperty(JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+    
     InputStream istr = ConfigFinder.getInstance().open(filename);
     if (istr == null) {
       logger.error("null InputStream from ConfigFinder on " + filename);
