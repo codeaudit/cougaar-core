@@ -1,0 +1,218 @@
+/*
+ * <copyright>
+ *  Copyright 2002-2003 BBNT Solutions, LLC
+ *  under sponsorship of the Defense Advanced Research Projects Agency (DARPA).
+ * 
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the Cougaar Open Source License as published by
+ *  DARPA on the Cougaar Open Source Website (www.cougaar.org).
+ * 
+ *  THE COUGAAR SOFTWARE AND ANY DERIVATIVE SUPPLIED BY LICENSOR IS
+ *  PROVIDED 'AS IS' WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS OR
+ *  IMPLIED, INCLUDING (BUT NOT LIMITED TO) ALL IMPLIED WARRANTIES OF
+ *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND WITHOUT
+ *  ANY WARRANTIES AS TO NON-INFRINGEMENT.  IN NO EVENT SHALL COPYRIGHT
+ *  HOLDER BE LIABLE FOR ANY DIRECT, SPECIAL, INDIRECT OR CONSEQUENTIAL
+ *  DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE OF DATA OR PROFITS,
+ *  TORTIOUS CONDUCT, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ *  PERFORMANCE OF THE COUGAAR SOFTWARE.
+ * </copyright>
+ */
+
+package org.cougaar.core.wp.resolver.bootstrap;
+
+import java.io.*;
+import java.util.*;
+import java.net.*;
+import org.cougaar.core.component.*;
+import org.cougaar.core.mts.*;
+import org.cougaar.core.node.*;
+import org.cougaar.core.service.*;
+import org.cougaar.core.service.wp.*;
+import org.cougaar.core.wp.*;
+import org.cougaar.core.wp.resolver.*;
+import org.cougaar.util.*;
+
+/**
+ * This component reads the bootstrap config and fills
+ * the TableService.
+ */
+public class ConfigReader
+extends GenericStateModelAdapter
+implements Component
+{
+  private static final String FILENAME =
+    "alpreg.ini";
+  private static final String SERVER_PROP =
+    "org.cougaar.name.server";
+  private static final String PORT_PROP =
+    "org.cougaar.name.server.port";
+
+  private ServiceBroker sb;
+  private LoggingService logger = LoggingService.NULL;
+  private AgentIdentificationService agentIdService;
+  private TableService tableService;
+
+  private String agentName;
+
+  private String host;
+  private int port;
+
+  public void setBindingSite(BindingSite bs) {
+    this.sb = bs.getServiceBroker();
+  }
+
+  public void setLoggingService(LoggingService ls) {
+    logger = (ls == null ? LoggingService.NULL : ls);
+  }
+
+  public void setAgentIdentificationService(
+      AgentIdentificationService ais) {
+    this.agentIdService = ais;
+    if (ais != null) {
+      this.agentName = ais.getMessageAddress().getAddress();
+    }
+  }
+
+  public void setTableService(TableService ts) {
+    this.tableService =  ts;
+  }
+
+  public void load() {
+    super.load();
+
+    readConfig();
+
+    sb.releaseService(this, TableService.class, tableService);
+    tableService = null;
+
+    if (agentIdService != null) {
+      sb.releaseService(
+          this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
+
+    if (logger != LoggingService.NULL) {
+      sb.releaseService(this, LoggingService.class, logger);
+      logger = null;
+    }
+    sb = null;
+  }
+
+  private void readConfig() {
+    read_file(FILENAME);
+    read_props();
+    if (host != null && port > 0) {
+      // backwards compatibility!
+      parse("WP=-RMI_REG,rmi://"+host+":"+port+"/*");
+    }
+  }
+  
+  private void add(AddressEntry ae) {
+    if (logger.isInfoEnabled()) {
+      logger.info("Add bootstrap entry: "+ae);
+    }
+    tableService.add(ae);
+  }
+
+  private void parse(String line) {
+    if (line.startsWith("#") ||
+        line.startsWith("[") ||
+        line.startsWith("//")) {
+      return;
+    }
+    int index = line.indexOf('=');
+    if (index <= 0) {
+      return;
+    }
+    String name = line.substring(0, index).trim();
+    String value = line.substring(index + 1).trim();
+    if ("address".equals(name) ||
+        "hostname".equals(name)) {
+      host = value;
+    } else if ("port".equals(name)) {
+      port = Integer.parseInt(value);
+    } else if (
+        "alias".equals(name) ||
+        "lpsport".equals(name)) {
+      // ignore
+    } else {
+      int sep = value.indexOf(',');
+      if (sep >= 0) {
+        String type = value.substring(0, sep).trim();
+        String suri = value.substring(sep+1).trim();
+        URI uri;
+        try {
+          uri = URI.create(suri);
+        } catch (Exception e) {
+          throw new RuntimeException("Invalid line: "+line, e);
+        }
+        AddressEntry ae = new AddressEntry(
+            name,
+            Application.getApplication(type),
+            uri,
+            Cert.NULL,
+            Long.MAX_VALUE);
+        add(ae);
+      }
+    }
+  }
+
+  private void read_file(String filename) {
+    try {
+      InputStream fs = ConfigFinder.getInstance().open(filename);
+      if (fs != null) {
+        BufferedReader in = 
+          new BufferedReader(new InputStreamReader(fs));
+        String line = null;
+        while ((line = in.readLine()) != null) {
+          parse(line);
+        }
+        in.close();
+      }
+    } catch (FileNotFoundException fnfe) {
+    } catch(Exception e) {
+      if (logger.isErrorEnabled()) {
+        logger.error("Failed read of "+filename, e);
+      }
+    }
+  }
+
+  private void read_props() {
+    String server = System.getProperty(SERVER_PROP);
+    if (server != null) {
+      int sep1 = server.indexOf(':');
+      String rawHost = 
+        (sep1 >= 0 ?
+         server.substring(0, sep1) :
+         server);
+      try {
+        InetAddress addr = InetAddress.getByName(rawHost);
+        host = addr.getHostAddress();
+      } catch (UnknownHostException uhe) {
+        logger.error(SERVER_PROP+" specifies unknown host: " + server);
+      }
+      if (sep1 >= 0) {
+        int sep2 = server.indexOf(':', sep1+1);
+        if (sep2 < 0) {
+          sep2 = server.length();
+        }
+        String sport = server.substring(sep1+1, sep2);
+        try {
+          port = Integer.parseInt(sport);
+        } catch (NumberFormatException nfe) {
+          logger.error(
+              SERVER_PROP+" port is not an integer: "+server);
+        }
+      }
+    }
+    String serverPort = System.getProperty(PORT_PROP);
+    if (serverPort != null) {
+      try {
+        port = Integer.parseInt(serverPort);
+      } catch (NumberFormatException nfe) {
+        logger.error(PORT_PROP+" is not an integer: " + serverPort);
+      }
+    }
+  }
+}

@@ -119,7 +119,9 @@ extends SimpleAgent
   private List components = new ArrayList();
 
   private static final boolean isHeartbeatOn;
-  private static final boolean isWPEnabled;
+  private static final boolean isNSEnabled;
+  private static final boolean isOldWPEnabled;
+  private static final boolean isNewWPEnabled;
   private static final boolean isCommunityEnabled;
   private static final boolean isPlanningEnabled;
   private static final boolean isServletEnabled;
@@ -128,7 +130,15 @@ extends SimpleAgent
 
   static {
     isHeartbeatOn=PropertyParser.getBoolean("org.cougaar.core.agent.heartbeat", true);
-    isWPEnabled=PropertyParser.getBoolean("org.cougaar.core.load.wp", true);
+    isNSEnabled=PropertyParser.getBoolean("org.cougaar.core.load.ns", true);
+    String wpFlag=System.getProperty("org.cougaar.core.load.wp", "true");
+    isOldWPEnabled=
+      ("true".equalsIgnoreCase(wpFlag) ||
+       "old".equals(wpFlag) ||
+       "both".equals(wpFlag));
+    isNewWPEnabled=
+      ("new".equals(wpFlag) ||
+       "both".equals(wpFlag));
     isCommunityEnabled=PropertyParser.getBoolean("org.cougaar.core.load.community", true);
     isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
     isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
@@ -243,19 +253,32 @@ extends SimpleAgent
           null,  //lease
           null)); //policy
 
-    try {
-      rootsb.addService(NamingService.class,
-          new NamingServiceProvider(
-            SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
-    } catch (NamingException ne) {
-      throw new Error("Couldn't initialize NamingService ", ne);
+    if (isNSEnabled) {
+      try {
+        rootsb.addService(NamingService.class,
+            new NamingServiceProvider(
+              SystemProperties.getSystemPropertiesWithPrefix("java.naming.")));
+      } catch (NamingException ne) {
+        throw new Error("Couldn't initialize NamingService ", ne);
+      }
     }
 
-    if (isWPEnabled) {
+    if (isOldWPEnabled) {
+      add(new ComponentDescription(
+            (getIdentifier()+"OldWhitePages"),
+            Agent.INSERTION_POINT + ".WP",
+            "org.cougaar.core.naming.JNDIWhitePagesServiceComponent",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null)); //policy
+    }
+    if (isNewWPEnabled) {
       add(new ComponentDescription(
             (getIdentifier()+"WhitePages"),
             Agent.INSERTION_POINT + ".WP",
-            "org.cougaar.core.naming.JNDIWhitePagesServiceComponent",
+            "org.cougaar.core.wp.WhitePages",
             null,  //codebase
             null,  //parameters
             null,  //certificate
