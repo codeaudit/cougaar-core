@@ -50,6 +50,7 @@ public class DBInitializerServiceProvider implements ServiceProvider {
   public static final String QUERY_EXPERIMENT = "queryExperiment";
   public static final String QUERY_AGENT_NAMES = "queryAgentNames";
   public static final String QUERY_COMPONENTS = "queryComponents";
+  public static final String QUERY_ROOT_COMPONENTS = "queryRootComponents";
   public static final String QUERY_COMPONENT_PARAMS = "queryComponentParams";
   public static final String QUERY_AGENT_PROTOTYPE = "queryAgentPrototype";
   public static final String QUERY_PLUGIN_NAMES = "queryPluginNames";
@@ -157,7 +158,8 @@ public class DBInitializerServiceProvider implements ServiceProvider {
       getComponentDescriptions(String parentName, String insertionPoint)
       throws InitializerServiceException
     {
-      substitutions.put(":parent_name", sqlQuote(parentName));
+      if (parentName == null) throw new IllegalArgumentException("parentName cannot be null");
+      substitutions.put(":parent_name", parentName);
       substitutions.put(":insertion_point", insertionPoint);
       try {
         Connection conn = DBConnectionPool.getConnection(database, username, password);
