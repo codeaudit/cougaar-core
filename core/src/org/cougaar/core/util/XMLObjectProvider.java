@@ -14,7 +14,6 @@ package org.cougaar.core.util;
 import java.io.OutputStream;
 import java.util.ArrayList;
 
-import com.ibm.xml.parser.TXDocument;
 import org.w3c.dom.Document;
 
 

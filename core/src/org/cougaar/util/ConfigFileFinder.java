@@ -17,7 +17,6 @@ import java.io.*;
 import java.net.*;
 import java.util.Vector;
 import java.util.Stack;
-import com.ibm.xml.parser.*;
 import org.w3c.dom.Document;
 
 /**
@@ -63,3 +62,4 @@ public class ConfigFileFinder {
     return ConfigFinder.getInstance().parseXMLConfigFile(xmlfile);
   }
 }
+
