@@ -42,52 +42,80 @@ import org.cougaar.planning.ldm.plan.DirectiveImpl;
  */
 public class AttributeBasedAddress extends ClusterIdentifier implements Serializable
 {
-  String communityName;
-  String attributeName, attributeValue;
-  
+  protected transient String myCommunityName;
+  protected transient String myAttributeType; 
+  protected transient String myAttributeValue;
+
   public AttributeBasedAddress() {
   }
 
-  public AttributeBasedAddress(String commName, String attrName, String attrValue) {
-    communityName = commName;
-    attributeName = attrName;
-    attributeValue = attrValue;
+  public AttributeBasedAddress(String commName, String attrType, String attrValue) {
+    if (commName == null) {
+      myCommunityName = "";
+    } else {
+      myCommunityName = commName;
+    }
+    myAttributeType = attrType;
+    myAttributeValue = attrValue;
+
+    // Use MessageAddress support for equals/hashCode
+    _hc = getAddressString().hashCode();
   }
   
-  public String getAttributeValue() {
-    return attributeValue;
-  }
-  
-  public String getAttributeName() {
-    return attributeName;
-  }
 
   public String getCommunityName() {
-    return communityName;
+    return myCommunityName;
   }
+
+  /**
+   * @deprecated Use getAttributeType instead.
+   **/
+  public String getAttributeName() {
+    return getAttributeType();
+  }
+
+  public String getAttributeType() {
+    return myAttributeType;
+  }
+
+  public String getAttributeValue() {
+    return myAttributeValue;
+  }
+  
 
   public boolean isPersistable(){
     return false;
   }
 
+  public String toString() {
+    return getAddressString();
+  }
+      
  
   // override MessageAddress
   public void writeExternal(ObjectOutput out) throws IOException {
-    out.writeObject(communityName);
-    out.writeObject(attributeName);
-    out.writeObject(attributeValue);
+    out.writeObject(myCommunityName);
+    out.writeObject(myAttributeType);
+    out.writeObject(myAttributeValue);
   }
 
   public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
-    communityName = (String) in.readObject();
-    attributeName = (String) in.readObject();
-    attributeValue = (String) in.readObject();
+    myCommunityName = (String) in.readObject();
+    myAttributeType = (String) in.readObject();
+    myAttributeValue = (String) in.readObject();
+    _hc = getAddressString().hashCode();
   }
 
   protected Object readResolve() {
-    return new AttributeBasedAddress(communityName, attributeName, attributeValue);
+    return new AttributeBasedAddress(myCommunityName, myAttributeType, myAttributeValue);
   }
 
+  protected String getAddressString() {
+    if (_as == null) {
+      _as = myCommunityName + ":" + myAttributeType + "=" + myAttributeValue.intern();
+    } 
+    return _as;
+  }
 }
 
 
