@@ -29,8 +29,11 @@ public abstract class AssetSkeletonBase
   implements Serializable, Cloneable 
 {
 
-  /** additional properties searched by default get*PG methods **/
+  /** additional properties searched by default get*PG methods.
+   *  Includes PropertyGroups and PropertyGroupSchedules
+   **/
   private ArrayList otherProperties = null;
+  
   protected boolean hasOtherTimePhasedProperties = false;
 
   public boolean hasOtherTimePhasedProperties() {
@@ -81,7 +84,8 @@ public abstract class AssetSkeletonBase
     }
   }
 
-  /** @return the set of additional properties - not synchronized!**/
+  /** @return the set of additional properties (includes PropertyGroups and
+   * PropertyGroupSchedules) - not synchronized!**/
   public synchronized Enumeration getOtherProperties() {
     if (otherProperties == null || otherProperties.size()==0)
       return Empty.enumeration;
@@ -89,7 +93,9 @@ public abstract class AssetSkeletonBase
       return new Enumerator(otherProperties);
   }
 
-  /** replace the existing set of other properties **/
+  /** replace the existing set of other properties (PropertyGroups and
+   *  PropertyGroupSchedules)
+   **/
   protected synchronized void setOtherProperties(Collection newProps) {
     synchronized (otherProperties) {
       if (otherProperties != null) {
@@ -112,136 +118,87 @@ public abstract class AssetSkeletonBase
     }    
   }
 
-  /** Add an OtherPropertyGroup to the set of additional properties **/
+  /** Add a PropertyGroup to the set of properties
+   *  @param prop PropertyGroup to add
+   **/
   public void addOtherPropertyGroup(PropertyGroup prop) {
     setLocalPG(prop.getPrimaryClass(), prop);
   }
 
-  /** Add a PropertyGroupSchedule to the Aset of additional properties **/
-  public synchronized void addOtherPropertyGroupSchedule(PropertyGroupSchedule prop) {
-    setLocalPGSchedule(prop);
-  }
-
-  /** Add an OtherPropertyGroup to the set of additional 
-   * properties, replacing any existing properties of the 
-   * same type.
+  /** Add a PropertyGroupSchedule to the set of properties.
+   *  @param pgs PropertyGroupSchedule to add
    **/
-  public synchronized void replaceOtherPropertyGroup(PropertyGroup prop) {
-    if (TimePhasedPropertyGroup.class.isAssignableFrom(prop.getClass())) {
-      removeOtherPropertyGroup(prop);
-      
-      addOtherPropertyGroup(prop);
-    } else {
-      removeOtherPropertyGroup(prop.getClass());
-
-      force().add(prop);
-    }
+  public void addOtherPropertyGroupSchedule(PropertyGroupSchedule pgs) {
+    setLocalPGSchedule(pgs);
   }
 
-  /** Add an OtherPropertyGroup to the set of additional 
-   * properties, replacing any existing properties of the 
-   * same type.
+  /** Replace a PropertyGroup in the set of properties. 
+   *  @param prop PropertyGroup to replace 
    **/
-  public synchronized void replaceOtherPropertyGroupSchedule(PropertyGroupSchedule schedule) {
-    System.out.println(99);
-    removeOtherPropertyGroup(schedule.getPGClass());
-    addOtherPropertyGroupSchedule(schedule);
+  public void replaceOtherPropertyGroup(PropertyGroup prop) {
+    setLocalPG(prop.getPrimaryClass(), prop);
   }
 
-  /** Removes the instance matching the class passed in as an argument 
-   * Note: this implementation assumes that OtherPropertyGroup holds one 
-   * and only one instance of a given class.
-   * Also, this method <i>must</i> be invoked if you 
-   * are replacing a property.  Otherwise, you will 
-   * be adding a duplicate property which will be an error. 
+  /** Replace a PropertyGroupSchedule in the set properties.
+   *  @oaram schedule PropertyGroupSchedule to replace.
+   **/
+  public void replaceOtherPropertyGroupSchedule(PropertyGroupSchedule schedule) {
+    setLocalPGSchedule(schedule);
+  }
+
+  /** Removes the PropertyGroup matching the class passed in as an argument 
+   * from the set of properties.
+   * Note: this implementation assumes that the set of properties
+   * holds one and only one instance of a given class.
    * @param c Class to match.
    * @return PropertyGroup Return the property instance that was removed; 
    * otherwise, return null.
    **/ 
-  public synchronized PropertyGroup removeOtherPropertyGroup(Class c) {
-    if (otherProperties == null) {
-      return null;
-    }
-
-    // Better be a property group
-    // Need to verify because otherProperties contains both PGs and PGSchedules.
-    // Don't want to allow caller to remove an unspecified PGSchedule 
-    if (!PropertyGroup.class.isAssignableFrom(c)) {
-      throw new IllegalArgumentException();
-    }
-
-    boolean isTimePhased = TimePhasedPropertyGroup.class.isAssignableFrom(c);
-    Object last = null;
-    Iterator i = otherProperties.iterator();
-    while (i.hasNext()) {
-      Object p = i.next();
-      
-      if (!isTimePhased) {
-        if (c.isInstance(p)) {
-          last = p;
-          i.remove();
-        }
-      } else {
-        if ((p instanceof PropertyGroupSchedule) &&
-            (((PropertyGroupSchedule)p).getPGClass().equals(c))) {
-          last = ((PropertyGroupSchedule)p).getDefault();
-          
-          //Didn't have a default so we've got to iterate
-          if (last == null) {
-            for (Iterator j = ((PropertyGroupSchedule)p).iterator();
-                 j.hasNext();) {
-              last = j.next();
-              break;
-            }
-          }
-
-          i.remove();
-        }
-      }
-          
-    }
-    return (PropertyGroup)last;
+  public PropertyGroup removeOtherPropertyGroup(Class c) {
+    return removeLocalPG(c);
   }
 
-  public synchronized PropertyGroup removeOtherPropertyGroup(PropertyGroup pg) {
-    if (otherProperties == null) {
-      return null;
-    }
 
-    boolean isTimePhased = 
-      TimePhasedPropertyGroup.class.isAssignableFrom(pg.getClass());
-
-    Object last = null;
-    Iterator i = otherProperties.iterator();
-    while (i.hasNext()) {
-      Object p = i.next();
-
-      if (!isTimePhased) {
-        if (pg.equals(p)){
-          last = p;
-          i.remove();
-        }
-      } else if ((p instanceof PropertyGroupSchedule) &&
-                 (((PropertyGroupSchedule)p).getPGClass().equals(pg.getClass()))) {
-        TimePhasedPropertyGroup tpppg = (TimePhasedPropertyGroup)pg;
-        
-        // BOZO - Should we allow them to remove the default?
-        if (((PropertyGroupSchedule)p).remove(p)) {
-          last = p;
-        } else {
-          last = null;
-        }
-      }
-    }
-
-    return (PropertyGroup) last;
+  /** Removes the PropertyGroup passed in as an argument from the set of 
+   * properties.
+   * @param pg PropertyGroup to remove
+   * @return PropertyGroup Return the property instance that was removed; 
+   * otherwise, return null.
+   **/ 
+  public PropertyGroup removeOtherPropertyGroup(PropertyGroup pg) {
+    return removeLocalPG(pg);
   }
 
-  /** return the time-phased schedule associated with the specified PropertyGroup
-   * class. 
+  /** Removes the PropertyGroupSchedule whose PGClass matched the class passed
+   * in as an argument from the set of properties. 
+   * Note: this implementation assumes that set of additional properties holds
+   * one and only one instance of this PropertyGroupSchedule
+   * @param c Class to match.
+   * @return PropertyGroupSchedule Return the PropertyGroupSchedule that was 
+   * removed; otherwise, return null.
+   **/ 
+  public PropertyGroupSchedule removeOtherPropertyGroupSchedule(Class c) {
+    return removeLocalPGSchedule(c);
+  }
+
+  /** Removes the instance matching the PropertyGroupSchedule passed in as an
+   * argument 
+   * Note: this implementation assumes that set of additional properties holds
+   * one and only one instance of a given PropertyGroupSchedule
+   * @param pgs PropertyGroupSchedule to remove. Match based on the schedule's
+   * PGClass.
+   * @return PropertyGroupSchedule Return the instance that was removed; 
+   * otherwise, return null.
+   **/ 
+  public PropertyGroupSchedule removeOtherPropertyGroupSchedule(PropertyGroupSchedule pgs) {
+    return removeLocalPGSchedule(pgs.getPGClass());
+  }
+
+  /** return the PropertyGroupSchedule associated with the specified class.
+   * @param
    **/
   public synchronized PropertyGroupSchedule searchForPropertyGroupSchedule(Class c) {
-    if (otherProperties == null) { 
+    if (!hasOtherTimePhasedProperties) {
       return null;    
     }
 
@@ -250,24 +207,19 @@ public abstract class AssetSkeletonBase
       return null;
     }
 
-    Iterator i = otherProperties.iterator();
-    while (i.hasNext()) {
-      Object p = i.next();
+    int index = findLocalPGScheduleIndex(c);
 
-      if (p instanceof PropertyGroupSchedule) {
-        if (((PropertyGroupSchedule)p).getPGClass().equals(c)) {
-          // BOZO - Should we clone?
-          return (PropertyGroupSchedule)p;
-        }
-      }
+    if (index >= 0){ 
+      return (PropertyGroupSchedule) force().get(index);
+    } else {
+      return null;
     }
-    return null;
   }
 
 
   /** Convenient equivalent to searchForPropertyGroupSchedule(pg.getClass()) **/
   public final PropertyGroupSchedule searchForPropertyGroupSchedule(PropertyGroup pg) {
-    return searchForPropertyGroupSchedule(pg.getClass());
+    return searchForPropertyGroupSchedule(pg.getPrimaryClass());
   }
 
 
@@ -357,76 +309,233 @@ public abstract class AssetSkeletonBase
       return null;    
     }
 
-    // use index loop rather than iterator
-    int l = otherProperties.size();
-    for (int i = 0; i<l; i++) {
-      Object p = otherProperties.get(i);
-      if ((p instanceof PropertyGroupSchedule)) {
-        PropertyGroupSchedule pgs = (PropertyGroupSchedule) p;
-        if (pgc.isAssignableFrom(pgs.getPGClass())) {
-          if (t == UNSPECIFIED_TIME) {
-            return pgs.getDefault();
-          } else {
-            return (PropertyGroup) pgs.intersects(t);
-          }
+    if (TimePhasedPropertyGroup.class.isAssignableFrom(pgc)) {
+      int index = findLocalPGScheduleIndex(pgc);
+      if (index >=0) {
+        PropertyGroupSchedule pgs = (PropertyGroupSchedule) force().get(index);
+        if (t == UNSPECIFIED_TIME) {
+          return pgs.getDefault();
+        } else {
+          return (PropertyGroup) pgs.intersects(t);
         }
-      } else if (pgc.isAssignableFrom(p.getClass())) {
-        return (PropertyGroup)p;
+      } else {
+        return null;
+      }
+    } else {
+      int index = findLocalPGIndex(pgc);
+
+      if (index >= 0) {
+        return (PropertyGroup) force().get(index);
+      } else {
+        return null;
       }
     }
-    return null;
   }
 
   /** Set the apropriate slot in the asset to the specified pg.
    * Scheduled PGs have the time range in them, so the time (range)
    * should not be specified in the arglist.
    **/
-  protected void setLocalPG(Class pgc, PropertyGroup prop) {
+  protected synchronized void setLocalPG(Class pgc, PropertyGroup prop) {
     if (prop instanceof TimePhasedPropertyGroup) {
-      PropertyGroupSchedule schedule = searchForPropertyGroupSchedule(pgc);
-      if (schedule != null) {
-        schedule.add(prop);
+      int index = findLocalPGScheduleIndex(pgc);
+      TimePhasedPropertyGroup timePhasedProp = (TimePhasedPropertyGroup) prop;
+
+      PropertyGroupSchedule schedule;
+      if (index >= 0) {
+        schedule = (PropertyGroupSchedule) force().get(index);
+        schedule.removeAll(schedule.intersectingSet(timePhasedProp));
       } else {
         hasOtherTimePhasedProperties = true;
-        // ??? Should this first value be a default
-        schedule = new PropertyGroupSchedule((TimePhasedPropertyGroup)prop);
+        schedule = new PropertyGroupSchedule();
         force().add(schedule);
       }
+
+      schedule.add(prop);
     } else {
-      addOrReplaceLocalPG(pgc, prop);
+      addOrReplaceLocalPG(prop);
     }
   }
 
-  protected void setLocalPGSchedule(PropertyGroupSchedule pgSchedule) {
+  protected synchronized void setLocalPGSchedule(PropertyGroupSchedule pgSchedule) {
     if (hasOtherTimePhasedProperties) {
-      removeOtherPropertyGroup(pgSchedule.getPGClass());
+      int index = findLocalPGScheduleIndex(pgSchedule.getPGClass());
+      if (index >= 0) {
+        force().remove(index);
+      }
+    } else {
+      hasOtherTimePhasedProperties = true;
     }
 
-    hasOtherTimePhasedProperties = true;
-
     force().add(pgSchedule);
+  }
+
+  protected synchronized PropertyGroup removeLocalPG(Class c) {
+    // Better be a property group
+    // Need to verify because otherProperties contains both PGs and 
+    // PGSchedules. Don't want to allow caller to remove an unspecified 
+    // PGSchedule 
+    if (!PropertyGroup.class.isAssignableFrom(c)) {
+      throw new IllegalArgumentException();
+    }
+
+    PropertyGroup removed = null;
+
+    // Use removeOtherPropertyGroupSchedule to remove entire schedules.
+    if (TimePhasedPropertyGroup.class.isAssignableFrom(c)) {
+
+      int index = findLocalPGScheduleIndex(c);
+      if (index >=0) {
+        PropertyGroupSchedule pgs = (PropertyGroupSchedule) force().get(index);
+
+        removed = pgs.getDefault();
+
+        if ((removed == null) &&
+            (pgs.size() > 0)) {
+          removed = (PropertyGroup) pgs.get(0);
+        }
+
+        force().remove(index);
+      }
+    } else {
+      int index = findLocalPGIndex(c);
+      if (index >= 0) {
+        removed = (PropertyGroup) force().get(index);
+        force().remove(index);
+      }
+    } 
+    return removed;
+  }
+
+  protected synchronized PropertyGroup removeLocalPG(PropertyGroup pg) {
+    // Better be a property group
+    // Need to verify because otherProperties contains both PGs and 
+    // PGSchedules. Don't want to allow caller to remove an unspecified 
+    // PGSchedule 
+    if (!PropertyGroup.class.isAssignableFrom(pg.getPrimaryClass())) {
+      throw new IllegalArgumentException();
+    }
+
+    PropertyGroup removed = null;
+    Class pgc = pg.getPrimaryClass();
+
+    // Use removeOtherPropertyGroupSchedule to remove entire schedules.
+    if (TimePhasedPropertyGroup.class.isAssignableFrom(pgc)) {
+
+      int index = findLocalPGScheduleIndex(pgc);
+      if (index >=0) {
+        PropertyGroupSchedule pgs = (PropertyGroupSchedule) force().get(index);
+
+        if (pgs.getDefault() == pg) {
+          pgs.clearDefault();
+          removed = pg;
+        } 
+        
+        if (pgs.remove(pg)) {
+          removed = pg;
+        }
+      }
+    } else {
+      int index = findLocalPGIndex(pg.getPrimaryClass());
+      if (index >= 0) {
+        removed = (PropertyGroup) force().get(index);
+        force().remove(index);
+      }
+    } 
+    return removed;
+  }
+
+  protected synchronized PropertyGroupSchedule removeLocalPGSchedule(Class c) {
+    int index = findLocalPGScheduleIndex(c);
+
+    if (index >=0) {
+      return (PropertyGroupSchedule) force().remove(index);
+    } else {
+      return null;
+    }
   }
 
   /** add a PG, making sure to drop any previous PG of identical class which had
    * already been there.
    **/
-  private final synchronized void addOrReplaceLocalPG(Class pgc, PropertyGroup prop) {
+  private final synchronized void addOrReplaceLocalPG(PropertyGroup prop) {
+    // Look through the list for a PG of a matching class.  The hard part
+    // of this is that either the prop or any of the elements of the list
+    // may be natural (FooPGImpl), locked, Null, etc.  So: our solution is
+    // to compare the "PrimaryClass" of each.
+    int index = findLocalPGIndex(prop.getPrimaryClass());
+    ArrayList ps = force();
+
+    if (index >= 0) {
+      ps.set(index, prop);
+    } else {
+      ps.add(prop);
+    }
+  }
+
+  /** find index of specified PG in the set of additional properties.
+   **/
+  private final synchronized int findLocalPGIndex(Class propertyGroupClass) {
     // Look through the list for a PG of a matching class.  The hard part
     // of this is that either the prop or any of the elements of the list
     // may be natural (FooPGImpl), locked, Null, etc.  So: our solution is
     // to compare the "PrimaryClass" of each.
     ArrayList ps = force();
-
-    Class key = prop.getPrimaryClass();
     int l = ps.size();
+
     for (int i = 0; i<l; i++) {
-      PropertyGroup op = (PropertyGroup) ps.get(i);
-      Class ok = op.getPrimaryClass();
-      if (key.equals(ok)) {
-        ps.set(i, prop);
-        return;
+      Object o = ps.get(i);
+      Class ok = null;
+
+      if (o instanceof PropertyGroupSchedule) {
+        // Don't bother with PropertyGroupSchedules
+        continue;
+      } else if (o instanceof PropertyGroup) {
+        ok = ((PropertyGroup) o).getPrimaryClass();
+      } else {
+        throw new RuntimeException("Unable to handle object of Class: " + o.getClass() +
+                                   " in otherProperties list.");
+      }
+      if (propertyGroupClass.equals(ok)) {
+        return i;
       }
     }
-    ps.add(prop);
+    return -1;
+  }
+
+  /** find index of specified PropertyGroupSchedule in the set of additional
+   * properties.
+   **/
+  private final synchronized int findLocalPGScheduleIndex(Class propertyGroupClass) {
+    // Look through the list for a PG of a matching class.  The hard part
+    // of this is that either the prop or any of the elements of the list
+    // may be natural (FooPGImpl), locked, Null, etc.  So: our solution is
+    // to compare the "PrimaryClass" of each.
+    ArrayList ps = force();
+    int l = ps.size();
+
+    for (int i = 0; i<l; i++) {
+      Object o = ps.get(i);
+      Class ok = null;
+
+      if (o instanceof PropertyGroup) {
+        // Don't bother with PropertyGroups
+        continue;
+      } else if (o instanceof PropertyGroup) {
+        ok = ((PropertyGroupSchedule) o).getPGClass();
+      } else {
+        throw new RuntimeException("Unable to handle object of Class: " + o.getClass() +
+                                   " in otherProperties list.");
+      }
+      if (propertyGroupClass.equals(ok)) {
+        return i;
+      }
+    }
+    return -1;
   }
 }
+
+
+
+
+
