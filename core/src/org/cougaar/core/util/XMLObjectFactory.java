@@ -20,7 +20,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.domain.planning.ldm.asset.PropertyGroup;
 
 import org.w3c.dom.*;
-import com.ibm.xml.parsers.*;
+import org.apache.xerces.parsers.DOMParser;
 import org.xml.sax.InputSource;
 import org.cougaar.core.cluster.*;
 import java.io.*;
