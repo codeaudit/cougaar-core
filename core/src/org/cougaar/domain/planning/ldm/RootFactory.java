@@ -54,7 +54,7 @@ public class RootFactory
   /** map of assetname -> assetClass **/
   private final Map assetClasses = new HashMap(89);
 
-  /** set of property(group) factories **/
+  /** set of property(group) factory classes **/
   private final Set propertyFactories = new HashSet(11);
 
   /** set of assetFactories **/
@@ -88,10 +88,10 @@ public class RootFactory
       }
 
       synchronized (propertyFactories) {
-        if (propertyFactories.contains(pf)) {
+        if (propertyFactories.contains(pfc)) {
           return;
         } else {
-          propertyFactories.add(pf);
+          propertyFactories.add(pfc);
         }
       }
 
@@ -127,7 +127,9 @@ public class RootFactory
     } else {
       pfc = pf.getClass();
     }
-    return propertyFactories.contains(pfc);
+    synchronized (propertyFactories) {
+      return propertyFactories.contains(pfc);
+    }
   }
 
   private final Method findPropertyGroupFactoryMethod(String name) {

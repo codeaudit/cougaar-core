@@ -1,0 +1,8 @@
+;!generate: org.cougaar.tools.build.AssetWriter -Porg.cougaar.lib.quo.performance.assets programmer_assets.def
+;; Basis for generating class definitions for Subclasses of Assets
+;;
+
+[ProgrammerAsset org.cougaar.lib.quo.performance.ProgrammerAssetAdapter]
+slots = LanguagePG, SkillsPG
+doc=Representation of a programmer with languages and skills represented
+ 
