@@ -75,8 +75,14 @@ public class ServiceBrokerSupport
     }
   }
 
-  /** the current set of services.  A map of Class serviceClass to ServiceProvider **/
-  private HashMap services = new HashMap(89);
+  /** the current set of services.  A map of Class serviceClass to ServiceProvider
+   * Access to services is guarded by servicesLock.
+   **/
+  private final HashMap services = new HashMap(89);
+  /** Lock for services.  Protected so that extending classes can 
+   * synchronize over multiple calls.
+   **/
+  protected final Object servicesLock = new Object();
 
   /** add a Service to this ServiceBroker Context **/
   public boolean addService(Class serviceClass, ServiceProvider serviceProvider) {
@@ -85,7 +91,7 @@ public class ServiceBrokerSupport
     if(serviceProvider == null)
       throw new IllegalArgumentException("serviceProvider null");
       
-    synchronized (services) {
+    synchronized (servicesLock) {
       Object old = services.get(serviceClass);
       if (old != null) {
         return false;
@@ -108,7 +114,7 @@ public class ServiceBrokerSupport
     if(serviceProvider == null)
       throw new IllegalArgumentException("serviceProvider null");
       
-    synchronized (services) {
+    synchronized (servicesLock) {
       Object old = services.remove(serviceClass); 
       if (old == null) {
         return;                 // bail out - already revoked
@@ -124,7 +130,7 @@ public class ServiceBrokerSupport
   public boolean hasService(Class serviceClass) {
     if (serviceClass == null)
       throw new IllegalArgumentException("serviceClass null");
-    synchronized (services) {
+    synchronized (servicesLock) {
       return (null != services.get(serviceClass));
     }
   }
@@ -134,7 +140,7 @@ public class ServiceBrokerSupport
    **/
   public Iterator getCurrentServiceClasses() {
     //We could cache the answer if this turns out to be a hot spot.
-    synchronized (services) {
+    synchronized (servicesLock) {
       ArrayList l = new ArrayList(services.keySet());
       return l.iterator();
     }
@@ -148,7 +154,7 @@ public class ServiceBrokerSupport
     if (serviceClass == null) throw new IllegalArgumentException("null serviceClass");
 
     Object service;
-    synchronized (services) {
+    synchronized (servicesLock) {
       ServiceProvider sp = (ServiceProvider) services.get(serviceClass);
       if (sp == null) return null; // bail
 
@@ -178,7 +184,7 @@ public class ServiceBrokerSupport
     if (requestor == null) throw new IllegalArgumentException("null requestor");
     if (serviceClass == null) throw new IllegalArgumentException("null serviceClass");
 
-    synchronized (services) {
+    synchronized (servicesLock) {
       ServiceProvider sp = (ServiceProvider) services.get(serviceClass);
       if (sp != null) {
         sp.releaseService(this, requestor, serviceClass, service);

@@ -102,4 +102,27 @@ public class PropagatingServiceBroker
       return delegate.getService(requestor, serviceClass, srl);
     }
   }
+
+  public void releaseService(Object requestor, Class serviceClass, Object service) {
+    synchronized (servicesLock) {
+      if (super.hasService(serviceClass)) {
+        super.releaseService(requestor, serviceClass, service);
+        return;
+      }
+    }
+    // else
+    delegate.releaseService(requestor, serviceClass, service);
+  }
+
+  public void revokeService(Class serviceClass, ServiceProvider serviceProvider) {
+    synchronized (servicesLock) {
+      if (super.hasService(serviceClass)) {
+        super.revokeService(serviceClass, serviceProvider);
+        return;
+      }
+    }
+    // else
+    delegate.revokeService(serviceClass, serviceProvider);
+  }
+
 }
