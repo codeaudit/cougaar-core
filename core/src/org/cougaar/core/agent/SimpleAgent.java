@@ -376,7 +376,24 @@ public class SimpleAgent
       throw new StateModelException(
           "Container ("+getBindingSite()+") does not implement AgentBindingSite");
     }
+
+    // do the standard thing.
     super.load();
+
+    // final step is to load the plugin manager which will make the plugins go.
+    String pimname = new String(getMessageAddress()+"PluginManager");
+    ComponentDescription pimdesc = 
+      new ComponentDescription(
+                               pimname,
+                               "Node.AgentManager.Agent.PluginManager",
+                               "org.cougaar.core.plugin.PluginManager",
+                               null,  //codebase
+                               null,  //parameters
+                               null,  //certificate
+                               null,  //lease
+                               null); //policy
+    
+    add(pimdesc);
   }
 
   protected void loadHighPriorityComponents() {
@@ -611,24 +628,6 @@ public class SimpleAgent
                                    null,
                                    null,
                                    null));
-
-      // start up the pluginManager component - should really itself be loaded
-      // as an agent subcomponent.
-      //create a component description for pluginmanager instead of an instance
-      String pimname = new String(getMessageAddress()+"PluginManager");
-      ComponentDescription pimdesc = 
-        new ComponentDescription(
-            pimname,
-            "Node.AgentManager.Agent.PluginManager",
-            "org.cougaar.core.plugin.PluginManager",
-            null,  //codebase
-            null,  //parameters
-            null,  //certificate
-            null,  //lease
-            null); //policy
-
-      add(pimdesc);
-    }
 
     // get blackboard service
     myBlackboardService = (BlackboardForAgent) 

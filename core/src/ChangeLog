@@ -1,5 +1,9 @@
 2002-05-21  Michael Thome  <mthome@bbn.com>
 
+	* SimpleAgent
+	Change the load order so that all direct subcomponents are loaded
+	before the PluginManager is started.  This fixes bug 1344.
+
 	* NewTask, TaskImpl
 	Added addPrepositionalPhrase(PP), setPrepositionalPhrases(PP), and
 	deprecated setPrepositionalPhrases(PP) as confusing.
