@@ -22,6 +22,7 @@ package org.cougaar.core.adaptivity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import org.cougaar.util.UnaryPredicate;
@@ -62,14 +63,52 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
 
   private IncrementalSubscription policySubscription;
 
+  private class OMPredicate implements UnaryPredicate {
+    private HashSet omnames;
+
+    public OMPredicate() {
+      omnames = new HashSet(13);
+    }
+
+    public void addOM(String om) {
+      omnames.add(om);
+    }
+
+    public void removeOM(String om) {
+      omnames.remove(om);
+    }
+
+    public boolean execute(Object o) {
+      if (o instanceof OperatingMode) {
+	OperatingMode om = (OperatingMode)o;
+	String bbOM = om.getName();
+	for (Iterator it = omnames.iterator(); it.hasNext();) {
+	  String storedName = (String) it.next();
+	  if (bbOM.equals(storedName)) {
+	    return true;
+	  }
+	}
+      }
+      return false;
+    }
+  }
+
+  private IncrementalSubscription omSubscription;
+  private OMPredicate omPred;
+
   public OperatingModePolicyManager() {
     super(requiredServices);
   }
 
   public void setupSubscriptions() {
+  }
+
+  private void realySetupSubscriptions() {
 
     policySubscription = (IncrementalSubscription) blackboard.subscribe(policyPredicate);
 
+    omPred = new OMPredicate();
+    omSubscription = (IncrementalSubscription) blackboard.subscribe(omPred);
   }
 
   private boolean haveServices() {
@@ -80,16 +119,24 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
         sb.getService(this, PlaybookConstrainService.class, null);
       operatingModeService = (OperatingModeService)
         getServiceBroker().getService(this, OperatingModeService.class, null);
+      realySetupSubscriptions();
       return true;
     }
     return false;
   }
 
   public void execute() {
-    if (policySubscription.hasChanged()) {
-      removePolicies(policySubscription.getRemovedCollection());
-      changePolicies(policySubscription.getChangedCollection());
-      addPolicies(policySubscription.getAddedCollection());
+    if (haveServices()) {
+      if (policySubscription.hasChanged()) {
+	removePolicies(policySubscription.getRemovedCollection());
+	changePolicies(policySubscription.getChangedCollection());
+	addPolicies(policySubscription.getAddedCollection());
+      }
+      
+      // Missing OperatingModes may have shown up
+      if (omSubscription.hasChanged()) {
+	checkOMSubs();
+      }
     }
   }
 
@@ -98,12 +145,10 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
    */
   private void addPolicies(Collection newPolicies) {
     if (logger.isInfoEnabled()) logger.info("Adding policy");
-    if (haveServices()) {
-      for (Iterator it = newPolicies.iterator(); it.hasNext();) {
-	OperatingModePolicy omp = (OperatingModePolicy)it.next();
-	if (nonAdaptive(omp)) {
-	  playbookConstrainService.constrain(omp);
-	}
+    for (Iterator it = newPolicies.iterator(); it.hasNext();) {
+      OperatingModePolicy omp = (OperatingModePolicy)it.next();
+      if (nonAdaptive(omp)) {
+	playbookConstrainService.constrain(omp);
       }
     }
   }
@@ -113,10 +158,8 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
    */
   private void removePolicies(Collection removedPolicies)  {
     if (logger.isInfoEnabled()) logger.info("Removing policy");
-    if (haveServices()) {
-      for (Iterator it = removedPolicies.iterator(); it.hasNext();) {
-	playbookConstrainService.unconstrain((OperatingModePolicy)it.next());
-      }
+    for (Iterator it = removedPolicies.iterator(); it.hasNext();) {
+      playbookConstrainService.unconstrain((OperatingModePolicy)it.next());
     }
   }
   
@@ -126,16 +169,35 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
    */
   private void changePolicies(Collection changedPolicies) {
     if (logger.isInfoEnabled()) logger.info("Changing policy");
-    if (haveServices()) {
-      for (Iterator it = changedPolicies.iterator(); it.hasNext();) {
-	OperatingModePolicy omp = (OperatingModePolicy)it.next();
-	if (nonAdaptive(omp)) {
-	  playbookConstrainService.unconstrain(omp);
-	  playbookConstrainService.constrain(omp);
-	}
+    for (Iterator it = changedPolicies.iterator(); it.hasNext();) {
+      OperatingModePolicy omp = (OperatingModePolicy)it.next();
+      if (nonAdaptive(omp)) {
+	playbookConstrainService.unconstrain(omp);
+	playbookConstrainService.constrain(omp);
       }
     }
   }
+
+  /**
+   * If any missing OperatingModes have been published run through
+   * all the policies again
+   **/
+  private void checkOMSubs() {
+    if (logger.isInfoEnabled()) logger.info("checking for wanted Operating Modes");
+
+//      for (Iterator subIt = omSubscription.getAddedCollection().iterator();
+//  	 subIt.hasNext();) {
+//        System.out.println("Found OM: " + subIt.next());
+//      }
+    
+    // If anyone of the missing OMs has shown up, run through ALL of policies
+    for (Iterator policyIt = policySubscription.iterator(); 
+	 policyIt.hasNext();) {
+      OperatingModePolicy omp = (OperatingModePolicy) policyIt.next();
+      nonAdaptive(omp);
+    }
+  }
+
 
   /**
    * This methods sets the values of OperatingModes of NonAdaptive Policies.
@@ -162,7 +224,15 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
 	if (!(ranges[0] instanceof OMCPoint)) {
 	  return false;
 	} 
-	keepers.add(cps[i]);
+
+	ConstraintOperator op = cps[i].getOperator();
+  	if (op.equals(ConstraintOperator.EQUAL) ||
+  	    op.equals(ConstraintOperator.ASSIGN) ||
+  	    op.equals(ConstraintOperator.IN)) {
+	  keepers.add(cps[i]);
+  	} else {
+  	  return false; 
+  	}
       }
     }
 
@@ -174,14 +244,40 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
       ConstraintPhrase cp = (ConstraintPhrase)it.next();
       
       /* lookup and set operating mode corresponding to this phrase */
-      OperatingMode om = operatingModeService.getOperatingModeByName(cp.getProxyName());
+      OperatingMode om = findOM(cp.getProxyName());
       if (om != null) {
 	OMCRange theValue = cp.getAllowedValues().getAllowedValues()[0];
 	om.setValue(theValue.getMin());
 	blackboard.publishChange(om);
+	
+	// Remove this om from the predicate, in case it's there.
+	omPred.removeOM(cp.getProxyName());
+      } else {
+	// didn't find operating mode we expected
+	// add it to the om predicate, and hope it shows up later
+	omPred.addOM(cp.getProxyName());
       }
     }
     return true;
+  }
+
+  /**
+   * Lookup an OperatingMode first using the OperatingModeService,
+   * then by searching the local subscription
+   **/
+  private OperatingMode findOM(String omName) {
+    // first try to find the om using the OMService
+    OperatingMode om = operatingModeService.getOperatingModeByName(omName);
+    if (om == null) {
+      // Not in OMService, maybe in our subscription
+      for (Iterator subIt = omSubscription.iterator(); subIt.hasNext();) {
+	OperatingMode subOM = (OperatingMode) subIt.next();
+	if (omName.equals(subOM.getName())) {
+	  return subOM;
+	}
+      }
+    }
+    return om;
   }
 }
 
