@@ -673,8 +673,9 @@ implements Component
           } catch (NamingException ne) {
             if (ne instanceof NameNotFoundException) {
               ret = null;
-            }
-            throw new RuntimeException("Unable to access name server", ne);
+            } else {
+	      throw new RuntimeException("Unable to access name server", ne);
+	    }
           }
           cache.put(cacheKey, ret);
           return ret;
