@@ -25,19 +25,19 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.Date;
+import java.util.Set;
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.cougaar.core.agent.AgentContainer;
+import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.wp.WhitePagesService;
-
-// temporary
-import org.cougaar.core.service.TopologyReaderService;
-
 
 public abstract class MetricsServlet extends HttpServlet implements Constants
 {
@@ -47,8 +47,7 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
     protected String nodeID;
     protected DecimalFormat f4_2,f6_3,f3_0,f7_0;
 
-    // temporary
-    TopologyReaderService topologyService;
+    private AgentContainer agentContainer;
 
     public MetricsServlet(ServiceBroker sb) {
 	ServletService servletService = (ServletService)
@@ -63,10 +62,15 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
 	    throw new RuntimeException("Unable to obtain WhitePages service");
 	}
 
-	// temporary
-	topologyService = (TopologyReaderService)
-	    sb.getService(this, TopologyReaderService.class, null);
-
+	NodeControlService ncs = (NodeControlService)
+            sb.getService(this, NodeControlService.class, null);
+        if (ncs != null) {
+            Container c = ncs.getRootContainer();
+            if (c instanceof AgentContainer) {
+                agentContainer = (AgentContainer) c;
+            }
+            sb.releaseService(this, NodeControlService.class, ncs);
+        }
 
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
@@ -93,6 +97,17 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
     protected abstract String myTitle();
     protected abstract void outputPage(PrintWriter out);
 
+    /**
+     * @return the message addresses of the agents on this
+     * node, or null if that information is not available.
+     */
+    protected final Set getLocalAgents() {
+        if (agentContainer == null) {
+            return null;
+        } else {
+            return agentContainer.getAgentAddresses();
+        }
+    }
 
     public void doGet(HttpServletRequest request,
 		      HttpServletResponse response) 

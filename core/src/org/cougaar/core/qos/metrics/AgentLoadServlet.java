@@ -26,8 +26,7 @@ import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Set;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.mts.MessageAddress;
 
 public class AgentLoadServlet 
     extends MetricsServlet
@@ -46,18 +45,8 @@ public class AgentLoadServlet
 
     protected void outputPage(PrintWriter out) {
 	// Get list of All Agents On this Node
-	Set matches = null;
-	try {
-	    matches = topologyService.getAllEntries(null,  // Agent
-						    nodeID,// only this node
-						    null, // Host
-						    null, // Site
-						    null); // Enclave
-	} catch (Exception ex) {
-	    // Node hasn't finished initializing yet
-	    return;
-	}
-	if (matches == null) return;
+        Set localAgents = getLocalAgents();
+	if (localAgents == null) return;
 
 	//Header Row
 	out.print("<table border=1>\n");
@@ -73,14 +62,16 @@ public class AgentLoadServlet
 	out.print("</b></tr>");
 
 	//Rows
-	Iterator itr = matches.iterator();
-	while (itr.hasNext()) {
+	for (Iterator itr = localAgents.iterator(); itr.hasNext(); ) {
 	    // Get Agent
-	    TopologyEntry entry = (TopologyEntry) itr.next();
-	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
-
-	    String name = entry.getAgent();
+	    MessageAddress addr = (MessageAddress) itr.next();
+	    String name = addr.getAddress();
+            if (name.equals(nodeID) || name.equals(nodeID+"(MTS)")) {
+                // ignore node-agent and MTS
+                continue;
+            }
 	    String agentPath = "Agent(" +name+ ")"+PATH_SEPR;
+
 	    // Get Metrics
 	    Metric cpuLoad = metricsService.getValue(agentPath
 						     + CPU_LOAD_AVG_10_SEC_AVG);

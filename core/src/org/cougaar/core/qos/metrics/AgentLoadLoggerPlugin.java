@@ -30,19 +30,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TimerTask;
+import org.cougaar.core.agent.AgentContainer;
+import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.TopologyEntry;
-import org.cougaar.core.service.TopologyReaderService;
 
 public class AgentLoadLoggerPlugin 
     extends ComponentPlugin
     implements Constants
 {
-    private TopologyReaderService topologyService;
+    private AgentContainer agentContainer;
     private MetricsService metricsService;
     private String node;
     private String filename = "agent-data.log";
@@ -69,26 +71,18 @@ public class AgentLoadLoggerPlugin
 
     private void collectNames() {
 	start = System.currentTimeMillis();
-	Set matches = null;
-	try {
-	    matches = topologyService.getAllEntries(null,  // Agent
-						    node,
-						    null, // Host
-						    null, // Site
-						    null); // Enclave
-	} catch (Exception ex) {
-	    // Node hasn't finished initializing yet
-	    return;
-	}
-	if (matches == null) return;
+	Set localAgents = getLocalAgents();
+	if (localAgents == null) return;
 	
 	agents = new ArrayList();
 	out.print("Time");
-	Iterator itr = matches.iterator();
-	while (itr.hasNext()) {
-	    TopologyEntry entry = (TopologyEntry) itr.next();
-	    if ((entry.getType() & TopologyReaderService.AGENT) == 0) continue;
-	    String name = entry.getAgent();
+	for (Iterator itr = localAgents.iterator(); itr.hasNext(); ) {
+            MessageAddress addr = (MessageAddress) itr.next();
+	    String name = addr.getAddress();
+            if (name.equals(node) || name.equals(node+"(MTS)")) {
+                // ignore node-agent and MTS
+                continue;
+            }
 	    out.print('\t');
 	    out.print(name);
 	    agents.add(name);
@@ -122,8 +116,15 @@ public class AgentLoadLoggerPlugin
 
 	ServiceBroker sb = getServiceBroker();
 
-	topologyService = (TopologyReaderService)
-	    sb.getService(this, TopologyReaderService.class, null);
+	NodeControlService ncs = (NodeControlService)
+            sb.getService(this, NodeControlService.class, null);
+        if (ncs != null) {
+            Container c = ncs.getRootContainer();
+            if (c instanceof AgentContainer) {
+                agentContainer = (AgentContainer) c;
+            }
+            sb.releaseService(this, NodeControlService.class, ncs);
+        }
 
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);
@@ -149,6 +150,18 @@ public class AgentLoadLoggerPlugin
 
 	threadService.schedule(new Poller(), 60000, 500);
 	
+    }
+
+    /**
+     * @return the message addresses of the agents on this
+     * node, or null if that information is not available.
+     */
+    protected final Set getLocalAgents() {
+        if (agentContainer == null) {
+            return null;
+        } else {
+            return agentContainer.getAgentAddresses();
+        }
     }
 
     protected void setupSubscriptions() {
