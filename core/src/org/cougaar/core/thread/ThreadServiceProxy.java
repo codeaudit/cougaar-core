@@ -117,32 +117,5 @@ final class ThreadServiceProxy 	implements ThreadService
     }
 
 
-    public void suspendCurrentThread(long millis) {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).suspend(millis);
-	}
-    }
-
-
-    public void yieldCurrentThread() {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).yield(null);
-	}
-    }
-    public void blockCurrentThread(Object lock, long millis) {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).wait(lock, millis);
-	}
-    }
-    public void blockCurrentThread(Object lock) {
-	Thread thread = Thread.currentThread();
-	if (thread instanceof ControllableThread) {
-	    ((ControllableThread) thread).wait(lock);
-	}
-    }
-
 
 }
