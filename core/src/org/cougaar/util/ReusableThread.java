@@ -60,9 +60,14 @@ public class ReusableThread extends Thread {
     pool = p;
   }
 
+    // Hook for subclasses
+    protected void claim() {
+    }
+
   public final void run() {
     while (true) {
       synchronized (runLock) {
+	  claim();
         Runnable r = getRunnable();
         if (r != null)
           r.run();
