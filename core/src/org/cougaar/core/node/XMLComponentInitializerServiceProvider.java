@@ -28,6 +28,7 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
 import org.cougaar.core.node.ComponentInitializerService.InitializerException;
 import org.cougaar.util.log.*;
+import org.cougaar.util.ConfigFinder;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -39,7 +40,7 @@ import org.xml.sax.helpers.DefaultHandler;
  * @property org.cougaar.node.name
  *   The name for this Node. 
  * @property org.cougaar.society.file 
- *   The name of the XML file from which to read this Nodes definition
+ *   The name of the XML file from which to read this Node's definition
  * 
  * </pre>
  **/
@@ -69,12 +70,15 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
   public XMLComponentInitializerServiceProvider() {
     this.logger = Logging.getLogger(getClass());
 
-    filename = System.getProperty("org.cougaar.society.file");
-    nodename = System.getProperty("org.cougaar.node.name");
+    filename = System.getProperty("org.cougaar.society.file", "society.xml");
+    nodename = System.getProperty("org.cougaar.node.name", "Node");
+    if (logger.isShoutEnabled())
+      logger.shout("Will initialize node from XML file " + filename + ", creating node " + nodename);
+
     try {
       parseFile();
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Exception reading society XML file " + filename, e);
     }
   }
 
@@ -84,10 +88,17 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
     MyHandler handler = new MyHandler();
     xr.setContentHandler(handler);
     xr.setErrorHandler(handler);
-
-    FileReader r = new FileReader(filename);
-    xr.parse(new InputSource(r));
-    r.close();
+    InputStream istr = ConfigFinder.getInstance().open(filename);
+    if (istr == null) {
+      logger.error("null InputStream from ConfigFinder on " + filename);
+      return;
+    }
+    InputSource is = new InputSource(istr);
+    if (is != null) {
+      xr.parse(is);
+    } else {
+      logger.error("Unable to open " + filename + " for XML initialization");
+    }
   }
 
   public Object getService(
@@ -223,6 +234,8 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
       if (localName.equals("node")) {
 	String thisName = atts.getValue("name");
 	if (nodename.equals(thisName)) {
+	  if (logger.isDebugEnabled())
+	    logger.debug("started element for this node: " + thisName);
           currentParent = thisName;
           HashMap nodeComponents = new HashMap();
           allComponents.put(thisName, nodeComponents); // Space for node agent components
@@ -236,8 +249,10 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
       if (!thisNode)
 	return;
       if (localName.equals("agent")) {
-
+	
         String name = atts.getValue("name");
+	if (logger.isDebugEnabled())
+	  logger.debug("started element for agent " + name);
         assert(allComponents.get(name) == null);
         currentParent = name;
         // make a new place for the agent's components
@@ -323,9 +338,13 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
 	currentComponent = null;
       } else if (localName.equals("agent")) {
         currentParent = nodename;
+	if (logger.isDebugEnabled())
+	  logger.debug("finished a agent");
       } else if (localName.equals("node")) {
 	thisNode = false;
         currentParent = null;
+	if (logger.isDebugEnabled())
+	  logger.debug("finished a node");
       }
     }
 
@@ -333,6 +352,7 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
      * @see org.xml.sax.ErrorHandler#error(SAXParseException)
      */
     public void error(SAXParseException exception) throws SAXException {
+      logger.error("Error parsing the file", exception);
       super.error(exception);
     }
 
@@ -340,6 +360,7 @@ public class XMLComponentInitializerServiceProvider implements ServiceProvider {
      * @see org.xml.sax.ErrorHandler#warning(SAXParseException)
      */
     public void warning(SAXParseException exception) throws SAXException {
+      logger.warn("Warning parsing the file", exception);
       super.warning(exception);
     }
 
