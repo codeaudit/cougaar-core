@@ -1,3 +1,10 @@
+2002-07-09  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/topology/TopologyReaderServiceComponent.java:
+	Fix unintended change in behavior when searches fail. Should
+	return null, but was accidentally falling into exception throwing
+	code.
+
 2002-07-08  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/topology/TopologyReaderServiceComponent.java:
