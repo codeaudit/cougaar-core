@@ -24,6 +24,7 @@ package org.cougaar.core.node;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import java.util.List;
 import java.util.Collection;
 import java.util.Iterator;
@@ -32,6 +33,7 @@ import javax.naming.NamingException;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.AgentManager;
+import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.agent.SimpleAgent;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.BinderFactory;
@@ -111,12 +113,15 @@ public class NodeAgent
 {
   private ServiceBroker agentServiceBroker = null;
   private AgentManager agentManager = null;
+  private AgentContainer agentManagerProxy = null;
 
-  private boolean ignoreRehydratedAgentDescs = true;
+  private boolean ignoreRehydratedAgentDescs = false;
   private ComponentDescription[] agentDescs = null;
 
   private String nodeName = null;
   private MessageAddress nodeIdentifier = null;
+
+  private List components = new ArrayList();
 
   private static final boolean isHeartbeatOn;
   private static final boolean isWPEnabled;
@@ -134,6 +139,37 @@ public class NodeAgent
     isServletEnabled=PropertyParser.getBoolean("org.cougaar.core.load.servlet", true);
   }
 
+  private class AgentManagerProxy implements AgentContainer {
+    public boolean containsAgent(MessageAddress agentId) {
+      return agentManager.containsAgent(agentId);
+    }
+    public Set getAgentAddresses() { return agentManager.getAgentAddresses(); }
+    public ComponentDescription getAgentDescription(MessageAddress agentId) {
+      return agentManager.getAgentDescription(agentId);
+    }
+    public Map getAgents() { return agentManager.getAgents(); }
+    public void addAgent(MessageAddress agentId, StateTuple tuple) {
+      agentManager.addAgent(agentId, tuple);
+      persistNow();
+    }
+    public List getComponents() {
+      return agentManager.getComponents();
+    }
+    public boolean add(Object o) {
+      boolean result = agentManager.add(o);
+      persistNow();
+      return result;
+    }
+    public void removeAgent(MessageAddress agentId) {
+      agentManager.removeAgent(agentId);
+      persistNow();
+    }
+    public boolean remove(Object o) {
+      boolean result = agentManager.remove(o);
+      persistNow();
+      return result;
+    }
+  }
 
   /**
    * Set the required NodeAgent parameter.
@@ -152,6 +188,7 @@ public class NodeAgent
     super.setParameter(nodeIdentifier);
     agentServiceBroker = (ServiceBroker) l.get(1);
     agentManager = (AgentManager) l.get(2);
+    agentManagerProxy = new AgentManagerProxy();
     ignoreRehydratedAgentDescs = ((Boolean) l.get(3)).booleanValue();
   }
 
@@ -178,8 +215,8 @@ public class NodeAgent
         public ServiceBroker getRootServiceBroker() {
           return agentServiceBroker;
         }
-        public Container getRootContainer() {
-          return agentManager;
+        public AgentContainer getRootContainer() {
+          return agentManagerProxy;
         }
       };
 
@@ -390,6 +427,13 @@ public class NodeAgent
     super.loadLowPriorityComponents();
   }
 
+  private void persistNow() {
+    if (getModelState() == ACTIVE) {
+      myBlackboardService.persistNow();
+      if (logger.isInfoEnabled()) logger.info("persistNow()");
+    }
+  }
+
   protected PersistenceClient getPersistenceClient() {
     final PersistenceClient superPersistenceClient = super.getPersistenceClient();
     return new PersistenceClient() {
@@ -400,9 +444,9 @@ public class NodeAgent
           List superData = superPersistenceClient.getPersistenceData();
           List data = new ArrayList(superData.size() + 1);
           data.addAll(superData);
-          Collection agents = agentManager.getAgents().values();
+          List components = agentManager.getComponents();
           // Find and remove ourself from the agent collection
-          for (Iterator i = agents.iterator(); i.hasNext(); ) {
+          for (Iterator i = components.iterator(); i.hasNext(); ) {
             ComponentDescription cd = (ComponentDescription) i.next();
             if (NodeAgent.class.getName().equals(cd.getClassname())) {
               if (logger.isDebugEnabled()) logger.debug("Removing " + cd);
@@ -412,7 +456,7 @@ public class NodeAgent
               if (logger.isDebugEnabled()) logger.debug("Keeping " + cd);
             }
           }
-          data.add(agents.toArray(new ComponentDescription[agents.size()]));
+          data.add(components.toArray(new ComponentDescription[components.size()]));
           return data;
         }
       };
