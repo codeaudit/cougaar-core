@@ -24,7 +24,6 @@ skeletonBase=org.cougaar.domain.planning.ldm.asset.AssetSkeletonBase
 hasDataQuality=false
 
 [TypeIdentificationPG]
-hasDataQuality=true
 doc=Identification of a type of Asset, e.g. by NSN, part number, etc.
 slots=String type_identification, \
 	String nomenclature, \
@@ -35,7 +34,6 @@ alternate_type_identification.doc=examples: "LIN/T13168", "DODIC/C786"
 nomenclature.ldm=type_nomenclature
 
 [ItemIdentificationPG]
-timephased=true
 doc=Identification of a unique, actual Asset, e.g. by VIN, SSN, etc.
 slots=String item_identification, \
 	String nomenclature, \
@@ -66,6 +64,18 @@ relationshipBG.delegate=PGDelegate copy(PropertyGroup pg);\
         void readObject(java.io.ObjectInputStream in);\
         void writeObject(java.io.ObjectOutputStream out);\
         void init(org.cougaar.domain.planning.ldm.plan.HasRelationships hasRelationships); 
+
+[EntityPG]
+slots=Collection<Role> roles
+roles.doc=Collection of Roles the organization is capable of \
+          fulfilling.
+roles.init=ArrayList
+
+[CommunityPG]
+timephased=true
+slots=Collection<String> communities
+communities.doc=Collection of community names to which the asset belongs at the specified time.
+communities.init=ArrayList
 
 ;[AggregateAssetPG]
 ;import=org.cougaar.domain.planning.ldm.asset.Asset
