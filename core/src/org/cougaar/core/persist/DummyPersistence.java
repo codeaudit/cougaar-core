@@ -37,20 +37,15 @@ import org.cougaar.planning.ldm.plan.Plan;
  * of the work of doing persistence, but discards the results. This is
  * only used for performance testing.
  **/
-public class DummyPersistence implements PersistencePlugin {
-
-  private PersistencePluginSupport pps;
-  private String name;
+public class DummyPersistence
+  extends PersistencePluginAdapter
+  implements PersistencePlugin
+{
 
   public void init(PersistencePluginSupport pps, String name, String[] params)
     throws PersistenceException
   {
-    this.pps = pps;
-    this.name = name;
-  }
-
-  public String getName() {
-    return name;
+    init(pps, name);
   }
 
   public SequenceNumbers[] readSequenceNumbers(String suffix) {
@@ -99,13 +94,5 @@ public class DummyPersistence implements PersistencePlugin {
   }
 
   public void deleteOldPersistence() {
-  }
-
-  public java.sql.Connection getDatabaseConnection(Object locker) {
-    throw new UnsupportedOperationException("DummyPersistence.getDatabaseConnection not supported");
-  }
-
-  public void releaseDatabaseConnection(Object locker) {
-    throw new UnsupportedOperationException("DummyPersistence.releaseDatabaseConnection not supported");
   }
 }

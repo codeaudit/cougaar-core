@@ -32,6 +32,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.*;
 
+import org.cougaar.core.adaptivity.OMCRange;
+import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -45,7 +47,6 @@ import java.lang.reflect.Modifier;
 /**
  * This persistence class saves plan objects in files. It saves and
  * restores persistence deltas in files.
- * @param parameter
  * @property org.cougaar.install.path Used by FilePersistence as the
  * parent directory for persistence snapshots when there is no
  * directory specified in configuration parameters and
@@ -55,9 +56,10 @@ import java.lang.reflect.Modifier;
  * relative path, it the base will be the value or
  * org.cougaar.install.path.
  **/
-public class FilePersistence implements PersistencePlugin {
-  protected PersistencePluginSupport pps;
-
+public class FilePersistence
+  extends PersistencePluginAdapter
+  implements PersistencePlugin
+{
   /**
    * Wrap a FileOutputStream to prove safe close semantics. Explicitly
    * sync the file descriptor on close() to insure the file has been
@@ -88,13 +90,10 @@ public class FilePersistence implements PersistencePlugin {
 
   private File persistenceDirectory;
 
-  private String name;
-
   public void init(PersistencePluginSupport pps, String name, String[] params)
     throws PersistenceException
   {
-    this.pps = pps;
-    this.name = name;
+    init(pps, name);
     File persistenceRoot;
     if (params.length < 1) {
       persistenceRoot = getDefaultPersistenceRoot();
@@ -124,10 +123,6 @@ public class FilePersistence implements PersistencePlugin {
 
   private File getNewSequenceFile(String suffix) {
     return new File(persistenceDirectory, "newSequence" + suffix);
-  }
-
-  public String getName() {
-    return name;
   }
 
   public SequenceNumbers[] readSequenceNumbers(final String suffix) {
@@ -278,13 +273,5 @@ public class FilePersistence implements PersistencePlugin {
   private File getDeltaFile(int sequence) {
     return new File(persistenceDirectory,
                     "delta" + BasePersistence.formatDeltaNumber(sequence));
-  }
-
-  public java.sql.Connection getDatabaseConnection(Object locker) {
-    throw new UnsupportedOperationException("FilePersistence.getDatabaseConnection not supported");
-  }
-
-  public void releaseDatabaseConnection(Object locker) {
-    throw new UnsupportedOperationException("FilePersistence.releaseDatabaseConnection not supported");
   }
 }

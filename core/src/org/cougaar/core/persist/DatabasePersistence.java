@@ -20,6 +20,7 @@
  */
 package org.cougaar.core.persist;
 
+import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContext;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -87,7 +88,10 @@ import java.io.Reader;
  * @property org.cougaar.core.persistence.database.password Specify the database password to use for DatabasePersistence.
  * @property org.cougaar.core.persistence.database.driver Specify the database driver to use for DatabasePersistence.
  **/
-public class DatabasePersistence implements PersistencePlugin {
+public class DatabasePersistence
+  extends PersistencePluginAdapter
+  implements PersistencePlugin
+{
   // Codes used in the active column. Chosen for backward compatibility
   private static final String INCREMENTAL = "'t'";
   private static final String FULL        = "'x'";
@@ -103,7 +107,6 @@ public class DatabasePersistence implements PersistencePlugin {
   String databaseDriver =
     System.getProperty("org.cougaar.core.persistence.database.driver");
 
-  private PersistencePluginSupport pps;
   private Connection theConnection;
   private DatabaseMetaData theMetaData;
   private PreparedStatement getSequenceNumbers;
@@ -115,15 +118,13 @@ public class DatabasePersistence implements PersistencePlugin {
   private PreparedStatement checkDelta;
   private PreparedStatement cleanDeltas;
   private String deltaTable;
-  private String name;
 
   public void init(PersistencePluginSupport pps, String name, String[] params)
     throws PersistenceException
   {
+    init(pps, name);
     String clusterName = pps.getClusterIdentifier().getAddress().replace('-', '_');
     LoggingService ls = pps.getLoggingService();
-    this.pps = pps;
-    this.name = name;
     deltaTable = "delta_" + clusterName;
     if (databaseDriver != null) {
       try {
@@ -208,10 +209,6 @@ public class DatabasePersistence implements PersistencePlugin {
     pps.getLoggingService().info("Creating table: " + qry);
     Statement stmt = theConnection.createStatement();
     stmt.executeUpdate(qry);
-  }
-
-  public String getName() {
-    return name;
   }
 
   public SequenceNumbers[] readSequenceNumbers(String suffix) {
@@ -440,6 +437,10 @@ public class DatabasePersistence implements PersistencePlugin {
   private WrappedConnection activeConnection;
   private HashMap wrappedConnections = new HashMap();
 
+  /**
+   * Override adapter version since we actually have a database
+   * connection we can return instead of throwing an exception.
+   **/
   public Connection getDatabaseConnection(Object locker) {
     if (locker == null) throw new IllegalArgumentException("locker is null");
     synchronized (connectionLock) {
