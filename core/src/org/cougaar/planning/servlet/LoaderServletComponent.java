@@ -35,16 +35,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//import org.cougaar.core.agent.AgentIdentificationService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.component.ComponentDescription;
 
 import org.cougaar.core.service.AgentContainmentService;
+import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.MessageTransportService;
+
+import org.cougaar.core.servlet.BaseServletComponent;
+import org.cougaar.core.plugin.PluginBase;
 
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.StringUtility;
 
 /**
@@ -114,6 +115,7 @@ extends BaseServletComponent
   protected AgentContainmentService agentContainer;
 
   protected NodeIdentificationService nodeIdService;
+  protected AgentIdentificationService agentIdService;
 
   private static final String[] VALID_ACTIONS = {
     "add",
@@ -130,13 +132,7 @@ extends BaseServletComponent
     return new MyServlet();
   }
 
-  // aquire services:
   public void load() {
-    // FIXME need AgentIdentificationService
-    org.cougaar.core.plugin.PluginBindingSite pbs =
-      (org.cougaar.core.plugin.PluginBindingSite) bindingSite;
-    this.agentId = pbs.getAgentIdentifier();
-
     // get the nodeId
     this.nodeIdService = (NodeIdentificationService)
       serviceBroker.getService(
@@ -168,6 +164,23 @@ extends BaseServletComponent
           "\" servlet");
     }
 
+    this.agentIdService = (AgentIdentificationService)
+      serviceBroker.getService(
+          this,
+          AgentIdentificationService.class,
+          null);
+    if (agentIdService == null) {
+      throw new RuntimeException(
+          "Unable to obtain AgentIdentificationService for \""+
+          getPath()+"\" servlet");
+    }
+    this.agentId = agentIdService.getMessageAddress();
+    if (agentId == null) {
+      throw new RuntimeException(
+          "Unable to obtain agent's id? for \""+
+          getPath()+"\" servlet");
+    }
+
     // FIXME get node containment service
 
     super.load();
@@ -187,6 +200,11 @@ extends BaseServletComponent
       nodeIdService = null;
     }
     // release agentIdService
+    if (agentIdService != null) {
+      serviceBroker.releaseService(
+          this, AgentIdentificationService.class, agentIdService);
+      agentIdService = null;
+    }
   }
 
   private boolean performAction(
@@ -281,7 +299,7 @@ extends BaseServletComponent
         action = "add";
         target = "agent";
         insertionPoint =
-          "Node.AgentManager.Agent.PluginManager.Plugin";
+          PluginBase.INSERTION_POINT;
         // get "name=value" parameters
         for (Enumeration en = request.getParameterNames();
             en.hasMoreElements();
